@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "IRLY",
+    "slug": "irly",
+    "scheme": "irly",
+    "version": "2.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#08080C",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.irly.mobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "app.irly.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#08080C",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "IRLY",
+      "shortName": "IRLY",
+      "themeColor": "#08080C",
+      "backgroundColor": "#08080C"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120,
+          "resizeMode": "contain",
+          "backgroundColor": "#08080C",
+          "dark": {
+            "backgroundColor": "#08080C"
+          }
+        }
+      ],
+      "expo-image",
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "IRLY uses motion to add a subtle depth effect to destination cards."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

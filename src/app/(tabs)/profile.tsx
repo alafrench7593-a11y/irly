@@ -1,0 +1,330 @@
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { StyleSheet, Switch, View } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IrlyMark } from '@/brand/IrlyMark';
+import { Rail } from '@/components/cards/Blocks';
+import { CommunityCard } from '@/components/cards/ThingCards';
+import { useTabBarSpace } from '@/components/navigation/TabBar';
+import { Avatar } from '@/components/ui/Avatar';
+import { Badge, Divider, Segmented, SectionHeader } from '@/components/ui/Controls';
+import { Icon, type IconName } from '@/components/ui/Icon';
+import { Text } from '@/components/ui/Text';
+import { Cover } from '@/components/visual/Cover';
+import { ACTIVITIES, INTERESTS, SERVICE_CATEGORIES, USER_TYPES } from '@/data/catalog';
+import { CITIES, DESTINATIONS } from '@/data/destinations';
+import { findCommunity, findEvent, findService, findSession } from '@/data/repo';
+import { DestinationSheet } from '@/features/destination/DestinationSheet';
+import { openHero } from '@/features/hero/heroStore';
+import { whenLabel } from '@/lib/time';
+import { enter } from '@/motion/enter';
+import { PressableScale } from '@/motion/PressableScale';
+import { useCityId, useStore, type Appearance } from '@/state/store';
+import { radius, space } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
+
+export default function Profile() {
+  const t = useTheme();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const bottom = useTabBarSpace();
+  const cityId = useCityId();
+  const city = CITIES[cityId];
+  const dest = DESTINATIONS[city.destinationId];
+  const profile = useStore((s) => s.profile);
+  const joined = useStore((s) => s.joined);
+  const memberOf = useStore((s) => s.memberOf);
+  const connections = useStore((s) => s.connections);
+  const bookings = useStore((s) => s.bookings);
+  const appearance = useStore((s) => s.appearance);
+  const setAppearance = useStore((s) => s.setAppearance);
+  const hapticsOn = useStore((s) => s.hapticsOn);
+  const setHaptics = useStore((s) => s.setHaptics);
+  const resetOnboarding = useStore((s) => s.resetOnboarding);
+  const [destSheet, setDestSheet] = useState(false);
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.set(e.contentOffset.y);
+  });
+  const coverH = insets.top + 190;
+
+  const name = profile.name || 'You';
+  const plans = Object.keys(joined)
+    .map((id) => {
+      const e = findEvent(id);
+      if (e) return { id, kind: 'event' as const, title: e.title, when: whenLabel(e.when, CITIES[e.cityId]), icon: 'ticket' as IconName };
+      const s = findSession(id);
+      if (s) return { id, kind: 'session' as const, title: s.title, when: whenLabel(s.when, CITIES[s.cityId]), icon: ACTIVITIES[s.kind].icon };
+      return null;
+    })
+    .filter(Boolean) as { id: string; kind: 'event' | 'session'; title: string; when: string; icon: IconName }[];
+  const communities = Object.keys(memberOf)
+    .map((id) => findCommunity(id))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c));
+  const connected = Object.values(connections).filter((s) => s === 'connected').length;
+
+  return (
+    <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottom }}>
+        <Cover visual={{ photo: city.photo }} light={city.light} height={coverH} scrollY={scrollY} scrim="top" />
+        <View style={[styles.identity, { marginTop: -52 }]}>
+          <Animated.View entering={enter.pop(0)}>
+            <View style={[styles.avatarRing, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
+              <Avatar name={name} hue={262} size={96} />
+            </View>
+          </Animated.View>
+          <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 4 }}>
+            <Text variant="displayL">{name}</Text>
+            <Text variant="body" tone="secondary">
+              {city.name} {city.destinationId === 'bali' ? '🌴' : dest.flag}
+            </Text>
+          </Animated.View>
+          <Animated.View entering={enter.rise(2)} style={styles.badges}>
+            {profile.types.map((x) => (
+              <Badge key={x} kind="accent" label={USER_TYPES[x].label} />
+            ))}
+            <Badge kind="verified" label="ID verified" />
+          </Animated.View>
+          <Animated.View entering={enter.rise(3)} style={[styles.stats, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <Stat value={connected} label="Connections" />
+            <View style={[styles.vr, { backgroundColor: t.c.line }]} />
+            <Stat value={plans.length} label="Plans" />
+            <View style={[styles.vr, { backgroundColor: t.c.line }]} />
+            <Stat value={communities.length} label="Communities" />
+          </Animated.View>
+        </View>
+
+        <Animated.View entering={enter.rise(4)} style={styles.section}>
+          <SectionHeader title="Interests" />
+          <View style={styles.wrap}>
+            {profile.interests.length === 0 && profile.activities.length === 0 ? (
+              <Text variant="bodyS" tone="tertiary">
+                Add interests to get better introductions.
+              </Text>
+            ) : null}
+            {profile.interests.map((i) => (
+              <View key={i} style={[styles.tag, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+                <Icon name={INTERESTS[i].icon} size={14} color={t.c.textSecondary} />
+                <Text variant="label">{INTERESTS[i].label}</Text>
+              </View>
+            ))}
+            {profile.activities.map((a) => (
+              <View key={a} style={[styles.tag, { backgroundColor: t.light.accentSoft, borderColor: 'transparent' }]}>
+                <Icon name={ACTIVITIES[a].icon} size={14} color={t.accent} />
+                <Text variant="label" tone="accent">
+                  {ACTIVITIES[a].label}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(5)} style={styles.section}>
+          <SectionHeader title="Upcoming" overline="In real life" />
+          <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+            {plans.length === 0 ? (
+              <EmptyRow icon="calendar" text="Nothing planned yet. Join a plan and it lands here." onPress={() => router.push('/social')} />
+            ) : (
+              plans.map((p) => (
+                <Row key={p.id} icon={p.icon} title={p.title} meta={p.when} onPress={() => openHero({ kind: p.kind, id: p.id })} />
+              ))
+            )}
+            {bookings.map((b) => {
+              const s = findService(b.serviceId);
+              return s ? (
+                <Row
+                  key={b.id}
+                  icon={SERVICE_CATEGORIES[s.category].icon}
+                  title={`Call with ${s.name}`}
+                  meta={`${b.dateLabel} · ${b.slot}`}
+                  onPress={() => openHero({ kind: 'service', id: s.id })}
+                />
+              ) : null;
+            })}
+          </View>
+        </Animated.View>
+
+        {communities.length ? (
+          <Animated.View entering={enter.rise(6)} style={styles.section}>
+            <SectionHeader title="Your communities" />
+            <Rail itemWidth={250}>
+              {communities.map((c) => (
+                <CommunityCard key={c.id} community={c} />
+              ))}
+            </Rail>
+          </Animated.View>
+        ) : null}
+
+        <Animated.View entering={enter.rise(7)} style={styles.section}>
+          <SectionHeader title="Settings" />
+          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <View style={styles.settingBlock}>
+              <View style={styles.settingHead}>
+                <Icon name={t.isDay ? 'sun' : 'moon'} size={18} color={t.c.text} />
+                <Text variant="titleS">Appearance</Text>
+              </View>
+              <Text variant="bodyS" tone="secondary">
+                Auto follows the local time in {city.name}: day at sunrise, night after sunset.
+              </Text>
+              <Segmented<Appearance>
+                value={appearance}
+                onChange={setAppearance}
+                options={[
+                  { value: 'auto', label: 'Auto' },
+                  { value: 'day', label: 'Day' },
+                  { value: 'night', label: 'Night' },
+                ]}
+              />
+            </View>
+            <Divider inset={16} />
+            <View style={[styles.settingRow]}>
+              <Icon name="zap" size={18} color={t.c.text} />
+              <Text variant="titleS" style={{ flex: 1 }}>
+                Haptic feedback
+              </Text>
+              <Switch
+                value={hapticsOn}
+                onValueChange={setHaptics}
+                trackColor={{ true: t.c.brand, false: t.c.overlay }}
+                thumbColor="#FFFFFF"
+                accessibilityLabel="Haptic feedback"
+              />
+            </View>
+            <Divider inset={16} />
+            <SettingLink icon="globe" label="Destination" value={`${dest.shortName} · ${city.name}`} onPress={() => setDestSheet(true)} />
+            <Divider inset={16} />
+            <SettingLink icon="palette" label="IRLY Design System" value="Tokens & components" onPress={() => router.push('/design-system')} />
+            <Divider inset={16} />
+            <SettingLink
+              icon="repeat"
+              label="Replay onboarding"
+              onPress={() => {
+                resetOnboarding();
+                router.replace('/welcome');
+              }}
+            />
+          </View>
+        </Animated.View>
+
+        <View style={styles.about}>
+          <IrlyMark size={40} state="idle" ringColor={t.c.textTertiary} lensColor={t.c.brand} glow={false} />
+          <Text variant="caption" tone="tertiary" align="center">
+            IRLY 2.0 · Trusted. Curated. Human-first.
+          </Text>
+        </View>
+      </Animated.ScrollView>
+      <DestinationSheet visible={destSheet} onClose={() => setDestSheet(false)} />
+    </View>
+  );
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+      <Text variant="number">{value}</Text>
+      <Text variant="caption" tone="tertiary">
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function Row({ icon, title, meta, onPress }: { icon: IconName; title: string; meta: string; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <PressableScale onPress={onPress} style={[styles.row, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+      <View style={[styles.rowIcon, { backgroundColor: t.light.accentSoft }]}>
+        <Icon name={icon} size={18} color={t.accent} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text variant="titleS" numberOfLines={1}>
+          {title}
+        </Text>
+        <Text variant="bodyS" tone="secondary">
+          {meta}
+        </Text>
+      </View>
+      <Icon name="chevronRight" size={18} color={t.c.textTertiary} />
+    </PressableScale>
+  );
+}
+
+function EmptyRow({ icon, text, onPress }: { icon: IconName; text: string; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <PressableScale onPress={onPress} style={[styles.row, styles.empty, { borderColor: t.c.lineStrong }]}>
+      <Icon name={icon} size={18} color={t.c.textTertiary} />
+      <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
+        {text}
+      </Text>
+    </PressableScale>
+  );
+}
+
+function SettingLink({ icon, label, value, onPress }: { icon: IconName; label: string; value?: string; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <PressableScale
+      haptic="select"
+      scaleTo={0.98}
+      onPress={onPress}
+      style={styles.settingRow}
+      accessibilityLabel={value ? `${label}, ${value}` : label}
+    >
+      <Icon name={icon} size={18} color={t.c.text} />
+      <Text variant="titleS" style={{ flex: 1 }}>
+        {label}
+      </Text>
+      {value ? (
+        <Text variant="bodyS" tone="tertiary">
+          {value}
+        </Text>
+      ) : null}
+      <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+    </PressableScale>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  identity: { alignItems: 'center', gap: 14, paddingHorizontal: space.gutter, marginBottom: space[8] },
+  avatarRing: { borderRadius: 60, borderWidth: 4 },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center' },
+  stats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    paddingVertical: 16,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    marginTop: 6,
+  },
+  vr: { width: StyleSheet.hairlineWidth * 2, height: 34 },
+  section: { marginBottom: space[8] },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: space.gutter },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+  },
+  rowIcon: { width: 40, height: 40, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  empty: { borderStyle: 'dashed', paddingVertical: 16 },
+  group: { marginHorizontal: space.gutter, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
+  settingBlock: { padding: 16, gap: 10 },
+  settingHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  settingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, height: 56 },
+  about: { alignItems: 'center', gap: 10, paddingVertical: space[6] },
+});
