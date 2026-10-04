@@ -217,7 +217,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       </Animated.View>
 
       <View style={[styles.closeWrap, { left: origin.x - BUTTON / 2, top: origin.y - BUTTON / 2 }]}>
-        <PressableScale haptic="tap" scaleTo={0.9} onPress={hide} accessibilityLabel="Close" style={[styles.close, { backgroundColor: t.c.overlay }]}>
+        <PressableScale haptic="tap" scaleTo={0.9} onPress={hide} accessibilityLabel="Close composer" style={[styles.close, { backgroundColor: t.c.overlay }]}>
           <Animated.View style={closeBtn}>
             <Icon name="plus" size={24} color={t.c.text} strokeWidth={2.4} />
           </Animated.View>

@@ -70,7 +70,7 @@ export default function ActivityKindScreen() {
         </Animated.View>
         <View style={[styles.head, { marginTop: -110 }]}>
           <View style={[styles.icon, { backgroundColor: t.c.brand }]}>
-            <Icon name={a.icon} size={22} color="#FFFFFF" />
+            <Icon name={a.icon} size={22} color={t.c.onBrand} />
           </View>
           <Text variant="displayXL">{a.label}</Text>
           <Text variant="body" tone="secondary">

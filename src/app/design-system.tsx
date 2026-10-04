@@ -12,41 +12,28 @@ import { Avatar, AvatarStack } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Badge, Chip, Field, IconButton, LiveDot, Segmented } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
+import { JoinButton } from '@/components/ui/JoinButton';
+import { HappeningRowSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
-import { CITIES, DESTINATIONS } from '@/data/destinations';
+import { CITIES } from '@/data/destinations';
 import { PHOTO_IDS, type PhotoKey } from '@/data/photos';
 import { getCityContent } from '@/data/repo';
 import { scoreMatch } from '@/features/matching/match';
-import { spring } from '@/motion/tokens';
+import { blur, motion, scale, spring, staggerStep } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
-import { lights, type LightId } from '@/theme/lights';
-import { palettes, radius, space, type as typeScale, type TypeVariant } from '@/theme/tokens';
+import { category, palettes, radius, space, status, type as typeScale, type TypeVariant } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 const PHOTO_KEYS = Object.keys(PHOTO_IDS) as PhotoKey[];
 
-/** One sample per light: the photo it comes from, its sky and its accent. */
-const LIGHT_SAMPLES: { id: LightId; label: string; photo: PhotoKey }[] = [
-  ...(['dubai', 'abudhabi', 'sharjah', 'ajman', 'rak', 'fujairah', 'uaq', 'bali'] as const).map((id) => ({
-    id: CITIES[id].light,
-    label: CITIES[id].name,
-    photo: CITIES[id].photo,
-  })),
-  ...(['thailand', 'singapore', 'london', 'paris'] as const).map((id) => ({
-    id: DESTINATIONS[id].light,
-    label: DESTINATIONS[id].shortName,
-    photo: DESTINATIONS[id].photo,
-  })),
-];
-
 function Block({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <View style={styles.block}>
-      <Text variant="overline" tone="accent">
+      <Text variant="overline" tone="secondary">
         {title}
       </Text>
       {note ? (
@@ -72,7 +59,7 @@ export default function DesignSystem() {
   const typeVariants = Object.keys(typeScale) as TypeVariant[];
 
   return (
-    <Page overline="IRLY 2.0" title="Design System" subtitle="Minimal, premium, human, international. One system, a different light in every city.">
+    <Page overline="IRLY 3.0" title="Design System" subtitle="Black and white. Colour only for categories, statuses and actions. Motion that links two states, never decoration.">
       <Block title="Brand · Common Ground" note="Two rings, two lives; the lens is where they meet. The mark has four motion states.">
         <View style={[styles.brandCard, { backgroundColor: '#000000' }]}>
           <IrlyMark size={96} state={mark} lensColor={palettes.night.brand} />
@@ -86,40 +73,31 @@ export default function DesignSystem() {
         <IrlyLogo size={18} />
       </Block>
 
-      <Block title="Core colour" note={`Night and day palettes. The app switches with local time in ${city.name}.`}>
-        {(['night', 'day'] as const).map((mode) => (
-          <View key={mode} style={styles.swatches}>
-            {(['bg', 'surface', 'raised', 'text', 'brand', 'live', 'positive', 'caution'] as const).map((k) => (
-              <View key={k} style={{ alignItems: 'center', gap: 4, width: '25%', marginBottom: 10 }}>
-                <View style={[styles.swatch, { backgroundColor: palettes[mode][k], borderColor: t.c.line }]} />
-                <Text variant="caption" tone="tertiary">
-                  {mode} · {k}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ))}
+      <Block title="Core colour" note="Black, white and four greys carry the whole interface. Depth comes from grey steps, hairlines and glass, not shadows.">
+        <View style={styles.swatches}>
+          {(['bg', 'surface', 'raised', 'overlay', 'textTertiary', 'textSecondary', 'text', 'glass'] as const).map((k) => (
+            <View key={k} style={{ alignItems: 'center', gap: 4, width: '25%', marginBottom: 10 }}>
+              <View style={[styles.swatch, { backgroundColor: palettes.night[k], borderColor: t.c.lineStrong }]} />
+              <Text variant="caption" tone="tertiary">
+                {k}
+              </Text>
+            </View>
+          ))}
+        </View>
       </Block>
 
-      <Block
-        title="Destination lights"
-        note="Each destination brings a real photograph and an accent taken from it. Core colours never change, so IRLY stays recognisable."
-      >
-        <View style={styles.lights}>
-          {LIGHT_SAMPLES.map(({ id, label, photo }) => (
-            <View key={id} style={{ width: '31%', gap: 6 }}>
-              <Photo visual={{ photo }} light={id} width={300} style={styles.light} />
-              <View style={styles.skyRow}>
-                {lights[id].sky.map((c, i) => (
-                  <View key={i} style={[styles.sky, { backgroundColor: c }]} />
-                ))}
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <View style={[styles.dot, { backgroundColor: lights[id].accent }]} />
-                <Text variant="caption" numberOfLines={1}>
-                  {label}
-                </Text>
-              </View>
+      <Block title="Categories & statuses" note="On an icon, a dot, a ring or a halo. Never as a background fill.">
+        <View style={styles.swatches}>
+          {(Object.keys(category) as (keyof typeof category)[]).map((k) => (
+            <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, width: '33%', marginBottom: 10 }}>
+              <View style={[styles.dot, { width: 12, height: 12, borderRadius: 6, backgroundColor: category[k] }]} />
+              <Text variant="caption">{k}</Text>
+            </View>
+          ))}
+          {(Object.keys(status) as (keyof typeof status)[]).map((k) => (
+            <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, width: '33%', marginBottom: 10 }}>
+              <View style={[styles.dot, { width: 12, height: 12, borderRadius: 6, backgroundColor: status[k] }]} />
+              <Text variant="caption">{k}</Text>
             </View>
           ))}
         </View>
@@ -141,14 +119,14 @@ export default function DesignSystem() {
         </View>
       </Block>
 
-      <Block title="Typography" note="Instrument Serif for human, editorial moments. Manrope for the interface.">
+      <Block title="Typography" note="One family, Manrope. Display for the one question of a screen, capitals for titles on photos.">
         {typeVariants.map((v) => (
           <View key={v} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
             <Text variant="caption" tone="tertiary" style={{ width: 74 }}>
               {v}
             </Text>
             <Text variant={v} style={{ flex: 1 }} numberOfLines={1}>
-              {v.startsWith('display') ? `Good evening, ${city.name}.` : v === 'number' ? '148' : 'Connect. Relocate. Belong.'}
+              {v.startsWith('display') ? "What's happening today?" : v === 'cardTitle' ? 'Padel tonight' : v === 'number' ? '148' : 'Connect. Relocate. Belong.'}
             </Text>
           </View>
         ))}
@@ -177,7 +155,7 @@ export default function DesignSystem() {
         </View>
       </Block>
 
-      <Block title="Surfaces" note="Elevation is soft and directional; glass is reserved for chrome floating over content.">
+      <Block title="Surfaces" note="Grey steps on black. Glass (#121212 at 72 %, blur, white hairline) is reserved for chrome floating over content: tab bar, headers, sheets, map controls.">
         <View style={styles.wrap}>
           <View style={[styles.surface, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
             <Text variant="label">Surface</Text>
@@ -207,7 +185,6 @@ export default function DesignSystem() {
         <Button label="Join" icon="plus" />
         <View style={styles.wrap}>
           <Button label="Secondary" variant="secondary" size="md" />
-          <Button label="You're in" variant="done" icon="check" size="md" />
           <Button label="Ghost" variant="ghost" size="md" />
           <Button label="Small" size="sm" />
         </View>
@@ -222,7 +199,7 @@ export default function DesignSystem() {
       <Block title="Chips, badges, controls">
         <View style={styles.wrap}>
           <Chip label="Padel" icon="target" selected={chip} onPress={() => setChip(!chip)} />
-          <Chip label="Surf" icon="waves" tone="accent" selected />
+          <Chip label="Surf" dot={category.beach} />
           <Chip label="Small" size="sm" />
         </View>
         <View style={styles.wrap}>
@@ -250,7 +227,7 @@ export default function DesignSystem() {
         <Field icon="search" placeholder="Search field" />
       </Block>
 
-      <Block title="Avatars" note="Generated duotones until members add a photo. Online and verified states.">
+      <Block title="Avatars" note="Initials on grey until members add a photo. Availability and verified states.">
         <View style={[styles.wrap, { alignItems: 'center' }]}>
           {content.people.slice(0, 4).map((p, i) => (
             <Avatar key={p.id} name={p.name} hue={p.hue} size={[64, 52, 44, 36][i]} online={i === 0} verified={i === 1} />
@@ -271,9 +248,36 @@ export default function DesignSystem() {
         {content.people[0] ? <PersonCard match={scoreMatch(profile, content.people[0], 'friends', () => city.name)} /> : null}
       </Block>
 
-      <Block title="Motion" note="Tap a spring. Transform and opacity only; 60 fps on the UI thread.">
-        {(Object.keys(spring) as (keyof typeof spring)[]).map((k) => (
+      <Block title="Join" note="Pressed, spring, confirmation: the button settles into « You're going » with a check, a success haptic and a toast. Tap again to leave.">
+        <JoinButton id="design-system-demo" full />
+      </Block>
+
+      <Block title="Loading" note="Skeletons with the geometry of the final component and a very soft sweep. Never a lone spinner.">
+        <Skeleton height={180} radius={radius.xxl} />
+        <HappeningRowSkeleton />
+      </Block>
+
+      <Block title="Motion · springs" note="Tap a track. Three springs cover the app: soft for surfaces that change shape, medium for things that travel, strong for feedback that should be felt.">
+        {(['soft', 'medium', 'strong'] as const).map((k) => (
           <SpringDemo key={k} name={k} />
+        ))}
+      </Block>
+
+      <Block title="Motion · tokens" note="Every animation reads from these. Transform and opacity only; blur never animates.">
+        {[
+          ['motion.fast / normal / slow', `${motion.fast} / ${motion.normal} / ${motion.slow} ms`],
+          ['ease.standard / enter / exit', 'bezier(.2,0,0,1) / (.05,.7,.1,1) / (.3,0,.8,.15)'],
+          ['ease.camera', 'bezier(.65,0,.15,1), 2D ↔ 3D'],
+          ['scale.press / hover / selected', `${scale.press} / ${scale.hover} / ${scale.selected}`],
+          ['blur.light / medium / strong', `${blur.light} / ${blur.medium} / ${blur.strong}`],
+          ['stagger', `${staggerStep} ms per item, 6 at most`],
+        ].map(([k, v]) => (
+          <View key={k} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+            <Text variant="label">{k}</Text>
+            <Text variant="caption" tone="secondary" style={{ flexShrink: 1 }} align="right">
+              {v}
+            </Text>
+          </View>
         ))}
       </Block>
 
@@ -296,7 +300,7 @@ export default function DesignSystem() {
   );
 }
 
-function SpringDemo({ name }: { name: keyof typeof spring }) {
+function SpringDemo({ name }: { name: 'soft' | 'medium' | 'strong' }) {
   const t = useTheme();
   const x = useSharedValue(0);
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
@@ -315,7 +319,7 @@ function SpringDemo({ name }: { name: keyof typeof spring }) {
         }}
       >
         <Animated.View style={[styles.ball, { backgroundColor: t.c.brand }, style]}>
-          <Icon name="zap" size={12} color="#FFFFFF" />
+          <Icon name="zap" size={12} color={t.c.onBrand} />
         </Animated.View>
       </View>
     </View>

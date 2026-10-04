@@ -1,153 +1,116 @@
-# IRLY Design System
+# IRLY Design System (v3)
 
-Référence du système visuel et du motion design d'IRLY 2.0. La source de vérité est le code (`src/theme`, `src/motion`, `src/components`) ; ce document l'explique. Une version vivante est consultable dans l'app : Profil, puis « IRLY Design System ».
+Noir et blanc, une seule famille de caractères, et un mouvement qui relie toujours deux états. Toute décision visuelle passe par un token (`src/theme/tokens.ts`, `src/motion/tokens.ts`) ; aucun écran ne code une couleur, une durée ou un ressort en dur.
+
+Consultable dans l'app : Profil › « IRLY Design System ».
 
 ## Principes
 
-1. **La vraie vie d'abord.** Les écrans montrent des gens, des lieux et des moments réels : photos réelles, heures locales, quartiers, prix en monnaie locale.
-2. **Une seule app, une lumière par ville.** Les couleurs cœur (marque, texte, surfaces) ne changent jamais. Chaque destination apporte sa photo et une couleur d'accent tirée de cette photo.
-3. **Premium par la retenue.** Fond sombre profond la nuit, ivoire le jour, une seule couleur de marque, du verre uniquement pour ce qui flotte au-dessus du contenu.
-4. **Le mouvement oriente.** Les choses se rejoignent (rencontre), se posent (ressorts) et s'ouvrent (expansion). Jamais d'animation décorative en boucle sur du contenu.
+- **Noir, blanc, quatre gris.** La couleur n'apparaît que sur les catégories, les statuts et les actions, jamais en aplat de fond.
+- **La profondeur vient des paliers de gris, des filets et du verre**, pas des ombres (invisibles sur noir).
+- **Chaque animation a une fonction** : orienter (d'où vient cet écran), confirmer (« You're going »), ou suivre un geste. Aucune boucle décorative, sauf l'anneau des éléments en cours.
+- **Le geste pilote.** Pendant un glisser, rien n'est minuté ; au lâcher, un ressort repart de la vitesse du doigt.
 
 ## Couleurs
 
-Deux palettes complètes, choisies automatiquement selon l'heure locale de la ville (jour de 6 h 30 à 18 h) ou forcées dans les réglages.
-
-| Token | Nuit | Jour | Usage |
-| --- | --- | --- | --- |
-| `bg` | `#08080C` | `#F5F4F0` | Fond d'écran |
-| `surface` | `#111117` | `#FFFFFF` | Cartes, listes |
-| `raised` | `#18181F` | `#FFFFFF` | Sheets, boutons ronds |
-| `overlay` | `#22222B` | `#EEECE6` | Surfaces internes |
-| `text` | `#F4F3F8` | `#0C0B14` | Texte principal |
-| `textSecondary` | 66 % | 62 % | Texte secondaire |
-| `textTertiary` | 42 % | 42 % | Métadonnées |
-| `brand` | `#8B6CFF` | `#6A4CF5` | Marque, actions principales |
-| `live` | `#FF6A4D` | `#F2542D` | « En ce moment », la couleur de la vraie vie |
-| `positive` | `#3DDC97` | `#12A86B` | Confirmé, vérifié, rejoint |
-| `caution` | `#FFC15E` | `#C98500` | Attention |
-| `critical` | `#FF5D6C` | `#E23B4E` | Erreur |
-
-Chaque couleur d'action a sa version douce (`brandSoft`, `liveSoft`, `positiveSoft`) pour les fonds de chips et de badges.
-
-### Lumières de destination (`src/theme/lights.ts`)
-
-Une lumière = 4 tons prélevés sur la photo de la ville (du haut vers le bas), un accent lisible sur fond sombre, un accent pour le mode jour et sa version douce. Elle teinte l'italique du message d'accueil, les chips d'activité, la carte et l'état de chargement des photos.
-
-| Destination | Accent nuit | Accent jour |
+| Token | Valeur | Usage |
 | --- | --- | --- |
-| Dubai | `#FFAD80` | `#D9622E` |
-| Abu Dhabi | `#6FD8CB` | `#14837A` |
-| Sharjah | `#F59A72` | `#B5502C` |
-| Ajman | `#74D3DE` | `#167C8A` |
-| Ras Al Khaimah | `#E9AA90` | `#A85A3E` |
-| Bali, Fujairah, Umm Al Quwain, Thaïlande, Singapour, Londres, Paris | voir `lights.ts` | |
+| `bg` | `#000000` | Fond de tous les écrans |
+| `surface` | `#0D0D0D` | Cartes au repos |
+| `raised` | `#1A1A1A` | Cartes surélevées, champs |
+| `overlay` | `#262626` | Chips, contrôles, boutons secondaires |
+| `line` / `lineStrong` | blanc 8 % / 16 % | Séparateurs, contours |
+| `text` / `textSecondary` / `textTertiary` | `#FFFFFF` / `#A3A3A3` / `#6B6B6B` | Texte (tertiaire : grandes tailles seulement) |
+| `brand` / `onBrand` | `#FFFFFF` / `#000000` | Action principale : Join, Connect, Create |
+| `glass` | `#121212` à 72 %, flou, filet blanc 10 % | Barre d'onglets, en-têtes, feuilles, contrôles de carte |
+
+Catégories (`category`) : Sport `#32D74B`, Food `#FF9F0A`, Coffee `#C8A27A`, Padel `#64D2FF`, Beach `#FFD60A`, Nightlife `#BF5AF2`, Travel `#0A84FF`, Wellness `#66D4CF`, Activities `#FF6482`, Dog walk `#D4A373`. Statuts (`status`) : Live `#FF453A`, disponible maintenant `#32D74B`, plus tard `#FF9F0A`. La correspondance activité, événement ou lieu → couleur est dans `src/theme/categories.ts`.
+
+Les lumières de destination (`src/theme/lights.ts`) ne teintent plus l'interface ; elles restent pour l'atmosphère de l'onboarding et du portail de destination.
 
 ## Typographie
 
-Deux familles, chargées une fois au démarrage :
+Une seule famille : **Manrope** (Instrument Serif est retiré).
 
-- **Instrument Serif** pour les moments humains et éditoriaux : salutations, noms de villes, titres d'événements.
-- **Manrope** pour l'interface.
+| Variante | Taille / interligne | Graisse | Usage |
+| --- | --- | --- | --- |
+| `displayL` | 34 / 38 | ExtraBold | « What's happening today? » |
+| `cardTitle` | 26 / 28, capitales | ExtraBold | « PADEL TONIGHT » sur photo |
+| `titleM` | 20 / 24 | Bold | Titres de section |
+| `body` | 15 / 22 | Medium | Textes |
+| `bodyS` | 13 / 18 | Medium | Lieu, heure, distance |
+| `label` | 13 / 16 | Bold | Boutons, chips |
+| `overline` | 11 / 14, capitales | SemiBold | Catégories, statuts |
 
-| Variante | Police | Taille / interligne |
-| --- | --- | --- |
-| `displayXL` | Instrument Serif | 46 / 48 |
-| `displayL` | Instrument Serif | 36 / 40 |
-| `displayM` | Instrument Serif | 28 / 32 |
-| `titleL` | Manrope ExtraBold | 24 / 30 |
-| `titleM` | Manrope Bold | 19 / 25 |
-| `titleS` | Manrope Bold | 16 / 21 |
-| `bodyL` | Manrope Medium | 16 / 24 |
-| `body` | Manrope Medium | 15 / 22 |
-| `bodyS` | Manrope Medium | 13 / 18 |
-| `label` | Manrope Bold | 13 / 16 |
-| `caption` | Manrope SemiBold | 12 / 16 |
-| `overline` | Manrope ExtraBold, capitales, interlettrage 1.4 | 11 / 14 |
-| `number` | Manrope ExtraBold | 22 / 26 |
+Icônes : Lucide, trait 1,75, grille de 24. Aucun emoji dans l'interface.
 
-Le logotype « IRLY » est en Manrope ExtraBold avec un interlettrage de 0,16 em.
+## Espacements et rayons
 
-## Espacements, rayons, ombres
-
-- **Grille de 4 points** : 2, 4, 8, 12, 16, 20, 24, 32, 40, 56, 72. Marge latérale d'écran : 20.
-- **Rayons** : xs 8, sm 12, md 16, lg 22, xl 28, xxl 34, pill. Le rayon grandit avec la taille de la surface (chip, carte, sheet, couverture).
-- **Ombres** (`boxShadow`, nouvelle architecture) : `card`, `float`, `glow` (halo de marque pour l'action principale). Plus denses la nuit, plus légères et teintées de violet le jour.
-- **Verre** (`Glass`) : flou réel sur iOS et web, teinte dense sur Android (lisible et économe dans les listes). Réservé au chrome : barre d'onglets, en-têtes, sélecteur de destination, CTA flottants.
-
-## Photographie
-
-- Photos réelles uniquement (Unsplash), déclarées par clé dans `src/data/photos.ts`.
-- Composant `Photo` : fondu enchaîné à l'arrivée, cache disque, état de chargement aux couleurs de la destination (jamais de boîte grise), voiles dégradés `soft`, `strong`, `full` pour garder le texte lisible.
-- Composant `Cover` : couverture de page à coins inférieurs arrondis, parallaxe au défilement, étirement au tirer-vers-le-bas, uniquement des transformations (fluide à 60 i/s).
+Grille de 4 points, marge latérale 20, 32 entre sections. Rayons : 12 petits éléments, 28 cartes (`xl`), 32 grandes cartes et haut des feuilles (`xxl`), pilule pour boutons et chips.
 
 ## Motion design (`src/motion/tokens.ts`)
 
-### Durées et courbes
+| Token | Valeur | Usage |
+| --- | --- | --- |
+| `motion.fast` / `normal` / `slow` | 150 / 260 / 400 ms | Fondus, pression, recentrage caméra |
+| `ease.standard` | bezier(.2, 0, 0, 1) | Tout mouvement sans ressort |
+| `ease.enter` / `ease.exit` | bezier(.05, .7, .1, 1) / (.3, 0, .8, .15) | Entrées, sorties |
+| `ease.camera` | bezier(.65, 0, .15, 1) | Passage 2D ↔ 3D |
+| `spring.soft` | 520 ms, amortissement 0,96 | Surfaces qui changent de forme : carte → page, avatar → profil, Create |
+| `spring.medium` | 460 ms, 0,9 | Ce qui voyage : feuilles, indicateur d'onglet, écrans |
+| `spring.strong` | 560 ms, 0,58 | Retour ressenti : marqueur choisi, Join, catégorie choisie |
+| `scale.press` / `hover` / `selected` | 0,96 / 1,02 / 1,12 | Pression, survol web, sélection |
+| `blur.light` / `medium` / `strong` | 30 / 55 / 80 | Chips sur carte, contrôles, feuilles et barre d'onglets |
+| `staggerStep` | 55 ms, 6 éléments au plus | Révélations en cascade |
 
-| Token | Valeur |
-| --- | --- |
-| `micro` / `fast` / `base` / `slow` / `xslow` | 120 / 200 / 300 / 450 / 700 ms |
-| `standard` | cubic-bezier(0.2, 0, 0, 1) : tout ce qui entre ou bouge |
-| `emphasized` | cubic-bezier(0.3, 0, 0, 1) : mouvements de page |
-| `exit` | cubic-bezier(0.4, 0, 1, 1) : sorties |
+Les anciens noms v2 (`spring.smooth`, `spring.bouncy`, `spring.sheet`...) sont des alias des trois ressorts.
 
-### Ressorts (durée perçue + amortissement)
+### Règles
 
-| Token | Durée | Amortissement | Usage |
-| --- | --- | --- | --- |
-| `press` | 260 ms | 0.72 | Retour d'appui |
-| `snappy` | 380 ms | 0.86 | Indicateurs, chips, interrupteurs |
-| `smooth` | 520 ms | 0.96 | Cartes qui s'ouvrent, grandes surfaces |
-| `bouncy` | 560 ms | 0.58 | Célébration : rejoindre, se connecter, succès |
-| `sheet` | 460 ms | 0.9 | Bottom sheets |
+- On n'anime que `transform` et `opacity`, sur le fil graphique (Reanimated).
+- Le flou ne s'anime jamais : un calque de verre apparaît en fondu.
+- « Réduire les animations » : `ReducedMotionConfig` (système) termine les animations instantanément ; le squelette ne balaie plus.
 
-- **Appui** : échelle 0.97 puis retour en ressort `press`, avec haptique.
-- **Entrées** : montée d'environ 25 px avec fondu, en ressort, décalée de 55 ms par élément pour que la page se lise de haut en bas.
+### Flows signatures
 
-### Chorégraphies signatures
+| Flow | Ce qui se passe | Où |
+| --- | --- | --- |
+| Lancement de la Home | En-tête, question, catégories, carte du jour, personnes, activités se révèlent en cascade | `app/(tabs)/index.tsx` |
+| Carte → page Activité | La carte s'agrandit depuis sa position, garde photo, titre, lieu et participants | `features/hero/HeroHost.tsx` |
+| Carrousels | Le plus proche du centre grossit, les autres reculent, accrochage et inertie natifs | `Carousel` dans `components/cards/HomeCards.tsx` |
+| Marqueur → feuille | Marqueur ×1,12 et halo une fois, caméra recentrée au-dessus de la feuille, feuille en aperçu | `app/(tabs)/map.tsx` |
+| Feuille de la carte | Trois crans (136 px, moitié, presque plein), suit le doigt, choisit le cran avec la vitesse, résiste en haut, se ferme d'un geste vers le bas | `features/map/MapSheet.tsx` |
+| 2D → 3D | Indicateur qui glisse, caméra inclinée 56° en 1,2 s (`ease.camera`), brume à l'horizon, marqueurs droits et synchronisés | `app/(tabs)/map.tsx`, `features/map/MapMarkers.tsx` |
+| Marqueurs | Entrée 0,8 → 1 en cascade, sortie en fondu, clusters qui se défont en zoomant | `features/map/MapMarkers.tsx` |
+| Barre d'onglets | Pilule qui glisse, icône active à ×1,12, haptique de sélection | `components/navigation/TabBar.tsx` |
+| Create | Le bouton + grandit en cercle jusqu'à l'écran et devient la croix ; catégories en cascade | `features/create/CreateHost.tsx` |
+| Join | Pression, ressort, « You're going » avec coche verte, haptique, toast ; ton avatar rejoint la pile | `components/ui/JoinButton.tsx`, `features/hero/details.tsx` |
+| Chargement | Squelettes à la géométrie finale, balayage très doux | `components/ui/Skeleton.tsx`, `components/visual/Photo.tsx` |
 
-- **Logo** (`IrlyMark`) : deux anneaux qui se rejoignent sur une lentille violette. États `idle` (respiration lente), `loading` (orbite), `success` (les anneaux fusionnent, coche), `transition` (la lentille s'ouvre et devient l'écran suivant).
-- **Carte vers plein écran** (`features/hero`) : la carte mesurée à l'écran s'agrandit jusqu'à la page, sa photo devient l'en-tête, son titre devient le titre de page. Fermeture par glissement vers le bas ou bouton.
-- **Changement de destination** : un portail circulaire s'ouvre depuis le sélecteur sur la photo de la nouvelle ville, le logo orbite pendant que l'app change de ville, puis la lumière se lève.
-- **Barre d'onglets** : indicateur qui glisse en ressort `snappy`, icône qui « pop », haptique de sélection.
-- **En-tête d'accueil** : blanc sur la photo de couverture, il passe en fondu aux couleurs du thème quand la couverture sort de l'écran.
+Les prototypes de ces flows sont sur le canevas « IRLY v3 — écrans ».
 
 ### Haptique (`haptic(kind)`)
 
-| Type | iOS / Android |
+| Type | Usage |
 | --- | --- |
-| `select` | Sélection (onglets, chips) |
+| `select` | Onglets, chips, crans de feuille, marqueur |
 | `tap` | Impact léger |
-| `press` | Impact moyen (actions principales) |
-| `heavy` | Impact fort |
-| `success` / `warning` / `error` | Notifications système |
-
-Sur le web : API Vibration (Android) et interrupteur natif caché (iOS 18 et plus), uniquement pendant un geste de l'utilisateur. Désactivable dans les réglages.
+| `press` | 2D ↔ 3D, Create |
+| `success` | Join, publication |
 
 ## Composants
 
 | Famille | Composants | Fichier |
 | --- | --- | --- |
-| Base | `Text`, `Icon` (Lucide), `Button` (primary, secondary, ghost, glass, inverse, done), `IconButton`, `Chip`, `Badge` (verified, pick, soon, live...), `LiveDot`, `Segmented`, `Field`, `Divider` | `components/ui` |
-| Surfaces | `Glass`, `Sheet` (glisser pour fermer), `Toast` | `components/ui` |
-| Membres | `Avatar` (monogramme, en ligne, vérifié), `AvatarStack`, `PersonCard` (raisons du match), `ConnectButton` | `components/ui`, `components/cards` |
-| Contenu | `EventCard`, `EventRow`, `SessionCard`, `ActivityTile`, `PlaceCard`, `CommunityCard`, `ServiceCard`, `EditorialCard`, `GuideCard`, `PlanCard`, `NearbyRow`, `MeetCard`, `ServicesGrid`, `Rail` | `components/cards` |
-| Navigation | `TabBar`, `HomeHeader`, `PageHeader`, `DestinationPill` | `components/navigation` |
-| Mise en page | `AppFrame` (colonne téléphone sur tablette et ordinateur), `Page` | `components/layout` |
-| Visuel | `Photo`, `Cover` | `components/visual` |
-| Marque | `IrlyMark`, `IrlyLogo`, `IrlyWordmark` | `brand` |
+| Base | `Text`, `Icon`, `Button`, `IconButton`, `Chip` (point de catégorie), `Badge`, `LiveDot`, `Segmented`, `Field`, `JoinButton`, `Skeleton` | `components/ui` |
+| Surfaces | `Glass`, `Sheet`, `Toast` | `components/ui` |
+| Home | `HighlightCard`, `HappeningRow`, `PersonBubble`, `Carousel` | `components/cards/HomeCards.tsx` |
+| Carte | `MarkerView` (personne, activité, événement, groupe, lieu), `ClusterView`, `Projected`, `MapSheet` | `features/map` |
+| Navigation | `TabBar` (Home, Discover, Create, Map, Profile), `HomeHeader`, `PageHeader`, `DestinationPill` | `components/navigation` |
+| Création | `CreateHost` | `features/create` |
 
 ## Accessibilité
 
-- Toutes les commandes ont un libellé (`accessibilityLabel`) et un rôle.
-- Le réglage système « Réduire les animations » est respecté partout.
-- Contraste : texte principal sur fond au-dessus de 15:1 la nuit ; les accents de destination ont une version jour plus foncée pour rester lisibles sur fond clair.
-- Boutons ronds de 40 px, zone tactile élargie (`hitSlop`) sur les petites cibles.
-
-## Ajouter une destination
-
-1. Ajouter la lumière dans `src/theme/lights.ts` (4 tons + accents).
-2. Ajouter la photo dans `src/data/photos.ts`.
-3. Déclarer la destination et ses villes (quartiers, devise, sections de la Home, activités, catégories de services) dans `src/data/destinations.ts`.
-4. Créer son contenu dans `src/data/content/` et l'enregistrer dans `src/data/repo.ts`.
+- Toutes les commandes ont un libellé et un rôle ; chaque cran de feuille est aussi atteignable au toucher de son en-tête.
+- Contraste : texte 21:1, secondaire 8:1 ; le tertiaire est réservé aux grandes tailles.
+- Cibles de 44 px au moins, `hitSlop` sur les petites.

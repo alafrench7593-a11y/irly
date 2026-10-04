@@ -99,3 +99,12 @@ export function timeAgo(minAgo: number): string {
   if (h < 24) return `${h} h`;
   return `${Math.round(h / 24)} d`;
 }
+
+/** True while a plan is actually under way, in the city's time. */
+export function isHappeningNow(when: When, city: Pick<City, 'utcOffset'>, now = Date.now()): boolean {
+  if (when.dayOffset !== 0) return false;
+  const [h, m] = when.time.split(':').map(Number);
+  const start = h + (m || 0) / 60;
+  const current = cityHour(city, now);
+  return current >= start - 0.25 && current <= start + when.durationMin / 60;
+}

@@ -78,11 +78,11 @@ export default function WhoAreYou() {
               >
                 <View style={styles.optionTop}>
                   <View style={[styles.optionIcon, { backgroundColor: selected ? t.c.brand : 'rgba(255,255,255,0.08)' }]}>
-                    <Icon name={def.icon} size={18} color="#FFFFFF" />
+                    <Icon name={def.icon} size={18} color={selected ? t.c.onBrand : '#FFFFFF'} />
                   </View>
                   {selected ? (
                     <View style={[styles.tick, { backgroundColor: t.c.brand }]}>
-                      <Icon name="check" size={12} color="#FFFFFF" strokeWidth={3} />
+                      <Icon name="check" size={12} color={t.c.onBrand} strokeWidth={3} />
                     </View>
                   ) : null}
                 </View>

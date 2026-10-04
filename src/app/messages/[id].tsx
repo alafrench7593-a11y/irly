@@ -112,7 +112,7 @@ export default function Thread() {
                       : { backgroundColor: t.c.surface, borderColor: t.c.line, borderWidth: StyleSheet.hairlineWidth * 2, borderBottomLeftRadius: 6 },
                   ]}
                 >
-                  <Text variant="body" color={mine ? '#FFFFFF' : t.c.text}>
+                  <Text variant="body" color={mine ? t.c.onBrand : t.c.text}>
                     {m.text}
                   </Text>
                 </View>
@@ -137,7 +137,7 @@ export default function Thread() {
           </View>
           <Animated.View style={sendStyle}>
             <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand }]} accessibilityLabel="Send">
-              <Icon name="send" size={18} color="#FFFFFF" strokeWidth={2.3} />
+              <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />
             </PressableScale>
           </Animated.View>
         </Glass>

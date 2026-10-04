@@ -65,7 +65,7 @@ export function DestinationSheet({ visible, onClose }: Props) {
                     </View>
                     {current ? (
                       <View style={[styles.check, { backgroundColor: t.c.brand }]}>
-                        <Icon name="check" size={14} color="#FFFFFF" strokeWidth={3} />
+                        <Icon name="check" size={14} color={t.c.onBrand} strokeWidth={3} />
                       </View>
                     ) : (
                       <Icon name="chevronRight" size={18} color={t.c.textTertiary} />

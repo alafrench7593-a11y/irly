@@ -8,7 +8,7 @@ import { Rail } from '@/components/cards/Blocks';
 import { CommunityCard } from '@/components/cards/ThingCards';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge, Divider, Segmented, SectionHeader } from '@/components/ui/Controls';
+import { Badge, Divider, SectionHeader } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Cover } from '@/components/visual/Cover';
@@ -20,7 +20,7 @@ import { openHero } from '@/features/hero/heroStore';
 import { whenLabel } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
-import { useCityId, useStore, type Appearance } from '@/state/store';
+import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -37,8 +37,6 @@ export default function Profile() {
   const memberOf = useStore((s) => s.memberOf);
   const connections = useStore((s) => s.connections);
   const bookings = useStore((s) => s.bookings);
-  const appearance = useStore((s) => s.appearance);
-  const setAppearance = useStore((s) => s.setAppearance);
   const hapticsOn = useStore((s) => s.hapticsOn);
   const setHaptics = useStore((s) => s.setHaptics);
   const resetOnboarding = useStore((s) => s.resetOnboarding);
@@ -159,25 +157,6 @@ export default function Profile() {
         <Animated.View entering={enter.rise(7)} style={styles.section}>
           <SectionHeader title="Settings" />
           <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-            <View style={styles.settingBlock}>
-              <View style={styles.settingHead}>
-                <Icon name={t.isDay ? 'sun' : 'moon'} size={18} color={t.c.text} />
-                <Text variant="titleS">Appearance</Text>
-              </View>
-              <Text variant="bodyS" tone="secondary">
-                Auto follows the local time in {city.name}: day at sunrise, night after sunset.
-              </Text>
-              <Segmented<Appearance>
-                value={appearance}
-                onChange={setAppearance}
-                options={[
-                  { value: 'auto', label: 'Auto' },
-                  { value: 'day', label: 'Day' },
-                  { value: 'night', label: 'Night' },
-                ]}
-              />
-            </View>
-            <Divider inset={16} />
             <View style={[styles.settingRow]}>
               <Icon name="zap" size={18} color={t.c.text} />
               <Text variant="titleS" style={{ flex: 1 }}>
@@ -187,7 +166,7 @@ export default function Profile() {
                 value={hapticsOn}
                 onValueChange={setHaptics}
                 trackColor={{ true: t.c.brand, false: t.c.overlay }}
-                thumbColor="#FFFFFF"
+                thumbColor={hapticsOn ? '#000000' : '#FFFFFF'}
                 accessibilityLabel="Haptic feedback"
               />
             </View>

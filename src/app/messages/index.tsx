@@ -75,7 +75,7 @@ function ConversationRow({ conversation: c }: { conversation: Conversation }) {
           </Text>
           {unread ? (
             <View style={[styles.badge, { backgroundColor: t.c.brand }]}>
-              <Text variant="caption" color="#FFFFFF" style={{ fontSize: 11 }}>
+              <Text variant="caption" color={t.c.onBrand} style={{ fontSize: 11 }}>
                 {unread}
               </Text>
             </View>

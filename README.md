@@ -1,4 +1,4 @@
-# IRLY 2.0
+# IRLY 3.0
 
 **Connect. Relocate. Belong.** L'application qui aide les expatriés, les locaux, les nomades et les entrepreneurs à se rencontrer en vrai, à s'installer et à trouver leur place dans une ville.
 
@@ -94,13 +94,24 @@ Le contenu est un **jeu de démonstration réaliste** (membres, sessions, évén
 
 Les actions (rejoindre, sauvegarder, se connecter, réserver, envoyer un message, publier un plan) fonctionnent et sont gardées sur l'appareil. **Il n'y a pas encore de serveur** : pas de comptes, pas de messagerie temps réel, pas de paiement, pas de vérification d'identité réelle. Toute la lecture des données passe par `src/data/repo.ts`, qui est le point unique à brancher sur une API.
 
+## Ce qui change en v3
+
+- **Noir et blanc** : une seule palette, Manrope seule, la couleur réservée aux catégories et statuts. Plus de mode jour ni de violet de marque.
+- **Navigation** : Home, Discover, Create (au centre), Map, Profile. Messages passe dans l'en-tête ; Social devient « Plans », accessible depuis la Home.
+- **Home** : « What's happening today? », catégories, carte du jour, People around you (carrousel avec profondeur), Activities near you.
+- **Carte** : marqueurs personne, activité, événement, groupe, lieu ; clusters selon le zoom ; feuille à trois crans pilotée au doigt ; passage 2D ↔ 3D avec caméra inclinée ; recherche.
+- **Create** : le bouton + s'ouvre en plein écran, trois étapes.
+- **Motion** : tokens `motion`, `ease`, `spring.soft/medium/strong`, `scale`, `blur` dans `src/motion/tokens.ts`. Détail dans [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md).
+
 ## Limites connues
 
-- La carte est une carte vectorielle stylisée (pas de fond de carte réel). Pour la production : Mapbox ou Apple Maps via `react-native-maps`.
+- La carte est la carte IRLY Night (SVG), pas encore Google Maps : il faut une clé. Plan dans [docs/GOOGLE_MAPS.md](./docs/GOOGLE_MAPS.md). La 3D actuelle est une vue inclinée, pas la 3D photoréaliste.
+- La transition avatar → profil entre deux écrans est une révélation en cascade, pas encore un élément partagé continu.
 - Les badges « Verified » sont de la démonstration tant que le parcours de vérification n'existe pas.
 - Pas de notifications push.
 
 ## Documents
 
 - [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) : tokens, composants, motion design, règles.
+- [docs/GOOGLE_MAPS.md](./docs/GOOGLE_MAPS.md) : passage à la carte Google.
 - [AUDIT.md](./AUDIT.md) : audit de l'ancienne application et choix de la refonte.

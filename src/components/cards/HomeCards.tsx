@@ -14,7 +14,7 @@ import { areaName, CITIES } from '@/data/destinations';
 import { goingCount, peopleByIds } from '@/data/repo';
 import type { ActivitySession, City, IrlEvent, Person } from '@/data/types';
 import { useHeroCard } from '@/features/hero/useHeroCard';
-import { whenLabel } from '@/lib/time';
+import { isHappeningNow, whenLabel } from '@/lib/time';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
 import { activityColor, eventColor } from '@/theme/categories';
@@ -65,7 +65,7 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236 }: { 
   const city = CITIES[h.item.cityId];
   const { ref, onPress, hidden } = useHeroCard(h.type, h.id);
   const joined = useStore((s) => Boolean(s.joined[h.id]));
-  const live = h.item.when.dayOffset === 0;
+  const live = isHappeningNow(h.item.when, city);
   return (
     <PressableScale
       ref={ref}
@@ -113,7 +113,7 @@ export const HappeningRow = memo(function HappeningRow({ h }: { h: Happening }) 
   const city = CITIES[h.item.cityId];
   const { ref, onPress, hidden } = useHeroCard(h.type, h.id);
   const joined = useStore((s) => Boolean(s.joined[h.id]));
-  const live = h.item.when.dayOffset === 0;
+  const live = isHappeningNow(h.item.when, city);
   return (
     <PressableScale
       ref={ref}
