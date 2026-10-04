@@ -5,7 +5,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { photo as photoUrl } from '@/data/photos';
 import type { Visual } from '@/data/types';
-import { lights, type LightId } from '@/theme/lights';
+import type { LightId } from '@/theme/lights';
 
 type Props = {
   visual: Visual;
@@ -28,15 +28,15 @@ const SCRIMS = {
 };
 
 /**
- * A real photograph. While it loads, the frame shows the destination's
- * colours with a soft breathing pulse (no illustration, no grey box);
- * the photo then cross-fades in and is cached on disk for next time.
+ * A real photograph. While it loads, the frame is a skeleton with the
+ * exact geometry of the photo: grey with a soft breathing pulse. The photo
+ * then cross-fades in and is cached on disk for next time.
  */
 export const Photo = memo(function Photo({ visual, light, style, scrim = 'none', width = 900, blur, children, recyclingKey }: Props) {
   // loading: breathing placeholder · done: photo shown, or the plain
   // destination colours if the network refused it (no endless pulse).
   const [status, setStatus] = useState<'loading' | 'done'>('loading');
-  const sky = lights[light].sky;
+  void light;
   const pulse = useSharedValue(0);
   const loading = status === 'loading';
 
@@ -53,8 +53,8 @@ export const Photo = memo(function Photo({ visual, light, style, scrim = 'none',
 
   return (
     <View style={[styles.root, style]}>
-      <LinearGradient colors={[sky[0], sky[1]]} start={{ x: 0, y: 0 }} end={{ x: 0.6, y: 1 }} style={StyleSheet.absoluteFill} />
-      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: sky[2] }, pulseStyle]} pointerEvents="none" />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]} />
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#3A3A3A' }, pulseStyle]} pointerEvents="none" />
       <Image
         source={{ uri: photoUrl(visual.photo, width) }}
         style={StyleSheet.absoluteFill}

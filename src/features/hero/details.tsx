@@ -1,10 +1,11 @@
 import { memo, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Badge, Chip, Divider } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { JoinButton } from '@/components/ui/JoinButton';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -28,6 +29,7 @@ import { cityNow, durationLabel, whenLabel } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
+import { motion, spring } from '@/motion/tokens';
 import { useStore } from '@/state/store';
 import type { LightId } from '@/theme/lights';
 import { radius, space } from '@/theme/tokens';
@@ -203,6 +205,7 @@ function PersonRow({ personId, caption, go }: { personId: string; caption: strin
 }
 
 function Going({ ids, extra, joined, go }: { ids: string[]; extra: number; joined: boolean; go: Go }) {
+  const me = useStore((s) => s.profile.name);
   const people = peopleByIds(ids);
   const total = goingCount({ goingIds: ids, extraGoing: extra }, joined);
   const names = people.slice(0, 2).map((p) => p.name);
@@ -213,7 +216,15 @@ function Going({ ids, extra, joined, go }: { ids: string[]; extra: number; joine
   return (
     <View style={{ gap: space[4] }}>
       <View style={styles.goingRow}>
-        <AvatarStack people={people} size={34} max={5} extra={extra + (joined ? 1 : 0)} />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {joined ? (
+            // You join the stack: your avatar springs in at the front.
+            <Animated.View entering={ZoomIn.springify(spring.strong.duration).dampingRatio(spring.strong.dampingRatio)} exiting={ZoomOut.duration(160)} style={{ zIndex: 10, marginRight: -11 }}>
+              <Avatar name={me || 'You'} hue={0} size={34} ring />
+            </Animated.View>
+          ) : null}
+          <AvatarStack people={people} size={34} max={5} extra={extra} />
+        </View>
         <View style={{ flex: 1 }}>
           <Text variant="titleS">{total} going</Text>
           <Text variant="bodyS" tone="secondary" numberOfLines={2}>
@@ -578,10 +589,7 @@ export function DetailBody({ item, go }: { item: HeroItem; go: Go }) {
 export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
   const joined = useStore((s) => Boolean(s.joined[item.id]));
   const saved = useStore((s) => Boolean(s.saved[item.id]));
-  const member = useStore((s) => Boolean(s.memberOf[item.id]));
-  const toggleJoin = useStore((s) => s.toggleJoin);
   const toggleSave = useStore((s) => s.toggleSave);
-  const toggleMembership = useStore((s) => s.toggleMembership);
   const [booking, setBooking] = useState(false);
 
   const model = useMemo(() => {
@@ -617,20 +625,6 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
 
   if (!model) return null;
 
-  const onJoin = () => {
-    const on = toggleJoin(item.id);
-    if (on) {
-      haptic('success');
-      toast("You're in. See you there", 'check');
-    }
-  };
-  const onMember = () => {
-    const on = toggleMembership(item.id);
-    if (on) {
-      haptic('success');
-      toast('Welcome to the community', 'users', 'brand');
-    }
-  };
   const onSave = () => {
     const on = toggleSave(item.id);
     if (on) toast('Saved to your places', 'bookmark', 'brand');
@@ -651,20 +645,15 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
       {model.kind === 'join' ? (
         <>
           {joined ? (
-            <Button label="Chat" variant="secondary" icon="message" size="md" onPress={() => go('/messages')} />
+            <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)}>
+              <Button label="Chat" variant="secondary" icon="message" size="md" onPress={() => go('/messages')} />
+            </Animated.View>
           ) : null}
-          <Button
-            label={joined ? "You're in" : 'Join'}
-            variant={joined ? 'done' : 'primary'}
-            icon={joined ? 'check' : 'plus'}
-            size="md"
-            haptic={false}
-            onPress={onJoin}
-          />
+          <JoinButton id={item.id} label="JOIN" size="md" />
         </>
       ) : null}
       {model.kind === 'member' ? (
-        <Button label={member ? 'Member' : 'Join community'} variant={member ? 'done' : 'primary'} icon={member ? 'check' : 'users'} size="md" haptic={false} onPress={onMember} />
+        <JoinButton id={item.id} membership label="JOIN GROUP" size="md" />
       ) : null}
       {model.kind === 'save' ? (
         <>

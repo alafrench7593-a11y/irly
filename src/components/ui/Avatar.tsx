@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { initials } from '@/lib/format';
@@ -21,9 +20,10 @@ type Props = {
 };
 
 /**
- * Generated avatars: a duotone gradient seeded by the person plus their
- * initials. Real photos plug into the same component later; until then
- * nobody is represented by a stranger's face.
+ * Avatars: initials on a grey disc (v3 is black and white; the hue only
+ * shifts the grey by a hair so neighbours stay distinguishable). Real
+ * photos plug into the same component later; until then nobody is
+ * represented by a stranger's face.
  */
 export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring }: Props) {
   const t = useTheme();
@@ -40,19 +40,14 @@ export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verif
           borderColor: t.c.bg,
         }}
       >
-        <LinearGradient
-          colors={[hsl(hue, 70, 64), hsl(hue + 38, 62, 42)]}
-          start={{ x: 0.1, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          style={[StyleSheet.absoluteFill, styles.center]}
-        >
+        <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: hsl(hue, 4, 15) }]}>
           <Text
             allowFontScaling={false}
             style={{ fontFamily: font.heavy, fontSize: size * 0.36, color: '#FFFFFF', letterSpacing: -0.3 }}
           >
             {initials(name)}
           </Text>
-        </LinearGradient>
+        </View>
       </View>
       {online ? (
         <View
@@ -86,7 +81,7 @@ export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verif
             },
           ]}
         >
-          <Icon name="check" size={size * 0.18} color="#FFFFFF" strokeWidth={3} />
+          <Icon name="check" size={size * 0.18} color={t.c.onBrand} strokeWidth={3} />
         </View>
       ) : null}
     </View>

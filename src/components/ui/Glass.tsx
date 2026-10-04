@@ -13,27 +13,30 @@ type Props = {
 };
 
 /**
- * Frosted glass. Real blur on iOS and web; on Android a dense tint keeps
- * text legible without the cost of a live blur in scrolling lists.
+ * Frosted glass: #121212 at 72 % over a real blur, white hairline at 10 %.
+ * Used for the tab bar, headers, sheets and map controls, so overlays read
+ * as physically placed above the content. On Android a dense tint keeps
+ * text legible without the cost of a live blur. The blur never animates:
+ * a glass layer fades in as a whole.
  */
 export const Glass = memo(function Glass({ style, intensity = 40, dark, border = true, children }: Props) {
   const t = useTheme();
   const isDark = dark || t.mode === 'night';
-  const tint = dark ? 'rgba(10,10,16,0.42)' : t.c.glass;
+  const tint = dark ? 'rgba(18,18,18,0.55)' : t.c.glass;
   return (
     <View
       style={[
         styles.root,
-        border ? { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: dark ? 'rgba(255,255,255,0.16)' : t.c.line } : null,
+        border ? { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(255,255,255,0.10)' } : null,
         style,
       ]}
     >
       {Platform.OS === 'android' ? (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(10,10,16,0.72)' : t.mode === 'night' ? 'rgba(20,20,27,0.94)' : 'rgba(255,255,255,0.94)' }]} />
+        <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: dark ? 'rgba(18,18,18,0.8)' : 'rgba(18,18,18,0.94)' }]} />
       ) : (
         <>
-          <BlurView intensity={intensity} tint={isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: tint }]} />
+          <BlurView intensity={intensity} tint={isDark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, styles.under]} />
+          <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: tint }]} />
         </>
       )}
       {children}
@@ -42,5 +45,8 @@ export const Glass = memo(function Glass({ style, intensity = 40, dark, border =
 });
 
 const styles = StyleSheet.create({
-  root: { overflow: 'hidden' },
+  // The glass is its own stacking context and its layers sit under the
+  // content, so icons (SVG) are never painted below the tint on web.
+  root: { overflow: 'hidden', zIndex: 0 },
+  under: { zIndex: -1 },
 });

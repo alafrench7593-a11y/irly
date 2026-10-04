@@ -31,7 +31,7 @@ export const ToastHost = memo(function ToastHost() {
   useEffect(() => {
     if (!current) return;
     y.set(-120);
-    y.set(withSequence(withSpring(0, spring.bouncy), withDelay(1900, withTiming(-120, { duration: 260 }))));
+    y.set(withSequence(withSpring(0, spring.medium), withDelay(1900, withTiming(-120, { duration: 260 }))));
   }, [current, y]);
 
   const style = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
@@ -42,7 +42,7 @@ export const ToastHost = memo(function ToastHost() {
     <Animated.View pointerEvents="none" style={[styles.wrap, { top: insets.top + 8 }, style]}>
       <Glass style={styles.pill} intensity={60}>
         <View style={[styles.icon, { backgroundColor: color }]}>
-          <Icon name={current.icon ?? 'check'} size={14} color="#FFFFFF" strokeWidth={2.8} />
+          <Icon name={current.icon ?? 'check'} size={14} color={current.tone === 'brand' ? t.c.onBrand : '#FFFFFF'} strokeWidth={2.8} />
         </View>
         <Text variant="label">{current.title}</Text>
       </Glass>

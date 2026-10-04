@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import type { City, MapArt as MapArtKind } from '@/data/types';
-import { lights } from '@/theme/lights';
 import type { Mode } from '@/theme/tokens';
 
 /**
@@ -130,15 +129,20 @@ type Props = {
 
 export const MAP_SIZE = 1000;
 
+/**
+ * "IRLY Night": black land, anthracite water, dark grey roads, so the
+ * markers (people, plans, places) are the only colour on screen. The same
+ * palette is used for the Google vector style (Map ID "IRLY Night").
+ */
 export const MapArt = memo(function MapArt({ city, mode, width, height, viewBox, showAreas = true }: Props) {
-  const light = lights[city.light];
+  void mode;
   const shapes = SHAPES[city.map];
-  const night = mode === 'night';
-  const land = night ? '#15151C' : '#EDEBE5';
-  const landEdge = night ? 'rgba(255,255,255,0.07)' : 'rgba(10,10,20,0.08)';
-  const road = night ? 'rgba(255,255,255,0.075)' : 'rgba(20,20,40,0.08)';
-  const waterTop = night ? light.sky[0] : '#CFE0E8';
-  const waterBottom = night ? light.sky[1] : '#DCE9EE';
+  const land = '#070707';
+  const landEdge = 'rgba(255,255,255,0.10)';
+  const road = '#262626';
+  const waterTop = '#1B1B1D';
+  const waterBottom = '#151517';
+  const night = true;
   const isSeaFirst = city.map === 'abudhabi' || city.map === 'bali';
 
   return (
@@ -165,7 +169,7 @@ export const MapArt = memo(function MapArt({ city, mode, width, height, viewBox,
       </G>
       {showAreas
         ? city.areas.map((a) => (
-            <Circle key={a.id} cx={a.point.x * MAP_SIZE} cy={a.point.y * MAP_SIZE} r={70} fill={light.accent} opacity={night ? 0.035 : 0.06} />
+            <Circle key={a.id} cx={a.point.x * MAP_SIZE} cy={a.point.y * MAP_SIZE} r={70} fill="#FFFFFF" opacity={0.025} />
           ))
         : null}
     </Svg>

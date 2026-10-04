@@ -63,7 +63,7 @@ export default function Ready() {
     <View style={styles.root}>
       <Animated.View style={[StyleSheet.absoluteFill, skyStyle]}>
         <Photo visual={{ photo: city.photo }} light={city.light} width={1400} style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(8,8,12,0.68)' }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.68)' }]} />
       </Animated.View>
       <View style={styles.center}>
         <IrlyMark
@@ -91,7 +91,7 @@ export default function Ready() {
           {lines.slice(0, step).map((l) => (
             <Animated.View key={l} entering={FadeInDown.springify(420).dampingRatio(0.9)} style={styles.line}>
               <View style={styles.check}>
-                <Icon name="check" size={12} color="#08080C" strokeWidth={3} />
+                <Icon name="check" size={12} color="#000000" strokeWidth={3} />
               </View>
               <Text variant="body" color="rgba(255,255,255,0.82)">
                 {l}
@@ -105,7 +105,7 @@ export default function Ready() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#08080C' },
+  root: { flex: 1, backgroundColor: '#000000' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.gutter },
   lines: { marginTop: space[8], gap: 12, minHeight: 150, alignSelf: 'stretch', paddingHorizontal: space[6] },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12 },

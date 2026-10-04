@@ -45,7 +45,7 @@ export const IrlyMark = memo(function IrlyMark({
   size = 64,
   state = 'idle',
   ringColor = '#FFFFFF',
-  lensColor = '#8B6CFF',
+  lensColor = '#FFFFFF',
   glow = true,
   onDone,
 }: Props) {

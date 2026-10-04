@@ -43,7 +43,7 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
     <View style={styles.root}>
       <View style={styles.sky}>
         <Photo visual={{ photo: city.photo }} light={city.light} width={1200} style={StyleSheet.absoluteFill} />
-        <LinearGradient colors={['rgba(8,8,12,0.35)', 'rgba(8,8,12,0.8)', '#08080C']} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.8)', '#000000']} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[styles.top, { paddingTop: insets.top + 8 }]}>
@@ -70,7 +70,7 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
           {children}
         </ScrollView>
         <View style={[styles.footer, { paddingBottom: insets.bottom + space[4] }]}>
-          <LinearGradient colors={['rgba(8,8,12,0)', '#08080C']} locations={[0, 0.45]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+          <LinearGradient colors={['rgba(0,0,0,0)', '#000000']} locations={[0, 0.45]} style={StyleSheet.absoluteFill} pointerEvents="none" />
           <Button label={cta} onPress={onContinue} disabled={!canContinue} full iconRight="arrowRight" haptic="press" />
         </View>
       </KeyboardAvoidingView>
@@ -79,7 +79,7 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#08080C' },
+  root: { flex: 1, backgroundColor: '#000000' },
   sky: { position: 'absolute', top: 0, left: 0, right: 0, height: 340 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.gutter },
   dots: { flexDirection: 'row', gap: 6, alignItems: 'center' },

@@ -74,7 +74,7 @@ export default function DesignSystem() {
   return (
     <Page overline="IRLY 2.0" title="Design System" subtitle="Minimal, premium, human, international. One system, a different light in every city.">
       <Block title="Brand · Common Ground" note="Two rings, two lives; the lens is where they meet. The mark has four motion states.">
-        <View style={[styles.brandCard, { backgroundColor: '#08080C' }]}>
+        <View style={[styles.brandCard, { backgroundColor: '#000000' }]}>
           <IrlyMark size={96} state={mark} lensColor={palettes.night.brand} />
           <IrlyWordmark size={26} color="#FFFFFF" />
         </View>

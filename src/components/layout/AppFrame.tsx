@@ -50,7 +50,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
     <FrameContext.Provider value={frame}>
       <View style={[styles.fill, styles.row]}>
         <Photo visual={{ photo: city?.photo ?? 'emirates' }} light={city?.light ?? 'dubai'} blur={28} width={1600} style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(4,4,8,0.62)' }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.72)' }]} />
         {width > 1100 ? (
           <View style={styles.aside} pointerEvents="none">
             <IrlyMark size={64} state="idle" lensColor={t.c.brand} />

@@ -47,7 +47,7 @@ export default function ChooseEmirate() {
     <View style={styles.root}>
       <Photo visual={{ photo: dest.photo }} light="dubai" scrim="full" width={1200} style={StyleSheet.absoluteFill} />
       <Animated.View entering={FadeIn.duration(500)} style={StyleSheet.absoluteFill}>
-        <LinearGradient colors={['rgba(8,8,12,0.55)', 'rgba(8,8,12,0.92)', '#08080C']} locations={[0, 0.35, 0.7]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={['rgba(0,0,0,0.55)', 'rgba(0,0,0,0.92)', '#000000']} locations={[0, 0.35, 0.7]} style={StyleSheet.absoluteFill} />
       </Animated.View>
 
       <ScrollView
@@ -125,7 +125,7 @@ function FeaturedCard({ city, onPick }: { city: City; onPick: (c: City, ref: Ref
           <Stat value={city.stats.activities} label="activities" />
           <Stat value={city.stats.events} label="events this week" />
           <View style={styles.go}>
-            <Icon name="arrowRight" size={20} color="#08080C" strokeWidth={2.4} />
+            <Icon name="arrowRight" size={20} color="#000000" strokeWidth={2.4} />
           </View>
         </Glass>
       </View>
@@ -154,7 +154,7 @@ function EmirateCard({ city, width, onPick }: { city: City; width: number; onPic
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#08080C' },
+  root: { flex: 1, backgroundColor: '#000000' },
   head: { paddingHorizontal: space.gutter, gap: 8, marginBottom: space[7] },
   featured: { height: 330, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'space-between' },
   featuredTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },

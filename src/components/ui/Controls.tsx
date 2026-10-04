@@ -82,48 +82,55 @@ export const IconButton = memo(function IconButton({
 type ChipProps = {
   label: string;
   icon?: IconName;
+  /** Category colour shown as a dot (or tints the icon). */
+  dot?: string;
   selected?: boolean;
   onPress?: () => void;
   size?: 'md' | 'sm';
+  /** Kept for older call sites; v3 chips are always black and white. */
   tone?: 'brand' | 'accent';
   onDark?: boolean;
 };
 
-export const Chip = memo(function Chip({ label, icon, selected, onPress, size = 'md', tone = 'brand', onDark }: ChipProps) {
+/**
+ * Chip: grey pill at rest, white with black text when selected. Selecting
+ * gives a small spring bump (scale.selected territory, kept subtle) and a
+ * selection haptic.
+ */
+export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, size = 'md', onDark }: ChipProps) {
   const t = useTheme();
   const bump = useSharedValue(1);
   useEffect(() => {
-    if (selected) bump.set(withSequence(withTiming(1.06, { duration: 90 }), withSpring(1, spring.bouncy)));
+    if (selected) bump.set(withSequence(withTiming(1.06, { duration: 90 }), withSpring(1, spring.strong)));
   }, [selected, bump]);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
-  const active = tone === 'accent' ? t.accent : t.c.brand;
-  const bg = selected ? (tone === 'accent' ? t.light.accentSoft : t.c.brandSoft) : onDark ? 'rgba(255,255,255,0.1)' : t.c.surface;
-  const border = selected ? active : onDark ? 'rgba(255,255,255,0.18)' : t.c.line;
-  const fg = selected ? (tone === 'accent' ? t.accent : t.c.brand) : onDark ? '#FFFFFF' : t.c.text;
-  const h = size === 'md' ? 40 : 32;
+  const bg = selected ? t.c.brand : onDark ? 'rgba(255,255,255,0.1)' : t.c.overlay;
+  const border = selected ? t.c.brand : onDark ? 'rgba(255,255,255,0.18)' : t.c.line;
+  const fg = selected ? t.c.onBrand : t.c.text;
+  const h = size === 'md' ? 40 : 34;
   return (
     <Animated.View style={animated}>
       <PressableScale
         onPress={onPress}
         haptic="select"
-        scaleTo={0.94}
+        scaleTo={0.97}
         accessibilityRole="button"
         accessibilityState={{ selected }}
         style={[
           styles.chip,
           {
             height: h,
-            paddingHorizontal: size === 'md' ? 15 : 12,
+            paddingHorizontal: size === 'md' ? 15 : 13,
             backgroundColor: bg,
             borderColor: border,
           },
         ]}
       >
-        {icon ? <Icon name={icon} size={size === 'md' ? 16 : 14} color={fg} strokeWidth={2} /> : null}
-        <Text variant="label" color={fg} style={size === 'sm' ? { fontSize: 12 } : undefined}>
+        {dot && !icon ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
+        {icon ? <Icon name={icon} size={size === 'md' ? 16 : 14} color={dot && !selected ? dot : fg} strokeWidth={2} /> : null}
+        <Text variant="label" color={fg} style={size === 'sm' ? { fontSize: 12.5 } : undefined}>
           {label}
         </Text>
-        {selected && size === 'md' ? <Icon name="check" size={14} color={fg} strokeWidth={2.6} /> : null}
       </PressableScale>
     </Animated.View>
   );
@@ -145,12 +152,12 @@ export const Badge = memo(function Badge({ kind, label, onDark }: { kind: BadgeK
     positive: { bg: t.c.positiveSoft, fg: t.c.positive, icon: 'check', text: '' },
   };
   const m = map[kind];
-  const bg = onDark ? 'rgba(10,10,16,0.5)' : m.bg;
+  const bg = onDark ? 'rgba(18,18,18,0.6)' : m.bg;
   const fg = onDark ? '#FFFFFF' : m.fg;
   return (
     <View style={[styles.badgeRow, { backgroundColor: bg }]}>
       {kind === 'live' ? <LiveDot size={6} color={onDark ? t.c.live : fg} /> : null}
-      {m.icon ? <Icon name={m.icon} size={12} color={onDark && kind === 'verified' ? '#C9BBFF' : fg} strokeWidth={2.4} /> : null}
+      {m.icon ? <Icon name={m.icon} size={12} color={fg} strokeWidth={2.4} /> : null}
       <Text variant="caption" color={fg} style={{ fontSize: 11, lineHeight: 14 }}>
         {label ?? m.text}
       </Text>

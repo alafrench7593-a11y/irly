@@ -15,9 +15,10 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
-      <Tabs.Screen name="social" options={{ title: 'Social' }} />
       <Tabs.Screen name="map" options={{ title: 'Map' }} />
-      <Tabs.Screen name="profile" options={{ title: 'You' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      {/* Real-life plans: reached from Home and Discover, no longer a tab. */}
+      <Tabs.Screen name="social" options={{ title: 'Plans', href: null }} />
     </Tabs>
   );
 }

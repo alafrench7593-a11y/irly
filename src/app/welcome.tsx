@@ -117,9 +117,9 @@ export default function Welcome() {
   };
 
   return (
-    <View style={[styles.root, { backgroundColor: '#08080C' }]}>
+    <View style={[styles.root, { backgroundColor: '#000000' }]}>
       <LinearGradient
-        colors={['#120D2B', '#08080C', '#08080C']}
+        colors={['#0D0D0D', '#000000', '#000000']}
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -237,7 +237,7 @@ function DestinationCard({
           </Text>
         </View>
         <View style={styles.arrow}>
-          <Icon name="arrowRight" size={20} color="#08080C" strokeWidth={2.4} />
+          <Icon name="arrowRight" size={20} color="#000000" strokeWidth={2.4} />
         </View>
       </Glass>
     </PressableScale>

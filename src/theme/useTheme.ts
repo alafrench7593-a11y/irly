@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
-import { isDaytime } from '@/lib/time';
 import { useStore } from '@/state/store';
 import { lights, type Light, type LightId } from './lights';
 import { elevation, palettes, type Mode, type Palette } from './tokens';
@@ -16,21 +15,25 @@ export type Theme = {
   isDay: boolean;
 };
 
-export function resolveMode(appearance: 'auto' | 'day' | 'night', cityId: CityId | null): Mode {
-  if (appearance !== 'auto') return appearance;
-  // Onboarding happens "between destinations": always at night, the
-  // atmosphere is what carries the colour.
-  if (!cityId) return 'night';
-  return isDaytime(CITIES[cityId]) ? 'day' : 'night';
+/**
+ * v3 has a single black theme. The `appearance` setting and the city's
+ * local time no longer change the palette; the signature is kept so the
+ * call sites stay unchanged.
+ */
+export function resolveMode(_appearance: 'auto' | 'day' | 'night', _cityId: CityId | null): Mode {
+  return 'night';
 }
 
 export function buildTheme(mode: Mode, lightId: LightId): Theme {
-  const light = lights[lightId];
+  // The destination keeps its sky (onboarding, portal transition) but no
+  // longer tints the interface: accents are white, colour is reserved for
+  // categories and statuses.
+  const light: Light = { ...lights[lightId], accent: '#FFFFFF', accentDay: '#FFFFFF', accentSoft: 'rgba(255,255,255,0.10)' };
   return {
     mode,
     c: palettes[mode],
     light,
-    accent: mode === 'day' ? light.accentDay : light.accent,
+    accent: light.accent,
     shadow: elevation[mode],
     isDay: mode === 'day',
   };

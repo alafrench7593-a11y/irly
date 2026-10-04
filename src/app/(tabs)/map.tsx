@@ -1,9 +1,12 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   clamp,
+  FadeIn,
+  FadeOut,
+  useAnimatedReaction,
   useAnimatedStyle,
   useSharedValue,
   withDecay,
@@ -13,103 +16,45 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
-import { ConnectButton } from '@/components/cards/PeopleCards';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFrame } from '@/components/layout/AppFrame';
 import { DestinationPill } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
-import { Avatar, AvatarStack } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
-import { Chip, IconButton, LiveDot } from '@/components/ui/Controls';
+import { Chip } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS, SERVICE_CATEGORIES } from '@/data/catalog';
-import { areaName, CITIES } from '@/data/destinations';
-import { findPerson, getCityContent, peopleByIds } from '@/data/repo';
+import { CITIES } from '@/data/destinations';
+import { getCityContent } from '@/data/repo';
 import type { CityId, MapPoint } from '@/data/types';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
-import { openHero, type HeroKind } from '@/features/hero/heroStore';
 import { MapArt } from '@/features/map/MapArt';
-import { formatCount } from '@/lib/format';
-import { whenLabel } from '@/lib/time';
+import { ClusterView, MarkerView, Projected, TILT, type Camera } from '@/features/map/MapMarkers';
+import { MapSheet, type Snap } from '@/features/map/MapSheet';
+import { buildMarkers, placeMarkers, ZOOM, type MapMarkerData, type MarkerType } from '@/features/map/markers';
+import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
-import { spring } from '@/motion/tokens';
+import { blur, ease, motion, spring } from '@/motion/tokens';
 import { useCityId } from '@/state/store';
-import { radius, space } from '@/theme/tokens';
+import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-type Layer = 'all' | 'people' | 'activity' | 'event' | 'restaurant' | 'community' | 'service' | 'place';
+type Layer = 'all' | MarkerType;
 
 const LAYERS: { id: Layer; label: string; icon: IconName }[] = [
   { id: 'all', label: 'All', icon: 'layers' },
-  { id: 'people', label: 'People', icon: 'users' },
   { id: 'activity', label: 'Activities', icon: 'activity' },
   { id: 'event', label: 'Events', icon: 'ticket' },
-  { id: 'restaurant', label: 'Food & drinks', icon: 'utensils' },
-  { id: 'community', label: 'Communities', icon: 'heartHandshake' },
-  { id: 'service', label: 'Services', icon: 'shield' },
-  { id: 'place', label: 'Places', icon: 'palm' },
+  { id: 'person', label: 'People', icon: 'users' },
+  { id: 'group', label: 'Groups', icon: 'heartHandshake' },
+  { id: 'place', label: 'Places', icon: 'pin' },
 ];
 
-type Marker = {
-  id: string;
-  layer: Exclude<Layer, 'all'>;
-  point: MapPoint;
-  title: string;
-  subtitle: string;
-  icon: IconName;
-  hero?: { kind: HeroKind; id: string };
-  personId?: string;
-  goingIds?: string[];
-  live?: boolean;
-};
-
-function hash(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
-function jitter(p: MapPoint, id: string, spread = 0.045): MapPoint {
-  const h = hash(id);
-  const angle = (h % 360) * (Math.PI / 180);
-  const r = spread * (0.35 + ((h >> 8) % 100) / 160);
-  return { x: Math.min(0.97, Math.max(0.03, p.x + Math.cos(angle) * r)), y: Math.min(0.97, Math.max(0.03, p.y + Math.sin(angle) * r)) };
-}
-
-/**
- * Pushes overlapping points apart until they are at least `minDist` from
- * each other (a few relaxation passes, deterministic, stays near the area).
- */
-function declutter<T extends { point: MapPoint }>(list: T[], minDist: number): T[] {
-  const pts = list.map((m) => ({ ...m.point }));
-  for (let pass = 0; pass < 30; pass++) {
-    let moved = false;
-    for (let i = 0; i < pts.length; i++) {
-      for (let j = i + 1; j < pts.length; j++) {
-        let dx = pts[j].x - pts[i].x;
-        let dy = pts[j].y - pts[i].y;
-        let d = Math.hypot(dx, dy);
-        if (d >= minDist) continue;
-        if (d < 1e-6) {
-          dx = Math.cos(i + j);
-          dy = Math.sin(i + j);
-          d = 1;
-        }
-        const push = (minDist - Math.min(d, minDist)) / 2;
-        pts[i].x -= (dx / d) * push;
-        pts[i].y -= (dy / d) * push;
-        pts[j].x += (dx / d) * push;
-        pts[j].y += (dy / d) * push;
-        moved = true;
-      }
-    }
-    if (!moved) break;
-  }
-  const inside = (v: number) => Math.min(0.97, Math.max(0.03, v));
-  return list.map((m, i) => ({ ...m, point: { x: inside(pts[i].x), y: inside(pts[i].y) } }));
-}
+const MIN_Z = 0.75;
+const MAX_Z = 2.8;
+/** Opens at street level on the busiest neighbourhood: people and plans, not bubbles. */
+const START_Z = 1.5;
 
 /** Point of the area holding the most markers. */
 function busiestArea(areas: { id: string; point: MapPoint }[], markers: { point: MapPoint }[]): MapPoint {
@@ -138,107 +83,44 @@ export default function MapScreen() {
   return <CityMap key={`${cityId}:${params.area ?? ''}`} cityId={cityId} areaId={params.area} />;
 }
 
+/**
+ * Map. Everything happening around you, on IRLY's own night map, in 2D or
+ * with a tilted camera. Markers fade and scale in progressively, clusters
+ * dissolve into markers as you zoom, the selected marker grows with a halo
+ * while the camera glides to keep it in view above the sheet, and the
+ * sheet follows the finger between its three snaps.
+ */
 function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const t = useTheme();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const frame = useFrame();
-  const bottom = useTabBarSpace();
+  const tabSpace = useTabBarSpace();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const [layer, setLayer] = useState<Layer>('all');
-  const [selected, setSelected] = useState<Marker | null>(null);
+  const [selected, setSelected] = useState<MapMarkerData | null>(null);
+  const [snap, setSnap] = useState<Snap>('collapsed');
   const [destSheet, setDestSheet] = useState(false);
+  const [mode3d, setMode3d] = useState(false);
+  const [query, setQuery] = useState('');
+  const [zq, setZq] = useState(START_Z);
 
   const W = frame.width;
   const H = frame.height;
   const S = Math.round(Math.max(W, H) * 1.35);
+  // The sheet lives above the floating tab bar.
+  const sheetBottom = tabSpace - 28;
+  const sheetArea = H - sheetBottom;
 
-  const rawMarkers = useMemo<Marker[]>(() => {
-    const pt = (areaId: string) => (city.areas.find((a) => a.id === areaId) ?? city.areas[0]).point;
-    const list: Marker[] = [];
-    content.people.forEach((p) =>
-      list.push({
-        id: p.id,
-        layer: 'people',
-        point: jitter(pt(p.areaId), p.id, 0.05),
-        title: p.name,
-        subtitle: p.headline,
-        icon: 'user',
-        personId: p.id,
-      }),
-    );
-    content.sessions.forEach((s) =>
-      list.push({
-        id: s.id,
-        layer: 'activity',
-        point: jitter(pt(s.areaId), s.id),
-        title: s.title,
-        subtitle: whenLabel(s.when, city),
-        icon: ACTIVITIES[s.kind].icon,
-        hero: { kind: 'session', id: s.id },
-        goingIds: s.goingIds,
-        live: s.when.dayOffset === 0,
-      }),
-    );
-    content.events.forEach((e) =>
-      list.push({
-        id: e.id,
-        layer: 'event',
-        point: jitter(pt(e.areaId), e.id),
-        title: e.title,
-        subtitle: whenLabel(e.when, city),
-        icon: EVENT_CATEGORIES[e.category].icon,
-        hero: { kind: 'event', id: e.id },
-        goingIds: e.goingIds,
-        live: e.when.dayOffset === 0,
-      }),
-    );
-    content.places.forEach((p) =>
-      list.push({
-        id: p.id,
-        layer: ['restaurant', 'cafe', 'rooftop', 'market'].includes(p.kind) ? 'restaurant' : 'place',
-        point: jitter(pt(p.areaId), p.id),
-        title: p.name,
-        subtitle: `${PLACE_KINDS[p.kind].label} · ★ ${p.rating.toFixed(1)}`,
-        icon: PLACE_KINDS[p.kind].icon,
-        hero: { kind: 'place', id: p.id },
-      }),
-    );
-    content.communities.forEach((c) =>
-      list.push({
-        id: c.id,
-        layer: 'community',
-        point: jitter(pt(city.areas[hash(c.id) % city.areas.length].id), c.id),
-        title: c.name,
-        subtitle: `${formatCount(c.members)} members · ${c.rhythm}`,
-        icon: 'heartHandshake',
-        hero: { kind: 'community', id: c.id },
-        goingIds: c.memberIds,
-      }),
-    );
-    content.services.slice(0, 8).forEach((s) =>
-      list.push({
-        id: s.id,
-        layer: 'service',
-        point: jitter(pt(s.areaId), s.id),
-        title: s.name,
-        subtitle: SERVICE_CATEGORIES[s.category].label,
-        icon: SERVICE_CATEGORIES[s.category].icon,
-        hero: { kind: 'service', id: s.id },
-      }),
-    );
-    return list;
-  }, [content, city]);
-  // Markers keep a constant size on screen: push apart the ones that would
-  // overlap so each stays tappable (about one marker apart).
-  const markers = useMemo(() => declutter(rawMarkers, 50 / S), [rawMarkers, S]);
+  const all = useMemo(() => buildMarkers(city, content), [city, content]);
+  const layerMarkers = useMemo(() => (layer === 'all' ? all : all.filter((m) => m.type === layer)), [all, layer]);
+  // A chosen layer shows all its markers whatever the zoom.
+  const placed = useMemo(
+    () => placeMarkers(layer === 'all' ? layerMarkers : layerMarkers, layer === 'all' ? zq : Math.max(zq, ZOOM.street), S),
+    [layerMarkers, layer, zq, S],
+  );
 
-  const visible = layer === 'all' ? markers : markers.filter((m) => m.layer === layer);
-
-  // Camera. Shared values are read and written with get/set so the
-  // React Compiler can reason about them. The camera never shows past the
-  // edge of the map.
+  // Camera, on the UI thread. The camera never shows past the edge of the map.
   const bound = useCallback(
     (v: number, z: number, viewport: number) => {
       'worklet';
@@ -248,135 +130,247 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
     [S],
   );
 
-  // Open on the busiest neighbourhood (or the one asked for), not on the
-  // geometric middle of the map, which in Bali is empty jungle.
-  const hub = useMemo(() => busiestArea(city.areas, rawMarkers), [city, rawMarkers]);
+  const hub = useMemo(() => busiestArea(city.areas, all), [city, all]);
   const area = areaId ? city.areas.find((a) => a.id === areaId) : undefined;
   const focus = area?.point ?? hub;
-  const scale = useSharedValue(1);
-  const tx = useSharedValue(bound(-(focus.x - 0.5) * S, 1, W));
-  const ty = useSharedValue(bound(-(focus.y - 0.5) * S, 1, H));
-  const startScale = useSharedValue(1);
+  const cam: Camera = {
+    zoom: useSharedValue(START_Z),
+    tx: useSharedValue(bound(-(focus.x - 0.5) * S * START_Z, START_Z, W)),
+    ty: useSharedValue(bound(-(focus.y - 0.5) * S * START_Z, START_Z, H)),
+    tilt: useSharedValue(0),
+  };
+  const startZoom = useSharedValue(1);
 
-  const centerOn = useCallback(
-    (p: MapPoint, zoom?: number) => {
-      const z = zoom ?? scale.get();
-      if (zoom) scale.set(withSpring(zoom, spring.smooth));
-      tx.set(withSpring(bound(-(p.x - 0.5) * S * z, z, W), spring.smooth));
-      ty.set(withSpring(bound(-(p.y - 0.5) * S * z - 70, z, H), spring.smooth));
+  // Recompute clusters when the zoom crosses an eighth.
+  useAnimatedReaction(
+    () => Math.round(cam.zoom.value * 8) / 8,
+    (q, prev) => {
+      if (q !== prev) scheduleOnRN(setZq, q);
     },
-    [S, W, H, bound, scale, tx, ty],
+  );
+
+  /** Glide so `p` sits in the middle of what the sheet leaves visible. */
+  const centerOn = useCallback(
+    (p: MapPoint, zoom?: number, sheetH = 0) => {
+      const z = zoom ?? cam.zoom.get();
+      if (zoom) cam.zoom.set(withSpring(zoom, spring.soft));
+      const visibleShift = sheetH ? -(sheetH - (H - sheetArea)) / 2 : -30;
+      cam.tx.set(withSpring(bound(-(p.x - 0.5) * S * z, z, W), spring.soft));
+      cam.ty.set(withSpring(bound(-(p.y - 0.5) * S * z + visibleShift, z, H), spring.soft));
+    },
+    [S, W, H, bound, cam.tx, cam.ty, cam.zoom, sheetArea],
   );
 
   useEffect(() => {
-    if (area) centerOn(area.point, 1.5);
+    if (area) centerOn(area.point, 1.6);
   }, [area, centerOn]);
 
   const pan = Gesture.Pan()
     .onChange((e) => {
-      tx.set(tx.get() + e.changeX);
-      ty.set(ty.get() + e.changeY);
+      cam.tx.set(cam.tx.get() + e.changeX);
+      cam.ty.set(cam.ty.get() + e.changeY);
     })
     .onEnd((e) => {
-      const maxX = Math.max(0, (S * scale.get() - W) / 2);
-      const maxY = Math.max(0, (S * scale.get() - H) / 2);
-      tx.set(withDecay({ velocity: e.velocityX, clamp: [-maxX, maxX] }));
-      ty.set(withDecay({ velocity: e.velocityY, clamp: [-maxY, maxY] }));
+      const maxX = Math.max(0, (S * cam.zoom.get() - W) / 2);
+      const maxY = Math.max(0, (S * cam.zoom.get() - H) / 2);
+      cam.tx.set(withDecay({ velocity: e.velocityX, clamp: [-maxX, maxX] }));
+      cam.ty.set(withDecay({ velocity: e.velocityY, clamp: [-maxY, maxY] }));
     });
 
   const pinch = Gesture.Pinch()
     .onStart(() => {
-      startScale.set(scale.get());
+      startZoom.set(cam.zoom.get());
     })
     .onChange((e) => {
-      scale.set(clamp(startScale.get() * e.scale, 0.75, 2.6));
+      cam.zoom.set(clamp(startZoom.get() * e.scale, MIN_Z, MAX_Z));
     })
     .onEnd(() => {
-      tx.set(withSpring(bound(tx.get(), scale.get(), W), spring.snappy));
-      ty.set(withSpring(bound(ty.get(), scale.get(), H), spring.snappy));
+      cam.tx.set(withSpring(bound(cam.tx.get(), cam.zoom.get(), W), spring.medium));
+      cam.ty.set(withSpring(bound(cam.ty.get(), cam.zoom.get(), H), spring.medium));
     });
 
-  // Tapping empty map closes the sheet. Taps on a marker are left to the
-  // marker: hit-test against marker positions on screen, on the UI thread.
-  const points = useMemo(() => visible.map((m) => m.point), [visible]);
-  const tap = Gesture.Tap().onEnd((e) => {
-    const z = scale.get();
-    const cx = W / 2 + tx.get();
-    const cy = H / 2 + ty.get();
-    for (let i = 0; i < points.length; i++) {
-      const mx = cx + (points[i].x * S - S / 2) * z;
-      const my = cy + (points[i].y * S - S / 2) * z;
-      if (Math.abs(e.x - mx) < 30 && Math.abs(e.y - my) < 30) return;
-    }
+  // Markers sit above the canvas and take their own taps; a tap that
+  // reaches the canvas is a tap on empty map: it folds the selection away.
+  const tap = Gesture.Tap().onEnd(() => {
     scheduleOnRN(setSelected, null);
   });
 
   const gesture = Gesture.Race(Gesture.Simultaneous(pan, pinch), tap);
 
+  const cameraStyle = useAnimatedStyle(() => ({
+    transform: [
+      { perspective: TILT.perspective },
+      { rotateX: `${TILT.angle * cam.tilt.value}rad` },
+      { scale: 1 + (TILT.zoom - 1) * cam.tilt.value },
+    ],
+  }));
+  const fogStyle = useAnimatedStyle(() => ({ opacity: cam.tilt.value }));
   const canvasStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: tx.get() }, { translateY: ty.get() }, { scale: scale.get() }],
+    transform: [{ translateX: cam.tx.get() }, { translateY: cam.ty.get() }, { scale: cam.zoom.get() }],
   }));
 
-  const zoom = (factor: number) => {
+  const zoomBy = (factor: number) => {
     haptic('select');
-    const z = Math.max(0.75, Math.min(2.6, scale.get() * factor));
-    scale.set(withTiming(z, { duration: 260 }));
+    const z = clamp(cam.zoom.get() * factor, MIN_Z, MAX_Z);
+    cam.zoom.set(withTiming(z, { duration: motion.normal, easing: ease.standard }));
   };
 
-  const select = (m: Marker) => {
-    haptic('tap');
-    setSelected(m);
-    centerOn(m.point);
+  const setMode = (three: boolean) => {
+    if (three === mode3d) return;
+    haptic('press');
+    setMode3d(three);
+    cam.tilt.set(withTiming(three ? 1 : 0, { duration: three ? 1200 : 800, easing: ease.camera }));
   };
+
+  const select = (m: MapMarkerData) => {
+    haptic('select');
+    setSelected(m);
+    setSnap('collapsed');
+    centerOn(m.point, Math.max(cam.zoom.get(), ZOOM.neighbourhood + 0.15), 136);
+  };
+
+  const openCluster = (p: MapPoint) => {
+    centerOn(p, clamp(cam.zoom.get() * 1.6, MIN_Z, MAX_Z));
+  };
+
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const areas = city.areas.filter((a) => a.name.toLowerCase().includes(q)).map((a) => ({ id: a.id, title: a.name, sub: 'Neighbourhood', point: a.point, marker: null as MapMarkerData | null }));
+    const things = all
+      .filter((m) => m.title.toLowerCase().includes(q))
+      .map((m) => ({ id: m.id, title: m.title, sub: m.subtitle, point: m.point, marker: m as MapMarkerData | null }));
+    return [...areas, ...things].slice(0, 6);
+  }, [query, city, all]);
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <GestureDetector gesture={gesture}>
         <View style={StyleSheet.absoluteFill}>
-          <Animated.View style={[{ position: 'absolute', width: S, height: S, left: (W - S) / 2, top: (H - S) / 2 }, canvasStyle]}>
-            <MapArt city={city} mode={t.mode} width={S} height={S} />
-            {city.areas.map((a) => (
-              <AreaLabel key={a.id} name={a.name} x={a.point.x * S} y={a.point.y * S} scale={scale} />
-            ))}
-            {visible.map((m) => (
-              <MapMarker key={m.id} marker={m} S={S} scale={scale} selected={selected?.id === m.id} onPress={() => select(m)} />
-            ))}
+          <Animated.View style={[StyleSheet.absoluteFill, cameraStyle]}>
+            <Animated.View style={[{ position: 'absolute', width: S, height: S, left: (W - S) / 2, top: (H - S) / 2 }, canvasStyle]}>
+              <MapArt city={city} mode={t.mode} width={S} height={S} />
+              {city.areas.map((a) => (
+                <AreaLabel key={a.id} name={a.name} x={a.point.x * S} y={a.point.y * S} zoom={cam.zoom} />
+              ))}
+            </Animated.View>
           </Animated.View>
         </View>
       </GestureDetector>
 
-      {/* Top chrome */}
-      <View style={[styles.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
-        <View style={styles.topRow}>
-          <Glass style={styles.titlePill}>
-            <Icon name="map" size={16} color={t.c.text} />
-            <Text variant="label">{visible.length} around you</Text>
+      {/* Markers: projected on screen, upright in 2D and 3D. */}
+      <View style={[StyleSheet.absoluteFill, { zIndex: 1 }]} pointerEvents="box-none">
+        {placed.map((p, i) =>
+          p.kind === 'marker' ? (
+            <Projected key={p.m.id} point={p.m.point} S={S} W={W} H={H} cam={cam} index={i} selected={selected?.id === p.m.id}>
+              <MarkerView m={p.m} selected={selected?.id === p.m.id} onPress={() => select(p.m)} />
+            </Projected>
+          ) : (
+            <Projected key={p.c.id} point={p.c.point} S={S} W={W} H={H} cam={cam} index={i}>
+              <ClusterView c={p.c} onPress={() => openCluster(p.c.point)} />
+            </Projected>
+          ),
+        )}
+      </View>
+
+      {/* Fog at the horizon: in 3D the far edge of the map dissolves into black. */}
+      <Animated.View style={[styles.fog, fogStyle]} pointerEvents="none">
+        <LinearGradient colors={['#000000', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0)']} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+
+      {/* Floating UI: arrives after the map, stays put in 2D and 3D. */}
+      <Animated.View entering={enter.fade(0, 120)} style={[styles.top, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
+        <View style={styles.searchRow}>
+          <Glass style={styles.search} intensity={blur.medium}>
+            <Icon name="search" size={18} color={t.c.textSecondary} />
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              placeholder={`Search ${city.name}`}
+              placeholderTextColor={t.c.textTertiary}
+              selectionColor={t.c.text}
+              style={[styles.searchInput, { color: t.c.text }]}
+              accessibilityLabel="Search the map"
+              returnKeyType="search"
+            />
+            {query ? (
+              <PressableScale haptic="select" onPress={() => setQuery('')} accessibilityLabel="Clear search" hitSlop={8}>
+                <Icon name="x" size={16} color={t.c.textSecondary} />
+              </PressableScale>
+            ) : null}
           </Glass>
           <DestinationPill onPress={() => setDestSheet(true)} />
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
-          {LAYERS.map((l) => (
-            <Glass key={l.id} style={{ borderRadius: radius.pill }} border={false}>
-              <Chip size="sm" label={l.label} icon={l.icon} selected={layer === l.id} onPress={() => setLayer(l.id)} />
+        {results.length ? (
+          <Animated.View entering={FadeIn.duration(motion.fast)} exiting={FadeOut.duration(motion.fast)}>
+            <Glass style={styles.results} intensity={blur.strong}>
+              {results.map((r) => (
+                <PressableScale
+                  key={r.id}
+                  haptic="select"
+                  scaleTo={0.98}
+                  style={styles.result}
+                  onPress={() => {
+                    setQuery('');
+                    if (r.marker) select(r.marker);
+                    else centerOn(r.point, 1.6);
+                  }}
+                >
+                  <Icon name={r.marker ? r.marker.icon : 'pin'} size={16} color={r.marker ? r.marker.color : t.c.textSecondary} />
+                  <View style={{ flex: 1 }}>
+                    <Text variant="label" numberOfLines={1}>
+                      {r.title}
+                    </Text>
+                    <Text variant="caption" tone="tertiary" numberOfLines={1}>
+                      {r.sub}
+                    </Text>
+                  </View>
+                </PressableScale>
+              ))}
             </Glass>
-          ))}
-        </ScrollView>
-      </View>
+          </Animated.View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
+            {LAYERS.map((l) => (
+              <Glass key={l.id} style={{ borderRadius: radius.pill }} border={false} intensity={blur.light}>
+                <Chip size="sm" label={l.label} icon={l.icon} selected={layer === l.id} onPress={() => setLayer(l.id)} />
+              </Glass>
+            ))}
+          </ScrollView>
+        )}
+      </Animated.View>
 
-      <View style={[styles.controls, { bottom: bottom + (selected ? 186 : 12) }]} pointerEvents="box-none">
-        <IconButton icon="plus" label="Zoom in" onPress={() => zoom(1.35)} />
-        <IconButton icon="minus" label="Zoom out" onPress={() => zoom(1 / 1.35)} />
-        <IconButton icon="locate" label="Recenter" onPress={() => centerOn(hub, 1)} />
-      </View>
+      <Animated.View entering={enter.fade(1, 160)} style={[styles.controls, { top: insets.top + 118 }]} pointerEvents="box-none">
+        <ModeSwitch three={mode3d} onChange={setMode} />
+        <MapButton icon="locate" label="Recenter" onPress={() => centerOn(hub, START_Z)} />
+        <MapButton icon="plus" label="Zoom in" onPress={() => zoomBy(1.35)} />
+        <MapButton icon="minus" label="Zoom out" onPress={() => zoomBy(1 / 1.35)} />
+      </Animated.View>
+
+      {mode3d ? <TiltNote /> : null}
+
+      {/* Legal mention of the base map stays visible. */}
+      {!selected ? (
+        <View style={[styles.credit, { bottom: tabSpace - 18 }]} pointerEvents="none">
+          <Text variant="caption" tone="tertiary" style={{ fontSize: 10 }}>
+            IRLY Night map
+          </Text>
+        </View>
+      ) : null}
 
       {selected ? (
-        <MarkerSheet
+        <MapSheet
           key={selected.id}
           marker={selected}
-          bottom={bottom - 10}
+          height={sheetArea}
+          bottom={sheetBottom}
+          top={insets.top + 8}
+          snap={snap}
+          onSnap={(s) => {
+            setSnap(s);
+            if (s !== 'expanded') centerOn(selected.point, undefined, s === 'half' ? sheetArea * 0.52 : 136);
+          }}
           onClose={() => setSelected(null)}
-          onOpen={(h) => openHero(h)}
-          onPerson={(id) => router.push(`/person/${id}`)}
         />
       ) : null}
       <DestinationSheet visible={destSheet} onClose={() => setDestSheet(false)} />
@@ -384,154 +378,97 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   );
 }
 
-const AreaLabel = memo(function AreaLabel({ name, x, y, scale }: { name: string; x: number; y: number; scale: SharedValue<number> }) {
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: 1 / scale.get() }], opacity: scale.get() < 0.9 ? 0 : 1 }));
+/** 2D | 3D with a sliding indicator. */
+function ModeSwitch({ three, onChange }: { three: boolean; onChange: (three: boolean) => void }) {
+  const t = useTheme();
+  const x = useSharedValue(three ? 1 : 0);
+  useEffect(() => {
+    x.set(withSpring(three ? 1 : 0, spring.medium));
+  }, [three, x]);
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateY: x.value * 40 }] }));
+  return (
+    <Glass style={styles.mode} intensity={blur.medium}>
+      <Animated.View style={[styles.modePill, { backgroundColor: t.c.brand }, pill]} />
+      {(['2D', '3D'] as const).map((label, i) => {
+        const on = (i === 1) === three;
+        return (
+          <PressableScale
+            key={label}
+            haptic={false}
+            scaleTo={0.92}
+            onPress={() => onChange(i === 1)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
+            accessibilityLabel={label === '3D' ? '3D view' : '2D view'}
+            style={styles.modeItem}
+          >
+            <Text variant="label" color={on ? t.c.onBrand : t.c.text}>
+              {label}
+            </Text>
+          </PressableScale>
+        );
+      })}
+    </Glass>
+  );
+}
+
+function MapButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <PressableScale haptic="select" scaleTo={0.9} onPress={onPress} accessibilityLabel={label} hitSlop={4}>
+      <Glass style={styles.button} intensity={blur.medium}>
+        <Icon name={icon} size={18} color={t.c.text} />
+      </Glass>
+    </PressableScale>
+  );
+}
+
+/** Honest about what the 3D button shows without Google's 3D tiles. */
+function TiltNote() {
+  const [shown, setShown] = useState(true);
+  useEffect(() => {
+    const id = setTimeout(() => setShown(false), 3200);
+    return () => clearTimeout(id);
+  }, []);
+  if (!shown) return null;
+  return (
+    <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.normal)} style={styles.noteWrap} pointerEvents="none">
+      <Glass style={styles.note} intensity={blur.medium}>
+        <Icon name="orbit3d" size={14} color="#FFFFFF" />
+        <Text variant="caption">Tilted view · photorealistic 3D arrives with Google Maps</Text>
+      </Glass>
+    </Animated.View>
+  );
+}
+
+const AreaLabel = memo(function AreaLabel({ name, x, y, zoom }: { name: string; x: number; y: number; zoom: SharedValue<number> }) {
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: 1 / zoom.get() }], opacity: zoom.get() < 0.9 ? 0 : 1 }));
   return (
     <Animated.View style={[styles.areaLabel, { left: x - 70, top: y + 18 }, style]} pointerEvents="none">
-      <Text variant="overline" tone="tertiary" align="center" style={{ fontSize: 9.5 }}>
+      <Text variant="overline" color="#8A8A8A" align="center" style={{ fontSize: 9.5 }}>
         {name}
       </Text>
     </Animated.View>
   );
 });
 
-const MapMarker = memo(function MapMarker({
-  marker,
-  S,
-  scale,
-  selected,
-  onPress,
-}: {
-  marker: Marker;
-  S: number;
-  scale: SharedValue<number>;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  const t = useTheme();
-  const pop = useSharedValue(selected ? 1.25 : 1);
-  useEffect(() => {
-    pop.set(withSpring(selected ? 1.28 : 1, spring.bouncy));
-  }, [selected, pop]);
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: pop.get() / scale.get() }] }));
-  const person = marker.personId ? findPerson(marker.personId) : undefined;
-  const isPerson = marker.layer === 'people' && person;
-  const color =
-    marker.layer === 'event' ? t.c.live : marker.layer === 'community' ? t.c.brand : marker.layer === 'service' ? t.c.positive : t.accent;
-  return (
-    <Animated.View style={[styles.marker, { left: marker.point.x * S - 22, top: marker.point.y * S - 22, zIndex: selected ? 10 : 1 }, style]}>
-      <PressableScale haptic={false} scaleTo={0.88} onPress={onPress} accessibilityLabel={marker.title} hitSlop={6}>
-        {isPerson ? (
-          <View style={[styles.personMarker, { borderColor: selected ? t.c.brand : t.c.bg, boxShadow: t.shadow.card }]}>
-            <Avatar name={person.name} hue={person.hue} size={34} />
-          </View>
-        ) : (
-          <View style={[styles.pin, { backgroundColor: selected ? color : t.c.raised, borderColor: color, boxShadow: t.shadow.card }]}>
-            <Icon name={marker.icon} size={17} color={selected ? '#FFFFFF' : color} strokeWidth={2.2} />
-            {marker.live ? (
-              <View style={styles.liveDot}>
-                <LiveDot size={8} />
-              </View>
-            ) : null}
-          </View>
-        )}
-      </PressableScale>
-    </Animated.View>
-  );
-});
-
-function MarkerSheet({
-  marker,
-  bottom,
-  onClose,
-  onOpen,
-  onPerson,
-}: {
-  marker: Marker;
-  bottom: number;
-  onClose: () => void;
-  onOpen: (h: { kind: HeroKind; id: string }) => void;
-  onPerson: (id: string) => void;
-}) {
-  const t = useTheme();
-  const cityId = useCityId();
-  const city = CITIES[cityId];
-  const y = useSharedValue(220);
-  useEffect(() => {
-    y.set(withSpring(0, spring.sheet));
-  }, [y]);
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));
-  const person = marker.personId ? findPerson(marker.personId) : undefined;
-  const going = marker.goingIds ? peopleByIds(marker.goingIds) : [];
-  return (
-    <Animated.View style={[styles.sheetWrap, { bottom }, style]}>
-      <Glass style={styles.sheet} intensity={70}>
-        <View style={styles.sheetTop}>
-          {person ? (
-            <Avatar name={person.name} hue={person.hue} size={48} verified={person.verified} online={person.online} />
-          ) : (
-            <View style={[styles.sheetIcon, { backgroundColor: t.light.accentSoft }]}>
-              <Icon name={marker.icon} size={22} color={t.accent} />
-            </View>
-          )}
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text variant="titleM" numberOfLines={1}>
-              {marker.title}
-            </Text>
-            <Text variant="bodyS" tone="secondary" numberOfLines={1}>
-              {person ? `${person.headline} · ${areaName(city, person.areaId)}` : marker.subtitle}
-            </Text>
-          </View>
-          <IconButton icon="x" label="Close" size={34} onPress={onClose} variant="plain" />
-        </View>
-        {going.length ? (
-          <View style={styles.sheetRow}>
-            <AvatarStack people={going} size={26} max={4} />
-            <Text variant="caption" tone="secondary">
-              {going.map((p) => p.name).slice(0, 2).join(', ')} {marker.layer === 'community' ? 'are members' : 'are going'}
-            </Text>
-          </View>
-        ) : null}
-        <View style={styles.sheetActions}>
-          {person ? (
-            <>
-              <Button label="Profile" variant="secondary" size="md" onPress={() => onPerson(person.id)} />
-              <View style={{ flex: 1 }}>
-                <ConnectButton person={person} size="md" full />
-              </View>
-            </>
-          ) : marker.hero ? (
-            <Button label="Open" iconRight="arrowUpRight" size="md" full onPress={() => marker.hero && onOpen(marker.hero)} />
-          ) : null}
-        </View>
-      </Glass>
-    </Animated.View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  top: { position: 'absolute', top: 0, left: 0, right: 0, gap: 10 },
-  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space.gutter },
-  titlePill: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 38, paddingHorizontal: 14, borderRadius: radius.pill },
-  layers: { paddingHorizontal: space.gutter, gap: 8 },
-  controls: { position: 'absolute', right: space.gutter, gap: 10 },
+  fog: { position: 'absolute', top: 0, left: 0, right: 0, height: '42%', zIndex: 2 },
+  top: { position: 'absolute', top: 0, left: 0, right: 0, gap: 10, zIndex: 5 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.gutter - 4 },
+  search: { flex: 1, height: 48, borderRadius: radius.pill, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16 },
+  searchInput: { flex: 1, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 },
+  results: { marginHorizontal: space.gutter - 4, borderRadius: radius.xl, paddingVertical: 6 },
+  result: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 10 },
+  layers: { paddingHorizontal: space.gutter - 4, gap: 8 },
+  controls: { position: 'absolute', right: space.gutter - 4, gap: 10, alignItems: 'center', zIndex: 5 },
+  mode: { width: 48, height: 88, borderRadius: 24, padding: 4 },
+  modePill: { position: 'absolute', top: 4, left: 4, width: 40, height: 40, borderRadius: 20 },
+  modeItem: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  button: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  noteWrap: { position: 'absolute', left: 0, right: 0, bottom: 150, alignItems: 'center', zIndex: 5 },
+  note: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 34, paddingHorizontal: 14, borderRadius: radius.pill },
+  credit: { position: 'absolute', left: space.gutter, zIndex: 5 },
   areaLabel: { position: 'absolute', width: 140 },
-  marker: { position: 'absolute', width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  personMarker: { borderRadius: 20, borderWidth: 3 },
-  pin: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  liveDot: { position: 'absolute', top: -2, right: -2 },
-  sheetWrap: { position: 'absolute', left: 12, right: 12 },
-  sheet: { borderRadius: radius.xl, padding: 16, gap: 14 },
-  sheetTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  sheetIcon: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  sheetRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  sheetActions: { flexDirection: 'row', gap: 10 },
 });

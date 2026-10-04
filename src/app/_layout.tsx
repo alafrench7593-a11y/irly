@@ -1,4 +1,3 @@
-import { InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
 import {
   Manrope_400Regular,
   Manrope_500Medium,
@@ -18,6 +17,7 @@ import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppFrame } from '@/components/layout/AppFrame';
 import { ToastHost } from '@/components/ui/Toast';
+import { CreateHost } from '@/features/create/CreateHost';
 import { DestinationTransition } from '@/features/destination/DestinationTransition';
 import { HeroHost } from '@/features/hero/HeroHost';
 import { useStore } from '@/state/store';
@@ -33,8 +33,6 @@ export default function RootLayout() {
     Manrope_600SemiBold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
-    InstrumentSerif_400Regular,
-    InstrumentSerif_400Regular_Italic,
   });
   const hydrated = useStore((s) => s.hydrated);
   const ready = (fontsLoaded || Boolean(fontError)) && hydrated;
@@ -47,7 +45,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <ReducedMotionConfig mode={ReduceMotion.System} />
-        {ready ? <App /> : <View style={[styles.root, { backgroundColor: '#08080C' }]} />}
+        {ready ? <App /> : <View style={[styles.root, { backgroundColor: '#000000' }]} />}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -76,6 +74,7 @@ function App() {
         <Stack.Screen name="match" options={{ animation: 'slide_from_bottom' }} />
       </Stack>
       <HeroHost />
+      <CreateHost />
       <DestinationTransition />
       <ToastHost />
     </AppFrame>

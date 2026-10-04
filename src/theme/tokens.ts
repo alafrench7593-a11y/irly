@@ -42,58 +42,66 @@ export type Palette = {
   shadow: string;
 };
 
-export const palettes: Record<Mode, Palette> = {
-  night: {
-    bg: '#08080C',
-    surface: '#111117',
-    raised: '#18181F',
-    overlay: '#22222B',
-    glass: 'rgba(17,17,23,0.62)',
-    line: 'rgba(255,255,255,0.07)',
-    lineStrong: 'rgba(255,255,255,0.14)',
-    text: '#F4F3F8',
-    textSecondary: 'rgba(244,243,248,0.66)',
-    textTertiary: 'rgba(244,243,248,0.42)',
-    onDark: '#FFFFFF',
-    brand: '#8B6CFF',
-    brandPressed: '#7A59F5',
-    brandSoft: 'rgba(139,108,255,0.16)',
-    onBrand: '#FFFFFF',
-    live: '#FF6A4D',
-    liveSoft: 'rgba(255,106,77,0.16)',
-    positive: '#3DDC97',
-    positiveSoft: 'rgba(61,220,151,0.14)',
-    caution: '#FFC15E',
-    critical: '#FF5D6C',
-    scrim: 'rgba(4,4,8,0.62)',
-    shadow: 'rgba(0,0,0,0.45)',
-  },
-  day: {
-    bg: '#F5F4F0',
-    surface: '#FFFFFF',
-    raised: '#FFFFFF',
-    overlay: '#EEECE6',
-    glass: 'rgba(255,255,255,0.72)',
-    line: 'rgba(12,11,20,0.07)',
-    lineStrong: 'rgba(12,11,20,0.14)',
-    text: '#0C0B14',
-    textSecondary: 'rgba(12,11,20,0.62)',
-    textTertiary: 'rgba(12,11,20,0.42)',
-    onDark: '#FFFFFF',
-    brand: '#6A4CF5',
-    brandPressed: '#5A3DE6',
-    brandSoft: 'rgba(106,76,245,0.10)',
-    onBrand: '#FFFFFF',
-    live: '#F2542D',
-    liveSoft: 'rgba(242,84,45,0.12)',
-    positive: '#12A86B',
-    positiveSoft: 'rgba(18,168,107,0.12)',
-    caution: '#C98500',
-    critical: '#E23B4E',
-    scrim: 'rgba(12,11,20,0.36)',
-    shadow: 'rgba(22,16,60,0.12)',
-  },
+/**
+ * IRLY v3 is black and white. Black, white and four greys carry the whole
+ * interface; colour only appears on categories, statuses and actions.
+ * On black, shadows are invisible: depth comes from grey steps, hairlines
+ * and glass. There is a single theme; `day` is kept as an alias so older
+ * call sites keep compiling.
+ */
+const night: Palette = {
+  bg: '#000000',
+  surface: '#0D0D0D',
+  raised: '#1A1A1A',
+  overlay: '#262626',
+  glass: 'rgba(18,18,18,0.72)',
+  line: 'rgba(255,255,255,0.08)',
+  lineStrong: 'rgba(255,255,255,0.16)',
+  text: '#FFFFFF',
+  textSecondary: '#A3A3A3',
+  textTertiary: '#6B6B6B',
+  onDark: '#FFFFFF',
+  brand: '#FFFFFF',
+  brandPressed: '#E6E6E6',
+  brandSoft: 'rgba(255,255,255,0.10)',
+  onBrand: '#000000',
+  live: '#FF453A',
+  liveSoft: 'rgba(255,69,58,0.16)',
+  positive: '#32D74B',
+  positiveSoft: 'rgba(50,215,75,0.14)',
+  caution: '#FF9F0A',
+  critical: '#FF453A',
+  scrim: 'rgba(0,0,0,0.64)',
+  shadow: 'rgba(0,0,0,0.6)',
 };
+
+export const palettes: Record<Mode, Palette> = { night, day: night };
+
+/**
+ * Category and status colours. Used on an icon, a dot or a halo, never as
+ * a background fill.
+ */
+export const category = {
+  sport: '#32D74B',
+  food: '#FF9F0A',
+  coffee: '#C8A27A',
+  padel: '#64D2FF',
+  beach: '#FFD60A',
+  nightlife: '#BF5AF2',
+  travel: '#0A84FF',
+  wellness: '#66D4CF',
+  activities: '#FF6482',
+  dogwalk: '#D4A373',
+  business: '#A3A3A3',
+  culture: '#FF6482',
+} as const;
+export type CategoryId = keyof typeof category;
+
+export const status = {
+  live: '#FF453A',
+  availableNow: '#32D74B',
+  availableLater: '#FF9F0A',
+} as const;
 
 /** 4-pt spacing scale. `gutter` is the screen side padding. */
 export const space = {
@@ -116,9 +124,11 @@ export const radius = {
   xs: 8,
   sm: 12,
   md: 16,
-  lg: 22,
+  lg: 20,
+  /** Cards. */
   xl: 28,
-  xxl: 34,
+  /** Large cards and the top of sheets. */
+  xxl: 32,
   pill: 999,
 } as const;
 
@@ -129,14 +139,16 @@ export const font = {
   semibold: 'Manrope_600SemiBold',
   bold: 'Manrope_700Bold',
   heavy: 'Manrope_800ExtraBold',
-  serif: 'InstrumentSerif_400Regular',
-  serifItalic: 'InstrumentSerif_400Regular_Italic',
+  /** v3 has a single family: the former serif slots resolve to Manrope. */
+  serif: 'Manrope_800ExtraBold',
+  serifItalic: 'Manrope_800ExtraBold',
 } as const;
 
 export type TypeVariant =
   | 'displayXL'
   | 'displayL'
   | 'displayM'
+  | 'cardTitle'
   | 'titleL'
   | 'titleM'
   | 'titleS'
@@ -157,43 +169,44 @@ type TypeStyle = {
 };
 
 /**
- * Type scale. Instrument Serif carries the editorial, human moments
- * (greetings, destinations); Manrope carries the interface.
+ * Type scale. One family, Manrope. Display is reserved for the one big
+ * question of a screen ("What's happening today?"); card titles on photos
+ * are set in capitals.
  */
 export const type: Record<TypeVariant, TypeStyle> = {
-  displayXL: { fontFamily: font.serif, fontSize: 46, lineHeight: 48, letterSpacing: -0.6 },
-  displayL: { fontFamily: font.serif, fontSize: 36, lineHeight: 40, letterSpacing: -0.4 },
-  displayM: { fontFamily: font.serif, fontSize: 28, lineHeight: 32, letterSpacing: -0.2 },
-  titleL: { fontFamily: font.heavy, fontSize: 24, lineHeight: 30, letterSpacing: -0.6 },
-  titleM: { fontFamily: font.bold, fontSize: 19, lineHeight: 25, letterSpacing: -0.35 },
+  displayXL: { fontFamily: font.heavy, fontSize: 40, lineHeight: 44, letterSpacing: -0.8 },
+  displayL: { fontFamily: font.heavy, fontSize: 34, lineHeight: 38, letterSpacing: -0.6 },
+  displayM: { fontFamily: font.heavy, fontSize: 26, lineHeight: 30, letterSpacing: -0.4 },
+  /** Title of a large photo card: « PADEL TONIGHT ». */
+  cardTitle: { fontFamily: font.heavy, fontSize: 26, lineHeight: 28, letterSpacing: -0.2, textTransform: 'uppercase' },
+  titleL: { fontFamily: font.heavy, fontSize: 24, lineHeight: 30, letterSpacing: -0.5 },
+  titleM: { fontFamily: font.bold, fontSize: 20, lineHeight: 24, letterSpacing: -0.3 },
   titleS: { fontFamily: font.bold, fontSize: 16, lineHeight: 21, letterSpacing: -0.2 },
   bodyL: { fontFamily: font.medium, fontSize: 16, lineHeight: 24 },
   body: { fontFamily: font.medium, fontSize: 15, lineHeight: 22 },
   bodyS: { fontFamily: font.medium, fontSize: 13, lineHeight: 18 },
   label: { fontFamily: font.bold, fontSize: 13, lineHeight: 16, letterSpacing: 0.1 },
   caption: { fontFamily: font.semibold, fontSize: 12, lineHeight: 16 },
-  overline: { fontFamily: font.heavy, fontSize: 11, lineHeight: 14, letterSpacing: 1.4, textTransform: 'uppercase' },
+  overline: { fontFamily: font.semibold, fontSize: 11, lineHeight: 14, letterSpacing: 0.9, textTransform: 'uppercase' },
   number: { fontFamily: font.heavy, fontSize: 22, lineHeight: 26, letterSpacing: -0.8 },
 };
 
-/** Elevation, expressed as CSS box-shadow strings (New Architecture). */
-export const elevation = {
-  night: {
-    card: '0px 10px 30px rgba(0, 0, 0, 0.32)',
-    float: '0px 18px 48px rgba(0, 0, 0, 0.5)',
-    glow: '0px 10px 32px rgba(139, 108, 255, 0.42)',
-  },
-  day: {
-    card: '0px 8px 24px rgba(22, 16, 60, 0.07)',
-    float: '0px 18px 44px rgba(22, 16, 60, 0.14)',
-    glow: '0px 10px 30px rgba(106, 76, 245, 0.32)',
-  },
-} as const;
+/**
+ * Elevation. Shadows do not read on black, so `card` is empty and `float`
+ * is only a soft separation for glass over the map. `glow` is gone with
+ * the brand violet.
+ */
+const shadows = {
+  card: '0px 0px 0px rgba(0, 0, 0, 0)',
+  float: '0px 16px 40px rgba(0, 0, 0, 0.55)',
+  glow: '0px 0px 0px rgba(0, 0, 0, 0)',
+};
+export const elevation = { night: shadows, day: shadows } as const;
 
 /** Layout constants shared by navigation chrome. */
 export const layout = {
-  tabBarHeight: 64,
-  tabBarBottomGap: 14,
+  tabBarHeight: 68,
+  tabBarBottomGap: 16,
   headerHeight: 52,
   maxContentWidth: 560,
 } as const;

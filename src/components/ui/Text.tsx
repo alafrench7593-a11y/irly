@@ -46,10 +46,9 @@ export const Text = memo(function Text({
     onBrand: t.c.onBrand,
   };
   const base = type[variant];
-  const fontFamily =
-    italic && (variant === 'displayXL' || variant === 'displayL' || variant === 'displayM')
-      ? 'InstrumentSerif_400Regular_Italic'
-      : base.fontFamily;
+  // v3 has no italic serif: `italic` is accepted for older call sites and ignored.
+  void italic;
+  const fontFamily = base.fontFamily;
   return (
     <RNText
       allowFontScaling

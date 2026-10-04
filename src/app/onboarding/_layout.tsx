@@ -7,7 +7,7 @@ export default function OnboardingLayout() {
         headerShown: false,
         animation: 'fade',
         animationDuration: 280,
-        contentStyle: { backgroundColor: '#08080C' },
+        contentStyle: { backgroundColor: '#000000' },
       }}
     />
   );

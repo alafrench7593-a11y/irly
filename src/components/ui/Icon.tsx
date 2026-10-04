@@ -19,6 +19,9 @@ import Camera from 'lucide-react-native/icons/camera';
 import Car from 'lucide-react-native/icons/car';
 import Check from 'lucide-react-native/icons/check';
 import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import Satellite from 'lucide-react-native/icons/satellite';
+import Rotate3d from 'lucide-react-native/icons/rotate-3d';
 import ChevronLeft from 'lucide-react-native/icons/chevron-left';
 import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Clock from 'lucide-react-native/icons/clock';
@@ -132,6 +135,9 @@ export const icons = {
   car: Car,
   check: Check,
   chevronDown: ChevronDown,
+  chevronUp: ChevronUp,
+  satellite: Satellite,
+  orbit3d: Rotate3d,
   chevronLeft: ChevronLeft,
   chevronRight: ChevronRight,
   clock: Clock,
@@ -229,7 +235,10 @@ type Props = {
   fill?: string;
 };
 
-export const Icon = memo(function Icon({ name, size = 20, color, strokeWidth = 1.9, fill }: Props) {
+/** Lucide, 1.75 stroke on a 24 grid. Never shrinks inside a flex row. */
+export const Icon = memo(function Icon({ name, size = 20, color, strokeWidth = 1.75, fill }: Props) {
   const Cmp = icons[name];
-  return <Cmp size={size} color={color} strokeWidth={strokeWidth} fill={fill ?? 'none'} />;
+  return <Cmp size={size} color={color} strokeWidth={strokeWidth} fill={fill ?? 'none'} style={NO_SHRINK} />;
 });
+
+const NO_SHRINK = { flexShrink: 0 };

@@ -107,7 +107,7 @@ function Portal({ target }: { target: CityId }) {
         </View>
       </Animated.View>
       <Animated.View style={[styles.center, contentStyle]} pointerEvents="none">
-        <IrlyMark size={64} state={mark} lensColor="#8B6CFF" />
+        <IrlyMark size={64} state={mark} lensColor="#FFFFFF" />
         <Text variant="overline" tone="onDark" style={{ marginTop: 28, opacity: 0.8 }}>
           {dest.flag}  {dest.name}
         </Text>
