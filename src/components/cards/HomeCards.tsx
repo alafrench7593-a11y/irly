@@ -253,7 +253,7 @@ export const PersonBubble = memo(function PersonBubble({ person, city }: { perso
 });
 
 const styles = StyleSheet.create({
-  highlight: { borderRadius: radius.xxl, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(255,255,255,0.08)' },
+  highlight: { borderRadius: radius.xxl, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(10,10,10,0.06)' },
   highlightTop: { flexDirection: 'row', padding: 16 },
   timePill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, paddingHorizontal: 10, borderRadius: radius.pill },
   highlightBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 12 },

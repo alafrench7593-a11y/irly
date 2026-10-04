@@ -8,6 +8,9 @@ import { Rail } from '@/components/cards/Blocks';
 import { CommunityCard } from '@/components/cards/ThingCards';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
+import { Sheet } from '@/components/ui/Sheet';
+import { toast } from '@/components/ui/Toast';
 import { Badge, Divider, SectionHeader } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -18,6 +21,7 @@ import { findCommunity, findEvent, findService, findSession } from '@/data/repo'
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { openHero } from '@/features/hero/heroStore';
 import { whenLabel } from '@/lib/time';
+import { useNow } from '@/lib/useNow';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
@@ -40,6 +44,10 @@ export default function Profile() {
   const hapticsOn = useStore((s) => s.hapticsOn);
   const setHaptics = useStore((s) => s.setHaptics);
   const resetOnboarding = useStore((s) => s.resetOnboarding);
+  const deleteAccount = useStore((s) => s.deleteAccount);
+  const now = useNow();
+  const days = profile.arrivedAt ? Math.max(1, Math.round((now - profile.arrivedAt) / 86_400_000)) : 0;
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [destSheet, setDestSheet] = useState(false);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -69,20 +77,42 @@ export default function Profile() {
         <View style={[styles.identity, { marginTop: -52 }]}>
           <Animated.View entering={enter.pop(0)}>
             <View style={[styles.avatarRing, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-              <Avatar name={name} hue={262} size={96} />
+              <Avatar name={name} hue={262} size={96} photo={profile.photoUri} />
             </View>
           </Animated.View>
           <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 4 }}>
             <Text variant="displayL">{name}</Text>
             <Text variant="body" tone="secondary">
-              {city.name} {city.destinationId === 'bali' ? '🌴' : dest.flag}
+              {[profile.age, profile.country, city.name].filter(Boolean).join(' · ')} {city.destinationId === 'bali' ? '🌴' : dest.flag}
             </Text>
+            {profile.arrivedAt ? (
+              <View style={[styles.newHere, { backgroundColor: t.c.brand }]}>
+                <Text variant="overline" color={t.c.onBrand}>
+                  New in {city.name} · {days} {days > 1 ? 'days' : 'day'}
+                </Text>
+              </View>
+            ) : null}
+            {profile.bio ? (
+              <Text variant="body" align="center" style={{ marginTop: 8, paddingHorizontal: 12 }}>
+                {profile.bio}
+              </Text>
+            ) : null}
+            {profile.languages?.length ? (
+              <Text variant="caption" tone="secondary">
+                Speaks {profile.languages.join(', ')}
+              </Text>
+            ) : null}
+            {profile.faith && profile.faithVisible && profile.faith !== 'Prefer not to say' ? (
+              <Text variant="caption" tone="tertiary">
+                {profile.faith}
+              </Text>
+            ) : null}
           </Animated.View>
           <Animated.View entering={enter.rise(2)} style={styles.badges}>
             {profile.types.map((x) => (
               <Badge key={x} kind="accent" label={USER_TYPES[x].label} />
             ))}
-            <Badge kind="verified" label="ID verified" />
+
           </Animated.View>
           <Animated.View entering={enter.rise(3)} style={[styles.stats, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
             <Stat value={connected} label="Connections" />
@@ -166,7 +196,7 @@ export default function Profile() {
                 value={hapticsOn}
                 onValueChange={setHaptics}
                 trackColor={{ true: t.c.brand, false: t.c.overlay }}
-                thumbColor={hapticsOn ? '#000000' : '#FFFFFF'}
+                thumbColor="#FFFFFF"
                 accessibilityLabel="Haptic feedback"
               />
             </View>
@@ -176,24 +206,48 @@ export default function Profile() {
             <SettingLink icon="palette" label="IRLY Design System" value="Tokens & components" onPress={() => router.push('/design-system')} />
             <Divider inset={16} />
             <SettingLink
-              icon="repeat"
-              label="Replay onboarding"
+              icon="arrowLeft"
+              label="Log out"
               onPress={() => {
                 resetOnboarding();
                 router.replace('/welcome');
               }}
             />
+            <Divider inset={16} />
+            <SettingLink icon="x" label="Delete account" danger onPress={() => setConfirmDelete(true)} />
           </View>
         </Animated.View>
 
         <View style={styles.about}>
           <IrlyMark size={40} state="idle" ringColor={t.c.textTertiary} lensColor={t.c.brand} glow={false} />
           <Text variant="caption" tone="tertiary" align="center">
-            IRLY 2.0 · Trusted. Curated. Human-first.
+            IRLY · Find someone to do something with.
           </Text>
         </View>
       </Animated.ScrollView>
       <DestinationSheet visible={destSheet} onClose={() => setDestSheet(false)} />
+      <Sheet
+        visible={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title="Delete your IRLY account?"
+        subtitle="This permanently removes your profile, connections and content. It cannot be undone."
+      >
+        <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+          <Button
+            label="DELETE ACCOUNT"
+            full
+            haptic="warning"
+            variant="danger"
+            onPress={() => {
+              deleteAccount();
+              setConfirmDelete(false);
+              toast('Your account has been deleted', 'check', 'live');
+              router.replace('/welcome');
+            }}
+          />
+          <Button label="Cancel" variant="ghost" full onPress={() => setConfirmDelete(false)} />
+        </View>
+      </Sheet>
     </View>
   );
 }
@@ -241,7 +295,7 @@ function EmptyRow({ icon, text, onPress }: { icon: IconName; text: string; onPre
   );
 }
 
-function SettingLink({ icon, label, value, onPress }: { icon: IconName; label: string; value?: string; onPress: () => void }) {
+function SettingLink({ icon, label, value, onPress, danger }: { icon: IconName; label: string; value?: string; onPress: () => void; danger?: boolean }) {
   const t = useTheme();
   return (
     <PressableScale
@@ -251,8 +305,8 @@ function SettingLink({ icon, label, value, onPress }: { icon: IconName; label: s
       style={styles.settingRow}
       accessibilityLabel={value ? `${label}, ${value}` : label}
     >
-      <Icon name={icon} size={18} color={t.c.text} />
-      <Text variant="titleS" style={{ flex: 1 }}>
+      <Icon name={icon} size={18} color={danger ? t.c.critical : t.c.text} />
+      <Text variant="titleS" color={danger ? t.c.critical : undefined} style={{ flex: 1 }}>
         {label}
       </Text>
       {value ? (
@@ -266,6 +320,7 @@ function SettingLink({ icon, label, value, onPress }: { icon: IconName; label: s
 }
 
 const styles = StyleSheet.create({
+  newHere: { marginTop: 8, height: 26, paddingHorizontal: 12, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   root: { flex: 1 },
   identity: { alignItems: 'center', gap: 14, paddingHorizontal: space.gutter, marginBottom: space[8] },
   avatarRing: { borderRadius: 60, borderWidth: 4 },

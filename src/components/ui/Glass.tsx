@@ -13,7 +13,9 @@ type Props = {
 };
 
 /**
- * Frosted glass: #121212 at 72 % over a real blur, white hairline at 10 %.
+ * Frosted glass. On the light app: white at 72 % over a real blur with a
+ * bright hairline. On photos (`dark`): a whisper of white over a dark blur,
+ * as in the reference (event page over its own photo).
  * Used for the tab bar, headers, sheets and map controls, so overlays read
  * as physically placed above the content. On Android a dense tint keeps
  * text legible without the cost of a live blur. The blur never animates:
@@ -22,17 +24,18 @@ type Props = {
 export const Glass = memo(function Glass({ style, intensity = 40, dark, border = true, children }: Props) {
   const t = useTheme();
   const isDark = dark || t.mode === 'night';
-  const tint = dark ? 'rgba(18,18,18,0.55)' : t.c.glass;
+  const tint = isDark ? 'rgba(255,255,255,0.12)' : t.c.glass;
+  const edge = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.9)';
   return (
     <View
       style={[
         styles.root,
-        border ? { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(255,255,255,0.10)' } : null,
+        border ? { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: edge } : null,
         style,
       ]}
     >
       {Platform.OS === 'android' ? (
-        <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: dark ? 'rgba(18,18,18,0.8)' : 'rgba(18,18,18,0.94)' }]} />
+        <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: isDark ? 'rgba(40,40,40,0.82)' : 'rgba(255,255,255,0.95)' }]} />
       ) : (
         <>
           <BlurView intensity={intensity} tint={isDark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, styles.under]} />

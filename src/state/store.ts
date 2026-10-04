@@ -15,11 +15,43 @@ import { setHapticsEnabled } from '@/motion/haptics';
 
 export type Appearance = 'auto' | 'day' | 'night';
 
+export type Gender = 'woman' | 'man' | 'other';
+
+export type LookingFor =
+  | 'friends'
+  | 'sport'
+  | 'networking'
+  | 'activities'
+  | 'travel'
+  | 'food'
+  | 'nightlife'
+  | 'communities'
+  | 'dogwalk'
+  | 'events'
+  | 'irlygirl';
+
 export type Profile = {
   name: string;
   types: UserType[];
   interests: Interest[];
   activities: ActivityKind[];
+  /** Required to finish signing up. Local URI until the server stores it. */
+  photoUri?: string;
+  age?: number;
+  bio?: string;
+  country?: string;
+  languages?: string[];
+  /** Declared at signup. Gives access to IRLY Girl when 'woman'. */
+  gender?: Gender;
+  lookingFor?: LookingFor[];
+  /**
+   * Optional and private. Never shown to anyone unless the member turns
+   * `faithVisible` on, and never used to rank or filter people.
+   */
+  faith?: string;
+  faithVisible?: boolean;
+  /** When the member arrived in the city (for "New in Dubai · 12 days"). */
+  arrivedAt?: number;
 };
 
 export type MyPlan = {
@@ -52,6 +84,8 @@ type State = {
   appearance: Appearance;
   hapticsOn: boolean;
   joined: Flags;
+  /** Answers other than "going" (going lives in `joined`). */
+  rsvp: Record<string, 'maybe' | 'no'>;
   saved: Flags;
   memberOf: Flags;
   connections: Record<string, 'pending' | 'connected'>;
@@ -69,9 +103,12 @@ type Actions = {
   updateProfile: (patch: Partial<Profile>) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
+  /** Wipes everything on this device: profile, plans, messages, connections. */
+  deleteAccount: () => void;
   setAppearance: (a: Appearance) => void;
   setHaptics: (on: boolean) => void;
   toggleJoin: (id: string) => boolean;
+  setRsvp: (id: string, answer: 'going' | 'maybe' | 'no') => void;
   toggleSave: (id: string) => boolean;
   toggleMembership: (id: string) => boolean;
   connect: (personId: string) => void;
@@ -84,7 +121,7 @@ type Actions = {
   postPlan: (plan: Omit<MyPlan, 'id' | 'createdAt'>) => MyPlan;
 };
 
-export const emptyProfile: Profile = { name: '', types: [], interests: [], activities: [] };
+export const emptyProfile: Profile = { name: '', types: [], interests: [], activities: [], languages: [], lookingFor: [] };
 
 /**
  * Storage that never throws: private browsing, sandboxed web views and
@@ -139,6 +176,7 @@ export const useStore = create<State & Actions>()(
       appearance: 'auto',
       hapticsOn: true,
       joined: {},
+      rsvp: {},
       saved: {},
       memberOf: {},
       connections: {},
@@ -159,12 +197,41 @@ export const useStore = create<State & Actions>()(
       },
       updateProfile: (patch) => set({ profile: { ...get().profile, ...patch } }),
       completeOnboarding: () => set({ onboarded: true }),
+      deleteAccount: () =>
+        set({
+          onboarded: false,
+          destinationId: null,
+          cityId: null,
+          profile: emptyProfile,
+          lastIntent: null,
+          joined: {},
+          rsvp: {},
+          saved: {},
+          memberOf: {},
+          connections: {},
+          bookings: [],
+          sent: {},
+          read: {},
+          myPlans: [],
+        }),
       resetOnboarding: () =>
         set({ onboarded: false, destinationId: null, cityId: null, profile: emptyProfile, lastIntent: null }),
       setAppearance: (appearance) => set({ appearance }),
       setHaptics: (hapticsOn) => {
         setHapticsEnabled(hapticsOn);
         set({ hapticsOn });
+      },
+      setRsvp: (id, answer) => {
+        const joined = { ...get().joined };
+        const rsvp = { ...get().rsvp };
+        if (answer === 'going') {
+          joined[id] = true;
+          delete rsvp[id];
+        } else {
+          delete joined[id];
+          rsvp[id] = answer;
+        }
+        set({ joined, rsvp });
       },
       toggleJoin: (id) => {
         const [joined, on] = toggle(get().joined, id);

@@ -250,7 +250,7 @@ function CategoryTile({ kind, selected, onPress }: { kind: ActivityKind; selecte
           { backgroundColor: selected ? t.c.brand : t.c.raised, borderColor: selected ? t.c.brand : t.c.line },
         ]}
       >
-        <View style={[styles.tileIcon, { backgroundColor: selected ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)' }]}>
+        <View style={[styles.tileIcon, { backgroundColor: selected ? 'rgba(255,255,255,0.14)' : 'rgba(10,10,10,0.05)' }]}>
           <Icon name={a.icon} size={20} color={selected ? t.c.onBrand : color} />
         </View>
         <Text variant="titleS" color={selected ? t.c.onBrand : t.c.text}>

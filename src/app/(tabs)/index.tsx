@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
 import { EventCard } from '@/components/cards/EventCards';
+import { LiveStrip } from '@/features/live/LiveStrip';
 import { Carousel, fromEvent, fromSession, HappeningRow, HighlightCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
 import { CommunityCard } from '@/components/cards/ThingCards';
 import { HomeHeader } from '@/components/navigation/Headers';
@@ -28,12 +29,17 @@ import { useTheme } from '@/theme/useTheme';
 const FILTERS: { id: 'all' | CategoryId; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'sport', label: 'Sport' },
-  { id: 'padel', label: 'Padel' },
-  { id: 'coffee', label: 'Coffee' },
-  { id: 'beach', label: 'Beach' },
+  { id: 'networking', label: 'Networking' },
   { id: 'food', label: 'Food' },
-  { id: 'wellness', label: 'Wellness' },
+  { id: 'coffee', label: 'Coffee' },
+  { id: 'padel', label: 'Padel' },
+  { id: 'beach', label: 'Beach' },
   { id: 'nightlife', label: 'Nightlife' },
+  { id: 'travel', label: 'Travel' },
+  { id: 'wellness', label: 'Wellness' },
+  { id: 'dogwalk', label: 'Dog walk' },
+  { id: 'shopping', label: 'Shopping' },
+  { id: 'events', label: 'Events' },
 ];
 
 /**
@@ -73,14 +79,18 @@ export default function Home() {
     );
   }, [content]);
 
-  const filtered = filter === 'all' ? happenings : happenings.filter((h) => h.color === category[filter]);
+  const filtered =
+    filter === 'all'
+      ? happenings
+      : filter === 'events'
+        ? happenings.filter((h) => h.type === 'event')
+        : happenings.filter((h) => h.color === category[filter]);
   const highlight = filtered.find((h) => h.item.when.dayOffset === 0) ?? filtered[0];
   const rest = filtered.filter((h) => h !== highlight).slice(0, 6);
   const people = useMemo(
     () => [...content.people].sort((a, b) => Number(Boolean(b.online)) - Number(Boolean(a.online))).slice(0, 12),
     [content.people],
   );
-  const area = city.areas[0]?.name ?? city.name;
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
@@ -92,15 +102,20 @@ export default function Home() {
         contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + space[4], paddingBottom: bottom }}
       >
         <Animated.View entering={enter.rise(0, 80)} style={styles.intro}>
-          <View style={styles.meta}>
+          <PressableScale haptic="select" scaleTo={0.97} onPress={() => setSheet(true)} style={styles.meta} accessibilityLabel={`${city.name}. Change destination`}>
             <Icon name="pin" size={14} color={t.c.textSecondary} />
             <Text variant="label" tone="secondary">
-              {area} · {localClock(city, now)} · {city.temperature}°C
+              {city.name} · {localClock(city, now)} · {city.temperature}°C
             </Text>
-          </View>
+            <Icon name="chevronDown" size={14} color={t.c.textSecondary} />
+          </PressableScale>
           <Text variant="displayL" accessibilityRole="header">
             What&apos;s happening today?
           </Text>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(1, 80)} style={styles.liveStrip}>
+          <LiveStrip />
         </Animated.View>
 
         <Animated.View entering={enter.rise(1, 80)} style={styles.filters}>
@@ -190,6 +205,7 @@ const styles = StyleSheet.create({
   intro: { paddingHorizontal: space.gutter, gap: 10 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   filters: { marginTop: space[6] },
+  liveStrip: { marginTop: space[6] },
   block: { paddingHorizontal: space.gutter, marginTop: space[6] },
   empty: {
     height: 160,

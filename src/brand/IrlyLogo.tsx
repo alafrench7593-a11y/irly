@@ -6,7 +6,10 @@ import { IrlyMark, type MarkState } from './IrlyMark';
 
 type WordmarkProps = { size?: number; color?: string };
 
-/** "IRLY" set in Manrope ExtraBold with open tracking. */
+/**
+ * The IRLY wordmark: four capitals, ExtraBold, tight tracking, set as one
+ * compact block that reads at 16 px in a navbar and at 120 px on a splash.
+ */
 export const IrlyWordmark = memo(function IrlyWordmark({ size = 18, color }: WordmarkProps) {
   const t = useTheme();
   return (
@@ -15,10 +18,9 @@ export const IrlyWordmark = memo(function IrlyWordmark({ size = 18, color }: Wor
       style={{
         fontFamily: font.heavy,
         fontSize: size,
-        lineHeight: size * 1.15,
-        letterSpacing: size * 0.16,
+        lineHeight: size * 1.1,
+        letterSpacing: -size * 0.03,
         color: color ?? t.c.text,
-        marginRight: -size * 0.16,
       }}
     >
       IRLY

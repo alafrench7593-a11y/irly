@@ -48,13 +48,13 @@ export default function Interests() {
   return (
     <StepShell
       step={1}
-      total={2}
+      total={4}
       overline={`IRLY ${city.name}`}
       title="What do you love?"
       subtitle="Three or more picks and IRLY can start introducing you to people and plans."
       cta={count >= 3 ? `Build my ${city.name}` : `Pick ${3 - count} more`}
       canContinue={count >= 3}
-      onContinue={() => router.push('/onboarding/ready')}
+      onContinue={() => router.push('/onboarding/profile')}
     >
       <Animated.View entering={enter.rise(1, 60)} style={styles.block}>
         <Text variant="overline" color="rgba(255,255,255,0.55)">

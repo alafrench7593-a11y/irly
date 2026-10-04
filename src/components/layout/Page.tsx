@@ -18,10 +18,12 @@ type Props = {
   overlay?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
   bottomInset?: number;
+  /** Tab roots have no back button. */
+  back?: boolean;
 };
 
 /** Standard stack page: large editorial title that hands over to a compact header on scroll. */
-export function Page({ title, overline, subtitle, right, children, overlay, contentStyle, bottomInset = 40 }: Props) {
+export function Page({ title, overline, subtitle, right, children, overlay, contentStyle, bottomInset = 40, back = true }: Props) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
@@ -54,7 +56,7 @@ export function Page({ title, overline, subtitle, right, children, overlay, cont
         </Animated.View>
         {children}
       </Animated.ScrollView>
-      <PageHeader title={title} scrollY={scrollY} right={right} />
+      <PageHeader title={title} scrollY={scrollY} right={right} back={back} />
       {overlay}
     </View>
   );

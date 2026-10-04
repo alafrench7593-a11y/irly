@@ -2,12 +2,13 @@ import type { IconName } from '@/components/ui/Icon';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
 import type { City, CityContent, MapPoint } from '@/data/types';
 import type { HeroKind } from '@/features/hero/heroStore';
+import type { Live } from '@/features/live/liveStore';
 import { formatCount } from '@/lib/format';
 import { planDate, whenLabel } from '@/lib/time';
 import { activityColor, eventColor, placeColor } from '@/theme/categories';
 import { category, status } from '@/theme/tokens';
 
-export type MarkerType = 'person' | 'activity' | 'event' | 'group' | 'place';
+export type MarkerType = 'person' | 'activity' | 'event' | 'group' | 'place' | 'live';
 
 export type MapMarkerData = {
   id: string;
@@ -42,6 +43,7 @@ export type Placed = { kind: 'marker'; m: MapMarkerData } | { kind: 'cluster'; c
 export const ZOOM = { neighbourhood: 1.0, street: 1.45 } as const;
 
 const MIN_ZOOM: Record<MarkerType, number> = {
+  live: 0,
   activity: 0,
   event: 0,
   group: ZOOM.neighbourhood,
@@ -65,9 +67,25 @@ export function jitter(p: MapPoint, id: string, spread = 0.045): MapPoint {
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-export function buildMarkers(city: City, content: CityContent): MapMarkerData[] {
+export function buildMarkers(city: City, content: CityContent, lives: Live[] = []): MapMarkerData[] {
   const pt = (areaId: string) => (city.areas.find((a) => a.id === areaId) ?? city.areas[0]).point;
   const list: MapMarkerData[] = [];
+  lives.forEach((l) => {
+    const p = l.authorId === 'me' ? undefined : content.people.find((x) => x.id === l.authorId);
+    list.push({
+      id: l.id,
+      type: 'live',
+      // A live is placed at its neighbourhood, never at an address.
+      point: jitter(pt(l.areaId), l.id, 0.03),
+      title: p ? `${p.name} is live` : 'You are live',
+      subtitle: `${l.place} · now`,
+      icon: 'zap',
+      color: status.live,
+      personId: p?.id,
+      body: l.text,
+      live: true,
+    });
+  });
   content.people.forEach((p) =>
     list.push({
       id: p.id,

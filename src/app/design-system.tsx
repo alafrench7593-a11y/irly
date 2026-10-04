@@ -61,7 +61,7 @@ export default function DesignSystem() {
   return (
     <Page overline="IRLY 3.0" title="Design System" subtitle="Black and white. Colour only for categories, statuses and actions. Motion that links two states, never decoration.">
       <Block title="Brand · Common Ground" note="Two rings, two lives; the lens is where they meet. The mark has four motion states.">
-        <View style={[styles.brandCard, { backgroundColor: '#000000' }]}>
+        <View style={[styles.brandCard, { backgroundColor: '#0A0A0A' }]}>
           <IrlyMark size={96} state={mark} lensColor={palettes.night.brand} />
           <IrlyWordmark size={26} color="#FFFFFF" />
         </View>
@@ -155,7 +155,7 @@ export default function DesignSystem() {
         </View>
       </Block>
 
-      <Block title="Surfaces" note="Grey steps on black. Glass (#121212 at 72 %, blur, white hairline) is reserved for chrome floating over content: tab bar, headers, sheets, map controls.">
+      <Block title="Surfaces" note="White cards on off-white with soft shadows. Glass (white at 72 %, blur, bright hairline) is reserved for chrome floating over content: tab bar, headers, sheets, map controls.">
         <View style={styles.wrap}>
           <View style={[styles.surface, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
             <Text variant="label">Surface</Text>

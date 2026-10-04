@@ -5,15 +5,15 @@ import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedStyle,
-  useDerivedValue,
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IrlyLogo } from '@/brand/IrlyLogo';
+import { IrlyWordmark } from '@/brand/IrlyLogo';
+import { useLiveCount } from '@/features/live/liveStore';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { IconButton } from '@/components/ui/Controls';
+import { IconButton, LiveDot } from '@/components/ui/Controls';
 import { CITIES, DESTINATIONS } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
 import { PressableScale } from '@/motion/PressableScale';
@@ -84,50 +84,25 @@ export const DestinationPill = memo(function DestinationPill({ onPress, onDark, 
   );
 });
 
-/** Round header button that reads on a photo and on the page. */
-function HeaderButton({ icon, label, onPress, badge, solid }: { icon: 'message'; label: string; onPress: () => void; badge?: number; solid: SharedValue<number> }) {
-  const t = useTheme();
-  const { solidStyle, overStyle } = useCrossfade(solid);
-  return (
-    <PressableScale onPress={onPress} scaleTo={0.9} accessibilityLabel={label} haptic="select" hitSlop={6}>
-      <View style={styles.headerButton}>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.headerButtonBg, { backgroundColor: t.c.raised, borderColor: t.c.line }, solidStyle]} />
-        <Animated.View style={[StyleSheet.absoluteFill, overStyle]}>
-          <Glass dark style={[StyleSheet.absoluteFill, styles.round]} />
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.centered, solidStyle]}>
-          <Icon name={icon} size={18} color={t.c.text} />
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.centered, overStyle]}>
-          <Icon name={icon} size={18} color="#FFFFFF" />
-        </Animated.View>
-      </View>
-      {badge ? (
-        <View style={[styles.centered, styles.badge, { backgroundColor: t.c.live, borderColor: t.c.bg }]}>
-          <Text variant="caption" color="#FFFFFF" style={{ fontSize: 10, lineHeight: 12 }}>
-            {badge > 9 ? '9+' : badge}
-          </Text>
-        </View>
-      ) : null}
-    </PressableScale>
-  );
-}
-
 type HomeHeaderProps = {
   scrollY: SharedValue<number>;
-  onDestination: () => void;
-  /** Scroll offset where the cover photo has gone and the header turns solid. */
+  /** Scroll offset where the header turns into glass. */
   solidAt?: number;
+  /** Kept for older call sites. */
+  onDestination?: () => void;
 };
 
-export function HomeHeader({ scrollY, onDestination, solidAt = 60 }: HomeHeaderProps) {
+/**
+ * Home header: IRLY on the left, IRL (everything posted live, right now)
+ * in the centre, Discover (search) and notifications on the right. It sits
+ * on the page and turns into glass as content scrolls under it.
+ */
+export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const unread = useUnread();
-  const solid = useDerivedValue(() => interpolate(scrollY.value, [solidAt - 56, solidAt], [0, 1], Extrapolation.CLAMP));
-  const bg = useAnimatedStyle(() => ({ opacity: solid.value }));
-  const { solidStyle, overStyle } = useCrossfade(solid);
+  const lives = useLiveCount();
+  const bg = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.value, [solidAt - 24, solidAt], [0, 1], Extrapolation.CLAMP) }));
   return (
     <View style={[styles.header, { paddingTop: insets.top, height: insets.top + layout.headerHeight + 8 }]}>
       <Animated.View style={[StyleSheet.absoluteFill, bg]} pointerEvents="none">
@@ -135,17 +110,30 @@ export function HomeHeader({ scrollY, onDestination, solidAt = 60 }: HomeHeaderP
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
       </Animated.View>
       <View style={styles.row}>
-        <View>
-          <Animated.View style={solidStyle}>
-            <IrlyLogo size={17} />
-          </Animated.View>
-          <Animated.View style={[StyleSheet.absoluteFill, overStyle]} pointerEvents="none">
-            <IrlyLogo size={17} color="#FFFFFF" />
-          </Animated.View>
+        <IrlyWordmark size={24} />
+        <View style={styles.irlWrap} pointerEvents="box-none">
+        <PressableScale
+          onPress={() => router.push('/live')}
+          haptic="select"
+          scaleTo={0.94}
+          accessibilityLabel={`IRL: ${lives} posted live around you`}
+        >
+          <View style={[styles.irl, { backgroundColor: t.c.brand }]}>
+            <LiveDot size={7} color={t.c.live} />
+            <Text variant="label" color={t.c.onBrand} style={{ letterSpacing: 1 }}>
+              IRL
+            </Text>
+            {lives ? (
+              <Text variant="caption" color="rgba(255,255,255,0.7)">
+                {lives}
+              </Text>
+            ) : null}
+          </View>
+        </PressableScale>
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <DestinationPill onPress={onDestination} solid={solid} />
-          <HeaderButton icon="message" label="Messages" badge={unread} onPress={() => router.push('/messages')} solid={solid} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <IconButton icon="search" label="Discover" onPress={() => router.push('/discover')} />
+          <IconButton icon="bell" label="Notifications" badge={2} onPress={() => router.push('/notifications')} />
         </View>
       </View>
     </View>
@@ -158,10 +146,12 @@ type PageHeaderProps = {
   right?: ReactNode;
   /** Header sits on a photo: white controls until the page scrolls. */
   overImage?: boolean;
+  /** Tab roots have no back button. */
+  back?: boolean;
 };
 
 /** Stack page header: back button, title that appears once the large title scrolls away. */
-export function PageHeader({ title, scrollY, right }: PageHeaderProps) {
+export function PageHeader({ title, scrollY, right, back = true }: PageHeaderProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -179,11 +169,15 @@ export function PageHeader({ title, scrollY, right }: PageHeaderProps) {
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
       </Animated.View>
       <View style={styles.row}>
-        <IconButton
-          icon="chevronLeft"
-          label="Back"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-        />
+        {back ? (
+          <IconButton
+            icon="chevronLeft"
+            label="Back"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          />
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
         <Animated.View style={[styles.title, titleStyle]} pointerEvents="none">
           <Text variant="titleS" numberOfLines={1}>
             {title}
@@ -229,4 +223,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   title: { position: 'absolute', left: 80, right: 80, alignItems: 'center' },
+  irlWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  irl: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 14, borderRadius: radius.pill },
 });

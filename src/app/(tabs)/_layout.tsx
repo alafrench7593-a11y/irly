@@ -14,9 +14,11 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
       <Tabs.Screen name="map" options={{ title: 'Map' }} />
+      <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      {/* Discover hub: opened from the Home header (search), not a tab. */}
+      <Tabs.Screen name="discover" options={{ title: 'Discover', href: null }} />
       {/* Real-life plans: reached from Home and Discover, no longer a tab. */}
       <Tabs.Screen name="social" options={{ title: 'Plans', href: null }} />
     </Tabs>

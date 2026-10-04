@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { initials } from '@/lib/format';
@@ -17,6 +18,8 @@ type Props = {
   verified?: boolean;
   /** Draws a ring in the background colour, for stacks and overlaps. */
   ring?: boolean;
+  /** A real photo (member's profile picture). */
+  photo?: string;
 };
 
 /**
@@ -25,7 +28,7 @@ type Props = {
  * photos plug into the same component later; until then nobody is
  * represented by a stranger's face.
  */
-export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring }: Props) {
+export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring, photo }: Props) {
   const t = useTheme();
   const ringW = ring ? Math.max(2, size * 0.06) : 0;
   return (
@@ -40,14 +43,15 @@ export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verif
           borderColor: t.c.bg,
         }}
       >
-        <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: hsl(hue, 4, 15) }]}>
+        <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: hsl(hue, 10, 89) }]}>
           <Text
             allowFontScaling={false}
-            style={{ fontFamily: font.heavy, fontSize: size * 0.36, color: '#FFFFFF', letterSpacing: -0.3 }}
+            style={{ fontFamily: font.heavy, fontSize: size * 0.36, color: '#3A3A3A', letterSpacing: -0.3 }}
           >
             {initials(name)}
           </Text>
         </View>
+        {photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
       </View>
       {online ? (
         <View

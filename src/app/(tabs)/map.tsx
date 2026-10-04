@@ -31,6 +31,7 @@ import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { MapArt } from '@/features/map/MapArt';
 import { ClusterView, MarkerView, Projected, TILT, type Camera } from '@/features/map/MapMarkers';
 import { MapSheet, type Snap } from '@/features/map/MapSheet';
+import { useLives } from '@/features/live/liveStore';
 import { buildMarkers, placeMarkers, ZOOM, type MapMarkerData, type MarkerType } from '@/features/map/markers';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -44,6 +45,7 @@ type Layer = 'all' | MarkerType;
 
 const LAYERS: { id: Layer; label: string; icon: IconName }[] = [
   { id: 'all', label: 'All', icon: 'layers' },
+  { id: 'live', label: 'Live', icon: 'zap' },
   { id: 'activity', label: 'Activities', icon: 'activity' },
   { id: 'event', label: 'Events', icon: 'ticket' },
   { id: 'person', label: 'People', icon: 'users' },
@@ -112,7 +114,8 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const sheetBottom = tabSpace - 28;
   const sheetArea = H - sheetBottom;
 
-  const all = useMemo(() => buildMarkers(city, content), [city, content]);
+  const lives = useLives();
+  const all = useMemo(() => buildMarkers(city, content, lives), [city, content, lives]);
   const layerMarkers = useMemo(() => (layer === 'all' ? all : all.filter((m) => m.type === layer)), [all, layer]);
   // A chosen layer shows all its markers whatever the zoom.
   const placed = useMemo(
@@ -275,7 +278,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
 
       {/* Fog at the horizon: in 3D the far edge of the map dissolves into black. */}
       <Animated.View style={[styles.fog, fogStyle]} pointerEvents="none">
-        <LinearGradient colors={['#000000', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0)']} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={['#F6F6F4', 'rgba(246,246,244,0.85)', 'rgba(246,246,244,0)']} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
       </Animated.View>
 
       {/* Floating UI: arrives after the map, stays put in 2D and 3D. */}
@@ -353,7 +356,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
       {!selected ? (
         <View style={[styles.credit, { bottom: tabSpace - 18 }]} pointerEvents="none">
           <Text variant="caption" tone="tertiary" style={{ fontSize: 10 }}>
-            IRLY Night map
+            IRLY map
           </Text>
         </View>
       ) : null}
@@ -445,7 +448,7 @@ const AreaLabel = memo(function AreaLabel({ name, x, y, zoom }: { name: string; 
   const style = useAnimatedStyle(() => ({ transform: [{ scale: 1 / zoom.get() }], opacity: zoom.get() < 0.9 ? 0 : 1 }));
   return (
     <Animated.View style={[styles.areaLabel, { left: x - 70, top: y + 18 }, style]} pointerEvents="none">
-      <Text variant="overline" color="#8A8A8A" align="center" style={{ fontSize: 9.5 }}>
+      <Text variant="overline" color="#7A7A7A" align="center" style={{ fontSize: 9.5 }}>
         {name}
       </Text>
     </Animated.View>

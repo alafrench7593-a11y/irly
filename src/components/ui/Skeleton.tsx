@@ -22,7 +22,7 @@ export const Skeleton = memo(function Skeleton({ width = '100%', height, radius 
     <View style={[styles.root, { width, height, borderRadius: radius }, style]}>
       <Animated.View style={[StyleSheet.absoluteFill, band]}>
         <LinearGradient
-          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0)']}
+          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.7)', 'rgba(255,255,255,0)']}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}
@@ -47,7 +47,7 @@ export function HappeningRowSkeleton() {
 }
 
 const styles = StyleSheet.create({
-  root: { backgroundColor: '#1A1A1A', overflow: 'hidden' },
+  root: { backgroundColor: '#EDEDEA', overflow: 'hidden' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: radii.xl,
     borderWidth: StyleSheet.hairlineWidth * 2,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: '#0D0D0D',
+    borderColor: 'rgba(10,10,10,0.07)',
+    backgroundColor: '#FFFFFF',
   },
 });

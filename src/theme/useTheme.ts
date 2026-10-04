@@ -16,19 +16,20 @@ export type Theme = {
 };
 
 /**
- * v3 has a single black theme. The `appearance` setting and the city's
- * local time no longer change the palette; the signature is kept so the
- * call sites stay unchanged.
+ * v4: the app is light; onboarding stays immersive. The `appearance`
+ * setting and the city's local time no longer change the palette.
  */
-export function resolveMode(_appearance: 'auto' | 'day' | 'night', _cityId: CityId | null): Mode {
-  return 'night';
+export function resolveMode(_appearance: 'auto' | 'day' | 'night', cityId: CityId | null): Mode {
+  // Onboarding is immersive (photos, white type, glass); the app is light.
+  return cityId ? 'day' : 'night';
 }
 
 export function buildTheme(mode: Mode, lightId: LightId): Theme {
   // The destination keeps its sky (onboarding, portal transition) but no
   // longer tints the interface: accents are white, colour is reserved for
   // categories and statuses.
-  const light: Light = { ...lights[lightId], accent: '#FFFFFF', accentDay: '#FFFFFF', accentSoft: 'rgba(255,255,255,0.10)' };
+  const ink = mode === 'day' ? '#0A0A0A' : '#FFFFFF';
+  const light: Light = { ...lights[lightId], accent: ink, accentDay: ink, accentSoft: mode === 'day' ? 'rgba(10,10,10,0.06)' : 'rgba(255,255,255,0.12)' };
   return {
     mode,
     c: palettes[mode],

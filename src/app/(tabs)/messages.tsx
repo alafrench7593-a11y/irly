@@ -2,6 +2,10 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
+import { useTabBarSpace } from '@/components/navigation/TabBar';
+import { Chip } from '@/components/ui/Controls';
+import { Rail } from '@/components/cards/Blocks';
+import { useState } from 'react';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -24,13 +28,38 @@ const KIND_ICON: Record<Conversation['kind'], IconName> = {
   service: 'shield',
 };
 
+type Filter = 'all' | 'direct' | 'group' | 'event' | 'community';
+
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'direct', label: 'Private' },
+  { id: 'group', label: 'Sessions' },
+  { id: 'community', label: 'Communities' },
+  { id: 'event', label: 'Events' },
+];
+
+/**
+ * Messages tab: private chats, session chats (every plan you join opens
+ * one), community and event chats, in one list.
+ */
 export default function Messages() {
   const cityId = useCityId();
   const city = CITIES[cityId];
+  const bottom = useTabBarSpace();
   const connections = useStore((s) => s.connections);
-  const conversations = cityConversations(cityId, connections);
+  const [filter, setFilter] = useState<Filter>('all');
+  const conversations = cityConversations(cityId, connections).filter(
+    (c) => filter === 'all' || c.kind === filter || (filter === 'direct' && c.kind === 'service'),
+  );
   return (
-    <Page overline={city.name} title="Messages" subtitle="Every plan you join opens a group chat. Every connection, a conversation.">
+    <Page back={false} overline={city.name} title="Messages" subtitle="Every session you join opens a group chat." bottomInset={bottom}>
+      <View style={{ marginBottom: space[5] }}>
+        <Rail gap={8}>
+          {FILTERS.map((f) => (
+            <Chip key={f.id} size="sm" label={f.label} selected={filter === f.id} onPress={() => setFilter(f.id)} />
+          ))}
+        </Rail>
+      </View>
       <View style={{ paddingHorizontal: space.gutter, gap: 8 }}>
         {conversations.map((c, i) => (
           <Animated.View key={c.id} entering={enter.rise(i, 40)}>

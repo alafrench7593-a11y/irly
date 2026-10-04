@@ -9,7 +9,7 @@ import { useTheme } from '@/theme/useTheme';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'glass' | 'inverse' | 'done';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'glass' | 'inverse' | 'done' | 'danger';
 type Size = 'lg' | 'md' | 'sm';
 
 type Props = {
@@ -66,6 +66,7 @@ export const Button = memo(function Button({
     glass: { bg: 'rgba(255,255,255,0.16)', fg: '#FFFFFF', border: 'rgba(255,255,255,0.22)' },
     inverse: { bg: t.c.text, fg: t.c.bg },
     done: { bg: t.c.positiveSoft, fg: t.c.positive, border: t.c.positive },
+    danger: { bg: t.c.critical, fg: '#FFFFFF' },
   };
   const p = palette[variant];
   const h = HEIGHT[size];

@@ -7,6 +7,8 @@ import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { Text } from '@/components/ui/Text';
+import { useUnread } from './Headers';
 import { openCreate, useCreateStore } from '@/features/create/createStore';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -17,13 +19,13 @@ import { useTheme } from '@/theme/useTheme';
 
 const TABS: Record<string, { label: string; icon: IconName }> = {
   index: { label: 'Home', icon: 'home' },
-  discover: { label: 'Discover', icon: 'compass' },
   map: { label: 'Map', icon: 'map' },
+  messages: { label: 'Messages', icon: 'message' },
   profile: { label: 'Profile', icon: 'user' },
 };
 
 /** Slot order in the bar. `create` is not a screen: it opens the composer. */
-const SLOTS = ['index', 'discover', 'create', 'map', 'profile'] as const;
+const SLOTS = ['index', 'map', 'create', 'messages', 'profile'] as const;
 
 const SIDE = 20;
 
@@ -41,12 +43,14 @@ export function useTabBarSpace(): number {
  * is open, so the same control closes what it opened.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
+  const t = useTheme();
   const frame = useFrame();
   const insets = useSafeAreaInsets();
   const barW = frame.width - SIDE * 2;
   const itemW = barW / SLOTS.length;
   const activeName = state.routes[state.index]?.name;
   const activeSlot = Math.max(0, SLOTS.indexOf(activeName as (typeof SLOTS)[number]));
+  const unread = useUnread();
   const x = useSharedValue(activeSlot * itemW);
 
   useEffect(() => {
@@ -58,7 +62,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View style={[styles.wrap, { bottom, left: SIDE, width: barW }]}>
-      <Glass style={styles.bar} intensity={blur.strong}>
+      <Glass style={[styles.bar, { boxShadow: t.shadow.float }]} intensity={blur.strong}>
         <Animated.View style={[styles.indicator, { left: (itemW - 56) / 2 }, indicator]} />
         {SLOTS.map((slot, i) => {
           if (slot === 'create') {
@@ -74,6 +78,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               label={meta.label}
               icon={meta.icon}
               isProfile={slot === 'profile'}
+              badge={slot === 'messages' ? unread : 0}
               focused={focused}
               width={itemW}
               onPress={() => {
@@ -98,6 +103,7 @@ const TabItem = memo(function TabItem({
   width,
   onPress,
   isProfile,
+  badge,
 }: {
   label: string;
   icon: IconName;
@@ -105,9 +111,11 @@ const TabItem = memo(function TabItem({
   width: number;
   onPress: () => void;
   isProfile: boolean;
+  badge: number;
 }) {
   const t = useTheme();
   const name = useStore((s) => s.profile.name);
+  const photo = useStore((s) => s.profile.photoUri);
   const pop = useSharedValue(focused ? scale.selected : 1);
   useEffect(() => {
     pop.set(focused ? withSequence(withTiming(scale.selected + 0.06, { duration: 110 }), withSpring(scale.selected, spring.strong)) : withSpring(1, spring.medium));
@@ -127,11 +135,18 @@ const TabItem = memo(function TabItem({
       <Animated.View style={iconStyle}>
         {isProfile ? (
           <View style={{ borderRadius: 14, borderWidth: 1.5, borderColor: focused ? t.c.text : 'transparent', padding: 1 }}>
-            <Avatar name={name || 'You'} hue={0} size={22} />
+            <Avatar name={name || 'You'} hue={0} size={22} photo={photo} />
           </View>
         ) : (
           <Icon name={icon} size={22} color={color} strokeWidth={focused ? 2.1 : 1.75} />
         )}
+        {badge ? (
+          <View style={[styles.badge, { backgroundColor: t.c.live, borderColor: t.c.surface }]}>
+            <Text variant="caption" color="#FFFFFF" style={{ fontSize: 10, lineHeight: 12 }}>
+              {badge > 9 ? '9+' : badge}
+            </Text>
+          </View>
+        ) : null}
       </Animated.View>
     </PressableScale>
   );
@@ -179,7 +194,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  indicator: { position: 'absolute', top: 10, width: 56, height: 48, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.10)' },
+  indicator: { position: 'absolute', top: 10, width: 56, height: 48, borderRadius: radius.pill, backgroundColor: 'rgba(10,10,10,0.07)' },
   item: { height: '100%', alignItems: 'center', justifyContent: 'center' },
+  badge: { position: 'absolute', top: -6, right: -10, minWidth: 18, height: 18, borderRadius: 9, borderWidth: 2, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
   create: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },
 });

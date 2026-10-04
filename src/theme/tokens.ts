@@ -43,64 +43,96 @@ export type Palette = {
 };
 
 /**
- * IRLY v3 is black and white. Black, white and four greys carry the whole
- * interface; colour only appears on categories, statuses and actions.
- * On black, shadows are invisible: depth comes from grey steps, hairlines
- * and glass. There is a single theme; `day` is kept as an alias so older
- * call sites keep compiling.
+ * IRLY v4 is light. Off-white ground, white cards, translucent glass over
+ * photos and the map, and black for the logo, strong titles and the main
+ * action. Colour only on categories, statuses and actions. `night` is kept
+ * is the immersive palette used before onboarding is done (full-bleed
+ * photos with white text and glass).
+ */
+const light: Palette = {
+  bg: '#F6F6F4',
+  surface: '#FFFFFF',
+  raised: '#FFFFFF',
+  overlay: '#EDEDEA',
+  glass: 'rgba(255,255,255,0.72)',
+  line: 'rgba(10,10,10,0.07)',
+  lineStrong: 'rgba(10,10,10,0.13)',
+  text: '#0A0A0A',
+  textSecondary: '#5E5E5E',
+  textTertiary: '#8E8E8E',
+  onDark: '#FFFFFF',
+  brand: '#0A0A0A',
+  brandPressed: '#262626',
+  brandSoft: 'rgba(10,10,10,0.06)',
+  onBrand: '#FFFFFF',
+  live: '#FF3B30',
+  liveSoft: 'rgba(255,59,48,0.12)',
+  positive: '#1F9D45',
+  positiveSoft: 'rgba(52,199,89,0.14)',
+  caution: '#D97A00',
+  critical: '#E5352B',
+  scrim: 'rgba(10,10,10,0.32)',
+  shadow: 'rgba(10,10,10,0.12)',
+};
+/**
+ * Immersive palette: onboarding and other photo-led screens, where the
+ * interface floats over a full-bleed photograph (white text, glass).
  */
 const night: Palette = {
   bg: '#000000',
   surface: '#0D0D0D',
   raised: '#1A1A1A',
   overlay: '#262626',
-  glass: 'rgba(18,18,18,0.72)',
-  line: 'rgba(255,255,255,0.08)',
-  lineStrong: 'rgba(255,255,255,0.16)',
+  glass: 'rgba(255,255,255,0.12)',
+  line: 'rgba(255,255,255,0.10)',
+  lineStrong: 'rgba(255,255,255,0.18)',
   text: '#FFFFFF',
-  textSecondary: '#A3A3A3',
-  textTertiary: '#6B6B6B',
+  textSecondary: 'rgba(255,255,255,0.72)',
+  textTertiary: 'rgba(255,255,255,0.5)',
   onDark: '#FFFFFF',
   brand: '#FFFFFF',
   brandPressed: '#E6E6E6',
-  brandSoft: 'rgba(255,255,255,0.10)',
-  onBrand: '#000000',
+  brandSoft: 'rgba(255,255,255,0.14)',
+  onBrand: '#0A0A0A',
   live: '#FF453A',
-  liveSoft: 'rgba(255,69,58,0.16)',
+  liveSoft: 'rgba(255,69,58,0.18)',
   positive: '#32D74B',
-  positiveSoft: 'rgba(50,215,75,0.14)',
+  positiveSoft: 'rgba(50,215,75,0.16)',
   caution: '#FF9F0A',
   critical: '#FF453A',
-  scrim: 'rgba(0,0,0,0.64)',
-  shadow: 'rgba(0,0,0,0.6)',
+  scrim: 'rgba(0,0,0,0.6)',
+  shadow: 'rgba(0,0,0,0.5)',
 };
 
-export const palettes: Record<Mode, Palette> = { night, day: night };
+export const palettes: Record<Mode, Palette> = { night, day: light };
 
 /**
  * Category and status colours. Used on an icon, a dot or a halo, never as
  * a background fill.
  */
 export const category = {
-  sport: '#32D74B',
-  food: '#FF9F0A',
-  coffee: '#C8A27A',
-  padel: '#64D2FF',
-  beach: '#FFD60A',
-  nightlife: '#BF5AF2',
-  travel: '#0A84FF',
-  wellness: '#66D4CF',
-  activities: '#FF6482',
-  dogwalk: '#D4A373',
-  business: '#A3A3A3',
-  culture: '#FF6482',
+  sport: '#34C759',
+  food: '#FF9500',
+  coffee: '#A2845E',
+  padel: '#32ADE6',
+  beach: '#F2B600',
+  nightlife: '#AF52DE',
+  travel: '#007AFF',
+  wellness: '#30B0C7',
+  activities: '#FF2D55',
+  dogwalk: '#C69C6D',
+  business: '#5E5E5E',
+  culture: '#FF2D55',
+  networking: '#5856D6',
+  shopping: '#FF6482',
+  events: '#FF3B30',
 } as const;
 export type CategoryId = keyof typeof category;
 
 export const status = {
-  live: '#FF453A',
-  availableNow: '#32D74B',
-  availableLater: '#FF9F0A',
+  live: '#FF3B30',
+  availableNow: '#34C759',
+  availableLater: '#FF9500',
 } as const;
 
 /** 4-pt spacing scale. `gutter` is the screen side padding. */
@@ -192,14 +224,13 @@ export const type: Record<TypeVariant, TypeStyle> = {
 };
 
 /**
- * Elevation. Shadows do not read on black, so `card` is empty and `float`
- * is only a soft separation for glass over the map. `glow` is gone with
- * the brand violet.
+ * Elevation. On a light ground, soft wide shadows give floating surfaces
+ * (cards, glass bars, sheets) a physical presence.
  */
 const shadows = {
-  card: '0px 0px 0px rgba(0, 0, 0, 0)',
-  float: '0px 16px 40px rgba(0, 0, 0, 0.55)',
-  glow: '0px 0px 0px rgba(0, 0, 0, 0)',
+  card: '0px 8px 24px rgba(10, 10, 10, 0.06)',
+  float: '0px 18px 48px rgba(10, 10, 10, 0.14)',
+  glow: '0px 10px 30px rgba(10, 10, 10, 0.18)',
 };
 export const elevation = { night: shadows, day: shadows } as const;
 
