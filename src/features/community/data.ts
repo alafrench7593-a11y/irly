@@ -288,7 +288,7 @@ export function useCommunityActivities(communityId: string) {
     if (!uid || !supabase) return [];
     const { data } = await supabase
       .from('activities')
-      .select('id, title, starts_at, area_id, activity_participants(status)')
+      .select('id, title, starts_at, area_id, going')
       .eq('community_id', communityId)
       .is('cancelled_at', null)
       .gte('starts_at', new Date(Date.now() - 2 * 3600_000).toISOString())
@@ -299,7 +299,7 @@ export function useCommunityActivities(communityId: string) {
       title: a.title as string,
       startsAt: Date.parse(a.starts_at as string),
       areaId: a.area_id as string,
-      going: ((a.activity_participants ?? []) as { status: string }[]).filter((p) => p.status === 'going').length,
+      going: (a.going as number | null) ?? 0,
     }));
   }, [communityId, uid]);
   useEffect(() => {

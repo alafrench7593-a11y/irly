@@ -490,6 +490,16 @@ select pg_temp.expect_denied($$update public.activities set girl_only = false wh
 select pg_temp.expect_denied($$update public.activities set capacity = 0 where title = 'Dina girls run'$$, 'capacity cannot go below the people going');
 select pg_temp.expect_denied($$update public.profiles set birthdate = '2000-01-01' where id = auth.uid()$$, 'birthdate is fixed after signup');
 
+-- ───── activity_visibility ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+insert into public.safety_settings (user_id, activity_visibility) values (auth.uid(), 'nobody')
+  on conflict (user_id) do update set activity_visibility = 'nobody';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(not exists (select 1 from public.activity_participants x join public.activities a on a.id = x.activity_id
+  where a.title = 'Carl public run' and x.user_id = '00000000-0000-0000-0000-00000000000d'), 'a member who hides her activities is not listed as going');
+select pg_temp.check((select going from public.activity_detail((select id from public.activities where title = 'Carl public run'))) >= 1, 'the going count stays exact');
+select pg_temp.check((select public.going(a) from public.activities a where a.title = 'Carl public run') >= 1, 'the computed going column stays exact');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

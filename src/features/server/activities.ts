@@ -85,7 +85,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
     if (!supabase || !uid) return [];
     const { data } = await supabase
       .from('activities')
-      .select('id, title, category_id, sub_id, area_id, place_name, starts_at, capacity, price_minor, currency, creator_id, activity_participants(user_id, status)')
+      .select('id, title, category_id, sub_id, area_id, place_name, starts_at, capacity, price_minor, currency, creator_id, going, activity_participants(user_id, status)')
       .eq('city_id', cityId)
       .is('cancelled_at', null)
       .gte('starts_at', new Date().toISOString())
@@ -103,7 +103,8 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
           placeName: a.place_name,
           startsAt: Date.parse(a.starts_at),
           capacity: a.capacity,
-          going: parts.filter((p) => p.status === 'going').length,
+          // Exact count (participant rows are filtered by each member's privacy).
+          going: (a.going as number | null) ?? parts.filter((p) => p.status === 'going').length,
           priceMinor: a.price_minor,
           currency: a.currency,
           creatorId: a.creator_id,

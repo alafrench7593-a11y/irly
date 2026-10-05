@@ -181,7 +181,7 @@ The key stays in GitHub; the app only reads the database.
 
 ## Third security pass (migration 1600)
 
-- Safety settings now enforced: `who_can_message` (new direct chats and messages in direct chats; a reply is always allowed once the other person wrote), `irl_visibility` (default audience of a new IRL post), `location_precision` (others never read `profiles.area_id`; `hidden` hides the city; IRL posts drop the venue below `area`). Still not enforced: `activity_visibility` (participant lists).
+- Safety settings now enforced: `who_can_message` (new direct chats and messages in direct chats; a reply is always allowed once the other person wrote), `irl_visibility` (default audience of a new IRL post), `location_precision` (others never read `profiles.area_id`; `hidden` hides the city; IRL posts drop the venue below `area`). `activity_visibility` (migration 1700): participant rows are visible to yourself, the creator, people also going, otherwise per the member's setting; counts stay exact through `private.going_count()` and the computed column `activities.going`.
 - Reports only through `report()`: it checks you can see the target, sets whose content it is, refuses self-reports and duplicates, 10 per hour. Three reports hide content only from accounts older than 7 days, and never after a moderator dismissed the case. Reports survive the reporter's account deletion.
 - A removed comment or post is frozen for its author; removed text is purged from notifications.
 - Activities: girl-only stays girl-only once women joined; capacity never below the people going; the community check applies only when the community changes.
