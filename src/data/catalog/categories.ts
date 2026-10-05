@@ -388,3 +388,53 @@ export const GIRL_CATEGORY: Omit<CatalogCategory, 'id'> & { id: 'girl' } = {
     'Girls beach', 'Girls beauty', 'Girls networking', 'Women entrepreneurs', 'Girls coffee', 'Girls dinner',
   ),
 };
+
+/**
+ * The photo for an activity idea: the closest real photo we have for the
+ * activity itself (padel, yacht, desert, mosque...), else its category's.
+ */
+const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
+  [/padel/i, 'padel'],
+  [/football|soccer/i, 'football'],
+  [/basket/i, 'basketball'],
+  [/tennis|badminton/i, 'tennis'],
+  [/run|marathon|jog/i, 'running'],
+  [/crossfit/i, 'crossfit'],
+  [/gym|fitness|box|mma|kick|martial|wrestl/i, 'gym'],
+  [/cycl|bike/i, 'cycling'],
+  [/swim|snorkel|div/i, 'swimming'],
+  [/volley/i, 'volleyball'],
+  [/yoga|pilates|meditat/i, 'yoga'],
+  [/surf|kite|paddle|sail|water/i, 'surf'],
+  [/kayak|mangrove/i, 'kayak'],
+  [/yacht|boat|cruise|dhow/i, 'yacht'],
+  [/desert|dune|safari|camp/i, 'dunes'],
+  [/hike|hatta|mountain|jebel|wadi|trek/i, 'hikeDesert'],
+  [/waterfall/i, 'waterfall'],
+  [/mosque|abu dhabi|louvre|qasr/i, 'abudhabi'],
+  [/oman|musandam|road trip/i, 'fort'],
+  [/sharjah/i, 'sharjah'],
+  [/fujairah/i, 'fujairah'],
+  [/ras al|rak/i, 'rak'],
+  [/global village|souk|market/i, 'nightMarket'],
+  [/mall|shop|fashion/i, 'dubaiNight'],
+  [/marina|jbr|palm|sunset/i, 'dubaiMarina'],
+  [/beach/i, 'beachSunset'],
+  [/beach club|pool/i, 'beachClub'],
+  [/brunch|breakfast/i, 'brunch'],
+  [/coffee|caf/i, 'coffee'],
+  [/dinner|restaurant|food|sushi|street food|dessert/i, 'dinnerGroup'],
+  [/rooftop|bar|drinks|lounge/i, 'rooftop'],
+  [/club|party|dj|night/i, 'rooftopNeon'],
+  [/gallery|art|museum|paint|exhibit/i, 'gallery'],
+  [/founder|startup|ai\b|e-?com|business|investor|pitch/i, 'founders'],
+  [/cowork|remote|laptop/i, 'coworking'],
+  [/network|meetup|meeting|talk/i, 'meeting'],
+  [/creek|old dubai|heritage|abra/i, 'dubaiCreek'],
+];
+
+export function ideaPhoto(categoryId: CategoryKey, label: string, place?: string): PhotoKey {
+  const text = `${label} ${place ?? ''}`;
+  for (const [re, key] of IDEA_PHOTOS) if (re.test(text)) return key;
+  return CATEGORY_BY_ID[categoryId].photo;
+}

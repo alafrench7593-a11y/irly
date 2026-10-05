@@ -12,7 +12,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
-import { CATEGORY_BY_ID, GIRL_CATEGORY, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
+import { CATEGORY_BY_ID, GIRL_CATEGORY, ideaPhoto, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { INTEREST_CATEGORY, planDisplay, SESSION_CATEGORY } from '@/data/catalog/mapping';
 import { areaName, CITIES } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
@@ -128,6 +128,7 @@ export default function CategoryScreen() {
             <View style={styles.rows}>
               {sub.activities.map((act) => (
                 <View key={act.id} style={[styles.activity, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
+                  <Photo visual={{ photo: ideaPhoto(category.id as CategoryKey, act.label, act.place) }} light={city.light} style={styles.thumb} width={200} recyclingKey={`act-${act.id}`} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text variant="titleS" color={ink}>
                       {act.label}
@@ -250,6 +251,7 @@ const styles = StyleSheet.create({
   chips: { marginTop: space[6] },
   section: { marginTop: space[8] },
   rows: { paddingHorizontal: space.gutter, gap: 10 },
+  thumb: { width: 64, height: 64, borderRadius: radius.lg, overflow: 'hidden' },
   activity: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.xl },
   empty: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: radius.xl, borderWidth: 1, borderStyle: 'dashed' },
   topBar: { position: 'absolute', left: space.gutter },

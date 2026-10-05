@@ -13,7 +13,7 @@ import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { SectionHeader } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { CATEGORIES, CATEGORY_BY_ID } from '@/data/catalog/categories';
+import { CATEGORIES, CATEGORY_BY_ID, ideaPhoto } from '@/data/catalog/categories';
 import { openCreate } from '@/features/create/createStore';
 import { CreateMenu } from '@/features/create/CreateMenu';
 import { planDisplay } from '@/data/catalog/mapping';
@@ -188,9 +188,9 @@ export default function Home() {
               title={sec.category.label}
               action={sec.items.length ? `${sec.items.length}` : undefined}
             />
-            <Rail itemWidth={sec.items.length ? 260 : 210}>
+            <Rail itemWidth={210}>
               {sec.items.map((h) => (
-                <View key={h.id} style={{ width: 260 }}>
+                <View key={h.id} style={{ width: 210 }}>
                   <HighlightCard h={h} height={260} compact />
                 </View>
               ))}
@@ -201,6 +201,7 @@ export default function Home() {
                   place={idea.place}
                   color={sec.category.color}
                   icon={sec.category.icon}
+                  photo={ideaPhoto(sec.category.id, idea.title, idea.place)}
                   onPress={() => openCreate(null, { categoryId: sec.category.id, subId: idea.subId, activityId: idea.activityId })}
                 />
               ))}

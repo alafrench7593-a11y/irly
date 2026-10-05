@@ -343,56 +343,62 @@ export const CategoryCard = memo(function CategoryCard({
 /* ───────── Idea card: something to do, one tap from a session ───────── */
 
 /**
- * A thing you can do in a category ("Dog walk · Kite Beach"). Tapping it
- * opens Create already filled in, so an idea becomes a session in one tap.
+ * A thing you can do in a category ("Dog walk · Kite Beach"), on its photo.
+ * Tapping it opens Create already filled in, so an idea becomes a session
+ * in one tap.
  */
 export const IdeaCard = memo(function IdeaCard({
   title,
   place,
   icon,
   color,
+  photo,
   onPress,
 }: {
   title: string;
   place?: string;
   icon: IconName;
   color: string;
+  photo: PhotoKey;
   onPress: () => void;
 }) {
   const t = useTheme();
   return (
-    <PressableScale
-      haptic="select"
-      onPress={onPress}
-      scaleTo={0.97}
-      style={[ideaStyles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}
-      accessibilityLabel={`${title}. Create a session`}
-    >
-      <View style={[ideaStyles.icon, { backgroundColor: `${color}1F` }]}>
-        <Icon name={icon} size={18} color={color} />
-      </View>
-      <View style={{ gap: 2, flex: 1 }}>
-        <Text variant="titleS" numberOfLines={2}>
-          {title}
-        </Text>
-        {place ? (
-          <Text variant="bodyS" tone="secondary" numberOfLines={1}>
-            {place}
+    <PressableScale haptic="select" onPress={onPress} scaleTo={0.97} style={[ideaStyles.card, { boxShadow: t.shadow.card }]} accessibilityLabel={`${title}. Create a session`}>
+      <Photo visual={{ photo }} light="dubai" scrim="strong" style={[StyleSheet.absoluteFill, ideaStyles.photo]} width={500} recyclingKey={`idea-${title}`}>
+        <View style={ideaStyles.top}>
+          <Glass dark style={ideaStyles.icon}>
+            <Icon name={icon} size={16} color="#FFFFFF" />
+          </Glass>
+        </View>
+        <View style={ideaStyles.bottom}>
+          <View style={[ideaStyles.bar, { backgroundColor: color }]} />
+          <Text variant="titleS" tone="onDark" numberOfLines={2}>
+            {title}
           </Text>
-        ) : null}
-      </View>
-      <View style={[ideaStyles.cta, { backgroundColor: t.c.brand }]}>
-        <Icon name="plus" size={14} color={t.c.onBrand} />
-        <Text variant="label" color={t.c.onBrand}>
-          Create
-        </Text>
-      </View>
+          {place ? (
+            <Text variant="bodyS" color="rgba(255,255,255,0.8)" numberOfLines={1}>
+              {place}
+            </Text>
+          ) : null}
+          <View style={ideaStyles.cta}>
+            <Icon name="plus" size={14} color="#0A0A0A" />
+            <Text variant="label" color="#0A0A0A">
+              Create
+            </Text>
+          </View>
+        </View>
+      </Photo>
     </PressableScale>
   );
 });
 
 const ideaStyles = StyleSheet.create({
-  card: { width: 210, height: 172, borderRadius: radius.xl, padding: 16, gap: 10 },
-  icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  cta: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingHorizontal: 12, height: 30, borderRadius: 15 },
+  card: { width: 210, height: 260, borderRadius: radius.xl },
+  photo: { borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'space-between' },
+  top: { padding: 12, flexDirection: 'row' },
+  icon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  bottom: { padding: 14, gap: 4 },
+  bar: { width: 24, height: 3, borderRadius: 2, marginBottom: 4 },
+  cta: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingHorizontal: 12, height: 30, borderRadius: 15, marginTop: 8, backgroundColor: '#FFFFFF' },
 });
