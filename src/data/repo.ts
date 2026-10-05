@@ -1,4 +1,5 @@
 import { bali } from './content/bali';
+import { GIRL_PEOPLE } from './content/girls';
 import { dubai } from './content/dubai';
 import { regionalContent } from './content/regional';
 import { CITIES } from './destinations';
@@ -71,7 +72,8 @@ function idx(): Index {
   return index;
 }
 
-export const findPerson = (id: string) => idx().people.get(id);
+// IRLY Girl members are looked up too (chat names, avatars after a match).
+export const findPerson = (id: string) => idx().people.get(id) ?? GIRL_PEOPLE.get(id);
 export const findSession = (id: string) => idx().sessions.get(id);
 export const findEvent = (id: string) => idx().events.get(id);
 export const findPlace = (id: string) => idx().places.get(id);

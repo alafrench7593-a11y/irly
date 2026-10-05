@@ -9,6 +9,7 @@ import { CITIES } from '@/data/destinations';
 import { findCommunity, findPerson } from '@/data/repo';
 import { Photo } from '@/components/visual/Photo';
 import type { Conversation } from '@/data/types';
+import { useGirlStore } from '@/features/girl/girlStore';
 import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
@@ -40,7 +41,8 @@ export default function Messages() {
   const connections = useStore((s) => s.connections);
   const memberOf = useStore((s) => s.memberOf);
   const read = useStore((s) => s.read);
-  const all = cityConversations(cityId, connections, memberOf);
+  const matches = useGirlStore((s) => s.matches);
+  const all = cityConversations(cityId, connections, memberOf, matches);
   const communities = all.filter((c) => c.kind === 'community');
   const direct = all.filter((c) => c.kind === 'direct' || c.kind === 'service');
   const groups = all.filter((c) => c.kind === 'group' || c.kind === 'event');

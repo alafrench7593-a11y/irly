@@ -211,7 +211,7 @@ export default function Home() {
 
         {girl ? (
           <Animated.View entering={enter.rise(2, 80)} style={[styles.rows, { marginTop: space[8] }]}>
-            <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/category/girl')} style={[styles.mine, styles.girl]} accessibilityLabel="IRLY Girl">
+            <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/girl')} style={[styles.mine, styles.girl]} accessibilityLabel="IRLY Girl">
               <Icon name="sparkles" size={18} color="#3A2A2A" />
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color="#3A2A2A">

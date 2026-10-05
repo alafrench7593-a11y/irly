@@ -95,6 +95,16 @@ export default function Thread() {
             </Text>
           </View>
           {messages.map((m, i) => {
+            // IRLY's own notes (match intro, conversation starters) sit in the middle.
+            if (m.from === 'irly') {
+              return (
+                <Animated.View key={m.id} entering={FadeInDown.springify(380).dampingRatio(0.8)} style={styles.note}>
+                  <Text variant="bodyS" tone="secondary" align="center">
+                    {m.text}
+                  </Text>
+                </Animated.View>
+              );
+            }
             const mine = m.from === 'me';
             const showName = !mine && conversation.kind !== 'direct' && messages[i - 1]?.from !== m.from;
             return (
@@ -195,6 +205,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   intro: { alignItems: 'center', gap: 6, marginBottom: space[6] },
   bubbleRow: { maxWidth: '80%' },
+  note: { alignSelf: 'center', maxWidth: '85%', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(200,100,122,0.08)' },
   left: { alignSelf: 'flex-start' },
   right: { alignSelf: 'flex-end' },
   bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20 },

@@ -18,6 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppFrame } from '@/components/layout/AppFrame';
 import { ToastHost } from '@/components/ui/Toast';
 import { CreateHost } from '@/features/create/CreateHost';
+import { girl } from '@/features/girl/theme';
 import { DestinationTransition } from '@/features/destination/DestinationTransition';
 import { HeroHost } from '@/features/hero/HeroHost';
 import { useStore } from '@/state/store';
@@ -72,6 +73,10 @@ function App() {
         <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
         <Stack.Screen name="(tabs)" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="match" options={{ animation: 'slide_from_bottom' }} />
+        {/* IRLY Girl: its own universe; the screen fades and GirlIntro morphs. */}
+        <Stack.Screen name="girl/index" options={{ animation: 'fade', contentStyle: { backgroundColor: girl.bg } }} />
+        <Stack.Screen name="girl/onboarding" options={{ animation: 'slide_from_bottom', contentStyle: { backgroundColor: girl.bg } }} />
+        <Stack.Screen name="girl/profile" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
       </Stack>
       <HeroHost />
       <CreateHost />

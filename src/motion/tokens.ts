@@ -70,6 +70,10 @@ export const spring = {
   strong,
   /** Press feedback: quick, barely lively. */
   press: { duration: 260, dampingRatio: 0.72 },
+  /** Directive names: fast = press/snap, standard = travel, gentle = surfaces. */
+  fast: { duration: 300, dampingRatio: 0.8 },
+  standard: medium,
+  gentle: soft,
   /** v2 aliases. */
   snappy: { duration: 380, dampingRatio: 0.86 },
   smooth: soft,
@@ -97,3 +101,20 @@ export const pressScale = scale.press;
 /** Delay between items of a list that reveals in order. At most 6 steps. */
 export const staggerStep = 55;
 export const maxStagger = 6;
+
+/**
+ * Named transitions. Screens and overlays pick one of these instead of
+ * inventing timings: page and modal slide on springs, the match moment and
+ * the IRLY Girl morph have their own choreography built from these steps.
+ */
+export const transition = {
+  page: spring.medium,
+  modal: spring.soft,
+  sheet: spring.medium,
+  sharedElement: spring.soft,
+  fade: { duration: motion.normal, easing: ease.standard },
+  /** IRLY → IRLY Girl: colour wash, blur, wordmark morph. */
+  morph: { wash: 520, hold: 260, reveal: 420 },
+  /** IT'S AN IRLY MATCH: cards meet, glass merges, text and actions follow. */
+  match: { approach: 520, merge: 280, text: 360, actions: 420 },
+} as const;
