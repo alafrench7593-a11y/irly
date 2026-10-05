@@ -165,6 +165,20 @@ The key stays in GitHub; the app only reads the database.
 - Blocking someone ends the friendship. Match discovery never reveals a hidden age through filters, or hidden languages through reasons. `friends` and `communities` profile visibility are enforced.
 - Joining or befriending again does not re-notify (ACTIVITY_JOINED once per person, FRIEND_REQUEST once a week, COMMUNITY_JOINED only for a new membership).
 
+## Second security pass (migration 1500)
+
+- Invite-only activities open only through a share sent by the creator or someone going.
+- Hidden match fields are stripped from match reasons, their facets and stored matches.
+- `created_at` is the server clock on member inserts (backdating beat the rate limits).
+- IRL posts and activities can only point at a community you belong to; an owner cannot change `created_by` or `girl_only`.
+- Deleting an account deletes the person's messages and hands their communities to the longest-standing member. **Storage files are not deleted** (Supabase blocks SQL deletes on `storage.objects`): a scheduled cleanup through the Storage API is still to build.
+- Storage: IRL media is readable only through a post you can see; profile photos are hidden from people in a block.
+- A removed comment or message has its text erased (kept in `private.removed_content` for moderation) and keeps its place in threads.
+- Polls are frozen once someone voted.
+- `my_profile()` returns your own full row (column grants hide birthdate, faith, gender and is_admin, even from yourself, in direct selects).
+- Known and accepted: Supabase Realtime does not apply RLS to DELETE events, so subscribers can receive the primary key of deleted rows (likes, friendships, memberships). The app no longer subscribes to unfiltered like deletions.
+- Not enforced yet: `who_can_message`, `irl_visibility`, `activity_visibility`, `location_precision` in safety settings.
+
 ## Still to connect
 
 - Provider keys for Apple, Google and SMS (see above).

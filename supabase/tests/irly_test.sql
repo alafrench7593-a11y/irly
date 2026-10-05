@@ -407,10 +407,12 @@ select pg_temp.expect_denied($$update public.messages set conversation_id = (sel
 -- Comments: removed ones are not readable by others and cannot be restored.
 insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at) values (auth.uid(), 'Carl public run', 'sport', 'dubai', 'marina', now() + interval '2 days');
 insert into public.comments (target_type, target_id, author_id, body) select 'activity', id::text, auth.uid(), 'rude comment' from public.activities where title = 'Carl public run';
+select id as rude_id from public.comments where body = 'rude comment' \gset
 update public.comments set deleted_at = now() where body = 'rude comment';
-select pg_temp.expect_denied($$update public.comments set deleted_at = null where body = 'rude comment'$$, 'a removed comment cannot be restored');
+select pg_temp.expect_denied($$update public.comments set deleted_at = null where id = '$$ || :'rude_id' || $$'$$, 'a removed comment cannot be restored');
+select pg_temp.check((select body from public.comments where id = :'rude_id') = '—', 'a removed comment''s text is erased (kept for moderators only)');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
-select pg_temp.check(not exists (select 1 from public.comments where body = 'rude comment'), 'removed comments are not readable');
+select pg_temp.check(not exists (select 1 from public.comments where body = 'rude comment'), 'removed comments'' text is not readable');
 -- Notifications are not repeated by toggling.
 select public.join_activity((select id from public.activities where title = 'Carl public run'), 'going');
 select public.join_activity((select id from public.activities where title = 'Carl public run'), 'maybe');
@@ -439,6 +441,32 @@ select public.block_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check(not exists (select 1 from public.my_friends() where first_name = 'Carl'), 'blocking ends the friendship');
 select public.unblock_user('00000000-0000-0000-0000-00000000000c');
 
+-- ───── Bug hunt 2: security regressions ─────
+-- A hand-written message pointing at an invite-only activity is not an invite.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.create_community('Bea Club', 'dubai') as bea_club \gset
+insert into public.messages (conversation_id, sender_id, kind, body, ref_type, ref_id)
+  values ((select id from public.conversations where community_id = :'bea_club'), auth.uid(), 'share', 'x', 'activity', :'invite_act');
+select pg_temp.expect_denied($$select public.join_activity('$$ || :'invite_act' || $$')$$, 'a forged share does not open an invite-only activity');
+-- Server clock: backdating cannot beat rate limits or pin a feed.
+insert into public.comments (target_type, target_id, author_id, body, created_at)
+  select 'activity', id::text, auth.uid(), 'backdated', '2000-01-01' from public.activities where title = 'Carl public run';
+select pg_temp.check((select created_at from public.comments where body = 'backdated') > now() - interval '1 minute', 'created_at is the server''s clock');
+-- profiles_public hides people who blocked you.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check(not exists (select 1 from public.profiles_public where first_name = 'Bea'), 'someone who blocked you is not listed');
+-- Hidden match fields are not in reasons, nor in their facets.
+select pg_temp.check(not exists (select 1 from public.irly_match_discover('{}') where first_name = 'Dina' and (reasons ? 'areas' or coalesce(reasons -> 'facets', '{}') ? 'areas')), 'hidden areas never in match reasons');
+-- Communities: no posting into one you are not in; owner cannot flip girl-only.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id, area_id, body, visibility, community_id) values (auth.uid(), 'dubai', 'marina', 'hi moms', 'community', (select id from public.communities where name = 'Marina Padel Girls'))$$, 'no IRL post into a community you are not in');
+select pg_temp.expect_denied($$insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, community_id) values (auth.uid(), 'x', 'sport', 'dubai', 'marina', now() + interval '1 day', (select id from public.communities where name = 'Marina Padel Girls'))$$, 'no activity linked to a community you are not in');
+select pg_temp.expect_denied($$update public.communities set girl_only = true where name = 'Carl Club'$$, 'an owner cannot change girl-only');
+-- Polls are frozen once someone voted (Carl wrote "Best time?").
+select pg_temp.expect_denied($$update public.community_posts set poll = '{"options":["Ban","Keep"]}' where body = 'Best time?'$$, 'a poll cannot change after votes');
+-- Your own full profile, through my_profile().
+select pg_temp.check((select gender from public.my_profile()) = 'man', 'my_profile returns your own full row');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
@@ -450,6 +478,7 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select public.delete_my_account();
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.profiles where first_name = 'Carl'), 'a member with messages can delete the account');
-select pg_temp.check(exists (select 1 from public.messages where body = 'Carl message' and sender_id is null), 'their messages stay, without author');
+select pg_temp.check(not exists (select 1 from public.messages where body = 'Carl message'), 'their messages go with the account (never shown as IRLY''s own)');
+select pg_temp.check(exists (select 1 from public.community_members m join public.communities c on c.id = m.community_id where c.name = 'Carl Club' and m.role = 'owner') or not exists (select 1 from public.community_members m join public.communities c on c.id = m.community_id where c.name = 'Carl Club'), 'their communities keep an owner if anyone is left');
 
 \echo 'ALL TESTS PASSED'
