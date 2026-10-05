@@ -41,6 +41,8 @@ type Mode = 'choose' | 'email' | 'link' | 'code' | 'forgot' | 'phone' | 'phoneCo
  * phone. Sessions persist and refresh on their own; signing in publishes the
  * signup profile so matches, chats and plans are real and shared.
  */
+
+const handledUrls = new Set<string>();
 export default function AccountScreen() {
   const t = useTheme();
   const router = useRouter();
@@ -57,6 +59,10 @@ export default function AccountScreen() {
 
   // Coming back from an email link or Apple/Google in the app.
   useEffect(() => {
+    // Linking.useURL() returns the launch link on every visit: handle each link once
+    // (replaying it signed people back in after Sign out, or reused a spent token).
+    if (!url || handledUrls.has(url)) return;
+    handledUrls.add(url);
     // An expired or already-used link comes back as #error=…&error_description=…
     const failed = url?.match(/[#?&]error_description=([^&]+)/);
     if (failed) {

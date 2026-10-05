@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuthStatus } from '@/features/auth/account';
 import { confirm } from '@/lib/confirm';
 import { t as tx } from '@/i18n';
 import { useState } from 'react';
@@ -33,6 +34,7 @@ export default function CommentsScreen() {
   const params = useLocalSearchParams<{ type: TargetType; id: string; title?: string }>();
   const target = { type: params.type, id: params.id, title: params.title };
   const { comments, loading, add, remove, refresh, signedIn } = useComments(target);
+  const auth = useAuthStatus();
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [sending, setSending] = useState(false);
@@ -88,7 +90,7 @@ export default function CommentsScreen() {
               {params.title}
             </Text>
           ) : null}
-          {!signedIn ? (
+          {auth === 'out' ? (
             <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
               <Text variant="body" tone="secondary" align="center">
                 Sign in to read and write comments.

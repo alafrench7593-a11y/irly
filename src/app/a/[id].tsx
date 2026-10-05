@@ -15,7 +15,7 @@ import { Photo } from '@/components/visual/Photo';
 import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
-import { useAccount } from '@/features/auth/account';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { cancelServerActivity, icsFor, joinServerActivity, leaveServerActivity, useServerActivity } from '@/features/server/activities';
 import { hideItem, reportItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
@@ -40,11 +40,19 @@ export default function ActivityPage() {
   const { detail: a, loading, error, refresh } = useServerActivity(id);
   const eng = useEngagement('activity', a ? [a.id] : []);
   const [busy, setBusy] = useState(false);
+  const auth = useAuthStatus();
 
   useEffect(() => {
     if (a) track(a.format === 'event' ? 'EVENT_VIEW' : 'ACTIVITY_VIEW', { category: a.categoryId });
   }, [a?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (auth === 'unknown') {
+    return (
+      <Centered>
+        <ActivityIndicator />
+      </Centered>
+    );
+  }
   if (!eng.signedIn) {
     return (
       <Centered>

@@ -1,6 +1,6 @@
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { useEffect, useState } from 'react';
+import { create } from 'zustand';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useStore, type Profile } from '@/state/store';
@@ -11,24 +11,41 @@ const LANG: Record<string, string> = { English: 'en', Français: 'fr', العر�
 
 export type Account = { userId: string; email?: string } | null;
 
-/** The signed-in member, kept in sync with Supabase Auth. */
+type AuthState = { status: 'unknown' | 'in' | 'out'; account: Account };
+const useAuthStore = create<AuthState>(() => ({ status: supabase ? 'unknown' : 'out', account: null }));
+
+function setSession(u: { id: string; email?: string } | null | undefined) {
+  const cur = useAuthStore.getState();
+  // Same person (a token refresh): keep the same object, nothing re-renders.
+  if (u && cur.account?.userId === u.id) {
+    if (cur.status !== 'in') useAuthStore.setState({ status: 'in' });
+    return;
+  }
+  useAuthStore.setState(u ? { status: 'in', account: { userId: u.id, email: u.email } } : { status: 'out', account: null });
+}
+
+// One session reader and one auth listener for the whole app (every screen
+// used to start "signed out" and resolve on its own, flashing Sign in).
+if (supabase) {
+  supabase.auth
+    .getSession()
+    .then(({ data }) => setSession(data.session?.user))
+    .catch(() => setSession(null));
+  supabase.auth.onAuthStateChange((event, session) => {
+    setSession(session?.user);
+    // Signed in from the email link: publish the signup profile once.
+    if (event === 'SIGNED_IN' && session?.user) syncProfile(session.user.id).catch(() => undefined);
+  });
+}
+
+/** The signed-in member, kept in sync with Supabase Auth (null while unknown or signed out). */
 export function useAccount(): Account {
-  const [account, setAccount] = useState<Account>(null);
-  useEffect(() => {
-    if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
-      const u = data.session?.user;
-      setAccount(u ? { userId: u.id, email: u.email } : null);
-    });
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      const u = session?.user;
-      setAccount(u ? { userId: u.id, email: u.email } : null);
-      // Signed in from the email link: publish the signup profile once.
-      if (event === 'SIGNED_IN' && u) syncProfile(u.id).catch(() => undefined);
-    });
-    return () => data.subscription.unsubscribe();
-  }, []);
-  return account;
+  return useAuthStore((st) => st.account);
+}
+
+/** 'unknown' until the stored session is read: show a spinner, not "Sign in". */
+export function useAuthStatus(): AuthState['status'] {
+  return useAuthStore((st) => st.status);
 }
 
 /** Where the email link sends the member back: this web page, or the app. */

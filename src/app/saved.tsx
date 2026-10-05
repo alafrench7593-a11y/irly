@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useAuthStatus } from '@/features/auth/account';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -52,7 +53,8 @@ async function titlesFor(items: SavedItem[]): Promise<Record<string, string>> {
 export default function SavedScreen() {
   const t = useTheme();
   const router = useRouter();
-  const { items, refresh, signedIn } = useSaved();
+  const { items, refresh } = useSaved();
+  const auth = useAuthStatus();
   const [tab, setTab] = useState<Tab>('all');
   const [titles, setTitles] = useState<Record<string, string>>({});
 
@@ -80,7 +82,7 @@ export default function SavedScreen() {
   return (
     <Page overline="Profile" title="Saved" subtitle="Plans, places and people you kept for later.">
       <View style={styles.body}>
-        {!signedIn ? (
+        {auth === 'out' ? (
           <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
             <Text variant="body" tone="secondary" align="center">
               Sign in to save things and find them on every device.

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useAuthStatus } from '@/features/auth/account';
 import { cityDayKey, cityWhen } from '@/lib/time';
 import { StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -28,7 +29,8 @@ const hour = (ms: number, city: string) => cityWhen(ms, city, { hour: '2-digit',
 export default function CalendarScreen() {
   const t = useTheme();
   const router = useRouter();
-  const { items, loading, error, signedIn } = useCalendar();
+  const { items, loading, error } = useCalendar();
+  const auth = useAuthStatus();
 
   const days: { key: string; label: string; items: CalendarItem[] }[] = [];
   for (const it of items) {
@@ -41,7 +43,7 @@ export default function CalendarScreen() {
   return (
     <Page overline="Your plans" title="Calendar" subtitle="Everything you're going to, in one place.">
       <View style={styles.body}>
-        {!signedIn ? (
+        {auth === 'out' ? (
           <Empty text="Sign in to keep your plans in sync across devices." action="Sign in" onPress={() => router.push('/account')} />
         ) : error && !items.length ? (
           <Empty text="Can’t reach IRLY right now. Check your connection and try again." action="Find something to do" onPress={() => router.push('/discover')} />

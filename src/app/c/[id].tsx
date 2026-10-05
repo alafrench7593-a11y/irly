@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuthStatus } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -44,6 +45,7 @@ export default function CommunityScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { detail: c, loading, error, refresh, signedIn } = useCommunity(id);
+  const auth = useAuthStatus();
   const feed = useCommunityFeed(id);
   const acts = useCommunityActivities(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
@@ -55,6 +57,13 @@ export default function CommunityScreen() {
   const city = c ? (CITIES[c.cityId as CityId] ?? CITIES.dubai) : CITIES.dubai;
   const geo: GeoIndex = useMemo(() => ({ cities: [{ id: city.id, name: city.name }], areas: city.areas.map((a) => ({ id: a.id, name: a.name, cityId: city.id })) }), [city]);
 
+  if (auth === 'unknown') {
+    return (
+      <Centered>
+        <ActivityIndicator />
+      </Centered>
+    );
+  }
   if (!signedIn) {
     return (
       <Centered>

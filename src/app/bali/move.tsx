@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useAuthStatus } from '@/features/auth/account';
 import { switchToBali } from '@/features/bali/switch';
 import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
@@ -24,7 +25,8 @@ const label = (s: string) => tx(s === 'sim' ? 'SIM / eSIM' : s.replace(/_/g, ' '
 export default function BaliMove() {
   const t = useTheme();
   const router = useRouter();
-  const { data: steps, toggle, signedIn } = useMove('bali');
+  const { data: steps, toggle } = useMove('bali');
+  const auth = useAuthStatus();
   const done = steps.filter((s) => s.done).length;
 
   const tick = (s: (typeof steps)[number]) => {
@@ -41,7 +43,7 @@ export default function BaliMove() {
             <View style={{ width: `${(done / steps.length) * 100}%`, height: '100%', backgroundColor: t.c.positive, borderRadius: 3 }} />
           </View>
         ) : null}
-        {!signedIn ? (
+        {auth === 'out' ? (
           <View style={[styles.note, { backgroundColor: t.c.surface }]}>
             <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
               Sign in to save your progress across devices.

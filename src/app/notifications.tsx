@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useAccount } from '@/features/auth/account';
+import { useAuthStatus } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
@@ -34,8 +34,8 @@ export default function Notifications() {
   const s = content.sessions[0];
   const e = content.events[0];
   // Examples of what IRLY sends, only before sign-in (never mixed with real ones).
-  const account = useAccount();
-  const items: Item[] = account ? [] : [
+  const auth = useAuthStatus();
+  const items: Item[] = auth !== 'out' ? [] : [
     a && s ? { id: 'n1', icon: 'users', title: tx('{name} joined {what}', { name: a.name, what: s.title }), body: 'You are now 7 going', ago: '4 min', personId: a.id, unread: true, onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
     b ? { id: 'n2', icon: 'zap', title: tx('{name} is live nearby', { name: b.name }), body: 'Coffee and laptop, anyone around?', ago: '12 min', personId: b.id, unread: true, onPress: () => router.push('/live') } : null,
     s ? { id: 'n3', icon: 'pin', title: 'New session near you', body: s.title, ago: '1 h', onPress: () => openHero({ kind: 'session', id: s.id }) } : null,

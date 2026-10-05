@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useAccount } from '@/features/auth/account';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { useServerNotifications } from '@/features/server/social';
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -127,9 +127,10 @@ export function InboxButtons() {
   const router = useRouter();
   const unread = useUnread();
   const account = useAccount();
+  const auth = useAuthStatus();
   const server = useServerNotifications();
   // Signed in: the bell counts real notifications; otherwise the demo ones.
-  const bell = account ? server.unread : 2;
+  const bell = account ? server.unread : auth === 'out' ? 2 : 0;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />

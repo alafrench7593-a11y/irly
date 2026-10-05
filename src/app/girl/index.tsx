@@ -86,20 +86,25 @@ export default function GirlHome() {
   const width = Math.min((frame.width || window.width) - space.gutter * 2, 420);
   const height = Math.min(width * 1.32, (frame.height || window.height) * 0.56);
 
+  // Only the latest request may write the deck (a slow "for you" page must
+  // not land after the member switched to "new" or changed filters).
+  const deckSeq = useRef(0);
   const loadDeck = useCallback(async (f: Filters, from: number) => {
     const api = apiRef.current;
     if (!api) return;
+    const n = ++deckSeq.current;
     setDeckLoading(true);
     setDeckError(null);
     try {
       const page = await api.discover(f, from);
+      if (n !== deckSeq.current) return;
       setDeck((d) => (from === 0 ? page : [...d, ...page.filter((p) => !d.some((x) => x.userId === p.userId))]));
       setOffset(from + page.length);
       setExhausted(page.length < PAGE_SIZE);
     } catch (e) {
-      setDeckError(e instanceof Error ? e.message : 'Could not load profiles');
+      if (n === deckSeq.current) setDeckError(e instanceof Error ? e.message : 'Could not load profiles');
     } finally {
-      setDeckLoading(false);
+      if (n === deckSeq.current) setDeckLoading(false);
     }
   }, []);
 

@@ -44,15 +44,17 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
   const router = useRouter();
   const account = useAccount();
   const setCity = useStore((s) => s.setCity);
-  const [hits, setHits] = useState<SearchHit[]>([]);
+  // Results belong to the query that produced them (no stale list while typing).
+  const [res, setRes] = useState<{ q: string; hits: SearchHit[] }>({ q: '', hits: [] });
+  const uid = account?.userId;
 
   useEffect(() => {
-    if (!account || q.trim().length < 2) return;
+    if (!uid || q.trim().length < 2) return;
     let alive = true;
     const timer = setTimeout(() => {
       searchServer(q, cityId).then((h) => {
         if (!alive) return;
-        setHits(h);
+        setRes({ q, hits: h });
         track('SEARCH', { results: h.length });
       });
     }, 250);
@@ -60,9 +62,9 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
       alive = false;
       clearTimeout(timer);
     };
-  }, [q, cityId, account]);
+  }, [q, cityId, uid]);
 
-  const shown = account && q.trim().length >= 2 ? hits : [];
+  const shown = uid && q.trim().length >= 2 && res.q === q ? res.hits : [];
   if (!shown.length) return null;
 
   const open = (h: SearchHit) => {
