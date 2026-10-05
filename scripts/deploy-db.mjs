@@ -9,11 +9,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const token = process.env.SUPABASE_ACCESS_TOKEN;
+const token = (process.env.SUPABASE_ACCESS_TOKEN || '').trim().replace(/^["']|["']$/g, '');
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 if (!token) {
   console.log('SUPABASE_ACCESS_TOKEN is not set: nothing deployed.');
   process.exit(0);
+}
+// A personal access token starts with sbp_. The project's publishable,
+// anon, secret or service_role keys do not work with the Management API.
+if (!token.startsWith('sbp_')) {
+  console.error(
+    `SUPABASE_ACCESS_TOKEN must be a personal access token starting with "sbp_" (got "${token.slice(0, 12)}…").\n` +
+      'Create one at https://supabase.com/dashboard/account/tokens and save it as the repository secret.',
+  );
+  process.exit(1);
 }
 
 const api = `https://api.supabase.com/v1/projects/${ref}`;
