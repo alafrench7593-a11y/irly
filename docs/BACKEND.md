@@ -65,6 +65,7 @@ par conception). Ne jamais mettre la clé `service_role` / secret dans l'app.
 # Local tests (PostgreSQL 15+):
 npm run test:db
 npm run test:compat
+npm run test:intent
 
 # Supabase project:
 supabase link --project-ref <ref>
@@ -72,11 +73,57 @@ supabase db push
 cp .env.example .env   # fill EXPO_PUBLIC_SUPABASE_URL / ANON_KEY
 ```
 
+## Engagement layer (migration 0600)
+
+- **One interaction system.** `likes`, `comments` (one level of replies),
+  `saves`, `shares`, `hidden_items` point at any entity by
+  `(target_type, target_id)`: `irl_post`, `activity` (events are activities
+  with `format = 'event'`), `community`, `community_post`, `comment`,
+  `profile`, `place`, `catalog`. `private.can_see` (security invoker) checks
+  the target under the caller's own RLS: you can only interact with what you
+  can already see. `engagement(type, ids[])` returns counters + my state.
+- **Canonical reads.** `activity_detail`, `my_calendar`, `search_all`
+  (activities, communities, people, places, areas, cities, categories),
+  `recommend_activities` (interests, friends going, likes/saves, never
+  hidden items), `irl_feed` (with the linked activity), `comment_thread`.
+- **Chats.** `open_direct` (friends or matches only), `share_to_chat`
+  (a `share` message pointing at the entity).
+- **Notifications.** New kinds (LIKE, COMMENT, COMMENT_REPLY, MENTION,
+  FRIEND_REQUEST, FRIEND_ACCEPTED, ACTIVITY_UPDATED…). `notification_prefs`
+  mutes kinds; a trigger drops muted kinds and anything from a blocked user.
+- **Safety.** Rate limits (likes, comments, IRL posts, community posts),
+  three reports in a day hide an IRL post / comment and raise the case to
+  high priority, search hides profiles set to *Nobody*.
+- **Content.** `countries → regions → cities → areas → places` and
+  `categories`, admin-editable (RLS: everyone reads, admins write).
+- **Analytics / AI.** `analytics_events` (insert-only, admins read, no
+  sensitive props) and `ai_commands` (the assistant's log, owner only).
+
+## Sign-in providers (one-time, in the Supabase dashboard)
+
+The app already has the buttons and the flows. Each provider only needs to
+be switched on in **Authentication → Sign In / Providers**:
+
+- **Email + password**: on by default. Keep "Confirm email" on.
+- **Google**: create an OAuth client in Google Cloud (type *Web*), paste the
+  client ID and secret. Authorised redirect URI:
+  `https://yqutcmgslwxcmnsqmhvy.supabase.co/auth/v1/callback`.
+- **Apple**: Services ID + key from the Apple Developer account (paid).
+- **Phone**: needs an SMS provider (Twilio, MessageBird, Vonage).
+
+Until a provider is on, its button shows "not switched on yet".
+
+## Assistant
+
+`src/features/ai/intent.ts` turns text or voice into a command (intent +
+activity, day, time, area, city, budget), deterministic and tested
+(`npm run test:intent`). Voice uses the browser's speech recognition on the
+web and the keyboard's dictation in Expo Go. Anything that changes data
+(create, switch city) is shown as an editable card and waits for a tap.
+
 ## Still to connect
 
-- Sign in with Apple, Google and phone (Supabase Auth providers) and the
-  signup profile writing to `profiles`. Until a member is signed in, the
-  app uses on-device data (`deviceApi`), with the same behaviour.
+- Provider keys for Apple, Google and SMS (see above).
 - Push notifications (Expo push tokens + a database webhook on
   `notifications`).
 - Google Places for real place search in Create.

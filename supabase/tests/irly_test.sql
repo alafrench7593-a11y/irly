@@ -212,6 +212,94 @@ select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id,
 select pg_temp.as_admin();
 select pg_temp.check((select count(*) from public.notifications n where n.kind = 'IRLY_POST_CREATED') = 1, 'friend notified of the IRL post');
 
+-- ───── Interactions: likes, comments, saves, shares ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(public.toggle_like('irl_post', (select id::text from public.irl_feed('dubai') limit 1)), 'friend likes the IRL post');
+select pg_temp.check((select likes from public.engagement('irl_post', array[(select id::text from public.irl_feed('dubai') limit 1)])) = 1, 'like counted');
+select pg_temp.check((select liked from public.engagement('irl_post', array[(select id::text from public.irl_feed('dubai') limit 1)])), 'and shown as mine');
+select pg_temp.check(not public.toggle_like('irl_post', (select id::text from public.irl_feed('dubai') limit 1)), 'second tap unlikes');
+select public.toggle_like('irl_post', (select id::text from public.irl_feed('dubai') limit 1));
+insert into public.comments (target_type, target_id, author_id, body)
+values ('irl_post', (select id::text from public.irl_feed('dubai') limit 1), auth.uid(), 'On my way!');
+select pg_temp.check((select comments from public.engagement('irl_post', array[(select id::text from public.irl_feed('dubai') limit 1)])) = 1, 'comment counted');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.expect_denied($$select public.toggle_like('irl_post', (select id::text from public.irl_posts where body like 'Coffee%'))$$, 'stranger cannot like a friends-only post');
+select pg_temp.expect_denied($$insert into public.comments (target_type, target_id, author_id, body) values ('irl_post', '00000000-0000-0000-0000-000000000000', auth.uid(), 'hi')$$, 'cannot comment on what you cannot see');
+select pg_temp.check((select count(*) from public.comments) = 0, 'stranger sees none of the comments');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+insert into public.comments (target_type, target_id, author_id, body, parent_id)
+select target_type, target_id, auth.uid(), 'See you there', id from public.comments limit 1;
+select pg_temp.check((select count(*) from public.comment_thread('irl_post', (select id::text from public.irl_posts limit 1)) where parent_id is not null) = 1, 'reply threaded under the comment');
+select pg_temp.check(public.toggle_save('activity', '10000000-0000-0000-0000-000000000001'), 'save an activity');
+select pg_temp.check(public.toggle_save('place', 'kite-beach'), 'save a place');
+select pg_temp.check((select count(*) from public.saves) = 2, 'saved items listed');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) from public.saves) = 0, 'saves are private');
+select pg_temp.check((select saves from public.engagement('place', array['kite-beach'])) = 1, 'but the total is public');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications where kind = 'LIKE') = 1, 'author notified of the like (once)');
+select pg_temp.check((select count(*) from public.notifications where kind = 'COMMENT_REPLY') = 1, 'commenter notified of the reply');
+select pg_temp.check((select count(*) from public.notifications where kind = 'FRIEND_REQUEST') = 1, 'friend request has its own notification');
+
+-- ───── Muted notifications, direct chat, share ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+insert into public.notification_prefs (user_id, muted_kinds) values (auth.uid(), '{COMMENT}');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+insert into public.comments (target_type, target_id, author_id, body)
+values ('irl_post', (select id::text from public.irl_feed('dubai') limit 1), auth.uid(), 'Still there?');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications where kind = 'COMMENT') = 1, 'muted kinds are not delivered');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(public.open_direct('00000000-0000-0000-0000-00000000000d') = public.open_direct('00000000-0000-0000-0000-00000000000d'), 'one direct chat per pair');
+select pg_temp.expect_denied($$select public.open_direct('00000000-0000-0000-0000-00000000000a')$$, 'no private message to a stranger');
+select public.share_to_chat(public.open_direct('00000000-0000-0000-0000-00000000000d'), 'place', 'kite-beach', 'Kite Beach');
+select pg_temp.check((select count(*) from public.messages where kind = 'share') = 1, 'share arrives in the chat');
+
+-- ───── Calendar, search, recommendations ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select count(*) from public.my_calendar() where title = 'Padel tonight') = 1, 'joined session in my calendar');
+select pg_temp.check((select going from public.activity_detail('10000000-0000-0000-0000-000000000001')) = 2, 'detail counts participants');
+select pg_temp.check((select conversation_id from public.activity_detail('10000000-0000-0000-0000-000000000001')) is not null, 'detail links my activity chat');
+select pg_temp.check(exists (select 1 from public.search_all('padel', 'dubai') where kind = 'activity'), 'search finds the session');
+select pg_temp.check(exists (select 1 from public.search_all('mall', 'dubai') where kind = 'place'), 'search finds places');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.search_all('brunch', 'dubai') where kind = 'activity'), 'search respects girl-only');
+select pg_temp.check(exists (select 1 from public.search_all('Ali', null) where kind = 'person'), 'people are searchable by first name');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+insert into public.safety_settings (user_id, profile_visibility) values (auth.uid(), 'nobody')
+on conflict (user_id) do update set profile_visibility = 'nobody';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.search_all('Ali', null) where kind = 'person'), 'hidden profiles are not searchable');
+update public.profiles set interests = '{sport}' where id = auth.uid();
+select pg_temp.as_admin();
+insert into public.activities (id, creator_id, title, category_id, city_id, area_id, starts_at)
+values ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-00000000000a', 'Beach volley', 'sport', 'dubai', 'kitebeach', now() + interval '1 day');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select reason from public.recommend_activities('dubai') where title = 'Beach volley') = 'your_interests', 'recommended for my interests');
+insert into public.hidden_items (user_id, target_type, target_id) values (auth.uid(), 'activity', '10000000-0000-0000-0000-000000000003');
+select pg_temp.check(not exists (select 1 from public.recommend_activities('dubai') where title = 'Beach volley'), 'hidden items are not recommended');
+
+-- ───── Participants hear about changes ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+update public.activities set starts_at = starts_at + interval '1 hour' where id = '10000000-0000-0000-0000-000000000001';
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications where kind = 'ACTIVITY_UPDATED') = 1, 'participant notified of the new time');
+
+-- ───── Analytics and AI log ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+insert into public.analytics_events (user_id, name, props) values (auth.uid(), 'ACTIVITY_VIEW', '{"category":"sport"}');
+select pg_temp.check((select count(*) from public.analytics_events) = 0, 'members cannot read analytics');
+select pg_temp.expect_denied($$insert into public.analytics_events (user_id, name) values ('00000000-0000-0000-0000-00000000000a', 'LOGIN')$$, 'cannot log events as someone else');
+insert into public.ai_commands (user_id, input, intent, entities) values (auth.uid(), 'padel tomorrow', 'SEARCH', '{"activity":"padel"}');
+select pg_temp.check((select count(*) from public.ai_commands) = 1, 'AI command logged for its owner');
+
+-- ───── Repeated reports hide content ─────
+select pg_temp.as_admin();
+insert into public.reports (reporter_id, target_kind, target_id, category)
+select u, 'irl_post', (select id from public.irl_posts limit 1), 'spam'
+from unnest(array['00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c']::uuid[]) u;
+select pg_temp.check((select expires_at <= now() from public.irl_posts limit 1), 'three reports take the IRL post down');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

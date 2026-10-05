@@ -11,6 +11,8 @@ on:
       - 'supabase/**'
       - 'scripts/deploy-db.mjs'
       - 'scripts/test-db.sh'
+      - 'scripts/check-intent.mts'
+      - 'src/features/ai/**'
       - '.github/workflows/supabase.yml'
   workflow_dispatch:
 
@@ -42,6 +44,8 @@ jobs:
           node-version: 22
       - name: App score equals server score
         run: node --experimental-strip-types --no-warnings scripts/check-compat.mts
+      - name: Assistant command engine
+        run: node --experimental-strip-types --no-warnings scripts/check-intent.mts
 
   deploy:
     needs: test

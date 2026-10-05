@@ -20,6 +20,8 @@ export type ServerIrlPost = {
   createdAt: number;
   friend: boolean;
   mine: boolean;
+  activityId: string | null;
+  activityTitle: string | null;
 };
 
 type FeedRow = {
@@ -33,6 +35,8 @@ type FeedRow = {
   visibility: 'everyone' | 'friends';
   created_at: string;
   friend: boolean;
+  activity_id?: string | null;
+  activity_title?: string | null;
 };
 
 async function signed(path: string | null): Promise<string | null> {
@@ -63,6 +67,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         createdAt: Date.parse(r.created_at),
         friend: r.friend,
         mine: r.author_id === uid,
+        activityId: r.activity_id ?? null,
+        activityTitle: r.activity_title ?? null,
       })),
     );
   }, [cityId, uid]);
@@ -98,6 +104,8 @@ export async function postServerIrl(input: {
   body: string;
   photoUri?: string;
   visibility: 'everyone' | 'friends';
+  /** IRL → activity: the post points at the activity, never a copy of it. */
+  activityId?: string | null;
 }): Promise<boolean> {
   if (!supabase) return false;
   const { data: s } = await supabase.auth.getSession();
@@ -118,6 +126,7 @@ export async function postServerIrl(input: {
     body: input.body,
     media_path,
     visibility: input.visibility,
+    activity_id: input.activityId ?? null,
   });
   if (error) throw new Error(error.message);
   return true;

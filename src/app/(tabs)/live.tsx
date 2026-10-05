@@ -11,6 +11,10 @@ import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { LiveRing } from '@/features/live/LiveStrip';
 import { useAccount } from '@/features/auth/account';
 import { addFriend, deleteServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
+import { ActionBar } from '@/components/social/ActionBar';
+import { createServerActivity } from '@/features/server/activities';
+import { hideItem, reportItem, useEngagement } from '@/features/server/engage';
+import { track } from '@/lib/analytics';
 import type { CityId } from '@/data/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -233,6 +237,8 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
   const city = CITIES[cityId];
   const { posts } = useServerIrl(cityId);
   const { friends, refresh } = useFriends();
+  const router = useRouter();
+  const eng = useEngagement('irl_post', posts.map((p) => p.id));
   const now = useNow();
   if (!posts.length) return null;
   const sorted = [...posts].sort((a, b) => Number(b.friend) - Number(a.friend) || b.createdAt - a.createdAt);
@@ -260,6 +266,16 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
             </View>
             {p.mediaUrl ? <Image source={{ uri: p.mediaUrl }} style={styles.photo} contentFit="cover" /> : null}
             <Text variant={p.mediaUrl ? 'body' : 'titleM'}>{p.body}</Text>
+            {p.activityId ? (
+              <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={`Join ${p.activityTitle ?? 'the activity'}`}>
+                <Icon name="calendar" size={18} color={t.c.text} />
+                <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
+                  {p.activityTitle ?? 'Activity'}
+                </Text>
+                <Text variant="label">Join</Text>
+              </PressableScale>
+            ) : null}
+            <ActionBar target={{ type: 'irl_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} />
             {status === 'mine' ? (
               <Button
                 label="Remove"
@@ -269,9 +285,12 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 onPress={() => deleteServerIrl(p.id).catch((e) => toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live'))}
               />
             ) : status === 'friend' ? (
-              <Text variant="caption" tone="tertiary">
-                Friend
-              </Text>
+              <View style={styles.actions}>
+                <Text variant="caption" tone="tertiary" style={{ flex: 1 }}>
+                  Friend
+                </Text>
+                <PostMenu id={p.id} authorId={p.authorId} />
+              </View>
             ) : (
               <Button
                 label={status === 'incoming' ? 'Accept friend' : status === 'sent' ? 'Request sent' : 'Add friend'}
@@ -296,6 +315,39 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
   );
 }
 
+/** Not for me / report, on someone else's post. */
+function PostMenu({ id, authorId }: { id: string; authorId: string }) {
+  const t = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', gap: 14 }}>
+      <PressableScale
+        onPress={() =>
+          hideItem({ type: 'irl_post', id })
+            .then(() => toast('Hidden from your feed', 'eye', 'brand'))
+            .catch(() => undefined)
+        }
+        haptic="select"
+        hitSlop={8}
+        accessibilityLabel="Hide this post"
+      >
+        <Icon name="eye" size={18} color={t.c.textTertiary} />
+      </PressableScale>
+      <PressableScale
+        onPress={() =>
+          reportItem({ type: 'irl_post', id }, 'inappropriate', authorId)
+            .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
+            .catch(() => undefined)
+        }
+        haptic="select"
+        hitSlop={8}
+        accessibilityLabel="Report this post"
+      >
+        <Icon name="flag" size={18} color={t.c.textTertiary} />
+      </PressableScale>
+    </View>
+  );
+}
+
 function Composer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const t = useTheme();
   const cityId = useCityId();
@@ -305,6 +357,7 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
   const [area, setArea] = useState(city.areas[0].id);
   const [uri, setUri] = useState<string | undefined>();
   const [visibility, setVisibility] = useState<'friends' | 'everyone'>('friends');
+  const [openUp, setOpenUp] = useState(false);
   const [busy, setBusy] = useState(false);
   const account = useAccount();
 
@@ -319,7 +372,29 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
       // Signed in: the post goes to the server, friends see it live.
       setBusy(true);
       try {
-        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility });
+        // "Anyone want to join?" becomes a real activity the post points at.
+        let activityId: string | null = null;
+        if (openUp) {
+          const start = new Date(Date.now() + 30 * 60 * 1000);
+          activityId = await createServerActivity(
+            {
+              cityId,
+              title: text.trim().slice(0, 80).padEnd(3, '.'),
+              place: areaName(city, area),
+              areaId: area,
+              day: 'Today',
+              time: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
+              spots: 0,
+              privacy: visibility === 'friends' ? 'connections' : 'public',
+              format: 'meetup',
+              currency: city.currency,
+            },
+            start,
+          );
+          track('ACTIVITY_CREATE', { via: 'irl' });
+        }
+        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility, activityId });
+        track('IRL_CREATE', { photo: Boolean(uri), activity: Boolean(activityId) });
       } catch (e) {
         toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
         setBusy(false);
@@ -377,6 +452,7 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
               <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => setVisibility('friends')} />
               <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => setVisibility('everyone')} />
             </View>
+            <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => setOpenUp(!openUp)} />
           </View>
         ) : null}
         <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim()} onPress={submit} />
@@ -392,6 +468,7 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   photo: { height: 220, borderRadius: radius.lg },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg },
   fab: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   round: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   friend: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, borderRadius: radius.xl },

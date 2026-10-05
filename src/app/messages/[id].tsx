@@ -105,9 +105,24 @@ function ServerThreadView({ id }: { id: string }) {
                       : { backgroundColor: t.c.surface, borderColor: t.c.line, borderWidth: StyleSheet.hairlineWidth * 2, borderBottomLeftRadius: 6 },
                   ]}
                 >
-                  <Text variant="body" color={mine ? t.c.onBrand : t.c.text}>
-                    {m.text}
-                  </Text>
+                  {m.share ? (
+                    <PressableScale
+                      haptic="select"
+                      onPress={() => (m.share?.type === 'activity' && m.share.id ? router.push(`/a/${m.share.id}`) : router.push(`/search?q=${encodeURIComponent(m.text)}`))}
+                      style={styles.shared}
+                      accessibilityLabel={`Open ${m.text}`}
+                    >
+                      <Icon name={m.share.type === 'activity' ? 'calendar' : m.share.type === 'place' ? 'pin' : 'link'} size={16} color={mine ? t.c.onBrand : t.c.text} />
+                      <Text variant="titleS" color={mine ? t.c.onBrand : t.c.text} numberOfLines={2} style={{ flexShrink: 1 }}>
+                        {m.text}
+                      </Text>
+                      <Icon name="chevronRight" size={16} color={mine ? t.c.onBrand : t.c.text} />
+                    </PressableScale>
+                  ) : (
+                    <Text variant="body" color={mine ? t.c.onBrand : t.c.text}>
+                      {m.text}
+                    </Text>
+                  )}
                 </View>
               </Animated.View>
             );
@@ -327,6 +342,7 @@ function Dot({ delay }: { delay: number }) {
 }
 
 const styles = StyleSheet.create({
+  shared: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   root: { flex: 1 },
   intro: { alignItems: 'center', gap: 6, marginBottom: space[6] },
   bubbleRow: { maxWidth: '80%' },

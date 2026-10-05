@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
@@ -19,6 +19,7 @@ import { CITIES } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 import { getCityContent } from '@/data/repo';
 import { scoreMatch } from '@/features/matching/match';
+import { ServerResults } from '@/features/search/ServerResults';
 import { isWeekend } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
@@ -39,7 +40,8 @@ export default function Discover() {
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
-  const [q, setQ] = useState('');
+  const params = useLocalSearchParams<{ q?: string }>();
+  const [q, setQ] = useState(params.q ?? '');
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
@@ -139,8 +141,9 @@ export default function Discover() {
 
         {results ? (
           <View style={{ gap: space[7] }}>
+            <ServerResults q={q} cityId={cityId} />
             <Text variant="bodyS" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
-              {total ? `${total} results for “${q.trim()}”` : `Nothing for “${q.trim()}” yet. Try “run”, “dinner” or “visa”.`}
+              {total ? `${total} results for “${q.trim()}” in the city guide` : `Nothing in the city guide for “${q.trim()}”. Try “run”, “dinner” or “visa”.`}
             </Text>
             {results.events.length ? (
               <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>

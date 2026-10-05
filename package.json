@@ -52,7 +52,8 @@
     "test:db": "bash scripts/test-db.sh",
     "test:compat": "node --experimental-strip-types --no-warnings scripts/check-compat.mts",
     "export:web": "expo export --platform web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test:intent": "node --experimental-strip-types --no-warnings scripts/check-intent.mts"
   },
   "private": true,
   "engines": {

@@ -132,6 +132,7 @@ export function InboxButtons() {
   const bell = account ? server.unread : 2;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />
       <IconButton icon="message" label={`Messages${unread ? `, ${unread} unread` : ''}`} badge={unread} onPress={() => router.push('/messages')} />
       <IconButton icon="bell" label={`Notifications${bell ? `, ${bell} new` : ''}`} badge={bell} onPress={() => router.push('/notifications')} />
     </View>

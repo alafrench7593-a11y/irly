@@ -13,7 +13,8 @@ import type { CityId } from '@/data/types';
 import { haptic } from '@/motion/haptics';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { joinServerActivity, useServerActivities, type ServerActivity } from './activities';
+import { PressableScale } from '@/motion/PressableScale';
+import { joinServerActivity, useRecommendations, useServerActivities, type ServerActivity } from './activities';
 
 const when = (ms: number) =>
   new Date(ms).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -25,20 +26,24 @@ const when = (ms: number) =>
  */
 export function MemberActivities({ cityId }: { cityId: CityId }) {
   const { activities, refresh } = useServerActivities(cityId);
+  const recs = useRecommendations(cityId);
   if (!activities.length) return null;
+  // Recommended first (interests, friends going), then the rest by date.
+  const rank = new Map(recs.map((r, i) => [r.id, i]));
+  const ordered = [...activities].sort((a, b) => (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99) || a.startsAt - b.startsAt);
   return (
     <View style={{ marginTop: space[8] }}>
       <SectionHeader overline="Live on IRLY" title="Planned by members" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 12 }}>
-        {activities.map((a) => (
-          <MemberCard key={a.id} a={a} cityId={cityId} onChanged={refresh} />
+        {ordered.map((a) => (
+          <MemberCard key={a.id} a={a} cityId={cityId} onChanged={refresh} friendsGoing={recs.find((r) => r.id === a.id)?.friendsGoing ?? 0} />
         ))}
       </ScrollView>
     </View>
   );
 }
 
-function MemberCard({ a, cityId, onChanged }: { a: ServerActivity; cityId: CityId; onChanged: () => void }) {
+function MemberCard({ a, cityId, onChanged, friendsGoing }: { a: ServerActivity; cityId: CityId; onChanged: () => void; friendsGoing: number }) {
   const t = useTheme();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -66,7 +71,7 @@ function MemberCard({ a, cityId, onChanged }: { a: ServerActivity; cityId: CityI
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
+    <PressableScale onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]} accessibilityLabel={a.title}>
       <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined) }} light={city.light} scrim="soft" style={styles.photo} width={500} recyclingKey={`srv-${a.id}`} />
       <View style={styles.body}>
         <View style={styles.row}>
@@ -85,7 +90,7 @@ function MemberCard({ a, cityId, onChanged }: { a: ServerActivity; cityId: CityI
           <Icon name="users" size={14} color={t.c.textSecondary} />
           <Text variant="caption" tone="secondary">
             {a.going}
-            {a.capacity ? ` / ${a.capacity}` : ''} going · {a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : 'Free'}
+            {a.capacity ? ` / ${a.capacity}` : ''} going{friendsGoing ? ` · ${friendsGoing} friend${friendsGoing > 1 ? 's' : ''}` : ''} · {a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : 'Free'}
           </Text>
         </View>
         <Button
@@ -98,7 +103,7 @@ function MemberCard({ a, cityId, onChanged }: { a: ServerActivity; cityId: CityI
           onPress={join}
         />
       </View>
-    </View>
+    </PressableScale>
   );
 }
 

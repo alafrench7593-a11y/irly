@@ -103,7 +103,39 @@ function ServerNotifications() {
       case 'MESSAGE_CREATED':
         return { icon: 'message', title: 'New message', body: 'Tap to open the conversation', go: () => router.push(`/messages/${p.conversation_id}`) };
       case 'ACTIVITY_JOINED':
-        return { icon: 'users', title: 'Someone joined your activity', body: 'Their name is in the activity chat', go: () => router.push('/messages') };
+        return { icon: 'users', title: 'Someone joined your activity', body: 'Their name is in the activity chat', go: () => router.push(p.activity_id ? `/a/${p.activity_id}` : '/messages') };
+      case 'ACTIVITY_UPDATED':
+        return {
+          icon: p.cancelled ? 'x' : 'clock',
+          title: p.cancelled ? tx('{title} was cancelled', { title: p.title ?? '' }) : tx('{title} changed', { title: p.title ?? '' }),
+          body: p.cancelled ? 'It is off your calendar' : 'New time or place: check the details',
+          go: () => router.push(`/a/${p.activity_id}`),
+        };
+      case 'LIKE':
+      case 'COMMENT':
+      case 'COMMENT_REPLY':
+      case 'MENTION': {
+        const open = () =>
+          p.target_type === 'activity'
+            ? router.push(`/a/${p.target_id}`)
+            : router.push(`/comments?type=${p.target_type}&id=${encodeURIComponent(p.target_id ?? '')}`);
+        const who = name(p.from);
+        const title =
+          n.kind === 'LIKE'
+            ? tx('{name} liked your post', { name: who })
+            : n.kind === 'COMMENT'
+              ? tx('{name} commented', { name: who })
+              : n.kind === 'COMMENT_REPLY'
+                ? tx('{name} replied to you', { name: who })
+                : tx('{name} mentioned you', { name: who });
+        return { icon: n.kind === 'LIKE' ? 'heart' : 'message', title, body: p.body ?? '', go: open };
+      }
+      case 'FRIEND_REQUEST': {
+        const pending = friends.find((f) => f.userId === p.from && f.incoming);
+        return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: 'Friends see each other’s IRL posts', accept: pending ? p.from : undefined };
+      }
+      case 'FRIEND_ACCEPTED':
+        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends' };
       case 'COMMUNITY_JOINED':
         return { icon: 'heartHandshake', title: 'You joined a community', body: 'Its chat is in Messages', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'IRLY_POST_CREATED':

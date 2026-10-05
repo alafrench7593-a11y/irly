@@ -25,7 +25,7 @@ export function startsAt(day: string, time: string, now = new Date()): Date {
   return d;
 }
 
-export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>): Promise<string | null> {
+export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date): Promise<string | null> {
   if (!supabase) return null;
   const { data: session } = await supabase.auth.getSession();
   const uid = session.session?.user.id;
@@ -43,7 +43,7 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
       city_id: plan.cityId,
       area_id: plan.areaId,
       place_name: plan.place ?? null,
-      starts_at: startsAt(plan.day, plan.time).toISOString(),
+      starts_at: (at ?? startsAt(plan.day, plan.time)).toISOString(),
       price_minor: Math.round((plan.price ?? 0) * 100),
       currency: plan.currency ?? 'AED',
       capacity: plan.spots ? Math.max(2, plan.spots) : null,
@@ -151,4 +151,245 @@ export async function createServerCommunity(input: { name: string; cityId: strin
   if (error) throw new Error(error.message);
   const { data: conv } = await supabase.from('conversations').select('id').eq('community_id', data).maybeSingle();
   return (conv?.id as string) ?? '';
+}
+
+export type ActivityDetail = {
+  id: string;
+  creatorId: string;
+  creatorName: string | null;
+  format: string;
+  title: string;
+  description: string | null;
+  categoryId: string;
+  cityId: string;
+  areaId: string;
+  placeName: string | null;
+  startsAt: number;
+  endsAt: number | null;
+  priceMinor: number;
+  currency: string;
+  capacity: number | null;
+  going: number;
+  girlOnly: boolean;
+  communityId: string | null;
+  coverUrl: string | null;
+  myStatus: string | null;
+  conversationId: string | null;
+  cancelled: boolean;
+};
+
+type DetailRow = {
+  id: string;
+  creator_id: string;
+  creator_name: string | null;
+  format: string;
+  title: string;
+  description: string | null;
+  category_id: string;
+  city_id: string;
+  area_id: string;
+  place_name: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  price_minor: number;
+  currency: string;
+  capacity: number | null;
+  going: number;
+  girl_only: boolean;
+  community_id: string | null;
+  cover_url: string | null;
+  my_status: string | null;
+  conversation_id: string | null;
+  cancelled: boolean;
+};
+
+/** One activity or event, live: participant count and my status update as people join. */
+export function useServerActivity(id: string): { detail: ActivityDetail | null; loading: boolean; refresh: () => void } {
+  const account = useAccount();
+  const uid = account?.userId;
+  const [detail, setDetail] = useState<ActivityDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async (): Promise<ActivityDetail | null> => {
+    if (!supabase || !uid) return null;
+    const { data } = await supabase.rpc('activity_detail', { p_id: id });
+    const r = ((data as DetailRow[]) ?? [])[0];
+    if (!r) return null;
+    return {
+      id: r.id,
+      creatorId: r.creator_id,
+      creatorName: r.creator_name,
+      format: r.format,
+      title: r.title,
+      description: r.description,
+      categoryId: r.category_id,
+      cityId: r.city_id,
+      areaId: r.area_id,
+      placeName: r.place_name,
+      startsAt: Date.parse(r.starts_at),
+      endsAt: r.ends_at ? Date.parse(r.ends_at) : null,
+      priceMinor: r.price_minor,
+      currency: r.currency,
+      capacity: r.capacity,
+      going: r.going,
+      girlOnly: r.girl_only,
+      communityId: r.community_id,
+      coverUrl: r.cover_url,
+      myStatus: r.my_status,
+      conversationId: r.conversation_id,
+      cancelled: r.cancelled,
+    };
+  }, [id, uid]);
+
+  const refresh = useCallback(() => {
+    load().then(setDetail);
+  }, [load]);
+
+  useEffect(() => {
+    if (!supabase || !uid) return;
+    let alive = true;
+    const reload = () =>
+      load().then((d) => {
+        if (!alive) return;
+        setDetail(d);
+        setLoading(false);
+      });
+    reload();
+    const channel = supabase
+      .channel(`activity-${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `activity_id=eq.${id}` }, reload)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'activities', filter: `id=eq.${id}` }, reload)
+      .subscribe();
+    return () => {
+      alive = false;
+      supabase?.removeChannel(channel);
+    };
+  }, [id, uid, load]);
+
+  return { detail: uid ? detail : null, loading: uid ? loading : false, refresh };
+}
+
+export async function leaveServerActivity(activityId: string): Promise<void> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const { error } = await supabase.rpc('leave_activity', { p_activity: activityId });
+  if (error) throw new Error(error.message);
+}
+
+export async function cancelServerActivity(activityId: string): Promise<void> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const { error } = await supabase.from('activities').update({ cancelled_at: new Date().toISOString() }).eq('id', activityId);
+  if (error) throw new Error(error.message);
+}
+
+export type CalendarItem = {
+  id: string;
+  title: string;
+  format: string;
+  categoryId: string;
+  cityId: string;
+  areaId: string;
+  placeName: string | null;
+  startsAt: number;
+  endsAt: number | null;
+  hosting: boolean;
+  conversationId: string | null;
+};
+
+/** Everything I'm going to, soonest first. Live when I join or leave. */
+export function useCalendar(): { items: CalendarItem[]; loading: boolean; signedIn: boolean } {
+  const account = useAccount();
+  const uid = account?.userId;
+  const [items, setItems] = useState<CalendarItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async (): Promise<CalendarItem[]> => {
+    if (!supabase || !uid) return [];
+    const { data } = await supabase.rpc('my_calendar', {});
+    return ((data as Record<string, string | boolean | null>[]) ?? []).map((r) => ({
+      id: r.id as string,
+      title: r.title as string,
+      format: r.format as string,
+      categoryId: r.category_id as string,
+      cityId: r.city_id as string,
+      areaId: r.area_id as string,
+      placeName: (r.place_name as string) ?? null,
+      startsAt: Date.parse(r.starts_at as string),
+      endsAt: r.ends_at ? Date.parse(r.ends_at as string) : null,
+      hosting: Boolean(r.hosting),
+      conversationId: (r.conversation_id as string) ?? null,
+    }));
+  }, [uid]);
+  useEffect(() => {
+    if (!supabase || !uid) return;
+    let alive = true;
+    const reload = () =>
+      load().then((list) => {
+        if (!alive) return;
+        setItems(list);
+        setLoading(false);
+      });
+    reload();
+    const channel = supabase
+      .channel(`calendar-${uid}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `user_id=eq.${uid}` }, reload)
+      .subscribe();
+    return () => {
+      alive = false;
+      supabase?.removeChannel(channel);
+    };
+  }, [uid, load]);
+  return { items: uid ? items : [], loading: uid ? loading : false, signedIn: Boolean(uid) };
+}
+
+/** An .ics file for the phone's own calendar (Apple, Google, Outlook). */
+export function icsFor(a: { id: string; title: string; startsAt: number; endsAt: number | null; placeName: string | null; areaId: string }): string {
+  const stamp = (ms: number) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const end = a.endsAt ?? a.startsAt + 2 * 3600 * 1000;
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//IRLY//EN',
+    'BEGIN:VEVENT',
+    `UID:${a.id}@irly.app`,
+    `DTSTAMP:${stamp(Date.now())}`,
+    `DTSTART:${stamp(a.startsAt)}`,
+    `DTEND:${stamp(end)}`,
+    `SUMMARY:${a.title.replace(/[,;\n]/g, ' ')}`,
+    `LOCATION:${(a.placeName ?? a.areaId).replace(/[,;\n]/g, ' ')}`,
+    `URL:https://irly.app/a/${a.id}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+}
+
+export type Recommendation = { id: string; title: string; format: string; categoryId: string; areaId: string; startsAt: number; going: number; friendsGoing: number; reason: string };
+
+/** Ranked for me: interests, friends going, what I liked before, never what I hid. */
+export function useRecommendations(cityId: string): Recommendation[] {
+  const account = useAccount();
+  const uid = account?.userId;
+  const [list, setList] = useState<Recommendation[]>([]);
+  useEffect(() => {
+    if (!supabase || !uid) return;
+    let alive = true;
+    supabase.rpc('recommend_activities', { p_city: cityId, p_limit: 12 }).then(({ data }) => {
+      if (!alive) return;
+      setList(
+        ((data as Record<string, string | number>[]) ?? []).map((r) => ({
+          id: r.id as string,
+          title: r.title as string,
+          format: r.format as string,
+          categoryId: r.category_id as string,
+          areaId: r.area_id as string,
+          startsAt: Date.parse(r.starts_at as string),
+          going: Number(r.going),
+          friendsGoing: Number(r.friends_going),
+          reason: r.reason as string,
+        })),
+      );
+    });
+    return () => {
+      alive = false;
+    };
+  }, [cityId, uid]);
+  return uid ? list : [];
 }

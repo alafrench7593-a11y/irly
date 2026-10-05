@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { deleteServerAccount, useAccount } from '@/features/auth/account';
+import { deleteServerAccount, signOut, useAccount } from '@/features/auth/account';
 import { LANGS, useLangStore } from '@/i18n';
 import { useGirlStore } from '@/features/girl/girlStore';
 import { useState } from 'react';
@@ -191,6 +191,19 @@ export default function Profile() {
         ) : null}
 
         <Animated.View entering={enter.rise(7)} style={styles.section}>
+          <SectionHeader title="Your IRLY" />
+          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <SettingLink icon="calendar" label="Calendar" value="Everything you're going to" onPress={() => router.push('/calendar')} />
+            <Divider inset={16} />
+            <SettingLink icon="bookmark" label="Saved" value="Plans, places, people" onPress={() => router.push('/saved')} />
+            <Divider inset={16} />
+            <SettingLink icon="sparkles" label="Assistant" value="Ask or speak" onPress={() => router.push('/assistant')} />
+            <Divider inset={16} />
+            <SettingLink icon="shield" label="Privacy & notifications" value="Visibility, alerts" onPress={() => router.push('/settings')} />
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(8)} style={styles.section}>
           <SectionHeader title="Settings" />
           <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
             <View style={[styles.settingRow]}>
@@ -224,6 +237,7 @@ export default function Profile() {
               icon="arrowLeft"
               label="Log out"
               onPress={() => {
+                signOut().catch(() => undefined);
                 resetOnboarding();
                 router.replace('/welcome');
               }}

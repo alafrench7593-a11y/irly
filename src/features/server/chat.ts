@@ -74,14 +74,14 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
   return { conversations, refresh };
 }
 
-type MessageRow = { id: string; sender_id: string | null; kind: string; body: string; created_at: string };
+type MessageRow = { id: string; sender_id: string | null; kind: string; body: string; created_at: string; ref_type?: string | null; ref_id?: string | null };
 
 export type ServerThread = {
   loading: boolean;
   error: string | null;
   title: string;
   kind: InboxRow['kind'] | null;
-  messages: (Message & { name?: string })[];
+  messages: (Message & { name?: string; share?: { type: string; id: string | null } })[];
   send: (text: string) => Promise<void>;
 };
 
@@ -102,7 +102,7 @@ export function useServerThread(conversationId: string): ServerThread {
     (async () => {
       const [{ data: conv, error: e1 }, { data: msgs, error: e2 }, { data: members }] = await Promise.all([
         supabase!.from('conversations').select('id, kind, title').eq('id', conversationId).maybeSingle(),
-        supabase!.from('messages').select('id, sender_id, kind, body, created_at').eq('conversation_id', conversationId).is('deleted_at', null).order('created_at').limit(200),
+        supabase!.from('messages').select('id, sender_id, kind, body, created_at, ref_type, ref_id').eq('conversation_id', conversationId).is('deleted_at', null).order('created_at').limit(200),
         supabase!.from('conversation_members').select('user_id, profiles(first_name)').eq('conversation_id', conversationId),
       ]);
       if (!alive) return;
@@ -145,7 +145,7 @@ export function useServerThread(conversationId: string): ServerThread {
       const { data, error: e } = await supabase
         .from('messages')
         .insert({ conversation_id: conversationId, sender_id: uid, body: text })
-        .select('id, sender_id, kind, body, created_at')
+        .select('id, sender_id, kind, body, created_at, ref_type, ref_id')
         .single();
       if (e) throw new Error(e.message);
       setRows((list) => (list.some((x) => x.id === data.id) ? list : [...list, data as MessageRow]));
@@ -160,6 +160,7 @@ export function useServerThread(conversationId: string): ServerThread {
     text: r.body,
     minAgo: 0,
     at: Date.parse(r.created_at),
+    share: r.kind === 'share' && r.ref_type ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
   }));
   return { loading, error, title, kind, messages, send };
 }
