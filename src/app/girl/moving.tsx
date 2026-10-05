@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { t as tx } from '@/i18n';
+import { dateLocale, t as tx } from '@/i18n';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -129,7 +129,7 @@ export default function GirlsMoving() {
                     {m.firstName}
                   </Text>
                   <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
-                    {[STATUSES.find((s) => s.id === m.status)?.label, m.moveMonth ? new Date(m.moveMonth).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : null, m.areas[0]]
+                    {[STATUSES.find((s) => s.id === m.status)?.label, m.moveMonth ? new Date(m.moveMonth).toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' }) : null, m.areas[0]]
                       .filter(Boolean)
                       .map((x) => tx(x as string))
                       .join(' · ')}

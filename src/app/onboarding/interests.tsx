@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Chip } from '@/components/ui/Controls';
@@ -52,7 +53,7 @@ export default function Interests() {
       overline={`IRLY ${city.name}`}
       title="What do you love?"
       subtitle="Three or more picks and IRLY can start introducing you to people and plans."
-      cta={count >= 3 ? `Build my ${city.name}` : `Pick ${3 - count} more`}
+      cta={count >= 3 ? tx('Build my {city}', { city: city.name }) : tx('Pick {n} more', { n: 3 - count })}
       canContinue={count >= 3}
       onContinue={() => router.push('/onboarding/profile')}
     >

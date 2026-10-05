@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { switchToBali } from '@/features/bali/switch';
-import { t as tx } from '@/i18n';
+import { dateLocale, t as tx } from '@/i18n';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -16,7 +16,7 @@ const KIND: Record<GuideKind, { label: string; icon: 'shield' | 'sparkles' | 'br
   third_party: { label: 'Third-party service', icon: 'briefcase' },
 };
 const title = (s: string) => (s === 'visa' ? 'Visa & stay' : s === 'sim' ? 'SIM / eSIM' : s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()));
-const date = (d: string | null) => (d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : null);
+const date = (d: string | null) => (d ? new Date(d).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' }) : null);
 
 /**
  * A relocation topic. Official information first (with its source and the

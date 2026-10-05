@@ -83,7 +83,7 @@ export const PersonCard = memo(function PersonCard({ match, width }: { match: Ma
             {p.headline}
           </Text>
           <Text variant="caption" tone="tertiary" numberOfLines={1}>
-            {p.types.map((x) => USER_TYPES[x].label).join(' · ')} · {areaName(city, p.areaId)}
+            {[...p.types.map((x) => tx(USER_TYPES[x].label)), areaName(city, p.areaId)].join(' · ')}
           </Text>
         </View>
       </View>
@@ -127,7 +127,7 @@ export function planHeadline(plan: FeedPlan): { headline: string; going: number;
     const city = CITIES[s.cityId];
     const going = goingCount(s, false);
     return {
-      headline: `${going} ${going === 1 ? 'person is' : 'people are'} ${ACTIVITIES[s.kind].verb} ${relativeDay(s.when, city)}.`,
+      headline: tx(going === 1 ? '{n} person is {verb} {day}.' : '{n} people are {verb} {day}.', { n: going, verb: tx(ACTIVITIES[s.kind].verb), day: relativeDay(s.when, city) }),
       going,
       when: `${whenLabel(s.when, city)} · ${areaName(city, s.areaId)}`,
     };
@@ -136,9 +136,9 @@ export function planHeadline(plan: FeedPlan): { headline: string; going: number;
   if (!e) return null;
   const city = CITIES[e.cityId];
   return {
-    headline: `${plan.label ?? e.title} ${relativeDay(e.when, city)}.`,
+    headline: tx('{title} {day}.', { title: tx(plan.label ?? e.title), day: relativeDay(e.when, city) }),
     going: goingCount(e, false),
-    when: `${e.title} · ${whenLabel(e.when, city)}`,
+    when: `${tx(e.title)} · ${whenLabel(e.when, city)}`,
   };
 }
 
@@ -164,7 +164,7 @@ export const PlanCard = memo(function PlanCard({ plan }: { plan: FeedPlan }) {
           <View style={styles.row}>
             {soon ? <LiveDot size={6} /> : null}
             <Text variant="caption" tone={soon ? 'live' : 'tertiary'}>
-              {soon ? 'Today' : 'Coming up'} · posted {timeAgo(plan.postedMinAgo)} ago
+              {tx(soon ? 'Today · posted {ago} ago' : 'Coming up · posted {ago} ago', { ago: timeAgo(plan.postedMinAgo) })}
             </Text>
           </View>
         </View>

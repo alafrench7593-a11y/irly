@@ -48,6 +48,11 @@ export function translate(lang: Lang, text: string, vars?: Record<string, string
   return base.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
 }
 
+/** Locale for dates and times in the current language. */
+export function dateLocale(): string {
+  return resolveLang(useLangStore.getState().setting) === 'fr' ? 'fr-FR' : 'en-GB';
+}
+
 export type T = (text: string, vars?: Record<string, string | number>) => string;
 
 /** The current language. */

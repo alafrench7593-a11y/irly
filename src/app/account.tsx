@@ -174,7 +174,7 @@ export default function AccountScreen() {
     code: ['Check your email', `Sent to ${email.trim()}. Open the link on this device, or enter the 6-digit code if the email shows one.`],
     forgot: ['Forgot your password?', 'We email you a link to choose a new one.'],
     phone: ['Sign in with your phone', 'We text you a 6-digit code.'],
-    phoneCode: ['Enter the code', `Sent to ${phone.trim()}.`],
+    phoneCode: ['Enter the code', tx('Sent to {phone}.', { phone: phone.trim() })],
     reset: ['New password', 'Open the reset link from your email on this device first.'],
   };
 

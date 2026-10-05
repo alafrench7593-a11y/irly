@@ -57,6 +57,7 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
     .select('id')
     .single();
   if (error) throw new Error(error.message);
+  if (!data) throw new Error('Could not create');
   return data.id as string;
 }
 

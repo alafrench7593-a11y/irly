@@ -213,7 +213,7 @@ function FriendsLiveNow() {
                   <View style={styles.meta}>
                     <LiveDot size={6} color={t.c.positive} />
                     <Text variant="caption" numberOfLines={1}>
-                      {l.text.split(/[,.?!]/)[0]}
+                      {tx(l.text).split(/[,.?!]/)[0]}
                     </Text>
                   </View>
                   <Text variant="caption" tone="tertiary" numberOfLines={1}>

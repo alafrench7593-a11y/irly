@@ -112,7 +112,7 @@ export function getHeader(item: HeroItem): DetailHeader | null {
         overline: 'Community',
         overlineIcon: 'users',
         title: c.name,
-        meta: `${formatCount(c.members)} members · ${c.rhythm}`,
+        meta: `${tx('{n} members', { n: formatCount(c.members) })} · ${tx(c.rhythm)}`,
         verified: c.verified,
       };
     }
@@ -526,16 +526,16 @@ const ServiceBody = memo(function ServiceBody({ id }: { id: string; go: Go }) {
           <View style={styles.trustItem}>
             <Icon name="clock" size={22} color={t.c.text} />
             <Text variant="bodyS" tone="secondary" align="center">
-              {s.responseTime.replace('Replies in ', '')}
+              {tx(s.responseTime.replace('Replies in ', ''))}
             </Text>
           </View>
         </View>
       </Section>
       <Section title="Details" index={3}>
         <View style={{ gap: space[5] }}>
-          <InfoRow icon="banknote" label="From" value={`${formatPrice(s.priceFrom, city.currency)} ${s.unit}`} />
+          <InfoRow icon="banknote" label="From" value={`${formatPrice(s.priceFrom, city.currency)} ${tx(s.unit)}`} />
           <InfoRow icon="languages" label="Languages" value={s.languages.join(' · ')} />
-          <InfoRow icon="pin" label="Based in" value={`${areaName(city, s.areaId)} · serves all of ${city.name}`} />
+          <InfoRow icon="pin" label="Based in" value={tx('{area} · serves all of {city}', { area: areaName(city, s.areaId), city: city.name })} />
         </View>
       </Section>
     </>
@@ -613,7 +613,7 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
       }
       case 'community': {
         const c = findCommunity(item.id);
-        return c ? { price: 'Free', note: `${formatCount(c.members)} members`, kind: 'member' as const } : null;
+        return c ? { price: 'Free', note: tx('{n} members', { n: formatCount(c.members) }), kind: 'member' as const } : null;
       }
       case 'place':
         return { price: '', note: '', kind: 'save' as const };

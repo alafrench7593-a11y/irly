@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/ui/Icon';
+import { t as tx } from '@/i18n';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
 import { toLatLng, type LatLng } from '@/data/geo';
 import type { City, CityContent, MapPoint } from '@/data/types';
@@ -83,8 +84,8 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       // A live is placed at its neighbourhood, never at an address.
       areaId: l.areaId,
       point: jitter(pt(l.areaId), l.id, 0.03),
-      title: p ? `${p.name} is live` : 'You are live',
-      subtitle: `${l.place} · now`,
+      title: p ? tx('{name} is live', { name: p.name }) : tx('You are live'),
+      subtitle: `${tx(l.place)} · ${tx('now')}`,
       icon: 'zap',
       color: status.live,
       personId: p?.id,

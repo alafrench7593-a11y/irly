@@ -214,7 +214,7 @@ export const ServiceCard = memo(function ServiceCard({ service, compact }: { ser
           <View style={[styles.metaRow, { marginTop: 4 }]}>
             <Icon name="star" size={12} color={t.accent} fill={t.accent} />
             <Text variant="caption" tone="secondary">
-              {service.rating.toFixed(1)} · {formatCount(service.reviews)} reviews · {service.responseTime}
+              {[service.rating.toFixed(1), tx('{n} reviews', { n: formatCount(service.reviews) }), tx('Replies in {time}', { time: tx(service.responseTime.replace('Replies in ', '')) })].join(' · ')}
             </Text>
           </View>
         ) : null}

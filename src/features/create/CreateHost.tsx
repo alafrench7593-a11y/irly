@@ -295,7 +295,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   <PressableScale haptic={false} scaleTo={0.98} onPress={() => chooseEntry(category.id, pick.sub!)} style={[styles.result, { backgroundColor: t.c.surface }]}>
                     <View style={[styles.dot, { backgroundColor: category.color }]} />
                     <Text variant="label" style={{ flex: 1 }}>
-                      {pick.sub.label} session
+                      {tx('{what} session', { what: tx(pick.sub.label) })}
                     </Text>
                     <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
                   </PressableScale>

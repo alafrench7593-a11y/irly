@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { cityWhen } from '@/lib/time';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { t as tx } from '@/i18n';
+import { dateLocale, t as tx } from '@/i18n';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionBar } from '@/components/social/ActionBar';
@@ -155,7 +155,7 @@ export default function PlaceScreen() {
 
           {p.provider === 'google' ? (
             <Text variant="caption" tone="tertiary">
-              {tx('Rating, hours and photos from Google. Updated {date}.', { date: p.fetchedAt ? new Date(p.fetchedAt).toLocaleDateString('en-GB') : '—' })}
+              {tx('Rating, hours and photos from Google. Updated {date}.', { date: p.fetchedAt ? new Date(p.fetchedAt).toLocaleDateString(dateLocale()) : '—' })}
             </Text>
           ) : null}
         </View>

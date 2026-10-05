@@ -22,42 +22,42 @@ export type PlanType = { id: string; label: string; icon: IconName; audience: 'a
 
 /** Restaurant plans (any member; girls plans need IRLY Girl, checked server-side). */
 export const FOOD_PLANS: PlanType[] = [
-  { id: 'DINNER', label: 'Dinner', icon: 'utensils', audience: 'all', category: 'food', title: (w) => `Dinner at ${w}` },
-  { id: 'BRUNCH', label: 'Brunch', icon: 'coffee', audience: 'all', category: 'food', title: (w) => `Brunch at ${w}` },
-  { id: 'COFFEE', label: 'Coffee', icon: 'coffee', audience: 'all', category: 'food', title: (w) => `Coffee at ${w}` },
-  { id: 'RESTAURANT_MEETUP', label: 'Meetup', icon: 'users', audience: 'all', category: 'food', title: (w) => `Meetup at ${w}` },
-  { id: 'GIRLS_DINNER', label: 'Girls dinner', icon: 'heart', audience: 'girls', category: 'food', title: (w) => `Girls dinner at ${w}` },
-  { id: 'FAMILY_DINNER', label: 'Family dinner', icon: 'home', audience: 'families', category: 'family', title: (w) => `Family dinner at ${w}` },
-  { id: 'MOM_BRUNCH', label: 'Mom brunch', icon: 'baby', audience: 'moms', category: 'family', title: (w) => `Mom brunch at ${w}` },
-  { id: 'BRUNCH_WITH_KIDS', label: 'Kids + brunch', icon: 'baby', audience: 'moms', category: 'family', title: (w) => `Brunch with kids at ${w}` },
+  { id: 'DINNER', label: 'Dinner', icon: 'utensils', audience: 'all', category: 'food', title: (w) => tx('Dinner at {w}', { w }) },
+  { id: 'BRUNCH', label: 'Brunch', icon: 'coffee', audience: 'all', category: 'food', title: (w) => tx('Brunch at {w}', { w }) },
+  { id: 'COFFEE', label: 'Coffee', icon: 'coffee', audience: 'all', category: 'food', title: (w) => tx('Coffee at {w}', { w }) },
+  { id: 'RESTAURANT_MEETUP', label: 'Meetup', icon: 'users', audience: 'all', category: 'food', title: (w) => tx('Meetup at {w}', { w }) },
+  { id: 'GIRLS_DINNER', label: 'Girls dinner', icon: 'heart', audience: 'girls', category: 'food', title: (w) => tx('Girls dinner at {w}', { w }) },
+  { id: 'FAMILY_DINNER', label: 'Family dinner', icon: 'home', audience: 'families', category: 'family', title: (w) => tx('Family dinner at {w}', { w }) },
+  { id: 'MOM_BRUNCH', label: 'Mom brunch', icon: 'baby', audience: 'moms', category: 'family', title: (w) => tx('Mom brunch at {w}', { w }) },
+  { id: 'BRUNCH_WITH_KIDS', label: 'Kids + brunch', icon: 'baby', audience: 'moms', category: 'family', title: (w) => tx('Brunch with kids at {w}', { w }) },
 ];
 
 /** IRLY Girl plans (girls only, checked server-side). */
 export const GIRL_PLANS: PlanType[] = [
-  { id: 'SURF', label: 'Girls surf morning', icon: 'waves', audience: 'girls', category: 'sport', title: (w) => `Girls surf morning · ${w}` },
-  { id: 'BRUNCH', label: 'Girls brunch', icon: 'coffee', audience: 'girls', category: 'food', title: (w) => `Girls brunch · ${w}` },
-  { id: 'WELLNESS', label: 'Girls wellness', icon: 'leaf', audience: 'girls', category: 'wellness', title: (w) => `Girls wellness · ${w}` },
-  { id: 'SUNSET', label: 'Girls sunset', icon: 'sunset', audience: 'girls', category: 'outdoor', title: (w) => `Girls sunset · ${w}` },
-  { id: 'COWORKING', label: 'Coworking day', icon: 'laptop', audience: 'girls', category: 'networking', title: (w) => `Girls coworking day · ${w}` },
-  { id: 'COFFEE', label: 'Women entrepreneurs coffee', icon: 'briefcase', audience: 'girls', category: 'networking', title: (w) => `Women entrepreneurs coffee · ${w}` },
-  { id: 'GIRLS_DINNER', label: 'Girls dinner', icon: 'utensils', audience: 'girls', category: 'food', title: (w) => `Girls dinner · ${w}` },
+  { id: 'SURF', label: 'Girls surf morning', icon: 'waves', audience: 'girls', category: 'sport', title: (w) => `${tx('Girls surf morning')} · ${w}` },
+  { id: 'BRUNCH', label: 'Girls brunch', icon: 'coffee', audience: 'girls', category: 'food', title: (w) => `${tx('Girls brunch')} · ${w}` },
+  { id: 'WELLNESS', label: 'Girls wellness', icon: 'leaf', audience: 'girls', category: 'wellness', title: (w) => `${tx('Girls wellness')} · ${w}` },
+  { id: 'SUNSET', label: 'Girls sunset', icon: 'sunset', audience: 'girls', category: 'outdoor', title: (w) => `${tx('Girls sunset')} · ${w}` },
+  { id: 'COWORKING', label: 'Coworking day', icon: 'laptop', audience: 'girls', category: 'networking', title: (w) => `${tx('Girls coworking day')} · ${w}` },
+  { id: 'COFFEE', label: 'Women entrepreneurs coffee', icon: 'briefcase', audience: 'girls', category: 'networking', title: (w) => `${tx('Women entrepreneurs coffee')} · ${w}` },
+  { id: 'GIRLS_DINNER', label: 'Girls dinner', icon: 'utensils', audience: 'girls', category: 'food', title: (w) => `${tx('Girls dinner')} · ${w}` },
 ];
 
 /** IRLY Moms: activities with children (always IRLY Girl plans). */
 export const MOM_PLANS: PlanType[] = [
-  { id: 'PLAYDATE', label: 'Playdate', icon: 'baby', audience: 'moms', category: 'family', title: (w) => `Playdate · ${w}` },
-  { id: 'BEACH_WITH_KIDS', label: 'Beach with kids', icon: 'sun', audience: 'moms', category: 'family', title: (w) => `Beach with kids · ${w}` },
-  { id: 'PARK_MEETUP', label: 'Park meetup', icon: 'leaf', audience: 'moms', category: 'family', title: (w) => `Park meetup · ${w}` },
-  { id: 'MOM_COFFEE', label: 'Mom coffee', icon: 'coffee', audience: 'moms', category: 'family', title: (w) => `Mom coffee · ${w}` },
-  { id: 'MOM_BABY_WALK', label: 'Mom & baby walk', icon: 'footprints', audience: 'moms', category: 'family', title: (w) => `Mom & baby walk · ${w}` },
-  { id: 'BRUNCH_WITH_KIDS', label: 'Brunch with kids', icon: 'utensils', audience: 'moms', category: 'family', title: (w) => `Brunch with kids · ${w}` },
-  { id: 'FAMILY_PICNIC', label: 'Family picnic', icon: 'sun', audience: 'moms', category: 'family', title: (w) => `Family picnic · ${w}` },
-  { id: 'SWIMMING', label: 'Swimming', icon: 'waves', audience: 'moms', category: 'family', title: (w) => `Kids swimming · ${w}` },
-  { id: 'KIDS_FOOTBALL', label: 'Kids football', icon: 'volleyball', audience: 'moms', category: 'family', title: (w) => `Kids football · ${w}` },
-  { id: 'KIDS_PADEL', label: 'Kids padel', icon: 'trophy', audience: 'moms', category: 'family', title: (w) => `Kids padel · ${w}` },
-  { id: 'KIDS_TENNIS', label: 'Kids tennis', icon: 'trophy', audience: 'moms', category: 'family', title: (w) => `Kids tennis · ${w}` },
-  { id: 'CREATIVE_WORKSHOP', label: 'Creative workshop', icon: 'palette', audience: 'moms', category: 'family', title: (w) => `Creative workshop · ${w}` },
-  { id: 'KIDS_ART', label: 'Kids art', icon: 'brush', audience: 'moms', category: 'family', title: (w) => `Kids art · ${w}` },
+  { id: 'PLAYDATE', label: 'Playdate', icon: 'baby', audience: 'moms', category: 'family', title: (w) => `${tx('Playdate')} · ${w}` },
+  { id: 'BEACH_WITH_KIDS', label: 'Beach with kids', icon: 'sun', audience: 'moms', category: 'family', title: (w) => `${tx('Beach with kids')} · ${w}` },
+  { id: 'PARK_MEETUP', label: 'Park meetup', icon: 'leaf', audience: 'moms', category: 'family', title: (w) => `${tx('Park meetup')} · ${w}` },
+  { id: 'MOM_COFFEE', label: 'Mom coffee', icon: 'coffee', audience: 'moms', category: 'family', title: (w) => `${tx('Mom coffee')} · ${w}` },
+  { id: 'MOM_BABY_WALK', label: 'Mom & baby walk', icon: 'footprints', audience: 'moms', category: 'family', title: (w) => `${tx('Mom & baby walk')} · ${w}` },
+  { id: 'BRUNCH_WITH_KIDS', label: 'Brunch with kids', icon: 'utensils', audience: 'moms', category: 'family', title: (w) => `${tx('Brunch with kids')} · ${w}` },
+  { id: 'FAMILY_PICNIC', label: 'Family picnic', icon: 'sun', audience: 'moms', category: 'family', title: (w) => `${tx('Family picnic')} · ${w}` },
+  { id: 'SWIMMING', label: 'Swimming', icon: 'waves', audience: 'moms', category: 'family', title: (w) => `${tx('Kids swimming')} · ${w}` },
+  { id: 'KIDS_FOOTBALL', label: 'Kids football', icon: 'volleyball', audience: 'moms', category: 'family', title: (w) => `${tx('Kids football')} · ${w}` },
+  { id: 'KIDS_PADEL', label: 'Kids padel', icon: 'trophy', audience: 'moms', category: 'family', title: (w) => `${tx('Kids padel')} · ${w}` },
+  { id: 'KIDS_TENNIS', label: 'Kids tennis', icon: 'trophy', audience: 'moms', category: 'family', title: (w) => `${tx('Kids tennis')} · ${w}` },
+  { id: 'CREATIVE_WORKSHOP', label: 'Creative workshop', icon: 'palette', audience: 'moms', category: 'family', title: (w) => `${tx('Creative workshop')} · ${w}` },
+  { id: 'KIDS_ART', label: 'Kids art', icon: 'brush', audience: 'moms', category: 'family', title: (w) => `${tx('Kids art')} · ${w}` },
 ];
 
 const DAYS: Day[] = ['today', 'tomorrow', 'weekend', 'next_week'];

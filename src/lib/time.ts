@@ -1,4 +1,4 @@
-import { t as tx } from '@/i18n';
+import { dateLocale, t as tx } from '@/i18n';
 import type { City, When } from '@/data/types';
 
 /**
@@ -59,12 +59,12 @@ export function planDate(when: When, city: Pick<City, 'utcOffset'>, now = Date.n
 export function relativeDay(when: When, city: Pick<City, 'utcOffset'>, now = Date.now()): string {
   const h = startHour(when);
   if (when.dayOffset === 0) {
-    if (h >= 17) return 'tonight';
-    if (h < 12) return 'this morning';
-    return 'today';
+    if (h >= 17) return tx('tonight');
+    if (h < 12) return tx('this morning');
+    return tx('today');
   }
-  if (when.dayOffset === 1) return h >= 17 ? 'tomorrow night' : 'tomorrow';
-  return WEEKDAYS[planDate(when, city, now).getUTCDay()];
+  if (when.dayOffset === 1) return tx(h >= 17 ? 'tomorrow night' : 'tomorrow');
+  return tx(WEEKDAYS[planDate(when, city, now).getUTCDay()]).toLowerCase();
 }
 
 /** "Tonight · 20:30", "Tomorrow · 06:00", "Sat 12 Oct · 10:00" */
@@ -94,11 +94,11 @@ export function durationLabel(min: number): string {
 }
 
 export function timeAgo(minAgo: number): string {
-  if (minAgo < 1) return 'now';
+  if (minAgo < 1) return tx('now');
   if (minAgo < 60) return `${Math.round(minAgo)} min`;
   const h = Math.round(minAgo / 60);
   if (h < 24) return `${h} h`;
-  return `${Math.round(h / 24)} d`;
+  return tx('{n} d', { n: Math.round(h / 24) });
 }
 
 /** True while a plan is actually under way, in the city's time. */
@@ -118,7 +118,7 @@ const offsetOf = (cityId: string | null | undefined) => (cityId === 'bali' ? 8 :
  * in Bali for a Bali meetup, wherever the phone is). UAE +4, Bali +8, no DST.
  */
 export function cityWhen(ms: number, cityId: string | null | undefined, opts: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }): string {
-  return new Date(ms + offsetOf(cityId) * HOUR_MS).toLocaleString('en-GB', { ...opts, timeZone: 'UTC' });
+  return new Date(ms + offsetOf(cityId) * HOUR_MS).toLocaleString(dateLocale(), { ...opts, timeZone: 'UTC' });
 }
 
 /** The city's calendar day of a timestamp, as a sortable key. */

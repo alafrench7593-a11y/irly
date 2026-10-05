@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { t as tx } from '@/i18n';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -137,7 +138,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
             <Glass dark style={styles.badge}>
               <Icon name="sparkles" size={12} color="#FFFFFF" />
               <Text variant="caption" color="#FFFFFF">
-                New in {city?.name ?? 'town'}
+                {city ? tx('New in {city}', { city: city.name }) : tx('New in town')}
               </Text>
             </Glass>
           ) : null}

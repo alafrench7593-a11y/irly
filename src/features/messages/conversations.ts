@@ -1,4 +1,5 @@
 import { findCommunity, findConversation, findPerson, findService, getCityContent } from '@/data/repo';
+import { t as tx } from '@/i18n';
 import type { CityId, Conversation, Message } from '@/data/types';
 import { useGirlStore, type LocalMatch } from '@/features/girl/girlStore';
 import { labelOf } from '@/features/girl/taxonomy';
@@ -76,7 +77,7 @@ export function communityConversation(communityId: string): Conversation | undef
     personIds: c.memberIds,
     unread: 0,
     refId: c.id,
-    messages: [{ id: `${c.id}-welcome`, from: c.memberIds[0] ?? 'irly', text: `Welcome to ${c.name}! ${c.rhythm}. Say hi 👋`, minAgo: 1 }],
+    messages: [{ id: `${c.id}-welcome`, from: c.memberIds[0] ?? 'irly', text: tx('Welcome to {name}! {rhythm}. Say hi 👋', { name: c.name, rhythm: tx(c.rhythm) }), minAgo: 1 }],
   };
 }
 

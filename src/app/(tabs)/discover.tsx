@@ -61,7 +61,7 @@ export default function Discover() {
     ...CATEGORIES.map((c) => ({ label: c.label, caption: c.tagline, icon: c.icon, photo: c.photo, href: `/category/${c.id}` })),
     { label: 'Events', caption: tx('{n} this week', { n: content.events.length }), icon: 'ticket', photo: content.events[0]?.visual.photo ?? 'dinner', href: '/events' },
     { label: 'Activities', caption: tx('{n} sports & more', { n: city.activityKinds.length }), icon: 'activity', photo: ACTIVITIES[city.activityKinds[0]].photo ?? 'running', href: '/activities' },
-    { label: 'Communities', caption: `${city.stats.communities} groups`, icon: 'users', photo: 'founders', href: '/communities' },
+    { label: 'Communities', caption: tx('{n} groups', { n: city.stats.communities }), icon: 'users', photo: 'founders', href: '/communities' },
     { label: 'Services', caption: 'Curated & verified', icon: 'shield', photo: SERVICE_CATEGORIES[city.serviceCategories[0]].photo ?? 'apartment', href: '/services' },
     { label: 'Business', caption: 'Setup, visa, people', icon: 'briefcase', photo: 'meeting', href: '/business' },
     { label: 'Map', caption: 'Everything around you', icon: 'map', photo: city.photo, href: '/map' },
