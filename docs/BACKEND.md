@@ -155,6 +155,16 @@ web and the keyboard's dictation in Expo Go. Anything that changes data
 
 The key stays in GitHub; the app only reads the database.
 
+## Security fixes (migration 1300)
+
+- Profiles: members cannot delete their own row (delete + re-insert bypassed the gender lock). Others never read `birthdate`, `faith`, `gender` or `is_admin`: column privileges, applied by `private.restrict_profile_columns()`. **A new column added to `profiles` later is not readable until that function is run again** (`select private.restrict_profile_columns();`).
+- Posts, comments and messages: only the text and `deleted_at` can be edited. Author, community, conversation, kind and dates are fixed. A removal (by a moderator or after 3 reports) cannot be undone by the author, and moderators can only remove a post, never rewrite it.
+- Removed comments and deleted messages are no longer readable by others, including through realtime.
+- Mentions notify only real accounts that can see the item, once each.
+- `join_activity` honours privacy: friends-only activities need the creator's friendship, community ones need membership, invite-only ones need a share in one of your chats.
+- Blocking someone ends the friendship. Match discovery never reveals a hidden age through filters, or hidden languages through reasons. `friends` and `communities` profile visibility are enforced.
+- Joining or befriending again does not re-notify (ACTIVITY_JOINED once per person, FRIEND_REQUEST once a week, COMMUNITY_JOINED only for a new membership).
+
 ## Still to connect
 
 - Provider keys for Apple, Google and SMS (see above).

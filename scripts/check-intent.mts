@@ -39,6 +39,25 @@ const cases: [string, Expect][] = [
   ['Find moms for a playdate', { intent: 'OPEN_MOMS' }],
   ['Restaurants in JLT', { intent: 'FIND_RESTAURANT', placeKind: 'restaurant', areaId: 'jlt' }],
   ['Où manger ce soir ?', { intent: 'FIND_RESTAURANT', day: 'today' }],
+  // Regressions from the bug hunt.
+  ['Any new events tonight?', { day: 'today' }],
+  ['I need a plan for tonight', { intent: 'FIND_SOMETHING_TO_DO' }],
+  ['which area has the best padel in Dubai?', { activity: 'padel', cityId: 'dubai' }],
+  ['visa run from Dubai', { cityId: 'dubai' }],
+  ['Créer un événement samedi', { intent: 'CREATE_EVENT', day: 'sat' }],
+  ['Crée une communauté de padel', { intent: 'CREATE_COMMUNITY', activity: 'padel' }],
+  ['un café demain', { activity: 'coffee', day: 'tomorrow' }],
+  ['coffee at 7.30pm', { time: '19:30' }],
+  ['Brunch at 11.30', { time: '11:30' }],
+  ['Dinner at 8:30', { time: '20:30' }],
+  ['padel monday 6pm', { day: 'mon', time: '18:00' }],
+];
+const never: [string, string][] = [
+  ['Any new events tonight?', 'CREATE_ACTIVITY'],
+  ['new restaurants in JLT', 'CREATE_ACTIVITY'],
+  ['I m new in dubai, find friends', 'CREATE_ACTIVITY'],
+  ['which area has the best padel in Dubai?', 'WHERE_TO_LIVE'],
+  ['visa run from Dubai', 'OPEN_VISA'],
 ];
 
 let failed = 0;
@@ -50,6 +69,37 @@ for (const [input, want] of cases) {
     failed++;
     console.error(`✗ ${input}\n   expected ${JSON.stringify(want)}\n   got      ${JSON.stringify(got)}`);
   } else console.log(`✓ ${input}`);
+}
+
+for (const [input, bad] of never) {
+  const c = parseCommand(input, geo);
+  if (c.intent === bad) {
+    failed++;
+    console.error(`✗ ${input} must not be ${bad}`);
+  } else console.log(`✓ ${input} is not ${bad}`);
+}
+
+// City time: 19:00 in Bali (UTC+8), asked from anywhere, is 11:00 UTC.
+const utcNoon = new Date(Date.UTC(2026, 9, 5, 4, 0)); // Monday 12:00 in Bali
+const bali = dateFor('tomorrow', '19:00', utcNoon, 8);
+if (bali.toISOString() !== '2026-10-06T11:00:00.000Z') {
+  failed++;
+  console.error('✗ dateFor in Bali time', bali.toISOString());
+}
+// Midnight stays midnight (not 19:00).
+const late = dateFor('tomorrow', '00:30', utcNoon, 8);
+if (late.toISOString() !== '2026-10-05T16:30:00.000Z') {
+  failed++;
+  console.error('✗ dateFor 00:30', late.toISOString());
+}
+// On Saturday morning, "this weekend 18:00" is today, and "saturday 18:00" too.
+const satMorning = new Date(Date.UTC(2026, 9, 10, 6, 0)); // Saturday 10:00 in Dubai
+for (const d of ['weekend', 'sat'] as const) {
+  const x = dateFor(d, '18:00', satMorning, 4);
+  if (x.toISOString() !== '2026-10-10T14:00:00.000Z') {
+    failed++;
+    console.error(`✗ dateFor ${d} on Saturday`, x.toISOString());
+  }
 }
 
 // Dates: "tomorrow 19:00" from a Monday noon is Tuesday 19:00.

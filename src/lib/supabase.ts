@@ -31,3 +31,15 @@ export async function hasSession(): Promise<boolean> {
   const { data } = await supabase.auth.getSession();
   return Boolean(data.session);
 }
+
+let channelSeq = 0;
+/**
+ * A realtime topic unique to this subscription. supabase-js hands back the
+ * existing channel when a topic is reused, and adding listeners to a joined
+ * channel throws; two mounted screens (tabs stay mounted) or an effect
+ * re-run while the old channel is still leaving would collide.
+ */
+export function topic(name: string) {
+  channelSeq += 1;
+  return `${name}#${channelSeq}`;
+}

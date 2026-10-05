@@ -7,7 +7,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useServerInbox } from '@/features/server/chat';
-import { openDirect, shareNative, shareToChat, type TargetType } from '@/features/server/engage';
+import { openDirect, copyLink, shareNative, shareToChat, type TargetType } from '@/features/server/engage';
 import { useFriends } from '@/features/server/social';
 import { hueOf } from '@/lib/format';
 import { haptic } from '@/motion/haptics';
@@ -64,9 +64,9 @@ export default function ShareScreen() {
             icon="link"
             label="Copy link"
             onPress={() =>
-              shareNative(target)
-                .then(() => toast('Link ready to paste', 'link', 'brand'))
-                .catch(() => undefined)
+              copyLink(target)
+                .then(() => toast('Link copied', 'link', 'brand'))
+                .catch(() => toast('Could not copy the link', 'x', 'live'))
             }
           />
         </View>

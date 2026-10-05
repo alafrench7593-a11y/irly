@@ -118,7 +118,7 @@ export function QuickPlan({
         price: 0,
         currency: city.currency,
       };
-      const id = await createServerActivity(plan, dateFor(day, time), { placeId: place?.id ?? null, activityType: type.id, audience: type.audience });
+      const id = await createServerActivity(plan, dateFor(day, time, new Date(), city.utcOffset), { placeId: place?.id ?? null, activityType: type.id, audience: type.audience });
       postPlan(plan);
       haptic('success');
       track('ACTIVITY_CREATE', { type: type.id, audience: type.audience, place: Boolean(place) });

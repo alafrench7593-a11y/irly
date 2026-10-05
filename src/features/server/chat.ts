@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
-import { supabase } from '@/lib/supabase';
+import { supabase, topic } from '@/lib/supabase';
 
 /**
  * Server chats (signed in): the inbox from `my_conversations()` and live
@@ -37,10 +37,19 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
   const account = useAccount();
   const [rows, setRows] = useState<InboxRow[]>([]);
   const uid = account?.userId;
+  const currentUid = useRef(uid);
+  useEffect(() => {
+    currentUid.current = uid;
+  }, [uid]);
 
   const refresh = useCallback(() => {
     if (!supabase || !uid) return;
-    supabase.rpc('my_conversations').then(({ data }) => setRows((data as InboxRow[]) ?? []));
+    const asked = uid;
+    supabase.rpc('my_conversations').then(({ data, error }) => {
+      // Keep the inbox on a failed refresh; drop a late answer for a previous account.
+      if (error || currentUid.current !== asked) return;
+      setRows((data as InboxRow[]) ?? []);
+    });
   }, [uid]);
 
   useEffect(() => {
@@ -48,7 +57,7 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
     refresh();
     // New messages anywhere you are a member refresh the inbox.
     const channel = supabase
-      .channel(`inbox-${uid}`)
+      .channel(topic(`inbox-${uid}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, refresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_members', filter: `user_id=eq.${uid}` }, refresh)
       .subscribe();
@@ -126,7 +135,7 @@ export function useServerThread(conversationId: string): ServerThread {
     })();
 
     const channel = supabase
-      .channel(`thread-${conversationId}`)
+      .channel(topic(`thread-${conversationId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow;
         setRows((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
@@ -162,5 +171,5 @@ export function useServerThread(conversationId: string): ServerThread {
     at: Date.parse(r.created_at),
     share: r.kind === 'share' && r.ref_type ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
   }));
-  return { loading, error, title, kind, messages, send };
+  return { loading: uid ? loading : false, error, title, kind, messages, send };
 }

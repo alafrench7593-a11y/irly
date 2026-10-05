@@ -26,6 +26,7 @@ import {
 } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { hasBackend } from '@/lib/supabase';
+import { useStore } from '@/state/store';
 import { haptic } from '@/motion/haptics';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -138,7 +139,10 @@ export default function AccountScreen() {
             icon="arrowLeft"
             onPress={async () => {
               await signOut();
+              // Same as Log out on the profile: the next account must not inherit this profile.
+              useStore.getState().resetOnboarding();
               toast('Signed out', 'check', 'brand');
+              router.replace('/welcome');
             }}
           />
         </View>

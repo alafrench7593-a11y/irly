@@ -26,6 +26,13 @@ expect(communityAssist('quoi de neuf ?', ctx).kind === 'digest', 'digest in Fren
 const i = communityAssist('give me post ideas', ctx);
 expect(i.kind === 'ideas' && i.ideas.length === 3, 'ideas for the category', i);
 expect(communityAssist('hello', ctx).kind === 'help', 'unknown → help');
+// Regressions: a plan "this week" is a plan; accents; "new" is not "create".
+expect(communityAssist('Organise padel this week', ctx).kind === 'plan', 'plan this week is a plan');
+expect(communityAssist('Organiser un padel cette semaine', ctx).kind === 'plan', 'French plan this week is a plan');
+expect(communityAssist('Plan a dinner to resume our chats', ctx).kind === 'plan', 'resume as a verb is not a digest');
+expect(communityAssist('résumé', ctx).kind === 'digest', 'résumé → digest');
+expect(communityAssist('des idées ?', ctx).kind === 'ideas', 'idées → ideas');
+expect(communityAssist('Anyone tried the new court?', ctx).kind !== 'plan', 'a question about a new court is not a plan');
 
 expect(postLooksLikeAPlan("Padel saturday 9am, who's in?", geo)?.activity === 'padel', 'an inviting post becomes an activity suggestion');
 expect(postLooksLikeAPlan('Qui vient courir demain matin ?', geo)?.activity === 'running', 'in French too');

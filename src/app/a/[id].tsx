@@ -49,7 +49,7 @@ export default function ActivityPage() {
         <Text variant="titleM" align="center">
           Sign in to see this activity
         </Text>
-        <Button label="Sign in" onPress={() => router.replace('/account')} />
+        <Button label="Sign in" onPress={() => router.push('/account')} />
       </Centered>
     );
   }

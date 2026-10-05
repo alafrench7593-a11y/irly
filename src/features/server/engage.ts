@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
-import { supabase } from '@/lib/supabase';
+import { supabase, topic } from '@/lib/supabase';
 
 /**
  * One interaction system for the whole app. Anything that can be liked,
@@ -48,7 +49,8 @@ export function useEngagement(type: TargetType, ids: string[]) {
 
   const load = useCallback(async (): Promise<Record<string, Engagement>> => {
     if (!supabase || !uid || !key) return {};
-    const { data } = await supabase.rpc('engagement', { p_type: type, p_ids: key.split(',') });
+    const { data, error } = await supabase.rpc('engagement', { p_type: type, p_ids: key.split(',') });
+    if (error) throw new Error(error.message);
     const out: Record<string, Engagement> = {};
     for (const r of (data as Row[]) ?? []) out[r.target_id] = { likes: r.likes, comments: r.comments, saves: r.saves, liked: r.liked, saved: r.saved };
     return out;
@@ -57,10 +59,13 @@ export function useEngagement(type: TargetType, ids: string[]) {
   useEffect(() => {
     if (!supabase || !uid || !key) return;
     let alive = true;
-    const reload = () => load().then((m) => alive && setMap(m));
+    const reload = () =>
+      load()
+        .then((m) => alive && setMap(m))
+        .catch(() => undefined);
     reload();
     const channel = supabase
-      .channel(`eng-${type}-${key.length}-${uid}`)
+      .channel(topic(`eng-${type}-${key.length}-${uid}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: `target_type=eq.${type}` }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_type=eq.${type}` }, reload)
       .subscribe();
@@ -70,35 +75,54 @@ export function useEngagement(type: TargetType, ids: string[]) {
     };
   }, [type, key, uid, load]);
 
-  const patch = (id: string, next: Partial<Engagement>) => setMap((m) => ({ ...m, [id]: { ...(m[id] ?? EMPTY), ...next } }));
+  const patch = useCallback((id: string, next: Partial<Engagement>) => setMap((m) => ({ ...m, [id]: { ...(m[id] ?? EMPTY), ...next } })), []);
+
+  // Latest state for the toggles (not the render's snapshot), and one toggle
+  // in flight per item: a double tap must not toggle twice on the server.
+  const mapRef = useRef(map);
+  useEffect(() => {
+    mapRef.current = map;
+  }, [map]);
+  const busy = useRef(new Set<string>());
 
   const like = useCallback(
     async (id: string) => {
-      const cur = map[id] ?? EMPTY;
-      patch(id, { liked: !cur.liked, likes: cur.likes + (cur.liked ? -1 : 1) });
+      const k = `like:${id}`;
+      if (busy.current.has(k)) return;
+      busy.current.add(k);
+      const cur = mapRef.current[id] ?? EMPTY;
+      patch(id, { liked: !cur.liked, likes: Math.max(0, cur.likes + (cur.liked ? -1 : 1)) });
       try {
         const liked = await toggleLike({ type, id });
+        patch(id, { liked });
         if (liked) track(type === 'irl_post' ? 'IRL_LIKE' : type === 'activity' ? 'EVENT_LIKE' : 'LIKE', { type });
       } catch (e) {
-        patch(id, cur);
+        patch(id, { liked: cur.liked, likes: cur.likes });
         throw e;
+      } finally {
+        busy.current.delete(k);
       }
     },
-    [map, type],
+    [type, patch],
   );
 
   const save = useCallback(
     async (id: string) => {
-      const cur = map[id] ?? EMPTY;
-      patch(id, { saved: !cur.saved, saves: cur.saves + (cur.saved ? -1 : 1) });
+      const k = `save:${id}`;
+      if (busy.current.has(k)) return;
+      busy.current.add(k);
+      const cur = mapRef.current[id] ?? EMPTY;
+      patch(id, { saved: !cur.saved, saves: Math.max(0, cur.saves + (cur.saved ? -1 : 1)) });
       try {
         await toggleSave({ type, id });
       } catch (e) {
-        patch(id, cur);
+        patch(id, { saved: cur.saved, saves: cur.saves });
         throw e;
+      } finally {
+        busy.current.delete(k);
       }
     },
-    [map, type],
+    [type, patch],
   );
 
   const get = useCallback((id: string) => map[id] ?? EMPTY, [map]);
@@ -165,6 +189,12 @@ function logShare(t: Target, channel: 'link' | 'native') {
     const uid = data.session?.user.id;
     if (uid) supabase?.from('shares').insert({ user_id: uid, target_type: t.type, target_id: t.id, channel }).then(() => undefined);
   });
+}
+
+/** Copies the item's link (no share sheet). */
+export async function copyLink(t: Target): Promise<void> {
+  await Clipboard.setStringAsync(deepLink(t));
+  logShare(t, 'link');
 }
 
 /** Send to a chat: one message that points at the canonical item. */
@@ -242,7 +272,7 @@ export function useComments(t: Target) {
       });
     reload();
     const channel = supabase
-      .channel(`comments-${t.type}-${t.id}`)
+      .channel(topic(`comments-${t.type}-${t.id}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_id=eq.${t.id}` }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.comment' }, reload)
       .subscribe();

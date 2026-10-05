@@ -191,7 +191,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
           ))
         ) : (
           <Text variant="bodyS" color={girl.inkSoft}>
-            Sign in to see and join mom communities.
+            {communities.loading ? '' : communities.error ? tx('Could not load. Check your connection.') : me ? tx('No mom communities here yet.') : tx('Sign in to see and join mom communities.')}
           </Text>
         )}
       </View>

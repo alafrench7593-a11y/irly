@@ -113,43 +113,52 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
   const text = norm(input);
   const t = plain(text);
   const e: Entities = { query: '' };
+  // Patterns run accent-free on accent-free text: JS \b treats "é" as a
+  // non-word character, so "créer", "événement" or "café" never matched.
+  const has = (re: RegExp) => new RegExp(plain(re.source), re.flags).test(t);
 
   // Activity and category.
   for (const [re, id, cat] of ACTIVITIES) {
-    if (re.test(text)) {
+    if (has(re)) {
       e.activity = id;
       e.category = cat;
       break;
     }
   }
   for (const [re, kind] of PLACE_KINDS) {
-    if (re.test(text)) {
+    if (has(re)) {
       e.placeKind = kind;
       break;
     }
   }
 
   // Day.
-  if (/\b(tonight|ce soir|today|aujourd hui|now|maintenant|right now)\b/.test(text)) e.day = 'today';
-  else if (/\b(tomorrow|demain)\b/.test(text)) e.day = 'tomorrow';
-  else if (/\b(this weekend|weekend|ce week-?end)\b/.test(text)) e.day = 'weekend';
-  else if (/\b(next week|la semaine prochaine)\b/.test(text)) e.day = 'next_week';
-  else for (const [re, d] of WEEKDAYS) if (re.test(text)) e.day = d;
+  if (has(/\b(tonight|ce soir|today|aujourd hui|now|maintenant|right now)\b/)) e.day = 'today';
+  else if (has(/\b(tomorrow|demain)\b/)) e.day = 'tomorrow';
+  else if (has(/\b(this weekend|weekend|ce week-?end)\b/)) e.day = 'weekend';
+  else if (has(/\b(next week|la semaine prochaine)\b/)) e.day = 'next_week';
+  else for (const [re, d] of WEEKDAYS) if (has(re)) e.day = d;
 
-  // Time: "7 pm", "7pm", "19:30", "19h", "à 20h30", "8 PM".
-  const ampm = text.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
-  const h24 = text.match(/\b(\d{1,2})(?::|h)(\d{2})?\b/);
+  // Time: "7 pm", "7pm", "7.30pm", "19:30", "11.30", "19h", "à 20h30", "8 PM".
+  const ampm = text.match(/\b(\d{1,2})(?:[:.h](\d{2}))?\s*(am|pm)\b/);
+  const h24 = text.match(/\b(\d{1,2})(?:[:.](\d{2})|h(\d{2})?)(?![\d.])/);
   if (ampm) {
     let h = Number(ampm[1]) % 12;
     if (ampm[3] === 'pm') h += 12;
     e.time = `${String(h).padStart(2, '0')}:${ampm[2] ?? '00'}`;
-  } else if (h24 && Number(h24[1]) < 24 && (text.includes(':') || /\d{1,2}h/.test(text))) {
-    e.time = `${String(Number(h24[1])).padStart(2, '0')}:${h24[2] ?? '00'}`;
+  } else if (h24 && Number(h24[1]) < 24 && Number(h24[2] ?? h24[3] ?? 0) < 60) {
+    e.time = `${String(Number(h24[1])).padStart(2, '0')}:${h24[2] ?? h24[3] ?? '00'}`;
   }
-  if (/\b(tonight|ce soir|evening|soir|soirée)\b/.test(text)) e.dayPart = 'evening';
-  else if (/\b(morning|matin)\b/.test(text)) e.dayPart = 'morning';
-  else if (/\b(afternoon|après-midi|apres-midi|aprem)\b/.test(text)) e.dayPart = 'afternoon';
-  else if (/\b(night|nuit)\b/.test(text)) e.dayPart = 'night';
+  if (has(/\b(tonight|ce soir|evening|soir|soirée)\b/)) e.dayPart = 'evening';
+  else if (has(/\b(morning|matin)\b/)) e.dayPart = 'morning';
+  else if (has(/\b(afternoon|après-midi|apres-midi|aprem)\b/)) e.dayPart = 'afternoon';
+  else if (has(/\b(night|nuit)\b/)) e.dayPart = 'night';
+  // "Dinner at 8:30" is 20:30: a morning hour in an evening context is pm.
+  if (e.time && !ampm) {
+    const h = Number(e.time.slice(0, 2));
+    const evening = e.dayPart === 'evening' || e.dayPart === 'night' || e.activity === 'dinner' || e.activity === 'nightlife';
+    if (h >= 1 && h <= 11 && evening) e.time = `${h + 12}:${e.time.slice(3)}`;
+  }
   if (!e.time && e.dayPart) e.time = { morning: '09:00', afternoon: '15:00', evening: '19:00', night: '22:00' }[e.dayPart];
 
   // City, then area (longest name first so "Dubai Marina" beats "Dubai").
@@ -173,24 +182,26 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
   if (spots) e.spots = Number(spots[1]);
 
   // Intent.
-  const create = /\b(create|créer|crée|cree|creer|organi[sz]e|organiser|host|set up|plan|planifie|start|lance|make|new)\b/.test(text);
-  const event = /\b(event|événement|evenement|party|soirée|tournament|tournoi|workshop|concert)\b/.test(text);
+  const create = has(/\b(create|créer|crée|cree|creer|organi[sz]e|organiser|host|set up|plan (?:a|an|un|une|my|some)|planifie|start (?:a|an|un|une)|lance|make (?:a|an|un|une))\b/);
+  const event = has(/\b(event|événement|evenement|party|soirée|tournament|tournoi|workshop|concert)\b/);
   let intent: Intent;
   let confidence = 0.6;
-  if (/\b(calendar|calendrier|agenda|my plans|mes plans)\b/.test(text)) intent = 'OPEN_CALENDAR';
-  else if (/\b(saved|sauvegard|enregistr|favoris)\b/.test(text)) intent = 'OPEN_SAVED';
-  else if (/\b(visa|visas|kitas|e-?voa|voa|immigration|overstay)\b/.test(text)) intent = 'OPEN_VISA';
-  else if (/(where (should|to|can) i live|which area|quel quartier|où (vivre|habiter|m installer|s installer)|move to bali|m installer à bali)/.test(text)) intent = 'WHERE_TO_LIVE';
-  else if (/\b(moms?|mums?|mamans?|playdates?|with (my )?kids|avec (mes |les )?enfants)\b/.test(text) && !create) intent = 'OPEN_MOMS';
-  else if (!create && (e.placeKind === 'restaurant' || e.placeKind === 'cafe' || /\b(where to eat|où manger|eat|manger)\b/.test(text))) intent = 'FIND_RESTAURANT';
-  else if (/\b(switch to|go to|change (?:city|destination) to|passe à|va à|change pour)\b/.test(text) && e.cityId) intent = 'CHANGE_DESTINATION';
-  else if (create && /\b(community|communauté|communaute|group|groupe|club)\b/.test(text) && !/\bbeach ?club\b/.test(text)) intent = 'CREATE_COMMUNITY';
+  const notElsewhere = !e.cityId || e.cityId === 'bali';
+  if (has(/\b(calendar|calendrier|agenda|my plans|mes plans)\b/)) intent = 'OPEN_CALENDAR';
+  else if (has(/\b(saved|sauvegard|enregistr|favoris)\b/)) intent = 'OPEN_SAVED';
+  // The visa guide and the quiz are Bali's: not for "visa run from Dubai".
+  else if (notElsewhere && has(/\b(visa|visas|kitas|e-?voa|voa|immigration|overstay)\b/)) intent = 'OPEN_VISA';
+  else if (notElsewhere && has(/(where (should|to|can) i live|which (area|neighbou?rhood) (should|to|do|for) (i )?(live|stay|move|rent)|which area to (live|stay|move)|quel quartier (pour )?(vivre|habiter|m installer|loger)|où (vivre|habiter|m installer|s installer)|move to bali|moving to bali|m installer à bali)/)) intent = 'WHERE_TO_LIVE';
+  else if (has(/\b(moms?|mums?|mamans?|playdates?|with (my )?kids|avec (mes |les )?enfants)\b/) && !create) intent = 'OPEN_MOMS';
+  else if (!create && (e.placeKind === 'restaurant' || e.placeKind === 'cafe' || has(/\b(where to eat|où manger|eat|manger)\b/))) intent = 'FIND_RESTAURANT';
+  else if (has(/\b(switch to|go to|change (?:city|destination) to|passe à|va à|change pour)\b/) && e.cityId) intent = 'CHANGE_DESTINATION';
+  else if (create && has(/\b(community|communauté|communaute|group|groupe|club)\b/) && !has(/\bbeach ?club\b/)) intent = 'CREATE_COMMUNITY';
   else if (create && event) intent = 'CREATE_EVENT';
   else if (create) intent = 'CREATE_ACTIVITY';
-  else if (/\b(join|rejoindre|rejoins|participer|i m in)\b/.test(text)) intent = 'JOIN_ACTIVITY';
-  else if (/\b(girls?|filles?|women|femmes|copines?)\b/.test(text) && /\b(find|meet|trouve|rencontrer|who|qui)\b/.test(text)) intent = 'FIND_MATCH';
-  else if (/\b(people|friends?|amis?|someone|quelqu un|partner|partenaire|buddy)\b/.test(text)) intent = 'FIND_PEOPLE';
-  else if (/\b(what can i do|something to do|quoi faire|que faire|bored|ennuie|plans? for)\b/.test(text)) intent = 'FIND_SOMETHING_TO_DO';
+  else if (has(/\b(join|rejoindre|rejoins|participer|i m in)\b/)) intent = 'JOIN_ACTIVITY';
+  else if (has(/\b(girls?|filles?|women|femmes|copines?)\b/) && has(/\b(find|meet|trouve|rencontrer|who|qui)\b/)) intent = 'FIND_MATCH';
+  else if (has(/\b(people|friends?|amis?|someone|quelqu un|partner|partenaire|buddy)\b/)) intent = 'FIND_PEOPLE';
+  else if (has(/\b(what can i do|something to do|quoi faire|que faire|bored|ennuie|plans? for)\b/)) intent = 'FIND_SOMETHING_TO_DO';
   else if (e.placeKind && !e.activity) intent = 'FIND_PLACE';
   else if (e.placeKind === 'beach_club') intent = 'FIND_PLACE';
   else intent = 'SEARCH';
@@ -209,26 +220,60 @@ function stripFiller(text: string): string {
     .slice(0, 60);
 }
 
-/** "tomorrow" → the CreateHost day vocabulary ('Today' | 'Tomorrow' | 'This weekend' | 'Next week'). */
+const WEEKDAY: Partial<Record<Day, number>> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+const WEEKDAY_NAME = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** "tomorrow" → the CreateHost day vocabulary ('Today' | 'Tomorrow' | 'This weekend' | 'Next week'), or the weekday's name. */
 export function planDay(d?: Day): string {
   if (!d || d === 'today') return 'Today';
   if (d === 'tomorrow') return 'Tomorrow';
   if (d === 'next_week') return 'Next week';
-  return 'This weekend';
+  if (d === 'weekend') return 'This weekend';
+  return WEEKDAY_NAME[WEEKDAY[d] as number];
 }
 
-/** Concrete date for a parsed day (weekday → next occurrence). */
-export function dateFor(d: Day | undefined, time: string | undefined, now = new Date()): Date {
-  const out = new Date(now);
-  out.setSeconds(0, 0);
-  const idx: Partial<Record<Day, number>> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
-  if (d === 'tomorrow') out.setDate(out.getDate() + 1);
-  else if (d === 'next_week') out.setDate(out.getDate() + 7);
-  else if (d === 'weekend') out.setDate(out.getDate() + ((6 - out.getDay() + 7) % 7));
-  else if (d && idx[d] !== undefined) out.setDate(out.getDate() + (((idx[d] as number) - out.getDay() + 7) % 7 || 7));
-  const [h, m] = (time ?? '19:00').split(':').map(Number);
-  out.setHours(h, m);
-  if (out.getTime() < now.getTime()) out.setDate(out.getDate() + 1);
+/** The reverse of planDay: 'This weekend' → 'weekend', 'Monday' → 'mon'. */
+export function dayOf(label: string): Day {
+  const l = label.toLowerCase();
+  if (l === 'tomorrow') return 'tomorrow';
+  if (l === 'this weekend') return 'weekend';
+  if (l === 'next week') return 'next_week';
+  const i = WEEKDAY_NAME.findIndex((n) => n.toLowerCase() === l);
+  return i >= 0 ? ((Object.keys(WEEKDAY) as Day[]).find((k) => WEEKDAY[k] === i) as Day) : 'today';
+}
+
+const HOUR = 3600 * 1000;
+
+/**
+ * Concrete instant for a parsed day and "HH:MM", read as the CITY's wall
+ * clock (utcOffset in hours; UAE +4, Bali +8, no DST). A member planning
+ * Bali from Paris gets 19:00 in Bali, not 19:00 in Paris.
+ * Weekday → its next occurrence (today if the time is still ahead);
+ * weekend → Saturday, or Sunday once Saturday's time has passed.
+ */
+export function dateFor(d: Day | undefined, time: string | undefined, now = new Date(), utcOffset = -now.getTimezoneOffset() / 60): Date {
+  const local = new Date(now.getTime() + utcOffset * HOUR); // UTC fields = city wall clock
+  const [hh, mm] = (time ?? '19:00').split(':').map(Number);
+  const h = Number.isFinite(hh) ? hh : 19;
+  const m = Number.isFinite(mm) ? mm : 0;
+  const at = (days: number) => {
+    const x = new Date(Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + days, h, m));
+    return new Date(x.getTime() - utcOffset * HOUR);
+  };
+  const dow = local.getUTCDay();
+  let out: Date;
+  if (d === 'tomorrow') out = at(1);
+  else if (d === 'next_week') out = at(7);
+  else if (d === 'weekend') {
+    out = at(dow === 0 ? 0 : 6 - dow);
+    if (out.getTime() < now.getTime()) out = at(dow === 6 ? 1 : 6); // Saturday passed → Sunday; Sunday passed → next Saturday
+  } else if (d && WEEKDAY[d] !== undefined) {
+    out = at(((WEEKDAY[d] as number) - dow + 7) % 7);
+    if (out.getTime() < now.getTime()) out = at((((WEEKDAY[d] as number) - dow + 7) % 7) + 7);
+  } else {
+    out = at(0);
+    if (out.getTime() < now.getTime()) out = at(1);
+  }
   return out;
 }
 

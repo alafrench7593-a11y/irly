@@ -42,6 +42,12 @@ export default function Discover() {
   const profile = useStore((s) => s.profile);
   const params = useLocalSearchParams<{ q?: string }>();
   const [q, setQ] = useState(params.q ?? '');
+  // The tab stays mounted: a new /search?q=… must replace the old query.
+  const [seenParam, setSeenParam] = useState(params.q);
+  if (params.q !== seenParam) {
+    setSeenParam(params.q);
+    setQ(params.q ?? '');
+  }
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);

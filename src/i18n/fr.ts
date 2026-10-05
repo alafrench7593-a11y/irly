@@ -1151,6 +1151,8 @@ export const fr: Record<string, string> = {
   'Share…': 'Partager…',
   'Copy link': 'Copier le lien',
   'Link ready to paste': 'Lien prêt à coller',
+  'Link copied': 'Lien copié',
+  'Could not copy the link': 'Impossible de copier le lien',
   'Private message': 'Message privé',
   'Chats, groups and communities': 'Chats, groupes et communautés',
   'Sent': 'Envoyé',
@@ -1691,4 +1693,9 @@ export const fr: Record<string, string> = {
   '{n} posts this week': '{n} posts cette semaine',
   'Join the community to post': 'Rejoins la communauté pour publier',
   'Join the community to vote': 'Rejoins la communauté pour voter',
+  'Could not load. Check your connection.': 'Chargement impossible. Vérifie ta connexion.',
+  'No mom communities here yet.': 'Pas encore de communauté de mamans ici.',
+  'Your settings are still loading': 'Tes réglages sont en cours de chargement',
+  'Could not load your settings. Check your connection.': 'Impossible de charger tes réglages. Vérifie ta connexion.',
+  'Create your IRLY Girl profile first': 'Crée d’abord ton profil IRLY Girl',
 };

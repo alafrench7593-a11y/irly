@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
-import { supabase } from '@/lib/supabase';
+import { supabase, topic } from '@/lib/supabase';
 
 /**
  * IRL posts, friends and notifications on the server (signed in), live
@@ -52,7 +52,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
 
   const load = useCallback(async (): Promise<ServerIrlPost[]> => {
     if (!supabase || !uid) return [];
-    const { data } = await supabase.rpc('irl_feed', { p_city: cityId });
+    const { data, error } = await supabase.rpc('irl_feed', { p_city: cityId });
+    if (error) throw new Error(error.message);
     const rows = (data as FeedRow[]) ?? [];
     return Promise.all(
       rows.map(async (r) => ({
@@ -80,11 +81,11 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    load().then((p) => alive && setPosts(p));
+    load().then((p) => alive && setPosts(p)).catch(() => undefined);
     const channel = supabase
-      .channel(`irl-${cityId}-${uid}`)
+      .channel(topic(`irl-${cityId}-${uid}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, () => {
-        load().then((p) => alive && setPosts(p));
+        load().then((p) => alive && setPosts(p)).catch(() => undefined);
       })
       .subscribe();
     return () => {
@@ -148,7 +149,8 @@ export function useFriends(): { friends: Friend[]; refresh: () => void } {
   const [friends, setFriends] = useState<Friend[]>([]);
   const load = useCallback(async (): Promise<Friend[]> => {
     if (!supabase || !uid) return [];
-    const { data } = await supabase.rpc('my_friends');
+    const { data, error } = await supabase.rpc('my_friends');
+    if (error) throw new Error(error.message);
     return ((data as { user_id: string; first_name: string; status: Friend['status']; incoming: boolean }[]) ?? []).map((r) => ({
       userId: r.user_id,
       firstName: r.first_name,
@@ -162,11 +164,11 @@ export function useFriends(): { friends: Friend[]; refresh: () => void } {
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    load().then((f) => alive && setFriends(f));
+    load().then((f) => alive && setFriends(f)).catch(() => undefined);
     const channel = supabase
-      .channel(`friends-${uid}`)
+      .channel(topic(`friends-${uid}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => {
-        load().then((f) => alive && setFriends(f));
+        load().then((f) => alive && setFriends(f)).catch(() => undefined);
       })
       .subscribe();
     return () => {
@@ -201,7 +203,8 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   const [items, setItems] = useState<ServerNotification[]>([]);
   const load = useCallback(async (): Promise<ServerNotification[]> => {
     if (!supabase || !uid) return [];
-    const { data } = await supabase.from('notifications').select('id, kind, payload, read_at, created_at').order('created_at', { ascending: false }).limit(50);
+    const { data, error } = await supabase.from('notifications').select('id, kind, payload, read_at, created_at').order('created_at', { ascending: false }).limit(50);
+    if (error) throw new Error(error.message);
     return (data ?? []).map((n) => ({
       id: n.id,
       kind: n.kind,
@@ -213,11 +216,11 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    load().then((n) => alive && setItems(n));
+    load().then((n) => alive && setItems(n)).catch(() => undefined);
     const channel = supabase
-      .channel(`notifications-${uid}`)
+      .channel(topic(`notifications-${uid}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` }, () => {
-        load().then((n) => alive && setItems(n));
+        load().then((n) => alive && setItems(n)).catch(() => undefined);
       })
       .subscribe();
     return () => {

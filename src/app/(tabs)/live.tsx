@@ -354,7 +354,9 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
   const city = CITIES[cityId];
   const post = useLiveStore((s) => s.post);
   const [text, setText] = useState('');
-  const [area, setArea] = useState(city.areas[0].id);
+  const [picked, setArea] = useState(city.areas[0].id);
+  // Switching destination keeps the composer mounted: never post a Dubai area in Bali.
+  const area = city.areas.some((a) => a.id === picked) ? picked : city.areas[0].id;
   const [uri, setUri] = useState<string | undefined>();
   const [visibility, setVisibility] = useState<'friends' | 'everyone'>('friends');
   const [openUp, setOpenUp] = useState(false);

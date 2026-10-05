@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
-import { supabase } from '@/lib/supabase';
+import { supabase, topic } from '@/lib/supabase';
 import type { AreaProfile, OpeningHours } from './fit';
 
 /**
@@ -322,7 +322,7 @@ export function usePlaceActivities(slug: string) {
   useEffect(() => {
     if (!supabase) return;
     const channel = supabase
-      .channel(`place-acts-${slug}`)
+      .channel(topic(`place-acts-${slug}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, () => reload())
       .subscribe();
     return () => {
@@ -425,8 +425,9 @@ export function useGirlExtras() {
       if ('momMode' in patch) row.mom_mode = patch.momMode;
       if ('kidsAgeGroups' in patch) row.kids_age_groups = patch.kidsAgeGroups;
       if ('lookingFor' in patch) row.looking_for = patch.lookingFor;
-      const { error } = await sb().from('irly_match_profiles').update(row).eq('user_id', uid);
+      const { data, error } = await sb().from('irly_match_profiles').update(row).eq('user_id', uid).select('user_id');
       if (error) throw new Error(error.message);
+      if (!data?.length) throw new Error('Create your IRLY Girl profile first');
       q.reload();
     },
     [uid, q],

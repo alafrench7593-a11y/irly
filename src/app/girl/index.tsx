@@ -113,8 +113,15 @@ export default function GirlHome() {
     }
   }, []);
 
+  // Focus re-checks reuse the current filters and keep the screen (no spinner flash).
+  const filtersRef = useRef(filters);
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
+  const booted = useRef(false);
+
   const boot = useCallback(async () => {
-    setState('loading');
+    if (!booted.current) setState('loading');
     try {
       const api = await matchApi();
       apiRef.current = api;
@@ -123,7 +130,8 @@ export default function GirlHome() {
       if (s === 'onboarding') router.replace('/girl/onboarding');
       else if (s === 'profile') router.replace('/girl/profile');
       else if (s === 'ready') {
-        loadDeck({ section: 'for_you' }, 0);
+        booted.current = true;
+        loadDeck(filtersRef.current, 0);
         loadMatches();
       }
     } catch {

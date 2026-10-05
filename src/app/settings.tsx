@@ -49,6 +49,8 @@ export default function SettingsScreen() {
   const uid = account?.userId;
   const [safety, setSafety] = useState<Safety>(DEFAULTS);
   const [muted, setMuted] = useState<string[]>([]);
+  // Saving before the server values arrive would write the defaults over them.
+  const [loaded, setLoaded] = useState(false);
 
   const load = useCallback(async () => {
     if (!supabase || !uid) return null;
@@ -56,23 +58,33 @@ export default function SettingsScreen() {
       supabase.from('safety_settings').select('profile_visibility, irl_visibility, activity_visibility, location_precision, show_active').eq('user_id', uid).maybeSingle(),
       supabase.from('notification_prefs').select('muted_kinds').eq('user_id', uid).maybeSingle(),
     ]);
+    if (s.error || n.error) throw new Error(s.error?.message ?? n.error?.message);
     return { safety: { ...DEFAULTS, ...(s.data ?? {}) } as Safety, muted: (n.data?.muted_kinds as string[]) ?? [] };
   }, [uid]);
 
   useEffect(() => {
     let alive = true;
-    load().then((r) => {
-      if (!alive || !r) return;
-      setSafety(r.safety);
-      setMuted(r.muted);
-    });
+    load()
+      .then((r) => {
+        if (!alive || !r) return;
+        setSafety(r.safety);
+        setMuted(r.muted);
+        setLoaded(true);
+      })
+      .catch(() => alive && toast('Could not load your settings. Check your connection.', 'x', 'live'));
     return () => {
       alive = false;
     };
   }, [load]);
 
+  const notReady = () => {
+    if (loaded) return false;
+    toast('Your settings are still loading', 'clock', 'brand');
+    return true;
+  };
+
   const saveSafety = async (patch: Partial<Safety>) => {
-    if (!supabase || !uid) return;
+    if (!supabase || !uid || notReady()) return;
     const next = { ...safety, ...patch };
     setSafety(next);
     const { error } = await supabase.from('safety_settings').upsert({ user_id: uid, ...next, updated_at: new Date().toISOString() });
@@ -83,7 +95,7 @@ export default function SettingsScreen() {
   };
 
   const toggleGroup = async (kinds: string[], on: boolean) => {
-    if (!supabase || !uid) return;
+    if (!supabase || !uid || notReady()) return;
     const prev = muted;
     const next = on ? muted.filter((k) => !kinds.includes(k)) : [...new Set([...muted, ...kinds])];
     setMuted(next);

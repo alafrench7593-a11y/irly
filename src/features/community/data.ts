@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
-import { supabase } from '@/lib/supabase';
+import { supabase, topic } from '@/lib/supabase';
 
 /**
  * A community on the IRLY server: detail, live feed (posts, polls, likes,
@@ -161,7 +161,7 @@ export function useCommunityFeed(communityId: string) {
         .finally(() => alive && setLoading(false));
     reload();
     const channel = supabase
-      .channel(`community-${communityId}`)
+      .channel(topic(`community-${communityId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes' }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.community_post' }, reload)
@@ -199,7 +199,6 @@ export function useCommunityFeed(communityId: string) {
   const vote = useCallback(
     async (p: CommunityPost, option: number) => {
       if (!uid) throw new Error('Sign in to vote');
-      const prev = posts;
       setPosts((list) =>
         list.map((x) => {
           if (x.id !== p.id) return x;
@@ -211,24 +210,24 @@ export function useCommunityFeed(communityId: string) {
       );
       const { error: e } = await sb().from('community_poll_votes').upsert({ post_id: p.id, user_id: uid, option });
       if (e) {
-        setPosts(prev);
+        // Back to the server's truth (a snapshot would drop posts that arrived meanwhile).
+        refresh();
         throw new Error(/row-level|policy/i.test(e.message) ? 'Join the community to vote' : e.message);
       }
     },
-    [uid, posts],
+    [uid, refresh],
   );
 
   const remove = useCallback(
     async (p: CommunityPost) => {
-      const prev = posts;
       setPosts((list) => list.filter((x) => x.id !== p.id));
       const { error: e } = await sb().from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', p.id);
       if (e) {
-        setPosts(prev);
+        refresh();
         throw new Error(e.message);
       }
     },
-    [posts],
+    [refresh],
   );
 
   return { posts: uid ? posts : [], loading: uid ? loading : false, error, refresh, post, vote, remove };

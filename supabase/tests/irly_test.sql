@@ -4,6 +4,8 @@
 
 -- Supabase grants table privileges to API roles; RLS decides the rows.
 grant select, insert, update, delete on all tables in schema public to anon, authenticated;
+-- …except the sensitive profile columns (migration 1300 narrows them again).
+select private.restrict_profile_columns();
 
 create or replace function pg_temp.as_user(uid uuid) returns void language plpgsql as $$
 begin
@@ -178,7 +180,7 @@ select pg_temp.check((select count(*) from public.communities) = 1, 'girl-only c
 select pg_temp.as_admin();
 set role anon;
 select pg_temp.expect_denied('select public.irly_match_state()', 'anon cannot call match API');
-select pg_temp.check((select count(*) from public.profiles) = 0, 'anon reads no profiles');
+select pg_temp.expect_denied('select count(*) from public.profiles', 'anon reads no profiles');
 reset role;
 
 -- ───── Members create communities; inbox ─────
@@ -379,6 +381,63 @@ select pg_temp.check(not exists (select 1 from public.community_feed((select id 
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 update public.community_posts set deleted_at = now() where body = 'Best time?' and author_id <> auth.uid();
 select pg_temp.check((select count(*) from public.community_feed('20000000-0000-0000-0000-000000000001')) = 2, 'a member cannot remove someone else''s post');
+
+-- ───── Bug hunt: security regressions ─────
+-- Gender lock: no delete + re-insert as a woman.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+delete from public.profiles where id = auth.uid();
+select pg_temp.check(exists (select 1 from public.profiles where id = auth.uid()), 'a member cannot delete their profile row (gender lock bypass)');
+select pg_temp.check(not public.my_girl_access(), 'and stays out of IRLY Girl');
+-- Sensitive columns of others are not readable, even with a shared chat.
+select pg_temp.expect_denied($$select faith from public.profiles where first_name = 'Dina'$$, 'faith of others is not readable');
+select pg_temp.expect_denied($$select birthdate from public.profiles$$, 'birthdates are not readable');
+select pg_temp.check((select count(*) from public.profiles where first_name = 'Carl') = 1, 'own non-sensitive columns still readable');
+-- Moderators remove, never rewrite; posts stay in their community.
+select public.create_community('Carl Club', 'dubai') as carl_club \gset
+insert into public.community_posts (community_id, author_id, body) values (:'carl_club', auth.uid(), 'Carl post');
+select pg_temp.expect_denied($$update public.community_posts set author_id = '00000000-0000-0000-0000-00000000000d' where body = 'Carl post'$$, 'a post''s author cannot be changed');
+select pg_temp.expect_denied($$update public.community_posts set community_id = '20000000-0000-0000-0000-000000000001' where body = 'Carl post'$$, 'a post cannot move to another community');
+update public.community_posts set deleted_at = now() where body = 'Carl post';
+select pg_temp.expect_denied($$update public.community_posts set deleted_at = null where body = 'Carl post'$$, 'a removed post cannot be restored by its author');
+-- Messages: no moving into another chat, no fake system messages.
+insert into public.messages (conversation_id, sender_id, body)
+  values ((select id from public.conversations where community_id = :'carl_club'), auth.uid(), 'Carl message');
+select pg_temp.expect_denied($$update public.messages set kind = 'system' where body = 'Carl message'$$, 'a message cannot become a system message');
+select pg_temp.expect_denied($$update public.messages set conversation_id = (select id from public.conversations where kind = 'activity' limit 1) where body = 'Carl message'$$, 'a message cannot move to another chat');
+-- Comments: removed ones are not readable by others and cannot be restored.
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at) values (auth.uid(), 'Carl public run', 'sport', 'dubai', 'marina', now() + interval '2 days');
+insert into public.comments (target_type, target_id, author_id, body) select 'activity', id::text, auth.uid(), 'rude comment' from public.activities where title = 'Carl public run';
+update public.comments set deleted_at = now() where body = 'rude comment';
+select pg_temp.expect_denied($$update public.comments set deleted_at = null where body = 'rude comment'$$, 'a removed comment cannot be restored');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check(not exists (select 1 from public.comments where body = 'rude comment'), 'removed comments are not readable');
+-- Notifications are not repeated by toggling.
+select public.join_activity((select id from public.activities where title = 'Carl public run'), 'going');
+select public.join_activity((select id from public.activities where title = 'Carl public run'), 'maybe');
+select public.join_activity((select id from public.activities where title = 'Carl public run'), 'going');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) from public.notifications where kind = 'ACTIVITY_JOINED' and payload ->> 'activity_id' = (select id::text from public.activities where title = 'Carl public run')) = 1, 'going/maybe/going notifies the creator once');
+-- Invite-only activities cannot be joined with the id alone.
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, privacy) values (auth.uid(), 'Carl invite only', 'sport', 'dubai', 'marina', now() + interval '2 days', 'invite');
+select id as invite_act from public.activities where title = 'Carl invite only' \gset
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_denied($$select public.join_activity('$$ || :'invite_act' || $$')$$, 'an invite-only activity is not joinable by id');
+-- Mentions: once, existing accounts only, only people who can see it.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+insert into public.comments (target_type, target_id, author_id, body, mentions)
+select 'community_post', id::text, auth.uid(), 'address is 12B',
+  array['00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000b', '11111111-1111-1111-1111-111111111111']::uuid[]
+from public.community_posts where body = 'Best time?';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(not exists (select 1 from public.notifications where kind = 'MENTION' and payload ->> 'body' like 'address%'), 'no mention for someone who cannot see the post (and no failure on unknown ids)');
+-- Hidden age never answers an age filter.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check(not exists (select 1 from public.irly_match_discover('{"age_min":18,"age_max":120}') where first_name = 'Dina'), 'hidden age is not revealed by age filters');
+-- Blocking ends the friendship (Carl and Dina are friends).
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select public.block_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.my_friends() where first_name = 'Carl'), 'blocking ends the friendship');
+select public.unblock_user('00000000-0000-0000-0000-00000000000c');
 
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');

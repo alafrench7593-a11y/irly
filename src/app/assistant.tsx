@@ -146,7 +146,7 @@ export default function Assistant() {
     setBusy(true);
     try {
       postPlan(plan);
-      const id = account ? await createServerActivity(plan, dateFor(e.day, e.time)) : null;
+      const id = account ? await createServerActivity(plan, dateFor(e.day, e.time, new Date(), city.utcOffset)) : null;
       haptic('success');
       track(cmd.intent === 'CREATE_EVENT' ? 'EVENT_CREATE' : 'ACTIVITY_CREATE', { category: e.category ?? 'other', via: source });
       logCommand(cmd, source, 'executed', id ? { type: 'activity', id } : undefined);

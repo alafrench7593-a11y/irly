@@ -28,18 +28,23 @@ async function titlesFor(items: SavedItem[]): Promise<Record<string, string>> {
   if (!supabase) return {};
   const out: Record<string, string> = {};
   const ids = (type: TargetType) => items.filter((i) => i.type === type).map((i) => i.id);
-  const [acts, places, comms, posts, people] = await Promise.all([
+  const [acts, places, comms, posts, people, cposts] = await Promise.all([
     ids('activity').length ? supabase.from('activities').select('id, title').in('id', ids('activity')) : null,
     ids('place').length ? supabase.from('places').select('slug, name').in('slug', ids('place')) : null,
     ids('community').length ? supabase.from('communities').select('id, name').in('id', ids('community')) : null,
     ids('irl_post').length ? supabase.from('irl_posts').select('id, body').in('id', ids('irl_post')) : null,
     ids('profile').length ? supabase.from('profiles_public').select('id, first_name').in('id', ids('profile')) : null,
+    ids('community_post').length ? supabase.from('community_posts').select('id, body, community_id').in('id', ids('community_post')) : null,
   ]);
   acts?.data?.forEach((r) => (out[`activity:${r.id}`] = r.title));
   places?.data?.forEach((r) => (out[`place:${r.slug}`] = r.name));
   comms?.data?.forEach((r) => (out[`community:${r.id}`] = r.name));
   posts?.data?.forEach((r) => (out[`irl_post:${r.id}`] = r.body));
   people?.data?.forEach((r) => (out[`profile:${r.id}`] = r.first_name));
+  cposts?.data?.forEach((r) => {
+    out[`community_post:${r.id}`] = r.body;
+    out[`community_post:${r.id}:community`] = r.community_id;
+  });
   return out;
 }
 
@@ -59,11 +64,14 @@ export default function SavedScreen() {
     };
   }, [items]);
 
-  const shown = items.filter((i) => tab === 'all' || i.type === tab);
+  const shown = items.filter((i) => tab === 'all' || i.type === tab || (tab === 'irl_post' && i.type === 'community_post'));
 
   const open = (i: SavedItem) => {
+    const postCommunity = titles[`community_post:${i.id}:community`];
     if (i.type === 'activity') router.push(`/a/${i.id}`);
-    else if (i.type === 'community') router.push('/communities');
+    else if (i.type === 'community') router.push(`/c/${i.id}`);
+    else if (i.type === 'place') router.push(`/place/${i.id}`);
+    else if (i.type === 'community_post' && postCommunity) router.push(`/c/${postCommunity}`);
     else if (i.type === 'irl_post') router.push('/live');
     else router.push(`/search?q=${encodeURIComponent(titles[`${i.type}:${i.id}`] ?? i.id)}`);
   };

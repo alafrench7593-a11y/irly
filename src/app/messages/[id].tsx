@@ -108,7 +108,13 @@ function ServerThreadView({ id }: { id: string }) {
                   {m.share ? (
                     <PressableScale
                       haptic="select"
-                      onPress={() => (m.share?.type === 'activity' && m.share.id ? router.push(`/a/${m.share.id}`) : router.push(`/search?q=${encodeURIComponent(m.text)}`))}
+                      onPress={() => {
+                        const sh = m.share;
+                        if (sh?.id && sh.type === 'activity') router.push(`/a/${sh.id}`);
+                        else if (sh?.id && sh.type === 'community') router.push(`/c/${sh.id}`);
+                        else if (sh?.type === 'irl_post') router.push('/live');
+                        else router.push(`/search?q=${encodeURIComponent(m.text)}`);
+                      }}
                       style={styles.shared}
                       accessibilityLabel={`Open ${m.text}`}
                     >

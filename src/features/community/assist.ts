@@ -44,6 +44,8 @@ function title(activity: string | undefined, label: string | undefined, communit
   return `${what} · ${communityName}`.slice(0, 80);
 }
 
+const flat = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
 /** Parse a request typed in the community assistant. */
 export function communityAssist(input: string, ctx: { communityName: string; categoryId?: string | null; geo: GeoIndex; activityLabel?: (id: string) => string | undefined }): Assist {
   const text = norm(input);
@@ -62,13 +64,18 @@ export function communityAssist(input: string, ctx: { communityName: string; cat
     return { kind: 'poll', question: question[0].toUpperCase() + question.slice(1), options: options.length >= 2 ? options : ['Yes', 'No'] };
   }
 
-  if (/\b(summary|summarise|summarize|digest|what s new|whats new|recap|résumé|resume|quoi de neuf|cette semaine|this week)\b/.test(text)) return { kind: 'digest' };
-
-  if (/\b(idea|ideas|idée|idées|idee|idees|what (should|can) i post|suggest|inspire|quoi poster|post about)\b/.test(text)) return { kind: 'ideas', ideas: ideasFor(ctx.categoryId) };
-
+  // Accent-free on both sides (JS \b does not see "é" as a word letter).
+  const t = flat(text);
+  const has = (re: RegExp) => new RegExp(flat(re.source), re.flags).test(t);
   const cmd = parseCommand(input, ctx.geo);
   const e = cmd.entities;
-  const wantsPlan = /\b(organi[sz]e|plan|create|crée|cree|créer|host|let s|on fait|faisons|propose)\b/.test(text) || cmd.intent === 'CREATE_ACTIVITY' || cmd.intent === 'CREATE_EVENT';
+  const wantsPlan = has(/\b(organi[sz]e|organiser|plan|create|crée|cree|créer|host|let s|on fait|faisons|propose)\b/) || cmd.intent === 'CREATE_ACTIVITY' || cmd.intent === 'CREATE_EVENT';
+
+  // A plan wins over the digest: "Organise padel this week" is a plan.
+  if (!wantsPlan && has(/\b(summary|summarise|summarize|digest|what s new|whats new|recap|résumé|quoi de neuf|cette semaine|this week)\b/)) return { kind: 'digest' };
+
+  if (!wantsPlan && has(/\b(idea|ideas|idée|idées|what (should|can) i post|suggest|inspire|quoi poster|post about)\b/)) return { kind: 'ideas', ideas: ideasFor(ctx.categoryId) };
+
   if (wantsPlan || e.activity) {
     return {
       kind: 'plan',
@@ -81,7 +88,7 @@ export function communityAssist(input: string, ctx: { communityName: string; cat
 /** "Padel saturday 9am, who's in?" → worth turning into an activity. */
 export function postLooksLikeAPlan(body: string, geo: GeoIndex): PlanDraft | null {
   const text = norm(body);
-  const inviting = /\b(who s in|whos in|who is in|anyone|qui vient|qui est chaud|qui est dispo|partant|partante|join me|let s|on fait|who wants)\b|\?$/.test(text);
+  const inviting = /\b(who s in|whos in|who is in|anyone|qui vient|qui est chaud|qui est dispo|partant|partante|join me|let s|on fait|who wants)\b|\?$/.test(flat(text));
   if (!inviting) return null;
   const cmd = parseCommand(body, geo);
   const e = cmd.entities;

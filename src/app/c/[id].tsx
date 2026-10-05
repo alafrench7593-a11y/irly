@@ -49,6 +49,8 @@ export default function CommunityScreen() {
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
   const [tab, setTab] = useState<Tab>('posts');
   const [busy, setBusy] = useState(false);
+  // An assistant idea tapped goes into the post composer (n remounts it).
+  const [idea, setIdea] = useState({ text: '', n: 0 });
 
   const city = c ? (CITIES[c.cityId as CityId] ?? CITIES.dubai) : CITIES.dubai;
   const geo: GeoIndex = useMemo(() => ({ cities: [{ id: city.id, name: city.name }], areas: city.areas.map((a) => ({ id: a.id, name: a.name, cityId: city.id })) }), [city]);
@@ -103,7 +105,7 @@ export default function CommunityScreen() {
     try {
       const actId = await createServerActivity(
         { cityId: city.id, categoryId: d.category as never, activityId: d.activity, title: d.title, place: areaLabel, privacy: 'community', day: planDay(d.day), time: d.time, spots: 0, areaId: area, format: 'meetup', price: 0, currency: city.currency },
-        dateFor(d.day, d.time),
+        dateFor(d.day, d.time, new Date(), city.utcOffset),
         { communityId: c.id, girlOnly: c.girlOnly },
       );
       if (actId) await feed.post({ body: tx('New plan: {title}, {when}. Join below 👇', { title: d.title, when: `${tx(planDay(d.day))} ${d.time}` }), activityId: actId });
@@ -174,8 +176,8 @@ export default function CommunityScreen() {
 
         {tab === 'posts' ? (
           <>
-            <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options })} />
-            {c.isMember ? <Composer onPost={(body, poll) => feed.post({ body, poll })} /> : null}
+            <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
+            {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll })} /> : null}
             {feed.error && !feed.posts.length ? (
               <Text variant="body" tone="secondary" style={styles.pad}>
                 Can’t reach IRLY right now. Check your connection.
@@ -263,6 +265,7 @@ function Assistant({
   isMember,
   onPlan,
   onPoll,
+  onIdea,
 }: {
   communityId: string;
   name: string;
@@ -271,6 +274,7 @@ function Assistant({
   isMember: boolean;
   onPlan: (d: PlanDraft) => Promise<void> | void;
   onPoll: (question: string, options: string[]) => Promise<void>;
+  onIdea: (text: string) => void;
 }) {
   const t = useTheme();
   const [text, setText] = useState('');
@@ -392,7 +396,7 @@ function Assistant({
       {result?.kind === 'ideas' ? (
         <View style={{ gap: 8 }}>
           {result.ideas.map((i) => (
-            <PressableScale key={i} onPress={() => setText(i)} haptic="select" style={[styles.idea, { borderColor: t.c.line }]} accessibilityLabel={i}>
+            <PressableScale key={i} onPress={() => onIdea(tx(i))} haptic="select" style={[styles.idea, { borderColor: t.c.line }]} accessibilityLabel={i}>
               <Text variant="bodyS">{tx(i)}</Text>
             </PressableScale>
           ))}
@@ -413,9 +417,9 @@ function Assistant({
 
 /* ───────── Composer ───────── */
 
-function Composer({ onPost }: { onPost: (body: string, poll: string[] | null) => Promise<void> }) {
+function Composer({ initial = '', onPost }: { initial?: string; onPost: (body: string, poll: string[] | null) => Promise<void> }) {
   const t = useTheme();
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState(initial);
   const [poll, setPoll] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const send = async () => {

@@ -74,13 +74,24 @@ export async function verifyCode(email: string, code: string): Promise<void> {
  * Writes the profile filled in at signup to `profiles`, once. Gender is
  * locked server-side after this first write (IRLY Girl access).
  */
-export async function syncProfile(uid: string): Promise<void> {
+const syncing = new Map<string, Promise<void>>();
+
+export function syncProfile(uid: string): Promise<void> {
+  // Every mounted useAccount() and verifyCode() call this on sign-in: share one run.
+  const running = syncing.get(uid);
+  if (running) return running;
+  const run = writeProfile(uid).finally(() => syncing.delete(uid));
+  syncing.set(uid, run);
+  return run;
+}
+
+async function writeProfile(uid: string): Promise<void> {
   if (!supabase) return;
   const { data: existing } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
   if (existing) return;
   const { profile, cityId } = useStore.getState();
   const row = toRow(uid, profile, cityId ?? 'dubai');
-  const { error } = await supabase.from('profiles').insert(row);
+  const { error } = await supabase.from('profiles').upsert(row, { onConflict: 'id', ignoreDuplicates: true });
   if (error) throw new Error(error.message);
   // The signup photo follows to the member's own folder (best effort).
   if (profile.photoUri && !/^https?:/.test(profile.photoUri)) {

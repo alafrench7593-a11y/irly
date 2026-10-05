@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { CityId } from '@/data/types';
+import { CITIES } from '@/data/destinations';
+import { dateFor, dayOf } from '@/features/ai/intent';
 import { useAccount } from '@/features/auth/account';
-import { supabase } from '@/lib/supabase';
+import { supabase, topic } from '@/lib/supabase';
 import type { MyPlan } from '@/state/store';
 
 /**
@@ -12,17 +14,9 @@ import type { MyPlan } from '@/state/store';
 
 const PRIVACY: Record<NonNullable<MyPlan['privacy']>, string> = { public: 'public', connections: 'friends', community: 'community', invite: 'invite' };
 
-/** "Today" / "Tomorrow" / "This weekend" / "Next week" + "19:30" → a date. */
-export function startsAt(day: string, time: string, now = new Date()): Date {
-  const [h, m] = time.split(':').map(Number);
-  const d = new Date(now);
-  d.setSeconds(0, 0);
-  if (day === 'Tomorrow') d.setDate(d.getDate() + 1);
-  else if (day === 'This weekend') d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7));
-  else if (day === 'Next week') d.setDate(d.getDate() + 7);
-  d.setHours(h || 19, m || 0);
-  if (d.getTime() < now.getTime()) d.setDate(d.getDate() + 1);
-  return d;
+/** "Today" / "Tomorrow" / "This weekend" / "Next week" / "Monday" + "19:30" → an instant, in the city's time. */
+export function startsAt(day: string, time: string, now = new Date(), utcOffset?: number): Date {
+  return dateFor(dayOf(day), time, now, utcOffset);
 }
 
 /** Extras that tie an activity to a place, a type (PLAYDATE, DINNER…) and an audience. */
@@ -46,7 +40,8 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
       city_id: plan.cityId,
       area_id: plan.areaId,
       place_name: plan.place ?? null,
-      starts_at: (at ?? startsAt(plan.day, plan.time)).toISOString(),
+      starts_at: (at ?? startsAt(plan.day, plan.time, new Date(), CITIES[plan.cityId as CityId]?.utcOffset)).toISOString(),
+      timezone: CITIES[plan.cityId as CityId]?.utcOffset === 8 ? 'Asia/Makassar' : 'Asia/Dubai',
       price_minor: Math.round((plan.price ?? 0) * 100),
       currency: plan.currency ?? 'AED',
       capacity: plan.spots ? Math.max(2, plan.spots) : null,
@@ -276,7 +271,7 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
         .finally(() => alive && setLoading(false));
     reload();
     const channel = supabase
-      .channel(`activity-${id}`)
+      .channel(topic(`activity-${id}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `activity_id=eq.${id}` }, reload)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'activities', filter: `id=eq.${id}` }, reload)
       .subscribe();
@@ -354,7 +349,7 @@ export function useCalendar(): { items: CalendarItem[]; loading: boolean; error:
         .finally(() => alive && setLoading(false));
     reload();
     const channel = supabase
-      .channel(`calendar-${uid}`)
+      .channel(topic(`calendar-${uid}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `user_id=eq.${uid}` }, reload)
       .subscribe();
     return () => {
