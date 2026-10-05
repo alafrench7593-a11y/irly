@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -113,7 +114,7 @@ export default function AccountScreen() {
             <TextInput
               value={email}
               onChangeText={setEmail}
-              placeholder="you@email.com"
+              placeholder={tx('you@email.com')}
               placeholderTextColor={t.c.textTertiary}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -131,7 +132,7 @@ export default function AccountScreen() {
             <TextInput
               value={code}
               onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))}
-              placeholder="123456"
+              placeholder={tx('123456')}
               placeholderTextColor={t.c.textTertiary}
               keyboardType="number-pad"
               autoComplete="one-time-code"

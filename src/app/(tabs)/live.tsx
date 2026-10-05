@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -57,9 +58,9 @@ export default function LiveScreen() {
   return (
     <Page
       back={false}
-      overline={`${city.name} · right now`}
+      overline={tx('{city} · right now', { city: city.name })}
       title="IRL"
-      subtitle={`What people around you are doing. Posts disappear after ${LIVE_TTL_MIN / 60} hours.`}
+      subtitle={tx('What people around you are doing. Posts disappear after {h} hours.', { h: LIVE_TTL_MIN / 60 })}
       right={<InboxButtons />}
       bottomInset={bottom + 70}
       overlay={
@@ -122,7 +123,7 @@ function LiveCard({ live }: { live: Live }) {
         <View style={styles.actions}>
           <ReactButton id={live.id} />
           <Button label="Message" variant="secondary" icon="message" size="sm" onPress={() => router.push('/messages')} />
-          <Button label="Join" icon="pin" size="sm" onPress={() => toast(`${person.name.split(' ')[0]} will know you're on your way`, 'pin')} />
+          <Button label="Join" icon="pin" size="sm" onPress={() => toast(tx("{name} will know you're on your way", { name: person.name.split(' ')[0] }), 'pin')} />
           <PressableScale haptic="select" scaleTo={0.9} onPress={() => router.push(`/person/${person.id}`)} accessibilityLabel={`View ${person.name}'s profile`} style={[styles.round, { backgroundColor: t.c.overlay }]}>
             <Icon name="user" size={16} color={t.c.text} />
           </PressableScale>
@@ -281,7 +282,7 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 onPress={() =>
                   addFriend(p.authorId)
                     .then((r) => {
-                      toast(r === 'accepted' ? `You and ${p.firstName} are friends` : `Request sent to ${p.firstName}`, 'user', 'brand');
+                      toast(r === 'accepted' ? tx('You and {name} are friends', { name: p.firstName }) : tx('Request sent to {name}', { name: p.firstName }), 'user', 'brand');
                       refresh();
                     })
                     .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
@@ -341,7 +342,7 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
         <TextInput
           value={text}
           onChangeText={setText}
-          placeholder="Coffee in the Marina, anyone?"
+          placeholder={tx('Coffee in the Marina, anyone?')}
           placeholderTextColor={t.c.textTertiary}
           multiline
           maxLength={160}

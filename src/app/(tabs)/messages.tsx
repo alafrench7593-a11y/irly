@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
@@ -77,7 +78,7 @@ export default function Messages() {
                     {c.title}
                   </Text>
                   <Text variant="caption" tone={unread ? 'primary' : 'tertiary'}>
-                    {unread ? `${unread} unread` : lit ? 'Just joined' : 'Up to date'}
+                    {unread ? tx('{n} unread', { n: unread }) : lit ? 'Just joined' : 'Up to date'}
                   </Text>
                   {unread ? <View style={[styles.dot, { backgroundColor: t.c.live }]} /> : null}
                 </PressableScale>
@@ -167,7 +168,7 @@ function ConversationRow({ conversation: c }: { conversation: Conversation }) {
         </View>
         <View style={styles.top}>
           <Text variant="bodyS" tone={unread ? 'primary' : 'secondary'} numberOfLines={1} style={{ flex: 1 }}>
-            {last ? `${last.from === 'me' ? 'You: ' : c.kind === 'direct' ? '' : `${senderName(last.from)}: `}${last.text}` : 'You are connected. Say hi 👋'}
+            {last ? `${last.from === 'me' ? tx('You:') + ' ' : c.kind === 'direct' ? '' : `${senderName(last.from)}: `}${last.text}` : 'You are connected. Say hi 👋'}
           </Text>
           {unread ? (
             <View style={[styles.badge, { backgroundColor: t.c.brand }]}>

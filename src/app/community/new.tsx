@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useState } from 'react';
 import { StyleSheet, Switch, TextInput, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -47,7 +48,7 @@ export default function NewCommunity() {
     try {
       const conv = await createServerCommunity({ name: name.trim(), cityId, tagline, description, categoryId: category, girlOnly });
       haptic('success');
-      toast(`${name.trim()} is live. You're its owner`, 'users', 'brand');
+      toast(tx("{name} is live. You're its owner", { name: name.trim() }), 'users', 'brand');
       router.replace(conv ? `/messages/${conv}` : '/messages');
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create the community', 'x', 'live');
@@ -76,14 +77,14 @@ export default function NewCommunity() {
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">One line</Text>
-          <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder="Apéros, padel and weekend trips" placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel="Tagline" />
+          <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder={tx('Apéros, padel and weekend trips')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel="Tagline" />
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">About</Text>
           <TextInput
             value={description}
             onChangeText={(v) => setDescription(v.slice(0, 600))}
-            placeholder="Who it's for, how often you meet, the vibe."
+            placeholder={tx("Who it's for, how often you meet, the vibe.")}
             placeholderTextColor={t.c.textTertiary}
             multiline
             style={[input, styles.multi]}

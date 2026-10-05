@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
+import { t } from '@/i18n';
 import { spring } from '@/motion/tokens';
 import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -19,7 +20,7 @@ let counter = 0;
 /** Fire-and-forget confirmation: "You're in", "Saved", "Request sent". */
 export function toast(title: string, icon: IconName = 'check', tone: ToastData['tone'] = 'positive') {
   counter += 1;
-  useToastStore.setState({ current: { id: counter, title, icon, tone } });
+  useToastStore.setState({ current: { id: counter, title: t(title), icon, tone } });
 }
 
 export const ToastHost = memo(function ToastHost() {

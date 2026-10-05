@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { t as tx } from '@/i18n';
 import { useEffect } from 'react';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -134,7 +135,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
               It&apos;s an IRLY match
             </Text>
             <Text variant="body" color={girl.inkSoft} align="center">
-              You and {person.firstName} both want to meet new people.
+              {tx('You and {name} both want to meet new people.', { name: person.firstName })}
             </Text>
           </Animated.View>
 
@@ -158,7 +159,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
           </Animated.View>
 
           <Animated.View entering={FadeIn.delay(textDelay + 240).duration(transition.match.actions)} style={{ gap: 12, paddingHorizontal: space.gutter }}>
-            <GButton label={`Say hello to ${person.firstName}`} icon="message" onPress={onHello} />
+            <GButton label={tx('Say hello to {name}', { name: person.firstName })} icon="message" onPress={onHello} />
           </Animated.View>
 
           <Animated.View entering={FadeIn.delay(textDelay + 320).duration(transition.match.actions)} style={{ gap: 12 }}>

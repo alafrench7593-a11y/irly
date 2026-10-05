@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { deleteServerAccount, useAccount } from '@/features/auth/account';
+import { LANGS, useLangStore } from '@/i18n';
 import { useGirlStore } from '@/features/girl/girlStore';
 import { useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
@@ -34,6 +35,8 @@ export default function Profile() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
+  const langSetting = useLangStore((s) => s.setting);
+  const setLang = useLangStore((s) => s.set);
   const insets = useSafeAreaInsets();
   const bottom = useTabBarSpace();
   const cityId = useCityId();
@@ -203,6 +206,13 @@ export default function Profile() {
                 accessibilityLabel="Haptic feedback"
               />
             </View>
+            <Divider inset={16} />
+            <SettingLink
+              icon="languages"
+              label="Language"
+              value={LANGS.find((l) => l.id === langSetting)?.label}
+              onPress={() => setLang(langSetting === 'auto' ? 'fr' : langSetting === 'fr' ? 'en' : 'auto')}
+            />
             <Divider inset={16} />
             <SettingLink icon="user" label="IRLY account" value={account ? 'Signed in' : 'Sign in to sync'} onPress={() => router.push('/account')} />
             <Divider inset={16} />

@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/ui/Icon';
+import { t as tx } from '@/i18n';
 import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
 import type { PhotoKey } from '@/data/photos';
 import type { CreatePreset } from '@/features/create/createStore';
@@ -84,15 +85,15 @@ export function reasonLines(reasons: Reasons, label: (id: string) => string, max
     ids.slice(0, limit).forEach((id) => {
       if (seen.has(id)) return;
       seen.add(id);
-      lines.push(text(label(id)));
+      lines.push(text(tx(label(id))));
     });
   };
-  add(reasons.sports, (l) => `Love ${l.toLowerCase()}`);
-  add(reasons.activities, (l) => `Like ${l.toLowerCase()}`);
-  add(reasons.interests, (l) => `Into ${l.toLowerCase()}`);
-  add(reasons.goals, (l) => `Want ${l.toLowerCase()}`, 1);
-  add(reasons.travel, (l) => `Dream of ${l}`, 1);
-  add(reasons.languages, (l) => `Speak ${l}`, 1);
-  add(reasons.availability, (l) => `Free on ${l.toLowerCase()}`, 1);
+  add(reasons.sports, (l) => tx('Love {x}', { x: l.toLowerCase() }));
+  add(reasons.activities, (l) => tx('Like {x}', { x: l.toLowerCase() }));
+  add(reasons.interests, (l) => tx('Into {x}', { x: l.toLowerCase() }));
+  add(reasons.goals, (l) => tx('Want {x}', { x: l.toLowerCase() }), 1);
+  add(reasons.travel, (l) => tx('Dream of {x}', { x: l }), 1);
+  add(reasons.languages, (l) => tx('Speak {x}', { x: l }), 1);
+  add(reasons.availability, (l) => tx('Free on {x}', { x: l.toLowerCase() }), 1);
   return lines.slice(0, max);
 }

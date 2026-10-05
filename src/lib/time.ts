@@ -1,3 +1,4 @@
+import { t as tx } from '@/i18n';
 import type { City, When } from '@/data/types';
 
 /**
@@ -69,15 +70,15 @@ export function relativeDay(when: When, city: Pick<City, 'utcOffset'>, now = Dat
 /** "Tonight · 20:30", "Tomorrow · 06:00", "Sat 12 Oct · 10:00" */
 export function whenLabel(when: When, city: Pick<City, 'utcOffset'>, now = Date.now()): string {
   const h = startHour(when);
-  if (when.dayOffset === 0) return `${h >= 17 ? 'Tonight' : 'Today'} · ${when.time}`;
-  if (when.dayOffset === 1) return `Tomorrow · ${when.time}`;
+  if (when.dayOffset === 0) return `${tx(h >= 17 ? 'Tonight' : 'Today')} · ${when.time}`;
+  if (when.dayOffset === 1) return `${tx('Tomorrow')} · ${when.time}`;
   const d = planDate(when, city, now);
-  return `${WEEKDAYS_SHORT[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} · ${when.time}`;
+  return `${tx(WEEKDAYS_SHORT[d.getUTCDay()])} ${d.getUTCDate()} ${tx(MONTHS[d.getUTCMonth()])} · ${when.time}`;
 }
 
 export function dayChip(when: When, city: Pick<City, 'utcOffset'>, now = Date.now()) {
   const d = planDate(when, city, now);
-  return { weekday: WEEKDAYS_SHORT[d.getUTCDay()].toUpperCase(), day: d.getUTCDate() };
+  return { weekday: tx(WEEKDAYS_SHORT[d.getUTCDay()]).toUpperCase(), day: d.getUTCDate() };
 }
 
 export function isWeekend(when: When, city: Pick<City, 'utcOffset'>, now = Date.now()): boolean {

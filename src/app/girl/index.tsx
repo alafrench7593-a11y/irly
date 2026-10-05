@@ -1,4 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
+import { t as tx, useT } from '@/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, useSharedValue } from 'react-native-reanimated';
@@ -75,6 +76,7 @@ export default function GirlHome() {
   const [showFilters, setShowFilters] = useState(false);
   const [moment, setMoment] = useState<{ match: MatchResult; person: Candidate } | null>(null);
   const fling = useSharedValue(0);
+  const tr = useT();
 
   const width = Math.min((frame.width || window.width) - space.gutter * 2, 420);
   const height = Math.min(width * 1.32, (frame.height || window.height) * 0.56);
@@ -152,7 +154,7 @@ export default function GirlHome() {
         setMoment({ match: result, person: c });
         loadMatches();
       } else if (d === 'like') {
-        toast(`${c.firstName} will see you want to connect`, 'heartHandshake', 'brand');
+        toast(tx('{name} will see you want to connect', { name: c.firstName }), 'heartHandshake', 'brand');
       }
     } catch (e) {
       // Put her back so nothing is lost.
@@ -168,7 +170,7 @@ export default function GirlHome() {
       const update = (x: Candidate) => (x.userId === c.userId ? { ...x, saved: !c.saved } : x);
       setDeck((list) => list.map(update));
       setOpen((o) => (o ? update(o) : o));
-      toast(c.saved ? 'Removed from saved' : `${c.firstName} saved`, 'bookmark', 'brand');
+      toast(c.saved ? 'Removed from saved' : tx('{name} saved', { name: c.firstName }), 'bookmark', 'brand');
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
     }
@@ -270,7 +272,7 @@ export default function GirlHome() {
               >
                 <Icon name={s.icon} size={14} color={on ? '#FFFFFF' : girl.ink} />
                 <Text variant="label" color={on ? '#FFFFFF' : girl.ink}>
-                  {s.label(city.name)}
+                  {s.id === 'new' ? tr('New in {city}', { city: city.name }) : s.label(city.name)}
                 </Text>
               </PressableScale>
             );
@@ -331,10 +333,10 @@ export default function GirlHome() {
 
         {top ? (
           <View style={styles.actions}>
-            <ActionButton icon="x" label={`Not now, ${top.firstName}`} onPress={() => fling.set(-1)} />
+            <ActionButton icon="x" label={tx('Not now, {name}', { name: top.firstName })} onPress={() => fling.set(-1)} />
             <ActionButton icon="bookmark" label={top.saved ? 'Remove from saved' : 'Save for later'} small onPress={() => save(top)} active={top.saved} />
-            <ActionButton icon="heartHandshake" label={`Connect with ${top.firstName}`} big onPress={() => fling.set(1)} />
-            <ActionButton icon="user" label={`View ${top.firstName}'s profile`} small onPress={() => setOpen(top)} />
+            <ActionButton icon="heartHandshake" label={tx('Connect with {name}', { name: top.firstName })} big onPress={() => fling.set(1)} />
+            <ActionButton icon="user" label={tx("View {name}'s profile", { name: top.firstName })} small onPress={() => setOpen(top)} />
             <ActionButton icon="shield" label="Block or report" onPress={() => setSafetyFor(top)} />
           </View>
         ) : null}
@@ -388,7 +390,7 @@ export default function GirlHome() {
           setDeck((list) => list.filter((x) => x.userId !== c.userId));
           try {
             await apiRef.current!.block(c.userId);
-            toast(`${c.firstName} is blocked`, 'shield', 'brand');
+            toast(tx('{name} is blocked', { name: c.firstName }), 'shield', 'brand');
             loadMatches();
           } catch (e) {
             toast(e instanceof Error ? e.message : 'Could not block', 'x', 'live');

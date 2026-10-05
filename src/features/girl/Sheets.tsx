@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { t as tx } from '@/i18n';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Sheet } from '@/components/ui/Sheet';
 import { Icon } from '@/components/ui/Icon';
@@ -242,14 +243,14 @@ export function SafetySheet({
     onClose();
   };
   return (
-    <Sheet visible={visible} onClose={close} title={mode === 'report' ? `Report ${name}` : mode === 'confirmBlock' ? `Block ${name}?` : 'Safety'}>
+    <Sheet visible={visible} onClose={close} title={mode === 'report' ? tx('Report {name}', { name }) : mode === 'confirmBlock' ? tx('Block {name}?', { name }) : 'Safety'}>
       <View style={{ paddingHorizontal: space.gutter, paddingBottom: 24, gap: 10 }}>
         {mode === 'menu' ? (
           <>
-            {!matched ? <Row icon="eye" label={`Hide ${name}`} hint="She won't appear in your discovery again." onPress={onHide} /> : null}
+            {!matched ? <Row icon="eye" label={tx('Hide {name}', { name })} hint="She won't appear in your discovery again." onPress={onHide} /> : null}
             {matched && onUnmatch ? <Row icon="x" label="Unmatch" hint="The match and your private chat end for both of you." onPress={onUnmatch} /> : null}
-            <Row icon="shield" label={`Block ${name}`} hint="You won't see each other anywhere on IRLY." onPress={() => setMode('confirmBlock')} />
-            <Row icon="flag" label={`Report ${name}`} hint="Our team reviews every report. She won't know who reported." onPress={() => setMode('report')} danger />
+            <Row icon="shield" label={tx('Block {name}', { name })} hint="You won't see each other anywhere on IRLY." onPress={() => setMode('confirmBlock')} />
+            <Row icon="flag" label={tx('Report {name}', { name })} hint="Our team reviews every report. She won't know who reported." onPress={() => setMode('report')} danger />
           </>
         ) : null}
         {mode === 'confirmBlock' ? (
@@ -258,7 +259,7 @@ export function SafetySheet({
               You won&apos;t see each other in IRLY Girl, chats or activities. Any match ends. You can unblock later in Settings.
             </Text>
             <GButton
-              label={`Block ${name}`}
+              label={tx('Block {name}', { name })}
               icon="shield"
               onPress={() => {
                 onBlock();
@@ -278,7 +279,7 @@ export function SafetySheet({
             <TextInput
               value={details}
               onChangeText={(v) => setDetails(v.slice(0, 1000))}
-              placeholder="What happened? (optional)"
+              placeholder={tx('What happened? (optional)')}
               placeholderTextColor={girl.inkFaint}
               multiline
               style={styles.input}

@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StyleSheet, TextInput, View } from 'react-native';
@@ -82,7 +83,7 @@ export default function ProfileStep() {
           <Field
             containerStyle={{ width: 110 }}
             icon="calendar"
-            placeholder="Age"
+            placeholder={tx('Age')}
             keyboardType="number-pad"
             maxLength={2}
             value={profile.age ? String(profile.age) : ''}
@@ -92,7 +93,7 @@ export default function ProfileStep() {
           <Field
             containerStyle={{ flex: 1 }}
             icon="globe"
-            placeholder="Country (e.g. France)"
+            placeholder={tx('Country (e.g. France)')}
             value={profile.country ?? ''}
             onChangeText={(country) => update({ country })}
             autoCapitalize="words"

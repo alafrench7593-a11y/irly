@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useFrame } from '@/components/layout/AppFrame';
@@ -46,7 +47,7 @@ export default function WhoAreYou() {
       <Animated.View entering={enter.rise(1, 80)} style={{ paddingHorizontal: space.gutter, marginBottom: space[6] }}>
         <Field
           icon="user"
-          placeholder="Your first name"
+          placeholder={tx('Your first name')}
           value={profile.name}
           onChangeText={(name) => updateProfile({ name })}
           autoCapitalize="words"

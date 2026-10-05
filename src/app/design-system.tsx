@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { IrlyLogo, IrlyWordmark } from '@/brand/IrlyLogo';
@@ -224,7 +225,7 @@ export default function DesignSystem() {
             { value: 'c', label: 'Weekend' },
           ]}
         />
-        <Field icon="search" placeholder="Search field" />
+        <Field icon="search" placeholder={tx('Search field')} />
       </Block>
 
       <Block title="Avatars" note="Initials on grey until members add a photo. Availability and verified states.">

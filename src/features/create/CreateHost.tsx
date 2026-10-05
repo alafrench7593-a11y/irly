@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { t as tx } from '@/i18n';
 import { BackHandler, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -174,9 +175,9 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     };
     postPlan(plan);
     // Signed in: the session also goes to the server, where members can join it.
-    createServerActivity(plan).catch((e) => toast(`Saved on this phone only: ${e instanceof Error ? e.message : 'server error'}`, 'x', 'live'));
+    createServerActivity(plan).catch((e) => toast(tx('Saved on this phone only: {why}', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live'));
     haptic('success');
-    toast(`${title} is live. Chat created`, 'send', 'brand');
+    toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
     hide();
   };
 
@@ -199,7 +200,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             </PressableScale>
           ) : null}
           <Text variant="overline" tone="secondary">
-            Step {step + 1} / 4{category ? ` · ${category.label}` : ''}
+            {tx('Step {n} / {total}', { n: step + 1, total: 4 })}{category ? ` · ${tx(category.label)}` : ''}
           </Text>
         </View>
 
@@ -212,7 +213,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 </Text>
               </Animated.View>
               <Animated.View entering={enter.rise(1, 120)} style={styles.block}>
-                <Field icon="search" placeholder="Padel, brunch, mosque visit, AI founders…" value={query} onChangeText={setQuery} returnKeyType="search" />
+                <Field icon="search" placeholder={tx('Padel, brunch, mosque visit, AI founders…')} value={query} onChangeText={setQuery} returnKeyType="search" />
               </Animated.View>
               {query.trim().length >= 2 ? (
                 <Animated.View entering={FadeIn.duration(motion.fast)} style={[styles.block, { gap: 6 }]}>
@@ -257,7 +258,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   </View>
                   <View style={styles.block}>
                     <Text variant="titleS">Can&apos;t find what you&apos;re looking for?</Text>
-                    <Field placeholder="Sunset photography at Palm Jumeirah" value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} returnKeyType="next" />
+                    <Field placeholder={tx('Sunset photography at Palm Jumeirah')} value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} returnKeyType="next" />
                     {custom.trim().length >= 3 ? <CustomButton text={custom} onPress={() => chooseCustom(custom)} /> : null}
                   </View>
                 </>
@@ -316,7 +317,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
               ) : null}
               <View style={styles.block}>
                 <Text variant="titleS">Something else in {category.label.toLowerCase()}?</Text>
-                <Field placeholder="Name your activity" value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} />
+                <Field placeholder={tx('Name your activity')} value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} />
                 {custom.trim().length >= 3 ? <CustomButton text={custom} onPress={() => chooseCustom(custom)} /> : null}
               </View>
             </View>
@@ -358,7 +359,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
               </Animated.View>
               <Animated.View entering={enter.rise(3)} style={styles.block}>
                 <Text variant="overline" tone="secondary">
-                  {place ? `Meeting point near ${place}` : 'Where'}
+                  {place ? tx('Meeting point near {place}', { place }) : 'Where'}
                 </Text>
                 <View style={styles.wrap}>
                   {city.areas.slice(0, 10).map((a) => (
@@ -423,7 +424,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
-                  placeholder="Add a few words (optional): meeting point, level, what to bring…"
+                  placeholder={tx('Add a few words (optional): meeting point, level, what to bring…')}
                   placeholderTextColor={t.c.textTertiary}
                   multiline
                   maxLength={240}
@@ -437,7 +438,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     {title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
-                    {day} · {time} · {place ?? areaName(city, area)} · {unlimited ? 'Unlimited' : `${spots} spots`} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
+                    {day} · {time} · {place ?? areaName(city, area)} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
                   </Text>
                 </View>
               </Animated.View>

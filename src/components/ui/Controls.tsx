@@ -1,3 +1,4 @@
+import { useT } from '@/i18n';
 import { memo, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type LayoutChangeEvent, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import Animated, {
@@ -283,8 +284,9 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
 
 type FieldProps = TextInputProps & { icon?: IconName; trailing?: ReactNode; containerStyle?: StyleProp<ViewStyle> };
 
-export const Field = memo(function Field({ icon, trailing, containerStyle, style, onFocus, onBlur, ...rest }: FieldProps) {
+export const Field = memo(function Field({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, ...rest }: FieldProps) {
   const t = useTheme();
+  const tr = useT();
   const focus = useSharedValue(0);
   const animated = useAnimatedStyle(() => ({
     borderColor: focus.value ? t.c.brand : t.c.line,
@@ -294,6 +296,7 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
     <Animated.View style={[styles.field, { backgroundColor: t.c.surface }, animated, containerStyle]}>
       {icon ? <Icon name={icon} size={18} color={t.c.textTertiary} /> : null}
       <TextInput
+        placeholder={placeholder ? tr(placeholder) : undefined}
         placeholderTextColor={t.c.textTertiary}
         selectionColor={t.c.brand}
         onFocus={(e) => {

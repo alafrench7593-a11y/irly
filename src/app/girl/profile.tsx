@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -205,7 +206,7 @@ export default function GirlProfile() {
                   value={draft.bio}
                   onChangeText={(v) => set('bio', v.slice(0, 300))}
                   multiline
-                  placeholder="New in Dubai, padel addict, always planning the next trip…"
+                  placeholder={tx('New in Dubai, padel addict, always planning the next trip…')}
                   placeholderTextColor={girl.inkFaint}
                   style={styles.input}
                   accessibilityLabel="Bio"
@@ -300,7 +301,7 @@ export default function GirlProfile() {
                   ))}
                 </Wrap>
               </GSection>
-              <GSection title={`Where you like to go in ${city.name}`} hint="Neighbourhoods only. Your exact location is never shared.">
+              <GSection title={tx('Where you like to go in {city}', { city: city.name })} hint="Neighbourhoods only. Your exact location is never shared.">
                 <Wrap>
                   {city.areas.map((a) => (
                     <GChip key={a.id} small label={a.name} selected={draft.areas.includes(a.id)} onPress={() => set('areas', toggle(draft.areas, a.id, 5))} />

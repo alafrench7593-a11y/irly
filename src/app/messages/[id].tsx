@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
@@ -117,7 +118,7 @@ function ServerThreadView({ id }: { id: string }) {
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder="Message"
+              placeholder={tx('Message')}
               placeholderTextColor={t.c.textTertiary}
               style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
               onSubmitEditing={send}
@@ -261,7 +262,7 @@ function Thread() {
             <TextInput
               value={text}
               onChangeText={setText}
-              placeholder="Message"
+              placeholder={tx('Message')}
               placeholderTextColor={t.c.textTertiary}
               style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
               onSubmitEditing={send}
