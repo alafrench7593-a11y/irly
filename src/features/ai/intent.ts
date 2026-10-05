@@ -22,7 +22,11 @@ export type Intent =
   | 'FIND_PLACE'
   | 'CHANGE_DESTINATION'
   | 'OPEN_CALENDAR'
-  | 'OPEN_SAVED';
+  | 'OPEN_SAVED'
+  | 'OPEN_VISA'
+  | 'WHERE_TO_LIVE'
+  | 'OPEN_MOMS'
+  | 'FIND_RESTAURANT';
 
 export type Day = 'today' | 'tomorrow' | 'weekend' | 'next_week' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 export type DayPart = 'morning' | 'afternoon' | 'evening' | 'night';
@@ -175,6 +179,10 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
   let confidence = 0.6;
   if (/\b(calendar|calendrier|agenda|my plans|mes plans)\b/.test(text)) intent = 'OPEN_CALENDAR';
   else if (/\b(saved|sauvegard|enregistr|favoris)\b/.test(text)) intent = 'OPEN_SAVED';
+  else if (/\b(visa|visas|kitas|e-?voa|voa|immigration|overstay)\b/.test(text)) intent = 'OPEN_VISA';
+  else if (/(where (should|to|can) i live|which area|quel quartier|où (vivre|habiter|m installer|s installer)|move to bali|m installer à bali)/.test(text)) intent = 'WHERE_TO_LIVE';
+  else if (/\b(moms?|mums?|mamans?|playdates?|with (my )?kids|avec (mes |les )?enfants)\b/.test(text) && !create) intent = 'OPEN_MOMS';
+  else if (!create && (e.placeKind === 'restaurant' || e.placeKind === 'cafe' || /\b(where to eat|où manger|eat|manger)\b/.test(text))) intent = 'FIND_RESTAURANT';
   else if (/\b(switch to|go to|change (?:city|destination) to|passe à|va à|change pour)\b/.test(text) && e.cityId) intent = 'CHANGE_DESTINATION';
   else if (create && /\b(community|communauté|communaute|group|groupe|club)\b/.test(text) && !/\bbeach ?club\b/.test(text)) intent = 'CREATE_COMMUNITY';
   else if (create && event) intent = 'CREATE_EVENT';
@@ -237,4 +245,8 @@ export const INTENT_LABEL: Record<Intent, string> = {
   CHANGE_DESTINATION: 'Change destination',
   OPEN_CALENDAR: 'Open your calendar',
   OPEN_SAVED: 'Open saved',
+  OPEN_VISA: 'Visa & stay',
+  WHERE_TO_LIVE: 'Where should I live?',
+  OPEN_MOMS: 'IRLY Moms',
+  FIND_RESTAURANT: 'Where to eat',
 };

@@ -21,6 +21,7 @@ import { girl } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton } from '@/features/girl/ui';
 import { MomsView } from '@/features/girl/MomsView';
+import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { joinCommunity, useCommunitiesLike } from '@/features/bali/data';
 import { CITIES } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
@@ -382,6 +383,13 @@ export default function GirlHome() {
             <ActionButton icon="shield" label="Block or report" onPress={() => setSafetyFor(top)} />
           </View>
         ) : null}
+
+        <View style={{ marginTop: space[7], marginHorizontal: space.gutter, padding: 16, gap: 10, borderRadius: radius.xl, backgroundColor: girl.surface }}>
+          <Text variant="titleM" color={girl.ink}>
+            Plan something with girls
+          </Text>
+          <QuickPlan cityId={cityId} types={GIRL_PLANS} palette="girl" />
+        </View>
 
         <View style={{ marginTop: space[7], gap: 10 }}>
           <View style={{ paddingHorizontal: space.gutter }}>

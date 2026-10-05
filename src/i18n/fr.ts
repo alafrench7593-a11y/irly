@@ -1642,4 +1642,16 @@ export const fr: Record<string, string> = {
   'Spouse visa (E31A): married to an Indonesian': 'Visa conjoint (E31A) : marié·e à un·e Indonésien·ne',
   'For the foreign husband or wife of an Indonesian citizen. The Indonesian spouse applies. Documents: application letter from the spouse, passport valid at least 6 months, proof of living costs (at least USD 2,000 over the last 3 months), recent photo, and proof of marriage: Indonesian marriage book, or a foreign marriage certificate registered in Indonesia (translated by a sworn translator unless in English).': 'Pour le mari ou la femme étranger·ère d’un·e citoyen·ne indonésien·ne. C’est le conjoint indonésien qui fait la demande. Documents : lettre de demande du conjoint, passeport valable au moins 6 mois, preuve de ressources (au moins 2 000 USD sur les 3 derniers mois), photo récente et preuve du mariage : livret de mariage indonésien, ou acte étranger enregistré en Indonésie (traduit par un traducteur assermenté sauf s’il est en anglais).',
   '1. Pick the visa that matches what you will do in Bali (visit, remote work, employment, family, retirement, investment). 2. Apply only on the official e-Visa portal: look-alike sites charge extra. 3. Pay the official fee on the portal. 4. Keep the e-visa PDF with your passport. 5. Pay the Bali tourist levy separately on Love Bali. 6. Note your expiry date and extend in time.': '1. Choisis le visa qui correspond à ce que tu feras à Bali (visite, télétravail, emploi, famille, retraite, investissement). 2. Demande uniquement sur le portail e-Visa officiel : les sites imitations facturent plus. 3. Paie les frais officiels sur le portail. 4. Garde le PDF de l’e-visa avec ton passeport. 5. Paie la taxe touristique de Bali à part sur Love Bali. 6. Note ta date d’expiration et prolonge à temps.',
+  // Girl plans, assistant routes.
+  'Looking for anything': 'Tout type de recherche',
+  'Plan something with girls': 'Organise quelque chose entre filles',
+  'Girls surf morning': 'Surf du matin entre filles',
+  'Girls sunset': 'Coucher de soleil entre filles',
+  'Coworking day': 'Journée coworking',
+  'Women entrepreneurs coffee': 'Café entre entrepreneuses',
+  'Open IRLY Moms': 'Ouvrir IRLY Moms',
+  'IRLY Moms is inside IRLY Girl: tap Moms at the top.': 'IRLY Moms est dans IRLY Girl : touche Mamans en haut.',
+  'See ranked restaurants': 'Voir les restaurants classés',
+  'IRLY Moms': 'IRLY Moms',
+  'IRLY Girl in {area}': 'IRLY Girl à {area}',
 };

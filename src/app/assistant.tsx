@@ -92,6 +92,8 @@ export default function Assistant() {
     logCommand(c, from, 'parsed');
     // Navigation-only intents act at once; nothing to confirm.
     if (c.intent === 'OPEN_CALENDAR') router.push('/calendar');
+    else if (c.intent === 'OPEN_VISA') router.push('/bali/guide/visa');
+    else if (c.intent === 'WHERE_TO_LIVE') router.push('/bali/quiz');
     else if (c.intent === 'OPEN_SAVED') router.push('/saved');
   };
 
@@ -336,6 +338,23 @@ function Act({ cmd, cityId, busy, onCreate, onSwitch }: { cmd: Command; cityId: 
     return (
       <View style={styles.pad}>
         <Button label="Open IRLY Girl" icon="heartHandshake" full onPress={() => router.push('/girl')} />
+      </View>
+    );
+  }
+  if (cmd.intent === 'OPEN_MOMS') {
+    return (
+      <View style={styles.pad}>
+        <Button label="Open IRLY Moms" icon="baby" full onPress={() => router.push('/girl')} />
+        <Text variant="caption" tone="tertiary" style={{ marginTop: 8 }}>
+          IRLY Moms is inside IRLY Girl: tap Moms at the top.
+        </Text>
+      </View>
+    );
+  }
+  if (cmd.intent === 'FIND_RESTAURANT') {
+    return (
+      <View style={styles.pad}>
+        <Button label="See ranked restaurants" icon="utensils" full onPress={() => router.push(e.areaId ? `/eat?area=${e.areaId}` : '/eat')} />
       </View>
     );
   }

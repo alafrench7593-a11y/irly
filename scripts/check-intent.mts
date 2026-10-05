@@ -33,6 +33,12 @@ const cases: [string, Expect][] = [
   ['Show my calendar', { intent: 'OPEN_CALENDAR' }],
   ['Quoi faire ce soir ?', { intent: 'FIND_SOMETHING_TO_DO', day: 'today' }],
   ['malls in Dubai', { intent: 'FIND_PLACE', placeKind: 'mall', cityId: 'dubai' }],
+  ['How do I extend my visa on arrival?', { intent: 'OPEN_VISA' }],
+  ['Where should I live in Bali?', { intent: 'WHERE_TO_LIVE' }],
+  ['Où habiter à Bali avec des enfants ?', { intent: 'WHERE_TO_LIVE' }],
+  ['Find moms for a playdate', { intent: 'OPEN_MOMS' }],
+  ['Restaurants in JLT', { intent: 'FIND_RESTAURANT', placeKind: 'restaurant', areaId: 'jlt' }],
+  ['Où manger ce soir ?', { intent: 'FIND_RESTAURANT', day: 'today' }],
 ];
 
 let failed = 0;

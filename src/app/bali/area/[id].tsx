@@ -9,7 +9,9 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import type { Trait } from '@/features/bali/fit';
-import { useAreaProfiles, useDestAreas, usePlaces } from '@/features/bali/data';
+import { useAreaProfiles, useDestAreas, useGirlCircle, usePlaces } from '@/features/bali/data';
+import { Avatar } from '@/components/ui/Avatar';
+import { hueOf } from '@/lib/format';
 import { useServerActivities } from '@/features/server/activities';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
@@ -60,6 +62,8 @@ export default function BaliArea() {
   const { activities } = useServerActivities('bali');
   const here = activities.filter((a) => a.areaId === id || hoods.some((h) => h.id === a.areaId));
   const places = usePlaces('bali', { area: id });
+  // Women only, and only those who show their area (checked server-side).
+  const girls = useGirlCircle('bali', { area: id });
   const name = area?.name ?? id;
 
   return (
@@ -171,6 +175,24 @@ export default function BaliArea() {
           )}
         </View>
 
+        {girls.data.length ? (
+          <View style={{ gap: 10 }}>
+            <Text variant="titleM" style={styles.pad}>
+              {tx('IRLY Girl in {area}', { area: name })}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 12 }}>
+              {girls.data.slice(0, 12).map((g) => (
+                <PressableScale key={g.userId} onPress={() => router.push('/girl')} haptic="select" scaleTo={0.95} style={styles.girl} accessibilityLabel={g.firstName}>
+                  <Avatar name={g.firstName} hue={hueOf(g.userId)} size={52} />
+                  <Text variant="caption" numberOfLines={1}>
+                    {g.firstName}
+                  </Text>
+                </PressableScale>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
         {places.data.length ? (
           <View style={{ gap: 10 }}>
             <Text variant="titleM" style={styles.pad}>
@@ -224,6 +246,7 @@ const styles = StyleSheet.create({
   bar: { flex: 1, height: 6, borderRadius: 3, overflow: 'hidden' },
   line: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg },
+  girl: { width: 72, alignItems: 'center', gap: 4 },
   place: { width: 180, borderRadius: radius.lg, overflow: 'hidden' },
   placePhoto: { width: 180, height: 110 },
 });

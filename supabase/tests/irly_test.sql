@@ -334,12 +334,14 @@ select pg_temp.check((select count(*) from public.place_activities('t-loved')) =
 select pg_temp.expect_denied($$select * from public.girl_circle('bali')$$, 'a man cannot browse IRLY Girl circles');
 
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
-update public.irly_match_profiles set destination = 'bali', destination_status = 'moving_soon', mom_mode = true, kids_age_groups = '{toddler}' where user_id = auth.uid();
+update public.irly_match_profiles set destination = 'bali', destination_status = 'moving_soon', mom_mode = true, kids_age_groups = '{toddler}', looking_for = '{coworking}' where user_id = auth.uid();
 select pg_temp.expect_denied($$update public.irly_match_profiles set kids_age_groups = '{Emma}' where user_id = auth.uid()$$, 'kids are age groups, never names');
 insert into public.relocation_progress (user_id, destination, step_id) values (auth.uid(), 'bali', 'visa');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check((select count(*) from public.girl_circle('bali', 'moving_soon')) = 1, 'women moving to Bali are discoverable');
 select pg_temp.check((select count(*) from public.girl_circle('bali', null, true)) = 1, 'Mom mode filter');
+select pg_temp.check((select count(*) from public.girl_circle('bali', null, false, null, 30, 'coworking')) = 1, 'filter by what she is looking for');
+select pg_temp.check((select count(*) from public.girl_circle('bali', null, false, null, 30, 'sports')) = 0, 'and only that');
 select pg_temp.check((select count(*) from public.relocation_progress) = 0, 'someone else''s move checklist is private');
 select pg_temp.check((select count(*) from public.communities where city_id = 'bali' and name = 'Bali Moms') = 1, 'Bali Moms community exists for women');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');

@@ -6,6 +6,7 @@
 // Env: GOOGLE_PLACES_API_KEY, SUPABASE_ACCESS_TOKEN (sbp_...),
 //      SUPABASE_PROJECT_REF (default: the IRLY project), PLACES_CITY (bali|dubai|all).
 import process from 'node:process';
+import { deriveTags } from './place-tags.mjs';
 
 const key = (process.env.GOOGLE_PLACES_API_KEY || '').trim();
 const raw = (process.env.SUPABASE_ACCESS_TOKEN || '').trim();
@@ -101,7 +102,10 @@ for (const city of Object.keys(AREAS)) {
           p.servesVegetarianFood ? 'vegetarian' : null,
           p.liveMusic ? 'live_music' : null,
           p.outdoorSeating ? 'outdoor' : null,
+          ...deriveTags({ name: p.displayName?.text ?? '', types, hours: p.regularOpeningHours }),
         ].filter(Boolean);
+        // Derived cuisines (Balinese, Indonesian, healthy…) are searchable as cuisines too.
+        for (const c of ['balinese', 'indonesian', 'healthy', 'vegan']) if (tags.includes(c) && !cuisines.includes(c)) cuisines.push(c);
         const photos = [];
         for (const ph of (p.photos ?? []).slice(0, 3)) {
           const u = await photoUrl(ph.name);
@@ -118,7 +122,7 @@ for (const city of Object.keys(AREAS)) {
           insert into public.places (slug, city_id, area_id, name, kind, category_id, tags, cuisines, types, lat, lng, provider, provider_place_id,
             rating, review_count, price_level, address, phone, website, opening_hours, photos, amenities, fetched_at)
           values (${lit(`g-${p.id}`)}, ${lit(city)}, ${lit(area)}, ${lit(p.displayName?.text ?? 'Restaurant')}, ${lit(kind)}, 'food',
-            ${arr(tags)}, ${arr(cuisines)}, ${arr(types)}, ${p.location?.latitude ?? 'null'}, ${p.location?.longitude ?? 'null'}, 'google', ${lit(p.id)},
+            ${arr([...new Set(tags)])}, ${arr(cuisines)}, ${arr(types)}, ${p.location?.latitude ?? 'null'}, ${p.location?.longitude ?? 'null'}, 'google', ${lit(p.id)},
             ${p.rating ?? 'null'}, ${p.userRatingCount ?? 'null'}, ${PRICE[p.priceLevel] ?? 'null'}, ${lit(p.formattedAddress)},
             ${lit(p.nationalPhoneNumber)}, ${lit(p.websiteUri)}, ${lit(p.regularOpeningHours ? JSON.stringify(p.regularOpeningHours) : null)}::jsonb,
             ${arr(photos)}, ${lit(JSON.stringify(amenities))}::jsonb, now())

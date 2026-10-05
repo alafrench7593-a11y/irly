@@ -9,6 +9,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { joinCommunity, useCommunitiesLike, useGirlCircle, useGirlExtras, type CircleMember } from '@/features/bali/data';
 import { girl } from '@/features/girl/theme';
+import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { GButton, GChip, Wrap } from '@/features/girl/ui';
 import { hueOf } from '@/lib/format';
 import { haptic } from '@/motion/haptics';
@@ -34,7 +35,8 @@ export default function GirlsMoving() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<Status | null>(null);
-  const circle = useGirlCircle('bali', { status });
+  const [looking, setLooking] = useState<string | null>(null);
+  const circle = useGirlCircle('bali', { status, looking });
   const extras = useGirlExtras();
   const me = extras.data;
   const communities = useCommunitiesLike('bali', '', true);
@@ -102,6 +104,13 @@ export default function GirlsMoving() {
           ))}
         </ScrollView>
 
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
+          <GChip small label={tx('Looking for anything')} selected={!looking} onPress={() => setLooking(null)} />
+          {LOOKING.map((l) => (
+            <GChip key={l} small label={tx(l)} selected={looking === l} onPress={() => setLooking(looking === l ? null : l)} />
+          ))}
+        </ScrollView>
+
         <View style={[styles.pad, { gap: 10 }]}>
           {circle.error ? (
             <Text variant="bodyS" color={girl.inkSoft}>
@@ -140,6 +149,15 @@ export default function GirlsMoving() {
             ))
           )}
           {circle.data.length ? <GButton label="Connect in IRLY Girl" icon="heartHandshake" onPress={() => router.push('/girl')} /> : null}
+        </View>
+
+        <View style={styles.pad}>
+          <View style={[styles.card, { gap: 10 }]}>
+            <Text variant="titleM" color={girl.ink}>
+              Plan something with girls
+            </Text>
+            <QuickPlan cityId="bali" types={GIRL_PLANS} palette="girl" />
+          </View>
         </View>
 
         <View style={[styles.pad, { gap: 10 }]}>

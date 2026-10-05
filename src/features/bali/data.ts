@@ -347,7 +347,7 @@ export type CircleMember = {
   score: number | null;
 };
 
-export function useGirlCircle(destination: string, opts: { status?: string | null; moms?: boolean; area?: string | null }) {
+export function useGirlCircle(destination: string, opts: { status?: string | null; moms?: boolean; area?: string | null; looking?: string | null }) {
   const account = useAccount();
   const key = JSON.stringify({ destination, ...opts, u: account?.userId });
   return useQuery<CircleMember[]>(
@@ -360,6 +360,7 @@ export function useGirlCircle(destination: string, opts: { status?: string | nul
         p_moms: Boolean(opts.moms),
         p_area: opts.area ?? null,
         p_limit: 40,
+        p_looking: opts.looking ?? null,
       });
       if (error) throw new Error(error.message);
       return ((data as Record<string, unknown>[]) ?? []).map((r) => ({

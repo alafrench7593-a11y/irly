@@ -1,5 +1,7 @@
 // "Where should I live in Bali?", test plans and opening hours.
 import { buildTestPlan, isOpenNow, rankAreas, type AreaProfile } from '../src/features/bali/fit.ts';
+// @ts-expect-error plain JS module shared with the sync script
+import { deriveTags } from './place-tags.mjs';
 
 const p = (areaId: string, traits: AreaProfile['traits']): AreaProfile => ({ areaId, name: areaId[0].toUpperCase() + areaId.slice(1), tagline: '', vibe: '', bestFor: [], notIdealFor: [], traits, pros: [], cons: [] });
 // Same values as supabase/migrations/…_irly_bali_moms.sql.
@@ -46,6 +48,14 @@ expect(isOpenNow(hours, 8, at('2026-10-05T04:00:00Z')) === true, 'open Monday no
 expect(isOpenNow(hours, 8, at('2026-10-05T15:00:00Z')) === false, 'closed Monday 23:00 in Bali');
 expect(isOpenNow(hours, 8, at('2026-10-09T17:30:00Z')) === true, 'open past midnight Friday → Saturday 01:30');
 expect(isOpenNow(null, 8) === null, 'unknown hours stay unknown');
+
+// Restaurant tags derived from provider data.
+const warung = deriveTags({ name: 'Warung Babi Guling Pak Malen', types: ['restaurant'] });
+expect(warung.includes('warung') && warung.includes('balinese') && warung.includes('indonesian'), 'warung + Balinese from the name', warung);
+expect(deriveTags({ name: 'Finns Beach Club', types: [] }).includes('beach_club'), 'beach club from the name');
+const late = { periods: [{ open: { day: 5, hour: 18 }, close: { day: 6, hour: 1 } }] };
+expect(deriveTags({ name: 'Bar X', types: [], hours: late }).includes('late_night'), 'late night from opening hours');
+expect(deriveTags({ name: 'Café Lola', types: ['restaurant'], hours: { periods: [{ open: { day: 1, hour: 8 }, close: { day: 1, hour: 17 } }] } }).length === 0, 'no tag without evidence');
 
 if (failed) {
   console.error(`${failed} Bali check(s) failed`);

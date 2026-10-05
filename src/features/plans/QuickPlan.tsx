@@ -32,6 +32,17 @@ export const FOOD_PLANS: PlanType[] = [
   { id: 'BRUNCH_WITH_KIDS', label: 'Kids + brunch', icon: 'baby', audience: 'moms', category: 'family', title: (w) => `Brunch with kids at ${w}` },
 ];
 
+/** IRLY Girl plans (girls only, checked server-side). */
+export const GIRL_PLANS: PlanType[] = [
+  { id: 'SURF', label: 'Girls surf morning', icon: 'waves', audience: 'girls', category: 'sport', title: (w) => `Girls surf morning · ${w}` },
+  { id: 'BRUNCH', label: 'Girls brunch', icon: 'coffee', audience: 'girls', category: 'food', title: (w) => `Girls brunch · ${w}` },
+  { id: 'WELLNESS', label: 'Girls wellness', icon: 'leaf', audience: 'girls', category: 'wellness', title: (w) => `Girls wellness · ${w}` },
+  { id: 'SUNSET', label: 'Girls sunset', icon: 'sunset', audience: 'girls', category: 'outdoor', title: (w) => `Girls sunset · ${w}` },
+  { id: 'COWORKING', label: 'Coworking day', icon: 'laptop', audience: 'girls', category: 'networking', title: (w) => `Girls coworking day · ${w}` },
+  { id: 'COFFEE', label: 'Women entrepreneurs coffee', icon: 'briefcase', audience: 'girls', category: 'networking', title: (w) => `Women entrepreneurs coffee · ${w}` },
+  { id: 'GIRLS_DINNER', label: 'Girls dinner', icon: 'utensils', audience: 'girls', category: 'food', title: (w) => `Girls dinner · ${w}` },
+];
+
 /** IRLY Moms: activities with children (always IRLY Girl plans). */
 export const MOM_PLANS: PlanType[] = [
   { id: 'PLAYDATE', label: 'Playdate', icon: 'baby', audience: 'moms', category: 'family', title: (w) => `Playdate · ${w}` },
