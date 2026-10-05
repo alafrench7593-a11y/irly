@@ -107,7 +107,7 @@ async function signedInPage(browser, who) {
   return page;
 }
 
-const visible = (page, text, timeout = 15000) => page.getByText(text, { exact: false }).first().waitFor({ timeout });
+const visible = (page, text, timeout = 15000) => page.getByText(text, { exact: false }).filter({ visible: true }).first().waitFor({ timeout });
 
 async function main() {
   await cleanup();

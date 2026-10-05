@@ -85,7 +85,7 @@ async function main() {
     try {
       if (route) await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
       if (act) await act();
-      for (const t of texts) await page.getByText(t, { exact: false }).first().waitFor({ timeout: 15000 });
+      for (const t of texts) await page.getByText(t, { exact: false }).filter({ visible: true }).first().waitFor({ timeout: 15000 });
       if (exact) await page.getByText(exact, { exact: true }).first().waitFor({ timeout: 15000 });
       passed++;
       console.log(`✓ ${label}`);
