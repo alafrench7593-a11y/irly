@@ -20,6 +20,8 @@ import type { Suggestion } from '@/features/girl/suggest';
 import { girl } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton } from '@/features/girl/ui';
+import { MomsView } from '@/features/girl/MomsView';
+import { joinCommunity, useCommunitiesLike } from '@/features/bali/data';
 import { CITIES } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -75,6 +77,8 @@ export default function GirlHome() {
   const [safetyFor, setSafetyFor] = useState<Candidate | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [moment, setMoment] = useState<{ match: MatchResult; person: Candidate } | null>(null);
+  const [mode, setMode] = useState<'all' | 'moms'>('all');
+  const serverCommunities = useCommunitiesLike(cityId, '', true);
   const fling = useSharedValue(0);
   const tr = useT();
 
@@ -257,6 +261,44 @@ export default function GirlHome() {
           </View>
         ) : null}
 
+        <View style={styles.modes}>
+          {(['all', 'moms'] as const).map((m) => (
+            <PressableScale
+              key={m}
+              haptic="select"
+              scaleTo={0.96}
+              onPress={() => setMode(m)}
+              style={[styles.mode, mode === m ? { backgroundColor: girl.ink } : null]}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: mode === m }}
+              accessibilityLabel={m === 'all' ? 'All girls' : 'Moms'}
+            >
+              <Text variant="label" color={mode === m ? '#FFFFFF' : girl.ink}>
+                {m === 'all' ? 'All girls' : 'Moms'}
+              </Text>
+            </PressableScale>
+          ))}
+        </View>
+
+        {mode === 'moms' ? (
+          <MomsView cityId={cityId} />
+        ) : (
+          <>
+        {cityId === 'bali' ? (
+          <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/girl/moving')} style={styles.moving} accessibilityLabel="Girls moving to Bali">
+            <Icon name="plane" size={20} color={girl.rose} />
+            <View style={{ flex: 1 }}>
+              <Text variant="titleS" color={girl.ink}>
+                Girls moving to Bali
+              </Text>
+              <Text variant="caption" color={girl.inkSoft}>
+                Meet women before you arrive
+              </Text>
+            </View>
+            <Icon name="chevronRight" size={18} color={girl.inkSoft} />
+          </PressableScale>
+        ) : null}
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sections}>
           {SECTIONS.map((s) => {
             const on = filters.section === s.id;
@@ -351,7 +393,28 @@ export default function GirlHome() {
             </Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
-            {COMMUNITIES.map((c) => (
+            {serverCommunities.data.map((c) => (
+              <PressableScale
+                key={c.id}
+                haptic="select"
+                scaleTo={0.96}
+                onPress={() =>
+                  joinCommunity(c.id)
+                    .then((conv) => conv && router.push(`/messages/${conv}`))
+                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'))
+                }
+                style={[styles.community, { backgroundColor: girl.blush }]}
+                accessibilityLabel={c.name}
+              >
+                <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
+                  <Icon name={c.member ? 'check' : 'users'} size={18} color={girl.rose} />
+                  <Text variant="titleS" color={girl.ink} numberOfLines={2}>
+                    {c.name}
+                  </Text>
+                </View>
+              </PressableScale>
+            ))}
+            {(serverCommunities.data.length ? [] : COMMUNITIES).map((c) => (
               <PressableScale key={c.name} haptic="select" scaleTo={0.96} onPress={() => router.push('/category/girl')} style={styles.community} accessibilityLabel={c.name}>
                 <Photo visual={{ photo: c.photo }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
                 <Text variant="titleS" color="#FFFFFF" numberOfLines={2} style={{ padding: 12 }}>
@@ -361,6 +424,8 @@ export default function GirlHome() {
             ))}
           </ScrollView>
         </View>
+          </>
+        )}
       </ScrollView>
 
       <ProfileSheet
@@ -453,6 +518,9 @@ function ActionButton({ icon, label, onPress, big, small, active }: { icon: Icon
 }
 
 const styles = StyleSheet.create({
+  modes: { flexDirection: 'row', alignSelf: 'center', marginTop: space[5], padding: 4, gap: 4, borderRadius: 22, backgroundColor: girl.surface },
+  mode: { paddingHorizontal: 18, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  moving: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: space.gutter, marginTop: space[5], padding: 14, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
   root: { flex: 1, backgroundColor: girl.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.gutter },

@@ -300,6 +300,49 @@ select u, 'irl_post', (select id from public.irl_posts limit 1), 'spam'
 from unnest(array['00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c']::uuid[]) u;
 select pg_temp.check((select expires_at <= now() from public.irl_posts limit 1), 'three reports take the IRL post down');
 
+-- ───── Bali geography, guides, places, moms ─────
+select pg_temp.as_admin();
+set role anon;
+select pg_temp.check((select admin_area_id from public.areas where city_id = 'bali' and id = 'berawa') = 'id-bali-badung', 'Berawa sits in Badung');
+select pg_temp.check((select parent_area_id from public.areas where city_id = 'bali' and id = 'berawa') = 'canggu', 'and in Canggu for people searching');
+select pg_temp.check((select count(*) from public.admin_areas where parent_id = 'id-bali') = 9, 'nine regencies and city of Bali');
+select pg_temp.check((select count(*) from public.area_profiles where city_id = 'bali') >= 10, 'area profiles readable before sign-in');
+select pg_temp.check(not exists (select 1 from public.guide_articles where kind = 'official' and source_url is null), 'official guides always cite a source');
+reset role;
+select pg_temp.expect_denied($$insert into public.guide_articles (destination, section, title, body, kind) values ('bali', 'visa', 'Made up', 'x', 'official')$$, 'official info without a source is refused');
+insert into public.places (slug, city_id, area_id, name, kind, cuisines, rating, review_count, price_level, provider, provider_place_id, fetched_at, amenities) values
+  ('t-tiny', 'bali', 'canggu', 'Tiny 4.9', 'restaurant', '{italian}', 4.9, 12, 2, 'google', 't1', now(), '{}'),
+  ('t-loved', 'bali', 'berawa', 'Loved 4.7', 'restaurant', '{italian}', 4.7, 3000, 2, 'google', 't2', now(), '{"good_for_children": true}');
+set role anon;
+select pg_temp.check((select slug from public.places_search('bali', null, 'restaurant', 'italian') limit 1) = 't-loved', 'ranking weighs review volume, not rating alone');
+select pg_temp.check((select count(*) from public.places_search('bali', 'canggu', 'restaurant')) = 2, 'an area includes its neighbourhoods');
+select pg_temp.check((select count(*) from public.places_search('bali', null, 'restaurant', null, null, null, null, true)) = 1, 'with kids filter');
+select pg_temp.check((select count(*) from public.places_search('bali', null, 'restaurant', null, 4.8)) = 1, 'minimum rating filter');
+reset role;
+
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, place_id, activity_type, audience, girl_only)
+values (auth.uid(), 'Mom brunch at Loved', 'food', 'bali', 'berawa', now() + interval '2 days', (select id from public.places where slug = 't-loved'), 'MOM_BRUNCH', 'moms', true);
+select pg_temp.check((select count(*) from public.place_activities('t-loved')) = 1, 'restaurant shows who is going');
+select pg_temp.check((select going from public.places_search('bali', 'berawa', 'restaurant')) = 1, 'and counts planned activities');
+select pg_temp.expect_denied($$insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, audience) values (auth.uid(), 'Moms open', 'food', 'bali', 'canggu', now() + interval '1 day', 'moms')$$, 'moms activities are IRLY Girl activities');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) from public.place_activities('t-loved')) = 0, 'a man does not see the moms brunch');
+select pg_temp.expect_denied($$select * from public.girl_circle('bali')$$, 'a man cannot browse IRLY Girl circles');
+
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+update public.irly_match_profiles set destination = 'bali', destination_status = 'moving_soon', mom_mode = true, kids_age_groups = '{toddler}' where user_id = auth.uid();
+select pg_temp.expect_denied($$update public.irly_match_profiles set kids_age_groups = '{Emma}' where user_id = auth.uid()$$, 'kids are age groups, never names');
+insert into public.relocation_progress (user_id, destination, step_id) values (auth.uid(), 'bali', 'visa');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select count(*) from public.girl_circle('bali', 'moving_soon')) = 1, 'women moving to Bali are discoverable');
+select pg_temp.check((select count(*) from public.girl_circle('bali', null, true)) = 1, 'Mom mode filter');
+select pg_temp.check((select count(*) from public.relocation_progress) = 0, 'someone else''s move checklist is private');
+select pg_temp.check((select count(*) from public.communities where city_id = 'bali' and name = 'Bali Moms') = 1, 'Bali Moms community exists for women');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) from public.communities where name like '%Moms%') = 0, 'mom communities are hidden from men');
+select pg_temp.expect_denied($$select private.friends_unchecked('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000d')$$, 'private helpers are not callable by members');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

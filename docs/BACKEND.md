@@ -66,6 +66,7 @@ par conception). Ne jamais mettre la clé `service_role` / secret dans l'app.
 npm run test:db
 npm run test:compat
 npm run test:intent
+npm run test:bali
 
 # Supabase project:
 supabase link --project-ref <ref>
@@ -120,6 +121,39 @@ activity, day, time, area, city, budget), deterministic and tested
 (`npm run test:intent`). Voice uses the browser's speech recognition on the
 web and the keyboard's dictation in Expo Go. Anything that changes data
 (create, switch city) is shown as an editable card and waits for a tap.
+
+## Bali and IRLY Moms (migration 0700)
+
+- **Geography.** `admin_areas` (Bali province → 8 regencies + Kota
+  Denpasar) is kept apart from the destination `areas` people search
+  (Canggu, Berawa…). Each area points at its regency (`admin_area_id`) and,
+  for neighbourhoods, at the area people know it by (`parent_area_id`).
+- **Area profiles** (`area_profiles`): editorial IRLY Guide ratings (0–5)
+  used by "Where should I live?" and the test-stay plans
+  (`src/features/bali/fit.ts`, `npm run test:bali`). No prices.
+- **Guides** (`guide_articles`): every entry is `official` (must cite a
+  source URL), `irly_guide` or `third_party`, with source date, last
+  verified and review dates. Visa entries only point at the official
+  portals until someone verifies the details and fills `last_verified_at`.
+- **Move checklist**: `relocation_steps` + private `relocation_progress`.
+- **Places**: provider fields (rating, reviews, price, cuisines, hours,
+  photos, amenities) and `places_search` ranked by a Bayesian rating
+  (review volume), IRLY popularity and freshness. Restaurants become social
+  through ordinary activities (`place_id`, `activity_type`, `audience`).
+- **IRLY Moms** lives inside IRLY Girl: `mom_mode` and `kids_age_groups`
+  (age groups only) on the Match profile, `audience = 'moms'` activities
+  (always girl-only), `girl_circle` for "Girls moving to Bali" and moms.
+- **Hardening**: private helpers are no longer executable by default.
+
+### Restaurants: one-time setup
+
+1. Google Cloud → enable **Places API (New)** → create an API key
+   (restrict it to that API).
+2. GitHub → repository → Settings → Secrets → Actions →
+   `GOOGLE_PLACES_API_KEY`.
+3. Actions → **Places** → Run workflow (then it refreshes weekly).
+
+The key stays in GitHub; the app only reads the database.
 
 ## Still to connect
 

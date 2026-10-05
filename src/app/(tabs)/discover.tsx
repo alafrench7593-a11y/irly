@@ -49,6 +49,8 @@ export default function Discover() {
 
   // Every catalog category is a door, then the hubs.
   const doors: Door[] = [
+    ...(cityId === 'bali' ? [{ label: 'Live Bali', caption: 'Areas, moving, test stays', icon: 'palm' as IconName, photo: 'bali' as PhotoKey, href: '/bali' }] : []),
+    { label: 'Where to eat', caption: 'Ranked restaurants, then company', icon: 'utensils', photo: 'dinner', href: '/eat' },
     ...CATEGORIES.map((c) => ({ label: c.label, caption: c.tagline, icon: c.icon, photo: c.photo, href: `/category/${c.id}` })),
     { label: 'Events', caption: `${content.events.length} this week`, icon: 'ticket', photo: content.events[0]?.visual.photo ?? 'dinner', href: '/events' },
     { label: 'Activities', caption: `${city.activityKinds.length} sports & more`, icon: 'activity', photo: ACTIVITIES[city.activityKinds[0]].photo ?? 'running', href: '/activities' },

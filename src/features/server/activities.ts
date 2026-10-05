@@ -25,7 +25,10 @@ export function startsAt(day: string, time: string, now = new Date()): Date {
   return d;
 }
 
-export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date): Promise<string | null> {
+/** Extras that tie an activity to a place, a type (PLAYDATE, DINNER…) and an audience. */
+export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families' };
+
+export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, extras: ActivityExtras = {}): Promise<string | null> {
   if (!supabase) return null;
   const { data: session } = await supabase.auth.getSession();
   const uid = session.session?.user.id;
@@ -48,6 +51,11 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
       currency: plan.currency ?? 'AED',
       capacity: plan.spots ? Math.max(2, plan.spots) : null,
       privacy: PRIVACY[plan.privacy ?? 'public'],
+      place_id: extras.placeId ?? null,
+      activity_type: extras.activityType ?? null,
+      audience: extras.audience ?? 'all',
+      // Girls and moms plans are IRLY Girl plans (enforced server-side).
+      girl_only: extras.audience === 'girls' || extras.audience === 'moms',
     })
     .select('id')
     .single();

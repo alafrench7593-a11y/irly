@@ -13,6 +13,8 @@ on:
       - 'scripts/test-db.sh'
       - 'scripts/check-intent.mts'
       - 'src/features/ai/**'
+      - 'src/features/bali/fit.ts'
+      - 'scripts/check-bali.mts'
       - '.github/workflows/supabase.yml'
   workflow_dispatch:
 
@@ -46,6 +48,8 @@ jobs:
         run: node --experimental-strip-types --no-warnings scripts/check-compat.mts
       - name: Assistant command engine
         run: node --experimental-strip-types --no-warnings scripts/check-intent.mts
+      - name: Bali area fit, test plans, opening hours
+        run: node --experimental-strip-types --no-warnings scripts/check-bali.mts
 
   deploy:
     needs: test

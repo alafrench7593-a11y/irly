@@ -16,6 +16,7 @@ import { Text } from '@/components/ui/Text';
 import { CATEGORIES, CATEGORY_BY_ID, ideaPhoto } from '@/data/catalog/categories';
 import { openCreate } from '@/features/create/createStore';
 import { CreateMenu } from '@/features/create/CreateMenu';
+import { Photo } from '@/components/visual/Photo';
 import { MemberActivities } from '@/features/server/MemberActivities';
 import { planDisplay } from '@/data/catalog/mapping';
 import { areaName, CITIES, DESTINATIONS } from '@/data/destinations';
@@ -117,6 +118,26 @@ export default function Home() {
         <Animated.View entering={enter.rise(1, 80)} style={styles.firstSection}>
           <LiveStrip />
         </Animated.View>
+
+        {cityId === 'bali' ? (
+          <Animated.View entering={enter.rise(2, 80)} style={[styles.section, { paddingHorizontal: space.gutter }]}>
+            <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/bali')} accessibilityLabel="Live Bali">
+              <Photo visual={{ photo: 'bali' }} light="bali" scrim="strong" style={{ height: 150, borderRadius: radius.xl, overflow: 'hidden' }} width={900}>
+                <View style={{ flex: 1, padding: 16, justifyContent: 'flex-end', gap: 4 }}>
+                  <Text variant="overline" color="#FFFFFF">
+                    IRLY Bali
+                  </Text>
+                  <Text variant="titleL" color="#FFFFFF">
+                    Live Bali. Don&apos;t just visit.
+                  </Text>
+                  <Text variant="caption" color="rgba(255,255,255,0.85)">
+                    Where to live · My move · Test Bali · Where to eat
+                  </Text>
+                </View>
+              </Photo>
+            </PressableScale>
+          </Animated.View>
+        ) : null}
 
         <Animated.View entering={enter.rise(2, 80)} style={styles.section}>
           <CreateMenu />

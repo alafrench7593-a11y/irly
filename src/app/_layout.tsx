@@ -76,6 +76,7 @@ function App() {
         {/* IRLY Girl: its own universe; the screen fades and GirlIntro morphs. */}
         <Stack.Screen name="girl/index" options={{ animation: 'fade', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="girl/onboarding" options={{ animation: 'slide_from_bottom', contentStyle: { backgroundColor: girl.bg } }} />
+        <Stack.Screen name="girl/moving" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="comments" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="share" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
