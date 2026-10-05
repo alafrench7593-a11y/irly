@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
+import { imageType } from '@/lib/media';
 
 /**
  * IRL posts, friends and notifications on the server (signed in), live
@@ -119,8 +120,9 @@ export async function postServerIrl(input: {
   let media_path: string | null = null;
   if (input.photoUri) {
     const body = await (await fetch(input.photoUri)).arrayBuffer();
-    media_path = `${uid}/${Date.now()}.jpg`;
-    const { error } = await supabase.storage.from('irl-media').upload(media_path, body, { contentType: 'image/jpeg' });
+    const img = imageType(input.photoUri);
+    media_path = `${uid}/${Date.now()}.${img.ext}`;
+    const { error } = await supabase.storage.from('irl-media').upload(media_path, body, { contentType: img.contentType });
     if (error) throw new Error(error.message);
   }
   const { error } = await supabase.from('irl_posts').insert({

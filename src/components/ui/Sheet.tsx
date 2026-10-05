@@ -13,6 +13,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { haptic } from '@/motion/haptics';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { duration, easing, spring } from '@/motion/tokens';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -82,7 +83,9 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
       }
     });
 
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: Math.max(-24, y.value) }] }));
+  // Inputs in a sheet (Go live, report) stay above the keyboard.
+  const keyboard = useKeyboardHeight();
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: Math.max(-24, y.value) - keyboard.value }] }));
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(y.value, [0, sheetH.value], [1, 0], Extrapolation.CLAMP),
   }));

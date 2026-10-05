@@ -65,7 +65,7 @@ function ServerThreadView({ id }: { id: string }) {
   const group = thread.kind !== 'direct' && thread.kind !== 'match';
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
@@ -224,7 +224,7 @@ function Thread() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}

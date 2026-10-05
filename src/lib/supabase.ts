@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
@@ -24,6 +24,16 @@ export const supabase: SupabaseClient | null =
     : null;
 
 export const hasBackend = supabase !== null;
+
+// Native: refresh the session only while the app is in the foreground, and
+// right away when it comes back (Supabase's recommended pattern for React
+// Native). Otherwise a long background leaves realtime with an expired token.
+if (supabase && Platform.OS !== 'web') {
+  AppState.addEventListener('change', (state) => {
+    if (state === 'active') supabase?.auth.startAutoRefresh();
+    else supabase?.auth.stopAutoRefresh();
+  });
+}
 
 /** True when a member is signed in to the backend. */
 export async function hasSession(): Promise<boolean> {

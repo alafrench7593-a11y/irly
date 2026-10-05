@@ -57,6 +57,12 @@ export default function AccountScreen() {
 
   // Coming back from an email link or Apple/Google in the app.
   useEffect(() => {
+    // An expired or already-used link comes back as #error=…&error_description=…
+    const failed = url?.match(/[#?&]error_description=([^&]+)/);
+    if (failed) {
+      toast(decodeURIComponent(failed[1].replace(/\+/g, ' ')), 'x', 'live');
+      return;
+    }
     if (url && url.includes('access_token')) {
       completeFromUrl(url)
         .then((ok) => {

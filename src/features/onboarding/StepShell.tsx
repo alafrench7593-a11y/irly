@@ -45,7 +45,7 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
         <Photo visual={{ photo: city.photo }} light={city.light} width={1200} style={StyleSheet.absoluteFill} />
         <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.8)', '#000000']} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
       </View>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <View style={[styles.top, { paddingTop: insets.top + 8 }]}>
           <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => router.back()} />
           <View style={styles.dots}>

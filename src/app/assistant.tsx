@@ -163,7 +163,7 @@ export default function Assistant() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 16, paddingBottom: 32, gap: space[6] }}

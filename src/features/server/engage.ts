@@ -179,7 +179,9 @@ export async function shareNative(t: Target): Promise<void> {
     if (nav?.share) await nav.share({ title: t.title ?? 'IRLY', url });
     else await nav?.clipboard?.writeText(url);
   } else {
-    await Share.share({ message, url });
+    // iOS shares message and url separately (the link appeared twice); Android only has message.
+    const res = await Share.share(Platform.OS === 'ios' ? { message: t.title ? `${t.title} on IRLY` : 'IRLY', url } : { message });
+    if (res.action !== Share.sharedAction) return; // dismissed: nothing was shared
   }
   logShare(t, Platform.OS === 'web' ? 'link' : 'native');
 }

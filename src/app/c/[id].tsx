@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
@@ -120,136 +120,138 @@ export default function CommunityScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
-        <View style={[styles.pad, { gap: 6 }]}>
-          <Text variant="overline" tone="accent">
-            {[city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
-          </Text>
-          <Text variant="displayM">{c.name}</Text>
-          {c.tagline ? (
-            <Text variant="body" tone="secondary">
-              {c.tagline}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
+          <View style={[styles.pad, { gap: 6 }]}>
+            <Text variant="overline" tone="accent">
+              {[city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
             </Text>
-          ) : null}
-          <Text variant="caption" tone="tertiary">
-            {tx('{n} members', { n: c.members })}
-          </Text>
-        </View>
-
-        <View style={[styles.pad, styles.row]}>
-          {c.isMember ? (
-            <>
-              <View style={{ flex: 1 }}>
-                <Button label="Open chat" icon="message" full onPress={() => (c.conversationId ? router.push(`/messages/${c.conversationId}`) : join())} />
-              </View>
-              {c.myRole === 'owner' ? null : (
-                <Button
-                  label="Leave"
-                  variant="secondary"
-                  onPress={() =>
-                    leaveCommunity(c.id)
-                      .then(() => {
-                        toast('You left the community', 'check', 'brand');
-                        refresh();
-                      })
-                      .catch(() => toast('Could not leave', 'x', 'live'))
-                  }
-                />
-              )}
-            </>
-          ) : (
-            <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
-          )}
-        </View>
-
-        <View style={styles.pad}>
-          <Segmented
-            options={[
-              { value: 'posts', label: tx('Posts') },
-              { value: 'activities', label: tx('Activities') },
-              { value: 'about', label: tx('About') },
-            ]}
-            value={tab}
-            onChange={setTab}
-          />
-        </View>
-
-        {tab === 'posts' ? (
-          <>
-            <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
-            {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll })} /> : null}
-            {feed.error && !feed.posts.length ? (
-              <Text variant="body" tone="secondary" style={styles.pad}>
-                Can’t reach IRLY right now. Check your connection.
-              </Text>
-            ) : !feed.loading && !feed.posts.length ? (
-              <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
-                <Icon name="message" size={22} color={t.c.textSecondary} />
-                <Text variant="body" tone="secondary" align="center">
-                  {c.isMember ? 'No posts yet. Say hi or ask the assistant for ideas.' : 'No posts yet. Join to start the conversation.'}
-                </Text>
-              </View>
-            ) : (
-              feed.posts.map((p) => (
-                <PostCard
-                  key={p.id}
-                  p={p}
-                  eng={eng}
-                  canModerate={c.myRole === 'owner' || c.myRole === 'moderator'}
-                  isMember={c.isMember}
-                  plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo) : null}
-                  onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
-                  onRemove={() => feed.remove(p).then(() => toast('Post removed', 'check', 'brand')).catch(() => toast('Could not remove', 'x', 'live'))}
-                  onPlan={(d) => createPlan({ ...d, title: `${d.title} · ${c.name}`.slice(0, 80) })}
-                />
-              ))
-            )}
-          </>
-        ) : null}
-
-        {tab === 'activities' ? (
-          <View style={[styles.pad, { gap: 10 }]}>
-            {acts.activities.length ? (
-              acts.activities.map((a) => (
-                <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
-                  <Icon name="calendar" size={18} color={t.c.text} />
-                  <View style={{ flex: 1 }}>
-                    <Text variant="titleS" numberOfLines={1}>
-                      {a.title}
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
-                      {when(a.startsAt)} · {a.going} {tx('going')}
-                    </Text>
-                  </View>
-                </PressableScale>
-              ))
-            ) : (
+            <Text variant="displayM">{c.name}</Text>
+            {c.tagline ? (
               <Text variant="body" tone="secondary">
-                Nothing planned yet. Ask the assistant: “organise padel saturday 9am”.
+                {c.tagline}
               </Text>
+            ) : null}
+            <Text variant="caption" tone="tertiary">
+              {tx('{n} members', { n: c.members })}
+            </Text>
+          </View>
+
+          <View style={[styles.pad, styles.row]}>
+            {c.isMember ? (
+              <>
+                <View style={{ flex: 1 }}>
+                  <Button label="Open chat" icon="message" full onPress={() => (c.conversationId ? router.push(`/messages/${c.conversationId}`) : join())} />
+                </View>
+                {c.myRole === 'owner' ? null : (
+                  <Button
+                    label="Leave"
+                    variant="secondary"
+                    onPress={() =>
+                      leaveCommunity(c.id)
+                        .then(() => {
+                          toast('You left the community', 'check', 'brand');
+                          refresh();
+                        })
+                        .catch(() => toast('Could not leave', 'x', 'live'))
+                    }
+                  />
+                )}
+              </>
+            ) : (
+              <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
             )}
           </View>
-        ) : null}
 
-        {tab === 'about' ? (
-          <View style={[styles.pad, { gap: 10 }]}>
-            <Text variant="body">{c.description ?? c.tagline ?? tx('A community on IRLY.')}</Text>
-            <Text variant="caption" tone="tertiary">
-              Members post, plan activities and talk in the community chat. Be kind: posts can be reported and removed by the community’s hosts.
-            </Text>
-            <Button
-              label="Report this community"
-              icon="flag"
-              variant="ghost"
-              onPress={() =>
-                reportItem({ type: 'community', id: c.id }, 'inappropriate')
-                  .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-                  .catch(() => undefined)
-              }
+          <View style={styles.pad}>
+            <Segmented
+              options={[
+                { value: 'posts', label: tx('Posts') },
+                { value: 'activities', label: tx('Activities') },
+                { value: 'about', label: tx('About') },
+              ]}
+              value={tab}
+              onChange={setTab}
             />
           </View>
-        ) : null}
-      </ScrollView>
+
+          {tab === 'posts' ? (
+            <>
+              <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
+              {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll })} /> : null}
+              {feed.error && !feed.posts.length ? (
+                <Text variant="body" tone="secondary" style={styles.pad}>
+                  Can’t reach IRLY right now. Check your connection.
+                </Text>
+              ) : !feed.loading && !feed.posts.length ? (
+                <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+                  <Icon name="message" size={22} color={t.c.textSecondary} />
+                  <Text variant="body" tone="secondary" align="center">
+                    {c.isMember ? 'No posts yet. Say hi or ask the assistant for ideas.' : 'No posts yet. Join to start the conversation.'}
+                  </Text>
+                </View>
+              ) : (
+                feed.posts.map((p) => (
+                  <PostCard
+                    key={p.id}
+                    p={p}
+                    eng={eng}
+                    canModerate={c.myRole === 'owner' || c.myRole === 'moderator'}
+                    isMember={c.isMember}
+                    plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo) : null}
+                    onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
+                    onRemove={() => feed.remove(p).then(() => toast('Post removed', 'check', 'brand')).catch(() => toast('Could not remove', 'x', 'live'))}
+                    onPlan={(d) => createPlan({ ...d, title: `${d.title} · ${c.name}`.slice(0, 80) })}
+                  />
+                ))
+              )}
+            </>
+          ) : null}
+
+          {tab === 'activities' ? (
+            <View style={[styles.pad, { gap: 10 }]}>
+              {acts.activities.length ? (
+                acts.activities.map((a) => (
+                  <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
+                    <Icon name="calendar" size={18} color={t.c.text} />
+                    <View style={{ flex: 1 }}>
+                      <Text variant="titleS" numberOfLines={1}>
+                        {a.title}
+                      </Text>
+                      <Text variant="caption" tone="tertiary">
+                        {when(a.startsAt)} · {a.going} {tx('going')}
+                      </Text>
+                    </View>
+                  </PressableScale>
+                ))
+              ) : (
+                <Text variant="body" tone="secondary">
+                  Nothing planned yet. Ask the assistant: “organise padel saturday 9am”.
+                </Text>
+              )}
+            </View>
+          ) : null}
+
+          {tab === 'about' ? (
+            <View style={[styles.pad, { gap: 10 }]}>
+              <Text variant="body">{c.description ?? c.tagline ?? tx('A community on IRLY.')}</Text>
+              <Text variant="caption" tone="tertiary">
+                Members post, plan activities and talk in the community chat. Be kind: posts can be reported and removed by the community’s hosts.
+              </Text>
+              <Button
+                label="Report this community"
+                icon="flag"
+                variant="ghost"
+                onPress={() =>
+                  reportItem({ type: 'community', id: c.id }, 'inappropriate')
+                    .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
+                    .catch(() => undefined)
+                }
+              />
+            </View>
+          ) : null}
+        </ScrollView>
+      </KeyboardAvoidingView>
       <PageHeader title={c.name} />
     </View>
   );

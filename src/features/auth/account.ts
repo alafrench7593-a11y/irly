@@ -1,8 +1,10 @@
 import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useStore, type Profile } from '@/state/store';
+import { imageType } from '@/lib/media';
 
 /** Signup language names → ISO codes stored server-side. */
 const LANG: Record<string, string> = { English: 'en', Français: 'fr', العربية: 'ar', हिन्दी: 'hi', Русский: 'ru', Español: 'es', Italiano: 'it', Deutsch: 'de', Bahasa: 'id', Filipino: 'tl', اردو: 'ur', Português: 'pt' };
@@ -97,8 +99,9 @@ async function writeProfile(uid: string): Promise<void> {
   if (profile.photoUri && !/^https?:/.test(profile.photoUri)) {
     try {
       const body = await (await fetch(profile.photoUri)).arrayBuffer();
-      const path = `${uid}/avatar-${Date.now()}.jpg`;
-      const up = await supabase.storage.from('profile-photos').upload(path, body, { contentType: 'image/jpeg' });
+      const img = imageType(profile.photoUri);
+      const path = `${uid}/avatar-${Date.now()}.${img.ext}`;
+      const up = await supabase.storage.from('profile-photos').upload(path, body, { contentType: img.contentType });
       if (!up.error) await supabase.from('profiles').update({ photo_paths: [path] }).eq('id', uid);
     } catch {
       // The profile works without it; the photo can be added later.
@@ -203,7 +206,11 @@ export async function signInWithProvider(provider: 'google' | 'apple'): Promise<
   const web = Platform.OS === 'web';
   const { data, error } = await client().auth.signInWithOAuth({ provider, options: { redirectTo: redirectTo(), skipBrowserRedirect: !web } });
   if (error) throw new Error(authMessage(error));
-  if (!web && data.url) await Linking.openURL(data.url);
+  if (!web && data.url) {
+    // In-app auth session: closes itself and hands back the redirect URL.
+    const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo());
+    if (res.type === 'success' && res.url) await completeFromUrl(res.url);
+  }
 }
 
 export async function sendPhoneCode(phone: string): Promise<void> {

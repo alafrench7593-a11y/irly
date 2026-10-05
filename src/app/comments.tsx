@@ -73,7 +73,7 @@ export default function CommentsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 20, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 18 }}
