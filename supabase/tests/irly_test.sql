@@ -308,6 +308,9 @@ select pg_temp.check((select parent_area_id from public.areas where city_id = 'b
 select pg_temp.check((select count(*) from public.admin_areas where parent_id = 'id-bali') = 9, 'nine regencies and city of Bali');
 select pg_temp.check((select count(*) from public.area_profiles where city_id = 'bali') >= 10, 'area profiles readable before sign-in');
 select pg_temp.check(not exists (select 1 from public.guide_articles where kind = 'official' and source_url is null), 'official guides always cite a source');
+select pg_temp.check(not exists (select 1 from public.guide_articles where destination = 'bali' and section = 'visa' and kind = 'official'
+  and source_url !~ '^https://([a-z]+\.)*(imigrasi\.go\.id|baliprov\.go\.id)/'), 'Bali visa official entries come from government domains');
+select pg_temp.check((select count(*) from public.guide_articles where destination = 'bali' and section = 'visa' and kind = 'official' and last_verified_at is not null) >= 10, 'Bali visa entries carry their verification date');
 reset role;
 select pg_temp.expect_denied($$insert into public.guide_articles (destination, section, title, body, kind) values ('bali', 'visa', 'Made up', 'x', 'official')$$, 'official info without a source is refused');
 insert into public.places (slug, city_id, area_id, name, kind, cuisines, rating, review_count, price_level, provider, provider_place_id, fetched_at, amenities) values
