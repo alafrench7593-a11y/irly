@@ -10,11 +10,13 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
  * Without keys this is null and features fall back to on-device data, so
  * the app stays usable in development and demos.
  */
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+// The IRLY project. Both values are public (the anon key only grants what
+// row level security allows); .env can override them for another project.
+const url = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://yqutcmgslwxcmnsqmhvy.supabase.co';
+const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v';
 
 export const supabase: SupabaseClient | null =
-  url && anonKey
+  url && anonKey.length > 20
     ? createClient(url, anonKey, {
         auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
       })

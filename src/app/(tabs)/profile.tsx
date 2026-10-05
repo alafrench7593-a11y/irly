@@ -1,4 +1,6 @@
 import { useRouter } from 'expo-router';
+import { deleteServerAccount, useAccount } from '@/features/auth/account';
+import { useGirlStore } from '@/features/girl/girlStore';
 import { useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
@@ -31,6 +33,7 @@ import { useTheme } from '@/theme/useTheme';
 export default function Profile() {
   const t = useTheme();
   const router = useRouter();
+  const account = useAccount();
   const insets = useSafeAreaInsets();
   const bottom = useTabBarSpace();
   const cityId = useCityId();
@@ -201,6 +204,8 @@ export default function Profile() {
               />
             </View>
             <Divider inset={16} />
+            <SettingLink icon="user" label="IRLY account" value={account ? 'Signed in' : 'Sign in to sync'} onPress={() => router.push('/account')} />
+            <Divider inset={16} />
             <SettingLink icon="globe" label="Destination" value={`${dest.shortName} · ${city.name}`} onPress={() => setDestSheet(true)} />
             <Divider inset={16} />
             <SettingLink icon="palette" label="IRLY Design System" value="Tokens & components" onPress={() => router.push('/design-system')} />
@@ -238,7 +243,15 @@ export default function Profile() {
             full
             haptic="warning"
             variant="danger"
-            onPress={() => {
+            onPress={async () => {
+              try {
+                // Server first: if it fails, nothing is wiped and the member can retry.
+                await deleteServerAccount();
+              } catch (e) {
+                toast(e instanceof Error ? e.message : 'Could not delete your account. Try again.', 'x', 'live');
+                return;
+              }
+              useGirlStore.getState().reset();
               deleteAccount();
               setConfirmDelete(false);
               toast('Your account has been deleted', 'check', 'live');

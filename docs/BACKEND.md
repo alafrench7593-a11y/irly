@@ -48,6 +48,17 @@ availability, areas, age range, communities, travel. Weights live in
 `irly_match_config` (admins can tune them without an app release). The app
 keeps an identical copy in `src/features/girl/compat.ts` for on-device mode.
 
+## Mise en route du projet IRLY (yqutcmgslwxcmnsqmhvy)
+
+1. Supabase → SQL Editor → New query : coller tout `supabase/setup.sql`, puis Run.
+2. Authentication → Sign In / Providers → Email : activé.
+3. Authentication → Email Templates → « Magic Link » : ajouter `{{ .Token }}`
+   dans le message, pour que l'e-mail contienne le code à 6 chiffres.
+4. Dans l'app : Profil → IRLY account → e-mail → code.
+
+L'URL et la clé publishable sont déjà dans `src/lib/supabase.ts` (publiques
+par conception). Ne jamais mettre la clé `service_role` / secret dans l'app.
+
 ## Running
 
 ```bash

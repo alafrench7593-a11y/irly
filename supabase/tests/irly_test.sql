@@ -181,4 +181,11 @@ select pg_temp.expect_denied('select public.irly_match_state()', 'anon cannot ca
 select pg_temp.check((select count(*) from public.profiles) = 0, 'anon reads no profiles');
 reset role;
 
+-- ───── Account deletion cascades ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select public.delete_my_account();
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.profiles where first_name = 'Dina'), 'deleting the account removes the profile');
+select pg_temp.check(not exists (select 1 from public.irly_match_profiles where user_id = '00000000-0000-0000-0000-00000000000d'), 'and the match profile');
+
 \echo 'ALL TESTS PASSED'
