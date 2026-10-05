@@ -445,5 +445,11 @@ select public.delete_my_account();
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.profiles where first_name = 'Dina'), 'deleting the account removes the profile');
 select pg_temp.check(not exists (select 1 from public.irly_match_profiles where user_id = '00000000-0000-0000-0000-00000000000d'), 'and the match profile');
+-- A member who sent messages can delete their account (sender_id → null cascade).
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select public.delete_my_account();
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.profiles where first_name = 'Carl'), 'a member with messages can delete the account');
+select pg_temp.check(exists (select 1 from public.messages where body = 'Carl message' and sender_id is null), 'their messages stay, without author');
 
 \echo 'ALL TESTS PASSED'

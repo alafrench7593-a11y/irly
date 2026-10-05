@@ -100,7 +100,15 @@ try {
     return true;
   });
   await step('gender is locked after signup', () => denied(C.sb.from('profiles').update({ gender: 'woman' }).eq('id', C.id).select().single()));
-  await step('anonymous visitors read no profiles', async () => (must(await anon.from('profiles').select('id')) ?? []).length === 0);
+  await step('anonymous visitors read no profiles', async () => {
+    // Refused outright since migration 1300 (no column is granted to anon).
+    const r = await anon.from('profiles').select('id');
+    return Boolean(r.error) || (r.data ?? []).length === 0;
+  });
+  await step('others\' birthdate and faith are not readable', async () => {
+    const r = await A.sb.from('profiles').select('birthdate, faith').neq('id', A.id);
+    return Boolean(r.error);
+  });
 
   // ───── Activity: create, join, chat, calendar, search ─────
   let actId;
