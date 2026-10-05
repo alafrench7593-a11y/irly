@@ -253,7 +253,7 @@ try {
     return true;
   });
   await step('analytics event recorded; members cannot read analytics', async () => {
-    must(await C.sb.from('analytics_events').insert({ user_id: C.id, name: 'E2E_RUN', props: { run } }));
+    must(await C.sb.from('analytics_events').insert({ user_id: C.id, name: 'IRLY_E_TO_E_RUN', props: { run } }));
     return must(await C.sb.from('analytics_events').select('id')).length === 0;
   });
   await step('assistant command logged for its owner', async () => {
@@ -277,7 +277,7 @@ try {
   });
 } finally {
   await sql(`delete from public.reports where details = 'e2e'`).catch(() => undefined);
-  await sql(`delete from public.analytics_events where name = 'E2E_RUN'`).catch(() => undefined);
+  await sql(`delete from public.analytics_events where name = 'IRLY_E_TO_E_RUN'`).catch(() => undefined);
   await cleanup();
 }
 

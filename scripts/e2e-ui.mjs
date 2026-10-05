@@ -101,7 +101,7 @@ async function main() {
     await click('Continue with email');
     await page.getByPlaceholder('you@email.com').fill(EMAIL);
     await page.getByPlaceholder('Password').fill(PASSWORD);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
   });
   await check('Home shows Live Bali', '/', ['Live Bali']);
   await check('Discover shows Bali and restaurants doors', '/discover', ['Discover', 'Where to eat']);
