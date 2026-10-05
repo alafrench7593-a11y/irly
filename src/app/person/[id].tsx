@@ -1,4 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { NotFound } from '@/components/layout/NotFound';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
@@ -61,7 +62,7 @@ export default function PersonProfile() {
           </Animated.View>
           <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-              <Text variant="displayL">{person.name}</Text>
+              <Text variant="displayL" raw>{person.name}</Text>
               <Text variant="titleM" tone="tertiary">
                 {person.age}
               </Text>
@@ -133,7 +134,7 @@ export default function PersonProfile() {
         </Animated.View>
 
         <Animated.View entering={enter.rise(7)} style={[styles.section, styles.facts]}>
-          <Fact icon="clock" label="Free" value={person.availability.map((a) => AVAILABILITY[a]).join(', ')} />
+          <Fact icon="clock" label={tx('Free (available)')} value={person.availability.map((a) => AVAILABILITY[a]).join(', ')} />
           <Fact icon="languages" label="Speaks" value={person.languages.join(', ')} />
         </Animated.View>
 

@@ -279,12 +279,12 @@ function FullContent({ marker }: { marker: MapMarkerData }) {
     <View style={{ gap: space[5], marginTop: space[6] }}>
       {going.length ? (
         <View style={{ gap: space[3] }}>
-          <Text variant="titleS">{marker.type === 'group' ? 'Members' : 'Going'}</Text>
+          <Text variant="titleS">{marker.type === 'group' ? 'Members' : "Who's going"}</Text>
           {going.slice(0, 6).map((p) => (
             <PressableScale key={p.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/person/${p.id}`)} style={styles.personRow}>
               <Avatar name={p.name} hue={p.hue} size={40} online={p.online} />
               <View style={{ flex: 1 }}>
-                <Text variant="label">{p.name}</Text>
+                <Text variant="label" raw>{p.name}</Text>
                 <Text variant="caption" tone="tertiary" numberOfLines={1}>
                   {p.headline}
                 </Text>

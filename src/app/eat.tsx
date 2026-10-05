@@ -139,7 +139,7 @@ function Card({ p, rank, open, onPress, cityId }: { p: PlaceHit; rank: number; o
         </View>
       </View>
       <View style={styles.info}>
-        <Text variant="titleS" numberOfLines={1}>
+        <Text variant="titleS" numberOfLines={1} raw>
           {p.name}
         </Text>
         <Text variant="caption" tone="secondary" numberOfLines={1}>

@@ -266,7 +266,7 @@ export default function GirlHome() {
                   <View style={styles.matchRing}>
                     <Avatar name={m.firstName} hue={m.hue} size={56} photo={m.photoUrls[0]} />
                   </View>
-                  <Text variant="caption" color={girl.ink} numberOfLines={1}>
+                  <Text variant="caption" color={girl.ink} numberOfLines={1} raw>
                     {m.firstName}
                   </Text>
                 </PressableScale>

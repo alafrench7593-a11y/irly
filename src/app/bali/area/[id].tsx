@@ -188,7 +188,7 @@ export default function BaliArea() {
               {girls.data.slice(0, 12).map((g) => (
                 <PressableScale key={g.userId} onPress={() => router.push('/girl')} haptic="select" scaleTo={0.95} style={styles.girl} accessibilityLabel={g.firstName}>
                   <Avatar name={g.firstName} hue={hueOf(g.userId)} size={52} />
-                  <Text variant="caption" numberOfLines={1}>
+                  <Text variant="caption" numberOfLines={1} raw>
                     {g.firstName}
                   </Text>
                 </PressableScale>
@@ -207,7 +207,7 @@ export default function BaliArea() {
                 <PressableScale key={p.id} onPress={() => router.push(`/place/${p.slug}`)} haptic="select" scaleTo={0.97} style={[styles.place, { backgroundColor: t.c.surface }]} accessibilityLabel={p.name}>
                   {p.photo ? <Image source={{ uri: p.photo }} style={styles.placePhoto} contentFit="cover" /> : <Photo visual={{ photo: 'dinner' }} light="bali" style={styles.placePhoto} width={400} />}
                   <View style={{ padding: 10, gap: 2 }}>
-                    <Text variant="titleS" numberOfLines={1}>
+                    <Text variant="titleS" numberOfLines={1} raw>
                       {p.name}
                     </Text>
                     <Text variant="caption" tone="tertiary">

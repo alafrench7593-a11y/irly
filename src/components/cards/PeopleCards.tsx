@@ -74,7 +74,7 @@ export const PersonCard = memo(function PersonCard({ match, width }: { match: Ma
         <Avatar name={p.name} hue={p.hue} size={56} online={p.online} verified={p.verified} />
         <View style={{ flex: 1, gap: 2 }}>
           <View style={styles.row}>
-            <Text variant="titleM">{p.name}</Text>
+            <Text variant="titleM" raw>{p.name}</Text>
             <Text variant="body" tone="tertiary">
               {p.age}
             </Text>

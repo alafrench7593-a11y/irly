@@ -80,7 +80,7 @@ export default function BaliHub() {
           {profiles.data.map((p) => (
             <PressableScale key={p.areaId} onPress={() => router.push(`/bali/area/${p.areaId}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={p.name}>
               <View style={{ flex: 1 }}>
-                <Text variant="titleS">{p.name}</Text>
+                <Text variant="titleS" raw>{p.name}</Text>
                 <Text variant="caption" tone="secondary" numberOfLines={1}>
                   {p.tagline}
                 </Text>

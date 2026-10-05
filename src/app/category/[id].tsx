@@ -191,7 +191,7 @@ export default function CategoryScreen() {
                 <Icon name="plus" size={20} color={ink} />
                 <View style={{ flex: 1 }}>
                   <Text variant="titleS" color={ink}>
-                    No {sub ? sub.label.toLowerCase() : category.label.toLowerCase()} session yet
+                    {tx('No {what} activity yet', { what: tx(sub ? sub.label : category.label).toLowerCase() })}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
                     Create the first one. People into it nearby will see it.
@@ -229,7 +229,7 @@ export default function CategoryScreen() {
               <Icon name="users" size={20} color={ink} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={ink}>
-                  Create a {sub ? sub.label : category.label} community
+                  {tx('Create a {what} community', { what: tx(sub ? sub.label : category.label).toLowerCase() })}
                 </Text>
                 <Text variant="bodyS" tone="secondary">
                   {city.name} {sub ? sub.label : category.label}: sessions, chat, members.

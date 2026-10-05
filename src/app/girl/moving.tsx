@@ -125,7 +125,7 @@ export default function GirlsMoving() {
               <View key={m.userId} style={[styles.card, styles.row]}>
                 <Avatar name={m.firstName} hue={hueOf(m.userId)} size={48} />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text variant="titleS" color={girl.ink}>
+                  <Text variant="titleS" color={girl.ink} raw>
                     {m.firstName}
                   </Text>
                   <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>

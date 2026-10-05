@@ -196,7 +196,7 @@ function PersonRow({ personId, caption, go }: { personId: string; caption: strin
         <Text variant="bodyS" tone="tertiary">
           {caption}
         </Text>
-        <Text variant="titleS">{p.name}</Text>
+        <Text variant="titleS" raw>{p.name}</Text>
         <Text variant="bodyS" tone="secondary" numberOfLines={1}>
           {p.headline}
         </Text>

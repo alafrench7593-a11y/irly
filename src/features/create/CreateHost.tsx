@@ -316,7 +316,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 </Animated.View>
               ) : null}
               <View style={styles.block}>
-                <Text variant="titleS">Something else in {category.label.toLowerCase()}?</Text>
+                <Text variant="titleS">{tx('Something else in {category}?', { category: tx(category.label).toLowerCase() })}</Text>
                 <Field placeholder={tx('Name your activity')} value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} />
                 {custom.trim().length >= 3 ? <CustomButton text={custom} onPress={() => chooseCustom(custom)} /> : null}
               </View>

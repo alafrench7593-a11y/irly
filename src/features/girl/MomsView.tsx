@@ -122,7 +122,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
             {moms.data.map((m) => (
               <View key={m.userId} style={[styles.person]}>
                 <Avatar name={m.firstName} hue={hueOf(m.userId)} size={56} />
-                <Text variant="titleS" color={girl.ink} numberOfLines={1}>
+                <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>
                   {m.firstName}
                 </Text>
                 <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
@@ -213,7 +213,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
                   </View>
                 )}
                 <View style={{ padding: 10 }}>
-                  <Text variant="titleS" color={girl.ink} numberOfLines={1}>
+                  <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>
                     {p.name}
                   </Text>
                   <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
