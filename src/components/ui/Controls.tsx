@@ -308,7 +308,9 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
           focus.set(withTiming(0, { duration: 160 }));
           onBlur?.(e);
         }}
-        style={[{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }, style]}
+        // minWidth 0: on the web an input is ~200 px wide by default and overflowed
+        // narrow fields (Age), putting the next field's icon over it on iPhone.
+        style={[{ flex: 1, minWidth: 0, width: '100%', color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }, style]}
         {...rest}
       />
       {trailing}

@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { CharCount } from '@/components/ui/CharCount';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -205,15 +206,14 @@ export default function GirlProfile() {
                 <TextInput
                   value={draft.bio}
                   onChangeText={(v) => set('bio', v.slice(0, 300))}
+                  maxLength={300}
                   multiline
-                  placeholder={tx('New in Dubai, padel addict, always planning the next trip…')}
+                  placeholder={tx('New in {city}, padel addict, always planning the next trip…', { city: CITIES[cityId]?.name ?? 'Dubai' })}
                   placeholderTextColor={girl.inkFaint}
                   style={styles.input}
                   accessibilityLabel="Bio"
                 />
-                <Text variant="caption" color={girl.inkFaint} align="right">
-                  {draft.bio.length}/300
-                </Text>
+                <CharCount length={draft.bio.trim().length} min={10} max={300} color={girl.inkFaint} warn={girl.rose} />
               </GSection>
             </>
           ) : null}

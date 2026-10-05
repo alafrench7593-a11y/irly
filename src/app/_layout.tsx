@@ -11,7 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -26,6 +26,16 @@ import { useTheme } from '@/theme/useTheme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ duration: 250, fade: true });
+
+// Web (phone browsers): an input is ~200 px wide by default and does not
+// shrink in a flex row, so narrow fields overflowed under their neighbours
+// and could not be tapped on iPhone. Inputs also keep 16 px text so iOS
+// Safari does not zoom in on focus.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const css = document.createElement('style');
+  css.textContent = 'input,textarea{min-width:0;max-width:100%;font-size:16px}';
+  document.head.appendChild(css);
+}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({

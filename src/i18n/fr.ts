@@ -1842,4 +1842,10 @@ export const fr: Record<string, string> = {
   'This person is no longer on IRLY': 'Cette personne n’est plus sur IRLY',
   'This conversation is not available': 'Cette conversation n’est pas disponible',
   'This page no longer exists': 'Cette page n’existe plus',
+  'Minimum {min} characters': 'Minimum {min} caractères',
+  '{n} more characters (minimum {min})': 'Encore {n} caractères (minimum {min})',
+  'Maximum {max} characters reached': 'Maximum {max} caractères atteint',
+  'French in {city}\nEntrepreneur · Padel · Travel\nAlways down for coffee.': 'Français à {city}\nEntrepreneur · Padel · Voyage\nToujours partant pour un café.',
+  'New in {city}, padel addict, always planning the next trip…': 'Nouvelle à {city}, fan de padel, toujours en train de prévoir le prochain voyage…',
+  'Apple and Google sign-in are coming soon. Use your email: you get a 6-digit code.': 'La connexion Apple et Google arrive bientôt. Utilise ton e-mail : tu reçois un code à 6 chiffres.',
 };

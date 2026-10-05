@@ -25,7 +25,7 @@ import {
   verifyPhoneCode,
 } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
-import { hasBackend } from '@/lib/supabase';
+import { enabledProviders, hasBackend } from '@/lib/supabase';
 import { wipeLocal } from '@/state/wipe';
 import { haptic } from '@/motion/haptics';
 import { font, radius, space } from '@/theme/tokens';
@@ -56,6 +56,11 @@ export default function AccountScreen() {
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const url = Linking.useURL();
+  // Only offer Apple / Google when they are switched on in Supabase.
+  const [providers, setProviders] = useState<{ apple: boolean; google: boolean; phone: boolean } | null>(null);
+  useEffect(() => {
+    enabledProviders().then(setProviders);
+  }, []);
 
   // Coming back from an email link or Apple/Google in the app.
   useEffect(() => {
@@ -178,10 +183,15 @@ export default function AccountScreen() {
       <Animated.View key={mode} entering={FadeIn.duration(220)} style={styles.body}>
         {mode === 'choose' ? (
           <>
-            {Platform.OS !== 'android' ? <Button label="Continue with Apple" icon="lock" full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
-            <Button label="Continue with Google" icon="globe" full variant="secondary" onPress={() => act(() => signInWithProvider('google'))} />
+            {providers?.apple && Platform.OS !== 'android' ? <Button label="Continue with Apple" icon="lock" full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
+            {providers?.google ? <Button label="Continue with Google" icon="globe" full variant="secondary" onPress={() => act(() => signInWithProvider('google'))} /> : null}
+            {providers && !providers.apple && !providers.google ? (
+              <Text variant="bodyS" tone="secondary" align="center">
+                Apple and Google sign-in are coming soon. Use your email: you get a 6-digit code.
+              </Text>
+            ) : null}
             <Button label="Continue with email" icon="send" full variant="secondary" onPress={() => setMode('email')} />
-            <Button label="Continue with phone" icon="message" full variant="secondary" onPress={() => setMode('phone')} />
+            {providers?.phone ? <Button label="Continue with phone" icon="message" full variant="secondary" onPress={() => setMode('phone')} /> : null}
           </>
         ) : null}
 

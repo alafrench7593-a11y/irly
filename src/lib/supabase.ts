@@ -53,3 +53,18 @@ export function topic(name: string) {
   channelSeq += 1;
   return `${name}#${channelSeq}`;
 }
+
+/**
+ * Which sign-in providers are switched on in Supabase (Authentication →
+ * Providers). Read from the public auth settings, so the app only offers
+ * Apple / Google when they actually work.
+ */
+export async function enabledProviders(): Promise<{ apple: boolean; google: boolean; phone: boolean }> {
+  try {
+    const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: anonKey } });
+    const j = (await res.json()) as { external?: Record<string, boolean> };
+    return { apple: Boolean(j.external?.apple), google: Boolean(j.external?.google), phone: Boolean(j.external?.phone) };
+  } catch {
+    return { apple: false, google: false, phone: false };
+  }
+}

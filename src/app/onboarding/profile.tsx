@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { CharCount } from '@/components/ui/CharCount';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
@@ -126,16 +127,14 @@ export default function ProfileStep() {
         <TextInput
           value={bio}
           onChangeText={(b) => update({ bio: b })}
-          placeholder={'French in Dubai\nEntrepreneur · Padel · Travel\nAlways down for coffee.'}
+          placeholder={tx('French in {city}\nEntrepreneur · Padel · Travel\nAlways down for coffee.', { city: city.name })}
           placeholderTextColor={t.c.textTertiary}
           multiline
           maxLength={160}
           style={[styles.bio, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }]}
           accessibilityLabel="Short bio"
         />
-        <Text variant="caption" tone="tertiary" align="right">
-          {bio.length}/160
-        </Text>
+        <CharCount length={bio.trim().length} min={10} max={160} />
       </Animated.View>
 
       <Animated.View entering={enter.rise(4, 80)} style={styles.block}>
