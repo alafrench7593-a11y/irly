@@ -10,6 +10,7 @@ import { findCommunity, findPerson } from '@/data/repo';
 import { Photo } from '@/components/visual/Photo';
 import type { Conversation } from '@/data/types';
 import { useGirlStore } from '@/features/girl/girlStore';
+import { useServerInbox } from '@/features/server/chat';
 import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
@@ -42,7 +43,8 @@ export default function Messages() {
   const memberOf = useStore((s) => s.memberOf);
   const read = useStore((s) => s.read);
   const matches = useGirlStore((s) => s.matches);
-  const all = cityConversations(cityId, connections, memberOf, matches);
+  const server = useServerInbox();
+  const all = [...server.conversations, ...cityConversations(cityId, connections, memberOf, matches)];
   const communities = all.filter((c) => c.kind === 'community');
   const direct = all.filter((c) => c.kind === 'direct' || c.kind === 'service');
   const groups = all.filter((c) => c.kind === 'group' || c.kind === 'event');
@@ -82,6 +84,18 @@ export default function Messages() {
               </Animated.View>
             );
           })}
+          <PressableScale
+            haptic="select"
+            scaleTo={0.96}
+            onPress={() => router.push('/community/new')}
+            style={[styles.community, styles.find, { borderColor: t.c.lineStrong }]}
+            accessibilityLabel="Create a community"
+          >
+            <Icon name="users" size={22} color={t.c.text} />
+            <Text variant="label" align="center">
+              Create a community
+            </Text>
+          </PressableScale>
           <PressableScale
             haptic="select"
             scaleTo={0.96}

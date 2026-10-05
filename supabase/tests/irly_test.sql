@@ -181,6 +181,20 @@ select pg_temp.expect_denied('select public.irly_match_state()', 'anon cannot ca
 select pg_temp.check((select count(*) from public.profiles) = 0, 'anon reads no profiles');
 reset role;
 
+-- ───── Members create communities; inbox ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.create_community('Marina Padel Girls', 'dubai', 'Padel twice a week', null, 'sport', true);
+select pg_temp.check((select count(*) from public.my_conversations() where kind = 'community' and title = 'Marina Padel Girls') = 1, 'creator is in the new community chat');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.expect_denied($$select public.create_community('Sneaky girls', 'dubai', null, null, null, true)$$, 'man cannot create a girls-only community');
+select pg_temp.check((select count(*) from public.communities where name = 'Marina Padel Girls') = 0, 'girls-only community hidden from a man');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(not exists (select 1 from public.my_conversations() where kind = 'match'), 'blocked match chat not in inbox');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select unread from public.my_conversations() where kind = 'activity') >= 0, 'inbox lists the activity chat');
+select public.mark_conversation_read((select conversation_id from public.my_conversations() where kind = 'activity'));
+select pg_temp.check((select unread from public.my_conversations() where kind = 'activity') = 0, 'read state updates');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

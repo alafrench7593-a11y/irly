@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -18,6 +18,8 @@ import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { findPerson } from '@/data/repo';
+import { toast } from '@/components/ui/Toast';
+import { isServerId, useServerThread } from '@/features/server/chat';
 import { allMessages, cannedReply, resolveConversation, senderName } from '@/features/messages/conversations';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -26,7 +28,129 @@ import { useCityId, useStore } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-export default function Thread() {
+export default function ThreadScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  // Server conversations (signed in) have UUIDs; the rest live on the device.
+  return isServerId(id) ? <ServerThreadView id={id} /> : <Thread />;
+}
+
+/** A live conversation from the IRLY server: realtime in, optimistic out. */
+function ServerThreadView({ id }: { id: string }) {
+  const t = useTheme();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const thread = useServerThread(id);
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const send = async () => {
+    const body = text.trim();
+    if (!body || sending) return;
+    haptic('tap');
+    setSending(true);
+    setText('');
+    try {
+      await thread.send(body);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
+    } catch (e) {
+      setText(body);
+      toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const group = thread.kind !== 'direct' && thread.kind !== 'match';
+  return (
+    <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+          showsVerticalScrollIndicator={false}
+        >
+          {thread.loading ? <ActivityIndicator color={t.c.text} /> : null}
+          {thread.error ? (
+            <Text variant="body" tone="secondary" align="center">
+              {thread.error}
+            </Text>
+          ) : null}
+          {thread.messages.map((m, i) => {
+            if (m.from === 'irly') {
+              return (
+                <View key={m.id} style={styles.note}>
+                  <Text variant="bodyS" tone="secondary" align="center">
+                    {m.text}
+                  </Text>
+                </View>
+              );
+            }
+            const mine = m.from === 'me';
+            const showName = !mine && group && thread.messages[i - 1]?.from !== m.from;
+            return (
+              <Animated.View key={m.id} entering={FadeInDown.springify(380).dampingRatio(0.8)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
+                {showName ? (
+                  <Text variant="caption" tone="tertiary" style={{ marginLeft: 12, marginBottom: 2 }}>
+                    {m.name ?? 'Member'}
+                  </Text>
+                ) : null}
+                <View
+                  style={[
+                    styles.bubble,
+                    mine
+                      ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
+                      : { backgroundColor: t.c.surface, borderColor: t.c.line, borderWidth: StyleSheet.hairlineWidth * 2, borderBottomLeftRadius: 6 },
+                  ]}
+                >
+                  <Text variant="body" color={mine ? t.c.onBrand : t.c.text}>
+                    {m.text}
+                  </Text>
+                </View>
+              </Animated.View>
+            );
+          })}
+        </ScrollView>
+        <Glass style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+          <View style={[styles.inputWrap, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="Message"
+              placeholderTextColor={t.c.textTertiary}
+              style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
+              onSubmitEditing={send}
+              returnKeyType="send"
+              maxLength={4000}
+              accessibilityLabel="Message"
+            />
+          </View>
+          <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, opacity: text.trim() ? 1 : 0.4 }]} accessibilityLabel="Send">
+            <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />
+          </PressableScale>
+        </Glass>
+      </KeyboardAvoidingView>
+      <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
+        <Glass style={StyleSheet.absoluteFill} border={false} intensity={60} />
+        <View style={styles.headerRow}>
+          <IconButton icon="chevronLeft" label="Back" onPress={() => router.back()} />
+          <View style={{ flex: 1, alignItems: 'center' }}>
+            <Text variant="titleS" numberOfLines={1}>
+              {thread.title}
+            </Text>
+            <Text variant="caption" tone="tertiary">
+              {group ? 'Group' : 'Private'}
+            </Text>
+          </View>
+          <View style={{ width: 40 }} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function Thread() {
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();

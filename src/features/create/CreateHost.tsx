@@ -18,6 +18,7 @@ import { ease, motion, scale as scaleTokens, spring } from '@/motion/tokens';
 import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { createServerActivity } from '@/features/server/activities';
 import { useCreateStore, type CreateFormat } from './createStore';
 
 const DAYS = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
@@ -153,7 +154,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
 
   const post = () => {
     if (!pick || !title) return;
-    postPlan({
+    const plan = {
       cityId,
       categoryId: pick.categoryId,
       subId: pick.sub?.id,
@@ -170,7 +171,10 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       format,
       price: paid ? price : 0,
       currency: city.currency,
-    });
+    };
+    postPlan(plan);
+    // Signed in: the session also goes to the server, where members can join it.
+    createServerActivity(plan).catch((e) => toast(`Saved on this phone only: ${e instanceof Error ? e.message : 'server error'}`, 'x', 'live'));
     haptic('success');
     toast(`${title} is live. Chat created`, 'send', 'brand');
     hide();

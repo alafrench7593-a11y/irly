@@ -16,6 +16,7 @@ import { Text } from '@/components/ui/Text';
 import { CATEGORIES, CATEGORY_BY_ID, ideaPhoto } from '@/data/catalog/categories';
 import { openCreate } from '@/features/create/createStore';
 import { CreateMenu } from '@/features/create/CreateMenu';
+import { MemberActivities } from '@/features/server/MemberActivities';
 import { planDisplay } from '@/data/catalog/mapping';
 import { areaName, CITIES, DESTINATIONS } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
@@ -151,6 +152,8 @@ export default function Home() {
           <SectionHeader title="People near you" action="See all" onAction={() => router.push('/match?intent=friends')} />
           <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
         </Animated.View>
+
+        <MemberActivities cityId={cityId} />
 
         <Animated.View entering={enter.rise(5, 80)} style={styles.section}>
           <SectionHeader title="Activities near you" action="All" onAction={() => router.push('/social')} />
