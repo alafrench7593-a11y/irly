@@ -53,8 +53,8 @@ export const Photo = memo(function Photo({ visual, light, style, scrim = 'none',
 
   return (
     <View style={[styles.root, style]}>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#1A1A1A' }]} />
-      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#3A3A3A' }, pulseStyle]} pointerEvents="none" />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#E4E4E1' }]} />
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#F4F4F2' }, pulseStyle]} pointerEvents="none" />
       <Image
         source={{ uri: photoUrl(visual.photo, width) }}
         style={StyleSheet.absoluteFill}

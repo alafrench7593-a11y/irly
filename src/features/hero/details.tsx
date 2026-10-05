@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge, Chip, Divider } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { JoinButton } from '@/components/ui/JoinButton';
+import { RsvpControl } from '@/components/ui/Rsvp';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -630,6 +631,27 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
     if (on) toast('Saved to your places', 'bookmark', 'brand');
   };
 
+  if (model.kind === 'join') {
+    return (
+      <View style={{ gap: 12 }}>
+        <RsvpControl id={item.id} />
+        <View style={styles.ctaRow}>
+          <View style={{ flex: 1 }}>
+            <Text variant="titleS">{model.price}</Text>
+            <Text variant="caption" tone="secondary" numberOfLines={1}>
+              {model.note}
+            </Text>
+          </View>
+          {joined ? (
+            <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)}>
+              <Button label="Group chat" variant="secondary" icon="message" size="md" onPress={() => go('/messages')} />
+            </Animated.View>
+          ) : null}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.ctaRow}>
       {model.price ? (
@@ -642,16 +664,6 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
       ) : (
         <View style={{ flex: 1 }} />
       )}
-      {model.kind === 'join' ? (
-        <>
-          {joined ? (
-            <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)}>
-              <Button label="Chat" variant="secondary" icon="message" size="md" onPress={() => go('/messages')} />
-            </Animated.View>
-          ) : null}
-          <JoinButton id={item.id} label="JOIN" size="md" />
-        </>
-      ) : null}
       {model.kind === 'member' ? (
         <JoinButton id={item.id} membership label="JOIN GROUP" size="md" />
       ) : null}

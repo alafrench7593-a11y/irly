@@ -105,7 +105,7 @@ Les actions (rejoindre, sauvegarder, se connecter, réserver, envoyer un message
 
 ## Limites connues
 
-- La carte est la carte IRLY Night (SVG), pas encore Google Maps : il faut une clé. Plan dans [docs/GOOGLE_MAPS.md](./docs/GOOGLE_MAPS.md). La 3D actuelle est une vue inclinée, pas la 3D photoréaliste.
+- Carte : réelle sur téléphone (Apple Plans sur iPhone, Google Maps sur Android, bâtiments 3D) ; carte IRLY dessinée sur le web. Google Maps sur iPhone et la 3D photoréaliste demandent une clé : [docs/GOOGLE_MAPS.md](./docs/GOOGLE_MAPS.md).
 - La transition avatar → profil entre deux écrans est une révélation en cascade, pas encore un élément partagé continu.
 - Les badges « Verified » sont de la démonstration tant que le parcours de vérification n'existe pas.
 - Pas de notifications push.

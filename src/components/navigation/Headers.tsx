@@ -5,11 +5,10 @@ import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedStyle,
-  useDerivedValue,
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IrlyLogo } from '@/brand/IrlyLogo';
+import { IrlyWordmark } from '@/brand/IrlyLogo';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -84,50 +83,23 @@ export const DestinationPill = memo(function DestinationPill({ onPress, onDark, 
   );
 });
 
-/** Round header button that reads on a photo and on the page. */
-function HeaderButton({ icon, label, onPress, badge, solid }: { icon: 'message'; label: string; onPress: () => void; badge?: number; solid: SharedValue<number> }) {
-  const t = useTheme();
-  const { solidStyle, overStyle } = useCrossfade(solid);
-  return (
-    <PressableScale onPress={onPress} scaleTo={0.9} accessibilityLabel={label} haptic="select" hitSlop={6}>
-      <View style={styles.headerButton}>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.headerButtonBg, { backgroundColor: t.c.raised, borderColor: t.c.line }, solidStyle]} />
-        <Animated.View style={[StyleSheet.absoluteFill, overStyle]}>
-          <Glass dark style={[StyleSheet.absoluteFill, styles.round]} />
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.centered, solidStyle]}>
-          <Icon name={icon} size={18} color={t.c.text} />
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.centered, overStyle]}>
-          <Icon name={icon} size={18} color="#FFFFFF" />
-        </Animated.View>
-      </View>
-      {badge ? (
-        <View style={[styles.centered, styles.badge, { backgroundColor: t.c.live, borderColor: t.c.bg }]}>
-          <Text variant="caption" color="#FFFFFF" style={{ fontSize: 10, lineHeight: 12 }}>
-            {badge > 9 ? '9+' : badge}
-          </Text>
-        </View>
-      ) : null}
-    </PressableScale>
-  );
-}
-
 type HomeHeaderProps = {
   scrollY: SharedValue<number>;
-  onDestination: () => void;
-  /** Scroll offset where the cover photo has gone and the header turns solid. */
+  /** Scroll offset where the header turns into glass. */
   solidAt?: number;
+  /** Kept for older call sites. */
+  onDestination?: () => void;
 };
 
-export function HomeHeader({ scrollY, onDestination, solidAt = 60 }: HomeHeaderProps) {
+/**
+ * Home header: IRLY on the left, Messages and notifications on the right.
+ * IRL lives in the centre of the tab bar. It sits
+ * on the page and turns into glass as content scrolls under it.
+ */
+export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const unread = useUnread();
-  const solid = useDerivedValue(() => interpolate(scrollY.value, [solidAt - 56, solidAt], [0, 1], Extrapolation.CLAMP));
-  const bg = useAnimatedStyle(() => ({ opacity: solid.value }));
-  const { solidStyle, overStyle } = useCrossfade(solid);
+  const bg = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.value, [solidAt - 24, solidAt], [0, 1], Extrapolation.CLAMP) }));
   return (
     <View style={[styles.header, { paddingTop: insets.top, height: insets.top + layout.headerHeight + 8 }]}>
       <Animated.View style={[StyleSheet.absoluteFill, bg]} pointerEvents="none">
@@ -135,19 +107,27 @@ export function HomeHeader({ scrollY, onDestination, solidAt = 60 }: HomeHeaderP
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
       </Animated.View>
       <View style={styles.row}>
-        <View>
-          <Animated.View style={solidStyle}>
-            <IrlyLogo size={17} />
-          </Animated.View>
-          <Animated.View style={[StyleSheet.absoluteFill, overStyle]} pointerEvents="none">
-            <IrlyLogo size={17} color="#FFFFFF" />
-          </Animated.View>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <DestinationPill onPress={onDestination} solid={solid} />
-          <HeaderButton icon="message" label="Messages" badge={unread} onPress={() => router.push('/messages')} solid={solid} />
+        <IrlyWordmark size={24} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <InboxButtons />
         </View>
       </View>
+    </View>
+  );
+}
+
+/**
+ * Messages and notifications: the two doors every tab root keeps at the
+ * top right. Messages holds private chats, group chats and the dedicated
+ * community area.
+ */
+export function InboxButtons() {
+  const router = useRouter();
+  const unread = useUnread();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <IconButton icon="message" label={`Messages${unread ? `, ${unread} unread` : ''}`} badge={unread} onPress={() => router.push('/messages')} />
+      <IconButton icon="bell" label="Notifications" badge={2} onPress={() => router.push('/notifications')} />
     </View>
   );
 }
@@ -158,10 +138,12 @@ type PageHeaderProps = {
   right?: ReactNode;
   /** Header sits on a photo: white controls until the page scrolls. */
   overImage?: boolean;
+  /** Tab roots have no back button. */
+  back?: boolean;
 };
 
 /** Stack page header: back button, title that appears once the large title scrolls away. */
-export function PageHeader({ title, scrollY, right }: PageHeaderProps) {
+export function PageHeader({ title, scrollY, right, back = true }: PageHeaderProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -179,11 +161,15 @@ export function PageHeader({ title, scrollY, right }: PageHeaderProps) {
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
       </Animated.View>
       <View style={styles.row}>
-        <IconButton
-          icon="chevronLeft"
-          label="Back"
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-        />
+        {back ? (
+          <IconButton
+            icon="chevronLeft"
+            label="Back"
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          />
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
         <Animated.View style={[styles.title, titleStyle]} pointerEvents="none">
           <Text variant="titleS" numberOfLines={1}>
             {title}

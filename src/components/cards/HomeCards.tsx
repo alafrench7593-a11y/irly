@@ -10,8 +10,11 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { ACTIVITIES, EVENT_CATEGORIES } from '@/data/catalog';
+import type { CategoryKey } from '@/data/catalog/categories';
+import { EVENT_CATEGORY, SESSION_CATEGORY } from '@/data/catalog/mapping';
 import { areaName, CITIES } from '@/data/destinations';
 import { goingCount, peopleByIds } from '@/data/repo';
+import type { PhotoKey } from '@/data/photos';
 import type { ActivitySession, City, IrlEvent, Person } from '@/data/types';
 import { useHeroCard } from '@/features/hero/useHeroCard';
 import { isHappeningNow, whenLabel } from '@/lib/time';
@@ -31,6 +34,8 @@ import { Photo } from '../visual/Photo';
 
 export type Happening = {
   type: 'session' | 'event';
+  /** Catalog category the plan belongs to. */
+  group: CategoryKey;
   id: string;
   title: string;
   label: string;
@@ -41,12 +46,12 @@ export type Happening = {
 
 export function fromSession(s: ActivitySession): Happening {
   const a = ACTIVITIES[s.kind];
-  return { type: 'session', id: s.id, title: s.title, label: a.label, icon: a.icon, color: activityColor(s.kind), item: s };
+  return { type: 'session', group: SESSION_CATEGORY[s.kind], id: s.id, title: s.title, label: a.label, icon: a.icon, color: activityColor(s.kind), item: s };
 }
 
 export function fromEvent(e: IrlEvent): Happening {
   const c = EVENT_CATEGORIES[e.category];
-  return { type: 'event', id: e.id, title: e.title, label: c.label, icon: c.icon, color: eventColor(e.category), item: e };
+  return { type: 'event', group: EVENT_CATEGORY[e.category], id: e.id, title: e.title, label: c.label, icon: c.icon, color: eventColor(e.category), item: e };
 }
 
 function photoOf(h: Happening) {
@@ -61,7 +66,7 @@ function photoOf(h: Happening) {
  * The day's highlight. Tapping it grows the card into the activity page
  * (shared element: same photo, same title, same place, same people).
  */
-export const HighlightCard = memo(function HighlightCard({ h, height = 236 }: { h: Happening; height?: number }) {
+export const HighlightCard = memo(function HighlightCard({ h, height = 236, compact }: { h: Happening; height?: number; compact?: boolean }) {
   const city = CITIES[h.item.cityId];
   const { ref, onPress, hidden } = useHeroCard(h.type, h.id);
   const joined = useStore((s) => Boolean(s.joined[h.id]));
@@ -87,7 +92,7 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236 }: { 
             <Text variant="overline" color={h.color}>
               {h.label}
             </Text>
-            <Text variant="cardTitle" tone="onDark" numberOfLines={2}>
+            <Text variant={compact ? 'titleM' : 'cardTitle'} tone="onDark" numberOfLines={2}>
               {h.title}
             </Text>
             <Text variant="bodyS" color="rgba(255,255,255,0.72)" numberOfLines={1}>
@@ -253,7 +258,13 @@ export const PersonBubble = memo(function PersonBubble({ person, city }: { perso
 });
 
 const styles = StyleSheet.create({
-  highlight: { borderRadius: radius.xxl, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(255,255,255,0.08)' },
+  category: { borderRadius: radius.xxl },
+  categoryTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
+  categoryIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  categoryCount: { height: 26, paddingHorizontal: 10, borderRadius: 13, justifyContent: 'center' },
+  categoryBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 4 },
+  categoryBar: { width: 24, height: 4, borderRadius: 2, marginBottom: 6 },
+  highlight: { borderRadius: radius.xxl, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(10,10,10,0.06)' },
   highlightTop: { flexDirection: 'row', padding: 16 },
   timePill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, paddingHorizontal: 10, borderRadius: radius.pill },
   highlightBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
@@ -271,4 +282,123 @@ const styles = StyleSheet.create({
   person: { alignItems: 'center', gap: 4 },
   personRing: { borderRadius: 32, borderWidth: 2, padding: 2, marginBottom: 4 },
   status: { position: 'absolute', right: 1, bottom: 1, width: 14, height: 14, borderRadius: 7, borderWidth: 2 },
+});
+
+/* ───────── Category card: the door to a whole world ───────── */
+
+/**
+ * Large photo card for a category ("Sport · Find people to play with"),
+ * with the number of things happening in it. Opens the category page.
+ */
+export const CategoryCard = memo(function CategoryCard({
+  label,
+  tagline,
+  icon,
+  color,
+  photo,
+  count,
+  onPress,
+  width = 200,
+  height = 248,
+}: {
+  label: string;
+  tagline: string;
+  icon: IconName;
+  color: string;
+  photo: PhotoKey;
+  count?: number;
+  onPress: () => void;
+  width?: number;
+  height?: number;
+}) {
+  return (
+    <PressableScale onPress={onPress} scaleTo={0.97} style={{ width, height }} accessibilityLabel={`${label}. ${tagline}`}>
+      <Photo visual={{ photo }} light="dubai" scrim="strong" style={[StyleSheet.absoluteFill, styles.category]} width={600} recyclingKey={`cat-${label}`}>
+        <View style={styles.categoryTop}>
+          <Glass dark style={styles.categoryIcon}>
+            <Icon name={icon} size={18} color="#FFFFFF" />
+          </Glass>
+          {count ? (
+            <Glass dark style={styles.categoryCount}>
+              <Text variant="caption" tone="onDark">
+                {count} near you
+              </Text>
+            </Glass>
+          ) : null}
+        </View>
+        <View style={styles.categoryBottom}>
+          <View style={[styles.categoryBar, { backgroundColor: color }]} />
+          <Text variant="titleL" tone="onDark" numberOfLines={1}>
+            {label}
+          </Text>
+          <Text variant="bodyS" color="rgba(255,255,255,0.8)" numberOfLines={2}>
+            {tagline}
+          </Text>
+        </View>
+      </Photo>
+    </PressableScale>
+  );
+});
+
+/* ───────── Idea card: something to do, one tap from a session ───────── */
+
+/**
+ * A thing you can do in a category ("Dog walk · Kite Beach"), on its photo.
+ * Tapping it opens Create already filled in, so an idea becomes a session
+ * in one tap.
+ */
+export const IdeaCard = memo(function IdeaCard({
+  title,
+  place,
+  icon,
+  color,
+  photo,
+  onPress,
+}: {
+  title: string;
+  place?: string;
+  icon: IconName;
+  color: string;
+  photo: PhotoKey;
+  onPress: () => void;
+}) {
+  const t = useTheme();
+  return (
+    <PressableScale haptic="select" onPress={onPress} scaleTo={0.97} style={[ideaStyles.card, { boxShadow: t.shadow.card }]} accessibilityLabel={`${title}. Create a session`}>
+      <Photo visual={{ photo }} light="dubai" scrim="strong" style={[StyleSheet.absoluteFill, ideaStyles.photo]} width={500} recyclingKey={`idea-${title}`}>
+        <View style={ideaStyles.top}>
+          <Glass dark style={ideaStyles.icon}>
+            <Icon name={icon} size={16} color="#FFFFFF" />
+          </Glass>
+        </View>
+        <View style={ideaStyles.bottom}>
+          <View style={[ideaStyles.bar, { backgroundColor: color }]} />
+          <Text variant="titleS" tone="onDark" numberOfLines={2}>
+            {title}
+          </Text>
+          {place ? (
+            <Text variant="bodyS" color="rgba(255,255,255,0.8)" numberOfLines={1}>
+              {place}
+            </Text>
+          ) : null}
+          <View style={ideaStyles.cta}>
+            <Icon name="plus" size={14} color="#0A0A0A" />
+            <Text variant="label" color="#0A0A0A">
+              Create
+            </Text>
+          </View>
+        </View>
+      </Photo>
+    </PressableScale>
+  );
+});
+
+const ideaStyles = StyleSheet.create({
+  card: { width: 210, height: 260, borderRadius: radius.xl },
+  photo: { borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'space-between' },
+  top: { padding: 12, flexDirection: 'row' },
+  icon: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  bottom: { padding: 14, gap: 4 },
+  bar: { width: 24, height: 3, borderRadius: 2, marginBottom: 4 },
+  cta: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingHorizontal: 12, height: 30, borderRadius: 15, marginTop: 8, backgroundColor: '#FFFFFF' },
 });

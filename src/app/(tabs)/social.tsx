@@ -22,6 +22,7 @@ import { rankMatches } from '@/features/matching/match';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
+import { planDisplay } from '@/data/catalog/mapping';
 import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -124,7 +125,7 @@ function MyPlanCard({ plan }: { plan: MyPlan }) {
   const t = useTheme();
   const city = CITIES[plan.cityId];
   const name = useStore((s) => s.profile.name) || 'You';
-  const a = ACTIVITIES[plan.kind];
+  const a = planDisplay(plan);
   return (
     <View style={[styles.mine, { backgroundColor: t.c.brandSoft, borderColor: t.c.brand }]}>
       <View style={styles.row}>
@@ -135,13 +136,13 @@ function MyPlanCard({ plan }: { plan: MyPlan }) {
             Visible to people who match you in {city.name}
           </Text>
         </View>
-        <Icon name={a.icon} size={20} color={t.c.brand} />
+        <Icon name={a.icon} size={20} color={a.color} />
       </View>
       <Text variant="displayM" style={{ marginTop: space[4] }}>
-        {a.label} · {plan.day.toLowerCase()} at {plan.time}.
+        {a.title} · {plan.day.toLowerCase()} at {plan.time}.
       </Text>
       <Text variant="bodyS" tone="secondary" style={{ marginTop: 4 }}>
-        {areaName(city, plan.areaId)} · {plan.spots} spots · we will notify you when people join
+        {plan.place ?? areaName(city, plan.areaId)} · {plan.spots ? `${plan.spots} spots` : 'Unlimited'} · we will notify you when people join
       </Text>
     </View>
   );

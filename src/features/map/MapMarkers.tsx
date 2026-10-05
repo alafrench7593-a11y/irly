@@ -15,6 +15,7 @@ import { LiveDot } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { findPerson, peopleByIds } from '@/data/repo';
+import { LiveRing } from '@/features/live/LiveStrip';
 import { PressableScale } from '@/motion/PressableScale';
 import { ease, scale as scaleTokens, spring } from '@/motion/tokens';
 import { status } from '@/theme/tokens';
@@ -138,10 +139,20 @@ export const MarkerView = memo(function MarkerView({
   let content: React.ReactNode;
   let ringShape = { width: 44, height: 44, borderRadius: 22 };
   switch (m.type) {
+    case 'live': {
+      const p = m.personId ? findPerson(m.personId) : undefined;
+      ringShape = { width: 50, height: 50, borderRadius: 25 };
+      content = (
+        <LiveRing size={50}>
+          <Avatar name={p?.name ?? 'You'} hue={p?.hue ?? 0} size={36} />
+        </LiveRing>
+      );
+      break;
+    }
     case 'person': {
       const p = m.personId ? findPerson(m.personId) : undefined;
       content = (
-        <View style={[styles.person, { borderColor: t.c.text, boxShadow: `0px 0px 24px ${m.color}66` }]}>
+        <View style={[styles.person, { borderColor: "#FFFFFF", boxShadow: `0px 4px 18px ${m.color}88` }]}>
           <Avatar name={p?.name ?? m.title} hue={p?.hue ?? 0} size={36} />
           <View style={[styles.personStatus, { backgroundColor: m.color, borderColor: t.c.bg }]} />
         </View>
@@ -151,7 +162,7 @@ export const MarkerView = memo(function MarkerView({
     case 'activity':
       ringShape = { width: 64, height: 32, borderRadius: 16 };
       content = (
-        <View style={[styles.pill, { borderColor: selected ? m.color : 'rgba(255,255,255,0.14)' }]}>
+        <View style={[styles.pill, { borderColor: selected ? m.color : 'rgba(10,10,10,0.08)' }]}>
           <Icon name={m.icon} size={15} color={m.color} strokeWidth={2.1} />
           <Text variant="label" style={{ fontSize: 12.5 }}>
             {m.count ?? ''}
@@ -167,7 +178,7 @@ export const MarkerView = memo(function MarkerView({
     case 'event':
       ringShape = { width: 40, height: 40, borderRadius: 12 };
       content = (
-        <View style={[styles.event, { borderColor: selected ? m.color : 'rgba(255,255,255,0.2)', borderBottomColor: m.color }]}>
+        <View style={[styles.event, { borderColor: selected ? m.color : 'rgba(10,10,10,0.1)', borderBottomColor: m.color }]}>
           <Text variant="caption" tone="secondary" style={{ fontSize: 8, lineHeight: 10, letterSpacing: 0.8 }}>
             {m.month}
           </Text>
@@ -182,7 +193,7 @@ export const MarkerView = memo(function MarkerView({
       const [a, b] = peopleByIds(m.goingIds ?? []);
       ringShape = { width: 58, height: 34, borderRadius: 17 };
       content = (
-        <View style={[styles.group, { borderColor: selected ? m.color : 'rgba(255,255,255,0.14)' }]}>
+        <View style={[styles.group, { borderColor: selected ? m.color : 'rgba(10,10,10,0.08)' }]}>
           <View style={{ flexDirection: 'row' }}>
             {a ? <Avatar name={a.name} hue={a.hue} size={22} ring /> : null}
             {b ? (
@@ -252,13 +263,14 @@ const styles = StyleSheet.create({
   person: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   personStatus: { position: 'absolute', right: -1, bottom: -1, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   pill: {
+    boxShadow: '0px 6px 16px rgba(10,10,10,0.12)',
     height: 32,
     paddingHorizontal: 11,
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(18,18,18,0.9)',
+    backgroundColor: 'rgba(255,255,255,0.94)',
     borderWidth: 1,
   },
   pillLive: { position: 'absolute', top: -3, right: -3 },
@@ -266,7 +278,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#000000',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderBottomWidth: 2,
     alignItems: 'center',
@@ -281,11 +293,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(18,18,18,0.9)',
+    backgroundColor: 'rgba(255,255,255,0.94)',
     borderWidth: 1,
   },
   placeWrap: { alignItems: 'center', gap: 3 },
   place: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   placeName: { fontSize: 10, maxWidth: 90 },
-  cluster: { backgroundColor: 'rgba(18,18,18,0.86)', borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  cluster: { backgroundColor: 'rgba(255,255,255,0.92)', boxShadow: '0px 6px 16px rgba(10,10,10,0.12)', borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
 });

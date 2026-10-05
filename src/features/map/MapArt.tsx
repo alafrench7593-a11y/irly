@@ -130,18 +130,18 @@ type Props = {
 export const MAP_SIZE = 1000;
 
 /**
- * "IRLY Night": black land, anthracite water, dark grey roads, so the
- * markers (people, plans, places) are the only colour on screen. The same
- * palette is used for the Google vector style (Map ID "IRLY Night").
+ * "IRLY Day": warm off-white land, soft blue-grey water, white roads, so
+ * the markers (people, plans, places) carry the colour. The same palette is
+ * the target for the Google vector style (Map ID "IRLY Day").
  */
 export const MapArt = memo(function MapArt({ city, mode, width, height, viewBox, showAreas = true }: Props) {
   void mode;
   const shapes = SHAPES[city.map];
-  const land = '#070707';
-  const landEdge = 'rgba(255,255,255,0.10)';
-  const road = '#262626';
-  const waterTop = '#1B1B1D';
-  const waterBottom = '#151517';
+  const land = '#F4F3F0';
+  const landEdge = 'rgba(10,10,10,0.08)';
+  const road = '#FFFFFF';
+  const waterTop = '#D6E2EA';
+  const waterBottom = '#CBD9E3';
   const night = true;
   const isSeaFirst = city.map === 'abudhabi' || city.map === 'bali';
 
@@ -169,7 +169,7 @@ export const MapArt = memo(function MapArt({ city, mode, width, height, viewBox,
       </G>
       {showAreas
         ? city.areas.map((a) => (
-            <Circle key={a.id} cx={a.point.x * MAP_SIZE} cy={a.point.y * MAP_SIZE} r={70} fill="#FFFFFF" opacity={0.025} />
+            <Circle key={a.id} cx={a.point.x * MAP_SIZE} cy={a.point.y * MAP_SIZE} r={70} fill="#0A0A0A" opacity={0.025} />
           ))
         : null}
     </Svg>

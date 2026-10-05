@@ -1,4 +1,8 @@
+import { useRouter } from 'expo-router';
 import { memo, useEffect, useRef } from 'react';
+import { findCommunity } from '@/data/repo';
+import { closeHero } from '@/features/hero/heroStore';
+import { communityChatId } from '@/features/messages/conversations';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { haptic } from '@/motion/haptics';
@@ -32,6 +36,7 @@ type Props = {
 export const JoinButton = memo(function JoinButton({ id, label = 'JOIN ACTIVITY', size = 'lg', full, style, membership }: Props) {
   const t = useTheme();
   const joined = useStore((s) => Boolean(membership ? s.memberOf[id] : s.joined[id]));
+  const router = useRouter();
   const toggle = useStore((s) => (membership ? s.toggleMembership : s.toggleJoin));
   const pulse = useSharedValue(1);
   const check = useSharedValue(joined ? 1 : 0);
@@ -53,7 +58,17 @@ export const JoinButton = memo(function JoinButton({ id, label = 'JOIN ACTIVITY'
     const on = toggle(id);
     if (on) {
       haptic('success');
-      toast(membership ? 'Welcome to the group' : "You're going. Group chat unlocked", 'check');
+      if (membership) {
+        // Joining a community joins its chat: the member lands in it.
+        const community = findCommunity(id);
+        toast(community ? `You joined ${community.name}. Chat added to Messages` : 'You joined. Chat added to Messages', 'message', 'brand');
+        if (community) {
+          closeHero();
+          router.push(`/messages?highlight=${communityChatId(id, community.cityId)}`);
+        }
+      } else {
+        toast("You're in. Activity chat unlocked", 'check');
+      }
     } else {
       haptic('tap');
       toast(membership ? 'You left the group' : 'You left this activity', 'x', 'live');

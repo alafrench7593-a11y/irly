@@ -51,6 +51,14 @@
       ],
       "expo-image",
       [
+        "expo-location",
+        { "locationWhenInUsePermission": "IRLY shows what is happening around you. Your exact position is never shared with other members." }
+      ],
+      [
+        "expo-image-picker",
+        { "photosPermission": "IRLY uses your photos for your profile picture and the moments you post live.", "cameraPermission": "IRLY uses the camera for your profile picture and the moments you post live." }
+      ],
+      [
         "expo-sensors",
         {
           "motionPermission": "IRLY uses motion to add a subtle depth effect to destination cards."

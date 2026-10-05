@@ -35,7 +35,7 @@ export default function WhoAreYou() {
   return (
     <StepShell
       step={0}
-      total={2}
+      total={4}
       overline={`IRLY ${city.name}`}
       title={`Who are you in ${city.name}?`}
       subtitle="Pick up to three. IRLY uses this to introduce you to the right people, never to box you in."

@@ -124,7 +124,7 @@ export function MapSheet({
         <Glass style={[StyleSheet.absoluteFill, styles.glass]} intensity={blur.strong} />
         <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
           <View style={styles.header} accessibilityRole="adjustable" accessibilityLabel="Details. Drag up for more">
-            <View style={[styles.grabber, { backgroundColor: 'rgba(255,255,255,0.3)' }]} />
+            <View style={[styles.grabber, { backgroundColor: 'rgba(10,10,10,0.18)' }]} />
             <View style={styles.titleRow}>
               <Lead marker={marker} />
               <View style={{ flex: 1, gap: 3 }}>
@@ -175,6 +175,8 @@ function label(m: MapMarkerData) {
       return 'Group';
     case 'place':
       return 'Place';
+    case 'live':
+      return 'IRL';
   }
 }
 

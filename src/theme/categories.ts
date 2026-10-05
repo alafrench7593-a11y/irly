@@ -23,12 +23,12 @@ const ACTIVITY: Record<ActivityKind, string> = {
   beach: category.beach,
   yoga: category.wellness,
   wellness: category.wellness,
-  networking: category.coffee,
+  networking: category.networking,
 };
 
 const EVENT: Record<EventCategory, string> = {
   sports: category.sport,
-  networking: category.coffee,
+  networking: category.networking,
   party: category.nightlife,
   wellness: category.wellness,
   business: category.business,

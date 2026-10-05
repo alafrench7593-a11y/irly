@@ -1,18 +1,24 @@
 import type { IconName } from '@/components/ui/Icon';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
+import { toLatLng, type LatLng } from '@/data/geo';
 import type { City, CityContent, MapPoint } from '@/data/types';
 import type { HeroKind } from '@/features/hero/heroStore';
+import type { Live } from '@/features/live/liveStore';
 import { formatCount } from '@/lib/format';
 import { planDate, whenLabel } from '@/lib/time';
 import { activityColor, eventColor, placeColor } from '@/theme/categories';
 import { category, status } from '@/theme/tokens';
 
-export type MarkerType = 'person' | 'activity' | 'event' | 'group' | 'place';
+export type MarkerType = 'person' | 'activity' | 'event' | 'group' | 'place' | 'live';
 
 export type MapMarkerData = {
   id: string;
   type: MarkerType;
   point: MapPoint;
+  /** Neighbourhood the marker belongs to. */
+  areaId: string;
+  /** Real position (neighbourhood centre + fixed offset), for the real map. */
+  coords?: LatLng;
   title: string;
   subtitle: string;
   icon: IconName;
@@ -42,6 +48,7 @@ export type Placed = { kind: 'marker'; m: MapMarkerData } | { kind: 'cluster'; c
 export const ZOOM = { neighbourhood: 1.0, street: 1.45 } as const;
 
 const MIN_ZOOM: Record<MarkerType, number> = {
+  live: 0,
   activity: 0,
   event: 0,
   group: ZOOM.neighbourhood,
@@ -65,15 +72,33 @@ export function jitter(p: MapPoint, id: string, spread = 0.045): MapPoint {
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-export function buildMarkers(city: City, content: CityContent): MapMarkerData[] {
+export function buildMarkers(city: City, content: CityContent, lives: Live[] = []): MapMarkerData[] {
   const pt = (areaId: string) => (city.areas.find((a) => a.id === areaId) ?? city.areas[0]).point;
   const list: MapMarkerData[] = [];
+  lives.forEach((l) => {
+    const p = l.authorId === 'me' ? undefined : content.people.find((x) => x.id === l.authorId);
+    list.push({
+      id: l.id,
+      type: 'live',
+      // A live is placed at its neighbourhood, never at an address.
+      areaId: l.areaId,
+      point: jitter(pt(l.areaId), l.id, 0.03),
+      title: p ? `${p.name} is live` : 'You are live',
+      subtitle: `${l.place} · now`,
+      icon: 'zap',
+      color: status.live,
+      personId: p?.id,
+      body: l.text,
+      live: true,
+    });
+  });
   content.people.forEach((p) =>
     list.push({
       id: p.id,
       type: 'person',
       // Privacy: a person is never shown at an address, only around their
       // neighbourhood, with a fixed per-person offset.
+      areaId: p.areaId,
       point: jitter(pt(p.areaId), p.id, 0.05),
       title: p.name,
       subtitle: p.headline,
@@ -87,6 +112,7 @@ export function buildMarkers(city: City, content: CityContent): MapMarkerData[] 
     list.push({
       id: s.id,
       type: 'activity',
+      areaId: s.areaId,
       point: jitter(pt(s.areaId), s.id),
       title: s.title,
       subtitle: `${s.venue} · ${whenLabel(s.when, city)}`,
@@ -103,6 +129,7 @@ export function buildMarkers(city: City, content: CityContent): MapMarkerData[] 
     list.push({
       id: e.id,
       type: 'event',
+      areaId: e.areaId,
       point: jitter(pt(e.areaId), e.id),
       title: e.title,
       subtitle: `${e.venue} · ${whenLabel(e.when, city)}`,
@@ -121,6 +148,7 @@ export function buildMarkers(city: City, content: CityContent): MapMarkerData[] 
     list.push({
       id: c.id,
       type: 'group',
+      areaId: city.areas[hash(c.id) % city.areas.length].id,
       point: jitter(pt(city.areas[hash(c.id) % city.areas.length].id), c.id),
       title: c.name,
       subtitle: `${formatCount(c.members)} members · ${c.rhythm}`,
@@ -135,6 +163,7 @@ export function buildMarkers(city: City, content: CityContent): MapMarkerData[] 
     list.push({
       id: p.id,
       type: 'place',
+      areaId: p.areaId,
       point: jitter(pt(p.areaId), p.id),
       title: p.name,
       subtitle: `${PLACE_KINDS[p.kind].label} · ★ ${p.rating.toFixed(1)}`,
@@ -144,7 +173,7 @@ export function buildMarkers(city: City, content: CityContent): MapMarkerData[] 
       body: p.blurb,
     }),
   );
-  return list;
+  return list.map((m) => ({ ...m, coords: toLatLng(city.id, m.areaId, pt(m.areaId), m.point) }));
 }
 
 /**

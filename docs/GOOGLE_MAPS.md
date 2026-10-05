@@ -1,8 +1,12 @@
 # Carte Google : ce qui reste à faire
 
-La v3 tourne aujourd'hui sur la carte IRLY Night (SVG, `features/map/MapArt.tsx`). Toute la couche IRLY (marqueurs, clusters, feuille, 2D/3D, recherche) est indépendante du fond de carte : la caméra est un état partagé (`Camera` dans `features/map/MapMarkers.tsx`) et les marqueurs sont projetés à l'écran par `project()`.
+**Sur téléphone, la carte est réelle** (`features/map/RealMap.native.tsx`, `react-native-maps`, inclus dans Expo Go, sans clé) : Apple Plans sur iPhone, Google Maps sur Android, vrais bâtiments 3D quand on passe en 3D (caméra inclinée à 60°). Les marqueurs IRLY sont placés aux coordonnées réelles des quartiers (`data/geo.ts`), jamais à une adresse.
 
-Le passage à Google Maps n'est **pas fait**, faute de clé : rien n'a pu être testé.
+Sur le web, la carte reste la carte IRLY dessinée (`features/map/MapArt.tsx`).
+
+Ce qui suit concerne **Google Maps partout, y compris sur iPhone, et la 3D photoréaliste de Google**, qui demandent une clé et une build de développement (pas Expo Go). Toute la couche IRLY (marqueurs, clusters, feuille, 2D/3D, recherche) est indépendante du fond de carte : la caméra est un état partagé (`Camera` dans `features/map/MapMarkers.tsx`) et les marqueurs sont projetés à l'écran par `project()`.
+
+Google Maps sur iPhone et la 3D photoréaliste ne sont **pas faits**, faute de clé.
 
 ## Étape 1 : le test d'une journée (avant tout le reste)
 
