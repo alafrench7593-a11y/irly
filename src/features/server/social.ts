@@ -74,7 +74,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   }, [cityId, uid]);
 
   const refresh = useCallback(() => {
-    load().then(setPosts);
+    load().then(setPosts).catch(() => undefined);
   }, [load]);
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export function useFriends(): { friends: Friend[]; refresh: () => void } {
     }));
   }, [uid]);
   const refresh = useCallback(() => {
-    load().then(setFriends);
+    load().then(setFriends).catch(() => undefined);
   }, [load]);
   useEffect(() => {
     if (!supabase || !uid) return;

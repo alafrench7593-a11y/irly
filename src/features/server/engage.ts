@@ -253,7 +253,7 @@ export function useComments(t: Target) {
   }, [t.type, t.id, uid, load]);
 
   const refresh = useCallback(() => {
-    load().then(setList);
+    load().then(setList).catch(() => undefined);
   }, [load]);
 
   /** Optimistic: shows at once, marked pending, replaced by the server row. */
@@ -302,7 +302,7 @@ export function useSaved() {
     return (data ?? []).map((r) => ({ type: r.target_type as TargetType, id: r.target_id as string, createdAt: Date.parse(r.created_at as string) }));
   }, [uid]);
   const refresh = useCallback(() => {
-    load().then(setItems);
+    load().then(setItems).catch(() => undefined);
   }, [load]);
   useEffect(() => {
     let alive = true;

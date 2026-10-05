@@ -28,7 +28,7 @@ const hour = (ms: number) => new Date(ms).toLocaleTimeString('en-GB', { hour: '2
 export default function CalendarScreen() {
   const t = useTheme();
   const router = useRouter();
-  const { items, loading, signedIn } = useCalendar();
+  const { items, loading, error, signedIn } = useCalendar();
 
   const days: { key: string; label: string; items: CalendarItem[] }[] = [];
   for (const it of items) {
@@ -43,6 +43,8 @@ export default function CalendarScreen() {
       <View style={styles.body}>
         {!signedIn ? (
           <Empty text="Sign in to keep your plans in sync across devices." action="Sign in" onPress={() => router.push('/account')} />
+        ) : error && !items.length ? (
+          <Empty text="Can’t reach IRLY right now. Check your connection and try again." action="Find something to do" onPress={() => router.push('/discover')} />
         ) : !loading && !items.length ? (
           <Empty text="Nothing planned yet. Join a session or create one." action="Find something to do" onPress={() => router.push('/discover')} />
         ) : (

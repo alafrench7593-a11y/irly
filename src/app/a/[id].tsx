@@ -35,7 +35,7 @@ export default function ActivityPage() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const account = useAccount();
-  const { detail: a, loading, refresh } = useServerActivity(id);
+  const { detail: a, loading, error, refresh } = useServerActivity(id);
   const eng = useEngagement('activity', a ? [a.id] : []);
   const [busy, setBusy] = useState(false);
 
@@ -57,6 +57,19 @@ export default function ActivityPage() {
     return (
       <Centered>
         <ActivityIndicator color={t.c.text} />
+      </Centered>
+    );
+  }
+  if (!a && error) {
+    return (
+      <Centered>
+        <Text variant="titleM" align="center">
+          Can’t reach IRLY right now
+        </Text>
+        <Text variant="body" tone="secondary" align="center">
+          Check your connection and try again.
+        </Text>
+        <Button label="Try again" onPress={refresh} />
       </Centered>
     );
   }

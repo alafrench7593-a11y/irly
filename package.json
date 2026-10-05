@@ -55,7 +55,8 @@
     "lint": "expo lint",
     "test:intent": "node --experimental-strip-types --no-warnings scripts/check-intent.mts",
     "test:bali": "node --experimental-strip-types --no-warnings scripts/check-bali.mts",
-    "sync:places": "node scripts/sync-places.mjs"
+    "sync:places": "node scripts/sync-places.mjs",
+    "test:routes": "node scripts/check-routes.mjs"
   },
   "private": true,
   "engines": {

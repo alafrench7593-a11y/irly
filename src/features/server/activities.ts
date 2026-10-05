@@ -118,7 +118,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
   }, [cityId, uid]);
 
   const refresh = useCallback(() => {
-    load().then(setActivities);
+    load().then(setActivities).catch(() => undefined);
   }, [load]);
 
   useEffect(() => {
@@ -212,15 +212,18 @@ type DetailRow = {
 };
 
 /** One activity or event, live: participant count and my status update as people join. */
-export function useServerActivity(id: string): { detail: ActivityDetail | null; loading: boolean; refresh: () => void } {
+export function useServerActivity(id: string): { detail: ActivityDetail | null; loading: boolean; error: string | null; refresh: () => void } {
   const account = useAccount();
   const uid = account?.userId;
   const [detail, setDetail] = useState<ActivityDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (): Promise<ActivityDetail | null> => {
     if (!supabase || !uid) return null;
-    const { data } = await supabase.rpc('activity_detail', { p_id: id });
+    const { data, error: e } = await supabase.rpc('activity_detail', { p_id: id });
+    // Network or server failure: say so, never "this activity no longer exists".
+    if (e) throw new Error(e.message);
     const r = ((data as DetailRow[]) ?? [])[0];
     if (!r) return null;
     return {
@@ -250,18 +253,26 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
   }, [id, uid]);
 
   const refresh = useCallback(() => {
-    load().then(setDetail);
+    load()
+      .then((d) => {
+        setDetail(d);
+        setError(null);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : 'offline'));
   }, [load]);
 
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
     const reload = () =>
-      load().then((d) => {
-        if (!alive) return;
-        setDetail(d);
-        setLoading(false);
-      });
+      load()
+        .then((d) => {
+          if (!alive) return;
+          setDetail(d);
+          setError(null);
+        })
+        .catch((e) => alive && setError(e instanceof Error ? e.message : 'offline'))
+        .finally(() => alive && setLoading(false));
     reload();
     const channel = supabase
       .channel(`activity-${id}`)
@@ -274,7 +285,7 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
     };
   }, [id, uid, load]);
 
-  return { detail: uid ? detail : null, loading: uid ? loading : false, refresh };
+  return { detail: uid ? detail : null, loading: uid ? loading : false, error: uid ? error : null, refresh };
 }
 
 export async function leaveServerActivity(activityId: string): Promise<void> {
@@ -304,14 +315,16 @@ export type CalendarItem = {
 };
 
 /** Everything I'm going to, soonest first. Live when I join or leave. */
-export function useCalendar(): { items: CalendarItem[]; loading: boolean; signedIn: boolean } {
+export function useCalendar(): { items: CalendarItem[]; loading: boolean; error: string | null; signedIn: boolean } {
   const account = useAccount();
   const uid = account?.userId;
   const [items, setItems] = useState<CalendarItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const load = useCallback(async (): Promise<CalendarItem[]> => {
     if (!supabase || !uid) return [];
-    const { data } = await supabase.rpc('my_calendar', {});
+    const { data, error: e } = await supabase.rpc('my_calendar', {});
+    if (e) throw new Error(e.message);
     return ((data as Record<string, string | boolean | null>[]) ?? []).map((r) => ({
       id: r.id as string,
       title: r.title as string,
@@ -330,11 +343,14 @@ export function useCalendar(): { items: CalendarItem[]; loading: boolean; signed
     if (!supabase || !uid) return;
     let alive = true;
     const reload = () =>
-      load().then((list) => {
-        if (!alive) return;
-        setItems(list);
-        setLoading(false);
-      });
+      load()
+        .then((list) => {
+          if (!alive) return;
+          setItems(list);
+          setError(null);
+        })
+        .catch((e) => alive && setError(e instanceof Error ? e.message : 'offline'))
+        .finally(() => alive && setLoading(false));
     reload();
     const channel = supabase
       .channel(`calendar-${uid}`)
@@ -345,7 +361,7 @@ export function useCalendar(): { items: CalendarItem[]; loading: boolean; signed
       supabase?.removeChannel(channel);
     };
   }, [uid, load]);
-  return { items: uid ? items : [], loading: uid ? loading : false, signedIn: Boolean(uid) };
+  return { items: uid ? items : [], loading: uid ? loading : false, error: uid ? error : null, signedIn: Boolean(uid) };
 }
 
 /** An .ics file for the phone's own calendar (Apple, Google, Outlook). */
