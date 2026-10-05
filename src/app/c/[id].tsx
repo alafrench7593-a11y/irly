@@ -22,7 +22,7 @@ import { createServerActivity } from '@/features/server/activities';
 import { reportItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
 import { hueOf } from '@/lib/format';
-import { timeAgo } from '@/lib/time';
+import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -30,7 +30,7 @@ import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type Tab = 'posts' | 'activities' | 'about';
-const when = (ms: number) => new Date(ms).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
 
 /**
  * A community: posts (text, polls, plans) with likes and comments, its chat,
@@ -193,6 +193,7 @@ export default function CommunityScreen() {
               ) : (
                 feed.posts.map((p) => (
                   <PostCard
+                    cityId={city.id}
                     key={p.id}
                     p={p}
                     eng={eng}
@@ -219,7 +220,7 @@ export default function CommunityScreen() {
                         {a.title}
                       </Text>
                       <Text variant="caption" tone="tertiary">
-                        {when(a.startsAt)} · {a.going} {tx('going')}
+                        {when(a.startsAt, city.id)} · {a.going} {tx('going')}
                       </Text>
                     </View>
                   </PressableScale>
@@ -293,7 +294,7 @@ function Assistant({
     track('AI_COMMAND', { scope: 'community', kind: r.kind });
     if (r.kind === 'digest') {
       fetchDigest(communityId)
-        .then((d) => setDigest(digestLines(d, when)))
+        .then((d) => setDigest(digestLines(d, (ms) => when(ms, geo.cities[0]?.id ?? 'dubai'))))
         .catch(() => setDigest(['Can’t reach IRLY right now.']));
     }
   };
@@ -486,6 +487,7 @@ function PostCard({
   onVote,
   onRemove,
   onPlan,
+  cityId,
 }: {
   p: CommunityPost;
   eng: ReturnType<typeof useEngagement>;
@@ -495,6 +497,7 @@ function PostCard({
   onVote: (o: number) => void;
   onRemove: () => void;
   onPlan: (d: PlanDraft) => void;
+  cityId: string;
 }) {
   const t = useTheme();
   const router = useRouter();
@@ -566,7 +569,7 @@ function PostCard({
             </Text>
             {p.activityStartsAt ? (
               <Text variant="caption" tone="tertiary">
-                {when(p.activityStartsAt)}
+                {when(p.activityStartsAt, cityId)}
               </Text>
             ) : null}
           </View>

@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -39,9 +40,17 @@ export default function ProfileStep() {
   const pick = async () => {
     // Kept as data (not a blob: or cache file:// URI, which die on reload or
     // when the OS clears its cache) until it is uploaded at sign-in.
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsEditing: true, aspect: [1, 1], base64: true });
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [1, 1] });
     const a = !res.canceled ? res.assets[0] : null;
-    if (a) update({ photoUri: a.base64 ? `data:${a.mimeType ?? 'image/jpeg'};base64,${a.base64}` : a.uri });
+    if (!a) return;
+    // 512 px JPEG as data (~40-80 KB): survives reloads and cache clean-ups,
+    // and stays small enough for the persisted store (web quota, Android 2 MB rows).
+    try {
+      const small = await manipulateAsync(a.uri, [{ resize: { width: 512 } }], { compress: 0.7, format: SaveFormat.JPEG, base64: true });
+      update({ photoUri: small.base64 ? `data:image/jpeg;base64,${small.base64}` : small.uri });
+    } catch {
+      update({ photoUri: a.uri });
+    }
   };
 
   const ok =

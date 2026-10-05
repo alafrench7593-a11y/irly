@@ -1,7 +1,7 @@
 import { GIRLS } from '@/data/content/girls';
 import { hasSession, supabase } from '@/lib/supabase';
 import { useStore } from '@/state/store';
-import { DEFAULT_WEIGHTS, matchScore, type MatchProfile, type Reasons, type Weights } from './compat';
+import { DEFAULT_WEIGHTS, matchScore, normalizeReasons, type MatchProfile, type Reasons, type Weights } from './compat';
 import { useGirlStore } from './girlStore';
 import type { Candidate, Filters, MatchAction, MatchProfileDraft, MatchResult, MatchState, MatchSummary, ReportCategory } from './types';
 import { imageBytes, imageType } from '@/lib/media';
@@ -172,7 +172,7 @@ const serverApi: MatchApi = {
         isNew: r.is_new,
         saved: r.saved,
         score: r.score,
-        reasons: r.reasons,
+        reasons: normalizeReasons(r.reasons),
       })),
     );
   },
@@ -182,7 +182,7 @@ const serverApi: MatchApi = {
       p_action: action,
     });
     const r = rows?.[0];
-    return r ? { matchId: r.match_id, conversationId: r.conversation_id, score: r.score, reasons: r.reasons } : null;
+    return r ? { matchId: r.match_id, conversationId: r.conversation_id, score: r.score, reasons: normalizeReasons(r.reasons) } : null;
   },
   async matches() {
     const rows = await rpc<
@@ -197,7 +197,7 @@ const serverApi: MatchApi = {
         hue: hueOf(r.user_id),
         photoUrls: await signedPhotos(r.photo_paths),
         score: r.score,
-        reasons: r.reasons,
+        reasons: normalizeReasons(r.reasons),
         createdAt: Date.parse(r.created_at),
       })),
     );

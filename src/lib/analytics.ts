@@ -38,7 +38,7 @@ async function flush() {
     const rows = batch.map((e) => ({ user_id: e.uid, name: e.name, props: e.props, platform: PLATFORM, created_at: e.at }));
     const { error } = await supabase.from('analytics_events').insert(rows);
     // A member without a profile row yet fails the user_id foreign key: keep the events, anonymously.
-    if (error) await supabase.from('analytics_events').insert(rows.map((r) => ({ ...r, user_id: null })));
+    if (error && (error.code === '23503' || error.code === '42501')) await supabase.from('analytics_events').insert(rows.map((r) => ({ ...r, user_id: null })));
   } catch {
     // Analytics never gets in the way.
   }

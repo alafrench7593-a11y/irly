@@ -209,7 +209,10 @@ export async function signInWithProvider(provider: 'google' | 'apple'): Promise<
   if (!web && data.url) {
     // In-app auth session: closes itself and hands back the redirect URL.
     const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo());
-    if (res.type === 'success' && res.url) await completeFromUrl(res.url);
+    if (res.type !== 'success' || !res.url) return;
+    const failed = res.url.match(/[#?&]error_description=([^&]+)/);
+    if (failed) throw new Error(decodeURIComponent(failed[1].replace(/\+/g, ' ')));
+    if (!(await completeFromUrl(res.url))) throw new Error('Sign-in did not complete. Try again.');
   }
 }
 

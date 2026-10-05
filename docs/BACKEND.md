@@ -179,6 +179,16 @@ The key stays in GitHub; the app only reads the database.
 - Known and accepted: Supabase Realtime does not apply RLS to DELETE events, so subscribers can receive the primary key of deleted rows (likes, friendships, memberships). The app no longer subscribes to unfiltered like deletions.
 - Not enforced yet: `who_can_message`, `irl_visibility`, `activity_visibility`, `location_precision` in safety settings.
 
+## Third security pass (migration 1600)
+
+- Safety settings now enforced: `who_can_message` (new direct chats and messages in direct chats; a reply is always allowed once the other person wrote), `irl_visibility` (default audience of a new IRL post), `location_precision` (others never read `profiles.area_id`; `hidden` hides the city; IRL posts drop the venue below `area`). Still not enforced: `activity_visibility` (participant lists).
+- Reports only through `report()`: it checks you can see the target, sets whose content it is, refuses self-reports and duplicates, 10 per hour. Three reports hide content only from accounts older than 7 days, and never after a moderator dismissed the case. Reports survive the reporter's account deletion.
+- A removed comment or post is frozen for its author; removed text is purged from notifications.
+- Activities: girl-only stays girl-only once women joined; capacity never below the people going; the community check applies only when the community changes.
+- Match reasons keep their lists (empty when hidden): removing the keys crashed IRLY Girl screens. `hidden_fields` limited to `age`, `languages`, `areas`.
+- Invitees can open an invite-only activity shared with them by the creator or someone going.
+- Account deletion also removes the person's direct chats and notifications about them. Notifications only change `read_at`; chat roles and birthdate are fixed.
+
 ## Still to connect
 
 - Provider keys for Apple, Google and SMS (see above).

@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Chip, Field } from '@/components/ui/Controls';
@@ -36,7 +36,7 @@ export default function Eat() {
   const params = useLocalSearchParams<{ area?: string; kids?: string; city?: string }>();
   // "Restaurants in Canggu" asked from Dubai opens Bali's list, not Dubai's.
   const current = useCityId();
-  const cityId = params.city && params.city in CITIES ? (params.city as CityId) : current;
+  const cityId = params.city && Object.prototype.hasOwnProperty.call(CITIES, params.city) ? (params.city as CityId) : current;
   const city = CITIES[cityId];
   const areas = useDestAreas(cityId);
   const now = useNow();
@@ -49,7 +49,13 @@ export default function Eat() {
   const [openNow, setOpenNow] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
 
-  const { data, loading, error } = usePlaces(cityId, { area, kind: 'restaurant', cuisine, minRating, maxPrice, kids, tags, q });
+  // Search waits for a pause in typing.
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    const id = setTimeout(() => setQuery(q), 300);
+    return () => clearTimeout(id);
+  }, [q]);
+  const { data, loading, error } = usePlaces(cityId, { area, kind: 'restaurant', cuisine, minRating, maxPrice, kids, tags, q: query });
   const list = useMemo(() => (openNow ? data.filter((p) => isOpenNow(p.openingHours, city.utcOffset, new Date(now)) === true) : data), [data, openNow, city, now]);
   const mainAreas = areas.data.filter((a) => a.kind !== 'neighborhood');
   const toggle = (tag: string) => setTags((ts) => (ts.includes(tag) ? ts.filter((x) => x !== tag) : [...ts, tag]));

@@ -83,9 +83,10 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
       }
     });
 
-  // Inputs in a sheet (Go live, report) stay above the keyboard.
-  const keyboard = useKeyboardHeight();
-  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: Math.max(-24, y.value) - keyboard.value }] }));
+  // Inputs in a sheet (Go live, report) stay above the keyboard: the sheet
+  // sits on the keyboard and shrinks so its top stays on screen.
+  const keyboard = useKeyboardHeight(mounted);
+  const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: Math.max(-24, y.value) }] }));
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: interpolate(y.value, [0, sheetH.value], [1, 0], Extrapolation.CLAMP),
   }));
@@ -109,8 +110,9 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
               styles.sheet,
               {
                 width,
-                maxHeight: screenH * maxHeight,
-                paddingBottom: Math.max(insets.bottom, space[5]) + space[3],
+                bottom: keyboard,
+                maxHeight: Math.min(screenH * maxHeight, screenH - keyboard - insets.top - 8),
+                paddingBottom: keyboard ? space[3] : Math.max(insets.bottom, space[5]) + space[3],
                 backgroundColor: t.c.raised,
                 borderColor: t.c.line,
                 boxShadow: t.shadow.float,

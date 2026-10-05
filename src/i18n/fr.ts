@@ -1817,4 +1817,8 @@ export const fr: Record<string, string> = {
   'Start a {what} plan': 'Lancer un plan {what}',
   'Delete this comment?': 'Supprimer ce commentaire ?',
   'Could not delete the comment': 'Impossible de supprimer le commentaire',
+  'Now showing Bali. Switch back anytime from the destination menu': 'Tu vois maintenant Bali. Reviens quand tu veux depuis le menu des destinations',
+  'Sign-in did not complete. Try again.': 'La connexion n’a pas abouti. Réessaie.',
+  'this member does not accept new messages from you': 'ce membre n’accepte pas de nouveaux messages de ta part',
+  'you cannot report yourself': 'tu ne peux pas te signaler toi-même',
 };

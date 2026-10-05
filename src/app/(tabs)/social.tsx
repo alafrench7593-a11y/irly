@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { planDayLabel, upcomingPlans } from '@/features/plans/when';
 import { t as tx } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -46,7 +47,7 @@ export default function Social() {
   const profile = useStore((s) => s.profile);
   const lastIntent = useStore((s) => s.lastIntent);
   const setIntent = useStore((s) => s.setIntent);
-  const myPlans = useStore((s) => s.myPlans).filter((p) => p.cityId === cityId);
+  const myPlans = upcomingPlans(useStore((s) => s.myPlans).filter((p) => p.cityId === cityId));
   const [composer, setComposer] = useState(false);
   const intent: Intent = lastIntent ?? 'friends';
 
@@ -140,7 +141,7 @@ function MyPlanCard({ plan }: { plan: MyPlan }) {
         <Icon name={a.icon} size={20} color={a.color} />
       </View>
       <Text variant="displayM" style={{ marginTop: space[4] }}>
-        {a.title} · {plan.day.toLowerCase()} at {plan.time}.
+        {a.title} · {tx(planDayLabel(plan)).toLowerCase()} · {plan.time}.
       </Text>
       <Text variant="bodyS" tone="secondary" style={{ marginTop: 4 }}>
         {plan.place ?? areaName(city, plan.areaId)} · {plan.spots ? tx('{n} spots', { n: plan.spots }) : tx('Unlimited')} · {tx('we will notify you when people join')}

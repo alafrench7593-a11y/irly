@@ -238,7 +238,7 @@ do $$
 declare t text;
 begin
   foreach t in array array['irl_posts', 'comments', 'likes', 'community_posts', 'messages', 'communities', 'activities'] loop
-    execute format('drop trigger if exists %I on public.%I', t || '_server_clock', t);
+    execute format('drop trigger if exists %I on public.%I', 'a_' || t || '_server_clock', t);
     -- "a_" sorts first: the clock is set before the rate-limit trigger counts.
     execute format('create trigger %I before insert on public.%I for each row execute function private.server_clock()', 'a_' || t || '_server_clock', t);
   end loop;

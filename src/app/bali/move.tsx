@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useStore } from '@/state/store';
+import { switchToBali } from '@/features/bali/switch';
 import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -24,8 +24,6 @@ const label = (s: string) => tx(s === 'sim' ? 'SIM / eSIM' : s.replace(/_/g, ' '
 export default function BaliMove() {
   const t = useTheme();
   const router = useRouter();
-  // Search and Communities follow the current city: show Bali's.
-  const setCity = useStore((st) => st.setCity);
   const { data: steps, toggle, signedIn } = useMove('bali');
   const done = steps.filter((s) => s.done).length;
 
@@ -70,7 +68,7 @@ export default function BaliMove() {
                 </PressableScale>
               ) : (
                 <PressableScale onPress={() => {
-                  setCity('bali');
+                  switchToBali();
                   router.push(s.id === 'community' ? '/communities' : '/discover');
                 }} haptic="select" hitSlop={8} accessibilityLabel={s.label}>
                   <Text variant="label" tone="secondary">

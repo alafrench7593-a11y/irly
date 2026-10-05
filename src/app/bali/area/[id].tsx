@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { switchToBali } from '@/features/bali/switch';
 import { cityWhen } from '@/lib/time';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
@@ -15,7 +16,6 @@ import { Avatar } from '@/components/ui/Avatar';
 import { hueOf } from '@/lib/format';
 import { useServerActivities } from '@/features/server/activities';
 import { PressableScale } from '@/motion/PressableScale';
-import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -53,7 +53,6 @@ export default function BaliArea() {
   const t = useTheme();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const setCity = useStore((s) => s.setCity);
   const areas = useDestAreas('bali');
   const profiles = useAreaProfiles('bali');
   const area = areas.data.find((a) => a.id === id);
@@ -151,7 +150,7 @@ export default function BaliArea() {
           {SECTIONS.map((s) => (
             <Chip key={s.label} size="sm" icon={s.icon} label={tx(s.label)} onPress={() => {
                 const href = s.href(id);
-                if (href.startsWith('/search')) setCity('bali');
+                if (href.startsWith('/search')) switchToBali();
                 router.push(href as never);
               }} />
           ))}
@@ -227,7 +226,7 @@ export default function BaliArea() {
             icon="compass"
             full
             onPress={() => {
-              setCity('bali');
+              switchToBali();
               router.push(`/search?q=${encodeURIComponent(name)}`);
             }}
           />
@@ -237,7 +236,7 @@ export default function BaliArea() {
             variant="secondary"
             full
             onPress={() => {
-              setCity('bali');
+              switchToBali();
               router.push('/communities');
             }}
           />

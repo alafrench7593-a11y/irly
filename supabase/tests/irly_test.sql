@@ -297,6 +297,8 @@ select pg_temp.check((select count(*) from public.ai_commands) = 1, 'AI command 
 
 -- ───── Repeated reports hide content ─────
 select pg_temp.as_admin();
+-- Escalation only counts established accounts (7 days): age the test accounts.
+update public.profiles set created_at = now() - interval '30 days';
 insert into public.reports (reporter_id, target_kind, target_id, category)
 select u, 'irl_post', (select id from public.irl_posts limit 1), 'spam'
 from unnest(array['00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c']::uuid[]) u;
@@ -456,7 +458,8 @@ select pg_temp.check((select created_at from public.comments where body = 'backd
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select pg_temp.check(not exists (select 1 from public.profiles_public where first_name = 'Bea'), 'someone who blocked you is not listed');
 -- Hidden match fields are not in reasons, nor in their facets.
-select pg_temp.check(not exists (select 1 from public.irly_match_discover('{}') where first_name = 'Dina' and (reasons ? 'areas' or coalesce(reasons -> 'facets', '{}') ? 'areas')), 'hidden areas never in match reasons');
+select pg_temp.check(not exists (select 1 from public.irly_match_discover('{}') where first_name = 'Dina' and (coalesce(reasons -> 'areas', '[]') <> '[]' or coalesce(reasons -> 'facets', '{}') ? 'areas')), 'hidden areas never in match reasons');
+select pg_temp.check(not exists (select 1 from public.irly_match_discover('{}') where jsonb_typeof(reasons -> 'languages') is distinct from 'array'), 'reasons always keep their lists (the app reads them)');
 -- Communities: no posting into one you are not in; owner cannot flip girl-only.
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id, area_id, body, visibility, community_id) values (auth.uid(), 'dubai', 'marina', 'hi moms', 'community', (select id from public.communities where name = 'Marina Padel Girls'))$$, 'no IRL post into a community you are not in');
@@ -466,6 +469,26 @@ select pg_temp.expect_denied($$update public.communities set girl_only = true wh
 select pg_temp.expect_denied($$update public.community_posts set poll = '{"options":["Ban","Keep"]}' where body = 'Best time?'$$, 'a poll cannot change after votes');
 -- Your own full profile, through my_profile().
 select pg_temp.check((select gender from public.my_profile()) = 'man', 'my_profile returns your own full row');
+
+-- ───── Bug hunt 3 ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+-- Reports: only what you can see, never yourself, once per item.
+select pg_temp.expect_denied($$select public.report('irl_post', null, (select id from public.irl_posts where body like 'Coffee at the Marina%' limit 1), 'spam')$$, 'cannot report content you cannot see');
+select pg_temp.expect_denied($$select public.report('comment', null, '$$ || :'rude_id' || $$', 'spam')$$, 'cannot report yourself');
+select pg_temp.expect_denied($$insert into public.reports (reporter_id, target_kind, target_id, category) values (auth.uid(), 'comment', '$$ || :'rude_id' || $$', 'spam')$$, 'reports only through report()');
+-- A removed comment is frozen for its author.
+select pg_temp.expect_denied($$update public.comments set body = 'bad words again' where id = '$$ || :'rude_id' || $$'$$, 'a removed comment cannot be rewritten');
+-- Notifications: only read_at changes.
+select pg_temp.expect_denied($$update public.notifications set payload = '{}' where user_id = auth.uid()$$, 'notification content is fixed');
+-- Girl-only stays girl-only once women joined.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, girl_only) values (auth.uid(), 'Dina girls run', 'sport', 'dubai', 'marina', now() + interval '2 days', true);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.join_activity((select id from public.activities where title = 'Dina girls run'));
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.expect_denied($$update public.activities set girl_only = false where title = 'Dina girls run'$$, 'a girl-only activity with women in it stays girl-only');
+select pg_temp.expect_denied($$update public.activities set capacity = 0 where title = 'Dina girls run'$$, 'capacity cannot go below the people going');
+select pg_temp.expect_denied($$update public.profiles set birthdate = '2000-01-01' where id = auth.uid()$$, 'birthdate is fixed after signup');
 
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');

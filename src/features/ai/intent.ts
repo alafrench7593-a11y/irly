@@ -141,7 +141,10 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
 
   // Time: "7 pm", "7pm", "7.30pm", "19:30", "11.30", "19h", "à 20h30", "8 PM".
   const ampm = text.match(/\b(\d{1,2})(?:[:.h](\d{2}))?\s*(am|pm)\b/);
-  const h24 = text.match(/\b(\d{1,2})(?:[:.](\d{2})|h(\d{2})?)(?![\d.])/);
+  // "11.30" counts only after "at/à/vers" and never before a currency ("5.50 aed", "on 10.12" are not times).
+  const h24 =
+    text.match(/\b(\d{1,2})(?::(\d{2})|h(\d{2})?)(?![\d.])/) ??
+    text.match(/(?:\bat|à|\bvers|@)\s*(\d{1,2})\.(\d{2})\b(?!\s*(?:aed|dhs?|dirhams?|€|eur|euros?|\$|usd))/);
   if (ampm) {
     let h = Number(ampm[1]) % 12;
     if (ampm[3] === 'pm') h += 12;
@@ -156,8 +159,9 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
   // "Dinner at 8:30" is 20:30: a morning hour in an evening context is pm.
   if (e.time && !ampm) {
     const h = Number(e.time.slice(0, 2));
+    // Only 5–11 shifts ("dinner at 8:30" → 20:30); "party at 1:30" stays 01:30.
     const evening = e.dayPart === 'evening' || e.dayPart === 'night' || e.activity === 'dinner' || e.activity === 'nightlife';
-    if (h >= 1 && h <= 11 && evening) e.time = `${h + 12}:${e.time.slice(3)}`;
+    if (h >= 5 && h <= 11 && evening) e.time = `${h + 12}:${e.time.slice(3)}`;
   }
   if (!e.time && e.dayPart) e.time = { morning: '09:00', afternoon: '15:00', evening: '19:00', night: '22:00' }[e.dayPart];
 
@@ -182,7 +186,12 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
   if (spots) e.spots = Number(spots[1]);
 
   // Intent.
-  const create = has(/\b(create|créer|crée|cree|creer|organi[sz]e|organiser|host|set up|plan (?:a|an|un|une|my|some)|planifie|start (?:a|an|un|une)|lance|make (?:a|an|un|une))\b/);
+  const explicitTime = Boolean(ampm || h24);
+  const create =
+    // Bare "plan/start/host/make" creates only with something to create ("plan padel tomorrow 7pm"),
+    // not "I need a plan for tonight".
+    (Boolean(e.activity || explicitTime) && has(/\b(plan|planifier|start|host|make)\b/)) ||
+    has(/\b(create|créer|crée|cree|creer|organi[sz]e|organiser|host|set up|plan (?:a|an|un|une|my|some)|planifie|start (?:a|an|un|une)|lance|make (?:a|an|un|une))\b/);
   const event = has(/\b(event|événement|evenement|party|soirée|tournament|tournoi|workshop|concert)\b/);
   let intent: Intent;
   let confidence = 0.6;

@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
@@ -22,7 +23,8 @@ import { haptic } from '@/motion/haptics';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const when = (ms: number) => new Date(ms).toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+// The activity's own city time, wherever the phone is.
+const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
 /**
  * The canonical page of a member activity or event (one id, linked from
@@ -133,7 +135,7 @@ export default function ActivityPage() {
       link.download = `${a.title}.ics`;
       link.click();
     } else {
-      await Share.share({ message: `${a.title} · ${when(a.startsAt)} · ${a.placeName ?? areaName(city, a.areaId)}\nhttps://irly.app/a/${a.id}` });
+      await Share.share({ message: `${a.title} · ${when(a.startsAt, city.id)} · ${a.placeName ?? areaName(city, a.areaId)}\nhttps://irly.app/a/${a.id}` });
     }
   };
 
@@ -167,7 +169,7 @@ export default function ActivityPage() {
             </View>
           ) : null}
           <ActionBar target={target} eng={eng} />
-          <Fact icon="clock" text={when(a.startsAt)} />
+          <Fact icon="clock" text={when(a.startsAt, city.id)} />
           <Fact icon="pin" text={`${a.placeName ? `${a.placeName} · ` : ''}${city ? areaName(city, a.areaId) : a.areaId}`} />
           <Fact icon="users" text={`${a.going}${a.capacity ? ` / ${a.capacity}` : ''} ${tx('going')}${full ? ` · ${tx('Full')}` : ''}`} />
           <Fact icon="banknote" text={a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : tx('Free')} />

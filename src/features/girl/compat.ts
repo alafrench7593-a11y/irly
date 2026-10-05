@@ -74,6 +74,22 @@ export type Reasons = {
   facets: Partial<Record<Facet, number>>;
 };
 
+/** Server reasons may omit lists (hidden fields): always give arrays. */
+export function normalizeReasons(r: Partial<Reasons> | null | undefined): Reasons {
+  const list = (x: unknown) => (Array.isArray(x) ? (x as string[]) : []);
+  return {
+    interests: list(r?.interests),
+    activities: list(r?.activities),
+    sports: list(r?.sports),
+    goals: list(r?.goals),
+    languages: list(r?.languages),
+    areas: list(r?.areas),
+    availability: list(r?.availability),
+    travel: list(r?.travel),
+    facets: r?.facets && typeof r.facets === 'object' ? r.facets : {},
+  };
+}
+
 const shared = (a: string[], b: string[]) => a.filter((x) => b.includes(x)).sort();
 
 /** |A ∩ B| / √(|A|·|B|); null when either side is empty (facet ignored). */

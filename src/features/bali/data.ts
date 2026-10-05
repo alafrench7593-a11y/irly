@@ -19,7 +19,8 @@ function useQuery<T>(key: string, run: () => Promise<T>, initial: T): { data: T;
   const [seen, setSeen] = useState(`${key}#${tick}`);
   if (seen !== `${key}#${tick}`) {
     setSeen(`${key}#${tick}`);
-    setLoading(true);
+    // Keep the previous results on screen while refining (no spinner flash per keystroke).
+    setLoading(Array.isArray(data) ? data.length === 0 : true);
     setError(null);
   }
   useEffect(() => {
