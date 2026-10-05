@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { NONE } from '@/lib/none';
 import type { CityId } from '@/data/types';
 import { CITIES } from '@/data/destinations';
 import { dateFor, dayOf } from '@/features/ai/intent';
@@ -128,7 +129,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
     };
   }, [load]);
 
-  return { activities: uid ? activities : [], refresh };
+  return { activities: uid ? activities : NONE, refresh };
 }
 
 /** Join (capacity-checked server-side). Returns the activity chat id, or 'full'. */
@@ -358,7 +359,7 @@ export function useCalendar(): { items: CalendarItem[]; loading: boolean; error:
       supabase?.removeChannel(channel);
     };
   }, [uid, load]);
-  return { items: uid ? items : [], loading: uid ? loading : false, error: uid ? error : null, signedIn: Boolean(uid) };
+  return { items: uid ? items : NONE, loading: uid ? loading : false, error: uid ? error : null, signedIn: Boolean(uid) };
 }
 
 /** An .ics file for the phone's own calendar (Apple, Google, Outlook). */
@@ -412,5 +413,5 @@ export function useRecommendations(cityId: string): Recommendation[] {
       alive = false;
     };
   }, [cityId, uid]);
-  return uid ? list : [];
+  return uid ? list : NONE;
 }

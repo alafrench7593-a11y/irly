@@ -211,7 +211,7 @@ export default function Home() {
         {sections.map((sec, i) => (
           <Animated.View key={sec.category.id} entering={enter.rise(6, 80)} style={styles.section}>
             <SectionHeader
-              overline={i === 0 ? `For you · ${moment.title}` : sec.category.tagline}
+              overline={i === 0 ? tx('For you · {when}', { when: moment.title }) : sec.category.tagline}
               title={sec.category.label}
               action={sec.items.length ? `${sec.items.length}` : undefined}
             />

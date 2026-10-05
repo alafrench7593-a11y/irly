@@ -1,4 +1,5 @@
 import { ACTIVITIES, INTERESTS, USER_TYPES } from '@/data/catalog';
+import { t as tx } from '@/i18n';
 import type { Intent, Person, UserType } from '@/data/types';
 import type { Profile } from '@/state/store';
 
@@ -31,8 +32,9 @@ function overlap<T>(a: T[], b: T[]): T[] {
 }
 
 function list(labels: string[]): string {
-  if (labels.length <= 1) return labels[0] ?? '';
-  return `${labels.slice(0, -1).join(', ')} & ${labels[labels.length - 1]}`;
+  const l = labels.map((x) => tx(x));
+  if (l.length <= 1) return l[0] ?? '';
+  return `${l.slice(0, -1).join(', ')} & ${l[l.length - 1]}`;
 }
 
 export function scoreMatch(me: Profile, other: Person, intent: Intent, areaName: (id: string) => string): Match {
@@ -47,21 +49,21 @@ export function scoreMatch(me: Profile, other: Person, intent: Intent, areaName:
   if (sharedActivities.length) {
     const w = sharedActivities.length * (intent === 'sports' || intent === 'activities' ? 16 : 9);
     score += Math.min(w, 40);
-    reasons.push({ w, text: `Also into ${list(sharedActivities.slice(0, 2).map((k) => ACTIVITIES[k].label.toLowerCase()))}` });
+    reasons.push({ w, text: tx('Also into {x}', { x: list(sharedActivities.slice(0, 2).map((k) => ACTIVITIES[k].label.toLowerCase())) }) });
   }
 
   const sharedInterests = overlap(me.interests, other.interests);
   if (sharedInterests.length) {
     const w = sharedInterests.length * (intent === 'friends' || intent === 'similar' ? 9 : 6);
     score += Math.min(w, 30);
-    reasons.push({ w, text: `Shares your love of ${list(sharedInterests.slice(0, 2).map((i) => INTERESTS[i].label.toLowerCase()))}` });
+    reasons.push({ w, text: tx('Shares your love of {x}', { x: list(sharedInterests.slice(0, 2).map((i) => INTERESTS[i].label.toLowerCase())) }) });
   }
 
   if (intent === 'similar') {
     const same = overlap(me.types, other.types);
     if (same.length) {
       score += 18 * same.length;
-      reasons.push({ w: 20, text: `${USER_TYPES[same[0]].label} like you` });
+      reasons.push({ w: 20, text: tx('{type} like you', { type: tx(USER_TYPES[same[0]].label) }) });
     }
   }
 
@@ -69,7 +71,7 @@ export function scoreMatch(me: Profile, other: Person, intent: Intent, areaName:
     const pair = (me.types.includes(a) && other.types.includes(b)) || (me.types.includes(b) && other.types.includes(a));
     if (pair && intents.includes(intent)) {
       score += 16;
-      const label = text === 'Local who knows the city' ? `Local, knows ${areaName(other.areaId)}` : text;
+      const label = text === 'Local who knows the city' ? tx('Local, knows {area}', { area: areaName(other.areaId) }) : tx(text);
       reasons.push({ w: 18, text: label });
       break;
     }
@@ -85,7 +87,7 @@ export function scoreMatch(me: Profile, other: Person, intent: Intent, areaName:
   }
   if (other.verified) {
     score += 6;
-    reasons.push({ w: 4, text: 'Verified by IRLY' });
+    reasons.push({ w: 4, text: tx('Verified by IRLY') });
   }
   if (other.online) score += 4;
 

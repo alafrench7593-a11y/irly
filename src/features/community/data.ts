@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { supabase, topic } from '@/lib/supabase';
@@ -230,7 +231,7 @@ export function useCommunityFeed(communityId: string) {
     [refresh],
   );
 
-  return { posts: uid ? posts : [], loading: uid ? loading : false, error, refresh, post, vote, remove };
+  return { posts: uid ? posts : NONE, loading: uid ? loading : false, error, refresh, post, vote, remove };
 }
 
 export function useCommunityList(cityId: string) {
@@ -259,7 +260,7 @@ export function useCommunityList(cityId: string) {
       alive = false;
     };
   }, [cityId, uid]);
-  return uid ? list : [];
+  return uid ? list : NONE;
 }
 
 export async function fetchDigest(communityId: string): Promise<Digest> {
@@ -312,7 +313,7 @@ export function useCommunityActivities(communityId: string) {
   const refresh = useCallback(() => {
     load().then(setList).catch(() => undefined);
   }, [load]);
-  return { activities: uid ? list : [], refresh };
+  return { activities: uid ? list : NONE, refresh };
 }
 
 export async function joinCommunity(id: string): Promise<string> {

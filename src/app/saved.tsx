@@ -58,6 +58,7 @@ export default function SavedScreen() {
 
   useEffect(() => {
     let alive = true;
+    if (!items.length) return;
     titlesFor(items).then((m) => alive && setTitles(m));
     return () => {
       alive = false;

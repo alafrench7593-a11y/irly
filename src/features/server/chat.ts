@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
@@ -66,7 +67,7 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
     };
   }, [uid, refresh]);
 
-  const conversations = (uid ? rows : []).map(
+  const conversations = (uid ? rows : NONE).map(
     (r): Conversation => ({
       id: r.conversation_id,
       cityId: 'dubai',

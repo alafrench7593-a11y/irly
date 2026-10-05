@@ -1,4 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
+import { NotFound } from '@/components/layout/NotFound';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +34,7 @@ export default function PersonProfile() {
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
   });
-  if (!person) return null;
+  if (!person) return <NotFound title="This person is no longer on IRLY" />;
 
   const city = CITIES[person.cityId];
   const dest = DESTINATIONS[city.destinationId];

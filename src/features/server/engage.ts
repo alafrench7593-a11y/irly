@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { NONE } from '@/lib/none';
 import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 import { useAccount } from '@/features/auth/account';
@@ -320,7 +321,7 @@ export function useComments(t: Target) {
     [refresh],
   );
 
-  return { comments: uid ? list : [], loading: uid ? loading : false, add, remove, refresh, signedIn: Boolean(uid) };
+  return { comments: uid ? list : NONE, loading: uid ? loading : false, add, remove, refresh, signedIn: Boolean(uid) };
 }
 
 /* ───────── Saved ───────── */
@@ -346,5 +347,5 @@ export function useSaved() {
       alive = false;
     };
   }, [load]);
-  return { items: uid ? items : [], refresh, signedIn: Boolean(uid) };
+  return { items: uid ? items : NONE, refresh, signedIn: Boolean(uid) };
 }

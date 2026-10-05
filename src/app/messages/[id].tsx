@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { NotFound } from '@/components/layout/NotFound';
 import { t as tx } from '@/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -156,7 +157,7 @@ function ServerThreadView({ id }: { id: string }) {
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         <Glass style={StyleSheet.absoluteFill} border={false} intensity={60} />
         <View style={styles.headerRow}>
-          <IconButton icon="chevronLeft" label="Back" onPress={() => router.back()} />
+          <IconButton icon="chevronLeft" label="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text variant="titleS" numberOfLines={1}>
               {thread.title}
@@ -199,7 +200,7 @@ function Thread() {
 
   const sendStyle = useAnimatedStyle(() => ({ transform: [{ scale: sendScale.value }], opacity: 0.4 + sendScale.value * 0.6 }));
 
-  if (!conversation) return null;
+  if (!conversation) return <NotFound title="This conversation is not available" />;
   const messages = allMessages(conversation, sent);
   const person = conversation.kind === 'direct' ? findPerson(conversation.personIds[0]) : undefined;
 
@@ -302,7 +303,7 @@ function Thread() {
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         <Glass style={StyleSheet.absoluteFill} border={false} intensity={60} />
         <View style={styles.headerRow}>
-          <IconButton icon="chevronLeft" label="Back" onPress={() => router.back()} />
+          <IconButton icon="chevronLeft" label="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text variant="titleS" numberOfLines={1}>
               {conversation.title}

@@ -51,7 +51,7 @@ export default function PlaceScreen() {
     return (
       <View style={[styles.center, { backgroundColor: t.c.bg, gap: 12 }]}>
         <Text variant="titleM">{error ? 'Could not load this place' : 'Place not found'}</Text>
-        <Button label="Back" variant="secondary" onPress={() => router.back()} />
+        <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </View>
     );
   }

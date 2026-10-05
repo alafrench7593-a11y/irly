@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
 import { imageBytes, imageType } from '@/lib/media';
@@ -99,7 +100,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     };
   }, [cityId, uid, load]);
 
-  return { posts: uid ? posts : [], refresh };
+  return { posts: uid ? posts : NONE, refresh };
 }
 
 /** Post what you're doing right now. Photo goes to the member's own folder. */
@@ -182,7 +183,7 @@ export function useFriends(): { friends: Friend[]; refresh: () => void } {
       supabase?.removeChannel(channel);
     };
   }, [uid, load]);
-  return { friends: uid ? friends : [], refresh };
+  return { friends: uid ? friends : NONE, refresh };
 }
 
 /** Sends a request, or accepts one. Returns 'pending' or 'accepted'. */
@@ -243,6 +244,6 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
       .is('read_at', null)
       .then(() => setItems((list) => list.map((n) => (n.readAt ? n : { ...n, readAt: Date.parse(now) }))));
   }, [uid]);
-  const list = uid ? items : [];
+  const list = uid ? items : NONE;
   return { items: list, unread: list.filter((n) => !n.readAt).length, markAllRead };
 }
