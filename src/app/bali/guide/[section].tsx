@@ -86,12 +86,17 @@ function Article({ g }: { g: Guide }) {
           {g.sourceDate ? ` · ${date(g.sourceDate)}` : ''}
         </Text>
       ) : null}
+      {g.kind === 'irly_guide' && g.sourceUrl ? (
+        <Text variant="caption" tone="tertiary">
+          {tx('Figures as reported by this source on {date}. Not verified by IRLY: confirm on the official portal before you act.', { date: date(g.sourceDate) ?? '—' })}
+        </Text>
+      ) : null}
       {g.kind === 'official' ? (
         <Text variant="caption" color={verified ? t.c.positive : t.c.textTertiary}>
           {verified ? tx('Last verified by IRLY: {date}', { date: verified }) : tx('Not verified by IRLY yet: check the official source')}
         </Text>
       ) : null}
-      {g.sourceUrl ? <Button label="Open the official source" icon="arrowUpRight" size="sm" variant="secondary" onPress={() => Linking.openURL(g.sourceUrl as string)} /> : null}
+      {g.sourceUrl ? <Button label={g.kind === 'official' ? 'Open the official source' : 'Open the source'} icon="arrowUpRight" size="sm" variant="secondary" onPress={() => Linking.openURL(g.sourceUrl as string)} /> : null}
     </View>
   );
 }
