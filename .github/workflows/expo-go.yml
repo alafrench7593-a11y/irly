@@ -66,9 +66,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          TAP="https://expo.dev/--/to-exp/$(node -e "process.stdout.write(encodeURIComponent(process.env.URL))")"
+          TAPS="https://expo.dev/--/to-exp/$(node -e "process.stdout.write(encodeURIComponent(process.env.URL.replace('exp://','exps://')))")"
           QR="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$(node -e "process.stdout.write(encodeURIComponent(process.env.URL))")"
           UNTIL=$(date -u -d '+2 hours' '+%H:%M UTC')
-          BODY=$(printf '## IRLY dans Expo Go\n\n1. Installe **Expo Go** (App Store / Google Play).\n2. Sur le téléphone, ouvre : **%s**\n   Si rien ne se passe : ouvre Expo Go → « Enter URL manually » → colle `%s`\n   (ou scanne le QR code : appareil photo sur iPhone, Expo Go sur Android)\n\n![QR](%s)\n\nActif jusqu’à **%s** environ. Commit `%s`.\n' "$URL" "$URL" "$QR" "$UNTIL" "${GITHUB_SHA::7}")
+          BODY=$(printf '## IRLY dans Expo Go\n\n1. Installe **Expo Go** (App Store / Google Play).\n2. Sur le téléphone, touche : %s (si erreur : %s)\n   Lien Expo Go : **%s**\n   Si rien ne se passe : ouvre Expo Go → « Enter URL manually » → colle `%s`\n   (ou scanne le QR code : appareil photo sur iPhone, Expo Go sur Android)\n\n![QR](%s)\n\nActif jusqu’à **%s** environ. Commit `%s`.\n' "$TAP" "$TAPS" "$URL" "$URL" "$QR" "$UNTIL" "${GITHUB_SHA::7}")
           N=$(gh issue list --state open --search "Expo Go: IRLY link in:title" --json number --jq '.[0].number')
           if [ -n "$N" ]; then gh issue edit "$N" --body "$BODY"; gh issue comment "$N" --body "Nouveau lien : $URL (jusqu’à $UNTIL)"; else gh issue create --title "Expo Go: IRLY link" --body "$BODY"; fi
       - name: Keep the server up
