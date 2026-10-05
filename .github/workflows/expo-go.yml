@@ -37,7 +37,7 @@ jobs:
         run: |
           curl -sL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
           chmod +x cloudflared
-          nohup ./cloudflared tunnel --url http://localhost:8081 --no-autoupdate > cf.log 2>&1 &
+          nohup ./cloudflared tunnel --url http://localhost:8082 --no-autoupdate > cf.log 2>&1 &
           for i in $(seq 1 60); do
             HOST=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' cf.log | head -1 | sed 's#https://##' || true)
             [ -n "$HOST" ] && break
@@ -50,6 +50,7 @@ jobs:
       - name: Start Metro behind the tunnel
         run: |
           EXPO_PACKAGER_PROXY_URL="https://$HOST" nohup npx expo start --go --port 8081 > expo.log 2>&1 &
+          HOST="$HOST" nohup node .github/scripts/expo-go-proxy.mjs > proxy.log 2>&1 &
           for i in $(seq 1 90); do
             curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/status | grep -q 200 && break
             sleep 4
@@ -62,6 +63,13 @@ jobs:
         run: |
           curl -s -o /dev/null -w "android bundle: %{http_code}\n" "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=android&dev=true&minify=false" --max-time 600 || true
           curl -s -o /dev/null -w "ios bundle: %{http_code}\n" "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true&minify=false" --max-time 600 || true
+      - name: Check the public URL like a phone would
+        run: |
+          sleep 5
+          echo "OPEN=$(curl -s -o /dev/null -w '%{http_code}' https://$HOST/open)" >> "$GITHUB_ENV"
+          echo "MANIFEST=$(curl -s -o /dev/null -w '%{http_code}' -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' https://$HOST/)" >> "$GITHUB_ENV"
+          echo "MANIFEST_HTTP=$(curl -s -o /dev/null -w '%{http_code}' -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' http://$HOST/)" >> "$GITHUB_ENV"
+          curl -s -H 'expo-platform: android' -H 'accept: application/expo+json,application/json' https://$HOST/ | head -c 400; echo
       - name: Post the link
         env:
           GH_TOKEN: ${{ github.token }}
@@ -70,7 +78,7 @@ jobs:
           TAPS="https://expo.dev/--/to-exp/$(node -e "process.stdout.write(encodeURIComponent(process.env.URL.replace('exp://','exps://')))")"
           QR="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$(node -e "process.stdout.write(encodeURIComponent(process.env.URL))")"
           UNTIL=$(date -u -d '+2 hours' '+%H:%M UTC')
-          BODY=$(printf '## IRLY dans Expo Go\n\n1. Installe **Expo Go** (App Store / Google Play).\n2. Sur le téléphone, touche : %s (si erreur : %s)\n   Lien Expo Go : **%s**\n   Si rien ne se passe : ouvre Expo Go → « Enter URL manually » → colle `%s`\n   (ou scanne le QR code : appareil photo sur iPhone, Expo Go sur Android)\n\n![QR](%s)\n\nActif jusqu’à **%s** environ. Commit `%s`.\n' "$TAP" "$TAPS" "$URL" "$URL" "$QR" "$UNTIL" "${GITHUB_SHA::7}")
+          BODY=$(printf '## IRLY dans Expo Go\n\n**Sur le téléphone, ouvre : https://%s/open** puis touche le bouton.\n\n1. Installe **Expo Go** (App Store / Google Play).\n2. Autres liens : %s (ou %s)\n   Lien Expo Go : **%s**\n   Si rien ne se passe : ouvre Expo Go → « Enter URL manually » → colle `%s`\n   (ou scanne le QR code : appareil photo sur iPhone, Expo Go sur Android)\n\n![QR](%s)\n\nActif jusqu’à **%s** environ. Commit `%s`.\n\nContrôle serveur : page %s, manifest https %s, http %s.\n' "$HOST" "$TAP" "$TAPS" "$URL" "$URL" "$QR" "$UNTIL" "${GITHUB_SHA::7}" "$OPEN" "$MANIFEST" "$MANIFEST_HTTP")
           N=$(gh issue list --state open --search "Expo Go: IRLY link in:title" --json number --jq '.[0].number')
           if [ -n "$N" ]; then gh issue edit "$N" --body "$BODY"; gh issue comment "$N" --body "Nouveau lien : $URL (jusqu’à $UNTIL)"; else gh issue create --title "Expo Go: IRLY link" --body "$BODY"; fi
       - name: Keep the server up
