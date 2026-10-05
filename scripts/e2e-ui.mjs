@@ -81,28 +81,35 @@ async function main() {
     localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   });
 
-  const check = async (label, route, texts, act) => {
+  const check = async (label, route, texts, act, exact) => {
     try {
       if (route) await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
       if (act) await act();
       for (const t of texts) await page.getByText(t, { exact: false }).first().waitFor({ timeout: 15000 });
+      if (exact) await page.getByText(exact, { exact: true }).first().waitFor({ timeout: 15000 });
       passed++;
       console.log(`✓ ${label}`);
     } catch (e) {
       failed++;
       failures.push(label);
       console.log(`✗ ${label}: ${(e instanceof Error ? e.message : String(e)).split('\n')[0]}`);
+      const seen = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').slice(0, 400)).catch(() => '');
+      console.log(`   url: ${page.url()}\n   screen: ${seen}`);
     }
     await page.screenshot({ path: path.join(SHOTS, `${String(passed + failed).padStart(2, '0')}-${label.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}.png`) });
   };
   const click = (text) => page.getByText(text, { exact: true }).first().click();
 
-  await check('sign in through the app (email + password)', '/account', ['Your account'], async () => {
+  await check('sign in through the app (email + password)', '/account', [], async () => {
     await click('Continue with email');
     await page.getByPlaceholder('you@email.com').fill(EMAIL);
     await page.getByPlaceholder('Password').fill(PASSWORD);
-    await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
-  });
+    const buttons = page.getByRole('button', { name: 'Sign in', exact: true });
+    console.log(`   (${await buttons.count()} "Sign in" buttons)`);
+    await buttons.last().click();
+  }, 'Signed in');
+  // The session must survive a full reload (stored by the app).
+  await check('session persists after reload', '/account', [], null, 'Signed in');
   await check('Home shows Live Bali', '/', ['Live Bali']);
   await check('Discover shows Bali and restaurants doors', '/discover', ['Discover', 'Where to eat']);
   await check('Bali hub', '/bali', ["Don't just visit", 'Where should I live?', 'Areas, explained']);
