@@ -36,11 +36,11 @@ export default function Notifications() {
   // Examples of what IRLY sends, only before sign-in (never mixed with real ones).
   const auth = useAuthStatus();
   const items: Item[] = auth !== 'out' ? [] : [
-    a && s ? { id: 'n1', icon: 'users', title: tx('{name} joined {what}', { name: a.name, what: s.title }), body: 'You are now 7 going', ago: '4 min', personId: a.id, unread: true, onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
-    b ? { id: 'n2', icon: 'zap', title: tx('{name} is live nearby', { name: b.name }), body: 'Coffee and laptop, anyone around?', ago: '12 min', personId: b.id, unread: true, onPress: () => router.push('/live') } : null,
-    s ? { id: 'n3', icon: 'pin', title: 'New session near you', body: s.title, ago: '1 h', onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
-    c ? { id: 'n4', icon: 'handshake', title: tx('{name} accepted your connection', { name: c.name }), body: 'Say hi in Messages', ago: '3 h', personId: c.id, onPress: () => router.push('/messages') } : null,
-    e ? { id: 'n5', icon: 'calendar', title: 'Tomorrow', body: e.title, ago: '5 h', onPress: () => openHero({ kind: 'event', id: e.id }) } : null,
+    a && s ? { id: 'n1', icon: 'users', title: tx('{name} joined {what}', { name: a.name, what: tx(s.title) }), body: tx('You are now 7 going'), ago: '4 min', personId: a.id, unread: true, onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
+    b ? { id: 'n2', icon: 'zap', title: tx('{name} is live nearby', { name: b.name }), body: tx('Coffee and laptop, anyone around?'), ago: '12 min', personId: b.id, unread: true, onPress: () => router.push('/live') } : null,
+    s ? { id: 'n3', icon: 'pin', title: tx('New session near you'), body: tx(s.title), ago: '1 h', onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
+    c ? { id: 'n4', icon: 'handshake', title: tx('{name} accepted your connection', { name: c.name }), body: tx('Say hi in Messages'), ago: '3 h', personId: c.id, onPress: () => router.push('/messages') } : null,
+    e ? { id: 'n5', icon: 'calendar', title: tx('Tomorrow'), body: tx(e.title), ago: '5 h', onPress: () => openHero({ kind: 'event', id: e.id }) } : null,
   ].filter(Boolean) as Item[];
 
   return (

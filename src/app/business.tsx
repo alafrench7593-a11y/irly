@@ -136,7 +136,7 @@ function ProCard({ pro, onProfile }: { pro: Professional; onProfile?: () => void
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Icon name="star" size={12} color={t.accent} fill={t.accent} />
             <Text variant="caption" tone="secondary">
-              {pro.rating.toFixed(1)} · {pro.reviews} reviews · {pro.languages.join(', ')}
+              {[pro.rating.toFixed(1), tx('{n} reviews', { n: pro.reviews }), pro.languages.map((l) => tx(l)).join(', ')].join(' · ')}
             </Text>
           </View>
         </View>

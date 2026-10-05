@@ -104,7 +104,7 @@ export default function Profile() {
             ) : null}
             {profile.languages?.length ? (
               <Text variant="caption" tone="secondary">
-                Speaks {profile.languages.join(', ')}
+                {tx('Speaks {langs}', { langs: profile.languages.map((l) => tx(l)).join(', ') })}
               </Text>
             ) : null}
             {profile.faith && profile.faithVisible && profile.faith !== 'Prefer not to say' ? (

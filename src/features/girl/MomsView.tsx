@@ -184,7 +184,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
                   {c.name}
                 </Text>
                 <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
-                  {[c.tagline, c.members ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')}
+                  {[c.tagline ? tx(c.tagline) : null, c.members ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')}
                 </Text>
               </View>
               {c.member ? <GChip small label={tx('Joined')} selected /> : <GButton label="Join" onPress={() => join(c.id, c.name)} />}

@@ -269,7 +269,7 @@ function Thread() {
                       : { backgroundColor: t.c.surface, borderColor: t.c.line, borderWidth: StyleSheet.hairlineWidth * 2, borderBottomLeftRadius: 6 },
                   ]}
                 >
-                  <Text variant="body" raw color={mine ? t.c.onBrand : t.c.text}>
+                  <Text variant="body" raw={mine} color={mine ? t.c.onBrand : t.c.text}>
                     {m.text}
                   </Text>
                 </View>

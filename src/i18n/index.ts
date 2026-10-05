@@ -42,8 +42,29 @@ export const useLangStore = create<LangState>()(
 
 export const resolveLang = (s: LangSetting): Lang => (s === 'auto' ? deviceLang() : s);
 
+/**
+ * Sentences generated from data (regional seed content): matched by shape
+ * when there is no exact key, their parts translated on their own.
+ */
+const PATTERNS: [RegExp, string, string[]][] = [
+  [/^In (.+) since (\d{4})$/, 'In {city} since {year}', ['city', 'year']],
+  [/^(.+)\. Members across (.+) meet in real life, then keep the conversation going here\.$/, '{tagline}. Members across {city} meet in real life, then keep the conversation going here.', ['tagline', 'city']],
+  [/^Welcome to (.+)! Next meetup is on the calendar, see you there\?$/, 'Welcome to {city}! Next meetup is on the calendar, see you there?', ['city']],
+];
+
+function byPattern(text: string): string | undefined {
+  for (const [re, key, names] of PATTERNS) {
+    const m = re.exec(text);
+    if (m && fr[key]) return fr[key].replace(/\{(\w+)\}/g, (_, k) => {
+      const v = m[names.indexOf(k) + 1] ?? '';
+      return fr[v] ?? v;
+    });
+  }
+  return undefined;
+}
+
 export function translate(lang: Lang, text: string, vars?: Record<string, string | number>): string {
-  const base = lang === 'fr' ? (fr[text] ?? text) : text;
+  const base = lang === 'fr' ? (fr[text] ?? byPattern(text) ?? text) : text;
   if (!vars) return base;
   return base.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
 }

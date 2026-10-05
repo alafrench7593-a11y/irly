@@ -534,7 +534,7 @@ const ServiceBody = memo(function ServiceBody({ id }: { id: string; go: Go }) {
       <Section title="Details" index={3}>
         <View style={{ gap: space[5] }}>
           <InfoRow icon="banknote" label="From" value={`${formatPrice(s.priceFrom, city.currency)} ${tx(s.unit)}`} />
-          <InfoRow icon="languages" label="Languages" value={s.languages.join(' · ')} />
+          <InfoRow icon="languages" label="Languages" value={s.languages.map((l) => tx(l)).join(' · ')} />
           <InfoRow icon="pin" label="Based in" value={tx('{area} · serves all of {city}', { area: areaName(city, s.areaId), city: city.name })} />
         </View>
       </Section>
