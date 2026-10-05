@@ -46,7 +46,7 @@ jobs:
           cat cf.log | tail -20
           [ -n "$HOST" ] || { echo "No tunnel"; exit 1; }
           echo "HOST=$HOST" >> "$GITHUB_ENV"
-          echo "URL=exps://$HOST" >> "$GITHUB_ENV"
+          echo "URL=exp://$HOST" >> "$GITHUB_ENV"
       - name: Start Metro behind the tunnel
         run: |
           EXPO_PACKAGER_PROXY_URL="https://$HOST" nohup npx expo start --go --port 8081 > expo.log 2>&1 &
