@@ -68,6 +68,8 @@ export function useEngagement(type: TargetType, ids: string[]) {
       .channel(topic(`eng-${type}-${key.length}-${uid}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: `target_type=eq.${type}` }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_type=eq.${type}` }, reload)
+      // Unlikes are DELETEs, which Realtime cannot filter.
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'likes' }, reload)
       .subscribe();
     return () => {
       alive = false;

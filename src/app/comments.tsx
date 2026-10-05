@@ -164,7 +164,7 @@ function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () =>
             {c.id.startsWith('tmp-') ? 'Sending…' : timeAgo(Math.max(0, Math.round((now - c.createdAt) / 60000)))}
           </Text>
         </Text>
-        <Text variant="body" tone={c.deleted ? 'tertiary' : undefined}>
+        <Text variant="body" raw={!c.deleted} tone={c.deleted ? 'tertiary' : undefined}>
           {c.deleted ? 'Comment deleted' : c.body}
         </Text>
         {!c.deleted ? (

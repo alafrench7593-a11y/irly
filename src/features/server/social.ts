@@ -87,6 +87,10 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
       .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, () => {
         load().then((p) => alive && setPosts(p)).catch(() => undefined);
       })
+      // Realtime cannot filter DELETE events (the old row only has its id): listen unfiltered.
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, () => {
+        load().then((p) => alive && setPosts(p)).catch(() => undefined);
+      })
       .subscribe();
     return () => {
       alive = false;

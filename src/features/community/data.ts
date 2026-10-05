@@ -165,6 +165,7 @@ export function useCommunityFeed(communityId: string) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes' }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.community_post' }, reload)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'likes' }, reload)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: 'target_type=eq.community_post' }, reload)
       .subscribe();
     return () => {

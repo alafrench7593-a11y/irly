@@ -354,7 +354,7 @@ function Act({ cmd, cityId, busy, onCreate, onSwitch }: { cmd: Command; cityId: 
   if (cmd.intent === 'FIND_RESTAURANT') {
     return (
       <View style={styles.pad}>
-        <Button label="See ranked restaurants" icon="utensils" full onPress={() => router.push(e.areaId ? `/eat?area=${e.areaId}` : '/eat')} />
+        <Button label="See ranked restaurants" icon="utensils" full onPress={() => router.push(`/eat?city=${e.cityId ?? cityId}${e.areaId ? `&area=${e.areaId}` : ''}`)} />
       </View>
     );
   }

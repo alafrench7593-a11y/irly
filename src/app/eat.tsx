@@ -33,8 +33,10 @@ const label = (s: string) => tx(s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toU
 export default function Eat() {
   const t = useTheme();
   const router = useRouter();
-  const params = useLocalSearchParams<{ area?: string; kids?: string }>();
-  const cityId = useCityId();
+  const params = useLocalSearchParams<{ area?: string; kids?: string; city?: string }>();
+  // "Restaurants in Canggu" asked from Dubai opens Bali's list, not Dubai's.
+  const current = useCityId();
+  const cityId = params.city && params.city in CITIES ? (params.city as CityId) : current;
   const city = CITIES[cityId];
   const areas = useDestAreas(cityId);
   const now = useNow();

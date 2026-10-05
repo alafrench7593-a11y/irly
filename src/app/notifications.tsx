@@ -169,7 +169,7 @@ function ServerNotifications() {
                   {d.title}
                 </Text>
                 {d.body ? (
-                  <Text variant="bodyS" tone="secondary" numberOfLines={1}>
+                  <Text variant="bodyS" tone="secondary" numberOfLines={1} raw>
                     {d.body}
                   </Text>
                 ) : null}

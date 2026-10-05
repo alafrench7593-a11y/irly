@@ -527,7 +527,9 @@ function PostCard({
           </PressableScale>
         )}
       </View>
-      <Text variant="body">{p.body}</Text>
+      <Text variant="body" raw>
+        {p.body}
+      </Text>
 
       {p.poll ? (
         <View style={{ gap: 6 }}>

@@ -61,7 +61,7 @@ export default function BaliTest() {
             </View>
             <Icon name={ICON[d.theme]} size={18} color={t.c.text} />
             <Text variant="bodyS" style={{ flex: 1 }}>
-              {tx(d.title)}
+              {d.title.replace(/: (.+)$/, (_, task: string) => `: ${tx(task)}`)}
             </Text>
             <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
           </PressableScale>

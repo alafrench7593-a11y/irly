@@ -265,7 +265,9 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
               </View>
             </View>
             {p.mediaUrl ? <Image source={{ uri: p.mediaUrl }} style={styles.photo} contentFit="cover" /> : null}
-            <Text variant={p.mediaUrl ? 'body' : 'titleM'}>{p.body}</Text>
+            <Text variant={p.mediaUrl ? 'body' : 'titleM'} raw>
+              {p.body}
+            </Text>
             {p.activityId ? (
               <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={`Join ${p.activityTitle ?? 'the activity'}`}>
                 <Icon name="calendar" size={18} color={t.c.text} />

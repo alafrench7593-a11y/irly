@@ -88,10 +88,10 @@ export default function BaliQuiz() {
             </Text>
             <View style={styles.wrap}>
               {f.why.map((w) => (
-                <Chip key={w} size="sm" icon="check" label={tx(w)} selected={i !== 0} />
+                <Chip key={w} size="sm" icon="check" label={reason(w)} selected={i !== 0} />
               ))}
               {f.watch.map((w) => (
-                <Chip key={w} size="sm" icon="minus" label={tx(w)} />
+                <Chip key={w} size="sm" icon="minus" label={reason(w)} />
               ))}
             </View>
           </PressableScale>
@@ -121,3 +121,9 @@ const styles = StyleSheet.create({
   resultHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });
+
+/** "Strong for surf" → "Idéal pour le surf": the sentence and the trait are translated separately. */
+function reason(w: string): string {
+  const m = w.match(/^(Strong|Weaker) for (.+)$/);
+  return m ? tx(`${m[1]} for {what}`, { what: tx(m[2]) }) : tx(w);
+}

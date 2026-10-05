@@ -22,6 +22,8 @@ type Props = TextProps & {
   color?: string;
   align?: TextStyle['textAlign'];
   italic?: boolean;
+  /** User-written content (messages, posts, comments): shown as typed, never translated. */
+  raw?: boolean;
 };
 
 export const Text = memo(function Text({
@@ -30,6 +32,7 @@ export const Text = memo(function Text({
   color,
   align,
   italic,
+  raw,
   style,
   children,
   ...rest
@@ -59,7 +62,7 @@ export const Text = memo(function Text({
       {...rest}
       style={[base, { fontFamily, color: color ?? tones[tone], textAlign: align }, style]}
     >
-      {lang === 'en' ? children : localize(children, lang)}
+      {lang === 'en' || raw ? children : localize(children, lang)}
     </RNText>
   );
 });
