@@ -18,6 +18,16 @@ import Calendar from 'lucide-react-native/icons/calendar';
 import Camera from 'lucide-react-native/icons/camera';
 import Car from 'lucide-react-native/icons/car';
 import Check from 'lucide-react-native/icons/check';
+import ShoppingBag from 'lucide-react-native/icons/shopping-bag';
+import Dog from 'lucide-react-native/icons/dog';
+import PawPrint from 'lucide-react-native/icons/paw-print';
+import Baby from 'lucide-react-native/icons/baby';
+import Popcorn from 'lucide-react-native/icons/popcorn';
+import Drama from 'lucide-react-native/icons/drama';
+import Brush from 'lucide-react-native/icons/brush';
+import Ship from 'lucide-react-native/icons/ship';
+import Gamepad2 from 'lucide-react-native/icons/gamepad-2';
+import WandSparkles from 'lucide-react-native/icons/wand-sparkles';
 import ChevronDown from 'lucide-react-native/icons/chevron-down';
 import ChevronUp from 'lucide-react-native/icons/chevron-up';
 import Satellite from 'lucide-react-native/icons/satellite';
@@ -135,6 +145,16 @@ export const icons = {
   car: Car,
   check: Check,
   chevronDown: ChevronDown,
+  shoppingBag: ShoppingBag,
+  dog: Dog,
+  pawPrint: PawPrint,
+  baby: Baby,
+  popcorn: Popcorn,
+  drama: Drama,
+  brush: Brush,
+  ship: Ship,
+  gamepad: Gamepad2,
+  wand: WandSparkles,
   chevronUp: ChevronUp,
   satellite: Satellite,
   orbit3d: Rotate3d,

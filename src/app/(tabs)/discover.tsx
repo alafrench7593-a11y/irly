@@ -24,6 +24,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { CATEGORIES } from '@/data/catalog/categories';
 
 type Door = { label: string; caption: string; icon: IconName; photo: PhotoKey; href: string };
 
@@ -43,7 +44,9 @@ export default function Discover() {
     scrollY.set(e.contentOffset.y);
   });
 
+  // Every catalog category is a door, then the hubs.
   const doors: Door[] = [
+    ...CATEGORIES.map((c) => ({ label: c.label, caption: c.tagline, icon: c.icon, photo: c.photo, href: `/category/${c.id}` })),
     { label: 'Events', caption: `${content.events.length} this week`, icon: 'ticket', photo: content.events[0]?.visual.photo ?? 'dinner', href: '/events' },
     { label: 'Activities', caption: `${city.activityKinds.length} sports & more`, icon: 'activity', photo: ACTIVITIES[city.activityKinds[0]].photo ?? 'running', href: '/activities' },
     { label: 'Communities', caption: `${city.stats.communities} groups`, icon: 'users', photo: 'founders', href: '/communities' },

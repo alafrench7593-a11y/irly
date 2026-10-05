@@ -12,6 +12,7 @@ import type {
   UserType,
 } from '@/data/types';
 import { setHapticsEnabled } from '@/motion/haptics';
+import type { CategoryKey } from '@/data/catalog/categories';
 
 export type Appearance = 'auto' | 'day' | 'night';
 
@@ -54,10 +55,23 @@ export type Profile = {
   arrivedAt?: number;
 };
 
+/**
+ * A session created by the member. Universal: any catalog entry (category →
+ * subcategory → activity) or a custom activity becomes one. `kind` is kept
+ * for sessions created before the catalog existed.
+ */
 export type MyPlan = {
   id: string;
   cityId: CityId;
-  kind: ActivityKind;
+  kind?: ActivityKind;
+  categoryId?: CategoryKey;
+  subId?: string;
+  activityId?: string;
+  title?: string;
+  place?: string;
+  description?: string;
+  privacy?: 'public' | 'connections' | 'invite';
+  note?: string;
   day: string;
   time: string;
   spots: number;

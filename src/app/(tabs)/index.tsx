@@ -1,62 +1,40 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { LinearTransition, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
-import { LiveStrip } from '@/features/live/LiveStrip';
-import { Carousel, fromEvent, fromSession, HappeningRow, HighlightCard, PersonBubble, type Happening, type HomeGroup } from '@/components/cards/HomeCards';
-import { openCreate } from '@/features/create/createStore';
+import { EventCard } from '@/components/cards/EventCards';
+import { Carousel, CategoryCard, fromEvent, fromSession, HappeningRow, HighlightCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
 import { CommunityCard } from '@/components/cards/ThingCards';
 import { HomeHeader } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
-import { Chip, SectionHeader } from '@/components/ui/Controls';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { SectionHeader } from '@/components/ui/Controls';
+import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { CITIES, DESTINATIONS } from '@/data/destinations';
+import { CATEGORIES } from '@/data/catalog/categories';
+import { planDisplay } from '@/data/catalog/mapping';
+import { areaName, CITIES, DESTINATIONS } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
+import { momentFor } from '@/features/home/moment';
+import { LiveStrip } from '@/features/live/LiveStrip';
 import { localClock } from '@/lib/time';
+import { useNow } from '@/lib/useNow';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
-import { useCityId } from '@/state/store';
-import { category, layout, space, type CategoryId } from '@/theme/tokens';
+import { useCityId, useStore } from '@/state/store';
+import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-/** Category filters of the Home, in the order of the brief. */
-const FILTERS: { id: 'all' | CategoryId; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'sport', label: 'Sport' },
-  { id: 'networking', label: 'Networking' },
-  { id: 'food', label: 'Food' },
-  { id: 'coffee', label: 'Coffee' },
-  { id: 'padel', label: 'Padel' },
-  { id: 'beach', label: 'Beach' },
-  { id: 'nightlife', label: 'Nightlife' },
-  { id: 'travel', label: 'Travel' },
-  { id: 'wellness', label: 'Wellness' },
-  { id: 'dogwalk', label: 'Dog walk' },
-  { id: 'shopping', label: 'Shopping' },
-  { id: 'events', label: 'Events' },
-];
-
-/** The Home groups everything happening into the sections people think in. */
-const GROUPS: { id: HomeGroup; title: string; overline: string; icon: IconName; empty: string }[] = [
-  { id: 'sport', title: 'Sport', overline: 'Play together', icon: 'trophy', empty: 'No sport session yet' },
-  { id: 'networking', title: 'Networking', overline: 'Meet people who build', icon: 'handshake', empty: 'No networking session yet' },
-  { id: 'goingout', title: 'Going out', overline: 'Food, drinks, nights, culture', icon: 'martini', empty: 'Nothing planned for tonight yet' },
-  { id: 'activities', title: 'Activities', overline: 'Beach, wellness, outdoors', icon: 'palm', empty: 'No activity yet' },
-  { id: 'trips', title: 'Trips', overline: 'Day trips and getaways together', icon: 'plane', empty: 'No trip planned yet' },
-  { id: 'pets', title: 'Pets', overline: 'Dog walks and pet friends', icon: 'heart', empty: 'No dog walk yet' },
-];
-
 /**
- * Home answers one question: what is happening today, with whom, near me.
- * On launch the page reveals itself top to bottom (header, question,
- * categories, the day's highlight, people, activities) on one spring, so
- * it reads like a sentence instead of popping in at once.
+ * Home answers one question: "I just arrived. What can I do, and who can I
+ * do it with?" It opens on what is live right now, then every category as
+ * a door (sport, networking, food, trips...), then what fits this moment of
+ * the day for you, sessions near you, people, groups and events. The page
+ * reveals itself top to bottom on one spring.
  */
 export default function Home() {
   const t = useTheme();
@@ -67,15 +45,11 @@ export default function Home() {
   const city = CITIES[cityId];
   const dest = DESTINATIONS[city.destinationId];
   const content = getCityContent(cityId);
+  const profile = useStore((s) => s.profile);
+  const myPlans = useStore((s) => s.myPlans).filter((p) => p.cityId === cityId);
   const [sheet, setSheet] = useState(false);
-  const [filter, setFilter] = useState<'all' | CategoryId>('all');
-  const [now, setNow] = useState(() => Date.now());
+  const now = useNow();
   const scrollY = useSharedValue(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(id);
-  }, []);
 
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
@@ -89,18 +63,27 @@ export default function Home() {
     );
   }, [content]);
 
-  const filtered =
-    filter === 'all'
-      ? happenings
-      : filter === 'events'
-        ? happenings.filter((h) => h.type === 'event')
-        : happenings.filter((h) => h.color === category[filter]);
-  const highlight = filtered.find((h) => h.item.when.dayOffset === 0) ?? filtered[0];
-  const rest = filtered.filter((h) => h !== highlight).slice(0, 6);
+  const counts = useMemo(() => {
+    const m = new Map<string, number>();
+    happenings.forEach((h) => m.set(h.group, (m.get(h.group) ?? 0) + 1));
+    return m;
+  }, [happenings]);
+
+  const moment = useMemo(() => momentFor(city, now, profile.interests), [city, now, profile.interests]);
+  const recommended = useMemo(() => {
+    const rank = (h: Happening) => {
+      const i = moment.categories.indexOf(h.group);
+      return (i < 0 ? 10 : i) + h.item.when.dayOffset * 0.5;
+    };
+    return [...happenings].sort((a, b) => rank(a) - rank(b)).slice(0, 8);
+  }, [happenings, moment]);
+
+  const nearby = happenings.filter((h) => !recommended.includes(h)).slice(0, 5);
   const people = useMemo(
     () => [...content.people].sort((a, b) => Number(Boolean(b.online)) - Number(Boolean(a.online))).slice(0, 12),
     [content.people],
   );
+  const girl = profile.gender === 'woman';
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
@@ -124,104 +107,100 @@ export default function Home() {
           </Text>
         </Animated.View>
 
-        <Animated.View entering={enter.rise(1, 80)} style={styles.liveStrip}>
+        <Animated.View entering={enter.rise(1, 80)} style={styles.firstSection}>
           <LiveStrip />
         </Animated.View>
 
-        <Animated.View entering={enter.rise(1, 80)} style={styles.filters}>
-          <Rail gap={8}>
-            {FILTERS.map((f) => (
-              <Chip
-                key={f.id}
-                size="sm"
-                label={f.label}
-                dot={f.id === 'all' ? undefined : category[f.id]}
-                selected={filter === f.id}
-                onPress={() => setFilter(f.id)}
+        <Animated.View entering={enter.rise(2, 80)} style={styles.section}>
+          <SectionHeader overline="Everything you can do" title="Explore" action="Discover" onAction={() => router.push('/discover')} />
+          <Rail itemWidth={200}>
+            {CATEGORIES.map((c) => (
+              <CategoryCard
+                key={c.id}
+                label={c.label}
+                tagline={c.tagline}
+                icon={c.icon}
+                color={c.color}
+                photo={c.photo}
+                count={counts.get(c.id)}
+                onPress={() => router.push(`/category/${c.id}`)}
               />
+            ))}
+            {girl ? (
+              <CategoryCard label="IRLY Girl" tagline="Find your girls" icon="heart" color="#E8A0A8" photo="brunch" onPress={() => router.push('/category/girl')} />
+            ) : null}
+            <CategoryCard label="Communities" tagline="Belong somewhere" icon="users" color="#5E5E5E" photo="dinnerGroup" onPress={() => router.push('/communities')} />
+            <CategoryCard label="Events" tagline="This week in the city" icon="ticket" color="#FF3B30" photo="djSunset" onPress={() => router.push('/events')} />
+          </Rail>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(3, 80)} style={styles.section}>
+          <SectionHeader overline={moment.title} title="Recommended for you" />
+          <Rail itemWidth={280}>
+            {recommended.map((h) => (
+              <View key={h.id} style={{ width: 280 }}>
+                <HighlightCard h={h} height={300} />
+              </View>
             ))}
           </Rail>
         </Animated.View>
 
-        {highlight ? (
-          <Animated.View key={`hl-${filter}`} entering={enter.rise(2, 80)} style={styles.block}>
-            <HighlightCard h={highlight} />
-          </Animated.View>
-        ) : (
-          <Animated.View entering={enter.fade(2)} style={[styles.empty, { borderColor: t.c.line }]}>
-            <Text variant="titleS">Nothing in this category yet</Text>
-            <Text variant="bodyS" tone="secondary" align="center">
-              Start one: tap Create, people nearby will see it.
-            </Text>
-          </Animated.View>
-        )}
-
-        <Animated.View entering={enter.rise(3, 80)} style={styles.section}>
-          <SectionHeader title="People around you" action="See all" onAction={() => router.push('/match?intent=friends')} />
-          <Carousel
-            data={people}
-            itemWidth={76}
-            gap={10}
-            keyOf={(p) => p.id}
-            render={(p) => <PersonBubble person={p} city={city} />}
-          />
-        </Animated.View>
-
-        {filter === 'all' ? (
-          GROUPS.map((g, i) => {
-            const items = happenings.filter((h) => h.group === g.id && h !== highlight).slice(0, 8);
-            return (
-              <Animated.View key={g.id} entering={enter.rise(Math.min(4 + i, 6), 80)} style={styles.section}>
-                <SectionHeader overline={g.overline} title={g.title} action={items.length ? `${items.length}` : undefined} />
-                {items.length ? (
-                  <Rail itemWidth={260}>
-                    {items.map((h) => (
-                      <View key={h.id} style={{ width: 260 }}>
-                        <HighlightCard h={h} height={260} compact />
-                      </View>
-                    ))}
-                  </Rail>
-                ) : (
-                  <PressableScale
-                    haptic="select"
-                    scaleTo={0.98}
-                    onPress={() => openCreate()}
-                    style={[styles.emptyGroup, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}
-                    accessibilityLabel={`${g.title}: nothing yet. Create one`}
-                  >
-                    <View style={[styles.emptyIcon, { backgroundColor: t.c.overlay }]}>
-                      <Icon name={g.icon} size={20} color={t.c.text} />
+        {myPlans.length ? (
+          <Animated.View entering={enter.rise(4, 80)} style={styles.section}>
+            <SectionHeader title="Your sessions" action="All" onAction={() => router.push('/social')} />
+            <View style={styles.rows}>
+              {myPlans.slice(0, 3).map((p) => {
+                const d = planDisplay(p);
+                return (
+                  <View key={p.id} style={[styles.mine, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
+                    <View style={[styles.mineIcon, { backgroundColor: `${d.color}1F` }]}>
+                      <Icon name={d.icon} size={18} color={d.color} />
                     </View>
-                    <View style={{ flex: 1, gap: 2 }}>
-                      <Text variant="titleS">{g.empty}</Text>
-                      <Text variant="bodyS" tone="secondary">
-                        Be the first: create one, people nearby will see it.
+                    <View style={{ flex: 1 }}>
+                      <Text variant="titleS" numberOfLines={1}>
+                        {d.title}
+                      </Text>
+                      <Text variant="bodyS" tone="secondary" numberOfLines={1}>
+                        {p.day} · {p.time} · {p.place ?? areaName(city, p.areaId)} · {p.spots} spots
                       </Text>
                     </View>
-                    <Icon name="plus" size={18} color={t.c.text} />
-                  </PressableScale>
-                )}
-              </Animated.View>
-            );
-          })
-        ) : (
-          <Animated.View entering={enter.rise(4, 80)} style={styles.section}>
-            <SectionHeader title="Activities near you" action="Plans" onAction={() => router.push('/social')} />
-            <View style={styles.rows}>
-              {rest.map((h, i) => (
-                <Animated.View key={`${filter}-${h.id}`} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
-                  <HappeningRow h={h} />
-                </Animated.View>
-              ))}
+                  </View>
+                );
+              })}
             </View>
           </Animated.View>
-        )}
+        ) : null}
+
+        <Animated.View entering={enter.rise(4, 80)} style={styles.section}>
+          <SectionHeader title="Sessions near you" action="Map" onAction={() => router.push('/map')} />
+          <View style={styles.rows}>
+            {nearby.map((h, i) => (
+              <Animated.View key={h.id} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
+                <HappeningRow h={h} />
+              </Animated.View>
+            ))}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(5, 80)} style={styles.section}>
+          <SectionHeader title="People you may connect with" action="See all" onAction={() => router.push('/match?intent=friends')} />
+          <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
+        </Animated.View>
 
         <Animated.View entering={enter.rise(6, 80)} style={styles.section}>
-          <SectionHeader title="Groups" action="All" onAction={() => router.push('/communities')} />
+          <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />
           <Rail itemWidth={250}>
             {content.communities.map((c) => (
               <CommunityCard key={c.id} community={c} />
+            ))}
+          </Rail>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(6, 80)} style={styles.section}>
+          <SectionHeader title="Events this week" action="See all" onAction={() => router.push('/events')} />
+          <Rail itemWidth={236}>
+            {content.events.slice(0, 8).map((e) => (
+              <EventCard key={`ev-${e.id}`} event={e} width={236} height={300} />
             ))}
           </Rail>
         </Animated.View>
@@ -234,7 +213,7 @@ export default function Home() {
         </PressableScale>
       </Animated.ScrollView>
 
-      <HomeHeader scrollY={scrollY} onDestination={() => setSheet(true)} solidAt={24} />
+      <HomeHeader scrollY={scrollY} solidAt={24} />
       <DestinationSheet visible={sheet} onClose={() => setSheet(false)} />
     </View>
   );
@@ -244,23 +223,10 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   intro: { paddingHorizontal: space.gutter, gap: 10 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  filters: { marginTop: space[6] },
-  liveStrip: { marginTop: space[6] },
-  block: { paddingHorizontal: space.gutter, marginTop: space[6] },
-  empty: {
-    height: 160,
-    borderRadius: 32,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginHorizontal: space.gutter,
-    marginTop: space[6],
-    paddingHorizontal: space[6],
-  },
+  firstSection: { marginTop: space[6] },
   section: { marginTop: space[8] },
   rows: { paddingHorizontal: space.gutter, gap: 10 },
-  emptyGroup: { marginHorizontal: space.gutter, flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 28, borderWidth: 1, borderStyle: 'dashed' },
-  emptyIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  mine: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.xl },
+  mineIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   footer: { alignItems: 'center', gap: 12, paddingVertical: space[8] },
 });
