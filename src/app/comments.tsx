@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { confirm } from '@/lib/confirm';
 import { t as tx } from '@/i18n';
 import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -56,8 +57,11 @@ export default function CommentsScreen() {
 
   const onMore = (c: Comment) => {
     if (c.mine) {
-      remove(c.id);
-      toast('Comment deleted', 'check', 'brand');
+      confirm('Delete this comment?', () =>
+        remove(c.id)
+          .then(() => toast('Comment deleted', 'check', 'brand'))
+          .catch(() => toast('Could not delete the comment', 'x', 'live')),
+      );
     } else {
       reportItem({ type: 'comment', id: c.id }, 'inappropriate', c.authorId)
         .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))

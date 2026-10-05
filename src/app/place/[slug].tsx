@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { cityWhen } from '@/lib/time';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
@@ -20,7 +21,6 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const when = (ms: number) => new Date(ms).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 const price = (n: number | null) => (n == null ? null : n === 0 ? 'Free' : '$'.repeat(n));
 const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 
@@ -114,7 +114,7 @@ export default function PlaceScreen() {
                       {a.title}
                     </Text>
                     <Text variant="caption" tone="tertiary">
-                      {when(a.startsAt)} · {a.going} {tx('going')}
+                      {cityWhen(a.startsAt, p.cityId)} · {a.going} {tx('going')}
                     </Text>
                   </View>
                   <Text variant="label">{tx('Join')}</Text>

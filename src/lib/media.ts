@@ -10,3 +10,13 @@ export function imageType(uri: string): { ext: string; contentType: string } {
   if (kind === 'webp') return { ext: 'webp', contentType: 'image/webp' };
   return { ext: 'jpg', contentType: 'image/jpeg' };
 }
+
+/** Bytes of a picked image: data: URIs are decoded here (fetch of data: is unreliable on Android). */
+export async function imageBytes(uri: string): Promise<ArrayBuffer> {
+  const m = uri.match(/^data:[^;]+;base64,(.*)$/);
+  if (!m) return (await fetch(uri)).arrayBuffer();
+  const bin = atob(m[1]);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}

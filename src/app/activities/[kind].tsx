@@ -1,4 +1,7 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
+import { t as tx } from '@/i18n';
+import { openCreate } from '@/features/create/createStore';
+import { SESSION_CATEGORY } from '@/data/catalog/mapping';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -32,7 +35,6 @@ const HERO = 300;
 
 export default function ActivityKindScreen() {
   const t = useTheme();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { kind } = useLocalSearchParams<{ kind: ActivityKind }>();
   const cityId = useCityId();
@@ -111,7 +113,11 @@ export default function ActivityKindScreen() {
 
       <PageHeader title={a.label} scrollY={scrollY} />
       <View style={[styles.cta, { bottom: insets.bottom + 16 }]}>
-        <Button label={`Start a ${a.label.toLowerCase()} plan`} icon="plus" onPress={() => router.push('/social')} />
+        <Button
+          label={tx('Start a {what} plan', { what: tx(a.label).toLowerCase() })}
+          icon="plus"
+          onPress={() => openCreate(null, { categoryId: SESSION_CATEGORY[kind] ?? 'sport', activityId: ACTIVITIES[kind] ? kind : undefined })}
+        />
       </View>
     </View>
   );

@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { t as tx } from '@/i18n';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
@@ -163,7 +164,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
     const here = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
     const far = Math.abs(here.latitude - start.latitude) > 0.6 || Math.abs(here.longitude - start.longitude) > 0.6;
     if (far) {
-      toast(`You are not in ${city.name} right now. Showing ${city.name}`, 'pin', 'brand');
+      toast(tx('You are not in {city} right now. Showing {city}', { city: city.name }), 'pin', 'brand');
       centerOn(start, start.latitudeDelta);
     } else {
       centerOn(here, 0.02);

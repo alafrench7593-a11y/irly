@@ -1,4 +1,6 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
+import { cityWhen } from '@/lib/time';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -32,7 +34,6 @@ export async function searchServer(q: string, cityId: string | null, limit = 30)
 }
 
 const ICON: Record<SearchHit['kind'], IconName> = { activity: 'calendar', community: 'users', person: 'user', place: 'pin', area: 'map', city: 'globe', category: 'layers' };
-const when = (ms: number) => new Date(ms).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 /**
  * Live results from members (sessions, events, communities, people) and the
@@ -71,7 +72,7 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
     else if (h.kind === 'city' && setCity) setCity(h.id as never);
     else if (h.kind === 'place')
       toggleSave({ type: 'place', id: h.id })
-        .then((saved) => toast(saved ? `${h.title} saved` : 'Removed from saved', 'bookmark', 'brand'))
+        .then((saved) => toast(saved ? tx('{name} saved', { name: h.title }) : 'Removed from saved', 'bookmark', 'brand'))
         .catch(() => undefined);
     else if (h.kind === 'person')
       addFriend(h.id)
@@ -97,7 +98,7 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
               {h.title}
             </Text>
             <Text variant="caption" tone="tertiary" numberOfLines={1}>
-              {h.startsAt ? when(h.startsAt) : (h.subtitle ?? h.kind)}
+              {h.startsAt ? cityWhen(h.startsAt, h.cityId) : (h.subtitle ?? h.kind)}
               {h.areaId && h.kind === 'activity' ? ` · ${h.areaId}` : ''}
             </Text>
           </View>

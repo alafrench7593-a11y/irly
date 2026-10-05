@@ -109,3 +109,19 @@ export function isHappeningNow(when: When, city: Pick<City, 'utcOffset'>, now = 
   const current = cityHour(city, now);
   return current >= start - 0.25 && current <= start + when.durationMin / 60;
 }
+
+const HOUR_MS = 60 * 60 * 1000;
+const offsetOf = (cityId: string | null | undefined) => (cityId === 'bali' ? 8 : 4);
+
+/**
+ * A server timestamp written as the city's wall clock ("Sat 12 Oct, 19:00"
+ * in Bali for a Bali meetup, wherever the phone is). UAE +4, Bali +8, no DST.
+ */
+export function cityWhen(ms: number, cityId: string | null | undefined, opts: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }): string {
+  return new Date(ms + offsetOf(cityId) * HOUR_MS).toLocaleString('en-GB', { ...opts, timeZone: 'UTC' });
+}
+
+/** The city's calendar day of a timestamp, as a sortable key. */
+export function cityDayKey(ms: number, cityId: string | null | undefined): string {
+  return new Date(ms + offsetOf(cityId) * HOUR_MS).toISOString().slice(0, 10);
+}

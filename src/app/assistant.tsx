@@ -150,7 +150,8 @@ export default function Assistant() {
       haptic('success');
       track(cmd.intent === 'CREATE_EVENT' ? 'EVENT_CREATE' : 'ACTIVITY_CREATE', { category: e.category ?? 'other', via: source });
       logCommand(cmd, source, 'executed', id ? { type: 'activity', id } : undefined);
-      toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
+      // Signed out, the plan only exists on this phone: no shared chat was created.
+      toast(id ? tx('{title} is live. Chat created', { title }) : tx('{title} saved on this phone. Sign in to share it', { title }), 'send', 'brand');
       setCmd(null);
       if (id) router.push(`/a/${id}`);
     } catch (err) {
@@ -173,7 +174,9 @@ export default function Assistant() {
             <Text variant="overline" tone="accent">
               IRLY assistant
             </Text>
-            <Text variant="displayM">{cmd ? cmd.input : 'What do you feel like doing?'}</Text>
+            <Text variant="displayM" raw={Boolean(cmd)}>
+              {cmd ? cmd.input : tx('What do you feel like doing?')}
+            </Text>
           </View>
 
           {!cmd ? (

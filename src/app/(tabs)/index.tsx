@@ -1,4 +1,6 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
+import { planDayLabel, upcomingPlans } from '@/features/plans/when';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
@@ -52,6 +54,7 @@ export default function Home() {
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
   const myPlans = useStore((s) => s.myPlans).filter((p) => p.cityId === cityId);
+  const upcoming = upcomingPlans(myPlans);
   const [sheet, setSheet] = useState(false);
   const now = useNow();
   const scrollY = useSharedValue(0);
@@ -143,11 +146,11 @@ export default function Home() {
           <CreateMenu />
         </Animated.View>
 
-        {myPlans.length ? (
+        {upcoming.length ? (
           <Animated.View entering={enter.rise(4, 80)} style={styles.section}>
             <SectionHeader title="Your sessions" action="All" onAction={() => router.push('/social')} />
             <View style={styles.rows}>
-              {myPlans.slice(0, 3).map((p) => {
+              {upcoming.slice(0, 3).map((p) => {
                 const d = planDisplay(p);
                 return (
                   <View key={p.id} style={[styles.mine, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
@@ -159,7 +162,7 @@ export default function Home() {
                         {d.title}
                       </Text>
                       <Text variant="bodyS" tone="secondary" numberOfLines={1}>
-                        {p.day} · {p.time} · {p.place ?? areaName(city, p.areaId)} · {p.spots ? `${p.spots} spots` : 'Unlimited'}
+                        {tx(planDayLabel(p))} · {p.time} · {p.place ?? areaName(city, p.areaId)} · {p.spots ? tx('{n} spots', { n: p.spots }) : tx('Unlimited')}
                       </Text>
                     </View>
                   </View>

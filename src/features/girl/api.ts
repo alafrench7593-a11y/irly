@@ -4,7 +4,7 @@ import { useStore } from '@/state/store';
 import { DEFAULT_WEIGHTS, matchScore, type MatchProfile, type Reasons, type Weights } from './compat';
 import { useGirlStore } from './girlStore';
 import type { Candidate, Filters, MatchAction, MatchProfileDraft, MatchResult, MatchState, MatchSummary, ReportCategory } from './types';
-import { imageType } from '@/lib/media';
+import { imageBytes, imageType } from '@/lib/media';
 
 /**
  * IRLY Match data access. Screens only talk to this.
@@ -122,7 +122,7 @@ const serverApi: MatchApi = {
     const paths: string[] = [];
     for (const [i, uri] of d.photoUris.entries()) {
       if (uri.startsWith('http')) continue;
-      const body = await (await fetch(uri)).arrayBuffer();
+      const body = await imageBytes(uri);
       const img = imageType(uri);
       const path = `${uid}/${Date.now()}-${i}.${img.ext}`;
       const { error } = await supabase!.storage.from('match-photos').upload(path, body, { contentType: img.contentType, upsert: false });

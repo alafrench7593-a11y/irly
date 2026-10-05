@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -150,7 +151,7 @@ function ProCard({ pro, onProfile }: { pro: Professional; onProfile?: () => void
             haptic={false}
             onPress={() => {
               haptic('success');
-              toast(`Intro requested with ${pro.name.split(' ')[0]}`, 'handshake', 'brand');
+              toast(tx('Intro requested with {name}', { name: pro.name.split(' ')[0] }), 'handshake', 'brand');
             }}
           />
         </View>

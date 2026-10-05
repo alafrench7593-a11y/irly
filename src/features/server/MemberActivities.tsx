@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { cityWhen } from '@/lib/time';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
@@ -16,8 +17,6 @@ import { useTheme } from '@/theme/useTheme';
 import { PressableScale } from '@/motion/PressableScale';
 import { joinServerActivity, useRecommendations, useServerActivities, type ServerActivity } from './activities';
 
-const when = (ms: number) =>
-  new Date(ms).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 /**
  * "Planned by members": real sessions other people created, from the
@@ -84,7 +83,7 @@ function MemberCard({ a, cityId, onChanged, friendsGoing }: { a: ServerActivity;
           {a.title}
         </Text>
         <Text variant="bodyS" tone="secondary" numberOfLines={1}>
-          {when(a.startsAt)} · {a.placeName ?? areaName(city, a.areaId)}
+          {cityWhen(a.startsAt, city.id)} · {a.placeName ?? areaName(city, a.areaId)}
         </Text>
         <View style={styles.row}>
           <Icon name="users" size={14} color={t.c.textSecondary} />

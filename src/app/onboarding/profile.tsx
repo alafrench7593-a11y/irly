@@ -37,8 +37,11 @@ export default function ProfileStep() {
   const bio = profile.bio ?? '';
 
   const pick = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85, allowsEditing: true, aspect: [1, 1] });
-    if (!res.canceled && res.assets[0]) update({ photoUri: res.assets[0].uri });
+    // Kept as data (not a blob: or cache file:// URI, which die on reload or
+    // when the OS clears its cache) until it is uploaded at sign-in.
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsEditing: true, aspect: [1, 1], base64: true });
+    const a = !res.canceled ? res.assets[0] : null;
+    if (a) update({ photoUri: a.base64 ? `data:${a.mimeType ?? 'image/jpeg'};base64,${a.base64}` : a.uri });
   };
 
   const ok =

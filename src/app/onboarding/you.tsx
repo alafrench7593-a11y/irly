@@ -38,7 +38,7 @@ export default function WhoAreYou() {
       step={0}
       total={4}
       overline={`IRLY ${city.name}`}
-      title={`Who are you in ${city.name}?`}
+      title={tx('Who are you in {city}?', { city: city.name })}
       subtitle="Pick up to three. IRLY uses this to introduce you to the right people, never to box you in."
       cta="Continue"
       canContinue={profile.types.length > 0}

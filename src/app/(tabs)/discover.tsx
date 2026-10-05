@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
@@ -106,7 +107,7 @@ export default function Discover() {
         <View style={{ paddingHorizontal: space.gutter, marginBottom: space[7] }}>
           <Field
             icon="search"
-            placeholder={`Search ${city.name}: padel, rooftop, visa…`}
+            placeholder={tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
             value={q}
             onChangeText={setQ}
             returnKeyType="search"
@@ -269,7 +270,7 @@ export default function Discover() {
             ) : null}
 
             <Animated.View entering={enter.rise(8)} style={styles.section}>
-              <SectionHeader overline="Neighbourhoods" title={`Around ${city.name}`} action="Map" onAction={() => router.push('/map')} />
+              <SectionHeader overline="Neighbourhoods" title={tx('Around {city}', { city: city.name })} action="Map" onAction={() => router.push('/map')} />
               <View style={styles.areas}>
                 {city.areas.map((a) => {
                   const n =

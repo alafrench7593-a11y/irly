@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -163,7 +164,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
                   {a.title}
                 </Text>
                 <Text variant="caption" color={girl.inkSoft}>
-                  {new Date(a.startsAt).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {a.going} {tx('going')}
+                  {cityWhen(a.startsAt, cityId, { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {a.going} {tx('going')}
                 </Text>
               </View>
             </PressableScale>

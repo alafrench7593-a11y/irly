@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ACTIVITIES, USER_TYPES } from '@/data/catalog';
@@ -50,7 +51,7 @@ export function ConnectButton({ person, size = 'md', full }: { person: Person; s
         if (state) return;
         connect(person.id);
         haptic('success');
-        toast(`Request sent to ${person.name}`, 'send', 'brand');
+        toast(tx('Request sent to {name}', { name: person.name }), 'send', 'brand');
       }}
     />
   );

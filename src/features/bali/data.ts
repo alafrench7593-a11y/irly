@@ -15,6 +15,13 @@ function useQuery<T>(key: string, run: () => Promise<T>, initial: T): { data: T;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  // A new key (filter, search, city) or a reload: show loading, drop the old error.
+  const [seen, setSeen] = useState(`${key}#${tick}`);
+  if (seen !== `${key}#${tick}`) {
+    setSeen(`${key}#${tick}`);
+    setLoading(true);
+    setError(null);
+  }
   useEffect(() => {
     let alive = true;
     run()

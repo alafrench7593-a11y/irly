@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { cityWhen } from '@/lib/time';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
@@ -34,8 +35,8 @@ const TRAITS: { id: Trait; label: string; invert?: boolean }[] = [
 ];
 
 const SECTIONS: { label: string; icon: 'utensils' | 'coffee' | 'laptop' | 'leaf' | 'baby' | 'shield' | 'waves' | 'home'; href: (area: string) => string }[] = [
-  { label: 'Restaurants', icon: 'utensils', href: (a) => `/eat?area=${a}` },
-  { label: 'With kids', icon: 'baby', href: (a) => `/eat?area=${a}&kids=1` },
+  { label: 'Restaurants', icon: 'utensils', href: (a) => `/eat?city=bali&area=${a}` },
+  { label: 'With kids', icon: 'baby', href: (a) => `/eat?city=bali&area=${a}&kids=1` },
   { label: 'Coworking', icon: 'laptop', href: () => '/search?q=coworking' },
   { label: 'Wellness', icon: 'leaf', href: () => '/search?q=yoga' },
   { label: 'Surf', icon: 'waves', href: () => '/search?q=surf' },
@@ -148,7 +149,11 @@ export default function BaliArea() {
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
           {SECTIONS.map((s) => (
-            <Chip key={s.label} size="sm" icon={s.icon} label={tx(s.label)} onPress={() => router.push(s.href(id) as never)} />
+            <Chip key={s.label} size="sm" icon={s.icon} label={tx(s.label)} onPress={() => {
+                const href = s.href(id);
+                if (href.startsWith('/search')) setCity('bali');
+                router.push(href as never);
+              }} />
           ))}
         </ScrollView>
 
@@ -163,7 +168,7 @@ export default function BaliArea() {
                     {a.title}
                   </Text>
                   <Text variant="caption" tone="tertiary">
-                    {new Date(a.startsAt).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {a.going} {tx('going')}
+                    {cityWhen(a.startsAt, 'bali', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {a.going} {tx('going')}
                   </Text>
                 </View>
               </PressableScale>
@@ -226,7 +231,16 @@ export default function BaliArea() {
               router.push(`/search?q=${encodeURIComponent(name)}`);
             }}
           />
-          <Button label="Communities" icon="users" variant="secondary" full onPress={() => router.push('/communities')} />
+          <Button
+            label="Communities"
+            icon="users"
+            variant="secondary"
+            full
+            onPress={() => {
+              setCity('bali');
+              router.push('/communities');
+            }}
+          />
           <Button label="IRLY Girl in Bali" icon="heartHandshake" variant="secondary" full onPress={() => router.push('/girl')} />
           {area?.lat != null && area.lng != null ? (
             <Button label="Open in maps" icon="map" variant="ghost" full onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${area.lat},${area.lng}`)} />

@@ -68,9 +68,12 @@ export default function Communities() {
               <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
             </PressableScale>
           ))}
-          <Button label="Create a community" icon="plus" variant="secondary" full onPress={() => router.push('/community/new')} />
         </View>
       ) : null}
+      {/* Always reachable, even in a city with no server communities yet. */}
+      <View style={{ paddingHorizontal: space.gutter, marginBottom: space[6] }}>
+        <Button label="Create a community" icon="plus" variant="secondary" full onPress={() => router.push('/community/new')} />
+      </View>
       <View style={{ paddingHorizontal: space.gutter, gap: 14 }}>
         {list.map((c, i) => (
           <Animated.View key={c.id} entering={enter.rise(i, 60)} exiting={FadeOut.duration(140)} layout={LinearTransition.springify(420)}>

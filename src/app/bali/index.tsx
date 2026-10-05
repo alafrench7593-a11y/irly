@@ -19,7 +19,7 @@ const DOORS: Door[] = [
   { label: 'My Bali move', caption: 'Visa, housing, SIM… step by step', icon: 'package', photo: 'apartment', href: '/bali/move' },
   { label: 'Test Bali first', caption: '7, 14, 30 or 60 days', icon: 'plane', photo: 'beachSunset', href: '/bali/test' },
   { label: 'Visa & stay', caption: 'Official sources first', icon: 'stamp', photo: 'baliTemple', href: '/bali/guide/visa' },
-  { label: 'Where to eat', caption: 'Ranked, then find someone to eat with', icon: 'utensils', photo: 'dinner', href: '/eat' },
+  { label: 'Where to eat', caption: 'Ranked, then find someone to eat with', icon: 'utensils', photo: 'dinner', href: '/eat?city=bali' },
   { label: 'Girls moving to Bali', caption: 'Meet women before you arrive', icon: 'heartHandshake', photo: 'brunch', href: '/girl/moving' },
 ];
 

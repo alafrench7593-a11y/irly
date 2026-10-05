@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useStore, type Profile } from '@/state/store';
-import { imageType } from '@/lib/media';
+import { imageBytes, imageType } from '@/lib/media';
 
 /** Signup language names → ISO codes stored server-side. */
 const LANG: Record<string, string> = { English: 'en', Français: 'fr', العربية: 'ar', हिन्दी: 'hi', Русский: 'ru', Español: 'es', Italiano: 'it', Deutsch: 'de', Bahasa: 'id', Filipino: 'tl', اردو: 'ur', Português: 'pt' };
@@ -98,7 +98,7 @@ async function writeProfile(uid: string): Promise<void> {
   // The signup photo follows to the member's own folder (best effort).
   if (profile.photoUri && !/^https?:/.test(profile.photoUri)) {
     try {
-      const body = await (await fetch(profile.photoUri)).arrayBuffer();
+      const body = await imageBytes(profile.photoUri);
       const img = imageType(profile.photoUri);
       const path = `${uid}/avatar-${Date.now()}.${img.ext}`;
       const up = await supabase.storage.from('profile-photos').upload(path, body, { contentType: img.contentType });

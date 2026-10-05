@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useStore } from '@/state/store';
 import { t as tx } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -27,6 +28,8 @@ const ICON: Record<PlanTheme, IconName> = {
 export default function BaliTest() {
   const t = useTheme();
   const router = useRouter();
+  // Search and Communities follow the current city: show Bali's.
+  const setCity = useStore((st) => st.setCity);
   const answers = useBaliStore((s) => s.answers);
   const profiles = useAreaProfiles('bali');
   const [length, setLength] = useState<PlanLength>(14);
@@ -50,7 +53,7 @@ export default function BaliTest() {
         {plan.map((d) => (
           <PressableScale
             key={d.day}
-            onPress={() => (d.theme === 'housing' || d.theme === 'healthcare' ? router.push(`/bali/guide/${d.theme}`) : router.push(`/search?q=${encodeURIComponent(d.search)}`))}
+            onPress={() => (d.theme === 'housing' || d.theme === 'healthcare' ? router.push(`/bali/guide/${d.theme}`) : (setCity('bali'), router.push(`/search?q=${encodeURIComponent(d.search)}`)))}
             haptic="select"
             scaleTo={0.98}
             style={[styles.day, { backgroundColor: t.c.surface }]}

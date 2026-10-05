@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
+import { wipeLocal } from '@/state/wipe';
 import { deleteServerAccount, signOut, useAccount } from '@/features/auth/account';
 import { LANGS, useLangStore } from '@/i18n';
-import { useGirlStore } from '@/features/girl/girlStore';
 import { useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
@@ -49,8 +49,6 @@ export default function Profile() {
   const bookings = useStore((s) => s.bookings);
   const hapticsOn = useStore((s) => s.hapticsOn);
   const setHaptics = useStore((s) => s.setHaptics);
-  const resetOnboarding = useStore((s) => s.resetOnboarding);
-  const deleteAccount = useStore((s) => s.deleteAccount);
   const now = useNow();
   const days = profile.arrivedAt ? Math.max(1, Math.round((now - profile.arrivedAt) / 86_400_000)) : 0;
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -238,7 +236,7 @@ export default function Profile() {
               label="Log out"
               onPress={() => {
                 signOut().catch(() => undefined);
-                resetOnboarding();
+                wipeLocal();
                 router.replace('/welcome');
               }}
             />
@@ -275,8 +273,7 @@ export default function Profile() {
                 toast(e instanceof Error ? e.message : 'Could not delete your account. Try again.', 'x', 'live');
                 return;
               }
-              useGirlStore.getState().reset();
-              deleteAccount();
+              wipeLocal();
               setConfirmDelete(false);
               toast('Your account has been deleted', 'check', 'live');
               router.replace('/welcome');

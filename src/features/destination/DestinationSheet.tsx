@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { t as tx } from '@/i18n';
 import { Badge, Divider } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
@@ -39,7 +40,7 @@ export function DestinationSheet({ visible, onClose }: Props) {
                   {destId === 'bali' ? '🌴' : dest.flag}  {dest.shortName}
                 </Text>
                 <Text variant="caption" tone="tertiary">
-                  {dest.cities.length > 1 ? `${dest.cities.length} emirates` : dest.country}
+                  {dest.cities.length > 1 ? tx('{n} emirates', { n: dest.cities.length }) : dest.country}
                 </Text>
               </View>
               {dest.cities.map((id) => {
@@ -102,7 +103,7 @@ export function DestinationSheet({ visible, onClose }: Props) {
                   if (joined) return;
                   joinWaitlist(destId);
                   haptic('success');
-                  toast(`You'll be first in ${d.shortName}`, 'bell', 'brand');
+                  toast(tx('Noted: we will show {place} first when it opens', { place: d.shortName }), 'bell', 'brand');
                 }}
                 style={[
                   styles.waitlist,

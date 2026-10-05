@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/Button';
 import { Chip, IconButton, SectionHeader } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
 import { CATEGORY_BY_ID, GIRL_CATEGORY, ideaPhoto, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { INTEREST_CATEGORY, planDisplay, SESSION_CATEGORY } from '@/data/catalog/mapping';
@@ -73,7 +72,15 @@ export default function CategoryScreen() {
     [category, content],
   );
 
-  if (!category) return null;
+  // Unknown id (old link): say so, with a way back, instead of a blank screen.
+  if (!category) {
+    return (
+      <View style={[styles.root, styles.gate, { paddingTop: insets.top + 40 }]}>
+        <Text variant="titleM">This category no longer exists</Text>
+        <Button label="Back" icon="chevronLeft" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+      </View>
+    );
+  }
 
   if (isGirl && gender !== 'woman') {
     return (
@@ -214,7 +221,7 @@ export default function CategoryScreen() {
             <PressableScale
               haptic="select"
               scaleTo={0.98}
-              onPress={() => toast('Creating communities arrives with accounts (server)', 'users', 'brand')}
+              onPress={() => router.push('/community/new')}
               style={[styles.empty, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}
               accessibilityLabel="Create a community"
             >

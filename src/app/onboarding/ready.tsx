@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -81,7 +82,7 @@ export default function Ready() {
         />
         <Animated.View entering={FadeIn.delay(150).duration(500)} style={{ alignItems: 'center', marginTop: 34, gap: 6 }}>
           <Text variant="overline" color="rgba(255,255,255,0.65)">
-            {name ? `Welcome, ${name}` : 'Welcome'}
+            {name ? tx('Welcome, {name}', { name }) : tx('Welcome')}
           </Text>
           <Text variant="displayL" tone="onDark" align="center">
             Building your <Text variant="displayL" tone="onDark" italic>{city.name}</Text>

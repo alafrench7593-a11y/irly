@@ -35,7 +35,7 @@ export default function Events() {
       if (when === 'today') return e.when.dayOffset === 0;
       if (when === 'tomorrow') return e.when.dayOffset === 1;
       if (when === 'weekend') return isWeekend(e.when, city);
-      return e.when.dayOffset <= 7;
+      return e.when.dayOffset < 7;
     })
     .filter((e) => cats.length === 0 || cats.includes(e.category))
     .sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time));

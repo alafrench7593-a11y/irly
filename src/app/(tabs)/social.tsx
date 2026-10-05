@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
@@ -142,7 +143,7 @@ function MyPlanCard({ plan }: { plan: MyPlan }) {
         {a.title} · {plan.day.toLowerCase()} at {plan.time}.
       </Text>
       <Text variant="bodyS" tone="secondary" style={{ marginTop: 4 }}>
-        {plan.place ?? areaName(city, plan.areaId)} · {plan.spots ? `${plan.spots} spots` : 'Unlimited'} · we will notify you when people join
+        {plan.place ?? areaName(city, plan.areaId)} · {plan.spots ? tx('{n} spots', { n: plan.spots }) : tx('Unlimited')} · {tx('we will notify you when people join')}
       </Text>
     </View>
   );

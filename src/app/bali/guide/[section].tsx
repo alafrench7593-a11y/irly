@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useStore } from '@/state/store';
 import { t as tx } from '@/i18n';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -25,6 +26,8 @@ const date = (d: string | null) => (d ? new Date(d).toLocaleDateString('en-GB', 
 export default function GuideScreen() {
   const t = useTheme();
   const router = useRouter();
+  // Search and Communities follow the current city: show Bali's.
+  const setCity = useStore((st) => st.setCity);
   const { section } = useLocalSearchParams<{ section: string }>();
   const { data, loading, error } = useGuides('bali', section);
   const order: GuideKind[] = ['official', 'irly_guide', 'third_party'];
@@ -38,12 +41,15 @@ export default function GuideScreen() {
             Could not load this guide. Check your connection.
           </Text>
         ) : null}
-        {!loading && !data.length ? (
+        {!loading && !error && !data.length ? (
           <View style={[styles.card, { backgroundColor: t.c.surface }]}>
             <Text variant="body" tone="secondary">
               This guide is being written. Ask your area’s community on IRLY in the meantime.
             </Text>
-            <Button label="Communities" icon="users" size="sm" onPress={() => router.push('/communities')} />
+            <Button label="Communities" icon="users" size="sm" onPress={() => {
+              setCity('bali');
+              router.push('/communities');
+            }} />
           </View>
         ) : null}
         {order.map((k) => {
