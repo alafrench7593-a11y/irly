@@ -2,7 +2,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
@@ -360,16 +361,29 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
   // Switching destination keeps the composer mounted: never post a Dubai area in Bali.
   const area = city.areas.some((a) => a.id === picked) ? picked : city.areas[0].id;
   const [uri, setUri] = useState<string | undefined>();
-  const [visibility, setVisibility] = useState<'friends' | 'everyone'>('friends');
-  // Untouched, the post follows the member's IRL visibility setting (server side).
-  const [chosen, setChosen] = useState(false);
-  const choose = (v: 'friends' | 'everyone') => {
-    setVisibility(v);
-    setChosen(true);
-  };
+  // Untouched, the post follows the member's IRL visibility setting; the chips show it.
+  const [chosen, setChosen] = useState<'friends' | 'everyone' | null>(null);
+  const [setting, setSetting] = useState<'friends' | 'everyone' | 'private'>('friends');
+  const visibility = chosen ?? (setting === 'private' ? null : setting);
   const [openUp, setOpenUp] = useState(false);
   const [busy, setBusy] = useState(false);
   const account = useAccount();
+  useEffect(() => {
+    if (!supabase || !account) return;
+    let alive = true;
+    supabase
+      .from('safety_settings')
+      .select('irl_visibility')
+      .eq('user_id', account.userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive || !data) return;
+        setSetting(data.irl_visibility === 'everyone' ? 'everyone' : data.irl_visibility === 'nobody' ? 'private' : 'friends');
+      });
+    return () => {
+      alive = false;
+    };
+  }, [account]);
 
   const pick = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true });
@@ -395,7 +409,7 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
               day: 'Today',
               time: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
               spots: 0,
-              privacy: visibility === 'friends' ? 'connections' : 'public',
+              privacy: visibility === 'everyone' ? 'public' : 'connections',
               format: 'meetup',
               currency: city.currency,
             },
@@ -403,7 +417,8 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
           );
           track('ACTIVITY_CREATE', { via: 'irl' });
         }
-        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility: chosen ? visibility : undefined, activityId });
+        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility: chosen ?? undefined, activityId });
+        setChosen(null);
         track('IRL_CREATE', { photo: Boolean(uri), activity: Boolean(activityId) });
       } catch (e) {
         toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
@@ -459,8 +474,8 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
               Who sees it
             </Text>
             <View style={styles.wrap}>
-              <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => choose('friends')} />
-              <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => choose('everyone')} />
+              <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => setChosen('friends')} />
+              <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => setChosen('everyone')} />
             </View>
             <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => setOpenUp(!openUp)} />
           </View>

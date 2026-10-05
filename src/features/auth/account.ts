@@ -17,7 +17,7 @@ const useAuthStore = create<AuthState>(() => ({ status: supabase ? 'unknown' : '
 function setSession(u: { id: string; email?: string } | null | undefined) {
   const cur = useAuthStore.getState();
   // Same person (a token refresh): keep the same object, nothing re-renders.
-  if (u && cur.account?.userId === u.id) {
+  if (u && cur.account?.userId === u.id && cur.account.email === u.email) {
     if (cur.status !== 'in') useAuthStore.setState({ status: 'in' });
     return;
   }

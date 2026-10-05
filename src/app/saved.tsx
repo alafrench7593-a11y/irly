@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Segmented } from '@/components/ui/Controls';
@@ -82,7 +82,9 @@ export default function SavedScreen() {
   return (
     <Page overline="Profile" title="Saved" subtitle="Plans, places and people you kept for later.">
       <View style={styles.body}>
-        {auth === 'out' ? (
+        {auth === 'unknown' ? (
+          <ActivityIndicator style={{ marginTop: 24 }} />
+        ) : auth === 'out' ? (
           <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
             <Text variant="body" tone="secondary" align="center">
               Sign in to save things and find them on every device.

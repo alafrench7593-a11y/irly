@@ -90,7 +90,9 @@ export default function CommentsScreen() {
               {params.title}
             </Text>
           ) : null}
-          {auth === 'out' ? (
+          {auth === 'unknown' ? (
+          <ActivityIndicator style={{ marginTop: 24 }} />
+        ) : auth === 'out' ? (
             <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
               <Text variant="body" tone="secondary" align="center">
                 Sign in to read and write comments.

@@ -57,6 +57,10 @@ const cases: [string, Expect][] = [
   ['Party tonight at 1:30', { time: '01:30' }],
   ['Padel for 5.50 aed tomorrow', { time: undefined as unknown as string }],
   ['Brunch on 10.12', { time: undefined as unknown as string }],
+  ['Can you plan padel tomorrow at 7pm?', { intent: 'CREATE_ACTIVITY' }],
+  ['please plan padel tomorrow 7pm', { intent: 'CREATE_ACTIVITY' }],
+  ['Hey, plan padel tomorrow 7pm', { intent: 'CREATE_ACTIVITY' }],
+  ['plan padel tomorrow 7pm?', { intent: 'CREATE_ACTIVITY' }],
 ];
 const never: [string, string][] = [
   ['Any new events tonight?', 'CREATE_ACTIVITY'],

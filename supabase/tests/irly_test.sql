@@ -499,6 +499,17 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check(public.report('profile', '00000000-0000-0000-0000-00000000000a', null, 'harassment') is not null, 'someone you blocked can still be reported');
 select pg_temp.check(public.report('activity', null, (select id from public.activities where title = 'Carl public run'), 'spam') is not null, 'an activity you can see can be reported');
 
+-- ───── Bug hunt 5 ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+insert into public.safety_settings (user_id, location_precision) values (auth.uid(), 'hidden')
+  on conflict (user_id) do update set location_precision = 'hidden';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check(not exists (select 1 from public.irly_match_discover('{"section":"interests"}') where first_name = 'Dina' and city_id is not null), 'hidden precision hides the city in discovery');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+update public.safety_settings set location_precision = 'area' where user_id = auth.uid();
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(public.report('activity', null, (select id from public.activities where title = 'Carl public run'), 'spam') is not null, 'reporting again returns the same report');
+
 -- ───── activity_visibility ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 insert into public.safety_settings (user_id, activity_visibility) values (auth.uid(), 'nobody')

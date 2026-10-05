@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { cityDayKey, cityWhen } from '@/lib/time';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -43,7 +43,9 @@ export default function CalendarScreen() {
   return (
     <Page overline="Your plans" title="Calendar" subtitle="Everything you're going to, in one place.">
       <View style={styles.body}>
-        {auth === 'out' ? (
+        {auth === 'unknown' ? (
+          <ActivityIndicator style={{ marginTop: 24 }} />
+        ) : auth === 'out' ? (
           <Empty text="Sign in to keep your plans in sync across devices." action="Sign in" onPress={() => router.push('/account')} />
         ) : error && !items.length ? (
           <Empty text="Can’t reach IRLY right now. Check your connection and try again." action="Find something to do" onPress={() => router.push('/discover')} />
