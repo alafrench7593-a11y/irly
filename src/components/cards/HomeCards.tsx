@@ -339,3 +339,60 @@ export const CategoryCard = memo(function CategoryCard({
     </PressableScale>
   );
 });
+
+/* ───────── Idea card: something to do, one tap from a session ───────── */
+
+/**
+ * A thing you can do in a category ("Dog walk · Kite Beach"). Tapping it
+ * opens Create already filled in, so an idea becomes a session in one tap.
+ */
+export const IdeaCard = memo(function IdeaCard({
+  title,
+  place,
+  icon,
+  color,
+  onPress,
+}: {
+  title: string;
+  place?: string;
+  icon: IconName;
+  color: string;
+  onPress: () => void;
+}) {
+  const t = useTheme();
+  return (
+    <PressableScale
+      haptic="select"
+      onPress={onPress}
+      scaleTo={0.97}
+      style={[ideaStyles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}
+      accessibilityLabel={`${title}. Create a session`}
+    >
+      <View style={[ideaStyles.icon, { backgroundColor: `${color}1F` }]}>
+        <Icon name={icon} size={18} color={color} />
+      </View>
+      <View style={{ gap: 2, flex: 1 }}>
+        <Text variant="titleS" numberOfLines={2}>
+          {title}
+        </Text>
+        {place ? (
+          <Text variant="bodyS" tone="secondary" numberOfLines={1}>
+            {place}
+          </Text>
+        ) : null}
+      </View>
+      <View style={[ideaStyles.cta, { backgroundColor: t.c.brand }]}>
+        <Icon name="plus" size={14} color={t.c.onBrand} />
+        <Text variant="label" color={t.c.onBrand}>
+          Create
+        </Text>
+      </View>
+    </PressableScale>
+  );
+});
+
+const ideaStyles = StyleSheet.create({
+  card: { width: 210, height: 172, borderRadius: radius.xl, padding: 16, gap: 10 },
+  icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  cta: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingHorizontal: 12, height: 30, borderRadius: 15 },
+});
