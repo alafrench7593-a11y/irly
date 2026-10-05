@@ -9,11 +9,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyWordmark } from '@/brand/IrlyLogo';
-import { useLiveCount } from '@/features/live/liveStore';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { IconButton, LiveDot } from '@/components/ui/Controls';
+import { IconButton } from '@/components/ui/Controls';
 import { CITIES, DESTINATIONS } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
 import { PressableScale } from '@/motion/PressableScale';
@@ -93,15 +92,13 @@ type HomeHeaderProps = {
 };
 
 /**
- * Home header: IRLY on the left, IRL (everything posted live, right now)
- * in the centre, Discover (search) and notifications on the right. It sits
+ * Home header: IRLY on the left, Messages and notifications on the right.
+ * IRL lives in the centre of the tab bar. It sits
  * on the page and turns into glass as content scrolls under it.
  */
 export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const lives = useLiveCount();
   const bg = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.value, [solidAt - 24, solidAt], [0, 1], Extrapolation.CLAMP) }));
   return (
     <View style={[styles.header, { paddingTop: insets.top, height: insets.top + layout.headerHeight + 8 }]}>
@@ -111,31 +108,26 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
       </Animated.View>
       <View style={styles.row}>
         <IrlyWordmark size={24} />
-        <View style={styles.irlWrap} pointerEvents="box-none">
-        <PressableScale
-          onPress={() => router.push('/live')}
-          haptic="select"
-          scaleTo={0.94}
-          accessibilityLabel={`IRL: ${lives} posted live around you`}
-        >
-          <View style={[styles.irl, { backgroundColor: t.c.brand }]}>
-            <LiveDot size={7} color={t.c.live} />
-            <Text variant="label" color={t.c.onBrand} style={{ letterSpacing: 1 }}>
-              IRL
-            </Text>
-            {lives ? (
-              <Text variant="caption" color="rgba(255,255,255,0.7)">
-                {lives}
-              </Text>
-            ) : null}
-          </View>
-        </PressableScale>
-        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <IconButton icon="search" label="Discover" onPress={() => router.push('/discover')} />
-          <IconButton icon="bell" label="Notifications" badge={2} onPress={() => router.push('/notifications')} />
+          <InboxButtons />
         </View>
       </View>
+    </View>
+  );
+}
+
+/**
+ * Messages and notifications: the two doors every tab root keeps at the
+ * top right. Messages holds private chats, group chats and the dedicated
+ * community area.
+ */
+export function InboxButtons() {
+  const router = useRouter();
+  const unread = useUnread();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <IconButton icon="message" label={`Messages${unread ? `, ${unread} unread` : ''}`} badge={unread} onPress={() => router.push('/messages')} />
+      <IconButton icon="bell" label="Notifications" badge={2} onPress={() => router.push('/notifications')} />
     </View>
   );
 }
@@ -223,6 +215,4 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   title: { position: 'absolute', left: 80, right: 80, alignItems: 'center' },
-  irlWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  irl: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 14, borderRadius: radius.pill },
 });

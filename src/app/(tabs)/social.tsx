@@ -142,7 +142,7 @@ function MyPlanCard({ plan }: { plan: MyPlan }) {
         {a.title} · {plan.day.toLowerCase()} at {plan.time}.
       </Text>
       <Text variant="bodyS" tone="secondary" style={{ marginTop: 4 }}>
-        {plan.place ?? areaName(city, plan.areaId)} · {plan.spots} spots · we will notify you when people join
+        {plan.place ?? areaName(city, plan.areaId)} · {plan.spots ? `${plan.spots} spots` : 'Unlimited'} · we will notify you when people join
       </Text>
     </View>
   );

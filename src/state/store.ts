@@ -12,6 +12,7 @@ import type {
   UserType,
 } from '@/data/types';
 import { setHapticsEnabled } from '@/motion/haptics';
+import type { CreateFormat } from '@/features/create/createStore';
 import type { CategoryKey } from '@/data/catalog/categories';
 
 export type Appearance = 'auto' | 'day' | 'night';
@@ -70,10 +71,16 @@ export type MyPlan = {
   title?: string;
   place?: string;
   description?: string;
-  privacy?: 'public' | 'connections' | 'invite';
+  privacy?: 'public' | 'connections' | 'community' | 'invite';
   note?: string;
+  /** Sport, event, trip, meetup… (how it was created). */
+  format?: CreateFormat;
+  /** 0 = free. In `currency`, the destination's. */
+  price?: number;
+  currency?: string;
   day: string;
   time: string;
+  /** 0 = unlimited. */
   spots: number;
   areaId: string;
   createdAt: number;

@@ -22,10 +22,12 @@ export function LiveStrip() {
   const router = useRouter();
   const lives = useLives();
   const me = useStore((s) => s.profile.name) || 'You';
+  const connections = useStore((s) => s.connections);
+  const friendsLive = lives.some((l) => connections[l.authorId] === 'connected');
   return (
     <View style={{ gap: 12 }}>
       <View style={styles.head}>
-        <Text variant="titleM">Live now</Text>
+        <Text variant="titleM">{friendsLive ? 'Friends live now' : 'Live now'}</Text>
         <Text variant="label" tone="secondary" onPress={() => router.push('/live')}>
           IRL
         </Text>

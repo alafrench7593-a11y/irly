@@ -10,6 +10,7 @@ import { CommunityCard, PlaceCard, ServiceCard, SessionCard } from '@/components
 import { useFrame } from '@/components/layout/AppFrame';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Field, SectionHeader } from '@/components/ui/Controls';
+import { InboxButtons } from '@/components/navigation/Headers';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
@@ -83,11 +84,14 @@ export default function Discover() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + space[6], paddingBottom: bottom }}
       >
-        <View style={styles.head}>
-          <Text variant="overline" tone="accent">
-            {city.name}
-          </Text>
-          <Text variant="displayL">Discover</Text>
+        <View style={[styles.head, styles.headRow]}>
+          <View style={{ flex: 1 }}>
+            <Text variant="overline" tone="accent">
+              {city.name}
+            </Text>
+            <Text variant="displayL">Discover</Text>
+          </View>
+          <InboxButtons />
         </View>
         <View style={{ paddingHorizontal: space.gutter, marginBottom: space[7] }}>
           <Field
@@ -107,6 +111,31 @@ export default function Discover() {
             }
           />
         </View>
+
+        {!results ? (
+          <View style={{ paddingHorizontal: space.gutter, marginBottom: space[7] }}>
+            <PressableScale
+              haptic="select"
+              scaleTo={0.98}
+              onPress={() => router.push('/match?intent=friends')}
+              style={[styles.people, { backgroundColor: t.c.brand, boxShadow: t.shadow.card }]}
+              accessibilityLabel="People: find who to do things with"
+            >
+              <View style={[styles.peopleIcon, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
+                <Icon name="users" size={20} color={t.c.onBrand} />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text variant="titleS" color={t.c.onBrand}>
+                  People
+                </Text>
+                <Text variant="bodyS" color={t.c.onBrand} style={{ opacity: 0.7 }}>
+                  {content.people.length} people in {city.name} matched on interests, languages, plans
+                </Text>
+              </View>
+              <Icon name="chevronRight" size={18} color={t.c.onBrand} />
+            </PressableScale>
+          </View>
+        ) : null}
 
         {results ? (
           <View style={{ gap: space[7] }}>
@@ -273,6 +302,9 @@ export default function Discover() {
 }
 
 const styles = StyleSheet.create({
+  headRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+  people: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 24 },
+  peopleIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
   root: { flex: 1 },
   head: { paddingHorizontal: space.gutter, marginBottom: space[5], gap: 2 },
   doors: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: space.gutter, marginBottom: space[9] },

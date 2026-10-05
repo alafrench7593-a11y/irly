@@ -15,6 +15,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CATEGORIES, CATEGORY_BY_ID } from '@/data/catalog/categories';
 import { openCreate } from '@/features/create/createStore';
+import { CreateMenu } from '@/features/create/CreateMenu';
 import { planDisplay } from '@/data/catalog/mapping';
 import { areaName, CITIES, DESTINATIONS } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
@@ -108,12 +109,16 @@ export default function Home() {
             <Icon name="chevronDown" size={14} color={t.c.textSecondary} />
           </PressableScale>
           <Text variant="displayL" accessibilityRole="header">
-            What&apos;s happening today?
+            What&apos;s happening?
           </Text>
         </Animated.View>
 
         <Animated.View entering={enter.rise(1, 80)} style={styles.firstSection}>
           <LiveStrip />
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(2, 80)} style={styles.section}>
+          <CreateMenu />
         </Animated.View>
 
         {myPlans.length ? (
@@ -132,7 +137,7 @@ export default function Home() {
                         {d.title}
                       </Text>
                       <Text variant="bodyS" tone="secondary" numberOfLines={1}>
-                        {p.day} · {p.time} · {p.place ?? areaName(city, p.areaId)} · {p.spots} spots
+                        {p.day} · {p.time} · {p.place ?? areaName(city, p.areaId)} · {p.spots ? `${p.spots} spots` : 'Unlimited'}
                       </Text>
                     </View>
                   </View>
@@ -142,25 +147,42 @@ export default function Home() {
           </Animated.View>
         ) : null}
 
-        {girl ? (
-          <Animated.View entering={enter.rise(2, 80)} style={styles.rows}>
-            <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/category/girl')} style={[styles.mine, styles.girl]} accessibilityLabel="IRLY Girl">
-              <Icon name="sparkles" size={18} color="#3A2A2A" />
-              <View style={{ flex: 1 }}>
-                <Text variant="titleS" color="#3A2A2A">
-                  IRLY Girl
-                </Text>
-                <Text variant="bodyS" color="#8A7470">
-                  Women only: brunch, padel, trips, wellness.
-                </Text>
+        <Animated.View entering={enter.rise(5, 80)} style={styles.section}>
+          <SectionHeader title="People near you" action="See all" onAction={() => router.push('/match?intent=friends')} />
+          <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(5, 80)} style={styles.section}>
+          <SectionHeader title="Activities near you" action="All" onAction={() => router.push('/social')} />
+          <Rail itemWidth={260}>
+            {happenings.slice(0, 8).map((h) => (
+              <View key={h.id} style={{ width: 260 }}>
+                <HighlightCard h={h} height={300} compact />
               </View>
-              <Icon name="chevronRight" size={18} color="#3A2A2A" />
-            </PressableScale>
-          </Animated.View>
-        ) : null}
+            ))}
+          </Rail>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(6, 80)} style={styles.section}>
+          <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />
+          <Rail itemWidth={250}>
+            {content.communities.map((c) => (
+              <CommunityCard key={c.id} community={c} />
+            ))}
+          </Rail>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(6, 80)} style={styles.section}>
+          <SectionHeader title="Events this week" action="See all" onAction={() => router.push('/events')} />
+          <Rail itemWidth={236}>
+            {content.events.slice(0, 8).map((e) => (
+              <EventCard key={`ev-${e.id}`} event={e} width={236} height={300} />
+            ))}
+          </Rail>
+        </Animated.View>
 
         {sections.map((sec, i) => (
-          <Animated.View key={sec.category.id} entering={enter.rise(Math.min(2 + i, 6), 80)} style={styles.section}>
+          <Animated.View key={sec.category.id} entering={enter.rise(6, 80)} style={styles.section}>
             <SectionHeader
               overline={i === 0 ? `For you · ${moment.title}` : sec.category.tagline}
               title={sec.category.label}
@@ -186,28 +208,22 @@ export default function Home() {
           </Animated.View>
         ))}
 
-        <Animated.View entering={enter.rise(5, 80)} style={styles.section}>
-          <SectionHeader title="People you may connect with" action="See all" onAction={() => router.push('/match?intent=friends')} />
-          <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
-        </Animated.View>
-
-        <Animated.View entering={enter.rise(6, 80)} style={styles.section}>
-          <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />
-          <Rail itemWidth={250}>
-            {content.communities.map((c) => (
-              <CommunityCard key={c.id} community={c} />
-            ))}
-          </Rail>
-        </Animated.View>
-
-        <Animated.View entering={enter.rise(6, 80)} style={styles.section}>
-          <SectionHeader title="Events this week" action="See all" onAction={() => router.push('/events')} />
-          <Rail itemWidth={236}>
-            {content.events.slice(0, 8).map((e) => (
-              <EventCard key={`ev-${e.id}`} event={e} width={236} height={300} />
-            ))}
-          </Rail>
-        </Animated.View>
+        {girl ? (
+          <Animated.View entering={enter.rise(2, 80)} style={[styles.rows, { marginTop: space[8] }]}>
+            <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/category/girl')} style={[styles.mine, styles.girl]} accessibilityLabel="IRLY Girl">
+              <Icon name="sparkles" size={18} color="#3A2A2A" />
+              <View style={{ flex: 1 }}>
+                <Text variant="titleS" color="#3A2A2A">
+                  IRLY Girl
+                </Text>
+                <Text variant="bodyS" color="#8A7470">
+                  Women only: brunch, padel, trips, wellness.
+                </Text>
+              </View>
+              <Icon name="chevronRight" size={18} color="#3A2A2A" />
+            </PressableScale>
+          </Animated.View>
+        ) : null}
 
         <PressableScale haptic="select" scaleTo={0.98} onPress={() => setSheet(true)} style={styles.footer}>
           <IrlyMark size={30} state="static" ringColor={t.c.textTertiary} lensColor={t.c.text} glow={false} />
@@ -232,6 +248,6 @@ const styles = StyleSheet.create({
   rows: { paddingHorizontal: space.gutter, gap: 10 },
   mine: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.xl },
   mineIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  girl: { backgroundColor: '#FBF6F1', marginTop: space[8] },
+  girl: { backgroundColor: '#FBF6F1' },
   footer: { alignItems: 'center', gap: 12, paddingVertical: space[8] },
 });

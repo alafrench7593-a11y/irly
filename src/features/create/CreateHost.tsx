@@ -18,16 +18,33 @@ import { ease, motion, scale as scaleTokens, spring } from '@/motion/tokens';
 import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { useCreateStore } from './createStore';
+import { useCreateStore, type CreateFormat } from './createStore';
 
 const DAYS = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
 const TIMES = ['07:00', '10:00', '12:30', '16:00', '18:00', '19:30', '21:00'];
 const PRIVACY: { id: NonNullable<MyPlan['privacy']>; label: string }[] = [
   { id: 'public', label: 'Public' },
-  { id: 'connections', label: 'Connections' },
+  { id: 'connections', label: 'Friends' },
+  { id: 'community', label: 'Community' },
   { id: 'invite', label: 'Invite only' },
 ];
 const BUTTON = 52;
+
+/** Suggested prices in the destination's currency. */
+const PRICES: Record<'AED' | 'IDR', number[]> = {
+  AED: [25, 50, 80, 150, 300],
+  IDR: [50_000, 100_000, 250_000, 500_000, 1_000_000],
+};
+export const formatPrice = (n: number, currency: string) => (n ? `${currency} ${n.toLocaleString('en-US')}` : 'Free');
+
+const FORMAT: Record<CreateFormat, { title: string; cta: string }> = {
+  activity: { title: 'What do you want to do?', cta: 'Create activity' },
+  sport: { title: 'Which sport?', cta: 'Create sport session' },
+  event: { title: 'What is the event?', cta: 'Create event' },
+  session: { title: 'What do you want to do?', cta: 'Post session' },
+  meetup: { title: 'What kind of meetup?', cta: 'Create meetup' },
+  trip: { title: 'Where are you going?', cta: 'Create trip' },
+};
 
 type Pick = { categoryId: CategoryKey; sub?: CatalogSub; activity?: CatalogActivity; custom?: string };
 
@@ -56,12 +73,16 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const city = CITIES[cityId];
   const postPlan = useStore((s) => s.postPlan);
 
-  const presetCategory = preset ? CATEGORY_BY_ID[preset.categoryId] : undefined;
+  const format: CreateFormat = preset?.format ?? 'session';
+  const presetCategory = preset?.categoryId ? CATEGORY_BY_ID[preset.categoryId] : undefined;
   const presetSub = presetCategory?.subs.find((x) => x.id === preset?.subId);
   const [pick, setPick] = useState<Pick | null>(
-    preset ? { categoryId: preset.categoryId, sub: presetSub, activity: presetSub?.activities?.find((x) => x.id === preset.activityId) } : null,
+    presetCategory ? { categoryId: presetCategory.id, sub: presetSub, activity: presetSub?.activities?.find((x) => x.id === preset?.activityId) } : null,
   );
-  const [step, setStep] = useState(preset ? (presetSub ? 2 : 1) : 0);
+  const [step, setStep] = useState(presetCategory ? (presetSub ? 2 : 1) : 0);
+  const [paid, setPaid] = useState(false);
+  const [price, setPrice] = useState(PRICES[city.currency][1]);
+  const [unlimited, setUnlimited] = useState(false);
   const [query, setQuery] = useState('');
   const [custom, setCustom] = useState('');
   const [day, setDay] = useState(DAYS[0]);
@@ -144,11 +165,14 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       privacy,
       day,
       time,
-      spots,
+      spots: unlimited ? 0 : spots,
       areaId: area,
+      format,
+      price: paid ? price : 0,
+      currency: city.currency,
     });
     haptic('success');
-    toast(`${title} is live. Group chat ready`, 'send', 'brand');
+    toast(`${title} is live. Chat created`, 'send', 'brand');
     hide();
   };
 
@@ -180,7 +204,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             <View key="s0">
               <Animated.View entering={enter.rise(0, 120)}>
                 <Text variant="displayL" style={styles.title}>
-                  What do you want to do?
+                  {FORMAT[format].title}
                 </Text>
               </Animated.View>
               <Animated.View entering={enter.rise(1, 120)} style={styles.block}>
@@ -358,7 +382,13 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   How many people?
                 </Text>
               </Animated.View>
-              <Animated.View entering={enter.rise(1)} style={[styles.block, styles.stepperRow]}>
+              <Animated.View entering={enter.rise(1)} style={[styles.block, styles.wrap, { justifyContent: 'center' }]}>
+                {[2, 4, 10, 50].map((n) => (
+                  <Chip key={n} size="sm" label={`${n}`} selected={!unlimited && spots === n} onPress={() => { setUnlimited(false); setSpots(n); }} />
+                ))}
+                <Chip size="sm" label="Unlimited" selected={unlimited} onPress={() => setUnlimited(true)} />
+              </Animated.View>
+              <Animated.View entering={enter.rise(1)} style={[styles.block, styles.stepperRow, unlimited ? { opacity: 0.35 } : null]} pointerEvents={unlimited ? 'none' : 'auto'}>
                 <PressableScale haptic="select" scaleTo={0.85} onPress={() => setSpots((n) => Math.max(2, n - 1))} style={[styles.stepBtn, { backgroundColor: t.c.overlay }]} accessibilityLabel="Fewer spots">
                   <Icon name="minus" size={22} color={t.c.text} />
                 </PressableScale>
@@ -368,6 +398,22 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 <PressableScale haptic="select" scaleTo={0.85} onPress={() => setSpots((n) => Math.min(60, n + 1))} style={[styles.stepBtn, { backgroundColor: t.c.overlay }]} accessibilityLabel="More spots">
                   <Icon name="plus" size={22} color={t.c.text} />
                 </PressableScale>
+              </Animated.View>
+              <Animated.View entering={enter.rise(2)} style={styles.block}>
+                <Text variant="overline" tone="secondary">
+                  Price
+                </Text>
+                <View style={styles.wrap}>
+                  <Chip size="sm" label="Free" selected={!paid} onPress={() => setPaid(false)} />
+                  <Chip size="sm" label="Paid" icon="banknote" selected={paid} onPress={() => setPaid(true)} />
+                </View>
+                {paid ? (
+                  <Animated.View entering={FadeIn.duration(motion.fast)} style={styles.wrap}>
+                    {PRICES[city.currency].map((n) => (
+                      <Chip key={n} size="sm" label={formatPrice(n, city.currency)} selected={price === n} onPress={() => setPrice(n)} />
+                    ))}
+                  </Animated.View>
+                ) : null}
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.block}>
                 <TextInput
@@ -387,7 +433,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     {title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
-                    {day} · {time} · {place ?? areaName(city, area)} · {spots} spots · {PRIVACY.find((x) => x.id === privacy)?.label}
+                    {day} · {time} · {place ?? areaName(city, area)} · {unlimited ? 'Unlimited' : `${spots} spots`} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
                   </Text>
                 </View>
               </Animated.View>
@@ -408,7 +454,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             {step < 3 ? (
               <Button label="Next" iconRight="arrowRight" full disabled={!canNext} haptic="select" onPress={() => setStep(step + 1)} />
             ) : (
-              <Button label="Post session" icon="send" full haptic={false} onPress={post} />
+              <Button label={FORMAT[format].cta} icon="send" full haptic={false} onPress={post} />
             )}
           </View>
         ) : null}
