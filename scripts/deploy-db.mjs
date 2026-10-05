@@ -9,7 +9,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const token = (process.env.SUPABASE_ACCESS_TOKEN || '').trim().replace(/^["']|["']$/g, '');
+// Tolerates a secret pasted as "SUPABASE_ACCESS_TOKEN=sbp_…", with quotes or spaces.
+const raw = (process.env.SUPABASE_ACCESS_TOKEN || '').trim();
+const token = raw.match(/sbp_[A-Za-z0-9_]+/)?.[0] ?? raw.replace(/^["']|["']$/g, '');
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 if (!token) {
   console.log('SUPABASE_ACCESS_TOKEN is not set: nothing deployed.');
@@ -19,7 +21,7 @@ if (!token) {
 // anon, secret or service_role keys do not work with the Management API.
 if (!token.startsWith('sbp_')) {
   console.error(
-    `SUPABASE_ACCESS_TOKEN must be a personal access token starting with "sbp_" (got "${token.slice(0, 12)}…").\n` +
+    `SUPABASE_ACCESS_TOKEN must be a personal access token starting with "sbp_" (the saved value does not contain one).\n` +
       'Create one at https://supabase.com/dashboard/account/tokens and save it as the repository secret.',
   );
   process.exit(1);
