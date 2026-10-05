@@ -27,21 +27,25 @@ export default function BaliQuiz() {
   const saved = useBaliStore((s) => s.answers);
   const setSaved = useBaliStore((s) => s.setAnswers);
   const profiles = useAreaProfiles('bali');
-  const [answers, setAnswers] = useState<QuizAnswers>(saved);
-  const [step, setStep] = useState(Object.keys(saved).length >= QUIZ.length ? QUIZ.length : 0);
+  // Until the member starts answering, show what is saved. Saved answers
+  // load from storage after the first render, so they are read, not copied.
+  const [local, setLocal] = useState<{ answers: QuizAnswers; step: number } | null>(null);
+  const savedDone = Object.keys(saved).length >= QUIZ.length;
+  const answers = local?.answers ?? saved;
+  const step = local?.step ?? (savedDone ? QUIZ.length : 0);
+  const setStep = (n: number) => setLocal((l) => ({ answers: l?.answers ?? answers, step: n }));
   const done = step >= QUIZ.length;
   const ranked = useMemo(() => (done ? rankAreas(profiles.data, answers) : []), [done, profiles.data, answers]);
   const q = QUIZ[step];
 
   const answer = (value: string) => {
     const next = { ...answers, [q.id]: value } as QuizAnswers;
-    setAnswers(next);
+    setLocal({ answers: next, step: step + 1 });
     haptic('select');
     if (step + 1 >= QUIZ.length) {
       setSaved(next);
       track('BALI_QUIZ_DONE', { questions: QUIZ.length });
     }
-    setStep(step + 1);
   };
 
   if (!done) {
@@ -98,8 +102,7 @@ export default function BaliQuiz() {
           label="Answer again"
           variant="ghost"
           onPress={() => {
-            setAnswers({});
-            setStep(0);
+            setLocal({ answers: {}, step: 0 });
           }}
         />
         <Text variant="caption" tone="tertiary">
