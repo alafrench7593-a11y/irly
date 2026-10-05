@@ -1,4 +1,6 @@
+import * as Linking from 'expo-linking';
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useStore, type Profile } from '@/state/store';
 
@@ -16,20 +18,47 @@ export function useAccount(): Account {
       const u = data.session?.user;
       setAccount(u ? { userId: u.id, email: u.email } : null);
     });
-    const { data } = supabase.auth.onAuthStateChange((_e, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user;
       setAccount(u ? { userId: u.id, email: u.email } : null);
+      // Signed in from the email link: publish the signup profile once.
+      if (event === 'SIGNED_IN' && u) syncProfile(u.id).catch(() => undefined);
     });
     return () => data.subscription.unsubscribe();
   }, []);
   return account;
 }
 
-/** Step 1: email a 6-digit code. Creates the account on first use. */
+/** Where the email link sends the member back: this web page, or the app. */
+function redirectTo(): string {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}/account`;
+  return Linking.createURL('/account');
+}
+
+/**
+ * Step 1: email a sign-in link (and a 6-digit code when the email template
+ * includes one). Creates the account on first use.
+ */
 export async function sendCode(email: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: true } });
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email.trim().toLowerCase(),
+    options: { shouldCreateUser: true, emailRedirectTo: redirectTo() },
+  });
   if (error) throw new Error(error.message);
+}
+
+/** Native: the email link opens irly://account#access_token=… ; finish sign-in. */
+export async function completeFromUrl(url: string): Promise<boolean> {
+  if (!supabase) return false;
+  const hash = url.split('#')[1] ?? url.split('?')[1] ?? '';
+  const params = new URLSearchParams(hash);
+  const access_token = params.get('access_token');
+  const refresh_token = params.get('refresh_token');
+  if (!access_token || !refresh_token) return false;
+  const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+  if (error) throw new Error(error.message);
+  return true;
 }
 
 /** Step 2: check the code, then publish the signup profile server-side. */

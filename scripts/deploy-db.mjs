@@ -84,7 +84,19 @@ for (const file of files) {
   console.log(`+ ${file}`);
 }
 
-// Sign-in email with the 6-digit code the app asks for.
+// Where sign-in links may send people back: local web, Vercel, the app.
+const urls = await fetch(`${api}/config/auth`, {
+  method: 'PATCH',
+  headers,
+  body: JSON.stringify({
+    site_url: 'http://localhost:8081',
+    uri_allow_list: 'http://localhost:8081/**,http://localhost:19006/**,https://*.vercel.app/**,irly://**,exp://**',
+  }),
+});
+console.log(urls.ok ? '✓ sign-in redirect URLs configured' : `! redirect URLs not configured (${urls.status}): ${(await urls.text()).slice(0, 300)}`);
+
+// Sign-in email with a 6-digit code (needs a custom SMTP on the free plan;
+// without it Supabase sends its default email with a sign-in link).
 const auth = await fetch(`${api}/config/auth`, {
   method: 'PATCH',
   headers,
@@ -95,7 +107,7 @@ const auth = await fetch(`${api}/config/auth`, {
     mailer_otp_length: 6,
   }),
 });
-console.log(auth.ok ? '✓ sign-in email configured (6-digit code)' : `! sign-in email not configured (${auth.status}): ${(await auth.text()).slice(0, 300)}`);
+console.log(auth.ok ? '✓ sign-in email configured (6-digit code)' : `• default sign-in email kept (link): ${(await auth.text()).slice(0, 200)}`);
 
 const [check] = await query("select count(*)::int as n from information_schema.tables where table_schema = 'public'");
 console.log(`✓ database ready: ${check.n} tables in public`);

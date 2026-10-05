@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { sendCode, signOut, useAccount, verifyCode } from '@/features/auth/account';
+import * as Linking from 'expo-linking';
+import { completeFromUrl, sendCode, signOut, useAccount, verifyCode } from '@/features/auth/account';
 import { haptic } from '@/motion/haptics';
 import { hasBackend } from '@/lib/supabase';
 import { font, radius, space } from '@/theme/tokens';
@@ -29,6 +30,16 @@ export default function AccountScreen() {
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [busy, setBusy] = useState(false);
+  const url = Linking.useURL();
+
+  // Opened from the email link in the app (native): finish signing in.
+  useEffect(() => {
+    if (url && url.includes('access_token')) {
+      completeFromUrl(url)
+        .then((ok) => ok && toast("You're signed in. Your profile is live", 'check', 'positive'))
+        .catch((e) => toast(e instanceof Error ? e.message : 'The link has expired', 'x', 'live'));
+    }
+  }, [url]);
 
   const send = async () => {
     if (!EMAIL.test(email.trim())) return toast('Enter a valid email address', 'x', 'live');
@@ -37,7 +48,7 @@ export default function AccountScreen() {
       await sendCode(email);
       haptic('success');
       setStep('code');
-      toast('Code sent. Check your inbox', 'send', 'brand');
+      toast('Email sent. Check your inbox', 'send', 'brand');
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not send the code', 'x', 'live');
     } finally {
@@ -95,7 +106,7 @@ export default function AccountScreen() {
   }
 
   return (
-    <Page overline="IRLY account" title={step === 'email' ? 'Sign in' : 'Enter your code'} subtitle={step === 'email' ? 'We email you a 6-digit code. No password.' : `Sent to ${email.trim()}. It expires in a few minutes.`}>
+    <Page overline="IRLY account" title={step === 'email' ? 'Sign in' : 'Check your email'} subtitle={step === 'email' ? 'We email you a sign-in link. No password.' : `Sent to ${email.trim()}. Open the link on this device: you will be signed in here. If the email shows a 6-digit code, enter it below.`}>
       <Animated.View key={step} entering={FadeIn.duration(220)} style={styles.body}>
         {step === 'email' ? (
           <>
@@ -113,7 +124,7 @@ export default function AccountScreen() {
               style={input}
               accessibilityLabel="Email"
             />
-            <Button label="Send my code" icon="send" full loading={busy} disabled={!EMAIL.test(email.trim())} onPress={send} />
+            <Button label="Email me a sign-in link" icon="send" full loading={busy} disabled={!EMAIL.test(email.trim())} onPress={send} />
           </>
         ) : (
           <>
@@ -131,7 +142,7 @@ export default function AccountScreen() {
             />
             <Button label="Sign in" icon="check" full loading={busy} disabled={code.length < 6} onPress={verify} />
             <Button label="Use another email" variant="ghost" onPress={() => setStep('email')} />
-            <Button label="Send a new code" variant="ghost" onPress={send} />
+            <Button label="Send a new email" variant="ghost" onPress={send} />
           </>
         )}
         <Text variant="caption" tone="tertiary">
