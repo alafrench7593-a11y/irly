@@ -1,0 +1,66 @@
+name: Expo Go link
+
+# Runs the IRLY dev server on a GitHub runner with an Expo tunnel, so a phone
+# anywhere can open the app in Expo Go. The exp:// link (and a QR code) is
+# posted in the issue "Expo Go: IRLY link". The server stays up 2 hours.
+# Start it: Actions → Expo Go link → Run workflow, or push a change to
+# .github/expo-go.txt on the working branch.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths:
+      - '.github/expo-go.txt'
+      - '.github/workflows/expo-go.yml'
+
+concurrency:
+  group: expo-go
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 130
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm install -g @expo/ngrok@^4.1.0
+      - name: Start Metro with a tunnel
+        run: |
+          nohup npx expo start --tunnel --go > expo.log 2>&1 &
+          for i in $(seq 1 90); do
+            URL=$(grep -oE 'exp://[A-Za-z0-9._-]+(:[0-9]+)?' expo.log | head -1 || true)
+            [ -n "$URL" ] && break
+            sleep 4
+          done
+          cat expo.log
+          [ -n "$URL" ] || { echo "No tunnel URL"; exit 1; }
+          echo "URL=$URL" >> "$GITHUB_ENV"
+      - name: Warm up the bundle (first open is then fast)
+        run: |
+          curl -s -o /dev/null -w "android bundle: %{http_code}\n" "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=android&dev=true&minify=false" --max-time 600 || true
+          curl -s -o /dev/null -w "ios bundle: %{http_code}\n" "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true&minify=false" --max-time 600 || true
+      - name: Post the link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          QR="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$(node -e "process.stdout.write(encodeURIComponent(process.env.URL))")"
+          UNTIL=$(date -u -d '+2 hours' '+%H:%M UTC')
+          BODY=$(printf '## IRLY dans Expo Go\n\n1. Installe **Expo Go** (App Store / Google Play).\n2. Sur le téléphone, ouvre ce lien : **%s**\n   (ou scanne le QR code avec l’appareil photo sur iPhone, ou depuis Expo Go sur Android)\n\n![QR](%s)\n\nActif jusqu’à **%s** environ. Commit `%s`.\n' "$URL" "$QR" "$UNTIL" "${GITHUB_SHA::7}")
+          N=$(gh issue list --state open --search "Expo Go: IRLY link in:title" --json number --jq '.[0].number')
+          if [ -n "$N" ]; then gh issue edit "$N" --body "$BODY"; gh issue comment "$N" --body "Nouveau lien : $URL (jusqu’à $UNTIL)"; else gh issue create --title "Expo Go: IRLY link" --body "$BODY"; fi
+      - name: Keep the server up
+        run: |
+          for i in $(seq 1 120); do
+            sleep 60
+            pgrep -f "expo start" > /dev/null || { echo "Metro stopped"; tail -50 expo.log; exit 1; }
+          done
