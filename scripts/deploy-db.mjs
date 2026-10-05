@@ -11,7 +11,7 @@ import path from 'node:path';
 
 // Tolerates a secret pasted as "SUPABASE_ACCESS_TOKEN=sbp_…", with quotes or spaces.
 const raw = (process.env.SUPABASE_ACCESS_TOKEN || '').trim();
-const token = raw.match(/sbp_[A-Za-z0-9_]+/)?.[0] ?? raw.replace(/^["']|["']$/g, '');
+const token = raw.match(/sbp_[^\s"'`]+/)?.[0] ?? raw.replace(/^["']|["']$/g, '');
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 if (!token) {
   console.log('SUPABASE_ACCESS_TOKEN is not set: nothing deployed.');
@@ -33,6 +33,12 @@ const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application
 async function query(sql) {
   const res = await fetch(`${api}/database/query`, { method: 'POST', headers, body: JSON.stringify({ query: sql }) });
   const text = await res.text();
+  if (res.status === 401) {
+    throw new Error(
+      `Supabase refused the access token (401: ${text.slice(0, 200)}). Token length ${token.length}. ` +
+        'It may be revoked or mistyped: create a new one at https://supabase.com/dashboard/account/tokens and update the repository secret.',
+    );
+  }
   if (!res.ok) throw new Error(`SQL failed (${res.status}): ${text.slice(0, 800)}`);
   return text ? JSON.parse(text) : [];
 }
