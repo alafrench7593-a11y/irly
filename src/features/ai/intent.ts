@@ -190,7 +190,8 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
   const create =
     // Bare "plan/start/host/make" creates only with something to create ("plan padel tomorrow 7pm"),
     // not "I need a plan for tonight".
-    (Boolean(e.activity || explicitTime) && has(/\b(plan|planifier|start|host|make)\b/)) ||
+    // Only as a command at the start, never in a question ("what time does padel start?").
+    (Boolean(e.activity || explicitTime) && !/\?\s*$/.test(text) && has(/^\s*(?:let s\s+|on\s+)?(plan|planifier|start|host|make)\b/)) ||
     has(/\b(create|créer|crée|cree|creer|organi[sz]e|organiser|host|set up|plan (?:a|an|un|une|my|some)|planifie|start (?:a|an|un|une)|lance|make (?:a|an|un|une))\b/);
   const event = has(/\b(event|événement|evenement|party|soirée|tournament|tournoi|workshop|concert)\b/);
   let intent: Intent;

@@ -110,7 +110,8 @@ export async function postServerIrl(input: {
   placeName?: string;
   body: string;
   photoUri?: string;
-  visibility: 'everyone' | 'friends';
+  /** Left out: the member's IRL visibility setting applies (server default). */
+  visibility?: 'everyone' | 'friends';
   /** IRL → activity: the post points at the activity, never a copy of it. */
   activityId?: string | null;
 }): Promise<boolean> {
@@ -133,7 +134,7 @@ export async function postServerIrl(input: {
     place_name: input.placeName ?? null,
     body: input.body,
     media_path,
-    visibility: input.visibility,
+    ...(input.visibility ? { visibility: input.visibility } : {}),
     activity_id: input.activityId ?? null,
   });
   if (error) throw new Error(error.message);

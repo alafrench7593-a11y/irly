@@ -32,7 +32,7 @@ function overlap<T>(a: T[], b: T[]): T[] {
 }
 
 function list(labels: string[]): string {
-  const l = labels.map((x) => tx(x));
+  const l = labels;
   if (l.length <= 1) return l[0] ?? '';
   return `${l.slice(0, -1).join(', ')} & ${l[l.length - 1]}`;
 }
@@ -49,14 +49,14 @@ export function scoreMatch(me: Profile, other: Person, intent: Intent, areaName:
   if (sharedActivities.length) {
     const w = sharedActivities.length * (intent === 'sports' || intent === 'activities' ? 16 : 9);
     score += Math.min(w, 40);
-    reasons.push({ w, text: tx('Also into {x}', { x: list(sharedActivities.slice(0, 2).map((k) => ACTIVITIES[k].label.toLowerCase())) }) });
+    reasons.push({ w, text: tx('Also into {x}', { x: list(sharedActivities.slice(0, 2).map((k) => tx(ACTIVITIES[k].label).toLocaleLowerCase())) }) });
   }
 
   const sharedInterests = overlap(me.interests, other.interests);
   if (sharedInterests.length) {
     const w = sharedInterests.length * (intent === 'friends' || intent === 'similar' ? 9 : 6);
     score += Math.min(w, 30);
-    reasons.push({ w, text: tx('Shares your love of {x}', { x: list(sharedInterests.slice(0, 2).map((i) => INTERESTS[i].label.toLowerCase())) }) });
+    reasons.push({ w, text: tx('Shares your love of {x}', { x: list(sharedInterests.slice(0, 2).map((i) => tx(INTERESTS[i].label).toLocaleLowerCase())) }) });
   }
 
   if (intent === 'similar') {

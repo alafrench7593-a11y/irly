@@ -490,6 +490,15 @@ select pg_temp.expect_denied($$update public.activities set girl_only = false wh
 select pg_temp.expect_denied($$update public.activities set capacity = 0 where title = 'Dina girls run'$$, 'capacity cannot go below the people going');
 select pg_temp.expect_denied($$update public.profiles set birthdate = '2000-01-01' where id = auth.uid()$$, 'birthdate is fixed after signup');
 
+-- ───── Bug hunt 4 ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+update public.comments set deleted_at = now() where id = :'rude_id';
+select pg_temp.check(true, 'removing an already removed comment is a no-op, not an error');
+select pg_temp.expect_denied($$select city_id from public.profiles where first_name = 'Dina'$$, 'others'' city is not readable from profiles');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(public.report('profile', '00000000-0000-0000-0000-00000000000a', null, 'harassment') is not null, 'someone you blocked can still be reported');
+select pg_temp.check(public.report('activity', null, (select id from public.activities where title = 'Carl public run'), 'spam') is not null, 'an activity you can see can be reported');
+
 -- ───── activity_visibility ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 insert into public.safety_settings (user_id, activity_visibility) values (auth.uid(), 'nobody')

@@ -135,7 +135,7 @@ export default function ActivityPage() {
       link.download = `${a.title}.ics`;
       link.click();
     } else {
-      await Share.share({ message: `${a.title} · ${when(a.startsAt, city.id)} · ${a.placeName ?? areaName(city, a.areaId)}\nhttps://irly.app/a/${a.id}` });
+      await Share.share({ message: `${a.title} · ${when(a.startsAt, a.cityId)} · ${a.placeName ?? areaName(city, a.areaId)}\nhttps://irly.app/a/${a.id}` });
     }
   };
 
@@ -169,7 +169,7 @@ export default function ActivityPage() {
             </View>
           ) : null}
           <ActionBar target={target} eng={eng} />
-          <Fact icon="clock" text={when(a.startsAt, city.id)} />
+          <Fact icon="clock" text={when(a.startsAt, a.cityId)} />
           <Fact icon="pin" text={`${a.placeName ? `${a.placeName} · ` : ''}${city ? areaName(city, a.areaId) : a.areaId}`} />
           <Fact icon="users" text={`${a.going}${a.capacity ? ` / ${a.capacity}` : ''} ${tx('going')}${full ? ` · ${tx('Full')}` : ''}`} />
           <Fact icon="banknote" text={a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : tx('Free')} />

@@ -64,6 +64,10 @@ const never: [string, string][] = [
   ['I m new in dubai, find friends', 'CREATE_ACTIVITY'],
   ['which area has the best padel in Dubai?', 'WHERE_TO_LIVE'],
   ['visa run from Dubai', 'OPEN_VISA'],
+  ['What time does padel start?', 'CREATE_ACTIVITY'],
+  ['When does the padel start at Marina?', 'CREATE_ACTIVITY'],
+  ['Who can make padel at 7pm?', 'CREATE_ACTIVITY'],
+  ['what is the plan for padel tonight?', 'CREATE_ACTIVITY'],
 ];
 
 let failed = 0;

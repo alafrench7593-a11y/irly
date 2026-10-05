@@ -361,6 +361,12 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
   const area = city.areas.some((a) => a.id === picked) ? picked : city.areas[0].id;
   const [uri, setUri] = useState<string | undefined>();
   const [visibility, setVisibility] = useState<'friends' | 'everyone'>('friends');
+  // Untouched, the post follows the member's IRL visibility setting (server side).
+  const [chosen, setChosen] = useState(false);
+  const choose = (v: 'friends' | 'everyone') => {
+    setVisibility(v);
+    setChosen(true);
+  };
   const [openUp, setOpenUp] = useState(false);
   const [busy, setBusy] = useState(false);
   const account = useAccount();
@@ -397,7 +403,7 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
           );
           track('ACTIVITY_CREATE', { via: 'irl' });
         }
-        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility, activityId });
+        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility: chosen ? visibility : undefined, activityId });
         track('IRL_CREATE', { photo: Boolean(uri), activity: Boolean(activityId) });
       } catch (e) {
         toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
@@ -453,8 +459,8 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
               Who sees it
             </Text>
             <View style={styles.wrap}>
-              <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => setVisibility('friends')} />
-              <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => setVisibility('everyone')} />
+              <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => choose('friends')} />
+              <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => choose('everyone')} />
             </View>
             <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => setOpenUp(!openUp)} />
           </View>
