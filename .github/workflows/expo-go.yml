@@ -33,18 +33,31 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: npm install -g @expo/ngrok@^4.1.0
-      - name: Start Metro with a tunnel
+      - name: Start a Cloudflare tunnel (Expo's ngrok tunnel is broken)
         run: |
-          nohup npx expo start --tunnel --go > expo.log 2>&1 &
+          curl -sL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
+          nohup ./cloudflared tunnel --url http://localhost:8081 --no-autoupdate > cf.log 2>&1 &
+          for i in $(seq 1 60); do
+            HOST=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' cf.log | head -1 | sed 's#https://##' || true)
+            [ -n "$HOST" ] && break
+            sleep 2
+          done
+          cat cf.log | tail -20
+          [ -n "$HOST" ] || { echo "No tunnel"; exit 1; }
+          echo "HOST=$HOST" >> "$GITHUB_ENV"
+          echo "URL=exps://$HOST" >> "$GITHUB_ENV"
+      - name: Start Metro behind the tunnel
+        run: |
+          EXPO_PACKAGER_PROXY_URL="https://$HOST" nohup npx expo start --go --port 8081 > expo.log 2>&1 &
           for i in $(seq 1 90); do
-            URL=$(grep -oE 'exp://[A-Za-z0-9._-]+(:[0-9]+)?' expo.log | head -1 || true)
-            [ -n "$URL" ] && break
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/status | grep -q 200 && break
             sleep 4
           done
           cat expo.log
-          [ -n "$URL" ] || { echo "No tunnel URL"; exit 1; }
-          echo "URL=$URL" >> "$GITHUB_ENV"
+          curl -s http://localhost:8081/status
+          # The manifest must point at the tunnel, not localhost.
+          curl -s -H "expo-platform: ios" -H "accept: application/expo+json" http://localhost:8081/ | head -c 600; echo
       - name: Warm up the bundle (first open is then fast)
         run: |
           curl -s -o /dev/null -w "android bundle: %{http_code}\n" "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=android&dev=true&minify=false" --max-time 600 || true
@@ -55,7 +68,7 @@ jobs:
         run: |
           QR="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$(node -e "process.stdout.write(encodeURIComponent(process.env.URL))")"
           UNTIL=$(date -u -d '+2 hours' '+%H:%M UTC')
-          BODY=$(printf '## IRLY dans Expo Go\n\n1. Installe **Expo Go** (App Store / Google Play).\n2. Sur le téléphone, ouvre ce lien : **%s**\n   (ou scanne le QR code avec l’appareil photo sur iPhone, ou depuis Expo Go sur Android)\n\n![QR](%s)\n\nActif jusqu’à **%s** environ. Commit `%s`.\n' "$URL" "$QR" "$UNTIL" "${GITHUB_SHA::7}")
+          BODY=$(printf '## IRLY dans Expo Go\n\n1. Installe **Expo Go** (App Store / Google Play).\n2. Sur le téléphone, ouvre : **%s**\n   Si rien ne se passe : ouvre Expo Go → « Enter URL manually » → colle `%s`\n   (ou scanne le QR code : appareil photo sur iPhone, Expo Go sur Android)\n\n![QR](%s)\n\nActif jusqu’à **%s** environ. Commit `%s`.\n' "$URL" "$URL" "$QR" "$UNTIL" "${GITHUB_SHA::7}")
           N=$(gh issue list --state open --search "Expo Go: IRLY link in:title" --json number --jq '.[0].number')
           if [ -n "$N" ]; then gh issue edit "$N" --body "$BODY"; gh issue comment "$N" --body "Nouveau lien : $URL (jusqu’à $UNTIL)"; else gh issue create --title "Expo Go: IRLY link" --body "$BODY"; fi
       - name: Keep the server up
