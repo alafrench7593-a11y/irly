@@ -163,7 +163,7 @@ function ConversationRow({ conversation: c }: { conversation: Conversation }) {
             {c.title}
           </Text>
           <Text variant="caption" tone="tertiary">
-            {last ? timeAgo(minutesAgo(last)) : 'new'}
+            {last ? timeAgo(minutesAgo(last)) : tx('new')}
           </Text>
         </View>
         <View style={styles.top}>

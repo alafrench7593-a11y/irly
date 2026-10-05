@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { useServerNotifications } from '@/features/server/social';
 import { memo, type ReactNode } from 'react';
@@ -134,8 +135,8 @@ export function InboxButtons() {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />
-      <IconButton icon="message" label={`Messages${unread ? `, ${unread} unread` : ''}`} badge={unread} onPress={() => router.push('/messages')} />
-      <IconButton icon="bell" label={`Notifications${bell ? `, ${bell} new` : ''}`} badge={bell} onPress={() => router.push('/notifications')} />
+      <IconButton icon="message" label={unread ? tx('Messages, {n} unread', { n: unread }) : tx('Messages')} badge={unread} onPress={() => router.push('/messages')} />
+      <IconButton icon="bell" label={bell ? tx('Notifications, {n} new', { n: bell }) : tx('Notifications')} badge={bell} onPress={() => router.push('/notifications')} />
     </View>
   );
 }

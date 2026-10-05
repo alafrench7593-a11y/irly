@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
@@ -159,7 +160,7 @@ export default function CategoryScreen() {
         ) : null}
 
         <Animated.View entering={enter.rise(2, 60)} style={styles.section}>
-          <SectionHeader title={sub ? `${sub.label} sessions` : 'Sessions'} action={sessions.length + mine.length ? `${sessions.length + mine.length}` : undefined} />
+          <SectionHeader title={sub ? tx('{what} sessions', { what: tx(sub.label) }) : tx('Sessions')} action={sessions.length + mine.length ? `${sessions.length + mine.length}` : undefined} />
           <View style={styles.rows}>
             {mine.map((p) => (
               <View key={p.id} style={[styles.activity, { backgroundColor: t.c.surface }]}>
@@ -203,7 +204,7 @@ export default function CategoryScreen() {
 
         {people.length ? (
           <Animated.View entering={enter.rise(3, 60)} style={styles.section}>
-            <SectionHeader title={`${people.length} people into ${sub ? sub.label.toLowerCase() : category.label.toLowerCase()}`} action="See all" onAction={() => router.push('/match?intent=activities')} />
+            <SectionHeader title={tx('{n} people into {what}', { n: people.length, what: tx(sub ? sub.label : category.label).toLowerCase() })} action="See all" onAction={() => router.push('/match?intent=activities')} />
             <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
           </Animated.View>
         ) : null}
@@ -243,7 +244,7 @@ export default function CategoryScreen() {
         <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => router.back()} />
       </View>
       <View style={[styles.cta, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
-        <Button label={sub ? `Create ${sub.label} session` : 'Create session'} icon="plus" haptic="press" onPress={() => create(sub?.id)} />
+        <Button label={sub ? tx('Create a {what} session', { what: tx(sub.label) }) : tx('Create session')} icon="plus" haptic="press" onPress={() => create(sub?.id)} />
       </View>
     </View>
   );

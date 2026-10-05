@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { cityWhen } from '@/lib/time';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -88,8 +89,13 @@ function MemberCard({ a, cityId, onChanged, friendsGoing }: { a: ServerActivity;
         <View style={styles.row}>
           <Icon name="users" size={14} color={t.c.textSecondary} />
           <Text variant="caption" tone="secondary">
-            {a.going}
-            {a.capacity ? ` / ${a.capacity}` : ''} going{friendsGoing ? ` · ${friendsGoing} friend${friendsGoing > 1 ? 's' : ''}` : ''} · {a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : 'Free'}
+            {[
+              tx(a.capacity ? '{n}/{cap} going' : '{n} going', { n: a.going, cap: a.capacity ?? 0 }),
+              friendsGoing ? tx(friendsGoing > 1 ? '{n} friends' : '{n} friend', { n: friendsGoing }) : null,
+              a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : tx('Free'),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </Text>
         </View>
         <Button

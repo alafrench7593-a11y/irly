@@ -256,7 +256,9 @@ export default function Home() {
         <PressableScale haptic="select" scaleTo={0.98} onPress={() => setSheet(true)} style={styles.footer}>
           <IrlyMark size={30} state="static" ringColor={t.c.textTertiary} lensColor={t.c.text} glow={false} />
           <Text variant="bodyS" tone="tertiary" align="center">
-            You are in {dest.name} · {city.name}.{'\n'}Tap to switch destination.
+            {tx('You are in {dest} · {city}.', { dest: tx(dest.name), city: city.name })}
+            {'\n'}
+            {tx('Tap to switch destination.')}
           </Text>
         </PressableScale>
       </Animated.ScrollView>

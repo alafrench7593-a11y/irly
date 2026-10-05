@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { t as tx } from '@/i18n';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { DestinationPill } from '@/components/navigation/Headers';
@@ -75,7 +76,7 @@ export function MapTopBar({
           <TextInput
             value={query}
             onChangeText={onQuery}
-            placeholder={`Search ${cityName}`}
+            placeholder={tx('Search {city}', { city: cityName })}
             placeholderTextColor={t.c.textTertiary}
             selectionColor={t.c.text}
             style={[styles.searchInput, { color: t.c.text }]}

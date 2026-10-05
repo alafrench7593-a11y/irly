@@ -1,4 +1,5 @@
 import { memo, useMemo, useState, type ReactNode } from 'react';
+import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
@@ -25,7 +26,7 @@ import {
 } from '@/data/repo';
 import type { City, Visual } from '@/data/types';
 import { MapArt } from '@/features/map/MapArt';
-import { formatCount, formatPrice, plural, priceLevel } from '@/lib/format';
+import { formatCount, formatPrice, priceLevel } from '@/lib/format';
 import { cityNow, durationLabel, whenLabel } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -212,8 +213,12 @@ function Going({ ids, extra, joined, go }: { ids: string[]; extra: number; joine
   const names = people.slice(0, 2).map((p) => p.name);
   const rest = total - names.length - (joined ? 1 : 0);
   const sentence = joined
-    ? `You, ${names.join(', ')}${rest > 0 ? ` and ${rest} more` : ''}`
-    : `${names.join(', ')}${rest > 0 ? ` and ${plural(rest, 'other')}` : ''}`;
+    ? rest > 0
+      ? tx('You, {names} and {n} more', { names: names.join(', '), n: rest })
+      : tx('You, {names}', { names: names.join(', ') })
+    : rest > 0
+      ? tx('{names} and {n} more', { names: names.join(', '), n: rest })
+      : names.join(', ');
   return (
     <View style={{ gap: space[4] }}>
       <View style={styles.goingRow}>
@@ -301,7 +306,7 @@ const EventBody = memo(function EventBody({ id, go }: { id: string; go: Go }) {
         <View style={{ gap: space[5] }}>
           <InfoRow icon="calendar" label="When" value={`${whenLabel(e.when, city)} · ${durationLabel(e.when.durationMin)}`} />
           <InfoRow icon="pin" label="Where" value={`${e.venue}`} />
-          <InfoRow icon="ticket" label="Entry" value={`${formatPrice(e.price, city.currency)} · ${plural(e.capacity, 'spot')}`} />
+          <InfoRow icon="ticket" label="Entry" value={`${formatPrice(e.price, city.currency)} · ${tx(e.capacity === 1 ? '{n} spot' : '{n} spots', { n: e.capacity })}`} />
         </View>
       </Section>
       <Section title="Who's going" index={1}>
@@ -358,7 +363,7 @@ const SessionBody = memo(function SessionBody({ id, go }: { id: string; go: Go }
       <Section title="Spots" index={1}>
         <View style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text variant="titleS">{left === 0 ? 'Full, join the waitlist' : `${plural(left, 'spot')} left`}</Text>
+            <Text variant="titleS">{left === 0 ? tx('Full, join the waitlist') : tx(left === 1 ? '{n} spot left' : '{n} spots left', { n: left })}</Text>
             <Text variant="bodyS" tone="secondary">
               {going}/{s.spots}
             </Text>
@@ -463,8 +468,7 @@ const CommunityBody = memo(function CommunityBody({ id, go }: { id: string; go: 
         <View style={styles.goingRow}>
           <AvatarStack people={people} size={34} max={5} extra={c.members - people.length + (member ? 1 : 0)} />
           <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
-            {member ? 'You and ' : ''}
-            {people.map((p) => p.name).join(', ')} and {formatCount(c.members - people.length)} more
+            {tx(member ? 'You, {names} and {n} more' : '{names} and {n} more', { names: people.map((p) => p.name).join(', '), n: formatCount(c.members - people.length) })}
           </Text>
         </View>
         <View style={{ gap: 10, marginTop: space[5] }}>
@@ -695,7 +699,7 @@ function BookingSheet({ serviceId, visible, onClose }: { serviceId: string; visi
   const [slot, setSlot] = useState<string | null>(null);
   if (!s) return null;
   return (
-    <Sheet visible={visible} onClose={onClose} title="Book a call" subtitle={`${s.name} · 20 min, free`}>
+    <Sheet visible={visible} onClose={onClose} title="Book a call" subtitle={tx('{name} · 20 min, free', { name: s.name })}>
       <View style={{ gap: space[6], paddingBottom: space[3] }}>
         <View style={{ paddingHorizontal: space.gutter, gap: space[4] }}>
           <Text variant="overline" tone="tertiary">
@@ -709,7 +713,7 @@ function BookingSheet({ serviceId, visible, onClose }: { serviceId: string; visi
         </View>
         <View style={{ paddingHorizontal: space.gutter, gap: space[4] }}>
           <Text variant="overline" tone="tertiary">
-            Time ({CITIES[s.cityId].name} time)
+            {tx('Time ({city} time)', { city: CITIES[s.cityId].name })}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {SLOTS.map((x) => (
@@ -726,7 +730,7 @@ function BookingSheet({ serviceId, visible, onClose }: { serviceId: string; visi
         </View>
         <View style={{ paddingHorizontal: space.gutter }}>
           <Button
-            label={slot ? `Confirm ${days[day]?.label} · ${slot}` : 'Pick a time'}
+            label={slot ? tx('Confirm {day} · {slot}', { day: tx(days[day]?.label ?? ''), slot }) : tx('Pick a time')}
             disabled={!slot}
             full
             haptic={false}

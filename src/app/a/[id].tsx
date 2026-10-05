@@ -160,8 +160,7 @@ export default function ActivityPage() {
           <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined) }} light={city?.light} scrim="strong" style={StyleSheet.absoluteFill} width={1000} recyclingKey={`a-${a.id}`} />
           <View style={[styles.coverText, { paddingBottom: space[5] }]}>
             <Text variant="overline" color="#FFFFFF">
-              {isEvent ? 'Event' : (category?.label ?? 'Activity')}
-              {a.girlOnly ? ' · IRLY Girl' : ''}
+              {[tx(isEvent ? 'Event' : (category?.label ?? 'Activity')), a.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
             </Text>
             <Text variant="displayM" color="#FFFFFF">
               {a.title}

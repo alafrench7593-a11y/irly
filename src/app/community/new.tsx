@@ -73,7 +73,7 @@ export default function NewCommunity() {
         ) : null}
         <View style={{ gap: 6 }}>
           <Text variant="label">Name</Text>
-          <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 60))} placeholder={`French in ${city.name}`} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel="Community name" />
+          <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 60))} placeholder={tx('French in {city}', { city: city.name })} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel="Community name" />
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">One line</Text>

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { wipeLocal } from '@/state/wipe';
 import { deleteServerAccount, signOut, useAccount } from '@/features/auth/account';
 import { LANGS, useLangStore } from '@/i18n';
@@ -92,7 +93,7 @@ export default function Profile() {
             {profile.arrivedAt ? (
               <View style={[styles.newHere, { backgroundColor: t.c.brand }]}>
                 <Text variant="overline" color={t.c.onBrand}>
-                  New in {city.name} · {days} {days > 1 ? 'days' : 'day'}
+                  {tx(days > 1 ? 'New in {city} · {n} days' : 'New in {city} · {n} day', { city: city.name, n: days })}
                 </Text>
               </View>
             ) : null}
@@ -168,7 +169,7 @@ export default function Profile() {
                 <Row
                   key={b.id}
                   icon={SERVICE_CATEGORIES[s.category].icon}
-                  title={`Call with ${s.name}`}
+                  title={tx('Call with {name}', { name: s.name })}
                   meta={`${b.dateLabel} · ${b.slot}`}
                   onPress={() => openHero({ kind: 'service', id: s.id })}
                 />
@@ -227,7 +228,7 @@ export default function Profile() {
             <Divider inset={16} />
             <SettingLink icon="user" label="IRLY account" value={account ? 'Signed in' : 'Sign in to sync'} onPress={() => router.push('/account')} />
             <Divider inset={16} />
-            <SettingLink icon="globe" label="Destination" value={`${dest.shortName} · ${city.name}`} onPress={() => setDestSheet(true)} />
+            <SettingLink icon="globe" label="Destination" value={`${tx(dest.shortName)} · ${city.name}`} onPress={() => setDestSheet(true)} />
             <Divider inset={16} />
             <SettingLink icon="palette" label="IRLY Design System" value="Tokens & components" onPress={() => router.push('/design-system')} />
             <Divider inset={16} />

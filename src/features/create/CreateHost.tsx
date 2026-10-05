@@ -129,7 +129,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
 
   const results = useMemo(() => searchCatalog(query, 8), [query]);
   const category = pick ? CATEGORY_BY_ID[pick.categoryId] : undefined;
-  const title = pick?.custom ?? pick?.activity?.label ?? (pick?.sub ? `${pick.sub.label} session` : undefined);
+  const title = pick?.custom ?? pick?.activity?.label ?? (pick?.sub ? `${tx('{what} session', { what: tx(pick.sub.label) })}` : undefined);
   const place = pick?.activity?.place;
 
   const chooseCategory = (id: CategoryKey) => {
@@ -482,7 +482,7 @@ function CustomButton({ text, onPress }: { text: string; onPress: () => void }) 
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} style={[styles.custom, { borderColor: t.c.lineStrong }]} accessibilityLabel={`Create custom activity: ${text}`}>
       <Icon name="wand" size={18} color={t.c.text} />
       <Text variant="label" style={{ flex: 1 }} numberOfLines={1}>
-        Create &quot;{text.trim()}&quot;
+        {tx('Create “{what}”', { what: text.trim() })}
       </Text>
       <Icon name="arrowRight" size={16} color={t.c.text} />
     </PressableScale>

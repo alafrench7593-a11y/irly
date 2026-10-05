@@ -37,10 +37,10 @@ export function DestinationSheet({ visible, onClose }: Props) {
             <View key={destId} style={{ marginBottom: space[5] }}>
               <View style={styles.groupHeader}>
                 <Text variant="titleS">
-                  {destId === 'bali' ? '🌴' : dest.flag}  {dest.shortName}
+                  {destId === 'bali' ? '🌴' : dest.flag}  {tx(dest.shortName)}
                 </Text>
                 <Text variant="caption" tone="tertiary">
-                  {dest.cities.length > 1 ? tx('{n} emirates', { n: dest.cities.length }) : dest.country}
+                  {dest.cities.length > 1 ? tx('{n} emirates', { n: dest.cities.length }) : tx(dest.country)}
                 </Text>
               </View>
               {dest.cities.map((id) => {

@@ -152,7 +152,7 @@ export default function Discover() {
           <View style={{ gap: space[7] }}>
             <ServerResults q={q} cityId={cityId} />
             <Text variant="bodyS" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
-              {total ? `${total} results for “${q.trim()}” in the city guide` : `Nothing in the city guide for “${q.trim()}”. Try “run”, “dinner” or “visa”.`}
+              {total ? tx('{n} results for “{q}” in the city guide', { n: total, q: q.trim() }) : tx('Nothing in the city guide for “{q}”. Try “run”, “dinner” or “visa”.', { q: q.trim() })}
             </Text>
             {results.events.length ? (
               <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>

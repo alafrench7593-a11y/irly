@@ -33,6 +33,8 @@ export type LookingFor =
   | 'irlygirl';
 
 export type Profile = {
+  /** The account this on-device profile was published to; never sent to another one. */
+  ownerId?: string;
   name: string;
   types: UserType[];
   interests: Interest[];

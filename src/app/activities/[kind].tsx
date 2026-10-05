@@ -76,7 +76,7 @@ export default function ActivityKindScreen() {
           </View>
           <Text variant="displayXL">{a.label}</Text>
           <Text variant="body" tone="secondary">
-            {sessions.length ? `${sessions.length} sessions this week in ${city.name}` : `Be the first to start a ${a.label.toLowerCase()} plan in ${city.name}.`}
+            {sessions.length ? tx('{n} sessions this week in {city}', { n: sessions.length, city: city.name }) : tx('Be the first to start a {what} plan in {city}.', { what: tx(a.label).toLowerCase(), city: city.name })}
           </Text>
         </View>
 
@@ -90,7 +90,7 @@ export default function ActivityKindScreen() {
 
         {players.length ? (
           <View style={{ marginBottom: space[9] }}>
-            <SectionHeader overline="Smart matching" title={`Play ${a.label.toLowerCase()} with`} />
+            <SectionHeader overline="Smart matching" title={tx('Play {what} with', { what: tx(a.label).toLowerCase() })} />
             <Rail itemWidth={290}>
               {players.map((m) => (
                 <PersonCard key={m.person.id} match={m} width={290} />

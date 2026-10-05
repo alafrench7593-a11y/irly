@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useAuthStatus } from '@/features/auth/account';
 import { cityDayKey, cityWhen } from '@/lib/time';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -70,8 +71,8 @@ export default function CalendarScreen() {
                         {it.title}
                       </Text>
                       <Text variant="caption" tone="tertiary" numberOfLines={1}>
-                        {it.hosting ? 'Hosting · ' : ''}
-                        {it.format === 'event' ? 'Event · ' : ''}
+                        {it.hosting ? `${tx('Hosting')} · ` : ''}
+                        {it.format === 'event' ? `${tx('Event')} · ` : ''}
                         {it.placeName ?? it.areaId}
                       </Text>
                     </View>

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -83,7 +84,7 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236, comp
           <Glass dark style={styles.timePill}>
             {live ? <LiveDot size={6} color={status.live} /> : null}
             <Text variant="overline" tone="onDark">
-              {live ? `Live · ${h.item.when.time}` : whenLabel(h.item.when, city)}
+              {live ? tx('Live · {time}', { time: h.item.when.time }) : whenLabel(h.item.when, city)}
             </Text>
           </Glass>
         </View>

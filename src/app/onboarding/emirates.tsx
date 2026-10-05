@@ -1,4 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useRef, type RefObject } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -121,8 +122,8 @@ function FeaturedCard({ city, onPick }: { city: City; onPick: (c: City, ref: Ref
           </Text>
         </View>
         <Glass dark style={styles.stats}>
-          <Stat value={city.stats.communities} label="communities" />
-          <Stat value={city.stats.activities} label="activities" />
+          <Stat value={city.stats.communities} label={tx('communities')} />
+          <Stat value={city.stats.activities} label={tx('activities')} />
           <Stat value={city.stats.events} label="events this week" />
           <View style={styles.go}>
             <Icon name="arrowRight" size={20} color="#000000" strokeWidth={2.4} />
@@ -146,7 +147,7 @@ function EmirateCard({ city, width, onPick }: { city: City; width: number; onPic
           {city.name}
         </Text>
         <Text variant="caption" color="rgba(255,255,255,0.7)" numberOfLines={1}>
-          {city.stats.communities} communities · {city.stats.events} events
+          {tx('{c} communities · {e} events', { c: city.stats.communities, e: city.stats.events })}
         </Text>
       </View>
     </PressableScale>

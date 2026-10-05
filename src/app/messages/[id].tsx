@@ -238,7 +238,7 @@ function Thread() {
               {conversation.title}
             </Text>
             <Text variant="caption" tone="tertiary" align="center">
-              {person ? `${person.headline} · met on IRLY` : `${conversation.personIds.length + 1} members · messages stay in the group`}
+              {person ? tx('{headline} · met on IRLY', { headline: tx(person.headline) }) : tx('{n} members · messages stay in the group', { n: conversation.personIds.length + 1 })}
             </Text>
           </View>
           {messages.map((m, i) => {
