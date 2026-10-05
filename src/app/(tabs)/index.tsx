@@ -5,14 +5,14 @@ import Animated, { LinearTransition, useAnimatedScrollHandler, useSharedValue } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
-import { EventCard } from '@/components/cards/EventCards';
 import { LiveStrip } from '@/features/live/LiveStrip';
-import { Carousel, fromEvent, fromSession, HappeningRow, HighlightCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
+import { Carousel, fromEvent, fromSession, HappeningRow, HighlightCard, PersonBubble, type Happening, type HomeGroup } from '@/components/cards/HomeCards';
+import { openCreate } from '@/features/create/createStore';
 import { CommunityCard } from '@/components/cards/ThingCards';
 import { HomeHeader } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Chip, SectionHeader } from '@/components/ui/Controls';
-import { Icon } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES, DESTINATIONS } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
@@ -40,6 +40,16 @@ const FILTERS: { id: 'all' | CategoryId; label: string }[] = [
   { id: 'dogwalk', label: 'Dog walk' },
   { id: 'shopping', label: 'Shopping' },
   { id: 'events', label: 'Events' },
+];
+
+/** The Home groups everything happening into the sections people think in. */
+const GROUPS: { id: HomeGroup; title: string; overline: string; icon: IconName; empty: string }[] = [
+  { id: 'sport', title: 'Sport', overline: 'Play together', icon: 'trophy', empty: 'No sport session yet' },
+  { id: 'networking', title: 'Networking', overline: 'Meet people who build', icon: 'handshake', empty: 'No networking session yet' },
+  { id: 'goingout', title: 'Going out', overline: 'Food, drinks, nights, culture', icon: 'martini', empty: 'Nothing planned for tonight yet' },
+  { id: 'activities', title: 'Activities', overline: 'Beach, wellness, outdoors', icon: 'palm', empty: 'No activity yet' },
+  { id: 'trips', title: 'Trips', overline: 'Day trips and getaways together', icon: 'plane', empty: 'No trip planned yet' },
+  { id: 'pets', title: 'Pets', overline: 'Dog walks and pet friends', icon: 'heart', empty: 'No dog walk yet' },
 ];
 
 /**
@@ -157,25 +167,55 @@ export default function Home() {
           />
         </Animated.View>
 
-        <Animated.View entering={enter.rise(4, 80)} style={styles.section}>
-          <SectionHeader title="Activities near you" action="Plans" onAction={() => router.push('/social')} />
-          <View style={styles.rows}>
-            {rest.map((h, i) => (
-              <Animated.View key={`${filter}-${h.id}`} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
-                <HappeningRow h={h} />
+        {filter === 'all' ? (
+          GROUPS.map((g, i) => {
+            const items = happenings.filter((h) => h.group === g.id && h !== highlight).slice(0, 8);
+            return (
+              <Animated.View key={g.id} entering={enter.rise(Math.min(4 + i, 6), 80)} style={styles.section}>
+                <SectionHeader overline={g.overline} title={g.title} action={items.length ? `${items.length}` : undefined} />
+                {items.length ? (
+                  <Rail itemWidth={260}>
+                    {items.map((h) => (
+                      <View key={h.id} style={{ width: 260 }}>
+                        <HighlightCard h={h} height={260} compact />
+                      </View>
+                    ))}
+                  </Rail>
+                ) : (
+                  <PressableScale
+                    haptic="select"
+                    scaleTo={0.98}
+                    onPress={() => openCreate()}
+                    style={[styles.emptyGroup, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}
+                    accessibilityLabel={`${g.title}: nothing yet. Create one`}
+                  >
+                    <View style={[styles.emptyIcon, { backgroundColor: t.c.overlay }]}>
+                      <Icon name={g.icon} size={20} color={t.c.text} />
+                    </View>
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text variant="titleS">{g.empty}</Text>
+                      <Text variant="bodyS" tone="secondary">
+                        Be the first: create one, people nearby will see it.
+                      </Text>
+                    </View>
+                    <Icon name="plus" size={18} color={t.c.text} />
+                  </PressableScale>
+                )}
               </Animated.View>
-            ))}
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={enter.rise(5, 80)} style={styles.section}>
-          <SectionHeader title="Events this week" action="See all" onAction={() => router.push('/events')} />
-          <Rail itemWidth={236}>
-            {content.events.slice(0, 8).map((e) => (
-              <EventCard key={`ev-${e.id}`} event={e} width={236} height={300} />
-            ))}
-          </Rail>
-        </Animated.View>
+            );
+          })
+        ) : (
+          <Animated.View entering={enter.rise(4, 80)} style={styles.section}>
+            <SectionHeader title="Activities near you" action="Plans" onAction={() => router.push('/social')} />
+            <View style={styles.rows}>
+              {rest.map((h, i) => (
+                <Animated.View key={`${filter}-${h.id}`} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
+                  <HappeningRow h={h} />
+                </Animated.View>
+              ))}
+            </View>
+          </Animated.View>
+        )}
 
         <Animated.View entering={enter.rise(6, 80)} style={styles.section}>
           <SectionHeader title="Groups" action="All" onAction={() => router.push('/communities')} />
@@ -220,5 +260,7 @@ const styles = StyleSheet.create({
   },
   section: { marginTop: space[8] },
   rows: { paddingHorizontal: space.gutter, gap: 10 },
+  emptyGroup: { marginHorizontal: space.gutter, flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 28, borderWidth: 1, borderStyle: 'dashed' },
+  emptyIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   footer: { alignItems: 'center', gap: 12, paddingVertical: space[8] },
 });

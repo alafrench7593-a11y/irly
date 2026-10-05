@@ -29,8 +29,42 @@ import { Photo } from '../visual/Photo';
 
 /* ───────── One shape for "something happening" ───────── */
 
+/** Home sections: everything happening, grouped the way people think about it. */
+export type HomeGroup = 'sport' | 'networking' | 'goingout' | 'activities' | 'trips' | 'pets';
+
+const SESSION_GROUP: Record<ActivitySession['kind'], HomeGroup> = {
+  padel: 'sport',
+  football: 'sport',
+  basketball: 'sport',
+  tennis: 'sport',
+  running: 'sport',
+  gym: 'sport',
+  boxing: 'sport',
+  cycling: 'sport',
+  volleyball: 'sport',
+  swimming: 'sport',
+  networking: 'networking',
+  yoga: 'activities',
+  wellness: 'activities',
+  beach: 'activities',
+  surf: 'activities',
+  hiking: 'trips',
+  kayak: 'trips',
+};
+
+const EVENT_GROUP: Record<IrlEvent['category'], HomeGroup> = {
+  sports: 'sport',
+  networking: 'networking',
+  business: 'networking',
+  party: 'goingout',
+  food: 'goingout',
+  culture: 'goingout',
+  wellness: 'activities',
+};
+
 export type Happening = {
   type: 'session' | 'event';
+  group: HomeGroup;
   id: string;
   title: string;
   label: string;
@@ -41,12 +75,12 @@ export type Happening = {
 
 export function fromSession(s: ActivitySession): Happening {
   const a = ACTIVITIES[s.kind];
-  return { type: 'session', id: s.id, title: s.title, label: a.label, icon: a.icon, color: activityColor(s.kind), item: s };
+  return { type: 'session', group: SESSION_GROUP[s.kind], id: s.id, title: s.title, label: a.label, icon: a.icon, color: activityColor(s.kind), item: s };
 }
 
 export function fromEvent(e: IrlEvent): Happening {
   const c = EVENT_CATEGORIES[e.category];
-  return { type: 'event', id: e.id, title: e.title, label: c.label, icon: c.icon, color: eventColor(e.category), item: e };
+  return { type: 'event', group: EVENT_GROUP[e.category], id: e.id, title: e.title, label: c.label, icon: c.icon, color: eventColor(e.category), item: e };
 }
 
 function photoOf(h: Happening) {
@@ -61,7 +95,7 @@ function photoOf(h: Happening) {
  * The day's highlight. Tapping it grows the card into the activity page
  * (shared element: same photo, same title, same place, same people).
  */
-export const HighlightCard = memo(function HighlightCard({ h, height = 236 }: { h: Happening; height?: number }) {
+export const HighlightCard = memo(function HighlightCard({ h, height = 236, compact }: { h: Happening; height?: number; compact?: boolean }) {
   const city = CITIES[h.item.cityId];
   const { ref, onPress, hidden } = useHeroCard(h.type, h.id);
   const joined = useStore((s) => Boolean(s.joined[h.id]));
@@ -87,7 +121,7 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236 }: { 
             <Text variant="overline" color={h.color}>
               {h.label}
             </Text>
-            <Text variant="cardTitle" tone="onDark" numberOfLines={2}>
+            <Text variant={compact ? 'titleM' : 'cardTitle'} tone="onDark" numberOfLines={2}>
               {h.title}
             </Text>
             <Text variant="bodyS" color="rgba(255,255,255,0.72)" numberOfLines={1}>
