@@ -177,7 +177,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
         </Text>
         {communities.data.length ? (
           communities.data.map((c) => (
-            <View key={c.id} style={[styles.card, styles.row]}>
+            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row]} accessibilityLabel={c.name}>
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={girl.ink}>
                   {c.name}
@@ -187,7 +187,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
                 </Text>
               </View>
               {c.member ? <GChip small label={tx('Joined')} selected /> : <GButton label="Join" onPress={() => join(c.id, c.name)} />}
-            </View>
+            </PressableScale>
           ))
         ) : (
           <Text variant="bodyS" color={girl.inkSoft}>

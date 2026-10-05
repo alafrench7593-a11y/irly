@@ -246,6 +246,35 @@ try {
     return Boolean(must(await A.sb.rpc('join_community', { p_community: c.id })));
   });
 
+  // ───── Community posts ─────
+  let girlsId;
+  await step('Alice posts in Bali Girls; Bea joins and sees it with its author', async () => {
+    girlsId = must(await A.sb.from('communities').select('id').eq('city_id', 'bali').eq('name', 'Bali Girls').single()).id;
+    must(await A.sb.from('community_posts').insert({ community_id: girlsId, author_id: A.id, body: `E2E brunch sunday, who's in? ${run}` }));
+    must(await B.sb.rpc('join_community', { p_community: girlsId }));
+    const feed = must(await B.sb.rpc('community_feed', { p_community: girlsId, p_limit: 50 }));
+    return feed.some((p) => p.body.includes(run) && p.first_name === 'Alice');
+  });
+  await step('poll: Bea votes once, counts update', async () => {
+    const d = must(await A.sb.from('community_posts').insert({ community_id: girlsId, author_id: A.id, body: `E2E poll ${run}?`, poll: { options: ['Sat', 'Sun'] } }).select('id').single());
+    must(await B.sb.from('community_poll_votes').insert({ post_id: d.id, user_id: B.id, option: 1 }));
+    const r = must(await A.sb.rpc('community_feed', { p_community: girlsId, p_limit: 50 })).find((p) => p.id === d.id);
+    return r.poll_counts[1] === 1;
+  });
+  await step('Bea is notified of Alice\'s new post', async () => must(await B.sb.from('notifications').select('kind')).some((n) => n.kind === 'COMMUNITY_POST'));
+  await step('Carl (man) cannot read or post in a girls community', async () => {
+    const r = await C.sb.rpc('community_feed', { p_community: girlsId, p_limit: 5 });
+    const ins = await C.sb.from('community_posts').insert({ community_id: girlsId, author_id: C.id, body: 'x' });
+    return (r.data ?? []).length === 0 && Boolean(ins.error);
+  });
+  await step('community activity linked to the community, announced in the feed', async () => {
+    const a = must(await A.sb.from('activities').insert({ creator_id: A.id, title: `E2E community brunch ${run}`, category_id: 'food', city_id: 'bali', area_id: 'canggu', starts_at: new Date(Date.now() + 3 * 86400000).toISOString(), community_id: girlsId, girl_only: true, privacy: 'community' }).select('id').single());
+    must(await A.sb.from('community_posts').insert({ community_id: girlsId, author_id: A.id, body: 'New plan', activity_id: a.id }));
+    const post = must(await B.sb.rpc('community_feed', { p_community: girlsId, p_limit: 50 })).find((p) => p.activity_id === a.id);
+    return Boolean(post?.activity_title);
+  });
+  await step('digest summarises the week', async () => must(await A.sb.rpc('community_digest', { p_community: girlsId }))[0].posts_week >= 3);
+
   // ───── Recommendations, settings, analytics, assistant log ─────
   await step('recommendations run for Carl', async () => Array.isArray(must(await C.sb.rpc('recommend_activities', { p_city: 'bali', p_limit: 10 }))));
   await step('Carl mutes likes (notification preferences saved)', async () => {

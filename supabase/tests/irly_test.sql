@@ -348,6 +348,38 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check((select count(*) from public.communities where name like '%Moms%') = 0, 'mom communities are hidden from men');
 select pg_temp.expect_denied($$select private.friends_unchecked('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000d')$$, 'private helpers are not callable by members');
 
+-- ───── Community posts, polls, digest ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select public.join_community('20000000-0000-0000-0000-000000000001');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+insert into public.community_posts (community_id, author_id, body) values ('20000000-0000-0000-0000-000000000001', auth.uid(), 'Padel Saturday 9am, who is in?');
+insert into public.community_posts (community_id, author_id, body, poll) values ('20000000-0000-0000-0000-000000000001', auth.uid(), 'Best time?', '{"options":["Morning","Evening"]}');
+select pg_temp.check((select count(*) from public.community_feed('20000000-0000-0000-0000-000000000001')) = 2, 'member posts appear in the feed');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select first_name from public.community_feed('20000000-0000-0000-0000-000000000001') limit 1) = 'Carl', 'with the author''s name');
+insert into public.community_poll_votes (post_id, user_id, option) select id, auth.uid(), 1 from public.community_posts where body = 'Best time?';
+select pg_temp.check((select poll_counts[2] from public.community_feed('20000000-0000-0000-0000-000000000001') where body = 'Best time?') = 1, 'poll vote counted');
+select pg_temp.expect_denied($$insert into public.community_poll_votes (post_id, user_id, option) select id, auth.uid(), 4 from public.community_posts where body = 'Best time?'$$, 'one vote per member, existing options only');
+select public.toggle_like('community_post', (select id::text from public.community_posts where body like 'Padel Saturday%'));
+select pg_temp.check((select likes from public.community_feed('20000000-0000-0000-0000-000000000001') where body like 'Padel Saturday%') = 1, 'likes on community posts');
+select pg_temp.check((select is_member from public.community_detail('20000000-0000-0000-0000-000000000001')), 'detail knows I am a member');
+select pg_temp.check((select conversation_id from public.community_detail('20000000-0000-0000-0000-000000000001')) is not null, 'and links the community chat');
+select pg_temp.check((select posts_week from public.community_digest('20000000-0000-0000-0000-000000000001')) = 2, 'digest counts the week');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000d' and kind = 'COMMUNITY_POST'), 'members are notified of new posts');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_denied($$insert into public.community_posts (community_id, author_id, body) values ('20000000-0000-0000-0000-000000000001', auth.uid(), 'not a member')$$, 'only members can post');
+select pg_temp.expect_denied($$insert into public.community_poll_votes (post_id, user_id, option) select id, auth.uid(), 0 from public.community_posts where body = 'Best time?'$$, 'only members can vote');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select public.join_community((select id from public.communities where name = 'Marina Padel Girls'));
+insert into public.community_posts (community_id, author_id, body) values ((select id from public.communities where name = 'Marina Padel Girls'), auth.uid(), 'Off-topic ad');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+update public.community_posts set deleted_at = now() where body = 'Off-topic ad';
+select pg_temp.check(not exists (select 1 from public.community_feed((select id from public.communities where name = 'Marina Padel Girls')) where body = 'Off-topic ad'), 'the owner can remove a post');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+update public.community_posts set deleted_at = now() where body = 'Best time?' and author_id <> auth.uid();
+select pg_temp.check((select count(*) from public.community_feed('20000000-0000-0000-0000-000000000001')) = 2, 'a member cannot remove someone else''s post');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

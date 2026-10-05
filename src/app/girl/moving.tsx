@@ -165,7 +165,7 @@ export default function GirlsMoving() {
             Bali girl communities
           </Text>
           {communities.data.map((c) => (
-            <View key={c.id} style={[styles.card, styles.row]}>
+            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row]} accessibilityLabel={c.name}>
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={girl.ink}>
                   {c.name}
@@ -192,7 +192,7 @@ export default function GirlsMoving() {
                   }
                 />
               )}
-            </View>
+            </PressableScale>
           ))}
         </View>
 

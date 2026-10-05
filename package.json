@@ -56,7 +56,8 @@
     "test:intent": "node --experimental-strip-types --no-warnings scripts/check-intent.mts",
     "test:bali": "node --experimental-strip-types --no-warnings scripts/check-bali.mts",
     "sync:places": "node scripts/sync-places.mjs",
-    "test:routes": "node scripts/check-routes.mjs"
+    "test:routes": "node scripts/check-routes.mjs",
+    "test:community": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-community.mts"
   },
   "private": true,
   "engines": {

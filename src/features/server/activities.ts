@@ -26,7 +26,7 @@ export function startsAt(day: string, time: string, now = new Date()): Date {
 }
 
 /** Extras that tie an activity to a place, a type (PLAYDATE, DINNER…) and an audience. */
-export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families' };
+export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean };
 
 export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, extras: ActivityExtras = {}): Promise<string | null> {
   if (!supabase) return null;
@@ -55,7 +55,8 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
       activity_type: extras.activityType ?? null,
       audience: extras.audience ?? 'all',
       // Girls and moms plans are IRLY Girl plans (enforced server-side).
-      girl_only: extras.audience === 'girls' || extras.audience === 'moms',
+      girl_only: extras.girlOnly || extras.audience === 'girls' || extras.audience === 'moms',
+      community_id: extras.communityId ?? null,
     })
     .select('id')
     .single();

@@ -66,7 +66,7 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
 
   const open = (h: SearchHit) => {
     if (h.kind === 'activity') router.push(`/a/${h.id}`);
-    else if (h.kind === 'community') router.push('/communities');
+    else if (h.kind === 'community') router.push(`/c/${h.id}`);
     else if (h.kind === 'category') router.push(`/category/${h.id}`);
     else if (h.kind === 'city' && setCity) setCity(h.id as never);
     else if (h.kind === 'place')

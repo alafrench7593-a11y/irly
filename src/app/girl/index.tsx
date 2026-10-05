@@ -22,7 +22,7 @@ import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section
 import { GButton } from '@/features/girl/ui';
 import { MomsView } from '@/features/girl/MomsView';
 import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
-import { joinCommunity, useCommunitiesLike } from '@/features/bali/data';
+import { useCommunitiesLike } from '@/features/bali/data';
 import { CITIES } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -406,11 +406,7 @@ export default function GirlHome() {
                 key={c.id}
                 haptic="select"
                 scaleTo={0.96}
-                onPress={() =>
-                  joinCommunity(c.id)
-                    .then((conv) => conv && router.push(`/messages/${conv}`))
-                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'))
-                }
+                onPress={() => router.push(`/c/${c.id}`)}
                 style={[styles.community, { backgroundColor: girl.blush }]}
                 accessibilityLabel={c.name}
               >

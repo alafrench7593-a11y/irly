@@ -182,6 +182,55 @@ async function main() {
   });
   await shot('cancelled');
 
+  // ───────── Community: post, live feed, assistant ─────────
+  const girlsId = (await sql(`select id from public.communities where city_id = 'bali' and name = 'Bali Girls'`))[0].id;
+  await step('Uma joins Bali Girls from its page', async () => {
+    await page.goto(`${BASE}/c/${girlsId}`);
+    await page.getByRole('button', { name: 'Join the community' }).click();
+    await visible(page, 'Open chat');
+    return true;
+  });
+  await step('Uma posts → Vera (other member) receives it', async () => {
+    must(await veraSb.rpc('join_community', { p_community: girlsId }));
+    await page.getByPlaceholder('Write to the community…').fill(`Hello girls ${run}`);
+    await page.getByRole('button', { name: 'Post', exact: true }).click();
+    for (let i = 0; i < 20; i++) {
+      const feed = must(await veraSb.rpc('community_feed', { p_community: girlsId, p_limit: 50 }));
+      if (feed.some((p) => p.body === `Hello girls ${run}`)) return true;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return false;
+  });
+  await step('Vera posts → it appears live in Uma\'s open community page', async () => {
+    await page.waitForTimeout(1500);
+    must(await veraSb.from('community_posts').insert({ community_id: girlsId, author_id: vera.id, body: `Live from Vera ${run}` }));
+    await visible(page, `Live from Vera ${run}`, 20000);
+    return true;
+  });
+  await step('assistant: "Poll: Saturday or Sunday?" → poll posted, Uma votes', async () => {
+    await page.getByPlaceholder('Ask: organise brunch sunday 11am…').fill('Poll: Saturday or Sunday?');
+    await page.getByRole('button', { name: 'Ask', exact: true }).click();
+    await page.getByRole('button', { name: 'Post this poll' }).click();
+    await visible(page, 'Saturday or Sunday?');
+    await page.getByRole('button', { name: 'Vote Sunday' }).first().click();
+    await visible(page, '1 votes');
+    return true;
+  });
+  await step('assistant: "Organise padel saturday 9am" → activity created and announced', async () => {
+    await page.getByPlaceholder('Ask: organise brunch sunday 11am…').fill('Organise padel saturday 9am');
+    await page.getByRole('button', { name: 'Ask', exact: true }).click();
+    await page.getByRole('button', { name: 'Create it for the community' }).click();
+    await visible(page, 'New plan: Padel', 20000);
+    const acts = must(await veraSb.from('activities').select('title').eq('community_id', girlsId));
+    return acts.some((a) => a.title.startsWith('Padel'));
+  });
+  await step('assistant: weekly digest from real data', async () => {
+    await page.getByPlaceholder('Ask: organise brunch sunday 11am…').fill("What's new this week?");
+    await page.getByRole('button', { name: 'Ask', exact: true }).click();
+    await visible(page, 'posts this week');
+    return true;
+  });
+
   // ───────── 1. Paths: every screen opens ─────────
   const areas = (await sql(`select id from public.areas where city_id = 'bali' order by sort`)).map((r) => r.id);
   const sections = ['visa', 'housing', 'banking', 'sim', 'internet', 'transport', 'healthcare', 'insurance', 'schools', 'childcare', 'work', 'coworking', 'business', 'accounting', 'tax', 'legal', 'real_estate', 'moving', 'pets', 'services'];
@@ -191,7 +240,7 @@ async function main() {
   const screens = [
     '/', '/discover', '/live', '/map', '/messages', '/profile', '/social', '/account', '/assistant', '/business', '/calendar', '/communities',
     '/community/new', '/design-system', '/eat', '/events', '/match', '/notifications', '/saved', '/services', '/settings', '/activities',
-    '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`,
+    '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
     `/comments?type=activity&id=${actId}`, `/share?type=activity&id=${actId}&title=x`, '/person/p-kadek',
     ...areas.map((a) => `/bali/area/${a}`),
     ...sections.map((s) => `/bali/guide/${s}`),

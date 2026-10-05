@@ -56,7 +56,7 @@ const ACTIVITIES: [RegExp, string, string][] = [
   [/\btennis\b/, 'tennis', 'sport'],
   [/\b(basket|basketball)\b/, 'basketball', 'sport'],
   [/\b(volley|volleyball|beach volley)\b/, 'volleyball', 'sport'],
-  [/\b(run|runs|runners?|running|jog|jogging|course à pied|coureurs?)\b/, 'running', 'sport'],
+  [/\b(run|runs|runners?|running|jog|jogging|course à pied|coureurs?|courir|footing)\b/, 'running', 'sport'],
   [/\b(gym|workout|muscu|fitness|crossfit)\b/, 'gym', 'sport'],
   [/\b(yoga|pilates|meditation|méditation)\b/, 'yoga', 'wellness'],
   [/\b(cycling|bike|vélo|velo)\b/, 'cycling', 'sport'],
