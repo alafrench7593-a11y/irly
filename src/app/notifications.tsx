@@ -1,4 +1,9 @@
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { Button } from '@/components/ui/Button';
+import { toast } from '@/components/ui/Toast';
+import { addFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
+import { timeAgo } from '@/lib/time';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
@@ -36,6 +41,7 @@ export default function Notifications() {
 
   return (
     <Page title="Notifications" subtitle="Only what helps you meet people.">
+      <ServerNotifications />
       <View style={styles.list}>
         {items.map((n, i) => {
           const p = n.personId ? content.people.find((x) => x.id === n.personId) : undefined;
@@ -66,6 +72,95 @@ export default function Notifications() {
         })}
       </View>
     </Page>
+  );
+}
+
+const ago = (ms: number) => timeAgo(Math.max(1, (Date.now() - ms) / 60000));
+
+/** Signed in: real notifications from the server, live, marked read on open. */
+function ServerNotifications() {
+  const t = useTheme();
+  const router = useRouter();
+  const { items, markAllRead } = useServerNotifications();
+  const { friends, refresh } = useFriends();
+  const unread = items.some((n) => !n.readAt);
+  useEffect(() => {
+    if (unread) {
+      const h = setTimeout(markAllRead, 1500);
+      return () => clearTimeout(h);
+    }
+  }, [unread, markAllRead]);
+  if (!items.length) return null;
+  const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? 'Someone';
+  const describe = (n: ServerNotification): { icon: IconName; title: string; body: string; go?: () => void; accept?: string } => {
+    const p = n.payload;
+    switch (n.kind) {
+      case 'MATCH_CREATED':
+        return { icon: 'sparkles', title: "It's an IRLY match", body: 'Say hello and find something to do', go: () => router.push(`/messages/${p.conversation_id}`) };
+      case 'MATCH_REMOVED':
+        return { icon: 'x', title: 'A match ended', body: 'The private chat is closed' };
+      case 'MESSAGE_CREATED':
+        return { icon: 'message', title: 'New message', body: 'Tap to open the conversation', go: () => router.push(`/messages/${p.conversation_id}`) };
+      case 'ACTIVITY_JOINED':
+        return { icon: 'users', title: 'Someone joined your activity', body: 'Their name is in the activity chat', go: () => router.push('/messages') };
+      case 'COMMUNITY_JOINED':
+        return { icon: 'heartHandshake', title: 'You joined a community', body: 'Its chat is in Messages', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
+      case 'IRLY_POST_CREATED':
+        return { icon: 'zap', title: `${name(p.from)} is live`, body: p.body ?? 'See what they are doing', go: () => router.push('/live') };
+      case 'PROFILE_UPDATED':
+        if (p.type === 'friend_request') {
+          const pending = friends.find((f) => f.userId === p.from && f.incoming);
+          return { icon: 'user', title: `${name(p.from)} wants to be friends`, body: 'Friends see each other’s IRL posts', accept: pending ? p.from : undefined };
+        }
+        if (p.type === 'friend_accepted') return { icon: 'check', title: `${name(p.from)} accepted`, body: 'You are now friends' };
+        return { icon: 'user', title: 'Profile update', body: '' };
+      default:
+        return { icon: 'bell', title: 'IRLY', body: '' };
+    }
+  };
+  return (
+    <View style={[styles.list, { marginBottom: space[6] }]}>
+      {items.map((n, i) => {
+        const d = describe(n);
+        return (
+          <Animated.View key={n.id} entering={enter.rise(i)}>
+            <PressableScale onPress={d.go} scaleTo={0.98} style={[styles.row, { backgroundColor: n.readAt ? 'transparent' : t.c.surface, boxShadow: n.readAt ? undefined : t.shadow.card }]}>
+              <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
+                <Icon name={d.icon} size={18} color={t.c.text} />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text variant="label" numberOfLines={2}>
+                  {d.title}
+                </Text>
+                {d.body ? (
+                  <Text variant="bodyS" tone="secondary" numberOfLines={1}>
+                    {d.body}
+                  </Text>
+                ) : null}
+              </View>
+              {d.accept ? (
+                <Button
+                  label="Accept"
+                  size="sm"
+                  onPress={() =>
+                    addFriend(d.accept!)
+                      .then(() => {
+                        toast('You are now friends', 'check', 'positive');
+                        refresh();
+                      })
+                      .catch((e) => toast(e instanceof Error ? e.message : 'Could not accept', 'x', 'live'))
+                  }
+                />
+              ) : (
+                <Text variant="caption" tone="tertiary">
+                  {ago(n.createdAt)}
+                </Text>
+              )}
+            </PressableScale>
+          </Animated.View>
+        );
+      })}
+    </View>
   );
 }
 

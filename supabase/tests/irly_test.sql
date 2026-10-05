@@ -195,6 +195,23 @@ select pg_temp.check((select unread from public.my_conversations() where kind = 
 select public.mark_conversation_read((select conversation_id from public.my_conversations() where kind = 'activity'));
 select pg_temp.check((select unread from public.my_conversations() where kind = 'activity') = 0, 'read state updates');
 
+-- ───── Friends and IRL ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(public.add_friend('00000000-0000-0000-0000-00000000000d') = 'pending', 'friend request sent');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select incoming from public.my_friends() where first_name = 'Carl'), 'request shows as incoming');
+select pg_temp.check(public.add_friend('00000000-0000-0000-0000-00000000000c') = 'accepted', 'accepting makes friends');
+insert into public.irl_posts (author_id, city_id, area_id, body, visibility) values (auth.uid(), 'dubai', 'marina', 'Coffee at the Marina, anyone?', 'friends');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) from public.irl_feed('dubai')) = 1, 'friend sees the friends-only IRL post');
+select pg_temp.check((select first_name from public.irl_feed('dubai') limit 1) = 'Dina', 'with the author''s first name');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check((select count(*) from public.irl_feed('dubai')) = 0, 'non-friend does not');
+select pg_temp.expect_denied($$select private.are_friends('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000d')$$, 'cannot probe other people''s friendships');
+select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id, area_id, body, expires_at) values (auth.uid(), 'dubai', 'marina', 'forever', now() + interval '3 days')$$, 'IRL posts cannot outlive 4 hours');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications n where n.kind = 'IRLY_POST_CREATED') = 1, 'friend notified of the IRL post');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

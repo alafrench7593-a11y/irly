@@ -8,6 +8,9 @@ import { Page } from '@/components/layout/Page';
 import { InboxButtons } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { LiveRing } from '@/features/live/LiveStrip';
+import { useAccount } from '@/features/auth/account';
+import { addFriend, deleteServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
+import type { CityId } from '@/data/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Chip, LiveDot } from '@/components/ui/Controls';
@@ -71,6 +74,7 @@ export default function LiveScreen() {
       <View style={{ marginBottom: space[6] }}>
         <FriendsLiveNow />
       </View>
+      <ServerFeed cityId={cityId} />
       <View style={styles.list}>
         {sorted.map((l, i) => (
           <Animated.View key={l.id} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
@@ -219,6 +223,78 @@ function FriendsLiveNow() {
   );
 }
 
+/**
+ * Signed in: what members are posting right now, live. Friends' posts
+ * first; add someone as a friend from their post.
+ */
+function ServerFeed({ cityId }: { cityId: CityId }) {
+  const t = useTheme();
+  const city = CITIES[cityId];
+  const { posts } = useServerIrl(cityId);
+  const { friends, refresh } = useFriends();
+  const now = useNow();
+  if (!posts.length) return null;
+  const sorted = [...posts].sort((a, b) => Number(b.friend) - Number(a.friend) || b.createdAt - a.createdAt);
+  return (
+    <View style={[styles.list, { marginBottom: space[6] }]}>
+      <Text variant="overline" tone="secondary">
+        On IRLY right now
+      </Text>
+      {sorted.map((p, i) => {
+        const f = friends.find((x) => x.userId === p.authorId);
+        const status = p.mine ? 'mine' : p.friend ? 'friend' : f?.status === 'pending' ? (f.incoming ? 'incoming' : 'sent') : 'none';
+        return (
+          <Animated.View key={p.id} entering={enter.rise(i)} style={[styles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
+            <View style={styles.head}>
+              <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} />
+              <View style={{ flex: 1 }}>
+                <Text variant="titleS">{p.mine ? 'You' : p.firstName}</Text>
+                <View style={styles.meta}>
+                  <LiveDot size={6} color={t.c.live} />
+                  <Text variant="caption" tone="secondary" numberOfLines={1}>
+                    {p.placeName ?? areaName(city, p.areaId)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {p.visibility === 'friends' ? 'Friends' : 'Everyone'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            {p.mediaUrl ? <Image source={{ uri: p.mediaUrl }} style={styles.photo} contentFit="cover" /> : null}
+            <Text variant={p.mediaUrl ? 'body' : 'titleM'}>{p.body}</Text>
+            {status === 'mine' ? (
+              <Button
+                label="Remove"
+                variant="secondary"
+                size="sm"
+                icon="x"
+                onPress={() => deleteServerIrl(p.id).catch((e) => toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live'))}
+              />
+            ) : status === 'friend' ? (
+              <Text variant="caption" tone="tertiary">
+                Friend
+              </Text>
+            ) : (
+              <Button
+                label={status === 'incoming' ? 'Accept friend' : status === 'sent' ? 'Request sent' : 'Add friend'}
+                size="sm"
+                variant={status === 'sent' ? 'secondary' : 'primary'}
+                icon={status === 'sent' ? 'check' : 'plus'}
+                disabled={status === 'sent'}
+                onPress={() =>
+                  addFriend(p.authorId)
+                    .then((r) => {
+                      toast(r === 'accepted' ? `You and ${p.firstName} are friends` : `Request sent to ${p.firstName}`, 'user', 'brand');
+                      refresh();
+                    })
+                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
+                }
+              />
+            )}
+          </Animated.View>
+        );
+      })}
+    </View>
+  );
+}
+
 function Composer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const t = useTheme();
   const cityId = useCityId();
@@ -227,15 +303,31 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
   const [text, setText] = useState('');
   const [area, setArea] = useState(city.areas[0].id);
   const [uri, setUri] = useState<string | undefined>();
+  const [visibility, setVisibility] = useState<'friends' | 'everyone'>('friends');
+  const [busy, setBusy] = useState(false);
+  const account = useAccount();
 
   const pick = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true });
     if (!res.canceled && res.assets[0]) setUri(res.assets[0].uri);
   };
 
-  const submit = () => {
-    if (!text.trim()) return;
-    post({ cityId, kind: uri ? 'photo' : 'text', text: text.trim(), photoUri: uri, place: areaName(city, area), areaId: area });
+  const submit = async () => {
+    if (!text.trim() || busy) return;
+    if (account) {
+      // Signed in: the post goes to the server, friends see it live.
+      setBusy(true);
+      try {
+        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility });
+      } catch (e) {
+        toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
+        setBusy(false);
+        return;
+      }
+      setBusy(false);
+    } else {
+      post({ cityId, kind: uri ? 'photo' : 'text', text: text.trim(), photoUri: uri, place: areaName(city, area), areaId: area });
+    }
     haptic('success');
     toast("You're live for 4 hours", 'zap', 'live');
     setText('');
@@ -275,7 +367,18 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
             ))}
           </View>
         </View>
-        <Button label="Post live" icon="zap" full haptic={false} disabled={!text.trim()} onPress={submit} />
+        {account ? (
+          <View style={{ gap: 8 }}>
+            <Text variant="overline" tone="tertiary">
+              Who sees it
+            </Text>
+            <View style={styles.wrap}>
+              <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => setVisibility('friends')} />
+              <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => setVisibility('everyone')} />
+            </View>
+          </View>
+        ) : null}
+        <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim()} onPress={submit} />
       </View>
     </Sheet>
   );

@@ -1,4 +1,6 @@
 import { useRouter } from 'expo-router';
+import { useAccount } from '@/features/auth/account';
+import { useServerNotifications } from '@/features/server/social';
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -124,10 +126,14 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
 export function InboxButtons() {
   const router = useRouter();
   const unread = useUnread();
+  const account = useAccount();
+  const server = useServerNotifications();
+  // Signed in: the bell counts real notifications; otherwise the demo ones.
+  const bell = account ? server.unread : 2;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <IconButton icon="message" label={`Messages${unread ? `, ${unread} unread` : ''}`} badge={unread} onPress={() => router.push('/messages')} />
-      <IconButton icon="bell" label="Notifications" badge={2} onPress={() => router.push('/notifications')} />
+      <IconButton icon="bell" label={`Notifications${bell ? `, ${bell} new` : ''}`} badge={bell} onPress={() => router.push('/notifications')} />
     </View>
   );
 }
