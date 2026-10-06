@@ -4,6 +4,7 @@
  * Tone: friendly, "tu".
  */
 export const fr: Record<string, string> = {
+  "Girls' plans coming up": 'Prochains plans entre filles',
   'All Emirates': 'Tous les Émirats',
   'Nothing planned in {city} yet. See all the Emirates, or plan the first one.': 'Rien de prévu à {city} pour l’instant. Regarde tous les Émirats, ou organise la première.',
   'Nobody is live in {city} right now.': 'Personne n’est en live à {city} en ce moment.',

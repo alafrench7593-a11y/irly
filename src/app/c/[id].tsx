@@ -117,7 +117,7 @@ export default function CommunityScreen() {
     const areaLabel = city.areas.find((a) => a.id === area)?.name ?? city.name;
     try {
       const actId = await createServerActivity(
-        { cityId: city.id, categoryId: d.category as never, activityId: d.activity, title: d.title, place: areaLabel, privacy: 'community', day: planDay(d.day), time: d.time, spots: 0, areaId: area, format: 'meetup', price: 0, currency: city.currency },
+        { cityId: city.id, categoryId: (d.category ?? c.categoryId ?? undefined) as never, activityId: d.activity, title: d.title, place: areaLabel, privacy: 'community', day: planDay(d.day), time: d.time, spots: 0, areaId: area, format: 'meetup', price: 0, currency: city.currency },
         dateFor(d.day, d.time, new Date(), city.utcOffset),
         { communityId: c.id, girlOnly: c.girlOnly },
       );

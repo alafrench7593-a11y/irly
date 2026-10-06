@@ -166,6 +166,8 @@ async function main() {
   await step('… the area page of Canggu', async () => (await page.goto(`${BASE}/bali/area/canggu`), await visible(page, 'Playdate'), true));
   await step('… the place page (who\'s going)', async () => (await page.goto(`${BASE}/place/echo-beach`), await visible(page, 'Playdate'), true));
   await step('… the messages inbox', async () => (await page.goto(`${BASE}/messages`), await visible(page, 'Playdate'), true));
+  await step('… its category page (Family)', async () => (await page.goto(`${BASE}/category/family`), await visible(page, 'Playdate'), true));
+  await step('… IRLY Girl (a moms plan)', async () => (await page.goto(`${BASE}/category/girl`), await visible(page, 'Playdate'), true));
   await step('… Discover search', async () => (await page.goto(`${BASE}/discover?q=Playdate`), await visible(page, 'On IRLY now'), await visible(page, 'Playdate'), true));
   await step('… and Vera\'s calendar (other member)', async () => must(await veraSb.rpc('my_calendar', {})).some((x) => x.id === actId));
   await step('Uma cancels in the app → Vera is notified and it leaves her calendar', async () => {

@@ -76,7 +76,30 @@ const ACTIVITIES: [RegExp, string, string][] = [
   [/\b(spa|massage|wellness|bien-être)\b/, 'spa', 'wellness'],
   [/\b(cinema|cinéma|movie|film|concert|comedy)\b/, 'entertainment', 'entertainment'],
   [/\b(paint|painting|pottery|poterie|photo walk|workshop|atelier)\b/, 'creative', 'creative'],
+  // Category only (no catalog activity): kids, trips, classes, games.
+  [/\b(kids?|children|enfants?|playdates?|family|famille|baby|babies|bebe|moms?|mamans?)\b/, '', 'family'],
+  [/\b(trip|road ?trip|voyage|getaway|weekend away)\b/, '', 'travel'],
+  [/\b(class|lesson|language|langue|cours|study|book club|club de lecture|reading)\b/, '', 'learning'],
+  [/\b(karaoke|bowling|arcade|board games?|jeux|escape room|quiz)\b/, '', 'entertainment'],
+  [/\b(eat|food|pizza|sushi|burger|bbq|picnic|pique-nique)\b/, '', 'food'],
 ];
+
+/**
+ * The category (and catalog activity) a free text belongs to: "Padel at
+ * JLT" → sport/padel, "Playdate at the park" → family. Used when a session
+ * is created without an explicit category (IRL « anyone want to join? »,
+ * the assistant, community plans).
+ */
+export function guessCategory(input: string): { category?: string; activity?: string } {
+  const t = plain(norm(input));
+  // The subject usually comes first: « Coffee at Kite Beach » is coffee, « Book club » is not a club night.
+  let best: { at: number; category: string; activity?: string } | null = null;
+  for (const [re, id, cat] of ACTIVITIES) {
+    const m = new RegExp(plain(re.source), re.flags).exec(t);
+    if (m && (!best || m.index < best.at)) best = { at: m.index, category: cat, activity: id || undefined };
+  }
+  return best ? { category: best.category, activity: best.activity } : {};
+}
 
 const PLACE_KINDS: [RegExp, string][] = [
   [/\bbeach ?clubs?\b/, 'beach_club'],
@@ -120,7 +143,7 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
   // Activity and category.
   for (const [re, id, cat] of ACTIVITIES) {
     if (has(re)) {
-      e.activity = id;
+      if (id) e.activity = id;
       e.category = cat;
       break;
     }

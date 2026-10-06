@@ -4,7 +4,7 @@ import { NONE } from '@/lib/none';
 import type { CityId } from '@/data/types';
 import { CITIES, cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
-import { dateFor, dayOf } from '@/features/ai/intent';
+import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
 import type { MyPlan } from '@/state/store';
@@ -50,6 +50,7 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
     const up = await supabase.storage.from('activity-photos').upload(coverPath, await imageBytes(extras.coverUri), { contentType: img.contentType });
     if (up.error) throw new Error('Could not upload the photo');
   }
+  const guess = guessCategory(`${plan.title ?? ''} ${plan.description ?? ''} ${plan.place ?? ''}`);
   const { data, error } = await supabase
     .from('activities')
     .insert({
@@ -58,9 +59,10 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
       format: plan.format ?? 'session',
       title: (plan.title ?? 'IRLY session').slice(0, 80),
       description: plan.description ?? null,
-      category_id: plan.categoryId ?? 'sport',
+      // No category chosen (IRL « anyone want to join? », the assistant…): read it from the title.
+      category_id: plan.categoryId ?? guess.category ?? 'entertainment',
       sub_id: plan.subId ?? null,
-      catalog_activity_id: plan.activityId ?? null,
+      catalog_activity_id: plan.activityId ?? (plan.categoryId ? null : (guess.activity ?? null)),
       city_id: plan.cityId,
       area_id: plan.areaId,
       place_name: plan.place ?? null,
@@ -107,24 +109,29 @@ export type ServerActivity = {
   coverUrl: string | null;
   /** Its emirate (or Bali): lists cover every city of the destination. */
   cityId: string;
+  /** IRLY Girl (girls and moms) sessions: only women see them. */
+  girlOnly: boolean;
 };
 
 /** Upcoming activities members created in this destination (all seven emirates, or Bali), your city first. */
-export function useServerActivities(cityId: CityId): { activities: ServerActivity[]; refresh: () => void } {
+export function useServerActivities(cityId: CityId, only: { categoryId?: string; girlOnly?: boolean } = {}): { activities: ServerActivity[]; refresh: () => void } {
+  const { categoryId, girlOnly } = only;
   const account = useAccount();
   const uid = account?.userId;
   const [activities, setActivities] = useState<ServerActivity[]>([]);
 
   const load = useCallback(async (): Promise<ServerActivity[]> => {
     if (!supabase || !uid) return [];
-    const { data, error } = await supabase
+    let q = supabase
       .from('activities')
-      .select('id, title, category_id, sub_id, area_id, city_id, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
+      .select('id, title, category_id, sub_id, area_id, city_id, girl_only, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
       .in('city_id', cityScope(cityId))
       .is('cancelled_at', null)
-      .gte('starts_at', new Date().toISOString())
-      .order('starts_at')
-      .limit(60);
+      .gte('starts_at', new Date().toISOString());
+    // A category or IRLY Girl page asks the server for its own sessions, not the first 60 of everything.
+    if (categoryId) q = q.eq('category_id', categoryId);
+    if (girlOnly) q = q.eq('girl_only', true);
+    const { data, error } = await q.order('starts_at').limit(60);
     if (error) throw new Error(error.message);
     const links = await coverLinks((data ?? []).map((a) => a.cover_path as string | null));
     return (
@@ -137,6 +144,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
           subId: a.sub_id,
           areaId: a.area_id,
           cityId: a.city_id as string,
+          girlOnly: Boolean(a.girl_only),
           placeName: a.place_name,
           startsAt: Date.parse(a.starts_at),
           capacity: a.capacity,
@@ -152,7 +160,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
         // Your own emirate first, then the others, each by time.
         .sort((x, y) => Number(y.cityId === cityId) - Number(x.cityId === cityId) || x.startsAt - y.startsAt)
     );
-  }, [cityId, uid]);
+  }, [cityId, uid, categoryId, girlOnly]);
 
   const refresh = useCallback(() => {
     load().then(setActivities).catch(() => undefined);

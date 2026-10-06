@@ -26,7 +26,9 @@ import { ScrollReveal } from '@/motion/ScrollReveal';
 import { MomsView } from '@/features/girl/MomsView';
 import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { useCommunitiesLike } from '@/features/bali/data';
-import { CITIES } from '@/data/destinations';
+import { useServerActivities } from '@/features/server/activities';
+import { cityWhen } from '@/lib/time';
+import { CITIES, placeLabel } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
@@ -85,6 +87,8 @@ export default function GirlHome() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const [mode, setMode] = useState<'all' | 'moms'>(params.mode === 'moms' ? 'moms' : 'all');
   const serverCommunities = useCommunitiesLike(cityId, '', true);
+  // Plans created in IRLY Girl (girls and moms): they show up right here.
+  const { activities: girlPlans } = useServerActivities(cityId, { girlOnly: true });
   const fling = useSharedValue(0);
   const tr = useT();
   const scrollY = useSharedValue(0);
@@ -418,6 +422,34 @@ export default function GirlHome() {
           </View>
         </ScrollReveal>
 
+        {girlPlans.length ? (
+          <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], gap: 10 }}>
+            <Text variant="titleM" color={girl.ink} style={{ paddingHorizontal: space.gutter }}>
+              {"Girls' plans coming up"}
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+              {girlPlans.map((a) => (
+                <PressableScale key={a.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/a/${a.id}`)} style={styles.plan} accessibilityLabel={a.title}>
+                  <View style={styles.planPhoto}>
+                    <Photo visual={{ photo: girlPhotoFor(a.title), uri: a.coverUrl }} light="dubai" width={500} style={StyleSheet.absoluteFill} />
+                  </View>
+                  <View style={{ padding: 12, gap: 2 }}>
+                    <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>
+                      {a.title}
+                    </Text>
+                    <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
+                      {cityWhen(a.startsAt, cityId, { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {placeLabel(cityId, a.cityId, a.areaId, a.placeName)}
+                    </Text>
+                    <Text variant="caption" color={girl.rose}>
+                      {tx('{n} going', { n: a.going })}
+                    </Text>
+                  </View>
+                </PressableScale>
+              ))}
+            </ScrollView>
+          </ScrollReveal>
+        ) : null}
+
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], gap: 10 }}>
           <View style={{ paddingHorizontal: space.gutter }}>
             <Text variant="titleM" color={girl.ink}>
@@ -577,5 +609,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: space[4] },
   action: { alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },
   community: { width: 168, height: 200, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end', boxShadow: girl.shadowSoft },
+  plan: { width: 220, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
+  planPhoto: { height: 120, overflow: 'hidden' },
   communityBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,250,246,0.92)', alignItems: 'center', justifyContent: 'center' },
 });

@@ -1,5 +1,5 @@
 // The assistant's command engine on the sentences from the IRLY brief.
-import { dateFor, parseCommand, type GeoIndex } from '../src/features/ai/intent.ts';
+import { dateFor, guessCategory, parseCommand, type GeoIndex } from '../src/features/ai/intent.ts';
 
 const geo: GeoIndex = {
   cities: [
@@ -132,6 +132,25 @@ const sat = dateFor('sat', '10:00', monday);
 if (sat.getDay() !== 6 || sat.getDate() !== 10) {
   failed++;
   console.error('✗ dateFor saturday', sat);
+}
+
+// A session created without a category lands in the right one.
+for (const [text, cat] of [
+  ['Padel at JLT, anyone?', 'sport'],
+  ['Coffee at Kite Beach', 'food'],
+  ['Café à JBR, qui vient ?', 'food'],
+  ['Playdate at the park with the kids', 'family'],
+  ['Sunset yoga', 'wellness'],
+  ['Board games night', 'entertainment'],
+  ['Road trip to Hatta', 'travel'],
+  ['Book club in Al Qasba', 'learning'],
+  ['Rooftop drinks', 'nightlife'],
+] as const) {
+  const g = guessCategory(text);
+  if (g.category !== cat) {
+    failed++;
+    console.error(`✗ guessCategory "${text}" → ${g.category}, expected ${cat}`);
+  }
 }
 
 if (failed) {

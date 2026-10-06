@@ -61,9 +61,10 @@ export default function CategoryScreen() {
   }, [category, content, sub, isGirl]);
 
   // Activities members created on the server (yours included), in this category.
-  const { activities: serverAll } = useServerActivities(cityId);
+  // The IRLY Girl page lists the girls' and moms' sessions (any category).
+  const { activities: serverAll } = useServerActivities(cityId, isGirl ? { girlOnly: true } : { categoryId: category?.id });
   const server = useMemo(
-    () => (category && !isGirl ? serverAll.filter((a) => a.categoryId === category.id && (!sub || a.subId === sub.id)) : []),
+    () => (category ? serverAll.filter((a) => (isGirl ? a.girlOnly : a.categoryId === category.id) && (!sub || a.subId === sub.id)) : []),
     [serverAll, category, sub, isGirl],
   );
   // Plans on this phone, minus those already listed from the server.
