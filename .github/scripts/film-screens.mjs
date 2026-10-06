@@ -57,6 +57,7 @@ const SHOTS = [
   { name: 'event', path: '/events', steps: [['wait', 2400], ['click', '[aria-label^="Founders"]'], ['wait', 1900]] },
   { name: 'event_going', path: '/events', steps: [['wait', 2400], ['click', '[aria-label^="Founders"]'], ['wait', 1900], ['click', '[aria-label="Going"]'], ['wait', 1300]] },
   { name: 'person', path: '/person/p-layla', steps: [['wait', 2200]] },
+  { name: 'person_requested', path: '/person/p-layla', steps: [['wait', 2200], ['click', '[aria-label="Connect"]'], ['wait', 650]] },
   { name: 'create', path: '/', steps: [['wait', 3800], ['click', '[aria-label^="IRL:"]'], ['wait', 1000], ['click', '[aria-label="Create activity"]'], ['wait', 1700]] },
   { name: 'chat', path: '/messages/cv-d1', steps: [['wait', 2200]] },
   { name: 'story', path: '/story', steps: [['shot', 1700, 'story_people'], ['shot', 4700, 'story_places'], ['shot', 7800, 'story_activities'], ['shot', 11000, 'story_real'], ['shot', 14300, 'story_irly']] },
@@ -93,15 +94,26 @@ for (const shot of SHOTS) {
 }
 
 // The web version on a desktop: the phone column on the city's blurred light.
-{
+for (const [name, route, click] of [['desktop', '/', null], ['desktop_person', '/person/p-layla', null], ['desktop_person_requested', '/person/p-layla', '[aria-label="Connect"]']]) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
   await ctx.addInitScript((s) => { try { localStorage.setItem('irly-v2', s); } catch {} }, JSON.stringify(state()));
   const page = await ctx.newPage();
-  await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 90000 });
-  await page.waitForTimeout(4200);
-  await page.screenshot({ path: `${OUT}/desktop.jpg`, type: 'jpeg', quality: 92 });
+  page.on('pageerror', (e) => errors.push(`${name}: ${e.message}`));
+  await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 90000 });
+  await page.waitForTimeout(route === '/' ? 4200 : 2600);
+  if (click) { await page.locator(click).first().click({ timeout: 15000 }).catch((e) => errors.push(`${name}: ${e.message.split('\n')[0]}`)); await page.waitForTimeout(650); }
+  await page.screenshot({ path: `${OUT}/${name}.jpg`, type: 'jpeg', quality: 92 });
   await ctx.close();
-  console.log('shot desktop');
+  console.log('shot', name);
+}
+
+// The source photographs behind two screens, full size (the app loads them from Unsplash):
+// Layla's cover (running at dusk) and Dubai at night.
+for (const [k, id] of Object.entries({ running: '1552674605-db6ffd4facb5', dubaiNight: '1590264539175-39df72442833' })) {
+  const r = await fetch(`https://images.unsplash.com/photo-${id}?w=2400&q=88&fm=jpg`);
+  if (r.ok) fs.writeFileSync(`${OUT}/photo_${k}.jpg`, Buffer.from(await r.arrayBuffer()));
+  else errors.push(`photo ${k}: HTTP ${r.status}`);
+  console.log('photo', k, r.status);
 }
 
 await browser.close();
