@@ -14,7 +14,7 @@ const res = await fetch(api, { headers });
 if (!res.ok) throw new Error(`Reading the auth config failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
 const current = await res.json();
 
-const wanted = ['exp://**', 'irly://**', 'https://*.trycloudflare.com/**', 'http://localhost:8081/**'];
+const wanted = ['exp://**', 'irly://**', 'https://*.trycloudflare.com/**', 'http://localhost:8081/**', 'https://alafrench7593-a11y.github.io/irly/**'];
 const allow = new Set((current.uri_allow_list ?? '').split(',').map((s) => s.trim()).filter(Boolean));
 wanted.forEach((u) => allow.add(u));
 
