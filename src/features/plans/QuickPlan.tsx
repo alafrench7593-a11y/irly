@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx } from '@/i18n';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -153,11 +154,7 @@ export function QuickPlan({
         ))}
       </Row>
       {!place ? (
-        <Row>
-          {city.areas.map((a) => (
-            <C girl={G} key={a.id} label={a.name} on={area === a.id} onPress={() => setArea(a.id)} />
-          ))}
-        </Row>
+        <AreaPicker cityId={city.id} value={area} onChange={setArea} palette={G ? GIRL_PICKER : undefined} />
       ) : null}
       <Text variant="caption" color={ink} tone={G ? undefined : 'tertiary'}>
         {type.audience === 'moms' ? 'Visible to IRLY Moms and IRLY Girl members.' : type.audience === 'girls' ? 'Visible to IRLY Girl members only.' : 'Anyone on IRLY can join.'} {tx('It gets its own chat and lands in your calendar.')}
@@ -170,6 +167,8 @@ export function QuickPlan({
     </View>
   );
 }
+
+const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.ink, line: girl.line };
 
 function C({ label, on, onPress, girl: g }: { label: string; on: boolean; onPress: () => void; girl: boolean }) {
   return g ? <GChip small label={label} selected={on} onPress={onPress} /> : <Chip size="sm" label={label} selected={on} onPress={onPress} />;

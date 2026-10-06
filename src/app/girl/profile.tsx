@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { AreaPicker } from '@/components/ui/AreaPicker';
 import { CharCount } from '@/components/ui/CharCount';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
@@ -44,6 +45,8 @@ const toggle = (list: string[], id: string, max = 99) =>
  * Pre-filled from signup (photo, bio, languages). Every step says why it
  * is asked; the last one decides what stays private.
  */
+const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.ink, line: girl.line };
+
 export default function GirlProfile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -302,11 +305,7 @@ export default function GirlProfile() {
                 </Wrap>
               </GSection>
               <GSection title={tx('Where you like to go in {city}', { city: city.name })} hint="Neighbourhoods only. Your exact location is never shared.">
-                <Wrap>
-                  {city.areas.map((a) => (
-                    <GChip key={a.id} small label={a.name} selected={draft.areas.includes(a.id)} onPress={() => set('areas', toggle(draft.areas, a.id, 5))} />
-                  ))}
-                </Wrap>
+                <AreaPicker cityId={city.id} value={draft.areas} multiple max={5} placeholder="Pick up to 5 neighbourhoods" onChange={(id) => set('areas', toggle(draft.areas, id, 5))} palette={GIRL_PICKER} />
               </GSection>
               <GSection title="When you are usually free">
                 <Wrap>

@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -544,11 +545,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           <Text variant="overline" tone="tertiary">
             Where
           </Text>
-          <View style={styles.wrap}>
-            {city.areas.slice(0, 8).map((a) => (
-              <Chip key={a.id} size="sm" label={a.name} icon="pin" selected={area === a.id} onPress={() => setArea(a.id)} />
-            ))}
-          </View>
+          <AreaPicker cityId={city.id} value={area} onChange={setArea} />
         </View>
         {account ? (
           <View style={{ gap: 8 }}>

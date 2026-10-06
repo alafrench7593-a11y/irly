@@ -4,6 +4,23 @@
  * Tone: friendly, "tu".
  */
 export const fr: Record<string, string> = {
+  'Choose a neighbourhood': 'Choisis un quartier',
+  '{n} neighbourhoods': '{n} quartiers',
+  'Search a neighbourhood': 'Chercher un quartier',
+  'No neighbourhood called « {q} » in {city}.': 'Aucun quartier « {q} » à {city}.',
+  'Done · {n}/{max}': 'OK · {n}/{max}',
+  'Pick up to 5 neighbourhoods': 'Choisis jusqu’à 5 quartiers',
+  'Any neighbourhood': 'Tous les quartiers',
+  'Done': 'OK',
+  'Marina & JBR': 'Marina et JBR',
+  'Downtown & Business Bay': 'Downtown et Business Bay',
+  'Jumeirah & the coast': 'Jumeirah et la côte',
+  'Creek & old Dubai': 'Creek et vieux Dubaï',
+  'MBR City & Meydan': 'MBR City et Meydan',
+  'JVC, Hills & new Dubai': 'JVC, Hills et nouveau Dubaï',
+  'Villa communities & desert': 'Quartiers de villas et désert',
+  'Mirdif & the east': 'Mirdif et l’est',
+  'Jebel Ali, Expo & Hatta': 'Jebel Ali, Expo et Hatta',
   "Girls' plans coming up": 'Prochains plans entre filles',
   'All Emirates': 'Tous les Émirats',
   'Nothing planned in {city} yet. See all the Emirates, or plan the first one.': 'Rien de prévu à {city} pour l’instant. Regarde tous les Émirats, ou organise la première.',

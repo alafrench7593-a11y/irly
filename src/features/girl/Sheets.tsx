@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx } from '@/i18n';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Sheet } from '@/components/ui/Sheet';
@@ -83,11 +84,7 @@ export function FiltersSheet({
           </Wrap>
         </GSection>
         <GSection title="Area">
-          <Wrap>
-            {city.areas.map((a) => (
-              <GChip key={a.id} small label={a.name} selected={f.area === a.id} onPress={() => one('area', a.id)} />
-            ))}
-          </Wrap>
+          <AreaPicker cityId={city.id} value={f.area ?? null} placeholder="Any neighbourhood" onChange={(id) => one('area', id)} palette={{ ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.ink, line: girl.line }} />
         </GSection>
         <GSection title="Available">
           <Wrap>

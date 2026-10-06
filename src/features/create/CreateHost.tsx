@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { AreaPicker } from '@/components/ui/AreaPicker';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Image } from 'expo-image';
@@ -439,11 +440,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 <Text variant="overline" tone="secondary">
                   {place ? tx('Meeting point near {place}', { place }) : 'Where'}
                 </Text>
-                <View style={styles.wrap}>
-                  {city.areas.slice(0, 10).map((a) => (
-                    <Chip key={a.id} size="sm" label={a.name} icon="pin" selected={area === a.id} onPress={() => setArea(a.id)} />
-                  ))}
-                </View>
+                <AreaPicker cityId={city.id} value={area} onChange={setArea} />
               </Animated.View>
               <Animated.View entering={enter.rise(4)} style={styles.block}>
                 <Text variant="overline" tone="secondary">
