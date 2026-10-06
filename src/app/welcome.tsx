@@ -131,7 +131,7 @@ export default function Welcome() {
           <IrlyWordmark size={64} color="#FFFFFF" accentColor="#FFFFFF" animated />
         </Animated.View>
         <Animated.View style={[{ marginTop: 14 }, taglineStyle]}>
-          <Text variant="label" color="rgba(255,255,255,0.62)" style={{ letterSpacing: 2.2 }}>
+          <Text variant="label" color="rgba(255,255,255,0.62)" style={{ letterSpacing: 2.2, textAlign: 'center', paddingHorizontal: space.gutter, maxWidth: frame.width }}>
             CONNECT · RELOCATE · BELONG
           </Text>
         </Animated.View>
