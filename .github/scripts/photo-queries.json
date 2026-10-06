@@ -1,0 +1,23 @@
+{
+  "golf": "golf course golfer", "cricket": "cricket match bat", "horseRiding": "horse riding", "climbing": "indoor climbing wall", "skate": "skateboarding skatepark",
+  "rollerblade": "roller skating", "archery": "archery target", "dance": "dance class studio", "badminton": "badminton", "tableTennis": "table tennis ping pong",
+  "diving": "scuba diving", "snorkel": "snorkeling reef", "paddleboard": "stand up paddle board", "kitesurf": "kitesurfing", "sailing": "sailing boat sea",
+  "martialArts": "martial arts training", "startup": "startup team office", "pitch": "pitch presentation stage", "crypto": "bitcoin cryptocurrency", "finance": "stock market charts",
+  "realEstate": "modern apartment building", "marketing": "marketing team whiteboard", "creators": "content creator filming smartphone", "designWork": "designer desk sketches", "developer": "programmer code laptop",
+  "legal": "lawyer documents desk", "healthcare": "doctor clinic", "education": "classroom teaching", "logistics": "shipping containers port", "hospitality": "hotel lobby",
+  "luxury": "luxury watch", "automotive": "sports car", "fineDining": "fine dining plate", "bakery": "bakery pastries", "steak": "steak dinner",
+  "sushi": "sushi platter", "burger": "burger fries", "pizza": "pizza", "arabicFood": "arabic mezze hummus", "indianFood": "indian curry",
+  "frenchFood": "french bistro", "italianFood": "pasta italian", "japaneseFood": "ramen bowl", "koreanFood": "korean bbq", "healthyFood": "healthy salad bowl",
+  "dessert": "dessert cake", "streetFood": "street food stall", "burjKhalifa": "burj khalifa", "mall": "shopping mall interior", "souk": "spice souk market",
+  "sneakers": "sneakers store wall", "fashion": "clothing boutique rack", "vintage": "vintage clothing store", "beauty": "makeup cosmetics", "electronics": "electronics store gadgets",
+  "homeDecor": "home decor interior shop", "museum": "museum interior visitors", "mosque": "sheikh zayed grand mosque", "cinema": "cinema screen audience", "concert": "concert crowd stage lights",
+  "comedy": "stand up comedy microphone", "theatre": "theatre stage", "arcade": "arcade games", "escapeRoom": "escape room puzzle", "karting": "go kart racing",
+  "bowling": "bowling alley", "vr": "virtual reality headset", "themePark": "roller coaster theme park", "waterPark": "water park slide", "festival": "music festival crowd",
+  "liveMusic": "live band guitar", "club": "nightclub dance floor", "lounge": "cocktail lounge bar", "spa": "spa treatment", "massage": "massage therapy",
+  "sauna": "sauna", "coldPlunge": "ice bath cold plunge", "meditation": "meditation", "dog": "dog walking leash", "dogPark": "dogs playing park",
+  "horse": "horse portrait", "cat": "cat portrait", "petCafe": "cat cafe", "kids": "children playing outdoors", "family": "family picnic park",
+  "playground": "playground", "photography": "photographer camera", "music": "music studio recording", "painting": "painting canvas art class", "drawing": "sketchbook drawing",
+  "writing": "writing notebook coffee", "languages": "friends conversation cafe", "cooking": "cooking class kitchen", "picnic": "picnic blanket", "bbq": "barbecue grill",
+  "sunrise": "sunrise desert", "camping": "camping tent night", "glamping": "glamping tent", "islands": "tropical island aerial", "nature": "mangrove forest",
+  "roadtrip": "road trip car mountains", "dhow": "dhow boat dubai creek", "lake": "desert lake", "jbr": "dubai beach skyline", "kitesurf2": "kite beach"
+}

@@ -1,0 +1,31 @@
+name: Photo candidates
+
+# Searches Unsplash for subject photos and pushes contact sheets to the
+# photo-candidates branch (never merged; only used to choose photos).
+
+on:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/scripts/photo-queries.json', '.github/scripts/photo-search.mjs', '.github/workflows/photo-search.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get install -y imagemagick >/dev/null
+      - run: node .github/scripts/photo-search.mjs
+      - name: Push the sheets to photo-candidates
+        run: |
+          cd photo-candidates
+          git init -q -b photo-candidates
+          git add -A
+          git -c user.name=irly-bot -c user.email=bot@irly.app commit -qm "Photo candidates"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" photo-candidates
