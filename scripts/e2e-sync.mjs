@@ -208,7 +208,7 @@ async function main() {
     return true;
   });
   await step('assistant: "Poll: Saturday or Sunday?" → poll posted, Uma votes', async () => {
-    await page.getByPlaceholder('Ask: organise brunch sunday 11am…').fill('Poll: Saturday or Sunday?');
+    await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Poll: Saturday or Sunday?');
     await page.getByRole('button', { name: 'Ask', exact: true }).click();
     await page.getByRole('button', { name: 'Post this poll' }).click();
     await visible(page, 'Saturday or Sunday?');
@@ -216,8 +216,8 @@ async function main() {
     await visible(page, '1 votes');
     return true;
   });
-  await step('assistant: "Organise padel saturday 9am" → activity created and announced', async () => {
-    await page.getByPlaceholder('Ask: organise brunch sunday 11am…').fill('Organise padel saturday 9am');
+  await step('assistant: "Organise padel Saturday 9am" → activity created and announced', async () => {
+    await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Organise padel Saturday 9am');
     await page.getByRole('button', { name: 'Ask', exact: true }).click();
     await page.getByRole('button', { name: 'Create it for the community' }).click();
     await visible(page, 'New plan: Padel', 20000);
@@ -225,7 +225,7 @@ async function main() {
     return acts.some((a) => a.title.startsWith('Padel'));
   });
   await step('assistant: weekly digest from real data', async () => {
-    await page.getByPlaceholder('Ask: organise brunch sunday 11am…').fill("What's new this week?");
+    await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill("What's new this week?");
     await page.getByRole('button', { name: 'Ask', exact: true }).click();
     await visible(page, 'posts this week');
     return true;
