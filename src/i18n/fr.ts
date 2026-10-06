@@ -4,6 +4,10 @@
  * Tone: friendly, "tu".
  */
 export const fr: Record<string, string> = {
+  'New moms': 'Jeunes mamans',
+  'Beach days': 'Journées plage',
+  'Baby yoga': 'Yoga bébé',
+  'Meet moms. Find activities.': 'Rencontre des mamans. Trouve quoi faire.',
   // ───── Navigation, headers, common actions
   Home: 'Accueil',
   Discover: 'Découvrir',

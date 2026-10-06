@@ -2,7 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx, useT } from '@/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
@@ -20,6 +20,9 @@ import type { Suggestion } from '@/features/girl/suggest';
 import { girl } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton } from '@/features/girl/ui';
+import { GirlHero } from '@/features/girl/GirlHero';
+import { girlPhotoFor } from '@/features/girl/photos';
+import { ScrollReveal } from '@/motion/ScrollReveal';
 import { MomsView } from '@/features/girl/MomsView';
 import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { useCommunitiesLike } from '@/features/bali/data';
@@ -40,16 +43,16 @@ const SECTIONS: { id: Section; label: (city: string) => string; icon: IconName }
   { id: 'saved', label: () => 'Saved', icon: 'bookmark' },
 ];
 
-const COMMUNITIES: { name: string; photo: 'padel' | 'brunch' | 'founders' | 'gym' | 'beachSunset' | 'dubaiNight' | 'coffeeBar' | 'baliTemple' | 'dubai' }[] = [
-  { name: 'Dubai Girls', photo: 'dubai' },
-  { name: 'Girls Padel Dubai', photo: 'padel' },
-  { name: 'Dubai Brunch Girls', photo: 'brunch' },
-  { name: 'Women Entrepreneurs Dubai', photo: 'founders' },
-  { name: 'Dubai Fitness Girls', photo: 'gym' },
-  { name: 'Girls Who Travel', photo: 'beachSunset' },
-  { name: 'French Girls Dubai', photo: 'coffeeBar' },
-  { name: 'Dubai Beauty', photo: 'dubaiNight' },
-  { name: 'Bali Girls', photo: 'baliTemple' },
+const COMMUNITIES: { name: string }[] = [
+  { name: 'Dubai Girls' },
+  { name: 'Girls Padel Dubai' },
+  { name: 'Dubai Brunch Girls' },
+  { name: 'Women Entrepreneurs Dubai' },
+  { name: 'Dubai Fitness Girls' },
+  { name: 'Girls Who Travel' },
+  { name: 'French Girls Dubai' },
+  { name: 'Dubai Beauty' },
+  { name: 'Bali Girls' },
 ];
 
 /**
@@ -84,6 +87,16 @@ export default function GirlHome() {
   const serverCommunities = useCommunitiesLike(cityId, '', true);
   const fling = useSharedValue(0);
   const tr = useT();
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const reduced = useReducedMotion();
+  const [modesW, setModesW] = useState(0);
+  const thumb = useAnimatedStyle(() => {
+    const x = mode === 'moms' ? (modesW - 8) / 2 : 0;
+    return { transform: [{ translateX: reduced ? x : withSpring(x, { duration: 520, dampingRatio: 0.8 }) }] };
+  });
 
   const width = Math.min((frame.width || window.width) - space.gutter * 2, 420);
   const height = Math.min(width * 1.32, (frame.height || window.height) * 0.56);
@@ -239,23 +252,8 @@ export default function GirlHome() {
 
   return (
     <View style={styles.root}>
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <PressableScale haptic="tap" scaleTo={0.9} onPress={() => router.back()} accessibilityLabel="Back to IRLY" style={styles.round}>
-            <Icon name="chevronLeft" size={20} color={girl.ink} />
-          </PressableScale>
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text variant="titleM" color={girl.ink} style={{ letterSpacing: 2 }}>
-              IRLY <Text variant="titleM" color={girl.rose} style={{ letterSpacing: 2 }}>GIRL</Text>
-            </Text>
-            <Text variant="caption" color={girl.inkSoft}>
-              Find girls you actually get along with
-            </Text>
-          </View>
-          <PressableScale haptic="select" scaleTo={0.9} onPress={() => router.push('/girl/profile')} accessibilityLabel="Edit my IRLY Match profile" style={styles.round}>
-            <Icon name="user" size={18} color={girl.ink} />
-          </PressableScale>
-        </View>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
+        <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => router.back()} onProfile={() => router.push('/girl/profile')} />
 
         {matches.length ? (
           <View style={{ marginTop: space[5], gap: 10 }}>
@@ -277,18 +275,20 @@ export default function GirlHome() {
           </View>
         ) : null}
 
-        <View style={styles.modes}>
+        <View style={styles.modes} onLayout={(e) => setModesW(e.nativeEvent.layout.width)}>
+          <Animated.View style={[styles.modeThumb, { width: (modesW - 8) / 2 }, thumb]} />
           {(['all', 'moms'] as const).map((m) => (
             <PressableScale
               key={m}
               haptic="select"
               scaleTo={0.96}
               onPress={() => setMode(m)}
-              style={[styles.mode, mode === m ? { backgroundColor: girl.ink } : null]}
+              style={styles.mode}
               accessibilityRole="tab"
               accessibilityState={{ selected: mode === m }}
               accessibilityLabel={m === 'all' ? 'All girls' : 'Moms'}
             >
+              <Icon name={m === 'all' ? 'heart' : 'baby'} size={14} color={mode === m ? '#FFFFFF' : girl.ink} />
               <Text variant="label" color={mode === m ? '#FFFFFF' : girl.ink}>
                 {m === 'all' ? 'All girls' : 'Moms'}
               </Text>
@@ -399,14 +399,19 @@ export default function GirlHome() {
           </View>
         ) : null}
 
-        <View style={{ marginTop: space[7], marginHorizontal: space.gutter, padding: 16, gap: 10, borderRadius: radius.xl, backgroundColor: girl.surface }}>
-          <Text variant="titleM" color={girl.ink}>
-            Plan something with girls
-          </Text>
-          <QuickPlan cityId={cityId} types={GIRL_PLANS} palette="girl" />
-        </View>
+        <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], marginHorizontal: space.gutter, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft }}>
+          <View style={{ height: 120 }}>
+            <Photo visual={{ photo: 'girlSunset' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
+            <Text variant="titleL" color="#FFFFFF" style={{ position: 'absolute', left: 16, bottom: 14 }}>
+              Plan something with girls
+            </Text>
+          </View>
+          <View style={{ padding: 16 }}>
+            <QuickPlan cityId={cityId} types={GIRL_PLANS} palette="girl" />
+          </View>
+        </ScrollReveal>
 
-        <View style={{ marginTop: space[7], gap: 10 }}>
+        <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], gap: 10 }}>
           <View style={{ paddingHorizontal: space.gutter }}>
             <Text variant="titleM" color={girl.ink}>
               IRLY Girl communities
@@ -422,12 +427,15 @@ export default function GirlHome() {
                 haptic="select"
                 scaleTo={0.96}
                 onPress={() => router.push(`/c/${c.id}`)}
-                style={[styles.community, { backgroundColor: girl.blush }]}
+                style={styles.community}
                 accessibilityLabel={c.name}
               >
+                <Photo visual={{ photo: girlPhotoFor(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
                 <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
-                  <Icon name={c.member ? 'check' : 'users'} size={18} color={girl.rose} />
-                  <Text variant="titleS" color={girl.ink} numberOfLines={2}>
+                  <View style={styles.communityBadge}>
+                    <Icon name={c.member ? 'check' : 'users'} size={14} color={girl.rose} />
+                  </View>
+                  <Text variant="titleS" color="#FFFFFF" numberOfLines={2} raw>
                     {c.name}
                   </Text>
                 </View>
@@ -435,17 +443,17 @@ export default function GirlHome() {
             ))}
             {(serverCommunities.data.length ? [] : COMMUNITIES).map((c) => (
               <PressableScale key={c.name} haptic="select" scaleTo={0.96} onPress={() => router.push('/category/girl')} style={styles.community} accessibilityLabel={c.name}>
-                <Photo visual={{ photo: c.photo }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
+                <Photo visual={{ photo: girlPhotoFor(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
                 <Text variant="titleS" color="#FFFFFF" numberOfLines={2} style={{ padding: 12 }}>
                   {c.name}
                 </Text>
               </PressableScale>
             ))}
           </ScrollView>
-        </View>
+        </ScrollReveal>
           </>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       <ProfileSheet
         candidate={open}
@@ -537,8 +545,9 @@ function ActionButton({ icon, label, onPress, big, small, active }: { icon: Icon
 }
 
 const styles = StyleSheet.create({
-  modes: { flexDirection: 'row', alignSelf: 'center', marginTop: space[5], padding: 4, gap: 4, borderRadius: 22, backgroundColor: girl.surface },
-  mode: { paddingHorizontal: 18, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, backgroundColor: girl.surface, boxShadow: girl.shadow },
+  modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, backgroundColor: girl.ink },
+  mode: { flex: 1, flexDirection: 'row', gap: 6, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   moving: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: space.gutter, marginTop: space[5], padding: 14, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
   root: { flex: 1, backgroundColor: girl.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
@@ -553,5 +562,6 @@ const styles = StyleSheet.create({
   empty: { borderRadius: 32, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: space[4] },
   action: { alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },
-  community: { width: 150, height: 120, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end' },
+  community: { width: 168, height: 200, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end', boxShadow: girl.shadowSoft },
+  communityBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,250,246,0.92)', alignItems: 'center', justifyContent: 'center' },
 });

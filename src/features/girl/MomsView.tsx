@@ -3,8 +3,11 @@ import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { Photo } from '@/components/visual/Photo';
+import { enter } from '@/motion/enter';
+import { girlPhotoFor } from './photos';
 import { Avatar } from '@/components/ui/Avatar';
-import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
@@ -65,14 +68,21 @@ export function MomsView({ cityId }: { cityId: CityId }) {
 
   return (
     <View style={{ gap: space[7], paddingTop: space[5] }}>
-      <View style={[styles.pad, { gap: 6 }]}>
-        <Text variant="displayM" color={girl.ink}>
-          Meet moms. Find activities. Build your circle.
-        </Text>
+      <Animated.View entering={enter.rise(0)} style={[styles.pad, { gap: 12 }]}>
         <Text variant="body" color={girl.inkSoft}>
           {tx('Moms in {city}, plans with children and family-friendly places.', { city: city.name })}
         </Text>
-      </View>
+        <View style={styles.mosaic}>
+          {(['momYoga', 'momBeach', 'momBaby'] as const).map((k, i) => (
+            <Animated.View key={k} entering={enter.pop(i, 120)} style={[styles.tile, i === 0 ? { flex: 1.3 } : null]}>
+              <Photo visual={{ photo: k }} light="dubai" scrim="soft" width={500} style={StyleSheet.absoluteFill} />
+              <Text variant="label" color="#FFFFFF" style={styles.tileLabel}>
+                {['Baby yoga', 'Beach days', 'New moms'][i]}
+              </Text>
+            </Animated.View>
+          ))}
+        </View>
+      </Animated.View>
 
       {me && me.hasProfile ? (
         <View style={[styles.pad]}>
@@ -144,10 +154,15 @@ export function MomsView({ cityId }: { cityId: CityId }) {
       ) : null}
 
       <View style={[styles.pad]}>
-        <View style={styles.card}>
+        <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
+          <View style={{ height: 110 }}>
+            <Photo visual={{ photo: 'familyBeach' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
+          </View>
+          <View style={{ padding: 16 }}>
           <GSection title="Plan something with the kids" hint="Playdates, beach, park, kids sports, workshops.">
             <QuickPlan cityId={cityId} types={MOM_PLANS} palette="girl" />
           </GSection>
+          </View>
         </View>
       </View>
 
@@ -157,8 +172,10 @@ export function MomsView({ cityId }: { cityId: CityId }) {
             Coming up with kids
           </Text>
           {plans.slice(0, 6).map((a) => (
-            <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row]} accessibilityLabel={a.title}>
-              <Icon name="baby" size={18} color={girl.rose} />
+            <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { padding: 10 }]} accessibilityLabel={a.title}>
+              <View style={styles.thumb}>
+                <Photo visual={{ photo: girlPhotoFor(a.title, 'momPlaydate') }} light="dubai" width={200} style={StyleSheet.absoluteFill} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={girl.ink} numberOfLines={1}>
                   {a.title}
@@ -178,7 +195,10 @@ export function MomsView({ cityId }: { cityId: CityId }) {
         </Text>
         {communities.data.length ? (
           communities.data.map((c) => (
-            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row]} accessibilityLabel={c.name}>
+            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { padding: 10 }]} accessibilityLabel={c.name}>
+              <View style={styles.thumb}>
+                <Photo visual={{ photo: girlPhotoFor(c.name, 'momPlaydate') }} light="dubai" width={200} style={StyleSheet.absoluteFill} />
+              </View>
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={girl.ink}>
                   {c.name}
@@ -208,8 +228,8 @@ export function MomsView({ cityId }: { cityId: CityId }) {
                 {p.photo ? (
                   <Image source={{ uri: p.photo }} style={styles.placePhoto} contentFit="cover" />
                 ) : (
-                  <View style={[styles.placePhoto, { backgroundColor: girl.blush, alignItems: 'center', justifyContent: 'center' }]}>
-                    <Icon name={p.kind === 'park' ? 'leaf' : p.kind === 'beach' ? 'sun' : 'utensils'} size={22} color={girl.rose} />
+                  <View style={styles.placePhoto}>
+                    <Photo visual={{ photo: p.kind === 'beach' ? 'momBeach' : p.kind === 'park' ? 'momPlaydate' : 'familyBeach' }} light="dubai" width={400} style={StyleSheet.absoluteFill} />
                   </View>
                 )}
                 <View style={{ padding: 10 }}>
@@ -237,5 +257,9 @@ const styles = StyleSheet.create({
   rowBetween: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   person: { width: 120, alignItems: 'center', gap: 4, padding: 12, borderRadius: radius.xl, backgroundColor: girl.surface },
   place: { width: 170, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: girl.surface },
-  placePhoto: { width: 170, height: 100 },
+  placePhoto: { width: 170, height: 100, overflow: 'hidden' },
+  mosaic: { flexDirection: 'row', gap: 8, height: 150 },
+  tile: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end' },
+  tileLabel: { padding: 10 },
+  thumb: { width: 56, height: 56, borderRadius: 16, overflow: 'hidden' },
 });
