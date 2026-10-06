@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { Image } from 'expo-image';
 import { t as tx } from '@/i18n';
 import { BackHandler, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -93,6 +96,15 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>('public');
   const [spots, setSpots] = useState(6);
   const [description, setDescription] = useState('');
+  // Optional: the creator's own photo instead of the catalogue one.
+  const [cover, setCover] = useState<string | null>(null);
+  const pickCover = async () => {
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [16, 10] });
+    if (res.canceled || !res.assets[0]) return;
+    // Phone photos are 5–10 MB: 1280 px wide is plenty for a card and a header.
+    const small = await manipulateAsync(res.assets[0].uri, [{ resize: { width: 1280 } }], { compress: 0.75, format: SaveFormat.JPEG });
+    setCover(small.uri);
+  };
 
   const D = 2 * Math.hypot(Math.max(origin.x, frame.width - origin.x), Math.max(origin.y, frame.height - origin.y));
   const p = useSharedValue(0);
@@ -173,9 +185,9 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       price: paid ? price : 0,
       currency: city.currency,
     };
-    const local = postPlan(plan);
+    const local = postPlan({ ...plan, ...(cover ? { coverUri: cover } : {}) });
     // Signed in: the session also goes to the server, where members can join it.
-    createServerActivity(plan)
+    createServerActivity(plan, undefined, { coverUri: cover })
       .then((serverId) => {
         if (serverId) useStore.getState().linkPlan(local.id, serverId);
       })
@@ -425,6 +437,21 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 ) : null}
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.block}>
+                {cover ? (
+                  <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={styles.cover} accessibilityLabel="Change the photo">
+                    <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                    <PressableScale haptic="select" onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Remove the photo" hitSlop={8}>
+                      <Icon name="x" size={16} color="#FFFFFF" strokeWidth={2.6} />
+                    </PressableScale>
+                  </PressableScale>
+                ) : (
+                  <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={[styles.coverEmpty, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]} accessibilityLabel="Add your own photo (optional)">
+                    <Icon name="camera" size={20} color={t.c.text} />
+                    <Text variant="label">Add your own photo (optional)</Text>
+                  </PressableScale>
+                )}
+              </Animated.View>
+              <Animated.View entering={enter.rise(2)} style={styles.block}>
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
@@ -494,6 +521,9 @@ function CustomButton({ text, onPress }: { text: string; onPress: () => void }) 
 }
 
 const styles = StyleSheet.create({
+  cover: { height: 150, borderRadius: radius.lg, overflow: 'hidden' },
+  coverRemove: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  coverEmpty: { height: 64, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   circle: { position: 'absolute' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.gutter, height: 44 },
   back: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },

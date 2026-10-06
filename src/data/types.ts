@@ -137,7 +137,8 @@ export type ActivityKind =
 export type Level = 'all' | 'beginner' | 'intermediate' | 'advanced';
 
 /** Every visual in IRLY is a real photograph. */
-export type Visual = { photo: PhotoKey };
+/** A catalogue photo, or a member's own photo (uri) with the catalogue one as fallback. */
+export type Visual = { photo: PhotoKey; uri?: string | null };
 
 export type When = { dayOffset: number; time: string; durationMin: number };
 

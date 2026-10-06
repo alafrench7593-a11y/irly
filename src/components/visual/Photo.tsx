@@ -56,7 +56,7 @@ export const Photo = memo(function Photo({ visual, light, style, scrim = 'none',
       <View style={[StyleSheet.absoluteFill, { backgroundColor: '#E4E4E1' }]} />
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#F4F4F2' }, pulseStyle]} pointerEvents="none" />
       <Image
-        source={{ uri: photoUrl(visual.photo, width) }}
+        source={{ uri: visual.uri || photoUrl(visual.photo, width) }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={{ duration: 450, effect: 'cross-dissolve' }}

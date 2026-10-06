@@ -88,6 +88,8 @@ export type MyPlan = {
   createdAt: number;
   /** The same plan on the server, once it was saved there (avoids showing it twice). */
   serverId?: string;
+  /** The creator's own photo, on this phone. */
+  coverUri?: string;
 };
 
 export type Booking = {

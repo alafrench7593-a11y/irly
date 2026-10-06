@@ -72,7 +72,7 @@ function MemberCard({ a, cityId, onChanged, friendsGoing }: { a: ServerActivity;
 
   return (
     <PressableScale onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]} accessibilityLabel={a.title}>
-      <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined) }} light={city.light} scrim="soft" style={styles.photo} width={500} recyclingKey={`srv-${a.id}`} />
+      <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined), uri: a.coverUrl }} light={city.light} scrim="soft" style={styles.photo} width={500} recyclingKey={`srv-${a.id}`} />
       <View style={styles.body}>
         <View style={styles.row}>
           <View style={[styles.dot, { backgroundColor: category?.color ?? t.c.text }]} />

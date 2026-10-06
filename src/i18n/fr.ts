@@ -2726,4 +2726,8 @@ export const fr: Record<string, string> = {
   'Changed country? Just tell IRLY where you are: the app follows you.': 'Tu as changé de pays ? Dis simplement à IRLY où tu es : l’app te suit.',
   'You are here': 'Tu es ici',
   'I am here now': 'J’y suis maintenant',
+  'Add your own photo (optional)': 'Ajouter ta propre photo (facultatif)',
+  'Change the photo': 'Changer la photo',
+  'Remove the photo': 'Retirer la photo',
+  'Could not upload the photo': 'Impossible d’envoyer la photo',
 };

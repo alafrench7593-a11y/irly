@@ -510,6 +510,14 @@ update public.safety_settings set location_precision = 'area' where user_id = au
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check(public.report('activity', null, (select id from public.activities where title = 'Carl public run'), 'spam') is not null, 'reporting again returns the same report');
 
+-- ───── Activity photos ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_denied($$insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, cover_path) values (auth.uid(), 'Borrowed photo', 'food', 'dubai', 'marina', now() + interval '1 day', '00000000-0000-0000-0000-00000000000a/x.jpg')$$, 'an activity cannot use someone else''s photo');
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, cover_path)
+  values (auth.uid(), 'Own photo', 'food', 'dubai', 'marina', now() + interval '1 day', '00000000-0000-0000-0000-00000000000b/cover.jpg');
+select pg_temp.check((select cover_path from public.activities where title = 'Own photo') = '00000000-0000-0000-0000-00000000000b/cover.jpg', 'an activity can use its creator''s own photo');
+select pg_temp.expect_denied($$update public.activities set cover_path = '../etc/passwd' where title = 'Own photo'$$, 'a photo path must be a plain file in your folder');
+
 -- ───── activity_visibility ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 insert into public.safety_settings (user_id, activity_visibility) values (auth.uid(), 'nobody')

@@ -7,6 +7,7 @@ import { dateFor, dayOf } from '@/features/ai/intent';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
 import type { MyPlan } from '@/state/store';
+import { imageBytes, imageType } from '@/lib/media';
 
 /**
  * Activities on the server (signed in). Creating a session in the app also
@@ -22,17 +23,37 @@ export function startsAt(day: string, time: string, now = new Date(), utcOffset?
 }
 
 /** Extras that tie an activity to a place, a type (PLAYDATE, DINNER…) and an audience. */
-export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean };
+export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean; coverUri?: string | null };
+
+/** Signed links for uploaded activity photos (private bucket); other values pass through. */
+export async function coverLinks(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
+  const own = [...new Set(paths.filter((p): p is string => Boolean(p) && !/^https?:/.test(p as string)))];
+  const out: Record<string, string> = {};
+  for (const p of paths) if (p && /^https?:/.test(p)) out[p] = p;
+  if (!supabase || !own.length) return out;
+  const { data } = await supabase.storage.from('activity-photos').createSignedUrls(own, 6 * 3600);
+  for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
+  return out;
+}
 
 export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, extras: ActivityExtras = {}): Promise<string | null> {
   if (!supabase) return null;
   const { data: session } = await supabase.auth.getSession();
   const uid = session.session?.user.id;
   if (!uid) return null;
+  // The member's own photo goes up first, into their folder.
+  let coverPath: string | null = null;
+  if (extras.coverUri) {
+    const img = imageType(extras.coverUri);
+    coverPath = `${uid}/${Date.now()}.${img.ext}`;
+    const up = await supabase.storage.from('activity-photos').upload(coverPath, await imageBytes(extras.coverUri), { contentType: img.contentType });
+    if (up.error) throw new Error('Could not upload the photo');
+  }
   const { data, error } = await supabase
     .from('activities')
     .insert({
       creator_id: uid,
+      cover_path: coverPath,
       format: plan.format ?? 'session',
       title: (plan.title ?? 'IRLY session').slice(0, 80),
       description: plan.description ?? null,
@@ -81,6 +102,8 @@ export type ServerActivity = {
   currency: string;
   creatorId: string;
   joined: boolean;
+  /** The creator's own photo (signed link), when they added one. */
+  coverUrl: string | null;
 };
 
 /** Upcoming activities other members created in this city. */
@@ -93,13 +116,14 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
     if (!supabase || !uid) return [];
     const { data, error } = await supabase
       .from('activities')
-      .select('id, title, category_id, sub_id, area_id, place_name, starts_at, capacity, price_minor, currency, creator_id, going, activity_participants(user_id, status)')
+      .select('id, title, category_id, sub_id, area_id, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
       .eq('city_id', cityId)
       .is('cancelled_at', null)
       .gte('starts_at', new Date().toISOString())
       .order('starts_at')
       .limit(30);
     if (error) throw new Error(error.message);
+    const links = await coverLinks((data ?? []).map((a) => a.cover_path as string | null));
     return (
       (data ?? []).map((a) => {
         const parts = (a.activity_participants ?? []) as { user_id: string; status: string }[];
@@ -117,6 +141,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
           priceMinor: a.price_minor,
           currency: a.currency,
           creatorId: a.creator_id,
+          coverUrl: a.cover_path ? (links[a.cover_path as string] ?? null) : null,
           joined: parts.some((p) => p.user_id === uid && p.status === 'going'),
         };
       })
@@ -259,7 +284,7 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
       going: r.going,
       girlOnly: r.girl_only,
       communityId: r.community_id,
-      coverUrl: r.cover_url,
+      coverUrl: r.cover_url ? ((await coverLinks([r.cover_url]))[r.cover_url] ?? null) : null,
       myStatus: r.my_status,
       conversationId: r.conversation_id,
       cancelled: r.cancelled,
