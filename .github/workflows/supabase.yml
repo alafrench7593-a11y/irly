@@ -18,11 +18,13 @@ on:
       - 'scripts/check-community.mts'
       - 'src/features/community/**'
       - 'scripts/place-tags.mjs'
+      - 'scripts/check-areas.mts'
+      - 'src/data/destinations.ts'
       - '.github/workflows/supabase.yml'
   workflow_dispatch:
 
 concurrency:
-  group: supabase-deploy
+  group: irly-backend
   cancel-in-progress: false
 
 jobs:
@@ -55,6 +57,8 @@ jobs:
         run: node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-community.mts
       - name: Bali area fit, test plans, opening hours
         run: node --experimental-strip-types --no-warnings scripts/check-bali.mts
+      - name: Every app neighbourhood exists on the server
+        run: node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-areas.mts
 
   deploy:
     needs: test

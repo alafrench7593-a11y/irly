@@ -21,7 +21,7 @@ on:
     branches: [claude/confident-ride-1o2o3x]
 
 concurrency:
-  group: e2e
+  group: irly-backend
   cancel-in-progress: false
 
 jobs:
