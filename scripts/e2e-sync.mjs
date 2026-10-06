@@ -213,7 +213,7 @@ async function main() {
     await page.getByRole('button', { name: 'Post this poll' }).click();
     await visible(page, 'Saturday or Sunday?');
     await page.getByRole('button', { name: 'Vote Sunday' }).first().click();
-    await visible(page, '1 votes');
+    await visible(page, '1 vote');
     return true;
   });
   await step('assistant: "Organise padel Saturday 9am" → activity created and announced', async () => {
