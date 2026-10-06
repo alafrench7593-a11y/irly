@@ -88,3 +88,25 @@ Public domain or CC0 (no attribution required). Listed for reference.
 - **karaoke**: State Alumni Karaoke (pdm) https://www.flickr.com/photos/41243200@N08/6553437779
 - **education**: Bibliothèque Départementale de La Réunion (cc0) https://www.flickr.com/photos/11234074@N05/10085206053
 - **dhow**: Sailing boat at sunset (cc0) https://www.flickr.com/photos/135396164@N05/29813555710
+- **girlFriends**: K-178-Ae-04032-id-420004 (cc0) https://www.flickr.com/photos/147875007@N03/33725918750
+- **girlSunset**: K-178-Rob-DSC64345549-id-420313 (cc0) https://www.flickr.com/photos/147875007@N03/34006151095
+- **girlShopping**: shopping_freak (cc0) https://www.flickr.com/photos/135396164@N05/31615475610
+- **girlSpa**: Woman Massage (cc0) https://stocksnap.io/photo/woman-massage-VH22RVC5UT
+- **girlChill**: Young woman with fresh organic coconut on a waterfall background in the jungle of Bali island. (cc0) https://www.flickr.com/photos/157635012@N07/29473976708
+- **girlWaterfall**: Young woman tourist in the deep jungle with waterfall. Real adventure concept. Bali island. (cc0) https://www.flickr.com/photos/157635012@N07/40843375163
+- **girlClass**: CP22 - WPS Provides Medical Care at Juan Fe (pdm) https://www.flickr.com/photos/61270229@N05/52508661595
+- **girlBookClub**: 'The Help' Book Discussion Group (pdm) https://www.flickr.com/photos/38144472@N04/6777098634
+- **momPlaydate**: Playground Child (cc0) https://stocksnap.io/photo/playground-child-GKN827HJAJ
+- **momYoga**: Mother Yoga (cc0) https://stocksnap.io/photo/mother-yoga-KHGQ1XCMT4
+- **girlCoffee**: K-178-Ae-04038-id-420049 (cc0) https://www.flickr.com/photos/147875007@N03/34006156965
+- **girlCafe**: Christmas lights and girl holding coffee (cc0) https://www.flickr.com/photos/135396164@N05/31540749992
+- **girlWork**: Woman Laptop (cc0) https://stocksnap.io/photo/woman-laptop-NJVNNNG7TM
+- **girlLaptop**: Woman Laptop (cc0) https://stocksnap.io/photo/woman-laptop-TSVQYTBDPE
+- **girlHike**: stocks-1709 (cc0) https://www.flickr.com/photos/157635012@N07/45517854902
+- **girlTravel**: SELFIE (pdm) https://www.flickr.com/photos/53812099@N04/18373250760
+- **girlFitness**: PILATES (27) (cc0) https://www.flickr.com/photos/164280250@N04/52409079541
+- **girlSurf**: Woman surfing Knysna, South Africa (cc0) https://www.rawpixel.com/image/3336787/free-photo-image-public-domain-sea-ocean-waves
+- **girlDinner**: Latham Staples with friends (pdm) https://www.flickr.com/photos/37404197@N00/54134256264
+- **momBaby**: Mom & baby are fine (cc0) https://www.rawpixel.com/image/3388694/mom-baby-are-fine
+- **momBeach**: People Woman (cc0) https://stocksnap.io/photo/people-woman-06SNH84TA8
+- **familyBeach**: People Family (cc0) https://stocksnap.io/photo/people-family-Z59RZ5SREK
