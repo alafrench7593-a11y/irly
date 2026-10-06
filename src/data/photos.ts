@@ -82,10 +82,107 @@ const ids = {
   laundry: '1582735689369-4fe89db7114c',
 } as const;
 
-export type PhotoKey = keyof typeof ids;
+/**
+ * IRLY's own photo library: one checked photo per subject (public domain /
+ * CC0, sources in public-photos/CREDITS.md), cropped to 16:10 in two sizes
+ * and served with the web app.
+ */
+export const LIBRARY = [
+  'arcade',
+  'archery',
+  'automotive',
+  'badminton',
+  'bakery',
+  'bbq',
+  'beauty',
+  'bowling',
+  'burger',
+  'burjKhalifa',
+  'camping',
+  'cat',
+  'cinema',
+  'climbing',
+  'comedy',
+  'concert',
+  'cooking',
+  'cricket',
+  'dance',
+  'designWork',
+  'dessert',
+  'developer',
+  'dhow',
+  'diving',
+  'dog',
+  'dogPark',
+  'education',
+  'family',
+  'fashion',
+  'festival',
+  'finance',
+  'fineDining',
+  'frenchFood',
+  'glamping',
+  'golf',
+  'healthyFood',
+  'homeDecor',
+  'horse',
+  'horseRiding',
+  'indianFood',
+  'islands',
+  'italianFood',
+  'japaneseFood',
+  'jbr',
+  'karaoke',
+  'karting',
+  'kids',
+  'kitesurf',
+  'koreanFood',
+  'lake',
+  'legal',
+  'liveMusic',
+  'logistics',
+  'lounge',
+  'luxury',
+  'mall',
+  'massage',
+  'meditation',
+  'mosque',
+  'music',
+  'nature',
+  'petCafe',
+  'photography',
+  'picnic',
+  'pizza',
+  'playground',
+  'realEstate',
+  'roadtrip',
+  'rollerblade',
+  'sailing',
+  'sauna',
+  'skate',
+  'sneakers',
+  'snorkel',
+  'souk',
+  'spa',
+  'startup',
+  'steak',
+  'streetFood',
+  'sushi',
+  'tableTennis',
+  'theatre',
+  'themePark',
+  'vr',
+  'waterPark',
+  'writing',
+] as const;
+const LIBRARY_SET = new Set<string>(LIBRARY);
+const LIBRARY_BASE = 'https://alafrench7593-a11y.github.io/irly/photos';
+
+export type PhotoKey = keyof typeof ids | (typeof LIBRARY)[number];
 
 export const PHOTO_IDS = ids;
 
 export function photo(key: PhotoKey, width = 900): string {
-  return `https://images.unsplash.com/photo-${ids[key]}?auto=format&fit=crop&w=${width}&q=72`;
+  if (LIBRARY_SET.has(key)) return `${LIBRARY_BASE}/${key}-${width <= 500 ? 480 : 1200}.jpg`;
+  return `https://images.unsplash.com/photo-${ids[key as keyof typeof ids]}?auto=format&fit=crop&w=${width}&q=72`;
 }

@@ -309,7 +309,7 @@ export const bali: CityContent = {
       host: 'Dewa · Chef',
       description: 'Market tour, sambal from scratch and a long-table dinner with the cooks.',
       highlights: ['Market tour', 'Sambal masterclass', 'Long-table dinner'],
-      photo: 'dinnerGroup',
+      photo: 'cooking',
     }),
     event(C, {
       id: 'e-b6',

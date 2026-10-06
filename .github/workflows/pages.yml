@@ -38,6 +38,8 @@ jobs:
         run: node -e "const f='app.json';const j=require('./'+f);j.expo.experiments={...(j.expo.experiments||{}),baseUrl:'/irly'};require('fs').writeFileSync(f,JSON.stringify(j,null,2))"
       - run: npx expo export --platform web
       - run: node .github/scripts/pages-html.mjs /irly
+      - name: Photo library
+        run: if [ -d public-photos ]; then mkdir -p dist/photos && cp public-photos/*.jpg public-photos/CREDITS.md dist/photos/; fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
