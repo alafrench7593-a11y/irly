@@ -56,7 +56,8 @@ export function useAuthStatus(): AuthState['status'] {
 
 /** Where the email link sends the member back: this web page, or the app. */
 function redirectTo(): string {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}/account`;
+  // On the web the app can live under a path (GitHub Pages: /irly).
+  if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}${process.env.EXPO_BASE_URL ?? ''}/account`;
   return Linking.createURL('/account');
 }
 

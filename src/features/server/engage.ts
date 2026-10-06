@@ -35,7 +35,9 @@ export function deepLink(t: Target): string {
           : t.type === 'irl_post'
             ? `live?post=${t.id}`
             : `search?q=${encodeURIComponent(t.title ?? t.id)}`;
-  return `https://irly.app/${path}`;
+  // On the web, the address people can actually open; in the app, the public link.
+  if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}${process.env.EXPO_BASE_URL ?? ''}/${path}`;
+  return `https://alafrench7593-a11y.github.io/irly/${path}`;
 }
 
 /**
