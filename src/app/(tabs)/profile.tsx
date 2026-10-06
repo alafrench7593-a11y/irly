@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { t as tx } from '@/i18n';
 import { wipeLocal } from '@/state/wipe';
 import { deleteServerAccount, signOut, useAccount } from '@/features/auth/account';
@@ -26,6 +27,7 @@ import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { openHero } from '@/features/hero/heroStore';
 import { whenLabel } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
+import { CountUp } from '@/motion/CountUp';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
@@ -59,7 +61,7 @@ export default function Profile() {
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
   });
-  const coverH = insets.top + 190;
+  const coverH = insets.top + 250;
 
   const name = profile.name || 'You';
   const plans = Object.keys(joined)
@@ -79,7 +81,14 @@ export default function Profile() {
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottom }}>
-        <Cover visual={{ photo: city.photo }} light={city.light} height={coverH} scrollY={scrollY} scrim="top" />
+        {/* The city you live in, full bleed, melting into the page. */}
+        <Cover visual={{ photo: city.photo }} light={city.light} height={coverH} scrollY={scrollY} scrim="top" radius={0}>
+          <LinearGradient
+            colors={[`rgba(${t.mode === 'night' ? '5,5,6' : '246,246,244'},0)`, t.c.bg]}
+            style={styles.coverFade}
+            pointerEvents="none"
+          />
+        </Cover>
         <View style={[styles.identity, { marginTop: -52 }]}>
           <Animated.View entering={enter.pop(0)}>
             <View style={[styles.avatarRing, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
@@ -298,7 +307,7 @@ export default function Profile() {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text variant="number">{value}</Text>
+      <CountUp value={value} />
       <Text variant="caption" tone="tertiary">
         {label}
       </Text>
@@ -363,6 +372,7 @@ function SettingLink({ icon, label, value, onPress, danger }: { icon: IconName; 
 }
 
 const styles = StyleSheet.create({
+  coverFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 140 },
   newHere: { marginTop: 8, height: 26, paddingHorizontal: 12, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   root: { flex: 1 },
   identity: { alignItems: 'center', gap: 14, paddingHorizontal: space.gutter, marginBottom: space[8] },

@@ -122,6 +122,9 @@ export const fr: Record<string, string> = {
   'Next events': 'Prochains événements',
   'All events': 'Tous les événements',
   'See all events': 'Voir tous les événements',
+  // ───── IRLY match (main app)
+  'Say hello': 'Dire bonjour',
+  'You and {name} said yes to meeting.': 'Toi et {name}, vous avez dit oui pour vous voir.',
   // ───── IRL menu
   'Your move.': 'À toi de jouer.',
   'Create\nactivity': 'Créer une\nactivité',

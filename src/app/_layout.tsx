@@ -23,6 +23,7 @@ import { DestinationTransition } from '@/features/destination/DestinationTransit
 import { HeroHost } from '@/features/hero/HeroHost';
 import { AppIntro } from '@/features/intro/AppIntro';
 import { FlightHost } from '@/features/flight/FlightHost';
+import { MatchHost } from '@/features/match/IrlyMatch';
 import { useStore } from '@/state/store';
 import { useTheme } from '@/theme/useTheme';
 
@@ -99,6 +100,7 @@ function App() {
       </Stack>
       <HeroHost />
       <FlightHost />
+      <MatchHost />
       <CreateHost />
       <DestinationTransition />
       <AppIntro />
