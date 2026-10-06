@@ -85,9 +85,11 @@ Grille de 4 points, marge latérale 20, 40 entre sections sur l'accueil. Rayons 
 | Flow | Ce qui se passe | Où |
 | --- | --- | --- |
 | Entrée dans l'app | Noir, le logo en points s'allume, puis le rideau se lève pendant que l'accueil zoome depuis l'arrière | `features/intro/AppIntro.tsx` |
+| C'est quoi IRLY | À l'inscription, après le logo : cinq scènes de 3 s qui se jouent seules (barres façon story, toucher à droite pour avancer, à gauche pour revenir, Passer). PEOPLE (des visages arrivent de partout), PLACES (la ville de nuit, des lieux tombent avec une onde), ACTIVITIES (des rangées d'activités qui défilent), REAL LIFE (deux personnes se retrouvent autour d'un plan), puis « Find someone to do something with. ». Rejouable depuis Profil › C'est quoi IRLY | `features/onboarding/IrlyStory.tsx` |
 | Accueil | Photo plein cadre de la ville (de nuit après la tombée du jour), parallaxe, étirement au tirer, dérive lente ; la question arrive mot par mot | `features/home/HomeHero.tsx` |
 | Défilement | Chaque section monte, grandit de 94 % à 100 % et apparaît en franchissant le bas de l'écran ; réversible | `motion/ScrollReveal.tsx` |
 | Rails | La carte qui entre par la droite est plus petite et plus sombre et grandit en place ; celle qui sort recule | `Rail` dans `components/cards/Blocks.tsx` |
+| Disque IRL | Perle blanche (dégradé radial), « IRL » écrit avec les points du logo, l'accent 2×2 du logo allumé en rouge live qui bat comme un pouls, une ligne de lumière acier qui fait le tour du bord ; autour, une onde sonar et le nombre de personnes en live | `features/irl/IrlDisc.tsx`, `components/navigation/TabBar.tsx` |
 | Bouton IRL | Le disque s'écrase comme une goutte de verre, une vitre floutée s'étend en cercle, une onde de lumière part, cinq actions jaillissent en arc ; « IRL » devient une croix. Appui long : le fil live | `features/irl/IrlMenu.tsx`, `components/navigation/TabBar.tsx` |
 | Discover | Quatre pages qui se balaient : PEOPLE, ACTIVITIES, PLACES, EVENTS. La pilule blanche colle au doigt, la page quittée rétrécit et pâlit, le titre se replie au défilement | `app/(tabs)/discover.tsx`, `features/discover` |
 | Avatar → profil | Le visage touché décolle, vole en arc en grandissant et se pose en haut du profil qui apparaît en fondu | `features/flight` |

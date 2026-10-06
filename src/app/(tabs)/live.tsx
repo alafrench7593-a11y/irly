@@ -49,10 +49,11 @@ export default function LiveScreen() {
   const lives = useLives();
   const { compose } = useLocalSearchParams<{ compose?: string }>();
   const router = useRouter();
-  const [manual, setManual] = useState(false);
-  // Opened from Create → Live / Post: the composer is already up.
-  const composer = manual || Boolean(compose);
-  const setComposer = (on: boolean) => {
+  const [manual, setManual] = useState<false | 'now' | 'post'>(false);
+  // Opened from the IRL menu (Post IRL, Share what I'm doing): the composer is already up.
+  const composer = Boolean(manual) || Boolean(compose);
+  const mode = compose === 'photo' || manual === 'post' ? 'post' : 'now';
+  const setComposer = (on: false | 'now' | 'post') => {
     setManual(on);
     if (!on && compose) router.setParams({ compose: undefined });
   };
@@ -67,16 +68,12 @@ export default function LiveScreen() {
       title="IRL"
       subtitle={tx('What people around you are doing. Posts disappear after {h} hours.', { h: LIVE_TTL_MIN / 60 })}
       right={<InboxButtons />}
-      bottomInset={bottom + 70}
-      overlay={
-        <>
-          <View style={[styles.fab, { bottom: bottom + 6 }]} pointerEvents="box-none">
-            <Button label="Go live" icon="plus" haptic="press" onPress={() => setComposer(true)} />
-          </View>
-          <Composer visible={composer} mode={compose === 'photo' ? 'post' : 'now'} onClose={() => setComposer(false)} />
-        </>
-      }
+      bottomInset={bottom + 24}
+      overlay={<Composer visible={composer} mode={mode} onClose={() => setComposer(false)} />}
     >
+      <View style={{ marginBottom: space[6] }}>
+        <GoLiveCard onText={() => setComposer('now')} onPhoto={() => setComposer('post')} />
+      </View>
       <View style={{ marginBottom: space[6] }}>
         <FriendsLiveNow />
       </View>
@@ -138,6 +135,38 @@ function LiveCard({ live }: { live: Live }) {
           Your post · visible to people nearby
         </Text>
       )}
+    </View>
+  );
+}
+
+/**
+ * « What are you doing right now? »: the door to going live, at the top of
+ * the feed, so it never floats over the IRL button. The whole card opens
+ * the words; the camera opens the photo-first composer.
+ */
+function GoLiveCard({ onText, onPhoto }: { onText: () => void; onPhoto: () => void }) {
+  const t = useTheme();
+  const name = useStore((s) => s.profile.name) || 'You';
+  const photo = useStore((s) => s.profile.photoUri);
+  return (
+    <View style={[styles.goLive, { marginHorizontal: space.gutter, backgroundColor: t.c.card, borderColor: t.c.line }]}>
+      <PressableScale haptic="select" scaleTo={0.98} onPress={onText} style={styles.goLiveMain} accessibilityLabel={tx('Go live: what are you doing right now?')}>
+        <Avatar name={name} hue={262} size={44} photo={photo} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <View style={styles.meta}>
+            <LiveDot size={6} />
+            <Text variant="overline" tone="live">
+              Go live
+            </Text>
+          </View>
+          <Text variant="body" tone="secondary" numberOfLines={2}>
+            What are you doing right now?
+          </Text>
+        </View>
+      </PressableScale>
+      <PressableScale haptic="select" scaleTo={0.9} onPress={onPhoto} accessibilityLabel="Post a photo" style={[styles.goLiveBtn, { backgroundColor: t.c.brand }]}>
+        <Icon name="camera" size={18} color={t.c.onBrand} />
+      </PressableScale>
     </View>
   );
 }
@@ -539,7 +568,9 @@ const styles = StyleSheet.create({
   photo: { height: 220, borderRadius: radius.lg },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg },
-  fab: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  goLive: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, paddingLeft: 12, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },
+  goLiveMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  goLiveBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   round: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   friend: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, borderRadius: radius.xl },
   input: { minHeight: 96, borderRadius: radius.lg, padding: 16, fontFamily: font.medium, fontSize: 17, textAlignVertical: 'top' },

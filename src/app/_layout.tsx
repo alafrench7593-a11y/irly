@@ -96,6 +96,7 @@ function App() {
         <Stack.Screen name="a/[id]" options={{ animation: 'fade_from_bottom' }} />
         {/* The face flies from the bubble into the profile while the page fades in. */}
         <Stack.Screen name="person/[id]" options={{ animation: 'fade' }} />
+        <Stack.Screen name="story" options={{ animation: 'fade', contentStyle: { backgroundColor: '#050506' } }} />
         <Stack.Screen name="girl/profile" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
       </Stack>
       <HeroHost />

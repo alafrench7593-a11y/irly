@@ -22,6 +22,7 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { DESTINATIONS, UPCOMING_DESTINATIONS } from '@/data/destinations';
 import type { Destination } from '@/data/types';
+import { IrlyStory } from '@/features/onboarding/IrlyStory';
 import { useExpand } from '@/features/onboarding/useExpand';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -38,7 +39,8 @@ export default function Welcome() {
   const frame = useFrame();
   const insets = useSafeAreaInsets();
   const setDestination = useStore((s) => s.setDestination);
-  const [phase, setPhase] = useState<'intro' | 'choose'>(introPlayed ? 'choose' : 'intro');
+  // intro (the logo) → story (what IRLY is) → choose (where you are going)
+  const [phase, setPhase] = useState<'intro' | 'story' | 'choose'>(introPlayed ? 'choose' : 'intro');
   const { overlay, expand, reset } = useExpand();
   const parallax = useParallax(phase === 'choose');
 
@@ -47,9 +49,25 @@ export default function Welcome() {
 
   // Intro choreography
   const glow = useSharedValue(introPlayed ? 1 : 0);
-  const word = useSharedValue(0);
+  const word = useSharedValue(introPlayed ? 1 : 0);
   const tagline = useSharedValue(0);
   const group = useSharedValue(introPlayed ? 1 : 0);
+  // The field dims while the story tells what IRLY is.
+  const dim = useSharedValue(0);
+
+  const toStory = () => {
+    word.set(withTiming(0, { duration: 260 }));
+    tagline.set(withTiming(0, { duration: 200 }));
+    dim.set(withTiming(1, { duration: 500 }));
+    setPhase('story');
+  };
+  const toChoose = () => {
+    introPlayed = true;
+    dim.set(withTiming(0, { duration: 500 }));
+    word.set(withSpring(1, spring.smooth));
+    group.set(withSpring(1, { duration: 760, dampingRatio: 0.92 }));
+    setPhase('choose');
+  };
 
   useEffect(() => {
     if (introPlayed) return;
@@ -57,16 +75,12 @@ export default function Welcome() {
     word.set(withDelay(320, withSpring(1, spring.smooth)));
     tagline.set(withDelay(700, withTiming(1, { duration: 600, easing: easing.standard })));
     const t1 = setTimeout(() => haptic('tap'), 360);
-    const t2 = setTimeout(() => {
-      introPlayed = true;
-      group.set(withSpring(1, { duration: 760, dampingRatio: 0.92 }));
-      tagline.set(withTiming(0, { duration: 220 }));
-      setPhase('choose');
-    }, 2150);
+    const t2 = setTimeout(toStory, 2150);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [glow, word, tagline, group]);
 
   useFocusEffect(
@@ -79,7 +93,7 @@ export default function Welcome() {
     transform: [{ translateY: group.value * lift }, { scale: 1 - group.value * 0.42 }],
   }));
   // The field dims once the destination cards arrive, so they stay readable.
-  const fieldStyle = useAnimatedStyle(() => ({ opacity: glow.value * (1 - group.value * 0.55) }));
+  const fieldStyle = useAnimatedStyle(() => ({ opacity: glow.value * (1 - group.value * 0.55) * (1 - dim.value * 0.6) }));
   const wordStyle = useAnimatedStyle(() => ({
     opacity: word.value,
     transform: [{ translateY: (1 - word.value) * 14 }],
@@ -95,12 +109,7 @@ export default function Welcome() {
   };
 
   const skip = () => {
-    if (phase === 'intro') {
-      introPlayed = true;
-      group.set(withSpring(1, { duration: 600, dampingRatio: 0.92 }));
-      tagline.set(withTiming(0, { duration: 160 }));
-      setPhase('choose');
-    }
+    if (phase === 'intro') toStory();
   };
 
   return (
@@ -122,14 +131,16 @@ export default function Welcome() {
           <IrlyWordmark size={64} color="#FFFFFF" accentColor="#FFFFFF" animated />
         </Animated.View>
         <Animated.View style={[{ marginTop: 14 }, taglineStyle]}>
-          <Text variant="label" color="rgba(255,255,255,0.62)" style={{ letterSpacing: 2.2 }}>
-            CONNECT · RELOCATE · BELONG
+          <Text raw variant="label" color="rgba(255,255,255,0.62)" style={{ letterSpacing: 4, textAlign: 'center', paddingHorizontal: space.gutter, maxWidth: frame.width }}>
+            IN REAL LIFE
           </Text>
         </Animated.View>
       </Animated.View>
 
       {phase === 'intro' ? (
         <PressableScale haptic={false} scaleTo={1} onPress={skip} style={StyleSheet.absoluteFill} accessibilityLabel="Skip intro" />
+      ) : phase === 'story' ? (
+        <IrlyStory onDone={toChoose} />
       ) : (
         <View style={[styles.choose, { paddingTop: insets.top + 132, paddingBottom: insets.bottom + space[5] }]}>
           <Animated.View entering={enter.rise(0, 120)} style={{ paddingHorizontal: space.gutter }}>
