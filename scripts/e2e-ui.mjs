@@ -111,7 +111,7 @@ async function main() {
   // The session must survive a full reload (stored by the app).
   await check('session persists after reload', '/account', [], null, 'Signed in');
   await check('Home shows Live Bali', '/', ['Live Bali']);
-  await check('Discover shows Bali and restaurants doors', '/discover', ['Discover', 'Where to eat']);
+  await check('Discover shows Bali and restaurants doors', '/discover?tab=places', ['Discover', 'Live Bali', 'Where to eat']);
   await check('Bali hub', '/bali', ["Don't just visit", 'Where should I live?', 'Areas, explained']);
   await check('Area page Canggu (guide + IRLY data)', '/bali/area/canggu', ['Canggu', 'IRLY Guide', 'Happening in Canggu']);
   await check('Neighbourhood Berawa shows its area', '/bali/area/berawa', ['Berawa', 'Badung']);
