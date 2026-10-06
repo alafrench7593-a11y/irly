@@ -80,7 +80,15 @@ async function step(label, fn) {
   } catch (e) {
     failed++;
     failures.push(label);
-    console.log(`✗ ${label}: ${(e instanceof Error ? e.message : String(e)).split('\n')[0]}`);
+    const msg = e instanceof Error ? e.message : String(e);
+    console.log(`✗ ${label}: ${msg.split('\n')[0]}`);
+    // Which locator, and what the screen said: enough to tell a race from a bug.
+    const waiting = msg.match(/waiting for (.+)/);
+    if (waiting) console.log(`   waiting for: ${waiting[1].slice(0, 200)}`);
+    if (globalThis.__page) {
+      const seen = await globalThis.__page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').slice(0, 700)).catch(() => '');
+      console.log(`   url: ${globalThis.__page.url()}\n   screen: ${seen}`);
+    }
   }
 }
 const must = (r) => {
@@ -118,6 +126,7 @@ async function main() {
 
   const browser = await chromium.launch();
   const page = await signedInPage(browser, uma);
+  globalThis.__page = page;
   const shot = (name) => page.screenshot({ path: path.join(SHOTS, `sync-${String(passed + failed).padStart(2, '0')}-${name}.png`) }).catch(() => undefined);
 
   // ───────── 3. Synchronisation (first: it creates the activity used below) ─────────
