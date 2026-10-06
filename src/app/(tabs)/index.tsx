@@ -75,7 +75,7 @@ export default function Home() {
   // Every category, straight on the Home, in the order that fits this
   // moment of the day for you: what is planned first, then ideas to start.
   const sections = useMemo(() => {
-    const order = [...moment.categories, ...CATEGORIES.map((c) => c.id).filter((id) => !moment.categories.includes(id))];
+    const order = [...moment.categories, ...CATEGORIES.map((c) => c.id).filter((id) => !moment.categories.includes(id))].filter((id) => CATEGORY_BY_ID[id]);
     return order.map((id) => {
       const category = CATEGORY_BY_ID[id];
       const items = happenings.filter((h) => h.group === id).slice(0, 6);

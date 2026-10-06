@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import type { HapticKind } from '@/motion/haptics';
@@ -18,6 +18,8 @@ type Props = {
   variant?: ButtonVariant;
   size?: Size;
   icon?: IconName;
+  /** A custom mark before the label (brand logos), drawn in the label colour. */
+  leading?: (color: string) => ReactNode;
   iconRight?: IconName;
   loading?: boolean;
   disabled?: boolean;
@@ -40,6 +42,7 @@ export const Button = memo(function Button({
   variant = 'primary',
   size = 'lg',
   icon,
+  leading,
   iconRight,
   loading,
   disabled,
@@ -97,6 +100,7 @@ export const Button = memo(function Button({
           <ActivityIndicator color={p.fg} />
         ) : (
           <View style={styles.row}>
+            {leading ? leading(p.fg) : null}
             {icon ? <Icon name={icon} size={size === 'sm' ? 15 : 18} color={p.fg} strokeWidth={2.2} /> : null}
             <Text variant={size === 'sm' ? 'label' : 'titleS'} color={p.fg} numberOfLines={1}>
               {label}

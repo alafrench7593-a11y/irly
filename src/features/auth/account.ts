@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { useStore, type Profile } from '@/state/store';
 import { imageBytes, imageType } from '@/lib/media';
 import { wipeLocal } from '@/state/wipe';
+import { CITIES } from '@/data/destinations';
+import { ACTIVITIES, INTERESTS } from '@/data/catalog';
 
 /** Signup language names → ISO codes stored server-side. */
 const LANG: Record<string, string> = { English: 'en', Français: 'fr', العربية: 'ar', हिन्दी: 'hi', Русский: 'ru', Español: 'es', Italiano: 'it', Deutsch: 'de', Bahasa: 'id', Filipino: 'tl', اردو: 'ur', Português: 'pt' };
@@ -39,14 +41,24 @@ useStore.subscribe((st, prev) => {
 if (supabase) {
   supabase.auth
     .getSession()
-    .then(({ data }) => setSession(data.session?.user))
+    .then(({ data }) => {
+      setSession(data.session?.user);
+      // Still signed in but this device never finished signup (or was reset).
+      if (data.session?.user) restoreProfile(data.session.user.id).catch(() => undefined);
+    })
     .catch(() => setSession(null));
   supabase.auth.onAuthStateChange((event, session) => {
     setSession(session?.user);
     // Signed out in another tab: forget this person here too.
     if (event === 'SIGNED_OUT') wipeLocal();
-    // Signed in from the email link: publish the signup profile once.
-    if (event === 'SIGNED_IN' && session?.user) syncProfile(session.user.id).catch(() => undefined);
+    // Signed in: a returning member gets their profile back on this device;
+    // a new one publishes the signup profile once.
+    if (event === 'SIGNED_IN' && session?.user) {
+      const uid = session.user.id;
+      restoreProfile(uid)
+        .then((restored) => (restored ? undefined : syncProfile(uid)))
+        .catch(() => undefined);
+    }
   });
 }
 
@@ -115,6 +127,76 @@ export function syncProfile(uid: string): Promise<void> {
   const run = writeProfile(uid).finally(() => syncing.delete(uid));
   syncing.set(uid, run);
   return run;
+}
+
+type ServerProfile = {
+  first_name: string | null;
+  birthdate: string | null;
+  gender: Profile['gender'] | null;
+  city_id: string | null;
+  country: string | null;
+  languages: string[] | null;
+  bio: string | null;
+  faith: string | null;
+  faith_visible: boolean | null;
+  arrived_at: string | null;
+  interests: string[] | null;
+  activity_prefs: string[] | null;
+  intentions: string[] | null;
+  photo_paths: string[] | null;
+};
+
+const restoring = new Map<string, Promise<boolean>>();
+
+/**
+ * A returning member signing in on a new device (or after a reset) gets
+ * their server profile back and goes straight to the app, instead of
+ * signing up again. Returns true when a profile was restored.
+ */
+export function restoreProfile(uid: string): Promise<boolean> {
+  const running = restoring.get(uid);
+  if (running) return running;
+  const run = readBack(uid).finally(() => restoring.delete(uid));
+  restoring.set(uid, run);
+  return run;
+}
+
+async function readBack(uid: string): Promise<boolean> {
+  if (!supabase || useStore.getState().onboarded) return false;
+  const { data, error } = await supabase.rpc('my_profile');
+  const r = ((data as ServerProfile[] | null) ?? [])[0];
+  if (error || !r || !r.first_name) return false;
+  const back = Object.fromEntries(Object.entries(LANG).map(([name, code]) => [code, name]));
+  let photoUri: string | undefined;
+  const path = r.photo_paths?.[0];
+  if (path) {
+    const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 30 * 24 * 3600);
+    photoUri = signed?.signedUrl ?? undefined;
+  }
+  const born = r.birthdate ? new Date(r.birthdate).getFullYear() : null;
+  const st = useStore.getState();
+  if (st.onboarded) return false;
+  st.updateProfile({
+    ownerId: uid,
+    name: r.first_name,
+    gender: r.gender ?? undefined,
+    age: born ? new Date().getFullYear() - born : undefined,
+    country: r.country ?? undefined,
+    languages: (r.languages ?? []).map((l) => back[l] ?? l),
+    bio: r.bio ?? undefined,
+    faith: r.faith ?? undefined,
+    faithVisible: Boolean(r.faith_visible),
+    arrivedAt: r.arrived_at ? Date.parse(r.arrived_at) : undefined,
+    // Only values this version of the app knows (older or newer apps may differ).
+    interests: (r.interests ?? []).filter((i): i is Profile['interests'][number] => i in INTERESTS),
+    activities: (r.activity_prefs ?? []).filter((a): a is Profile['activities'][number] => a in ACTIVITIES),
+    lookingFor: (r.intentions ?? []) as Profile['lookingFor'],
+    ...(photoUri ? { photoUri } : {}),
+  });
+  const city = r.city_id && r.city_id in CITIES ? (r.city_id as keyof typeof CITIES) : 'dubai';
+  st.setDestination(CITIES[city].destinationId, city);
+  st.completeOnboarding();
+  return true;
 }
 
 async function writeProfile(uid: string): Promise<void> {

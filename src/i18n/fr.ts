@@ -2716,4 +2716,9 @@ export const fr: Record<string, string> = {
   '{n} community': '{n} communauté',
   '{n} person': '{n} personne',
   'Plan created, but it could not be posted in the community': 'Activité créée, mais pas annoncée dans la communauté',
+  'Sent to {email}. Open the link on this device, or enter the 6-digit code if the email shows one.': 'Envoyé à {email}. Ouvre le lien sur cet appareil, ou saisis le code à 6 chiffres s’il figure dans l’e-mail.',
+  'Continue to IRLY': 'Continuer vers IRLY',
+  'One more step: finish your profile so people can find you.': 'Dernière étape : termine ton profil pour que les gens puissent te trouver.',
+  'Finish my profile': 'Terminer mon profil',
+  'You\'re signed in': 'Tu es connecté·e',
 };

@@ -1,4 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useStore } from '@/state/store';
+import { AppleLogo, GoogleG } from '@/brand/ProviderLogos';
 import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
@@ -47,6 +49,8 @@ export default function AccountScreen() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
+  const onboarded = useStore((s) => s.onboarded);
+  const cityId = useStore((s) => s.cityId);
   const params = useLocalSearchParams<{ reset?: string }>();
   const [mode, setMode] = useState<Mode>(params.reset ? 'reset' : 'choose');
   const [email, setEmail] = useState('');
@@ -79,7 +83,7 @@ export default function AccountScreen() {
         .then((ok) => {
           if (!ok) return;
           if (url.includes('type=recovery') || url.includes('reset=1')) setMode('reset');
-          else toast("You're signed in. Your profile is live", 'check', 'positive');
+          else toast("You're signed in", 'check', 'positive');
         })
         .catch((e) => toast(authMessage(e), 'x', 'live'));
     }
@@ -99,7 +103,7 @@ export default function AccountScreen() {
   const done = (how: string) => {
     haptic('success');
     track(creating ? 'SIGNUP' : 'LOGIN', { method: how });
-    toast("You're signed in. Your profile is live", 'check', 'positive');
+    toast("You're signed in", 'check', 'positive');
     if (router.canGoBack()) router.back();
   };
 
@@ -149,6 +153,16 @@ export default function AccountScreen() {
               Your profile, matches, chats and sessions are saved on the IRLY server.
             </Text>
           </View>
+          {onboarded && cityId ? (
+            <Button label="Continue to IRLY" icon="arrowRight" full onPress={() => router.replace('/(tabs)')} />
+          ) : (
+            <>
+              <Text variant="body" tone="secondary">
+                One more step: finish your profile so people can find you.
+              </Text>
+              <Button label="Finish my profile" icon="arrowRight" full onPress={() => router.replace('/welcome')} />
+            </>
+          )}
           <Button label="Change password" variant="secondary" icon="key" onPress={() => setMode('reset')} />
           <Button
             label="Sign out"
@@ -171,7 +185,7 @@ export default function AccountScreen() {
     choose: ['Join IRLY', 'Find someone to do something with.'],
     email: [creating ? 'Create your account' : 'Sign in with email', creating ? 'Email and a password. We send a link to confirm it’s you.' : 'Welcome back.'],
     link: ['Email me a link', 'No password: we email you a sign-in link.'],
-    code: ['Check your email', `Sent to ${email.trim()}. Open the link on this device, or enter the 6-digit code if the email shows one.`],
+    code: ['Check your email', tx('Sent to {email}. Open the link on this device, or enter the 6-digit code if the email shows one.', { email: email.trim() })],
     forgot: ['Forgot your password?', 'We email you a link to choose a new one.'],
     phone: ['Sign in with your phone', 'We text you a 6-digit code.'],
     phoneCode: ['Enter the code', tx('Sent to {phone}.', { phone: phone.trim() })],
@@ -183,8 +197,8 @@ export default function AccountScreen() {
       <Animated.View key={mode} entering={FadeIn.duration(220)} style={styles.body}>
         {mode === 'choose' ? (
           <>
-            {providers?.apple && Platform.OS !== 'android' ? <Button label="Continue with Apple" icon="lock" full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
-            {providers?.google ? <Button label="Continue with Google" icon="globe" full variant="secondary" onPress={() => act(() => signInWithProvider('google'))} /> : null}
+            {providers?.apple && Platform.OS !== 'android' ? <Button label="Continue with Apple" variant="inverse" leading={(c) => <AppleLogo size={18} color={c} />} full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
+            {providers?.google ? <Button label="Continue with Google" leading={() => <GoogleG size={18} />} full variant="secondary" loading={busy} onPress={() => act(() => signInWithProvider('google'))} /> : null}
             {providers && !providers.apple && !providers.google ? (
               <Text variant="bodyS" tone="secondary" align="center">
                 Apple and Google sign-in are coming soon. Use your email: you get a 6-digit code.
