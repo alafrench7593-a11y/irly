@@ -528,6 +528,59 @@ select pg_temp.check(not exists (select 1 from public.activity_participants x jo
 select pg_temp.check((select going from public.activity_detail((select id from public.activities where title = 'Carl public run'))) >= 1, 'the going count stays exact');
 select pg_temp.check((select public.going(a) from public.activities a where a.title = 'Carl public run') >= 1, 'the computed going column stays exact');
 
+
+-- ───── Every city: a session is a group chat, a community is a group chat ─────
+-- Dubai, the six other emirates and Bali: same rules everywhere.
+create or replace function pg_temp.sync_city(c text) returns void language plpgsql as $$
+declare
+  area text := (select id from public.areas where city_id = c order by id limit 1);
+  aid uuid; gid uuid; mid uuid; cid uuid; gcid uuid; conv uuid;
+begin
+  if area is null then raise exception 'FAIL % has no areas', c; end if;
+  -- Bea (IRLY Girl) creates a public session: its chat exists with her as admin.
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+  insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, currency)
+  values (auth.uid(), 'Sync ' || c, 'sport', c, area, now() + interval '3 days', case when c = 'bali' then 'IDR' else 'AED' end)
+  returning id into aid;
+  select id into conv from public.conversations where activity_id = aid;
+  perform pg_temp.check(conv is not null and exists (select 1 from public.conversation_members where conversation_id = conv and user_id = auth.uid() and role = 'admin'), c || ': a new session has its group chat, creator inside');
+  -- Carl joins: he is in the chat, Bea is told.
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+  perform public.join_activity(aid);
+  perform pg_temp.check(private.is_member(conv, auth.uid()), c || ': joining a session joins its chat');
+  insert into public.messages (conversation_id, sender_id, body) values (conv, auth.uid(), 'On my way');
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+  perform pg_temp.check(exists (select 1 from public.messages where conversation_id = conv and body = 'On my way'), c || ': the creator reads the group chat');
+  -- Girls and moms sessions: IRLY Girl only, their chat too.
+  insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, audience, girl_only)
+  values (auth.uid(), 'Girls ' || c, 'wellness', c, area, now() + interval '3 days', 'girls', true) returning id into gid;
+  insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, audience, girl_only)
+  values (auth.uid(), 'Moms ' || c, 'family', c, area, now() + interval '3 days', 'moms', true) returning id into mid;
+  perform pg_temp.check((select count(*) from public.conversations where activity_id in (gid, mid)) = 2, c || ': girls and moms sessions have their chats');
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+  perform public.join_activity(mid);
+  perform pg_temp.check(private.is_member((select id from public.conversations where activity_id = mid), auth.uid()), c || ': a woman joins the moms chat');
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+  perform pg_temp.expect_denied(format('select public.join_activity(%L)', mid), c || ': a man cannot join a moms session');
+  perform pg_temp.expect_denied(format('select public.join_activity(%L)', gid), c || ': a man cannot join a girls session');
+  -- Communities: the creator is in its chat, joiners too; girl-only stays girl-only.
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+  cid := public.create_community('Sync club ' || c, c);
+  perform pg_temp.check(private.is_member((select id from public.conversations where community_id = cid), auth.uid()), c || ': a new community has its group chat');
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+  perform public.join_community(cid);
+  perform pg_temp.check(private.is_member((select id from public.conversations where community_id = cid), auth.uid()), c || ': joining a community joins its chat');
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+  gcid := public.create_community('Sync girls ' || c, c, null, null, null, true);
+  perform pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+  perform pg_temp.expect_denied(format('select public.join_community(%L)', gcid), c || ': a man cannot join an IRLY Girl community');
+  -- The daily limit on new communities is not what this test is about.
+  perform pg_temp.as_admin();
+  update public.communities set created_at = now() - interval '2 days' where created_by = '00000000-0000-0000-0000-00000000000d';
+end $$;
+select pg_temp.sync_city(c) from unnest(array['dubai', 'abudhabi', 'sharjah', 'ajman', 'rak', 'fujairah', 'uaq', 'bali']) as c;
+select pg_temp.as_admin();
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
