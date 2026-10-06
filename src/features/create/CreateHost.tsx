@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Image } from 'expo-image';
@@ -10,10 +10,10 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Button } from '@/components/ui/Button';
 import { Chip, Field } from '@/components/ui/Controls';
-import { Icon } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { CATEGORIES, CATEGORY_BY_ID, guessCategory, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
+import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -52,6 +52,31 @@ const FORMAT: Record<CreateFormat, { title: string; cta: string }> = {
 };
 
 type Pick = { categoryId: CategoryKey; sub?: CatalogSub; activity?: CatalogActivity; custom?: string };
+
+/**
+ * WHAT DO YOU WANT TO DO? The twelve things people start most, one tap
+ * each. A pick with a catalog entry jumps straight to « when », a broad
+ * one opens its category, « Other » goes to « name your own ».
+ */
+const QUICK: { label: string; icon: IconName; entry?: string; category?: CategoryKey }[] = [
+  { label: 'Football', icon: 'trophy', entry: 'Football' },
+  { label: 'Padel', icon: 'target', entry: 'Padel' },
+  { label: 'Dinner', icon: 'utensils', entry: 'Dinner' },
+  { label: 'Coffee', icon: 'coffee', entry: 'Coffee' },
+  { label: 'Beach', icon: 'palm', entry: 'Beach' },
+  { label: 'Gym', icon: 'dumbbell', entry: 'Gym' },
+  { label: 'Brunch', icon: 'sunrise', entry: 'Brunch' },
+  { label: 'Walk', icon: 'footprints', entry: 'Walk together' },
+  { label: 'Party', icon: 'disc', category: 'nightlife' },
+  { label: 'Coworking', icon: 'laptop', category: 'networking' },
+  { label: 'Travel', icon: 'plane', category: 'travel' },
+  { label: 'Other', icon: 'plus' },
+];
+
+function findEntry(label: string) {
+  const l = label.toLowerCase();
+  return CATALOG_ENTRIES.find((e) => e.label.toLowerCase() === l) ?? searchCatalog(label, 1)[0];
+}
 
 /**
  * Create a session, from anything. Step 1: a category (or search the whole
@@ -154,6 +179,22 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     setQuery('');
     setStep(2);
   };
+  const scroller = useRef<ScrollView>(null);
+  const chooseQuick = (q: (typeof QUICK)[number]) => {
+    haptic('select');
+    if (q.entry) {
+      const e = findEntry(q.entry);
+      if (e) {
+        chooseEntry(e.categoryId, e.sub, e.activity);
+        return;
+      }
+    }
+    if (q.category) {
+      chooseCategory(q.category);
+      return;
+    }
+    scroller.current?.scrollToEnd({ animated: true });
+  };
   const chooseCustom = (text: string) => {
     const label = text.trim();
     if (label.length < 3) return;
@@ -220,7 +261,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 220 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView ref={scroller} contentContainerStyle={{ paddingBottom: 220 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {step === 0 ? (
             <View key="s0">
               <Animated.View entering={enter.rise(0, 120)}>
@@ -254,6 +295,27 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 </Animated.View>
               ) : (
                 <>
+                  <View style={styles.quick}>
+                    {QUICK.map((q, i) => (
+                      <Animated.View key={q.label} entering={enter.pop(Math.min(i, 11), 140)} style={styles.quickCell}>
+                        <PressableScale
+                          haptic={false}
+                          scaleTo={0.92}
+                          onPress={() => chooseQuick(q)}
+                          accessibilityLabel={q.label}
+                          style={[styles.quickTile, { backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.06)' : t.c.surface, borderColor: t.c.line }]}
+                        >
+                          <Icon name={q.icon} size={22} color={t.c.text} strokeWidth={1.9} />
+                          <Text variant="label" numberOfLines={1}>
+                            {q.label}
+                          </Text>
+                        </PressableScale>
+                      </Animated.View>
+                    ))}
+                  </View>
+                  <Text variant="overline" tone="tertiary" style={styles.or}>
+                    Or browse everything
+                  </Text>
                   <View style={styles.grid}>
                     {CATEGORIES.map((c, i) => (
                       <Animated.View key={c.id} entering={enter.pop(Math.min(i, 8), 160)} style={styles.cell}>
@@ -524,6 +586,10 @@ const styles = StyleSheet.create({
   cover: { height: 150, borderRadius: radius.lg, overflow: 'hidden' },
   coverRemove: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   coverEmpty: { height: 64, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  quick: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.gutter - 4, marginTop: space[5] },
+  quickCell: { width: '25%', padding: 4 },
+  quickTile: { height: 84, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  or: { paddingHorizontal: space.gutter, marginTop: space[6] },
   circle: { position: 'absolute' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.gutter, height: 44 },
   back: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },

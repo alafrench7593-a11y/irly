@@ -125,6 +125,7 @@ export const fr: Record<string, string> = {
   // ───── IRLY match (main app)
   'Say hello': 'Dire bonjour',
   'You and {name} said yes to meeting.': 'Toi et {name}, vous avez dit oui pour vous voir.',
+  'Or browse everything': 'Ou parcours tout',
   // ───── IRL menu
   'Your move.': 'À toi de jouer.',
   'Create\nactivity': 'Créer une\nactivité',
