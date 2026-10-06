@@ -1,0 +1,90 @@
+# Photo sources
+
+Public domain or CC0 (no attribution required). Listed for reference.
+
+- **golf**: AT&T Pebble Beach Weekend (pdm) https://www.flickr.com/photos/38345529@N05/32232790334
+- **cricket**: 63 Gary Ballance (YCCC 2008-22) (pdm) https://www.flickr.com/photos/78091088@N02/52611954793
+- **horseRiding**: A little horse riding (cc0) https://www.flickr.com/photos/36943025@N07/12247084443
+- **climbing**: Indoors Rock (cc0) https://stocksnap.io/photo/indoors-rock-KL2Y9YDUMN
+- **skate**: Skateboard Skater (cc0) https://stocksnap.io/photo/skateboard-skater-5OTFJYVYSE
+- **rollerblade**: Exceptional Family Member Program -- roller skating event (pdm) https://www.flickr.com/photos/38345529@N05/32106539418
+- **archery**: Project 366 #239: 260812 Stay On Target! (pdm) https://www.flickr.com/photos/23408922@N07/7865159650
+- **badminton**: Programa de Formación y Captación de Talento de Badminton en el Polideportivo 2 de Videna (pdm) https://www.flickr.com/photos/149051229@N03/49379850113
+- **diving**: Free person scuba diving image (cc0) https://www.rawpixel.com/image/5914294/image-public-domain-ocean-sea
+- **snorkel**: Hawksbill Sea Turtle/ Carey de Concha (pdm) https://www.flickr.com/photos/41464593@N02/5840602412
+- **kitesurf**: kitesurf (cc0) https://www.flickr.com/photos/51195133@N03/35920361520
+- **sailing**: Circolo Nautico NIC Porto di Catania - Sicilia Italy Italia - Creative Commons by gnuckx (cc0) https://www.flickr.com/photos/34409164@N06/5436615139
+- **startup**: Team Meeting (cc0) https://stocksnap.io/photo/team-meeting-69TMH4ITIE
+- **finance**: Stocks Graph (cc0) https://stocksnap.io/photo/stocks-graph-MEDIALY3UV
+- **realEstate**: white modern apartment building Berlin (cc0) https://www.rawpixel.com/image/3285824/free-photo-image-office-building-residence-city
+- **designWork**: Notebook Notepad (cc0) https://stocksnap.io/photo/notebook-notepad-CBOLBKWDV5
+- **developer**: Developer Discuss (cc0) https://stocksnap.io/photo/developer-discuss-OEIJJX36TI
+- **legal**:  (cc0) https://www.rawpixel.com/image/5942592/free-public-domain-cc0-photo
+- **logistics**: Shipping containers port (cc0) https://www.rawpixel.com/image/6026504/photo-image-public-domain-free
+- **luxury**: Bulgari-Ladies-Luxury-Watch (pdm) https://www.flickr.com/photos/150219019@N03/34978829571
+- **automotive**: green sports car (cc0) https://www.flickr.com/photos/151415985@N06/36191749930
+- **fineDining**: fine dining crab cake appetizer (cc0) https://www.flickr.com/photos/47121680@N00/52542068934
+- **bakery**: Free close bakery pastries image (cc0) https://www.rawpixel.com/image/5917505/image-public-domain-wood-fruit
+- **steak**: Steak dinner two roasted carrots (cc0) https://www.rawpixel.com/image/3283009/free-photo-image-steak-food-photography
+- **sushi**: Sushi Platter (cc0) https://www.rawpixel.com/image/5970394/sushi-platter
+- **burger**: Burger & Fries (cc0) https://www.rawpixel.com/image/5970484/burger-fries
+- **pizza**: Toronto Pizza and Veal Sandwiches - 1 (cc0) https://www.flickr.com/photos/35034347371@N01/2859728
+- **indianFood**: Spicy Indian Curry (cc0) https://www.rawpixel.com/image/5970798/spicy-indian-curry
+- **italianFood**: Pasta, Italian food (cc0) https://www.rawpixel.com/image/6033909/pasta-italian-food-free-public-domain-cc0-photo
+- **japaneseFood**: Miso Ramen Dinner (cc0) https://www.flickr.com/photos/37996646802@N01/2905104260
+- **koreanFood**: Korean BBQ, food image (cc0) https://www.rawpixel.com/image/6036219/photo-image-public-domain-food-free
+- **healthyFood**: A lamb's lettuce salad (cc0) https://www.flickr.com/photos/135396164@N05/33631368531
+- **burjKhalifa**: Burj Khalifa (pdm) https://www.flickr.com/photos/134921587@N06/19718646928
+- **souk**: 2022-11-13_18-44-18_JO_Amman_JH (cc0) https://www.flickr.com/photos/96541566@N06/52532718503
+- **fashion**: Women clothes in the store (cc0) https://www.flickr.com/photos/157635012@N07/48124880907
+- **beauty**: Makeup brushes (cc0) https://www.flickr.com/photos/135396164@N05/35675834556
+- **homeDecor**:  (cc0) https://www.rawpixel.com/image/5949306/free-public-domain-cc0-photo
+- **mosque**: Sheikh Zayed Grand Mosque, Abu (cc0) https://www.rawpixel.com/image/6032480/photo-image-public-domain-person-free
+- **concert**: Crowd People (cc0) https://stocksnap.io/photo/crowd-people-IUJP9OI22I
+- **theatre**: Winter Garden Theatre stage (pdm) https://www.flickr.com/photos/197655756@N08/52693923069
+- **arcade**: Arcade Games (cc0) https://www.flickr.com/photos/85825630@N00/23750085074
+- **karting**: Go-kart @ Orchard (pdm) https://www.flickr.com/photos/171425013@N02/48773210752
+- **vr**: A person wearing a black virtual reality headset, looking slightly upward. They are dressed in a dark jacket and a blue sweater, standing indoors with a plain white background. (cc0) https://wordpress.org/photos/photo/762677c44a/
+- **themePark**: Free roller coaster image (cc0) https://www.rawpixel.com/image/5924386/photo-image-light-public-domain-shape
+- **waterPark**: Water park slides (cc0) https://www.rawpixel.com/image/6029238/water-park-slides-free-public-domain-cc0-photo
+- **festival**: Music Festival Crowd (cc0) https://www.rawpixel.com/image/5969754/music-festival-crowd
+- **liveMusic**: 20171027-AMS-LSC-0383 (pdm) https://www.flickr.com/photos/41284017@N08/38014875656
+- **lounge**: Cocktail Drink (cc0) https://stocksnap.io/photo/cocktail-drink-3PI710IGAC
+- **spa**: Spa treatment room landscape (cc0) https://www.flickr.com/photos/184934270@N04/52263877413
+- **sauna**: Sauna (cc0) https://www.flickr.com/photos/182083360@N03/48101873571
+- **meditation**: Between two diamond white birch trees Buddha meditates in Broadview, Seattle, Washington, USA (cc0) https://www.flickr.com/photos/71401718@N00/5717539869
+- **dog**: A lovely couple with two dogs (cc0) https://www.flickr.com/photos/135396164@N05/34386345973
+- **dogPark**: stocks-3705 (cc0) https://www.flickr.com/photos/157635012@N07/45182118181
+- **horse**: Horse Portrait (cc0) https://stocksnap.io/photo/horse-portrait-NLO6EYDZUZ
+- **cat**: Cat portrait by iezalel williams IMG_2980-004 - Canon EOS 700D (cc0) https://www.flickr.com/photos/181765699@N08/48051761348
+- **petCafe**: ICHI Cat Cafe (pdm) https://www.flickr.com/photos/21156626@N00/27744443135
+- **playground**: The empty playground. (cc0) https://www.flickr.com/photos/88123769@N02/34262948212
+- **photography**: Photographer Camera (cc0) https://stocksnap.io/photo/photographer-camera-L0D9N4OE1F
+- **music**: 2015_08_29_Kavi_Pratt_Studio_JPEG_RESIZED_0011 (pdm) https://www.flickr.com/photos/132740829@N02/21249357101
+- **writing**: Coffee with Notebook on table in office (cc0) https://www.flickr.com/photos/151415985@N06/34954976072
+- **picnic**: Picnic Blanket Man Woman Wine (cc0) https://www.rawpixel.com/image/8811991/picnic-blanket-man-woman-wine
+- **bbq**: Free barbecue grilling meat image (cc0) https://www.rawpixel.com/image/5914943/image-public-domain-food-free
+- **camping**: Tent in Hidden Valley Campground (pdm) https://www.flickr.com/photos/115357548@N08/51318549394
+- **glamping**: Glamping desert (cc0) https://www.rawpixel.com/image/5923975/glamping-desert-free-public-domain-cc0-image
+- **islands**: Aerial panorama of the city of Honolulu (pdm) https://www.flickr.com/photos/195382194@N04/51993271708
+- **nature**: Mangrove Forest -Pichavaram - India (cc0) https://www.flickr.com/photos/81073027@N00/2387221908
+- **roadtrip**: Volcano topping in Bend, Oregon USA (pdm) https://www.flickr.com/photos/37789131@N08/37888785701
+- **lake**: Burning Lake (cc0) https://www.flickr.com/photos/24046097@N00/16799983387
+- **jbr**: Deserted beach, Adu Dhabi (cc0) https://www.rawpixel.com/image/11176966/deserted-beach-adu-dhabi
+- **cinema**: Rows cinema seats (cc0) https://www.rawpixel.com/image/5921030/photo-image-background-public-domain-red
+- **mall**: Shopping mall escalator interior (cc0) https://www.rawpixel.com/image/6029175/photo-image-public-domain-person-concrete
+- **bowling**: Bowling Night (cc0) https://www.flickr.com/photos/62518311@N00/74849606
+- **dance**: Expo 88 Performers (pdm) https://www.flickr.com/photos/60455048@N02/31218186402
+- **cooking**: The cook's smile, cooking vegetarian green bean soup, big wooden paddle spoon, young woman in a brown shirt, pot, kitchen, Breitenbush Hot Springs, Breitenbush, Oregon, USA (cc0) https://www.flickr.com/photos/71401718@N00/6231890399
+- **kids**: play in ggate park (cc0) https://www.flickr.com/photos/63584234@N00/2391781958
+- **family**: Family beach vacation (cc0) https://www.rawpixel.com/image/6035106/photo-image-public-domain-kid-people
+- **dessert**: Free chocolate cake slice image (cc0) https://www.rawpixel.com/image/5916247/image-public-domain-food-chocolate
+- **streetFood**: Stand bij het 'Food Truck Festival' TREK (pdm) https://www.flickr.com/photos/98552965@N05/18575965642
+- **sneakers**: Sneakers Shoes (cc0) https://stocksnap.io/photo/sneakers-shoes-U20YIXFQBC
+- **frenchFood**: Croissants (cc0) https://www.flickr.com/photos/29155878@N03/22143942963
+- **tableTennis**: Nick Licata and KIRO Radio host Dori Monson play friendly rounds of ping pong at City Hall (cc0) https://www.flickr.com/photos/47354378@N05/9519160528
+- **massage**: Free back massage spa image (cc0) https://www.rawpixel.com/image/5924895/photo-image-public-domain-people-free
+- **comedy**: Reza Aslan speaking at 5X15 (pdm) https://www.flickr.com/photos/38144472@N04/14628738274
+- **karaoke**: State Alumni Karaoke (pdm) https://www.flickr.com/photos/41243200@N08/6553437779
+- **education**: Bibliothèque Départementale de La Réunion (cc0) https://www.flickr.com/photos/11234074@N05/10085206053
+- **dhow**: Sailing boat at sunset (cc0) https://www.flickr.com/photos/135396164@N05/29813555710
