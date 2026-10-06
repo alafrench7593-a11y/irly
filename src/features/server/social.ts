@@ -25,6 +25,8 @@ export type ServerIrlPost = {
   mine: boolean;
   activityId: string | null;
   activityTitle: string | null;
+  /** Its emirate: the feed covers the whole destination. */
+  cityId: string | null;
 };
 
 type FeedRow = {
@@ -77,6 +79,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         mine: r.author_id === uid,
         activityId: r.activity_id ?? null,
         activityTitle: r.activity_title ?? null,
+        cityId: (r as { city_id?: string }).city_id ?? null,
       })),
     );
   }, [cityId, uid]);

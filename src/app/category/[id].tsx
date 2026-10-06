@@ -14,7 +14,7 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { CATEGORY_BY_ID, GIRL_CATEGORY, ideaPhoto, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { INTEREST_CATEGORY, planDisplay, SESSION_CATEGORY } from '@/data/catalog/mapping';
-import { areaName, CITIES } from '@/data/destinations';
+import { areaName, CITIES, placeLabel } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
 import { openCreate } from '@/features/create/createStore';
 import { enter } from '@/motion/enter';
@@ -201,7 +201,7 @@ export default function CategoryScreen() {
                     {a.title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
-                    {[cityWhen(a.startsAt, cityId), a.placeName ?? areaName(city, a.areaId), tx('{n} going', { n: a.going })].join(' · ')}
+                    {[cityWhen(a.startsAt, cityId), placeLabel(cityId, a.cityId, a.areaId, a.placeName), tx('{n} going', { n: a.going })].join(' · ')}
                   </Text>
                 </View>
                 <Icon name="chevronRight" size={18} color={t.c.textTertiary} />

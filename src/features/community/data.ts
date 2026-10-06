@@ -49,7 +49,7 @@ export type CommunityPost = {
   pending?: boolean;
 };
 
-export type CommunitySummary = { id: string; name: string; tagline: string | null; categoryId: string | null; girlOnly: boolean; members: number; isMember: boolean; postsWeek: number };
+export type CommunitySummary = { id: string; name: string; tagline: string | null; categoryId: string | null; girlOnly: boolean; members: number; isMember: boolean; postsWeek: number; cityId: string | null };
 
 export type Digest = { postsWeek: number; newMembersWeek: number; members: number; upcoming: number; nextTitle: string | null; nextStartsAt: number | null; topPostBody: string | null; topPostLikes: number };
 
@@ -254,6 +254,7 @@ export function useCommunityList(cityId: string) {
           members: Number(r.members ?? 0),
           isMember: Boolean(r.is_member),
           postsWeek: Number(r.posts_week ?? 0),
+          cityId: (r.city_id as string) ?? null,
         })),
       );
     });

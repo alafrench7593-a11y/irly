@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import type { CityId } from '@/data/types';
-import { CITIES } from '@/data/destinations';
+import { CITIES, cityScope } from '@/data/destinations';
 import { dateFor, dayOf } from '@/features/ai/intent';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
@@ -104,9 +104,11 @@ export type ServerActivity = {
   joined: boolean;
   /** The creator's own photo (signed link), when they added one. */
   coverUrl: string | null;
+  /** Its emirate (or Bali): lists cover every city of the destination. */
+  cityId: string;
 };
 
-/** Upcoming activities other members created in this city. */
+/** Upcoming activities members created in this destination (all seven emirates, or Bali), your city first. */
 export function useServerActivities(cityId: CityId): { activities: ServerActivity[]; refresh: () => void } {
   const account = useAccount();
   const uid = account?.userId;
@@ -116,12 +118,12 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
     if (!supabase || !uid) return [];
     const { data, error } = await supabase
       .from('activities')
-      .select('id, title, category_id, sub_id, area_id, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
-      .eq('city_id', cityId)
+      .select('id, title, category_id, sub_id, area_id, city_id, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
+      .in('city_id', cityScope(cityId))
       .is('cancelled_at', null)
       .gte('starts_at', new Date().toISOString())
       .order('starts_at')
-      .limit(30);
+      .limit(60);
     if (error) throw new Error(error.message);
     const links = await coverLinks((data ?? []).map((a) => a.cover_path as string | null));
     return (
@@ -133,6 +135,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
           categoryId: a.category_id,
           subId: a.sub_id,
           areaId: a.area_id,
+          cityId: a.city_id as string,
           placeName: a.place_name,
           startsAt: Date.parse(a.starts_at),
           capacity: a.capacity,
@@ -145,6 +148,8 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
           joined: parts.some((p) => p.user_id === uid && p.status === 'going'),
         };
       })
+        // Your own emirate first, then the others, each by time.
+        .sort((x, y) => Number(y.cityId === cityId) - Number(x.cityId === cityId) || x.startsAt - y.startsAt)
     );
   }, [cityId, uid]);
 
@@ -424,7 +429,7 @@ export function icsFor(a: { id: string; title: string; startsAt: number; endsAt:
   ].join('\r\n');
 }
 
-export type Recommendation = { id: string; title: string; format: string; categoryId: string; areaId: string; startsAt: number; going: number; friendsGoing: number; reason: string };
+export type Recommendation = { id: string; title: string; format: string; categoryId: string; areaId: string; cityId: string; startsAt: number; going: number; friendsGoing: number; reason: string };
 
 /** Ranked for me: interests, friends going, what I liked before, never what I hid. */
 export function useRecommendations(cityId: string): Recommendation[] {
@@ -444,6 +449,7 @@ export function useRecommendations(cityId: string): Recommendation[] {
           format: r.format as string,
           categoryId: r.category_id as string,
           areaId: r.area_id as string,
+          cityId: (r.city_id as string) ?? cityId,
           startsAt: Date.parse(r.starts_at as string),
           going: Number(r.going),
           friendsGoing: Number(r.friends_going),

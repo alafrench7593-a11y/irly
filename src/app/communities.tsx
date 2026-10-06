@@ -11,7 +11,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
-import type { Community } from '@/data/types';
+import type { CityId, Community } from '@/data/types';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCommunityList } from '@/features/community/data';
@@ -62,7 +62,7 @@ export default function Communities() {
                   {c.name}
                 </Text>
                 <Text variant="caption" tone="tertiary" numberOfLines={1}>
-                  {[tx('{n} members', { n: c.members }), c.postsWeek ? tx('{n} posts this week', { n: c.postsWeek }) : null, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
+                  {[c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, tx('{n} members', { n: c.members }), c.postsWeek ? tx('{n} posts this week', { n: c.postsWeek }) : null, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
                 </Text>
               </View>
               <Icon name="chevronRight" size={16} color={t.c.textTertiary} />

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
+import { cityScope } from '@/data/destinations';
+import type { CityId } from '@/data/types';
 import type { AreaProfile, OpeningHours } from './fit';
 
 /**
@@ -447,14 +449,14 @@ export function useGirlExtras() {
 /** Communities of a destination matching a word (Moms, Girls…), with membership. */
 export function useCommunitiesLike(cityId: string, like: string, girlOnly = false) {
   const account = useAccount();
-  return useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number }[]>(
+  return useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string }[]>(
     `comm-${cityId}-${like}-${girlOnly}-${account?.userId ?? 'anon'}`,
     async () => {
       if (!account) return [];
       let q = sb()
         .from('communities')
-        .select('id, name, tagline, community_members(user_id)')
-        .eq('city_id', cityId)
+        .select('id, name, tagline, city_id, community_members(user_id)')
+        .in('city_id', cityScope(cityId as CityId))
         .ilike('name', `%${like}%`)
         .is('deleted_at', null);
       if (girlOnly) q = q.eq('girl_only', true);
@@ -462,7 +464,7 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
       if (error) throw new Error(error.message);
       return (data ?? []).map((c) => {
         const m = (c.community_members ?? []) as { user_id: string }[];
-        return { id: c.id, name: c.name, tagline: c.tagline, member: m.some((x) => x.user_id === account.userId), members: m.length };
+        return { id: c.id, name: c.name, tagline: c.tagline, member: m.some((x) => x.user_id === account.userId), members: m.length, cityId: c.city_id as string };
       });
     },
     [],

@@ -581,6 +581,17 @@ end $$;
 select pg_temp.sync_city(c) from unnest(array['dubai', 'abudhabi', 'sharjah', 'ajman', 'rak', 'fujairah', 'uaq', 'bali']) as c;
 select pg_temp.as_admin();
 
+-- ───── One country: the seven emirates see each other, Bali stays apart ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check((select count(*) from public.recommend_activities('dubai', 50) where city_id = 'sharjah') >= 1, 'from Dubai: Sharjah sessions are recommended');
+select pg_temp.check((select count(*) from public.recommend_activities('dubai', 50) where city_id = 'bali') = 0, 'from Dubai: no Bali sessions');
+select pg_temp.check((select count(*) from public.community_list('dubai') where city_id = 'fujairah') >= 1, 'from Dubai: Fujairah communities are listed');
+select pg_temp.check((select city_id from public.community_list('ajman') limit 1) = 'ajman', 'own emirate first in communities');
+select pg_temp.check((select count(*) from public.community_list('bali') where city_id <> 'bali') = 0, 'from Bali: only Bali communities');
+select pg_temp.check((select count(*) from public.search_all('Sync', 'dubai') where kind = 'activity' and city_id = 'rak') >= 1, 'search from Dubai finds a RAK session');
+select pg_temp.check(private.city_scope('uaq') @> array['dubai', 'abudhabi', 'sharjah', 'ajman', 'rak', 'fujairah', 'uaq'] and not ('bali' = any (private.city_scope('uaq'))), 'UAE scope is the seven emirates');
+select pg_temp.as_admin();
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

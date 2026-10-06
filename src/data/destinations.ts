@@ -453,3 +453,19 @@ export function citiesOf(destinationId: DestinationId): City[] {
 export function areaName(city: City, areaId: string): string {
   return city.areas.find((a) => a.id === areaId)?.name ?? city.name;
 }
+
+/** Every city of the same destination: the seven emirates see each other, Bali is Bali. */
+export function cityScope(cityId: CityId): CityId[] {
+  const city = CITIES[cityId];
+  return city ? DESTINATIONS[city.destinationId].cities : [cityId];
+}
+
+/**
+ * Where something is, seen from your city: "Al Majaz" at home,
+ * "Al Majaz · Sharjah" when it is in another emirate.
+ */
+export function placeLabel(viewer: CityId, cityId: string | null | undefined, areaId: string, place?: string | null): string {
+  const city = CITIES[(cityId ?? viewer) as CityId] ?? CITIES[viewer];
+  const where = place ?? areaName(city, areaId);
+  return city.id === viewer ? where : `${where} · ${city.name}`;
+}

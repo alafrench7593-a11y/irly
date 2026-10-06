@@ -10,7 +10,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
 import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
-import { areaName, CITIES } from '@/data/destinations';
+import { CITIES, placeLabel } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { haptic } from '@/motion/haptics';
 import { radius, space } from '@/theme/tokens';
@@ -84,7 +84,7 @@ function MemberCard({ a, cityId, onChanged, friendsGoing }: { a: ServerActivity;
           {a.title}
         </Text>
         <Text variant="bodyS" tone="secondary" numberOfLines={1}>
-          {cityWhen(a.startsAt, city.id)} · {a.placeName ?? areaName(city, a.areaId)}
+          {cityWhen(a.startsAt, city.id)} · {placeLabel(city.id, a.cityId, a.areaId, a.placeName)}
         </Text>
         <View style={styles.row}>
           <Icon name="users" size={14} color={t.c.textSecondary} />

@@ -25,7 +25,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
-import { areaName, CITIES } from '@/data/destinations';
+import { areaName, CITIES, placeLabel } from '@/data/destinations';
 import { findPerson } from '@/data/repo';
 import { LIVE_TTL_MIN, useLives, useLiveStore, type Live } from '@/features/live/liveStore';
 import { timeAgo } from '@/lib/time';
@@ -264,7 +264,6 @@ function FriendsLiveNow() {
  */
 function ServerFeed({ cityId }: { cityId: CityId }) {
   const t = useTheme();
-  const city = CITIES[cityId];
   const { posts } = useServerIrl(cityId);
   const { friends, refresh } = useFriends();
   const router = useRouter();
@@ -299,7 +298,7 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 <View style={styles.meta}>
                   <LiveDot size={6} color={t.c.live} />
                   <Text variant="caption" tone="secondary" numberOfLines={1}>
-                    {p.placeName ?? areaName(city, p.areaId)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {p.visibility === 'friends' ? 'Friends' : 'Everyone'}
+                    {placeLabel(cityId, p.cityId, p.areaId, p.placeName)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {p.visibility === 'friends' ? 'Friends' : 'Everyone'}
                   </Text>
                 </View>
               </View>

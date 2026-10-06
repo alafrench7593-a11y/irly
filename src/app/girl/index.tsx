@@ -435,9 +435,16 @@ export default function GirlHome() {
                   <View style={styles.communityBadge}>
                     <Icon name={c.member ? 'check' : 'users'} size={14} color={girl.rose} />
                   </View>
-                  <Text variant="titleS" color="#FFFFFF" numberOfLines={2} raw>
-                    {c.name}
-                  </Text>
+                  <View>
+                    {c.cityId !== cityId ? (
+                      <Text variant="caption" color="rgba(255,255,255,0.85)" numberOfLines={1}>
+                        {CITIES[c.cityId as keyof typeof CITIES]?.name}
+                      </Text>
+                    ) : null}
+                    <Text variant="titleS" color="#FFFFFF" numberOfLines={2} raw>
+                      {c.name}
+                    </Text>
+                  </View>
                 </View>
               </PressableScale>
             ))}
