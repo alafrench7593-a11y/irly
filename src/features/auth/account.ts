@@ -28,6 +28,12 @@ function setSession(u: { id: string; email?: string } | null | undefined) {
   useAuthStore.setState(u ? { status: 'in', account: { userId: u.id, email: u.email } } : { status: 'out', account: null });
 }
 
+// Signup finished while signed in: publish the profile now.
+useStore.subscribe((st, prev) => {
+  const uid = useAuthStore.getState().account?.userId;
+  if (uid && st.onboarded && !prev.onboarded) syncProfile(uid).catch(() => undefined);
+});
+
 // One session reader and one auth listener for the whole app (every screen
 // used to start "signed out" and resolve on its own, flashing Sign in).
 if (supabase) {
@@ -113,9 +119,12 @@ export function syncProfile(uid: string): Promise<void> {
 
 async function writeProfile(uid: string): Promise<void> {
   if (!supabase) return;
-  const { profile, cityId } = useStore.getState();
+  const { profile, cityId, onboarded } = useStore.getState();
   // A profile filled in for another account is never published to this one.
   if (profile.ownerId && profile.ownerId !== uid) return;
+  // Signed in (Google, email) before finishing signup: wait for the real
+  // profile. Publishing a placeholder would lock the wrong gender for good.
+  if (!onboarded || !profile.name.trim() || !profile.gender) return;
   const { data: existing } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
   if (existing) return;
   const row = toRow(uid, profile, cityId ?? 'dubai');
