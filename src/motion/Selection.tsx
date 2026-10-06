@@ -97,7 +97,8 @@ export function SelectionLayers({
           style={[{ position: 'absolute', left: (box.w - d) / 2, top: (box.h - d) / 2, width: d, height: d, borderRadius: d / 2, backgroundColor: fill }, drop]}
         />
       ) : null}
-      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, top]}>
+      {/* The selected copy is visual only: screen readers read the label once. */}
+      <Animated.View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" aria-hidden style={[StyleSheet.absoluteFill, top]}>
         {chosen}
       </Animated.View>
       {box.w ? (
