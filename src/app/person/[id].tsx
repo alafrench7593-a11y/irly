@@ -1,4 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
+import { useRef } from 'react';
+import { useAvatarFlight, useFlyingTo } from '@/features/flight/avatarFlight';
 import { t as tx } from '@/i18n';
 import { NotFound } from '@/components/layout/NotFound';
 import { StyleSheet, View } from 'react-native';
@@ -35,6 +37,8 @@ export default function PersonProfile() {
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
   });
+  const face = useRef<View>(null);
+  const flying = useFlyingTo(id);
   if (!person) return <NotFound title="This person is no longer on IRLY" />;
 
   const city = CITIES[person.cityId];
@@ -57,8 +61,23 @@ export default function PersonProfile() {
           scrim="top"
         />
         <View style={[styles.identity, { marginTop: -56 }]}>
-          <Animated.View entering={enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-            <Avatar name={person.name} hue={person.hue} size={104} online={person.online} />
+          <Animated.View entering={flying ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
+            {/* The face flying in from the bubble lands exactly here. */}
+            <View
+              ref={face}
+              collapsable={false}
+              style={{ opacity: flying ? 0 : 1 }}
+              onLayout={() => {
+                requestAnimationFrame(() =>
+                  face.current?.measureInWindow?.((x, y, width, height) => {
+                    const { hostOffset, land } = useAvatarFlight.getState();
+                    if (width > 0) land(person.id, { x: x - hostOffset.x, y: y - hostOffset.y, width, height });
+                  }),
+                );
+              }}
+            >
+              <Avatar name={person.name} hue={person.hue} size={104} online={person.online} />
+            </View>
           </Animated.View>
           <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>

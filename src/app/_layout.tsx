@@ -22,6 +22,7 @@ import { girl } from '@/features/girl/theme';
 import { DestinationTransition } from '@/features/destination/DestinationTransition';
 import { HeroHost } from '@/features/hero/HeroHost';
 import { AppIntro } from '@/features/intro/AppIntro';
+import { FlightHost } from '@/features/flight/FlightHost';
 import { useStore } from '@/state/store';
 import { useTheme } from '@/theme/useTheme';
 
@@ -92,9 +93,12 @@ function App() {
         <Stack.Screen name="share" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="a/[id]" options={{ animation: 'fade_from_bottom' }} />
+        {/* The face flies from the bubble into the profile while the page fades in. */}
+        <Stack.Screen name="person/[id]" options={{ animation: 'fade' }} />
         <Stack.Screen name="girl/profile" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
       </Stack>
       <HeroHost />
+      <FlightHost />
       <CreateHost />
       <DestinationTransition />
       <AppIntro />

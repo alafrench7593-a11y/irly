@@ -42,6 +42,11 @@ export type Palette = {
   shadow: string;
   /** Steel blue of the IRLY light (logo gradient): the one quiet accent. */
   steel: string;
+  /**
+   * Card laid on a page that may have a photo behind it (detail pages sit
+   * on the blurred photo of the place): translucent on IRLY Noir.
+   */
+  card: string;
 };
 
 /**
@@ -74,6 +79,7 @@ const light: Palette = {
   scrim: 'rgba(10,10,10,0.32)',
   shadow: 'rgba(10,10,10,0.12)',
   steel: '#5E7A99',
+  card: '#FFFFFF',
 };
 /**
  * IRLY Noir (v5, default): the screen of the logo. Near-black ground with
@@ -105,6 +111,7 @@ const night: Palette = {
   scrim: 'rgba(0,0,0,0.62)',
   shadow: 'rgba(0,0,0,0.6)',
   steel: '#8EA5BF',
+  card: 'rgba(255,255,255,0.055)',
 };
 
 export const palettes: Record<Mode, Palette> = { night, day: light };

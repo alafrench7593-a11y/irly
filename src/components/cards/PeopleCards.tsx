@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
+import { flyFrom } from '@/features/flight/avatarFlight';
 import { t as tx } from '@/i18n';
-import { memo } from 'react';
+import { memo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ACTIVITIES, USER_TYPES } from '@/data/catalog';
 import { areaName, CITIES } from '@/data/destinations';
@@ -64,14 +65,17 @@ export const PersonCard = memo(function PersonCard({ match, width }: { match: Ma
   const router = useRouter();
   const p = match.person;
   const city = CITIES[p.cityId];
+  const face = useRef<View>(null);
   return (
     <PressableScale
-      onPress={() => router.push(`/person/${p.id}`)}
+      onPress={() => flyFrom(face.current, p, () => router.push(`/person/${p.id}`))}
       style={[styles.person, { width, backgroundColor: t.c.surface, borderColor: t.c.line }]}
       accessibilityLabel={`${p.name}, ${p.headline}`}
     >
       <View style={styles.personTop}>
-        <Avatar name={p.name} hue={p.hue} size={56} online={p.online} verified={p.verified} />
+        <View ref={face} collapsable={false}>
+          <Avatar name={p.name} hue={p.hue} size={56} online={p.online} verified={p.verified} />
+        </View>
         <View style={{ flex: 1, gap: 2 }}>
           <View style={styles.row}>
             <Text variant="titleM" raw>{p.name}</Text>

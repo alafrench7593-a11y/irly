@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
-import { memo, type ReactNode } from 'react';
+import { memo, useRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Extrapolation,
@@ -17,6 +17,7 @@ import { areaName, CITIES } from '@/data/destinations';
 import { goingCount, peopleByIds } from '@/data/repo';
 import type { PhotoKey } from '@/data/photos';
 import type { ActivitySession, City, IrlEvent, Person } from '@/data/types';
+import { flyFrom } from '@/features/flight/avatarFlight';
 import { useHeroCard } from '@/features/hero/useHeroCard';
 import { isHappeningNow, whenLabel } from '@/lib/time';
 import { PressableScale } from '@/motion/PressableScale';
@@ -238,15 +239,18 @@ export const PersonBubble = memo(function PersonBubble({ person, city }: { perso
   const t = useTheme();
   const router = useRouter();
   const now = Boolean(person.online);
+  const face = useRef<View>(null);
   return (
     <PressableScale
-      onPress={() => router.push(`/person/${person.id}`)}
+      onPress={() => flyFrom(face.current, person, () => router.push(`/person/${person.id}`))}
       scaleTo={0.94}
       style={styles.person}
       accessibilityLabel={`${person.name}, ${now ? 'available now' : 'available later'}, ${areaName(city, person.areaId)}`}
     >
       <View style={[styles.personRing, { borderColor: t.c.text, boxShadow: `0px 0px 24px ${now ? 'rgba(50,215,75,0.35)' : 'rgba(255,159,10,0.28)'}` }]}>
-        <Avatar name={person.name} hue={person.hue} size={56} />
+        <View ref={face} collapsable={false}>
+          <Avatar name={person.name} hue={person.hue} size={56} />
+        </View>
         <View style={[styles.status, { backgroundColor: now ? status.availableNow : status.availableLater, borderColor: t.c.bg }]} />
       </View>
       <Text variant="label" numberOfLines={1}>
