@@ -10,7 +10,6 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withDelay,
-  withRepeat,
   withSequence,
   withSpring,
   withTiming,
@@ -29,10 +28,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { ease, motion, spring } from '@/motion/tokens';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-
-/** The IRL disc: size and how far it rises out of the tab bar. */
-export const IRL_DISC = 66;
-export const IRL_LIFT = 16;
+import { IRL_DISC, IrlDiscFace } from './IrlDisc';
 
 type Router = ReturnType<typeof useRouter>;
 type Action = { id: string; label: string; a11y: string; icon: IconName; run: (router: Router) => void };
@@ -50,43 +46,6 @@ const ACTIONS: Action[] = [
 const ANGLES = [162, 126, 90, 54, 18];
 const ORB = 62;
 const ORB_BOX = 96;
-
-/**
- * The face of the IRL disc: white on IRLY Noir (the one main action),
- * a breathing live dot over « IRL ». With `progress`, « IRL » turns into a
- * close cross as the menu opens.
- */
-export function IrlDiscFace({ progress }: { progress?: SharedValue<number> }) {
-  const t = useTheme();
-  const breathe = useSharedValue(0);
-  useEffect(() => {
-    breathe.set(withRepeat(withTiming(1, { duration: 1800 }), -1, true));
-  }, [breathe]);
-  const dot = useAnimatedStyle(() => ({ opacity: 0.45 + breathe.value * 0.55, transform: [{ scale: 0.85 + breathe.value * 0.3 }] }));
-  const word = useAnimatedStyle(() => {
-    const v = progress ? progress.value : 0;
-    return { opacity: 1 - v, transform: [{ scale: 1 - v * 0.3 }] };
-  });
-  const cross = useAnimatedStyle(() => {
-    const v = progress ? progress.value : 0;
-    return { opacity: v, transform: [{ rotate: `${(1 - v) * -90}deg` }, { scale: 0.6 + v * 0.4 }] };
-  });
-  return (
-    <View style={[styles.face, { backgroundColor: t.c.brand }]}>
-      <Animated.View style={[styles.center, word]}>
-        <Animated.View style={[styles.dot, { backgroundColor: t.c.live }, dot]} />
-        <Text variant="label" color={t.c.onBrand} style={styles.word}>
-          IRL
-        </Text>
-      </Animated.View>
-      {progress ? (
-        <Animated.View style={[StyleSheet.absoluteFill, styles.center, cross]}>
-          <Icon name="x" size={26} color={t.c.onBrand} strokeWidth={2.4} />
-        </Animated.View>
-      ) : null}
-    </View>
-  );
-}
 
 type Props = {
   /** Centre of the IRL disc, in window coordinates. */
@@ -317,9 +276,6 @@ function Orb({
 
 const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
-  face: { width: IRL_DISC, height: IRL_DISC, borderRadius: IRL_DISC / 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  dot: { width: 7, height: 7, borderRadius: 4, marginBottom: 2 },
-  word: { letterSpacing: 1.4, fontSize: 15, lineHeight: 18 },
   reveal: { position: 'absolute', overflow: 'hidden' },
   ring: { position: 'absolute', borderWidth: 1.5 },
   head: { position: 'absolute', gap: 10 },

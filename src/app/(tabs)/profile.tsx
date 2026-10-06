@@ -207,6 +207,8 @@ export default function Profile() {
             <Divider inset={16} />
             <SettingLink icon="sparkles" label="Assistant" value="Ask or speak" onPress={() => router.push('/assistant')} />
             <Divider inset={16} />
+            <SettingLink icon="orbit" label="What is IRLY?" value="Five scenes, 15 seconds" onPress={() => router.push('/story')} />
+            <Divider inset={16} />
             <SettingLink icon="shield" label="Privacy & notifications" value="Visibility, alerts" onPress={() => router.push('/settings')} />
           </View>
         </Animated.View>

@@ -34,6 +34,24 @@ export function wordmarkDots(): DotLayout {
   return { dots, cols: x + 1.6, rows: 7, top: -2.2 };
 }
 
+/**
+ * Any word made of IRLY glyphs ("IRL" on the IRL button), with the 2×2
+ * accent above its last letter when `accent` is set.
+ */
+export function textDots(text: string, accent = false): DotLayout {
+  const dots: Dot[] = [];
+  let x = 0;
+  for (const ch of text) {
+    const g = GLYPHS[ch];
+    if (!g) continue;
+    g.forEach((line, row) => [...line].forEach((c, col) => c === '#' && dots.push({ col: x + col, row, accent: false })));
+    x += g[0].length + 1;
+  }
+  if (!accent) return { dots, cols: x - 1, rows: 7, top: 0 };
+  ACCENT.forEach(([c, r]) => dots.push({ col: x - 0.4 + c, row: -2.2 + r, accent: true }));
+  return { dots, cols: x + 1.6, rows: 7, top: -2.2 };
+}
+
 /** The app mark: a lowercase "i" whose dot is the accent. */
 export function markDots(): DotLayout {
   const dots: Dot[] = [];
