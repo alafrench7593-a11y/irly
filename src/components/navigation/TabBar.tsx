@@ -1,17 +1,20 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import { t as tx } from '@/i18n';
 import { memo, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { IRL_DISC, IRL_LIFT, IrlDiscFace, IrlMenu } from '@/features/irl/IrlMenu';
+import { useIrlMenu } from '@/features/irl/irlMenuStore';
 import { useLiveCount } from '@/features/live/liveStore';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
-import { blur, scale, spring } from '@/motion/tokens';
+import { scale, spring } from '@/motion/tokens';
 import { useStore } from '@/state/store';
 import { layout, radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -35,16 +38,22 @@ export function useTabBarSpace(): number {
 }
 
 /**
- * Floating glass navigation. Icons only, IRL in the middle: larger, raised
- * above the bar, with a live dot that breathes and the number of people
- * live around you. The active pill travels between tabs on `spring.medium`,
- * the selected icon pops to `scale.selected` and settles on
- * `spring.strong`, and every change ticks a selection haptic.
+ * Floating navigation in thick smoked glass. Icons only, and IRL in the
+ * middle: a white disc that rises out of the bar, the one dominant control
+ * of the app. Pressing it opens the IRL menu (create, post, find someone,
+ * event, share what you're doing, and the live feed); a long press goes
+ * straight to the live feed. The active pill travels between tabs on
+ * `spring.medium`, the selected icon pops to `scale.selected` and settles
+ * on `spring.strong`, every change ticks a selection haptic.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const t = useTheme();
   const frame = useFrame();
+  const window = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const menuOpen = useIrlMenu((s) => s.open);
+  const showMenu = useIrlMenu((s) => s.show);
+  const hideMenu = useIrlMenu((s) => s.hide);
   const barW = frame.width - SIDE * 2;
   const itemW = barW / SLOTS.length;
   const activeName = state.routes[state.index]?.name;
@@ -59,61 +68,73 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const onIrl = activeName === 'live' || !SLOTS.includes(activeName as (typeof SLOTS)[number]);
   const indicator = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const bottom = Math.max(insets.bottom, layout.tabBarBottomGap);
+  const liveRoute = state.routes.find((r) => r.name === 'live');
+
+  const goLive = () => {
+    if (!liveRoute) return;
+    const event = navigation.emit({ type: 'tabPress', target: liveRoute.key, canPreventDefault: true });
+    if (activeName !== 'live' && !event.defaultPrevented) navigation.navigate(liveRoute.name, liveRoute.params);
+  };
+
+  // Centre of the disc in window coordinates (the app column is centred).
+  const center = { x: window.width / 2, y: frame.height - bottom - layout.tabBarHeight / 2 - IRL_LIFT };
 
   return (
-    <View style={[styles.wrap, { bottom, left: SIDE, width: barW }]}>
-      <Glass style={[styles.bar, { boxShadow: t.shadow.float }]} intensity={blur.strong}>
-        <Animated.View style={[styles.indicator, { left: (itemW - 56) / 2, opacity: onIrl ? 0 : 1 }, indicator]} />
-        {SLOTS.map((slot) => {
-          const route = state.routes.find((r) => r.name === slot);
-          if (!route) return <View key={slot} style={{ width: itemW }} />;
-          const focused = activeName === slot;
-          const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!focused && !event.defaultPrevented) {
-              haptic(slot === 'live' ? 'press' : 'select');
-              navigation.navigate(route.name, route.params);
-            }
-          };
-          // IRL is drawn above the bar (below), so it can rise out of it.
-          if (slot === 'live') return <View key={route.key} style={{ width: itemW }} />;
-          const meta = TABS[slot];
-          return (
-            <TabItem
-              key={route.key}
-              label={meta.label}
-              icon={meta.icon}
-              isProfile={slot === 'profile'}
-              badge={0}
-              focused={focused}
-              width={itemW}
-              onPress={onPress}
-            />
-          );
-        })}
-      </Glass>
-      {(() => {
-        const i = SLOTS.indexOf('live');
-        const route = state.routes.find((r) => r.name === 'live');
-        if (!route) return null;
-        const focused = activeName === 'live';
-        return (
-          <View style={[styles.irlSlot, { left: i * itemW, width: itemW }]} pointerEvents="box-none">
+    <>
+      <View style={[styles.wrap, { bottom, left: SIDE, width: barW }]}>
+        <Glass level="thick" style={[styles.bar, { boxShadow: t.shadow.float }]}>
+          <Animated.View
+            style={[
+              styles.indicator,
+              { left: (itemW - 56) / 2, opacity: onIrl ? 0 : 1, backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.09)' : 'rgba(10,10,10,0.07)' },
+              indicator,
+            ]}
+          />
+          {SLOTS.map((slot) => {
+            const route = state.routes.find((r) => r.name === slot);
+            if (!route) return <View key={slot} style={{ width: itemW }} />;
+            const focused = activeName === slot;
+            const onPress = () => {
+              const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              if (!focused && !event.defaultPrevented) {
+                haptic('select');
+                navigation.navigate(route.name, route.params);
+              }
+            };
+            // IRL is drawn above the bar (below), so it can rise out of it.
+            if (slot === 'live') return <View key={route.key} style={{ width: itemW }} />;
+            const meta = TABS[slot];
+            return (
+              <TabItem
+                key={route.key}
+                label={meta.label}
+                icon={meta.icon}
+                isProfile={slot === 'profile'}
+                badge={0}
+                focused={focused}
+                width={itemW}
+                onPress={onPress}
+              />
+            );
+          })}
+        </Glass>
+        {liveRoute ? (
+          <View style={[styles.irlSlot, { left: SLOTS.indexOf('live') * itemW, width: itemW }]} pointerEvents="box-none">
             <IrlButton
               width={itemW}
-              focused={focused}
-              onPress={() => {
-                const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                if (!focused && !event.defaultPrevented) {
-                  haptic('press');
-                  navigation.navigate(route.name, route.params);
-                }
+              focused={activeName === 'live'}
+              hidden={menuOpen}
+              onPress={showMenu}
+              onLongPress={() => {
+                haptic('heavy');
+                goLive();
               }}
             />
           </View>
-        );
-      })()}
-    </View>
+        ) : null}
+      </View>
+      {menuOpen ? <IrlMenu center={center} frameWidth={frame.width} onLive={goLive} onClosed={hideMenu} /> : null}
+    </>
   );
 }
 
@@ -174,43 +195,48 @@ const TabItem = memo(function TabItem({
 });
 
 /**
- * IRL: what is happening right now. A raised dark glass disc above the bar
- * with a breathing live dot and the live count. Selected, it grows on
- * `spring.strong` and its ring turns red.
+ * IRL: the white disc above the bar. On the live feed a thin red ring
+ * says « you are here ». While the menu is open the menu draws the disc
+ * (turning into a cross), so this one steps aside.
  */
-function IrlButton({ width, focused, onPress }: { width: number; focused: boolean; onPress: () => void }) {
+function IrlButton({
+  width,
+  focused,
+  hidden,
+  onPress,
+  onLongPress,
+}: {
+  width: number;
+  focused: boolean;
+  hidden: boolean;
+  onPress: () => void;
+  onLongPress: () => void;
+}) {
   const t = useTheme();
   const lives = useLiveCount();
   const grow = useSharedValue(focused ? 1 : 0);
-  const breathe = useSharedValue(0);
   useEffect(() => {
     grow.set(withSpring(focused ? 1 : 0, spring.strong));
   }, [focused, grow]);
-  useEffect(() => {
-    breathe.set(withRepeat(withTiming(1, { duration: 1800 }), -1, true));
-  }, [breathe]);
-  const disc = useAnimatedStyle(() => ({ transform: [{ translateY: -16 }, { scale: 1 + grow.value * 0.08 }] }));
-  const ring = useAnimatedStyle(() => ({ opacity: 0.35 + grow.value * 0.65 }));
-  const dot = useAnimatedStyle(() => ({ opacity: 0.45 + breathe.value * 0.55, transform: [{ scale: 0.85 + breathe.value * 0.3 }] }));
+  const disc = useAnimatedStyle(() => ({ transform: [{ translateY: -IRL_LIFT }, { scale: 1 + grow.value * 0.04 }] }));
+  const ring = useAnimatedStyle(() => ({ opacity: grow.value, transform: [{ scale: 1 + (1 - grow.value) * 0.12 }] }));
   return (
     <View style={[styles.item, { width }]}>
-      <Animated.View style={disc}>
+      <Animated.View style={[disc, { opacity: hidden ? 0 : 1 }]}>
+        <Animated.View style={[styles.irlRing, { borderColor: t.c.live }, ring]} pointerEvents="none" />
         <PressableScale
           onPress={onPress}
-          haptic={false}
-          scaleTo={0.9}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: focused }}
-          accessibilityLabel={`IRL: ${lives} live around you`}
-          style={[styles.irl, { boxShadow: t.shadow.float }]}
+          onLongPress={onLongPress}
+          delayLongPress={380}
+          haptic="press"
+          scaleTo={0.88}
+          accessibilityRole="button"
+          accessibilityState={{ selected: focused, expanded: hidden }}
+          accessibilityLabel={tx('IRL: {n} live around you', { n: lives })}
+          accessibilityHint={tx('Opens IRL actions. Long press for the live feed.')}
+          style={[styles.irl, { boxShadow: t.shadow.glow }]}
         >
-          <Glass dark style={[StyleSheet.absoluteFill, styles.irlFill]} intensity={blur.strong} border={false} />
-          <View style={[StyleSheet.absoluteFill, styles.irlFill]} />
-          <Animated.View style={[StyleSheet.absoluteFill, styles.irlRing, { borderColor: t.c.live }, ring]} />
-          <Animated.View style={[styles.irlDot, { backgroundColor: t.c.live }, dot]} />
-          <Text variant="label" color="#FFFFFF" style={styles.irlLabel}>
-            IRL
-          </Text>
+          <IrlDiscFace />
         </PressableScale>
       </Animated.View>
     </View>
@@ -225,13 +251,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  indicator: { position: 'absolute', top: 10, width: 56, height: 48, borderRadius: radius.pill, backgroundColor: 'rgba(10,10,10,0.07)' },
+  indicator: { position: 'absolute', top: 10, width: 56, height: 48, borderRadius: radius.pill },
   item: { height: '100%', alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: -6, right: -10, minWidth: 18, height: 18, borderRadius: 9, borderWidth: 2, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
   irlSlot: { position: 'absolute', top: 0, height: layout.tabBarHeight },
-  irl: { width: 66, height: 66, borderRadius: 33, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
-  irlFill: { borderRadius: 33, overflow: 'hidden', backgroundColor: 'rgba(10,10,10,0.72)' },
-  irlRing: { borderRadius: 33, borderWidth: 2 },
-  irlDot: { width: 7, height: 7, borderRadius: 4, marginBottom: 2 },
-  irlLabel: { letterSpacing: 1.2, fontSize: 15 },
+  irl: { width: IRL_DISC, height: IRL_DISC, borderRadius: IRL_DISC / 2 },
+  irlRing: { position: 'absolute', left: -5, top: -5, width: IRL_DISC + 10, height: IRL_DISC + 10, borderRadius: (IRL_DISC + 10) / 2, borderWidth: 2 },
 });

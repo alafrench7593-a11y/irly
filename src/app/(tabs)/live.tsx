@@ -73,7 +73,7 @@ export default function LiveScreen() {
           <View style={[styles.fab, { bottom: bottom + 6 }]} pointerEvents="box-none">
             <Button label="Go live" icon="plus" haptic="press" onPress={() => setComposer(true)} />
           </View>
-          <Composer visible={composer} onClose={() => setComposer(false)} />
+          <Composer visible={composer} mode={compose === 'photo' ? 'post' : 'now'} onClose={() => setComposer(false)} />
         </>
       }
     >
@@ -371,7 +371,11 @@ function PostMenu({ id, authorId, onHide }: { id: string; authorId: string; onHi
   );
 }
 
-function Composer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+/**
+ * Two doors into the same composer: « Post IRL » leads with the photo,
+ * « Share what I'm doing » with the words.
+ */
+function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?: 'post' | 'now'; onClose: () => void }) {
   const t = useTheme();
   const cityId = useCityId();
   const city = CITIES[cityId];
@@ -461,8 +465,23 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Go live" subtitle="What are you doing right now? Only your area is shown, never your address.">
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      title={mode === 'post' ? 'Post IRL' : 'Go live'}
+      subtitle={
+        mode === 'post'
+          ? 'A photo of where you are, right now. Only your area is shown, never your address.'
+          : 'What are you doing right now? Only your area is shown, never your address.'
+      }
+    >
       <View style={{ paddingHorizontal: space.gutter, gap: space[5] }}>
+        {mode === 'post' && !uri ? (
+          <PressableScale haptic="select" onPress={pick} style={[styles.photoFrame, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
+            <Icon name="camera" size={26} color={t.c.text} />
+            <Text variant="label">Add a photo</Text>
+          </PressableScale>
+        ) : null}
         <TextInput
           value={text}
           onChangeText={setText}
@@ -478,10 +497,12 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
             <Image source={{ uri }} style={styles.preview} contentFit="cover" />
           </Animated.View>
         ) : null}
-        <PressableScale haptic="select" onPress={pick} style={[styles.addPhoto, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
-          <Icon name="camera" size={18} color={t.c.text} />
-          <Text variant="label">{uri ? 'Change photo' : 'Add a photo'}</Text>
-        </PressableScale>
+        {mode === 'post' && !uri ? null : (
+          <PressableScale haptic="select" onPress={pick} style={[styles.addPhoto, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
+            <Icon name="camera" size={18} color={t.c.text} />
+            <Text variant="label">{uri ? 'Change photo' : 'Add a photo'}</Text>
+          </PressableScale>
+        )}
         <View style={{ gap: 8 }}>
           <Text variant="overline" tone="tertiary">
             Where
@@ -523,6 +544,7 @@ const styles = StyleSheet.create({
   friend: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, borderRadius: radius.xl },
   input: { minHeight: 96, borderRadius: radius.lg, padding: 16, fontFamily: font.medium, fontSize: 17, textAlignVertical: 'top' },
   preview: { height: 180, borderRadius: radius.lg },
+  photoFrame: { height: 168, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
   addPhoto: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', justifyContent: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });
