@@ -1,4 +1,4 @@
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx, useT } from '@/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -78,7 +78,9 @@ export default function GirlHome() {
   const [safetyFor, setSafetyFor] = useState<Candidate | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [moment, setMoment] = useState<{ match: MatchResult; person: Candidate } | null>(null);
-  const [mode, setMode] = useState<'all' | 'moms'>('all');
+  // « IRLY Moms » on the Home opens this world on the Moms side.
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const [mode, setMode] = useState<'all' | 'moms'>(params.mode === 'moms' ? 'moms' : 'all');
   const serverCommunities = useCommunitiesLike(cityId, '', true);
   const fling = useSharedValue(0);
   const tr = useT();

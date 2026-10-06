@@ -21,6 +21,7 @@ import { CreateHost } from '@/features/create/CreateHost';
 import { girl } from '@/features/girl/theme';
 import { DestinationTransition } from '@/features/destination/DestinationTransition';
 import { HeroHost } from '@/features/hero/HeroHost';
+import { AppIntro } from '@/features/intro/AppIntro';
 import { useStore } from '@/state/store';
 import { useTheme } from '@/theme/useTheme';
 
@@ -96,6 +97,7 @@ function App() {
       <HeroHost />
       <CreateHost />
       <DestinationTransition />
+      <AppIntro />
       <ToastHost />
     </AppFrame>
   );

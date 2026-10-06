@@ -1,39 +1,64 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { t as tx } from '@/i18n';
-import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useDerivedValue,
+  useReducedMotion,
+  useSharedValue,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Rail } from '@/components/cards/Blocks';
-import { EventCard, EventRow } from '@/components/cards/EventCards';
+import { EventRow } from '@/components/cards/EventCards';
 import { PersonCard } from '@/components/cards/PeopleCards';
 import { CommunityCard, PlaceCard, ServiceCard, SessionCard } from '@/components/cards/ThingCards';
 import { useFrame } from '@/components/layout/AppFrame';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
-import { Field, SectionHeader } from '@/components/ui/Controls';
+import { Field } from '@/components/ui/Controls';
+import { Glass } from '@/components/ui/Glass';
 import { InboxButtons } from '@/components/navigation/Headers';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { Photo } from '@/components/visual/Photo';
 import { ACTIVITIES, SERVICE_CATEGORIES } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
-import type { PhotoKey } from '@/data/photos';
 import { getCityContent } from '@/data/repo';
 import { scoreMatch } from '@/features/matching/match';
 import { ServerResults } from '@/features/search/ServerResults';
-import { isWeekend } from '@/lib/time';
-import { enter } from '@/motion/enter';
+import { DiscoverTabs } from '@/features/discover/DiscoverTabs';
+import { ActivitiesPage, EventsPage, PeoplePage, PlacesPage } from '@/features/discover/DiscoverPages';
+import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { CATEGORIES } from '@/data/catalog/categories';
 
-type Door = { label: string; caption: string; icon: IconName; photo: PhotoKey; href: string };
+const TABS = [
+  { id: 'people', label: 'People' },
+  { id: 'activities', label: 'Activities' },
+  { id: 'places', label: 'Places' },
+  { id: 'events', label: 'Events' },
+] as const;
+type TabId = (typeof TABS)[number]['id'];
 
+/** How far the title row folds away as a page scrolls. */
+const FOLD = 58;
+
+/**
+ * Discover: PEOPLE | ACTIVITIES | PLACES | EVENTS, four pages you swipe
+ * between or reach from the tabs. The white pill is glued to the pager;
+ * the page you leave shrinks and dims while the next one arrives; the
+ * title row folds away as you scroll and comes back as you return to the
+ * top (blended between pages while you swipe, so it never jumps). Search
+ * replaces the pages with results across the whole city guide.
+ */
 export default function Discover() {
   const t = useTheme();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const frame = useFrame();
   const bottom = useTabBarSpace();
@@ -41,7 +66,7 @@ export default function Discover() {
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
-  const params = useLocalSearchParams<{ q?: string }>();
+  const params = useLocalSearchParams<{ q?: string; tab?: string }>();
   const [q, setQ] = useState(params.q ?? '');
   // The tab stays mounted: a new /search?q=… must replace the old query.
   const [seenParam, setSeenParam] = useState(params.q);
@@ -49,24 +74,51 @@ export default function Discover() {
     setSeenParam(params.q);
     setQ(params.q ?? '');
   }
-  const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => {
-    scrollY.set(e.contentOffset.y);
-  });
 
-  // Every catalog category is a door, then the hubs.
-  const doors: Door[] = [
-    ...(cityId === 'bali' ? [{ label: 'Live Bali', caption: 'Areas, moving, test stays', icon: 'palm' as IconName, photo: 'bali' as PhotoKey, href: '/bali' }] : []),
-    { label: 'Where to eat', caption: 'Ranked restaurants, then company', icon: 'utensils', photo: 'dinner', href: '/eat' },
-    ...CATEGORIES.map((c) => ({ label: c.label, caption: c.tagline, icon: c.icon, photo: c.photo, href: `/category/${c.id}` })),
-    { label: 'Events', caption: tx('{n} this week', { n: content.events.length }), icon: 'ticket', photo: content.events[0]?.visual.photo ?? 'dinner', href: '/events' },
-    { label: 'Activities', caption: tx('{n} sports & more', { n: city.activityKinds.length }), icon: 'activity', photo: ACTIVITIES[city.activityKinds[0]].photo ?? 'running', href: '/activities' },
-    { label: 'Communities', caption: tx('{n} groups', { n: city.stats.communities }), icon: 'users', photo: 'founders', href: '/communities' },
-    { label: 'Services', caption: 'Curated & verified', icon: 'shield', photo: SERVICE_CATEGORIES[city.serviceCategories[0]].photo ?? 'apartment', href: '/services' },
-    { label: 'Business', caption: 'Setup, visa, people', icon: 'briefcase', photo: 'meeting', href: '/business' },
-    { label: 'Map', caption: 'Everything around you', icon: 'map', photo: city.photo, href: '/map' },
-  ];
-  const doorW = (frame.width - space.gutter * 2 - 12) / 2;
+  const W = frame.width;
+  const initial = Math.max(0, TABS.findIndex((x) => x.id === (params.tab as TabId)));
+  const [active, setActive] = useState(initial);
+  const [mounted, setMounted] = useState<Set<number>>(() => new Set([initial]));
+  const pager = useAnimatedRef<Animated.ScrollView>();
+  const x = useSharedValue(initial * W);
+  const s0 = useSharedValue(0);
+  const s1 = useSharedValue(0);
+  const s2 = useSharedValue(0);
+  const s3 = useSharedValue(0);
+  const pageScroll = [s0, s1, s2, s3];
+  const [headerH, setHeaderH] = useState(insets.top + 190);
+  const resultsY = useSharedValue(0);
+
+  // Neighbouring pages mount just after the visible one, so a swipe never lands on a blank page.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setMounted((m) => {
+        const next = new Set(m);
+        next.add(active);
+        if (active > 0) next.add(active - 1);
+        if (active < TABS.length - 1) next.add(active + 1);
+        return next.size === m.size ? m : next;
+      });
+    }, 350);
+    return () => clearTimeout(id);
+  }, [active]);
+
+  const onPager = useAnimatedScrollHandler((e) => {
+    x.set(e.contentOffset.x);
+  });
+  const settle = (offset: number) => {
+    const i = Math.round(offset / W);
+    if (i !== active) {
+      haptic('select');
+      setActive(i);
+      setMounted((m) => (m.has(i) ? m : new Set([...m, i])));
+    }
+  };
+  const goTo = (i: number) => {
+    setMounted((m) => (m.has(i) ? m : new Set([...m, i])));
+    setActive(i);
+    pager.current?.scrollTo({ x: i * W, animated: true });
+  };
 
   const results = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -81,74 +133,40 @@ export default function Discover() {
       people: content.people.filter((p) => has(p.name, p.headline, p.bio)),
     };
   }, [q, content]);
-
-  const tonight = content.events.filter((e) => e.when.dayOffset === 0);
-  const weekend = content.events.filter((e) => isWeekend(e.when, city));
   const total = results ? Object.values(results).reduce((n, list) => n + list.length, 0) : 0;
+
+  // The header folds with the page under it, blended across a swipe.
+  const fold = useDerivedValue(() => {
+    const clamp = (v: number) => Math.max(0, Math.min(FOLD, v));
+    if (results) return clamp(resultsY.value);
+    const vals = [s0.value, s1.value, s2.value, s3.value];
+    const p = W ? x.value / W : 0;
+    const i0 = Math.max(0, Math.min(TABS.length - 1, Math.floor(p)));
+    const i1 = Math.min(TABS.length - 1, i0 + 1);
+    const f = Math.max(0, Math.min(1, p - i0));
+    return clamp(vals[i0]) * (1 - f) + clamp(vals[i1]) * f;
+  });
+  const headerStyle = useAnimatedStyle(() => ({ transform: [{ translateY: -fold.value }] }));
+  const titleStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(fold.value, [0, FOLD * 0.7], [1, 0], Extrapolation.CLAMP),
+    transform: [{ scale: interpolate(fold.value, [0, FOLD], [1, 0.94], Extrapolation.CLAMP) }],
+  }));
+  const onResults = useAnimatedScrollHandler((e) => {
+    resultsY.set(e.contentOffset.y);
+  });
+
+  const pages = [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <Animated.ScrollView
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + space[6], paddingBottom: bottom }}
-      >
-        <View style={[styles.head, styles.headRow]}>
-          <View style={{ flex: 1 }}>
-            <Text variant="overline" tone="accent">
-              {city.name}
-            </Text>
-            <Text variant="displayL">Discover</Text>
-          </View>
-          <InboxButtons />
-        </View>
-        <View style={{ paddingHorizontal: space.gutter, marginBottom: space[7] }}>
-          <Field
-            icon="search"
-            placeholder={tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
-            value={q}
-            onChangeText={setQ}
-            returnKeyType="search"
-            autoCorrect={false}
-            accessibilityLabel="Search"
-            trailing={
-              q ? (
-                <PressableScale onPress={() => setQ('')} haptic="select" accessibilityLabel="Clear search">
-                  <Icon name="x" size={18} color={t.c.textTertiary} />
-                </PressableScale>
-              ) : null
-            }
-          />
-        </View>
-
-        {!results ? (
-          <View style={{ paddingHorizontal: space.gutter, marginBottom: space[7] }}>
-            <PressableScale
-              haptic="select"
-              scaleTo={0.98}
-              onPress={() => router.push('/match?intent=friends')}
-              style={[styles.people, { backgroundColor: t.c.brand, boxShadow: t.shadow.card }]}
-              accessibilityLabel="People: find who to do things with"
-            >
-              <View style={[styles.peopleIcon, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
-                <Icon name="users" size={20} color={t.c.onBrand} />
-              </View>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text variant="titleS" color={t.c.onBrand}>
-                  People
-                </Text>
-                <Text variant="bodyS" color={t.c.onBrand} style={{ opacity: 0.7 }}>
-                  {content.people.length} people in {city.name} matched on interests, languages, plans
-                </Text>
-              </View>
-              <Icon name="chevronRight" size={18} color={t.c.onBrand} />
-            </PressableScale>
-          </View>
-        ) : null}
-
-        {results ? (
+      {results ? (
+        <Animated.ScrollView
+          onScroll={onResults}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingTop: headerH + space[5], paddingBottom: bottom }}
+        >
           <View style={{ gap: space[7] }}>
             <ServerResults q={q} cityId={cityId} />
             <Text variant="bodyS" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
@@ -221,99 +239,84 @@ export default function Discover() {
               </View>
             ) : null}
           </View>
-        ) : (
-          <>
-            <View style={styles.doors}>
-              {doors.map((d, i) => (
-                <Animated.View key={d.label} entering={enter.rise(i, 40)}>
-                  <PressableScale onPress={() => router.push(d.href as never)} style={{ width: doorW }} accessibilityLabel={d.label}>
-                    <Photo visual={{ photo: d.photo }} light={city.light} scrim="strong" style={styles.door} width={500}>
-                      <View style={styles.doorInner}>
-                        <View style={[styles.doorIcon, { backgroundColor: 'rgba(255,255,255,0.16)' }]}>
-                          <Icon name={d.icon} size={18} color="#FFFFFF" />
-                        </View>
-                        <View>
-                          <Text variant="titleM" tone="onDark">
-                            {d.label}
-                          </Text>
-                          <Text variant="caption" color="rgba(255,255,255,0.72)">
-                            {d.caption}
-                          </Text>
-                        </View>
-                      </View>
-                    </Photo>
-                  </PressableScale>
-                </Animated.View>
-              ))}
+        </Animated.ScrollView>
+      ) : (
+        <Animated.ScrollView
+          ref={pager}
+          horizontal
+          pagingEnabled
+          bounces={false}
+          showsHorizontalScrollIndicator={false}
+          onScroll={onPager}
+          scrollEventThrottle={16}
+          contentOffset={{ x: initial * W, y: 0 }}
+          onMomentumScrollEnd={(e) => settle(e.nativeEvent.contentOffset.x)}
+          onScrollEndDrag={(e) => {
+            // Web has no momentum events: settle on the snapped page.
+            if (Platform.OS === 'web') settle(e.nativeEvent.contentOffset.x);
+          }}
+          style={StyleSheet.absoluteFill}
+        >
+          {pages.map((PageView, i) => (
+            <PagerPage key={TABS[i].id} index={i} x={x} width={W}>
+              {mounted.has(i) ? <PageView cityId={cityId} scrollY={pageScroll[i]} top={headerH + space[2]} bottom={bottom} /> : null}
+            </PagerPage>
+          ))}
+        </Animated.ScrollView>
+      )}
+
+      <Animated.View style={[styles.header, headerStyle]} onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
+        <Glass level="thick" border={false} highlight={false} style={StyleSheet.absoluteFill} />
+        <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
+        <View style={{ paddingTop: insets.top + space[3] }}>
+          <Animated.View style={[styles.head, styles.headRow, titleStyle]}>
+            <View style={{ flex: 1 }}>
+              <Text variant="overline" tone="secondary">
+                {city.name}
+              </Text>
+              <Text variant="displayM">Discover</Text>
             </View>
-
-            {tonight.length ? (
-              <Animated.View entering={enter.rise(6)} style={styles.section}>
-                <SectionHeader overline="Today" live title="Tonight" action="Events" onAction={() => router.push('/events')} />
-                <Rail itemWidth={260}>
-                  {tonight.map((e) => (
-                    <EventCard key={e.id} event={e} width={260} height={320} />
-                  ))}
-                </Rail>
-              </Animated.View>
-            ) : null}
-
-            {weekend.length ? (
-              <Animated.View entering={enter.rise(7)} style={styles.section}>
-                <SectionHeader overline="Plan ahead" title="This weekend" />
-                <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
-                  {weekend.slice(0, 3).map((e) => (
-                    <EventRow key={e.id} event={e} />
-                  ))}
-                </View>
-              </Animated.View>
-            ) : null}
-
-            <Animated.View entering={enter.rise(8)} style={styles.section}>
-              <SectionHeader overline="Neighbourhoods" title={tx('Around {city}', { city: city.name })} action="Map" onAction={() => router.push('/map')} />
-              <View style={styles.areas}>
-                {city.areas.map((a) => {
-                  const n =
-                    content.events.filter((e) => e.areaId === a.id).length +
-                    content.sessions.filter((s) => s.areaId === a.id).length +
-                    content.places.filter((p) => p.areaId === a.id).length;
-                  return (
-                    <PressableScale
-                      key={a.id}
-                      haptic="select"
-                      scaleTo={0.95}
-                      onPress={() => router.push(`/map?area=${a.id}`)}
-                      style={[styles.area, { backgroundColor: t.c.surface, borderColor: t.c.line }]}
-                    >
-                      <Icon name="pin" size={14} color={t.accent} />
-                      <Text variant="label">{a.name}</Text>
-                      <Text variant="caption" tone="tertiary">
-                        {n}
-                      </Text>
-                    </PressableScale>
-                  );
-                })}
-              </View>
-            </Animated.View>
-
-            <Animated.View entering={enter.rise(9)} style={styles.section}>
-              <SectionHeader overline="Members love" title="IRLY picks" />
-              <Rail itemWidth={210}>
-                {content.places
-                  .filter((p) => p.irlyPick)
-                  .map((p) => (
-                    <PlaceCard key={p.id} place={p} width={210} />
-                  ))}
-              </Rail>
-            </Animated.View>
-          </>
-        )}
-      </Animated.ScrollView>
+            <InboxButtons />
+          </Animated.View>
+          <View style={{ paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[4] }}>
+            <Field
+              icon="search"
+              placeholder={tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
+              value={q}
+              onChangeText={setQ}
+              returnKeyType="search"
+              autoCorrect={false}
+              accessibilityLabel="Search"
+              trailing={
+                q ? (
+                  <PressableScale onPress={() => setQ('')} haptic="select" accessibilityLabel="Clear search">
+                    <Icon name="x" size={18} color={t.c.textTertiary} />
+                  </PressableScale>
+                ) : null
+              }
+            />
+            {!results ? <DiscoverTabs tabs={TABS} x={x} pageWidth={W} active={active} onPress={goTo} /> : null}
+          </View>
+        </View>
+      </Animated.View>
     </View>
   );
 }
 
+/** A page of the pager: it shrinks and dims as it slides away (depth). */
+function PagerPage({ index, x, width, children }: { index: number; x: SharedValue<number>; width: number; children: ReactNode }) {
+  const reduced = useReducedMotion();
+  const style = useAnimatedStyle(() => {
+    if (reduced || !width) return { opacity: 1, transform: [{ scale: 1 }] };
+    const d = Math.min(1, Math.abs(x.value / width - index));
+    return { opacity: 1 - d * 0.45, transform: [{ scale: 1 - d * 0.06 }] };
+  });
+  return <Animated.View style={[{ width, height: '100%' }, style]}>{children}</Animated.View>;
+}
+
 const styles = StyleSheet.create({
+  header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, overflow: 'hidden' },
+  hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   headRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
   people: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 24 },
   peopleIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },

@@ -9,7 +9,8 @@ export default function TabsLayout() {
       tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        animation: 'fade',
+        // Tabs slide a little and cross-fade (`shift`): you feel the direction.
+        animation: 'shift',
         sceneStyle: { backgroundColor: t.c.bg },
       }}
     >
