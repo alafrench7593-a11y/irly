@@ -123,9 +123,12 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
 
   useEffect(() => {
     let alive = true;
-    load().then((list) => {
-      if (alive) setActivities(list);
-    });
+    // A failed load keeps what is on screen.
+    load()
+      .then((list) => {
+        if (alive) setActivities(list);
+      })
+      .catch(() => undefined);
     return () => {
       alive = false;
     };

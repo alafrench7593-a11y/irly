@@ -1,8 +1,9 @@
 import { memo, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -12,21 +13,18 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
-import { Icon } from '@/components/ui/Icon';
 import { easing, spring } from '@/motion/tokens';
+import { markDots, type Dot } from './dots';
 
 /**
- * The IRLY mark: "Common Ground".
- *
- * Two rings (two people, two worlds) and the lens where they overlap,
- * lit in the brand colour. It is IRLY's promise drawn literally: we find
- * the place where your life and someone else's meet.
+ * The IRLY mark: a lowercase "i" drawn in dots, whose dot is the 2×2
+ * accent: you, here, in real life.
  *
  * States
- * - idle: the rings breathe toward each other, the lens glows softly
- * - loading: the rings orbit their common centre
- * - success: the rings converge into one, a check appears
- * - transition: the lens expands until it fills the screen
+ * - idle: light climbs the stem, the accent beats like a pulse
+ * - loading: the stem dots chase upward, quickly
+ * - success: every dot lights, the accent pops
+ * - transition: the mark grows from the accent until it fills the screen
  * - static: no motion (lists, headers, reduced motion)
  */
 export type MarkState = 'idle' | 'loading' | 'success' | 'transition' | 'static';
@@ -34,12 +32,17 @@ export type MarkState = 'idle' | 'loading' | 'success' | 'transition' | 'static'
 type Props = {
   size?: number;
   state?: MarkState;
+  /** Stem colour. */
   ringColor?: string;
+  /** Accent colour. */
   lensColor?: string;
   glow?: boolean;
   /** Called when the success or transition animation has finished. */
   onDone?: () => void;
 };
+
+const LAYOUT = markDots();
+const STEM = LAYOUT.dots.filter((d) => !d.accent).length;
 
 export const IrlyMark = memo(function IrlyMark({
   size = 64,
@@ -49,133 +52,118 @@ export const IrlyMark = memo(function IrlyMark({
   glow = true,
   onDone,
 }: Props) {
-  const d = size * 0.62;
-  const rest = d * 0.58;
-  const stroke = Math.max(1.5, d * 0.075);
-  const left = (size - d) / 2;
+  const pitch = size / 9;
+  const dot = pitch * 0.88;
+  const width = LAYOUT.cols * pitch;
+  const height = (LAYOUT.rows - LAYOUT.top) * pitch;
 
-  const sep = useSharedValue(state === 'success' ? 0 : rest);
-  const spin = useSharedValue(0);
+  const wave = useSharedValue(0);
+  const beat = useSharedValue(0);
+  const lit = useSharedValue(0);
   const scale = useSharedValue(1);
-  const glowOpacity = useSharedValue(0.5);
-  const ringOpacity = useSharedValue(1);
-  const check = useSharedValue(state === 'success' ? 1 : 0);
+  const fade = useSharedValue(1);
 
   useEffect(() => {
-    cancelAnimation(sep);
-    cancelAnimation(spin);
-    cancelAnimation(glowOpacity);
-    const breathe = (lo: number, hi: number, ms: number) =>
-      withRepeat(
-        withSequence(
-          withTiming(hi, { duration: ms, easing: easing.inOut }),
-          withTiming(lo, { duration: ms, easing: easing.inOut }),
-        ),
-        -1,
-        true,
-      );
+    cancelAnimation(wave);
+    cancelAnimation(beat);
+    const loop = (ms: number) => withRepeat(withTiming(1, { duration: ms, easing: Easing.linear }), -1, false);
+    const pulse = (up: number, down: number, rest: number) =>
+      withRepeat(withSequence(withTiming(1, { duration: up, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: down, easing: Easing.inOut(Easing.quad) }), withTiming(0, { duration: rest })), -1, false);
 
     switch (state) {
       case 'idle':
+        wave.set(0);
+        wave.set(loop(2600));
+        beat.set(pulse(420, 700, 1100));
+        lit.set(withTiming(0, { duration: 300 }));
         scale.set(withSpring(1, spring.smooth));
-        ringOpacity.set(withTiming(1, { duration: 300 }));
-        check.set(withTiming(0, { duration: 150 }));
-        spin.set(withTiming(0, { duration: 400 }));
-        sep.set(breathe(rest * 0.86, rest * 1.04, 1700));
-        glowOpacity.set(breathe(0.35, 0.7, 1700));
+        fade.set(withTiming(1, { duration: 300 }));
         break;
       case 'loading':
-        check.set(withTiming(0, { duration: 150 }));
-        sep.set(breathe(rest * 0.55, rest * 1.0, 650));
-        spin.set(withRepeat(withTiming(360, { duration: 1300, easing: Easing.linear }), -1, false));
-        glowOpacity.set(breathe(0.4, 0.85, 650));
+        wave.set(0);
+        wave.set(loop(800));
+        beat.set(pulse(200, 300, 100));
+        lit.set(withTiming(0, { duration: 200 }));
         break;
       case 'success':
-        spin.set(withTiming(Math.ceil(spin.value / 180) * 180, { duration: 500, easing: easing.standard }));
-        sep.set(withSpring(0, spring.bouncy));
-        glowOpacity.set(withTiming(0.9, { duration: 300 }));
-        check.set(withDelay(220, withSpring(1, spring.bouncy)));
+        wave.set(withTiming(0, { duration: 200 }));
+        beat.set(withSequence(withSpring(1, spring.bouncy), withTiming(0.4, { duration: 400 })));
+        lit.set(withTiming(1, { duration: 260, easing: easing.standard }));
         break;
       case 'transition':
-        sep.set(withTiming(0, { duration: 260, easing: easing.standard }));
-        ringOpacity.set(withTiming(0, { duration: 220 }));
-        check.set(withTiming(0, { duration: 120 }));
+        lit.set(withTiming(1, { duration: 160 }));
+        fade.set(withDelay(260, withTiming(0, { duration: 500 })));
         scale.set(withDelay(120, withTiming(40, { duration: 720, easing: easing.emphasized })));
         break;
       case 'static':
-        sep.set(rest);
-        spin.set(0);
-        glowOpacity.set(0.5);
+        wave.set(0);
+        beat.set(0);
+        lit.set(0);
         break;
     }
-    // Callbacks are fired from JS timers: they stay in sync with the
-    // animation durations above and keep the worklets serialisable.
+    // Callbacks are fired from JS timers, in step with the durations above.
     if (onDone && (state === 'success' || state === 'transition')) {
       const t = setTimeout(onDone, state === 'success' ? 900 : 760);
       return () => clearTimeout(t);
     }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, rest]);
+  }, [state]);
 
+  // Grows from the accent, so the transition opens out of "you".
+  const ax = (LAYOUT.dots.find((d) => d.accent)!.col + 1) * pitch - width / 2;
+  const ay = (0.6 - LAYOUT.top) * pitch - height / 2;
   const container = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${spin.value}deg` }, { scale: scale.value }],
+    opacity: fade.value,
+    transform: [{ translateX: ax }, { translateY: ay }, { scale: scale.value }, { translateX: -ax }, { translateY: -ay }],
   }));
-  const ringA = useAnimatedStyle(() => ({
-    opacity: ringOpacity.value,
-    transform: [{ translateX: -sep.value / 2 }],
-  }));
-  const ringB = useAnimatedStyle(() => ({
-    opacity: ringOpacity.value,
-    transform: [{ translateX: sep.value / 2 }],
-  }));
-  const clipA = useAnimatedStyle(() => ({ transform: [{ translateX: -sep.value / 2 }] }));
-  const innerB = useAnimatedStyle(() => ({ transform: [{ translateX: sep.value }] }));
-  const glowStyle = useAnimatedStyle(() => ({ opacity: glowOpacity.value * ringOpacity.value }));
-  const checkStyle = useAnimatedStyle(() => ({
-    opacity: check.value,
-    transform: [{ scale: 0.4 + check.value * 0.6 }],
-  }));
+  const glowStyle = useAnimatedStyle(() => ({ opacity: 0.35 + 0.45 * beat.value, transform: [{ scale: 0.9 + 0.25 * beat.value }] }));
 
-  const circle = { width: d, height: d, borderRadius: d / 2, left, top: 0, position: 'absolute' as const };
+  const moving = state !== 'static';
+  const g = pitch * 5;
 
   return (
-    <Animated.View style={[{ width: size, height: d }, container]} pointerEvents="none">
-      {glow ? (
-        <Animated.View style={[styles.glow, { left: size / 2 - d, top: -d / 2, width: d * 2, height: d * 2 }, glowStyle]}>
-          <Svg width={d * 2} height={d * 2}>
-            <Defs>
-              <RadialGradient id="irlyGlow" cx="50%" cy="50%" r="50%">
-                <Stop offset="0" stopColor={lensColor} stopOpacity={0.55} />
-                <Stop offset="0.45" stopColor={lensColor} stopOpacity={0.16} />
-                <Stop offset="1" stopColor={lensColor} stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Circle cx={d} cy={d} r={d} fill="url(#irlyGlow)" />
-          </Svg>
-        </Animated.View>
-      ) : null}
-
-      {/* Lens: circle B seen through circle A */}
-      <Animated.View style={[circle, { overflow: 'hidden' }, clipA]}>
-        <Animated.View
-          style={[{ position: 'absolute', left: 0, top: 0, width: d, height: d, borderRadius: d / 2, backgroundColor: lensColor }, innerB]}
-        />
+    <View style={{ width: size, height, alignItems: 'center' }} pointerEvents="none">
+      <Animated.View style={[{ width, height }, container]}>
+        {glow ? (
+          <Animated.View style={[{ position: 'absolute', left: ax + width / 2 - g / 2, top: ay + height / 2 - g / 2, width: g, height: g }, glowStyle]}>
+            <Svg width={g} height={g}>
+              <Defs>
+                <RadialGradient id="irlyGlow" cx="50%" cy="50%" r="50%">
+                  <Stop offset="0" stopColor={lensColor} stopOpacity={0.5} />
+                  <Stop offset="0.5" stopColor={lensColor} stopOpacity={0.12} />
+                  <Stop offset="1" stopColor={lensColor} stopOpacity={0} />
+                </RadialGradient>
+              </Defs>
+              <Circle cx={g / 2} cy={g / 2} r={g / 2} fill="url(#irlyGlow)" />
+            </Svg>
+          </Animated.View>
+        ) : null}
+        {LAYOUT.dots.map((d) => {
+          const style = {
+            position: 'absolute' as const,
+            left: d.col * pitch + (pitch - dot) / 2,
+            top: (d.row - LAYOUT.top) * pitch + (pitch - dot) / 2,
+            width: dot,
+            height: dot,
+            borderRadius: dot / 2,
+            backgroundColor: d.accent ? lensColor : ringColor,
+          };
+          return moving ? <MarkDot key={`${d.col}-${d.row}`} d={d} style={style} wave={wave} beat={beat} lit={lit} /> : <View key={`${d.col}-${d.row}`} style={style} />;
+        })}
       </Animated.View>
-
-      <Animated.View style={[circle, { borderWidth: stroke, borderColor: ringColor }, ringA]} />
-      <Animated.View style={[circle, { borderWidth: stroke, borderColor: ringColor }, ringB]} />
-
-      <Animated.View style={[StyleSheet.absoluteFill, styles.center, checkStyle]}>
-        <View>
-          <Icon name="check" size={d * 0.5} color="#FFFFFF" strokeWidth={2.6} />
-        </View>
-      </Animated.View>
-    </Animated.View>
+    </View>
   );
 });
 
-const styles = StyleSheet.create({
-  glow: { position: 'absolute' },
-  center: { alignItems: 'center', justifyContent: 'center' },
-});
+function MarkDot({ d, style, wave, beat, lit }: { d: Dot; style: object; wave: SharedValue<number>; beat: SharedValue<number>; lit: SharedValue<number> }) {
+  // Stem dots are numbered from the bottom: light climbs toward the accent.
+  const k = d.accent ? 0 : (7 - d.row) / STEM;
+  const animated = useAnimatedStyle(() => {
+    if (d.accent) return { opacity: 1, transform: [{ scale: 1 + 0.3 * beat.value }] };
+    const dist = Math.abs(((k - wave.value + 1.5) % 1) - 0.5);
+    const band = Math.max(0, 1 - dist * 5);
+    return { opacity: Math.max(lit.value, 0.55 + 0.45 * band), transform: [{ scale: 1 + 0.18 * band }] };
+  });
+  return <Animated.View style={[style, animated]} />;
+}
