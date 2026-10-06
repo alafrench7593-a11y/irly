@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import type { CityId } from '@/data/types';
 import { CITIES } from '@/data/destinations';
@@ -58,8 +59,13 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
     .single();
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Could not create');
+  bumpActivities();
   return data.id as string;
 }
+
+/** Bumped after you create an activity: every list reloads at once (Home, categories). */
+const useActivitiesVersion = create<{ n: number }>(() => ({ n: 0 }));
+export const bumpActivities = () => useActivitiesVersion.setState((v) => ({ n: v.n + 1 }));
 
 export type ServerActivity = {
   id: string;
@@ -120,6 +126,11 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
   const refresh = useCallback(() => {
     load().then(setActivities).catch(() => undefined);
   }, [load]);
+
+  const version = useActivitiesVersion((v) => v.n);
+  useEffect(() => {
+    if (version) refresh();
+  }, [version, refresh]);
 
   useEffect(() => {
     let alive = true;

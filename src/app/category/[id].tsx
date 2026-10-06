@@ -21,6 +21,10 @@ import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
+import { useServerActivities } from '@/features/server/activities';
+import { useAccount } from '@/features/auth/account';
+import { useCommunityList } from '@/features/community/data';
+import { cityWhen } from '@/lib/time';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -43,6 +47,7 @@ export default function CategoryScreen() {
   const gender = useStore((s) => s.profile.gender);
   const myPlans = useStore((s) => s.myPlans);
   const isGirl = id === 'girl';
+  const uid = useAccount()?.userId;
   const category = isGirl ? GIRL_CATEGORY : CATEGORY_BY_ID[id as CategoryKey];
   const [sub, setSub] = useState<CatalogSub | null>(null);
 
@@ -55,7 +60,18 @@ export default function CategoryScreen() {
     return list.sort((a, b) => a.item.when.dayOffset - b.item.when.dayOffset);
   }, [category, content, sub, isGirl]);
 
-  const mine = myPlans.filter((p) => p.cityId === cityId && planDisplay(p).categoryId === category?.id && (!sub || p.subId === sub.id));
+  // Activities members created on the server (yours included), in this category.
+  const { activities: serverAll } = useServerActivities(cityId);
+  const server = useMemo(
+    () => (category && !isGirl ? serverAll.filter((a) => a.categoryId === category.id && (!sub || a.subId === sub.id)) : []),
+    [serverAll, category, sub, isGirl],
+  );
+  // Plans on this phone, minus those already listed from the server.
+  const mine = myPlans.filter(
+    (p) => p.cityId === cityId && planDisplay(p).categoryId === category?.id && (!sub || p.subId === sub.id) && !(p.serverId && server.some((a) => a.id === p.serverId)),
+  );
+  const serverCommunities = useCommunityList(cityId);
+  const myCommunities = useMemo(() => (category && !isGirl ? serverCommunities.filter((c) => c.categoryId === category.id) : []), [serverCommunities, category, isGirl]);
 
   const people = useMemo(() => {
     if (!category) return [];
@@ -160,7 +176,7 @@ export default function CategoryScreen() {
         ) : null}
 
         <Animated.View entering={enter.rise(2, 60)} style={styles.section}>
-          <SectionHeader title={sub ? tx('{what} sessions', { what: tx(sub.label) }) : tx('Sessions')} action={sessions.length + mine.length ? `${sessions.length + mine.length}` : undefined} />
+          <SectionHeader title={sub ? tx('{what} sessions', { what: tx(sub.label) }) : tx('Sessions')} action={sessions.length + mine.length + server.length ? `${sessions.length + mine.length + server.length}` : undefined} />
           <View style={styles.rows}>
             {mine.map((p) => (
               <View key={p.id} style={[styles.activity, { backgroundColor: t.c.surface }]}>
@@ -175,12 +191,28 @@ export default function CategoryScreen() {
                 </View>
               </View>
             ))}
+            {server.map((a) => (
+              <PressableScale key={a.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/a/${a.id}`)} style={[styles.activity, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
+                <View style={{ flex: 1 }}>
+                  <Text variant="overline" tone="secondary">
+                    {a.creatorId === uid ? 'Your session' : 'Planned by a member'}
+                  </Text>
+                  <Text variant="titleS" raw>
+                    {a.title}
+                  </Text>
+                  <Text variant="bodyS" tone="secondary">
+                    {[cityWhen(a.startsAt, cityId), a.placeName ?? areaName(city, a.areaId), tx('{n} going', { n: a.going })].join(' · ')}
+                  </Text>
+                </View>
+                <Icon name="chevronRight" size={18} color={t.c.textTertiary} />
+              </PressableScale>
+            ))}
             {sessions.map((h, i) => (
               <Animated.View key={h.id} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
                 <HappeningRow h={h} />
               </Animated.View>
             ))}
-            {sessions.length + mine.length === 0 ? (
+            {sessions.length + mine.length + server.length === 0 ? (
               <PressableScale
                 haptic="select"
                 scaleTo={0.98}
@@ -218,7 +250,24 @@ export default function CategoryScreen() {
               ))}
             </Rail>
           ) : null}
-          <View style={[styles.rows, { marginTop: communities.length ? space[4] : 0 }]}>
+          {myCommunities.length ? (
+            <View style={[styles.rows, { marginTop: communities.length ? space[4] : 0 }]}>
+              {myCommunities.map((c) => (
+                <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${c.id}`)} style={[styles.activity, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
+                  <View style={{ flex: 1 }}>
+                    <Text variant="titleS" raw>
+                      {c.name}
+                    </Text>
+                    <Text variant="bodyS" tone="secondary">
+                      {[c.tagline, tx('{n} members', { n: c.members }), c.isMember ? tx('Member') : null].filter(Boolean).join(' · ')}
+                    </Text>
+                  </View>
+                  <Icon name="chevronRight" size={18} color={t.c.textTertiary} />
+                </PressableScale>
+              ))}
+            </View>
+          ) : null}
+          <View style={[styles.rows, { marginTop: communities.length || myCommunities.length ? space[4] : 0 }]}>
             <PressableScale
               haptic="select"
               scaleTo={0.98}
@@ -232,7 +281,7 @@ export default function CategoryScreen() {
                   {tx('Create a {what} community', { what: tx(sub ? sub.label : category.label).toLowerCase() })}
                 </Text>
                 <Text variant="bodyS" tone="secondary">
-                  {city.name} {sub ? sub.label : category.label}: sessions, chat, members.
+                  {tx('{city} · {what}: activities, chat, members.', { city: city.name, what: tx(sub ? sub.label : category.label) })}
                 </Text>
               </View>
             </PressableScale>

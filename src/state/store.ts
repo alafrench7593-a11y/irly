@@ -86,6 +86,8 @@ export type MyPlan = {
   spots: number;
   areaId: string;
   createdAt: number;
+  /** The same plan on the server, once it was saved there (avoids showing it twice). */
+  serverId?: string;
 };
 
 export type Booking = {
@@ -142,6 +144,7 @@ type Actions = {
   joinWaitlist: (destinationId: DestinationId) => void;
   setIntent: (intent: Intent) => void;
   postPlan: (plan: Omit<MyPlan, 'id' | 'createdAt'>) => MyPlan;
+  linkPlan: (id: string, serverId: string) => void;
 };
 
 export const emptyProfile: Profile = { name: '', types: [], interests: [], activities: [], languages: [], lookingFor: [] };
@@ -308,6 +311,7 @@ export const useStore = create<State & Actions>()(
         set({ myPlans: [created, ...get().myPlans] });
         return created;
       },
+      linkPlan: (id, serverId) => set({ myPlans: get().myPlans.map((p) => (p.id === id ? { ...p, serverId } : p)) }),
     }),
     {
       name: 'irly-v2',

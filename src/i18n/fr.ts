@@ -2721,4 +2721,9 @@ export const fr: Record<string, string> = {
   'One more step: finish your profile so people can find you.': 'Dernière étape : termine ton profil pour que les gens puissent te trouver.',
   'Finish my profile': 'Terminer mon profil',
   'You\'re signed in': 'Tu es connecté·e',
+  'Planned by a member': 'Organisé par un membre',
+  '{city} · {what}: activities, chat, members.': '{city} · {what} : activités, chat, membres.',
+  'Changed country? Just tell IRLY where you are: the app follows you.': 'Tu as changé de pays ? Dis simplement à IRLY où tu es : l’app te suit.',
+  'You are here': 'Tu es ici',
+  'I am here now': 'J’y suis maintenant',
 };

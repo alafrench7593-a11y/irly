@@ -107,7 +107,7 @@ const norm = (s: string) =>
 /** Strip accents for area/city matching ("Abou Dhabi" ~ "abu dhabi" stays explicit below). */
 const plain = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-const CITY_ALIASES: Record<string, string> = { 'abou dhabi': 'abudhabi', 'abu dhabi': 'abudhabi', rak: 'rak', 'ras al khaimah': 'rak', uaq: 'uaq', 'umm al quwain': 'uaq', charjah: 'sharjah', dubaï: 'dubai' };
+const CITY_ALIASES: Record<string, string> = { bali: 'bali', 'abou dhabi': 'abudhabi', 'abu dhabi': 'abudhabi', rak: 'rak', 'ras al khaimah': 'rak', uaq: 'uaq', 'umm al quwain': 'uaq', charjah: 'sharjah', dubaï: 'dubai' };
 
 export function parseCommand(input: string, geo: GeoIndex): Command {
   const text = norm(input);
@@ -206,7 +206,12 @@ export function parseCommand(input: string, geo: GeoIndex): Command {
   else if (notElsewhere && has(/(where (should|to|can) i live|which (area|neighbou?rhood) (should|to|do|for) (i )?(live|stay|move|rent)|which area to (live|stay|move)|quel quartier (pour )?(vivre|habiter|m installer|loger)|où (vivre|habiter|m installer|s installer)|move to bali|moving to bali|m installer à bali)/)) intent = 'WHERE_TO_LIVE';
   else if (has(/\b(moms?|mums?|mamans?|playdates?|with (my )?kids|avec (mes |les )?enfants)\b/) && !create) intent = 'OPEN_MOMS';
   else if (!create && (e.placeKind === 'restaurant' || e.placeKind === 'cafe' || has(/\b(where to eat|où manger|eat|manger)\b/))) intent = 'FIND_RESTAURANT';
-  else if (has(/\b(switch to|go to|change (?:city|destination) to|passe à|va à|change pour)\b/) && e.cityId) intent = 'CHANGE_DESTINATION';
+  // "I'm in Bali", "je suis à Dubaï", "j'habite à Sharjah": say where you are, the app follows.
+  else if (
+    e.cityId &&
+    has(/\b(switch to|go to|change (?:city|destination) to|passe a|passe à|va a|va à|change pour|i m (?:now )?in|i am (?:now )?in|i m (?:living|staying) in|i live in|i moved to|moved to|just landed in|je suis (?:a|à|en|au|aux|sur)|je vis (?:a|à|en)|j habite (?:a|à|en)|j ai demenage (?:a|à|en)|je viens d arriver (?:a|à|en)|je pars (?:a|à|en)|maintenant (?:a|à|en))\b/)
+  )
+    intent = 'CHANGE_DESTINATION';
   else if (create && has(/\b(community|communauté|communaute|group|groupe|club)\b/) && !has(/\bbeach ?club\b/)) intent = 'CREATE_COMMUNITY';
   else if (create && event) intent = 'CREATE_EVENT';
   else if (create) intent = 'CREATE_ACTIVITY';

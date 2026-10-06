@@ -173,9 +173,13 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       price: paid ? price : 0,
       currency: city.currency,
     };
-    postPlan(plan);
+    const local = postPlan(plan);
     // Signed in: the session also goes to the server, where members can join it.
-    createServerActivity(plan).catch((e) => toast(tx('Saved on this phone only: {why}', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live'));
+    createServerActivity(plan)
+      .then((serverId) => {
+        if (serverId) useStore.getState().linkPlan(local.id, serverId);
+      })
+      .catch((e) => toast(tx('Saved on this phone only: {why}', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live'));
     haptic('success');
     toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
     hide();
