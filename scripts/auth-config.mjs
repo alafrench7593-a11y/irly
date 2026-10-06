@@ -20,11 +20,27 @@ wanted.forEach((u) => allow.add(u));
 
 const patch = { uri_allow_list: [...allow].join(',') };
 const env = process.env;
-if (env.GOOGLE_OAUTH_CLIENT_ID && env.GOOGLE_OAUTH_CLIENT_SECRET) {
+// Pasted values often carry spaces, quotes or line breaks.
+const clean = (v) => (v ?? '').trim().replace(/^["']|["']$/g, '').trim();
+const googleId = clean(env.GOOGLE_OAUTH_CLIENT_ID);
+const googleSecret = clean(env.GOOGLE_OAUTH_CLIENT_SECRET);
+if (googleId && googleSecret) {
+  // Checks the shape only; the values themselves are never printed.
+  const problems = [];
+  if (!/^\d+-[a-z0-9]+\.apps\.googleusercontent\.com$/.test(googleId)) {
+    problems.push(
+      googleId.startsWith('GOCSPX-')
+        ? 'GOOGLE_OAUTH_CLIENT_ID holds the client SECRET: swap the two secrets'
+        : `GOOGLE_OAUTH_CLIENT_ID is not a client ID (it must look like 1234…-abc….apps.googleusercontent.com; got ${googleId.length} characters)`,
+    );
+  }
+  if (googleSecret.endsWith('.apps.googleusercontent.com')) problems.push('GOOGLE_OAUTH_CLIENT_SECRET holds the client ID: swap the two secrets');
+  if (problems.length) throw new Error(problems.join('\n'));
+  console.log(`Google client ID format OK (project number ${googleId.split('-')[0]})`);
   Object.assign(patch, {
     external_google_enabled: true,
-    external_google_client_id: env.GOOGLE_OAUTH_CLIENT_ID,
-    external_google_secret: env.GOOGLE_OAUTH_CLIENT_SECRET,
+    external_google_client_id: googleId,
+    external_google_secret: googleSecret,
   });
 }
 if (env.APPLE_SERVICES_ID && env.APPLE_CLIENT_SECRET) {
