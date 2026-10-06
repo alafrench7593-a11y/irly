@@ -110,7 +110,7 @@ for (const [name, route, click] of [['desktop', '/', null], ['desktop_person', '
 // The source photographs behind two screens, full size (the app loads them from Unsplash):
 // Layla's cover (running at dusk) and Dubai at night.
 for (const [k, id] of Object.entries({ running: '1552674605-db6ffd4facb5', dubaiNight: '1590264539175-39df72442833' })) {
-  const r = await fetch(`https://images.unsplash.com/photo-${id}?w=2400&q=88&fm=jpg`);
+  const r = await fetch(`https://images.unsplash.com/photo-${id}?w=4800&q=86&fm=jpg`);
   if (r.ok) fs.writeFileSync(`${OUT}/photo_${k}.jpg`, Buffer.from(await r.arrayBuffer()));
   else errors.push(`photo ${k}: HTTP ${r.status}`);
   console.log('photo', k, r.status);
