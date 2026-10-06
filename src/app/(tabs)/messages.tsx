@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { isServerId } from '@/features/server/chat';
+import { isServerId, useServerInbox } from '@/features/server/chat';
 import { t as tx } from '@/i18n';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -12,7 +12,6 @@ import { findCommunity, findPerson } from '@/data/repo';
 import { Photo } from '@/components/visual/Photo';
 import type { Conversation } from '@/data/types';
 import { useGirlStore } from '@/features/girl/girlStore';
-import { useServerInbox } from '@/features/server/chat';
 import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';

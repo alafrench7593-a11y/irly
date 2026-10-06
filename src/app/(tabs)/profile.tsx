@@ -1,9 +1,8 @@
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { t as tx } from '@/i18n';
+import { LANGS, t as tx, useLangStore } from '@/i18n';
 import { wipeLocal } from '@/state/wipe';
 import { deleteServerAccount, signOut, useAccount } from '@/features/auth/account';
-import { LANGS, useLangStore } from '@/i18n';
 import { useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';

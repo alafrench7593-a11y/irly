@@ -10,13 +10,10 @@ import type { TypeVariant } from '@/theme/tokens';
  */
 export function CountUp({ value, variant = 'number', duration = 700 }: { value: number; variant?: TypeVariant; duration?: number }) {
   const reduced = useReducedMotion();
-  const [shown, setShown] = useState(reduced ? value : 0);
-  const from = useRef(reduced ? value : 0);
+  const [shown, setShown] = useState(0);
+  const from = useRef(0);
   useEffect(() => {
-    if (reduced) {
-      setShown(value);
-      return;
-    }
+    if (reduced) return;
     const start = Date.now();
     const a = from.current;
     let frame = 0;
@@ -33,7 +30,7 @@ export function CountUp({ value, variant = 'number', duration = 700 }: { value: 
   }, [value, duration, reduced]);
   return (
     <Text variant={variant} raw accessibilityLabel={String(value)}>
-      {shown}
+      {reduced ? value : shown}
     </Text>
   );
 }
