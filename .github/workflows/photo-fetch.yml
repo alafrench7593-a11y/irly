@@ -1,0 +1,30 @@
+name: Photo library
+
+# Downloads and resizes the chosen subject photos into public-photos/
+# (served by the web build at /irly/photos/) and commits them.
+
+on:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/scripts/photo-picks.json', '.github/scripts/photo-fetch.mjs', '.github/workflows/photo-fetch.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get install -y imagemagick >/dev/null
+      - run: node .github/scripts/photo-fetch.mjs
+      - name: Commit the photos
+        run: |
+          git config user.name irly-bot
+          git config user.email bot@irly.app
+          git add public-photos
+          git diff --cached --quiet || git commit -m "Photo library: subject photos" && git push
