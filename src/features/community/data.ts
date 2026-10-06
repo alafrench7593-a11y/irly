@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { CityId } from '@/data/types';
+import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
@@ -262,7 +264,9 @@ export function useCommunityList(cityId: string) {
       alive = false;
     };
   }, [cityId, uid]);
-  return uid ? list : NONE;
+  const { keep } = useCityFilter(cityId as CityId);
+  const shown = useMemo(() => list.filter((c) => keep(c.cityId)), [list, keep]);
+  return uid ? shown : NONE;
 }
 
 export async function fetchDigest(communityId: string): Promise<Digest> {

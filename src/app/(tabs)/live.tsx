@@ -26,6 +26,8 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
 import { areaName, CITIES, placeLabel } from '@/data/destinations';
+import { ScopeToggle } from '@/components/ui/ScopeToggle';
+import { useCityFilter } from '@/features/server/scope';
 import { findPerson } from '@/data/repo';
 import { LIVE_TTL_MIN, useLives, useLiveStore, type Live } from '@/features/live/liveStore';
 import { timeAgo } from '@/lib/time';
@@ -264,6 +266,7 @@ function FriendsLiveNow() {
  */
 function ServerFeed({ cityId }: { cityId: CityId }) {
   const t = useTheme();
+  const { narrow } = useCityFilter(cityId);
   const { posts } = useServerIrl(cityId);
   const { friends, refresh } = useFriends();
   const router = useRouter();
@@ -279,13 +282,19 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
       return next;
     });
   const visible = posts.filter((p) => !gone.has(p.id));
-  if (!visible.length) return null;
+  if (!visible.length && !narrow) return null;
   const sorted = [...visible].sort((a, b) => Number(b.friend) - Number(a.friend) || b.createdAt - a.createdAt);
   return (
     <View style={[styles.list, { marginBottom: space[6] }]}>
       <Text variant="overline" tone="secondary">
         On IRLY right now
       </Text>
+      <ScopeToggle cityId={cityId} inset={false} />
+      {!sorted.length ? (
+        <Text variant="bodyS" tone="secondary">
+          {tx('Nobody is live in {city} right now.', { city: CITIES[cityId].name })}
+        </Text>
+      ) : null}
       {sorted.map((p, i) => {
         const f = friends.find((x) => x.userId === p.authorId);
         const status = p.mine ? 'mine' : p.friend ? 'friend' : f?.status === 'pending' ? (f.incoming ? 'incoming' : 'sent') : 'none';

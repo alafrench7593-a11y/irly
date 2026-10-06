@@ -122,11 +122,14 @@ type State = {
   waitlist: Flags;
   lastIntent: Intent | null;
   myPlans: MyPlan[];
+  /** Emirates: show only my emirate (false = all seven, the default). */
+  emirateOnly: boolean;
 };
 
 type Actions = {
   setDestination: (destinationId: DestinationId, cityId?: CityId) => void;
   setCity: (cityId: CityId) => void;
+  setEmirateOnly: (on: boolean) => void;
   updateProfile: (patch: Partial<Profile>) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
@@ -214,6 +217,7 @@ export const useStore = create<State & Actions>()(
       waitlist: {},
       lastIntent: null,
       myPlans: [],
+      emirateOnly: false,
 
       setDestination: (destinationId, cityId) =>
         set({ destinationId, cityId: cityId ?? DESTINATIONS[destinationId].defaultCity ?? null }),
@@ -223,6 +227,7 @@ export const useStore = create<State & Actions>()(
         );
         set({ cityId, destinationId: destinationId ?? get().destinationId });
       },
+      setEmirateOnly: (on) => set({ emirateOnly: on }),
       updateProfile: (patch) => set({ profile: { ...get().profile, ...patch } }),
       completeOnboarding: () => set({ onboarded: true }),
       deleteAccount: () =>

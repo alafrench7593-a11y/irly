@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { CityId } from '@/data/types';
+import { useCityFilter } from './scope';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
@@ -113,7 +115,9 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     };
   }, [cityId, uid, load]);
 
-  return { posts: uid ? posts : NONE, refresh };
+  const { keep } = useCityFilter(cityId as CityId);
+  const shown = useMemo(() => posts.filter((p) => keep(p.cityId)), [posts, keep]);
+  return { posts: uid ? shown : NONE, refresh };
 }
 
 /** Post what you're doing right now. Photo goes to the member's own folder. */

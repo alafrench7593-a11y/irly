@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
 import { cityScope } from '@/data/destinations';
+import { useCityFilter } from '@/features/server/scope';
 import type { CityId } from '@/data/types';
 import type { AreaProfile, OpeningHours } from './fit';
 
@@ -449,7 +450,8 @@ export function useGirlExtras() {
 /** Communities of a destination matching a word (Moms, Girls…), with membership. */
 export function useCommunitiesLike(cityId: string, like: string, girlOnly = false) {
   const account = useAccount();
-  return useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string }[]>(
+  const { keep } = useCityFilter(cityId as CityId);
+  const q = useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string }[]>(
     `comm-${cityId}-${like}-${girlOnly}-${account?.userId ?? 'anon'}`,
     async () => {
       if (!account) return [];
@@ -469,6 +471,8 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
     },
     [],
   );
+  const data = useMemo(() => q.data.filter((c) => keep(c.cityId)), [q.data, keep]);
+  return { ...q, data };
 }
 
 export async function joinCommunity(id: string): Promise<string> {

@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import type { CityId } from '@/data/types';
 import { CITIES, cityScope } from '@/data/destinations';
+import { useCityFilter } from './scope';
 import { dateFor, dayOf } from '@/features/ai/intent';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
@@ -175,7 +176,9 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
     };
   }, [load]);
 
-  return { activities: uid ? activities : NONE, refresh };
+  const { keep } = useCityFilter(cityId);
+  const shown = useMemo(() => activities.filter((a) => keep(a.cityId)), [activities, keep]);
+  return { activities: uid ? shown : NONE, refresh };
 }
 
 /** Join (capacity-checked server-side). Returns the activity chat id, or 'full'. */
@@ -461,5 +464,7 @@ export function useRecommendations(cityId: string): Recommendation[] {
       alive = false;
     };
   }, [cityId, uid]);
-  return uid ? list : NONE;
+  const { keep } = useCityFilter(cityId as CityId);
+  const shown = useMemo(() => list.filter((r) => keep(r.cityId)), [list, keep]);
+  return uid ? shown : NONE;
 }

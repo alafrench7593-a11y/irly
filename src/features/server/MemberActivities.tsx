@@ -11,6 +11,8 @@ import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
 import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
 import { CITIES, placeLabel } from '@/data/destinations';
+import { ScopeToggle } from '@/components/ui/ScopeToggle';
+import { useCityFilter } from './scope';
 import type { CityId } from '@/data/types';
 import { haptic } from '@/motion/haptics';
 import { radius, space } from '@/theme/tokens';
@@ -27,13 +29,21 @@ import { joinServerActivity, useRecommendations, useServerActivities, type Serve
 export function MemberActivities({ cityId }: { cityId: CityId }) {
   const { activities, refresh } = useServerActivities(cityId);
   const recs = useRecommendations(cityId);
-  if (!activities.length) return null;
+  const { narrow } = useCityFilter(cityId);
+  // Narrowed to one emirate and empty: keep the switch so « All Emirates » stays one tap away.
+  if (!activities.length && !narrow) return null;
   // Recommended first (interests, friends going), then the rest by date.
   const rank = new Map(recs.map((r, i) => [r.id, i]));
   const ordered = [...activities].sort((a, b) => (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99) || a.startsAt - b.startsAt);
   return (
     <View style={{ marginTop: space[8] }}>
       <SectionHeader overline="Live on IRLY" title="Planned by members" />
+      <ScopeToggle cityId={cityId} />
+      {!activities.length ? (
+        <Text variant="bodyS" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
+          {tx('Nothing planned in {city} yet. See all the Emirates, or plan the first one.', { city: CITIES[cityId].name })}
+        </Text>
+      ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 12 }}>
         {ordered.map((a) => (
           <MemberCard key={a.id} a={a} cityId={cityId} onChanged={refresh} friendsGoing={recs.find((r) => r.id === a.id)?.friendsGoing ?? 0} />

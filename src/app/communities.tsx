@@ -10,6 +10,7 @@ import { Chip } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
+import { ScopeToggle } from '@/components/ui/ScopeToggle';
 import { getCityContent } from '@/data/repo';
 import type { CityId, Community } from '@/data/types';
 import { enter } from '@/motion/enter';
@@ -49,6 +50,7 @@ export default function Communities() {
           ))}
         </Rail>
       </View>
+      <ScopeToggle cityId={cityId} />
       {live.length ? (
         <View style={{ paddingHorizontal: space.gutter, gap: 10, marginBottom: space[7] }}>
           <Text variant="overline" tone="tertiary">
