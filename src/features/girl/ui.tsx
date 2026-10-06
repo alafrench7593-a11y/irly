@@ -1,10 +1,10 @@
-import { memo, useEffect, type ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { PressableScale } from '@/motion/PressableScale';
-import { spring } from '@/motion/tokens';
+import { SelectionLayers, useSelection } from '@/motion/Selection';
 import { radius } from '@/theme/tokens';
 import { girl } from './theme';
 
@@ -22,32 +22,35 @@ export const GChip = memo(function GChip({
   icon?: IconName;
   small?: boolean;
 }) {
-  const bump = useSharedValue(1);
-  useEffect(() => {
-    if (selected) bump.set(withSequence(withTiming(1.06, { duration: 90 }), withSpring(1, spring.strong)));
-  }, [selected, bump]);
-  const style = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
-  const fg = selected ? '#FFFFFF' : girl.ink;
+  const { p, sweep, outer } = useSelection(Boolean(selected));
+  const box = [styles.chip, small ? styles.chipSmall : null];
+  const content = (fg: string) => (
+    <>
+      {icon ? <Icon name={icon} size={small ? 13 : 15} color={fg} /> : null}
+      <Text variant="label" color={fg} style={small ? { fontSize: 12 } : null}>
+        {label}
+      </Text>
+    </>
+  );
   return (
-    <Animated.View style={style}>
+    <Animated.View style={outer}>
       <PressableScale
         haptic={onPress ? 'select' : false}
-        scaleTo={0.96}
+        scaleTo={0.95}
         onPress={onPress}
         disabled={!onPress}
         accessibilityRole={onPress ? 'button' : 'text'}
         accessibilityState={{ selected }}
         accessibilityLabel={label}
-        style={[
-          styles.chip,
-          small ? styles.chipSmall : null,
-          { backgroundColor: selected ? girl.ink : girl.surface, borderColor: selected ? girl.ink : girl.line },
-        ]}
       >
-        {icon ? <Icon name={icon} size={small ? 13 : 15} color={fg} /> : null}
-        <Text variant="label" color={fg} style={small ? { fontSize: 12 } : null}>
-          {label}
-        </Text>
+        <SelectionLayers
+          p={p}
+          sweep={sweep}
+          fill={girl.ink}
+          radius={small ? 15 : 19}
+          base={<View style={[box, { backgroundColor: girl.surface, borderColor: girl.line }]}>{content(girl.ink)}</View>}
+          chosen={<View style={[box, { borderColor: girl.ink }]}>{content('#FFFFFF')}</View>}
+        />
       </PressableScale>
     </Animated.View>
   );

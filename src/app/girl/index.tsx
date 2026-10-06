@@ -2,7 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx, useT } from '@/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
@@ -93,9 +93,16 @@ export default function GirlHome() {
   });
   const reduced = useReducedMotion();
   const [modesW, setModesW] = useState(0);
+  const stretch = useSharedValue(1);
+  const modeSeen = useRef(mode);
+  useEffect(() => {
+    if (modeSeen.current === mode || reduced) return;
+    modeSeen.current = mode;
+    stretch.set(withSequence(withTiming(1.2, { duration: 150 }), withSpring(1, { duration: 520, dampingRatio: 0.5 })));
+  }, [mode, reduced, stretch]);
   const thumb = useAnimatedStyle(() => {
     const x = mode === 'moms' ? (modesW - 8) / 2 : 0;
-    return { transform: [{ translateX: reduced ? x : withSpring(x, { duration: 520, dampingRatio: 0.8 }) }] };
+    return { transform: [{ translateX: reduced ? x : withSpring(x, { duration: 520, dampingRatio: 0.8 }) }, { scaleX: stretch.value }, { scaleY: 1 / Math.sqrt(stretch.value) }] };
   });
 
   const width = Math.min((frame.width || window.width) - space.gutter * 2, 420);

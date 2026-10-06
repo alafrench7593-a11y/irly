@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Field } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
@@ -82,9 +82,9 @@ export default function WhoAreYou() {
                     <Icon name={def.icon} size={18} color={selected ? t.c.onBrand : '#FFFFFF'} />
                   </View>
                   {selected ? (
-                    <View style={[styles.tick, { backgroundColor: t.c.brand }]}>
+                    <Animated.View entering={ZoomIn.springify().damping(11)} exiting={ZoomOut.duration(160)} style={[styles.tick, { backgroundColor: t.c.brand }]}>
                       <Icon name="check" size={12} color={t.c.onBrand} strokeWidth={3} />
-                    </View>
+                    </Animated.View>
                   ) : null}
                 </View>
                 <Text variant="titleS" tone="onDark">

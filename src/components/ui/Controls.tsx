@@ -12,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
+import { SelectionLayers, useSelection } from '@/motion/Selection';
 import { spring } from '@/motion/tokens';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -102,40 +103,33 @@ type ChipProps = {
  */
 export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, size = 'md', onDark }: ChipProps) {
   const t = useTheme();
-  const bump = useSharedValue(1);
-  useEffect(() => {
-    if (selected) bump.set(withSequence(withTiming(1.06, { duration: 90 }), withSpring(1, spring.strong)));
-  }, [selected, bump]);
-  const animated = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
+  const { p, sweep, outer } = useSelection(Boolean(selected));
   const night = t.mode === 'night';
   const glassy = onDark || night;
-  const bg = selected ? t.c.brand : glassy ? 'rgba(255,255,255,0.08)' : t.c.overlay;
-  const border = selected ? t.c.brand : glassy ? 'rgba(255,255,255,0.14)' : t.c.line;
-  const fg = selected ? t.c.onBrand : t.c.text;
+  const restBg = glassy ? 'rgba(255,255,255,0.08)' : t.c.overlay;
+  const restBorder = glassy ? 'rgba(255,255,255,0.14)' : t.c.line;
   const h = size === 'md' ? 40 : 34;
+  const box = [styles.chip, { height: h, paddingHorizontal: size === 'md' ? 15 : 13 }];
+  const content = (fg: string, iconColor: string) => (
+    <>
+      {dot && !icon ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
+      {icon ? <Icon name={icon} size={size === 'md' ? 16 : 14} color={iconColor} strokeWidth={2} /> : null}
+      <Text variant="label" color={fg} style={size === 'sm' ? { fontSize: 12.5 } : undefined}>
+        {label}
+      </Text>
+    </>
+  );
   return (
-    <Animated.View style={animated}>
-      <PressableScale
-        onPress={onPress}
-        haptic="select"
-        scaleTo={0.97}
-        accessibilityRole="button"
-        accessibilityState={{ selected }}
-        style={[
-          styles.chip,
-          {
-            height: h,
-            paddingHorizontal: size === 'md' ? 15 : 13,
-            backgroundColor: bg,
-            borderColor: border,
-          },
-        ]}
-      >
-        {dot && !icon ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
-        {icon ? <Icon name={icon} size={size === 'md' ? 16 : 14} color={dot && !selected ? dot : fg} strokeWidth={2} /> : null}
-        <Text variant="label" color={fg} style={size === 'sm' ? { fontSize: 12.5 } : undefined}>
-          {label}
-        </Text>
+    <Animated.View style={outer}>
+      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityRole="button" accessibilityState={{ selected }}>
+        <SelectionLayers
+          p={p}
+          sweep={sweep}
+          fill={t.c.brand}
+          radius={h / 2}
+          base={<View style={[box, { backgroundColor: restBg, borderColor: restBorder }]}>{content(t.c.text, dot ?? t.c.text)}</View>}
+          chosen={<View style={[box, { borderColor: t.c.brand }]}>{content(t.c.onBrand, t.c.onBrand)}</View>}
+        />
       </PressableScale>
     </Animated.View>
   );
@@ -243,11 +237,22 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
   const [width, setWidth] = useState(0);
   const index = Math.max(0, options.findIndex((o) => o.value === value));
   const x = useSharedValue(0);
+  // The pill stretches like a drop of liquid as it travels, then settles.
+  const stretch = useSharedValue(1);
   const segW = width ? (width - 8) / options.length : 0;
+  const placed = useSharedValue(false);
   useEffect(() => {
+    if (!segW) return;
+    if (!placed.value) {
+      // First layout: place the pill without travelling across the control.
+      placed.set(true);
+      x.set(index * segW);
+      return;
+    }
     x.set(withSpring(index * segW, spring.snappy));
-  }, [index, segW, x]);
-  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+    stretch.set(withSequence(withTiming(1.22, { duration: 150, easing: Easing.out(Easing.quad) }), withSpring(1, { duration: 520, dampingRatio: 0.5 })));
+  }, [index, segW, x, stretch, placed]);
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scaleX: stretch.value }, { scaleY: 1 / Math.sqrt(stretch.value) }] }));
   return (
     <View
       onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
