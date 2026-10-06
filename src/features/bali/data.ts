@@ -158,6 +158,7 @@ export function useMove(destination: string) {
         uid ? sb().from('relocation_progress').select('step_id').eq('destination', destination) : Promise.resolve({ data: [] as { step_id: string }[] }),
       ]);
       if (error) throw new Error(error.message);
+      if ('error' in progress && progress.error) throw new Error(progress.error.message);
       const done = new Set((progress.data ?? []).map((p) => p.step_id));
       return (steps ?? []).map((s) => ({ id: s.id, label: s.label, section: s.section, done: done.has(s.id) }));
     },
@@ -168,7 +169,7 @@ export function useMove(destination: string) {
       if (!uid) throw new Error('Sign in to save your progress');
       const r = step.done
         ? await sb().from('relocation_progress').delete().eq('destination', destination).eq('step_id', step.id)
-        : await sb().from('relocation_progress').insert({ user_id: uid, destination, step_id: step.id });
+        : await sb().from('relocation_progress').upsert({ user_id: uid, destination, step_id: step.id }, { ignoreDuplicates: true });
       if (r.error) throw new Error(r.error.message);
       q.reload();
     },

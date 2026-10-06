@@ -36,7 +36,7 @@ export default function Notifications() {
   // Examples of what IRLY sends, only before sign-in (never mixed with real ones).
   const auth = useAuthStatus();
   const items: Item[] = auth !== 'out' ? [] : [
-    a && s ? { id: 'n1', icon: 'users', title: tx('{name} joined {what}', { name: a.name, what: tx(s.title) }), body: tx('You are now 7 going'), ago: '4 min', personId: a.id, unread: true, onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
+    a && s ? { id: 'n1', icon: 'users', title: tx('{name} joined {what}', { name: a.name, what: tx(s.title) }), body: tx('7 people are going now'), ago: '4 min', personId: a.id, unread: true, onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
     b ? { id: 'n2', icon: 'zap', title: tx('{name} is live nearby', { name: b.name }), body: tx('Coffee and laptop, anyone around?'), ago: '12 min', personId: b.id, unread: true, onPress: () => router.push('/live') } : null,
     s ? { id: 'n3', icon: 'pin', title: tx('New session near you'), body: tx(s.title), ago: '1 h', onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
     c ? { id: 'n4', icon: 'handshake', title: tx('{name} accepted your connection', { name: c.name }), body: tx('Say hi in Messages'), ago: '3 h', personId: c.id, onPress: () => router.push('/messages') } : null,
@@ -111,7 +111,7 @@ function ServerNotifications() {
         return {
           icon: p.cancelled ? 'x' : 'clock',
           title: p.cancelled ? tx('{title} was cancelled', { title: p.title ?? '' }) : tx('{title} changed', { title: p.title ?? '' }),
-          body: p.cancelled ? 'It is off your calendar' : 'New time or place: check the details',
+          body: p.cancelled ? 'It\'s been removed from your calendar' : 'New time or place: check the details',
           go: () => router.push(`/a/${p.activity_id}`),
         };
       case 'LIKE':

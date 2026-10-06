@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -241,8 +241,18 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
   const router = useRouter();
   const eng = useEngagement('irl_post', posts.map((p) => p.id));
   const now = useNow();
-  if (!posts.length) return null;
-  const sorted = [...posts].sort((a, b) => Number(b.friend) - Number(a.friend) || b.createdAt - a.createdAt);
+  // Hidden or being removed: gone from the list at once.
+  const [gone, setGone] = useState<Set<string>>(() => new Set());
+  const drop = (id: string, on: boolean) =>
+    setGone((g) => {
+      const next = new Set(g);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const visible = posts.filter((p) => !gone.has(p.id));
+  if (!visible.length) return null;
+  const sorted = [...visible].sort((a, b) => Number(b.friend) - Number(a.friend) || b.createdAt - a.createdAt);
   return (
     <View style={[styles.list, { marginBottom: space[6] }]}>
       <Text variant="overline" tone="secondary">
@@ -285,14 +295,20 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 variant="secondary"
                 size="sm"
                 icon="x"
-                onPress={() => deleteServerIrl(p.id).catch((e) => toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live'))}
+                onPress={() => {
+                  drop(p.id, true);
+                  deleteServerIrl(p.id).catch((e) => {
+                    drop(p.id, false);
+                    toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live');
+                  });
+                }}
               />
             ) : status === 'friend' ? (
               <View style={styles.actions}>
                 <Text variant="caption" tone="tertiary" style={{ flex: 1 }}>
                   Friend
                 </Text>
-                <PostMenu id={p.id} authorId={p.authorId} />
+                <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
               </View>
             ) : (
               <Button
@@ -319,16 +335,20 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
 }
 
 /** Not for me / report, on someone else's post. */
-function PostMenu({ id, authorId }: { id: string; authorId: string }) {
+function PostMenu({ id, authorId, onHide }: { id: string; authorId: string; onHide: (on: boolean) => void }) {
   const t = useTheme();
   return (
     <View style={{ flexDirection: 'row', gap: 14 }}>
       <PressableScale
-        onPress={() =>
+        onPress={() => {
+          onHide(true);
           hideItem({ type: 'irl_post', id })
             .then(() => toast('Hidden from your feed', 'eye', 'brand'))
-            .catch(() => undefined)
-        }
+            .catch(() => {
+              onHide(false);
+              toast('Could not hide this post', 'x', 'live');
+            });
+        }}
         haptic="select"
         hitSlop={8}
         accessibilityLabel="Hide this post"
@@ -339,7 +359,7 @@ function PostMenu({ id, authorId }: { id: string; authorId: string }) {
         onPress={() =>
           reportItem({ type: 'irl_post', id }, 'inappropriate', authorId)
             .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-            .catch(() => undefined)
+            .catch(() => toast('Could not send the report', 'x', 'live'))
         }
         haptic="select"
         hitSlop={8}
@@ -390,6 +410,7 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
     if (!res.canceled && res.assets[0]) setUri(res.assets[0].uri);
   };
 
+  const createdActivity = useRef<string | null>(null);
   const submit = async () => {
     if (!text.trim() || busy) return;
     if (account) {
@@ -397,8 +418,9 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
       setBusy(true);
       try {
         // "Anyone want to join?" becomes a real activity the post points at.
-        let activityId: string | null = null;
-        if (openUp) {
+        // A retry after a failed post reuses the activity already created.
+        let activityId: string | null = openUp ? createdActivity.current : null;
+        if (openUp && !activityId) {
           const start = new Date(Date.now() + 30 * 60 * 1000);
           activityId = await createServerActivity(
             {
@@ -415,9 +437,11 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
             },
             start,
           );
+          createdActivity.current = activityId;
           track('ACTIVITY_CREATE', { via: 'irl' });
         }
         await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility: chosen ?? undefined, activityId });
+        createdActivity.current = null;
         setChosen(null);
         track('IRL_CREATE', { photo: Boolean(uri), activity: Boolean(activityId) });
       } catch (e) {

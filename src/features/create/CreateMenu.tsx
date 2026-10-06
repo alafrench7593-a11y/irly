@@ -23,7 +23,7 @@ const OPTIONS: Option[] = [
   { id: 'session', label: 'Session', hint: 'A time, a place, spots', icon: 'calendar', color: '#5856D6', preset: { format: 'session' } },
   { id: 'trip', label: 'Trip', hint: 'Abu Dhabi, Hatta, Oman…', icon: 'plane', color: '#007AFF', preset: { categoryId: 'travel', format: 'trip' } },
   { id: 'meetup', label: 'Meetup', hint: 'Coffee, networking', icon: 'handshake', color: '#A2845E', preset: { format: 'meetup' } },
-  { id: 'live', label: 'Live', hint: 'What you do right now', icon: 'zap', color: '#FF3B30', route: '/live?compose=1' },
+  { id: 'live', label: 'Live', hint: 'What you\'re doing right now', icon: 'zap', color: '#FF3B30', route: '/live?compose=1' },
   { id: 'post', label: 'Post', hint: 'Photo or text, IRL', icon: 'camera', color: '#0A0A0A', route: '/live?compose=1' },
   { id: 'community', label: 'Community', hint: 'A permanent group', icon: 'users', color: '#30B0C7', route: '/community/new' },
 ];
@@ -59,7 +59,7 @@ export function CreateMenu() {
               Create
             </Text>
             <Text variant="bodyS" color={t.c.onBrand} style={{ opacity: 0.7 }} numberOfLines={1}>
-              Sport, event, trip, live… people join, a chat opens.
+              Sport, event, trip, live… People join and a chat opens.
             </Text>
           </View>
           <Icon name="arrowUpRight" size={20} color={t.c.onBrand} />

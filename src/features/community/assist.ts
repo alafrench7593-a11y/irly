@@ -30,7 +30,7 @@ const IDEAS: Record<string, string[]> = {
   food: ['Best brunch you had this month?', 'New place to try together this week: suggestions?', 'Cheap and great: share your favourite spot 👇'],
   family: ['Playdate this weekend: which park or beach?', 'Best kid-friendly café nearby?', 'Swap: what did your kids love doing this month?'],
   wellness: ['Morning yoga or evening walk this week?', 'Favourite place to slow down around here?', 'Who wants to try a new class together?'],
-  networking: ['What are you working on this month? Intro yourself 👇', 'Coworking day this week: who joins?', 'Ask for help: what do you need right now?'],
+  networking: ['What are you working on this month? Introduce yourself 👇', 'Coworking day this week: who\'s in?', 'Ask for help: what do you need right now?'],
   girl: ['Who is new here? Say hi 👋', 'Girls brunch this weekend: where?', 'Share a place you love going alone 💛'],
   default: ['Who is new here? Introduce yourself 👋', 'What should we do together this weekend?', 'Share a place you love around here'],
 };

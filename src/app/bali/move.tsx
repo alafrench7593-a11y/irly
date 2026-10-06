@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { switchToBali } from '@/features/bali/switch';
 import { t as tx } from '@/i18n';
-import { StyleSheet, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Controls';
@@ -25,14 +26,24 @@ const label = (s: string) => tx(s === 'sim' ? 'SIM / eSIM' : s.replace(/_/g, ' '
 export default function BaliMove() {
   const t = useTheme();
   const router = useRouter();
-  const { data: steps, toggle } = useMove('bali');
+  const { data: steps, loading, error, reload, toggle } = useMove('bali');
+  // One request per box at a time: a double tap must not save twice.
+  const busy = useRef(new Set<string>());
+  const [, setBusyTick] = useState(0);
   const auth = useAuthStatus();
   const done = steps.filter((s) => s.done).length;
 
   const tick = (s: (typeof steps)[number]) => {
+    if (busy.current.has(s.id)) return;
+    busy.current.add(s.id);
+    setBusyTick((n) => n + 1);
     toggle(s)
       .then(() => haptic(s.done ? 'select' : 'success'))
-      .catch((e) => toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live'));
+      .catch((e) => toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live'))
+      .finally(() => {
+        busy.current.delete(s.id);
+        setBusyTick((n) => n + 1);
+      });
   };
 
   return (
@@ -49,6 +60,15 @@ export default function BaliMove() {
               Sign in to save your progress across devices.
             </Text>
             <Button label="Sign in" size="sm" onPress={() => router.push('/account')} />
+          </View>
+        ) : null}
+        {loading && !steps.length ? <ActivityIndicator color={t.c.text} /> : null}
+        {error && !steps.length ? (
+          <View style={[styles.note, { backgroundColor: t.c.surface }]}>
+            <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
+              Your checklist could not be loaded.
+            </Text>
+            <Button label="Try again" size="sm" onPress={reload} />
           </View>
         ) : null}
         <View style={[styles.list, { backgroundColor: t.c.surface }]}>

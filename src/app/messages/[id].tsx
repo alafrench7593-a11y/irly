@@ -63,7 +63,7 @@ function ServerThreadView({ id }: { id: string }) {
     }
   };
 
-  const group = thread.kind !== 'direct' && thread.kind !== 'match';
+  const group = thread.kind !== null && thread.kind !== 'direct' && thread.kind !== 'match';
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
@@ -163,7 +163,7 @@ function ServerThreadView({ id }: { id: string }) {
               {thread.title}
             </Text>
             <Text variant="caption" tone="tertiary">
-              {group ? 'Group' : 'Private'}
+              {thread.kind === null ? '' : group ? 'Group' : 'Private'}
             </Text>
           </View>
           <View style={{ width: 40 }} />
@@ -309,7 +309,7 @@ function Thread() {
               {conversation.title}
             </Text>
             <Text variant="caption" tone={person?.online ? 'positive' : 'tertiary'}>
-              {person ? (person.online ? 'Active now' : 'Replies within the day') : 'Group'}
+              {person ? (person.online ? 'Active now' : 'Usually replies within a day') : 'Group'}
             </Text>
           </View>
           {person ? (

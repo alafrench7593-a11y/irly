@@ -121,15 +121,15 @@ export type PlanTheme = 'arrive' | 'explore' | 'cowork' | 'community' | 'wellnes
 export type PlanDay = { day: number; areaId: string; theme: PlanTheme; title: string; search: string };
 
 const THEME_TITLE: Record<PlanTheme, string> = {
-  arrive: 'Arrive, settle in, SIM and first walk',
+  arrive: 'Arrive, settle in, get a SIM and take a first walk',
   explore: 'Explore the area on foot',
-  cowork: 'Work a full day from a coworking',
+  cowork: 'Work a full day from a coworking space',
   community: 'Join a community meetup',
   wellness: 'Yoga or wellness morning',
   food: 'Try the local food scene',
   family: 'Family day: beach, park or kids activity',
   housing: 'Visit places to live',
-  healthcare: 'Locate clinic, hospital and pharmacy',
+  healthcare: 'Find the nearest clinic, hospital and pharmacy',
   social: 'Evening event with IRLY members',
   nature: 'Nature trip',
   decide: 'Review: would you live here?',

@@ -363,7 +363,7 @@ const SessionBody = memo(function SessionBody({ id, go }: { id: string; go: Go }
       <Section title="Spots" index={1}>
         <View style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text variant="titleS">{left === 0 ? tx('Full, join the waitlist') : tx(left === 1 ? '{n} spot left' : '{n} spots left', { n: left })}</Text>
+            <Text variant="titleS">{left === 0 ? tx('Full · join the waitlist') : tx(left === 1 ? '{n} spot left' : '{n} spots left', { n: left })}</Text>
             <Text variant="bodyS" tone="secondary">
               {going}/{s.spots}
             </Text>
@@ -725,7 +725,7 @@ function BookingSheet({ serviceId, visible, onClose }: { serviceId: string; visi
         <View style={{ paddingHorizontal: space.gutter, flexDirection: 'row', alignItems: 'center', gap: space[4] }}>
           <Icon name="shield" size={18} color={t.c.brand} />
           <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
-            Free cancellation up to 24 h before. Your contact details stay private until you confirm.
+            Free cancellation up to 24 hours before. Your contact details stay private until you confirm.
           </Text>
         </View>
         <View style={{ paddingHorizontal: space.gutter }}>

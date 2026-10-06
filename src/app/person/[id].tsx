@@ -134,7 +134,7 @@ export default function PersonProfile() {
         </Animated.View>
 
         <Animated.View entering={enter.rise(7)} style={[styles.section, styles.facts]}>
-          <Fact icon="clock" label={tx('Free (available)')} value={person.availability.map((a) => tx(AVAILABILITY[a])).join(', ')} />
+          <Fact icon="clock" label={tx('Usually free')} value={person.availability.map((a) => tx(AVAILABILITY[a])).join(', ')} />
           <Fact icon="languages" label="Speaks" value={person.languages.map((l) => tx(l)).join(', ')} />
         </Animated.View>
 

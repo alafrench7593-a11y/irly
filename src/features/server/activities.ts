@@ -85,7 +85,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
 
   const load = useCallback(async (): Promise<ServerActivity[]> => {
     if (!supabase || !uid) return [];
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('activities')
       .select('id, title, category_id, sub_id, area_id, place_name, starts_at, capacity, price_minor, currency, creator_id, going, activity_participants(user_id, status)')
       .eq('city_id', cityId)
@@ -93,6 +93,7 @@ export function useServerActivities(cityId: CityId): { activities: ServerActivit
       .gte('starts_at', new Date().toISOString())
       .order('starts_at')
       .limit(30);
+    if (error) throw new Error(error.message);
     return (
       (data ?? []).map((a) => {
         const parts = (a.activity_participants ?? []) as { user_id: string; status: string }[];
@@ -394,7 +395,8 @@ export function useRecommendations(cityId: string): Recommendation[] {
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    supabase.rpc('recommend_activities', { p_city: cityId, p_limit: 12 }).then(({ data }) => {
+    supabase.rpc('recommend_activities', { p_city: cityId, p_limit: 12 }).then(({ data, error }) => {
+      if (error) return;
       if (!alive) return;
       setList(
         ((data as Record<string, string | number>[]) ?? []).map((r) => ({

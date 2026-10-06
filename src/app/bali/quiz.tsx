@@ -99,7 +99,7 @@ export default function BaliQuiz() {
         <Button label="Test these areas before moving" icon="plane" full onPress={() => router.push('/bali/test')} />
         <Button label="Start my Bali move" icon="package" variant="secondary" full onPress={() => router.push('/bali/move')} />
         <Button
-          label="Answer again"
+          label="Retake the quiz"
           variant="ghost"
           onPress={() => {
             setLocal({ answers: {}, step: 0 });

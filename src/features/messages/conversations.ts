@@ -46,7 +46,7 @@ export function matchConversation(m: LocalMatch): Conversation | undefined {
       : r.travel.length
         ? 'You both love travelling ✈️'
         : r.interests[0]
-          ? `You both are into ${labelOf(r.interests[0]).toLowerCase()}.`
+          ? `You\'re both into ${labelOf(r.interests[0]).toLowerCase()}.`
           : 'You both want to meet new people.';
   const minutes = Math.max(1, (Date.now() - m.createdAt) / 60000);
   return {

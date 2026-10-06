@@ -241,8 +241,9 @@ export function useCommunityList(cityId: string) {
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
-    supabase.rpc('community_list', { p_city: cityId }).then(({ data }) => {
-      if (!alive) return;
+    supabase.rpc('community_list', { p_city: cityId }).then(({ data, error }) => {
+      // A failed load keeps the list already on screen.
+      if (!alive || error) return;
       setList(
         ((data as Row[]) ?? []).map((r) => ({
           id: r.id as string,
@@ -287,7 +288,7 @@ export function useCommunityActivities(communityId: string) {
   const [list, setList] = useState<CommunityActivity[]>([]);
   const load = useCallback(async () => {
     if (!uid || !supabase) return [];
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('activities')
       .select('id, title, starts_at, area_id, going')
       .eq('community_id', communityId)
@@ -295,6 +296,7 @@ export function useCommunityActivities(communityId: string) {
       .gte('starts_at', new Date(Date.now() - 2 * 3600_000).toISOString())
       .order('starts_at')
       .limit(30);
+    if (error) throw new Error(error.message);
     return (data ?? []).map((a) => ({
       id: a.id as string,
       title: a.title as string,

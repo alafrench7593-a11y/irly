@@ -33,7 +33,7 @@ export default function CommentsScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ type: TargetType; id: string; title?: string }>();
   const target = { type: params.type, id: params.id, title: params.title };
-  const { comments, loading, add, remove, refresh, signedIn } = useComments(target);
+  const { comments, loading, failed, add, remove, refresh, signedIn } = useComments(target);
   const auth = useAuthStatus();
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
@@ -101,6 +101,13 @@ export default function CommentsScreen() {
             </View>
           ) : loading ? (
             <ActivityIndicator color={t.c.text} />
+          ) : failed && !roots.length ? (
+            <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+              <Text variant="body" tone="secondary" align="center">
+                Comments could not be loaded.
+              </Text>
+              <Button label="Try again" size="sm" onPress={refresh} />
+            </View>
           ) : !roots.length ? (
             <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
               <Icon name="message" size={22} color={t.c.textSecondary} />
@@ -175,7 +182,7 @@ function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () =>
         <Text variant="body" raw={!c.deleted} tone={c.deleted ? 'tertiary' : undefined}>
           {c.deleted ? 'Comment deleted' : c.body}
         </Text>
-        {!c.deleted ? (
+        {!c.deleted && !c.id.startsWith('tmp-') ? (
           <View style={styles.meta}>
             <PressableScale onPress={onReply} haptic="select" hitSlop={8} accessibilityLabel="Reply">
               <Text variant="caption" tone="secondary">
@@ -190,7 +197,7 @@ function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () =>
           </View>
         ) : null}
       </View>
-      {!c.deleted ? (
+      {!c.deleted && !c.id.startsWith('tmp-') ? (
         <PressableScale onPress={onLike} haptic="select" scaleTo={0.85} hitSlop={8} style={styles.like} accessibilityLabel={c.liked ? 'Unlike' : 'Like'}>
           <Icon name="heart" size={16} color={c.liked ? t.c.live : t.c.textTertiary} fill={c.liked ? t.c.live : undefined} />
           {c.likes ? (

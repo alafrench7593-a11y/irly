@@ -150,7 +150,7 @@ export default function ActivityPage() {
   const more = () => {
     hideItem(target)
       .then(() => toast("Hidden. We won't suggest it again", 'eye', 'brand'))
-      .catch(() => undefined);
+      .catch(() => toast('Could not hide it', 'x', 'live'));
   };
 
   return (
@@ -200,7 +200,7 @@ export default function ActivityPage() {
               onPress={() =>
                 reportItem(target, 'inappropriate', a.creatorId)
                   .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-                  .catch(() => undefined)
+                  .catch(() => toast('Could not send the report', 'x', 'live'))
               }
             />
           </View>

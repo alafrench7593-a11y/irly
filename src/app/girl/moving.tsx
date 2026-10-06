@@ -73,7 +73,7 @@ export default function GirlsMoving() {
           <View style={styles.pad}>
             <View style={[styles.card, { gap: 10 }]}>
               <Text variant="titleS" color={girl.ink}>
-                Where are you with Bali?
+                {"What's your Bali status?"}
               </Text>
               <Wrap>
                 {STATUSES.map((s) => (

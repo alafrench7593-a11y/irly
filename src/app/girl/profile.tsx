@@ -347,7 +347,7 @@ export default function GirlProfile() {
                 onChange={(v) => set('visible', v)}
               />
               <ToggleRow
-                label="Show when I am active"
+                label="Show when I'm active"
                 hint="Others see 'Active now'. Off by default."
                 value={draft.showActive}
                 onChange={(v) => set('showActive', v)}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from '@/components/ui/Toast';
 import { NONE } from '@/lib/none';
 import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
@@ -176,7 +177,10 @@ export async function shareNative(t: Target): Promise<void> {
   if (Platform.OS === 'web') {
     const nav = globalThis.navigator as Navigator | undefined;
     if (nav?.share) await nav.share({ title: t.title ?? 'IRLY', url });
-    else await nav?.clipboard?.writeText(url);
+    else {
+      await nav?.clipboard?.writeText(url);
+      toast('Link copied', 'check', 'positive');
+    }
   } else {
     // iOS shares message and url separately (the link appeared twice); Android only has message.
     const res = await Share.share(Platform.OS === 'ios' ? { message: t.title ? `${t.title} on IRLY` : 'IRLY', url } : { message });
@@ -246,10 +250,12 @@ export function useComments(t: Target) {
   const uid = account?.userId;
   const [list, setList] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
   const load = useCallback(async (): Promise<Comment[]> => {
     if (!supabase || !uid) return [];
-    const { data } = await supabase.rpc('comment_thread', { p_type: t.type, p_id: t.id });
+    const { data, error } = await supabase.rpc('comment_thread', { p_type: t.type, p_id: t.id });
+    if (error) throw new Error(error.message);
     return ((data as CommentRow[]) ?? []).map((r) => ({
       id: r.id,
       parentId: r.parent_id,
@@ -267,12 +273,20 @@ export function useComments(t: Target) {
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
+    // A failed refresh keeps what is on screen; only a first load failure shows an error.
     const reload = () =>
-      load().then((c) => {
-        if (!alive) return;
-        setList(c);
-        setLoading(false);
-      });
+      load()
+        .then((c) => {
+          if (!alive) return;
+          setList(c);
+          setFailed(false);
+          setLoading(false);
+        })
+        .catch(() => {
+          if (!alive) return;
+          setFailed(true);
+          setLoading(false);
+        });
     reload();
     const channel = supabase
       .channel(topic(`comments-${t.type}-${t.id}`))
@@ -286,7 +300,12 @@ export function useComments(t: Target) {
   }, [t.type, t.id, uid, load]);
 
   const refresh = useCallback(() => {
-    load().then(setList).catch(() => undefined);
+    load()
+      .then((c) => {
+        setList(c);
+        setFailed(false);
+      })
+      .catch(() => undefined);
   }, [load]);
 
   /** Optimistic: shows at once, marked pending, replaced by the server row. */
@@ -297,11 +316,17 @@ export function useComments(t: Target) {
       if (!text) return;
       const temp: Comment = { id: `tmp-${Date.now()}`, parentId: parentId ?? null, authorId: uid, firstName: 'You', body: text, createdAt: Date.now(), deleted: false, likes: 0, liked: false, mine: true };
       setList((l) => [...l, temp]);
-      const { error } = await supabase.from('comments').insert({ target_type: t.type, target_id: t.id, author_id: uid, body: text, parent_id: parentId ?? null });
-      if (error) {
+      const { data, error } = await supabase
+        .from('comments')
+        .insert({ target_type: t.type, target_id: t.id, author_id: uid, body: text, parent_id: parentId ?? null })
+        .select('id, created_at')
+        .single();
+      if (error || !data) {
         setList((l) => l.filter((c) => c.id !== temp.id));
-        throw new Error(error.message.includes('slow down') ? 'Slow down a little' : error.message);
+        throw new Error(error?.message.includes('slow down') ? 'Slow down a little' : (error?.message ?? 'Could not post'));
       }
+      // The real row replaces the pending one, even if the refresh below fails.
+      setList((l) => l.map((c) => (c.id === temp.id ? { ...c, id: data.id as string, createdAt: Date.parse(data.created_at as string) } : c)));
       track(t.type === 'irl_post' ? 'IRL_COMMENT' : 'COMMENT', { type: t.type, reply: Boolean(parentId) });
       refresh();
     },
@@ -310,7 +335,7 @@ export function useComments(t: Target) {
 
   const remove = useCallback(
     async (id: string) => {
-      if (!supabase) return;
+      if (!supabase || id.startsWith('tmp-')) return;
       setList((l) => l.map((c) => (c.id === id ? { ...c, deleted: true, body: '' } : c)));
       const { error } = await supabase.from('comments').update({ deleted_at: new Date().toISOString() }).eq('id', id);
       if (error) {
@@ -321,7 +346,7 @@ export function useComments(t: Target) {
     [refresh],
   );
 
-  return { comments: uid ? list : NONE, loading: uid ? loading : false, add, remove, refresh, signedIn: Boolean(uid) };
+  return { comments: uid ? list : NONE, loading: uid ? loading : false, failed: uid ? failed : false, add, remove, refresh, signedIn: Boolean(uid) };
 }
 
 /* ───────── Saved ───────── */
@@ -332,20 +357,33 @@ export function useSaved() {
   const account = useAccount();
   const uid = account?.userId;
   const [items, setItems] = useState<SavedItem[]>([]);
+  const [failed, setFailed] = useState(false);
   const load = useCallback(async (): Promise<SavedItem[]> => {
     if (!supabase || !uid) return [];
-    const { data } = await supabase.from('saves').select('target_type, target_id, created_at').order('created_at', { ascending: false }).limit(300);
+    const { data, error } = await supabase.from('saves').select('target_type, target_id, created_at').order('created_at', { ascending: false }).limit(300);
+    if (error) throw new Error(error.message);
     return (data ?? []).map((r) => ({ type: r.target_type as TargetType, id: r.target_id as string, createdAt: Date.parse(r.created_at as string) }));
   }, [uid]);
   const refresh = useCallback(() => {
-    load().then(setItems).catch(() => undefined);
+    load()
+      .then((s) => {
+        setItems(s);
+        setFailed(false);
+      })
+      .catch(() => setFailed(true));
   }, [load]);
   useEffect(() => {
     let alive = true;
-    load().then((s) => alive && setItems(s));
+    load()
+      .then((s) => {
+        if (!alive) return;
+        setItems(s);
+        setFailed(false);
+      })
+      .catch(() => alive && setFailed(true));
     return () => {
       alive = false;
     };
   }, [load]);
-  return { items: uid ? items : NONE, refresh, signedIn: Boolean(uid) };
+  return { items: uid ? items : NONE, failed: uid ? failed : false, refresh, signedIn: Boolean(uid) };
 }

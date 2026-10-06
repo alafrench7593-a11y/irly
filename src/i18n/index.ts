@@ -63,7 +63,25 @@ function byPattern(text: string): string | undefined {
   return undefined;
 }
 
-export function translate(lang: Lang, text: string, vars?: Record<string, string | number>): string {
+/** Singular forms, used when {n} is 1 (in both languages). */
+const ONE: Record<string, string> = {
+  '{n} members': '{n} member',
+  '{n} votes': '{n} vote',
+  '{n} results for “{q}” in the city guide': '{n} result for “{q}” in the city guide',
+  '{n} more characters (minimum {min})': '{n} more character (minimum {min})',
+  '{n} posts this week': '{n} post this week',
+  '{n} sessions this week in {city}': '{n} session this week in {city}',
+  '{n} plans here': '{n} plan here',
+  '{n} people into {what}': '{n} person into {what}',
+  '{n} groups': '{n} group',
+  '{n} reviews': '{n} review',
+  '{n} activities': '{n} activity',
+  '{n} communities': '{n} community',
+  '{n} people': '{n} person',
+};
+
+export function translate(lang: Lang, rawText: string, vars?: Record<string, string | number>): string {
+  const text = vars && Number(vars.n) === 1 && ONE[rawText] ? ONE[rawText] : rawText;
   const base = lang === 'fr' ? (fr[text] ?? byPattern(text) ?? text) : text;
   if (!vars) return base;
   return base.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));

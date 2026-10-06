@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -297,7 +298,7 @@ function FullContent({ marker }: { marker: MapMarkerData }) {
       <View style={[styles.detail, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
         <Row icon="pin" text={marker.subtitle} />
         {marker.type === 'activity' || marker.type === 'event' ? <Row icon="message" text="Group chat opens when you join" /> : null}
-        {marker.type === 'group' ? <Row icon="users" text={`${marker.count ?? 0} members`} /> : null}
+        {marker.type === 'group' ? <Row icon="users" text={tx('{n} members', { n: marker.count ?? 0 })} /> : null}
       </View>
       <Button label="Open full page" variant="secondary" iconRight="arrowUpRight" full onPress={() => openHero(hero)} />
     </View>

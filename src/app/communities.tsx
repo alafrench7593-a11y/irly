@@ -41,7 +41,7 @@ export default function Communities() {
   const live = useCommunityList(cityId);
 
   return (
-    <Page overline={city.name} title="Communities" subtitle="Optional, by interest or neighbourhood. Meet the same faces again, that is how trust grows.">
+    <Page overline={city.name} title="Communities" subtitle="Optional, by interest or neighbourhood. Meet the same faces again: that's how trust grows.">
       <View style={{ marginBottom: space[6] }}>
         <Rail gap={8}>
           {KINDS.map((k) => (

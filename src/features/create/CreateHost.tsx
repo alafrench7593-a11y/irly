@@ -43,7 +43,7 @@ const FORMAT: Record<CreateFormat, { title: string; cta: string }> = {
   activity: { title: 'What do you want to do?', cta: 'Create activity' },
   sport: { title: 'Which sport?', cta: 'Create sport session' },
   event: { title: 'What is the event?', cta: 'Create event' },
-  session: { title: 'What do you want to do?', cta: 'Post session' },
+  session: { title: 'What do you want to do?', cta: 'Create session' },
   meetup: { title: 'What kind of meetup?', cta: 'Create meetup' },
   trip: { title: 'Where are you going?', cta: 'Create trip' },
 };
@@ -333,7 +333,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
               {pick?.custom ? (
                 <Animated.View entering={enter.rise(1)} style={styles.block}>
                   <Text variant="overline" tone="secondary">
-                    Category · IRLY guessed, change if needed
+                    Category · suggested by IRLY, change it if needed
                   </Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                     {CATEGORIES.map((c) => (

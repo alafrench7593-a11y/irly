@@ -20,7 +20,7 @@ const COMPLEMENTS: [UserType, UserType, Intent[], string][] = [
   ['expat', 'local', ['explore', 'friends', 'activities'], 'Local who knows the city'],
   ['tourist', 'local', ['explore', 'activities'], 'Local who can show you around'],
   ['entrepreneur', 'professional', ['business'], 'Could become a client or partner'],
-  ['expat', 'entrepreneur', ['business', 'similar'], 'Been through the move, built here'],
+  ['expat', 'entrepreneur', ['business', 'similar'], 'Made the move and built a life here'],
   ['nomad', 'nomad', ['similar', 'friends', 'business'], 'Also working remotely'],
   ['student', 'professional', ['business', 'explore'], 'Could mentor your next step'],
 ];

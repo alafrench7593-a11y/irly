@@ -36,7 +36,7 @@ const GEO: GeoIndex = {
 };
 
 const EXAMPLES = [
-  'Find me something to do tonight near Marina',
+  'Find me something to do tonight near the Marina',
   'Create a padel session tomorrow at 7 PM in JLT',
   'Find me a beach club this Saturday',
   'What can I do tonight for 100 dirhams?',
@@ -145,8 +145,9 @@ export default function Assistant() {
     };
     setBusy(true);
     try {
-      postPlan(plan);
+      // Server first: a failed create must not leave a plan on this phone.
       const id = account ? await createServerActivity(plan, dateFor(e.day, e.time, new Date(), city.utcOffset)) : null;
+      postPlan(plan);
       haptic('success');
       track(cmd.intent === 'CREATE_EVENT' ? 'EVENT_CREATE' : 'ACTIVITY_CREATE', { category: e.category ?? 'other', via: source });
       logCommand(cmd, source, 'executed', id ? { type: 'activity', id } : undefined);

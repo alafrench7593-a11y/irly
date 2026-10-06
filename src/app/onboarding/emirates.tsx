@@ -60,7 +60,7 @@ export default function ChooseEmirate() {
             {dest.flag}  IRLY Emirates
           </Text>
           <Text variant="displayL" tone="onDark">
-            Choose your Emirate
+            Choose your emirate
           </Text>
           <Text variant="body" color="rgba(255,255,255,0.62)">
             Dubai is live first. The other emirates open with their founding members.

@@ -107,8 +107,12 @@ export default function CommunityScreen() {
   };
 
   /** A plan from the assistant or a post: a real activity of this community, announced in the feed. */
-  const createPlan = async (d: PlanDraft) => {
-    if (!c.isMember) return toast('Join the community first', 'users', 'brand');
+  /** True once the activity exists; the announcement post is best effort. */
+  const createPlan = async (d: PlanDraft): Promise<boolean> => {
+    if (!c.isMember) {
+      toast('Join the community first', 'users', 'brand');
+      return false;
+    }
     const area = d.areaId ?? city.areas[0].id;
     const areaLabel = city.areas.find((a) => a.id === area)?.name ?? city.name;
     try {
@@ -117,13 +121,20 @@ export default function CommunityScreen() {
         dateFor(d.day, d.time, new Date(), city.utcOffset),
         { communityId: c.id, girlOnly: c.girlOnly },
       );
-      if (actId) await feed.post({ body: tx('New plan: {title}, {when}. Join below 👇', { title: d.title, when: `${tx(planDay(d.day))} ${d.time}` }), activityId: actId });
       haptic('success');
       track('ACTIVITY_CREATE', { via: 'community' });
-      toast(tx('{title} is live. Chat created', { title: d.title }), 'send', 'brand');
       acts.refresh();
+      const announced = actId
+        ? await feed
+            .post({ body: tx('New plan: {title}, {when}. Join below 👇', { title: d.title, when: `${tx(planDay(d.day))} ${d.time}` }), activityId: actId })
+            .then(() => true)
+            .catch(() => false)
+        : true;
+      toast(announced ? tx('{title} is live. Chat created', { title: d.title }) : tx('Plan created, but it could not be posted in the community'), announced ? 'send' : 'x', announced ? 'brand' : 'live');
+      return true;
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create', 'x', 'live');
+      return false;
     }
   };
 
@@ -236,7 +247,7 @@ export default function CommunityScreen() {
                 ))
               ) : (
                 <Text variant="body" tone="secondary">
-                  Nothing planned yet. Ask the assistant: “organise padel saturday 9am”.
+                  Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.
                 </Text>
               )}
             </View>
@@ -255,7 +266,7 @@ export default function CommunityScreen() {
                 onPress={() =>
                   reportItem({ type: 'community', id: c.id }, 'inappropriate')
                     .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-                    .catch(() => undefined)
+                    .catch(() => toast('Could not send the report', 'x', 'live'))
                 }
               />
             </View>
@@ -284,13 +295,14 @@ function Assistant({
   categoryId: string | null;
   geo: GeoIndex;
   isMember: boolean;
-  onPlan: (d: PlanDraft) => Promise<void> | void;
+  onPlan: (d: PlanDraft) => Promise<boolean>;
   onPoll: (question: string, options: string[]) => Promise<void>;
   onIdea: (text: string) => void;
 }) {
   const t = useTheme();
   const [text, setText] = useState('');
   const [result, setResult] = useState<Assist | null>(null);
+  const [posting, setPosting] = useState(false);
   const [digest, setDigest] = useState<string[] | null>(null);
   const [draft, setDraft] = useState<PlanDraft | null>(null);
   const [busy, setBusy] = useState(false);
@@ -308,7 +320,7 @@ function Assistant({
     }
   };
 
-  const chips = ['Organise padel saturday 9am', 'Poll: Saturday or Sunday?', "What's new this week?", 'Post ideas'];
+  const chips = ['Organise padel Saturday 9am', 'Poll: Saturday or Sunday?', "What's new this week?", 'Post ideas'];
 
   return (
     <View style={[styles.assist, { backgroundColor: t.c.surface }]}>
@@ -325,7 +337,7 @@ function Assistant({
         <TextInput
           value={text}
           onChangeText={setText}
-          placeholder={tx('Ask: organise brunch sunday 11am…')}
+          placeholder={tx('Ask: organise brunch Sunday 11am…')}
           placeholderTextColor={t.c.textTertiary}
           style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 }}
           onSubmitEditing={() => text.trim() && ask(text)}
@@ -360,11 +372,13 @@ function Assistant({
             icon="plus"
             full
             loading={busy}
-            disabled={!isMember}
+            disabled={!isMember || busy}
             onPress={async () => {
+              if (busy) return;
               setBusy(true);
-              await onPlan(draft);
+              const ok = await onPlan(draft);
               setBusy(false);
+              if (!ok) return;
               setResult(null);
               setText('');
             }}
@@ -382,15 +396,19 @@ function Assistant({
             label={isMember ? 'Post this poll' : 'Join to post'}
             icon="send"
             full
-            disabled={!isMember}
-            onPress={() =>
+            loading={posting}
+            disabled={!isMember || posting}
+            onPress={() => {
+              if (posting) return;
+              setPosting(true);
               onPoll(result.question, result.options)
                 .then(() => {
                   setResult(null);
                   setText('');
                 })
                 .catch((e) => toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live'))
-            }
+                .finally(() => setPosting(false));
+            }}
           />
         </View>
       ) : null}
@@ -420,7 +438,7 @@ function Assistant({
 
       {result?.kind === 'help' ? (
         <Text variant="bodyS" tone="secondary">
-          Try: “organise padel saturday 9am”, “poll: saturday or sunday?”, “what’s new this week?” or “post ideas”.
+          Try: “organise padel Saturday 9am”, “poll: Saturday or Sunday?”, “what’s new this week?” or “post ideas”.
         </Text>
       ) : null}
     </View>
@@ -531,7 +549,7 @@ function PostCard({
             onPress={() =>
               reportItem({ type: 'community_post', id: p.id }, 'inappropriate', p.authorId)
                 .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-                .catch(() => undefined)
+                .catch(() => toast('Could not send the report', 'x', 'live'))
             }
             haptic="select"
             hitSlop={8}

@@ -210,7 +210,7 @@ const FLAVORS: Record<RegionalCityId, Flavor> = {
     ],
     events: [
       { title: 'Mangrove clean-up & breakfast', category: 'culture', area: 'mangroves', venue: 'Mangrove Beach', photo: 'uaq', price: 0, description: 'Two hours of clean-up by kayak, then breakfast together on the sand.', highlights: ['Kayaks provided', 'Breakfast', 'Free'] },
-      { title: 'Old Town food walk', category: 'food', area: 'oldtown', venue: 'UAQ Old Town', photo: 'nightMarket', price: 70, description: 'Fishermen’s cafés, sweets shops and the fort at golden hour.', highlights: ['5 tastings', 'Local host', 'Golden hour'] },
+      { title: 'Old Town food walk', category: 'food', area: 'oldtown', venue: 'UAQ Old Town', photo: 'nightMarket', price: 70, description: 'Fishermen’s cafés, sweet shops and the fort at golden hour.', highlights: ['5 tastings', 'Local host', 'Golden hour'] },
     ],
     places: [
       ['Mangrove Beach', 'nature', 'mangroves', 'Kayaks, flamingos and absolute quiet.', 1, 4.7, ['Kayak', 'Nature'], 'uaq'],
@@ -384,7 +384,7 @@ export function regionalContent(cityId: RegionalCityId): CityContent {
           {
             id: 'm1',
             from: communities[0].memberIds[0],
-            text: `Welcome to ${city.name}! Next meetup is on the calendar, see you there?`,
+            text: `Welcome to ${city.name}! The next meetup is on the calendar. See you there?`,
             minAgo: 45,
           },
         ],

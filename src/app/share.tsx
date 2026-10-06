@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
@@ -34,24 +34,28 @@ export default function ShareScreen() {
     setSent((s) => ({ ...s, [key]: true }));
   };
 
-  const toChat = async (id: string) => {
+  // A fast double tap must not post the share twice.
+  const sending = useRef(new Set<string>());
+  const once = async (key: string, send: () => Promise<void>) => {
+    if (sending.current.has(key) || sent[key]) return;
+    sending.current.add(key);
     try {
-      await shareToChat(id, target);
-      mark(id);
+      await send();
+      mark(key);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live');
+    } finally {
+      sending.current.delete(key);
     }
   };
 
-  const toFriend = async (userId: string) => {
-    try {
+  const toChat = (id: string) => once(id, () => shareToChat(id, target));
+
+  const toFriend = (userId: string) =>
+    once(userId, async () => {
       const conv = await openDirect(userId);
       await shareToChat(conv, target);
-      mark(userId);
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live');
-    }
-  };
+    });
 
   const accepted = friends.filter((f) => f.status === 'accepted');
 

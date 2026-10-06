@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
@@ -47,6 +48,10 @@ async function signed(path: string | null): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
+/** Bumped after your own post or removal: every IRL feed reloads at once, without waiting for Realtime. */
+const useIrlVersion = create<{ n: number }>(() => ({ n: 0 }));
+const bumpIrl = () => useIrlVersion.setState((s) => ({ n: s.n + 1 }));
+
 export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh: () => void } {
   const account = useAccount();
   const uid = account?.userId;
@@ -79,6 +84,11 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   const refresh = useCallback(() => {
     load().then(setPosts).catch(() => undefined);
   }, [load]);
+
+  const version = useIrlVersion((s) => s.n);
+  useEffect(() => {
+    if (version) refresh();
+  }, [version, refresh]);
 
   useEffect(() => {
     if (!supabase || !uid) return;
@@ -138,6 +148,7 @@ export async function postServerIrl(input: {
     activity_id: input.activityId ?? null,
   });
   if (error) throw new Error(error.message);
+  bumpIrl();
   return true;
 }
 
@@ -145,6 +156,7 @@ export async function deleteServerIrl(id: string): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.from('irl_posts').delete().eq('id', id);
   if (error) throw new Error(error.message);
+  bumpIrl();
 }
 
 /* ───────────────────────── Friends ───────────────────────── */
@@ -205,6 +217,9 @@ export async function removeFriend(userId: string): Promise<void> {
 
 export type ServerNotification = { id: string; kind: string; payload: Record<string, string>; readAt: number | null; createdAt: number };
 
+/** Bumped when notifications are marked read: the header badge and the list stay in step. */
+const useNotifVersion = create<{ n: number }>(() => ({ n: 0 }));
+
 export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => void } {
   const account = useAccount();
   const uid = account?.userId;
@@ -221,6 +236,15 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
       createdAt: Date.parse(n.created_at),
     }));
   }, [uid]);
+  const version = useNotifVersion((s) => s.n);
+  useEffect(() => {
+    if (!version) return;
+    let alive = true;
+    load().then((n) => alive && setItems(n)).catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [version, load]);
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
@@ -243,7 +267,11 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
       .from('notifications')
       .update({ read_at: now })
       .is('read_at', null)
-      .then(() => setItems((list) => list.map((n) => (n.readAt ? n : { ...n, readAt: Date.parse(now) }))));
+      .then(({ error }) => {
+        if (error) return;
+        setItems((list) => list.map((n) => (n.readAt ? n : { ...n, readAt: Date.parse(now) })));
+        useNotifVersion.setState((s) => ({ n: s.n + 1 }));
+      });
   }, [uid]);
   const list = uid ? items : NONE;
   return { items: list, unread: list.filter((n) => !n.readAt).length, markAllRead };

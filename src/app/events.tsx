@@ -76,7 +76,7 @@ export default function Events() {
         <Animated.View entering={enter.fade(0)} style={[styles.empty, { borderColor: t.c.lineStrong }]}>
           <Icon name="calendar" size={28} color={t.c.textTertiary} />
           <Text variant="titleS" align="center">
-            Nothing matches, yet
+            Nothing matches yet
           </Text>
           <Text variant="bodyS" tone="secondary" align="center">
             Try another day or category, or start your own plan from Social.

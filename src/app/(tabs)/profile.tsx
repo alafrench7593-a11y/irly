@@ -93,7 +93,7 @@ export default function Profile() {
             {profile.arrivedAt ? (
               <View style={[styles.newHere, { backgroundColor: t.c.brand }]}>
                 <Text variant="overline" color={t.c.onBrand}>
-                  {tx(days > 1 ? 'New in {city} · {n} days' : 'New in {city} · {n} day', { city: city.name, n: days })}
+                  {tx(days === 1 ? 'New in {city} · {n} day' : 'New in {city} · {n} days', { city: city.name, n: days })}
                 </Text>
               </View>
             ) : null}

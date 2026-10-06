@@ -77,7 +77,7 @@ export const CATEGORIES: CatalogCategory[] = [
     photo: 'padel',
     subs: list(
       'Football', 'Padel', 'Tennis', 'Basketball', 'Volleyball', 'Beach volley', 'Running', 'Cycling', 'Gym', 'CrossFit',
-      'Boxing', 'Kickboxing', 'MMA', 'Wrestling', 'Swimming', 'Diving', 'Snorkeling', 'Kayak', 'Paddleboard', 'Kitesurf',
+      'Boxing', 'Kickboxing', 'MMA', 'Wrestling', 'Swimming', 'Diving', 'Snorkelling', 'Kayak', 'Paddleboard', 'Kitesurf',
       'Surf', 'Sailing', 'Golf', 'Cricket', 'Badminton', 'Table tennis', 'Horse riding', 'Yoga', 'Pilates', 'Martial arts',
       'Climbing', 'Skateboard', 'Rollerblading', 'Archery', 'Dance', 'Water sports',
     ),
@@ -175,7 +175,7 @@ export const CATEGORIES: CatalogCategory[] = [
       s('sharjah', 'Sharjah', [a('sharjah-heritage', 'Heart of Sharjah heritage walk', 'Heart of Sharjah', 'sharjah'), a('sharjah-art', 'Sharjah art day', 'Al Mureijah', 'sharjah')]),
       s('ajman', 'Ajman', [a('ajman-beach', 'Ajman beach day', 'Ajman Corniche', 'ajman')]),
       s('rak', 'Ras Al Khaimah', [a('jebel-jais', 'Jebel Jais mountain day', 'Jebel Jais', 'rak'), a('rak-beach', 'Al Marjan beach weekend', 'Al Marjan Island', 'rak')]),
-      s('fujairah', 'Fujairah', [a('fujairah-snorkel', 'Snorkeling at Snoopy Island', 'Snoopy Island', 'fujairah'), a('fujairah-mosque', 'Al Bidyah Mosque visit', 'Al Bidyah Mosque', 'fujairah', MOSQUE_NOTE)]),
+      s('fujairah', 'Fujairah', [a('fujairah-snorkel', 'Snorkelling at Snoopy Island', 'Snoopy Island', 'fujairah'), a('fujairah-mosque', 'Al Bidyah Mosque visit', 'Al Bidyah Mosque', 'fujairah', MOSQUE_NOTE)]),
       s('uaq', 'Umm Al Quwain', [a('uaq-mangroves', 'Mangrove kayak', 'Khor Al Beidah', 'uaq')]),
       s('oman', 'Oman', [a('oman-roadtrip', 'Oman road trip', 'Dubai → Musandam'), a('musandam-dhow', 'Musandam dhow cruise', 'Khasab, Musandam')]),
       s('hatta', 'Hatta', [a('hatta-day', 'Hatta day trip', 'Hatta', 'dubai'), a('hatta-kayak', 'Hatta dam kayak', 'Hatta Dam', 'dubai')]),
@@ -250,7 +250,7 @@ export const CATEGORIES: CatalogCategory[] = [
     photo: 'rooftopNeon',
     subs: [
       s('rooftops', 'Rooftops', [a('rooftop-night', 'Rooftop night')]),
-      s('dinner-dj', 'Dinner & DJ', [a('dinner-dj', 'Dinner + DJ')]),
+      s('dinner-dj', 'Dinner & DJ', [a('dinner-dj', 'Dinner & DJ')]),
       ...list('Clubs', 'Lounges', 'Live music', 'Beach clubs', 'Night events'),
     ],
   },

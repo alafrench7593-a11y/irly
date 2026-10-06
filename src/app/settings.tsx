@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -62,48 +62,70 @@ export default function SettingsScreen() {
     return { safety: { ...DEFAULTS, ...(s.data ?? {}) } as Safety, muted: (n.data?.muted_kinds as string[]) ?? [] };
   }, [uid]);
 
-  useEffect(() => {
-    let alive = true;
+  const [failed, setFailed] = useState(false);
+  const alive = useRef(true);
+  // The latest values, read by queued saves so a slow save never sends a stale copy.
+  const safetyNow = useRef(safety);
+  const mutedNow = useRef(muted);
+  // Saves run one after another, in the order they were made.
+  const queue = useRef<Promise<void>>(Promise.resolve());
+
+  const reload = useCallback(() => {
     load()
       .then((r) => {
-        if (!alive || !r) return;
+        if (!alive.current || !r) return;
+        setFailed(false);
+        safetyNow.current = r.safety;
+        mutedNow.current = r.muted;
         setSafety(r.safety);
         setMuted(r.muted);
         setLoaded(true);
       })
-      .catch(() => alive && toast('Could not load your settings. Check your connection.', 'x', 'live'));
-    return () => {
-      alive = false;
-    };
+      .catch(() => {
+        if (!alive.current) return;
+        setFailed(true);
+        toast('Could not load your settings. Check your connection.', 'x', 'live');
+      });
   }, [load]);
+
+  useEffect(() => {
+    alive.current = true;
+    reload();
+    return () => {
+      alive.current = false;
+    };
+  }, [reload]);
 
   const notReady = () => {
     if (loaded) return false;
-    toast('Your settings are still loading', 'clock', 'brand');
+    toast(failed ? 'Your settings could not be loaded. Tap Try again' : 'Your settings are still loading', 'clock', 'brand');
     return true;
   };
 
-  const saveSafety = async (patch: Partial<Safety>) => {
-    if (!supabase || !uid || notReady()) return;
-    const next = { ...safety, ...patch };
-    setSafety(next);
-    const { error } = await supabase.from('safety_settings').upsert({ user_id: uid, ...next, updated_at: new Date().toISOString() });
-    if (error) {
-      setSafety(safety);
-      toast('Could not save', 'x', 'live');
-    }
+  /** Queue a save of the latest state; on failure, show what the server really has. */
+  const enqueue = (write: () => PromiseLike<{ error: unknown }>) => {
+    queue.current = queue.current.then(async () => {
+      const { error } = await write();
+      if (error) {
+        toast('Could not save', 'x', 'live');
+        reload();
+      }
+    });
   };
 
-  const toggleGroup = async (kinds: string[], on: boolean) => {
+  const saveSafety = (patch: Partial<Safety>) => {
     if (!supabase || !uid || notReady()) return;
-    const prev = muted;
-    const next = on ? muted.filter((k) => !kinds.includes(k)) : [...new Set([...muted, ...kinds])];
-    setMuted(next);
-    const { error } = await supabase.from('notification_prefs').upsert({ user_id: uid, muted_kinds: next, updated_at: new Date().toISOString() });
-    if (error) {
-      setMuted(prev);
-      toast('Could not save', 'x', 'live');
-    }
+    safetyNow.current = { ...safetyNow.current, ...patch };
+    setSafety(safetyNow.current);
+    enqueue(() => supabase!.from('safety_settings').upsert({ user_id: uid, ...safetyNow.current, updated_at: new Date().toISOString() }));
+  };
+
+  const toggleGroup = (kinds: string[], on: boolean) => {
+    if (!supabase || !uid || notReady()) return;
+    const cur = mutedNow.current;
+    mutedNow.current = on ? cur.filter((k) => !kinds.includes(k)) : [...new Set([...cur, ...kinds])];
+    setMuted(mutedNow.current);
+    enqueue(() => supabase!.from('notification_prefs').upsert({ user_id: uid, muted_kinds: mutedNow.current, updated_at: new Date().toISOString() }));
   };
 
   if (!account) {
@@ -122,6 +144,14 @@ export default function SettingsScreen() {
   return (
     <Page overline="Profile" title="Privacy & notifications" subtitle="Your exact location is never shared. At most, your neighbourhood.">
       <View style={styles.body}>
+        {failed ? (
+          <View style={{ gap: space[2] }}>
+            <Text variant="body" tone="secondary">
+              Your settings could not be loaded.
+            </Text>
+            <Button label="Try again" onPress={reload} />
+          </View>
+        ) : null}
         <Audience label="Who can find my profile" value={safety.profile_visibility} onChange={(v) => saveSafety({ profile_visibility: v })} />
         <Audience label="Who sees my IRL moments by default" value={safety.irl_visibility} onChange={(v) => saveSafety({ irl_visibility: v })} />
         <Audience label="Who sees which activities I join" value={safety.activity_visibility} onChange={(v) => saveSafety({ activity_visibility: v })} />

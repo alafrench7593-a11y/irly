@@ -307,7 +307,7 @@ export const bali: CityContent = {
       going: ['p-dewa', 'p-mia'],
       extra: 6,
       host: 'Dewa · Chef',
-      description: 'Market tour, sambal from scratch and a long table dinner with the cooks.',
+      description: 'Market tour, sambal from scratch and a long-table dinner with the cooks.',
       highlights: ['Market tour', 'Sambal masterclass', 'Long-table dinner'],
       photo: 'dinnerGroup',
     }),

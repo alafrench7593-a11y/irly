@@ -53,7 +53,7 @@ async function titlesFor(items: SavedItem[]): Promise<Record<string, string>> {
 export default function SavedScreen() {
   const t = useTheme();
   const router = useRouter();
-  const { items, refresh } = useSaved();
+  const { items, failed, refresh } = useSaved();
   const auth = useAuthStatus();
   const [tab, setTab] = useState<Tab>('all');
   const [titles, setTitles] = useState<Record<string, string>>({});
@@ -94,7 +94,14 @@ export default function SavedScreen() {
         ) : (
           <>
             <Segmented options={TABS} value={tab} onChange={setTab} />
-            {!shown.length ? (
+            {failed && !shown.length ? (
+              <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+                <Text variant="body" tone="secondary" align="center">
+                  Your saved items could not be loaded.
+                </Text>
+                <Button label="Try again" size="sm" onPress={refresh} />
+              </View>
+            ) : !shown.length ? (
               <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
                 <Icon name="bookmark" size={24} color={t.c.textSecondary} />
                 <Text variant="body" tone="secondary" align="center">
