@@ -15,13 +15,26 @@ import { Easing } from 'react-native-reanimated';
  * whole codebase reads from one table.
  */
 
+/**
+ * Durations by role (IRLY brief, section 21):
+ * - fast (micro-interactions): press, like, chip, toggle
+ * - standard (navigation): tabs, pages, sheets
+ * - emphasized (major transitions): card to page, IRL menu, destination
+ * - cinematic: the match, onboarding, an IRL moment
+ */
 export const motion = {
   /** Fades, colour changes, content swap inside a control. */
-  fast: 150,
+  fast: 160,
   /** Press feedback, chips, small toggles. */
   normal: 260,
+  /** Navigation: tabs, pages, sheets. */
+  standard: 300,
   /** Camera recentring, larger fades. */
   slow: 400,
+  /** Major transitions: card → page, IRL menu, destination switch. */
+  emphasized: 500,
+  /** Match, onboarding, IRL moments. */
+  cinematic: 760,
 } as const;
 
 export const duration = {
@@ -68,6 +81,10 @@ export const spring = {
   soft,
   medium,
   strong,
+  /** Physical controls that open a world: the IRL button and its menu. */
+  physical: { duration: 420, dampingRatio: 0.74 },
+  /** The match moment and onboarding statements. */
+  cinematic: { duration: 760, dampingRatio: 0.88 },
   /** Press feedback: quick, barely lively. */
   press: { duration: 260, dampingRatio: 0.72 },
   /** Directive names: fast = press/snap, standard = travel, gentle = surfaces. */

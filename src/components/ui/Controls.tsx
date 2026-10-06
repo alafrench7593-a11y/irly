@@ -43,7 +43,9 @@ export const IconButton = memo(function IconButton({
   active,
 }: IconButtonProps) {
   const t = useTheme();
+  const night = t.mode === 'night';
   const fg = color ?? (variant === 'glass' ? '#FFFFFF' : variant === 'brand' ? t.c.onBrand : t.c.text);
+  const surfaceBg = night ? 'rgba(255,255,255,0.08)' : t.c.raised;
   const inner = (
     <View style={[styles.center, { width: size, height: size }]}>
       <Icon name={icon} size={size * 0.46} color={fg} fill={active ? fg : undefined} />
@@ -59,9 +61,9 @@ export const IconButton = memo(function IconButton({
         <View
           style={{
             borderRadius: size / 2,
-            backgroundColor: variant === 'surface' ? t.c.raised : variant === 'brand' ? t.c.brand : 'transparent',
+            backgroundColor: variant === 'surface' ? surfaceBg : variant === 'brand' ? t.c.brand : 'transparent',
             borderWidth: variant === 'surface' ? StyleSheet.hairlineWidth * 2 : 0,
-            borderColor: t.c.line,
+            borderColor: night ? 'rgba(255,255,255,0.12)' : t.c.line,
           }}
         >
           {inner}
@@ -105,8 +107,10 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
     if (selected) bump.set(withSequence(withTiming(1.06, { duration: 90 }), withSpring(1, spring.strong)));
   }, [selected, bump]);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
-  const bg = selected ? t.c.brand : onDark ? 'rgba(255,255,255,0.1)' : t.c.overlay;
-  const border = selected ? t.c.brand : onDark ? 'rgba(255,255,255,0.18)' : t.c.line;
+  const night = t.mode === 'night';
+  const glassy = onDark || night;
+  const bg = selected ? t.c.brand : glassy ? 'rgba(255,255,255,0.08)' : t.c.overlay;
+  const border = selected ? t.c.brand : glassy ? 'rgba(255,255,255,0.14)' : t.c.line;
   const fg = selected ? t.c.onBrand : t.c.text;
   const h = size === 'md' ? 40 : 34;
   return (
@@ -235,6 +239,7 @@ type SegmentedProps<T extends string> = {
 
 export function Segmented<T extends string>({ options, value, onChange }: SegmentedProps<T>) {
   const t = useTheme();
+  const night = t.mode === 'night';
   const [width, setWidth] = useState(0);
   const index = Math.max(0, options.findIndex((o) => o.value === value));
   const x = useSharedValue(0);
@@ -246,14 +251,22 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
   return (
     <View
       onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
-      style={[styles.segmented, { backgroundColor: t.c.surface, borderColor: t.c.line }]}
+      style={[
+        styles.segmented,
+        night
+          ? { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.12)' }
+          : { backgroundColor: t.c.surface, borderColor: t.c.line },
+      ]}
       accessibilityRole="tablist"
     >
       {segW > 0 ? (
         <Animated.View
           style={[
             styles.segPill,
-            { width: segW, backgroundColor: t.c.raised, borderColor: t.c.lineStrong, boxShadow: t.shadow.card },
+            // Noir: a white pill slides along a glass track (the RSVP look).
+            night
+              ? { width: segW, backgroundColor: t.c.brand, borderColor: t.c.brand, boxShadow: t.shadow.glow }
+              : { width: segW, backgroundColor: t.c.raised, borderColor: t.c.lineStrong, boxShadow: t.shadow.card },
             pill,
           ]}
         />
@@ -270,7 +283,11 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
             accessibilityRole="tab"
             accessibilityState={{ selected }}
           >
-            <Text variant="label" tone={selected ? 'primary' : 'tertiary'}>
+            <Text
+              variant="label"
+              tone={selected ? 'primary' : night ? 'secondary' : 'tertiary'}
+              color={selected && night ? t.c.onBrand : undefined}
+            >
               {o.label}
             </Text>
           </PressableScale>
@@ -293,7 +310,9 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
     transform: [{ scale: 1 + focus.value * 0.005 }],
   }));
   return (
-    <Animated.View style={[styles.field, { backgroundColor: t.c.surface }, animated, containerStyle]}>
+    <Animated.View
+      style={[styles.field, { backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.06)' : t.c.surface }, animated, containerStyle]}
+    >
       {icon ? <Icon name={icon} size={18} color={t.c.textTertiary} /> : null}
       <TextInput
         placeholder={placeholder ? tr(placeholder) : undefined}

@@ -72,6 +72,7 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236, comp
   const { ref, onPress, hidden } = useHeroCard(h.type, h.id);
   const joined = useStore((s) => Boolean(s.joined[h.id]));
   const live = isHappeningNow(h.item.when, city);
+  const t = useTheme();
   return (
     <PressableScale
       ref={ref}
@@ -79,7 +80,7 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236, comp
       style={{ height, opacity: hidden ? 0 : 1 }}
       accessibilityLabel={`${h.title}, ${whenLabel(h.item.when, city)}`}
     >
-      <Photo visual={photoOf(h)} light={city.light} scrim="strong" style={[StyleSheet.absoluteFill, styles.highlight]} recyclingKey={h.id} width={900}>
+      <Photo visual={photoOf(h)} light={city.light} scrim="strong" style={[StyleSheet.absoluteFill, styles.highlight, { borderColor: t.c.line }]} recyclingKey={h.id} width={900}>
         <View style={styles.highlightTop}>
           <Glass dark style={styles.timePill}>
             {live ? <LiveDot size={6} color={status.live} /> : null}
@@ -265,7 +266,7 @@ const styles = StyleSheet.create({
   categoryCount: { height: 26, paddingHorizontal: 10, borderRadius: 13, justifyContent: 'center' },
   categoryBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 4 },
   categoryBar: { width: 24, height: 4, borderRadius: 2, marginBottom: 6 },
-  highlight: { borderRadius: radius.xxl, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(10,10,10,0.06)' },
+  highlight: { borderRadius: radius.xxl, borderWidth: StyleSheet.hairlineWidth * 2 },
   highlightTop: { flexDirection: 'row', padding: 16 },
   timePill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, paddingHorizontal: 10, borderRadius: radius.pill },
   highlightBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 12 },

@@ -14,7 +14,8 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { openCreate, type CreatePreset } from './createStore';
 
-type Option = { id: string; label: string; hint: string; icon: IconName; color: string; preset?: CreatePreset; route?: string; soon?: string };
+/** `color` tints the icon; without one the icon takes the ink of the theme. */
+type Option = { id: string; label: string; hint: string; icon: IconName; color?: string; preset?: CreatePreset; route?: string; soon?: string };
 
 const OPTIONS: Option[] = [
   { id: 'sport', label: 'Sport', hint: 'Padel, football, run…', icon: 'trophy', color: '#34C759', preset: { categoryId: 'sport', format: 'sport' } },
@@ -24,7 +25,7 @@ const OPTIONS: Option[] = [
   { id: 'trip', label: 'Trip', hint: 'Abu Dhabi, Hatta, Oman…', icon: 'plane', color: '#007AFF', preset: { categoryId: 'travel', format: 'trip' } },
   { id: 'meetup', label: 'Meetup', hint: 'Coffee, networking', icon: 'handshake', color: '#A2845E', preset: { format: 'meetup' } },
   { id: 'live', label: 'Live', hint: 'What you\'re doing right now', icon: 'zap', color: '#FF3B30', route: '/live?compose=1' },
-  { id: 'post', label: 'Post', hint: 'Photo or text, IRL', icon: 'camera', color: '#0A0A0A', route: '/live?compose=1' },
+  { id: 'post', label: 'Post', hint: 'Photo or text, IRL', icon: 'camera', route: '/live?compose=1' },
   { id: 'community', label: 'Community', hint: 'A permanent group', icon: 'users', color: '#30B0C7', route: '/community/new' },
 ];
 
@@ -51,7 +52,7 @@ export function CreateMenu() {
     <>
       <View ref={anchor} collapsable={false} style={styles.anchorWrap}>
         <PressableScale haptic={false} scaleTo={0.97} onPress={show} accessibilityLabel="Create something" style={[styles.pill, { backgroundColor: t.c.brand, boxShadow: t.shadow.float }]}>
-          <View style={[styles.plus, { backgroundColor: 'rgba(255,255,255,0.14)' }]}>
+          <View style={[styles.plus, { backgroundColor: t.mode === 'night' ? 'rgba(5,5,6,0.07)' : 'rgba(255,255,255,0.14)' }]}>
             <Icon name="plus" size={22} color={t.c.onBrand} strokeWidth={2.4} />
           </View>
           <View style={{ flex: 1 }}>
@@ -105,6 +106,10 @@ function Menu({ origin, p, onClosed }: { origin: { x: number; y: number }; p: Sh
     }
   };
 
+  const night = t.mode === 'night';
+  const scrim = night
+    ? Platform.OS === 'web' ? 'rgba(5,5,6,0.6)' : 'rgba(5,5,6,0.38)'
+    : Platform.OS === 'web' ? 'rgba(246,246,244,0.55)' : 'rgba(246,246,244,0.3)';
   const backdrop = useAnimatedStyle(() => ({ opacity: p.value }));
   const title = useAnimatedStyle(() => ({
     opacity: interpolate(p.value, [0.3, 1], [0, 1], Extrapolation.CLAMP),
@@ -115,7 +120,7 @@ function Menu({ origin, p, onClosed }: { origin: { x: number; y: number }; p: Sh
     <Modal transparent visible animationType="none" statusBarTranslucent onRequestClose={() => close()}>
       <Animated.View style={[StyleSheet.absoluteFill, backdrop]}>
         <Glass style={StyleSheet.absoluteFill} border={false} intensity={blur.strong} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: Platform.OS === 'web' ? 'rgba(246,246,244,0.55)' : 'rgba(246,246,244,0.3)' }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: scrim }]} />
       </Animated.View>
       <PressableScale haptic={false} scaleTo={1} onPress={() => close()} style={StyleSheet.absoluteFill} accessibilityLabel="Close" />
       <View style={styles.sheet} pointerEvents="box-none">
@@ -142,6 +147,7 @@ function Menu({ origin, p, onClosed }: { origin: { x: number; y: number }; p: Sh
 
 function Tile({ option, index, p, onPress }: { option: Option; index: number; p: SharedValue<number>; origin: { x: number; y: number }; onPress: () => void }) {
   const t = useTheme();
+  const night = t.mode === 'night';
   // Each tile has its own progress, started `staggerStep` after the previous one.
   const own = useSharedValue(0);
   useEffect(() => {
@@ -156,9 +162,20 @@ function Tile({ option, index, p, onPress }: { option: Option; index: number; p:
   });
   return (
     <Animated.View style={[styles.cell, style]}>
-      <PressableScale haptic={false} scaleTo={0.94} onPress={onPress} accessibilityLabel={`${option.label}. ${option.hint}`} style={[styles.tile, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
-        <View style={[styles.tileIcon, { backgroundColor: `${option.color}1F` }]}>
-          <Icon name={option.icon} size={20} color={option.color} />
+      <PressableScale
+        haptic={false}
+        scaleTo={0.94}
+        onPress={onPress}
+        accessibilityLabel={`${option.label}. ${option.hint}`}
+        style={[
+          styles.tile,
+          night
+            ? { backgroundColor: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth * 2 }
+            : { backgroundColor: t.c.surface, boxShadow: t.shadow.card },
+        ]}
+      >
+        <View style={[styles.tileIcon, { backgroundColor: option.color ? `${option.color}1F` : t.c.brandSoft }]}>
+          <Icon name={option.icon} size={20} color={option.color ?? t.c.text} />
         </View>
         <Text variant="titleS" numberOfLines={1} adjustsFontSizeToFit>
           {option.label}

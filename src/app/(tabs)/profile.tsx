@@ -50,6 +50,7 @@ export default function Profile() {
   const bookings = useStore((s) => s.bookings);
   const hapticsOn = useStore((s) => s.hapticsOn);
   const setHaptics = useStore((s) => s.setHaptics);
+  const setAppearance = useStore((s) => s.setAppearance);
   const now = useNow();
   const days = profile.arrivedAt ? Math.max(1, Math.round((now - profile.arrivedAt) / 86_400_000)) : 0;
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -224,6 +225,13 @@ export default function Profile() {
               label="Language"
               value={LANGS.find((l) => l.id === langSetting)?.label}
               onPress={() => setLang(langSetting === 'auto' ? 'fr' : langSetting === 'fr' ? 'en' : 'auto')}
+            />
+            <Divider inset={16} />
+            <SettingLink
+              icon={t.mode === 'night' ? 'moon' : 'sun'}
+              label="Appearance"
+              value={t.mode === 'night' ? 'Dark' : 'Light'}
+              onPress={() => setAppearance(t.mode === 'night' ? 'day' : 'night')}
             />
             <Divider inset={16} />
             <SettingLink icon="user" label="IRLY account" value={account ? 'Signed in' : 'Sign in to sync'} onPress={() => router.push('/account')} />

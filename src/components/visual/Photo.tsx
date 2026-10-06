@@ -6,6 +6,7 @@ import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, wi
 import { photo as photoUrl } from '@/data/photos';
 import type { Visual } from '@/data/types';
 import type { LightId } from '@/theme/lights';
+import { useTheme } from '@/theme/useTheme';
 
 type Props = {
   visual: Visual;
@@ -30,12 +31,15 @@ const SCRIMS = {
 /**
  * A real photograph. While it loads, the frame is a skeleton with the
  * exact geometry of the photo: grey with a soft breathing pulse. The photo
- * then cross-fades in and is cached on disk for next time.
+ * then arrives blur-to-sharp (a soft cross-dissolve) and is cached on disk
+ * for next time.
  */
 export const Photo = memo(function Photo({ visual, light, style, scrim = 'none', width = 900, blur, children, recyclingKey }: Props) {
   // loading: breathing placeholder · done: photo shown, or the plain
   // destination colours if the network refused it (no endless pulse).
   const [status, setStatus] = useState<'loading' | 'done'>('loading');
+  const t = useTheme();
+  const night = t.mode === 'night';
   void light;
   const pulse = useSharedValue(0);
   const loading = status === 'loading';
@@ -53,13 +57,13 @@ export const Photo = memo(function Photo({ visual, light, style, scrim = 'none',
 
   return (
     <View style={[styles.root, style]}>
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: '#E4E4E1' }]} />
-      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: '#F4F4F2' }, pulseStyle]} pointerEvents="none" />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: night ? '#15171B' : '#E4E4E1' }]} />
+      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: night ? '#20232A' : '#F4F4F2' }, pulseStyle]} pointerEvents="none" />
       <Image
         source={{ uri: visual.uri || photoUrl(visual.photo, width) }}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
-        transition={{ duration: 450, effect: 'cross-dissolve' }}
+        transition={{ duration: 520, effect: 'cross-dissolve' }}
         cachePolicy="memory-disk"
         recyclingKey={recyclingKey}
         blurRadius={blur}

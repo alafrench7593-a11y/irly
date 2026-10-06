@@ -17,6 +17,7 @@ import { useLives } from '@/features/live/liveStore';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { space } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
 import { MapButton, MapTopBar, ModeSwitch, searchMap, type Layer } from './MapControls';
 import { ClusterView, MarkerView } from './MapMarkers';
 import { MapSheet, type Snap } from './MapSheet';
@@ -48,6 +49,8 @@ const MIN_SPAN: Record<MarkerType, number> = {
  */
 export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const insets = useSafeAreaInsets();
+  const t = useTheme();
+  const night = t.mode === 'night';
   const frame = useFrame();
   const tabSpace = useTabBarSpace();
   const map = useRef<MapView>(null);
@@ -188,8 +191,8 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
         toolbarEnabled={false}
         pitchEnabled
         rotateEnabled
-        userInterfaceStyle="light"
-        customMapStyle={Platform.OS === 'android' ? ANDROID_STYLE : undefined}
+        userInterfaceStyle={night ? 'dark' : 'light'}
+        customMapStyle={Platform.OS === 'android' ? (night ? ANDROID_NIGHT : ANDROID_STYLE) : undefined}
         mapPadding={{ top: insets.top + 110, right: 0, bottom: tabSpace, left: 0 }}
       >
         {placed.map((p) =>
@@ -275,6 +278,18 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
     </View>
   );
 }
+
+/** Google Maps on Android, IRLY Noir: near-black land, deep blue water, roads as faint light. */
+const ANDROID_NIGHT = [
+  { elementType: 'geometry', stylers: [{ color: '#121417' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8A9099' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0B0C0E' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#22252B' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2C3038' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0A1621' }] },
+];
 
 /** Google Maps on Android: quiet light style so IRLY markers carry the colour. */
 const ANDROID_STYLE = [

@@ -62,9 +62,14 @@ export const Button = memo(function Button({
 
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
+  const night = t.mode === 'night';
   const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string; shadow?: string }> = {
     primary: { bg: t.c.brand, fg: t.c.onBrand, shadow: t.shadow.glow },
-    secondary: { bg: t.c.raised, fg: t.c.text, border: t.c.lineStrong },
+    // On IRLY Noir the secondary action is a pane of smoked glass, never a
+    // second solid block competing with the white primary.
+    secondary: night
+      ? { bg: 'rgba(255,255,255,0.08)', fg: t.c.text, border: 'rgba(255,255,255,0.16)' }
+      : { bg: t.c.raised, fg: t.c.text, border: t.c.lineStrong },
     ghost: { bg: 'transparent', fg: t.c.text },
     glass: { bg: 'rgba(255,255,255,0.16)', fg: '#FFFFFF', border: 'rgba(255,255,255,0.22)' },
     inverse: { bg: t.c.text, fg: t.c.bg },

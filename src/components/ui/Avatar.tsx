@@ -30,6 +30,7 @@ type Props = {
  */
 export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring, photo }: Props) {
   const t = useTheme();
+  const night = t.mode === 'night';
   const ringW = ring ? Math.max(2, size * 0.06) : 0;
   return (
     <View style={{ width: size, height: size }}>
@@ -43,10 +44,10 @@ export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verif
           borderColor: t.c.bg,
         }}
       >
-        <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: hsl(hue, 10, 89) }]}>
+        <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: night ? hsl(hue, 12, 20) : hsl(hue, 10, 89) }]}>
           <Text
             allowFontScaling={false}
-            style={{ fontFamily: font.heavy, fontSize: size * 0.36, color: '#3A3A3A', letterSpacing: -0.3 }}
+            style={{ fontFamily: font.heavy, fontSize: size * 0.36, color: night ? 'rgba(255,255,255,0.88)' : '#3A3A3A', letterSpacing: -0.3 }}
           >
             {initials(name)}
           </Text>

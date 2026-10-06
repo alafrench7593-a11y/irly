@@ -16,12 +16,13 @@ export type Theme = {
 };
 
 /**
- * v4: the app is light; onboarding stays immersive. The `appearance`
- * setting and the city's local time no longer change the palette.
+ * v5: IRLY Noir everywhere by default (onboarding and app share one
+ * immersive world). "Light" in Settings brings back IRLY Clair once the
+ * member is in the app; onboarding always stays dark.
  */
-export function resolveMode(_appearance: 'auto' | 'day' | 'night', cityId: CityId | null): Mode {
-  // Onboarding is immersive (photos, white type, glass); the app is light.
-  return cityId ? 'day' : 'night';
+export function resolveMode(appearance: 'auto' | 'day' | 'night', cityId: CityId | null): Mode {
+  if (!cityId) return 'night';
+  return appearance === 'day' ? 'day' : 'night';
 }
 
 export function buildTheme(mode: Mode, lightId: LightId): Theme {
