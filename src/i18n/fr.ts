@@ -865,7 +865,6 @@ export const fr: Record<string, string> = {
   'Book a call': 'Réserver un appel',
   'Build here': 'Construire ici',
   'Building your': 'On prépare ton',
-  'CONNECT · RELOCATE · BELONG': 'RENCONTRER · S’INSTALLER · TROUVER SA PLACE',
   'Call booked. Check your messages': 'Appel réservé. Regarde tes messages',
   'Buddhism': 'Bouddhisme',
   'Christianity': 'Christianisme',
