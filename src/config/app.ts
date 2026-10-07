@@ -12,12 +12,18 @@ export const LEGAL_REQUIRED = '[LEGAL INFORMATION REQUIRED]';
 export const APP = {
   /** Trade name shown in the app. */
   name: 'IRLY',
-  /** Registered company that operates IRLY. */
+  /** Who operates IRLY: an individual (sole operator), not a company. */
+  operatorType: 'individual' as 'individual' | 'company',
+  /** Full legal name of the person who operates IRLY. */
   legalEntity: LEGAL_REQUIRED,
-  /** Registered address of that company. */
-  legalAddress: LEGAL_REQUIRED,
-  /** Country whose law governs the Terms, and the competent courts. */
-  governingLaw: LEGAL_REQUIRED,
+  /** Postal address of the operator. */
+  legalAddress: 'Azizi Riviera 3, Dubai, United Arab Emirates',
+  /** Law that governs the Terms, and the competent courts. */
+  governingLaw: 'the laws of the Emirate of Dubai and the applicable federal laws of the United Arab Emirates, and the courts of Dubai have jurisdiction',
+  /** Data protection law that applies to the operator. */
+  dataLaw: 'the UAE Personal Data Protection Law (Federal Decree-Law No. 45 of 2021)',
+  /** Where the IRLY database and files are hosted. */
+  hosting: 'the European Union (Ireland), with Supabase on Amazon Web Services',
   /** Help and account questions. */
   supportEmail: LEGAL_REQUIRED,
   /** Privacy requests (access, deletion, objections). */
@@ -32,9 +38,9 @@ export const APP = {
 
 /** Versions and dates of the legal texts shown in the app. */
 export const LEGAL_VERSIONS = {
-  privacy: { version: '0.1 (draft)', updated: '2026-10-07' },
-  terms: { version: '0.1 (draft)', updated: '2026-10-07' },
-  guidelines: { version: '0.1 (draft)', updated: '2026-10-07' },
+  privacy: { version: '0.2 (draft)', updated: '2026-10-07' },
+  terms: { version: '0.2 (draft)', updated: '2026-10-07' },
+  guidelines: { version: '0.2 (draft)', updated: '2026-10-07' },
 } as const;
 
 /**

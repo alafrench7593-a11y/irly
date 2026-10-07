@@ -195,11 +195,11 @@ Each problem is set out as **Problem → Cause → Fix → Test**.
 | Messages | chat | `messages` | conversation members | until deletion | delete own | Delete account |
 | Posts, comments, lives, activities | community | their tables, `irl-media`, `activity-photos` | per audience | until deletion; lives 4 h | delete own | Delete account |
 | Connections, blocks | social graph, safety | `friendships`, `blocks` | the two people | until deletion | yes | Delete account |
-| Reports | moderation | `reports`, `moderation_cases`, `private.removed_content` | reporter (own); admins | `[LEGAL INFORMATION REQUIRED]` | no | kept for moderation |
+| Reports | moderation | `reports`, `moderation_cases`, `private.removed_content` | reporter (own); admins | until handled + 12 months (enforced on the server) | no | kept for moderation |
 | Push token + language | notifications | `push_tokens`, `push_outbox` (7 days) | server only | until sign-out or deletion | Settings switch | sign-out or Delete account |
 | Usage events | product statistics | `analytics_events` (no text, email, location, faith or gender) | admins | 13 months | no | removed after 13 months |
 | Device location | centre the map | phone only, never sent | nobody | not stored | — | — |
-| Support requests | help | `support_requests` | admins | `[LEGAL INFORMATION REQUIRED]` | no | not linked once the account is deleted |
+| Support requests | help | `support_requests` | admins | 24 months (enforced on the server) | no | not linked once the account is deleted |
 
 Third-party SDKs: none for analytics or advertising. The services used are Supabase, the Expo push service, Apple/Google sign-in if switched on, and the phone's maps.
 
@@ -207,7 +207,8 @@ Third-party SDKs: none for analytics or advertising. The services used are Supab
 
 ## Manual check required
 
-- Fill every `[LEGAL INFORMATION REQUIRED]` in `src/config/app.ts`: company, address, support, privacy and safety emails, governing law, hosting region, legal bases, retention of reports and support requests. Then have the three texts reviewed by a lawyer.
+- Filled on 7 October 2026: individual operator, address (Azizi Riviera 3, Dubai), Dubai law and courts, UAE PDPL, hosting in the EU (Ireland; inferred from the database address, to confirm in Supabase → Settings → General), legal bases, data protection authority, and retention (reports 12 months after closing, support 24 months, both enforced on the server).
+- Still to fill in `src/config/app.ts` and `src/content/legal.ts`: the operator's full legal name, the exact public email(s), the safeguards for transfers outside the EU and UAE, and the liability clause. Then have the three texts reviewed by a lawyer (UAE).
 - App Store Connect:
   - privacy nutrition labels (from the inventory above);
   - age rating (social, user-to-user chat, meeting people: 17+ suggested);

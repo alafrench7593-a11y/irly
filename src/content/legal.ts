@@ -10,7 +10,7 @@ import { APP, LEGAL_VERSIONS } from '@/config/app';
 export type LegalDoc = 'privacy' | 'terms' | 'guidelines';
 export type LegalSection = { title: string; body: string[] };
 
-const who = `${APP.name} is operated by ${APP.legalEntity}, ${APP.legalAddress}.`;
+const who = `${APP.name} is operated by ${APP.legalEntity}, ${APP.operatorType === 'individual' ? 'an individual (sole operator), ' : ''}${APP.legalAddress}.`;
 
 export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: string; intro: string; sections: LegalSection[] }> = {
   privacy: {
@@ -45,18 +45,19 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       {
         title: 'Service providers',
         body: [
-          'Supabase (database, authentication, file storage and realtime), hosting region: [LEGAL INFORMATION REQUIRED].',
+          `Supabase (database, authentication, file storage and realtime). Your data is stored in ${APP.hosting}.`,
           'Expo push notification service and Apple / Google push services, to deliver notifications.',
           'Apple and Google sign-in, if you choose them.',
           'Map tiles from the map provider of your phone (Apple Maps on iPhone).',
-          'International transfers and the safeguards used: [LEGAL INFORMATION REQUIRED].',
+          'Some providers (the Expo push service, Apple and Google) may process data in the United States or other countries. The contractual safeguards that cover these transfers: [LEGAL INFORMATION REQUIRED].',
         ],
       },
       {
         title: 'How long we keep data',
         body: [
           'Your account and content: until you delete your account.',
-          'When you delete your account, your profile, photos, professional and IRLY Girl profiles, messages, posts, connections and notifications are deleted. Content that was reported to moderators is kept for the time needed to handle the report and meet legal obligations: [LEGAL INFORMATION REQUIRED].',
+          'When you delete your account, your profile, photos, professional and IRLY Girl profiles, messages, posts, connections and notifications are deleted. Content that was reported to moderators, and the report itself, is kept until the report is handled and then 12 months, unless the law requires longer.',
+          'Messages to support: 24 months.',
           'Push notification texts: 7 days. Usage events: 13 months.',
         ],
       },
@@ -67,8 +68,8 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
           'Correction: Edit profile and Professional profile.',
           'Deletion: Settings → Delete account deletes your account and data from our servers.',
           'Visibility: Settings → Privacy & notifications (who can find you, who sees your live posts and activities, location precision, notifications).',
-          `Objection, restriction and complaints: write to ${APP.privacyEmail}. You may also complain to your data protection authority: [LEGAL INFORMATION REQUIRED].`,
-          'Legal basis for each use (contract, consent, legitimate interest): [LEGAL INFORMATION REQUIRED].',
+          `Objection, restriction and complaints: write to ${APP.privacyEmail}. You may also complain to the UAE Data Office, or to the data protection authority where you live (for example the CNIL in France).`,
+          `Why we may use your data: to provide the service you sign up for (account, profile, chats, activities), with your consent where it is needed (notifications, optional details such as faith, your photos), and to keep IRLY safe and working (moderation, security, statistics without personal content). This follows ${APP.dataLaw} and, for people in the European Union, the GDPR (contract, consent and legitimate interests).`,
         ],
       },
       {

@@ -773,6 +773,21 @@ select pg_temp.as_admin();
 select pg_temp.check((select first_name from public.profiles where id = '00000000-0000-0000-0000-00000000000c') = 'Carl', 'nobody edits someone else''s profile');
 update public.profiles set first_name = 'Bea', city_id = 'dubai' where id = '00000000-0000-0000-0000-00000000000b';
 
+-- ───── Retention ─────
+select pg_temp.as_admin();
+insert into private.removed_content (source, id, body, removed_at) values ('messages', gen_random_uuid(), 'old', now() - interval '13 months'), ('messages', gen_random_uuid(), 'recent', now());
+insert into public.support_requests (user_id, kind, body, created_at) values (null, 'question', 'very old question', now() - interval '25 months');
+-- (triggers off for this back-dating only: updated_at is normally set to now)
+set session_replication_role = replica;
+update public.moderation_cases set status = 'dismissed', updated_at = now() - interval '13 months'
+  where report_id = (select id from public.reports where category = 'threats' limit 1);
+set session_replication_role = origin;
+select private.purge_retention();
+select pg_temp.check(not exists (select 1 from private.removed_content where body = 'old') and exists (select 1 from private.removed_content where body = 'recent'), 'removed text is kept 12 months');
+select pg_temp.check(not exists (select 1 from public.support_requests where body = 'very old question'), 'support requests are kept 24 months');
+select pg_temp.check(not exists (select 1 from public.reports where category = 'threats'), 'closed reports go 12 months after closing');
+select pg_temp.check(exists (select 1 from public.reports where category = 'scam'), 'open reports stay until handled');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
