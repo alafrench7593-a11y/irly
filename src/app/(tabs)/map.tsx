@@ -284,7 +284,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
 
       <Animated.View entering={enter.fade(1, 160)} style={[styles.controls, { top: insets.top + 118 }]} pointerEvents="box-none">
         <ModeSwitch three={mode3d} onChange={setMode} />
-        <MapButton icon="locate" label="Recenter" onPress={() => centerOn(hub, START_Z)} />
+        <MapButton icon="locate" label="Recentre" onPress={() => centerOn(hub, START_Z)} />
         <MapButton icon="plus" label="Zoom in" onPress={() => zoomBy(1.35)} />
         <MapButton icon="minus" label="Zoom out" onPress={() => zoomBy(1 / 1.35)} />
       </Animated.View>

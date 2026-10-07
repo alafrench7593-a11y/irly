@@ -182,7 +182,7 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
           })}
           {!list.length ? (
             <Text variant="bodyS" tone="secondary" style={{ padding: space[4] }}>
-              {tr('No neighbourhood called « {q} » in {city}.', { q: q.trim(), city: city.name })}
+              {tr('No neighbourhood called “{q}” in {city}.', { q: q.trim(), city: city.name })}
             </Text>
           ) : null}
         </ScrollView>

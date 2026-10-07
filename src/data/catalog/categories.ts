@@ -65,7 +65,7 @@ const s = (id: string, label: string, activities?: CatalogActivity[]): CatalogSu
 const a = (id: string, label: string, place?: string, cityId?: CityId, note?: string): CatalogActivity => ({ id, label, place, cityId, note });
 const list = (...labels: string[]) => labels.map((l) => s(l.toLowerCase().replace(/[^a-z0-9]+/g, '-'), l));
 
-const MOSQUE_NOTE = 'A place of worship: modest clothing covering arms and legs, headscarf for women (provided at the entrance), quiet voices. Check visiting hours, closed to visitors during some prayer times.';
+const MOSQUE_NOTE = 'A place of worship: modest clothing covering arms and legs, headscarf for women (provided at the entrance), quiet voices. Check visiting hours: closed to visitors during some prayer times.';
 
 export const CATEGORIES: CatalogCategory[] = [
   {

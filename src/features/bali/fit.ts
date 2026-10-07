@@ -127,7 +127,7 @@ const THEME_TITLE: Record<PlanTheme, string> = {
   community: 'Join a community meetup',
   wellness: 'Yoga or wellness morning',
   food: 'Try the local food scene',
-  family: 'Family day: beach, park or kids activity',
+  family: "Family day: beach, park or kids' activity",
   housing: 'Visit places to live',
   healthcare: 'Find the nearest clinic, hospital and pharmacy',
   social: 'Evening event with IRLY members',

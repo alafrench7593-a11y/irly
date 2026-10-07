@@ -159,7 +159,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
             <Photo visual={{ photo: 'familyBeach' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
           </View>
           <View style={{ padding: 16 }}>
-          <GSection title="Plan something with the kids" hint="Playdates, beach, park, kids sports, workshops.">
+          <GSection title="Plan something with the kids" hint="Playdates, beach, park, kids' sports, workshops.">
             <QuickPlan cityId={cityId} types={MOM_PLANS} palette="girl" />
           </GSection>
           </View>

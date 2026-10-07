@@ -45,7 +45,7 @@ export default function LookingStep() {
       total={4}
       overline="Almost there"
       title="What are you looking for?"
-      subtitle="Pick as many as you like. IRLY uses it to suggest people, sessions and communities."
+      subtitle="Pick as many as you like. IRLY uses them to suggest people, sessions and communities."
       cta="Continue"
       canContinue={looking.length > 0}
       onContinue={() => {

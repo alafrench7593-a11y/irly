@@ -113,7 +113,7 @@ export default function AccountScreen() {
 
   if (!hasBackend) {
     return (
-      <Page title="Account" subtitle="The IRLY server is not configured in this build.">
+      <Page title="Account" subtitle="Accounts aren't available in this version of IRLY.">
         <View />
       </Page>
     );

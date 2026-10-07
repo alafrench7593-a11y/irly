@@ -61,7 +61,7 @@ export default function Support() {
     });
     setBusy(false);
     if (error) {
-      toast(/slow down/i.test(error.message) ? tr('You sent several messages already. Try again in an hour.') : tr('Could not send. Check your connection and try again.'), 'x', 'live');
+      toast(/slow down/i.test(error.message) ? tr("You've already sent several messages. Try again in an hour.") : tr('Could not send. Check your connection and try again.'), 'x', 'live');
       return;
     }
     setBody('');

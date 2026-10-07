@@ -232,7 +232,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
           <View style={{ flex: 1, gap: 2 }}>
             <Text variant="titleS">Show me in Networking</Text>
             <Text variant="caption" tone="tertiary">
-              {d.visible ? tr('Professionals of the country can find you') : tr('Hidden: only your connections keep you')}
+              {d.visible ? tr('Professionals across the country can find you') : tr('Hidden: only your connections can see you')}
             </Text>
           </View>
           <View style={[styles.switch, { backgroundColor: d.visible ? t.c.text : t.c.line }]}>
