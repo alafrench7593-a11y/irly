@@ -14,17 +14,25 @@ const picksPath = `${DIR}/faces.json`;
 const picks = fs.existsSync(picksPath) ? JSON.parse(fs.readFileSync(picksPath, 'utf8')) : {};
 const exclude = new Set(JSON.parse(fs.readFileSync(`${DIR}/faces-exclude.json`, 'utf8')));
 const QUERIES = {
-  f: ['woman portrait', 'smiling woman', 'young woman portrait', 'woman headshot', 'woman face', 'businesswoman', 'girl portrait smile'],
-  m: ['man portrait', 'smiling man', 'young man portrait', 'man headshot', 'man face', 'businessman', 'guy portrait smile'],
+  f: ['woman portrait', 'smiling woman', 'young woman portrait', 'woman headshot', 'businesswoman'],
+  m: ['man portrait', 'smiling man', 'young man portrait', 'man headshot', 'businessman'],
 };
 
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Anonymous Openverse: at most 20 results a page, and a gentle pace.
 async function candidates(g) {
   const out = [];
   for (const q of QUERIES[g]) {
     for (const page of [1, 2]) {
-      const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0&source=stocksnap&page_size=40&page=${page}`;
-      const r = await fetch(u, { headers: { 'user-agent': 'IRLY demo portraits (github actions)' } });
-      if (!r.ok) { console.log('openverse', r.status, q); continue; }
+      const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0&source=stocksnap&page_size=20&page=${page}`;
+      let r;
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        await wait(1500 + attempt * 4000);
+        r = await fetch(u, { headers: { 'user-agent': 'IRLY demo portraits (github actions)' } });
+        if (r.status !== 429) break;
+      }
+      if (!r.ok) { console.log('openverse', r.status, q, (await r.text()).slice(0, 160)); continue; }
       const j = await r.json();
       for (const x of j.results ?? []) if (!out.some((o) => o.id === x.id)) out.push(x);
     }

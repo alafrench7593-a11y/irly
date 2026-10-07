@@ -48,7 +48,10 @@ async function open(signedIn) {
     const j = (x) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(x) });
     if (!signedIn) return route.abort();
     const sign = u.match(/object\/sign\/profile-photos\/([^?]+)/);
-    if (sign && route.request().method() === 'GET') return route.fulfill({ path: `public-photos/faces/${sign[1]}`, contentType: 'image/jpeg' });
+    if (sign && route.request().method() === 'GET') {
+      const f = `public-photos/faces/${sign[1]}`;
+      return fs.existsSync(f) ? route.fulfill({ path: f, contentType: 'image/jpeg' }) : route.fulfill({ status: 404 });
+    }
     if (u.includes('object/sign/profile-photos')) {
       const paths = JSON.parse(route.request().postData() || '{}').paths || [];
       return j(paths.map((p) => ({ path: p, signedURL: `/object/sign/profile-photos/${p}?token=demo`, error: null })));
@@ -129,6 +132,30 @@ m.on('idle',()=>{document.title='ready'});</script></body></html>`);
   await page.screenshot({ path: `${OUT}/dubai-map.jpg`, type: 'jpeg', quality: 82 });
   console.log('shot dubai-map');
   await ctx.close();
+}
+
+// Social card (1200×630) from the website's own hero, once the screens above exist.
+if (!only || only.includes('og')) {
+  const { execFileSync } = await import('node:child_process');
+  execFileSync('node', ['.github/scripts/site-build.mjs'], { stdio: 'inherit' });
+  const site = http
+    .createServer((q, r) => {
+      let f = path.join('dist/site', decodeURIComponent(q.url.split('?')[0].replace(/^\/irly\/site/, '')));
+      if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+      if (!fs.existsSync(f)) { r.statusCode = 404; return r.end(); }
+      r.setHeader('content-type', types[path.extname(f)] || (f.endsWith('.jpg') ? 'image/jpeg' : f.endsWith('.webp') ? 'image/webp' : 'application/octet-stream'));
+      fs.createReadStream(f).pipe(r);
+    })
+    .listen(8097);
+  const ctx = await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1, colorScheme: 'dark' });
+  await ctx.addInitScript(() => { try { sessionStorage.setItem('irly-intro', '1'); } catch (e) {} });
+  const page = await ctx.newPage();
+  await page.goto('http://localhost:8097/irly/site/');
+  await page.waitForTimeout(5000);
+  await page.screenshot({ path: 'site/og.jpg', type: 'jpeg', quality: 82 });
+  console.log('shot og');
+  await ctx.close();
+  site.close();
 }
 
 await browser.close();
