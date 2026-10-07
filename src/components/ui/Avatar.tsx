@@ -24,9 +24,9 @@ type Props = {
 
 /**
  * Avatars: initials on a grey disc (v3 is black and white; the hue only
- * shifts the grey by a hair so neighbours stay distinguishable). Real
- * photos plug into the same component later; until then nobody is
- * represented by a stranger's face.
+ * shifts the grey by a hair so neighbours stay distinguishable). A photo,
+ * when there is one, covers the initials. Real members show their own
+ * photo; example portraits exist only in the demonstration build.
  */
 export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring, photo }: Props) {
   const t = useTheme();
@@ -94,7 +94,7 @@ export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verif
 });
 
 type StackProps = {
-  people: { id: string; name: string; hue: number }[];
+  people: { id: string; name: string; hue: number; photo?: string }[];
   size?: number;
   max?: number;
   extra?: number;
@@ -108,7 +108,7 @@ export const AvatarStack = memo(function AvatarStack({ people, size = 26, max = 
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {shown.map((p, i) => (
         <View key={p.id} style={{ marginLeft: i === 0 ? 0 : -size * 0.32, zIndex: max - i }}>
-          <Avatar name={p.name} hue={p.hue} size={size} ring />
+          <Avatar name={p.name} hue={p.hue} size={size} ring photo={p.photo} />
         </View>
       ))}
       {rest > 0 ? (

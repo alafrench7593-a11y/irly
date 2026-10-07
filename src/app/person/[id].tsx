@@ -76,7 +76,7 @@ export default function PersonProfile() {
                 );
               }}
             >
-              <Avatar name={person.name} hue={person.hue} size={104} online={person.online} />
+              <Avatar name={person.name} hue={person.hue} size={104} online={person.online} photo={person.photo} />
             </View>
           </Animated.View>
           <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>

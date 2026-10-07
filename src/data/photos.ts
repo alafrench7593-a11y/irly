@@ -201,6 +201,13 @@ export const LIBRARY = [
 const LIBRARY_SET = new Set<string>(LIBRARY);
 const LIBRARY_BASE = 'https://alafrench7593-a11y.github.io/irly/photos';
 
+/**
+ * Example portraits for the demonstration build only (CC0 stock photos,
+ * fetched by the photo workflow into /irly/photos/faces/). Real members
+ * always show their own photo or their initials.
+ */
+export const portrait = (id: string) => `${LIBRARY_BASE}/faces/${id}.jpg`;
+
 export type PhotoKey = keyof typeof ids | (typeof LIBRARY)[number];
 
 export const PHOTO_IDS = ids;

@@ -5,6 +5,7 @@ import { GIRLS as EXAMPLE_GIRLS } from '@/data/content/girls';
 const GIRLS = DEMO ? EXAMPLE_GIRLS : [];
 import { hasSession, supabase } from '@/lib/supabase';
 import { useStore } from '@/state/store';
+import { portrait } from '@/data/photos';
 import { DEFAULT_WEIGHTS, matchScore, normalizeReasons, type MatchProfile, type Reasons, type Weights } from './compat';
 import { useGirlStore } from './girlStore';
 import type { Candidate, Filters, MatchAction, MatchProfileDraft, MatchResult, MatchState, MatchSummary, ReportCategory } from './types';
@@ -307,7 +308,7 @@ const deviceApi: MatchApi = {
           age: hidden('age') ? null : g.person.age,
           cityId: g.person.cityId,
           bio: g.match.bio,
-          photoUrls: [],
+          photoUrls: [portrait(g.person.id)],
           cover: g.cover,
           hue: g.person.hue,
           interests: g.match.interests,
@@ -359,7 +360,7 @@ const deviceApi: MatchApi = {
           firstName: g?.person.name ?? 'IRLY member',
           hue: g?.person.hue ?? 0,
           cover: g?.cover,
-          photoUrls: [],
+          photoUrls: g ? [portrait(g.person.id)] : [],
           score: m.score,
           reasons: m.reasons,
           createdAt: m.createdAt,

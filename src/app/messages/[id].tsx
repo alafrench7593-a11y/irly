@@ -387,7 +387,7 @@ function Thread() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.intro}>
-            {person ? <Avatar name={person.name} hue={person.hue} size={64} verified={person.verified} /> : null}
+            {person ? <Avatar name={person.name} hue={person.hue} size={64} verified={person.verified} photo={person.photo} /> : null}
             <Text variant="titleM" align="center">
               {conversation.title}
             </Text>
@@ -468,7 +468,7 @@ function Thread() {
           </View>
           {person ? (
             <PressableScale onPress={() => router.push(`/person/${person.id}`)} accessibilityLabel={`${person.name}'s profile`}>
-              <Avatar name={person.name} hue={person.hue} size={40} />
+              <Avatar name={person.name} hue={person.hue} size={40} photo={person.photo} />
             </PressableScale>
           ) : (
             <View style={{ width: 40 }} />

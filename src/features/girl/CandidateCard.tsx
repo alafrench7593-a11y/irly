@@ -159,7 +159,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         <View style={styles.bottom} pointerEvents="none">
           <Glass style={styles.panel} intensity={60}>
             <View style={styles.nameRow}>
-              <Avatar name={c.firstName} hue={c.hue} size={36} />
+              <Avatar name={c.firstName} hue={c.hue} size={36} photo={c.photoUrls[0]} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleL" color={girl.ink} numberOfLines={1}>
                   {c.firstName}

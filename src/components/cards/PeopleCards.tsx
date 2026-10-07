@@ -74,7 +74,7 @@ export const PersonCard = memo(function PersonCard({ match, width }: { match: Ma
     >
       <View style={styles.personTop}>
         <View ref={face} collapsable={false}>
-          <Avatar name={p.name} hue={p.hue} size={56} online={p.online} verified={p.verified} />
+          <Avatar name={p.name} hue={p.hue} size={56} online={p.online} verified={p.verified} photo={p.photo} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <View style={styles.row}>

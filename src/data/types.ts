@@ -111,6 +111,8 @@ export type Person = {
   /** Seed for the generated avatar gradient. */
   hue: number;
   online?: boolean;
+  /** Profile photo (example portrait in the demo build). */
+  photo?: string;
 };
 
 /* ───────────────────────── Things to do ───────────────────────── */

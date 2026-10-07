@@ -1,0 +1,46 @@
+name: Website screens
+
+# Example portraits (demo build only) and screens of the app for the website,
+# taken where photos and map tiles load. Commits public-photos/faces and site/shots.
+
+on:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/scripts/faces*', '.github/scripts/site-shots.mjs', '.github/workflows/site-shots.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: site-shots
+  cancel-in-progress: true
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: sudo apt-get install -y imagemagick >/dev/null
+      - name: Example portraits
+        run: node .github/scripts/faces.mjs
+      - run: npm ci
+      - name: Demo build
+        run: EXPO_PUBLIC_DEMO=1 npx expo export --platform web --output-dir dist-demo
+      - name: Screens
+        run: |
+          npm install --no-save playwright@1
+          npx playwright install --with-deps chromium
+          node .github/scripts/site-shots.mjs dist-demo
+      - name: Contact sheet (for review)
+        run: montage -label '%t' -pointsize 14 public-photos/faces/*.jpg -tile 9x -geometry 160x160+4+4 site/shots/_faces.jpg || true
+      - name: Commit
+        run: |
+          git config user.name irly-bot
+          git config user.email bot@irly.app
+          git add public-photos/faces .github/scripts/faces.json site/shots
+          git diff --cached --quiet || (git commit -m "Website screens and example portraits" && git pull --rebase && git push)

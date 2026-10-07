@@ -21,24 +21,10 @@ import { useTheme } from '@/theme/useTheme';
 import { MapButton, MapTopBar, ModeSwitch, searchMap, type Layer } from './MapControls';
 import { ClusterView, MarkerView } from './MapMarkers';
 import { MapSheet, type Snap } from './MapSheet';
-import { buildMarkers, type MapMarkerData, type MarkerType } from './markers';
+import { buildMarkers, type MapMarkerData } from './markers';
+import { placeMarkers, STREET, type Located } from './place';
 
 export const hasRealMap = true;
-
-type Placed = { kind: 'marker'; m: MapMarkerData & { coords: LatLng } } | { kind: 'cluster'; id: string; coords: LatLng; members: MapMarkerData[]; colors: string[] };
-
-/** Map spans (latitude delta) for the zoom bands of the spec. */
-const STREET = 0.045;
-const CITY = 0.14;
-
-const MIN_SPAN: Record<MarkerType, number> = {
-  live: Infinity,
-  activity: Infinity,
-  event: Infinity,
-  group: CITY,
-  person: STREET,
-  place: STREET,
-};
 
 /**
  * Real map: Apple Maps on iPhone, Google Maps on Android (both available in
@@ -69,7 +55,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const sheetArea = frame.height - sheetBottom;
 
   const all = useMemo(
-    () => buildMarkers(city, content, lives).filter((m): m is MapMarkerData & { coords: LatLng } => Boolean(m.coords)),
+    () => buildMarkers(city, content, lives).filter((m): m is Located => Boolean(m.coords)),
     [city, content, lives],
   );
 
@@ -83,35 +69,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   }, [all, city, cityId, areaId]);
   const [region, setRegion] = useState<Region>(start);
 
-  const placed = useMemo<Placed[]>(() => {
-    const shown = all.filter((m) => (layer === 'all' ? region.latitudeDelta <= MIN_SPAN[m.type] : m.type === layer));
-    // Only what is on screen (plus a margin), at most 150 things.
-    const inView = shown.filter(
-      (m) =>
-        Math.abs(m.coords.latitude - region.latitude) < region.latitudeDelta &&
-        Math.abs(m.coords.longitude - region.longitude) < region.longitudeDelta,
-    );
-    const cellLat = (region.latitudeDelta * (region.latitudeDelta > CITY ? 110 : 58)) / frame.height;
-    const cellLng = (region.longitudeDelta * (region.latitudeDelta > CITY ? 110 : 58)) / frame.width;
-    const grid = new Map<string, (MapMarkerData & { coords: LatLng })[]>();
-    for (const m of inView) {
-      const key = `${Math.floor(m.coords.latitude / cellLat)}:${Math.floor(m.coords.longitude / cellLng)}`;
-      const list = grid.get(key);
-      if (list) list.push(m);
-      else grid.set(key, [m]);
-    }
-    const out: Placed[] = [];
-    for (const [key, members] of grid) {
-      if (members.length === 1) {
-        out.push({ kind: 'marker', m: members[0] });
-        continue;
-      }
-      const latitude = members.reduce((s, m) => s + m.coords.latitude, 0) / members.length;
-      const longitude = members.reduce((s, m) => s + m.coords.longitude, 0) / members.length;
-      out.push({ kind: 'cluster', id: `cl-${key}-${members.length}`, coords: { latitude, longitude }, members, colors: [...new Set(members.map((m) => m.color))].slice(0, 4) });
-    }
-    return out.slice(0, 150);
-  }, [all, layer, region, frame]);
+  const placed = useMemo(() => placeMarkers(all, layer, region, frame), [all, layer, region, frame]);
 
   /** Glide so `c` sits in the middle of what the sheet leaves visible. */
   const centerOn = (c: LatLng, span?: number, sheetH = 0) => {

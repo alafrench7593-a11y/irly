@@ -788,6 +788,22 @@ select pg_temp.check(not exists (select 1 from public.support_requests where bod
 select pg_temp.check(not exists (select 1 from public.reports where category = 'threats'), 'closed reports go 12 months after closing');
 select pg_temp.check(exists (select 1 from public.reports where category = 'scam'), 'open reports stay until handled');
 
+-- ───── Waitlist (website) ─────
+set role anon;
+select pg_temp.check(public.join_waitlist('  New.Person@Example.com ', 'fr', 'site') = 'ok', 'a visitor joins the waitlist');
+select pg_temp.check(public.join_waitlist('new.person@example.com') = 'ok', 'joining twice answers the same (no address probing)');
+select pg_temp.check(pg_temp.error_of($$select public.join_waitlist('not-an-email')$$) like '%invalid email%', 'an invalid address is refused');
+select pg_temp.check(pg_temp.error_of($$select public.join_waitlist('a@b')$$) like '%invalid email%', 'an address without a domain is refused');
+select pg_temp.check(not exists (select 1 from public.waitlist), 'visitors cannot read the waitlist');
+select pg_temp.expect_denied($$insert into public.waitlist (email) values ('direct@example.com')$$, 'visitors cannot write the table directly');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check(not exists (select 1 from public.waitlist), 'members cannot read the waitlist');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.waitlist) = 1 and (select lang from public.waitlist) = 'fr' and (select email from public.waitlist) = 'new.person@example.com', 'stored once, lower-cased, with its language');
+insert into public.waitlist (email, created_at) values ('old@example.com', now() - interval '25 months');
+select private.purge_retention();
+select pg_temp.check(not exists (select 1 from public.waitlist where email = 'old@example.com'), 'waitlist addresses are kept 24 months');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

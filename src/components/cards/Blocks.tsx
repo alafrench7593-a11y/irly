@@ -145,7 +145,7 @@ export const MeetCard = memo(function MeetCard({ city, people }: { city: City; p
               transform: [{ scale: [1, 0.86, 0.94, 0.8, 1.04][i] }],
             }}
           >
-            <Avatar name={p.name} hue={p.hue} size={48} ring online={p.online} />
+            <Avatar name={p.name} hue={p.hue} size={48} ring online={p.online} photo={p.photo} />
           </View>
         ))}
       </View>

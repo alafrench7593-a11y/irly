@@ -39,7 +39,7 @@ jobs:
       - run: npx expo export --platform web
       - run: node .github/scripts/pages-html.mjs /irly
       - name: Photo library
-        run: if [ -d public-photos ]; then mkdir -p dist/photos && cp public-photos/*.jpg public-photos/CREDITS.md dist/photos/; fi
+        run: if [ -d public-photos ]; then mkdir -p dist/photos && cp public-photos/*.jpg public-photos/CREDITS.md dist/photos/; if [ -d public-photos/faces ]; then mkdir -p dist/photos/faces && cp public-photos/faces/*.jpg public-photos/faces/CREDITS.md dist/photos/faces/; fi; fi
       - name: Website (/irly/site)
         run: |
           mkdir -p dist/site

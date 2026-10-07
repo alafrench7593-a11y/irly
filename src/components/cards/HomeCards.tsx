@@ -249,7 +249,7 @@ export const PersonBubble = memo(function PersonBubble({ person, city }: { perso
     >
       <View style={[styles.personRing, { borderColor: t.c.text, boxShadow: `0px 0px 24px ${now ? 'rgba(50,215,75,0.35)' : 'rgba(255,159,10,0.28)'}` }]}>
         <View ref={face} collapsable={false}>
-          <Avatar name={person.name} hue={person.hue} size={56} />
+          <Avatar name={person.name} hue={person.hue} size={56} photo={person.photo} />
         </View>
         <View style={[styles.status, { backgroundColor: now ? status.availableNow : status.availableLater, borderColor: t.c.bg }]} />
       </View>
