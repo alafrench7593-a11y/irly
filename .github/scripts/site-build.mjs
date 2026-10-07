@@ -17,7 +17,7 @@ const body = lines.slice(i).join('\n');
 fs.writeFileSync(`${OUT}/index.html`, `<!doctype html>\n<html lang="en" dir="ltr">\n<head>\n${head}\n</head>\n<body>\n${body}\n</body>\n</html>\n`);
 for (const d of ['shots', 'img']) fs.cpSync(`site/${d}`, `${OUT}/${d}`, { recursive: true });
 fs.copyFileSync('assets/favicon.png', `${OUT}/favicon.png`);
-for (const f of ['sitemap.xml', 'robots.txt', 'apple-touch-icon.png', 'og.jpg']) if (fs.existsSync(`site/${f}`)) fs.copyFileSync(`site/${f}`, `${OUT}/${f}`);
+for (const f of ['sitemap.xml', 'robots.txt', 'apple-touch-icon.png', 'og.jpg', 'lenis.min.js']) if (fs.existsSync(`site/${f}`)) fs.copyFileSync(`site/${f}`, `${OUT}/${f}`);
 if (fs.existsSync('public-photos/faces')) {
   fs.mkdirSync(`${OUT}/faces`, { recursive: true });
   for (const f of fs.readdirSync('public-photos/faces')) if (f.endsWith('.jpg')) fs.copyFileSync(`public-photos/faces/${f}`, `${OUT}/faces/${f}`);
