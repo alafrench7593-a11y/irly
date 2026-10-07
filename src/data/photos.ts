@@ -1,4 +1,4 @@
-import { PEXELS_KEYS } from './pexelsKeys';
+import { DUBAI_KEYS } from './dubaiKeys';
 /**
  * Photography registry: real photos only.
  *
@@ -199,11 +199,11 @@ export const LIBRARY = [
   'waterPark',
   'writing',
 ] as const;
-// Keys that now have a Dubai photo from Pexels are served from the library too.
-const LIBRARY_SET = new Set<string>([...LIBRARY, ...PEXELS_KEYS]);
+// Keys that now have a Dubai photo (Pixabay / Pexels) are served from the library too.
+const LIBRARY_SET = new Set<string>([...LIBRARY, ...DUBAI_KEYS]);
 const LIBRARY_BASE = 'https://alafrench7593-a11y.github.io/irly/photos';
 
-/** Silent city films for the Home hero (Pexels, served by the website). */
+/** Silent city films for the Home hero (Pixabay / Pexels, served by the website). */
 export const CITY_FILMS: Partial<Record<string, string>> = { dubai: 'https://getirly.com/video/dubai.mp4' };
 
 /**

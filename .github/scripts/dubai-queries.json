@@ -1,5 +1,5 @@
 {
-  "_note": "key → [Pexels search, words one of which the photo description should contain]. place defaults to Dubai; keys of other emirates set their own. Bali and other destinations are not here: they keep their own photos.",
+  "_note": "key → [search, words one of which the photo description should contain]. place defaults to Dubai; keys of other emirates set their own. Bali and other destinations are not here: they keep their own photos.",
   "emirates": ["United Arab Emirates skyline", ["uae", "emirates", "dubai", "abu dhabi", "skyline"], "uae"],
   "dubai": ["Dubai skyline", ["skyline", "city", "burj", "dubai"]],
   "dubaiNight": ["Dubai night", ["night", "lights", "evening"]],
