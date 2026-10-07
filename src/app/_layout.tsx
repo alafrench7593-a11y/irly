@@ -26,6 +26,7 @@ import { FlightHost } from '@/features/flight/FlightHost';
 import { MatchHost } from '@/features/match/IrlyMatch';
 import { usePush } from '@/features/push/push';
 import { ReportHost } from '@/features/moderation/ReportSheet';
+import { UnreadSync } from '@/features/server/chat';
 import { useStore } from '@/state/store';
 import { useTheme } from '@/theme/useTheme';
 
@@ -106,6 +107,7 @@ function App() {
       <FlightHost />
       <MatchHost />
       <ReportHost />
+      <UnreadSync />
       <CreateHost />
       <DestinationTransition />
       <AppIntro />

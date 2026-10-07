@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
+import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
@@ -33,6 +34,19 @@ const KIND: Record<InboxRow['kind'], Conversation['kind']> = {
   community: 'community',
   group: 'group',
 };
+
+/** Unread messages across your server chats (the badge on Messages), fed by <UnreadSync />. */
+export const useServerUnread = create<{ n: number }>(() => ({ n: 0 }));
+
+/** Mounted once at the root: keeps the unread count live for every header. */
+export function UnreadSync() {
+  const { conversations } = useServerInbox();
+  const n = conversations.reduce((sum, c) => sum + (c.unread ?? 0), 0);
+  useEffect(() => {
+    useServerUnread.setState({ n });
+  }, [n]);
+  return null;
+}
 
 /** The signed-in member's conversations, in the app's Conversation shape. */
 export function useServerInbox(): { conversations: Conversation[]; refresh: () => void } {
@@ -206,8 +220,24 @@ export function useServerThread(conversationId: string): ServerThread {
         .catch(() => undefined);
 
     let joinedOnce = false;
+    // "Typing…" needs every member on the same topic (data changes do not):
+    // one shared topic per conversation, replaced if a previous screen left it behind.
+    const typingTopic = `typing:${conversationId}`;
+    supabase
+      .getChannels()
+      .filter((c) => c.topic === `realtime:${typingTopic}`)
+      .forEach((c) => supabase?.removeChannel(c));
+    const typingChannel = supabase
+      .channel(typingTopic, { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        const who = (payload as { uid?: string })?.uid;
+        if (!who || who === uid) return;
+        setTypingNames((t) => ({ ...t, [who]: Date.now() }));
+      })
+      .subscribe();
+    channelRef.current = typingChannel;
     const channel = supabase
-      .channel(topic(`thread-${conversationId}`), { config: { broadcast: { self: false } } })
+      .channel(topic(`thread-${conversationId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow;
         setRows((list) => merge(list, [m]));
@@ -218,11 +248,6 @@ export function useServerThread(conversationId: string): ServerThread {
         const m = payload.new as MessageRow & { deleted_at?: string | null };
         setRows((list) => (m.deleted_at ? list.filter((x) => x.id !== m.id) : merge(list, [m])));
       })
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        const who = (payload as { uid?: string })?.uid;
-        if (!who || who === uid) return;
-        setTypingNames((t) => ({ ...t, [who]: Date.now() }));
-      })
       .subscribe((status) => {
         // A rejoin after a dropped connection: the gap is filled from the server.
         if (status === 'SUBSCRIBED') {
@@ -230,7 +255,6 @@ export function useServerThread(conversationId: string): ServerThread {
           joinedOnce = true;
         }
       });
-    channelRef.current = channel;
     const app = AppState.addEventListener('change', (st) => {
       if (st === 'active') catchUp();
     });
@@ -239,6 +263,7 @@ export function useServerThread(conversationId: string): ServerThread {
       app.remove();
       channelRef.current = null;
       supabase?.removeChannel(channel);
+      supabase?.removeChannel(typingChannel);
     };
   }, [conversationId, uid]);
 

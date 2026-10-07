@@ -30,10 +30,14 @@ function setSession(u: { id: string; email?: string } | null | undefined) {
   useAuthStore.setState(u ? { status: 'in', account: { userId: u.id, email: u.email } } : { status: 'out', account: null });
 }
 
-// Signup finished while signed in: publish the profile now.
+// Signup finished while signed in: publish the profile now. Changing city
+// later moves your profile too (people nearby, recommendations).
 useStore.subscribe((st, prev) => {
   const uid = useAuthStore.getState().account?.userId;
   if (uid && st.onboarded && !prev.onboarded) syncProfile(uid).catch(() => undefined);
+  if (uid && supabase && st.onboarded && prev.onboarded && st.cityId && st.cityId !== prev.cityId && (!st.profile.ownerId || st.profile.ownerId === uid)) {
+    supabase.from('profiles').update({ city_id: st.cityId }).eq('id', uid).then(() => undefined);
+  }
 });
 
 // One session reader and one auth listener for the whole app (every screen
@@ -364,7 +368,8 @@ export async function deleteServerAccount(): Promise<void> {
   await import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
   const { error } = await supabase.rpc('delete_my_account');
   if (error) throw new Error(error.message);
-  await supabase.auth.signOut();
+  // The account no longer exists on the server: forget the session on this phone.
+  await supabase.auth.signOut({ scope: 'local' });
 }
 
 /** Download my data: everything IRLY stores about you, as a JSON file (or the share sheet on a phone). */

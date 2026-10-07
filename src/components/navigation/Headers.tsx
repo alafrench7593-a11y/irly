@@ -1,4 +1,5 @@
 import { DEMO } from '@/config/app';
+import { useServerUnread } from '@/features/server/chat';
 import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
@@ -27,7 +28,11 @@ import { useTheme } from '@/theme/useTheme';
 export function useUnread(): number {
   const cityId = useCityId();
   const read = useStore((s) => s.read);
-  return getCityContent(cityId).conversations.reduce((n, c) => n + (read[c.id] ? 0 : c.unread), 0);
+  const server = useServerUnread((s) => s.n);
+  const account = useAccount();
+  // Signed in: real unread messages; the on-device chats only exist in the demo build.
+  const local = getCityContent(cityId).conversations.reduce((n, c) => n + (read[c.id] ? 0 : c.unread), 0);
+  return (account ? server : 0) + local;
 }
 
 /**

@@ -320,6 +320,109 @@ async function main() {
     return true;
   });
 
+  // ───────── Two members chat: unread, history, typing, report, edit profile, block ─────────
+  let dm;
+  const veraSays = `Hi Uma ${run}`;
+  await step('Vera writes while Uma is elsewhere → the Messages badge counts it', async () => {
+    dm = must(await veraSb.rpc('open_direct', { p_user: uma.id }));
+    await page.goto(`${BASE}/`);
+    await page.waitForTimeout(2000);
+    must(await veraSb.from('messages').insert({ conversation_id: dm, sender_id: vera.id, body: veraSays }));
+    await page.getByLabel(/Messages, \d+ unread/).first().waitFor({ timeout: 20000 });
+    return true;
+  });
+  await step('Uma opens the chat: the message is there, and still there after a reload', async () => {
+    await page.goto(`${BASE}/messages/${dm}`);
+    await visible(page, veraSays, 20000);
+    await page.reload();
+    await visible(page, veraSays, 20000);
+    return true;
+  });
+  await step('Uma replies → Vera receives it, unread for her until she reads', async () => {
+    await page.getByPlaceholder('Message').fill(`Reply to Vera ${run}`);
+    await page.getByRole('button', { name: 'Send' }).click();
+    for (let i = 0; i < 20; i++) {
+      const inbox = must(await veraSb.rpc('my_conversations'));
+      const row = inbox.find((c) => c.conversation_id === dm);
+      if (row?.last_body === `Reply to Vera ${run}` && row.unread >= 1) {
+        must(await veraSb.rpc('mark_conversation_read', { p_conversation: dm }));
+        const after = must(await veraSb.rpc('my_conversations')).find((c) => c.conversation_id === dm);
+        return after.unread === 0;
+      }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return false;
+  });
+  await step('Vera is typing → Uma sees "Vera is typing…"', async () => {
+    const ch = veraSb.channel(`typing:${dm}`, { config: { broadcast: { self: false } } });
+    await new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('typing channel did not join')), 15000);
+      ch.subscribe((st) => st === 'SUBSCRIBED' && (clearTimeout(t), resolve()));
+    });
+    let seen = false;
+    for (let i = 0; i < 10 && !seen; i++) {
+      await ch.send({ type: 'broadcast', event: 'typing', payload: { uid: vera.id } });
+      seen = await page.getByText('Vera is typing…').first().isVisible().catch(() => false);
+      if (!seen) await new Promise((r) => setTimeout(r, 800));
+    }
+    await veraSb.removeChannel(ch);
+    return seen;
+  });
+  await step('Uma reports Vera’s message as a scam (long press → Report)', async () => {
+    const bubble = page.getByText(veraSays, { exact: true }).first();
+    await bubble.hover();
+    await page.mouse.down();
+    await page.waitForTimeout(900);
+    await page.mouse.up();
+    await page.getByRole('radio', { name: 'Scam' }).click();
+    await page.getByRole('button', { name: 'Send report' }).click();
+    for (let i = 0; i < 20; i++) {
+      const rows = await sql(`select category, target_kind from public.reports where reporter_id = '${uma.id}' and target_kind = 'message'`);
+      if (rows.some((r) => r.category === 'scam')) return true;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return false;
+  });
+  await step('Edit profile → the new bio is on the server', async () => {
+    await page.goto(`${BASE}/edit-profile`);
+    await page.getByLabel('Bio', { exact: true }).fill(`Building things in Bali ${run}`);
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    for (let i = 0; i < 20; i++) {
+      const [row] = await sql(`select bio from public.profiles where id = '${uma.id}'`);
+      if (row?.bio === `Building things in Bali ${run}`) return true;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return false;
+  });
+  await step('Uma blocks Vera from the chat → it leaves her inbox and Vera can no longer write', async () => {
+    await page.goto(`${BASE}/messages/${dm}`);
+    await page.getByLabel('Safety: report or block').click();
+    page.once('dialog', (d) => d.accept());
+    await page.getByRole('button', { name: 'Block', exact: true }).click();
+    for (let i = 0; i < 20; i++) {
+      const [b] = await sql(`select count(*)::int as n from public.blocks where blocker_id = '${uma.id}' and blocked_id = '${vera.id}'`);
+      if (b.n === 1) break;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    const sent = await veraSb.from('messages').insert({ conversation_id: dm, sender_id: vera.id, body: 'still here?' });
+    if (!sent.error) throw new Error('a blocked member could still write');
+    await page.goto(`${BASE}/messages`);
+    await page.waitForTimeout(2500);
+    return !(await page.getByText(`Reply to Vera ${run}`).first().isVisible().catch(() => false));
+  });
+  await step('Blocked members → Unblock Vera', async () => {
+    await page.goto(`${BASE}/blocked`);
+    await visible(page, 'Vera');
+    page.once('dialog', (d) => d.accept());
+    await page.getByRole('button', { name: 'Unblock' }).first().click();
+    for (let i = 0; i < 20; i++) {
+      const [b] = await sql(`select count(*)::int as n from public.blocks where blocker_id = '${uma.id}'`);
+      if (b.n === 0) return true;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return false;
+  });
+
   // ───────── 1. Paths: every screen opens ─────────
   const areas = (await sql(`select id from public.areas where city_id = 'bali' order by sort`)).map((r) => r.id);
   const sections = ['visa', 'housing', 'banking', 'sim', 'internet', 'transport', 'healthcare', 'insurance', 'schools', 'childcare', 'work', 'coworking', 'business', 'accounting', 'tax', 'legal', 'real_estate', 'moving', 'pets', 'services'];
@@ -391,6 +494,21 @@ async function main() {
     await page.getByRole('button', { name: 'Like' }).first().waitFor({ timeout: 5000 });
     await page.unroute(/rest\/v1\/rpc\/toggle_like/);
     return true;
+  });
+  // ───────── Last: Uma deletes her account from the app ─────────
+  await step('Delete account (Profile → Delete account): server data gone, back to the start', async () => {
+    await page.goto(`${BASE}/profile`);
+    await page.getByLabel('Delete account', { exact: true }).click();
+    await page.getByRole('button', { name: 'Delete my account' }).click();
+    await page.waitForURL(/welcome/, { timeout: 30000 });
+    const [p] = await sql(`select count(*)::int as n from public.profiles where id = '${uma.id}'`);
+    const [u] = await sql(`select count(*)::int as n from auth.users where id = '${uma.id}'`);
+    const [m] = await sql(`select count(*)::int as n from public.messages where sender_id = '${uma.id}'`);
+    const [f] = await sql(`select count(*)::int as n from storage.objects where (storage.foldername(name))[1] = '${uma.id}'`);
+    if (p.n || u.n || m.n || f.n) throw new Error(`left behind: profile ${p.n}, user ${u.n}, messages ${m.n}, files ${f.n}`);
+    // The old session no longer works.
+    const stored = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.includes('auth-token')).length);
+    return stored === 0;
   });
   await shot('end');
   await browser.close();
