@@ -1,6 +1,6 @@
 /**
  * Example portraits for the demonstration build (EXPO_PUBLIC_DEMO=1).
- * Picks CC0 portraits on Openverse (StockSnap), crops them square and writes
+ * Picks CC0 portrait photos on Openverse (StockSnap, Rawpixel), crops them square and writes
  * public-photos/faces/<id>.jpg. faces.json keeps each pick stable between
  * runs; ids listed in faces-exclude.json (rejected after review) are never
  * picked again. Real members never see these photos.
@@ -25,7 +25,7 @@ async function candidates(g) {
   const out = [];
   for (const q of QUERIES[g]) {
     for (const page of [1, 2]) {
-      const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0&source=stocksnap&aspect_ratio=tall&page_size=20&page=${page}`;
+      const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0&source=stocksnap,rawpixel&category=photograph&page_size=20&page=${page}`;
       let r;
       for (let attempt = 0; attempt < 4; attempt += 1) {
         await wait(1500 + attempt * 4000);
@@ -67,6 +67,6 @@ for (const p of people) {
   }
 }
 fs.writeFileSync(picksPath, JSON.stringify(picks, null, 2) + '\n');
-const credits = ['# Example portraits (demo build only)', '', 'CC0 photos from StockSnap via Openverse. Used only to illustrate the app with example content.', ''];
+const credits = ['# Example portraits (demo build only)', '', 'CC0 photos from StockSnap and Rawpixel via Openverse. Used only to illustrate the app with example content.', ''];
 for (const p of people) if (picks[p.id]) credits.push(`- **${p.id}**: ${picks[p.id].title} (${picks[p.id].license}) ${picks[p.id].landing}`);
 fs.writeFileSync('public-photos/faces/CREDITS.md', credits.join('\n') + '\n');
