@@ -128,10 +128,12 @@ const restoreOriginal = (key) => {
   }
 };
 const used = new Set(Object.values(picks).map((p) => p.id));
+// A photo rejected for one subject is not used for another either.
+const rejected = new Set(Object.values(exclude).flat());
 const report = { picked: [], kept: [], none: [] };
 
 for (const [key, [query, words, place = 'dubai']] of Object.entries(queries)) {
-  const banned = new Set(exclude[key] ?? []);
+  const banned = new Set([...(exclude[key] ?? []), ...rejected]);
   const old = picks[key];
   if (old && !banned.has(old.id) && fs.existsSync(`public-photos/${key}-1200.jpg`)) {
     report.kept.push(key);
@@ -154,7 +156,7 @@ for (const [key, [query, words, place = 'dubai']] of Object.entries(queries)) {
     report.none.push(key);
     continue;
   }
-  keepOriginal(key);
+  if (!old) keepOriginal(key); // only the photo it had before any Dubai photo
   const tmp = `/tmp/dubai-${key}.jpg`;
   await download(found.img, tmp);
   save(key, tmp);
