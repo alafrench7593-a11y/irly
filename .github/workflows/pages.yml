@@ -43,7 +43,7 @@ jobs:
       - name: Website (/irly/site)
         run: |
           mkdir -p dist/site
-          node -e "const fs=require('fs');const body=fs.readFileSync('site/index.html','utf8');fs.writeFileSync('dist/site/index.html','<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n<meta name=\"theme-color\" content=\"#050505\">\n<link rel=\"icon\" href=\"/irly/favicon.ico\">\n</head>\n<body>\n'+body+'\n</body>\n</html>\n')"
+          node -e "const fs=require('fs');const body=fs.readFileSync('site/index.html','utf8');fs.cpSync('site/shots','dist/site/shots',{recursive:true});fs.writeFileSync('dist/site/index.html','<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n<meta name=\"theme-color\" content=\"#050505\">\n<link rel=\"icon\" href=\"/irly/favicon.ico\">\n</head>\n<body>\n'+body+'\n</body>\n</html>\n')"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

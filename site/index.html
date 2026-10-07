@@ -260,6 +260,45 @@ footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
 .reveal.play { animation: up .9s var(--ease) both; }
 .reveal.play.d1 { animation-delay: .08s; } .reveal.play.d2 { animation-delay: .16s; } .reveal.play.d3 { animation-delay: .24s; }
 
+
+/* real screens inside the hero phone */
+.shots-in { position: absolute; inset: 0; }
+.shots-in img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .9s var(--ease), transform 1.2s var(--ease); transform: scale(1.03); }
+.shots-in img.on { opacity: 1; transform: none; }
+
+/* store badges */
+.stores { display: flex; flex-wrap: wrap; gap: 10px; }
+.store { display: inline-flex; align-items: center; gap: 10px; height: 52px; padding: 0 18px 0 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); color: var(--fg); text-decoration: none; }
+.store svg { width: 24px; height: 24px; fill: var(--fg); flex: none; }
+.store small { display: block; font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); line-height: 1.2; }
+.store b { display: block; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.15; }
+.soon { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--fg); }
+.soon::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--live); animation: ping 1.8s infinite; }
+
+/* the problem */
+.problem { padding-block: clamp(90px, 12vw, 170px); border-bottom: 1px solid var(--line); overflow-x: clip; }
+.problem h2 { font-size: clamp(44px, 7.4vw, 104px); }
+.problem h2 .dim { color: var(--faint); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: clamp(40px, 6vw, 70px); }
+@media (max-width: 860px) { .stats { grid-template-columns: 1fr; } }
+.stat { border-radius: var(--r-xl); padding: 26px; border: 1px solid var(--line); background: var(--card); display: grid; gap: 10px; align-content: start; }
+.stat .num { font-size: clamp(56px, 7vw, 88px); font-weight: 800; letter-spacing: -0.05em; line-height: .9; font-variant-numeric: tabular-nums; }
+.stat p { font-size: 15px; }
+.stat cite { font-style: normal; font-size: 12px; color: var(--faint); }
+.stat cite a { color: var(--muted); }
+.quote { margin-top: 28px; font-size: clamp(20px, 2.2vw, 26px); font-weight: 700; letter-spacing: -0.02em; color: var(--fg); max-width: 34ch; }
+
+/* screens gallery */
+.gallery { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(220px, 24vw, 290px); gap: clamp(16px, 2.4vw, 28px); overflow-x: auto; scroll-snap-type: x mandatory; padding: 10px max(20px, 4vw) 30px; scrollbar-width: none; }
+.gallery::-webkit-scrollbar { display: none; }
+.shot { scroll-snap-align: center; display: grid; gap: 14px; margin: 0; }
+.frame { border-radius: 40px; padding: 8px; background: linear-gradient(145deg, #2b2b2e, #0b0b0c 40%, #1d1d20); box-shadow: 0 40px 80px -30px rgba(0,0,0,.6), inset 0 0 0 1.5px #3a3a3e; transition: transform .7s var(--ease); }
+.frame img { display: block; width: 100%; aspect-ratio: 390 / 844; object-fit: cover; border-radius: 33px; background: #000; }
+.shot:hover .frame { transform: translateY(-8px) rotate(-1deg); }
+.shot figcaption b { display: block; font-size: 17px; letter-spacing: -0.01em; }
+.shot figcaption span { font-size: 14px; color: var(--muted); }
+.note { font-size: 13px; color: var(--faint); margin-top: 6px; }
+
 @keyframes rise { from { transform: translateY(105%); } to { transform: none; } }
 @keyframes fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 @keyframes up { from { opacity: 0; transform: translateY(28px) scale(.98); } to { opacity: 1; transform: none; } }
@@ -292,17 +331,18 @@ footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
     <nav class="nav-inner" aria-label="Main">
       <a class="brand" href="#top"><span class="brand-dot" aria-hidden="true"></span>IRLY</a>
       <div class="nav-links">
+        <a href="#why">Why IRLY</a>
+        <a href="#screens">The app</a>
         <a href="#how">How it works</a>
         <a href="#networking">Networking</a>
         <a href="#girl">IRLY Girl</a>
-        <a href="#cities">Cities</a>
         <a href="#safety">Safety</a>
       </div>
       <div class="nav-actions">
         <button class="theme" id="theme" type="button" aria-label="Switch light or dark">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         </button>
-        <a class="btn sm" href="https://alafrench7593-a11y.github.io/irly/" target="_blank" rel="noopener">Open IRLY</a>
+        <a class="btn sm" href="#screens">See the app</a>
       </div>
     </nav>
   </div>
@@ -313,15 +353,19 @@ footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
     <div class="glow" aria-hidden="true"></div>
     <div class="wrap hero-grid">
       <div class="hero-copy">
-        <span class="eyebrow">Dubai · the Emirates · Bali</span>
+        <span class="soon">Coming soon on iOS &amp; Android</span>
         <h1 class="slogan" aria-label="In real life.">
           <span class="w"><span>IN</span></span><br><span class="w"><span>REAL</span></span><br><span class="w"><span class="outline">LIFE.</span></span>
         </h1>
         <p class="lede">Find someone to do something with. Padel tonight, a sunrise run, a founders’ coffee, a brunch with new friends. Join a plan in one tap: its group chat opens with it, and you meet for real.</p>
         <div class="ctas">
-          <a class="btn" href="https://alafrench7593-a11y.github.io/irly/" target="_blank" rel="noopener">Open IRLY
+          <a class="btn" href="https://alafrench7593-a11y.github.io/irly/" target="_blank" rel="noopener">Try it on the web
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
           <a class="btn ghost" href="#how">See how it works</a>
+        </div>
+        <div class="stores" aria-label="Coming soon to the App Store and Google Play">
+          <span class="store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.6-1.9-1.5-.2-3 .9-3.7.9-.8 0-2-.9-3.2-.9-1.7 0-3.2 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.3-.9-2.3-3.8zM14 5.3c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/></svg><span><small>Coming soon on</small><b>iPhone</b></span></span>
+          <span class="store"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.5-9.7-9.5-9.7zm10.7 8.5 2.7-2.8L5.5 1.5c-.4-.2-.8-.3-1.1-.2l9.9 9.5zm0 2.4-9.9 9.5c.3.1.7 0 1.1-.2l11.5-6.5-2.7-2.8zm6.6-3.5L18 8.2l-3 3.8 3 3.8 2.9-1.6c.8-.5.8-1.7 0-2.2l-.2-.1z"/></svg><span><small>Coming soon on</small><b>Google Play</b></span></span>
         </div>
         <div class="facts" aria-label="IRLY in figures">
           <span class="fact"><b>7</b> Emirates + Bali</span>
@@ -338,17 +382,17 @@ footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
         <div class="phone" id="phone" aria-label="The IRLY app: today’s plans near you" role="img">
           <div class="screen">
             <div class="island"></div>
-            <div class="status"><span>9:41</span><span>5G ▮▮▮</span></div>
-            <div class="banner" aria-hidden="true">
+                        <div class="banner" aria-hidden="true">
               <div class="ic">IRLY</div>
               <div><b>Lina wants to connect</b><small>Networking · see her professional profile</small></div>
             </div>
-            <div class="app-head"><b>IRLY</b><span class="pill">Dubai ▾</span></div>
-            <div class="app-title">Happening<br>near you</div>
-            <div class="feed">
-              <div class="feed-track" id="feed"></div>
+            <div class="shots-in" id="shotsin">
+              <img class="on" src="shots/home.jpg" alt="IRLY home: what's happening around you, live now">
+              <img src="shots/network.jpg" alt="IRLY Networking: professionals with match percentage">
+              <img src="shots/map.jpg" alt="IRLY map of Dubai with plans and live moments">
+              <img src="shots/chat.jpg" alt="An IRLY chat before meeting in real life">
+              <img src="shots/girl.jpg" alt="IRLY Girl: find girls you actually get along with">
             </div>
-            <div class="tabbar" aria-hidden="true"><span class="on"></span><span></span><i class="plus">+</i><span></span><span></span></div>
           </div>
         </div>
       </div>
@@ -358,6 +402,50 @@ footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
   <div class="marquee" aria-label="Things people do on IRLY">
     <div class="mq-track" id="mq"></div>
   </div>
+
+
+  <section class="problem" id="why">
+    <div class="wrap">
+      <span class="eyebrow reveal">Why IRLY</span>
+      <h2 class="reveal d1">A city of millions.<br><span class="dim">Dinner for one.</span></h2>
+      <p class="lede reveal d2" style="margin-top:24px">Dubai is built for ambition: a new job, a new apartment, a new life, often far from family and old friends. The calendar fills up with work. The weekends stay empty. Making friends as an adult, in a city where almost everyone arrived from somewhere else, is harder than it looks.</p>
+      <div class="stats">
+        <div class="stat reveal">
+          <span class="num">88%</span>
+          <p>of people living in the UAE are expatriates: most of the city started out knowing no one.</p>
+          <cite>United Nations estimate (2021), via <a href="https://en.wikipedia.org/wiki/Expatriates_in_the_United_Arab_Emirates" target="_blank" rel="noopener">Expatriates in the UAE</a></cite>
+        </div>
+        <div class="stat reveal d1">
+          <span class="num">1 in 4</span>
+          <p>adults worldwide say they feel very or fairly lonely.</p>
+          <cite><a href="https://news.gallup.com/opinion/gallup/512618/almost-quarter-world-feels-lonely.aspx" target="_blank" rel="noopener">Gallup–Meta, Global State of Social Connections, 2023</a></cite>
+        </div>
+        <div class="stat reveal d2">
+          <span class="num">27%</span>
+          <p>of young adults aged 19 to 29 feel lonely, the highest of any age group.</p>
+          <cite><a href="https://news.gallup.com/opinion/gallup/512618/almost-quarter-world-feels-lonely.aspx" target="_blank" rel="noopener">Gallup–Meta, 2023</a></cite>
+        </div>
+      </div>
+      <p class="quote reveal">IRLY turns “we should hang out sometime” into a plan tonight, with people nearby who want to do the same thing.</p>
+    </div>
+  </section>
+
+  <section class="chapter" id="screens" style="padding-bottom:clamp(40px,6vw,80px)">
+    <div class="wrap head">
+      <span class="eyebrow reveal">The app</span>
+      <h2 class="reveal d1">Made for your thumb.</h2>
+      <p class="lede reveal d2">Every screen is built to get you out of the app and into a plan.</p>
+    </div>
+    <div class="gallery" tabindex="0" aria-label="IRLY screens">
+      <figure class="shot"><div class="frame"><img src="shots/home.jpg" alt="IRLY home screen" loading="lazy"></div><figcaption><b>Around you, right now</b><span>Who’s live, what starts next.</span></figcaption></figure>
+      <figure class="shot"><div class="frame"><img src="shots/category.jpg" alt="IRLY sport category with sessions" loading="lazy"></div><figcaption><b>Pick an activity</b><span>Sessions by category, ready to join.</span></figcaption></figure>
+      <figure class="shot"><div class="frame"><img src="shots/map.jpg" alt="IRLY map of Dubai" loading="lazy"></div><figcaption><b>The city, live</b><span>Plans and moments on the map.</span></figcaption></figure>
+      <figure class="shot"><div class="frame"><img src="shots/chat.jpg" alt="IRLY chat" loading="lazy"></div><figcaption><b>Chat, then meet</b><span>Every plan gets its own chat.</span></figcaption></figure>
+      <figure class="shot"><div class="frame"><img src="shots/network.jpg" alt="IRLY Networking" loading="lazy"></div><figcaption><b>Networking</b><span>Your match with every professional.</span></figcaption></figure>
+      <figure class="shot"><div class="frame"><img src="shots/girl.jpg" alt="IRLY Girl" loading="lazy"></div><figcaption><b>IRLY Girl</b><span>A space for women only.</span></figcaption></figure>
+    </div>
+    <div class="wrap"><p class="note">Screens from the IRLY app, shown with example content.</p></div>
+  </section>
 
   <section class="chapter" id="how">
     <div class="wrap">
@@ -493,7 +581,8 @@ footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
     <div class="wrap" style="display:grid;justify-items:center;gap:26px">
       <span class="eyebrow">See you out there</span>
       <h2>Less scrolling.<br>More living.</h2>
-      <a class="btn" href="https://alafrench7593-a11y.github.io/irly/" target="_blank" rel="noopener">Open IRLY</a>
+      <span class="soon">Coming soon on iOS &amp; Google Play</span>
+      <a class="btn" href="https://alafrench7593-a11y.github.io/irly/" target="_blank" rel="noopener">Try it on the web</a>
     </div>
   </section>
 </main>
@@ -545,7 +634,12 @@ footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
   const card = ([tag, t, m, avs, cta], live) =>
     `<div class="card">${live ? '' : '<div class="cover"></div>'}<div class="top">${tag === 'Live now' ? '<span class="dotlive"></span>' : ''}${tag}</div><div class="t">${t}</div><div class="row"><span class="m">${m}</span></div><div class="row"><span class="avs">${avs.map((c, i) => `<i style="background:${c}">${'ALNSK'[i]}</i>`).join('')}</span><span class="join">${cta}</span></div></div>`;
   const html = plans.map((p, i) => card(p, i % 2 === 0)).join('');
-  $('#feed').innerHTML = html + html;
+  const feedEl = $('#feed');
+  if (feedEl) feedEl.innerHTML = html + html;
+  // Real screens rotate inside the hero phone.
+  const imgs = [...document.querySelectorAll('#shotsin img')];
+  let si = 0;
+  if (!reduce && imgs.length > 1) setInterval(() => { imgs[si].classList.remove('on'); si = (si + 1) % imgs.length; imgs[si].classList.add('on'); }, 3200);
 
   // Marquee of things to do (doubled for the loop).
   const things = ['Padel', 'Sunrise runs', 'Founders’ dinners', 'Brunch', 'Desert hikes', 'Yoga on the sand', 'Beach volley', 'Gallery nights', 'Coworking', 'Playdates', 'Football', 'Coffee walks', 'Kitesurf', 'Investor meetups'];
