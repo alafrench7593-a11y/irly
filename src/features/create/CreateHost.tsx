@@ -569,7 +569,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
 function CustomButton({ text, onPress }: { text: string; onPress: () => void }) {
   const t = useTheme();
   return (
-    <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} style={[styles.custom, { borderColor: t.c.lineStrong }]} accessibilityLabel={`Create custom activity: ${text}`}>
+    <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} style={[styles.custom, { borderColor: t.c.lineStrong }]} accessibilityLabel={tx('Create custom activity: {name}', { name: text })}>
       <Icon name="wand" size={18} color={t.c.text} />
       <Text variant="label" style={{ flex: 1 }} numberOfLines={1}>
         {tx('Create “{what}”', { what: text.trim() })}

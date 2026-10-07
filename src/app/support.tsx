@@ -25,7 +25,7 @@ const KINDS: { id: Kind; label: string }[] = [
 const FAQ: { q: string; a: string }[] = [
   { q: 'How do I report or block someone?', a: 'Open their profile or your chat with them and tap the shield button. In a chat you can also long-press a message to report it.' },
   { q: 'How do I change my profile?', a: 'Profile → Edit profile. Your professional profile is in Profile → Professional.' },
-  { q: 'Who can see me?', a: 'Settings → Privacy & notifications: choose who can find your profile, who sees your live posts and activities, and how precise your location is (neighbourhood, city or hidden).' },
+  { q: 'Who can see me?', a: 'Profile → Privacy & notifications: choose who can find your profile, who sees your live posts and activities, and how precise your location is (neighbourhood, city or hidden).' },
   { q: 'How do I get a copy of my data or delete my account?', a: 'Profile → Download my data, and Profile → Delete account. Deleting removes your account and data from IRLY’s servers.' },
   { q: 'Someone is in danger', a: 'Contact local emergency services first. Then report the profile in the app or write to us below with "Safety concern".' },
 ];

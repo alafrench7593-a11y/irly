@@ -8,11 +8,16 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#000000",
+    "locales": {
+      "en": "./locales/en.json",
+      "fr": "./locales/fr.json"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "app.irly.mobile",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleAllowMixedLocalizations": true
       },
       "buildNumber": "1",
       "privacyManifests": {
@@ -84,7 +89,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "IRLY centres the map on where you are when you tap \"locate me\". Your position stays on your phone and is never shared with other members.",
+          "locationWhenInUsePermission": "IRLY centres the map on where you are when you tap \"My location\". Your position stays on your phone and is never shared with other members.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
           "isIosBackgroundLocationEnabled": false

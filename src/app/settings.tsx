@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { registerPush, type PushState } from '@/features/push/push';
-import { t as tx, useLang } from '@/i18n';
+import { t as tx, useLang, a11y } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -236,7 +236,7 @@ function Row({ label, value, onChange }: { label: string; value: boolean; onChan
       <Text variant="titleS" style={{ flex: 1 }}>
         {label}
       </Text>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel={label} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel={a11y(label)} />
     </View>
   );
 }

@@ -99,14 +99,23 @@ export function postLooksLikeAPlan(body: string, geo: GeoIndex): PlanDraft | nul
 export type DigestInput = { postsWeek: number; newMembersWeek: number; members: number; upcoming: number; nextTitle: string | null; nextStartsAt: number | null; topPostBody: string | null; topPostLikes: number };
 
 /** The week in plain words, from real numbers only. */
-export function digestLines(d: DigestInput, when: (ms: number) => string): string[] {
+export function digestLines(
+  d: DigestInput,
+  when: (ms: number) => string,
+  tx: (text: string, vars?: Record<string, string | number>) => string = (text, vars) => (vars ? text.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m)) : text),
+): string[] {
   const lines: string[] = [];
-  lines.push(d.postsWeek ? `${d.postsWeek} post${d.postsWeek > 1 ? 's' : ''} this week.` : 'No posts this week yet: start the conversation.');
-  if (d.newMembersWeek) lines.push(`${d.newMembersWeek} new member${d.newMembersWeek > 1 ? 's' : ''} (${d.members} in total). Say hi!`);
-  else lines.push(`${d.members} member${d.members === 1 ? '' : 's'}.`);
-  if (d.nextTitle && d.nextStartsAt) lines.push(`Next: ${d.nextTitle}, ${when(d.nextStartsAt)}${d.upcoming > 1 ? ` (+${d.upcoming - 1} more planned)` : ''}.`);
-  else lines.push('Nothing planned yet: propose something and it gets its own chat.');
-  if (d.topPostBody && d.topPostLikes > 0) lines.push(`Most liked: “${d.topPostBody.slice(0, 80)}” (${d.topPostLikes} ♥).`);
+  lines.push(d.postsWeek ? tx('{n} posts this week.', { n: d.postsWeek }) : tx('No posts this week yet: start the conversation.'));
+  if (d.newMembersWeek) lines.push(tx('{n} new members ({total} in total). Say hi!', { n: d.newMembersWeek, total: d.members }));
+  else lines.push(tx('{n} members.', { n: d.members }));
+  if (d.nextTitle && d.nextStartsAt) {
+    lines.push(
+      d.upcoming > 1
+        ? tx('Next: {title}, {when} (+{more} more planned).', { title: d.nextTitle, when: when(d.nextStartsAt), more: d.upcoming - 1 })
+        : tx('Next: {title}, {when}.', { title: d.nextTitle, when: when(d.nextStartsAt) }),
+    );
+  } else lines.push(tx('Nothing planned yet: propose something and it gets its own chat.'));
+  if (d.topPostBody && d.topPostLikes > 0) lines.push(tx('Most liked: “{text}” ({likes} ♥).', { text: d.topPostBody.slice(0, 80), likes: d.topPostLikes }));
   return lines;
 }
 

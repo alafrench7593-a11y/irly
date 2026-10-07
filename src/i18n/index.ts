@@ -78,13 +78,59 @@ const ONE: Record<string, string> = {
   '{n} activities': '{n} activity',
   '{n} communities': '{n} community',
   '{n} people': '{n} person',
+  '{n} places': '{n} place',
+  '{n} posts this week.': '{n} post this week.',
+  '{n} new members ({total} in total). Say hi!': '{n} new member ({total} in total). Say hi!',
+  '{n} members.': '{n} member.',
 };
 
 export function translate(lang: Lang, rawText: string, vars?: Record<string, string | number>): string {
-  const text = vars && Number(vars.n) === 1 && ONE[rawText] ? ONE[rawText] : rawText;
+  // English uses the singular for 1 only; French for 0 and 1 (« 0 activité »).
+  const n = vars ? Number(vars.n) : NaN;
+  const singular = lang === 'fr' ? Math.abs(n) < 2 : n === 1;
+  const text = singular && ONE[rawText] ? ONE[rawText] : rawText;
   const base = lang === 'fr' ? (fr[text] ?? byPattern(text) ?? text) : text;
   if (!vars) return base;
-  return base.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+  return base.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? place(lang, String(vars[k])) : m));
+}
+
+/** City names that French spells differently ("Dubaï"); neighbourhoods such as "Dubai Marina" keep their name. */
+const PLACES_FR: Record<string, string> = { Dubai: 'Dubaï' };
+const place = (lang: Lang, v: string) => (lang === 'fr' ? (PLACES_FR[v] ?? v) : v);
+
+const LABEL_SEP = /(, |\. |: | · )/;
+
+/**
+ * Screen-reader labels are often built from parts ("Padel, Tomorrow · 20:00",
+ * "Sport. Find people to play with"): translated whole when the dictionary
+ * has the sentence, otherwise part by part. Names and places pass through.
+ */
+export function localizeLabel(lang: Lang, label: string | undefined): string | undefined {
+  if (!label || lang === 'en') return label;
+  const whole = translate(lang, label);
+  if (whole !== label) return whole;
+  // Longest run of parts the dictionary knows, so "Sun, sea and sand" stays one phrase.
+  const parts = label.split(LABEL_SEP);
+  const out: string[] = [];
+  for (let i = 0; i < parts.length; ) {
+    if (i % 2 === 1) {
+      out.push(parts[i++]); // a separator
+      continue;
+    }
+    let j = parts.length - 1;
+    for (; j > i; j -= 2) {
+      const run = parts.slice(i, j + 1).join('');
+      if (translate(lang, run) !== run) break;
+    }
+    out.push(translate(lang, parts.slice(i, j + 1).join('')));
+    i = j + 1;
+  }
+  return out.join('');
+}
+
+/** Same, outside React (labels built in handlers or in non-component code). */
+export function a11y(label: string | undefined): string | undefined {
+  return localizeLabel(resolveLang(useLangStore.getState().setting), label);
 }
 
 /** Locale for dates and times in the current language. */

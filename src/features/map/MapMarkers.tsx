@@ -1,3 +1,4 @@
+import { t as tx } from '@/i18n';
 import { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -268,7 +269,7 @@ export const ClusterView = memo(function ClusterView({ c, onPress }: { c: Cluste
     border[`border${side}Color`] = colors[i % colors.length];
   });
   return (
-    <PressableScale haptic="tap" scaleTo={0.9} onPress={onPress} accessibilityLabel={`${n} places here. Zoom in`} hitSlop={6}>
+    <PressableScale haptic="tap" scaleTo={0.9} onPress={onPress} accessibilityLabel={tx('{n} places here. Zoom in', { n })} hitSlop={6}>
       <View style={[styles.cluster, { width: size, height: size, borderRadius: size / 2, backgroundColor: skin.fill, boxShadow: skin.shadow }, border]}>
         <Text variant="label" style={{ fontSize: n > 99 ? 12 : 14 }}>
           {n}

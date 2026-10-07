@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -128,7 +128,7 @@ export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, liv
                 </Glass>
               </PressableScale>
             </Animated.View>
-            <View style={styles.title} accessible accessibilityRole="header" accessibilityLabel={question}>
+            <View style={styles.title} accessible accessibilityRole="header" accessibilityLabel={a11y(question)}>
               {parts.map((w, i) => (
                 <Animated.View
                   key={`${w}-${i}`}

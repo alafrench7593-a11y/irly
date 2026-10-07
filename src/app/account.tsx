@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/state/store';
 import { AppleLogo, GoogleG } from '@/brand/ProviderLogos';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -123,7 +123,7 @@ export default function AccountScreen() {
     return (
       <Page overline="IRLY account" title="New password" subtitle="Choose a new password for your account.">
         <View style={styles.body}>
-          <TextInput value={password} onChangeText={setPassword} placeholder={tx('New password (8+ characters)')} placeholderTextColor={t.c.textTertiary} secureTextEntry autoComplete="new-password" textContentType="newPassword" style={input} accessibilityLabel="New password" />
+          <TextInput value={password} onChangeText={setPassword} placeholder={tx('New password (8+ characters)')} placeholderTextColor={t.c.textTertiary} secureTextEntry autoComplete="new-password" textContentType="newPassword" style={input} accessibilityLabel={a11y('New password')} />
           <Button
             label="Save password"
             icon="check"
@@ -208,7 +208,7 @@ export default function AccountScreen() {
 
         {mode === 'email' ? (
           <>
-            <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel="Email" />
+            <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel={a11y('Email')} />
             <TextInput
               value={password}
               onChangeText={setPassword}
@@ -219,7 +219,7 @@ export default function AccountScreen() {
               textContentType={creating ? 'newPassword' : 'password'}
               onSubmitEditing={() => undefined}
               style={input}
-              accessibilityLabel="Password"
+              accessibilityLabel={a11y('Password')}
             />
             <Button
               label={creating ? 'Create account' : 'Sign in'}
@@ -253,7 +253,7 @@ export default function AccountScreen() {
 
         {mode === 'link' || mode === 'forgot' ? (
           <>
-            <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel="Email" />
+            <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel={a11y('Email')} />
             <Button
               label={mode === 'link' ? 'Email me a sign-in link' : 'Send reset link'}
               icon="send"
@@ -279,7 +279,7 @@ export default function AccountScreen() {
 
         {mode === 'code' ? (
           <>
-            <TextInput value={code} onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))} placeholder={tx('123456')} placeholderTextColor={t.c.textTertiary} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" style={[input, styles.code]} accessibilityLabel="6-digit code" />
+            <TextInput value={code} onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))} placeholder={tx('123456')} placeholderTextColor={t.c.textTertiary} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" style={[input, styles.code]} accessibilityLabel={a11y('6-digit code')} />
             <Button label="Sign in" icon="check" full loading={busy} disabled={code.length < 6} onPress={() => act(async () => (await verifyCode(email, code), done('email_code')))} />
             <Button label="Send a new email" variant="ghost" onPress={() => act(() => sendCode(email))} />
           </>
@@ -287,7 +287,7 @@ export default function AccountScreen() {
 
         {mode === 'phone' ? (
           <>
-            <TextInput value={phone} onChangeText={setPhone} placeholder="+971 50 123 4567" placeholderTextColor={t.c.textTertiary} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" style={input} accessibilityLabel="Phone number" />
+            <TextInput value={phone} onChangeText={setPhone} placeholder="+971 50 123 4567" placeholderTextColor={t.c.textTertiary} keyboardType="phone-pad" autoComplete="tel" textContentType="telephoneNumber" style={input} accessibilityLabel={a11y('Phone number')} />
             <Button
               label="Text me a code"
               icon="send"
@@ -306,7 +306,7 @@ export default function AccountScreen() {
 
         {mode === 'phoneCode' ? (
           <>
-            <TextInput value={code} onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))} placeholder={tx('123456')} placeholderTextColor={t.c.textTertiary} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" style={[input, styles.code]} accessibilityLabel="6-digit code" />
+            <TextInput value={code} onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 6))} placeholder={tx('123456')} placeholderTextColor={t.c.textTertiary} keyboardType="number-pad" autoComplete="one-time-code" textContentType="oneTimeCode" style={[input, styles.code]} accessibilityLabel={a11y('6-digit code')} />
             <Button label="Sign in" icon="check" full loading={busy} disabled={code.length < 6} onPress={() => act(async () => (await verifyPhoneCode(phone, code), done('phone')))} />
           </>
         ) : null}

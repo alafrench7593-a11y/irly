@@ -93,7 +93,7 @@ export function scoreMatch(me: Profile, other: Person, intent: Intent, areaName:
 
   reasons.sort((x, y) => y.w - x.w);
   const unique = Array.from(new Set(reasons.map((r) => r.text))).slice(0, 3);
-  if (!unique.length) unique.push(`Lives in ${areaName(other.areaId)}`);
+  if (!unique.length) unique.push(tx('Lives in {area}', { area: areaName(other.areaId) }));
 
   const strength = score >= 60 ? 'Strong match' : score >= 35 ? 'Good match' : 'Worth meeting';
   return { person: other, score, reasons: unique, strength };

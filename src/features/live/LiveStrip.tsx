@@ -1,3 +1,4 @@
+import { t as tx } from '@/i18n';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -45,7 +46,7 @@ export function LiveStrip() {
           const p = l.authorId === 'me' ? undefined : findPerson(l.authorId);
           const name = p?.name ?? me;
           return (
-            <PressableScale key={l.id} haptic="select" scaleTo={0.94} onPress={() => router.push('/live')} style={styles.item} accessibilityLabel={`${name} is live: ${l.text}`}>
+            <PressableScale key={l.id} haptic="select" scaleTo={0.94} onPress={() => router.push('/live')} style={styles.item} accessibilityLabel={tx('{name} is live: {text}', { name, text: l.text })}>
               <LiveRing>
                 <Avatar name={name} hue={p?.hue ?? 0} size={56} photo={p?.photo} />
               </LiveRing>

@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { confirm } from '@/lib/confirm';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -150,7 +150,7 @@ export default function CommentsScreen() {
                   onSubmitEditing={send}
                   returnKeyType="send"
                   maxLength={500}
-                  accessibilityLabel="Comment"
+                  accessibilityLabel={a11y('Comment')}
                 />
               </View>
               <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, opacity: text.trim() ? 1 : 0.4 }]} accessibilityLabel="Post comment">

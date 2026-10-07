@@ -14,7 +14,7 @@ import { getCityContent } from '@/data/repo';
 import type { CityId } from '@/data/types';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { useLives } from '@/features/live/liveStore';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { space } from '@/theme/tokens';
@@ -212,7 +212,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
                 }
               }}
               accessibilityRole="button"
-              accessibilityLabel={p.kind === 'marker' ? p.m.title : `${p.members.length} places`}
+              accessibilityLabel={p.kind === 'marker' ? a11y(p.m.title) : tx('{n} places', { n: p.members.length })}
             >
               <View pointerEvents="none">
                 {p.kind === 'marker' ? (

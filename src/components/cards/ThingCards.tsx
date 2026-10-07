@@ -36,7 +36,7 @@ export const ActivityTile = memo(function ActivityTile({
 }) {
   const a = ACTIVITIES[kind];
   return (
-    <PressableScale onPress={onPress} style={{ width: size }} accessibilityLabel={`${a.label}, ${count} plans`}>
+    <PressableScale onPress={onPress} style={{ width: size }} accessibilityLabel={`${tx(a.label)}, ${tx('{n} activities', { n: count })}`}>
       <Photo visual={{ photo: a.photo }} light={city.light} scrim="strong" style={[styles.tile, { height: size * 1.18 }]} width={400}>
         <View style={styles.tileInner}>
           <Glass dark style={styles.tileIcon}>

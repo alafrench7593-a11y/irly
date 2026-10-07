@@ -84,7 +84,7 @@ export const JoinButton = memo(function JoinButton({ id, label = 'JOIN ACTIVITY'
         onPress={onPress}
         haptic={false}
         scaleTo={scale.press}
-        accessibilityLabel={joined ? `${doneLabel}. Tap to leave` : label}
+        accessibilityLabel={joined ? `${tx(doneLabel)}. ${tx('Tap to leave')}` : label}
         accessibilityState={{ selected: joined }}
         style={[
           styles.base,

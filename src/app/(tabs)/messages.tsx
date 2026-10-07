@@ -67,7 +67,7 @@ export default function Messages() {
                   scaleTo={0.96}
                   onPress={() => router.push(`/messages/${c.id}`)}
                   style={[styles.community, { backgroundColor: t.c.surface, borderColor: lit ? t.c.text : 'transparent', boxShadow: t.shadow.card }]}
-                  accessibilityLabel={`${c.title}${unread ? `, ${unread} unread` : ''}`}
+                  accessibilityLabel={`${c.title}${unread ? `, ${tx('{n} unread', { n: unread })}` : ''}`}
                 >
                   {community ? (
                     <Photo visual={community.visual} light={city.light} style={styles.communityPhoto} width={200} recyclingKey={`cv-${c.id}`} />

@@ -306,7 +306,7 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
 
 type FieldProps = TextInputProps & { icon?: IconName; trailing?: ReactNode; containerStyle?: StyleProp<ViewStyle> };
 
-export const Field = memo(function Field({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, ...rest }: FieldProps) {
+export const Field = memo(function Field({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, accessibilityLabel, ...rest }: FieldProps) {
   const t = useTheme();
   const tr = useT();
   const focus = useSharedValue(0);
@@ -336,6 +336,7 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
         // narrow fields (Age), putting the next field's icon over it on iPhone.
         style={[{ flex: 1, minWidth: 0, width: '100%', color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }, style]}
         {...rest}
+        accessibilityLabel={accessibilityLabel ? tr(accessibilityLabel) : undefined}
       />
       {trailing}
     </Animated.View>

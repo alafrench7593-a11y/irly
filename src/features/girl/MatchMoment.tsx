@@ -174,7 +174,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
               {suggestions.map((s) => (
                 <View key={s.id} style={styles.suggestion}>
-                  <PressableScale haptic="select" scaleTo={0.96} onPress={() => onSuggestion(s)} accessibilityLabel={`Create: ${s.label}`} style={styles.suggestionPhoto}>
+                  <PressableScale haptic="select" scaleTo={0.96} onPress={() => onSuggestion(s)} accessibilityLabel={tx('Create: {what}', { what: tx(s.label) })} style={styles.suggestionPhoto}>
                     <Photo visual={{ photo: s.photo }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
                     <View style={styles.suggestionText}>
                       <Icon name={s.icon} size={16} color="#FFFFFF" />
@@ -183,7 +183,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
                       </Text>
                     </View>
                   </PressableScale>
-                  <PressableScale haptic="select" scaleTo={0.96} onPress={() => onFindExisting(s)} accessibilityLabel={`Find ${s.label} sessions`} style={styles.findBtn}>
+                  <PressableScale haptic="select" scaleTo={0.96} onPress={() => onFindExisting(s)} accessibilityLabel={tx('Find activities: {what}', { what: tx(s.label) })} style={styles.findBtn}>
                     <Text variant="caption" color={girl.ink}>
                       Find existing
                     </Text>

@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { LANGS, t as tx, useLangStore } from '@/i18n';
+import { LANGS, t as tx, useLangStore, a11y } from '@/i18n';
 import { wipeLocal } from '@/state/wipe';
 import { deleteServerAccount, exportMyData, signOut, useAccount } from '@/features/auth/account';
 import { DEMO } from '@/config/app';
@@ -273,7 +273,7 @@ export default function Profile() {
                 onValueChange={setHaptics}
                 trackColor={{ true: t.c.brand, false: t.c.overlay }}
                 thumbColor="#FFFFFF"
-                accessibilityLabel="Haptic feedback"
+                accessibilityLabel={a11y('Haptic feedback')}
               />
             </View>
             <Divider inset={16} />

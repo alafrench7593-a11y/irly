@@ -104,7 +104,7 @@ function Stat({ value, label }: { value: number; label: string }) {
 function FeaturedCard({ city, onPick }: { city: City; onPick: (c: City, ref: RefObject<View | null>) => void }) {
   const ref = useRef<View>(null);
   return (
-    <PressableScale ref={ref} haptic={false} onPress={() => onPick(city, ref)} style={styles.featured} accessibilityLabel={`${city.name}, launch city`}>
+    <PressableScale ref={ref} haptic={false} onPress={() => onPick(city, ref)} style={styles.featured} accessibilityLabel={tx('{city}, launch city', { city: city.name })}>
       <Photo visual={{ photo: city.photo }} light={city.light} scrim="strong" width={1000} style={StyleSheet.absoluteFill} />
       <View style={styles.featuredTop}>
         <Badge kind="live" onDark label="Launch city · live now" />
