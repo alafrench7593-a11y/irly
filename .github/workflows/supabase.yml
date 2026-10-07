@@ -12,6 +12,8 @@ on:
       - 'scripts/deploy-db.mjs'
       - 'scripts/test-db.sh'
       - 'scripts/check-intent.mts'
+      - 'scripts/check-network.mts'
+      - 'src/features/network/**'
       - 'src/features/ai/**'
       - 'src/features/bali/fit.ts'
       - 'scripts/check-bali.mts'
@@ -53,6 +55,8 @@ jobs:
         run: node --experimental-strip-types --no-warnings scripts/check-compat.mts
       - name: Assistant command engine
         run: node --experimental-strip-types --no-warnings scripts/check-intent.mts
+      - name: Professional networking match
+        run: node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-network.mts
       - name: Community assistant
         run: node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-community.mts
       - name: Bali area fit, test plans, opening hours

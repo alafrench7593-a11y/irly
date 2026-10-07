@@ -24,6 +24,7 @@ import { useCityId, useStore } from '@/state/store';
 import { useServerActivities } from '@/features/server/activities';
 import { useAccount } from '@/features/auth/account';
 import { useCommunityList } from '@/features/community/data';
+import { NetworkDoor } from '@/features/network/ui';
 import { cityWhen } from '@/lib/time';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -146,6 +147,12 @@ export default function CategoryScreen() {
             ))}
           </ScrollView>
         </Animated.View>
+
+        {category.id === 'networking' ? (
+          <Animated.View entering={enter.rise(1, 60)} style={{ paddingHorizontal: space.gutter, marginTop: space[4] }}>
+            <NetworkDoor />
+          </Animated.View>
+        ) : null}
 
         {sub?.activities?.length ? (
           <Animated.View key={sub.id} entering={FadeIn.duration(260)} style={styles.section}>

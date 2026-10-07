@@ -592,6 +592,46 @@ select pg_temp.check((select count(*) from public.search_all('Sync', 'dubai') wh
 select pg_temp.check(private.city_scope('uaq') @> array['dubai', 'abudhabi', 'sharjah', 'ajman', 'rak', 'fujairah', 'uaq'] and not ('bali' = any (private.city_scope('uaq'))), 'UAE scope is the seven emirates');
 select pg_temp.as_admin();
 
+-- ───── Networking, professional side ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+insert into public.pro_profiles (user_id, role, job_title, company, industries, skills, project, intents, city_id, area_id)
+values (auth.uid(), 'founder', '  Founder ', 'Nova', '{ai,saas}', '{Python, python ,"  ",Sales}', 'AI for clinics', '{partners,investors,partners}', 'dubai', 'marina');
+select pg_temp.check((select skills from public.pro_profiles where user_id = auth.uid()) = '{Python,Sales}', 'pro skills are trimmed and deduplicated');
+select pg_temp.check((select job_title from public.pro_profiles where user_id = auth.uid()) = 'Founder', 'pro job title is trimmed');
+select pg_temp.expect_denied($$insert into public.pro_profiles (user_id, role, job_title, industries, city_id) values ('00000000-0000-0000-0000-00000000000c', 'founder', 'CEO', '{ai}', 'dubai')$$, 'nobody writes someone else''s pro profile');
+select pg_temp.expect_denied($$update public.pro_profiles set industries = '{astrology}' where user_id = auth.uid()$$, 'industries come from the list');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+insert into public.pro_profiles (user_id, role, job_title, industries, skills, intents, city_id, area_id)
+values (auth.uid(), 'investor', 'Angel investor', '{ai,fintech}', '{Fundraising}', '{opportunities}', 'sharjah', 'nowhere');
+select pg_temp.check((select area_id from public.pro_profiles where user_id = auth.uid()) is null, 'an unknown neighbourhood is dropped');
+select pg_temp.check(not exists (select 1 from public.pro_profiles where user_id <> auth.uid()), 'others'' pro rows are not readable directly');
+select pg_temp.check(exists (select 1 from public.pro_discover('dubai') where first_name = 'Bea' and lat is not null), 'from Sharjah: a Dubai founder is discoverable, with her area');
+select pg_temp.check(exists (select 1 from public.pro_discover('sharjah', '{"industry":"saas"}') where first_name = 'Bea'), 'industry filter');
+select pg_temp.check(not exists (select 1 from public.pro_discover('sharjah', '{"industry":"food"}') where first_name = 'Bea'), 'industry filter excludes');
+select pg_temp.check(exists (select 1 from public.pro_discover('sharjah', '{"role":"founder","intent":"investors"}')), 'role + looking for filters');
+select pg_temp.check(exists (select 1 from public.pro_discover('sharjah', '{"q":"pyth"}') where first_name = 'Bea'), 'search by skill');
+select pg_temp.check(not exists (select 1 from public.pro_discover('sharjah', '{"city":"ajman"}')), 'city filter');
+select pg_temp.check(not exists (select 1 from public.pro_discover('bali')), 'Bali does not see the Emirates');
+select pg_temp.check(not exists (select 1 from public.pro_discover('dubai') where user_id = auth.uid()), 'I am not in my own list');
+select pg_temp.check((select connection from public.pro_discover('dubai') where first_name = 'Bea') = 'none', 'not connected yet');
+select public.add_friend('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select connection from public.pro_profile_of('00000000-0000-0000-0000-00000000000b')) = 'requested', 'Connect sends a request');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select connection from public.pro_discover('dubai') where first_name = 'Carl') = 'incoming', 'she sees the incoming request');
+select public.add_friend('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select connection from public.pro_profile_of('00000000-0000-0000-0000-00000000000c')) = 'connected', 'accepting connects them');
+select pg_temp.check(public.open_direct('00000000-0000-0000-0000-00000000000c') is not null, 'connected professionals can message');
+update public.pro_profiles set visible = false where user_id = auth.uid();
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.pro_discover('dubai') where first_name = 'Bea'), 'a hidden pro profile leaves discovery');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+insert into public.pro_profiles (user_id, role, job_title, industries, city_id) values (auth.uid(), 'freelancer', 'Designer', '{design}', 'dubai');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.pro_discover('dubai') where first_name = 'Alice'), 'profile visibility "nobody" also hides the pro profile');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+update public.pro_profiles set visible = true where user_id = auth.uid();
+select pg_temp.as_admin();
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

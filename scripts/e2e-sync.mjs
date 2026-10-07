@@ -242,6 +242,76 @@ async function main() {
     return true;
   });
 
+  // ───────── Networking, professional side ─────────
+  await step('Vera has a professional profile (investor, AI & SaaS, Canggu)', async () => {
+    must(await veraSb.from('pro_profiles').insert({ user_id: vera.id, role: 'investor', job_title: 'Angel investor', company: `Vera Capital ${run}`, industries: ['ai', 'saas'], skills: ['Fundraising', 'Product'], intents: ['partners', 'opportunities'], city_id: 'bali', area_id: 'canggu', project: 'Backing AI tools for clinics' }));
+    return true;
+  });
+  await step('Uma creates her professional profile in the app', async () => {
+    await page.goto(`${BASE}/network/profile`);
+    await page.getByPlaceholder('Founder & CEO, Product designer…').fill('Founder');
+    await page.getByRole('button', { name: '🤖 AI & Artificial Intelligence', exact: true }).click();
+    await page.getByRole('button', { name: '🚀 SaaS', exact: true }).click();
+    await page.getByRole('button', { name: '💰 Find investors', exact: true }).click();
+    await page.getByRole('button', { name: '🤝 Find business partners', exact: true }).click();
+    await page.getByPlaceholder('Add a skill and press enter').fill('Python');
+    await page.getByPlaceholder('Add a skill and press enter').press('Enter');
+    await page.getByPlaceholder('An AI assistant for clinics in Dubai…').fill('AI assistant for clinics');
+    await page.getByRole('button', { name: 'Create my professional profile', exact: true }).click();
+    for (let i = 0; i < 20; i++) {
+      const rows = await sql(`select industries, intents, skills from public.pro_profiles where user_id = '${uma.id}'`);
+      if (rows[0]?.industries?.includes('saas') && rows[0].intents.includes('investors') && rows[0].skills.includes('Python')) return true;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    return false;
+  });
+  await step('Networking lists Vera with a match and the reason', async () => {
+    await page.goto(`${BASE}/network`);
+    await visible(page, `Angel investor · Vera Capital ${run}`, 20000);
+    await visible(page, '% match — You both work in AI & SaaS');
+    await shot('network-discover');
+    return true;
+  });
+  await step('… a domain filter hides her, "All domains" brings her back', async () => {
+    await page.getByRole('button', { name: '🛒 E-commerce', exact: true }).click();
+    await visible(page, 'No one matches these filters yet');
+    await page.getByRole('button', { name: 'All domains', exact: true }).click();
+    await visible(page, `Vera Capital ${run}`);
+    return true;
+  });
+  await step('… the filters sheet: Investor + City', async () => {
+    await page.getByLabel('Filters', { exact: true }).click();
+    await page.getByRole('button', { name: 'Investor', exact: true }).click();
+    await page.getByRole('button', { name: /^Show \d+ results$/ }).click();
+    await visible(page, `Vera Capital ${run}`);
+    await page.getByLabel('Filters', { exact: true }).click();
+    await page.getByRole('button', { name: 'Reset', exact: true }).click();
+    await page.getByRole('button', { name: /^Show \d+ results$/ }).click();
+    return true;
+  });
+  await step('Connect → Vera gets the request, accepts → Message opens the chat', async () => {
+    await page.getByRole('button', { name: 'Connect', exact: true }).first().click();
+    await visible(page, 'Requested');
+    let state;
+    for (let i = 0; i < 20 && state !== 'incoming'; i++) {
+      state = must(await veraSb.rpc('pro_profile_of', { p_user: uma.id }))[0]?.connection;
+      if (state !== 'incoming') await new Promise((r) => setTimeout(r, 500));
+    }
+    if (state !== 'incoming') return false;
+    must(await veraSb.rpc('add_friend', { p_user: uma.id }));
+    await page.getByRole('button', { name: 'Message', exact: true }).first().waitFor({ timeout: 20000 });
+    await page.getByRole('button', { name: 'Message', exact: true }).first().click();
+    await page.waitForURL(/\/messages\/[0-9a-f-]{36}/, { timeout: 20000 });
+    return true;
+  });
+  await step('Vera\'s professional page: why they should meet', async () => {
+    await page.goto(`${BASE}/network/${vera.id}`);
+    await visible(page, 'Why you should meet');
+    await visible(page, 'Backing AI tools for clinics');
+    await shot('network-profile');
+    return true;
+  });
+
   // ───────── 1. Paths: every screen opens ─────────
   const areas = (await sql(`select id from public.areas where city_id = 'bali' order by sort`)).map((r) => r.id);
   const sections = ['visa', 'housing', 'banking', 'sim', 'internet', 'transport', 'healthcare', 'insurance', 'schools', 'childcare', 'work', 'coworking', 'business', 'accounting', 'tax', 'legal', 'real_estate', 'moving', 'pets', 'services'];
@@ -251,7 +321,7 @@ async function main() {
   const screens = [
     '/', '/discover', '/live', '/map', '/messages', '/profile', '/social', '/account', '/assistant', '/business', '/calendar', '/communities',
     '/community/new', '/design-system', '/eat', '/events', '/match', '/notifications', '/saved', '/services', '/settings', '/activities',
-    '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
+    '/network', '/network/profile', `/network/${vera.id}`, '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
     `/comments?type=activity&id=${actId}`, `/share?type=activity&id=${actId}&title=x`, '/person/p-kadek',
     ...areas.map((a) => `/bali/area/${a}`),
     ...sections.map((s) => `/bali/guide/${s}`),

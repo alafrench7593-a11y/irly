@@ -205,6 +205,10 @@ export default function Profile() {
             <Divider inset={16} />
             <SettingLink icon="bookmark" label="Saved" value="Plans, places, people" onPress={() => router.push('/saved')} />
             <Divider inset={16} />
+            <SettingLink icon="briefcase" label="Professional" value="Job, project, networking goals" onPress={() => router.push('/network/profile')} />
+            <Divider inset={16} />
+            <SettingLink icon="network" label="Networking" value="Professionals near you" onPress={() => router.push('/network')} />
+            <Divider inset={16} />
             <SettingLink icon="sparkles" label="Assistant" value="Ask or speak" onPress={() => router.push('/assistant')} />
             <Divider inset={16} />
             <SettingLink icon="orbit" label="What is IRLY?" value="Five scenes, 15 seconds" onPress={() => router.push('/story')} />

@@ -21,6 +21,7 @@ import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
+import { NetworkDoor } from '@/features/network/ui';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -42,6 +43,9 @@ export default function Business() {
 
   return (
     <Page overline={`${city.name} · Business`} title="Build here" subtitle="From licence to first hire: guides kept current, people already vetted.">
+      <View style={{ paddingHorizontal: space.gutter, marginBottom: space[5] }}>
+        <NetworkDoor />
+      </View>
       <View style={{ marginBottom: space[6] }}>
         <Rail gap={8}>
           {city.businessTopics.map((id) => (
