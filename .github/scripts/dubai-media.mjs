@@ -135,13 +135,14 @@ for (const [key, [query, words, place = 'dubai']] of Object.entries(queries)) {
   await sleep(provider === 'pixabay' ? 700 : 400);
 }
 
-// Website videos: a Dubai clip of each search, cut to 12 s, 1280 px, silent.
+// Films (website and app): a clip of each search that names its place, cut to 12 s, 1280 px, silent.
 fs.mkdirSync('site/video', { recursive: true });
-for (const [name, query] of Object.entries(videos)) {
+for (const [name, spec] of Object.entries(videos)) {
+  const [query, place = 'dubai'] = Array.isArray(spec) ? spec : [spec];
   const k = `video:${name}`;
   const banned = new Set(exclude[k] ?? []);
   if (picks[k] && !banned.has(picks[k].id) && fs.existsSync(`site/video/${name}.mp4`)) continue;
-  const v = (await searchVideos(query)).find((x) => !banned.has(x.id) && x.file && PLACES.dubai.test(x.text) && x.duration >= 6);
+  const v = (await searchVideos(query)).find((x) => !banned.has(x.id) && x.file && (PLACES[place] ?? PLACES.dubai).test(x.text) && x.duration >= 6);
   if (!v) {
     report.none.push(k);
     continue;

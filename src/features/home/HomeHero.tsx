@@ -24,8 +24,8 @@ import { Photo } from '@/components/visual/Photo';
 import type { PhotoKey } from '@/data/photos';
 import type { City, CityId } from '@/data/types';
 import { useIntro } from '@/features/intro/introStore';
-import { CITY_FILMS } from '@/data/photos';
-import { HeroVideo } from './HeroVideo';
+import { Film } from '@/components/visual/Film';
+import { cityFilm } from '@/data/photos';
 import { cityHour, localClock } from '@/lib/time';
 import { PressableScale } from '@/motion/PressableScale';
 import { ease, motion } from '@/motion/tokens';
@@ -103,7 +103,7 @@ export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, liv
       <View style={[StyleSheet.absoluteFill, styles.clip]}>
         <Animated.View style={[StyleSheet.absoluteFill, photo]}>
           <Photo visual={{ photo: heroPhoto(city, now) }} light={city.light} width={1400} style={StyleSheet.absoluteFill} recyclingKey={`hero-${city.id}`} />
-          {CITY_FILMS[city.id] && !reduced ? <HeroVideo uri={CITY_FILMS[city.id]!} /> : null}
+          {cityFilm(city.id, heroPhoto(city, now)) && !reduced ? <Film uri={cityFilm(city.id, heroPhoto(city, now))!} /> : null}
         </Animated.View>
       </View>
       <LinearGradient

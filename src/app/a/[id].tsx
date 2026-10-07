@@ -4,7 +4,7 @@ import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionBar } from '@/components/social/ActionBar';
 import { Button } from '@/components/ui/Button';
@@ -12,7 +12,9 @@ import { IconButton } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
+import { Film } from '@/components/visual/Film';
 import { Photo } from '@/components/visual/Photo';
+import { filmFor } from '@/data/photos';
 import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
@@ -34,6 +36,7 @@ const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'lo
  * the assistant). Join is capacity-safe and opens the activity chat.
  */
 export default function ActivityPage() {
+  const reducedMotion = useReducedMotion();
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -160,6 +163,9 @@ export default function ActivityPage() {
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
         <View style={styles.cover}>
           <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined), uri: a.coverUrl }} light={city?.light} scrim="strong" style={StyleSheet.absoluteFill} width={1000} recyclingKey={`a-${a.id}`} />
+          {!a.coverUrl && !reducedMotion && filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined)) ? (
+            <Film uri={filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined))!} dim={0.4} />
+          ) : null}
           <View style={[styles.coverText, { paddingBottom: space[5] }]}>
             <Text variant="overline" color="#FFFFFF">
               {[tx(isEvent ? 'Event' : (category?.label ?? 'Activity')), a.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
