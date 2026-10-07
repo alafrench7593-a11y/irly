@@ -15,9 +15,9 @@ export const APP = {
   /** Who operates IRLY: an individual (sole operator), not a company. */
   operatorType: 'individual' as 'individual' | 'company',
   /** Full legal name of the person who operates IRLY. */
-  legalEntity: LEGAL_REQUIRED,
+  legalEntity: 'Samuel Princivil',
   /** Postal address of the operator. */
-  legalAddress: 'Azizi Riviera 3, Dubai, United Arab Emirates',
+  legalAddress: 'Dubai Digital Park, Dubai Silicon Oasis, Dubai, United Arab Emirates',
   /** Law that governs the Terms, and the competent courts. */
   governingLaw: 'the laws of the Emirate of Dubai and the applicable federal laws of the United Arab Emirates, and the courts of Dubai have jurisdiction',
   /** Data protection law that applies to the operator. */

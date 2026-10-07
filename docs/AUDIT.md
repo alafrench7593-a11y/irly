@@ -207,8 +207,8 @@ Third-party SDKs: none for analytics or advertising. The services used are Supab
 
 ## Manual check required
 
-- Filled on 7 October 2026: individual operator, address (Azizi Riviera 3, Dubai), Dubai law and courts, UAE PDPL, hosting in the EU (Ireland; inferred from the database address, to confirm in Supabase → Settings → General), legal bases, data protection authority, and retention (reports 12 months after closing, support 24 months, both enforced on the server).
-- Still to fill in `src/config/app.ts` and `src/content/legal.ts`: the operator's full legal name, the exact public email(s), the safeguards for transfers outside the EU and UAE, and the liability clause. Then have the three texts reviewed by a lawyer (UAE).
+- Filled on 7 October 2026: individual operator (Samuel Princivil), address (Dubai Digital Park, Dubai Silicon Oasis), Dubai law and courts, UAE PDPL, hosting in the EU (Ireland; inferred from the database address, to confirm in Supabase → Settings → General), legal bases, data protection authority, and retention (reports 12 months after closing, support 24 months, both enforced on the server).
+- Still to fill in `src/config/app.ts` and `src/content/legal.ts`: the exact public email(s), the safeguards for transfers outside the EU and UAE, and the liability clause. Then have the three texts reviewed by a lawyer (UAE).
 - App Store Connect:
   - privacy nutrition labels (from the inventory above);
   - age rating (social, user-to-user chat, meeting people: 17+ suggested);
