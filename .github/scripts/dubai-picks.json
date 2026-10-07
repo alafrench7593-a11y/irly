@@ -6,13 +6,6 @@
   "by": "supertranslator",
   "byUrl": "https://pixabay.com/users/supertranslator-2577061/"
  },
- "dubai": {
-  "id": "pixabay-6899298",
-  "tags": "buildings, skyline, architecture, skydive dubai, dubai city tour https:  pixabay.com photos buildings skyline architecture 6899298 ",
-  "page": "https://pixabay.com/photos/buildings-skyline-architecture-6899298/",
-  "by": "diksharathorealwar",
-  "byUrl": "https://pixabay.com/users/diksharathorealwar-25013596/"
- },
  "dubaiNight": {
   "id": "pixabay-1767540",
   "tags": "dubai, skyscraper, city lights, skyline, aerial view, city view, night photography, urban landscape, cityscape, emirates, travel, architecture, urban, modern, d",
@@ -55,13 +48,6 @@
   "by": "msisakib",
   "byUrl": "https://pixabay.com/users/msisakib-13972005/"
  },
- "sharjah": {
-  "id": "pixabay-618749",
-  "tags": "arab, face, orient, arabic, islam, muslim, man, old, way, prophet, turban, arab, islam, islam, islam, muslim, muslim, muslim, muslim, muslim, prophet, United Ar",
-  "page": "https://pixabay.com/photos/arab-face-orient-arabic-islam-618749/",
-  "by": "jpeter2",
-  "byUrl": "https://pixabay.com/users/jpeter2-697843/"
- },
  "ajman": {
   "id": "pixabay-5930110",
   "tags": "beach, buildings, architecture, nature, sky, clouds, modern, modern buildings, skyline, city, cityscape, skyscrapers, urban, ajman, uae, aqaar, towers https:  p",
@@ -75,13 +61,6 @@
   "page": "https://pixabay.com/photos/camels-u-a-e-dubai-ras-al-khaimah-1124138/",
   "by": "wedn",
   "byUrl": "https://pixabay.com/users/wedn-486377/"
- },
- "fujairah": {
-  "id": "pixabay-4943244",
-  "tags": "building, fujairah, united arab emirates, fujairah, fujairah, fujairah, fujairah, fujairah https:  pixabay.com photos building fujairah 4943244 ",
-  "page": "https://pixabay.com/photos/building-fujairah-4943244/",
-  "by": "ThaniaRodrigues",
-  "byUrl": "https://pixabay.com/users/ThaniaRodrigues-15642199/"
  },
  "fort": {
   "id": "pixabay-2455043",
@@ -97,13 +76,6 @@
   "by": "katetrysh",
   "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
  },
- "hikeDesert": {
-  "id": "pixabay-4736936",
-  "tags": "dubai, desert, nature, girl, sand https:  pixabay.com photos dubai desert girl sand 4736936 ",
-  "page": "https://pixabay.com/photos/dubai-desert-girl-sand-4736936/",
-  "by": "finalcall90",
-  "byUrl": "https://pixabay.com/users/finalcall90-14783712/"
- },
  "dunes": {
   "id": "pixabay-6826298",
   "tags": "dubai desert safari, desert safari dubai, capture desert, dunes, desert landscape, dubai, uae, dubai, dubai, dubai, dubai, dubai, uae https:  pixabay.com photos",
@@ -117,20 +89,6 @@
   "page": "https://pixabay.com/photos/dam-canoeing-water-canoe-outdoor-2715775/",
   "by": "lmombo",
   "byUrl": "https://pixabay.com/users/lmombo-6306199/"
- },
- "dinnerGroup": {
-  "id": "pixabay-2713872",
-  "tags": "boat, street, urban, arab, arabic, culture, dubai, eastern, human, islam, man, muslim, people, place, summer, sun, vacations, walk, adult, businessman, city, ec",
-  "page": "https://pixabay.com/photos/boat-street-urban-arab-arabic-2713872/",
-  "by": "igorovsyannykov",
-  "byUrl": "https://pixabay.com/users/igorovsyannykov-6222956/"
- },
- "rooftop": {
-  "id": "pixabay-10176691",
-  "tags": "woman, posing, fashion, portrait, beautiful, blonde, style, dress, cityscape, skyscraper, infinity pool, dubai, view, luxury, nature, rooftop pool, ring, summer",
-  "page": "https://pixabay.com/photos/woman-posing-fashion-portrait-10176691/",
-  "by": "Sunriseforever",
-  "byUrl": "https://pixabay.com/users/Sunriseforever-6314823/"
  },
  "rooftopNeon": {
   "id": "pixabay-1839726",
@@ -146,26 +104,12 @@
   "by": "marucha",
   "byUrl": "https://pixabay.com/users/marucha-4698045/"
  },
- "brunch": {
-  "id": "pixabay-9060102",
-  "tags": "spice market, dubai souq, traditional market, spice stall, middle eastern spices, local shopping, dubai, souq shopping, herbs, aromatic spices, shopping in duba",
-  "page": "https://pixabay.com/photos/spice-market-dubai-souq-9060102/",
-  "by": "katetrysh",
-  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
- },
  "yacht": {
   "id": "pixabay-5575251",
   "tags": "skyline, skyscrapers, buildings, cityscape, city, facades, edifice, architecture, modern architecture, waterfront, boats, yachts, dubai, urban, modern, water, d",
   "page": "https://pixabay.com/photos/skyline-skyscrapers-buildings-5575251/",
   "by": "MagicTV",
   "byUrl": "https://pixabay.com/users/MagicTV-18171246/"
- },
- "coffee": {
-  "id": "pixabay-4813104",
-  "tags": "dubai garden glow, light show, tea pot, dubai, traditional, tea, pot, style, coffee, arab, arabia, coffee cup, tea cup, cup, vintage, tradition, black coffee, b",
-  "page": "https://pixabay.com/photos/dubai-garden-glow-light-show-tea-pot-4813104/",
-  "by": "nedrafols",
-  "byUrl": "https://pixabay.com/users/nedrafols-15032032/"
  },
  "coffeeBar": {
   "id": "pixabay-787927",
@@ -188,54 +132,12 @@
   "by": "hanmei",
   "byUrl": "https://pixabay.com/users/hanmei-13048335/"
  },
- "gallery": {
-  "id": "pixabay-7470550",
-  "tags": "dubai, city, skyscrapers, modern architecture, futuristic, digital art, painting, urban, clip art, dubai, dubai, dubai, dubai, dubai https:  pixabay.com photos ",
-  "page": "https://pixabay.com/photos/dubai-city-skyscrapers-7470550/",
-  "by": "alexman89",
-  "byUrl": "https://pixabay.com/users/alexman89-10638719/"
- },
- "nightMarket": {
-  "id": "pixabay-4792152",
-  "tags": "ferris wheel, landscape, dubai, u a e, night, lights, architecture, lighting, skyline, large, cityscape, round, water, sea, nature, perspective, night photograp",
-  "page": "https://pixabay.com/photos/ferris-wheel-landscape-dubai-u-a-e-4792152/",
-  "by": "analogicus",
-  "byUrl": "https://pixabay.com/users/analogicus-8164369/"
- },
- "coworking": {
-  "id": "pixabay-7237750",
-  "tags": "dubai, skyscraper, architecture, urban, buildings, office, tower, business, property, dubai, dubai, dubai, dubai, dubai, office, business, business, property, p",
-  "page": "https://pixabay.com/photos/dubai-skyscraper-architecture-urban-7237750/",
-  "by": "solomonikvik",
-  "byUrl": "https://pixabay.com/users/solomonikvik-10496565/"
- },
- "founders": {
-  "id": "pixabay-6887712",
-  "tags": "aerial, apartment, architecture, bird view, building, business, business district, city, cityscape, construction, destination, downtown, drone view, dubai offic",
-  "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887712/",
-  "by": "katetrysh",
-  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
- },
- "meeting": {
-  "id": "pixabay-3161105",
-  "tags": "city, the skyscraper, architecture, townscape, modern, building, office, tall, nature, skyscrapers, dubai, united arabic emirates, sky https:  pixabay.com photo",
-  "page": "https://pixabay.com/photos/city-the-skyscraper-architecture-3161105/",
-  "by": "kamzyw",
-  "byUrl": "https://pixabay.com/users/kamzyw-708058/"
- },
  "office": {
   "id": "pixabay-7237745",
   "tags": "dubai, skyscraper, architecture, urban, buildings, office, tower, business, property, dubai, dubai, dubai, dubai, dubai https:  pixabay.com photos dubai skyscra",
   "page": "https://pixabay.com/photos/dubai-skyscraper-architecture-urban-7237745/",
   "by": "solomonikvik",
   "byUrl": "https://pixabay.com/users/solomonikvik-10496565/"
- },
- "apartment": {
-  "id": "pixabay-6887710",
-  "tags": "aerial, apartment, architecture, bird view, building, business, business district, city, cityscape, construction, destination, downtown, drone view, dubai offic",
-  "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887710/",
-  "by": "katetrysh",
-  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
  },
  "car": {
   "id": "pixabay-4927227",
@@ -244,47 +146,12 @@
   "by": "themotion",
   "byUrl": "https://pixabay.com/users/themotion-15582551/"
  },
- "girlFriends": {
-  "id": "pixabay-4045036",
-  "tags": "downtown, dubai, uae, tourism, city, people, buildings, burqa, girls, arab, shopping, center, dubai, dubai, dubai, dubai, dubai https:  pixabay.com photos downt",
-  "page": "https://pixabay.com/photos/downtown-dubai-uae-tourism-city-4045036/",
-  "by": "Olgaozik",
-  "byUrl": "https://pixabay.com/users/Olgaozik-11540328/"
- },
- "girlSunset": {
-  "id": "pixabay-4897900",
-  "tags": "al qudra, desert, dubai, sand, uae, emirates, arab, dune, vacations, adventure, dunes, sunset, landscape, sun, animal, friends, camel, woman, hot, travel, sahar",
-  "page": "https://pixabay.com/photos/al-qudra-desert-dubai-sand-uae-4897900/",
-  "by": "8268513",
-  "byUrl": "https://pixabay.com/users/8268513-8268513/"
- },
- "girlShopping": {
-  "id": "pixabay-2292841",
-  "tags": "dubai, nature, interior design, inside, setup, waterfall, organic architecture, organic, water, waves, waveform, architecture, modern, dubai mall, mall, shoppin",
-  "page": "https://pixabay.com/photos/dubai-interior-design-inside-setup-2292841/",
-  "by": "Martinschuschi",
-  "byUrl": "https://pixabay.com/users/Martinschuschi-5260235/"
- },
  "girlChill": {
   "id": "pixabay-4818972",
   "tags": "desert, sand, thin, dubai, girl, nature, woman https:  pixabay.com photos desert sand thin dubai girl woman 4818972 ",
   "page": "https://pixabay.com/photos/desert-sand-thin-dubai-girl-woman-4818972/",
   "by": "3239028",
   "byUrl": "https://pixabay.com/users/3239028-3239028/"
- },
- "girlWork": {
-  "id": "pixabay-4071845",
-  "tags": "dubai, arab, uae, emirates, architecture, arabic, tourism, muslim, statue, burkha, man, woman, abstract, uae, uae, uae, uae, uae, burkha, burkha, burkha https: ",
-  "page": "https://pixabay.com/photos/dubai-arab-uae-emirates-4071845/",
-  "by": "travelphotographer",
-  "byUrl": "https://pixabay.com/users/travelphotographer-3989469/"
- },
- "girlHike": {
-  "id": "pixabay-10176799",
-  "tags": "woman, nature, model, blonde, portrait, luxury, fashion, style, view, sunset, gold dress, dubai, skyscraper, pool, clear water, panorama, city, sunlight, palm i",
-  "page": "https://pixabay.com/photos/woman-model-blonde-portrait-luxury-10176799/",
-  "by": "Sunriseforever",
-  "byUrl": "https://pixabay.com/users/Sunriseforever-6314823/"
  },
  "girlTravel": {
   "id": "pixabay-4412444",
@@ -300,54 +167,12 @@
   "by": "Sunriseforever",
   "byUrl": "https://pixabay.com/users/Sunriseforever-6314823/"
  },
- "momBeach": {
-  "id": "pixabay-6887737",
-  "tags": "tourists, father and son, burj khalifa, vacation, telescope, dubai, digital telescope, electronic telescope, family, united arab emirates, burj khalifa, burj kh",
-  "page": "https://pixabay.com/photos/tourists-father-and-son-burj-khalifa-6887737/",
-  "by": "katetrysh",
-  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
- },
- "familyBeach": {
-  "id": "pixabay-4946254",
-  "tags": "atlantis, the palm, dubai, hotel, architecture, emirates, resort, luxury, vacation, building, modern, travel, sky, tourism, holiday, uae, beach, landscape, sea,",
-  "page": "https://pixabay.com/photos/atlantis-the-palm-dubai-hotel-4946254/",
-  "by": "8268513",
-  "byUrl": "https://pixabay.com/users/8268513-8268513/"
- },
- "arcade": {
-  "id": "pixabay-1278908",
-  "tags": "water games, dubai, dubai fountain, dubai, dubai, dubai, dubai fountain, dubai fountain, dubai fountain, dubai fountain, dubai fountain https:  pixabay.com phot",
-  "page": "https://pixabay.com/photos/water-games-dubai-dubai-fountain-1278908/",
-  "by": "wedn",
-  "byUrl": "https://pixabay.com/users/wedn-486377/"
- },
- "archery": {
-  "id": "pixabay-9060100",
-  "tags": "al seef, dubai, narrow alley, stone buildings, stairs, traditional architecture, middle eastern design, historic area, cultural heritage, arabic architecture, r",
-  "page": "https://pixabay.com/photos/al-seef-dubai-narrow-alley-9060100/",
-  "by": "katetrysh",
-  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
- },
  "automotive": {
   "id": "pixabay-3694924",
   "tags": "lamborghini, cars, blue, dubai, lovecars, supercars, blur, lamborghini, lamborghini, lamborghini, lamborghini, lamborghini https:  pixabay.com photos lamborghin",
   "page": "https://pixabay.com/photos/lamborghini-cars-blue-dubai-3694924/",
   "by": "Abdurashidbey",
   "byUrl": "https://pixabay.com/users/Abdurashidbey-7501944/"
- },
- "bbq": {
-  "id": "pixabay-2602031",
-  "tags": "meat, beef, raw, marinated, steak, fresh, meal, barbecue, uncooked, pepper, gourmet, rosemary, preparation, butcher, sirloin, tenderloin, fillet, protein, bbq, ",
-  "page": "https://pixabay.com/photos/meat-beef-raw-marinated-steak-2602031/",
-  "by": "gate74",
-  "byUrl": "https://pixabay.com/users/gate74-5942741/"
- },
- "burger": {
-  "id": "pixabay-3141129",
-  "tags": "fries, finger food, fried, burger, food, bread, sandwich, refreshment, meal, breakfast, lunch, eating, tasty, dubai, uae, fresh, delicious, tomato, appetizer, s",
-  "page": "https://pixabay.com/photos/fries-finger-food-fried-burger-3141129/",
-  "by": "sharonang",
-  "byUrl": "https://pixabay.com/users/sharonang-99559/"
  },
  "burjKhalifa": {
   "id": "pixabay-4922317",
@@ -363,13 +188,6 @@
   "by": "Schmid-Reportagen",
   "byUrl": "https://pixabay.com/users/Schmid-Reportagen-646138/"
  },
- "cinema": {
-  "id": "pixabay-4857129",
-  "tags": "motiongate, dubai, castle, movie, theme park, building, motiongate, motiongate, motiongate, motiongate, motiongate https:  pixabay.com photos motiongate dubai c",
-  "page": "https://pixabay.com/photos/motiongate-dubai-castle-movie-4857129/",
-  "by": "mcjools",
-  "byUrl": "https://pixabay.com/users/mcjools-7426151/"
- },
  "comedy": {
   "id": "pixabay-6162989",
   "tags": "tanoura dance, man, culture, stage, performance, arab dance, dancing, dance, tradition, arab, night, dubai, uae, emirates, tanoura dance, tanoura dance, tanoura",
@@ -377,40 +195,12 @@
   "by": "MemoTravels",
   "byUrl": "https://pixabay.com/users/MemoTravels-6537808/"
  },
- "concert": {
-  "id": "pixabay-4045037",
-  "tags": "downtown, dubai, uae, tourism, city, people, buildings, muslims, arabs, square, street, evening, crowd, dubai, dubai, dubai, dubai, dubai, uae https:  pixabay.c",
-  "page": "https://pixabay.com/photos/downtown-dubai-uae-tourism-city-4045037/",
-  "by": "Olgaozik",
-  "byUrl": "https://pixabay.com/users/Olgaozik-11540328/"
- },
- "designWork": {
-  "id": "pixabay-7405517",
-  "tags": "ornament, design, dubai https:  pixabay.com photos ornament design dubai 7405517 ",
-  "page": "https://pixabay.com/photos/ornament-design-dubai-7405517/",
-  "by": "grselvan",
-  "byUrl": "https://pixabay.com/users/grselvan-7453879/"
- },
- "dessert": {
-  "id": "pixabay-4829753",
-  "tags": "dessert, dubai, arab, emirates, brown dessert, dubai, dubai, dubai, dubai, dubai, arab, arab https:  pixabay.com photos dessert dubai arab emirates 4829753 ",
-  "page": "https://pixabay.com/photos/dessert-dubai-arab-emirates-4829753/",
-  "by": "Mustafa_Fahd",
-  "byUrl": "https://pixabay.com/users/Mustafa_Fahd-2576863/"
- },
  "dhow": {
   "id": "pixabay-1283778",
   "tags": "city, creek, lg, dubai, balconies, cityscape, residential building, uae, emirates, appartments, deira, hsbc, dhows, appartments, hsbc, hsbc, hsbc, hsbc, hsbc ht",
   "page": "https://pixabay.com/photos/city-creek-lg-dubai-balconies-1283778/",
   "by": "Pexels",
   "byUrl": "https://pixabay.com/users/Pexels-2286921/"
- },
- "family": {
-  "id": "pixabay-3309911",
-  "tags": "sunset, the dawn family, monolithic part of the waters, the silhouette, the sun, landscape, sky, travel, dubai, colorful, nature, panoramic, yellow https:  pixa",
-  "page": "https://pixabay.com/photos/sunset-the-dawn-family-3309911/",
-  "by": "nextvoyage",
-  "byUrl": "https://pixabay.com/users/nextvoyage-5275305/"
  },
  "fashion": {
   "id": "pixabay-10176777",
@@ -426,20 +216,6 @@
   "by": "analogicus",
   "byUrl": "https://pixabay.com/users/analogicus-8164369/"
  },
- "finance": {
-  "id": "pixabay-5328101",
-  "tags": "architecture, asia, asphalt, full hd wallpaper, avenue, beautiful wallpaper, free wallpaper, background, beijing, blue, laptop wallpaper, boston, brick, buildin",
-  "page": "https://pixabay.com/photos/architecture-asia-asphalt-avenue-5328101/",
-  "by": "cartujoart",
-  "byUrl": "https://pixabay.com/users/cartujoart-17156444/"
- },
- "glamping": {
-  "id": "pixabay-2388166",
-  "tags": "dubai, desert, nature, oryx, orange desert https:  pixabay.com photos dubai desert oryx orange desert 2388166 ",
-  "page": "https://pixabay.com/photos/dubai-desert-oryx-orange-desert-2388166/",
-  "by": "SandcatSkywalker",
-  "byUrl": "https://pixabay.com/users/SandcatSkywalker-5595039/"
- },
  "homeDecor": {
   "id": "pixabay-1815863",
   "tags": "architecture, dubai, mall, uae, travel, building, interior, market, tourism, emirates, city, urban, exterior, construction, downtown, landmark, souk, gold, attr",
@@ -447,33 +223,12 @@
   "by": "yesxcom",
   "byUrl": "https://pixabay.com/users/yesxcom-1380857/"
  },
- "indianFood": {
-  "id": "pixabay-7096820",
-  "tags": "indian man, dubai expo, portrait, man, outdoors, travel, uae, dubai expo 2020, city https:  pixabay.com photos indian man dubai expo portrait man 7096820 ",
-  "page": "https://pixabay.com/photos/indian-man-dubai-expo-portrait-man-7096820/",
-  "by": "sandip44",
-  "byUrl": "https://pixabay.com/users/sandip44-7206682/"
- },
  "islands": {
   "id": "pixabay-6565940",
   "tags": "hotel, building, palm trees, resort, architecture, tourism, dubai, emirates, oil paint, george paris, uae, madinat souk, creek, travel, jumeirah, colorful, burj",
   "page": "https://pixabay.com/photos/hotel-building-palm-trees-resort-6565940/",
   "by": "georgeparisph",
   "byUrl": "https://pixabay.com/users/georgeparisph-7568822/"
- },
- "italianFood": {
-  "id": "pixabay-2354524",
-  "tags": "italian passion, lamborghini, ferrari, ducati, dubai, lamborghini, ferrari, ducati, ducati, ducati, ducati, ducati https:  pixabay.com photos italian passion la",
-  "page": "https://pixabay.com/photos/italian-passion-lamborghini-ferrari-2354524/",
-  "by": "5ILI",
-  "byUrl": "https://pixabay.com/users/5ILI-5493488/"
- },
- "jbr": {
-  "id": "pixabay-2660002",
-  "tags": "dubai, beach, shells, sea, sand, shell, nature, seashell, the coast, summer, sandy beach, view, a lot of shells, landscape https:  pixabay.com photos dubai beac",
-  "page": "https://pixabay.com/photos/dubai-beach-shells-sea-sand-shell-2660002/",
-  "by": "adamtepl",
-  "byUrl": "https://pixabay.com/users/adamtepl-3296308/"
  },
  "kids": {
   "id": "pixabay-6887733",
@@ -488,13 +243,6 @@
   "page": "https://pixabay.com/photos/tofu-marinated-soy-sauce-marbled-7525311/",
   "by": "lpegasu",
   "byUrl": "https://pixabay.com/users/lpegasu-6640154/"
- },
- "lake": {
-  "id": "pixabay-4602838",
-  "tags": "dubai creek, nature, city, water, deira, dubai, creek, uae, emirates, travel, tourism, buildings, skyline, architecture, ship, downtown, landmark, al seef, trad",
-  "page": "https://pixabay.com/photos/dubai-creek-city-water-deira-dubai-4602838/",
-  "by": "sherryalmas",
-  "byUrl": "https://pixabay.com/users/sherryalmas-14170690/"
  },
  "lounge": {
   "id": "pixabay-1806257",
@@ -517,13 +265,6 @@
   "by": "MahiS3010",
   "byUrl": "https://pixabay.com/users/MahiS3010-15279556/"
  },
- "meditation": {
-  "id": "pixabay-248412",
-  "tags": "dubai, aquarium, fishes, food, burj, kalifa, shopping, mall, arabic, water, blue, shark, danger, people, fishing, light, transparent, texture, template, backgro",
-  "page": "https://pixabay.com/photos/dubai-aquarium-fishes-food-burj-248412/",
-  "by": "photosforyou",
-  "byUrl": "https://pixabay.com/users/photosforyou-124319/"
- },
  "mosque": {
   "id": "pixabay-4010835",
   "tags": "uae, dubai, city, arab, emirates, mosque, muslim, ornament, masjid, dubai, dubai, dubai, dubai, dubai, masjid https:  pixabay.com photos uae dubai city arab emi",
@@ -545,13 +286,6 @@
   "by": "katetrysh",
   "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
  },
- "picnic": {
-  "id": "pixabay-6569788",
-  "tags": "dubai, ferris wheel, amusement ride, theme park, amusement park, uae, united arab emirates, dubai, dubai, dubai, dubai, dubai, united arab emirates https:  pixa",
-  "page": "https://pixabay.com/photos/dubai-ferris-wheel-amusement-ride-6569788/",
-  "by": "esadjusic",
-  "byUrl": "https://pixabay.com/users/esadjusic-23062763/"
- },
  "realEstate": {
   "id": "pixabay-3773311",
   "tags": "dubai, cove, water, architecture, port, sky, skyline, ship, building, island, apart from, city, the skyscraper, clouds, hotels, cities, giant, funny, luxurious,",
@@ -565,13 +299,6 @@
   "page": "https://pixabay.com/photos/catamaran-sailing-boat-dubai-4220084/",
   "by": "Joe_Hillsund",
   "byUrl": "https://pixabay.com/users/Joe_Hillsund-7284621/"
- },
- "sneakers": {
-  "id": "pixabay-7021958",
-  "tags": "street, cars, nature, sunset, twilight, evening, city, uae, sky, dubai https:  pixabay.com photos street cars sunset twilight 7021958 ",
-  "page": "https://pixabay.com/photos/street-cars-sunset-twilight-7021958/",
-  "by": "ulianapinto",
-  "byUrl": "https://pixabay.com/users/ulianapinto-6333301/"
  },
  "souk": {
   "id": "pixabay-7385166",
@@ -614,5 +341,138 @@
   "page": "https://pixabay.com/videos/id-203951/",
   "by": "maksoy",
   "byUrl": "https://pixabay.com/users/maksoy-15113309/"
+ },
+ "dubai": {
+  "id": "pixabay-4044183",
+  "tags": "dubai, emirates, burj khalifa, skyline, city, night, view, architecture, modern, downtown, dubai, dubai, dubai, dubai, dubai, burj khalifa",
+  "page": "https://pixabay.com/photos/dubai-emirates-burj-khalifa-skyline-4044183/",
+  "by": "enjoytheworld",
+  "byUrl": "https://pixabay.com/users/enjoytheworld-6205481/"
+ },
+ "sharjah": {
+  "id": "pixabay-3658909",
+  "tags": "u a e, sharjah, skyline, architecture, city, nature, building, skyscraper, heaven, water",
+  "page": "https://pixabay.com/photos/u-a-e-sharjah-skyline-architecture-3658909/",
+  "by": "Makalu",
+  "byUrl": "https://pixabay.com/users/Makalu-680451/"
+ },
+ "fujairah": {
+  "id": "pixabay-2455042",
+  "tags": "fort, uae, castle, attraction, fortification, emirate, fujairah, history, historical, fortress, museum, fujairah, fujairah, fujairah, fujairah, fujairah",
+  "page": "https://pixabay.com/photos/fort-uae-castle-attraction-2455042/",
+  "by": "bhart9070",
+  "byUrl": "https://pixabay.com/users/bhart9070-5758980/"
+ },
+ "coffee": {
+  "id": "pixabay-722035",
+  "tags": "cafe, dubai, arab, emirates, arabian, tea, summer, leisure, lifestyle, relax, drink, espresso",
+  "page": "https://pixabay.com/photos/cafe-dubai-arab-emirates-arabian-722035/",
+  "by": "stefangeorgiou0",
+  "byUrl": "https://pixabay.com/users/stefangeorgiou0-936395/"
+ },
+ "nightMarket": {
+  "id": "pixabay-9060102",
+  "tags": "spice market, dubai souq, traditional market, spice stall, middle eastern spices, local shopping, dubai, souq shopping, herbs, aromatic spices, shopping in duba",
+  "page": "https://pixabay.com/photos/spice-market-dubai-souq-9060102/",
+  "by": "katetrysh",
+  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
+ },
+ "founders": {
+  "id": "pixabay-2713872",
+  "tags": "boat, street, urban, arab, arabic, culture, dubai, eastern, human, islam, man, muslim, people, place, summer, sun, vacations, walk, adult, businessman, city, ec",
+  "page": "https://pixabay.com/photos/boat-street-urban-arab-arabic-2713872/",
+  "by": "igorovsyannykov",
+  "byUrl": "https://pixabay.com/users/igorovsyannykov-6222956/"
+ },
+ "apartment": {
+  "id": "pixabay-6887712",
+  "tags": "aerial, apartment, architecture, bird view, building, business, business district, city, cityscape, construction, destination, downtown, drone view, dubai offic",
+  "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887712/",
+  "by": "katetrysh",
+  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
+ },
+ "newHome": {
+  "id": "pixabay-6887710",
+  "tags": "aerial, apartment, architecture, bird view, building, business, business district, city, cityscape, construction, destination, downtown, drone view, dubai offic",
+  "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887710/",
+  "by": "katetrysh",
+  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
+ },
+ "bbq": {
+  "id": "pixabay-4493690",
+  "tags": "chicken, grill, bbq, marinade, grilled, delicious, kebab, hot, summer, food, barbecue, nature, cooking",
+  "page": "https://pixabay.com/photos/chicken-grill-bbq-marinade-grilled-4493690/",
+  "by": "LAWJR",
+  "byUrl": "https://pixabay.com/users/LAWJR-4448871/"
+ },
+ "dessert": {
+  "id": "pixabay-4829761",
+  "tags": "foot in dessert, dessert, dubai, uae, brown dessert, uae, uae, uae, uae, uae",
+  "page": "https://pixabay.com/photos/foot-in-dessert-dessert-dubai-uae-4829761/",
+  "by": "Mustafa_Fahd",
+  "byUrl": "https://pixabay.com/users/Mustafa_Fahd-2576863/"
+ },
+ "family": {
+  "id": "pixabay-6887737",
+  "tags": "tourists, father and son, burj khalifa, vacation, telescope, dubai, digital telescope, electronic telescope, family, united arab emirates, burj khalifa, burj kh",
+  "page": "https://pixabay.com/photos/tourists-father-and-son-burj-khalifa-6887737/",
+  "by": "katetrysh",
+  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
+ },
+ "finance": {
+  "id": "pixabay-2948814",
+  "tags": "singapore, hdr, marina bay financial centre, skyline, building, financial district, skyscraper, architecture, urban, offices, business, bank, city, tower, blue ",
+  "page": "https://pixabay.com/photos/singapore-hdr-2948814/",
+  "by": "cegoh",
+  "byUrl": "https://pixabay.com/users/cegoh-94852/"
+ },
+ "indianFood": {
+  "id": "pixabay-1481494",
+  "tags": "india, indian, indian food, chicken, restaurant, healthy, delemad, tandoori chicken, bbq, kebab, food, skewer, marinate, tandoori, naan, good, great, atmosphere",
+  "page": "https://pixabay.com/photos/india-indian-indian-food-chicken-1481494/",
+  "by": "GOLDINPIC",
+  "byUrl": "https://pixabay.com/users/GOLDINPIC-2820402/"
+ },
+ "jbr": {
+  "id": "pixabay-4998424",
+  "tags": "nature, beach, sea, horizon, landscape, costa, marina, blue, alicante, alicante, alicante, alicante, alicante, alicante",
+  "page": "https://pixabay.com/photos/nature-beach-sea-horizon-landscape-4998424/",
+  "by": "Photokane",
+  "byUrl": "https://pixabay.com/users/Photokane-9686248/"
+ },
+ "themePark": {
+  "id": "pixabay-6569788",
+  "tags": "dubai, ferris wheel, amusement ride, theme park, amusement park, uae, united arab emirates, dubai, dubai, dubai, dubai, dubai, united arab emirates",
+  "page": "https://pixabay.com/photos/dubai-ferris-wheel-amusement-ride-6569788/",
+  "by": "esadjusic",
+  "byUrl": "https://pixabay.com/users/esadjusic-23062763/"
+ },
+ "video:night": {
+  "id": "pixabay-163160",
+  "tags": "fountain, show, lake, shopping mall, department store, night, night view, water, building, city, downtown, travel, travel destination, sights, tourist destinati",
+  "page": "https://pixabay.com/videos/id-163160/",
+  "by": "livesmart",
+  "byUrl": "https://pixabay.com/users/livesmart-44568/"
+ },
+ "video:beach": {
+  "id": "pixabay-117430",
+  "tags": "beach, sea, sunset, vacation, dubai, uae, architecture https:  pixabay.com videos id 117430 ",
+  "page": "https://pixabay.com/videos/id-117430/",
+  "by": "puhoff",
+  "byUrl": "https://pixabay.com/users/puhoff-27507993/"
+ },
+ "video:desert": {
+  "id": "pixabay-241694",
+  "tags": "camel, desert, nature, animal, mammal, view, tourism, morocco, trip, africa, dubai, dry, hot, heat, holiday, dune, adventure, earphones, mongolia, train, portra",
+  "page": "https://pixabay.com/videos/id-241694/",
+  "by": "Engin_Akyurt",
+  "byUrl": "https://pixabay.com/users/Engin_Akyurt-3656355/"
+ },
+ "video:abudhabi": {
+  "id": "pixabay-47170",
+  "tags": "grand mosque abu dhabi, the grand mosque, grand mosque from dubai, grad mosque uae, united arab emirates grand mosque, united arab emirates mosque https:  pixab",
+  "page": "https://pixabay.com/videos/id-47170/",
+  "by": "masterbert0427",
+  "byUrl": "https://pixabay.com/users/masterbert0427-17843107/"
  }
 }
