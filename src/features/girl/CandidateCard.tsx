@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -114,7 +114,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         style={[styles.card, { width, height }, card]}
         accessible
         accessibilityRole="button"
-        accessibilityLabel={`${c.firstName}${c.age ? `, ${c.age}` : ''}. ${c.score}% match. ${lines.join(', ')}. Open profile`}
+        accessibilityLabel={a11y(`${c.firstName}${c.age ? `, ${c.age}` : ''}. ${tx('{n}% match', { n: c.score })}. ${lines.join(', ')}. ${tx('Open profile')}`)}
       >
         {c.photoUrls[0] ? (
           <Image source={{ uri: c.photoUrls[0] }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />

@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { CharCount } from '@/components/ui/CharCount';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StyleSheet, TextInput, View } from 'react-native';
@@ -132,7 +132,7 @@ export default function ProfileStep() {
           multiline
           maxLength={160}
           style={[styles.bio, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }]}
-          accessibilityLabel="Short bio"
+          accessibilityLabel={a11y('Short bio')}
         />
         <CharCount length={bio.trim().length} min={10} max={160} />
       </Animated.View>

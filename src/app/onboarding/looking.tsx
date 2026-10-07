@@ -1,3 +1,4 @@
+import { a11y } from '@/i18n';
 import { useRouter } from 'expo-router';
 import { StyleSheet, Switch, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -81,7 +82,7 @@ export default function LookingStep() {
             onValueChange={(v) => update({ faithVisible: v })}
             trackColor={{ true: t.c.brand, false: t.c.overlay }}
             thumbColor="#FFFFFF"
-            accessibilityLabel="Show my faith on my profile"
+            accessibilityLabel={a11y('Show my faith on my profile')}
           />
         </View>
       </Animated.View>

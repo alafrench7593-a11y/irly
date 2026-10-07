@@ -83,7 +83,7 @@ export default function BaliMove() {
                 {tx(s.label)}
               </Text>
               {s.section ? (
-                <PressableScale onPress={() => router.push(`/bali/guide/${s.section}`)} haptic="select" hitSlop={8} accessibilityLabel={`${s.label} guide`}>
+                <PressableScale onPress={() => router.push(`/bali/guide/${s.section}`)} haptic="select" hitSlop={8} accessibilityLabel={tx('{topic} guide', { topic: tx(s.label) })}>
                   <Text variant="label" tone="secondary">
                     Guide
                   </Text>

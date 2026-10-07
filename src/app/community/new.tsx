@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { useState } from 'react';
 import { StyleSheet, Switch, TextInput, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -73,11 +73,11 @@ export default function NewCommunity() {
         ) : null}
         <View style={{ gap: 6 }}>
           <Text variant="label">Name</Text>
-          <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 60))} placeholder={tx('French in {city}', { city: city.name })} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel="Community name" />
+          <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 60))} placeholder={tx('French in {city}', { city: city.name })} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Community name')} />
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">One line</Text>
-          <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder={tx('Apéros, padel and weekend trips')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel="Tagline" />
+          <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder={tx('Apéros, padel and weekend trips')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Tagline')} />
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">About</Text>
@@ -88,7 +88,7 @@ export default function NewCommunity() {
             placeholderTextColor={t.c.textTertiary}
             multiline
             style={[input, styles.multi]}
-            accessibilityLabel="Description"
+            accessibilityLabel={a11y('Description')}
           />
         </View>
         <View style={{ gap: 8 }}>
@@ -107,7 +107,7 @@ export default function NewCommunity() {
                 Only women can see and join it.
               </Text>
             </View>
-            <Switch value={girlOnly} onValueChange={setGirlOnly} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel="IRLY Girl community" />
+            <Switch value={girlOnly} onValueChange={setGirlOnly} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel={a11y('IRLY Girl community')} />
           </View>
         ) : null}
         <Button label="Create community" icon="users" full loading={busy} disabled={!valid} onPress={create} />

@@ -67,7 +67,7 @@ export const DestinationPill = memo(function DestinationPill({ onPress, onDark, 
   );
   if (!solid) {
     return (
-      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityLabel={`Destination: ${city.name}. Change destination`}>
+      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityLabel={tx('Destination: {city}. Change destination', { city: city.name })}>
         <Glass dark={onDark} style={styles.pill} intensity={40}>
           {content(onDark ? '#FFFFFF' : t.c.text)}
         </Glass>
@@ -75,7 +75,7 @@ export const DestinationPill = memo(function DestinationPill({ onPress, onDark, 
     );
   }
   return (
-    <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityLabel={`Destination: ${city.name}. Change destination`}>
+    <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityLabel={tx('Destination: {city}. Change destination', { city: city.name })}>
       <View style={styles.pillShell}>
         <Animated.View style={[StyleSheet.absoluteFill, solidStyle]}>
           <Glass style={[StyleSheet.absoluteFill, styles.round]} intensity={40} />

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -312,7 +312,7 @@ function Assistant({
     track('AI_COMMAND', { scope: 'community', kind: r.kind });
     if (r.kind === 'digest') {
       fetchDigest(communityId)
-        .then((d) => setDigest(digestLines(d, (ms) => when(ms, geo.cities[0]?.id ?? 'dubai'))))
+        .then((d) => setDigest(digestLines(d, (ms) => when(ms, geo.cities[0]?.id ?? 'dubai'), tx)))
         .catch(() => setDigest(['Can’t reach IRLY right now.']));
     }
   };
@@ -339,7 +339,7 @@ function Assistant({
           style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 }}
           onSubmitEditing={() => text.trim() && ask(text)}
           returnKeyType="go"
-          accessibilityLabel="Ask the community assistant"
+          accessibilityLabel={a11y('Ask the community assistant')}
         />
         <PressableScale onPress={() => text.trim() && ask(text)} haptic="select" hitSlop={8} accessibilityLabel="Ask">
           <Icon name="send" size={18} color={t.c.text} />
@@ -478,7 +478,7 @@ function Composer({ initial = '', onPost }: { initial?: string; onPost: (body: s
         multiline
         maxLength={2000}
         style={[styles.composer, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }]}
-        accessibilityLabel="Write a post"
+        accessibilityLabel={a11y('Write a post')}
       />
       {poll ? (
         <View style={{ gap: 6 }}>
@@ -490,7 +490,7 @@ function Composer({ initial = '', onPost }: { initial?: string; onPost: (body: s
               placeholder={tx('Option {n}', { n: i + 1 })}
               placeholderTextColor={t.c.textTertiary}
               style={[styles.option, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }]}
-              accessibilityLabel={`Poll option ${i + 1}`}
+              accessibilityLabel={tx('Poll option {n}', { n: i + 1 })}
             />
           ))}
           {poll.length < 6 ? <Chip size="sm" icon="plus" label={tx('Add option')} onPress={() => setPoll([...poll, ''])} /> : null}
@@ -568,7 +568,7 @@ function PostCard({
             const pct = total ? Math.round((n / total) * 100) : 0;
             const mine = p.myVote === i;
             return (
-              <PressableScale key={o + i} onPress={() => isMember && onVote(i)} haptic="select" scaleTo={0.98} style={[styles.pollRow, { borderColor: mine ? t.c.text : t.c.line }]} accessibilityLabel={`Vote ${o}`}>
+              <PressableScale key={o + i} onPress={() => isMember && onVote(i)} haptic="select" scaleTo={0.98} style={[styles.pollRow, { borderColor: mine ? t.c.text : t.c.line }]} accessibilityLabel={tx('Vote: {option}', { option: o })}>
                 <View style={[StyleSheet.absoluteFill, { width: `${pct}%`, backgroundColor: t.c.overlay, borderRadius: radius.md }]} />
                 <Text variant="label" style={{ flex: 1 }}>
                   {o}
@@ -586,7 +586,7 @@ function PostCard({
       ) : null}
 
       {p.activityId ? (
-        <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={`Open ${p.activityTitle ?? 'activity'}`}>
+        <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={p.activityTitle ? tx('Open {title}', { title: p.activityTitle }) : tx('Open the activity')}>
           <Icon name="calendar" size={18} color={t.c.text} />
           <View style={{ flex: 1 }}>
             <Text variant="titleS" numberOfLines={1}>

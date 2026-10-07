@@ -55,7 +55,7 @@ export default function BaliTest() {
             haptic="select"
             scaleTo={0.98}
             style={[styles.day, { backgroundColor: t.c.surface }]}
-            accessibilityLabel={`Day ${d.day}: ${d.title}`}
+            accessibilityLabel={tx('Day {n}: {title}', { n: d.day, title: tx(d.title) })}
           >
             <View style={[styles.num, { backgroundColor: t.c.bg }]}>
               <Text variant="label">{d.day}</Text>

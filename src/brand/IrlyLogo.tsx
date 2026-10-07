@@ -1,3 +1,4 @@
+import { a11y } from '@/i18n';
 import { memo, useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -61,7 +62,7 @@ export const IrlyWordmark = memo(function IrlyWordmark({ size = 18, color, accen
   }, [animated, enter, sweep, pulse]);
 
   return (
-    <View style={{ width, height }} accessibilityRole="image" accessibilityLabel="IRLY" pointerEvents="none">
+    <View style={{ width, height }} accessibilityRole="image" accessibilityLabel={a11y('IRLY')} pointerEvents="none">
       {LAYOUT.dots.map((d) => {
         const left = d.col * pitch + (pitch - dot) / 2;
         const top = (d.row - LAYOUT.top) * pitch + (pitch - dot) / 2;

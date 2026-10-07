@@ -8,7 +8,6 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
-import { getCityContent } from '@/data/repo';
 import { haptic } from '@/motion/haptics';
 import { easing } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
@@ -23,7 +22,6 @@ export default function Ready() {
   const router = useRouter();
   const cityId = useCityId();
   const city = CITIES[cityId];
-  const content = getCityContent(cityId);
   const name = useStore((s) => s.profile.name);
   const completeOnboarding = useStore((s) => s.completeOnboarding);
   const [mark, setMark] = useState<MarkState>('loading');
@@ -31,10 +29,10 @@ export default function Ready() {
   const light = useSharedValue(0);
 
   const lines = [
-    `Finding ${content.people.length * 12} people like you`,
-    `Curating ${content.events.length + content.sessions.length} plans this week`,
-    `Checking ${content.services.length} verified services`,
-    `Lighting up the map of ${city.name}`,
+    tx('Finding people who share your interests'),
+    tx('Gathering plans in {city}', { city: city.name }),
+    tx('Getting local services ready'),
+    tx('Lighting up the map of {city}', { city: city.name }),
   ];
 
   useEffect(() => {

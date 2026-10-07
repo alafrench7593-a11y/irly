@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { CharCount } from '@/components/ui/CharCount';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
@@ -142,7 +142,7 @@ export default function GirlProfile() {
         >
           <Icon name={step > 0 ? 'chevronLeft' : 'x'} size={20} color={girl.ink} />
         </PressableScale>
-        <View style={styles.progress} accessibilityLabel={`Step ${step + 1} of ${STEPS.length}`}>
+        <View style={styles.progress} accessibilityLabel={tx('Step {n} of {total}', { n: step + 1, total: STEPS.length })}>
           {STEPS.map((s, i) => (
             <View key={s} style={[styles.bar, { backgroundColor: i <= step ? girl.ink : girl.blush }]} />
           ))}
@@ -181,7 +181,7 @@ export default function GirlProfile() {
                         haptic="tap"
                         scaleTo={0.9}
                         onPress={() => set('photoUris', draft.photoUris.filter((x) => x !== uri))}
-                        accessibilityLabel={`Remove photo ${i + 1}`}
+                        accessibilityLabel={tx('Remove photo {n}', { n: i + 1 })}
                         style={styles.remove}
                       >
                         <Icon name="x" size={14} color="#FFFFFF" />
@@ -214,7 +214,7 @@ export default function GirlProfile() {
                   placeholder={tx('New in {city}, padel addict, always planning the next trip…', { city: CITIES[cityId]?.name ?? 'Dubai' })}
                   placeholderTextColor={girl.inkFaint}
                   style={styles.input}
-                  accessibilityLabel="Bio"
+                  accessibilityLabel={a11y('Bio')}
                 />
                 <CharCount length={draft.bio.trim().length} min={10} max={300} color={girl.inkFaint} warn={girl.rose} />
               </GSection>
@@ -404,7 +404,7 @@ function ToggleRow({ label, hint, value, onChange }: { label: string; hint: stri
           {hint}
         </Text>
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: girl.ink, false: girl.blush }} thumbColor="#FFFFFF" accessibilityLabel={label} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: girl.ink, false: girl.blush }} thumbColor="#FFFFFF" accessibilityLabel={a11y(label)} />
     </View>
   );
 }

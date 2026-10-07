@@ -1,4 +1,4 @@
-<title>IRLY — Meet People. Live IRL.</title>
+<title>IRLY — Meet people. Live IRL.</title>
 <meta name="description" content="IRLY helps you meet people, discover activities and build real-life connections. Starting in Dubai, coming soon to iOS and Android.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -164,9 +164,22 @@ html[lang="ar"] .hero h1 { line-height: 1.2; }
 .pop.p4 { top: 58%; right: calc(50% - min(42vw, 400px)); animation-delay: calc(var(--t0) + 3s), calc(var(--t0) + 3.9s); }
 @media (max-width: 760px) { .pop { font-size: 11px; padding: 7px 10px 7px 7px; gap: 8px; } .pop .ava, .pop .emo { width: 26px; height: 26px; } .pop small { font-size: 10px; } .pop.p1 { left: 2%; top: 3%; } .pop.p2 { right: 2%; top: 20%; } .pop.p3 { left: 1%; top: 40%; } .pop.p4 { display: none; } }
 .hero .fade-b { position: absolute; inset: auto 0 0; height: 30%; background: linear-gradient(transparent, var(--bg)); z-index: 3; pointer-events: none; }
-.scroll-cue { position: absolute; bottom: 28px; left: 50%; z-index: 4; transform: translateX(-50%); width: 24px; height: 38px; border-radius: 12px; border: 1.5px solid var(--line-strong); opacity: 0; animation: fade 1s calc(var(--t0) + 3.2s) forwards; }
-@media (max-height: 760px) { .scroll-cue { display: none; } }
-.scroll-cue::after { content: ""; position: absolute; top: 7px; left: 50%; width: 3px; height: 7px; border-radius: 2px; background: var(--fg); transform: translateX(-50%); animation: cue 1.8s ease-in-out infinite; }
+.scroll-cue { position: absolute; bottom: 24px; left: 50%; z-index: 4; transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; padding: 6px 10px; color: var(--muted); font-size: var(--t-micro); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; opacity: 0; animation: fade 1s calc(var(--t0) + 3.2s) forwards; transition: opacity .4s var(--ease), color .3s; }
+.scroll-cue:hover, .scroll-cue:focus-visible { color: var(--fg); }
+.scroll-cue i { position: relative; width: 22px; height: 34px; border-radius: 12px; border: 1.5px solid var(--line-strong); }
+.scroll-cue i::after { content: ""; position: absolute; top: 7px; left: 50%; width: 3px; height: 7px; border-radius: 2px; background: var(--fg); transform: translateX(-50%); animation: cue 1.8s ease-in-out infinite; }
+/* Short screens: the cue moves to the corner, clear of the store badges. */
+@media (max-height: 760px) { .scroll-cue { left: auto; right: 18px; bottom: 18px; transform: none; grid-auto-flow: column; align-items: center; } .scroll-cue i { width: 18px; height: 28px; } }
+@media (max-height: 760px) and (max-width: 420px) { .scroll-cue { right: 10px; bottom: 14px; } .scroll-cue span { display: none; } }
+html.scrolled .scroll-cue { opacity: 0 !important; pointer-events: none; }
+/* Reading progress: a hairline that tells there is more below. */
+.progress { position: fixed; inset: 0 0 auto; z-index: 95; height: 2px; background: var(--fg); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); opacity: .55; pointer-events: none; }
+[dir="rtl"] .progress { transform-origin: 100% 50%; }
+/* Smooth wheel scrolling (Lenis), mouse only. */
+html.lenis, html.lenis body { height: auto; }
+html.lenis { scroll-behavior: auto; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
 
 /* ───────────────────────── Story chapters ───────────────────────── */
 .chapter { position: relative; padding-block: var(--s-6); }
@@ -208,6 +221,12 @@ html[lang="ar"] .alone :is(.big, .stack) { letter-spacing: 0; line-height: 1.3; 
 .fact .n { font-size: clamp(54px, 7vw, 90px); font-weight: 800; letter-spacing: -0.05em; line-height: .9; color: var(--fg); }
 .fact cite { font-style: normal; font-size: var(--t-micro); color: var(--faint); }
 .fact cite a { color: var(--muted); }
+.hard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+.hard .card { padding: 26px 28px; display: grid; gap: 8px; align-content: start; }
+.hard h3 { font-size: var(--t-h3, 22px); line-height: 1.15; letter-spacing: -0.02em; color: var(--fg); }
+.hard p { color: var(--muted); }
+.hard-end { margin-top: var(--s-5); max-width: 30ch; font-size: clamp(24px, 3.2vw, 40px); font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+@media (max-width: 760px) { .hard { grid-template-columns: minmax(0, 1fr); } }
 
 /* 03 · the solution */
 .comes { height: 300vh; }
@@ -457,15 +476,16 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
 </style>
 
 <a class="skip" href="#main" data-i="skip">Skip to content</a>
+<div class="progress" id="progress" aria-hidden="true"></div>
 
 <div class="intro" aria-hidden="true">
-  <div><div class="logo"><span>I</span><span>R</span><span>L</span><span>Y</span></div><div class="irl">IN REAL LIFE.</div></div>
+  <div><div class="logo" translate="no"><span>I</span><span>R</span><span>L</span><span>Y</span></div><div class="irl notranslate" dir="ltr" translate="no">IN REAL LIFE.</div></div>
 </div>
 
 <header class="nav" id="nav">
   <div class="wrap">
     <nav class="nav-in glass" aria-label="Main" data-i-aria="navMain">
-      <a class="brand" href="#top" aria-label="IRLY"><i aria-hidden="true"></i>IRLY</a>
+      <a class="brand notranslate" href="#top" aria-label="IRLY" translate="no"><i aria-hidden="true"></i>IRLY</a>
       <div class="links">
         <a href="#why" data-i="navWhy">Why IRLY</a>
         <a href="#how" data-i="navHow">How it works</a>
@@ -473,9 +493,9 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
         <a href="#dubai" data-i="navDubai">Dubai</a>
         <a href="https://getirly.com/app/" data-i="navApp">See the app</a>
       </div>
-      <div class="langs" role="group" aria-label="Language">
-        <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
-        <button type="button" data-lang="fr" aria-pressed="false" lang="fr">FR</button>
+      <div class="langs" role="group" aria-label="Language" data-i-aria="langGroup">
+        <button type="button" data-lang="en" aria-pressed="true" lang="en" aria-label="English">EN</button>
+        <button type="button" data-lang="fr" aria-pressed="false" lang="fr" aria-label="Français">FR</button>
         <button type="button" data-lang="ar" aria-pressed="false" lang="ar" aria-label="العربية">ع</button>
       </div>
       <a class="btn sm cta mag" href="#waitlist" data-i="joinWaitlist">Join the waitlist</a>
@@ -498,12 +518,12 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
     <div class="pin">
       <div class="glow" aria-hidden="true"></div>
       <div class="copy" id="heroCopy">
-        <span class="tag">IN REAL LIFE.</span>
+        <span class="tag notranslate" dir="ltr" translate="no">IN REAL LIFE.</span>
         <h1 id="h1"><span class="ln"><span data-i="h1a">Meet people.</span></span><span class="ln"><span data-i="h1b">Do more.</span></span><span class="ln"><span data-i="h1c">Live IRL.</span></span></h1>
         <p class="sub" data-i="heroSub">A social app built to help you make real connections, discover things to do and meet people in real life.</p>
         <div class="badges" role="group" aria-label="Coming soon to the App Store and Google Play" data-i-aria="badgesAria">
           <span class="badge mag" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.6-1.9-1.5-.2-3 .9-3.7.9-.8 0-2-.9-3.2-.9-1.7 0-3.2 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.3-.9-2.3-3.8zM14 5.3c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/></svg><span><small data-i="soonApple">Coming soon to the</small><b>App Store</b></span></span>
-          <span class="badge mag" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.5-9.7-9.5-9.7zm10.7 8.5 2.7-2.8L5.5 1.5c-.4-.2-.8-.3-1.1-.2l9.9 9.5zm0 2.4-9.9 9.5c.3.1.7 0 1.1-.2l11.5-6.5-2.7-2.8zm6.6-3.5L18 8.2l-3 3.8 3 3.8 2.9-1.6c.8-.5.8-1.7 0-2.2l-.2-.1z"/></svg><span><small data-i="soonGoogle">Coming soon on</small><b>Google Play</b></span></span>
+          <span class="badge mag" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.5-9.7-9.5-9.7zm10.7 8.5 2.7-2.8L5.5 1.5c-.4-.2-.8-.3-1.1-.2l9.9 9.5zm0 2.4-9.9 9.5c.3.1.7 0 1.1-.2l11.5-6.5-2.7-2.8zm6.6-3.5L18 8.2l-3 3.8 3 3.8 2.9-1.6c.8-.5.8-1.7 0-2.2l-.2-.1z"/></svg><span><small data-i="soonGoogle">Coming soon to</small><b>Google Play</b></span></span>
         </div>
         <p class="soonline"><span class="soon"><span class="dot" aria-hidden="true"></span><span data-i="comingSoon">Coming soon</span></span> <span data-i="soonLine">to the App Store and Google Play.</span></p>
       </div>
@@ -520,7 +540,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
         </div>
       </div>
       <div class="fade-b" aria-hidden="true"></div>
-      <div class="scroll-cue" aria-hidden="true"></div>
+      <a class="scroll-cue" href="#why" aria-label="Scroll down to discover IRLY" data-i-aria="scrollAria"><span data-i="scrollCue">Scroll</span><i aria-hidden="true"></i></a>
     </div>
   </section>
 
@@ -550,9 +570,17 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       <p class="eyebrow reveal"><b>02</b> <span data-i="k02">Making friends is difficult</span></p>
       <h2 class="reveal d1" id="facts-t" style="margin-top:20px" data-i="factsT">A city where almost everyone started out knowing no one.</h2>
       <div class="facts">
-        <div class="card fact reveal"><span class="n">88%</span><p data-i="fact1">of people living in the UAE are expatriates.</p><cite><span data-i="src">Source</span>: <a href="https://en.wikipedia.org/wiki/Expatriates_in_the_United_Arab_Emirates" target="_blank" rel="noopener">UN estimate, 2021</a></cite></div>
-        <div class="card fact reveal d1"><span class="n" data-i="fact2n">1 in 4</span><p data-i="fact2">adults worldwide say they feel very or fairly lonely.</p><cite><span data-i="src">Source</span>: <a href="https://news.gallup.com/opinion/gallup/512618/almost-quarter-world-feels-lonely.aspx" target="_blank" rel="noopener">Gallup–Meta, 2023</a></cite></div>
+        <div class="card fact reveal"><span class="n" data-i="fact1n">88%</span><p data-i="fact1">of people living in the UAE are expatriates.</p><cite><span data-i="src">Source:</span> <a href="https://en.wikipedia.org/wiki/Expatriates_in_the_United_Arab_Emirates" target="_blank" rel="noopener" data-i="srcUn">UN estimate, 2021</a></cite></div>
+        <div class="card fact reveal d1"><span class="n" data-i="fact2n">1 in 4</span><p data-i="fact2">adults worldwide say they feel very or fairly lonely.</p><cite><span data-i="src">Source:</span> <a href="https://news.gallup.com/opinion/gallup/512618/almost-quarter-world-feels-lonely.aspx" target="_blank" rel="noopener" data-i="srcGallup">Gallup–Meta, 2023</a></cite></div>
       </div>
+      <h3 class="reveal" style="margin-top:var(--s-6)" data-i="hardT">Why it is hard here</h3>
+      <div class="hard">
+        <div class="card reveal"><h3 data-i="hard1t">Everyone is busy.</h3><p data-i="hard1">Long days at work, long drives home. Weeknights vanish and weekends fill up fast.</p></div>
+        <div class="card reveal d1"><h3 data-i="hard2t">People come and go.</h3><p data-i="hard2">A contract ends, a friend moves on. In a city of newcomers, you often start over.</p></div>
+        <div class="card reveal d2"><h3 data-i="hard3t">Networking feels like a transaction.</h3><p data-i="hard3">Crowded events, business cards, small talk. Few conversations turn into people you see again.</p></div>
+        <div class="card reveal d3"><h3 data-i="hard4t">Nobody talks to strangers.</h3><p data-i="hard4">Malls, gyms and cafés are full, yet everyone keeps to their own table. Meeting new people rarely just happens.</p></div>
+      </div>
+      <p class="hard-end reveal" data-i="hardEnd">Making friends, finding a padel partner or meeting the right people for your work shouldn’t depend on luck.</p>
     </div>
   </section>
 
@@ -565,10 +593,10 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
         <h2 data-i="comes2">From online to IRL.</h2>
         <div class="chain" id="chain">
           <svg aria-hidden="true"><path id="chainBase"></path><path id="chainDraw" class="draw"></path></svg>
-          <div class="node"><div class="vis"><img class="ava one" src="faces/p-chloe.jpg" alt=""></div><div class="txt"><b data-i="n1">A person</b><span data-i="n1s">Chloé, new in the Marina</span></div></div>
+          <div class="node"><div class="vis"><img class="ava one" src="faces/p-chloe.jpg" alt=""></div><div class="txt"><b data-i="n1">A person</b><span data-i="n1s">Chloé, new to the Marina</span></div></div>
           <div class="node"><div class="vis"><span class="bubble" data-i="n2b">Padel tonight?</span></div><div class="txt"><b data-i="n2">A plan</b><span data-i="n2s">Posted in one tap</span></div></div>
           <div class="node"><div class="vis"><span class="avs"><img class="ava" src="faces/p-arjun.jpg" alt=""><img class="ava" src="faces/p-sofia.jpg" alt=""><img class="ava" src="faces/p-marco.jpg" alt=""><img class="ava" src="faces/p-mei.jpg" alt=""><img class="ava" src="faces/p-tom.jpg" alt=""></span></div><div class="txt"><b data-i="n3">5 people join</b><span data-i="n3s">A group chat opens</span></div></div>
-          <div class="node"><div class="vis"><img class="ph" src="img/fineDining.webp" alt="" loading="lazy"></div><div class="txt"><b data-i="n4">Dinner after</b><span data-i="n4s">A place nearby</span></div></div>
+          <div class="node"><div class="vis"><img class="ph" src="img/fineDining.webp" alt="" loading="lazy"></div><div class="txt"><b data-i="n4">Dinner afterwards</b><span data-i="n4s">A place nearby</span></div></div>
           <div class="node"><div class="vis"><img class="ph" src="img/girlDinner.webp" alt="" loading="lazy"></div><div class="txt"><b data-i="n5">Real life</b><span data-i="n5s">New friends, in person</span></div></div>
         </div>
       </div>
@@ -589,7 +617,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
           <article class="step"><span class="k">SCENE 3</span><h3 data-i="s3">Things to do, tonight.</h3><p data-i="s3p">Sport, food, culture, wellness. Every plan shows who is going and how many spots are left.</p></article>
           <article class="step"><span class="k">SCENE 4</span><h3 data-i="s4">Your city, live.</h3><p data-i="s4p">Plans, people and places on a real map of Dubai. Never an exact address.</p></article>
           <article class="step"><span class="k">SCENE 5</span><h3 data-i="s5">Create a plan in seconds.</h3><p data-i="s5p">Pick an activity, a time and a place. IRLY finds the people.</p></article>
-          <article class="step"><span class="k">SCENE 6</span><h3 data-i="s6">Communities that meet.</h3><p data-i="s6p">Runners, founders, French speakers, gamers. Groups that actually see each other.</p></article>
+          <article class="step"><span class="k">SCENE 6</span><h3 data-i="s6">Communities that meet.</h3><p data-i="s6p">Runners, founders, French speakers, gamers. People who actually see each other.</p></article>
           <article class="step"><span class="k">SCENE 7</span><h3 data-i="s7">A profile that says “let’s go”.</h3><p data-i="s7p">Who you are, what you love doing, what you’re looking for. No likes, no followers.</p></article>
         </div>
       </div>
@@ -661,7 +689,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       <div class="card plan" id="plan">
         <div class="cover"><img src="img/girlFitness.webp" alt="" loading="lazy"></div>
         <h3 data-i="planT">Padel</h3>
-        <div class="meta"><span class="chip on" data-i="planWhen">Tonight</span><span class="chip">7:30 PM</span><span class="chip">Al Quoz</span></div>
+        <div class="meta"><span class="chip on" data-i="planWhen">Tonight</span><span class="chip" data-i="planTime">7:30 PM</span><span class="chip" data-i="planWhere">Al Quoz</span></div>
         <div class="bar"><i id="planBar"></i></div>
         <div class="who">
           <span class="avs" id="planAvs"><img class="ava in" src="faces/p-chloe.jpg" alt=""><img class="ava" src="faces/p-tom.jpg" alt=""><img class="ava" src="faces/p-mia.jpg" alt=""><img class="ava" src="faces/p-noah.jpg" alt=""></span>
@@ -687,7 +715,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
         <div class="comm"><img src="img/liveMusic.webp" alt="" loading="lazy"><b data-i="c8">Music</b><small data-i="c8s">Jams and gigs</small></div>
         <div class="comm"><img src="img/photography.webp" alt="" loading="lazy"><b data-i="c9">Photography</b><small data-i="c9s">Photo walks</small></div>
         <div class="comm"><img src="img/picnic.webp" alt="" loading="lazy"><b data-i="c10">French in Dubai</b><small data-i="c10s">Apéros and brunches</small></div>
-        <div class="comm"><img src="img/festival.webp" alt="" loading="lazy"><b data-i="c11">International Community</b><small data-i="c11s">Every nationality</small></div>
+        <div class="comm"><img src="img/festival.webp" alt="" loading="lazy"><b data-i="c11">International community</b><small data-i="c11s">Every nationality</small></div>
         <div class="comm type"><span class="em" aria-hidden="true">＋</span><b data-i="c12">Start your own</b><small data-i="c12s">Any interest, any size</small></div>
       </div>
     </div>
@@ -712,13 +740,13 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
           <p class="lede reveal d2" data-i="dubaiP">Dubai is one of the most international places on earth. People arrive every day to</p>
           <div class="why reveal d2"><span class="chip" data-i="w1">work</span><span class="chip" data-i="w2">build a company</span><span class="chip" data-i="w3">study</span><span class="chip" data-i="w4">travel</span><span class="chip" data-i="w5">start a new life</span></div>
           <p class="reveal d3" data-i="dubaiP2">Building a real social life there can take years. So that is where IRLY starts.</p>
-          <div class="reach reveal d3" id="reach"><span data-i="r1">Dubai</span><em>→</em><span data-i="r2">UAE</span><em>→</em><span data-i="r3">GCC</span><em>→</em><span data-i="r4">The World</span></div>
+          <div class="reach reveal d3" id="reach"><span data-i="r1">Dubai</span><em>→</em><span data-i="r2">UAE</span><em>→</em><span data-i="r3">GCC</span><em>→</em><span data-i="r4">The world</span></div>
         </div>
         <div class="globe" aria-hidden="true"><canvas id="globe"></canvas></div>
       </div>
       <div class="photos">
         <img src="img/jbr.webp" alt="Dubai Marina and JBR from the beach" data-i-alt="altJbr" loading="lazy">
-        <img src="img/burjKhalifa.webp" alt="Burj Khalifa" loading="lazy">
+        <img src="img/burjKhalifa.webp" alt="Burj Khalifa" data-i-alt="altBurj" loading="lazy">
         <img src="img/dhow.webp" alt="A dhow on the water at sunset" data-i-alt="altDhow" loading="lazy">
       </div>
     </div>
@@ -752,17 +780,17 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
           <button class="btn mag" type="submit"><span class="lbl" data-i="notify">Notify me</span><span class="spin" aria-hidden="true"></span></button>
         </div>
         <p class="msgline" id="formMsg" role="status" aria-live="polite"></p>
-        <p class="legal" id="formLegal"><span data-i="formLegal">We’ll only use your email to tell you when IRLY launches.</span> <a href="https://alafrench7593-a11y.github.io/irly/legal/privacy" target="_blank" rel="noopener" data-i="privacy">Privacy Policy</a></p>
+        <p class="legal" id="formLegal"><span data-i="formLegal">We’ll only use your email to tell you when IRLY launches.</span> <a href="https://alafrench7593-a11y.github.io/irly/legal/privacy" target="_blank" rel="noopener" data-i="privacy">Privacy policy</a></p>
       </form>
       <div class="done" id="done">
         <div class="tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <b data-i="done1">✓ You’re on the list.</b>
+        <b data-i="done1">You’re on the list.</b>
         <p data-i="done2">We’ll let you know when IRLY goes live.</p>
         <p style="color:var(--fg);font-weight:800" data-i="done3">You’re in. See you IRL.</p>
       </div>
       <div class="badges" style="margin-top:32px" role="group" aria-label="Coming soon to the App Store and Google Play" data-i-aria="badgesAria">
         <span class="badge" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.6-1.9-1.5-.2-3 .9-3.7.9-.8 0-2-.9-3.2-.9-1.7 0-3.2 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.3-.9-2.3-3.8zM14 5.3c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/></svg><span><small data-i="soonApple">Coming soon to the</small><b>App Store</b></span></span>
-        <span class="badge" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.5-9.7-9.5-9.7zm10.7 8.5 2.7-2.8L5.5 1.5c-.4-.2-.8-.3-1.1-.2l9.9 9.5zm0 2.4-9.9 9.5c.3.1.7 0 1.1-.2l11.5-6.5-2.7-2.8zm6.6-3.5L18 8.2l-3 3.8 3 3.8 2.9-1.6c.8-.5.8-1.7 0-2.2l-.2-.1z"/></svg><span><small data-i="soonGoogle">Coming soon on</small><b>Google Play</b></span></span>
+        <span class="badge" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.5-9.7-9.5-9.7zm10.7 8.5 2.7-2.8L5.5 1.5c-.4-.2-.8-.3-1.1-.2l9.9 9.5zm0 2.4-9.9 9.5c.3.1.7 0 1.1-.2l11.5-6.5-2.7-2.8zm6.6-3.5L18 8.2l-3 3.8 3 3.8 2.9-1.6c.8-.5.8-1.7 0-2.2l-.2-.1z"/></svg><span><small data-i="soonGoogle">Coming soon to</small><b>Google Play</b></span></span>
       </div>
       <p class="proof" data-i="proof">Built for people who want to live more IRL.</p>
     </div>
@@ -774,7 +802,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
 <footer>
   <div class="wrap">
     <div class="foot">
-      <div><div class="big">IRLY</div><div class="tag">IN REAL LIFE.</div></div>
+      <div><div class="big notranslate" translate="no">IRLY</div><div class="tag notranslate" dir="ltr" translate="no">IN REAL LIFE.</div></div>
       <nav aria-labelledby="f-nav">
         <h3 id="f-nav" data-i="fNav">Navigation</h3>
         <a href="#how" data-i="fProduct">Product</a>
@@ -783,8 +811,8 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
         <a href="https://getirly.com/app/" data-i="navApp">See the app</a>
         <a href="#story" data-i="fAbout">About</a>
         <a href="https://alafrench7593-a11y.github.io/irly/support" target="_blank" rel="noopener" data-i="fContact">Contact</a>
-        <a href="https://alafrench7593-a11y.github.io/irly/legal/privacy" target="_blank" rel="noopener" data-i="privacy">Privacy Policy</a>
-        <a href="https://alafrench7593-a11y.github.io/irly/legal/terms" target="_blank" rel="noopener" data-i="terms">Terms of Use</a>
+        <a href="https://alafrench7593-a11y.github.io/irly/legal/privacy" target="_blank" rel="noopener" data-i="privacy">Privacy policy</a>
+        <a href="https://alafrench7593-a11y.github.io/irly/legal/terms" target="_blank" rel="noopener" data-i="terms">Terms of use</a>
       </nav>
       <div>
         <h3 data-i="fSocial">Social</h3>
@@ -806,6 +834,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
   </div>
 </footer>
 
+<script src="lenis.min.js"></script>
 <script>
 (() => {
   const root = document.documentElement;
@@ -813,6 +842,12 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const finePointer = matchMedia('(pointer: fine)').matches;
+  // Mouse wheels move in steps; Lenis eases them into one glide so the scroll
+  // scenes stay fluid. Touch and keyboard keep the native scroll.
+  let lenis = null;
+  if (finePointer && !reduce && window.Lenis) {
+    lenis = new window.Lenis({ lerp: 0.11, wheelMultiplier: 0.9, anchors: { offset: 0 }, autoRaf: true });
+  }
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -828,64 +863,74 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
   /* ───────── Languages. English is the page itself; French and Arabic are adapted, not literal. ───────── */
   const T = {
     fr: {
-      skip: 'Aller au contenu', navMain: 'Navigation principale', navWhy: 'Pourquoi IRLY', navHow: 'Comment ça marche', navComm: 'Communautés', navDubai: 'Dubaï', navApp: 'Voir l’app', joinWaitlist: 'Rejoindre la liste', menu: 'Menu',
+      skip: 'Aller au contenu', navMain: 'Principale', langGroup: 'Langue', navWhy: 'Pourquoi IRLY', navHow: 'Comment ça marche', navComm: 'Communautés', navDubai: 'Dubaï', navApp: 'Voir l’app', joinWaitlist: 'Rejoindre la liste d’attente', menu: 'Menu',
       h1a: 'Rencontre.', h1b: 'Bouge.', h1c: 'Vis IRL.', heroSub: 'L’app sociale pour créer de vrais liens, trouver quoi faire et rencontrer des gens, dans la vraie vie.',
       badgesAria: 'Bientôt sur l’App Store et Google Play', soonApple: 'Bientôt sur l’', soonGoogle: 'Bientôt sur', comingSoon: 'Bientôt', soonLine: 'sur l’App Store et Google Play.',
-      pop1: 'Layla est en live près de toi', pop1s: 'Kite Beach · run au lever du soleil', pop2: 'Padel · 19h30', pop2s: '2 places · tu es inscrit·e', pop3: 'Arjun veut se connecter', pop3s: 'Vous jouez tous les deux au foot', pop4: '« J’arrive ! »', pop4s: 'Groupe brunch · JLT', heroPhoneAria: 'L’écran d’accueil de l’app IRLY',
-      k01: 'On se sent seul', alone1: 'On peut être entouré de monde et se sentir seul.', alone2a: 'Nouvelle ville.', alone2b: 'Nouvelle vie.', alone2c: 'Aucun réseau.', alone3: 'Se faire des amis ne devrait pas être si dur.',
-      voicesT: 'Ce que disent les nouveaux arrivants', v1: 'Je viens d’arriver.', v2: 'Je ne connais personne.', v3: 'Où rencontrer du monde ?', v4: 'Cherche des amis.', v5: 'J’ai envie de faire un truc ce week-end.', vsrc1: 'Forum d’expats', vsrc2: 'Chat de groupe', vsrc3: 'Questions-réponses', vsrc4: 'Annonces', vsrc5: 'Réseaux sociaux', voicesNote: 'Le genre de messages que les nouveaux arrivants à Dubaï publient chaque semaine. Reformulés, non attribués.',
-      k02: 'Se faire des amis est difficile', factsT: 'Une ville où presque tout le monde est arrivé sans connaître personne.', fact1: 'des habitants des Émirats sont expatriés.', fact2n: '1 sur 4', fact2: 'des adultes dans le monde se sentent seuls.', src: 'Source',
-      k03: 'IRLY change ça', comes1: 'C’est là qu’IRLY entre en jeu.', comes2: 'Du virtuel au réel.', n1: 'Une personne', n1s: 'Chloé, nouvelle à la Marina', n2b: 'Padel ce soir ?', n2: 'Un plan', n2s: 'Publié en un geste', n3: '5 personnes rejoignent', n3s: 'Le chat de groupe s’ouvre', n4: 'Un dîner après', n4s: 'Un resto à côté', n5: 'La vraie vie', n5s: 'De nouveaux amis, en vrai',
-      k04: 'Comment ça marche', howT: 'Sept écrans. Une idée : sortir.', scenesAria: 'Écrans de l’app IRLY',
-      s1: 'Ce qui se passe autour de toi.', s1p: 'Ouvre IRLY : qui est dehors en ce moment, et ce qui commence bientôt près de toi.', s2: 'Les gens près de toi.', s2p: 'Nouveaux arrivants, locaux, pros. Leurs centres d’intérêt, leur quartier, ce que vous avez en commun.', s3: 'Quoi faire, ce soir.', s3p: 'Sport, food, culture, bien-être. Chaque plan montre qui y va et combien de places restent.', s4: 'Ta ville, en direct.', s4p: 'Plans, personnes et lieux sur une vraie carte de Dubaï. Jamais d’adresse exacte.', s5: 'Crée un plan en quelques secondes.', s5p: 'Choisis une activité, une heure, un lieu. IRLY trouve les gens.', s6: 'Des communautés qui se voient.', s6p: 'Runners, fondateurs, francophones, gamers. Des groupes qui se retrouvent vraiment.', s7: 'Un profil qui dit « on y va ».', s7p: 'Qui tu es, ce que tu aimes faire, ce que tu cherches. Pas de likes, pas de followers.',
+      pop1: 'Layla est en live près de toi', pop1s: 'Kite Beach · course au lever du soleil', pop2: 'Padel · 19h30', pop2s: 'Plus que 2 places · tu y vas', pop3: 'Arjun veut faire ta connaissance', pop3s: 'Vous jouez tous les deux au foot', pop4: '« J’arrive ! »', pop4s: 'Groupe brunch · JLT', heroPhoneAria: 'L’écran d’accueil de l’app IRLY',
+      k01: 'On se sent seul', alone1: 'On peut être entouré de monde et se sentir seul.', alone2a: 'Nouvelle ville.', alone2b: 'Nouvelle vie.', alone2c: 'Aucun réseau.', alone3: 'Se faire des amis ne devrait pas être si difficile.',
+      voicesT: 'Ce que disent les nouveaux arrivants', v1: 'Je viens d’arriver.', v2: 'Je ne connais personne.', v3: 'Où rencontrer du monde ?', v4: 'Je cherche des amis.', v5: 'J’ai envie de faire un truc ce week-end.', vsrc1: 'Forum d’expats', vsrc2: 'Chat de groupe', vsrc3: 'Questions-réponses', vsrc4: 'Petites annonces', vsrc5: 'Réseaux sociaux', voicesNote: 'Le genre de messages que les nouveaux arrivants à Dubaï publient chaque semaine. Reformulés, non attribués.',
+      k02: 'Se faire des amis est difficile', factsT: 'Une ville où presque tout le monde est arrivé sans connaître personne.', fact1n: '88 %', fact1: 'des habitants des Émirats sont expatriés.', fact2n: '1 sur 4', fact2: 'des adultes dans le monde disent se sentir très ou assez seuls.', src: 'Source :', srcUn: 'estimation de l’ONU, 2021', srcGallup: 'Gallup–Meta, 2023', scrollCue: 'Descends', scrollAria: 'Descendre pour découvrir IRLY', hardT: 'Pourquoi c’est difficile ici', hard1t: 'Tout le monde est débordé.', hard1: 'De longues journées de travail, de longs trajets. Les soirées en semaine disparaissent et les week-ends se remplissent vite.', hard2t: 'Les gens vont et viennent.', hard2: 'Un contrat se termine, un ami repart. Dans une ville de nouveaux arrivants, on recommence souvent à zéro.', hard3t: 'Le networking ressemble à une transaction.', hard3: 'Des événements bondés, des cartes de visite, des banalités. Peu de conversations deviennent des personnes qu’on revoit.', hard4t: 'Personne ne parle aux inconnus.', hard4: 'Les malls, les salles de sport et les cafés sont pleins, mais chacun reste à sa table. Rencontrer du monde n’arrive presque jamais par hasard.', hardEnd: 'Se faire des amis, trouver un partenaire de padel ou rencontrer les bonnes personnes pour ton travail ne devrait pas dépendre de la chance.',
+      k03: 'IRLY change ça', comes1: 'C’est là qu’IRLY entre en jeu.', comes2: 'Du virtuel au réel.', n1: 'Une personne', n1s: 'Chloé, tout juste arrivée à la Marina', n2b: 'Padel ce soir ?', n2: 'Une activité', n2s: 'Publiée en un geste', n3: '5 personnes s’inscrivent', n3s: 'Le chat de groupe s’ouvre', n4: 'Un dîner ensuite', n4s: 'Un resto à côté', n5: 'La vraie vie', n5s: 'De nouveaux amis, en vrai',
+      k04: 'Comment ça marche', howT: 'Sept écrans. Une idée : sortir.', scenesAria: 'Écrans de l’app IRLY',
+      s1: 'Ce qui se passe autour de toi.', s1p: 'Ouvre IRLY et vois qui est sorti en ce moment, et ce qui commence bientôt près de toi.', s2: 'Les gens près de toi.', s2p: 'Nouveaux venus, gens du coin, pros. Leurs centres d’intérêt, leur quartier, ce que vous avez en commun.', s3: 'Que faire ce soir.', s3p: 'Sport, restos, culture, bien-être. Chaque activité montre qui y va et combien de places il reste.', s4: 'Ta ville, en direct.', s4p: 'Activités, personnes et lieux sur une vraie carte de Dubaï. Jamais d’adresse exacte.', s5: 'Crée une activité en quelques secondes.', s5p: 'Choisis quoi faire, une heure, un lieu. IRLY trouve les gens.', s6: 'Des communautés qui se retrouvent.', s6p: 'Coureurs, fondateurs, francophones, gamers. Des gens qui se voient pour de vrai.', s7: 'Un profil qui dit « on y va ».', s7p: 'Qui tu es, ce que tu aimes faire, ce que tu cherches. Pas de likes, pas d’abonnés.',
       exampleNote: 'Écrans de l’app IRLY, avec du contenu et des profils d’exemple.',
-      k05: 'Rencontrer des gens', peopleT: 'Rencontre des gens qui ont vraiment ta vibe.', peopleP: 'IRLY te montre les gens près de toi qui aiment ce que tu aimes, parlent tes langues et sont libres quand tu l’es. Puis te propose quoi faire ensemble.', val1: 'Amitié.', val2: 'Communauté.', val3: 'Expériences.', notDating: 'Pas une app de rencontre amoureuse. Une app de gens et de plans.', deckAria: 'Profils d’exemple',
-      k06: 'Trouver quoi faire', todoT: 'Ne demande plus quoi faire. Fais-le.', t1: 'Sport', t2: 'Restos', t3: 'Brunch', t4: 'Running.<br>Foot.<br>Padel.', t5: 'Plage', t6: 'Événements', t7: 'Activités', t8: 'Voyages', t9: 'Hobbies', t10: 'Et tout ce qui te plaît.',
+      k05: 'Rencontrer des gens', peopleT: 'Rencontre des gens vraiment sur ta longueur d’onde.', peopleP: 'IRLY te montre les gens près de toi qui aiment ce que tu aimes, parlent tes langues et sont libres quand tu l’es. Puis il te propose quelque chose à faire ensemble.', val1: 'Amitié.', val2: 'Communauté.', val3: 'Expériences.', notDating: 'Pas une app de rencontres amoureuses. Ici, on se rencontre autour d’activités.', deckAria: 'Profils d’exemple',
+      pn1: 'Layla, 29', pn2: 'Samuel, 31', pn3: 'Mei, 25', pn4: 'Lucas, 30', pn5: 'Amira, 33', pw1: 'Jumeirah · 2 km', pw2: 'Dubai Marina · 1 km', pw3: 'Downtown · 4 km', pw4: 'JLT · 1,5 km', pw5: 'DIFC · 3 km',
+      tgRunning: 'Running', tgArt: 'Art', tgCoffee: 'Café', tgFootball: 'Foot', tgStartups: 'Startups', tgFashion: 'Mode', tgDesign: 'Design', tgBrunch: 'Brunch', tgYoga: 'Yoga', tgPadel: 'Padel', tgTech: 'Tech', tgMusic: 'Musique', tgBooks: 'Lecture', tgTravel: 'Voyage', tgFood: 'Cuisine',
+      pc1: 'Vous courez tous les deux au lever du soleil', pc2: 'Foot le mardi, comme toi', pc3: 'Vous adorez tous les deux les brunchs', pc4: 'Partenaire de padel pour ce soir ?', pc5: 'Vous venez tous les deux d’arriver',
+      k06: 'Trouver quoi faire', todoT: 'Ne te demande plus quoi faire. Vas-y.', t1: 'Sport', t2: 'Restos', t3: 'Brunch', t4: 'Running.<br>Foot.<br>Padel.', t5: 'Plage', t6: 'Événements', t7: 'Activités', t8: 'Voyages', t9: 'Loisirs', t10: 'Et tout ce qui te plaît.',
       k07: 'Ta ville', cityT: 'Dubaï, en direct.', lg1: 'Personnes', lg2: 'Activités', lg3: 'Communautés', lg4: 'Restos', lg5: 'Événements', cityOutro: 'Ta ville devient ton réseau social.', mapAlt: 'Carte de Dubaï',
-      k08: 'Se voir en vrai', createT: 'Publie un plan. Regarde-le se remplir.', createP: 'Dis à IRLY ce que tu as envie de faire. Les gens à côté qui veulent la même chose rejoignent, et le chat de groupe s’ouvre tout seul.', cf1: 'Créer', cf2: 'Les gens rejoignent', cf3: 'On se voit', planT: 'Padel', planWhen: 'Ce soir', planToast: 'Chat de groupe ouvert · À 19h30',
-      k09: 'Rejoindre des communautés', commT: 'Trouve ta tribu.', c1: 'Football', c1s: 'Foot à 5, chaque semaine', c2: 'Fitness', c2s: 'Cours, runs, salles', c3: 'Mode', c3s: 'Créateurs, stylistes, shopping', c4: 'Entrepreneurs', c4s: 'Dîners de fondateurs', c5: 'Food', c5s: 'Nouvelles adresses chaque semaine', c6: 'Voyage', c6s: 'Escapades du week-end', c7: 'Gaming', c7s: 'Soirées jeux', c8: 'Musique', c8s: 'Jams et concerts', c9: 'Photo', c9s: 'Balades photo', c10: 'Français à Dubaï', c10s: 'Apéros et brunchs', c11: 'Communauté internationale', c11s: 'Toutes les nationalités', c12: 'Crée la tienne', c12s: 'Toute passion, toute taille',
-      manifestoAria: 'IRLY n’est pas un réseau social de plus', mf1: 'Une app de plus ne guérira pas la solitude.', mf2: 'Les vraies personnes, si.', mf3: 'IRLY est conçu pour te faire sortir de l’écran.',
-      k10: 'On commence à Dubaï', dubaiT1: 'Ça commence à Dubaï.', dubaiT2: 'Pensé pour le monde.', dubaiP: 'Dubaï est l’un des endroits les plus internationaux au monde. On y arrive chaque jour pour', w1: 'travailler', w2: 'entreprendre', w3: 'étudier', w4: 'voyager', w5: 'recommencer sa vie', dubaiP2: 'Se construire une vraie vie sociale peut y prendre des années. Alors IRLY commence là.', r1: 'Dubaï', r2: 'Émirats', r3: 'Golfe', r4: 'Le monde', altJbr: 'Dubai Marina et JBR depuis la plage', altDhow: 'Un dhow sur l’eau au coucher du soleil',
-      storyK: 'Pourquoi IRLY ?', story1: 'IRLY est né d’un constat simple. Les gens veulent rencontrer du monde. Mais les apps qu’ils utilisent sont faites pour les garder en train de scroller, pas pour les faire sortir.', story2: 'IRLY inverse ça. Chaque écran mène à un plan, un lieu et des gens à rencontrer pour de vrai.', story3: 'Moins de scroll.', story4: 'Plus de vie.',
-      soonT: 'IRLY arrive.', soonP: 'Bientôt sur l’App Store et Google Play.', emailLabel: 'Ton email', emailPh: 'Ton email', notify: 'Préviens-moi', formLegal: 'Ton email sert uniquement à te prévenir du lancement d’IRLY.', privacy: 'Politique de confidentialité', terms: 'Conditions d’utilisation',
-      done1: '✓ Tu es sur la liste.', done2: 'On te prévient dès qu’IRLY est en ligne.', done3: 'C’est noté. À très vite, IRL.', proof: 'Pensé pour celles et ceux qui veulent vivre plus IRL.',
-      fNav: 'Navigation', fProduct: 'Produit', fAbout: 'À propos', fContact: 'Contact', fSocial: 'Réseaux', fApp: 'App', soonShort: 'Bientôt', rights: 'Tous droits réservés.', operator: 'IRLY est exploité par Samuel Princivil, Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.', fineNote: 'Les écrans et profils présentés sont des exemples. Photos : domaine public et CC0. Données cartographiques © contributeurs OpenStreetMap.',
-      errEmpty: 'Entre ton adresse email.', errInvalid: 'Cette adresse email ne semble pas valide.', errNet: 'Impossible d’envoyer pour le moment. Vérifie ta connexion et réessaie.', errBusy: 'Beaucoup de monde en ce moment. Réessaie dans quelques minutes.',
-      spotsLeft: '{n} places restantes', spotLeft: '1 place restante', full: 'Complet', scene: 'SCÈNE', example: 'Photo de profil d’exemple',
+      ml5: 'Padel', ml6: 'Course au lever du soleil', ml7: 'Foot', ml8: 'Fondateurs', ml9: 'Français à Dubaï', ml10: 'Brunch', ml11: 'Dîner', ml12: 'Soirée galerie', ml13: 'Fête sur la plage',
+      k08: 'Se voir en vrai', createT: 'Publie une activité. Regarde-la se remplir.', createP: 'Dis à IRLY ce que tu as envie de faire. Les gens du coin qui ont la même envie s’inscrivent, et le chat de groupe s’ouvre tout seul.', cf1: 'Crée', cf2: 'Les gens s’inscrivent', cf3: 'On se voit en vrai', planT: 'Padel', planWhen: 'Ce soir', planTime: '19h30', planWhere: 'Al Quoz', planToast: 'Chat de groupe ouvert · Rendez-vous à 19h30',
+      k09: 'Rejoindre des communautés', commT: 'Trouve ta tribu.', c1: 'Foot', c1s: 'Foot à 5, chaque semaine', c2: 'Fitness', c2s: 'Cours, footings, salles de sport', c3: 'Mode', c3s: 'Créateurs, stylistes, fans de shopping', c4: 'Entrepreneurs', c4s: 'Dîners de fondateurs', c5: 'Cuisine', c5s: 'Nouvelles adresses chaque semaine', c6: 'Voyage', c6s: 'Escapades du week-end', c7: 'Jeux vidéo', c7s: 'Soirées jeux', c8: 'Musique', c8s: 'Jams et concerts', c9: 'Photo', c9s: 'Balades photo', c10: 'Français à Dubaï', c10s: 'Apéros et brunchs', c11: 'Communauté internationale', c11s: 'Toutes les nationalités', c12: 'Crée la tienne', c12s: 'Toutes les passions, toutes les tailles',
+      manifestoAria: 'IRLY n’est pas un réseau social de plus', mf1: 'Une app de plus ne guérira pas la solitude.', mf2: 'Les vraies rencontres, si.', mf3: 'IRLY est conçu pour te faire sortir de l’écran.',
+      k10: 'On commence à Dubaï', dubaiT1: 'Ça commence à Dubaï.', dubaiT2: 'Pensé pour le monde.', dubaiP: 'Dubaï est l’un des endroits les plus internationaux au monde. On y arrive chaque jour pour', w1: 'travailler', w2: 'entreprendre', w3: 'étudier', w4: 'voyager', w5: 'commencer une nouvelle vie', dubaiP2: 'Se construire une vraie vie sociale peut y prendre des années. C’est donc là qu’IRLY commence.', r1: 'Dubaï', r2: 'Émirats', r3: 'Golfe', r4: 'Le monde', altJbr: 'Dubai Marina et JBR depuis la plage', altBurj: 'Burj Khalifa', altDhow: 'Un boutre sur l’eau au coucher du soleil',
+      storyK: 'Pourquoi IRLY ?', story1: 'IRLY est né d’un constat simple. Les gens veulent rencontrer du monde. Mais les apps qu’ils utilisent sont faites pour les garder rivés à l’écran, pas pour les faire sortir.', story2: 'IRLY fait l’inverse. Chaque écran mène à une activité, un lieu et des gens à rencontrer pour de vrai.', story3: 'Moins d’écran.', story4: 'Plus de vie.',
+      soonT: 'IRLY arrive.', soonP: 'Bientôt sur l’App Store et Google Play.', emailLabel: 'Ton e-mail', emailPh: 'Ton e-mail', notify: 'Préviens-moi', formLegal: 'Ton e-mail sert uniquement à te prévenir du lancement d’IRLY.', privacy: 'Politique de confidentialité', terms: 'Conditions d’utilisation',
+      done1: 'Tu es sur la liste.', done2: 'On te prévient dès qu’IRLY est en ligne.', done3: 'C’est noté. À très vite, IRL.', proof: 'Pensé pour celles et ceux qui veulent vivre plus IRL.',
+      fNav: 'Navigation', fProduct: 'Produit', fAbout: 'À propos', fContact: 'Contact', fSocial: 'Réseaux', fApp: 'App', soonShort: 'Bientôt', rights: 'Tous droits réservés.', operator: 'IRLY est exploité par Samuel Princivil, Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.', fineNote: 'Les écrans et profils présentés sont des exemples. Photos : domaine public et CC0. Données cartographiques © contributeurs OpenStreetMap.',
+      errEmpty: 'Entre ton adresse e-mail.', errInvalid: 'Cette adresse e-mail ne semble pas valide.', errNet: 'Impossible de t’inscrire pour le moment. Vérifie ta connexion et réessaie.', errBusy: 'Trop de tentatives. Réessaie dans quelques minutes.',
+      spotsLeft: '{n} places restantes', spotsTwo: '2 places restantes', spotLeft: '1 place restante', full: 'Complet', scene: 'SCÈNE', example: 'Photo de profil d’exemple',
     },
     ar: {
-      skip: 'انتقل إلى المحتوى', navMain: 'التنقل الرئيسي', navWhy: 'لماذا IRLY', navHow: 'كيف يعمل', navComm: 'المجتمعات', navDubai: 'دبي', navApp: 'شاهد التطبيق', joinWaitlist: 'انضم إلى قائمة الانتظار', menu: 'القائمة',
-      h1a: 'تعرّف على الناس.', h1b: 'اخرج أكثر.', h1c: 'عِش الواقع.', heroSub: 'تطبيق اجتماعي يساعدك على بناء علاقات حقيقية، واكتشاف ما تفعله، ولقاء الناس في الحياة الواقعية.',
+      skip: 'انتقل إلى المحتوى', navMain: 'الرئيسية', langGroup: 'اللغة', navWhy: 'لماذا IRLY', navHow: 'كيف يعمل', navComm: 'المجتمعات', navDubai: 'دبي', navApp: 'شاهد التطبيق', joinWaitlist: 'انضم إلى قائمة الانتظار', menu: 'القائمة',
+      h1a: 'تعرّف على الناس.', h1b: 'اخرج أكثر.', h1c: 'عِش الواقع.', heroSub: 'تطبيق اجتماعي يساعدك على بناء علاقات حقيقية، واكتشاف أشياء تفعلها، ولقاء الناس في الحياة الواقعية.',
       badgesAria: 'قريبًا على App Store وGoogle Play', soonApple: 'قريبًا على', soonGoogle: 'قريبًا على', comingSoon: 'قريبًا', soonLine: 'على App Store وGoogle Play.',
-      pop1: 'ليلى متواجدة بالقرب منك', pop1s: 'كايت بيتش · جري عند الشروق', pop2: 'بادل · ٧:٣٠ مساءً', pop2s: 'مكانان متبقيان · أنت مشترك', pop3: 'أرجون يريد التواصل', pop3s: 'كلاكما يلعب كرة القدم', pop4: '«أنا في الطريق!»', pop4s: 'مجموعة الفطور · JLT', heroPhoneAria: 'الشاشة الرئيسية لتطبيق IRLY',
-      k01: 'الوحدة حقيقية', alone1: 'قد تكون محاطًا بالناس وتشعر بالوحدة رغم ذلك.', alone2a: 'مدينة جديدة.', alone2b: 'حياة جديدة.', alone2c: 'بلا معارف.', alone3: 'تكوين الصداقات لا ينبغي أن يكون بهذه الصعوبة.',
-      voicesT: 'ما يقوله القادمون الجدد', v1: 'وصلت للتو.', v2: 'لا أعرف أحدًا.', v3: 'أين أتعرّف على الناس؟', v4: 'أبحث عن أصدقاء.', v5: 'أريد أن أفعل شيئًا في نهاية الأسبوع.', vsrc1: 'منتدى مغتربين', vsrc2: 'دردشة جماعية', vsrc3: 'أسئلة وأجوبة', vsrc4: 'لوحة إعلانات', vsrc5: 'وسائل التواصل', voicesNote: 'نوع المنشورات التي يكتبها القادمون الجدد إلى دبي كل أسبوع. بصياغة أخرى ودون نسبتها لأحد.',
-      k02: 'تكوين الصداقات صعب', factsT: 'مدينة وصل إليها الجميع تقريبًا دون أن يعرفوا أحدًا.', fact1: 'من سكان الإمارات وافدون.', fact2n: '١ من ٤', fact2: 'من البالغين حول العالم يشعرون بالوحدة.', src: 'المصدر',
-      k03: 'IRLY يغيّر ذلك', comes1: 'وهنا يأتي دور IRLY.', comes2: 'من الشاشة إلى الواقع.', n1: 'شخص', n1s: 'كلوي، جديدة في المارينا', n2b: 'بادل الليلة؟', n2: 'خطة', n2s: 'تُنشر بلمسة واحدة', n3: '٥ أشخاص ينضمون', n3s: 'تُفتح دردشة المجموعة', n4: 'عشاء بعدها', n4s: 'مطعم قريب', n5: 'الحياة الواقعية', n5s: 'أصدقاء جدد، وجهًا لوجه',
+      pop1: 'ليلى متواجدة الآن بالقرب منك', pop1s: 'كايت بيتش – جري عند الشروق', pop2: 'بادل – ٧:٣٠ مساءً', pop2s: 'بقي مكانان – لقد انضممت', pop3: 'أرجون يريد التعرّف عليك', pop3s: 'كلاكما يلعب كرة القدم', pop4: '«أنا في الطريق!»', pop4s: 'مجموعة الفطور المتأخر – JLT', heroPhoneAria: 'الشاشة الرئيسية لتطبيق IRLY',
+      k01: 'الناس يشعرون بالوحدة', alone1: 'قد تكون محاطًا بالناس وتشعر بالوحدة رغم ذلك.', alone2a: 'مدينة جديدة.', alone2b: 'حياة جديدة.', alone2c: 'بلا معارف.', alone3: 'تكوين الصداقات لا ينبغي أن يكون بهذه الصعوبة.',
+      voicesT: 'ما يقوله القادمون الجدد', v1: 'وصلت للتو.', v2: 'لا أعرف أحدًا.', v3: 'أين أتعرّف على الناس؟', v4: 'أبحث عن أصدقاء.', v5: 'أريد أن أفعل شيئًا في نهاية الأسبوع.', vsrc1: 'منتدى مغتربين', vsrc2: 'دردشة جماعية', vsrc3: 'أسئلة وأجوبة', vsrc4: 'لوحة إعلانات', vsrc5: 'وسائل التواصل', voicesNote: 'نوع المنشورات التي يكتبها القادمون الجدد إلى دبي كل أسبوع. أُعيدت صياغتها ولم تُنسب إلى أحد.',
+      k02: 'تكوين الصداقات صعب', factsT: 'مدينة وصل إليها الجميع تقريبًا دون أن يعرفوا أحدًا.', fact1n: '٨٨٪', fact1: 'من سكان الإمارات وافدون.', fact2n: '١ من ٤', fact2: 'من البالغين حول العالم يقولون إنهم يشعرون بالوحدة كثيرًا أو إلى حدٍّ ما.', src: 'المصدر:', srcUn: 'تقدير الأمم المتحدة، ٢٠٢١', srcGallup: 'غالوب وميتا، ٢٠٢٣', scrollCue: 'مرّر للأسفل', scrollAria: 'مرّر للأسفل لاكتشاف IRLY', hardT: 'لماذا الأمر صعب هنا', hard1t: 'الجميع مشغولون.', hard1: 'أيام عمل طويلة وطرق طويلة إلى البيت. تختفي أمسيات الأسبوع وتمتلئ عطلات نهاية الأسبوع بسرعة.', hard2t: 'الناس يأتون ويرحلون.', hard2: 'ينتهي عقد ويرحل صديق. في مدينة من القادمين الجدد، كثيرًا ما تبدأ من جديد.', hard3t: 'التواصل المهني يبدو كصفقة.', hard3: 'فعاليات مزدحمة وبطاقات عمل وأحاديث عابرة. قليل من هذه المحادثات يتحوّل إلى أشخاص تراهم مجددًا.', hard4t: 'لا أحد يتحدث مع الغرباء.', hard4: 'المراكز التجارية والنوادي الرياضية والمقاهي ممتلئة، لكن كل شخص يبقى على طاولته. التعرّف على أشخاص جدد نادرًا ما يحدث صدفة.', hardEnd: 'تكوين الصداقات أو إيجاد شريك للعب البادل أو لقاء الأشخاص المناسبين لعملك لا يجب أن يعتمد على الحظ.',
+      k03: 'IRLY يغيّر ذلك', comes1: 'وهنا يأتي دور IRLY.', comes2: 'من الشاشة إلى الواقع.', n1: 'شخص', n1s: 'كلوي، وصلت حديثًا إلى المارينا', n2b: 'بادل الليلة؟', n2: 'خطة', n2s: 'تُنشر بلمسة واحدة', n3: '٥ أشخاص ينضمون', n3s: 'تُفتح دردشة المجموعة', n4: 'عشاء بعدها', n4s: 'مطعم قريب', n5: 'الحياة الواقعية', n5s: 'أصدقاء جدد، وجهًا لوجه',
       k04: 'كيف يعمل', howT: 'سبع شاشات. فكرة واحدة: اخرج.', scenesAria: 'شاشات تطبيق IRLY',
-      s1: 'ما يحدث حولك.', s1p: 'افتح IRLY وشاهد من في الخارج الآن، وما الذي يبدأ قريبًا بالقرب منك.', s2: 'أشخاص بالقرب منك.', s2p: 'قادمون جدد، سكان محليون، مهنيون. اهتماماتهم وأحياؤهم وما يجمعكم.', s3: 'ما تفعله الليلة.', s3p: 'رياضة، طعام، ثقافة، عافية. كل خطة تُظهر من سيحضر وكم مكانًا تبقّى.', s4: 'مدينتك، مباشرة.', s4p: 'خطط وأشخاص وأماكن على خريطة حقيقية لدبي. دون عنوان دقيق أبدًا.', s5: 'أنشئ خطة في ثوانٍ.', s5p: 'اختر نشاطًا ووقتًا ومكانًا. وIRLY يجد الناس.', s6: 'مجتمعات تلتقي فعلًا.', s6p: 'عدّاؤون، روّاد أعمال، متحدثون بالفرنسية، لاعبون. مجموعات تلتقي حقًا.', s7: 'ملف شخصي يقول «هيا بنا».', s7p: 'من أنت، وما تحب فعله، وما تبحث عنه. بلا إعجابات ولا متابعين.',
+      s1: 'ما يحدث حولك.', s1p: 'افتح IRLY وشاهد من في الخارج الآن، وما الذي يبدأ قريبًا بالقرب منك.', s2: 'أشخاص بالقرب منك.', s2p: 'قادمون جدد، سكان محليون، مهنيون. اهتماماتهم وأحياؤهم وما يجمعكم.', s3: 'ماذا تفعل الليلة.', s3p: 'رياضة، طعام، ثقافة، صحة وعافية. كل خطة تُظهر من سيحضر وكم مكانًا تبقّى.', s4: 'مدينتك، مباشرة.', s4p: 'خطط وأشخاص وأماكن على خريطة حقيقية لدبي. ولا عناوين دقيقة أبدًا.', s5: 'أنشئ خطة في ثوانٍ.', s5p: 'اختر نشاطًا ووقتًا ومكانًا، ويتكفّل IRLY بإيجاد الناس.', s6: 'مجتمعات تلتقي فعلًا.', s6p: 'عدّاؤون، روّاد أعمال، متحدثون بالفرنسية، محبّو الألعاب. أشخاص يلتقون حقًا.', s7: 'ملف شخصي يقول «هيا بنا».', s7p: 'من أنت، وما تحب فعله، وما تبحث عنه. بلا إعجابات ولا متابعين.',
       exampleNote: 'شاشات من تطبيق IRLY بمحتوى وملفات شخصية توضيحية.',
-      k05: 'اكتشف الناس', peopleT: 'قابل أشخاصًا يشبهونك فعلًا.', peopleP: 'يعرض لك IRLY أشخاصًا قريبين يحبون ما تحب، ويتحدثون لغاتك، ومتفرغين حين تكون متفرغًا. ثم يقترح شيئًا تفعلونه معًا.', val1: 'صداقة.', val2: 'مجتمع.', val3: 'تجارب.', notDating: 'ليس تطبيق مواعدة. تطبيق للناس والخطط.', deckAria: 'ملفات شخصية توضيحية',
-      k06: 'اكتشف الأنشطة', todoT: 'لا تسأل ماذا تفعل. افعلها.', t1: 'رياضة', t2: 'مطاعم', t3: 'فطور متأخر', t4: 'جري.<br>كرة قدم.<br>بادل.', t5: 'شاطئ', t6: 'فعاليات', t7: 'أنشطة', t8: 'سفر', t9: 'هوايات', t10: 'وكل ما تحب.',
+      k05: 'اكتشف الناس', peopleT: 'قابل أشخاصًا يشبهونك فعلًا.', peopleP: 'يعرض لك IRLY أشخاصًا قريبين يحبون ما تحب، ويتحدثون لغاتك، ويكونون متفرغين حين تكون متفرغًا. ثم يقترح شيئًا تفعلونه معًا.', val1: 'صداقة.', val2: 'مجتمع.', val3: 'تجارب.', notDating: 'ليس تطبيق مواعدة. تطبيق للناس والخطط.', deckAria: 'ملفات شخصية توضيحية',
+      pn1: 'ليلى، ٢٩', pn2: 'سامويل، ٣١', pn3: 'مي، ٢٥', pn4: 'لوكاس، ٣٠', pn5: 'أميرة، ٣٣', pw1: 'جميرا – ٢ كم', pw2: 'دبي مارينا – ١ كم', pw3: 'وسط المدينة – ٤ كم', pw4: 'JLT – ١٫٥ كم', pw5: 'DIFC – ٣ كم',
+      tgRunning: 'جري', tgArt: 'فن', tgCoffee: 'قهوة', tgFootball: 'كرة القدم', tgStartups: 'شركات ناشئة', tgFashion: 'أزياء', tgDesign: 'تصميم', tgBrunch: 'فطور متأخر', tgYoga: 'يوغا', tgPadel: 'بادل', tgTech: 'تقنية', tgMusic: 'موسيقى', tgBooks: 'كتب', tgTravel: 'سفر', tgFood: 'طعام',
+      pc1: 'كلاكما يجري عند الشروق', pc2: 'كرة القدم أيام الثلاثاء، مثلك', pc3: 'كلاكما يحب أماكن الفطور المتأخر', pc4: 'شريك بادل الليلة؟', pc5: 'كلاكما وصل حديثًا',
+      k06: 'اكتشف الأنشطة', todoT: 'لا تكتفِ بالسؤال عمّا تفعله. انطلق وافعله.', t1: 'رياضة', t2: 'مطاعم', t3: 'فطور متأخر', t4: 'جري.<br>كرة قدم.<br>بادل.', t5: 'شاطئ', t6: 'فعاليات', t7: 'أنشطة', t8: 'سفر', t9: 'هوايات', t10: 'وكل ما تحب.',
       k07: 'مدينتك', cityT: 'دبي، مباشرة.', lg1: 'أشخاص', lg2: 'أنشطة', lg3: 'مجتمعات', lg4: 'مطاعم', lg5: 'فعاليات', cityOutro: 'مدينتك تصبح شبكتك الاجتماعية.', mapAlt: 'خريطة دبي',
-      k08: 'التقِ في الواقع', createT: 'انشر خطة. وشاهدها تكتمل.', createP: 'أخبر IRLY بما تريد فعله. ينضم من يريد الشيء نفسه بالقرب منك، وتُفتح دردشة المجموعة تلقائيًا.', cf1: 'أنشئ', cf2: 'ينضم الناس', cf3: 'التقوا', planT: 'بادل', planWhen: 'الليلة', planToast: 'دردشة المجموعة مفتوحة · نراكم ٧:٣٠',
-      k09: 'انضم إلى مجتمعات', commT: 'اعثر على ناسك.', c1: 'كرة القدم', c1s: 'مباريات خماسية كل أسبوع', c2: 'لياقة', c2s: 'حصص وجري ونوادٍ', c3: 'أزياء', c3s: 'مصممون ومنسقون', c4: 'روّاد أعمال', c4s: 'عشاء المؤسسين', c5: 'طعام', c5s: 'أماكن جديدة كل أسبوع', c6: 'سفر', c6s: 'رحلات نهاية الأسبوع', c7: 'ألعاب', c7s: 'أمسيات ألعاب', c8: 'موسيقى', c8s: 'عزف وحفلات', c9: 'تصوير', c9s: 'جولات تصوير', c10: 'الفرنسيون في دبي', c10s: 'لقاءات وفطور', c11: 'المجتمع الدولي', c11s: 'من كل الجنسيات', c12: 'أنشئ مجتمعك', c12s: 'أي اهتمام، أي حجم',
-      manifestoAria: 'IRLY ليس شبكة اجتماعية أخرى', mf1: 'تطبيق آخر لن يعالج الوحدة.', mf2: 'الناس الحقيقيون سيفعلون.', mf3: 'صُمّم IRLY ليُخرجك من الشاشة.',
-      k10: 'البداية من دبي', dubaiT1: 'البداية من دبي.', dubaiT2: 'ومصمّم للعالم.', dubaiP: 'دبي من أكثر الأماكن تنوعًا في العالم. يصل إليها الناس كل يوم من أجل', w1: 'العمل', w2: 'تأسيس شركة', w3: 'الدراسة', w4: 'السفر', w5: 'بداية جديدة', dubaiP2: 'وقد يستغرق بناء حياة اجتماعية حقيقية هناك سنوات. لذلك يبدأ IRLY من دبي.', r1: 'دبي', r2: 'الإمارات', r3: 'الخليج', r4: 'العالم', altJbr: 'دبي مارينا وجي بي آر من الشاطئ', altDhow: 'مركب شراعي على الماء عند الغروب',
+      ml5: 'بادل', ml6: 'جري عند الشروق', ml7: 'كرة القدم', ml8: 'المؤسسون', ml9: 'الفرنسيون في دبي', ml10: 'فطور متأخر', ml11: 'عشاء', ml12: 'أمسية في معرض فني', ml13: 'حفلة على الشاطئ',
+      k08: 'التقِ في الواقع', createT: 'انشر خطة. وشاهدها تكتمل.', createP: 'أخبر IRLY بما تريد فعله. ينضم من يريد الشيء نفسه بالقرب منك، وتُفتح دردشة المجموعة تلقائيًا.', cf1: 'أنشئ', cf2: 'ينضم الناس', cf3: 'التقوا في الواقع', planT: 'بادل', planWhen: 'الليلة', planTime: '٧:٣٠ مساءً', planWhere: 'القوز', planToast: 'دردشة المجموعة مفتوحة – نراكم الساعة ٧:٣٠',
+      k09: 'انضم إلى مجتمعات', commT: 'اعثر على جماعتك.', c1: 'كرة القدم', c1s: 'مباريات خماسية كل أسبوع', c2: 'اللياقة', c2s: 'حصص وجري ونوادٍ رياضية', c3: 'الأزياء', c3s: 'مصممون ومنسقو أزياء وعشاق تسوق', c4: 'روّاد الأعمال', c4s: 'عشاءات المؤسسين', c5: 'الطعام', c5s: 'أماكن جديدة كل أسبوع', c6: 'السفر', c6s: 'رحلات نهاية الأسبوع', c7: 'الألعاب', c7s: 'أمسيات ألعاب', c8: 'الموسيقى', c8s: 'عزف وحفلات', c9: 'التصوير', c9s: 'جولات تصوير', c10: 'الفرنسيون في دبي', c10s: 'لقاءات وفطور متأخر', c11: 'المجتمع الدولي', c11s: 'من كل الجنسيات', c12: 'أنشئ مجتمعك', c12s: 'أي اهتمام، أي حجم',
+      manifestoAria: 'IRLY ليس شبكة اجتماعية أخرى', mf1: 'تطبيق آخر لن يعالج الوحدة.', mf2: 'بل الناس الحقيقيون.', mf3: 'صُمّم IRLY ليُخرجك من الشاشة.',
+      k10: 'البداية من دبي', dubaiT1: 'البداية من دبي.', dubaiT2: 'ومصمّم للعالم.', dubaiP: 'دبي من أكثر الأماكن تنوعًا في العالم. يصل إليها الناس كل يوم من أجل', w1: 'العمل', w2: 'تأسيس شركة', w3: 'الدراسة', w4: 'السفر', w5: 'بداية حياة جديدة', dubaiP2: 'وقد يستغرق بناء حياة اجتماعية حقيقية هناك سنوات. لذلك يبدأ IRLY من دبي.', r1: 'دبي', r2: 'الإمارات', r3: 'الخليج', r4: 'العالم', altJbr: 'دبي مارينا وجي بي آر من الشاطئ', altBurj: 'برج خليفة', altDhow: 'مركب شراعي على الماء عند الغروب',
       storyK: 'لماذا IRLY؟', story1: 'بدأ IRLY من ملاحظة بسيطة: الناس يريدون التعرّف على أشخاص جدد، لكن التطبيقات التي يستخدمونها مصممة لإبقائهم يتصفحون، لا لإخراجهم من البيت.', story2: 'IRLY يقلب المعادلة. كل شاشة تقود إلى خطة ومكان وأشخاص يمكنك لقاؤهم فعلًا.', story3: 'تصفّح أقل.', story4: 'حياة أكثر.',
-      soonT: 'IRLY قادم.', soonP: 'قريبًا على App Store وGoogle Play.', emailLabel: 'بريدك الإلكتروني', emailPh: 'بريدك الإلكتروني', notify: 'أبلغني', formLegal: 'نستخدم بريدك فقط لإبلاغك عند إطلاق IRLY.', privacy: 'سياسة الخصوصية', terms: 'شروط الاستخدام',
-      done1: '✓ أنت على القائمة.', done2: 'سنخبرك فور إطلاق IRLY.', done3: 'تم. نراك في الواقع.', proof: 'مصمّم لمن يريد أن يعيش الواقع أكثر.',
+      soonT: 'IRLY قادم.', soonP: 'قريبًا على App Store وGoogle Play.', emailLabel: 'بريدك الإلكتروني', emailPh: 'بريدك الإلكتروني', notify: 'أبلغني', formLegal: 'نستخدم بريدك الإلكتروني فقط لإبلاغك عند إطلاق IRLY.', privacy: 'سياسة الخصوصية', terms: 'شروط الاستخدام',
+      done1: 'أنت على القائمة.', done2: 'سنخبرك فور إطلاق IRLY.', done3: 'تم. نراك في الواقع.', proof: 'مصمّم لمن يريد أن يعيش الواقع أكثر.',
       fNav: 'التنقل', fProduct: 'المنتج', fAbout: 'من نحن', fContact: 'تواصل معنا', fSocial: 'التواصل الاجتماعي', fApp: 'التطبيق', soonShort: 'قريبًا', rights: 'جميع الحقوق محفوظة.', operator: 'يُشغّل IRLY سامويل برينسيفيل، دبي ديجيتال بارك، واحة دبي للسيليكون، دبي، الإمارات العربية المتحدة.', fineNote: 'الشاشات والملفات الشخصية المعروضة أمثلة توضيحية. الصور: ملكية عامة وCC0. بيانات الخريطة © مساهمو OpenStreetMap.',
-      errEmpty: 'أدخل بريدك الإلكتروني.', errInvalid: 'يبدو أن هذا البريد الإلكتروني غير صالح.', errNet: 'تعذّر الإرسال الآن. تحقّق من اتصالك وحاول مجددًا.', errBusy: 'ضغط كبير الآن. حاول بعد بضع دقائق.',
-      spotsLeft: '{n} أماكن متبقية', spotLeft: 'مكان واحد متبقٍ', full: 'اكتمل العدد', scene: 'المشهد', example: 'صورة ملف شخصي توضيحية',
+      errEmpty: 'أدخل بريدك الإلكتروني.', errInvalid: 'يبدو أن هذا البريد الإلكتروني غير صالح.', errNet: 'تعذّر تسجيلك الآن. تحقّق من اتصالك وحاول مجددًا.', errBusy: 'محاولات كثيرة. حاول مجددًا بعد بضع دقائق.',
+      spotsLeft: '{n} أماكن متبقية', spotsTwo: 'مكانان متبقيان', spotLeft: 'مكان واحد متبقٍ', full: 'اكتمل العدد', scene: 'المشهد', example: 'صورة ملف شخصي توضيحية',
     },
   };
   const EN = {
-    errEmpty: 'Enter your email address.', errInvalid: 'That email address doesn’t look right.', errNet: 'We couldn’t send this right now. Check your connection and try again.', errBusy: 'Lots of people right now. Try again in a few minutes.',
-    spotsLeft: '{n} spots left', spotLeft: '1 spot left', full: 'Full', scene: 'SCENE', example: 'Example profile photo',
+    errEmpty: 'Enter your email address.', errInvalid: 'That email address doesn’t look right.', errNet: 'We couldn’t sign you up just now. Check your connection and try again.', errBusy: 'Too many attempts. Please try again in a few minutes.',
+    spotsLeft: '{n} spots left', spotsTwo: '2 spots left', spotLeft: '1 spot left', full: 'Full', scene: 'SCENE', example: 'Example profile photo',
   };
   let lang = 'en';
   const tr = (k) => (lang !== 'en' && T[lang][k]) || EN[k] || k;
+  // Arabic shows Arabic-Indic digits, like the rest of the Arabic text.
+  const num = (n) => (lang === 'ar' ? String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]) : String(n));
   const english = new Map();
   const ATTRS = [['iAria', 'aria-label'], ['iPh', 'placeholder'], ['iAlt', 'alt']];
   function setLang(next, save) {
@@ -901,7 +946,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       if (!(k in el.dataset)) el.dataset[k] = el.getAttribute(attr) || '';
       el.setAttribute(attr, (lang !== 'en' && T[lang][el.dataset[key]]) || el.dataset[k]);
     }));
-    $$('.step .k').forEach((el, i) => (el.textContent = `${tr('scene')} ${i + 1}`));
+    $$('.step .k').forEach((el, i) => (el.textContent = `${tr('scene')} ${num(i + 1)}`));
     $$('.pcard .face').forEach((img) => (img.alt = tr('example')));
     $$('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
     splitWords();
@@ -921,6 +966,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
     menuBtn.setAttribute('aria-expanded', String(open));
     sheet.setAttribute('aria-hidden', String(!open));
     document.body.style.overflow = open ? 'hidden' : '';
+    if (lenis) open ? lenis.stop() : lenis.start();
   };
   menuBtn.addEventListener('click', () => setMenu(!nav.classList.contains('open')));
   $$('a', sheet).forEach((a) => a.addEventListener('click', () => setMenu(false)));
@@ -958,12 +1004,13 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
   // Hero: the copy dissolves, the phone comes closer and straightens, its screen scrolls.
   const hero = $('.hero'), heroCopy = $('#heroCopy'), heroPhone = $('#heroPhone');
   heroPhone.addEventListener('animationend', () => { heroPhone.classList.add('live'); tick(); });
+  const heroShots = $$('img', heroPhone);
+  heroCopy.style.willChange = 'transform, opacity';
   onScroll(hero, (p) => {
     heroCopy.style.opacity = String(1 - clamp(p * 2.2));
     heroCopy.style.transform = `translateY(${-p * 120}px) scale(${1 - p * 0.08})`;
-    heroCopy.style.filter = p > 0.01 ? `blur(${clamp(p * 2.2) * 8}px)` : '';
     if (heroPhone.classList.contains('live')) heroPhone.style.transform = `translateY(${-p * 30}vh) rotateX(${12 - p * 12}deg) rotateY(${mouse.x * 10}deg) scale(${1 + p * 0.3})`;
-    $$('img', heroPhone).forEach((img) => img.classList.toggle('on', (p > 0.45) === (img.dataset.scene === '1')));
+    heroShots.forEach((img) => img.classList.toggle('on', (p > 0.45) === (img.dataset.scene === '1')));
   });
   if (finePointer && !reduce) addEventListener('pointermove', (e) => { mouse.x = e.clientX / innerWidth - 0.5; tick(); }, { passive: true });
 
@@ -1031,11 +1078,12 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
     ['p-amira', 'Amira, 33', 'DIFC · 3 km', ['Books', 'Travel', 'Food'], 'You both just moved here'],
   ];
   const deck = $('#deck');
-  deck.innerHTML = PEOPLE.map(([id, name, where, tags, common]) => `<article class="pcard" aria-hidden="true">
+  // Each piece of text carries its own key, so the language switch translates the cards too.
+  deck.innerHTML = PEOPLE.map(([id, name, where, tags, common], i) => `<article class="pcard" aria-hidden="true">
     <img class="face" src="faces/${id}.jpg" alt="" loading="lazy" width="340" height="340">
-    <div class="body"><div class="row"><b>${name}</b><span class="where">${where}</span></div>
-    <div class="tags">${tags.map((t) => `<span class="chip">${t}</span>`).join('')}</div>
-    <div class="common">✦ ${common}</div></div></article>`).join('');
+    <div class="body"><div class="row"><b data-i="pn${i + 1}">${name}</b><span class="where" data-i="pw${i + 1}">${where}</span></div>
+    <div class="tags">${tags.map((t) => `<span class="chip" data-i="tg${t}">${t}</span>`).join('')}</div>
+    <div class="common">✦ <span data-i="pc${i + 1}">${common}</span></div></div></article>`).join('');
   let order = $$('.pcard', deck);
   const layout = () => order.forEach((c, i) => { c.classList.remove('out', 'left'); c.style.zIndex = String(order.length - i); c.style.transform = `translateY(${i * 14}px) scale(${1 - i * 0.04})`; c.style.opacity = i < 3 ? '1' : '0'; });
   layout();
@@ -1068,7 +1116,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
   ];
   const kinds = ['person', 'activity', 'community', 'food', 'event'];
   const ptsBox = $('#pts');
-  ptsBox.innerHTML = POINTS.map(([k, x, y, face, label]) => `<span class="pt k-${k}" style="left:${x * 100}%;top:${y * 100}%">${face ? `<img src="faces/${face}.jpg" alt="">` : '<i></i>'}${label ? `<span>${label}</span>` : ''}</span>`).join('');
+  ptsBox.innerHTML = POINTS.map(([k, x, y, face, label], i) => `<span class="pt k-${k}" style="left:${x * 100}%;top:${y * 100}%">${face ? `<img src="faces/${face}.jpg" alt="">` : '<i></i>'}${label ? `<span data-i="ml${i + 1}">${label}</span>` : ''}</span>`).join('');
   const city = $('.city'), mapZoom = $('#mapZoom'), cityOutro = $('#cityOutro');
   onScroll(city, (p) => {
     const step = clamp(p / 0.7) * kinds.length;
@@ -1083,7 +1131,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
   let joined = 1;
   const renderPlan = () => {
     const left = 4 - joined;
-    spots.textContent = left === 0 ? tr('full') : left === 1 ? tr('spotLeft') : tr('spotsLeft').replace('{n}', left);
+    spots.textContent = left === 0 ? tr('full') : left === 1 ? tr('spotLeft') : left === 2 ? tr('spotsTwo') : tr('spotsLeft').replace('{n}', num(left));
     spots.classList.toggle('full', left === 0);
     bar.style.width = `${(joined / 4) * 100}%`;
     avs.forEach((a, i) => a.classList.toggle('in', i < joined));
@@ -1143,6 +1191,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
 
   // Dock: on phones, the waitlist button follows between the hero and the form.
   const dock = $('#dock'), waitlist = $('#waitlist');
+  const progress = $('#progress');
   const updateDock = () => dock.classList.toggle('show', scrollY > innerHeight * 0.9 && waitlist.getBoundingClientRect().top > innerHeight * 0.8);
 
   let queued = false;
@@ -1153,6 +1202,9 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       queued = false;
       if (!reduce) scenes.forEach((s) => { const r = s.el.getBoundingClientRect(); if (r.bottom > -100 && r.top < innerHeight + 100) s.fn(progressOf(s.el)); });
       updateDock();
+      const y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
+      progress.style.setProperty('--p', h > 0 ? (y / h).toFixed(4) : '0');
+      root.classList.toggle('scrolled', y > 40);
     });
   }
 

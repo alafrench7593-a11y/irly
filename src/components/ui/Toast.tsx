@@ -22,6 +22,7 @@ let counter = 0;
 function readable(title: string): string {
   if (/failed to fetch|network request failed|load failed|networkerror/i.test(title)) return 'No connection. Check your network and try again';
   if (/cannot read propert|undefined is not|is not a function|typeerror/i.test(title)) return 'Something went wrong. Try again';
+  if (/jwt|row-level security|violates|permission denied|duplicate key|pgrst|syntax error|relation .* does not exist|status code 5\d\d|internal server error/i.test(title)) return 'Something went wrong on our side. Try again in a moment';
   return title;
 }
 

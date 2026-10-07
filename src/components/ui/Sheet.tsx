@@ -1,3 +1,4 @@
+import { a11y } from '@/i18n';
 import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useFrame } from '@/components/layout/AppFrame';
@@ -99,7 +100,7 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
     <Modal transparent visible animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={dismiss}>
       <GestureHandlerRootView style={styles.flex}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.scrim }, backdropStyle]}>
-          <Pressable style={styles.flex} onPress={dismiss} accessibilityLabel="Close" />
+          <Pressable style={styles.flex} onPress={dismiss} accessibilityLabel={a11y('Close')} />
         </Animated.View>
         <GestureDetector gesture={pan}>
           <Animated.View

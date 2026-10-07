@@ -1,3 +1,4 @@
+import { a11y, t as tx } from '@/i18n';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -127,7 +128,7 @@ export default function GirlOnboarding() {
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-        <View style={styles.dots} accessibilityLabel={`Step ${index + 1} of ${SLIDES.length}`}>
+        <View style={styles.dots} accessibilityLabel={a11y(tx('Step {n} of {total}', { n: index + 1, total: SLIDES.length }))}>
           {SLIDES.map((s, i) => (
             <Dot key={s.title} i={i} x={x} width={width} />
           ))}

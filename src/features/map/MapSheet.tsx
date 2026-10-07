@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -124,7 +124,7 @@ export function MapSheet({
       <Animated.View style={[styles.sheet, { height: height - top + 40 }, sheetStyle]}>
         <Glass style={[StyleSheet.absoluteFill, styles.glass]} intensity={blur.strong} />
         <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
-          <View style={styles.header} accessibilityRole="adjustable" accessibilityLabel="Details. Drag up for more">
+          <View style={styles.header} accessibilityRole="adjustable" accessibilityLabel={a11y('Details. Drag up for more')}>
             <View style={[styles.grabber, { backgroundColor: t.c.lineStrong }]} />
             <View style={styles.titleRow}>
               <Lead marker={marker} />
@@ -257,7 +257,7 @@ function PersonDot({ name, hue, label: text, onPress, plus }: { name: string; hu
   return (
     <View style={styles.personDot}>
       {onPress ? (
-        <PressableScale onPress={onPress} scaleTo={0.92} haptic="select" accessibilityLabel={`Open ${text}'s profile`}>
+        <PressableScale onPress={onPress} scaleTo={0.92} haptic="select" accessibilityLabel={tx('Open {name}’s profile', { name: text })}>
           {inner}
         </PressableScale>
       ) : (

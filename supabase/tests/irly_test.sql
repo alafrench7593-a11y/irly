@@ -648,7 +648,7 @@ select pg_temp.check(not exists (select 1 from public.push_tokens), 'nobody read
 select pg_temp.check(public.pro_connect('00000000-0000-0000-0000-00000000000d') = 'pending', 'Connect from Networking sends a request');
 select pg_temp.as_admin();
 select pg_temp.check(exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000d' and kind = 'PRO_CONNECT_REQUEST' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000c'), 'she gets a Networking request notification');
-select pg_temp.check(exists (select 1 from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and body = 'Carl veut se connecter avec toi' and url = '/network/00000000-0000-0000-0000-00000000000c'), 'and a push in French that opens his professional profile');
+select pg_temp.check(exists (select 1 from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and body = 'Carl veut entrer en contact avec toi' and url = '/network/00000000-0000-0000-0000-00000000000c'), 'and a push in French that opens his professional profile');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select public.remove_friend('00000000-0000-0000-0000-00000000000d');
 select pg_temp.as_admin();

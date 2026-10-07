@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { DestinationPill } from '@/components/navigation/Headers';
@@ -80,7 +80,7 @@ export function MapTopBar({
             placeholderTextColor={t.c.textTertiary}
             selectionColor={t.c.text}
             style={[styles.searchInput, { color: t.c.text }]}
-            accessibilityLabel="Search the map"
+            accessibilityLabel={a11y('Search the map')}
             returnKeyType="search"
           />
           {query ? (

@@ -156,7 +156,7 @@ export default function EditProfile() {
 
         <Button label="Save" icon="check" full loading={busy} onPress={save} />
         <Text variant="caption" tone="tertiary" align="center">
-          Gender and age are set at signup. To change them, contact support from Settings.
+          Gender and age are set at signup. To change them, write to us from Profile → Help &amp; contact.
         </Text>
       </View>
     </Page>

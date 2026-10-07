@@ -17,5 +17,5 @@ export default function Story() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#050506' },
+  root: { flex: 1, backgroundColor: '#050506', overflow: 'hidden' },
 });

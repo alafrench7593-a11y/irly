@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { t as tx, useLang } from '@/i18n';
+import { t as tx, useLang, a11y } from '@/i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -226,7 +226,7 @@ export default function Assistant() {
                 onSubmitEditing={() => run(text, 'text')}
                 returnKeyType="go"
                 maxLength={500}
-                accessibilityLabel="Ask IRLY"
+                accessibilityLabel={a11y('Ask IRLY')}
               />
             </View>
             <PressableScale

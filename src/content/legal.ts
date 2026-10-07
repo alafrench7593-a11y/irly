@@ -1,7 +1,7 @@
 import { APP, LEGAL_VERSIONS } from '@/config/app';
 
 /**
- * The legal texts shown in the app (Settings → Legal). They describe what
+ * The legal texts shown in the app (Profile → Legal & support). They describe what
  * the app actually does, from the code and the database. They are drafts:
  * a lawyer must review them, and every [LEGAL INFORMATION REQUIRED] must be
  * filled in (src/config/app.ts) before launch.
@@ -27,7 +27,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
           'Professional profile (Networking, optional): role, job title, company, industries, skills, current project, what you look for and offer, goals and a neighbourhood. Used to show you to other professionals and calculate matches.',
           'IRLY Girl (optional, women only): the matching profile you fill in (interests, availability, areas, photos) and your likes and passes, used to suggest matches.',
           'Content you create: activities, community posts, comments, live (IRL) posts, photos, messages, likes, saves, reports and blocks. Used to provide these features.',
-          'Location: IRLY never stores your exact position. When you tap "locate me" on the map, your phone position is used on the phone only to centre the map. Your profile and posts show a neighbourhood or a city at most, as you choose in Privacy settings.',
+          'Location: IRLY never stores your exact position. When you tap "My location" on the map, your phone position is used on the phone only to centre the map. Your profile and posts show a neighbourhood or a city at most, as you choose in Profile → Privacy & notifications.',
           'Notifications: if you allow them, a push token for your phone and its language, used to send you notifications. Notification texts are kept 7 days to deliver them.',
           'Website waitlist (optional): the email address you enter on the IRLY website and the language of the page. Used only to tell you when IRLY launches. Never shared or sold.',
           'Usage events: anonymous-by-design events about how the app is used (for example "activity created"), linked to your account when signed in. They never contain message text, emails, exact locations, faith or gender. Kept 13 months.',
@@ -49,7 +49,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
           `Supabase (database, authentication, file storage and realtime). Your data is stored in ${APP.hosting}.`,
           'Expo push notification service and Apple / Google push services, to deliver notifications.',
           'Apple and Google sign-in, if you choose them.',
-          'Map tiles from the map provider of your phone (Apple Maps on iPhone).',
+          'Map tiles from the map provider of your phone (Apple Maps on iPhone). On the web version, map tiles come from OpenFreeMap (OpenStreetMap data).',
           'Some providers (the Expo push service, Apple and Google) may process data in the United States or other countries. The contractual safeguards that cover these transfers: [LEGAL INFORMATION REQUIRED].',
         ],
       },
@@ -66,10 +66,10 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       {
         title: 'Your rights and choices',
         body: [
-          'Access and portability: Settings → Download my data gives you a copy of your data.',
+          'Access and portability: Profile → Download my data gives you a copy of your data.',
           'Correction: Edit profile and Professional profile.',
-          'Deletion: Settings → Delete account deletes your account and data from our servers.',
-          'Visibility: Settings → Privacy & notifications (who can find you, who sees your live posts and activities, location precision, notifications).',
+          'Deletion: Profile → Delete account deletes your account and data from our servers.',
+          'Visibility: Profile → Privacy & notifications (who can find you, who sees your live posts and activities, location precision, notifications).',
           `Objection, restriction and complaints: write to ${APP.privacyEmail}. You may also complain to the UAE Data Office, or to the data protection authority where you live (for example the CNIL in France).`,
           `Why we may use your data: to provide the service you sign up for (account, profile, chats, activities), with your consent where it is needed (notifications, optional details such as faith, your photos), and to keep IRLY safe and working (moderation, security, statistics without personal content). This follows ${APP.dataLaw} and, for people in the European Union, the GDPR (contract, consent and legitimate interests).`,
         ],
@@ -101,7 +101,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       },
       {
         title: 'Your account',
-        body: ['Keep your sign-in secure. You are responsible for what happens on your account. You can delete it at any time in Settings.'],
+        body: ['Keep your sign-in secure. You are responsible for what happens on your account. You can delete it at any time in Profile.'],
       },
       {
         title: 'Your content',

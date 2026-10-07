@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { NotFound } from '@/components/layout/NotFound';
-import { dateLocale, t as tx } from '@/i18n';
+import { dateLocale, t as tx, a11y } from '@/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
@@ -251,7 +251,7 @@ function ServerThreadView({ id }: { id: string }) {
               onSubmitEditing={send}
               returnKeyType="send"
               maxLength={4000}
-              accessibilityLabel="Message"
+              accessibilityLabel={a11y('Message')}
             />
           </View>
           <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, opacity: text.trim() ? 1 : 0.4 }]} accessibilityLabel="Send">
@@ -443,7 +443,7 @@ function Thread() {
               style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
               onSubmitEditing={send}
               returnKeyType="send"
-              accessibilityLabel="Message"
+              accessibilityLabel={a11y('Message')}
             />
           </View>
           <Animated.View style={sendStyle}>
@@ -467,7 +467,7 @@ function Thread() {
             </Text>
           </View>
           {person ? (
-            <PressableScale onPress={() => router.push(`/person/${person.id}`)} accessibilityLabel={`${person.name}'s profile`}>
+            <PressableScale onPress={() => router.push(`/person/${person.id}`)} accessibilityLabel={tx('Open {name}’s profile', { name: person.name })}>
               <Avatar name={person.name} hue={person.hue} size={40} photo={person.photo} />
             </PressableScale>
           ) : (

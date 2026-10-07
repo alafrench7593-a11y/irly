@@ -245,7 +245,7 @@ export const PersonBubble = memo(function PersonBubble({ person, city }: { perso
       onPress={() => flyFrom(face.current, person, () => router.push(`/person/${person.id}`))}
       scaleTo={0.94}
       style={styles.person}
-      accessibilityLabel={`${person.name}, ${now ? 'available now' : 'available later'}, ${areaName(city, person.areaId)}`}
+      accessibilityLabel={`${person.name}, ${tx(now ? 'available now' : 'available later')}, ${areaName(city, person.areaId)}`}
     >
       <View style={[styles.personRing, { borderColor: t.c.text, boxShadow: `0px 0px 24px ${now ? 'rgba(50,215,75,0.35)' : 'rgba(255,159,10,0.28)'}` }]}>
         <View ref={face} collapsable={false}>
@@ -370,7 +370,7 @@ export const IdeaCard = memo(function IdeaCard({
 }) {
   const t = useTheme();
   return (
-    <PressableScale haptic="select" onPress={onPress} scaleTo={0.97} style={[ideaStyles.card, { boxShadow: t.shadow.card }]} accessibilityLabel={`${title}. Create a session`}>
+    <PressableScale haptic="select" onPress={onPress} scaleTo={0.97} style={[ideaStyles.card, { boxShadow: t.shadow.card }]} accessibilityLabel={`${tx(title)}. ${tx('Create an activity')}`}>
       <Photo visual={{ photo }} light="dubai" scrim="strong" style={[StyleSheet.absoluteFill, ideaStyles.photo]} width={500} recyclingKey={`idea-${title}`}>
         <View style={ideaStyles.top}>
           <Glass dark style={ideaStyles.icon}>

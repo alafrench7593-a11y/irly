@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { AreaPicker } from '@/components/ui/AreaPicker';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -130,7 +130,7 @@ function LiveCard({ live }: { live: Live }) {
           <ReactButton id={live.id} />
           <Button label="Message" variant="secondary" icon="message" size="sm" onPress={() => router.push('/messages')} />
           <Button label="Join" icon="pin" size="sm" onPress={() => toast(tx("{name} will know you're on your way", { name: person.name.split(' ')[0] }), 'pin')} />
-          <PressableScale haptic="select" scaleTo={0.9} onPress={() => router.push(`/person/${person.id}`)} accessibilityLabel={`View ${person.name}'s profile`} style={[styles.round, { backgroundColor: t.c.overlay }]}>
+          <PressableScale haptic="select" scaleTo={0.9} onPress={() => router.push(`/person/${person.id}`)} accessibilityLabel={tx('Open {name}’s profile', { name: person.name })} style={[styles.round, { backgroundColor: t.c.overlay }]}>
             <Icon name="user" size={16} color={t.c.text} />
           </PressableScale>
         </View>
@@ -234,7 +234,7 @@ function FriendsLiveNow() {
                 scaleTo={0.96}
                 onPress={() => router.push(`/person/${p.id}`)}
                 style={[styles.friend, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}
-                accessibilityLabel={`${p.name}, live: ${l.text}, ${areaName(city, l.areaId)}`}
+                accessibilityLabel={tx('{name}, live: {text}, {area}', { name: p.name, text: l.text, area: areaName(city, l.areaId) })}
               >
                 <LiveRing size={48}>
                   <Avatar name={p.name} hue={p.hue} size={38} />
@@ -319,7 +319,7 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
               {p.body}
             </Text>
             {p.activityId ? (
-              <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={`Join ${p.activityTitle ?? 'the activity'}`}>
+              <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={p.activityTitle ? tx('Join {title}', { title: p.activityTitle }) : tx('Join the activity')}>
                 <Icon name="calendar" size={18} color={t.c.text} />
                 <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
                   {p.activityTitle ?? 'Activity'}
@@ -525,7 +525,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           multiline
           maxLength={160}
           style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]}
-          accessibilityLabel="What are you doing right now?"
+          accessibilityLabel={a11y('What are you doing right now?')}
         />
         {uri ? (
           <Animated.View entering={FadeIn}>

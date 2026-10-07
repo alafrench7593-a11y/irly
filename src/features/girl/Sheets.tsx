@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AreaPicker } from '@/components/ui/AreaPicker';
-import { t as tx } from '@/i18n';
+import { t as tx, a11y } from '@/i18n';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Sheet } from '@/components/ui/Sheet';
 import { Icon } from '@/components/ui/Icon';
@@ -253,7 +253,7 @@ export function SafetySheet({
         {mode === 'confirmBlock' ? (
           <>
             <Text variant="body" color={girl.inkSoft}>
-              You won&apos;t see each other in IRLY Girl, chats or activities. Any match ends. You can unblock later in Settings.
+              You won&apos;t see each other in IRLY Girl, chats or activities. Any match ends. You can unblock them later in Profile → Blocked members.
             </Text>
             <GButton
               label={tx('Block {name}', { name })}
@@ -280,7 +280,7 @@ export function SafetySheet({
               placeholderTextColor={girl.inkFaint}
               multiline
               style={styles.input}
-              accessibilityLabel="Details"
+              accessibilityLabel={a11y('Details')}
             />
             <GButton
               label="Send report"

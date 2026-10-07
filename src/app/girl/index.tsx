@@ -273,7 +273,7 @@ export default function GirlHome() {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 14 }}>
               {matches.map((m) => (
-                <PressableScale key={m.matchId} haptic="select" scaleTo={0.94} onPress={() => router.push(`/messages/${m.conversationId}`)} style={styles.matchItem} accessibilityLabel={`Chat with ${m.firstName}`}>
+                <PressableScale key={m.matchId} haptic="select" scaleTo={0.94} onPress={() => router.push(`/messages/${m.conversationId}`)} style={styles.matchItem} accessibilityLabel={tx('Chat with {name}', { name: m.firstName })}>
                   <View style={styles.matchRing}>
                     <Avatar name={m.firstName} hue={m.hue} size={56} photo={m.photoUrls[0]} />
                   </View>
