@@ -60,14 +60,14 @@ async function getJson(url, headers = {}) {
   throw new Error('rate limited');
 }
 
-/** One shape for both providers: { id, text, page, img, by, byUrl } */
+/** One shape for both providers: { id, tags (what the photo shows), text (tags + page address), page, img, by, byUrl } */
 async function searchPhotos(q) {
   if (provider === 'pixabay') {
     const j = await getJson(`https://pixabay.com/api/?key=${PIXABAY}&q=${encodeURIComponent(q)}&image_type=photo&orientation=horizontal&min_width=1200&safesearch=true&per_page=60`);
-    return (j.hits ?? []).map((h) => ({ id: `pixabay-${h.id}`, text: `${h.tags} ${h.pageURL.replace(/[-/]/g, ' ')}`, page: h.pageURL, img: h.largeImageURL, by: h.user, byUrl: `https://pixabay.com/users/${h.user}-${h.user_id}/` }));
+    return (j.hits ?? []).map((h) => ({ id: `pixabay-${h.id}`, tags: h.tags, text: `${h.tags} ${h.pageURL.replace(/[-/]/g, ' ')}`, page: h.pageURL, img: h.largeImageURL, by: h.user, byUrl: `https://pixabay.com/users/${h.user}-${h.user_id}/` }));
   }
   const j = await getJson(`https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&per_page=40&orientation=landscape`, { Authorization: PEXELS });
-  return (j.photos ?? []).filter((p) => p.width >= 1200).map((p) => ({ id: `pexels-${p.id}`, text: `${p.alt ?? ''} ${decodeURIComponent(p.url ?? '').replace(/[-/]/g, ' ')}`, page: p.url, img: p.src.large2x ?? p.src.original, by: p.photographer, byUrl: p.photographer_url }));
+  return (j.photos ?? []).filter((p) => p.width >= 1200).map((p) => ({ id: `pexels-${p.id}`, tags: p.alt ?? '', text: `${p.alt ?? ''} ${decodeURIComponent(p.url ?? '').replace(/[-/]/g, ' ')}`, page: p.url, img: p.src.large2x ?? p.src.original, by: p.photographer, byUrl: p.photographer_url }));
 }
 
 /** { id, page, file, by, byUrl, duration } with a ~1280 px mp4. */
@@ -102,6 +102,31 @@ async function download(url, to) {
 }
 
 const escape = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** Whole words only ("pool" must not match "Liverpool"); a list of lists needs one word of each list. */
+const subjectTest = (words) => {
+  const groups = (Array.isArray(words[0]) ? words : [words]).map((g) => new RegExp(`\\b(${g.map(escape).join('|')})\\b`, 'i'));
+  return (tags) => groups.every((re) => re.test(tags));
+};
+/** A Dubai photo must not be another emirate's. */
+const OTHER_THAN_DUBAI = /abu dhabi|abudhabi|sharjah|ajman|fujairah|ras al khaimah|oman|qatar|doha|saudi/i;
+
+// The photo a key had before Dubai photos: kept aside so it comes back if no
+// Dubai photo fits the subject.
+const ORIG = 'public-photos/_orig';
+fs.mkdirSync(ORIG, { recursive: true });
+const keepOriginal = (key) => {
+  for (const f of [`public-photos/${key}-1200.jpg`, `public-photos/${key}-480.jpg`, `site/img/${key}.webp`]) {
+    const to = `${ORIG}/${f.split('/').pop()}`;
+    if (fs.existsSync(f) && !fs.existsSync(to)) fs.copyFileSync(f, to);
+  }
+};
+const restoreOriginal = (key) => {
+  for (const f of [`public-photos/${key}-1200.jpg`, `public-photos/${key}-480.jpg`, `site/img/${key}.webp`]) {
+    const from = `${ORIG}/${f.split('/').pop()}`;
+    if (fs.existsSync(from)) fs.copyFileSync(from, f);
+    else if (f.startsWith('public-photos/') && fs.existsSync(f)) fs.rmSync(f); // had no photo of its own: back to the default one
+  }
+};
 const used = new Set(Object.values(picks).map((p) => p.id));
 const report = { picked: [], kept: [], none: [] };
 
@@ -115,21 +140,25 @@ for (const [key, [query, words, place = 'dubai']] of Object.entries(queries)) {
   if (old) used.delete(old.id);
   delete picks[key];
   const placeRe = PLACES[place] ?? PLACES.dubai;
-  const subjectRe = new RegExp(words.map(escape).join('|'), 'i');
+  const fits = subjectTest(words);
   let found;
   try {
-    found = (await searchPhotos(query)).find((c) => !banned.has(c.id) && !used.has(c.id) && placeRe.test(c.text) && subjectRe.test(c.text));
+    found = (await searchPhotos(query)).find(
+      (c) => !banned.has(c.id) && !used.has(c.id) && placeRe.test(c.text) && fits(c.tags) && !(place === 'dubai' && OTHER_THAN_DUBAI.test(c.tags)),
+    );
   } catch (e) {
     console.log(key, e.message);
   }
   if (!found) {
+    if (old) restoreOriginal(key);
     report.none.push(key);
     continue;
   }
+  keepOriginal(key);
   const tmp = `/tmp/dubai-${key}.jpg`;
   await download(found.img, tmp);
   save(key, tmp);
-  picks[key] = { id: found.id, tags: found.text.slice(0, 160), page: found.page, by: found.by, byUrl: found.byUrl };
+  picks[key] = { id: found.id, tags: found.tags.slice(0, 160), page: found.page, by: found.by, byUrl: found.byUrl };
   used.add(found.id);
   report.picked.push(key);
   await sleep(provider === 'pixabay' ? 700 : 400);
