@@ -26,6 +26,7 @@ import {
   verifyCode,
   verifyPhoneCode,
 } from '@/features/auth/account';
+import { APP } from '@/config/app';
 import { track } from '@/lib/analytics';
 import { enabledProviders, hasBackend } from '@/lib/supabase';
 import { wipeLocal } from '@/state/wipe';
@@ -198,12 +199,8 @@ export default function AccountScreen() {
         {mode === 'choose' ? (
           <>
             {providers?.apple && Platform.OS !== 'android' ? <Button label="Continue with Apple" variant="inverse" leading={(c) => <AppleLogo size={18} color={c} />} full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
-            {providers?.google ? <Button label="Continue with Google" leading={() => <GoogleG size={18} />} full variant="secondary" loading={busy} onPress={() => act(() => signInWithProvider('google'))} /> : null}
-            {providers && !providers.apple && !providers.google ? (
-              <Text variant="bodyS" tone="secondary" align="center">
-                Apple and Google sign-in are coming soon. Use your email: you get a 6-digit code.
-              </Text>
-            ) : null}
+            {/* App Store rule 4.8: on iPhone, Google sign-in is only offered next to Sign in with Apple. */}
+            {providers?.google && (Platform.OS !== 'ios' || providers.apple) ? <Button label="Continue with Google" leading={() => <GoogleG size={18} />} full variant="secondary" loading={busy} onPress={() => act(() => signInWithProvider('google'))} /> : null}
             <Button label="Continue with email" icon="send" full variant="secondary" onPress={() => setMode('email')} />
             {providers?.phone ? <Button label="Continue with phone" icon="message" full variant="secondary" onPress={() => setMode('phone')} /> : null}
           </>
@@ -317,7 +314,19 @@ export default function AccountScreen() {
         {mode !== 'choose' ? <Button label="Other ways to sign in" variant="ghost" icon="arrowLeft" onPress={() => setMode('choose')} /> : null}
 
         <Text variant="caption" tone="tertiary">
-          By continuing you agree to keep IRLY safe and respectful. You can delete your account anytime in Profile.
+          {tx('By continuing you confirm you are {age} or older and accept the', { age: APP.minimumAge })}{' '}
+          <Text variant="caption" style={{ textDecorationLine: 'underline' }} onPress={() => router.push('/legal/terms')} accessibilityRole="link">
+            Terms of Use
+          </Text>
+          {', '}
+          <Text variant="caption" style={{ textDecorationLine: 'underline' }} onPress={() => router.push('/legal/guidelines')} accessibilityRole="link">
+            Community Guidelines
+          </Text>
+          {tx(' and ')}
+          <Text variant="caption" style={{ textDecorationLine: 'underline' }} onPress={() => router.push('/legal/privacy')} accessibilityRole="link">
+            Privacy Policy
+          </Text>
+          {tx('. You can delete your account anytime in Profile.')}
         </Text>
       </Animated.View>
     </Page>

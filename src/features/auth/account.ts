@@ -256,8 +256,8 @@ function toRow(uid: string, p: Profile, cityId: string) {
   };
 }
 
-/** The fields a member can change after signup (gender stays as declared). */
-export type ProfilePatch = Partial<Pick<Profile, 'name' | 'bio' | 'age' | 'country' | 'languages' | 'interests' | 'activities' | 'lookingFor'>> & {
+/** The fields a member can change after signup (gender and birth date stay as declared: the server refuses changes). */
+export type ProfilePatch = Partial<Pick<Profile, 'name' | 'bio' | 'country' | 'languages' | 'interests' | 'activities' | 'lookingFor'>> & {
   /** A new photo picked on the phone (local or data URI). */
   photoUri?: string;
   cityId?: string;
@@ -272,13 +272,11 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
   const st = useStore.getState();
   const uid = useAuthStore.getState().account?.userId;
   if (patch.name !== undefined && !patch.name.trim()) throw new Error('Add your first name');
-  if (patch.age !== undefined && (patch.age < 18 || patch.age > 120)) throw new Error('IRLY is for people aged 18 and over');
   let photoUri: string | undefined;
   if (supabase && uid) {
     const row: Record<string, unknown> = {};
     if (patch.name !== undefined) row.first_name = patch.name.trim().slice(0, 40);
     if (patch.bio !== undefined) row.bio = patch.bio.trim().slice(0, 300) || null;
-    if (patch.age !== undefined) row.birthdate = `${new Date().getFullYear() - patch.age}-01-01`;
     if (patch.country !== undefined) row.country = patch.country || null;
     if (patch.languages !== undefined) row.languages = patch.languages.map((l) => LANG[l] ?? l);
     if (patch.interests !== undefined) row.interests = patch.interests.map(String);
@@ -308,7 +306,7 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
       if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
     } else if (Object.keys(row).length) {
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
-      if (error) throw new Error(/check constraint|birthdate/i.test(error.message) ? 'Some fields are not valid' : error.message);
+      if (error) throw new Error(/check constraint/i.test(error.message) ? 'Some fields are not valid' : error.message);
     }
   }
   const { cityId, photoUri: picked, ...rest } = patch;
@@ -337,14 +335,56 @@ export async function signOut(): Promise<void> {
   await supabase?.auth.signOut();
 }
 
-/** Deletes the server account (and with it every row that belongs to it). */
+/** Your files in each storage bucket (they live in a folder named after you). */
+const BUCKETS = ['profile-photos', 'match-photos', 'irl-media', 'activity-photos'];
+async function removeMyFiles(uid: string): Promise<void> {
+  if (!supabase) return;
+  for (const bucket of BUCKETS) {
+    for (;;) {
+      const { data, error } = await supabase.storage.from(bucket).list(uid, { limit: 100 });
+      if (error) throw new Error(`Could not delete your files (${bucket}). Try again.`);
+      if (!data?.length) break;
+      const { error: e } = await supabase.storage.from(bucket).remove(data.map((f) => `${uid}/${f.name}`));
+      if (e) throw new Error(`Could not delete your files (${bucket}). Try again.`);
+      if (data.length < 100) break;
+    }
+  }
+}
+
+/**
+ * Deletes the server account: your photos and files first (the database
+ * cannot remove files), then every row that belongs to you, then the
+ * session. If any step fails nothing is wiped on the phone, so you can retry.
+ */
 export async function deleteServerAccount(): Promise<void> {
   if (!supabase) return;
   const { data } = await supabase.auth.getSession();
   if (!data.session) return;
+  await removeMyFiles(data.session.user.id);
+  await import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
   const { error } = await supabase.rpc('delete_my_account');
   if (error) throw new Error(error.message);
   await supabase.auth.signOut();
+}
+
+/** Download my data: everything IRLY stores about you, as a JSON file (or the share sheet on a phone). */
+export async function exportMyData(): Promise<void> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const { data, error } = await supabase.rpc('export_my_data');
+  if (error) throw new Error(error.message);
+  const json = JSON.stringify(data, null, 2);
+  const name = `irly-data-${new Date().toISOString().slice(0, 10)}.json`;
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    return;
+  }
+  const { Share } = await import('react-native');
+  await Share.share({ title: name, message: json });
 }
 
 /* ───────── Password, providers, phone ───────── */

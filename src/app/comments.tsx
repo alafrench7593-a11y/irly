@@ -13,7 +13,8 @@ import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { reportItem, toggleLike, useComments, type Comment, type TargetType } from '@/features/server/engage';
+import { openReport } from '@/features/moderation/reportStore';
+import { toggleLike, useComments, type Comment, type TargetType } from '@/features/server/engage';
 import { hueOf } from '@/lib/format';
 import { timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
@@ -65,9 +66,7 @@ export default function CommentsScreen() {
           .catch(() => toast('Could not delete the comment', 'x', 'live')),
       );
     } else {
-      reportItem({ type: 'comment', id: c.id }, 'inappropriate', c.authorId)
-        .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-        .catch(() => toast('Could not report', 'x', 'live'));
+      openReport({ kind: 'comment', id: c.id, userId: c.authorId }, c.firstName);
     }
   };
 

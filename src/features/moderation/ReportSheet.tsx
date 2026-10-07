@@ -13,6 +13,7 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { ReportCategory } from '@/features/server/engage';
 import { blockUser, report, REPORT_CATEGORIES, type ReportTarget } from './moderation';
+import { useReportStore } from './reportStore';
 
 /**
  * Report anything (a profile, a message, a post…): pick what is wrong, add
@@ -119,3 +120,11 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[2] },
   option: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingHorizontal: 14, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2 },
 });
+
+/** Mounted once at the root: the sheet opened by openReport() from any screen. */
+export function ReportHost() {
+  const target = useReportStore((s) => s.target);
+  const name = useReportStore((s) => s.name);
+  const close = useReportStore((s) => s.close);
+  return <ReportSheet target={target} name={name} onClose={close} />;
+}

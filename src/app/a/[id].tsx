@@ -18,7 +18,8 @@ import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { cancelServerActivity, icsFor, joinServerActivity, leaveServerActivity, useServerActivity } from '@/features/server/activities';
-import { hideItem, reportItem, useEngagement } from '@/features/server/engage';
+import { openReport } from '@/features/moderation/reportStore';
+import { hideItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
 import { radius, space } from '@/theme/tokens';
@@ -198,11 +199,7 @@ export default function ActivityPage() {
               icon="flag"
               size="sm"
               variant="ghost"
-              onPress={() =>
-                reportItem(target, 'inappropriate', a.creatorId)
-                  .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-                  .catch(() => toast('Could not send the report', 'x', 'live'))
-              }
+              onPress={() => openReport({ kind: 'activity', id: a.id, userId: a.creatorId })}
             />
           </View>
         </Animated.View>

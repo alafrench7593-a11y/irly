@@ -751,6 +751,28 @@ select pg_temp.check(public.export_my_data()::text not like '%Coffee tomorrow?%'
 select pg_temp.as_admin();
 select pg_temp.expect_denied($$select public.export_my_data()$$, 'export needs a signed-in member');
 
+-- ───── Support requests ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+insert into public.support_requests (user_id, kind, body, platform) values (auth.uid(), 'problem', 'The map does not load', 'ios');
+select pg_temp.expect_denied($$insert into public.support_requests (user_id, kind, body) values ('00000000-0000-0000-0000-00000000000c', 'problem', 'pretending to be Carl')$$, 'a request is always sent as myself');
+select pg_temp.check(not exists (select 1 from public.support_requests), 'members cannot read support requests (even their own)');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.support_requests) = 1, 'the team receives it');
+
+-- ───── Edit profile ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+update public.profiles set first_name = 'Béa', bio = 'Padel and brunch', languages = '{fr,en}', interests = '{sports}', country = 'France', city_id = 'abudhabi' where id = auth.uid();
+select pg_temp.check((select first_name from public.my_profile()) = 'Béa', 'I can edit my name, bio, languages and interests');
+select pg_temp.as_admin();
+select pg_temp.check((select city_id from public.profiles where id = '00000000-0000-0000-0000-00000000000b') = 'abudhabi', 'and my city');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_denied($$update public.profiles set birthdate = '2015-01-01' where id = auth.uid()$$, 'birth date cannot be changed after signup (minimum age)');
+select pg_temp.expect_denied($$update public.profiles set gender = 'man' where id = auth.uid()$$, 'gender cannot be changed by the member');
+update public.profiles set first_name = 'Mallory' where id = '00000000-0000-0000-0000-00000000000c';
+select pg_temp.as_admin();
+select pg_temp.check((select first_name from public.profiles where id = '00000000-0000-0000-0000-00000000000c') = 'Carl', 'nobody edits someone else''s profile');
+update public.profiles set first_name = 'Bea', city_id = 'dubai' where id = '00000000-0000-0000-0000-00000000000b';
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

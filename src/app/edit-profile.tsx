@@ -36,7 +36,6 @@ export default function EditProfile() {
   const profile = useStore((s) => s.profile);
   const currentCity = useCityId();
   const [name, setName] = useState(profile.name);
-  const [age, setAge] = useState(profile.age ? String(profile.age) : '');
   const [bio, setBio] = useState(profile.bio ?? '');
   const [country, setCountry] = useState(profile.country ?? '');
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? []);
@@ -46,13 +45,11 @@ export default function EditProfile() {
   const [busy, setBusy] = useState(false);
   const [tried, setTried] = useState(false);
 
-  const ageN = Number(age);
   const errors = {
     name: name.trim() ? null : tr('Add your first name'),
-    age: ageN >= 18 && ageN <= 120 ? null : tr('IRLY is for people aged 18 and over'),
     languages: languages.length ? null : tr('Pick at least one language'),
   };
-  const valid = !errors.name && !errors.age && !errors.languages;
+  const valid = !errors.name && !errors.languages;
 
   const pick = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [1, 1] });
@@ -76,7 +73,6 @@ export default function EditProfile() {
     try {
       await updateMyProfile({
         name: name.trim(),
-        age: ageN,
         bio: bio.trim(),
         country: country.trim(),
         languages,
@@ -116,8 +112,13 @@ export default function EditProfile() {
           <Field value={name} onChangeText={setName} maxLength={40} autoCapitalize="words" accessibilityLabel={tr('First name')} />
         </Section>
 
-        <Section title="Age" error={tried ? errors.age : null}>
-          <Field value={age} onChangeText={(v) => setAge(v.replace(/[^0-9]/g, '').slice(0, 3))} keyboardType="number-pad" accessibilityLabel={tr('Age')} />
+        <Section title="Age">
+          <Text variant="body" raw>
+            {profile.age ? String(profile.age) : '—'}
+          </Text>
+          <Text variant="caption" tone="tertiary">
+            Your age is set at signup (IRLY is for adults only). To correct it, contact support.
+          </Text>
         </Section>
 
         <Section title="Bio">
@@ -155,7 +156,7 @@ export default function EditProfile() {
 
         <Button label="Save" icon="check" full loading={busy} onPress={save} />
         <Text variant="caption" tone="tertiary" align="center">
-          Gender is set at signup. To change it, contact support from Settings.
+          Gender and age are set at signup. To change them, contact support from Settings.
         </Text>
       </View>
     </Page>

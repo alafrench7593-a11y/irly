@@ -15,7 +15,8 @@ import { useAccount } from '@/features/auth/account';
 import { addFriend, deleteServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
 import { ActionBar } from '@/components/social/ActionBar';
 import { createServerActivity } from '@/features/server/activities';
-import { hideItem, reportItem, useEngagement } from '@/features/server/engage';
+import { openReport } from '@/features/moderation/reportStore';
+import { hideItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
 import type { CityId } from '@/data/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -394,11 +395,7 @@ function PostMenu({ id, authorId, onHide }: { id: string; authorId: string; onHi
         <Icon name="eye" size={18} color={t.c.textTertiary} />
       </PressableScale>
       <PressableScale
-        onPress={() =>
-          reportItem({ type: 'irl_post', id }, 'inappropriate', authorId)
-            .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-            .catch(() => toast('Could not send the report', 'x', 'live'))
-        }
+        onPress={() => openReport({ kind: 'irl_post', id, userId: authorId })}
         haptic="select"
         hitSlop={8}
         accessibilityLabel="Report this post"

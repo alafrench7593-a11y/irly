@@ -20,7 +20,8 @@ import { dateFor, planDay, type Day, type GeoIndex } from '@/features/ai/intent'
 import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type PlanDraft } from '@/features/community/assist';
 import { fetchDigest, joinCommunity, leaveCommunity, useCommunity, useCommunityActivities, useCommunityFeed, type CommunityPost } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
-import { reportItem, useEngagement } from '@/features/server/engage';
+import { openReport } from '@/features/moderation/reportStore';
+import { useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
 import { hueOf } from '@/lib/format';
 import { cityWhen, timeAgo } from '@/lib/time';
@@ -263,11 +264,7 @@ export default function CommunityScreen() {
                 label="Report this community"
                 icon="flag"
                 variant="ghost"
-                onPress={() =>
-                  reportItem({ type: 'community', id: c.id }, 'inappropriate')
-                    .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-                    .catch(() => toast('Could not send the report', 'x', 'live'))
-                }
+                onPress={() => openReport({ kind: 'community', id: c.id })}
               />
             </View>
           ) : null}
@@ -551,11 +548,7 @@ function PostCard({
           </PressableScale>
         ) : (
           <PressableScale
-            onPress={() =>
-              reportItem({ type: 'community_post', id: p.id }, 'inappropriate', p.authorId)
-                .then(() => toast('Reported. Our team will review it', 'flag', 'brand'))
-                .catch(() => toast('Could not send the report', 'x', 'live'))
-            }
+            onPress={() => openReport({ kind: 'community_post', id: p.id, userId: p.authorId }, p.firstName)}
             haptic="select"
             hitSlop={8}
             accessibilityLabel="Report post"

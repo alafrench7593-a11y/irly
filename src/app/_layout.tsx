@@ -25,6 +25,7 @@ import { AppIntro } from '@/features/intro/AppIntro';
 import { FlightHost } from '@/features/flight/FlightHost';
 import { MatchHost } from '@/features/match/IrlyMatch';
 import { usePush } from '@/features/push/push';
+import { ReportHost } from '@/features/moderation/ReportSheet';
 import { useStore } from '@/state/store';
 import { useTheme } from '@/theme/useTheme';
 
@@ -104,6 +105,7 @@ function App() {
       <HeroHost />
       <FlightHost />
       <MatchHost />
+      <ReportHost />
       <CreateHost />
       <DestinationTransition />
       <AppIntro />
