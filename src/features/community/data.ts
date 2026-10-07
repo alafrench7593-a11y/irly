@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CityId } from '@/data/types';
 import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
@@ -138,6 +138,13 @@ export function useCommunityFeed(communityId: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Loads can finish out of order (a realtime burst); only the newest one lands.
+  const seq = useRef(0);
+  // Votes cast on a post that is still being sent, keyed by its temporary id.
+  const queued = useRef(new Map<string, number>());
+  // Temporary id → real id, for a tap that lands just as the post arrives.
+  const sent = useRef(new Map<string, string>());
+
   const load = useCallback(async (): Promise<CommunityPost[]> => {
     if (!uid) return [];
     const { data, error: e } = await sb().rpc('community_feed', { p_community: communityId, p_limit: 50 });
@@ -145,23 +152,30 @@ export function useCommunityFeed(communityId: string) {
     return ((data as Row[]) ?? []).map((r) => toPost(r, uid));
   }, [communityId, uid]);
 
+  /** The server list, plus our posts still on their way (they are not in it yet). */
+  const land = useCallback((server: CommunityPost[]) => setPosts((prev) => [...prev.filter((x) => x.pending), ...server]), []);
+
   const refresh = useCallback(() => {
+    const n = ++seq.current;
     load()
       .then((p) => {
-        setPosts(p);
+        if (n !== seq.current) return;
+        land(p);
         setError(null);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : 'offline'));
-  }, [load]);
+      .catch((e) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'));
+  }, [load, land]);
 
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
-    const reload = () =>
+    const reload = () => {
+      const n = ++seq.current;
       load()
-        .then((p) => alive && (setPosts(p), setError(null)))
-        .catch((e) => alive && setError(e instanceof Error ? e.message : 'offline'))
+        .then((p) => alive && n === seq.current && (land(p), setError(null)))
+        .catch((e) => alive && n === seq.current && setError(e instanceof Error ? e.message : 'offline'))
         .finally(() => alive && setLoading(false));
+    };
     reload();
     const channel = supabase
       .channel(topic(`community-${communityId}`))
@@ -174,9 +188,21 @@ export function useCommunityFeed(communityId: string) {
       alive = false;
       supabase?.removeChannel(channel);
     };
-  }, [communityId, uid, load]);
+  }, [communityId, uid, load, land]);
 
-  /** Optimistic: the post shows at once, then the server version replaces it. */
+  const sendVote = useCallback(
+    async (postId: string, option: number) => {
+      const { error: e } = await sb().from('community_poll_votes').upsert({ post_id: postId, user_id: uid, option });
+      if (e) {
+        // Back to the server's truth (a snapshot would drop posts that arrived meanwhile).
+        refresh();
+        throw new Error(/row-level|policy/i.test(e.message) ? 'Join the community to vote' : e.message);
+      }
+    },
+    [uid, refresh],
+  );
+
+  /** Optimistic: the post shows at once, then takes its real id; a vote cast meanwhile follows it. */
   const post = useCallback(
     async (input: { body: string; poll?: string[] | null; activityId?: string | null }) => {
       if (!uid) throw new Error('Sign in to post');
@@ -188,37 +214,50 @@ export function useCommunityFeed(communityId: string) {
         poll, pollCounts: poll ? poll.options.map(() => 0) : [], myVote: null, likes: 0, comments: 0, liked: false, createdAt: Date.now(), mine: true, pending: true,
       };
       setPosts((p) => [temp, ...p]);
-      const { error: e } = await sb().from('community_posts').insert({ community_id: communityId, author_id: uid, body, poll, activity_id: input.activityId ?? null });
-      if (e) {
+      const { data, error: e } = await sb()
+        .from('community_posts')
+        .insert({ community_id: communityId, author_id: uid, body, poll, activity_id: input.activityId ?? null })
+        .select('id')
+        .single();
+      const vote = queued.current.get(temp.id);
+      queued.current.delete(temp.id);
+      if (e || !data) {
         setPosts((p) => p.filter((x) => x.id !== temp.id));
-        throw new Error(/row-level|policy/i.test(e.message) ? 'Join the community to post' : /slow down/i.test(e.message) ? 'Slow down a little' : e.message);
+        const msg = e?.message ?? 'Could not post';
+        throw new Error(/row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down/i.test(msg) ? 'Slow down a little' : msg);
       }
+      const id = (data as { id: string }).id;
+      sent.current.set(temp.id, id);
+      // Same card, real id: the server copy will replace it, not sit beside it.
+      setPosts((p) => p.filter((x) => x.id !== id).map((x) => (x.id === temp.id ? { ...x, id, pending: false } : x)));
       track('COMMUNITY_POST', { poll: Boolean(poll), activity: Boolean(input.activityId) });
+      if (vote != null) await sendVote(id, vote).catch(() => undefined);
       refresh();
     },
-    [communityId, uid, refresh],
+    [communityId, uid, refresh, sendVote],
   );
 
   const vote = useCallback(
     async (p: CommunityPost, option: number) => {
       if (!uid) throw new Error('Sign in to vote');
+      const target = sent.current.get(p.id) ?? p.id;
       setPosts((list) =>
         list.map((x) => {
-          if (x.id !== p.id) return x;
+          if (x.id !== p.id && x.id !== target) return x;
           const counts = [...x.pollCounts];
           if (x.myVote != null) counts[x.myVote] = Math.max(0, (counts[x.myVote] ?? 0) - 1);
           counts[option] = (counts[option] ?? 0) + 1;
           return { ...x, pollCounts: counts, myVote: option };
         }),
       );
-      const { error: e } = await sb().from('community_poll_votes').upsert({ post_id: p.id, user_id: uid, option });
-      if (e) {
-        // Back to the server's truth (a snapshot would drop posts that arrived meanwhile).
-        refresh();
-        throw new Error(/row-level|policy/i.test(e.message) ? 'Join the community to vote' : e.message);
+      // Still being sent: the vote goes out as soon as the post has its id.
+      if (target.startsWith('tmp-')) {
+        queued.current.set(target, option);
+        return;
       }
+      await sendVote(target, option);
     },
-    [uid, refresh],
+    [uid, sendVote],
   );
 
   const remove = useCallback(

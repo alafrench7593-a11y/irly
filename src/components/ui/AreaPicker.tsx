@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import { CITIES } from '@/data/destinations';
@@ -49,6 +49,13 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
   const first = chosen[0] ? zoneOf(cityId, chosen[0]) : null;
   const [zone, setZone] = useState<string | null>(null);
   const activeZone = zone ?? first?.id ?? zones[0]?.id ?? null;
+  // Where each zone chip sits, so the row opens on the active zone.
+  const zoneRow = useRef<ScrollView>(null);
+  const zoneX = useRef(new Map<string, number>());
+  const showZone = (id: string | null, animated: boolean) => {
+    const x = id ? zoneX.current.get(id) : undefined;
+    if (x != null) zoneRow.current?.scrollTo({ x: Math.max(0, x - space.gutter), animated });
+  };
 
   const c: Palette = palette ?? { ink: t.c.text, soft: t.c.textSecondary, surface: t.c.surface, accent: t.c.brand, line: t.c.line };
 
@@ -120,9 +127,25 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
           <Field icon="search" placeholder="Search a neighbourhood" value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" />
         </View>
         {zones.length && !q.trim() ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.zones} keyboardShouldPersistTaps="handled">
+          <ScrollView ref={zoneRow} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.zones} keyboardShouldPersistTaps="handled">
             {zones.map((z) => (
-              <Chip key={z.id} size="sm" label={z.name} selected={activeZone === z.id} onPress={() => setZone(z.id)} />
+              <View
+                key={z.id}
+                onLayout={(e) => {
+                  zoneX.current.set(z.id, e.nativeEvent.layout.x);
+                  if (z.id === activeZone) showZone(z.id, false);
+                }}
+              >
+                <Chip
+                  size="sm"
+                  label={z.name}
+                  selected={activeZone === z.id}
+                  onPress={() => {
+                    setZone(z.id);
+                    showZone(z.id, true);
+                  }}
+                />
+              </View>
             ))}
           </ScrollView>
         ) : (

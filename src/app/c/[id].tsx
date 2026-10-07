@@ -376,11 +376,14 @@ function Assistant({
             onPress={async () => {
               if (busy) return;
               setBusy(true);
+              const asked = result;
+              const typed = text;
               const ok = await onPlan(draft);
               setBusy(false);
               if (!ok) return;
-              setResult(null);
-              setText('');
+              // Clear only this plan: a question asked meanwhile keeps its answer.
+              setResult((r) => (r === asked ? null : r));
+              setText((x) => (x === typed ? '' : x));
             }}
           />
         </Animated.View>
@@ -401,10 +404,12 @@ function Assistant({
             onPress={() => {
               if (posting) return;
               setPosting(true);
+              const asked = result;
+              const typed = text;
               onPoll(result.question, result.options)
                 .then(() => {
-                  setResult(null);
-                  setText('');
+                  setResult((r) => (r === asked ? null : r));
+                  setText((x) => (x === typed ? '' : x));
                 })
                 .catch((e) => toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live'))
                 .finally(() => setPosting(false));
