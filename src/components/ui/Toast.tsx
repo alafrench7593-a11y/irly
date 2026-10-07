@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { create } from 'zustand';
+import { t } from '@/i18n';
 import { spring } from '@/motion/tokens';
 import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -17,9 +18,16 @@ const useToastStore = create<{ current: ToastData | null }>(() => ({ current: nu
 let counter = 0;
 
 /** Fire-and-forget confirmation: "You're in", "Saved", "Request sent". */
+/** Browser and runtime errors people should never read as-is. */
+function readable(title: string): string {
+  if (/failed to fetch|network request failed|load failed|networkerror/i.test(title)) return 'No connection. Check your network and try again';
+  if (/cannot read propert|undefined is not|is not a function|typeerror/i.test(title)) return 'Something went wrong. Try again';
+  return title;
+}
+
 export function toast(title: string, icon: IconName = 'check', tone: ToastData['tone'] = 'positive') {
   counter += 1;
-  useToastStore.setState({ current: { id: counter, title, icon, tone } });
+  useToastStore.setState({ current: { id: counter, title: t(readable(title)), icon, tone } });
 }
 
 export const ToastHost = memo(function ToastHost() {

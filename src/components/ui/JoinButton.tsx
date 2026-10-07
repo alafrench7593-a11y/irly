@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { memo, useEffect, useRef } from 'react';
 import { findCommunity } from '@/data/repo';
 import { closeHero } from '@/features/hero/heroStore';
@@ -61,7 +62,7 @@ export const JoinButton = memo(function JoinButton({ id, label = 'JOIN ACTIVITY'
       if (membership) {
         // Joining a community joins its chat: the member lands in it.
         const community = findCommunity(id);
-        toast(community ? `You joined ${community.name}. Chat added to Messages` : 'You joined. Chat added to Messages', 'message', 'brand');
+        toast(community ? tx('You joined {name}. Chat added to Messages', { name: community.name }) : 'You joined. Chat added to Messages', 'message', 'brand');
         if (community) {
           closeHero();
           router.push(`/messages?highlight=${communityChatId(id, community.cityId)}`);

@@ -1,3 +1,4 @@
+import { useT } from '@/i18n';
 import { memo, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type LayoutChangeEvent, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import Animated, {
@@ -11,6 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
+import { SelectionLayers, useSelection } from '@/motion/Selection';
 import { spring } from '@/motion/tokens';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -42,7 +44,9 @@ export const IconButton = memo(function IconButton({
   active,
 }: IconButtonProps) {
   const t = useTheme();
+  const night = t.mode === 'night';
   const fg = color ?? (variant === 'glass' ? '#FFFFFF' : variant === 'brand' ? t.c.onBrand : t.c.text);
+  const surfaceBg = night ? 'rgba(255,255,255,0.08)' : t.c.raised;
   const inner = (
     <View style={[styles.center, { width: size, height: size }]}>
       <Icon name={icon} size={size * 0.46} color={fg} fill={active ? fg : undefined} />
@@ -58,9 +62,9 @@ export const IconButton = memo(function IconButton({
         <View
           style={{
             borderRadius: size / 2,
-            backgroundColor: variant === 'surface' ? t.c.raised : variant === 'brand' ? t.c.brand : 'transparent',
+            backgroundColor: variant === 'surface' ? surfaceBg : variant === 'brand' ? t.c.brand : 'transparent',
             borderWidth: variant === 'surface' ? StyleSheet.hairlineWidth * 2 : 0,
-            borderColor: t.c.line,
+            borderColor: night ? 'rgba(255,255,255,0.12)' : t.c.line,
           }}
         >
           {inner}
@@ -99,38 +103,33 @@ type ChipProps = {
  */
 export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, size = 'md', onDark }: ChipProps) {
   const t = useTheme();
-  const bump = useSharedValue(1);
-  useEffect(() => {
-    if (selected) bump.set(withSequence(withTiming(1.06, { duration: 90 }), withSpring(1, spring.strong)));
-  }, [selected, bump]);
-  const animated = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
-  const bg = selected ? t.c.brand : onDark ? 'rgba(255,255,255,0.1)' : t.c.overlay;
-  const border = selected ? t.c.brand : onDark ? 'rgba(255,255,255,0.18)' : t.c.line;
-  const fg = selected ? t.c.onBrand : t.c.text;
+  const { p, sweep, outer } = useSelection(Boolean(selected));
+  const night = t.mode === 'night';
+  const glassy = onDark || night;
+  const restBg = glassy ? 'rgba(255,255,255,0.08)' : t.c.overlay;
+  const restBorder = glassy ? 'rgba(255,255,255,0.14)' : t.c.line;
   const h = size === 'md' ? 40 : 34;
+  const box = [styles.chip, { height: h, paddingHorizontal: size === 'md' ? 15 : 13 }];
+  const content = (fg: string, iconColor: string) => (
+    <>
+      {dot && !icon ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
+      {icon ? <Icon name={icon} size={size === 'md' ? 16 : 14} color={iconColor} strokeWidth={2} /> : null}
+      <Text variant="label" color={fg} style={size === 'sm' ? { fontSize: 12.5 } : undefined}>
+        {label}
+      </Text>
+    </>
+  );
   return (
-    <Animated.View style={animated}>
-      <PressableScale
-        onPress={onPress}
-        haptic="select"
-        scaleTo={0.97}
-        accessibilityRole="button"
-        accessibilityState={{ selected }}
-        style={[
-          styles.chip,
-          {
-            height: h,
-            paddingHorizontal: size === 'md' ? 15 : 13,
-            backgroundColor: bg,
-            borderColor: border,
-          },
-        ]}
-      >
-        {dot && !icon ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
-        {icon ? <Icon name={icon} size={size === 'md' ? 16 : 14} color={dot && !selected ? dot : fg} strokeWidth={2} /> : null}
-        <Text variant="label" color={fg} style={size === 'sm' ? { fontSize: 12.5 } : undefined}>
-          {label}
-        </Text>
+    <Animated.View style={outer}>
+      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityRole="button" accessibilityState={{ selected }}>
+        <SelectionLayers
+          p={p}
+          sweep={sweep}
+          fill={t.c.brand}
+          radius={h / 2}
+          base={<View style={[box, { backgroundColor: restBg, borderColor: restBorder }]}>{content(t.c.text, dot ?? t.c.text)}</View>}
+          chosen={<View style={[box, { borderColor: t.c.brand }]}>{content(t.c.onBrand, t.c.onBrand)}</View>}
+        />
       </PressableScale>
     </Animated.View>
   );
@@ -234,25 +233,45 @@ type SegmentedProps<T extends string> = {
 
 export function Segmented<T extends string>({ options, value, onChange }: SegmentedProps<T>) {
   const t = useTheme();
+  const night = t.mode === 'night';
   const [width, setWidth] = useState(0);
   const index = Math.max(0, options.findIndex((o) => o.value === value));
   const x = useSharedValue(0);
+  // The pill stretches like a drop of liquid as it travels, then settles.
+  const stretch = useSharedValue(1);
   const segW = width ? (width - 8) / options.length : 0;
+  const placed = useSharedValue(false);
   useEffect(() => {
+    if (!segW) return;
+    if (!placed.value) {
+      // First layout: place the pill without travelling across the control.
+      placed.set(true);
+      x.set(index * segW);
+      return;
+    }
     x.set(withSpring(index * segW, spring.snappy));
-  }, [index, segW, x]);
-  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+    stretch.set(withSequence(withTiming(1.22, { duration: 150, easing: Easing.out(Easing.quad) }), withSpring(1, { duration: 520, dampingRatio: 0.5 })));
+  }, [index, segW, x, stretch, placed]);
+  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scaleX: stretch.value }, { scaleY: 1 / Math.sqrt(stretch.value) }] }));
   return (
     <View
       onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}
-      style={[styles.segmented, { backgroundColor: t.c.surface, borderColor: t.c.line }]}
+      style={[
+        styles.segmented,
+        night
+          ? { backgroundColor: 'rgba(255,255,255,0.06)', borderColor: 'rgba(255,255,255,0.12)' }
+          : { backgroundColor: t.c.surface, borderColor: t.c.line },
+      ]}
       accessibilityRole="tablist"
     >
       {segW > 0 ? (
         <Animated.View
           style={[
             styles.segPill,
-            { width: segW, backgroundColor: t.c.raised, borderColor: t.c.lineStrong, boxShadow: t.shadow.card },
+            // Noir: a white pill slides along a glass track (the RSVP look).
+            night
+              ? { width: segW, backgroundColor: t.c.brand, borderColor: t.c.brand, boxShadow: t.shadow.glow }
+              : { width: segW, backgroundColor: t.c.raised, borderColor: t.c.lineStrong, boxShadow: t.shadow.card },
             pill,
           ]}
         />
@@ -269,7 +288,11 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
             accessibilityRole="tab"
             accessibilityState={{ selected }}
           >
-            <Text variant="label" tone={selected ? 'primary' : 'tertiary'}>
+            <Text
+              variant="label"
+              tone={selected ? 'primary' : night ? 'secondary' : 'tertiary'}
+              color={selected && night ? t.c.onBrand : undefined}
+            >
               {o.label}
             </Text>
           </PressableScale>
@@ -283,17 +306,21 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
 
 type FieldProps = TextInputProps & { icon?: IconName; trailing?: ReactNode; containerStyle?: StyleProp<ViewStyle> };
 
-export const Field = memo(function Field({ icon, trailing, containerStyle, style, onFocus, onBlur, ...rest }: FieldProps) {
+export const Field = memo(function Field({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, ...rest }: FieldProps) {
   const t = useTheme();
+  const tr = useT();
   const focus = useSharedValue(0);
   const animated = useAnimatedStyle(() => ({
     borderColor: focus.value ? t.c.brand : t.c.line,
     transform: [{ scale: 1 + focus.value * 0.005 }],
   }));
   return (
-    <Animated.View style={[styles.field, { backgroundColor: t.c.surface }, animated, containerStyle]}>
+    <Animated.View
+      style={[styles.field, { backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.06)' : t.c.surface }, animated, containerStyle]}
+    >
       {icon ? <Icon name={icon} size={18} color={t.c.textTertiary} /> : null}
       <TextInput
+        placeholder={placeholder ? tr(placeholder) : undefined}
         placeholderTextColor={t.c.textTertiary}
         selectionColor={t.c.brand}
         onFocus={(e) => {
@@ -305,7 +332,9 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
           focus.set(withTiming(0, { duration: 160 }));
           onBlur?.(e);
         }}
-        style={[{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }, style]}
+        // minWidth 0: on the web an input is ~200 px wide by default and overflowed
+        // narrow fields (Age), putting the next field's icon over it on iPhone.
+        style={[{ flex: 1, minWidth: 0, width: '100%', color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }, style]}
         {...rest}
       />
       {trailing}

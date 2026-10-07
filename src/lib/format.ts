@@ -32,3 +32,10 @@ export function initials(name: string): string {
 export function priceLevel(level: number): string {
   return '$'.repeat(level);
 }
+
+/** A stable avatar hue for a name or id (server members have no preset hue). */
+export function hueOf(key: string): number {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 360;
+  return h;
+}

@@ -15,13 +15,26 @@ import { Easing } from 'react-native-reanimated';
  * whole codebase reads from one table.
  */
 
+/**
+ * Durations by role (IRLY brief, section 21):
+ * - fast (micro-interactions): press, like, chip, toggle
+ * - standard (navigation): tabs, pages, sheets
+ * - emphasized (major transitions): card to page, IRL menu, destination
+ * - cinematic: the match, onboarding, an IRL moment
+ */
 export const motion = {
   /** Fades, colour changes, content swap inside a control. */
-  fast: 150,
+  fast: 160,
   /** Press feedback, chips, small toggles. */
   normal: 260,
+  /** Navigation: tabs, pages, sheets. */
+  standard: 300,
   /** Camera recentring, larger fades. */
   slow: 400,
+  /** Major transitions: card → page, IRL menu, destination switch. */
+  emphasized: 500,
+  /** Match, onboarding, IRL moments. */
+  cinematic: 760,
 } as const;
 
 export const duration = {
@@ -68,8 +81,16 @@ export const spring = {
   soft,
   medium,
   strong,
+  /** Physical controls that open a world: the IRL button and its menu. */
+  physical: { duration: 420, dampingRatio: 0.74 },
+  /** The match moment and onboarding statements. */
+  cinematic: { duration: 760, dampingRatio: 0.88 },
   /** Press feedback: quick, barely lively. */
   press: { duration: 260, dampingRatio: 0.72 },
+  /** Directive names: fast = press/snap, standard = travel, gentle = surfaces. */
+  fast: { duration: 300, dampingRatio: 0.8 },
+  standard: medium,
+  gentle: soft,
   /** v2 aliases. */
   snappy: { duration: 380, dampingRatio: 0.86 },
   smooth: soft,
@@ -97,3 +118,20 @@ export const pressScale = scale.press;
 /** Delay between items of a list that reveals in order. At most 6 steps. */
 export const staggerStep = 55;
 export const maxStagger = 6;
+
+/**
+ * Named transitions. Screens and overlays pick one of these instead of
+ * inventing timings: page and modal slide on springs, the match moment and
+ * the IRLY Girl morph have their own choreography built from these steps.
+ */
+export const transition = {
+  page: spring.medium,
+  modal: spring.soft,
+  sheet: spring.medium,
+  sharedElement: spring.soft,
+  fade: { duration: motion.normal, easing: ease.standard },
+  /** IRLY → IRLY Girl: colour wash, blur, wordmark morph. */
+  morph: { wash: 520, hold: 260, reveal: 420 },
+  /** IT'S AN IRLY MATCH: cards meet, glass merges, text and actions follow. */
+  match: { approach: 520, merge: 280, text: 360, actions: 420 },
+} as const;

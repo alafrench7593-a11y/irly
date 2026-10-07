@@ -109,9 +109,11 @@ Les actions (rejoindre, sauvegarder, se connecter, réserver, envoyer un message
 - La transition avatar → profil entre deux écrans est une révélation en cascade, pas encore un élément partagé continu.
 - Les badges « Verified » sont de la démonstration tant que le parcours de vérification n'existe pas.
 - Pas de notifications push.
+- Backend Supabase prêt (schéma, sécurité, IRLY Girl Match, tests) mais pas encore branché à la connexion Apple / Google / téléphone : sans compte connecté, l'app utilise des données sur l'appareil. Voir [docs/BACKEND.md](./docs/BACKEND.md).
 
 ## Documents
 
 - [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) : tokens, composants, motion design, règles.
 - [docs/GOOGLE_MAPS.md](./docs/GOOGLE_MAPS.md) : passage à la carte Google.
 - [AUDIT.md](./AUDIT.md) : audit de l'ancienne application et choix de la refonte.
+- [docs/BACKEND.md](./docs/BACKEND.md) : backend Supabase, règles de sécurité, matching IRLY Girl, tests.

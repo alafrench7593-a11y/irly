@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
@@ -32,30 +32,33 @@ export function Page({ title, overline, subtitle, right, children, overlay, cont
   });
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <Animated.ScrollView
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={[{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + bottomInset }, contentStyle]}
-      >
-        <Animated.View entering={enter.rise(0, 40)} style={styles.head}>
-          {overline ? (
-            <Text variant="overline" tone="accent">
-              {overline}
+      {/* Forms on pages (sign-in, profile, create) stay above the keyboard. */}
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
+        <Animated.ScrollView
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + bottomInset }, contentStyle]}
+        >
+          <Animated.View entering={enter.rise(0, 40)} style={styles.head}>
+            {overline ? (
+              <Text variant="overline" tone="accent">
+                {overline}
+              </Text>
+            ) : null}
+            <Text variant="displayL" accessibilityRole="header">
+              {title}
             </Text>
-          ) : null}
-          <Text variant="displayL" accessibilityRole="header">
-            {title}
-          </Text>
-          {subtitle ? (
-            <Text variant="body" tone="secondary">
-              {subtitle}
-            </Text>
-          ) : null}
-        </Animated.View>
-        {children}
-      </Animated.ScrollView>
+            {subtitle ? (
+              <Text variant="body" tone="secondary">
+                {subtitle}
+              </Text>
+            ) : null}
+          </Animated.View>
+          {children}
+        </Animated.ScrollView>
+      </KeyboardAvoidingView>
       <PageHeader title={title} scrollY={scrollY} right={right} back={back} />
       {overlay}
     </View>
@@ -63,6 +66,7 @@ export function Page({ title, overline, subtitle, right, children, overlay, cont
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   root: { flex: 1 },
   head: { paddingHorizontal: space.gutter, gap: 4, marginBottom: space[7] },
 });

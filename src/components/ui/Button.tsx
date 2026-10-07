@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import type { HapticKind } from '@/motion/haptics';
@@ -18,6 +18,8 @@ type Props = {
   variant?: ButtonVariant;
   size?: Size;
   icon?: IconName;
+  /** A custom mark before the label (brand logos), drawn in the label colour. */
+  leading?: (color: string) => ReactNode;
   iconRight?: IconName;
   loading?: boolean;
   disabled?: boolean;
@@ -40,6 +42,7 @@ export const Button = memo(function Button({
   variant = 'primary',
   size = 'lg',
   icon,
+  leading,
   iconRight,
   loading,
   disabled,
@@ -59,9 +62,14 @@ export const Button = memo(function Button({
 
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
 
+  const night = t.mode === 'night';
   const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string; shadow?: string }> = {
     primary: { bg: t.c.brand, fg: t.c.onBrand, shadow: t.shadow.glow },
-    secondary: { bg: t.c.raised, fg: t.c.text, border: t.c.lineStrong },
+    // On IRLY Noir the secondary action is a pane of smoked glass, never a
+    // second solid block competing with the white primary.
+    secondary: night
+      ? { bg: 'rgba(255,255,255,0.08)', fg: t.c.text, border: 'rgba(255,255,255,0.16)' }
+      : { bg: t.c.raised, fg: t.c.text, border: t.c.lineStrong },
     ghost: { bg: 'transparent', fg: t.c.text },
     glass: { bg: 'rgba(255,255,255,0.16)', fg: '#FFFFFF', border: 'rgba(255,255,255,0.22)' },
     inverse: { bg: t.c.text, fg: t.c.bg },
@@ -97,6 +105,7 @@ export const Button = memo(function Button({
           <ActivityIndicator color={p.fg} />
         ) : (
           <View style={styles.row}>
+            {leading ? leading(p.fg) : null}
             {icon ? <Icon name={icon} size={size === 'sm' ? 15 : 18} color={p.fg} strokeWidth={2.2} /> : null}
             <Text variant={size === 'sm' ? 'label' : 'titleS'} color={p.fg} numberOfLines={1}>
               {label}

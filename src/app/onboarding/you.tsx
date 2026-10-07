@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Field } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
@@ -37,7 +38,7 @@ export default function WhoAreYou() {
       step={0}
       total={4}
       overline={`IRLY ${city.name}`}
-      title={`Who are you in ${city.name}?`}
+      title={tx('Who are you in {city}?', { city: city.name })}
       subtitle="Pick up to three. IRLY uses this to introduce you to the right people, never to box you in."
       cta="Continue"
       canContinue={profile.types.length > 0}
@@ -46,7 +47,7 @@ export default function WhoAreYou() {
       <Animated.View entering={enter.rise(1, 80)} style={{ paddingHorizontal: space.gutter, marginBottom: space[6] }}>
         <Field
           icon="user"
-          placeholder="Your first name"
+          placeholder={tx('Your first name')}
           value={profile.name}
           onChangeText={(name) => updateProfile({ name })}
           autoCapitalize="words"
@@ -81,9 +82,9 @@ export default function WhoAreYou() {
                     <Icon name={def.icon} size={18} color={selected ? t.c.onBrand : '#FFFFFF'} />
                   </View>
                   {selected ? (
-                    <View style={[styles.tick, { backgroundColor: t.c.brand }]}>
+                    <Animated.View entering={ZoomIn.springify().damping(11)} exiting={ZoomOut.duration(160)} style={[styles.tick, { backgroundColor: t.c.brand }]}>
                       <Icon name="check" size={12} color={t.c.onBrand} strokeWidth={3} />
-                    </View>
+                    </Animated.View>
                   ) : null}
                 </View>
                 <Text variant="titleS" tone="onDark">

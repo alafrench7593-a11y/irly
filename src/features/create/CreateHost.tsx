@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AreaPicker } from '@/components/ui/AreaPicker';
+import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { Image } from 'expo-image';
+import { t as tx } from '@/i18n';
 import { BackHandler, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,10 +11,10 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Button } from '@/components/ui/Button';
 import { Chip, Field } from '@/components/ui/Controls';
-import { Icon } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { CATEGORIES, CATEGORY_BY_ID, guessCategory, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
+import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -18,6 +23,7 @@ import { ease, motion, scale as scaleTokens, spring } from '@/motion/tokens';
 import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { createServerActivity } from '@/features/server/activities';
 import { useCreateStore, type CreateFormat } from './createStore';
 
 const DAYS = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
@@ -41,12 +47,37 @@ const FORMAT: Record<CreateFormat, { title: string; cta: string }> = {
   activity: { title: 'What do you want to do?', cta: 'Create activity' },
   sport: { title: 'Which sport?', cta: 'Create sport session' },
   event: { title: 'What is the event?', cta: 'Create event' },
-  session: { title: 'What do you want to do?', cta: 'Post session' },
+  session: { title: 'What do you want to do?', cta: 'Create session' },
   meetup: { title: 'What kind of meetup?', cta: 'Create meetup' },
   trip: { title: 'Where are you going?', cta: 'Create trip' },
 };
 
 type Pick = { categoryId: CategoryKey; sub?: CatalogSub; activity?: CatalogActivity; custom?: string };
+
+/**
+ * WHAT DO YOU WANT TO DO? The twelve things people start most, one tap
+ * each. A pick with a catalog entry jumps straight to « when », a broad
+ * one opens its category, « Other » goes to « name your own ».
+ */
+const QUICK: { label: string; icon: IconName; entry?: string; category?: CategoryKey }[] = [
+  { label: 'Football', icon: 'trophy', entry: 'Football' },
+  { label: 'Padel', icon: 'target', entry: 'Padel' },
+  { label: 'Dinner', icon: 'utensils', entry: 'Dinner' },
+  { label: 'Coffee', icon: 'coffee', entry: 'Coffee' },
+  { label: 'Beach', icon: 'palm', entry: 'Beach' },
+  { label: 'Gym', icon: 'dumbbell', entry: 'Gym' },
+  { label: 'Brunch', icon: 'sunrise', entry: 'Brunch' },
+  { label: 'Walk', icon: 'footprints', entry: 'Walk together' },
+  { label: 'Party', icon: 'disc', category: 'nightlife' },
+  { label: 'Coworking', icon: 'laptop', category: 'networking' },
+  { label: 'Travel', icon: 'plane', category: 'travel' },
+  { label: 'Other', icon: 'plus' },
+];
+
+function findEntry(label: string) {
+  const l = label.toLowerCase();
+  return CATALOG_ENTRIES.find((e) => e.label.toLowerCase() === l) ?? searchCatalog(label, 1)[0];
+}
 
 /**
  * Create a session, from anything. Step 1: a category (or search the whole
@@ -91,6 +122,15 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>('public');
   const [spots, setSpots] = useState(6);
   const [description, setDescription] = useState('');
+  // Optional: the creator's own photo instead of the catalogue one.
+  const [cover, setCover] = useState<string | null>(null);
+  const pickCover = async () => {
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [16, 10] });
+    if (res.canceled || !res.assets[0]) return;
+    // Phone photos are 5–10 MB: 1280 px wide is plenty for a card and a header.
+    const small = await manipulateAsync(res.assets[0].uri, [{ resize: { width: 1280 } }], { compress: 0.75, format: SaveFormat.JPEG });
+    setCover(small.uri);
+  };
 
   const D = 2 * Math.hypot(Math.max(origin.x, frame.width - origin.x), Math.max(origin.y, frame.height - origin.y));
   const p = useSharedValue(0);
@@ -127,7 +167,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
 
   const results = useMemo(() => searchCatalog(query, 8), [query]);
   const category = pick ? CATEGORY_BY_ID[pick.categoryId] : undefined;
-  const title = pick?.custom ?? pick?.activity?.label ?? (pick?.sub ? `${pick.sub.label} session` : undefined);
+  const title = pick?.custom ?? pick?.activity?.label ?? (pick?.sub ? `${tx('{what} session', { what: tx(pick.sub.label) })}` : undefined);
   const place = pick?.activity?.place;
 
   const chooseCategory = (id: CategoryKey) => {
@@ -139,6 +179,22 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     setPick({ categoryId, sub, activity });
     setQuery('');
     setStep(2);
+  };
+  const scroller = useRef<ScrollView>(null);
+  const chooseQuick = (q: (typeof QUICK)[number]) => {
+    haptic('select');
+    if (q.entry) {
+      const e = findEntry(q.entry);
+      if (e) {
+        chooseEntry(e.categoryId, e.sub, e.activity);
+        return;
+      }
+    }
+    if (q.category) {
+      chooseCategory(q.category);
+      return;
+    }
+    scroller.current?.scrollToEnd({ animated: true });
   };
   const chooseCustom = (text: string) => {
     const label = text.trim();
@@ -153,7 +209,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
 
   const post = () => {
     if (!pick || !title) return;
-    postPlan({
+    const plan = {
       cityId,
       categoryId: pick.categoryId,
       subId: pick.sub?.id,
@@ -170,9 +226,16 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       format,
       price: paid ? price : 0,
       currency: city.currency,
-    });
+    };
+    const local = postPlan({ ...plan, ...(cover ? { coverUri: cover } : {}) });
+    // Signed in: the session also goes to the server, where members can join it.
+    createServerActivity(plan, undefined, { coverUri: cover })
+      .then((serverId) => {
+        if (serverId) useStore.getState().linkPlan(local.id, serverId);
+      })
+      .catch((e) => toast(tx('Saved on this phone only: {why}', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live'));
     haptic('success');
-    toast(`${title} is live. Chat created`, 'send', 'brand');
+    toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
     hide();
   };
 
@@ -195,11 +258,11 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             </PressableScale>
           ) : null}
           <Text variant="overline" tone="secondary">
-            Step {step + 1} / 4{category ? ` · ${category.label}` : ''}
+            {tx('Step {n} / {total}', { n: step + 1, total: 4 })}{category ? ` · ${tx(category.label)}` : ''}
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 220 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView ref={scroller} contentContainerStyle={{ paddingBottom: 220 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {step === 0 ? (
             <View key="s0">
               <Animated.View entering={enter.rise(0, 120)}>
@@ -208,7 +271,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 </Text>
               </Animated.View>
               <Animated.View entering={enter.rise(1, 120)} style={styles.block}>
-                <Field icon="search" placeholder="Padel, brunch, mosque visit, AI founders…" value={query} onChangeText={setQuery} returnKeyType="search" />
+                <Field icon="search" placeholder={tx('Padel, brunch, mosque visit, AI founders…')} value={query} onChangeText={setQuery} returnKeyType="search" />
               </Animated.View>
               {query.trim().length >= 2 ? (
                 <Animated.View entering={FadeIn.duration(motion.fast)} style={[styles.block, { gap: 6 }]}>
@@ -233,6 +296,27 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 </Animated.View>
               ) : (
                 <>
+                  <View style={styles.quick}>
+                    {QUICK.map((q, i) => (
+                      <Animated.View key={q.label} entering={enter.pop(Math.min(i, 11), 140)} style={styles.quickCell}>
+                        <PressableScale
+                          haptic={false}
+                          scaleTo={0.92}
+                          onPress={() => chooseQuick(q)}
+                          accessibilityLabel={q.label}
+                          style={[styles.quickTile, { backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.06)' : t.c.surface, borderColor: t.c.line }]}
+                        >
+                          <Icon name={q.icon} size={22} color={t.c.text} strokeWidth={1.9} />
+                          <Text variant="label" numberOfLines={1}>
+                            {q.label}
+                          </Text>
+                        </PressableScale>
+                      </Animated.View>
+                    ))}
+                  </View>
+                  <Text variant="overline" tone="tertiary" style={styles.or}>
+                    Or browse everything
+                  </Text>
                   <View style={styles.grid}>
                     {CATEGORIES.map((c, i) => (
                       <Animated.View key={c.id} entering={enter.pop(Math.min(i, 8), 160)} style={styles.cell}>
@@ -253,7 +337,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   </View>
                   <View style={styles.block}>
                     <Text variant="titleS">Can&apos;t find what you&apos;re looking for?</Text>
-                    <Field placeholder="Sunset photography at Palm Jumeirah" value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} returnKeyType="next" />
+                    <Field placeholder={tx('Sunset photography at Palm Jumeirah')} value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} returnKeyType="next" />
                     {custom.trim().length >= 3 ? <CustomButton text={custom} onPress={() => chooseCustom(custom)} /> : null}
                   </View>
                 </>
@@ -290,7 +374,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   <PressableScale haptic={false} scaleTo={0.98} onPress={() => chooseEntry(category.id, pick.sub!)} style={[styles.result, { backgroundColor: t.c.surface }]}>
                     <View style={[styles.dot, { backgroundColor: category.color }]} />
                     <Text variant="label" style={{ flex: 1 }}>
-                      {pick.sub.label} session
+                      {tx('{what} session', { what: tx(pick.sub.label) })}
                     </Text>
                     <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
                   </PressableScale>
@@ -311,8 +395,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 </Animated.View>
               ) : null}
               <View style={styles.block}>
-                <Text variant="titleS">Something else in {category.label.toLowerCase()}?</Text>
-                <Field placeholder="Name your activity" value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} />
+                <Text variant="titleS">{tx('Something else in {category}?', { category: tx(category.label).toLowerCase() })}</Text>
+                <Field placeholder={tx('Name your activity')} value={custom} onChangeText={setCustom} onSubmitEditing={() => chooseCustom(custom)} />
                 {custom.trim().length >= 3 ? <CustomButton text={custom} onPress={() => chooseCustom(custom)} /> : null}
               </View>
             </View>
@@ -328,7 +412,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
               {pick?.custom ? (
                 <Animated.View entering={enter.rise(1)} style={styles.block}>
                   <Text variant="overline" tone="secondary">
-                    Category · IRLY guessed, change if needed
+                    Category · suggested by IRLY, change it if needed
                   </Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                     {CATEGORIES.map((c) => (
@@ -354,13 +438,9 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
               </Animated.View>
               <Animated.View entering={enter.rise(3)} style={styles.block}>
                 <Text variant="overline" tone="secondary">
-                  {place ? `Meeting point near ${place}` : 'Where'}
+                  {place ? tx('Meeting point near {place}', { place }) : 'Where'}
                 </Text>
-                <View style={styles.wrap}>
-                  {city.areas.slice(0, 10).map((a) => (
-                    <Chip key={a.id} size="sm" label={a.name} icon="pin" selected={area === a.id} onPress={() => setArea(a.id)} />
-                  ))}
-                </View>
+                <AreaPicker cityId={city.id} value={area} onChange={setArea} />
               </Animated.View>
               <Animated.View entering={enter.rise(4)} style={styles.block}>
                 <Text variant="overline" tone="secondary">
@@ -416,10 +496,25 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 ) : null}
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.block}>
+                {cover ? (
+                  <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={styles.cover} accessibilityLabel="Change the photo">
+                    <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                    <PressableScale haptic="select" onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Remove the photo" hitSlop={8}>
+                      <Icon name="x" size={16} color="#FFFFFF" strokeWidth={2.6} />
+                    </PressableScale>
+                  </PressableScale>
+                ) : (
+                  <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={[styles.coverEmpty, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]} accessibilityLabel="Add your own photo (optional)">
+                    <Icon name="camera" size={20} color={t.c.text} />
+                    <Text variant="label">Add your own photo (optional)</Text>
+                  </PressableScale>
+                )}
+              </Animated.View>
+              <Animated.View entering={enter.rise(2)} style={styles.block}>
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
-                  placeholder="Add a few words (optional): meeting point, level, what to bring…"
+                  placeholder={tx('Add a few words (optional): meeting point, level, what to bring…')}
                   placeholderTextColor={t.c.textTertiary}
                   multiline
                   maxLength={240}
@@ -433,7 +528,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     {title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
-                    {day} · {time} · {place ?? areaName(city, area)} · {unlimited ? 'Unlimited' : `${spots} spots`} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
+                    {day} · {time} · {place ?? areaName(city, area)} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
                   </Text>
                 </View>
               </Animated.View>
@@ -477,7 +572,7 @@ function CustomButton({ text, onPress }: { text: string; onPress: () => void }) 
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} style={[styles.custom, { borderColor: t.c.lineStrong }]} accessibilityLabel={`Create custom activity: ${text}`}>
       <Icon name="wand" size={18} color={t.c.text} />
       <Text variant="label" style={{ flex: 1 }} numberOfLines={1}>
-        Create &quot;{text.trim()}&quot;
+        {tx('Create “{what}”', { what: text.trim() })}
       </Text>
       <Icon name="arrowRight" size={16} color={t.c.text} />
     </PressableScale>
@@ -485,6 +580,13 @@ function CustomButton({ text, onPress }: { text: string; onPress: () => void }) 
 }
 
 const styles = StyleSheet.create({
+  cover: { height: 150, borderRadius: radius.lg, overflow: 'hidden' },
+  coverRemove: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  coverEmpty: { height: 64, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  quick: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.gutter - 4, marginTop: space[5] },
+  quickCell: { width: '25%', padding: 4 },
+  quickTile: { height: 84, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  or: { paddingHorizontal: space.gutter, marginTop: space[6] },
   circle: { position: 'absolute' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.gutter, height: 44 },
   back: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },

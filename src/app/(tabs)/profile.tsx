@@ -1,4 +1,9 @@
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { LANGS, t as tx, useLangStore } from '@/i18n';
+import { wipeLocal } from '@/state/wipe';
+import { deleteServerAccount, exportMyData, signOut, useAccount } from '@/features/auth/account';
+import { DEMO } from '@/config/app';
 import { useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
@@ -22,6 +27,7 @@ import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { openHero } from '@/features/hero/heroStore';
 import { whenLabel } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
+import { CountUp } from '@/motion/CountUp';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
@@ -31,6 +37,9 @@ import { useTheme } from '@/theme/useTheme';
 export default function Profile() {
   const t = useTheme();
   const router = useRouter();
+  const account = useAccount();
+  const langSetting = useLangStore((s) => s.setting);
+  const setLang = useLangStore((s) => s.set);
   const insets = useSafeAreaInsets();
   const bottom = useTabBarSpace();
   const cityId = useCityId();
@@ -43,17 +52,33 @@ export default function Profile() {
   const bookings = useStore((s) => s.bookings);
   const hapticsOn = useStore((s) => s.hapticsOn);
   const setHaptics = useStore((s) => s.setHaptics);
-  const resetOnboarding = useStore((s) => s.resetOnboarding);
-  const deleteAccount = useStore((s) => s.deleteAccount);
+  const setAppearance = useStore((s) => s.setAppearance);
   const now = useNow();
   const days = profile.arrivedAt ? Math.max(1, Math.round((now - profile.arrivedAt) / 86_400_000)) : 0;
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const downloadData = async () => {
+    if (!account) {
+      router.push('/account');
+      return;
+    }
+    if (exporting) return;
+    setExporting(true);
+    try {
+      await exportMyData();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not prepare your data. Try again.', 'x', 'live');
+    } finally {
+      setExporting(false);
+    }
+  };
   const [destSheet, setDestSheet] = useState(false);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
   });
-  const coverH = insets.top + 190;
+  const coverH = insets.top + 250;
 
   const name = profile.name || 'You';
   const plans = Object.keys(joined)
@@ -73,7 +98,14 @@ export default function Profile() {
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottom }}>
-        <Cover visual={{ photo: city.photo }} light={city.light} height={coverH} scrollY={scrollY} scrim="top" />
+        {/* The city you live in, full bleed, melting into the page. */}
+        <Cover visual={{ photo: city.photo }} light={city.light} height={coverH} scrollY={scrollY} scrim="top" radius={0}>
+          <LinearGradient
+            colors={[`rgba(${t.mode === 'night' ? '5,5,6' : '246,246,244'},0)`, t.c.bg]}
+            style={styles.coverFade}
+            pointerEvents="none"
+          />
+        </Cover>
         <View style={[styles.identity, { marginTop: -52 }]}>
           <Animated.View entering={enter.pop(0)}>
             <View style={[styles.avatarRing, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
@@ -88,7 +120,7 @@ export default function Profile() {
             {profile.arrivedAt ? (
               <View style={[styles.newHere, { backgroundColor: t.c.brand }]}>
                 <Text variant="overline" color={t.c.onBrand}>
-                  New in {city.name} · {days} {days > 1 ? 'days' : 'day'}
+                  {tx(days === 1 ? 'New in {city} · {n} day' : 'New in {city} · {n} days', { city: city.name, n: days })}
                 </Text>
               </View>
             ) : null}
@@ -99,7 +131,7 @@ export default function Profile() {
             ) : null}
             {profile.languages?.length ? (
               <Text variant="caption" tone="secondary">
-                Speaks {profile.languages.join(', ')}
+                {tx('Speaks {langs}', { langs: profile.languages.map((l) => tx(l)).join(', ') })}
               </Text>
             ) : null}
             {profile.faith && profile.faithVisible && profile.faith !== 'Prefer not to say' ? (
@@ -164,7 +196,7 @@ export default function Profile() {
                 <Row
                   key={b.id}
                   icon={SERVICE_CATEGORIES[s.category].icon}
-                  title={`Call with ${s.name}`}
+                  title={tx('Call with {name}', { name: s.name })}
                   meta={`${b.dateLabel} · ${b.slot}`}
                   onPress={() => openHero({ kind: 'service', id: s.id })}
                 />
@@ -185,7 +217,51 @@ export default function Profile() {
         ) : null}
 
         <Animated.View entering={enter.rise(7)} style={styles.section}>
-          <SectionHeader title="Settings" />
+          <SectionHeader title="Your IRLY" />
+          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <SettingLink icon="calendar" label="Calendar" value="Everything you're going to" onPress={() => router.push('/calendar')} />
+            <Divider inset={16} />
+            <SettingLink icon="bookmark" label="Saved" value="Plans, places, people" onPress={() => router.push('/saved')} />
+            <Divider inset={16} />
+            <SettingLink icon="network" label="Networking" value="Professionals near you" onPress={() => router.push('/network')} />
+            <Divider inset={16} />
+            <SettingLink icon="sparkles" label="Assistant" value="Ask or speak" onPress={() => router.push('/assistant')} />
+            <Divider inset={16} />
+            <SettingLink icon="orbit" label="What is IRLY?" value="Five scenes, 15 seconds" onPress={() => router.push('/story')} />
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(8)} style={styles.section}>
+          <SectionHeader title="Account" />
+          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <SettingLink icon="user" label="Edit profile" value="Photo, name, bio" onPress={() => router.push('/edit-profile')} />
+            <Divider inset={16} />
+            <SettingLink icon="briefcase" label="Professional" value="Job, project, goals" onPress={() => router.push('/network/profile')} />
+            <Divider inset={16} />
+            <SettingLink icon="shield" label="Privacy & notifications" value="Visibility, alerts" onPress={() => router.push('/settings')} />
+            <Divider inset={16} />
+            <SettingLink icon="lock" label="Security" value={account ? 'Sign-in & password' : 'Sign in to sync'} onPress={() => router.push('/account')} />
+            <Divider inset={16} />
+            <SettingLink icon="x" label="Blocked members" onPress={() => router.push('/blocked')} />
+            <Divider inset={16} />
+            <SettingLink icon="file" label="Download my data" value={exporting ? 'Preparing…' : 'A copy of what IRLY stores'} onPress={downloadData} />
+            <Divider inset={16} />
+            <SettingLink
+              icon="arrowLeft"
+              label="Log out"
+              onPress={() => {
+                signOut().catch(() => undefined);
+                wipeLocal();
+                router.replace('/welcome');
+              }}
+            />
+            <Divider inset={16} />
+            <SettingLink icon="x" label="Delete account" danger onPress={() => setConfirmDelete(true)} />
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(9)} style={styles.section}>
+          <SectionHeader title="App" />
           <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
             <View style={[styles.settingRow]}>
               <Icon name="zap" size={18} color={t.c.text} />
@@ -201,20 +277,40 @@ export default function Profile() {
               />
             </View>
             <Divider inset={16} />
-            <SettingLink icon="globe" label="Destination" value={`${dest.shortName} · ${city.name}`} onPress={() => setDestSheet(true)} />
-            <Divider inset={16} />
-            <SettingLink icon="palette" label="IRLY Design System" value="Tokens & components" onPress={() => router.push('/design-system')} />
-            <Divider inset={16} />
             <SettingLink
-              icon="arrowLeft"
-              label="Log out"
-              onPress={() => {
-                resetOnboarding();
-                router.replace('/welcome');
-              }}
+              icon="languages"
+              label="Language"
+              value={LANGS.find((l) => l.id === langSetting)?.label}
+              onPress={() => setLang(langSetting === 'auto' ? 'fr' : langSetting === 'fr' ? 'en' : 'auto')}
             />
             <Divider inset={16} />
-            <SettingLink icon="x" label="Delete account" danger onPress={() => setConfirmDelete(true)} />
+            <SettingLink
+              icon={t.mode === 'night' ? 'moon' : 'sun'}
+              label="Appearance"
+              value={t.mode === 'night' ? 'Dark' : 'Light'}
+              onPress={() => setAppearance(t.mode === 'night' ? 'day' : 'night')}
+            />
+            <Divider inset={16} />
+            <SettingLink icon="globe" label="Destination" value={`${tx(dest.shortName)} · ${city.name}`} onPress={() => setDestSheet(true)} />
+            {DEMO ? (
+              <>
+                <Divider inset={16} />
+                <SettingLink icon="palette" label="IRLY Design System" value="Tokens & components" onPress={() => router.push('/design-system')} />
+              </>
+            ) : null}
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(10)} style={styles.section}>
+          <SectionHeader title="Legal & support" />
+          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <SettingLink icon="shield" label="Privacy Policy" onPress={() => router.push('/legal/privacy')} />
+            <Divider inset={16} />
+            <SettingLink icon="file" label="Terms of Use" onPress={() => router.push('/legal/terms')} />
+            <Divider inset={16} />
+            <SettingLink icon="users" label="Community Guidelines" onPress={() => router.push('/legal/guidelines')} />
+            <Divider inset={16} />
+            <SettingLink icon="message" label="Help & contact" value="Report a problem" onPress={() => router.push('/support')} />
           </View>
         </Animated.View>
 
@@ -230,16 +326,35 @@ export default function Profile() {
         visible={confirmDelete}
         onClose={() => setConfirmDelete(false)}
         title="Delete your IRLY account?"
-        subtitle="This permanently removes your profile, connections and content. It cannot be undone."
+        subtitle="This cannot be undone."
       >
         <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+          <Text variant="body" tone="secondary">
+            Your profile, photos, professional and IRLY Girl profiles, messages, posts, comments, connections, matches and notifications are deleted from IRLY’s
+            servers, and you are signed out on this phone. Communities you own pass to another member. Content already reported to moderators is kept for review.
+          </Text>
+          <Text variant="caption" tone="tertiary">
+            Want a copy first? Use “Download my data”.
+          </Text>
           <Button
-            label="DELETE ACCOUNT"
+            label="Delete my account"
             full
             haptic="warning"
             variant="danger"
-            onPress={() => {
-              deleteAccount();
+            loading={deleting}
+            onPress={async () => {
+              if (deleting) return;
+              setDeleting(true);
+              try {
+                // Server first: if it fails, nothing is wiped and the member can retry.
+                await deleteServerAccount();
+              } catch (e) {
+                toast(e instanceof Error ? e.message : 'Could not delete your account. Try again.', 'x', 'live');
+                setDeleting(false);
+                return;
+              }
+              setDeleting(false);
+              wipeLocal();
               setConfirmDelete(false);
               toast('Your account has been deleted', 'check', 'live');
               router.replace('/welcome');
@@ -255,7 +370,7 @@ export default function Profile() {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-      <Text variant="number">{value}</Text>
+      <CountUp value={value} />
       <Text variant="caption" tone="tertiary">
         {label}
       </Text>
@@ -320,6 +435,7 @@ function SettingLink({ icon, label, value, onPress, danger }: { icon: IconName; 
 }
 
 const styles = StyleSheet.create({
+  coverFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 140 },
   newHere: { marginTop: 8, height: 26, paddingHorizontal: 12, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   root: { flex: 1 },
   identity: { alignItems: 'center', gap: 14, paddingHorizontal: space.gutter, marginBottom: space[8] },

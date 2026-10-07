@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
@@ -10,17 +11,21 @@ import { Button } from '@/components/ui/Button';
 import { Chip, IconButton, SectionHeader } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
 import { CATEGORY_BY_ID, GIRL_CATEGORY, ideaPhoto, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { INTEREST_CATEGORY, planDisplay, SESSION_CATEGORY } from '@/data/catalog/mapping';
-import { areaName, CITIES } from '@/data/destinations';
+import { areaName, CITIES, placeLabel } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
 import { openCreate } from '@/features/create/createStore';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
+import { useServerActivities } from '@/features/server/activities';
+import { useAccount } from '@/features/auth/account';
+import { useCommunityList } from '@/features/community/data';
+import { NetworkDoor } from '@/features/network/ui';
+import { cityWhen } from '@/lib/time';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -43,6 +48,7 @@ export default function CategoryScreen() {
   const gender = useStore((s) => s.profile.gender);
   const myPlans = useStore((s) => s.myPlans);
   const isGirl = id === 'girl';
+  const uid = useAccount()?.userId;
   const category = isGirl ? GIRL_CATEGORY : CATEGORY_BY_ID[id as CategoryKey];
   const [sub, setSub] = useState<CatalogSub | null>(null);
 
@@ -55,7 +61,19 @@ export default function CategoryScreen() {
     return list.sort((a, b) => a.item.when.dayOffset - b.item.when.dayOffset);
   }, [category, content, sub, isGirl]);
 
-  const mine = myPlans.filter((p) => p.cityId === cityId && planDisplay(p).categoryId === category?.id && (!sub || p.subId === sub.id));
+  // Activities members created on the server (yours included), in this category.
+  // The IRLY Girl page lists the girls' and moms' sessions (any category).
+  const { activities: serverAll } = useServerActivities(cityId, isGirl ? { girlOnly: true } : { categoryId: category?.id });
+  const server = useMemo(
+    () => (category ? serverAll.filter((a) => (isGirl ? a.girlOnly : a.categoryId === category.id) && (!sub || a.subId === sub.id)) : []),
+    [serverAll, category, sub, isGirl],
+  );
+  // Plans on this phone, minus those already listed from the server.
+  const mine = myPlans.filter(
+    (p) => p.cityId === cityId && planDisplay(p).categoryId === category?.id && (!sub || p.subId === sub.id) && !(p.serverId && server.some((a) => a.id === p.serverId)),
+  );
+  const serverCommunities = useCommunityList(cityId);
+  const myCommunities = useMemo(() => (category && !isGirl ? serverCommunities.filter((c) => c.categoryId === category.id) : []), [serverCommunities, category, isGirl]);
 
   const people = useMemo(() => {
     if (!category) return [];
@@ -73,7 +91,15 @@ export default function CategoryScreen() {
     [category, content],
   );
 
-  if (!category) return null;
+  // Unknown id (old link): say so, with a way back, instead of a blank screen.
+  if (!category) {
+    return (
+      <View style={[styles.root, styles.gate, { paddingTop: insets.top + 40 }]}>
+        <Text variant="titleM">This category no longer exists</Text>
+        <Button label="Back" icon="chevronLeft" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+      </View>
+    );
+  }
 
   if (isGirl && gender !== 'woman') {
     return (
@@ -122,6 +148,12 @@ export default function CategoryScreen() {
           </ScrollView>
         </Animated.View>
 
+        {category.id === 'networking' ? (
+          <Animated.View entering={enter.rise(1, 60)} style={{ paddingHorizontal: space.gutter, marginTop: space[4] }}>
+            <NetworkDoor />
+          </Animated.View>
+        ) : null}
+
         {sub?.activities?.length ? (
           <Animated.View key={sub.id} entering={FadeIn.duration(260)} style={styles.section}>
             <SectionHeader overline={sub.label} title="Things to do" />
@@ -152,7 +184,7 @@ export default function CategoryScreen() {
         ) : null}
 
         <Animated.View entering={enter.rise(2, 60)} style={styles.section}>
-          <SectionHeader title={sub ? `${sub.label} sessions` : 'Sessions'} action={sessions.length + mine.length ? `${sessions.length + mine.length}` : undefined} />
+          <SectionHeader title={sub ? tx('{what} sessions', { what: tx(sub.label) }) : tx('Sessions')} action={sessions.length + mine.length + server.length ? `${sessions.length + mine.length + server.length}` : undefined} />
           <View style={styles.rows}>
             {mine.map((p) => (
               <View key={p.id} style={[styles.activity, { backgroundColor: t.c.surface }]}>
@@ -167,12 +199,28 @@ export default function CategoryScreen() {
                 </View>
               </View>
             ))}
+            {server.map((a) => (
+              <PressableScale key={a.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/a/${a.id}`)} style={[styles.activity, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
+                <View style={{ flex: 1 }}>
+                  <Text variant="overline" tone="secondary">
+                    {a.creatorId === uid ? 'Your session' : 'Planned by a member'}
+                  </Text>
+                  <Text variant="titleS" raw>
+                    {a.title}
+                  </Text>
+                  <Text variant="bodyS" tone="secondary">
+                    {[cityWhen(a.startsAt, cityId), placeLabel(cityId, a.cityId, a.areaId, a.placeName), tx('{n} going', { n: a.going })].join(' · ')}
+                  </Text>
+                </View>
+                <Icon name="chevronRight" size={18} color={t.c.textTertiary} />
+              </PressableScale>
+            ))}
             {sessions.map((h, i) => (
               <Animated.View key={h.id} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
                 <HappeningRow h={h} />
               </Animated.View>
             ))}
-            {sessions.length + mine.length === 0 ? (
+            {sessions.length + mine.length + server.length === 0 ? (
               <PressableScale
                 haptic="select"
                 scaleTo={0.98}
@@ -183,7 +231,7 @@ export default function CategoryScreen() {
                 <Icon name="plus" size={20} color={ink} />
                 <View style={{ flex: 1 }}>
                   <Text variant="titleS" color={ink}>
-                    No {sub ? sub.label.toLowerCase() : category.label.toLowerCase()} session yet
+                    {tx('No {what} activity yet', { what: tx(sub ? sub.label : category.label).toLowerCase() })}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
                     Create the first one. People into it nearby will see it.
@@ -196,7 +244,7 @@ export default function CategoryScreen() {
 
         {people.length ? (
           <Animated.View entering={enter.rise(3, 60)} style={styles.section}>
-            <SectionHeader title={`${people.length} people into ${sub ? sub.label.toLowerCase() : category.label.toLowerCase()}`} action="See all" onAction={() => router.push('/match?intent=activities')} />
+            <SectionHeader title={tx('{n} people into {what}', { n: people.length, what: tx(sub ? sub.label : category.label).toLowerCase() })} action="See all" onAction={() => router.push('/match?intent=activities')} />
             <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
           </Animated.View>
         ) : null}
@@ -210,21 +258,38 @@ export default function CategoryScreen() {
               ))}
             </Rail>
           ) : null}
-          <View style={[styles.rows, { marginTop: communities.length ? space[4] : 0 }]}>
+          {myCommunities.length ? (
+            <View style={[styles.rows, { marginTop: communities.length ? space[4] : 0 }]}>
+              {myCommunities.map((c) => (
+                <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${c.id}`)} style={[styles.activity, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
+                  <View style={{ flex: 1 }}>
+                    <Text variant="titleS" raw>
+                      {c.name}
+                    </Text>
+                    <Text variant="bodyS" tone="secondary">
+                      {[c.tagline, tx('{n} members', { n: c.members }), c.isMember ? tx('Member') : null].filter(Boolean).join(' · ')}
+                    </Text>
+                  </View>
+                  <Icon name="chevronRight" size={18} color={t.c.textTertiary} />
+                </PressableScale>
+              ))}
+            </View>
+          ) : null}
+          <View style={[styles.rows, { marginTop: communities.length || myCommunities.length ? space[4] : 0 }]}>
             <PressableScale
               haptic="select"
               scaleTo={0.98}
-              onPress={() => toast('Creating communities arrives with accounts (server)', 'users', 'brand')}
+              onPress={() => router.push('/community/new')}
               style={[styles.empty, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}
               accessibilityLabel="Create a community"
             >
               <Icon name="users" size={20} color={ink} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={ink}>
-                  Create a {sub ? sub.label : category.label} community
+                  {tx('Create a {what} community', { what: tx(sub ? sub.label : category.label).toLowerCase() })}
                 </Text>
                 <Text variant="bodyS" tone="secondary">
-                  {city.name} {sub ? sub.label : category.label}: sessions, chat, members.
+                  {tx('{city} · {what}: activities, chat, members.', { city: city.name, what: tx(sub ? sub.label : category.label) })}
                 </Text>
               </View>
             </PressableScale>
@@ -236,7 +301,7 @@ export default function CategoryScreen() {
         <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => router.back()} />
       </View>
       <View style={[styles.cta, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
-        <Button label={sub ? `Create ${sub.label} session` : 'Create session'} icon="plus" haptic="press" onPress={() => create(sub?.id)} />
+        <Button label={sub ? tx('Create a {what} session', { what: tx(sub.label) }) : tx('Create session')} icon="plus" haptic="press" onPress={() => create(sub?.id)} />
       </View>
     </View>
   );

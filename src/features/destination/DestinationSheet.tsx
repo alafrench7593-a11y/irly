@@ -1,4 +1,5 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { t as tx } from '@/i18n';
 import { Badge, Divider } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
@@ -19,6 +20,9 @@ type Props = { visible: boolean; onClose: () => void };
 export function DestinationSheet({ visible, onClose }: Props) {
   const t = useTheme();
   const cityId = useStore((s) => s.cityId);
+  const destinationId = useStore((s) => s.destinationId);
+  // The last city used in each country, so coming back lands where you were.
+  const lastCity = useLastCity(cityId);
   const waitlist = useStore((s) => s.waitlist);
   const joinWaitlist = useStore((s) => s.joinWaitlist);
 
@@ -28,18 +32,49 @@ export function DestinationSheet({ visible, onClose }: Props) {
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Your IRLY destinations" subtitle="One app, a different city every time you land.">
+    <Sheet visible={visible} onClose={onClose} title="Where are you?" subtitle="Changed country? Just tell IRLY where you are: the app follows you.">
       <ScrollView style={{ maxHeight: 560 }} contentContainerStyle={{ paddingBottom: space[4] }} showsVerticalScrollIndicator={false}>
+        {/* The quick switch: one tap per country, then the city below. */}
+        <View style={styles.quick}>
+          {LIVE_DESTINATIONS.map((destId) => {
+            const dest = DESTINATIONS[destId];
+            const here = destinationId === destId;
+            return (
+              <PressableScale
+                key={destId}
+                haptic="select"
+                scaleTo={0.96}
+                onPress={() => {
+                  if (here) return;
+                  const last = lastCity[destId];
+                  pick(last && dest.cities.includes(last) ? last : (dest.defaultCity as CityId));
+                }}
+                style={[styles.quickTile, { backgroundColor: here ? t.c.text : t.c.surface, borderColor: here ? t.c.text : t.c.lineStrong }]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: here }}
+                accessibilityLabel={tx(dest.shortName)}
+              >
+                <Text style={{ fontSize: 26 }}>{destId === 'bali' ? '🌴' : dest.flag}</Text>
+                <Text variant="titleS" color={here ? t.c.bg : t.c.text}>
+                  {tx(dest.shortName)}
+                </Text>
+                <Text variant="caption" color={here ? t.c.bg : t.c.textSecondary}>
+                  {here ? tx('You are here') : tx('I am here now')}
+                </Text>
+              </PressableScale>
+            );
+          })}
+        </View>
         {LIVE_DESTINATIONS.map((destId) => {
           const dest = DESTINATIONS[destId];
           return (
             <View key={destId} style={{ marginBottom: space[5] }}>
               <View style={styles.groupHeader}>
                 <Text variant="titleS">
-                  {destId === 'bali' ? '🌴' : dest.flag}  {dest.shortName}
+                  {destId === 'bali' ? '🌴' : dest.flag}  {tx(dest.shortName)}
                 </Text>
                 <Text variant="caption" tone="tertiary">
-                  {dest.cities.length > 1 ? `${dest.cities.length} emirates` : dest.country}
+                  {dest.cities.length > 1 ? tx('{n} emirates', { n: dest.cities.length }) : tx(dest.country)}
                 </Text>
               </View>
               {dest.cities.map((id) => {
@@ -102,7 +137,7 @@ export function DestinationSheet({ visible, onClose }: Props) {
                   if (joined) return;
                   joinWaitlist(destId);
                   haptic('success');
-                  toast(`You'll be first in ${d.shortName}`, 'bell', 'brand');
+                  toast(tx('Noted: we will show {place} first when it opens', { place: d.shortName }), 'bell', 'brand');
                 }}
                 style={[
                   styles.waitlist,
@@ -121,7 +156,18 @@ export function DestinationSheet({ visible, onClose }: Props) {
   );
 }
 
+const LAST: Partial<Record<string, CityId>> = {};
+function useLastCity(cityId: CityId | null) {
+  if (cityId) {
+    const dest = (Object.keys(DESTINATIONS) as (keyof typeof DESTINATIONS)[]).find((d) => DESTINATIONS[d].cities.includes(cityId));
+    if (dest) LAST[dest] = cityId;
+  }
+  return LAST;
+}
+
 const styles = StyleSheet.create({
+  quick: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter, marginBottom: space[5] },
+  quickTile: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 16, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'baseline',

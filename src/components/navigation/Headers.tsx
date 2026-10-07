@@ -1,4 +1,9 @@
+import { DEMO } from '@/config/app';
+import { useServerUnread } from '@/features/server/chat';
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
+import { useServerNotifications } from '@/features/server/social';
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -23,7 +28,11 @@ import { useTheme } from '@/theme/useTheme';
 export function useUnread(): number {
   const cityId = useCityId();
   const read = useStore((s) => s.read);
-  return getCityContent(cityId).conversations.reduce((n, c) => n + (read[c.id] ? 0 : c.unread), 0);
+  const server = useServerUnread((s) => s.n);
+  const account = useAccount();
+  // Signed in: real unread messages; the on-device chats only exist in the demo build.
+  const local = getCityContent(cityId).conversations.reduce((n, c) => n + (read[c.id] ? 0 : c.unread), 0);
+  return (account ? server : 0) + local;
 }
 
 /**
@@ -124,10 +133,16 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
 export function InboxButtons() {
   const router = useRouter();
   const unread = useUnread();
+  const account = useAccount();
+  const auth = useAuthStatus();
+  const server = useServerNotifications();
+  // Signed in: the bell counts real notifications (the demo build shows its examples).
+  const bell = account ? server.unread : DEMO && auth === 'out' ? 2 : 0;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-      <IconButton icon="message" label={`Messages${unread ? `, ${unread} unread` : ''}`} badge={unread} onPress={() => router.push('/messages')} />
-      <IconButton icon="bell" label="Notifications" badge={2} onPress={() => router.push('/notifications')} />
+      <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />
+      <IconButton icon="message" label={unread ? tx('Messages, {n} unread', { n: unread }) : tx('Messages')} badge={unread} onPress={() => router.push('/messages')} />
+      <IconButton icon="bell" label={bell ? tx('Notifications, {n} new', { n: bell }) : tx('Notifications')} badge={bell} onPress={() => router.push('/notifications')} />
     </View>
   );
 }

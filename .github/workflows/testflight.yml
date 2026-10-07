@@ -1,0 +1,67 @@
+name: TestFlight
+
+# Builds the iOS app on Expo's servers (EAS) and sends it to TestFlight.
+# Secrets needed (Settings → Secrets and variables → Actions):
+#   EXPO_TOKEN          expo.dev → Account settings → Access tokens
+#   APPLE_TEAM_ID       developer.apple.com → Membership (10 characters)
+#   ASC_KEY_ID          App Store Connect → Users and Access → Integrations → API key ID
+#   ASC_ISSUER_ID       same page, "Issuer ID"
+#   ASC_KEY_P8          the downloaded .p8 file's full text
+#   ASC_APP_ID          App Store Connect → the IRLY app → App Information → Apple ID (digits)
+# Run: Actions → TestFlight → Run workflow (or change .github/testflight.txt).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/testflight.txt']
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check the secrets
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
+        run: |
+          missing=""
+          for v in EXPO_TOKEN APPLE_TEAM_ID ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 ASC_APP_ID; do
+            [ -n "${!v}" ] || missing="$missing $v"
+          done
+          if [ -n "$missing" ]; then echo "Missing secrets:$missing"; exit 1; fi
+          echo "All secrets present"
+      - name: App Store Connect key
+        run: printf '%s' "${{ secrets.ASC_KEY_P8 }}" > asc-api-key.p8
+      - name: Link the Expo project
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx --yes eas-cli@latest init --non-interactive --force
+      - name: Build and send to TestFlight
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          # Lets EAS create the certificate and provisioning profile on its own.
+          EXPO_ASC_API_KEY_PATH: ./asc-api-key.p8
+          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          EXPO_APPLE_TEAM_TYPE: ${{ secrets.APPLE_TEAM_TYPE || 'INDIVIDUAL' }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
+        run: npx --yes eas-cli@latest build --platform ios --profile production --non-interactive --auto-submit --wait

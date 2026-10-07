@@ -1,13 +1,24 @@
 import * as ImagePicker from 'expo-image-picker';
+import { AreaPicker } from '@/components/ui/AreaPicker';
+import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { InboxButtons } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { LiveRing } from '@/features/live/LiveStrip';
+import { useAccount } from '@/features/auth/account';
+import { addFriend, deleteServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
+import { ActionBar } from '@/components/social/ActionBar';
+import { createServerActivity } from '@/features/server/activities';
+import { openReport } from '@/features/moderation/reportStore';
+import { hideItem, useEngagement } from '@/features/server/engage';
+import { track } from '@/lib/analytics';
+import type { CityId } from '@/data/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Chip, LiveDot } from '@/components/ui/Controls';
@@ -16,7 +27,9 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
-import { areaName, CITIES } from '@/data/destinations';
+import { areaName, CITIES, placeLabel } from '@/data/destinations';
+import { ScopeToggle } from '@/components/ui/ScopeToggle';
+import { useCityFilter } from '@/features/server/scope';
 import { findPerson } from '@/data/repo';
 import { LIVE_TTL_MIN, useLives, useLiveStore, type Live } from '@/features/live/liveStore';
 import { timeAgo } from '@/lib/time';
@@ -40,10 +53,11 @@ export default function LiveScreen() {
   const lives = useLives();
   const { compose } = useLocalSearchParams<{ compose?: string }>();
   const router = useRouter();
-  const [manual, setManual] = useState(false);
-  // Opened from Create → Live / Post: the composer is already up.
-  const composer = manual || Boolean(compose);
-  const setComposer = (on: boolean) => {
+  const [manual, setManual] = useState<false | 'now' | 'post'>(false);
+  // Opened from the IRL menu (Post IRL, Share what I'm doing): the composer is already up.
+  const composer = Boolean(manual) || Boolean(compose);
+  const mode = compose === 'photo' || manual === 'post' ? 'post' : 'now';
+  const setComposer = (on: false | 'now' | 'post') => {
     setManual(on);
     if (!on && compose) router.setParams({ compose: undefined });
   };
@@ -54,23 +68,20 @@ export default function LiveScreen() {
   return (
     <Page
       back={false}
-      overline={`${city.name} · right now`}
+      overline={tx('{city} · right now', { city: city.name })}
       title="IRL"
-      subtitle={`What people around you are doing. Posts disappear after ${LIVE_TTL_MIN / 60} hours.`}
+      subtitle={tx('What people around you are doing. Posts disappear after {h} hours.', { h: LIVE_TTL_MIN / 60 })}
       right={<InboxButtons />}
-      bottomInset={bottom + 70}
-      overlay={
-        <>
-          <View style={[styles.fab, { bottom: bottom + 6 }]} pointerEvents="box-none">
-            <Button label="Go live" icon="plus" haptic="press" onPress={() => setComposer(true)} />
-          </View>
-          <Composer visible={composer} onClose={() => setComposer(false)} />
-        </>
-      }
+      bottomInset={bottom + 24}
+      overlay={<Composer visible={composer} mode={mode} onClose={() => setComposer(false)} />}
     >
+      <View style={{ marginBottom: space[6] }}>
+        <GoLiveCard onText={() => setComposer('now')} onPhoto={() => setComposer('post')} />
+      </View>
       <View style={{ marginBottom: space[6] }}>
         <FriendsLiveNow />
       </View>
+      <ServerFeed cityId={cityId} />
       <View style={styles.list}>
         {sorted.map((l, i) => (
           <Animated.View key={l.id} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
@@ -118,7 +129,7 @@ function LiveCard({ live }: { live: Live }) {
         <View style={styles.actions}>
           <ReactButton id={live.id} />
           <Button label="Message" variant="secondary" icon="message" size="sm" onPress={() => router.push('/messages')} />
-          <Button label="Join" icon="pin" size="sm" onPress={() => toast(`${person.name.split(' ')[0]} will know you're on your way`, 'pin')} />
+          <Button label="Join" icon="pin" size="sm" onPress={() => toast(tx("{name} will know you're on your way", { name: person.name.split(' ')[0] }), 'pin')} />
           <PressableScale haptic="select" scaleTo={0.9} onPress={() => router.push(`/person/${person.id}`)} accessibilityLabel={`View ${person.name}'s profile`} style={[styles.round, { backgroundColor: t.c.overlay }]}>
             <Icon name="user" size={16} color={t.c.text} />
           </PressableScale>
@@ -128,6 +139,38 @@ function LiveCard({ live }: { live: Live }) {
           Your post · visible to people nearby
         </Text>
       )}
+    </View>
+  );
+}
+
+/**
+ * « What are you doing right now? »: the door to going live, at the top of
+ * the feed, so it never floats over the IRL button. The whole card opens
+ * the words; the camera opens the photo-first composer.
+ */
+function GoLiveCard({ onText, onPhoto }: { onText: () => void; onPhoto: () => void }) {
+  const t = useTheme();
+  const name = useStore((s) => s.profile.name) || 'You';
+  const photo = useStore((s) => s.profile.photoUri);
+  return (
+    <View style={[styles.goLive, { marginHorizontal: space.gutter, backgroundColor: t.c.card, borderColor: t.c.line }]}>
+      <PressableScale haptic="select" scaleTo={0.98} onPress={onText} style={styles.goLiveMain} accessibilityLabel={tx('Go live: what are you doing right now?')}>
+        <Avatar name={name} hue={262} size={44} photo={photo} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <View style={styles.meta}>
+            <LiveDot size={6} />
+            <Text variant="overline" tone="live">
+              Go live
+            </Text>
+          </View>
+          <Text variant="body" tone="secondary" numberOfLines={2}>
+            What are you doing right now?
+          </Text>
+        </View>
+      </PressableScale>
+      <PressableScale haptic="select" scaleTo={0.9} onPress={onPhoto} accessibilityLabel="Post a photo" style={[styles.goLiveBtn, { backgroundColor: t.c.brand }]}>
+        <Icon name="camera" size={18} color={t.c.onBrand} />
+      </PressableScale>
     </View>
   );
 }
@@ -203,7 +246,7 @@ function FriendsLiveNow() {
                   <View style={styles.meta}>
                     <LiveDot size={6} color={t.c.positive} />
                     <Text variant="caption" numberOfLines={1}>
-                      {l.text.split(/[,.?!]/)[0]}
+                      {tx(l.text).split(/[,.?!]/)[0]}
                     </Text>
                   </View>
                   <Text variant="caption" tone="tertiary" numberOfLines={1}>
@@ -219,23 +262,236 @@ function FriendsLiveNow() {
   );
 }
 
-function Composer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+/**
+ * Signed in: what members are posting right now, live. Friends' posts
+ * first; add someone as a friend from their post.
+ */
+function ServerFeed({ cityId }: { cityId: CityId }) {
+  const t = useTheme();
+  const { narrow } = useCityFilter(cityId);
+  const { posts } = useServerIrl(cityId);
+  const { friends, refresh } = useFriends();
+  const router = useRouter();
+  const eng = useEngagement('irl_post', posts.map((p) => p.id));
+  const now = useNow();
+  // Hidden or being removed: gone from the list at once.
+  const [gone, setGone] = useState<Set<string>>(() => new Set());
+  const drop = (id: string, on: boolean) =>
+    setGone((g) => {
+      const next = new Set(g);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const visible = posts.filter((p) => !gone.has(p.id));
+  if (!visible.length && !narrow) return null;
+  const sorted = [...visible].sort((a, b) => Number(b.friend) - Number(a.friend) || b.createdAt - a.createdAt);
+  return (
+    <View style={[styles.list, { marginBottom: space[6] }]}>
+      <Text variant="overline" tone="secondary">
+        On IRLY right now
+      </Text>
+      <ScopeToggle cityId={cityId} inset={false} />
+      {!sorted.length ? (
+        <Text variant="bodyS" tone="secondary">
+          {tx('Nobody is live in {city} right now.', { city: CITIES[cityId].name })}
+        </Text>
+      ) : null}
+      {sorted.map((p, i) => {
+        const f = friends.find((x) => x.userId === p.authorId);
+        const status = p.mine ? 'mine' : p.friend ? 'friend' : f?.status === 'pending' ? (f.incoming ? 'incoming' : 'sent') : 'none';
+        return (
+          <Animated.View key={p.id} entering={enter.rise(i)} style={[styles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
+            <View style={styles.head}>
+              <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} />
+              <View style={{ flex: 1 }}>
+                <Text variant="titleS">{p.mine ? 'You' : p.firstName}</Text>
+                <View style={styles.meta}>
+                  <LiveDot size={6} color={t.c.live} />
+                  <Text variant="caption" tone="secondary" numberOfLines={1}>
+                    {placeLabel(cityId, p.cityId, p.areaId, p.placeName)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {p.visibility === 'friends' ? 'Friends' : 'Everyone'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            {p.mediaUrl ? <Image source={{ uri: p.mediaUrl }} style={styles.photo} contentFit="cover" /> : null}
+            <Text variant={p.mediaUrl ? 'body' : 'titleM'} raw>
+              {p.body}
+            </Text>
+            {p.activityId ? (
+              <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={`Join ${p.activityTitle ?? 'the activity'}`}>
+                <Icon name="calendar" size={18} color={t.c.text} />
+                <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
+                  {p.activityTitle ?? 'Activity'}
+                </Text>
+                <Text variant="label">Join</Text>
+              </PressableScale>
+            ) : null}
+            <ActionBar target={{ type: 'irl_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} />
+            {status === 'mine' ? (
+              <Button
+                label="Remove"
+                variant="secondary"
+                size="sm"
+                icon="x"
+                onPress={() => {
+                  drop(p.id, true);
+                  deleteServerIrl(p.id).catch((e) => {
+                    drop(p.id, false);
+                    toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live');
+                  });
+                }}
+              />
+            ) : status === 'friend' ? (
+              <View style={styles.actions}>
+                <Text variant="caption" tone="tertiary" style={{ flex: 1 }}>
+                  Friend
+                </Text>
+                <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
+              </View>
+            ) : (
+              <Button
+                label={status === 'incoming' ? 'Accept friend' : status === 'sent' ? 'Request sent' : 'Add friend'}
+                size="sm"
+                variant={status === 'sent' ? 'secondary' : 'primary'}
+                icon={status === 'sent' ? 'check' : 'plus'}
+                disabled={status === 'sent'}
+                onPress={() =>
+                  addFriend(p.authorId)
+                    .then((r) => {
+                      toast(r === 'accepted' ? tx('You and {name} are friends', { name: p.firstName }) : tx('Request sent to {name}', { name: p.firstName }), 'user', 'brand');
+                      refresh();
+                    })
+                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
+                }
+              />
+            )}
+          </Animated.View>
+        );
+      })}
+    </View>
+  );
+}
+
+/** Not for me / report, on someone else's post. */
+function PostMenu({ id, authorId, onHide }: { id: string; authorId: string; onHide: (on: boolean) => void }) {
+  const t = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', gap: 14 }}>
+      <PressableScale
+        onPress={() => {
+          onHide(true);
+          hideItem({ type: 'irl_post', id })
+            .then(() => toast('Hidden from your feed', 'eye', 'brand'))
+            .catch(() => {
+              onHide(false);
+              toast('Could not hide this post', 'x', 'live');
+            });
+        }}
+        haptic="select"
+        hitSlop={8}
+        accessibilityLabel="Hide this post"
+      >
+        <Icon name="eye" size={18} color={t.c.textTertiary} />
+      </PressableScale>
+      <PressableScale
+        onPress={() => openReport({ kind: 'irl_post', id, userId: authorId })}
+        haptic="select"
+        hitSlop={8}
+        accessibilityLabel="Report this post"
+      >
+        <Icon name="flag" size={18} color={t.c.textTertiary} />
+      </PressableScale>
+    </View>
+  );
+}
+
+/**
+ * Two doors into the same composer: « Post IRL » leads with the photo,
+ * « Share what I'm doing » with the words.
+ */
+function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?: 'post' | 'now'; onClose: () => void }) {
   const t = useTheme();
   const cityId = useCityId();
   const city = CITIES[cityId];
   const post = useLiveStore((s) => s.post);
   const [text, setText] = useState('');
-  const [area, setArea] = useState(city.areas[0].id);
+  const [picked, setArea] = useState(city.areas[0].id);
+  // Switching destination keeps the composer mounted: never post a Dubai area in Bali.
+  const area = city.areas.some((a) => a.id === picked) ? picked : city.areas[0].id;
   const [uri, setUri] = useState<string | undefined>();
+  // Untouched, the post follows the member's IRL visibility setting; the chips show it.
+  const [chosen, setChosen] = useState<'friends' | 'everyone' | null>(null);
+  const [setting, setSetting] = useState<'friends' | 'everyone' | 'private'>('friends');
+  const visibility = chosen ?? (setting === 'private' ? null : setting);
+  const [openUp, setOpenUp] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const account = useAccount();
+  useEffect(() => {
+    if (!supabase || !account) return;
+    let alive = true;
+    supabase
+      .from('safety_settings')
+      .select('irl_visibility')
+      .eq('user_id', account.userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive || !data) return;
+        setSetting(data.irl_visibility === 'everyone' ? 'everyone' : data.irl_visibility === 'nobody' ? 'private' : 'friends');
+      });
+    return () => {
+      alive = false;
+    };
+  }, [account]);
 
   const pick = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true });
     if (!res.canceled && res.assets[0]) setUri(res.assets[0].uri);
   };
 
-  const submit = () => {
-    if (!text.trim()) return;
-    post({ cityId, kind: uri ? 'photo' : 'text', text: text.trim(), photoUri: uri, place: areaName(city, area), areaId: area });
+  const createdActivity = useRef<string | null>(null);
+  const submit = async () => {
+    if (!text.trim() || busy) return;
+    if (account) {
+      // Signed in: the post goes to the server, friends see it live.
+      setBusy(true);
+      try {
+        // "Anyone want to join?" becomes a real activity the post points at.
+        // A retry after a failed post reuses the activity already created.
+        let activityId: string | null = openUp ? createdActivity.current : null;
+        if (openUp && !activityId) {
+          const start = new Date(Date.now() + 30 * 60 * 1000);
+          activityId = await createServerActivity(
+            {
+              cityId,
+              title: text.trim().slice(0, 80).padEnd(3, '.'),
+              place: areaName(city, area),
+              areaId: area,
+              day: 'Today',
+              time: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
+              spots: 0,
+              privacy: visibility === 'everyone' ? 'public' : 'connections',
+              format: 'meetup',
+              currency: city.currency,
+            },
+            start,
+          );
+          createdActivity.current = activityId;
+          track('ACTIVITY_CREATE', { via: 'irl' });
+        }
+        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility: chosen ?? undefined, activityId });
+        createdActivity.current = null;
+        setChosen(null);
+        track('IRL_CREATE', { photo: Boolean(uri), activity: Boolean(activityId) });
+      } catch (e) {
+        toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
+        setBusy(false);
+        return;
+      }
+      setBusy(false);
+    } else {
+      post({ cityId, kind: uri ? 'photo' : 'text', text: text.trim(), photoUri: uri, place: areaName(city, area), areaId: area });
+    }
     haptic('success');
     toast("You're live for 4 hours", 'zap', 'live');
     setText('');
@@ -244,12 +500,27 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose} title="Go live" subtitle="What are you doing right now? Only your area is shown, never your address.">
+    <Sheet
+      visible={visible}
+      onClose={onClose}
+      title={mode === 'post' ? 'Post IRL' : 'Go live'}
+      subtitle={
+        mode === 'post'
+          ? 'A photo of where you are, right now. Only your area is shown, never your address.'
+          : 'What are you doing right now? Only your area is shown, never your address.'
+      }
+    >
       <View style={{ paddingHorizontal: space.gutter, gap: space[5] }}>
+        {mode === 'post' && !uri ? (
+          <PressableScale haptic="select" onPress={pick} style={[styles.photoFrame, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
+            <Icon name="camera" size={26} color={t.c.text} />
+            <Text variant="label">Add a photo</Text>
+          </PressableScale>
+        ) : null}
         <TextInput
           value={text}
           onChangeText={setText}
-          placeholder="Coffee in the Marina, anyone?"
+          placeholder={tx('Coffee in the Marina, anyone?')}
           placeholderTextColor={t.c.textTertiary}
           multiline
           maxLength={160}
@@ -261,21 +532,31 @@ function Composer({ visible, onClose }: { visible: boolean; onClose: () => void 
             <Image source={{ uri }} style={styles.preview} contentFit="cover" />
           </Animated.View>
         ) : null}
-        <PressableScale haptic="select" onPress={pick} style={[styles.addPhoto, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
-          <Icon name="camera" size={18} color={t.c.text} />
-          <Text variant="label">{uri ? 'Change photo' : 'Add a photo'}</Text>
-        </PressableScale>
+        {mode === 'post' && !uri ? null : (
+          <PressableScale haptic="select" onPress={pick} style={[styles.addPhoto, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
+            <Icon name="camera" size={18} color={t.c.text} />
+            <Text variant="label">{uri ? 'Change photo' : 'Add a photo'}</Text>
+          </PressableScale>
+        )}
         <View style={{ gap: 8 }}>
           <Text variant="overline" tone="tertiary">
             Where
           </Text>
-          <View style={styles.wrap}>
-            {city.areas.slice(0, 8).map((a) => (
-              <Chip key={a.id} size="sm" label={a.name} icon="pin" selected={area === a.id} onPress={() => setArea(a.id)} />
-            ))}
-          </View>
+          <AreaPicker cityId={city.id} value={area} onChange={setArea} />
         </View>
-        <Button label="Post live" icon="zap" full haptic={false} disabled={!text.trim()} onPress={submit} />
+        {account ? (
+          <View style={{ gap: 8 }}>
+            <Text variant="overline" tone="tertiary">
+              Who sees it
+            </Text>
+            <View style={styles.wrap}>
+              <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => setChosen('friends')} />
+              <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => setChosen('everyone')} />
+            </View>
+            <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => setOpenUp(!openUp)} />
+          </View>
+        ) : null}
+        <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim()} onPress={submit} />
       </View>
     </Sheet>
   );
@@ -288,11 +569,15 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   photo: { height: 220, borderRadius: radius.lg },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  fab: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg },
+  goLive: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, paddingLeft: 12, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },
+  goLiveMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  goLiveBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   round: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   friend: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, borderRadius: radius.xl },
   input: { minHeight: 96, borderRadius: radius.lg, padding: 16, fontFamily: font.medium, fontSize: 17, textAlignVertical: 'top' },
   preview: { height: 180, borderRadius: radius.lg },
+  photoFrame: { height: 168, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
   addPhoto: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', justifyContent: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

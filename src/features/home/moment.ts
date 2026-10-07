@@ -1,4 +1,5 @@
 import type { CategoryKey } from '@/data/catalog/categories';
+import { t as tx } from '@/i18n';
 import { INTEREST_CATEGORY } from '@/data/catalog/mapping';
 import type { City, Interest } from '@/data/types';
 import { cityNow } from '@/lib/time';
@@ -24,7 +25,7 @@ export function momentFor(city: Pick<City, 'utcOffset'>, now: number, interests:
   else if (part === 'morning') base = ['sport', 'wellness', 'food', 'networking'];
   else if (part === 'afternoon') base = ['food', 'networking', 'shopping', 'culture'];
   else base = day === 4 || day === 5 ? ['nightlife', 'food', 'networking', 'entertainment'] : ['sport', 'networking', 'food', 'wellness'];
-  const mine = interests.map((i) => INTEREST_CATEGORY[i]);
+  const mine = interests.map((i) => INTEREST_CATEGORY[i]).filter(Boolean);
   const categories = [...new Set([...mine.filter((c) => base.includes(c)), ...base, ...mine])];
-  return { title: `${DAYS[day]} ${part}`, categories };
+  return { title: tx('{day} {part}', { day: tx(DAYS[day]), part: tx(part) }), categories };
 }

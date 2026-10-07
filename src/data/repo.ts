@@ -1,6 +1,8 @@
 import { bali } from './content/bali';
+import { GIRL_PEOPLE } from './content/girls';
 import { dubai } from './content/dubai';
 import { regionalContent } from './content/regional';
+import { DEMO } from '@/config/app';
 import { CITIES } from './destinations';
 import type {
   ActivitySession,
@@ -23,9 +25,24 @@ import type {
  */
 
 export function getCityContent(cityId: CityId): CityContent {
-  if (cityId === 'dubai') return dubai;
-  if (cityId === 'bali') return bali;
-  return regionalContent(cityId);
+  const all = cityId === 'dubai' ? dubai : cityId === 'bali' ? bali : regionalContent(cityId);
+  return DEMO ? all : realOnly(all);
+}
+
+/**
+ * Production: the example people, sessions, events, places, communities,
+ * services, professionals, feed and chats are invented, so they are never
+ * shown as if they were real. What stays: the city guides and editorials
+ * (general information). Everything else comes from the server.
+ */
+const real = new WeakMap<CityContent, CityContent>();
+function realOnly(c: CityContent): CityContent {
+  let r = real.get(c);
+  if (!r) {
+    r = { ...c, people: [], sessions: [], events: [], places: [], communities: [], services: [], professionals: [], feed: [], conversations: [] };
+    real.set(c, r);
+  }
+  return r;
 }
 
 type Index = {
@@ -71,7 +88,8 @@ function idx(): Index {
   return index;
 }
 
-export const findPerson = (id: string) => idx().people.get(id);
+// IRLY Girl members are looked up too (chat names, avatars after a match).
+export const findPerson = (id: string) => idx().people.get(id) ?? (DEMO ? GIRL_PEOPLE.get(id) : undefined);
 export const findSession = (id: string) => idx().sessions.get(id);
 export const findEvent = (id: string) => idx().events.get(id);
 export const findPlace = (id: string) => idx().places.get(id);

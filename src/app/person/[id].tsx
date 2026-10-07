@@ -1,4 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
+import { useRef } from 'react';
+import { useAvatarFlight, useFlyingTo } from '@/features/flight/avatarFlight';
+import { t as tx } from '@/i18n';
+import { NotFound } from '@/components/layout/NotFound';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +37,9 @@ export default function PersonProfile() {
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
   });
-  if (!person) return null;
+  const face = useRef<View>(null);
+  const flying = useFlyingTo(id);
+  if (!person) return <NotFound title="This person is no longer on IRLY" />;
 
   const city = CITIES[person.cityId];
   const dest = DESTINATIONS[city.destinationId];
@@ -55,12 +61,27 @@ export default function PersonProfile() {
           scrim="top"
         />
         <View style={[styles.identity, { marginTop: -56 }]}>
-          <Animated.View entering={enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-            <Avatar name={person.name} hue={person.hue} size={104} online={person.online} />
+          <Animated.View entering={flying ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
+            {/* The face flying in from the bubble lands exactly here. */}
+            <View
+              ref={face}
+              collapsable={false}
+              style={{ opacity: flying ? 0 : 1 }}
+              onLayout={() => {
+                requestAnimationFrame(() =>
+                  face.current?.measureInWindow?.((x, y, width, height) => {
+                    const { hostOffset, land } = useAvatarFlight.getState();
+                    if (width > 0) land(person.id, { x: x - hostOffset.x, y: y - hostOffset.y, width, height });
+                  }),
+                );
+              }}
+            >
+              <Avatar name={person.name} hue={person.hue} size={104} online={person.online} photo={person.photo} />
+            </View>
           </Animated.View>
           <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-              <Text variant="displayL">{person.name}</Text>
+              <Text variant="displayL" raw>{person.name}</Text>
               <Text variant="titleM" tone="tertiary">
                 {person.age}
               </Text>
@@ -132,8 +153,8 @@ export default function PersonProfile() {
         </Animated.View>
 
         <Animated.View entering={enter.rise(7)} style={[styles.section, styles.facts]}>
-          <Fact icon="clock" label="Free" value={person.availability.map((a) => AVAILABILITY[a]).join(', ')} />
-          <Fact icon="languages" label="Speaks" value={person.languages.join(', ')} />
+          <Fact icon="clock" label={tx('Usually free')} value={person.availability.map((a) => tx(AVAILABILITY[a])).join(', ')} />
+          <Fact icon="languages" label="Speaks" value={person.languages.map((l) => tx(l)).join(', ')} />
         </Animated.View>
 
         {sessions.length || events.length ? (

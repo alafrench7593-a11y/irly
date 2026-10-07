@@ -19,7 +19,7 @@ import { useTheme } from '@/theme/useTheme';
 
 const STEPS: { icon: IconName; title: string; body: string }[] = [
   { icon: 'idCard', title: 'Licence & identity checked', body: 'Trade licence, permits and the person behind the business.' },
-  { icon: 'users', title: 'Tested by members', body: 'A member uses the service before it is listed.' },
+  { icon: 'users', title: 'Tested by members', body: 'A member tries the service before it\'s listed.' },
   { icon: 'star', title: 'Reviews from real bookings', body: 'Only people who booked through IRLY can review.' },
 ];
 

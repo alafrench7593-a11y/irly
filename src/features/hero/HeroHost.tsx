@@ -18,6 +18,7 @@ import { Badge, IconButton } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { Backdrop } from '@/components/visual/Backdrop';
 import { Photo } from '@/components/visual/Photo';
 import { haptic } from '@/motion/haptics';
 import { spring } from '@/motion/tokens';
@@ -221,6 +222,8 @@ export function HeroHost() {
           <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.scrim }, backdropStyle]} />
           <GestureDetector gesture={pan}>
             <Animated.View style={[styles.frame, { backgroundColor: t.c.bg }, frameStyle]}>
+              {/* The page sits on its own photo, blurred and pushed back. */}
+              <Backdrop visual={header.visual} light={header.light} dim={0.6} />
               <GestureDetector gesture={nativeScroll}>
                 <Animated.ScrollView
                   ref={scrollRef}

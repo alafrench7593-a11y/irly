@@ -1,0 +1,29 @@
+name: Places
+
+# Refreshes restaurants and cafés from Google Places into the IRLY database.
+# Needs two repository secrets: GOOGLE_PLACES_API_KEY and SUPABASE_ACCESS_TOKEN.
+# Run it by hand (Actions → Places → Run workflow); it also refreshes weekly.
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'bali, dubai or all'
+        default: 'all'
+  schedule:
+    - cron: '17 3 * * 1'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Sync places
+        env:
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PLACES_CITY: ${{ inputs.city || 'all' }}
+        run: node scripts/sync-places.mjs

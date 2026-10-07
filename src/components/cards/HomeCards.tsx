@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { memo, type ReactNode } from 'react';
+import { t as tx } from '@/i18n';
+import { memo, useRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Extrapolation,
@@ -16,6 +17,7 @@ import { areaName, CITIES } from '@/data/destinations';
 import { goingCount, peopleByIds } from '@/data/repo';
 import type { PhotoKey } from '@/data/photos';
 import type { ActivitySession, City, IrlEvent, Person } from '@/data/types';
+import { flyFrom } from '@/features/flight/avatarFlight';
 import { useHeroCard } from '@/features/hero/useHeroCard';
 import { isHappeningNow, whenLabel } from '@/lib/time';
 import { PressableScale } from '@/motion/PressableScale';
@@ -71,6 +73,7 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236, comp
   const { ref, onPress, hidden } = useHeroCard(h.type, h.id);
   const joined = useStore((s) => Boolean(s.joined[h.id]));
   const live = isHappeningNow(h.item.when, city);
+  const t = useTheme();
   return (
     <PressableScale
       ref={ref}
@@ -78,12 +81,12 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236, comp
       style={{ height, opacity: hidden ? 0 : 1 }}
       accessibilityLabel={`${h.title}, ${whenLabel(h.item.when, city)}`}
     >
-      <Photo visual={photoOf(h)} light={city.light} scrim="strong" style={[StyleSheet.absoluteFill, styles.highlight]} recyclingKey={h.id} width={900}>
+      <Photo visual={photoOf(h)} light={city.light} scrim="strong" style={[StyleSheet.absoluteFill, styles.highlight, { borderColor: t.c.line }]} recyclingKey={h.id} width={900}>
         <View style={styles.highlightTop}>
           <Glass dark style={styles.timePill}>
             {live ? <LiveDot size={6} color={status.live} /> : null}
             <Text variant="overline" tone="onDark">
-              {live ? `Live · ${h.item.when.time}` : whenLabel(h.item.when, city)}
+              {live ? tx('Live · {time}', { time: h.item.when.time }) : whenLabel(h.item.when, city)}
             </Text>
           </Glass>
         </View>
@@ -236,15 +239,18 @@ export const PersonBubble = memo(function PersonBubble({ person, city }: { perso
   const t = useTheme();
   const router = useRouter();
   const now = Boolean(person.online);
+  const face = useRef<View>(null);
   return (
     <PressableScale
-      onPress={() => router.push(`/person/${person.id}`)}
+      onPress={() => flyFrom(face.current, person, () => router.push(`/person/${person.id}`))}
       scaleTo={0.94}
       style={styles.person}
       accessibilityLabel={`${person.name}, ${now ? 'available now' : 'available later'}, ${areaName(city, person.areaId)}`}
     >
       <View style={[styles.personRing, { borderColor: t.c.text, boxShadow: `0px 0px 24px ${now ? 'rgba(50,215,75,0.35)' : 'rgba(255,159,10,0.28)'}` }]}>
-        <Avatar name={person.name} hue={person.hue} size={56} />
+        <View ref={face} collapsable={false}>
+          <Avatar name={person.name} hue={person.hue} size={56} photo={person.photo} />
+        </View>
         <View style={[styles.status, { backgroundColor: now ? status.availableNow : status.availableLater, borderColor: t.c.bg }]} />
       </View>
       <Text variant="label" numberOfLines={1}>
@@ -264,7 +270,7 @@ const styles = StyleSheet.create({
   categoryCount: { height: 26, paddingHorizontal: 10, borderRadius: 13, justifyContent: 'center' },
   categoryBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 4 },
   categoryBar: { width: 24, height: 4, borderRadius: 2, marginBottom: 6 },
-  highlight: { borderRadius: radius.xxl, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(10,10,10,0.06)' },
+  highlight: { borderRadius: radius.xxl, borderWidth: StyleSheet.hairlineWidth * 2 },
   highlightTop: { flexDirection: 'row', padding: 16 },
   timePill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, paddingHorizontal: 10, borderRadius: radius.pill },
   highlightBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 12 },

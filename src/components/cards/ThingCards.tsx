@@ -1,11 +1,12 @@
 import { memo } from 'react';
+import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import { ACTIVITIES, LEVELS, PLACE_KINDS, SERVICE_CATEGORIES } from '@/data/catalog';
 import { areaName, CITIES } from '@/data/destinations';
 import { goingCount, peopleByIds } from '@/data/repo';
 import type { ActivityKind, ActivitySession, City, Community, Editorial, Place, ServiceProvider } from '@/data/types';
 import { useHeroCard } from '@/features/hero/useHeroCard';
-import { formatCount, formatPrice, plural, priceLevel } from '@/lib/format';
+import { formatCount, formatPrice, priceLevel } from '@/lib/format';
 import { whenLabel } from '@/lib/time';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
@@ -46,7 +47,7 @@ export const ActivityTile = memo(function ActivityTile({
               {a.label}
             </Text>
             <Text variant="caption" color="rgba(255,255,255,0.75)">
-              {count ? `${plural(count, 'plan')} this week` : 'Start the first plan'}
+              {count ? tx(count === 1 ? '{n} plan this week' : '{n} plans this week', { n: count }) : tx('Start the first plan')}
             </Text>
           </View>
         </View>
@@ -102,7 +103,7 @@ export const SessionCard = memo(function SessionCard({ session, width }: { sessi
           <AvatarStack people={peopleByIds(session.goingIds)} size={24} max={3} extra={session.extraGoing} />
         </View>
         <Text variant="label" tone={left <= 2 ? 'live' : 'secondary'}>
-          {left === 0 ? 'Full' : `${plural(left, 'spot')} left`}
+          {left === 0 ? tx('Full') : tx(left === 1 ? '{n} spot left' : '{n} spots left', { n: left })}
         </Text>
       </View>
     </PressableScale>
@@ -175,7 +176,7 @@ export const CommunityCard = memo(function CommunityCard({ community, width = 25
         <View style={[styles.metaRow, { marginTop: 8 }]}>
           <AvatarStack people={peopleByIds(community.memberIds)} size={22} max={3} />
           <Text variant="caption" tone="secondary">
-            {formatCount(community.members)} members
+            {tx('{n} members', { n: formatCount(community.members) })}
           </Text>
         </View>
       </View>
@@ -213,7 +214,7 @@ export const ServiceCard = memo(function ServiceCard({ service, compact }: { ser
           <View style={[styles.metaRow, { marginTop: 4 }]}>
             <Icon name="star" size={12} color={t.accent} fill={t.accent} />
             <Text variant="caption" tone="secondary">
-              {service.rating.toFixed(1)} · {formatCount(service.reviews)} reviews · {service.responseTime}
+              {[service.rating.toFixed(1), tx('{n} reviews', { n: formatCount(service.reviews) }), tx('Replies in {time}', { time: tx(service.responseTime.replace('Replies in ', '')) })].join(' · ')}
             </Text>
           </View>
         ) : null}

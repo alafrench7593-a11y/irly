@@ -130,19 +130,21 @@ type Props = {
 export const MAP_SIZE = 1000;
 
 /**
- * "IRLY Day": warm off-white land, soft blue-grey water, white roads, so
- * the markers (people, plans, places) carry the colour. The same palette is
- * the target for the Google vector style (Map ID "IRLY Day").
+ * Two palettes, so the markers (people, plans, places) always carry the
+ * colour. "IRLY Noir" (default): near-black land, deep blue water, roads
+ * as faint light, like a city seen from above at night. "IRLY Day": warm
+ * off-white land, soft blue-grey water, white roads. The same palettes are
+ * the targets for the native map styles.
  */
 export const MapArt = memo(function MapArt({ city, mode, width, height, viewBox, showAreas = true }: Props) {
-  void mode;
   const shapes = SHAPES[city.map];
-  const land = '#F4F3F0';
-  const landEdge = 'rgba(10,10,10,0.08)';
-  const road = '#FFFFFF';
-  const waterTop = '#D6E2EA';
-  const waterBottom = '#CBD9E3';
-  const night = true;
+  const night = mode === 'night';
+  const land = night ? '#121417' : '#F4F3F0';
+  const landEdge = night ? 'rgba(255,255,255,0.07)' : 'rgba(10,10,10,0.08)';
+  const road = night ? '#262A31' : '#FFFFFF';
+  const waterTop = night ? '#0C1824' : '#D6E2EA';
+  const waterBottom = night ? '#09121B' : '#CBD9E3';
+  const areaTint = night ? '#FFFFFF' : '#0A0A0A';
   const isSeaFirst = city.map === 'abudhabi' || city.map === 'bali';
 
   return (
@@ -169,7 +171,7 @@ export const MapArt = memo(function MapArt({ city, mode, width, height, viewBox,
       </G>
       {showAreas
         ? city.areas.map((a) => (
-            <Circle key={a.id} cx={a.point.x * MAP_SIZE} cy={a.point.y * MAP_SIZE} r={70} fill="#0A0A0A" opacity={0.025} />
+            <Circle key={a.id} cx={a.point.x * MAP_SIZE} cy={a.point.y * MAP_SIZE} r={70} fill={areaTint} opacity={night ? 0.03 : 0.025} />
           ))
         : null}
     </Svg>

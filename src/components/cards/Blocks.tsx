@@ -1,7 +1,15 @@
 import { useRouter } from 'expo-router';
-import { memo, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Children, isValidElement, memo, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { BUSINESS_TOPICS, INTENTS, SERVICE_CATEGORIES } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import { findEvent, findSession, peopleByIds } from '@/data/repo';
@@ -18,21 +26,69 @@ import { Icon } from '../ui/Icon';
 import { Text } from '../ui/Text';
 import { planHeadline } from './PeopleCards';
 
-/* ───────── Horizontal rail with snapping ───────── */
+/* ───────── Horizontal rail with snapping and depth ───────── */
 
+/**
+ * Horizontal rail. With an `itemWidth`, the cards have depth: the card
+ * peeking in from the right edge is smaller and dimmer and grows into
+ * place as it slides in; the one leaving on the left recedes. Driven by
+ * the scroll position on the UI thread.
+ */
 export function Rail({ children, itemWidth, gap = 12 }: { children: ReactNode; itemWidth?: number; gap?: number }) {
+  const x = useSharedValue(0);
+  const viewport = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    x.set(e.contentOffset.x);
+  });
   return (
-    <ScrollView
+    <Animated.ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: space.gutter, gap }}
       decelerationRate="fast"
       snapToInterval={itemWidth ? itemWidth + gap : undefined}
       snapToAlignment="start"
+      onScroll={onScroll}
+      scrollEventThrottle={16}
+      onLayout={(e) => viewport.set(e.nativeEvent.layout.width)}
     >
-      {children}
-    </ScrollView>
+      {itemWidth
+        ? Children.toArray(children).map((child, i) => (
+            <RailItem key={isValidElement(child) && child.key != null ? child.key : i} index={i} x={x} viewport={viewport} width={itemWidth} gap={gap}>
+              {child}
+            </RailItem>
+          ))
+        : children}
+    </Animated.ScrollView>
   );
+}
+
+function RailItem({
+  index,
+  x,
+  viewport,
+  width,
+  gap,
+  children,
+}: {
+  index: number;
+  x: SharedValue<number>;
+  viewport: SharedValue<number>;
+  width: number;
+  gap: number;
+  children: ReactNode;
+}) {
+  const reduced = useReducedMotion();
+  const style = useAnimatedStyle(() => {
+    const vw = viewport.value;
+    if (reduced || !vw) return { opacity: 1, transform: [{ scale: 1 }, { translateY: 0 }] };
+    const left = space.gutter + index * (width + gap) - x.value;
+    const arriving = interpolate(left, [vw - width * 0.6, vw - 6], [1, 0], Extrapolation.CLAMP);
+    const leaving = interpolate(left + width, [6, width * 0.6], [0, 1], Extrapolation.CLAMP);
+    const p = Math.min(arriving, leaving);
+    return { opacity: 0.35 + 0.65 * p, transform: [{ scale: 0.88 + 0.12 * p }, { translateY: (1 - p) * 14 }] };
+  });
+  return <Animated.View style={style}>{children}</Animated.View>;
 }
 
 /* ───────── Happening nearby: one real-life plan per row ───────── */
@@ -89,7 +145,7 @@ export const MeetCard = memo(function MeetCard({ city, people }: { city: City; p
               transform: [{ scale: [1, 0.86, 0.94, 0.8, 1.04][i] }],
             }}
           >
-            <Avatar name={p.name} hue={p.hue} size={48} ring online={p.online} />
+            <Avatar name={p.name} hue={p.hue} size={48} ring online={p.online} photo={p.photo} />
           </View>
         ))}
       </View>

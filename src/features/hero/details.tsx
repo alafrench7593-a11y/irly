@@ -1,4 +1,5 @@
 import { memo, useMemo, useState, type ReactNode } from 'react';
+import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
@@ -25,7 +26,7 @@ import {
 } from '@/data/repo';
 import type { City, Visual } from '@/data/types';
 import { MapArt } from '@/features/map/MapArt';
-import { formatCount, formatPrice, plural, priceLevel } from '@/lib/format';
+import { formatCount, formatPrice, priceLevel } from '@/lib/format';
 import { cityNow, durationLabel, whenLabel } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -111,7 +112,7 @@ export function getHeader(item: HeroItem): DetailHeader | null {
         overline: 'Community',
         overlineIcon: 'users',
         title: c.name,
-        meta: `${formatCount(c.members)} members · ${c.rhythm}`,
+        meta: `${tx('{n} members', { n: formatCount(c.members) })} · ${tx(c.rhythm)}`,
         verified: c.verified,
       };
     }
@@ -189,13 +190,13 @@ function PersonRow({ personId, caption, go }: { personId: string; caption: strin
   const p = findPerson(personId);
   if (!p) return null;
   return (
-    <PressableScale onPress={() => go(`/person/${p.id}`)} style={[styles.personRow, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <PressableScale onPress={() => go(`/person/${p.id}`)} style={[styles.personRow, { backgroundColor: t.c.card, borderColor: t.c.line }]}>
       <Avatar name={p.name} hue={p.hue} size={46} verified={p.verified} online={p.online} />
       <View style={{ flex: 1 }}>
         <Text variant="bodyS" tone="tertiary">
           {caption}
         </Text>
-        <Text variant="titleS">{p.name}</Text>
+        <Text variant="titleS" raw>{p.name}</Text>
         <Text variant="bodyS" tone="secondary" numberOfLines={1}>
           {p.headline}
         </Text>
@@ -212,8 +213,12 @@ function Going({ ids, extra, joined, go }: { ids: string[]; extra: number; joine
   const names = people.slice(0, 2).map((p) => p.name);
   const rest = total - names.length - (joined ? 1 : 0);
   const sentence = joined
-    ? `You, ${names.join(', ')}${rest > 0 ? ` and ${rest} more` : ''}`
-    : `${names.join(', ')}${rest > 0 ? ` and ${plural(rest, 'other')}` : ''}`;
+    ? rest > 0
+      ? tx('You, {names} and {n} more', { names: names.join(', '), n: rest })
+      : tx('You, {names}', { names: names.join(', ') })
+    : rest > 0
+      ? tx('{names} and {n} more', { names: names.join(', '), n: rest })
+      : names.join(', ');
   return (
     <View style={{ gap: space[4] }}>
       <View style={styles.goingRow}>
@@ -301,7 +306,7 @@ const EventBody = memo(function EventBody({ id, go }: { id: string; go: Go }) {
         <View style={{ gap: space[5] }}>
           <InfoRow icon="calendar" label="When" value={`${whenLabel(e.when, city)} · ${durationLabel(e.when.durationMin)}`} />
           <InfoRow icon="pin" label="Where" value={`${e.venue}`} />
-          <InfoRow icon="ticket" label="Entry" value={`${formatPrice(e.price, city.currency)} · ${plural(e.capacity, 'spot')}`} />
+          <InfoRow icon="ticket" label="Entry" value={`${formatPrice(e.price, city.currency)} · ${tx(e.capacity === 1 ? '{n} spot' : '{n} spots', { n: e.capacity })}`} />
         </View>
       </Section>
       <Section title="Who's going" index={1}>
@@ -328,7 +333,7 @@ const EventBody = memo(function EventBody({ id, go }: { id: string; go: Go }) {
 function HostCard({ name, verified }: { name: string; verified: boolean }) {
   const t = useTheme();
   return (
-    <View style={[styles.personRow, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <View style={[styles.personRow, { backgroundColor: t.c.card, borderColor: t.c.line }]}>
       <Avatar name={name} hue={name.length * 37} size={46} />
       <View style={{ flex: 1, gap: 4 }}>
         <Text variant="titleS">{name}</Text>
@@ -358,7 +363,7 @@ const SessionBody = memo(function SessionBody({ id, go }: { id: string; go: Go }
       <Section title="Spots" index={1}>
         <View style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text variant="titleS">{left === 0 ? 'Full, join the waitlist' : `${plural(left, 'spot')} left`}</Text>
+            <Text variant="titleS">{left === 0 ? tx('Full · join the waitlist') : tx(left === 1 ? '{n} spot left' : '{n} spots left', { n: left })}</Text>
             <Text variant="bodyS" tone="secondary">
               {going}/{s.spots}
             </Text>
@@ -427,7 +432,7 @@ const PlaceBody = memo(function PlaceBody({ id, go }: { id: string; go: Go }) {
 function PlanRow({ icon, title, meta }: { icon: IconName; title: string; meta: string }) {
   const t = useTheme();
   return (
-    <View style={[styles.personRow, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <View style={[styles.personRow, { backgroundColor: t.c.card, borderColor: t.c.line }]}>
       <View style={[styles.infoIcon, { backgroundColor: t.light.accentSoft }]}>
         <Icon name={icon} size={18} color={t.accent} />
       </View>
@@ -463,8 +468,7 @@ const CommunityBody = memo(function CommunityBody({ id, go }: { id: string; go: 
         <View style={styles.goingRow}>
           <AvatarStack people={people} size={34} max={5} extra={c.members - people.length + (member ? 1 : 0)} />
           <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
-            {member ? 'You and ' : ''}
-            {people.map((p) => p.name).join(', ')} and {formatCount(c.members - people.length)} more
+            {tx(member ? 'You, {names} and {n} more' : '{names} and {n} more', { names: people.map((p) => p.name).join(', '), n: formatCount(c.members - people.length) })}
           </Text>
         </View>
         <View style={{ gap: 10, marginTop: space[5] }}>
@@ -504,7 +508,7 @@ const ServiceBody = memo(function ServiceBody({ id }: { id: string; go: Go }) {
         <Highlights items={s.perks} />
       </Section>
       <Section title="Trust" index={2}>
-        <View style={[styles.trustCard, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+        <View style={[styles.trustCard, { backgroundColor: t.c.card, borderColor: t.c.line }]}>
           <View style={styles.trustItem}>
             <Text variant="number">{s.rating.toFixed(1)}</Text>
             <Text variant="bodyS" tone="secondary">
@@ -522,16 +526,16 @@ const ServiceBody = memo(function ServiceBody({ id }: { id: string; go: Go }) {
           <View style={styles.trustItem}>
             <Icon name="clock" size={22} color={t.c.text} />
             <Text variant="bodyS" tone="secondary" align="center">
-              {s.responseTime.replace('Replies in ', '')}
+              {tx(s.responseTime.replace('Replies in ', ''))}
             </Text>
           </View>
         </View>
       </Section>
       <Section title="Details" index={3}>
         <View style={{ gap: space[5] }}>
-          <InfoRow icon="banknote" label="From" value={`${formatPrice(s.priceFrom, city.currency)} ${s.unit}`} />
-          <InfoRow icon="languages" label="Languages" value={s.languages.join(' · ')} />
-          <InfoRow icon="pin" label="Based in" value={`${areaName(city, s.areaId)} · serves all of ${city.name}`} />
+          <InfoRow icon="banknote" label="From" value={`${formatPrice(s.priceFrom, city.currency)} ${tx(s.unit)}`} />
+          <InfoRow icon="languages" label="Languages" value={s.languages.map((l) => tx(l)).join(' · ')} />
+          <InfoRow icon="pin" label="Based in" value={tx('{area} · serves all of {city}', { area: areaName(city, s.areaId), city: city.name })} />
         </View>
       </Section>
     </>
@@ -609,7 +613,7 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
       }
       case 'community': {
         const c = findCommunity(item.id);
-        return c ? { price: 'Free', note: `${formatCount(c.members)} members`, kind: 'member' as const } : null;
+        return c ? { price: 'Free', note: tx('{n} members', { n: formatCount(c.members) }), kind: 'member' as const } : null;
       }
       case 'place':
         return { price: '', note: '', kind: 'save' as const };
@@ -695,7 +699,7 @@ function BookingSheet({ serviceId, visible, onClose }: { serviceId: string; visi
   const [slot, setSlot] = useState<string | null>(null);
   if (!s) return null;
   return (
-    <Sheet visible={visible} onClose={onClose} title="Book a call" subtitle={`${s.name} · 20 min, free`}>
+    <Sheet visible={visible} onClose={onClose} title="Book a call" subtitle={tx('{name} · 20 min, free', { name: s.name })}>
       <View style={{ gap: space[6], paddingBottom: space[3] }}>
         <View style={{ paddingHorizontal: space.gutter, gap: space[4] }}>
           <Text variant="overline" tone="tertiary">
@@ -709,7 +713,7 @@ function BookingSheet({ serviceId, visible, onClose }: { serviceId: string; visi
         </View>
         <View style={{ paddingHorizontal: space.gutter, gap: space[4] }}>
           <Text variant="overline" tone="tertiary">
-            Time ({CITIES[s.cityId].name} time)
+            {tx('Time ({city} time)', { city: CITIES[s.cityId].name })}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {SLOTS.map((x) => (
@@ -721,12 +725,12 @@ function BookingSheet({ serviceId, visible, onClose }: { serviceId: string; visi
         <View style={{ paddingHorizontal: space.gutter, flexDirection: 'row', alignItems: 'center', gap: space[4] }}>
           <Icon name="shield" size={18} color={t.c.brand} />
           <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
-            Free cancellation up to 24 h before. Your contact details stay private until you confirm.
+            Free cancellation up to 24 hours before. Your contact details stay private until you confirm.
           </Text>
         </View>
         <View style={{ paddingHorizontal: space.gutter }}>
           <Button
-            label={slot ? `Confirm ${days[day]?.label} · ${slot}` : 'Pick a time'}
+            label={slot ? tx('Confirm {day} · {slot}', { day: tx(days[day]?.label ?? ''), slot }) : tx('Pick a time')}
             disabled={!slot}
             full
             haptic={false}

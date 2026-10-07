@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeOut, LinearTransition } from 'react-native-reanimated';
@@ -9,9 +10,14 @@ import { Chip } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
+import { ScopeToggle } from '@/components/ui/ScopeToggle';
 import { getCityContent } from '@/data/repo';
-import type { Community } from '@/data/types';
+import type { CityId, Community } from '@/data/types';
 import { enter } from '@/motion/enter';
+import { PressableScale } from '@/motion/PressableScale';
+import { useCommunityList } from '@/features/community/data';
+import { Button } from '@/components/ui/Button';
+import { t as tx } from '@/i18n';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -32,15 +38,43 @@ export default function Communities() {
   const content = getCityContent(cityId);
   const [kind, setKind] = useState<(typeof KINDS)[number]['id']>('all');
   const list = content.communities.filter((c) => kind === 'all' || c.kind === kind);
+  const router = useRouter();
+  const live = useCommunityList(cityId);
 
   return (
-    <Page overline={city.name} title="Communities" subtitle="Optional, by interest or neighbourhood. Meet the same faces again, that is how trust grows.">
+    <Page overline={city.name} title="Communities" subtitle="Optional, by interest or neighbourhood. Meet the same faces again: that's how trust grows.">
       <View style={{ marginBottom: space[6] }}>
         <Rail gap={8}>
           {KINDS.map((k) => (
             <Chip key={k.id} size="sm" label={k.label} selected={kind === k.id} onPress={() => setKind(k.id)} />
           ))}
         </Rail>
+      </View>
+      <ScopeToggle cityId={cityId} />
+      {live.length ? (
+        <View style={{ paddingHorizontal: space.gutter, gap: 10, marginBottom: space[7] }}>
+          <Text variant="overline" tone="tertiary">
+            On IRLY now
+          </Text>
+          {live.map((c) => (
+            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.live, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
+              <Icon name={c.isMember ? 'check' : 'users'} size={18} color={t.c.text} />
+              <View style={{ flex: 1 }}>
+                <Text variant="titleS" numberOfLines={1}>
+                  {c.name}
+                </Text>
+                <Text variant="caption" tone="tertiary" numberOfLines={1}>
+                  {[c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, tx('{n} members', { n: c.members }), c.postsWeek ? tx('{n} posts this week', { n: c.postsWeek }) : null, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
+                </Text>
+              </View>
+              <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+            </PressableScale>
+          ))}
+        </View>
+      ) : null}
+      {/* Always reachable, even in a city with no server communities yet. */}
+      <View style={{ paddingHorizontal: space.gutter, marginBottom: space[6] }}>
+        <Button label="Create a community" icon="plus" variant="secondary" full onPress={() => router.push('/community/new')} />
       </View>
       <View style={{ paddingHorizontal: space.gutter, gap: 14 }}>
         {list.map((c, i) => (
@@ -63,5 +97,6 @@ export default function Communities() {
 }
 
 const styles = StyleSheet.create({
+  live: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg },
   create: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, borderWidth: 1.5, borderStyle: 'dashed' },
 });

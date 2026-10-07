@@ -47,7 +47,7 @@ export function LiveStrip() {
           return (
             <PressableScale key={l.id} haptic="select" scaleTo={0.94} onPress={() => router.push('/live')} style={styles.item} accessibilityLabel={`${name} is live: ${l.text}`}>
               <LiveRing>
-                <Avatar name={name} hue={p?.hue ?? 0} size={56} />
+                <Avatar name={name} hue={p?.hue ?? 0} size={56} photo={p?.photo} />
               </LiveRing>
               <Text variant="caption" numberOfLines={1} style={{ maxWidth: 72 }}>
                 {name.split(' ')[0]}

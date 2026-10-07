@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -124,7 +125,7 @@ export function MapSheet({
         <Glass style={[StyleSheet.absoluteFill, styles.glass]} intensity={blur.strong} />
         <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>
           <View style={styles.header} accessibilityRole="adjustable" accessibilityLabel="Details. Drag up for more">
-            <View style={[styles.grabber, { backgroundColor: 'rgba(10,10,10,0.18)' }]} />
+            <View style={[styles.grabber, { backgroundColor: t.c.lineStrong }]} />
             <View style={styles.titleRow}>
               <Lead marker={marker} />
               <View style={{ flex: 1, gap: 3 }}>
@@ -279,12 +280,12 @@ function FullContent({ marker }: { marker: MapMarkerData }) {
     <View style={{ gap: space[5], marginTop: space[6] }}>
       {going.length ? (
         <View style={{ gap: space[3] }}>
-          <Text variant="titleS">{marker.type === 'group' ? 'Members' : 'Going'}</Text>
+          <Text variant="titleS">{marker.type === 'group' ? 'Members' : "Who's going"}</Text>
           {going.slice(0, 6).map((p) => (
             <PressableScale key={p.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/person/${p.id}`)} style={styles.personRow}>
               <Avatar name={p.name} hue={p.hue} size={40} online={p.online} />
               <View style={{ flex: 1 }}>
-                <Text variant="label">{p.name}</Text>
+                <Text variant="label" raw>{p.name}</Text>
                 <Text variant="caption" tone="tertiary" numberOfLines={1}>
                   {p.headline}
                 </Text>
@@ -297,7 +298,7 @@ function FullContent({ marker }: { marker: MapMarkerData }) {
       <View style={[styles.detail, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
         <Row icon="pin" text={marker.subtitle} />
         {marker.type === 'activity' || marker.type === 'event' ? <Row icon="message" text="Group chat opens when you join" /> : null}
-        {marker.type === 'group' ? <Row icon="users" text={`${marker.count ?? 0} members`} /> : null}
+        {marker.type === 'group' ? <Row icon="users" text={tx('{n} members', { n: marker.count ?? 0 })} /> : null}
       </View>
       <Button label="Open full page" variant="secondary" iconRight="arrowUpRight" full onPress={() => openHero(hero)} />
     </View>

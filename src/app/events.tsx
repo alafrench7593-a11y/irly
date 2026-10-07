@@ -35,7 +35,7 @@ export default function Events() {
       if (when === 'today') return e.when.dayOffset === 0;
       if (when === 'tomorrow') return e.when.dayOffset === 1;
       if (when === 'weekend') return isWeekend(e.when, city);
-      return e.when.dayOffset <= 7;
+      return e.when.dayOffset < 7;
     })
     .filter((e) => cats.length === 0 || cats.includes(e.category))
     .sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time));
@@ -76,7 +76,7 @@ export default function Events() {
         <Animated.View entering={enter.fade(0)} style={[styles.empty, { borderColor: t.c.lineStrong }]}>
           <Icon name="calendar" size={28} color={t.c.textTertiary} />
           <Text variant="titleS" align="center">
-            Nothing matches, yet
+            Nothing matches yet
           </Text>
           <Text variant="bodyS" tone="secondary" align="center">
             Try another day or category, or start your own plan from Social.

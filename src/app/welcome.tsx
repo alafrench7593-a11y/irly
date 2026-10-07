@@ -3,20 +3,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  Easing,
   FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withSequence,
   withSpring,
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { IrlyWordmark } from '@/brand/IrlyLogo';
-import { IrlyMark } from '@/brand/IrlyMark';
+import { DotField } from '@/brand/DotField';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Badge } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
@@ -25,6 +22,7 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { DESTINATIONS, UPCOMING_DESTINATIONS } from '@/data/destinations';
 import type { Destination } from '@/data/types';
+import { IrlyStory } from '@/features/onboarding/IrlyStory';
 import { useExpand } from '@/features/onboarding/useExpand';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -32,18 +30,17 @@ import { PressableScale } from '@/motion/PressableScale';
 import { easing, spring } from '@/motion/tokens';
 import { useParallax } from '@/motion/useParallax';
 import { useStore } from '@/state/store';
-import { palettes, radius, space } from '@/theme/tokens';
+import { radius, space } from '@/theme/tokens';
 
 let introPlayed = false;
-
-const BRAND = palettes.night.brand;
 
 export default function Welcome() {
   const router = useRouter();
   const frame = useFrame();
   const insets = useSafeAreaInsets();
   const setDestination = useStore((s) => s.setDestination);
-  const [phase, setPhase] = useState<'intro' | 'choose'>(introPlayed ? 'choose' : 'intro');
+  // intro (the logo) → story (what IRLY is) → choose (where you are going)
+  const [phase, setPhase] = useState<'intro' | 'story' | 'choose'>(introPlayed ? 'choose' : 'intro');
   const { overlay, expand, reset } = useExpand();
   const parallax = useParallax(phase === 'choose');
 
@@ -51,30 +48,40 @@ export default function Welcome() {
   const lift = -(H / 2 - insets.top - 74);
 
   // Intro choreography
-  const glow = useSharedValue(0);
-  const word = useSharedValue(0);
+  const glow = useSharedValue(introPlayed ? 1 : 0);
+  const word = useSharedValue(introPlayed ? 1 : 0);
   const tagline = useSharedValue(0);
-  const sweep = useSharedValue(0);
   const group = useSharedValue(introPlayed ? 1 : 0);
+  // The field dims while the story tells what IRLY is.
+  const dim = useSharedValue(0);
+
+  const toStory = () => {
+    word.set(withTiming(0, { duration: 260 }));
+    tagline.set(withTiming(0, { duration: 200 }));
+    dim.set(withTiming(1, { duration: 500 }));
+    setPhase('story');
+  };
+  const toChoose = () => {
+    introPlayed = true;
+    dim.set(withTiming(0, { duration: 500 }));
+    word.set(withSpring(1, spring.smooth));
+    group.set(withSpring(1, { duration: 760, dampingRatio: 0.92 }));
+    setPhase('choose');
+  };
 
   useEffect(() => {
     if (introPlayed) return;
-    glow.set(withSequence(withTiming(1, { duration: 900, easing: easing.emphasized }), withTiming(0.65, { duration: 900 })));
+    glow.set(withTiming(1, { duration: 1200, easing: easing.emphasized }));
     word.set(withDelay(320, withSpring(1, spring.smooth)));
-    sweep.set(withDelay(520, withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.cubic) })));
     tagline.set(withDelay(700, withTiming(1, { duration: 600, easing: easing.standard })));
     const t1 = setTimeout(() => haptic('tap'), 360);
-    const t2 = setTimeout(() => {
-      introPlayed = true;
-      group.set(withSpring(1, { duration: 760, dampingRatio: 0.92 }));
-      tagline.set(withTiming(0, { duration: 220 }));
-      setPhase('choose');
-    }, 2150);
+    const t2 = setTimeout(toStory, 2150);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [glow, word, sweep, tagline, group]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [glow, word, tagline, group]);
 
   useFocusEffect(
     useCallback(() => {
@@ -85,19 +92,13 @@ export default function Welcome() {
   const groupStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: group.value * lift }, { scale: 1 - group.value * 0.42 }],
   }));
-  const glowStyle = useAnimatedStyle(() => ({
-    opacity: glow.value * (1 - group.value * 0.6),
-    transform: [{ scale: 0.6 + glow.value * 0.7 }],
-  }));
+  // The field dims once the destination cards arrive, so they stay readable.
+  const fieldStyle = useAnimatedStyle(() => ({ opacity: glow.value * (1 - group.value * 0.55) * (1 - dim.value * 0.6) }));
   const wordStyle = useAnimatedStyle(() => ({
     opacity: word.value,
     transform: [{ translateY: (1 - word.value) * 14 }],
   }));
   const taglineStyle = useAnimatedStyle(() => ({ opacity: tagline.value }));
-  const sweepStyle = useAnimatedStyle(() => ({
-    opacity: sweep.value > 0 && sweep.value < 1 ? 0.55 : 0,
-    transform: [{ translateX: -260 + sweep.value * 520 }, { rotate: '18deg' }],
-  }));
 
   const choose = (dest: Destination, ref: RefObject<View | null>) => {
     haptic('press');
@@ -108,12 +109,7 @@ export default function Welcome() {
   };
 
   const skip = () => {
-    if (phase === 'intro') {
-      introPlayed = true;
-      group.set(withSpring(1, { duration: 600, dampingRatio: 0.92 }));
-      tagline.set(withTiming(0, { duration: 160 }));
-      setPhase('choose');
-    }
+    if (phase === 'intro') toStory();
   };
 
   return (
@@ -124,41 +120,27 @@ export default function Welcome() {
         style={StyleSheet.absoluteFill}
       />
 
+      {/* The halftone field: light drifting behind a screen of dots */}
+      <Animated.View style={[StyleSheet.absoluteFill, fieldStyle]} pointerEvents="none">
+        <DotField />
+      </Animated.View>
+
       {/* Logo group: centred during the intro, then lifts into place */}
       <Animated.View style={[styles.center, groupStyle]} pointerEvents="none">
-        <Animated.View style={[styles.glow, glowStyle]}>
-          <Svg width={360} height={360}>
-            <Defs>
-              <RadialGradient id="wGlow" cx="50%" cy="50%" r="50%">
-                <Stop offset="0" stopColor={BRAND} stopOpacity={0.5} />
-                <Stop offset="0.5" stopColor={BRAND} stopOpacity={0.12} />
-                <Stop offset="1" stopColor={BRAND} stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Circle cx={180} cy={180} r={180} fill="url(#wGlow)" />
-          </Svg>
-        </Animated.View>
-        <IrlyMark size={104} state="idle" lensColor={BRAND} />
-        <Animated.View style={[{ marginTop: 26, overflow: 'hidden', paddingHorizontal: 12 }, wordStyle]}>
-          <IrlyWordmark size={34} color="#FFFFFF" />
-          <Animated.View style={[styles.sweep, sweepStyle]}>
-            <LinearGradient
-              colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0)']}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={StyleSheet.absoluteFill}
-            />
-          </Animated.View>
+        <Animated.View style={wordStyle}>
+          <IrlyWordmark size={64} color="#FFFFFF" accentColor="#FFFFFF" animated />
         </Animated.View>
         <Animated.View style={[{ marginTop: 14 }, taglineStyle]}>
-          <Text variant="label" color="rgba(255,255,255,0.62)" style={{ letterSpacing: 2.2 }}>
-            CONNECT · RELOCATE · BELONG
+          <Text raw variant="label" color="rgba(255,255,255,0.62)" style={{ letterSpacing: 4, textAlign: 'center', paddingHorizontal: space.gutter, maxWidth: frame.width }}>
+            IN REAL LIFE
           </Text>
         </Animated.View>
       </Animated.View>
 
       {phase === 'intro' ? (
         <PressableScale haptic={false} scaleTo={1} onPress={skip} style={StyleSheet.absoluteFill} accessibilityLabel="Skip intro" />
+      ) : phase === 'story' ? (
+        <IrlyStory onDone={toChoose} />
       ) : (
         <View style={[styles.choose, { paddingTop: insets.top + 132, paddingBottom: insets.bottom + space[5] }]}>
           <Animated.View entering={enter.rise(0, 120)} style={{ paddingHorizontal: space.gutter }}>
@@ -247,8 +229,6 @@ function DestinationCard({
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
-  glow: { position: 'absolute', width: 360, height: 360 },
-  sweep: { position: 'absolute', top: -20, bottom: -20, width: 70 },
   choose: { flex: 1 },
   cards: { flex: 1, gap: 14, paddingHorizontal: space.gutter, paddingTop: space[6], paddingBottom: space[5] },
   card: { flex: 1, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'space-between' },

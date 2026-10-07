@@ -1,4 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { isServerId, useServerInbox } from '@/features/server/chat';
+import { t as tx } from '@/i18n';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
@@ -9,6 +11,7 @@ import { CITIES } from '@/data/destinations';
 import { findCommunity, findPerson } from '@/data/repo';
 import { Photo } from '@/components/visual/Photo';
 import type { Conversation } from '@/data/types';
+import { useGirlStore } from '@/features/girl/girlStore';
 import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
@@ -40,7 +43,9 @@ export default function Messages() {
   const connections = useStore((s) => s.connections);
   const memberOf = useStore((s) => s.memberOf);
   const read = useStore((s) => s.read);
-  const all = cityConversations(cityId, connections, memberOf);
+  const matches = useGirlStore((s) => s.matches);
+  const server = useServerInbox();
+  const all = [...server.conversations, ...cityConversations(cityId, connections, memberOf, matches)];
   const communities = all.filter((c) => c.kind === 'community');
   const direct = all.filter((c) => c.kind === 'direct' || c.kind === 'service');
   const groups = all.filter((c) => c.kind === 'group' || c.kind === 'event');
@@ -73,13 +78,25 @@ export default function Messages() {
                     {c.title}
                   </Text>
                   <Text variant="caption" tone={unread ? 'primary' : 'tertiary'}>
-                    {unread ? `${unread} unread` : lit ? 'Just joined' : 'Up to date'}
+                    {unread ? tx('{n} unread', { n: unread }) : lit ? 'Just joined' : 'Up to date'}
                   </Text>
                   {unread ? <View style={[styles.dot, { backgroundColor: t.c.live }]} /> : null}
                 </PressableScale>
               </Animated.View>
             );
           })}
+          <PressableScale
+            haptic="select"
+            scaleTo={0.96}
+            onPress={() => router.push('/community/new')}
+            style={[styles.community, styles.find, { borderColor: t.c.lineStrong }]}
+            accessibilityLabel="Create a community"
+          >
+            <Icon name="users" size={22} color={t.c.text} />
+            <Text variant="label" align="center">
+              Create a community
+            </Text>
+          </PressableScale>
           <PressableScale
             haptic="select"
             scaleTo={0.96}
@@ -146,12 +163,12 @@ function ConversationRow({ conversation: c }: { conversation: Conversation }) {
             {c.title}
           </Text>
           <Text variant="caption" tone="tertiary">
-            {last ? timeAgo(minutesAgo(last)) : 'new'}
+            {last ? timeAgo(minutesAgo(last)) : tx('new')}
           </Text>
         </View>
         <View style={styles.top}>
           <Text variant="bodyS" tone={unread ? 'primary' : 'secondary'} numberOfLines={1} style={{ flex: 1 }}>
-            {last ? `${last.from === 'me' ? 'You: ' : c.kind === 'direct' ? '' : `${senderName(last.from)}: `}${last.text}` : 'You are connected. Say hi 👋'}
+            {last ? `${last.from === 'me' ? tx('You:') + ' ' : c.kind === 'direct' ? '' : `${senderName(last.from)}: `}${isServerId(c.id) ? last.text : tx(last.text)}` : tx('You are connected. Say hi 👋')}
           </Text>
           {unread ? (
             <View style={[styles.badge, { backgroundColor: t.c.brand }]}>

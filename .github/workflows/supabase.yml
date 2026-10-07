@@ -1,0 +1,78 @@
+name: Database
+
+# Tests the database rules on a throwaway PostgreSQL, then applies new
+# migrations to the IRLY Supabase project. Deploying needs one repository
+# secret: SUPABASE_ACCESS_TOKEN (Settings → Secrets and variables → Actions).
+
+on:
+  push:
+    branches: [main, claude/confident-ride-1o2o3x]
+    paths:
+      - 'supabase/**'
+      - 'scripts/deploy-db.mjs'
+      - 'scripts/test-db.sh'
+      - 'scripts/check-intent.mts'
+      - 'scripts/check-network.mts'
+      - 'src/features/network/**'
+      - 'src/features/ai/**'
+      - 'src/features/bali/fit.ts'
+      - 'scripts/check-bali.mts'
+      - 'scripts/check-community.mts'
+      - 'src/features/community/**'
+      - 'scripts/place-tags.mjs'
+      - 'scripts/check-areas.mts'
+      - 'src/data/destinations.ts'
+      - '.github/workflows/supabase.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: irly-backend
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Database rules (RLS, women-only access, matching, chats)
+        run: bash scripts/test-db.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: App score equals server score
+        run: node --experimental-strip-types --no-warnings scripts/check-compat.mts
+      - name: Assistant command engine
+        run: node --experimental-strip-types --no-warnings scripts/check-intent.mts
+      - name: Professional networking match
+        run: node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-network.mts
+      - name: Community assistant
+        run: node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-community.mts
+      - name: Bali area fit, test plans, opening hours
+        run: node --experimental-strip-types --no-warnings scripts/check-bali.mts
+      - name: Every app neighbourhood exists on the server
+        run: node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-areas.mts
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply migrations to Supabase
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/deploy-db.mjs

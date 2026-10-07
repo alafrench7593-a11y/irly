@@ -1,0 +1,57 @@
+name: Web app (GitHub Pages)
+
+# The app on a fixed address, updated on every push:
+# https://alafrench7593-a11y.github.io/irly/
+# One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
+
+on:
+  push:
+    branches: [main, claude/confident-ride-1o2o3x]
+    paths-ignore: ['supabase/**', 'docs/**', '.github/expo-go.txt']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Switches Pages on when the repository allows it; otherwise see the one-time setup above.
+      - uses: actions/configure-pages@v5
+        continue-on-error: true
+        with:
+          enablement: true
+      - name: Serve under /irly
+        run: node -e "const f='app.json';const j=require('./'+f);j.expo.experiments={...(j.expo.experiments||{}),baseUrl:'/irly'};require('fs').writeFileSync(f,JSON.stringify(j,null,2))"
+      - run: npx expo export --platform web
+      - run: node .github/scripts/pages-html.mjs /irly
+      - name: Photo library
+        run: if [ -d public-photos ]; then mkdir -p dist/photos && cp public-photos/*.jpg public-photos/CREDITS.md dist/photos/; if [ -d public-photos/faces ]; then mkdir -p dist/photos/faces && cp public-photos/faces/*.jpg public-photos/faces/CREDITS.md dist/photos/faces/; fi; fi
+      - name: Website (/irly/site)
+        run: node .github/scripts/site-build.mjs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

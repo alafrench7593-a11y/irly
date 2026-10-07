@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { t as tx } from '@/i18n';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -20,6 +21,7 @@ import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
+import { NetworkDoor } from '@/features/network/ui';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -41,6 +43,9 @@ export default function Business() {
 
   return (
     <Page overline={`${city.name} · Business`} title="Build here" subtitle="From licence to first hire: guides kept current, people already vetted.">
+      <View style={{ paddingHorizontal: space.gutter, marginBottom: space[5] }}>
+        <NetworkDoor />
+      </View>
       <View style={{ marginBottom: space[6] }}>
         <Rail gap={8}>
           {city.businessTopics.map((id) => (
@@ -135,7 +140,7 @@ function ProCard({ pro, onProfile }: { pro: Professional; onProfile?: () => void
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Icon name="star" size={12} color={t.accent} fill={t.accent} />
             <Text variant="caption" tone="secondary">
-              {pro.rating.toFixed(1)} · {pro.reviews} reviews · {pro.languages.join(', ')}
+              {[pro.rating.toFixed(1), tx('{n} reviews', { n: pro.reviews }), pro.languages.map((l) => tx(l)).join(', ')].join(' · ')}
             </Text>
           </View>
         </View>
@@ -150,7 +155,7 @@ function ProCard({ pro, onProfile }: { pro: Professional; onProfile?: () => void
             haptic={false}
             onPress={() => {
               haptic('success');
-              toast(`Intro requested with ${pro.name.split(' ')[0]}`, 'handshake', 'brand');
+              toast(tx('Intro requested with {name}', { name: pro.name.split(' ')[0] }), 'handshake', 'brand');
             }}
           />
         </View>

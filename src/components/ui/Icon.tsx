@@ -37,6 +37,8 @@ import ChevronRight from 'lucide-react-native/icons/chevron-right';
 import Clock from 'lucide-react-native/icons/clock';
 import Coffee from 'lucide-react-native/icons/coffee';
 import Compass from 'lucide-react-native/icons/compass';
+import Eye from 'lucide-react-native/icons/eye';
+import Flag from 'lucide-react-native/icons/flag';
 import Disc3 from 'lucide-react-native/icons/disc-3';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
 import FileText from 'lucide-react-native/icons/file-text';
@@ -163,6 +165,8 @@ export const icons = {
   clock: Clock,
   coffee: Coffee,
   compass: Compass,
+  eye: Eye,
+  flag: Flag,
   disc: Disc3,
   dumbbell: Dumbbell,
   file: FileText,

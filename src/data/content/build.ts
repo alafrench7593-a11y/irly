@@ -1,4 +1,5 @@
-import type { PhotoKey } from '../photos';
+import { DEMO } from '@/config/app';
+import { portrait, type PhotoKey } from '../photos';
 import type {
   ActivityKind,
   ActivitySession,
@@ -67,6 +68,7 @@ export function person(
     verified: p.verified ?? false,
     hue: p.hue,
     online: p.online,
+    photo: DEMO ? portrait(p.id) : undefined,
   };
 }
 

@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/ui/Icon';
+import { t as tx } from '@/i18n';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
 import { toLatLng, type LatLng } from '@/data/geo';
 import type { City, CityContent, MapPoint } from '@/data/types';
@@ -83,8 +84,8 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       // A live is placed at its neighbourhood, never at an address.
       areaId: l.areaId,
       point: jitter(pt(l.areaId), l.id, 0.03),
-      title: p ? `${p.name} is live` : 'You are live',
-      subtitle: `${l.place} · now`,
+      title: p ? tx('{name} is live', { name: p.name }) : tx('You are live'),
+      subtitle: `${tx(l.place)} · ${tx('now')}`,
       icon: 'zap',
       color: status.live,
       personId: p?.id,
@@ -114,8 +115,8 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       type: 'activity',
       areaId: s.areaId,
       point: jitter(pt(s.areaId), s.id),
-      title: s.title,
-      subtitle: `${s.venue} · ${whenLabel(s.when, city)}`,
+      title: tx(s.title),
+      subtitle: `${tx(s.venue)} · ${whenLabel(s.when, city)}`,
       icon: ACTIVITIES[s.kind].icon,
       color: activityColor(s.kind),
       hero: { kind: 'session', id: s.id },
@@ -131,8 +132,8 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       type: 'event',
       areaId: e.areaId,
       point: jitter(pt(e.areaId), e.id),
-      title: e.title,
-      subtitle: `${e.venue} · ${whenLabel(e.when, city)}`,
+      title: tx(e.title),
+      subtitle: `${tx(e.venue)} · ${whenLabel(e.when, city)}`,
       icon: EVENT_CATEGORIES[e.category].icon,
       color: eventColor(e.category),
       hero: { kind: 'event', id: e.id },
@@ -151,7 +152,7 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       areaId: city.areas[hash(c.id) % city.areas.length].id,
       point: jitter(pt(city.areas[hash(c.id) % city.areas.length].id), c.id),
       title: c.name,
-      subtitle: `${formatCount(c.members)} members · ${c.rhythm}`,
+      subtitle: `${tx('{n} members', { n: formatCount(c.members) })} · ${tx(c.rhythm)}`,
       icon: 'users',
       color: category.business,
       hero: { kind: 'community', id: c.id },
@@ -166,7 +167,7 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       areaId: p.areaId,
       point: jitter(pt(p.areaId), p.id),
       title: p.name,
-      subtitle: `${PLACE_KINDS[p.kind].label} · ★ ${p.rating.toFixed(1)}`,
+      subtitle: `${tx(PLACE_KINDS[p.kind].label)} · ★ ${p.rating.toFixed(1)}`,
       icon: PLACE_KINDS[p.kind].icon,
       color: placeColor(p.kind),
       hero: { kind: 'place', id: p.id },

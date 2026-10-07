@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://getirly.com/sitemap.xml

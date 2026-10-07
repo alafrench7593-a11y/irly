@@ -1,0 +1,101 @@
+name: Expo Go link
+
+# Runs the IRLY dev server on a GitHub runner with an Expo tunnel, so a phone
+# anywhere can open the app in Expo Go. The exp:// link (and a QR code) is
+# posted in the issue "Expo Go: IRLY link". The server stays up 2 hours.
+# Start it: Actions → Expo Go link → Run workflow, or push a change to
+# .github/expo-go.txt on the working branch.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths:
+      - '.github/expo-go.txt'
+      - '.github/workflows/expo-go.yml'
+
+concurrency:
+  group: expo-go
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 130
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Start a Cloudflare tunnel (Expo's ngrok tunnel is broken)
+        run: |
+          curl -sL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
+          nohup ./cloudflared tunnel --url http://localhost:8082 --no-autoupdate > cf.log 2>&1 &
+          for i in $(seq 1 60); do
+            HOST=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' cf.log | head -1 | sed 's#https://##' || true)
+            [ -n "$HOST" ] && break
+            sleep 2
+          done
+          cat cf.log | tail -20
+          [ -n "$HOST" ] || { echo "No tunnel"; exit 1; }
+          echo "HOST=$HOST" >> "$GITHUB_ENV"
+          echo "URL=exp://$HOST" >> "$GITHUB_ENV"
+      - name: Start Metro behind the tunnel
+        run: |
+          EXPO_PACKAGER_PROXY_URL="https://$HOST" nohup npx expo start --go --port 8081 > expo.log 2>&1 &
+          HOST="$HOST" nohup node .github/scripts/expo-go-proxy.mjs > proxy.log 2>&1 &
+          for i in $(seq 1 90); do
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/status | grep -q 200 && break
+            sleep 4
+          done
+          cat expo.log
+          curl -s http://localhost:8081/status
+          # The manifest must point at the tunnel, not localhost.
+          curl -s -H "expo-platform: ios" -H "accept: application/expo+json" http://localhost:8081/ | head -c 600; echo
+      - name: Warm up the bundle (first open is then fast)
+        run: |
+          curl -s -o /dev/null -w "android bundle: %{http_code}\n" "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=android&dev=true&minify=false" --max-time 600 || true
+          curl -s -o /dev/null -w "ios bundle: %{http_code}\n" "http://localhost:8081/node_modules/expo-router/entry.bundle?platform=ios&dev=true&minify=false" --max-time 600 || true
+      - name: Browser version (no Expo Go needed)
+        run: |
+          npx expo export -p web --output-dir dist > web-build.log 2>&1 || tail -30 web-build.log
+          nohup node .github/scripts/web-serve.mjs > web.log 2>&1 &
+          nohup ./cloudflared tunnel --url http://localhost:8083 --no-autoupdate > cf-web.log 2>&1 &
+          for i in $(seq 1 60); do
+            WEB=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' cf-web.log | head -1 || true)
+            [ -n "$WEB" ] && break
+            sleep 2
+          done
+          echo "WEB=$WEB" >> "$GITHUB_ENV"
+      - name: Check the public URL like a phone would
+        run: |
+          sleep 5
+          echo "WEBOK=$(curl -s -o /dev/null -w '%{http_code}' $WEB/)" >> "$GITHUB_ENV"
+          echo "OPEN=$(curl -s -o /dev/null -w '%{http_code}' https://$HOST/open)" >> "$GITHUB_ENV"
+          echo "MANIFEST=$(curl -s -o /dev/null -w '%{http_code}' -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' https://$HOST/)" >> "$GITHUB_ENV"
+          echo "MANIFEST_HTTP=$(curl -s -o /dev/null -w '%{http_code}' -H 'expo-platform: ios' -H 'accept: application/expo+json,application/json' http://$HOST/)" >> "$GITHUB_ENV"
+          curl -s -H 'expo-platform: android' -H 'accept: application/expo+json,application/json' https://$HOST/ | head -c 400; echo
+      - name: Post the link
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAP="https://expo.dev/--/to-exp/$(node -e "process.stdout.write(encodeURIComponent(process.env.URL))")"
+          TAPS="https://expo.dev/--/to-exp/$(node -e "process.stdout.write(encodeURIComponent(process.env.URL.replace('exp://','exps://')))")"
+          QR="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$(node -e "process.stdout.write(encodeURIComponent(process.env.URL))")"
+          UNTIL=$(date -u -d '+2 hours' '+%H:%M UTC')
+          BODY=$(printf '## IRLY sur ton téléphone\n\n### Le plus simple : dans le navigateur (Safari / Chrome)\n**%s**\n\n### Ou dans Expo Go\n**Ouvre : https://%s/open** puis touche le bouton.\n\n1. Installe **Expo Go** (App Store / Google Play).\n2. Autres liens : %s (ou %s)\n   Lien Expo Go : **%s**\n   Si rien ne se passe : ouvre Expo Go → « Enter URL manually » → colle `%s`\n   (ou scanne le QR code : appareil photo sur iPhone, Expo Go sur Android)\n\n![QR](%s)\n\nActif jusqu’à **%s** environ. Commit `%s`.\n\nContrôle serveur : navigateur %s, page %s, manifest https %s, http %s.\n' "$WEB" "$HOST" "$TAP" "$TAPS" "$URL" "$URL" "$QR" "$UNTIL" "${GITHUB_SHA::7}" "$WEBOK" "$OPEN" "$MANIFEST" "$MANIFEST_HTTP")
+          N=$(gh issue list --state open --search "Expo Go: IRLY link in:title" --json number --jq '.[0].number')
+          if [ -n "$N" ]; then gh issue edit "$N" --body "$BODY"; gh issue comment "$N" --body "Nouveau lien : $URL (jusqu’à $UNTIL)"; else gh issue create --title "Expo Go: IRLY link" --body "$BODY"; fi
+      - name: Keep the server up
+        run: |
+          for i in $(seq 1 120); do
+            sleep 60
+            pgrep -f "expo start" > /dev/null || { echo "Metro stopped"; tail -50 expo.log; exit 1; }
+          done

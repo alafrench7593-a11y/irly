@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { t as tx } from '@/i18n';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
@@ -16,27 +17,14 @@ import { useLives } from '@/features/live/liveStore';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { space } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
 import { MapButton, MapTopBar, ModeSwitch, searchMap, type Layer } from './MapControls';
 import { ClusterView, MarkerView } from './MapMarkers';
 import { MapSheet, type Snap } from './MapSheet';
-import { buildMarkers, type MapMarkerData, type MarkerType } from './markers';
+import { buildMarkers, type MapMarkerData } from './markers';
+import { placeMarkers, STREET, type Located } from './place';
 
 export const hasRealMap = true;
-
-type Placed = { kind: 'marker'; m: MapMarkerData & { coords: LatLng } } | { kind: 'cluster'; id: string; coords: LatLng; members: MapMarkerData[]; colors: string[] };
-
-/** Map spans (latitude delta) for the zoom bands of the spec. */
-const STREET = 0.045;
-const CITY = 0.14;
-
-const MIN_SPAN: Record<MarkerType, number> = {
-  live: Infinity,
-  activity: Infinity,
-  event: Infinity,
-  group: CITY,
-  person: STREET,
-  place: STREET,
-};
 
 /**
  * Real map: Apple Maps on iPhone, Google Maps on Android (both available in
@@ -47,6 +35,8 @@ const MIN_SPAN: Record<MarkerType, number> = {
  */
 export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const insets = useSafeAreaInsets();
+  const t = useTheme();
+  const night = t.mode === 'night';
   const frame = useFrame();
   const tabSpace = useTabBarSpace();
   const map = useRef<MapView>(null);
@@ -65,7 +55,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const sheetArea = frame.height - sheetBottom;
 
   const all = useMemo(
-    () => buildMarkers(city, content, lives).filter((m): m is MapMarkerData & { coords: LatLng } => Boolean(m.coords)),
+    () => buildMarkers(city, content, lives).filter((m): m is Located => Boolean(m.coords)),
     [city, content, lives],
   );
 
@@ -79,35 +69,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   }, [all, city, cityId, areaId]);
   const [region, setRegion] = useState<Region>(start);
 
-  const placed = useMemo<Placed[]>(() => {
-    const shown = all.filter((m) => (layer === 'all' ? region.latitudeDelta <= MIN_SPAN[m.type] : m.type === layer));
-    // Only what is on screen (plus a margin), at most 150 things.
-    const inView = shown.filter(
-      (m) =>
-        Math.abs(m.coords.latitude - region.latitude) < region.latitudeDelta &&
-        Math.abs(m.coords.longitude - region.longitude) < region.longitudeDelta,
-    );
-    const cellLat = (region.latitudeDelta * (region.latitudeDelta > CITY ? 110 : 58)) / frame.height;
-    const cellLng = (region.longitudeDelta * (region.latitudeDelta > CITY ? 110 : 58)) / frame.width;
-    const grid = new Map<string, (MapMarkerData & { coords: LatLng })[]>();
-    for (const m of inView) {
-      const key = `${Math.floor(m.coords.latitude / cellLat)}:${Math.floor(m.coords.longitude / cellLng)}`;
-      const list = grid.get(key);
-      if (list) list.push(m);
-      else grid.set(key, [m]);
-    }
-    const out: Placed[] = [];
-    for (const [key, members] of grid) {
-      if (members.length === 1) {
-        out.push({ kind: 'marker', m: members[0] });
-        continue;
-      }
-      const latitude = members.reduce((s, m) => s + m.coords.latitude, 0) / members.length;
-      const longitude = members.reduce((s, m) => s + m.coords.longitude, 0) / members.length;
-      out.push({ kind: 'cluster', id: `cl-${key}-${members.length}`, coords: { latitude, longitude }, members, colors: [...new Set(members.map((m) => m.color))].slice(0, 4) });
-    }
-    return out.slice(0, 150);
-  }, [all, layer, region, frame]);
+  const placed = useMemo(() => placeMarkers(all, layer, region, frame), [all, layer, region, frame]);
 
   /** Glide so `c` sits in the middle of what the sheet leaves visible. */
   const centerOn = (c: LatLng, span?: number, sheetH = 0) => {
@@ -158,12 +120,20 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
       centerOn(start, start.latitudeDelta);
       return;
     }
+    let pos: Location.LocationObject;
+    try {
+      pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    } catch {
+      // Location services off, no signal, or a timeout: say so and keep the city view.
+      toast('Your position is not available right now. Showing the busiest area', 'pin', 'brand');
+      centerOn(start, start.latitudeDelta);
+      return;
+    }
     setMe(true);
-    const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     const here = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
     const far = Math.abs(here.latitude - start.latitude) > 0.6 || Math.abs(here.longitude - start.longitude) > 0.6;
     if (far) {
-      toast(`You are not in ${city.name} right now. Showing ${city.name}`, 'pin', 'brand');
+      toast(tx('You are not in {city} right now. Showing {city}', { city: city.name }), 'pin', 'brand');
       centerOn(start, start.latitudeDelta);
     } else {
       centerOn(here, 0.02);
@@ -187,8 +157,8 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
         toolbarEnabled={false}
         pitchEnabled
         rotateEnabled
-        userInterfaceStyle="light"
-        customMapStyle={Platform.OS === 'android' ? ANDROID_STYLE : undefined}
+        userInterfaceStyle={night ? 'dark' : 'light'}
+        customMapStyle={Platform.OS === 'android' ? (night ? ANDROID_NIGHT : ANDROID_STYLE) : undefined}
         mapPadding={{ top: insets.top + 110, right: 0, bottom: tabSpace, left: 0 }}
       >
         {placed.map((p) =>
@@ -274,6 +244,18 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
     </View>
   );
 }
+
+/** Google Maps on Android, IRLY Noir: near-black land, deep blue water, roads as faint light. */
+const ANDROID_NIGHT = [
+  { elementType: 'geometry', stylers: [{ color: '#121417' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8A9099' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0B0C0E' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#22252B' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#2C3038' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0A1621' }] },
+];
 
 /** Google Maps on Android: quiet light style so IRLY markers carry the colour. */
 const ANDROID_STYLE = [

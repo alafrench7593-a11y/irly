@@ -71,7 +71,7 @@ const FLAVORS: Record<RegionalCityId, Flavor> = {
       ['yoga', 'Beach yoga · Saadiyat', 'saadiyat', 'Saadiyat public beach', 40],
     ],
     events: [
-      { title: 'Museum late · art & talks', category: 'culture', area: 'saadiyat', venue: 'Saadiyat Cultural District', photo: 'abudhabiSkyline', price: 0, description: 'After-hours galleries, a curator talk and dinner on the waterfront.', highlights: ['Curator talk at 19:30', 'Waterfront dinner', 'Members’ entry'] },
+      { title: 'Museum late · art & talks', category: 'culture', area: 'saadiyat', venue: 'Saadiyat Cultural District', photo: 'gallery', price: 0, description: 'After-hours galleries, a curator talk and dinner on the waterfront.', highlights: ['Curator talk at 19:30', 'Waterfront dinner', 'Members’ entry'] },
       { title: 'Founders breakfast', category: 'business', area: 'maryah', venue: 'Al Maryah Island', photo: 'meeting', price: 0, description: 'Twenty founders, one long table, introductions made by the host.', highlights: ['Hosted introductions', 'Investors attending', 'Free for members'] },
       { title: 'Yas sunset social', category: 'party', area: 'yas', venue: 'Yas Bay waterfront', photo: 'rooftopNeon', price: 90, description: 'Sundowners on the bay with a DJ and the circuit lights coming on.', highlights: ['Bay terrace', 'DJ from 18:00', 'Guest list'] },
       { title: 'Corniche food walk', category: 'food', area: 'corniche', venue: 'Corniche promenade', photo: 'nightMarket', price: 120, description: 'Six stops, from Emirati breakfast to Levantine sweets, with a local host.', highlights: ['6 tastings', 'Local host', 'Small group'] },
@@ -80,7 +80,7 @@ const FLAVORS: Record<RegionalCityId, Flavor> = {
       ['Saadiyat Beach', 'nature', 'saadiyat', 'Soft sand, calm water and turtles nesting nearby.', 1, 4.8, ['Swim', 'Nature'], 'beachSunset'],
       ['Qahwa House', 'cafe', 'maryah', 'Arabic coffee and dates, laptop-friendly mornings.', 2, 4.6, ['Coffee', 'Wi-Fi'], 'coffee'],
       ['Mangrove Kitchen', 'restaurant', 'reem', 'Seafood on a deck over the mangroves.', 3, 4.7, ['Seafood', 'Terrace'], 'dinner'],
-      ['Grand Mosque at dusk', 'nature', 'khalifa', 'The most beautiful hour to visit, respectfully dressed.', 1, 4.9, ['Culture', 'Free'], 'abudhabi'],
+      ['Grand Mosque at dusk', 'nature', 'khalifa', 'The most beautiful hour to visit, respectfully dressed.', 1, 4.9, ['Culture', 'Free'], 'mosque'],
     ],
     communities: [
       ['Abu Dhabi Newcomers', 'Your first circle in the capital', 'interest', 'Welcome dinner · monthly', ['food', 'travel'], 'brunch'],
@@ -182,9 +182,9 @@ const FLAVORS: Record<RegionalCityId, Flavor> = {
       ['running', 'Corniche run', 'fujcity', 'Fujairah Corniche', 0],
     ],
     events: [
-      { title: 'Snorkel day', category: 'sports', area: 'alaqah', venue: 'Al Aqah beach', photo: 'fujairah', price: 180, description: 'Guided snorkel over the reef with a marine biologist, lunch on the beach.', highlights: ['Marine biologist guide', 'Gear included', 'Lunch'] },
+      { title: 'Snorkel day', category: 'sports', area: 'alaqah', venue: 'Al Aqah beach', photo: 'snorkel', price: 180, description: 'Guided snorkel over the reef with a marine biologist, lunch on the beach.', highlights: ['Marine biologist guide', 'Gear included', 'Lunch'] },
       { title: 'Fort & mountains walk', category: 'culture', area: 'fujcity', venue: 'Fujairah Fort', photo: 'fujairah', price: 0, description: 'The oldest fort in the Emirates, the mountains behind it and the stories in between.', highlights: ['Local historian', 'Free', 'Sunset finish'] },
-      { title: 'Dibba dhow trip', category: 'party', area: 'dibba', venue: 'Dibba harbour', photo: 'yacht', price: 220, description: 'A day on a dhow along the fjord-like coast, swim stops included.', highlights: ['2 swim stops', 'Lunch on board', 'Small group'] },
+      { title: 'Dibba dhow trip', category: 'party', area: 'dibba', venue: 'Dibba harbour', photo: 'dhow', price: 220, description: 'A day on a dhow along the fjord-like coast, swim stops included.', highlights: ['2 swim stops', 'Lunch on board', 'Small group'] },
     ],
     places: [
       ['Al Aqah Beach', 'nature', 'alaqah', 'Clear water and coral a few strokes from the sand.', 1, 4.8, ['Snorkel', 'Beach'], 'fujairah'],
@@ -210,7 +210,7 @@ const FLAVORS: Record<RegionalCityId, Flavor> = {
     ],
     events: [
       { title: 'Mangrove clean-up & breakfast', category: 'culture', area: 'mangroves', venue: 'Mangrove Beach', photo: 'uaq', price: 0, description: 'Two hours of clean-up by kayak, then breakfast together on the sand.', highlights: ['Kayaks provided', 'Breakfast', 'Free'] },
-      { title: 'Old Town food walk', category: 'food', area: 'oldtown', venue: 'UAQ Old Town', photo: 'nightMarket', price: 70, description: 'Fishermen’s cafés, sweets shops and the fort at golden hour.', highlights: ['5 tastings', 'Local host', 'Golden hour'] },
+      { title: 'Old Town food walk', category: 'food', area: 'oldtown', venue: 'UAQ Old Town', photo: 'nightMarket', price: 70, description: 'Fishermen’s cafés, sweet shops and the fort at golden hour.', highlights: ['5 tastings', 'Local host', 'Golden hour'] },
     ],
     places: [
       ['Mangrove Beach', 'nature', 'mangroves', 'Kayaks, flamingos and absolute quiet.', 1, 4.7, ['Kayak', 'Nature'], 'uaq'],
@@ -384,7 +384,7 @@ export function regionalContent(cityId: RegionalCityId): CityContent {
           {
             id: 'm1',
             from: communities[0].memberIds[0],
-            text: `Welcome to ${city.name}! Next meetup is on the calendar, see you there?`,
+            text: `Welcome to ${city.name}! The next meetup is on the calendar. See you there?`,
             minAgo: 45,
           },
         ],

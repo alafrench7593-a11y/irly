@@ -1,4 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
+import { CharCount } from '@/components/ui/CharCount';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StyleSheet, TextInput, View } from 'react-native';
@@ -7,6 +10,7 @@ import { Chip, Field } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
+import { LANGUAGES } from '@/data/languages';
 import { StepShell } from '@/features/onboarding/StepShell';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
@@ -14,7 +18,6 @@ import { useCityId, useStore, type Gender } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const LANGUAGES = ['English', 'Français', 'العربية', 'हिन्दी', 'Русский', 'Español', 'Italiano', 'Deutsch', 'Filipino', 'اردو', 'Português', 'Bahasa'];
 
 const GENDERS: { id: Gender; label: string }[] = [
   { id: 'woman', label: 'Woman' },
@@ -36,8 +39,19 @@ export default function ProfileStep() {
   const bio = profile.bio ?? '';
 
   const pick = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85, allowsEditing: true, aspect: [1, 1] });
-    if (!res.canceled && res.assets[0]) update({ photoUri: res.assets[0].uri });
+    // Kept as data (not a blob: or cache file:// URI, which die on reload or
+    // when the OS clears its cache) until it is uploaded at sign-in.
+    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [1, 1] });
+    const a = !res.canceled ? res.assets[0] : null;
+    if (!a) return;
+    // 512 px JPEG as data (~40-80 KB): survives reloads and cache clean-ups,
+    // and stays small enough for the persisted store (web quota, Android 2 MB rows).
+    try {
+      const small = await manipulateAsync(a.uri, [{ resize: { width: 512 } }], { compress: 0.7, format: SaveFormat.JPEG, base64: true });
+      update({ photoUri: small.base64 ? `data:image/jpeg;base64,${small.base64}` : small.uri });
+    } catch {
+      update({ photoUri: a.uri });
+    }
   };
 
   const ok =
@@ -82,7 +96,7 @@ export default function ProfileStep() {
           <Field
             containerStyle={{ width: 110 }}
             icon="calendar"
-            placeholder="Age"
+            placeholder={tx('Age')}
             keyboardType="number-pad"
             maxLength={2}
             value={profile.age ? String(profile.age) : ''}
@@ -92,7 +106,7 @@ export default function ProfileStep() {
           <Field
             containerStyle={{ flex: 1 }}
             icon="globe"
-            placeholder="Country (e.g. France)"
+            placeholder={tx('Country (e.g. France)')}
             value={profile.country ?? ''}
             onChangeText={(country) => update({ country })}
             autoCapitalize="words"
@@ -113,16 +127,14 @@ export default function ProfileStep() {
         <TextInput
           value={bio}
           onChangeText={(b) => update({ bio: b })}
-          placeholder={'French in Dubai\nEntrepreneur · Padel · Travel\nAlways down for coffee.'}
+          placeholder={tx('French in {city}\nEntrepreneur · Padel · Travel\nAlways down for coffee.', { city: city.name })}
           placeholderTextColor={t.c.textTertiary}
           multiline
           maxLength={160}
           style={[styles.bio, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }]}
           accessibilityLabel="Short bio"
         />
-        <Text variant="caption" tone="tertiary" align="right">
-          {bio.length}/160
-        </Text>
+        <CharCount length={bio.trim().length} min={10} max={160} />
       </Animated.View>
 
       <Animated.View entering={enter.rise(4, 80)} style={styles.block}>

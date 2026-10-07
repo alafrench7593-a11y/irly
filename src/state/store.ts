@@ -33,6 +33,8 @@ export type LookingFor =
   | 'irlygirl';
 
 export type Profile = {
+  /** The account this on-device profile was published to; never sent to another one. */
+  ownerId?: string;
   name: string;
   types: UserType[];
   interests: Interest[];
@@ -84,6 +86,10 @@ export type MyPlan = {
   spots: number;
   areaId: string;
   createdAt: number;
+  /** The same plan on the server, once it was saved there (avoids showing it twice). */
+  serverId?: string;
+  /** The creator's own photo, on this phone. */
+  coverUri?: string;
 };
 
 export type Booking = {
@@ -116,11 +122,14 @@ type State = {
   waitlist: Flags;
   lastIntent: Intent | null;
   myPlans: MyPlan[];
+  /** Emirates: show only my emirate (false = all seven, the default). */
+  emirateOnly: boolean;
 };
 
 type Actions = {
   setDestination: (destinationId: DestinationId, cityId?: CityId) => void;
   setCity: (cityId: CityId) => void;
+  setEmirateOnly: (on: boolean) => void;
   updateProfile: (patch: Partial<Profile>) => void;
   completeOnboarding: () => void;
   resetOnboarding: () => void;
@@ -140,6 +149,7 @@ type Actions = {
   joinWaitlist: (destinationId: DestinationId) => void;
   setIntent: (intent: Intent) => void;
   postPlan: (plan: Omit<MyPlan, 'id' | 'createdAt'>) => MyPlan;
+  linkPlan: (id: string, serverId: string) => void;
 };
 
 export const emptyProfile: Profile = { name: '', types: [], interests: [], activities: [], languages: [], lookingFor: [] };
@@ -207,6 +217,7 @@ export const useStore = create<State & Actions>()(
       waitlist: {},
       lastIntent: null,
       myPlans: [],
+      emirateOnly: false,
 
       setDestination: (destinationId, cityId) =>
         set({ destinationId, cityId: cityId ?? DESTINATIONS[destinationId].defaultCity ?? null }),
@@ -216,6 +227,7 @@ export const useStore = create<State & Actions>()(
         );
         set({ cityId, destinationId: destinationId ?? get().destinationId });
       },
+      setEmirateOnly: (on) => set({ emirateOnly: on }),
       updateProfile: (patch) => set({ profile: { ...get().profile, ...patch } }),
       completeOnboarding: () => set({ onboarded: true }),
       deleteAccount: () =>
@@ -306,6 +318,7 @@ export const useStore = create<State & Actions>()(
         set({ myPlans: [created, ...get().myPlans] });
         return created;
       },
+      linkPlan: (id, serverId) => set({ myPlans: get().myPlans.map((p) => (p.id === id ? { ...p, serverId } : p)) }),
     }),
     {
       name: 'irly-v2',

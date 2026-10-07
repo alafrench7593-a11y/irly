@@ -152,6 +152,60 @@ export const CITIES: Record<CityId, City> = {
       { id: 'jlt', name: 'JLT', point: { x: 0.27, y: 0.77 } },
       { id: 'hills', name: 'Dubai Hills', point: { x: 0.46, y: 0.73 } },
       { id: 'alqudra', name: 'Al Qudra', point: { x: 0.6, y: 0.92 } },
+      { id: 'jbr', name: 'JBR', point: { x: 0.5, y: 0.86 } },
+      { id: 'jvc', name: 'JVC', point: { x: 0.62, y: 0.8 } },
+      { id: 'citywalk', name: 'City Walk', point: { x: 0.68, y: 0.44 } },
+      { id: 'albarsha', name: 'Al Barsha', point: { x: 0.5, y: 0.7 } },
+      { id: 'mirdif', name: 'Mirdif', point: { x: 0.95, y: 0.4 } },
+      { id: 'siliconoasis', name: 'Silicon Oasis', point: { x: 0.9, y: 0.62 } },
+      { id: 'ranches', name: 'Arabian Ranches', point: { x: 0.72, y: 0.84 } },
+      { id: 'jebelali', name: 'Jebel Ali', point: { x: 0.34, y: 0.94 } },
+      { id: 'dubaisouth', name: 'Dubai South', point: { x: 0.46, y: 0.97 } },
+      { id: 'hatta', name: 'Hatta', point: { x: 0.98, y: 0.95 } },
+      // Neighbourhoods and developer communities people actually name.
+      { id: 'creekharbour', name: 'Dubai Creek Harbour', point: { x: 0.875, y: 0.455 } },
+      { id: 'festivalcity', name: 'Dubai Festival City', point: { x: 0.908, y: 0.415 } },
+      { id: 'jaddaf', name: 'Al Jaddaf', point: { x: 0.85, y: 0.423 } },
+      { id: 'garhoud', name: 'Al Garhoud', point: { x: 0.905, y: 0.359 } },
+      { id: 'karama', name: 'Al Karama', point: { x: 0.782, y: 0.359 } },
+      { id: 'satwa', name: 'Al Satwa', point: { x: 0.706, y: 0.392 } },
+      { id: 'wasl', name: 'Al Wasl', point: { x: 0.621, y: 0.474 } },
+      { id: 'umsuqeim', name: 'Umm Suqeim', point: { x: 0.51, y: 0.571 } },
+      { id: 'sufouh', name: 'Al Sufouh', point: { x: 0.383, y: 0.665 } },
+      { id: 'mediacity', name: 'Media City & Internet City', point: { x: 0.346, y: 0.698 } },
+      { id: 'barshaheights', name: 'Barsha Heights', point: { x: 0.396, y: 0.697 } },
+      { id: 'greens', name: 'The Greens & The Views', point: { x: 0.375, y: 0.709 } },
+      { id: 'bluewaters', name: 'Bluewaters', point: { x: 0.242, y: 0.732 } },
+      { id: 'dubaiharbour', name: 'Dubai Harbour', point: { x: 0.301, y: 0.703 } },
+      { id: 'lamer', name: 'La Mer', point: { x: 0.648, y: 0.395 } },
+      { id: 'portrashid', name: 'Mina Rashid', point: { x: 0.724, y: 0.291 } },
+      { id: 'mamzar', name: 'Al Mamzar', point: { x: 0.917, y: 0.226 } },
+      { id: 'qusais', name: 'Al Qusais', point: { x: 0.97, y: 0.274 } },
+      { id: 'nahdadubai', name: 'Al Nahda Dubai', point: { x: 0.97, y: 0.255 } },
+      { id: 'warqa', name: 'Al Warqa', point: { x: 0.97, y: 0.501 } },
+      { id: 'khawaneej', name: 'Al Khawaneej', point: { x: 0.97, y: 0.399 } },
+      { id: 'internationalcity', name: 'International City', point: { x: 0.97, y: 0.563 } },
+      { id: 'nadalsheba', name: 'Nad Al Sheba', point: { x: 0.816, y: 0.562 } },
+      { id: 'meydan', name: 'Meydan', point: { x: 0.739, y: 0.559 } },
+      { id: 'sobha', name: 'Sobha Hartland', point: { x: 0.778, y: 0.517 } },
+      { id: 'azizi', name: 'Azizi Riviera', point: { x: 0.753, y: 0.552 } },
+      { id: 'mbrcity', name: 'MBR City (District One)', point: { x: 0.718, y: 0.534 } },
+      { id: 'd3', name: 'Dubai Design District', point: { x: 0.744, y: 0.491 } },
+      { id: 'barari', name: 'Al Barari', point: { x: 0.764, y: 0.705 } },
+      { id: 'dubailand', name: 'Dubailand', point: { x: 0.755, y: 0.754 } },
+      { id: 'arjan', name: 'Arjan', point: { x: 0.553, y: 0.794 } },
+      { id: 'motorcity', name: 'Motor City', point: { x: 0.534, y: 0.827 } },
+      { id: 'sportscity', name: 'Sports City', point: { x: 0.48, y: 0.839 } },
+      { id: 'damachills', name: 'DAMAC Hills', point: { x: 0.55, y: 0.879 } },
+      { id: 'townsquare', name: 'Town Square', point: { x: 0.639, y: 0.955 } },
+      { id: 'jvt', name: 'JVT', point: { x: 0.408, y: 0.812 } },
+      { id: 'springs', name: 'The Springs & Meadows', point: { x: 0.387, y: 0.787 } },
+      { id: 'jumeirahpark', name: 'Jumeirah Park', point: { x: 0.316, y: 0.82 } },
+      { id: 'alfurjan', name: 'Al Furjan', point: { x: 0.296, y: 0.856 } },
+      { id: 'discoverygardens', name: 'Discovery Gardens', point: { x: 0.275, y: 0.831 } },
+      { id: 'impz', name: 'Dubai Production City', point: { x: 0.401, y: 0.848 } },
+      { id: 'tilalalghaf', name: 'Tilal Al Ghaf', point: { x: 0.484, y: 0.888 } },
+      { id: 'expocity', name: 'Expo City', point: { x: 0.265, y: 0.97 } },
     ],
     homeSections: [
       'forYou',
@@ -205,6 +259,12 @@ export const CITIES: Record<CityId, City> = {
       { id: 'maryah', name: 'Al Maryah', point: { x: 0.54, y: 0.38 } },
       { id: 'yas', name: 'Yas Island', point: { x: 0.86, y: 0.4 } },
       { id: 'khalifa', name: 'Khalifa City', point: { x: 0.78, y: 0.72 } },
+      { id: 'mussafah', name: 'Mussafah', point: { x: 0.7, y: 0.86 } },
+      { id: 'shamkha', name: 'Al Shamkha', point: { x: 0.92, y: 0.8 } },
+      { id: 'alain', name: 'Al Ain', point: { x: 0.98, y: 0.97 } },
+      { id: 'ruwais', name: 'Ruwais', point: { x: 0.03, y: 0.95 } },
+      { id: 'madinatzayed', name: 'Madinat Zayed', point: { x: 0.3, y: 0.97 } },
+      { id: 'liwa', name: 'Liwa', point: { x: 0.5, y: 0.98 } },
     ],
     homeSections: [...CITY_SECTIONS.slice(0, 8), 'business', 'discover'],
     activityKinds: ['padel', 'running', 'cycling', 'kayak', 'football', 'gym', 'tennis', 'yoga'],
@@ -233,6 +293,13 @@ export const CITIES: Record<CityId, City> = {
       { id: 'heritage', name: 'Heart of Sharjah', point: { x: 0.64, y: 0.34 } },
       { id: 'aljada', name: 'Aljada', point: { x: 0.62, y: 0.64 } },
       { id: 'unicity', name: 'University City', point: { x: 0.82, y: 0.74 } },
+      { id: 'alnahda', name: 'Al Nahda', point: { x: 0.36, y: 0.58 } },
+      { id: 'muwaileh', name: 'Muwaileh', point: { x: 0.72, y: 0.56 } },
+      { id: 'dhaid', name: 'Al Dhaid', point: { x: 0.9, y: 0.86 } },
+      { id: 'mleiha', name: 'Mleiha', point: { x: 0.84, y: 0.95 } },
+      { id: 'khorfakkan', name: 'Khor Fakkan', point: { x: 0.98, y: 0.4 } },
+      { id: 'kalba', name: 'Kalba', point: { x: 0.98, y: 0.62 } },
+      { id: 'dibbahisn', name: 'Dibba Al Hisn', point: { x: 0.96, y: 0.12 } },
     ],
     homeSections: CITY_SECTIONS,
     activityKinds: ['football', 'running', 'gym', 'padel', 'cycling', 'basketball'],
@@ -259,6 +326,9 @@ export const CITIES: Record<CityId, City> = {
       { id: 'alzorah', name: 'Al Zorah', point: { x: 0.72, y: 0.3 } },
       { id: 'nuaimiya', name: 'Al Nuaimiya', point: { x: 0.46, y: 0.56 } },
       { id: 'aljurf', name: 'Al Jurf', point: { x: 0.64, y: 0.72 } },
+      { id: 'rashidiya', name: 'Al Rashidiya', point: { x: 0.5, y: 0.46 } },
+      { id: 'manama', name: 'Al Manama', point: { x: 0.92, y: 0.86 } },
+      { id: 'masfout', name: 'Masfout', point: { x: 0.96, y: 0.96 } },
     ],
     homeSections: CITY_SECTIONS,
     activityKinds: ['running', 'swimming', 'volleyball', 'football', 'gym', 'padel'],
@@ -286,6 +356,10 @@ export const CITIES: Record<CityId, City> = {
       { id: 'minaalarab', name: 'Mina Al Arab', point: { x: 0.5, y: 0.46 } },
       { id: 'rakcity', name: 'RAK City', point: { x: 0.66, y: 0.4 } },
       { id: 'jebeljais', name: 'Jebel Jais', point: { x: 0.8, y: 0.8 } },
+      { id: 'nakheel', name: 'Al Nakheel', point: { x: 0.62, y: 0.3 } },
+      { id: 'khuzam', name: 'Khuzam', point: { x: 0.72, y: 0.32 } },
+      { id: 'rams', name: 'Al Rams', point: { x: 0.7, y: 0.12 } },
+      { id: 'digdaga', name: 'Digdaga', point: { x: 0.6, y: 0.66 } },
     ],
     homeSections: CITY_SECTIONS,
     activityKinds: ['hiking', 'cycling', 'kayak', 'padel', 'running', 'yoga'],
@@ -313,6 +387,9 @@ export const CITIES: Record<CityId, City> = {
       { id: 'fujcity', name: 'Fujairah City', point: { x: 0.64, y: 0.46 } },
       { id: 'masafi', name: 'Masafi', point: { x: 0.36, y: 0.7 } },
       { id: 'wadi', name: 'Wadi Wurayah', point: { x: 0.7, y: 0.76 } },
+      { id: 'mirbah', name: 'Mirbah', point: { x: 0.7, y: 0.3 } },
+      { id: 'qidfa', name: 'Qidfa', point: { x: 0.62, y: 0.22 } },
+      { id: 'bidiyah', name: 'Al Bidiyah', point: { x: 0.52, y: 0.16 } },
     ],
     homeSections: CITY_SECTIONS,
     activityKinds: ['hiking', 'swimming', 'kayak', 'running', 'yoga', 'football'],
@@ -339,6 +416,8 @@ export const CITIES: Record<CityId, City> = {
       { id: 'oldtown', name: 'Old Town', point: { x: 0.46, y: 0.42 } },
       { id: 'lagoon', name: 'Khor Al Beidah', point: { x: 0.7, y: 0.34 } },
       { id: 'alsalam', name: 'Al Salam City', point: { x: 0.6, y: 0.66 } },
+      { id: 'alraas', name: 'Al Raas', point: { x: 0.4, y: 0.2 } },
+      { id: 'falaj', name: 'Falaj Al Mualla', point: { x: 0.86, y: 0.86 } },
     ],
     homeSections: CITY_SECTIONS,
     activityKinds: ['kayak', 'running', 'swimming', 'volleyball', 'yoga', 'padel'],
@@ -417,4 +496,20 @@ export function citiesOf(destinationId: DestinationId): City[] {
 
 export function areaName(city: City, areaId: string): string {
   return city.areas.find((a) => a.id === areaId)?.name ?? city.name;
+}
+
+/** Every city of the same destination: the seven emirates see each other, Bali is Bali. */
+export function cityScope(cityId: CityId): CityId[] {
+  const city = CITIES[cityId];
+  return city ? DESTINATIONS[city.destinationId].cities : [cityId];
+}
+
+/**
+ * Where something is, seen from your city: "Al Majaz" at home,
+ * "Al Majaz · Sharjah" when it is in another emirate.
+ */
+export function placeLabel(viewer: CityId, cityId: string | null | undefined, areaId: string, place?: string | null): string {
+  const city = CITIES[(cityId ?? viewer) as CityId] ?? CITIES[viewer];
+  const where = place ?? areaName(city, areaId);
+  return city.id === viewer ? where : `${where} · ${city.name}`;
 }

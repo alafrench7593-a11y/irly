@@ -135,6 +135,9 @@ export const MarkerView = memo(function MarkerView({
   const t = useTheme();
   const { body, ring } = useSelection(selected);
   const label = `${m.title}. ${m.subtitle}`;
+  // IRLY Noir: markers are chips of smoked glass with white type; on the
+  // light map they are white. The category colour stays on the icon.
+  const skin = markerSkin(t.mode === 'night');
 
   let content: React.ReactNode;
   let ringShape = { width: 44, height: 44, borderRadius: 22 };
@@ -152,7 +155,7 @@ export const MarkerView = memo(function MarkerView({
     case 'person': {
       const p = m.personId ? findPerson(m.personId) : undefined;
       content = (
-        <View style={[styles.person, { borderColor: "#FFFFFF", boxShadow: `0px 4px 18px ${m.color}88` }]}>
+        <View style={[styles.person, { borderColor: skin.personEdge, boxShadow: `0px 4px 18px ${m.color}88` }]}>
           <Avatar name={p?.name ?? m.title} hue={p?.hue ?? 0} size={36} />
           <View style={[styles.personStatus, { backgroundColor: m.color, borderColor: t.c.bg }]} />
         </View>
@@ -162,7 +165,7 @@ export const MarkerView = memo(function MarkerView({
     case 'activity':
       ringShape = { width: 64, height: 32, borderRadius: 16 };
       content = (
-        <View style={[styles.pill, { borderColor: selected ? m.color : 'rgba(10,10,10,0.08)' }]}>
+        <View style={[styles.pill, { backgroundColor: skin.fill, boxShadow: skin.shadow, borderColor: selected ? m.color : skin.edge }]}>
           <Icon name={m.icon} size={15} color={m.color} strokeWidth={2.1} />
           <Text variant="label" style={{ fontSize: 12.5 }}>
             {m.count ?? ''}
@@ -178,7 +181,7 @@ export const MarkerView = memo(function MarkerView({
     case 'event':
       ringShape = { width: 40, height: 40, borderRadius: 12 };
       content = (
-        <View style={[styles.event, { borderColor: selected ? m.color : 'rgba(10,10,10,0.1)', borderBottomColor: m.color }]}>
+        <View style={[styles.event, { backgroundColor: skin.solid, boxShadow: skin.shadow, borderColor: selected ? m.color : skin.edge, borderBottomColor: m.color }]}>
           <Text variant="caption" tone="secondary" style={{ fontSize: 8, lineHeight: 10, letterSpacing: 0.8 }}>
             {m.month}
           </Text>
@@ -193,7 +196,7 @@ export const MarkerView = memo(function MarkerView({
       const [a, b] = peopleByIds(m.goingIds ?? []);
       ringShape = { width: 58, height: 34, borderRadius: 17 };
       content = (
-        <View style={[styles.group, { borderColor: selected ? m.color : 'rgba(10,10,10,0.08)' }]}>
+        <View style={[styles.group, { backgroundColor: skin.fill, boxShadow: skin.shadow, borderColor: selected ? m.color : skin.edge }]}>
           <View style={{ flexDirection: 'row' }}>
             {a ? <Avatar name={a.name} hue={a.hue} size={22} ring /> : null}
             {b ? (
@@ -230,12 +233,32 @@ export const MarkerView = memo(function MarkerView({
   );
 });
 
+function markerSkin(night: boolean) {
+  return night
+    ? {
+        fill: 'rgba(22,24,28,0.92)',
+        solid: '#16181C',
+        edge: 'rgba(255,255,255,0.14)',
+        personEdge: 'rgba(255,255,255,0.9)',
+        shadow: '0px 8px 20px rgba(0,0,0,0.55)',
+      }
+    : {
+        fill: 'rgba(255,255,255,0.94)',
+        solid: '#FFFFFF',
+        edge: 'rgba(10,10,10,0.08)',
+        personEdge: '#FFFFFF',
+        shadow: '0px 6px 16px rgba(10,10,10,0.12)',
+      };
+}
+
 function compact(n: number) {
   return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
 }
 
 /** Cluster bubble: total count, ring cut by the categories inside. */
 export const ClusterView = memo(function ClusterView({ c, onPress }: { c: Cluster; onPress: () => void }) {
+  const t = useTheme();
+  const skin = markerSkin(t.mode === 'night');
   const n = c.members.length;
   const size = Math.min(64, 44 + Math.log2(n) * 5);
   const colors = c.colors.length ? c.colors : ['#FFFFFF'];
@@ -246,7 +269,7 @@ export const ClusterView = memo(function ClusterView({ c, onPress }: { c: Cluste
   });
   return (
     <PressableScale haptic="tap" scaleTo={0.9} onPress={onPress} accessibilityLabel={`${n} places here. Zoom in`} hitSlop={6}>
-      <View style={[styles.cluster, { width: size, height: size, borderRadius: size / 2 }, border]}>
+      <View style={[styles.cluster, { width: size, height: size, borderRadius: size / 2, backgroundColor: skin.fill, boxShadow: skin.shadow }, border]}>
         <Text variant="label" style={{ fontSize: n > 99 ? 12 : 14 }}>
           {n}
         </Text>
@@ -263,14 +286,12 @@ const styles = StyleSheet.create({
   person: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   personStatus: { position: 'absolute', right: -1, bottom: -1, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   pill: {
-    boxShadow: '0px 6px 16px rgba(10,10,10,0.12)',
     height: 32,
     paddingHorizontal: 11,
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.94)',
     borderWidth: 1,
   },
   pillLive: { position: 'absolute', top: -3, right: -3 },
@@ -278,7 +299,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderBottomWidth: 2,
     alignItems: 'center',
@@ -293,11 +313,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.94)',
     borderWidth: 1,
   },
   placeWrap: { alignItems: 'center', gap: 3 },
   place: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   placeName: { fontSize: 10, maxWidth: 90 },
-  cluster: { backgroundColor: 'rgba(255,255,255,0.92)', boxShadow: '0px 6px 16px rgba(10,10,10,0.12)', borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  cluster: { borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
 });
