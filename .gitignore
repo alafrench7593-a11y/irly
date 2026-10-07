@@ -41,3 +41,4 @@ yarn-error.*
 /android
 .env
 asc-api-key.p8
+out

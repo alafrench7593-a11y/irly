@@ -1,7 +1,8 @@
 {
-  "buildCommand": "npx expo export -p web",
-  "outputDirectory": "dist",
+  "buildCommand": "node .github/scripts/vercel-build.mjs",
+  "outputDirectory": "out",
   "installCommand": "npm ci --ignore-scripts",
   "framework": null,
-  "rewrites": [{ "source": "/((?!_expo|assets|favicon).*)", "destination": "/index.html" }]
+  "cleanUrls": true,
+  "rewrites": [{ "source": "/app/((?!_expo|assets|favicon|manifest|icon|apple-touch).*)", "destination": "/app/index.html" }]
 }
