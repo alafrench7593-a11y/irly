@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
@@ -91,16 +92,45 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
 
 type MessageRow = { id: string; sender_id: string | null; kind: string; body: string; created_at: string; ref_type?: string | null; ref_id?: string | null };
 
+const PAGE = 50;
+const COLS = 'id, sender_id, kind, body, created_at, ref_type, ref_id';
+// Oldest first; equal times keep a stable order.
+const byTime = (a: MessageRow, b: MessageRow) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id);
+/** Adds rows (new or refetched) without duplicates, in time order. */
+function merge(list: MessageRow[], more: MessageRow[]): MessageRow[] {
+  if (!more.length) return list;
+  const seen = new Map(list.map((m) => [m.id, m]));
+  for (const m of more) seen.set(m.id, m);
+  return [...seen.values()].sort(byTime);
+}
+
+export type ServerMessage = Message & { at: number; name?: string; senderId: string | null; share?: { type: string; id: string | null } };
+
 export type ServerThread = {
   loading: boolean;
   error: string | null;
   title: string;
   kind: InboxRow['kind'] | null;
-  messages: (Message & { name?: string; share?: { type: string; id: string | null } })[];
+  /** The other member of a private chat (to report or block them). */
+  otherId: string | null;
+  messages: ServerMessage[];
+  /** True while older messages may exist above the first one shown. */
+  hasEarlier: boolean;
+  loadEarlier: () => Promise<void>;
   send: (text: string) => Promise<void>;
+  remove: (messageId: string) => Promise<void>;
+  /** Names of the members typing right now. */
+  typing: string[];
+  /** Call while the member types (sent at most every 2 seconds). */
+  setTyping: () => void;
 };
 
-/** One conversation, live: history, new messages as they arrive, sending. */
+/**
+ * One conversation, live: the latest messages, older ones on demand, new
+ * ones as they arrive (and the ones missed while the app was in the
+ * background or offline, fetched again on return), deletions, and who is
+ * typing.
+ */
 export function useServerThread(conversationId: string): ServerThread {
   const account = useAccount();
   const uid = account?.userId;
@@ -110,76 +140,183 @@ export function useServerThread(conversationId: string): ServerThread {
   const [kind, setKind] = useState<InboxRow['kind'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasEarlier, setHasEarlier] = useState(false);
+  const [typing, setTypingNames] = useState<Record<string, number>>({});
+  const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
+  const lastTyping = useRef(0);
 
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
+    // The newest page, merged into what is on screen (first load, and after a gap).
+    const latest = async () => {
+      const { data, error: e } = await supabase!
+        .from('messages')
+        .select(COLS)
+        .eq('conversation_id', conversationId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(PAGE);
+      if (e) throw new Error(e.message);
+      return (data as MessageRow[]) ?? [];
+    };
     (async () => {
-      const [{ data: conv, error: e1 }, { data: msgs, error: e2 }, { data: members }] = await Promise.all([
-        supabase!.from('conversations').select('id, kind, title').eq('id', conversationId).maybeSingle(),
-        supabase!.from('messages').select('id, sender_id, kind, body, created_at, ref_type, ref_id').eq('conversation_id', conversationId).is('deleted_at', null).order('created_at').limit(200),
-        supabase!.from('conversation_members').select('user_id, profiles(first_name)').eq('conversation_id', conversationId),
-      ]);
-      if (!alive) return;
-      if (e1 || e2 || !conv) {
-        setError(e1?.message ?? e2?.message ?? 'This conversation is not available');
+      try {
+        const [{ data: conv, error: e1 }, msgs, { data: members }] = await Promise.all([
+          supabase!.from('conversations').select('id, kind, title').eq('id', conversationId).maybeSingle(),
+          latest(),
+          supabase!.from('conversation_members').select('user_id, profiles(first_name)').eq('conversation_id', conversationId),
+        ]);
+        if (!alive) return;
+        if (e1 || !conv) {
+          setError(e1?.message ?? 'This conversation is not available');
+          setLoading(false);
+          return;
+        }
+        const map: Record<string, string> = {};
+        (members ?? []).forEach((m: { user_id: string; profiles: { first_name: string } | { first_name: string }[] | null }) => {
+          const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+          if (p) map[m.user_id] = p.first_name;
+        });
+        setNames(map);
+        const other = Object.entries(map).find(([id]) => id !== uid)?.[1];
+        setTitle(conv.title ?? other ?? 'IRLY');
+        setKind(conv.kind);
+        setRows(msgs.slice().sort(byTime));
+        setHasEarlier(msgs.length === PAGE);
         setLoading(false);
-        return;
+        supabase!.rpc('mark_conversation_read', { p_conversation: conversationId }).then(() => undefined);
+      } catch (e) {
+        if (!alive) return;
+        setError(e instanceof Error ? e.message : 'Can’t reach IRLY right now');
+        setLoading(false);
       }
-      const map: Record<string, string> = {};
-      (members ?? []).forEach((m: { user_id: string; profiles: { first_name: string } | { first_name: string }[] | null }) => {
-        const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
-        if (p) map[m.user_id] = p.first_name;
-      });
-      setNames(map);
-      const other = Object.entries(map).find(([id]) => id !== uid)?.[1];
-      setTitle(conv.title ?? other ?? 'IRLY');
-      setKind(conv.kind);
-      setRows((msgs as MessageRow[]) ?? []);
-      setLoading(false);
-      supabase!.rpc('mark_conversation_read', { p_conversation: conversationId });
     })();
 
+    // Back from the background or a reconnection: fetch what was missed.
+    const catchUp = () =>
+      latest()
+        .then((msgs) => {
+          if (!alive) return;
+          // The newest page replaces its own time span: messages deleted meanwhile go too.
+          const from = msgs.length === PAGE ? msgs[msgs.length - 1].created_at : '';
+          setRows((list) => merge(list.filter((x) => x.created_at < from), msgs));
+          supabase?.rpc('mark_conversation_read', { p_conversation: conversationId }).then(() => undefined);
+        })
+        .catch(() => undefined);
+
+    let joinedOnce = false;
     const channel = supabase
-      .channel(topic(`thread-${conversationId}`))
+      .channel(topic(`thread-${conversationId}`), { config: { broadcast: { self: false } } })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow;
-        setRows((list) => (list.some((x) => x.id === m.id) ? list : [...list, m]));
-        supabase?.rpc('mark_conversation_read', { p_conversation: conversationId });
+        setRows((list) => merge(list, [m]));
+        if (m.sender_id) setTypingNames((t) => (m.sender_id! in t ? Object.fromEntries(Object.entries(t).filter(([k]) => k !== m.sender_id)) : t));
+        supabase?.rpc('mark_conversation_read', { p_conversation: conversationId }).then(() => undefined);
       })
-      .subscribe();
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        const m = payload.new as MessageRow & { deleted_at?: string | null };
+        setRows((list) => (m.deleted_at ? list.filter((x) => x.id !== m.id) : merge(list, [m])));
+      })
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        const who = (payload as { uid?: string })?.uid;
+        if (!who || who === uid) return;
+        setTypingNames((t) => ({ ...t, [who]: Date.now() }));
+      })
+      .subscribe((status) => {
+        // A rejoin after a dropped connection: the gap is filled from the server.
+        if (status === 'SUBSCRIBED') {
+          if (joinedOnce) catchUp();
+          joinedOnce = true;
+        }
+      });
+    channelRef.current = channel;
+    const app = AppState.addEventListener('change', (st) => {
+      if (st === 'active') catchUp();
+    });
     return () => {
       alive = false;
+      app.remove();
+      channelRef.current = null;
       supabase?.removeChannel(channel);
     };
   }, [conversationId, uid]);
 
+  // "Typing…" fades 4 seconds after the last signal.
+  const typingCount = Object.keys(typing).length;
+  useEffect(() => {
+    if (!typingCount) return;
+    const h = setInterval(() => {
+      const now = Date.now();
+      setTypingNames((t) => {
+        const keep = Object.entries(t).filter(([, at]) => now - at < 4000);
+        return keep.length === Object.keys(t).length ? t : Object.fromEntries(keep);
+      });
+    }, 1000);
+    return () => clearInterval(h);
+  }, [typingCount]);
+
+  const loadEarlier = useCallback(async () => {
+    if (!supabase || !rows.length) return;
+    const { data, error: e } = await supabase
+      .from('messages')
+      .select(COLS)
+      .eq('conversation_id', conversationId)
+      .is('deleted_at', null)
+      .lt('created_at', rows[0].created_at)
+      .order('created_at', { ascending: false })
+      .limit(PAGE);
+    if (e) throw new Error(e.message);
+    const older = (data as MessageRow[]) ?? [];
+    setRows((list) => merge(list, older));
+    setHasEarlier(older.length === PAGE);
+  }, [conversationId, rows]);
+
   const send = useCallback(
     async (text: string) => {
       if (!supabase || !uid) throw new Error('Sign in to send messages');
-      const { data, error: e } = await supabase
-        .from('messages')
-        .insert({ conversation_id: conversationId, sender_id: uid, body: text })
-        .select('id, sender_id, kind, body, created_at, ref_type, ref_id')
-        .single();
-      if (e) throw new Error(e.message);
-      setRows((list) => (list.some((x) => x.id === data.id) ? list : [...list, data as MessageRow]));
+      const { data, error: e } = await supabase.from('messages').insert({ conversation_id: conversationId, sender_id: uid, body: text }).select(COLS).single();
+      if (e) {
+        throw new Error(
+          /row-level|policy|blocked|not accept/i.test(e.message) ? 'This member does not accept messages from you' : /fetch|network/i.test(e.message) ? 'No connection: message not sent' : e.message,
+        );
+      }
+      setRows((list) => merge(list, [data as MessageRow]));
     },
     [conversationId, uid],
   );
 
+  const remove = useCallback(async (messageId: string) => {
+    if (!supabase) return;
+    const { error: e } = await supabase.rpc('delete_my_message', { p_message: messageId });
+    if (e) throw new Error(e.message);
+    setRows((list) => list.filter((x) => x.id !== messageId));
+  }, []);
+
+  const setTyping = useCallback(() => {
+    const now = Date.now();
+    if (!uid || now - lastTyping.current < 2000) return;
+    lastTyping.current = now;
+    channelRef.current?.send({ type: 'broadcast', event: 'typing', payload: { uid } }).catch(() => undefined);
+  }, [uid]);
+
   const messages = useMemo(
     () =>
-      rows.map((r) => ({
-    id: r.id,
-    from: r.sender_id === uid ? 'me' : r.sender_id ? r.sender_id : 'irly',
-    name: r.sender_id ? names[r.sender_id] : undefined,
-    text: r.body,
-    minAgo: 0,
-    at: Date.parse(r.created_at),
-    share: r.kind === 'share' && r.ref_type ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
-      })),
+      rows.map(
+        (r): ServerMessage => ({
+          id: r.id,
+          from: r.sender_id === uid ? 'me' : r.sender_id ? r.sender_id : 'irly',
+          senderId: r.sender_id,
+          name: r.sender_id ? names[r.sender_id] : undefined,
+          text: r.body,
+          minAgo: 0,
+          at: Date.parse(r.created_at),
+          share: r.kind === 'share' && r.ref_type ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
+        }),
+      ),
     [rows, names, uid],
   );
-  return { loading: uid ? loading : false, error, title, kind, messages, send };
+  const otherId = kind === 'direct' || kind === 'match' ? (Object.keys(names).find((id) => id !== uid) ?? null) : null;
+  const typingNames = useMemo(() => Object.keys(typing).map((id) => names[id] ?? 'Someone'), [typing, names]);
+  return { loading: uid ? loading : false, error, title, kind, otherId, messages, hasEarlier, loadEarlier, send, remove, typing: typingNames, setTyping };
 }

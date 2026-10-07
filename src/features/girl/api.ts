@@ -1,4 +1,8 @@
-import { GIRLS } from '@/data/content/girls';
+import { DEMO } from '@/config/app';
+import { GIRLS as EXAMPLE_GIRLS } from '@/data/content/girls';
+
+// Example members exist only in the demo build; real members come from the server.
+const GIRLS = DEMO ? EXAMPLE_GIRLS : [];
 import { hasSession, supabase } from '@/lib/supabase';
 import { useStore } from '@/state/store';
 import { DEFAULT_WEIGHTS, matchScore, normalizeReasons, type MatchProfile, type Reasons, type Weights } from './compat';

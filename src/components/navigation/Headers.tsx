@@ -1,3 +1,4 @@
+import { DEMO } from '@/config/app';
 import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
@@ -130,8 +131,8 @@ export function InboxButtons() {
   const account = useAccount();
   const auth = useAuthStatus();
   const server = useServerNotifications();
-  // Signed in: the bell counts real notifications; otherwise the demo ones.
-  const bell = account ? server.unread : auth === 'out' ? 2 : 0;
+  // Signed in: the bell counts real notifications (the demo build shows its examples).
+  const bell = account ? server.unread : DEMO && auth === 'out' ? 2 : 0;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />

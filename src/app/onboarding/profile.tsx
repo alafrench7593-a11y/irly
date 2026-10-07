@@ -10,6 +10,7 @@ import { Chip, Field } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
+import { LANGUAGES } from '@/data/languages';
 import { StepShell } from '@/features/onboarding/StepShell';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
@@ -17,7 +18,6 @@ import { useCityId, useStore, type Gender } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const LANGUAGES = ['English', 'Français', 'العربية', 'हिन्दी', 'Русский', 'Español', 'Italiano', 'Deutsch', 'Filipino', 'اردو', 'Português', 'Bahasa'];
 
 const GENDERS: { id: Gender; label: string }[] = [
   { id: 'woman', label: 'Woman' },

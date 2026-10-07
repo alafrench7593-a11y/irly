@@ -89,7 +89,16 @@ export function ConnectAction({
     );
   }
   if (pro.connection === 'incoming') {
-    return <Button label="Accept" icon="check" size={size} full={full} loading={busy} onPress={() => run('connected', () => proConnect(pro.userId), 'You and {name} are connected')} />;
+    return (
+      <View style={{ flexDirection: 'row', gap: 8, alignSelf: full ? 'stretch' : 'auto' }}>
+        <View style={{ flex: 2 }}>
+          <Button label="Accept" icon="check" size={size} full loading={busy} onPress={() => run('connected', () => proConnect(pro.userId), 'You and {name} are connected')} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button label="Decline" variant="secondary" size={size} full disabled={busy} onPress={() => run('none', () => removeFriend(pro.userId), 'Request from {name} declined')} />
+        </View>
+      </View>
+    );
   }
   if (pro.connection === 'requested') {
     return (

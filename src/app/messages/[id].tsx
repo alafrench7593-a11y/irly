@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { NotFound } from '@/components/layout/NotFound';
-import { t as tx } from '@/i18n';
+import { dateLocale, t as tx } from '@/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
@@ -16,6 +16,11 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { IconButton } from '@/components/ui/Controls';
+import { Button } from '@/components/ui/Button';
+import { Sheet } from '@/components/ui/Sheet';
+import { blockUser, type ReportTarget } from '@/features/moderation/moderation';
+import { ReportSheet } from '@/features/moderation/ReportSheet';
+import { confirm } from '@/lib/confirm';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -36,6 +41,18 @@ export default function ThreadScreen() {
   return isServerId(id) ? <ServerThreadView id={id} /> : <Thread />;
 }
 
+/** A day line between messages of different days ("Today", "Yesterday", "Mon 5 Oct"). */
+function dayLabel(at: number): string {
+  const d = new Date(at);
+  const today = new Date();
+  const start = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((start(today) - start(d)) / 86_400_000);
+  if (diff === 0) return tx('Today');
+  if (diff === 1) return tx('Yesterday');
+  return d.toLocaleDateString(dateLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
+}
+const clock = (at: number) => new Date(at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
+
 /** A live conversation from the IRLY server: realtime in, optimistic out. */
 function ServerThreadView({ id }: { id: string }) {
   const t = useTheme();
@@ -44,7 +61,13 @@ function ServerThreadView({ id }: { id: string }) {
   const thread = useServerThread(id);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [earlier, setEarlier] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [reporting, setReporting] = useState<ReportTarget | null>(null);
+  const [reportName, setReportName] = useState<string | undefined>();
   const scrollRef = useRef<ScrollView>(null);
+  // Keep the view at the bottom, except right after loading older messages.
+  const stick = useRef(true);
 
   const send = async () => {
     const body = text.trim();
@@ -52,9 +75,9 @@ function ServerThreadView({ id }: { id: string }) {
     haptic('tap');
     setSending(true);
     setText('');
+    stick.current = true;
     try {
       await thread.send(body);
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     } catch (e) {
       setText(body);
       toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live');
@@ -63,14 +86,33 @@ function ServerThreadView({ id }: { id: string }) {
     }
   };
 
+  const onLong = (m: (typeof thread.messages)[number]) => {
+    if (m.from === 'irly') return;
+    haptic('select');
+    if (m.from === 'me') {
+      confirm('Delete this message for everyone?', () => thread.remove(m.id).catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')));
+    } else {
+      setReportName(m.name);
+      setReporting({ kind: 'message', id: m.id, userId: m.senderId });
+    }
+  };
+
   const group = thread.kind !== null && thread.kind !== 'direct' && thread.kind !== 'match';
+  const other = thread.otherId;
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
-          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+          onContentSizeChange={() => {
+            if (stick.current) scrollRef.current?.scrollToEnd({ animated: false });
+          }}
+          onScroll={(e) => {
+            const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+            stick.current = contentOffset.y + layoutMeasurement.height > contentSize.height - 120;
+          }}
+          scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
         >
           {thread.loading ? <ActivityIndicator color={t.c.text} /> : null}
@@ -79,67 +121,130 @@ function ServerThreadView({ id }: { id: string }) {
               {thread.error}
             </Text>
           ) : null}
+          {thread.hasEarlier ? (
+            <PressableScale
+              haptic="select"
+              onPress={async () => {
+                if (earlier) return;
+                setEarlier(true);
+                stick.current = false;
+                try {
+                  await thread.loadEarlier();
+                } catch {
+                  toast('Can’t reach IRLY right now', 'x', 'live');
+                } finally {
+                  setEarlier(false);
+                }
+              }}
+              style={[styles.earlier, { borderColor: t.c.line }]}
+              accessibilityRole="button"
+            >
+              {earlier ? <ActivityIndicator color={t.c.text} /> : <Text variant="label">Load earlier messages</Text>}
+            </PressableScale>
+          ) : null}
+          {!thread.loading && !thread.error && !thread.messages.length ? (
+            <Text variant="bodyS" tone="secondary" align="center" style={{ marginTop: space[6] }}>
+              Say hello 👋 Messages appear here for both of you.
+            </Text>
+          ) : null}
           {thread.messages.map((m, i) => {
+            const prev = thread.messages[i - 1];
+            const newDay = !prev || new Date(prev.at).toDateString() !== new Date(m.at).toDateString();
+            const next = thread.messages[i + 1];
+            // The time shows under the last message of a run (same sender, within 5 minutes).
+            const showTime = !next || next.from !== m.from || next.at - m.at > 5 * 60_000;
+            const day = newDay ? (
+              <Text key={`d-${m.id}`} variant="caption" tone="tertiary" align="center" style={{ marginVertical: 6 }}>
+                {dayLabel(m.at)}
+              </Text>
+            ) : null;
             if (m.from === 'irly') {
               return (
-                <View key={m.id} style={styles.note}>
-                  <Text variant="bodyS" tone="secondary" align="center">
-                    {m.text}
-                  </Text>
+                <View key={m.id}>
+                  {day}
+                  <View style={styles.note}>
+                    <Text variant="bodyS" tone="secondary" align="center">
+                      {m.text}
+                    </Text>
+                  </View>
                 </View>
               );
             }
             const mine = m.from === 'me';
-            const showName = !mine && group && thread.messages[i - 1]?.from !== m.from;
+            const showName = !mine && group && prev?.from !== m.from;
             return (
-              <Animated.View key={m.id} entering={FadeInDown.springify(380).dampingRatio(0.8)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
-                {showName ? (
-                  <Text variant="caption" tone="tertiary" style={{ marginLeft: 12, marginBottom: 2 }}>
-                    {m.name ?? 'Member'}
-                  </Text>
-                ) : null}
-                <View
-                  style={[
-                    styles.bubble,
-                    mine
-                      ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
-                      : { backgroundColor: t.c.surface, borderColor: t.c.line, borderWidth: StyleSheet.hairlineWidth * 2, borderBottomLeftRadius: 6 },
-                  ]}
-                >
-                  {m.share ? (
-                    <PressableScale
-                      haptic="select"
-                      onPress={() => {
-                        const sh = m.share;
-                        if (sh?.id && sh.type === 'activity') router.push(`/a/${sh.id}`);
-                        else if (sh?.id && sh.type === 'community') router.push(`/c/${sh.id}`);
-                        else if (sh?.type === 'irl_post') router.push('/live');
-                        else router.push(`/search?q=${encodeURIComponent(m.text)}`);
-                      }}
-                      style={styles.shared}
-                      accessibilityLabel={`Open ${m.text}`}
-                    >
-                      <Icon name={m.share.type === 'activity' ? 'calendar' : m.share.type === 'place' ? 'pin' : 'link'} size={16} color={mine ? t.c.onBrand : t.c.text} />
-                      <Text variant="titleS" raw color={mine ? t.c.onBrand : t.c.text} numberOfLines={2} style={{ flexShrink: 1 }}>
+              <View key={m.id}>
+                {day}
+                <Animated.View entering={FadeInDown.springify(380).dampingRatio(0.8)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
+                  {showName ? (
+                    <Text variant="caption" tone="tertiary" style={{ marginLeft: 12, marginBottom: 2 }} raw>
+                      {m.name ?? tx('Member')}
+                    </Text>
+                  ) : null}
+                  <PressableScale
+                    haptic={false}
+                    scaleTo={0.98}
+                    onLongPress={() => onLong(m)}
+                    delayLongPress={350}
+                    onPress={
+                      m.share
+                        ? () => {
+                            const sh = m.share;
+                            if (sh?.id && sh.type === 'activity') router.push(`/a/${sh.id}`);
+                            else if (sh?.id && sh.type === 'community') router.push(`/c/${sh.id}`);
+                            else if (sh?.type === 'irl_post') router.push('/live');
+                            else router.push(`/search?q=${encodeURIComponent(m.text)}`);
+                          }
+                        : undefined
+                    }
+                    accessibilityHint={mine ? tx('Long press to delete') : tx('Long press to report')}
+                    style={[
+                      styles.bubble,
+                      mine
+                        ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
+                        : { backgroundColor: t.c.surface, borderColor: t.c.line, borderWidth: StyleSheet.hairlineWidth * 2, borderBottomLeftRadius: 6 },
+                    ]}
+                  >
+                    {m.share ? (
+                      <View style={styles.shared}>
+                        <Icon name={m.share.type === 'activity' ? 'calendar' : m.share.type === 'place' ? 'pin' : 'link'} size={16} color={mine ? t.c.onBrand : t.c.text} />
+                        <Text variant="titleS" raw color={mine ? t.c.onBrand : t.c.text} numberOfLines={2} style={{ flexShrink: 1 }}>
+                          {m.text}
+                        </Text>
+                        <Icon name="chevronRight" size={16} color={mine ? t.c.onBrand : t.c.text} />
+                      </View>
+                    ) : (
+                      <Text variant="body" raw color={mine ? t.c.onBrand : t.c.text} selectable>
                         {m.text}
                       </Text>
-                      <Icon name="chevronRight" size={16} color={mine ? t.c.onBrand : t.c.text} />
-                    </PressableScale>
-                  ) : (
-                    <Text variant="body" raw color={mine ? t.c.onBrand : t.c.text}>
-                      {m.text}
+                    )}
+                  </PressableScale>
+                  {showTime ? (
+                    <Text variant="caption" tone="tertiary" style={[{ marginTop: 2 }, mine ? { textAlign: 'right', marginRight: 6 } : { marginLeft: 6 }]} raw>
+                      {clock(m.at)}
                     </Text>
-                  )}
-                </View>
-              </Animated.View>
+                  ) : null}
+                </Animated.View>
+              </View>
             );
           })}
+          {thread.typing.length ? (
+            <View style={{ gap: 2 }}>
+              <Typing />
+              <Text variant="caption" tone="tertiary" style={{ marginLeft: 6 }}>
+                {thread.typing.length === 1 ? tx('{name} is typing…', { name: thread.typing[0] }) : tx('Several people are typing…')}
+              </Text>
+            </View>
+          ) : null}
         </ScrollView>
         <Glass style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
           <View style={[styles.inputWrap, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
             <TextInput
               value={text}
-              onChangeText={setText}
+              onChangeText={(v) => {
+                setText(v);
+                if (v.trim()) thread.setTyping();
+              }}
               placeholder={tx('Message')}
               placeholderTextColor={t.c.textTertiary}
               style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
@@ -150,7 +255,7 @@ function ServerThreadView({ id }: { id: string }) {
             />
           </View>
           <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, opacity: text.trim() ? 1 : 0.4 }]} accessibilityLabel="Send">
-            <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />
+            {sending ? <ActivityIndicator color={t.c.onBrand} /> : <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />}
           </PressableScale>
         </Glass>
       </KeyboardAvoidingView>
@@ -159,16 +264,65 @@ function ServerThreadView({ id }: { id: string }) {
         <View style={styles.headerRow}>
           <IconButton icon="chevronLeft" label="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
           <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text variant="titleS" numberOfLines={1}>
+            <Text variant="titleS" numberOfLines={1} raw>
               {thread.title}
             </Text>
             <Text variant="caption" tone="tertiary">
               {thread.kind === null ? '' : group ? 'Group' : 'Private'}
             </Text>
           </View>
-          <View style={{ width: 40 }} />
+          {other ? <IconButton icon="shield" label={tx('Safety: report or block')} onPress={() => setMenu(true)} /> : <View style={{ width: 40 }} />}
         </View>
       </View>
+      {other ? (
+        <Sheet visible={menu} onClose={() => setMenu(false)} title={thread.title} subtitle={tx('Private chat')}>
+          <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+            <Button
+              label="See professional profile"
+              icon="briefcase"
+              variant="secondary"
+              full
+              onPress={() => {
+                setMenu(false);
+                router.push(`/network/${other}`);
+              }}
+            />
+            <Button
+              label="Report"
+              icon="flag"
+              variant="secondary"
+              full
+              onPress={() => {
+                setMenu(false);
+                setReportName(thread.title);
+                setReporting({ kind: 'profile', userId: other });
+              }}
+            />
+            <Button
+              label="Block"
+              icon="shield"
+              variant="danger"
+              full
+              onPress={() =>
+                confirm(
+                  tx('Block {name}? You will no longer see each other, and this chat closes.', { name: thread.title }),
+                  () =>
+                    blockUser(other)
+                      .then(() => {
+                        setMenu(false);
+                        toast(tx('{name} is blocked', { name: thread.title }), 'shield', 'brand');
+                        if (router.canGoBack()) router.back();
+                        else router.replace('/messages');
+                      })
+                      .catch((e) => toast(e instanceof Error ? e.message : 'Could not block', 'x', 'live')),
+                  'Block',
+                )
+              }
+            />
+          </View>
+        </Sheet>
+      ) : null}
+      <ReportSheet target={reporting} name={reportName} onClose={() => setReporting(null)} onBlocked={() => (router.canGoBack() ? router.back() : router.replace('/messages'))} />
     </View>
   );
 }
@@ -350,6 +504,7 @@ function Dot({ delay }: { delay: number }) {
 
 const styles = StyleSheet.create({
   shared: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  earlier: { alignSelf: 'center', height: 36, paddingHorizontal: 16, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center', marginBottom: 8 },
   root: { flex: 1 },
   intro: { alignItems: 'center', gap: 6, marginBottom: space[6] },
   bubbleRow: { maxWidth: '80%' },

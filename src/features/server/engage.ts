@@ -1,3 +1,4 @@
+import { webLink } from '@/config/app';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/components/ui/Toast';
 import { NONE } from '@/lib/none';
@@ -18,6 +19,9 @@ import { supabase, topic } from '@/lib/supabase';
 export type TargetType = 'irl_post' | 'activity' | 'community' | 'community_post' | 'comment' | 'profile' | 'place' | 'catalog';
 export type Target = { type: TargetType; id: string; title?: string };
 
+/** What a member can report something for (stored with the report). */
+export type ReportCategory = 'harassment' | 'hate_speech' | 'spam' | 'scam' | 'fake_profile' | 'inappropriate' | 'threats' | 'other';
+
 export type Engagement = { likes: number; comments: number; saves: number; liked: boolean; saved: boolean };
 const EMPTY: Engagement = { likes: 0, comments: 0, saves: 0, liked: false, saved: false };
 
@@ -37,7 +41,7 @@ export function deepLink(t: Target): string {
             : `search?q=${encodeURIComponent(t.title ?? t.id)}`;
   // On the web, the address people can actually open; in the app, the public link.
   if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}${process.env.EXPO_BASE_URL ?? ''}/${path}`;
-  return `https://alafrench7593-a11y.github.io/irly/${path}`;
+  return webLink(`/${path}`);
 }
 
 /**
@@ -159,7 +163,7 @@ export async function hideItem(t: Target): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-export async function reportItem(t: Target, category: 'spam' | 'inappropriate' | 'harassment' | 'unsafe' | 'other', ownerId?: string): Promise<void> {
+export async function reportItem(t: Target, category: ReportCategory, ownerId?: string, details?: string): Promise<void> {
   const kind = t.type === 'catalog' || t.type === 'place' ? null : t.type;
   if (!kind) return;
   const { error } = await need().rpc('report', {
@@ -167,7 +171,7 @@ export async function reportItem(t: Target, category: 'spam' | 'inappropriate' |
     p_target_user: ownerId ?? null,
     p_target_id: t.id,
     p_category: category,
-    p_details: null,
+    p_details: details?.trim() ? details.trim().slice(0, 1000) : null,
   });
   if (error) throw new Error(error.message);
 }

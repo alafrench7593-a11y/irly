@@ -1,3 +1,4 @@
+import { webLink } from '@/config/app';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
@@ -434,7 +435,7 @@ export function icsFor(a: { id: string; title: string; startsAt: number; endsAt:
     `DTEND:${stamp(end)}`,
     `SUMMARY:${a.title.replace(/[,;\n]/g, ' ')}`,
     `LOCATION:${(a.placeName ?? a.areaId).replace(/[,;\n]/g, ' ')}`,
-    `URL:https://irly.app/a/${a.id}`,
+    `URL:${webLink(`/a/${a.id}`)}`,
     'END:VEVENT',
     'END:VCALENDAR',
   ].join('\r\n');

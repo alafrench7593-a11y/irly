@@ -1,4 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { IconButton } from '@/components/ui/Controls';
+import { Sheet } from '@/components/ui/Sheet';
+import { toast } from '@/components/ui/Toast';
+import { blockUser } from '@/features/moderation/moderation';
+import { ReportSheet } from '@/features/moderation/ReportSheet';
+import { confirm } from '@/lib/confirm';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +34,8 @@ export default function ProProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { pro, photo, state, setConnection } = usePro(id);
   const me = useMyPro();
+  const [safety, setSafety] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
@@ -159,7 +168,54 @@ export default function ProProfileScreen() {
         ) : null}
       </Animated.ScrollView>
 
-      <PageHeader title={pro.firstName} scrollY={scrollY} />
+      <PageHeader
+        title={pro.firstName}
+        scrollY={scrollY}
+        right={mine ? undefined : <IconButton icon="shield" label={tr('Safety: report or block')} onPress={() => setSafety(true)} />}
+      />
+      {mine ? null : (
+        <Sheet visible={safety} onClose={() => setSafety(false)} title={pro.firstName} subtitle={tr('Report or block this member')}>
+          <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+            <Button
+              label="Report"
+              icon="flag"
+              variant="secondary"
+              full
+              onPress={() => {
+                setSafety(false);
+                setReporting(true);
+              }}
+            />
+            <Button
+              label="Block"
+              icon="shield"
+              variant="danger"
+              full
+              onPress={() =>
+                confirm(
+                  tr('Block {name}? You will no longer see each other, and any connection or request ends.', { name: pro.firstName }),
+                  () =>
+                    blockUser(pro.userId)
+                      .then(() => {
+                        setSafety(false);
+                        toast(tr('{name} is blocked', { name: pro.firstName }), 'shield', 'brand');
+                        if (router.canGoBack()) router.back();
+                        else router.replace('/network');
+                      })
+                      .catch((e) => toast(e instanceof Error ? e.message : tr('Could not block'), 'x', 'live')),
+                  'Block',
+                )
+              }
+            />
+          </View>
+        </Sheet>
+      )}
+      <ReportSheet
+        target={reporting ? { kind: 'profile', userId: pro.userId } : null}
+        name={pro.firstName}
+        onClose={() => setReporting(false)}
+        onBlocked={() => (router.canGoBack() ? router.back() : router.replace('/network'))}
+      />
       <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 14) }]}>
         <Glass style={styles.ctaGlass} intensity={60}>
           {mine ? (

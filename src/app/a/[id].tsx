@@ -1,3 +1,4 @@
+import { webLink } from '@/config/app';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
@@ -143,7 +144,7 @@ export default function ActivityPage() {
       link.download = `${a.title}.ics`;
       link.click();
     } else {
-      await Share.share({ message: `${a.title} · ${when(a.startsAt, a.cityId)} · ${a.placeName ?? areaName(city, a.areaId)}\nhttps://irly.app/a/${a.id}` });
+      await Share.share({ message: `${a.title} · ${when(a.startsAt, a.cityId)} · ${a.placeName ?? areaName(city, a.areaId)}\n${webLink(`/a/${a.id}`)}` });
     }
   };
 

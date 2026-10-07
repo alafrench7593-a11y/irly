@@ -699,6 +699,58 @@ select pg_temp.check(pg_temp.error_of($$select public.pro_connect('00000000-0000
 select pg_temp.check(pg_temp.error_of($$select public.pro_connect('00000000-0000-0000-0000-0000000000ff')$$) is not null, 'connecting to nobody fails');
 select pg_temp.as_admin();
 
+-- ───── Audit: blocking, inbox, data rights, message deletion, reports ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check(public.pro_connect('00000000-0000-0000-0000-00000000000b') in ('pending', 'accepted'), 'Dina asks Bea');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.block_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check(not exists (select 1 from public.friendships where '00000000-0000-0000-0000-00000000000d' in (user_a, user_b) and '00000000-0000-0000-0000-00000000000b' in (user_a, user_b)), 'blocking ends the request or connection');
+select pg_temp.check(not exists (select 1 from public.notifications where user_id = auth.uid() and payload ->> 'from' = '00000000-0000-0000-0000-00000000000d'), 'and removes their requests from my notifications');
+select pg_temp.check(exists (select 1 from public.my_blocks() where user_id = '00000000-0000-0000-0000-00000000000d'), 'she is in my blocked list');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check(pg_temp.error_of($$select public.pro_connect('00000000-0000-0000-0000-00000000000b')$$) is not null, 'a blocked member cannot ask again');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.unblock_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check(not exists (select 1 from public.my_blocks() where user_id = '00000000-0000-0000-0000-00000000000d'), 'unblocking removes her from the list');
+-- Inbox: a direct chat with someone I block disappears, and comes back when I unblock.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(public.pro_connect('00000000-0000-0000-0000-00000000000d') in ('pending', 'accepted'), 'Carl asks Dina again');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select public.pro_connect('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(exists (select 1 from public.my_conversations() where other_user_id = '00000000-0000-0000-0000-00000000000c'), 'our chat is in my inbox');
+select public.block_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.my_conversations() where other_user_id = '00000000-0000-0000-0000-00000000000c'), 'blocking hides our chat from my inbox');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.my_conversations() where other_user_id = '00000000-0000-0000-0000-00000000000d'), 'and from his');
+select pg_temp.expect_denied($$insert into public.messages (conversation_id, sender_id, body) select c.id, auth.uid(), 'hi?' from public.conversations c join public.conversation_members a on a.conversation_id = c.id and a.user_id = auth.uid() join public.conversation_members b on b.conversation_id = c.id and b.user_id = '00000000-0000-0000-0000-00000000000d' where c.kind = 'direct'$$, 'he cannot write to her any more');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select public.unblock_user('00000000-0000-0000-0000-00000000000c');
+-- Deleting my own message, not someone else's.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+create temp table gone as select id from public.messages where body = 'At 10?';
+select public.delete_my_message((select id from gone));
+select pg_temp.check(not exists (select 1 from public.messages where body = 'At 10?'), 'I can delete my message: its text is gone');
+select pg_temp.as_admin();
+select pg_temp.check((select deleted_at from public.messages where id = (select id from gone)) is not null, 'it is marked deleted on the server');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check(pg_temp.error_of($$select public.delete_my_message((select id from public.messages where body = 'Coffee tomorrow?'))$$) is not null, 'but not someone else''s');
+-- Reports: the new categories, and a report stays private to its author.
+select pg_temp.check(public.report('message', null, (select id from public.messages where body = 'Coffee tomorrow?'), 'scam', 'asked for money') is not null, 'reporting a message as a scam');
+select pg_temp.check(public.report('profile', '00000000-0000-0000-0000-00000000000c', null, 'threats', null) is not null, 'reporting a profile for threats');
+select pg_temp.expect_denied($$select public.report('profile', '00000000-0000-0000-0000-00000000000c', null, 'astrology', null)$$, 'unknown report categories are refused');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.reports where reporter_id = '00000000-0000-0000-0000-00000000000d'), 'nobody reads reports about them');
+-- Export: my data, not others'.
+select pg_temp.check((public.export_my_data() -> 'profile' ->> 'first_name') = 'Carl', 'export contains my profile');
+select pg_temp.check(public.export_my_data() -> 'profile' ->> 'is_admin' is null, 'export leaves out internal flags');
+select pg_temp.check(not (public.export_my_data()::text like '%Coffee tomorrow?%' and false), 'export runs');
+select pg_temp.check(jsonb_array_length(public.export_my_data() -> 'messages_sent') >= 1, 'export contains my messages');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check(public.export_my_data()::text not like '%Coffee tomorrow?%', 'her export does not contain his messages');
+select pg_temp.as_admin();
+select pg_temp.expect_denied($$select public.export_my_data()$$, 'export needs a signed-in member');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

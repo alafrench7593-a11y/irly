@@ -44,7 +44,12 @@ if (supabase) {
     .then(({ data }) => {
       setSession(data.session?.user);
       // Still signed in but this device never finished signup (or was reset).
-      if (data.session?.user) restoreProfile(data.session.user.id).catch(() => undefined);
+      if (data.session?.user) {
+        const uid = data.session.user.id;
+        restoreProfile(uid)
+          .then((restored) => (restored ? undefined : refreshOwnPhoto(uid)))
+          .catch(() => undefined);
+      }
     })
     .catch(() => setSession(null));
   supabase.auth.onAuthStateChange((event, session) => {
@@ -170,7 +175,7 @@ async function readBack(uid: string): Promise<boolean> {
   let photoUri: string | undefined;
   const path = r.photo_paths?.[0];
   if (path) {
-    const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 30 * 24 * 3600);
+    const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 7 * 24 * 3600);
     photoUri = signed?.signedUrl ?? undefined;
   }
   const born = r.birthdate ? new Date(r.birthdate).getFullYear() : null;
@@ -249,6 +254,81 @@ function toRow(uid: string, p: Profile, cityId: string) {
     intentions: (p.lookingFor ?? []).map(String),
     onboarded_at: new Date().toISOString(),
   };
+}
+
+/** The fields a member can change after signup (gender stays as declared). */
+export type ProfilePatch = Partial<Pick<Profile, 'name' | 'bio' | 'age' | 'country' | 'languages' | 'interests' | 'activities' | 'lookingFor'>> & {
+  /** A new photo picked on the phone (local or data URI). */
+  photoUri?: string;
+  cityId?: string;
+};
+
+/**
+ * Edit profile: saves on the server first (when signed in), then on this
+ * phone, so what you see is what others see. A new photo replaces the old
+ * file in your storage folder.
+ */
+export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
+  const st = useStore.getState();
+  const uid = useAuthStore.getState().account?.userId;
+  if (patch.name !== undefined && !patch.name.trim()) throw new Error('Add your first name');
+  if (patch.age !== undefined && (patch.age < 18 || patch.age > 120)) throw new Error('IRLY is for people aged 18 and over');
+  let photoUri: string | undefined;
+  if (supabase && uid) {
+    const row: Record<string, unknown> = {};
+    if (patch.name !== undefined) row.first_name = patch.name.trim().slice(0, 40);
+    if (patch.bio !== undefined) row.bio = patch.bio.trim().slice(0, 300) || null;
+    if (patch.age !== undefined) row.birthdate = `${new Date().getFullYear() - patch.age}-01-01`;
+    if (patch.country !== undefined) row.country = patch.country || null;
+    if (patch.languages !== undefined) row.languages = patch.languages.map((l) => LANG[l] ?? l);
+    if (patch.interests !== undefined) row.interests = patch.interests.map(String);
+    if (patch.activities !== undefined) row.activity_prefs = patch.activities.map(String);
+    if (patch.lookingFor !== undefined) row.intentions = patch.lookingFor.map(String);
+    if (patch.cityId !== undefined) row.city_id = patch.cityId;
+    if (patch.photoUri && !/^https?:/.test(patch.photoUri)) {
+      const body = await imageBytes(patch.photoUri);
+      const img = imageType(patch.photoUri);
+      const path = `${uid}/avatar-${Date.now()}.${img.ext}`;
+      const up = await supabase.storage.from('profile-photos').upload(path, body, { contentType: img.contentType });
+      if (up.error) throw new Error('Could not upload the photo. Try again.');
+      const { data: old } = await supabase.rpc('my_profile');
+      const before = ((old as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];
+      row.photo_paths = [path];
+      const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 7 * 24 * 3600);
+      photoUri = signed?.signedUrl ?? patch.photoUri;
+      // The previous photo file goes once the new one is saved (below).
+      if (Object.keys(row).length) {
+        const { error } = await supabase.from('profiles').update(row).eq('id', uid);
+        if (error) {
+          await supabase.storage.from('profile-photos').remove([path]);
+          throw new Error(error.message);
+        }
+      }
+      const stale = before.filter((p) => p !== path && p.startsWith(`${uid}/`));
+      if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
+    } else if (Object.keys(row).length) {
+      const { error } = await supabase.from('profiles').update(row).eq('id', uid);
+      if (error) throw new Error(/check constraint|birthdate/i.test(error.message) ? 'Some fields are not valid' : error.message);
+    }
+  }
+  const { cityId, photoUri: picked, ...rest } = patch;
+  st.updateProfile({ ...rest, ...(picked ? { photoUri: photoUri ?? picked } : {}) });
+  if (cityId && cityId in CITIES) st.setDestination(CITIES[cityId as keyof typeof CITIES].destinationId, cityId as keyof typeof CITIES);
+}
+
+/**
+ * Signed photo links expire: on every launch the profile photo link is
+ * renewed from the server, so it never turns into a broken image.
+ */
+export async function refreshOwnPhoto(uid: string): Promise<void> {
+  if (!supabase) return;
+  const st = useStore.getState();
+  if (!st.onboarded || (st.profile.ownerId && st.profile.ownerId !== uid)) return;
+  const { data } = await supabase.rpc('my_profile');
+  const path = ((data as ServerProfile[] | null) ?? [])[0]?.photo_paths?.[0];
+  if (!path) return;
+  const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 7 * 24 * 3600);
+  if (signed?.signedUrl) st.updateProfile({ photoUri: signed.signedUrl });
 }
 
 export async function signOut(): Promise<void> {

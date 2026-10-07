@@ -47,6 +47,15 @@ export default function Notifications() {
   return (
     <Page title="Notifications" subtitle="Only what helps you meet people.">
       <ServerNotifications />
+      {auth === 'out' && !items.length ? (
+        <View style={[styles.list, { alignItems: 'center', gap: 12, paddingTop: space[6] }]}>
+          <Icon name="bell" size={26} color={t.c.textSecondary} />
+          <Text variant="body" tone="secondary" align="center">
+            Sign in to get notified when someone joins your plans, writes to you or wants to connect.
+          </Text>
+          <Button label="Sign in" icon="user" onPress={() => router.push('/account')} />
+        </View>
+      ) : null}
       <View style={styles.list}>
         {items.map((n, i) => {
           const p = n.personId ? content.people.find((x) => x.id === n.personId) : undefined;
@@ -95,7 +104,16 @@ function ServerNotifications() {
       return () => clearTimeout(h);
     }
   }, [unread, markAllRead]);
-  if (!items.length) return null;
+  if (!items.length) {
+    return (
+      <View style={[styles.list, { alignItems: 'center', gap: 10, paddingTop: space[6] }]}>
+        <Icon name="bell" size={26} color={t.c.textSecondary} />
+        <Text variant="body" tone="secondary" align="center">
+          Nothing new yet. Join a plan or connect with someone and it shows up here.
+        </Text>
+      </View>
+    );
+  }
   const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? 'Someone';
   const describe = (n: ServerNotification): { icon: IconName; title: string; body: string; go?: () => void; accept?: string; pro?: boolean } => {
     const p = n.payload;

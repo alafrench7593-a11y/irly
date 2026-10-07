@@ -162,8 +162,16 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
       centerOn(start, start.latitudeDelta);
       return;
     }
+    let pos: Location.LocationObject;
+    try {
+      pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    } catch {
+      // Location services off, no signal, or a timeout: say so and keep the city view.
+      toast('Your position is not available right now. Showing the busiest area', 'pin', 'brand');
+      centerOn(start, start.latitudeDelta);
+      return;
+    }
     setMe(true);
-    const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     const here = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
     const far = Math.abs(here.latitude - start.latitude) > 0.6 || Math.abs(here.longitude - start.longitude) > 0.6;
     if (far) {
