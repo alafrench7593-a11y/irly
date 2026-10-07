@@ -11,14 +11,20 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: node .github/scripts/demo-photos.mjs
-      - uses: actions/upload-artifact@v4
-        with:
-          name: demo-photos
-          path: demo-photos
-          retention-days: 7
+      - name: Publish on an orphan branch (artifacts are not reachable from the capture sandbox)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898732+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan demo/photos
+          git rm -rfq --cached . > /dev/null
+          git add demo-photos
+          git commit -qm "Demo photos: the app's Unsplash photos at 1600 px"
+          git push -f origin demo/photos
