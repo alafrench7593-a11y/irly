@@ -32,7 +32,13 @@ export default function ProProfileScreen() {
     scrollY.set(e.contentOffset.y);
   });
 
-  if (state === 'loading') return <View style={[styles.root, { backgroundColor: t.c.bg }]} />;
+  if (state === 'loading')
+    return (
+      <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+        <PageHeader title="" />
+      </View>
+    );
+  if (!me.signedIn) return <NotFound title="Sign in to see professional profiles" />;
   if (state === 'error') return <NotFound title="Can’t reach IRLY right now" />;
   if (!pro) return <NotFound title="This professional profile is not available" />;
 

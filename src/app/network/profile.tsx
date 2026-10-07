@@ -9,6 +9,7 @@ import { Chip, Field } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
+import { confirm } from '@/lib/confirm';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useMyPro, type ProDraft } from '@/features/network/api';
@@ -246,13 +247,16 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
             variant="ghost"
             full
             onPress={() =>
-              me
-                .remove()
-                .then(() => {
-                  toast(tr('Professional profile deleted'), 'check', 'brand');
-                  router.back();
-                })
-                .catch(() => toast(tr('Could not delete'), 'x', 'live'))
+              confirm('Delete your professional profile? You leave Networking; your connections stay.', () =>
+                me
+                  .remove()
+                  .then(() => {
+                    toast(tr('Professional profile deleted'), 'check', 'brand');
+                    if (router.canGoBack()) router.back();
+                    else router.replace('/network');
+                  })
+                  .catch(() => toast(tr('Could not delete'), 'x', 'live')),
+              )
             }
           />
         ) : null}

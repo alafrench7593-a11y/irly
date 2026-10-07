@@ -95,7 +95,7 @@ export default function NetworkDiscover() {
       </ScrollView>
 
       <View style={{ paddingHorizontal: space.gutter, gap: 12 }}>
-        {signedIn && !me.loading && !me.pro ? (
+        {signedIn && !me.loading && !me.pro && !me.error ? (
           <Animated.View entering={enter.rise(0)}>
             <PressableScale haptic="tap" scaleTo={0.98} onPress={() => router.push('/network/profile')} style={[styles.cta, { backgroundColor: t.c.text }]} accessibilityRole="button" accessibilityLabel={tr('Create your professional profile')}>
               <View style={{ flex: 1, gap: 4 }}>

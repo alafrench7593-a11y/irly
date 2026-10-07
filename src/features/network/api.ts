@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { create } from 'zustand';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
@@ -77,24 +78,31 @@ function need() {
   return supabase;
 }
 
-// Signed photo links, kept for the session (they last a day).
-const signed = new Map<string, string>();
+// Signed photo links, reused until shortly before they expire (a day).
+const DAY = 24 * 3600;
+const signed = new Map<string, { url: string; until: number }>();
 export async function photoUrls(paths: string[]): Promise<Record<string, string>> {
-  const missing = [...new Set(paths.filter((p) => p && !signed.has(p)))];
+  const now = Date.now();
+  const missing = [...new Set(paths.filter((p) => p && !((signed.get(p)?.until ?? 0) > now)))];
   if (missing.length && supabase) {
-    const { data } = await supabase.storage.from('profile-photos').createSignedUrls(missing, 24 * 3600);
-    for (const d of data ?? []) if (d.path && d.signedUrl) signed.set(d.path, d.signedUrl);
+    const { data } = await supabase.storage.from('profile-photos').createSignedUrls(missing, DAY);
+    for (const d of data ?? []) if (d.path && d.signedUrl) signed.set(d.path, { url: d.signedUrl, until: now + (DAY - 600) * 1000 });
   }
-  return Object.fromEntries(paths.filter((p) => signed.has(p)).map((p) => [p, signed.get(p)!]));
+  return Object.fromEntries(paths.filter((p) => signed.has(p)).map((p) => [p, signed.get(p)!.url]));
 }
 
-/** Your own professional profile (null until you create it). */
+// Bumped when you save or delete your professional profile, so every screen
+// showing it (Discover, a profile page, the editor) reloads it.
+const useProVersion = create<{ v: number; bump: () => void }>((set) => ({ v: 0, bump: () => set((s) => ({ v: s.v + 1 })) }));
+
+/** Your own professional profile (null until you create it), the same on every screen. */
 export function useMyPro() {
   const uid = useAccount()?.userId;
-  const [pro, setPro] = useState<ProProfile | null>(null);
-  const [visible, setVisible] = useState(true);
-  const [loading, setLoading] = useState(Boolean(uid && supabase));
-  const [error, setError] = useState<string | null>(null);
+  const version = useProVersion((s) => s.v);
+  const bump = useProVersion((s) => s.bump);
+  const current = `${uid}|${version}`;
+  // Loading is "the last answer is for another account or an older version".
+  const [res, setRes] = useState<{ for: string; pro: ProProfile | null; visible: boolean; error: string | null }>({ for: '', pro: null, visible: true, error: null });
 
   const load = useCallback(async () => {
     if (!uid || !supabase) return { pro: null, visible: true };
@@ -107,27 +115,16 @@ export function useMyPro() {
     return { pro: r ? toPro(r) : null, visible: (own.data as { visible?: boolean } | null)?.visible ?? true };
   }, [uid]);
 
-  const refresh = useCallback(() => {
-    load()
-      .then((x) => {
-        setPro(x.pro);
-        setVisible(x.visible);
-        setError(null);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : 'offline'))
-      .finally(() => setLoading(false));
-  }, [load]);
-
   useEffect(() => {
+    if (!uid || !supabase) return;
     let alive = true;
     load()
-      .then((x) => alive && (setPro(x.pro), setVisible(x.visible), setError(null)))
-      .catch((e) => alive && setError(e instanceof Error ? e.message : 'offline'))
-      .finally(() => alive && setLoading(false));
+      .then((x) => alive && setRes({ for: current, pro: x.pro, visible: x.visible, error: null }))
+      .catch((e) => alive && setRes((r) => ({ ...r, for: current, error: e instanceof Error ? e.message : 'offline' })));
     return () => {
       alive = false;
     };
-  }, [load]);
+  }, [uid, load, current]);
 
   const save = useCallback(
     async (d: ProDraft) => {
@@ -150,19 +147,30 @@ export function useMyPro() {
       const { error: e } = await need().from('pro_profiles').upsert(row, { onConflict: 'user_id' });
       if (e) throw new Error(/check constraint/i.test(e.message) ? 'Some fields are not valid' : e.message);
       track('PRO_PROFILE_SAVE', { industries: d.industries.length, intents: d.intents.length });
-      refresh();
+      bump();
     },
-    [uid, refresh],
+    [uid, bump],
   );
 
   const remove = useCallback(async () => {
     if (!uid) return;
     const { error: e } = await need().from('pro_profiles').delete().eq('user_id', uid);
     if (e) throw new Error(e.message);
-    setPro(null);
-  }, [uid]);
+    bump();
+  }, [uid, bump]);
 
-  return { pro: uid ? pro : null, visible, loading: uid ? loading : false, error, save, remove, refresh, signedIn: Boolean(uid) };
+  const on = Boolean(uid && supabase);
+  const fresh = res.for === current;
+  return {
+    // The previous answer stays on screen while a newer version loads (no flash of "create your profile").
+    pro: on && res.for.startsWith(`${uid}|`) ? res.pro : null,
+    visible: res.visible,
+    loading: on && !fresh,
+    error: on ? res.error : null,
+    save,
+    remove,
+    signedIn: Boolean(uid),
+  };
 }
 
 /** Professionals of the country (or one city), filtered on the server; live connection states. */

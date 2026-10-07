@@ -2977,4 +2977,6 @@ export const fr: Record<string, string> = {
   'Founders, freelancers, investors. See your match, connect, meet IRL.': 'Fondateurs, freelances, investisseurs. Vois ton match, connecte-toi, rencontrez-vous IRL.',
   'Job, project, networking goals': 'Métier, projet, objectifs de networking',
   'Professionals near you': 'Les professionnels près de toi',
+  'Delete your professional profile? You leave Networking; your connections stay.': 'Supprimer ton profil professionnel ? Tu quittes le Networking ; tes connexions restent.',
+  'Sign in to see professional profiles': 'Connecte-toi pour voir les profils professionnels',
 };

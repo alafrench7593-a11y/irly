@@ -52,9 +52,11 @@ export function ConnectAction({
     onChange(next);
     try {
       const r = await work();
-      if (r === 'accepted') onChange('connected');
+      // They had already asked you: Connect accepted their request.
+      const accepted = r === 'accepted';
+      if (accepted) onChange('connected');
       haptic('success');
-      toast(tr(done, { name: pro.firstName }), 'check', 'brand');
+      toast(tr(accepted ? 'You and {name} are connected' : done, { name: pro.firstName }), 'check', 'brand');
     } catch (e) {
       onChange(before);
       toast(e instanceof Error ? e.message : tr('Could not connect'), 'x', 'live');
