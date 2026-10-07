@@ -8,7 +8,8 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
-import { addFriend, removeFriend } from '@/features/server/social';
+import { removeFriend } from '@/features/server/social';
+import { proConnect } from './api';
 import { openDirect } from '@/features/server/engage';
 import { useT } from '@/i18n';
 import { haptic } from '@/motion/haptics';
@@ -88,7 +89,7 @@ export function ConnectAction({
     );
   }
   if (pro.connection === 'incoming') {
-    return <Button label="Accept" icon="check" size={size} full={full} loading={busy} onPress={() => run('connected', () => addFriend(pro.userId), 'You and {name} are connected')} />;
+    return <Button label="Accept" icon="check" size={size} full={full} loading={busy} onPress={() => run('connected', () => proConnect(pro.userId), 'You and {name} are connected')} />;
   }
   if (pro.connection === 'requested') {
     return (
@@ -104,7 +105,7 @@ export function ConnectAction({
       />
     );
   }
-  return <Button label="Connect" icon="plus" size={size} full={full} loading={busy} onPress={() => run('requested', () => addFriend(pro.userId), 'Request sent to {name}')} />;
+  return <Button label="Connect" icon="plus" size={size} full={full} loading={busy} onPress={() => run('requested', () => proConnect(pro.userId), 'Request sent to {name}')} />;
 }
 
 /** "92%" in a black pill, with the reason underneath on cards. */

@@ -252,6 +252,8 @@ function toRow(uid: string, p: Profile, cityId: string) {
 }
 
 export async function signOut(): Promise<void> {
+  // This phone stops receiving the account's notifications (needs the session, so first).
+  await import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
   await supabase?.auth.signOut();
 }
 

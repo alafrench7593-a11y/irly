@@ -632,6 +632,73 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 update public.pro_profiles set visible = true where user_id = auth.uid();
 select pg_temp.as_admin();
 
+-- ───── Networking connections and phone notifications ─────
+create or replace function pg_temp.error_of(stmt text) returns text language plpgsql as $$
+begin
+  execute stmt;
+  return null;
+exception when others then
+  return sqlerrm;
+end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select public.register_push_token('ExponentPushToken[dina-test-0001]', 'ios', 'fr');
+select pg_temp.check((select count(*) from public.push_tokens) = 1, 'my phone is registered (and I only see my own)');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.push_tokens), 'nobody reads someone else''s phone token');
+select pg_temp.check(public.pro_connect('00000000-0000-0000-0000-00000000000d') = 'pending', 'Connect from Networking sends a request');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000d' and kind = 'PRO_CONNECT_REQUEST' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000c'), 'she gets a Networking request notification');
+select pg_temp.check(exists (select 1 from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and body = 'Carl veut se connecter avec toi' and url = '/network/00000000-0000-0000-0000-00000000000c'), 'and a push in French that opens his professional profile');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select public.remove_friend('00000000-0000-0000-0000-00000000000d');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000d' and kind = 'PRO_CONNECT_REQUEST'), 'a withdrawn request takes its notification with it');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select public.pro_connect('00000000-0000-0000-0000-00000000000d');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000d' and kind = 'PRO_CONNECT_REQUEST'), 'asking again the same day does not notify twice');
+select pg_temp.check((select count(*) from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and url like '/network/%') = 1, 'nor push twice');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select pg_temp.check(public.pro_connect('00000000-0000-0000-0000-00000000000c') = 'accepted', 'Connect back accepts');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000c' and kind = 'PRO_CONNECT_ACCEPTED'), 'he is told she accepted');
+-- Messages: a push with the text, then a busy chat stays quiet for a minute.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select public.open_direct('00000000-0000-0000-0000-00000000000d');
+insert into public.messages (conversation_id, sender_id, body) select public.open_direct('00000000-0000-0000-0000-00000000000d'), auth.uid(), 'Coffee tomorrow?';
+insert into public.messages (conversation_id, sender_id, body) select public.open_direct('00000000-0000-0000-0000-00000000000d'), auth.uid(), 'At 10?';
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and title = 'Carl' and body = 'Coffee tomorrow?' and url like '/messages/%'), 'a message pushes its text, titled with the sender');
+select pg_temp.check((select count(*) from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and url like '/messages/%') = 1, 'a second message within a minute does not push again');
+-- Push off: notifications still arrive in the app, nothing goes to the phone.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+insert into public.notification_prefs (user_id, push_enabled) values (auth.uid(), false) on conflict (user_id) do update set push_enabled = false;
+select pg_temp.as_admin();
+delete from public.push_outbox;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select public.remove_friend('00000000-0000-0000-0000-00000000000d');
+select pg_temp.as_admin();
+insert into public.pro_connect_log (user_id, target, created_at) select '00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000a', now() - interval '2 days';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
+select public.pro_connect('00000000-0000-0000-0000-00000000000c');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000c' and kind = 'PRO_CONNECT_REQUEST'), 'with push off on her side, he still gets the request');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select public.pro_connect('00000000-0000-0000-0000-00000000000d');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d'), 'push off: nothing queued for her phone');
+-- A phone that switches accounts follows the new account.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.register_push_token('ExponentPushToken[dina-test-0001]', 'ios', 'en');
+select pg_temp.as_admin();
+select pg_temp.check((select user_id from public.push_tokens where token = 'ExponentPushToken[dina-test-0001]') = '00000000-0000-0000-0000-00000000000b', 'a phone that switched accounts pushes to the new one');
+-- 30 requests a day at most.
+insert into public.pro_connect_log (user_id, target) select '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000a' from generate_series(1, 30);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(pg_temp.error_of($$select public.pro_connect('00000000-0000-0000-0000-00000000000d')$$) like '%many requests today%', 'the 31st request of the day is refused');
+select pg_temp.check(pg_temp.error_of($$select public.pro_connect('00000000-0000-0000-0000-0000000000ff')$$) is not null, 'connecting to nobody fails');
+select pg_temp.as_admin();
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

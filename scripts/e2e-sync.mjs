@@ -298,10 +298,18 @@ async function main() {
       if (state !== 'incoming') await new Promise((r) => setTimeout(r, 500));
     }
     if (state !== 'incoming') return false;
-    must(await veraSb.rpc('add_friend', { p_user: uma.id }));
+    const notes = must(await veraSb.from('notifications').select('kind, payload').eq('kind', 'PRO_CONNECT_REQUEST'));
+    if (!notes.some((n) => n.payload?.from === uma.id)) throw new Error('Vera did not get a Networking request notification');
+    must(await veraSb.rpc('pro_connect', { p_user: uma.id }));
     await page.getByRole('button', { name: 'Message', exact: true }).first().waitFor({ timeout: 20000 });
     await page.getByRole('button', { name: 'Message', exact: true }).first().click();
     await page.waitForURL(/\/messages\/[0-9a-f-]{36}/, { timeout: 20000 });
+    return true;
+  });
+  await step('Uma\'s notifications: "Vera accepted your request" opens her professional profile', async () => {
+    await page.goto(`${BASE}/notifications`);
+    await page.getByText('Vera accepted your request', { exact: true }).first().click();
+    await page.waitForURL(new RegExp(`/network/${vera.id}`), { timeout: 15000 });
     return true;
   });
   await step('Vera\'s professional page: why they should meet', async () => {

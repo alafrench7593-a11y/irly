@@ -276,3 +276,10 @@ export function usePro(userId: string) {
   const state: 'loading' | 'ready' | 'missing' | 'error' = !on ? 'missing' : res.id !== userId ? 'loading' : res.failed && !pro ? 'error' : pro ? 'ready' : 'missing';
   return { pro, photo: res.id === userId ? photo : null, state, setConnection };
 }
+
+/** Connect from Networking: sends a request, or accepts theirs. Returns 'pending' or 'accepted'. */
+export async function proConnect(userId: string): Promise<string> {
+  const { data, error: e } = await need().rpc('pro_connect', { p_user: userId });
+  if (e) throw new Error(/many requests/i.test(e.message) ? 'You sent many requests today. Try again tomorrow.' : /not available/i.test(e.message) ? 'This member is not available' : e.message);
+  return data as string;
+}

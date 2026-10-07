@@ -4,6 +4,7 @@ import { t as tx } from '@/i18n';
 import { useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
+import { proConnect } from '@/features/network/api';
 import { addFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
 import { timeAgo } from '@/lib/time';
 import { StyleSheet, View } from 'react-native';
@@ -96,7 +97,7 @@ function ServerNotifications() {
   }, [unread, markAllRead]);
   if (!items.length) return null;
   const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? 'Someone';
-  const describe = (n: ServerNotification): { icon: IconName; title: string; body: string; go?: () => void; accept?: string } => {
+  const describe = (n: ServerNotification): { icon: IconName; title: string; body: string; go?: () => void; accept?: string; pro?: boolean } => {
     const p = n.payload;
     switch (n.kind) {
       case 'MATCH_CREATED':
@@ -137,6 +138,19 @@ function ServerNotifications() {
         const pending = friends.find((f) => f.userId === p.from && f.incoming);
         return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: 'Friends see each other’s IRL posts', accept: pending ? p.from : undefined };
       }
+      case 'PRO_CONNECT_REQUEST': {
+        const pending = friends.find((f) => f.userId === p.from && f.incoming);
+        return {
+          icon: 'network',
+          title: tx('{name} wants to connect', { name: name(p.from) }),
+          body: 'Networking · see their professional profile',
+          go: () => router.push(`/network/${p.from}`),
+          accept: pending ? p.from : undefined,
+          pro: true,
+        };
+      }
+      case 'PRO_CONNECT_ACCEPTED':
+        return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: 'Networking · say hi', go: () => router.push(`/network/${p.from}`) };
       case 'FRIEND_ACCEPTED':
         return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends' };
       case 'COMMUNITY_JOINED':
@@ -179,9 +193,9 @@ function ServerNotifications() {
                   label="Accept"
                   size="sm"
                   onPress={() =>
-                    addFriend(d.accept!)
+                    (d.pro ? proConnect(d.accept!) : addFriend(d.accept!))
                       .then(() => {
-                        toast('You are now friends', 'check', 'positive');
+                        toast(d.pro ? 'You are now connected' : 'You are now friends', 'check', 'positive');
                         refresh();
                       })
                       .catch((e) => toast(e instanceof Error ? e.message : 'Could not accept', 'x', 'live'))

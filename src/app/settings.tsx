@@ -1,12 +1,14 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { Platform, StyleSheet, Switch, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Chip, Divider } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
+import { registerPush, type PushState } from '@/features/push/push';
+import { t as tx, useLang } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -28,6 +30,7 @@ const GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Activities and events', kinds: ['ACTIVITY_JOINED', 'ACTIVITY_UPDATED', 'ACTIVITY_INVITATION', 'ACTIVITY_REMINDER'] },
   { label: 'Communities', kinds: ['COMMUNITY_JOINED', 'COMMUNITY_INVITATION', 'COMMUNITY_POST'] },
   { label: 'IRLY Girl matches', kinds: ['MATCH_CREATED', 'MATCH_SUGGESTION'] },
+  { label: 'Networking', kinds: ['PRO_CONNECT_REQUEST', 'PRO_CONNECT_ACCEPTED'] },
 ];
 
 const AUDIENCE = [
@@ -49,6 +52,9 @@ export default function SettingsScreen() {
   const uid = account?.userId;
   const [safety, setSafety] = useState<Safety>(DEFAULTS);
   const [muted, setMuted] = useState<string[]>([]);
+  const [push, setPush] = useState(true);
+  const [phone, setPhone] = useState<PushState | null>(null);
+  const lang = useLang();
   // Saving before the server values arrive would write the defaults over them.
   const [loaded, setLoaded] = useState(false);
 
@@ -56,10 +62,10 @@ export default function SettingsScreen() {
     if (!supabase || !uid) return null;
     const [s, n] = await Promise.all([
       supabase.from('safety_settings').select('profile_visibility, irl_visibility, activity_visibility, location_precision, show_active').eq('user_id', uid).maybeSingle(),
-      supabase.from('notification_prefs').select('muted_kinds').eq('user_id', uid).maybeSingle(),
+      supabase.from('notification_prefs').select('muted_kinds, push_enabled').eq('user_id', uid).maybeSingle(),
     ]);
     if (s.error || n.error) throw new Error(s.error?.message ?? n.error?.message);
-    return { safety: { ...DEFAULTS, ...(s.data ?? {}) } as Safety, muted: (n.data?.muted_kinds as string[]) ?? [] };
+    return { safety: { ...DEFAULTS, ...(s.data ?? {}) } as Safety, muted: (n.data?.muted_kinds as string[]) ?? [], push: (n.data?.push_enabled as boolean | undefined) ?? true };
   }, [uid]);
 
   const [failed, setFailed] = useState(false);
@@ -79,6 +85,7 @@ export default function SettingsScreen() {
         mutedNow.current = r.muted;
         setSafety(r.safety);
         setMuted(r.muted);
+        setPush(r.push);
         setLoaded(true);
       })
       .catch(() => {
@@ -118,6 +125,20 @@ export default function SettingsScreen() {
     safetyNow.current = { ...safetyNow.current, ...patch };
     setSafety(safetyNow.current);
     enqueue(() => supabase!.from('safety_settings').upsert({ user_id: uid, ...safetyNow.current, updated_at: new Date().toISOString() }));
+  };
+
+  // Push on this account's phones; turning it on also asks this phone's permission.
+  const togglePush = (on: boolean) => {
+    if (!supabase || !uid || notReady()) return;
+    setPush(on);
+    enqueue(() => supabase!.from('notification_prefs').upsert({ user_id: uid, push_enabled: on, muted_kinds: mutedNow.current, updated_at: new Date().toISOString() }));
+    if (on && Platform.OS !== 'web')
+      registerPush(lang)
+        .then((st) => {
+          setPhone(st);
+          if (st === 'denied') toast('Notifications are off for IRLY in your phone settings', 'bell', 'brand');
+        })
+        .catch(() => undefined);
   };
 
   const toggleGroup = (kinds: string[], on: boolean) => {
@@ -169,6 +190,18 @@ export default function SettingsScreen() {
 
         <Text variant="titleM" style={{ marginTop: space[4] }}>
           Notifications
+        </Text>
+        <View style={[styles.group, { backgroundColor: t.c.surface }]}>
+          <Row label="Notifications on my phone" value={push} onChange={togglePush} />
+        </View>
+        <Text variant="caption" tone="tertiary">
+          {Platform.OS === 'web'
+            ? tx('Phone notifications work in the IRLY app on iPhone and Android.')
+            : phone === 'denied'
+              ? tx('Notifications are off for IRLY in your phone settings.')
+              : phone === 'not-configured'
+                ? tx('This build of IRLY cannot receive notifications yet.')
+                : tx('Messages, requests and your activities, even when IRLY is closed. Choose which below.')}
         </Text>
         <View style={[styles.group, { backgroundColor: t.c.surface }]}>
           {GROUPS.map((g, i) => (

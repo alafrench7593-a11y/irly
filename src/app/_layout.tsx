@@ -24,6 +24,7 @@ import { HeroHost } from '@/features/hero/HeroHost';
 import { AppIntro } from '@/features/intro/AppIntro';
 import { FlightHost } from '@/features/flight/FlightHost';
 import { MatchHost } from '@/features/match/IrlyMatch';
+import { usePush } from '@/features/push/push';
 import { useStore } from '@/state/store';
 import { useTheme } from '@/theme/useTheme';
 
@@ -67,6 +68,7 @@ export default function RootLayout() {
 
 function App() {
   const t = useTheme();
+  usePush();
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(t.c.bg).catch(() => undefined);
   }, [t.c.bg]);
