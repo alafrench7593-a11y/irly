@@ -14,8 +14,8 @@ const picksPath = `${DIR}/faces.json`;
 const picks = fs.existsSync(picksPath) ? JSON.parse(fs.readFileSync(picksPath, 'utf8')) : {};
 const exclude = new Set(JSON.parse(fs.readFileSync(`${DIR}/faces-exclude.json`, 'utf8')));
 const QUERIES = {
-  f: ['woman portrait', 'smiling woman', 'young woman portrait', 'woman headshot', 'businesswoman'],
-  m: ['man portrait', 'smiling man', 'young man portrait', 'man headshot', 'businessman'],
+  f: ['woman portrait', 'smiling woman', 'young woman portrait', 'woman headshot', 'businesswoman', 'woman smile face'],
+  m: ['young man portrait', 'smiling man', 'man portrait', 'man headshot', 'guy smiling', 'man beard portrait', 'businessman portrait'],
 };
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -25,7 +25,7 @@ async function candidates(g) {
   const out = [];
   for (const q of QUERIES[g]) {
     for (const page of [1, 2]) {
-      const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0&source=stocksnap&page_size=20&page=${page}`;
+      const u = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(q)}&license=cc0&source=stocksnap&aspect_ratio=tall&page_size=20&page=${page}`;
       let r;
       for (let attempt = 0; attempt < 4; attempt += 1) {
         await wait(1500 + attempt * 4000);

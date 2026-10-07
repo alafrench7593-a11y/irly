@@ -190,7 +190,10 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
 
   return (
     <View style={styles.root}>
-      <View ref={host} style={StyleSheet.absoluteFill} />
+      {/* MapLibre makes its container position: relative, so it fills a positioned box instead. */}
+      <View style={StyleSheet.absoluteFill}>
+        <View ref={host} style={styles.fill} />
+      </View>
 
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         {placed.map((p) => {
@@ -272,6 +275,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
+  fill: { width: '100%', height: '100%' },
   controls: { position: 'absolute', right: space.gutter - 4, gap: 10, alignItems: 'center', zIndex: 5 },
   markerBox: { position: 'absolute', width: 72, height: 72, alignItems: 'center', justifyContent: 'center' },
 });

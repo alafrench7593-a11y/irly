@@ -37,7 +37,7 @@ jobs:
           npx playwright install --with-deps chromium
           node .github/scripts/site-shots.mjs dist-demo
       - name: Contact sheet (for review)
-        run: montage -label '%t' -pointsize 14 public-photos/faces/*.jpg -tile 9x -geometry 160x160+4+4 site/shots/_faces.jpg || true
+        run: montage -label '%t' -pointsize 14 public-photos/faces/*.jpg -tile 9x -geometry 160x160+4+4 public-photos/faces/_review.png || true
       - name: Commit
         run: |
           git config user.name irly-bot
