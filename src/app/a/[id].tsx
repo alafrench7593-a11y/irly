@@ -162,7 +162,7 @@ export default function ActivityPage() {
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
         <View style={styles.cover}>
-          <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined), uri: a.coverUrl }} light={city?.light} scrim="strong" style={StyleSheet.absoluteFill} width={1000} recyclingKey={`a-${a.id}`} />
+          <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined), uri: a.coverUrl }} light={city?.light} scrim="strong" style={StyleSheet.absoluteFill} width={1000} recyclingKey={`a-${a.id}`} drift />
           {!a.coverUrl && !reducedMotion && filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined)) ? (
             <Film uri={filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined))!} dim={0.4} />
           ) : null}

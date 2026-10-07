@@ -70,7 +70,7 @@ export default function PlaceScreen() {
           {p.photo ? (
             <Image source={{ uri: p.photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
           ) : (
-            <Photo visual={{ photo: food ? 'dinner' : 'beachSunset' }} light={city?.light ?? 'dubai'} scrim="strong" style={StyleSheet.absoluteFill} width={1000} />
+            <Photo drift visual={{ photo: food ? 'dinner' : 'beachSunset' }} light={city?.light ?? 'dubai'} scrim="strong" style={StyleSheet.absoluteFill} width={1000} />
           )}
           <View style={styles.scrim} />
           <View style={styles.heroText}>

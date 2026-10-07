@@ -201,7 +201,7 @@ function DestinationCard({
       accessibilityLabel={`${dest.name}. ${dest.tagline}`}
     >
       <Animated.View style={[StyleSheet.absoluteFill, layer]}>
-        <Photo visual={{ photo: dest.photo }} light={dest.light} scrim="strong" width={1000} style={StyleSheet.absoluteFill} />
+        <Photo drift visual={{ photo: dest.photo }} light={dest.light} scrim="strong" width={1000} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <View style={styles.cardTop}>
         <Glass dark style={styles.flag}>
