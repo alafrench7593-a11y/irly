@@ -1,0 +1,44 @@
+# Example portraits (demo build only)
+
+CC0 photos from StockSnap via Openverse. Used only to illustrate the app with example content.
+
+- **p-samuel**: Man Portrait (cc0) https://stocksnap.io/photo/man-portrait-ZTNVVRFBWS
+- **p-arjun**: Man Portrait (cc0) https://stocksnap.io/photo/man-portrait-B4SX9OQECA
+- **p-omar**: Male Doctor (cc0) https://stocksnap.io/photo/male-doctor-KN1OCKC4Y2
+- **p-lucas**: Oldman Portrait (cc0) https://stocksnap.io/photo/oldman-portrait-TTOM5R7SFF
+- **p-james**: Alone Background (cc0) https://stocksnap.io/photo/alone-background-TJSWWAXG9T
+- **p-khalid**: Senior Business (cc0) https://stocksnap.io/photo/senior-business-UTEZRDTKPP
+- **p-yusuf**: Family Portrait (cc0) https://stocksnap.io/photo/family-portrait-OIUD9DEKPG
+- **p-kadek**: Male Doctor (cc0) https://stocksnap.io/photo/male-doctor-XTPQ1UMFH1
+- **p-noah**: Frantic Eyes (cc0) https://stocksnap.io/photo/frantic-eyes-M558J8TZDJ
+- **p-marco**: Business Man (cc0) https://stocksnap.io/photo/business-man-IVZBYWKEFM
+- **p-tom**: Businessman Thinking (cc0) https://stocksnap.io/photo/businessman-thinking-TGG4JHNHB8
+- **p-ketut**: Business Man (cc0) https://stocksnap.io/photo/business-man-7BQNRHB6EX
+- **p-jonas**: Analog Camera (cc0) https://stocksnap.io/photo/analog-camera-YCK0SQKB21
+- **p-dewa**: Family Portrait (cc0) https://stocksnap.io/photo/family-portrait-RZ0ARMUB77
+- **p-layla**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-JDUWJJCPRQ
+- **p-chloe**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-ZL2KWPMLLI
+- **p-mei**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-JBCWCLO4JI
+- **p-amira**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-B2W1ZBFGPQ
+- **p-sofia**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-FL7B8THF3Q
+- **p-nadia**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-KSXH58AKBR
+- **p-hana**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-XKNXHW017D
+- **p-elena**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-TVCNLWQTHB
+- **p-ayu**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-WYOFLXRQQM
+- **p-lea**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-ZEXCRGH1GV
+- **p-priya**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-OLT5TSPKH5
+- **p-mia**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-E0WBOPWDCM
+- **g-ines**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-MT0NVMWJWM
+- **g-maya**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-XX8XAN3RK3
+- **g-sofia**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-CLTJPNEBUL
+- **g-amira**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-NCT0MAJ5LE
+- **g-lea**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-JS2S8DQDK2
+- **g-hana**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-HH3VQX6P1Q
+- **g-chloe**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-IKJHWZJXS9
+- **g-nour**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-TDZMLWIUNH
+- **g-elena**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-GGRTMOL7FT
+- **g-priya**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-SQZEIZNPVU
+- **g-olga**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-SLG9SVXZYZ
+- **g-zara**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-1AICL6EZQU
+- **g-ayu**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-EIKCYFFTDW
+- **g-camille**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-Z2HFEXONQC
