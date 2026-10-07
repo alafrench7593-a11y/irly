@@ -14,7 +14,7 @@ CC0 photos from StockSnap and Rawpixel via Openverse. Used only to illustrate th
 - **p-marco**: Business Man (cc0) https://stocksnap.io/photo/business-man-IVZBYWKEFM
 - **p-tom**: Businessman Thinking (cc0) https://stocksnap.io/photo/businessman-thinking-TGG4JHNHB8
 - **p-ketut**: Confident Business (cc0) https://stocksnap.io/photo/confident-business-XWRQJZ413Y
-- **p-jonas**: Black Girl (cc0) https://stocksnap.io/photo/black-girl-RT1FYY1CKO
+- **p-jonas**: Confident Business (cc0) https://stocksnap.io/photo/confident-business-ZMIFYSYFK8
 - **p-dewa**: Male Portrait (cc0) https://stocksnap.io/photo/male-portrait-LHZMZE0JL0
 - **p-layla**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-JDUWJJCPRQ
 - **p-chloe**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-ZL2KWPMLLI
@@ -22,7 +22,7 @@ CC0 photos from StockSnap and Rawpixel via Openverse. Used only to illustrate th
 - **p-amira**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-B2W1ZBFGPQ
 - **p-sofia**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-FL7B8THF3Q
 - **p-nadia**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-KSXH58AKBR
-- **p-hana**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-HWEIR0YYLW
+- **p-hana**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-OWTRV7IQJI
 - **p-elena**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-QHBOYMC790
 - **p-ayu**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-0JUBUDKGP0
 - **p-lea**: Woman Portrait (cc0) https://stocksnap.io/photo/woman-portrait-ZEXCRGH1GV
