@@ -363,54 +363,12 @@
   "by": "bhart9070",
   "byUrl": "https://pixabay.com/users/bhart9070-5758980/"
  },
- "coffee": {
-  "id": "pixabay-722035",
-  "tags": "cafe, dubai, arab, emirates, arabian, tea, summer, leisure, lifestyle, relax, drink, espresso",
-  "page": "https://pixabay.com/photos/cafe-dubai-arab-emirates-arabian-722035/",
-  "by": "stefangeorgiou0",
-  "byUrl": "https://pixabay.com/users/stefangeorgiou0-936395/"
- },
- "nightMarket": {
-  "id": "pixabay-9060102",
-  "tags": "spice market, dubai souq, traditional market, spice stall, middle eastern spices, local shopping, dubai, souq shopping, herbs, aromatic spices, shopping in duba",
-  "page": "https://pixabay.com/photos/spice-market-dubai-souq-9060102/",
-  "by": "katetrysh",
-  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
- },
- "founders": {
-  "id": "pixabay-2713872",
-  "tags": "boat, street, urban, arab, arabic, culture, dubai, eastern, human, islam, man, muslim, people, place, summer, sun, vacations, walk, adult, businessman, city, ec",
-  "page": "https://pixabay.com/photos/boat-street-urban-arab-arabic-2713872/",
-  "by": "igorovsyannykov",
-  "byUrl": "https://pixabay.com/users/igorovsyannykov-6222956/"
- },
- "apartment": {
-  "id": "pixabay-6887712",
-  "tags": "aerial, apartment, architecture, bird view, building, business, business district, city, cityscape, construction, destination, downtown, drone view, dubai offic",
-  "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887712/",
-  "by": "katetrysh",
-  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
- },
- "newHome": {
-  "id": "pixabay-6887710",
-  "tags": "aerial, apartment, architecture, bird view, building, business, business district, city, cityscape, construction, destination, downtown, drone view, dubai offic",
-  "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887710/",
-  "by": "katetrysh",
-  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
- },
  "bbq": {
   "id": "pixabay-4493690",
   "tags": "chicken, grill, bbq, marinade, grilled, delicious, kebab, hot, summer, food, barbecue, nature, cooking",
   "page": "https://pixabay.com/photos/chicken-grill-bbq-marinade-grilled-4493690/",
   "by": "LAWJR",
   "byUrl": "https://pixabay.com/users/LAWJR-4448871/"
- },
- "dessert": {
-  "id": "pixabay-4829761",
-  "tags": "foot in dessert, dessert, dubai, uae, brown dessert, uae, uae, uae, uae, uae",
-  "page": "https://pixabay.com/photos/foot-in-dessert-dessert-dubai-uae-4829761/",
-  "by": "Mustafa_Fahd",
-  "byUrl": "https://pixabay.com/users/Mustafa_Fahd-2576863/"
  },
  "family": {
   "id": "pixabay-6887737",
@@ -432,13 +390,6 @@
   "page": "https://pixabay.com/photos/india-indian-indian-food-chicken-1481494/",
   "by": "GOLDINPIC",
   "byUrl": "https://pixabay.com/users/GOLDINPIC-2820402/"
- },
- "jbr": {
-  "id": "pixabay-4998424",
-  "tags": "nature, beach, sea, horizon, landscape, costa, marina, blue, alicante, alicante, alicante, alicante, alicante, alicante",
-  "page": "https://pixabay.com/photos/nature-beach-sea-horizon-landscape-4998424/",
-  "by": "Photokane",
-  "byUrl": "https://pixabay.com/users/Photokane-9686248/"
  },
  "themePark": {
   "id": "pixabay-6569788",
@@ -474,5 +425,40 @@
   "page": "https://pixabay.com/videos/id-47170/",
   "by": "masterbert0427",
   "byUrl": "https://pixabay.com/users/masterbert0427-17843107/"
+ },
+ "nightMarket": {
+  "id": "pixabay-7385165",
+  "tags": "spice, souk, market, dubai, herbs, cinnamon, nutmeg, souk, dubai, dubai, dubai, dubai, dubai, nutmeg, nutmeg, nutmeg",
+  "page": "https://pixabay.com/photos/spice-souk-market-dubai-herbs-7385165/",
+  "by": "Squirrel_photos",
+  "byUrl": "https://pixabay.com/users/Squirrel_photos-7862139/"
+ },
+ "newHome": {
+  "id": "pixabay-6887712",
+  "tags": "aerial, apartment, architecture, bird view, building, business, business district, city, cityscape, construction, destination, downtown, drone view, dubai offic",
+  "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887712/",
+  "by": "katetrysh",
+  "byUrl": "https://pixabay.com/users/katetrysh-4218753/"
+ },
+ "girlDinner": {
+  "id": "pixabay-2713872",
+  "tags": "boat, street, urban, arab, arabic, culture, dubai, eastern, human, islam, man, muslim, people, place, summer, sun, vacations, walk, adult, businessman, city, ec",
+  "page": "https://pixabay.com/photos/boat-street-urban-arab-arabic-2713872/",
+  "by": "igorovsyannykov",
+  "byUrl": "https://pixabay.com/users/igorovsyannykov-6222956/"
+ },
+ "dessert": {
+  "id": "pixabay-326544",
+  "tags": "dubai, shop, shopping, mall, business, sweets, burj khalifa, dubai, dubai, dubai, burj khalifa, burj khalifa, burj khalifa, burj khalifa, burj khalifa, Dubai, U",
+  "page": "https://pixabay.com/photos/dubai-shop-shopping-mall-business-326544/",
+  "by": "patrese",
+  "byUrl": "https://pixabay.com/users/patrese-212440/"
+ },
+ "jbr": {
+  "id": "pixabay-4087278",
+  "tags": "surf, beach, sunset, sea, ocean, summer, waves, marina, sand, holiday, surfer, costa, nature, landscape, tropical, people, silhouette, surf, surf, surf, surf, s",
+  "page": "https://pixabay.com/photos/surf-beach-sunset-sea-ocean-4087278/",
+  "by": "mariamza",
+  "byUrl": "https://pixabay.com/users/mariamza-6544182/"
  }
 }
