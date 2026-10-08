@@ -491,7 +491,8 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\b(retreats?|recovery|cold plunge)\b/i, 'spa'],
   // Water and beach
   [/\bbeach clubs?\b|\bpool\b/i, 'beachClub'],
-  [/\b(beach|sunset)\b/i, 'beachSunset'],
+  [/\bsunset\b/i, 'beachSunset'],
+  [/\bbeach\b/i, 'beachClub'],
   [/\bsunrise\b/i, 'dunes'],
   [/\b(picnic)\b/i, 'picnic'],
   [/\b(bbq|barbecue)\b/i, 'bbq'],
