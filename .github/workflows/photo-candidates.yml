@@ -1,0 +1,38 @@
+name: Photo candidates
+
+# Candidate photos for one subject (Pixabay), committed with a contact sheet
+# so the best one can be chosen by eye.
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: Search words
+        default: burj khalifa
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/scripts/photo-candidates.mjs', '.github/workflows/photo-candidates.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get update >/dev/null && sudo apt-get install -y imagemagick >/dev/null
+      - run: node .github/scripts/photo-candidates.mjs
+        env:
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          QUERY: ${{ inputs.query || 'burj khalifa' }}
+      - name: Commit
+        run: |
+          git config user.name irly-bot
+          git config user.email bot@irly.app
+          git add photo-candidates
+          git diff --cached --quiet || (git commit -m "Photo candidates: ${{ inputs.query || 'burj khalifa' }}" && for i in 1 2 3 4 5; do git pull --rebase && git push && break; sleep $((i * 10)); done)
