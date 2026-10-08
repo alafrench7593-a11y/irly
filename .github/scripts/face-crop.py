@@ -1,8 +1,8 @@
 """
 Square portrait centred on the face, for the example portraits.
   python3 face-crop.py <in> <out>
-Exit 0: written. Exit 2: rejected (no face, several faces, or a face too
-small: a distant figure, not a portrait).
+Exit 0: written. Exit 2: rejected (black and white, no face, several faces, or a face
+too small: a distant figure, not a portrait).
 """
 import sys
 
@@ -13,6 +13,9 @@ img = cv2.imread(src)
 if img is None:
     sys.exit(2)
 h, w = img.shape[:2]
+# Colour photos only: black and white looks dated next to the rest.
+if cv2.cvtColor(img, cv2.COLOR_BGR2HSV)[:, :, 1].mean() < 28:
+    sys.exit(2)
 gray = cv2.equalizeHist(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
 cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=6, minSize=(int(w * 0.08), int(w * 0.08)))
