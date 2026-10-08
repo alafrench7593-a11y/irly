@@ -7,7 +7,10 @@ import fs from 'node:fs';
 const base = process.argv[2] ?? '';
 const file = 'dist/index.html';
 let html = fs.readFileSync(file, 'utf8');
+// The app is in English or French by itself: browsers must not translate it.
+html = html.replace(/<html lang="en">/, '<html lang="en" translate="no">');
 const head = `
+<meta name="google" content="notranslate">
 <link rel="manifest" href="${base}/manifest.json">
 <link rel="apple-touch-icon" href="${base}/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">

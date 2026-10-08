@@ -65,6 +65,7 @@ export async function enabledProviders(): Promise<{ apple: boolean; google: bool
     const j = (await res.json()) as { external?: Record<string, boolean> };
     return { apple: Boolean(j.external?.apple), google: Boolean(j.external?.google), phone: Boolean(j.external?.phone) };
   } catch {
-    return { apple: false, google: false, phone: false };
+    // Settings unreachable: still offer Google (switched on for IRLY); Supabase answers if it is not.
+    return { apple: false, google: true, phone: false };
   }
 }

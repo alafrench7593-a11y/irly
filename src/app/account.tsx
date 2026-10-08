@@ -59,7 +59,7 @@ export default function AccountScreen() {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(fromOnboarding);
   const [busy, setBusy] = useState(false);
   const url = Linking.useURL();
   // Only offer Apple / Google when they are switched on in Supabase.
@@ -203,12 +203,21 @@ export default function AccountScreen() {
             {providers?.apple && Platform.OS !== 'android' ? <Button label="Continue with Apple" variant="inverse" leading={(c) => <AppleLogo size={18} color={c} />} full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
             {/* App Store rule 4.8: on iPhone, Google sign-in is only offered next to Sign in with Apple. */}
             {providers?.google && (Platform.OS !== 'ios' || providers.apple) ? <Button label="Continue with Google" leading={() => <GoogleG size={18} />} full variant="secondary" loading={busy} onPress={() => act(() => signInWithProvider('google'))} /> : null}
-            <Button label="Continue with email" icon="send" full variant="secondary" onPress={() => setMode('email')} />
             {providers?.phone ? <Button label="Continue with phone" icon="message" full variant="secondary" onPress={() => setMode('phone')} /> : null}
+            {providers?.apple || providers?.google || providers?.phone ? (
+              <View style={styles.or}>
+                <View style={[styles.orLine, { backgroundColor: t.c.line }]} />
+                <Text variant="caption" tone="tertiary">
+                  or with your email
+                </Text>
+                <View style={[styles.orLine, { backgroundColor: t.c.line }]} />
+              </View>
+            ) : null}
           </>
         ) : null}
 
-        {mode === 'email' ? (
+        {/* Email and password, right on the first screen. */}
+        {mode === 'choose' || mode === 'email' ? (
           <>
             <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel={a11y('Email')} />
             <TextInput
@@ -313,7 +322,7 @@ export default function AccountScreen() {
           </>
         ) : null}
 
-        {mode !== 'choose' ? <Button label="Other ways to sign in" variant="ghost" icon="arrowLeft" onPress={() => setMode('choose')} /> : null}
+        {mode !== 'choose' && mode !== 'email' ? <Button label="Other ways to sign in" variant="ghost" icon="arrowLeft" onPress={() => setMode('choose')} /> : null}
         {fromOnboarding && mode === 'choose' ? <Button label="Not now" variant="ghost" onPress={() => router.replace('/(tabs)')} /> : null}
 
         <Text variant="caption" tone="tertiary">
@@ -337,6 +346,8 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
+  or: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 4 },
+  orLine: { flex: 1, height: StyleSheet.hairlineWidth * 2 },
   body: { paddingHorizontal: space.gutter, gap: 12 },
   input: { height: 56, borderRadius: radius.lg, borderWidth: 1, paddingHorizontal: 16, fontFamily: font.medium, fontSize: 17 },
   code: { letterSpacing: 8, fontSize: 24, textAlign: 'center' },

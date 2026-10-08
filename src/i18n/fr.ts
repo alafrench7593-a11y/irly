@@ -3238,4 +3238,5 @@ export const fr: Record<string, string> = {
   'Everyone in the chat sees it': 'Tout le monde dans le chat la voit',
   'only the community owner or a moderator can change its photo': 'Seuls le créateur et les modérateurs peuvent changer la photo',
   'only the chat admin can change its photo': 'Seul l’admin du chat peut changer la photo',
+  'or with your email': 'ou avec ton e-mail',
 };
