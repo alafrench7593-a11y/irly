@@ -44,6 +44,9 @@ function webHaptic(kind: HapticKind) {
   }
   const doc = g.document;
   if (!doc || !doc.body) return;
+  // Never while typing: the hidden switch below would take the focus from the field.
+  const active = doc.activeElement as HTMLElement | null;
+  if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
   try {
     if (!webSwitch) {
       const label = doc.createElement('label');
@@ -59,6 +62,8 @@ function webHaptic(kind: HapticKind) {
       webSwitch = label;
     }
     webSwitch.click();
+    // The click can move the focus to the switch: give it back.
+    if (active && doc.activeElement !== active && typeof active.focus === 'function') active.focus({ preventScroll: true });
   } catch {
     // Haptics are a nicety; never let them break an interaction.
   }
