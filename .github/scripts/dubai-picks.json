@@ -461,88 +461,74 @@
   "by": "IRLY",
   "byUrl": "https://getirly.com"
  },
- "founders": {
-  "id": "own-networking",
-  "tags": "networking, business meeting, office",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "meeting": {
-  "id": "own-networking",
-  "tags": "networking, business meeting, office",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "fashion": {
-  "id": "own-fashion",
-  "tags": "fashion, models, style",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "vr": {
-  "id": "own-vr",
-  "tags": "VR, gaming, friends",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "hikeDesert": {
-  "id": "own-wadi",
-  "tags": "wadi, hiking, travel, palms",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "roadtrip": {
-  "id": "own-wadi",
-  "tags": "wadi, hiking, travel, palms",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "running": {
-  "id": "own-running-race",
-  "tags": "running, race, runners",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "waterPark": {
-  "id": "own-waterpark",
-  "tags": "water park, slide, friends, family",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "crossfit": {
-  "id": "own-running",
-  "tags": "training, stairs, workout",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "boxing": {
-  "id": "own-mma",
-  "tags": "MMA, fight, boxing",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
- },
- "swimming": {
-  "id": "own-swim",
-  "tags": "open water swimming, group, Burj Al Arab, Dubai",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
+ "basketball": {
+  "id": "pixabay-9856638",
+  "tags": "ball, sport, beach, player, game, summer, people, man, sun, fun, fitness, basketball, nature, basket, child, childhood",
+  "page": "https://pixabay.com/photos/ball-sport-beach-player-game-9856638/",
+  "by": "TruongDinhAnh",
+  "byUrl": "https://pixabay.com/users/TruongDinhAnh-51794135/"
  },
  "tennis": {
-  "id": "own-tennis",
-  "tags": "tennis, mixed doubles, court",
-  "page": "provided by IRLY",
-  "by": "IRLY",
-  "byUrl": "https://getirly.com"
+  "id": "pixabay-7137979",
+  "tags": "tennis ball, tennis player, tennis racket, ball, athletic, tennis, sports, tennis net, tennis court, clay court, orange court, tennis sports, tennis player, ten",
+  "page": "https://pixabay.com/photos/tennis-ball-tennis-player-7137979/",
+  "by": "planet_fox",
+  "byUrl": "https://pixabay.com/users/planet_fox-4691618/"
+ },
+ "running": {
+  "id": "pixabay-6252827",
+  "tags": "running, woman, fitness, runner, jogging, exercise, wellness, active, athlete, run, lifestyle, outdoors, running, running, running, running, running, fitness, r",
+  "page": "https://pixabay.com/photos/running-woman-fitness-runner-6252827/",
+  "by": "roxanawilliams1920",
+  "byUrl": "https://pixabay.com/users/roxanawilliams1920-20506016/"
+ },
+ "crossfit": {
+  "id": "pixabay-534615",
+  "tags": "crossfit, sports, fitness, training, exercise, athlete, young, healthy, workout, fit, muscular, body, people, strength, power, strong, female, sport, woman, ath",
+  "page": "https://pixabay.com/photos/crossfit-sports-fitness-training-534615/",
+  "by": "Ichigo121212",
+  "byUrl": "https://pixabay.com/users/Ichigo121212-11728/"
+ },
+ "cycling": {
+  "id": "pixabay-7036709",
+  "tags": "man, bicycle, fitness, activity, travel, ride, bike, cycle, riding, cycling, cyclist, bicycle, fitness, cycle, cycling, cycling, cycling, cycling, cycling",
+  "page": "https://pixabay.com/photos/man-bicycle-fitness-activity-7036709/",
+  "by": "farishamza007",
+  "byUrl": "https://pixabay.com/users/farishamza007-2221177/"
+ },
+ "swimming": {
+  "id": "pixabay-462874",
+  "tags": "man, swimmer, pool, nature, swimming pool, water, swim, sports, goggles, male, guy",
+  "page": "https://pixabay.com/photos/man-swimmer-pool-swimming-pool-462874/",
+  "by": "jarmoluk",
+  "byUrl": "https://pixabay.com/users/jarmoluk-143740/"
+ },
+ "volleyball": {
+  "id": "pixabay-5560658",
+  "tags": "sunset, volleyball, beach, silhouette, beach volleyball, nature, sport, playing, golden hour, sun, sunlight, coast, shore, seashore, sea, ocean, leisure, vacati",
+  "page": "https://pixabay.com/photos/sunset-volleyball-beach-silhouette-5560658/",
+  "by": "Peggy_Marco",
+  "byUrl": "https://pixabay.com/users/Peggy_Marco-1553824/"
+ },
+ "boxing": {
+  "id": "pixabay-3311299",
+  "tags": "gloves, fighter, fight, sports, martial arts, workout, hobby, pear, mma, mma, mma, mma, mma, mma",
+  "page": "https://pixabay.com/photos/gloves-fighter-fight-sports-3311299/",
+  "by": "AV_Photographer",
+  "byUrl": "https://pixabay.com/users/AV_Photographer-8463932/"
+ },
+ "yoga": {
+  "id": "pixabay-1851165",
+  "tags": "meditate, woman, yoga, zen, meditating, relax, relaxing, wellness, nature, yoga pose, meditation, peaceful, silhouette, sunset, tranquil, calm",
+  "page": "https://pixabay.com/photos/meditate-woman-yoga-zen-meditating-1851165/",
+  "by": "Pexels",
+  "byUrl": "https://pixabay.com/users/Pexels-2286921/"
+ },
+ "waterPark": {
+  "id": "pixabay-497929",
+  "tags": "water park, slide, the sun, weather, holiday, greece, nature, mole, summer, water, the colors",
+  "page": "https://pixabay.com/photos/water-park-slide-the-sun-weather-497929/",
+  "by": "jarmoluk",
+  "byUrl": "https://pixabay.com/users/jarmoluk-143740/"
  }
 }
