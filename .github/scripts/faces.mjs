@@ -45,7 +45,9 @@ async function candidates(g) {
 const PIXABAY = process.env.PIXABAY_API_KEY;
 // One person per photo, in colour, an adult of the right gender.
 const GENDER = { f: /\b(woman|women|girl|female|lady)\b/i, m: /\b(man|men|guy|male|boy|businessman)\b/i };
-const NOT = /\b(black and white|monochrome|b&w|grayscale|group|couple|family|child|children|kid|kids|baby|crowd|team|friends|wedding|mask|nude|lingerie|bikini)\b/i;
+const NOT = /\b(black and white|monochrome|b&w|grayscale|group|couple|family|child|children|kid|kids|baby|crowd|team|friends|wedding|mask|nude|naked|lingerie|bikini|elderly|old|senior|grandmother|grandfather|painting|art|artwork|drawing|underwater|statue|sculpture|silhouette|dog|cat)\b/i;
+// A real portrait: the face is the subject.
+const PORTRAIT = /\b(portrait|face|headshot|smile|smiling)\b/i;
 async function pixabay(person) {
   const u = `https://pixabay.com/api/?key=${PIXABAY}&q=${encodeURIComponent(person.q)}&image_type=photo&category=people&orientation=vertical&min_width=800&safesearch=true&order=popular&per_page=80`;
   for (let attempt = 0; attempt < 4; attempt += 1) {
@@ -55,7 +57,7 @@ async function pixabay(person) {
     const j = await r.json();
     await wait(700);
     return (j.hits ?? [])
-      .filter((h) => GENDER[person.g].test(h.tags) && !NOT.test(h.tags))
+      .filter((h) => GENDER[person.g].test(h.tags) && PORTRAIT.test(h.tags) && !NOT.test(h.tags))
       .map((h) => ({ id: `pixabay-${h.id}`, url: h.largeImageURL, title: h.tags, foreign_landing_url: h.pageURL, license: 'pixabay' }));
   }
   return [];
