@@ -474,5 +474,12 @@
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
+ },
+ "fashion": {
+  "id": "own-fashion",
+  "tags": "fashion, models, style",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
  }
 }
