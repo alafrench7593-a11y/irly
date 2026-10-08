@@ -27,6 +27,8 @@ import { Text } from '@/components/ui/Text';
 import { findPerson } from '@/data/repo';
 import { toast } from '@/components/ui/Toast';
 import { isServerId, useServerThread } from '@/features/server/chat';
+import { pickPhoto, setChatPhoto, useChatPhoto, usePhotoLink } from '@/features/server/covers';
+import { Photo } from '@/components/visual/Photo';
 import { allMessages, cannedReply, resolveConversation, senderName } from '@/features/messages/conversations';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -59,6 +61,27 @@ function ServerThreadView({ id }: { id: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const thread = useServerThread(id);
+  const chatPhoto = useChatPhoto(id);
+  const chatPhotoUri = usePhotoLink(chatPhoto.path);
+  const [photoMenu, setPhotoMenu] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const changePhoto = async (next: 'pick' | 'reset') => {
+    if (photoBusy) return;
+    try {
+      const picked = next === 'pick' ? await pickPhoto() : null;
+      if (next === 'pick' && !picked) return;
+      setPhotoBusy(true);
+      await setChatPhoto(id, picked);
+      haptic('success');
+      toast(next === 'pick' ? 'Photo updated' : 'Back to the IRLY photo', 'check', 'brand');
+      setPhotoMenu(false);
+      chatPhoto.refresh();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not change the photo', 'x', 'live');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [earlier, setEarlier] = useState(false);
@@ -263,14 +286,25 @@ function ServerThreadView({ id }: { id: string }) {
         <Glass style={StyleSheet.absoluteFill} border={false} intensity={60} />
         <View style={styles.headerRow}>
           <IconButton icon="chevronLeft" label="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text variant="titleS" numberOfLines={1} raw>
-              {thread.title}
-            </Text>
-            <Text variant="caption" tone="tertiary">
-              {thread.kind === null ? '' : group ? 'Group' : 'Private'}
-            </Text>
-          </View>
+          <PressableScale
+            haptic={chatPhoto.canEdit ? 'select' : false}
+            scaleTo={chatPhoto.canEdit ? 0.97 : 1}
+            onPress={chatPhoto.canEdit ? () => setPhotoMenu(true) : undefined}
+            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+            accessibilityLabel={chatPhoto.canEdit ? 'Change the photo' : undefined}
+          >
+            {chatPhoto.hasPhoto ? (
+              <Photo visual={{ photo: chatPhoto.fallback, uri: chatPhotoUri ?? undefined }} light="dubai" style={styles.chatPhoto} width={120} recyclingKey={`chat-${id}-${chatPhoto.path ?? 'app'}`} />
+            ) : null}
+            <View style={{ flexShrink: 1, alignItems: chatPhoto.hasPhoto ? 'flex-start' : 'center' }}>
+              <Text variant="titleS" numberOfLines={1} raw>
+                {thread.title}
+              </Text>
+              <Text variant="caption" tone="tertiary">
+                {thread.kind === null ? '' : group ? 'Group' : 'Private'}
+              </Text>
+            </View>
+          </PressableScale>
           {other ? <IconButton icon="shield" label={tx('Safety: report or block')} onPress={() => setMenu(true)} /> : <View style={{ width: 40 }} />}
         </View>
       </View>
@@ -323,6 +357,12 @@ function ServerThreadView({ id }: { id: string }) {
         </Sheet>
       ) : null}
       <ReportSheet target={reporting} name={reportName} onClose={() => setReporting(null)} onBlocked={() => (router.canGoBack() ? router.back() : router.replace('/messages'))} />
+      <Sheet visible={photoMenu} onClose={() => setPhotoMenu(false)} title="Chat photo" subtitle={tx('Everyone in the chat sees it')}>
+        <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+          <Button label="Change the photo" icon="camera" full loading={photoBusy} onPress={() => changePhoto('pick')} />
+          {chatPhoto.path ? <Button label="Use the IRLY photo" icon="x" variant="secondary" full onPress={() => changePhoto('reset')} /> : null}
+        </View>
+      </Sheet>
     </View>
   );
 }
@@ -503,6 +543,7 @@ function Dot({ delay }: { delay: number }) {
 }
 
 const styles = StyleSheet.create({
+  chatPhoto: { width: 36, height: 36, borderRadius: 18, overflow: 'hidden' },
   shared: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   earlier: { alignSelf: 'center', height: 36, paddingHorizontal: 16, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center', marginBottom: 8 },
   root: { flex: 1 },

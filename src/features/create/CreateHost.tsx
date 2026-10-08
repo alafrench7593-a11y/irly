@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AreaPicker } from '@/components/ui/AreaPicker';
-import * as ImagePicker from 'expo-image-picker';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Image } from 'expo-image';
 import { t as tx } from '@/i18n';
 import { BackHandler, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -14,8 +12,9 @@ import { Chip, Field } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
+import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, ideaPhoto, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
+import { photo } from '@/data/photos';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -24,6 +23,7 @@ import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { createServerActivity } from '@/features/server/activities';
+import { pickPhoto } from '@/features/server/covers';
 import { useCreateStore, type CreateFormat } from './createStore';
 
 const DAYS = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
@@ -125,11 +125,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   // Optional: the creator's own photo instead of the catalogue one.
   const [cover, setCover] = useState<string | null>(null);
   const pickCover = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [16, 10] });
-    if (res.canceled || !res.assets[0]) return;
-    // Phone photos are 5–10 MB: 1280 px wide is plenty for a card and a header.
-    const small = await manipulateAsync(res.assets[0].uri, [{ resize: { width: 1280 } }], { compress: 0.75, format: SaveFormat.JPEG });
-    setCover(small.uri);
+    const uri = await pickPhoto();
+    if (uri) setCover(uri);
   };
 
   const D = 2 * Math.hypot(Math.max(origin.x, frame.width - origin.x), Math.max(origin.y, frame.height - origin.y));
@@ -496,19 +493,21 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 ) : null}
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.block}>
-                {cover ? (
-                  <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={styles.cover} accessibilityLabel="Change the photo">
-                    <Image source={{ uri: cover }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                    <PressableScale haptic="select" onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Remove the photo" hitSlop={8}>
+                {/* The session's photo: the app's photo for this activity, or the creator's own. */}
+                <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={styles.cover} accessibilityLabel="Change the photo">
+                  <Image source={{ uri: cover ?? (pick ? photo(ideaPhoto(pick.categoryId, title ?? '', place), 900) : undefined) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+                  <View style={[styles.coverPill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
+                    <Icon name="camera" size={16} color="#FFFFFF" />
+                    <Text variant="label" style={{ color: '#FFFFFF' }}>
+                      {cover ? 'Your photo' : 'Change the photo'}
+                    </Text>
+                  </View>
+                  {cover ? (
+                    <PressableScale haptic="select" onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Use the IRLY photo" hitSlop={8}>
                       <Icon name="x" size={16} color="#FFFFFF" strokeWidth={2.6} />
                     </PressableScale>
-                  </PressableScale>
-                ) : (
-                  <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={[styles.coverEmpty, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]} accessibilityLabel="Add your own photo (optional)">
-                    <Icon name="camera" size={20} color={t.c.text} />
-                    <Text variant="label">Add your own photo (optional)</Text>
-                  </PressableScale>
-                )}
+                  ) : null}
+                </PressableScale>
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.block}>
                 <TextInput
@@ -580,9 +579,9 @@ function CustomButton({ text, onPress }: { text: string; onPress: () => void }) 
 }
 
 const styles = StyleSheet.create({
-  cover: { height: 150, borderRadius: radius.lg, overflow: 'hidden' },
+  cover: { height: 170, borderRadius: radius.lg, overflow: 'hidden' },
   coverRemove: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  coverEmpty: { height: 64, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  coverPill: { position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
   quick: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.gutter - 4, marginTop: space[5] },
   quickCell: { width: '25%', padding: 4 },
   quickTile: { height: 84, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', gap: 8 },

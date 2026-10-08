@@ -804,6 +804,21 @@ insert into public.waitlist (email, created_at) values ('old@example.com', now()
 select private.purge_retention();
 select pg_temp.check(not exists (select 1 from public.waitlist where email = 'old@example.com'), 'waitlist addresses are kept 24 months');
 
+-- ───── Own photos for communities and chats ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.set_community_cover((select id from public.communities where name = 'Marina Padel Girls'), '00000000-0000-0000-0000-00000000000a/cover.jpg');
+select pg_temp.check((select cover_path from public.communities where name = 'Marina Padel Girls') = '00000000-0000-0000-0000-00000000000a/cover.jpg', 'the owner sets the community photo');
+select pg_temp.expect_denied($$select public.set_community_cover((select id from public.communities where name = 'Marina Padel Girls'), '00000000-0000-0000-0000-00000000000b/x.jpg')$$, 'a photo must be your own upload');
+select pg_temp.expect_denied($$update public.communities set cover_path = '00000000-0000-0000-0000-00000000000b/x.jpg' where name = 'Marina Padel Girls'$$, 'no direct update to someone else''s upload');
+select public.set_conversation_photo((select conversation_id from public.my_conversations() where kind = 'community' and title = 'Marina Padel Girls'), '00000000-0000-0000-0000-00000000000a/chat.jpg');
+select pg_temp.check((select photo_path from public.conversations where title = 'Marina Padel Girls') = '00000000-0000-0000-0000-00000000000a/chat.jpg', 'the community owner sets the chat photo');
+select public.set_community_cover((select id from public.communities where name = 'Marina Padel Girls'), null);
+select pg_temp.check((select cover_path from public.communities where name = 'Marina Padel Girls') is null, 'back to the app photo');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_denied($$select public.set_community_cover((select id from public.communities where name = 'Marina Padel Girls'), '00000000-0000-0000-0000-00000000000b/x.jpg')$$, 'a non-owner cannot change the community photo');
+select pg_temp.expect_denied($$select public.set_conversation_photo((select id from public.conversations where title = 'Marina Padel Girls'), '00000000-0000-0000-0000-00000000000b/x.jpg')$$, 'a non-admin cannot change the chat photo');
+select pg_temp.as_admin();
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

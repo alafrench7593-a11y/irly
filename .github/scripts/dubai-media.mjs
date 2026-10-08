@@ -44,6 +44,8 @@ const PLACES = {
   'ras al khaimah': /ras al khaimah|ras al-khaimah|jebel jais/i,
   fujairah: /fujairah/i,
   uae: /dubai|abu dhabi|abudhabi|\buae\b|emirates|sharjah|ajman|fujairah|ras al khaimah|umm al quwain|hatta|jebel jais/i,
+  // Sports: the right sport matters more than the city.
+  any: /./,
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -150,33 +150,37 @@
   ]
  ],
  "padel": [
-  "Dubai padel",
+  "padel",
   [
-   "padel",
-   "racket",
-   "court"
-  ]
+   [
+    "padel"
+   ]
+  ],
+  "any"
  ],
  "basketball": [
-  "Dubai basketball",
+  "basketball game",
   [
    "basketball"
-  ]
+  ],
+  "any"
  ],
  "tennis": [
-  "Dubai tennis",
+  "tennis player court",
   [
    "tennis"
-  ]
+  ],
+  "any"
  ],
  "running": [
-  "Dubai running",
+  "running runner",
   [
    "running",
    "runner",
    "jogging",
-   "run"
-  ]
+   "marathon"
+  ],
+  "any"
  ],
  "gym": [
   "Dubai gym fitness",
@@ -190,54 +194,60 @@
   ]
  ],
  "crossfit": [
-  "Dubai fitness workout",
+  "crossfit workout",
   [
-   "fitness",
-   "workout",
-   "training",
-   "exercise"
-  ]
+   "crossfit",
+   "kettlebell",
+   "barbell",
+   "workout"
+  ],
+  "any"
  ],
  "cycling": [
-  "Dubai cycling",
+  "road cycling",
   [
    "cycling",
-   "bike",
+   "cyclist",
    "bicycle",
-   "cyclist"
-  ]
+   "bike"
+  ],
+  "any"
  ],
  "swimming": [
-  "Dubai swimming pool",
+  "swimming pool swimmer",
   [
-   "pool",
    "swimming",
+   "swimmer",
    "swim"
-  ]
+  ],
+  "any"
  ],
  "volleyball": [
-  "beach volleyball Dubai",
+  "beach volleyball",
   [
    "volleyball"
-  ]
+  ],
+  "any"
  ],
  "boxing": [
-  "Dubai MMA boxing",
+  "mma fighter",
   [
+   "mma",
    "boxing",
    "boxer",
-   "mma",
-   "martial arts",
    "kickboxing",
-   "fighter"
-  ]
+   "martial arts",
+   "fighter",
+   "muay thai"
+  ],
+  "any"
  ],
  "yoga": [
-  "Dubai yoga",
+  "yoga",
   [
-   "yoga",
-   "meditation"
-  ]
+   "yoga"
+  ],
+  "any"
  ],
  "surf": [
   "Dubai surf beach",
