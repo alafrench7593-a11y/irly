@@ -1,0 +1,49 @@
+name: Site review
+
+# Captures the live getirly.com (website and web app) for a design review and
+# publishes the frames, metrics and Lighthouse reports on the review/getirly branch.
+
+on:
+  push:
+    branches: [film/screens]
+    paths: ['.github/scripts/site-review.mjs', '.github/workflows/site-review.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Playwright
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw && npm init -y > /dev/null
+          npm i playwright@1.56.1 > /dev/null
+          npx playwright install --with-deps chromium > /dev/null
+      - name: Capture getirly.com
+        run: |
+          cp .github/scripts/site-review.mjs /tmp/pw/
+          REVIEW_OUT=$GITHUB_WORKSPACE/review node /tmp/pw/site-review.mjs
+      - name: Lighthouse
+        run: |
+          cd /tmp/pw
+          export CHROME_PATH=$(node -e "console.log(require('playwright').chromium.executablePath())")
+          lh() { npx -y lighthouse@12.6.1 "$1" --quiet --output=json --output-path="$GITHUB_WORKSPACE/review/lh-$2.json" --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,accessibility,best-practices,seo ${3:-} || true; }
+          lh https://getirly.com/ site-mobile
+          lh https://getirly.com/ site-desktop --preset=desktop
+          lh https://getirly.com/app/ app-mobile
+          REVIEW_OUT=$GITHUB_WORKSPACE/review node /tmp/pw/site-review.mjs lh || true
+      - name: Publish on review/getirly
+        run: |
+          git config user.name irly-bot
+          git config user.email bot@irly.app
+          git checkout --orphan review/getirly
+          git rm -rfq --cached . > /dev/null
+          git add review
+          git commit -qm "Review captures of getirly.com"
+          git push -f origin review/getirly
