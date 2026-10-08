@@ -4,9 +4,11 @@ name: Web app (GitHub Pages)
 # https://alafrench7593-a11y.github.io/irly/
 # One-time setup: Settings → Pages → Build and deployment → Source: GitHub Actions.
 
+# Deploys from the work branch only: the github-pages environment refuses
+# main (every main run failed at deploy and cancelled the branch's deploy).
 on:
   push:
-    branches: [main, claude/confident-ride-1o2o3x]
+    branches: [claude/confident-ride-1o2o3x]
     paths-ignore: ['supabase/**', 'docs/**', '.github/expo-go.txt']
   workflow_dispatch:
 
