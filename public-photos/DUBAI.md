@@ -1,19 +1,24 @@
 # Dubai photos and videos
 
-From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://www.pexels.com/license/): free for commercial use, no attribution required. Credited with thanks.
+From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://www.pexels.com/license/): free for commercial use, no attribution required. Credited with thanks. Photos from Openverse show their licence (public domain or CC BY, credited here as the licence requires).
 
 - **abudhabi**: by [jpeter2](https://pixabay.com/users/jpeter2-697843/), https://pixabay.com/photos/mosque-abu-dhabi-to-travel-white-615415/
 - **abudhabiSkyline**: by [msisakib](https://pixabay.com/users/msisakib-13972005/), https://pixabay.com/photos/abu-dhabi-abu-dhabi-skyline-skyline-5249641/
 - **ajman**: by [palaniselvam16](https://pixabay.com/users/palaniselvam16-14631006/), https://pixabay.com/photos/beach-buildings-architecture-sky-5930110/
 - **automotive**: by [Abdurashidbey](https://pixabay.com/users/Abdurashidbey-7501944/), https://pixabay.com/photos/lamborghini-cars-blue-dubai-3694924/
+- **basketball**: by [TruongDinhAnh](https://pixabay.com/users/TruongDinhAnh-51794135/), https://pixabay.com/photos/ball-sport-beach-player-game-9856638/
 - **bbq**: by [LAWJR](https://pixabay.com/users/LAWJR-4448871/), https://pixabay.com/photos/chicken-grill-bbq-marinade-grilled-4493690/
-- **beachClub**: by [lukas_](https://pixabay.com/users/lukas_-4826719/), https://pixabay.com/photos/jumeirah-beach-hotel-beach-2146761/
+- **beachClub**: by [IRLY](https://getirly.com), provided by IRLY
 - **beachSunset**: by [hanmei](https://pixabay.com/users/hanmei-13048335/), https://pixabay.com/photos/dubai-beach-sunset-holiday-sun-4340895/
+- **boxing**: by [AV_Photographer](https://pixabay.com/users/AV_Photographer-8463932/), https://pixabay.com/photos/gloves-fighter-fight-sports-3311299/
+- **brunch**: by [IRLY](https://getirly.com), provided by IRLY
 - **burjKhalifa**: by [8268513](https://pixabay.com/users/8268513-8268513/), https://pixabay.com/photos/burj-khalifa-dubai-buildings-4922317/
 - **camping**: by [Schmid-Reportagen](https://pixabay.com/users/Schmid-Reportagen-646138/), https://pixabay.com/photos/desert-camels-dubai-639297/
 - **car**: by [themotion](https://pixabay.com/users/themotion-15582551/), https://pixabay.com/photos/aspiration-auto-automobile-4927227/
 - **coffeeBar**: by [atulknareda](https://pixabay.com/users/atulknareda-1067150/), https://pixabay.com/photos/coffee-airport-travel-business-787927/
 - **comedy**: by [MemoTravels](https://pixabay.com/users/MemoTravels-6537808/), https://pixabay.com/photos/tanoura-dance-man-culture-stage-6162989/
+- **crossfit**: by [Ichigo121212](https://pixabay.com/users/Ichigo121212-11728/), https://pixabay.com/photos/crossfit-sports-fitness-training-534615/
+- **cycling**: by [farishamza007](https://pixabay.com/users/farishamza007-2221177/), https://pixabay.com/photos/man-bicycle-fitness-activity-7036709/
 - **dessert**: by [patrese](https://pixabay.com/users/patrese-212440/), https://pixabay.com/photos/dubai-shop-shopping-mall-business-326544/
 - **dhow**: by [Pexels](https://pixabay.com/users/Pexels-2286921/), https://pixabay.com/photos/city-creek-lg-dubai-balconies-1283778/
 - **djSunset**: by [marucha](https://pixabay.com/users/marucha-4698045/), https://pixabay.com/photos/sea-sunset-romantic-dubai-3496528/
@@ -21,10 +26,11 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **dubaiCreek**: by [katetrysh](https://pixabay.com/users/katetrysh-4218753/), https://pixabay.com/photos/dubai-creek-waterfront-man-sitting-9060098/
 - **dubaiMarina**: by [Ameia-Ka](https://pixabay.com/users/Ameia-Ka-458091/), https://pixabay.com/photos/dubai-city-architecture-skyscrapers-1351569/
 - **dubaiNight**: by [bulletrain743](https://pixabay.com/users/bulletrain743-3598825/), https://pixabay.com/photos/dubai-skyscraper-city-lights-1767540/
-- **dunes**: by [hariskhan488](https://pixabay.com/users/hariskhan488-24535975/), https://pixabay.com/photos/dubai-desert-safari-6826298/
+- **dunes**: by [IRLY](https://getirly.com), provided by IRLY
 - **emirates**: by [supertranslator](https://pixabay.com/users/supertranslator-2577061/), https://pixabay.com/photos/sharjah-city-lake-cityscape-6399725/
 - **festival**: by [analogicus](https://pixabay.com/users/analogicus-8164369/), https://pixabay.com/photos/fireworks-night-night-sky-landscape-4825599/
 - **finance**: by [cegoh](https://pixabay.com/users/cegoh-94852/), https://pixabay.com/photos/singapore-hdr-2948814/
+- **fineDining**: by [IRLY](https://getirly.com), provided by IRLY
 - **football**: by [IRLY](https://getirly.com), provided by IRLY
 - **fort**: by [bhart9070](https://pixabay.com/users/bhart9070-5758980/), https://pixabay.com/photos/fort-wall-uae-fortification-2455043/
 - **fujairah**: by [bhart9070](https://pixabay.com/users/bhart9070-5758980/), https://pixabay.com/photos/fort-uae-castle-attraction-2455042/
@@ -48,20 +54,27 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **nature**: by [hariskhan488](https://pixabay.com/users/hariskhan488-24535975/), https://pixabay.com/photos/landscapre-desert-safari-6826296/
 - **nightMarket**: by [Squirrel_photos](https://pixabay.com/users/Squirrel_photos-7862139/), https://pixabay.com/photos/spice-souk-market-dubai-herbs-7385165/
 - **office**: by [solomonikvik](https://pixabay.com/users/solomonikvik-10496565/), https://pixabay.com/photos/dubai-skyscraper-architecture-urban-7237745/
+- **padel**: by [IRLY](https://getirly.com), provided by IRLY
 - **photography**: by [katetrysh](https://pixabay.com/users/katetrysh-4218753/), https://pixabay.com/photos/tourist-travel-photographer-dubai-6887746/
 - **rak**: by [wedn](https://pixabay.com/users/wedn-486377/), https://pixabay.com/photos/camels-u-a-e-dubai-ras-al-khaimah-1124138/
 - **realEstate**: by [nextvoyage](https://pixabay.com/users/nextvoyage-5275305/), https://pixabay.com/photos/dubai-cove-water-architecture-port-3773311/
 - **rooftopNeon**: by [Pexels](https://pixabay.com/users/Pexels-2286921/), https://pixabay.com/photos/buildings-illuminated-water-1839726/
+- **running**: by [roxanawilliams1920](https://pixabay.com/users/roxanawilliams1920-20506016/), https://pixabay.com/photos/running-woman-fitness-runner-6252827/
 - **sailing**: by [Joe_Hillsund](https://pixabay.com/users/Joe_Hillsund-7284621/), https://pixabay.com/photos/catamaran-sailing-boat-dubai-4220084/
 - **sharjah**: by [Makalu](https://pixabay.com/users/Makalu-680451/), https://pixabay.com/photos/u-a-e-sharjah-skyline-architecture-3658909/
 - **souk**: by [Squirrel_photos](https://pixabay.com/users/Squirrel_photos-7862139/), https://pixabay.com/photos/herb-souk-dubai-market-spices-7385166/
 - **startup**: by [Martinschuschi](https://pixabay.com/users/Martinschuschi-5260235/), https://pixabay.com/photos/dubai-skyline-city-architecture-2292779/
 - **steak**: by [RitaE](https://pixabay.com/users/RitaE-19628/), https://pixabay.com/photos/steak-meat-beef-steak-food-beef-3640560/
 - **streetFood**: by [koki_4ever](https://pixabay.com/users/koki_4ever-13750559/), https://pixabay.com/photos/pailla-egyptian-food-fish-gourmet-4505214/
+- **swimming**: by [jarmoluk](https://pixabay.com/users/jarmoluk-143740/), https://pixabay.com/photos/man-swimmer-pool-swimming-pool-462874/
+- **tennis**: by [planet_fox](https://pixabay.com/users/planet_fox-4691618/), https://pixabay.com/photos/tennis-ball-tennis-player-7137979/
 - **video:abudhabi**: by [masterbert0427](https://pixabay.com/users/masterbert0427-17843107/), https://pixabay.com/videos/id-47170/
 - **video:beach**: by [puhoff](https://pixabay.com/users/puhoff-27507993/), https://pixabay.com/videos/id-117430/
 - **video:desert**: by [Engin_Akyurt](https://pixabay.com/users/Engin_Akyurt-3656355/), https://pixabay.com/videos/id-241694/
 - **video:dubai**: by [Mahi8](https://pixabay.com/users/Mahi8-54853152/), https://pixabay.com/videos/id-339596/
 - **video:marina**: by [maksoy](https://pixabay.com/users/maksoy-15113309/), https://pixabay.com/videos/id-203951/
 - **video:night**: by [livesmart](https://pixabay.com/users/livesmart-44568/), https://pixabay.com/videos/id-163160/
+- **volleyball**: by [Peggy_Marco](https://pixabay.com/users/Peggy_Marco-1553824/), https://pixabay.com/photos/sunset-volleyball-beach-silhouette-5560658/
+- **waterPark**: by [jarmoluk](https://pixabay.com/users/jarmoluk-143740/), https://pixabay.com/photos/water-park-slide-the-sun-weather-497929/
 - **yacht**: by [MagicTV](https://pixabay.com/users/MagicTV-18171246/), https://pixabay.com/photos/skyline-skyscrapers-buildings-5575251/
+- **yoga**: by [Pexels](https://pixabay.com/users/Pexels-2286921/), https://pixabay.com/photos/meditate-woman-yoga-zen-meditating-1851165/

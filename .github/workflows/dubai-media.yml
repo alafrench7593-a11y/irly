@@ -26,6 +26,9 @@ jobs:
         with:
           node-version: 22
       - run: sudo apt-get update >/dev/null && sudo apt-get install -y imagemagick ffmpeg >/dev/null
+      # A queued run starts from an older commit: take the latest choices
+      # first, so photos provided by IRLY meanwhile are kept.
+      - run: git pull --ff-only origin "${GITHUB_REF_NAME}"
       - run: node .github/scripts/dubai-media.mjs
         env:
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
@@ -35,4 +38,4 @@ jobs:
           git config user.name irly-bot
           git config user.email bot@irly.app
           git add public-photos site/img site/video src/data/dubaiKeys.ts .github/scripts/dubai-picks.json
-          git diff --cached --quiet || (git commit -m "Dubai photos and videos" && for i in 1 2 3 4 5; do git pull --rebase -X theirs && git push && break; sleep $((i * 10)); done)
+          git diff --cached --quiet || (git commit -m "Dubai photos and videos" && for i in 1 2 3 4 5; do git pull --rebase -X ours && git push && break; sleep $((i * 10)); done)
