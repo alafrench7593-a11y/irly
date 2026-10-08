@@ -1327,12 +1327,14 @@
   ]
  ],
  "waterPark": [
-  "Dubai water park",
+  "water park slide",
   [
    "water park",
-   "slide",
-   "pool"
-  ]
+   "waterpark",
+   "water slide",
+   "aquapark"
+  ],
+  "any"
  ],
  "writing": [
   "writing cafe Dubai",
