@@ -4,6 +4,8 @@ import { useAccount } from '@/features/auth/account';
 import { communitiesChanged, useCommunitiesVersion } from './data';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
+import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
+import type { PhotoKey } from '@/data/photos';
 import type { Profile } from '@/state/store';
 
 /**
@@ -115,6 +117,31 @@ export const TOPIC_GROUPS: Record<string, string[]> = {
   food: ['food'],
   lifestyle: ['newcomers', 'girls', 'moms', 'food', 'beach'],
 };
+
+/** The photo of each IRLY community (IRLY's own photos where there are some). */
+// Some keys are IRLY photos added to the library (DUBAI_KEYS), outside the static PhotoKey list.
+export const TOPIC_PHOTO = {
+  newcomers: 'emirates',
+  gym: 'gym',
+  sport: 'crossfit',
+  football: 'football',
+  running: 'running',
+  trip: 'roadtrip',
+  beach: 'beachClub',
+  food: 'brunch',
+  network: 'founders',
+  entrepreneurs: 'meeting',
+  ecom: 'startup',
+  tech: 'developer',
+  ai: 'startup',
+  girls: 'girlFitness',
+  moms: 'momPlaydate',
+} as Record<string, PhotoKey>;
+
+/** A community's photo: its IRLY topic, else its category, else none. */
+export function communityPhoto(topic: string | null | undefined, categoryId: string | null | undefined): PhotoKey | null {
+  return (topic && TOPIC_PHOTO[topic]) || (categoryId && CATEGORY_BY_ID[categoryId as CategoryKey]?.photo) || null;
+}
 
 /** The house rules of every IRLY community. */
 export const GUIDELINES = [

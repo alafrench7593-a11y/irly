@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
 import { CommunityIntro } from '@/features/community/CommunityIntro';
+import { CommunityThumb } from '@/features/community/CommunityThumb';
 import { joinCommunities, profileTags, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
@@ -164,9 +165,7 @@ function CommunityRow({ c, index, reduced, choosing, picked, onToggle }: { c: Of
         accessibilityState={choosing ? { checked: picked } : undefined}
         accessibilityLabel={c.name}
       >
-        <View style={[styles.emoji, { backgroundColor: t.c.overlay }]}>
-          <Text style={{ fontSize: 24 }}>{c.emoji}</Text>
-        </View>
+        <CommunityThumb topic={c.topic} emoji={c.emoji} light={CITIES[c.cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={52} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="titleS" numberOfLines={1}>
             {c.name}

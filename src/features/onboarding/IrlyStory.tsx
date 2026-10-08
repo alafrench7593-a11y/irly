@@ -169,12 +169,12 @@ type FaceDef = { id: string; name: string; hue: number; x: number; y: number; si
 /** Example portraits (stock photos), never presented as members. */
 const FACES: FaceDef[] = [
   { id: 'p-layla', name: 'Layla', hue: 12, x: 0.5, y: 0.4, size: 96, live: true },
-  { id: 'p-samuel', name: 'Samuel', hue: 210, x: 0.2, y: 0.22, size: 66 },
+  { id: 'p-kenji', name: 'Kenji', hue: 210, x: 0.2, y: 0.22, size: 66 },
   { id: 'p-chloe', name: 'Chloé', hue: 330, x: 0.8, y: 0.2, size: 70, online: true },
-  { id: 'p-arjun', name: 'Arjun', hue: 40, x: 0.15, y: 0.6, size: 60, online: true },
-  { id: 'p-sofia', name: 'Sofia', hue: 150, x: 0.85, y: 0.58, size: 62 },
-  { id: 'p-nadia', name: 'Nadia', hue: 280, x: 0.34, y: 0.84, size: 54 },
-  { id: 'p-omar', name: 'Omar', hue: 95, x: 0.68, y: 0.86, size: 58, online: true },
+  { id: 'p-lucas', name: 'Lucas', hue: 40, x: 0.15, y: 0.6, size: 60, online: true },
+  { id: 'p-mia', name: 'Mia', hue: 150, x: 0.85, y: 0.58, size: 62 },
+  { id: 'p-amira', name: 'Amira', hue: 280, x: 0.34, y: 0.84, size: 54 },
+  { id: 'p-tom', name: 'Tom', hue: 95, x: 0.68, y: 0.86, size: 58, online: true },
 ];
 
 /** FRIENDS: real faces drift in from everywhere and gather; what you share shows. */
@@ -299,9 +299,9 @@ function Marquee({ items, dir, speed, reduced, delay, tileH }: { items: { photo:
 }
 
 const PROS: { id: string; name: string; role: string; hue: number }[] = [
-  { id: 'p-james', name: 'James', role: 'Founder · Fintech', hue: 210 },
-  { id: 'p-amira', name: 'Amira', role: 'Product designer', hue: 330 },
-  { id: 'p-khalid', name: 'Khalid', role: 'Investor · Real estate', hue: 40 },
+  { id: 'p-marco', name: 'Marco', role: 'Founder · Fintech', hue: 210 },
+  { id: 'p-chloe', name: 'Chloé', role: 'Product designer', hue: 330 },
+  { id: 'p-lucas', name: 'Lucas', role: 'Investor · Real estate', hue: 40 },
 ];
 
 /** NETWORK: professional cards fan in; one request turns into a connection. */
@@ -376,7 +376,7 @@ const RealLifeScene = memo(function RealLifeScene({ w, h, reduced }: SceneProps)
         <Avatar name="Layla" hue={12} size={80} photo={portrait('p-layla')} />
       </Animated.View>
       <Animated.View style={[styles.meetFace, { left: w / 2 - 40, top: cy - 40 }, right]}>
-        <Avatar name="Samuel" hue={210} size={80} photo={portrait('p-samuel')} />
+        <Avatar name="Kenji" hue={210} size={80} photo={portrait('p-kenji')} />
       </Animated.View>
       <Animated.View style={[styles.planCard, { top: cy + 64, left: w / 2 - 118 }, cardStyle]}>
         <Glass dark level="regular" style={styles.planGlass}>

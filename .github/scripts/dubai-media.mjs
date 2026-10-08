@@ -52,7 +52,7 @@ const PLACES = {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function getJson(url, headers = {}) {
   for (let i = 0; i < 4; i++) {
-    const r = await fetch(url, { headers });
+    const r = await fetch(url, { headers, signal: AbortSignal.timeout(30000) });
     if (r.status === 429) {
       await sleep(20000 * (i + 1));
       continue;
@@ -117,7 +117,7 @@ function save(key, src) {
 }
 
 async function download(url, to) {
-  const r = await fetch(url, { redirect: 'follow' });
+  const r = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(90000) });
   if (!r.ok) throw new Error(`${r.status} download`);
   fs.writeFileSync(to, Buffer.from(await r.arrayBuffer()));
 }
@@ -182,7 +182,15 @@ for (const [key, [query, words, place = 'dubai']] of Object.entries(queries)) {
   }
   if (!old) keepOriginal(key); // only the photo it had before any Dubai photo
   const tmp = `/tmp/dubai-${key}.jpg`;
-  await download(found.img, tmp);
+  try {
+    await download(found.img, tmp);
+  } catch (e) {
+    // A download that hangs or fails: the key keeps the photo it has.
+    console.log(key, 'download failed', e.message);
+    if (old) restoreOriginal(key);
+    report.none.push(key);
+    continue;
+  }
   save(key, tmp);
   picks[key] = { id: found.id, tags: found.tags.slice(0, 160), page: found.page, by: found.by, byUrl: found.byUrl, ...(found.license ? { license: found.license } : {}) };
   used.add(found.id);
@@ -203,7 +211,13 @@ for (const [name, spec] of Object.entries(videos)) {
     continue;
   }
   const tmp = `/tmp/dubai-video-${name}.mp4`;
-  await download(v.file, tmp);
+  try {
+    await download(v.file, tmp);
+  } catch (e) {
+    console.log(k, 'download failed', e.message);
+    report.none.push(k);
+    continue;
+  }
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', tmp, '-t', '12', '-an', '-vf', 'scale=1280:-2', '-c:v', 'libx264', '-preset', 'slow', '-crf', '28', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', `site/video/${name}.mp4`]);
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', '1', '-i', `site/video/${name}.mp4`, '-frames:v', '1', '-q:v', '5', `site/video/${name}.jpg`]);
   picks[k] = { id: v.id, tags: v.text.slice(0, 160), page: v.page, by: v.by, byUrl: v.byUrl };

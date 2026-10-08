@@ -22,10 +22,9 @@ import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type Pla
 import { fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
 import { pickPhoto, setCommunityCover, usePhotoLink } from '@/features/server/covers';
-import { GUIDELINES, introDraft } from '@/features/community/official';
+import { communityPhoto, GUIDELINES, introDraft } from '@/features/community/official';
 import { useStore } from '@/state/store';
 import { Photo } from '@/components/visual/Photo';
-import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { openReport } from '@/features/moderation/reportStore';
 import { useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
@@ -149,7 +148,7 @@ export default function CommunityScreen() {
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
-          <CommunityCover id={c.id} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
+          <CommunityCover id={c.id} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
           <View style={[styles.pad, { gap: 6 }]}>
             <Text variant="overline" tone="accent">
               {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
@@ -689,10 +688,10 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
 }
 
 /** The community's photo: its own, or the app's photo for its category. The owner and moderators can change it. */
-function CommunityCover({ id, categoryId, coverPath, light, canEdit, onChanged }: { id: string; categoryId: string | null; coverPath: string | null; light: LightId; canEdit: boolean; onChanged: () => void }) {
+function CommunityCover({ id, topic, categoryId, coverPath, light, canEdit, onChanged }: { id: string; topic: string | null; categoryId: string | null; coverPath: string | null; light: LightId; canEdit: boolean; onChanged: () => void }) {
   const uri = usePhotoLink(coverPath);
   const [saving, setSaving] = useState(false);
-  const fallback = CATEGORY_BY_ID[categoryId as CategoryKey]?.photo ?? 'meeting';
+  const fallback = communityPhoto(topic, categoryId) ?? 'meeting';
   const change = async (next: 'pick' | 'reset') => {
     if (saving) return;
     try {
