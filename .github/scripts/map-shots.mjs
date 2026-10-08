@@ -47,18 +47,30 @@ await page.goto('http://localhost:8095/map', { waitUntil: 'load' });
 await page.waitForLoadState('networkidle').catch(() => {});
 await sleep(9000);
 await shot('map-0'); await labels('map-0');
-// zoom in around the marina and the centre, so clusters open into people
-for (let i = 1; i <= 3; i++) {
-  await page.mouse.move(195, 430);
-  await page.mouse.wheel(0, -260);
-  await sleep(3500);
-  await shot(`map-${i}`); await labels(`map-${i}`);
+// zoomed out once, then panned in eight directions: pick the view with the most faces
+const drag = async (dx, dy) => {
+  await page.mouse.move(195, 430); await page.mouse.down();
+  for (let i = 1; i <= 12; i++) { await page.mouse.move(195 + (dx * i) / 12, 430 + (dy * i) / 12); await sleep(16); }
+  await page.mouse.up(); await sleep(3200);
+};
+const people = async () => page.evaluate(() => [...document.querySelectorAll('[aria-label]')]
+  .filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.left > 0 && r.right < innerWidth && r.top > 90 && r.bottom < innerHeight - 110; })
+  .map((e) => e.getAttribute('aria-label')).filter((l) => /^[A-Z][a-zé]+( is live)?\. /.test(l) && !/places|Café|★/.test(l)).length);
+await page.mouse.move(195, 430);
+await page.mouse.wheel(0, 300); await sleep(3500);
+await shot('out1'); await labels('out1');
+fs.appendFileSync(`${OUT}/labels.txt`, `\npeople out1: ${await people()}\n`);
+const dirs = [['w', 230, 0], ['e', -230, 0], ['n', 0, 300], ['s', 0, -300], ['nw', 200, 260], ['ne', -200, 260], ['sw', 200, -260], ['se', -200, -260]];
+for (const [name, dx, dy] of dirs) {
+  await drag(dx, dy);
+  await shot(`pan-${name}`); await labels(`pan-${name}`);
+  fs.appendFileSync(`${OUT}/labels.txt`, `\npeople pan-${name}: ${await people()}\n`);
+  await drag(-dx, -dy);
 }
-// the Live filter
-const live = page.getByText('Live', { exact: true }).first();
-if (await live.count()) { await live.click().catch(() => {}); await sleep(3500); await shot('map-live'); await labels('map-live'); }
-// open a person
-const person = page.locator('[aria-label*="Layla"], [aria-label*="Samuel"], [aria-label*="Chloé"]').first();
-if (await person.count()) { await person.click({ force: true }).catch(() => {}); await sleep(3000); await shot('map-person'); await labels('map-person'); }
+// further out: the whole city
+await page.mouse.move(195, 430);
+await page.mouse.wheel(0, 300); await sleep(3500);
+await shot('out2'); await labels('out2');
+fs.appendFileSync(`${OUT}/labels.txt`, `\npeople out2: ${await people()}\n`);
 await browser.close();
 process.exit(0);
