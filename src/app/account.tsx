@@ -52,7 +52,8 @@ export default function AccountScreen() {
   const account = useAccount();
   const onboarded = useStore((s) => s.onboarded);
   const cityId = useStore((s) => s.cityId);
-  const params = useLocalSearchParams<{ reset?: string }>();
+  const params = useLocalSearchParams<{ reset?: string; from?: string }>();
+  const fromOnboarding = params.from === 'onboarding';
   const [mode, setMode] = useState<Mode>(params.reset ? 'reset' : 'choose');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,7 +106,8 @@ export default function AccountScreen() {
     haptic('success');
     track(creating ? 'SIGNUP' : 'LOGIN', { method: how });
     toast("You're signed in", 'check', 'positive');
-    if (router.canGoBack()) router.back();
+    if (fromOnboarding) router.replace('/(tabs)');
+    else if (router.canGoBack()) router.back();
   };
 
   const input = [styles.input, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }];
@@ -183,7 +185,7 @@ export default function AccountScreen() {
   }
 
   const titles: Record<Mode, [string, string]> = {
-    choose: ['Join IRLY', 'Find someone to do something with.'],
+    choose: ['Join IRLY', fromOnboarding ? 'Create your account to save your profile and meet people for real.' : 'Find someone to do something with.'],
     email: [creating ? 'Create your account' : 'Sign in with email', creating ? 'Email and a password. We send a link to confirm it’s you.' : 'Welcome back.'],
     link: ['Email me a link', 'No password: we email you a sign-in link.'],
     code: ['Check your email', tx('Sent to {email}. Open the link on this device, or enter the 6-digit code if the email shows one.', { email: email.trim() })],
@@ -312,6 +314,7 @@ export default function AccountScreen() {
         ) : null}
 
         {mode !== 'choose' ? <Button label="Other ways to sign in" variant="ghost" icon="arrowLeft" onPress={() => setMode('choose')} /> : null}
+        {fromOnboarding && mode === 'choose' ? <Button label="Not now" variant="ghost" onPress={() => router.replace('/(tabs)')} /> : null}
 
         <Text variant="caption" tone="tertiary">
           {tx('By continuing you confirm you are {age} or older and accept the', { age: APP.minimumAge })}{' '}

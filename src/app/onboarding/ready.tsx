@@ -10,6 +10,8 @@ import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
 import { easing } from '@/motion/tokens';
+import { useAccount } from '@/features/auth/account';
+import { hasBackend } from '@/lib/supabase';
 import { useCityId, useStore } from '@/state/store';
 import { palettes, space } from '@/theme/tokens';
 
@@ -23,6 +25,7 @@ export default function Ready() {
   const cityId = useCityId();
   const city = CITIES[cityId];
   const name = useStore((s) => s.profile.name);
+  const account = useAccount();
   const completeOnboarding = useStore((s) => s.completeOnboarding);
   const [mark, setMark] = useState<MarkState>('loading');
   const [step, setStep] = useState(0);
@@ -73,7 +76,8 @@ export default function Ready() {
             mark === 'transition'
               ? () => {
                   completeOnboarding();
-                  router.replace('/(tabs)');
+                  // New here: offer an account (Apple, Google, email) before Home; skippable.
+                  router.replace(hasBackend && !account ? '/account?from=onboarding' : '/(tabs)');
                 }
               : undefined
           }
