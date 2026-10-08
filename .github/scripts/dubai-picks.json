@@ -530,5 +530,12 @@
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
+ },
+ "swimming": {
+  "id": "own-swim",
+  "tags": "open water swimming, group, Burj Al Arab, Dubai",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
  }
 }
