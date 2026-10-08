@@ -476,8 +476,8 @@
   "byUrl": "https://getirly.com"
  },
  "running": {
-  "id": "own-running-race",
-  "tags": "running, race, runners",
+  "id": "own-running-duo",
+  "tags": "running, friends, sport",
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
@@ -576,6 +576,13 @@
  "bali": {
   "id": "own-bali",
   "tags": "Bali, Nusa Penida, Kelingking beach",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
+ },
+ "marathon": {
+  "id": "own-running-race",
+  "tags": "running, race, runners",
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
