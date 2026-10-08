@@ -3,6 +3,10 @@
   "outputDirectory": "out",
   "installCommand": "npm ci --ignore-scripts",
   "framework": null,
-  "cleanUrls": true,
-  "rewrites": [{ "source": "/app/((?!_expo|assets|favicon|manifest|icon|apple-touch).*)", "destination": "/app/index.html" }]
+  "rewrites": [
+    {
+      "source": "/app/:path((?!_expo|assets|favicon|manifest|icon|apple-touch).*)",
+      "destination": "/app/index.html"
+    }
+  ]
 }
