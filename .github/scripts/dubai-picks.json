@@ -504,8 +504,8 @@
   "byUrl": "https://getirly.com"
  },
  "running": {
-  "id": "own-running",
-  "tags": "running, stairs, training",
+  "id": "own-running-race",
+  "tags": "running, race, runners",
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
@@ -513,6 +513,13 @@
  "waterPark": {
   "id": "own-waterpark",
   "tags": "water park, slide, friends, family",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
+ },
+ "crossfit": {
+  "id": "own-running",
+  "tags": "training, stairs, workout",
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
