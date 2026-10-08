@@ -1,0 +1,328 @@
+{
+ "when": "2026-10-08T20:31:44.298Z",
+ "runs": {
+  "site-desktop": {
+   "url": "http://localhost:8090/",
+   "errors": [],
+   "failed": [
+    "net::ERR_ABORTED http://localhost:8090/video/dubai.mp4",
+    "net::ERR_ABORTED http://localhost:8090/video/dubai.mp4",
+    "net::ERR_ABORTED http://localhost:8090/video/night.mp4"
+   ],
+   "status": 200,
+   "loadMs": 233,
+   "metrics": {
+    "dcl": 218,
+    "load": 229,
+    "htmlBytes": 159819,
+    "totalBytes": 1751614,
+    "requests": 23,
+    "byType": {
+     "link": 1470,
+     "img": 1400108,
+     "video": 171149,
+     "script": 19068
+    },
+    "big": [
+     [
+      "http://localhost:8090/video/dubai.jpg",
+      198809
+     ],
+     [
+      "http://localhost:8090/shots/home.jpg",
+      159691
+     ],
+     [
+      "http://localhost:8090/shots/story-en-2.jpg",
+      159223
+     ],
+     [
+      "http://localhost:8090/shots/story-en-5.jpg",
+      182194
+     ]
+    ],
+    "lcp": {
+     "t": 232,
+     "el": "SPAN.",
+     "url": ""
+    },
+    "title": "IRLY — Meet People. Do Things. Live IRL.",
+    "description": "New to Dubai? IRLY helps you meet people who share your interests, join communities, find things to do together and turn online connections into real-life moments. Starting in Dubai.",
+    "ogTitle": "IRLY — Meet People. Do Things. Live IRL.",
+    "ogDescription": "New to Dubai? Meet people who share your interests, join communities and do things together, in real life. Starting in Dubai.",
+    "ogImage": "https://getirly.com/og.jpg",
+    "twitterCard": "summary_large_image",
+    "canonical": "https://getirly.com/",
+    "hreflang": [
+     "en https://getirly.com/?lang=en",
+     "fr https://getirly.com/?lang=fr",
+     "ar https://getirly.com/?lang=ar",
+     "x-default https://getirly.com/"
+    ],
+    "lang": "en",
+    "dir": "ltr",
+    "h1": [
+     "New to Dubai? You don’t have to be alone."
+    ],
+    "h2": [
+     "A city full of people. Still feeling alone?",
+     "You’re not the only one looking.",
+     "You don’t need to know anyone to get started.",
+     "Pick what you’re into.",
+     "Say hello. Then go.",
+     "From a conversation to a real-life moment.",
+     "",
+     "Whatever you’re into, do it with people.",
+     "",
+     "",
+     "See IRLY in action.",
+     "Meet people who actually match your vibe.",
+     "Dubai, live.",
+     "Start in Dubai. Built for everywhere.",
+     "From a new city to your city.",
+     "Be there when IRLY launches."
+    ],
+    "imgs": 62,
+    "imgsNoAlt": 0,
+    "imgsEmptyAlt": 53,
+    "videos": [
+     {
+      "src": "http://localhost:8090/video/dubai.mp4",
+      "preload": "auto",
+      "autoplay": false
+     },
+     {
+      "src": "http://localhost:8090/video/night.mp4",
+      "preload": "none",
+      "autoplay": false
+     },
+     {
+      "src": "http://localhost:8090/video/marina.mp4",
+      "preload": "none",
+      "autoplay": false
+     }
+    ],
+    "jsonld": [
+     "{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type\":\"WebSite\",\"name\":\"IRLY\",\"url\":\"https://getirly.com/\",\"inLanguage\":[\"en\",\"fr\",\"ar\"]},{\"@type\":\"Organization\",\"name\":\"IRLY\",\"url\":\"https://getirly.com/\",\"logo\":\"https://getirly.com/apple-touch-icon.png\",\"slogan\":\"Meet people. Do things. Live IRL.\"}]}"
+    ],
+    "height": 48472,
+    "links": [
+     "#main",
+     "#top",
+     "#film",
+     "#communities",
+     "#app",
+     "#dubai",
+     "#waitlist",
+     "https://getirly.com/app/",
+     "#why",
+     "https://en.wikipedia.org/wiki/Expatriates_in_the_United_Arab_Emirates",
+     "https://news.gallup.com/opinion/gallup/512618/almost-quarter-world-feels-lonely.aspx",
+     "https://alafrench7593-a11y.github.io/irly/legal/privacy",
+     "https://alafrench7593-a11y.github.io/irly/support",
+     "https://alafrench7593-a11y.github.io/irly/legal/terms"
+    ],
+    "buttons": [
+     "EN",
+     "FR",
+     "ع",
+     "Find my people",
+     "Menu",
+     "Find my people →",
+     "See how IRLY works",
+     "iFitness",
+     "iFootball",
+     "iTravel",
+     "iNetworking",
+     "iBusiness",
+     "iFood",
+     "Running",
+     "Beach",
+     "Tech",
+     "New in town",
+     "Join the waitlist"
+    ]
+   },
+   "frames": 80
+  },
+  "site-phone": {
+   "url": "http://localhost:8090/",
+   "errors": [],
+   "failed": [
+    "net::ERR_ABORTED http://localhost:8090/video/night.mp4",
+    "net::ERR_ABORTED http://localhost:8090/video/night.mp4"
+   ],
+   "status": 200,
+   "loadMs": 198,
+   "metrics": {
+    "dcl": 190,
+    "load": 196,
+    "htmlBytes": 159819,
+    "totalBytes": 1751337,
+    "requests": 21,
+    "byType": {
+     "link": 1493,
+     "img": 1400108,
+     "video": 170849,
+     "script": 19068
+    },
+    "big": [
+     [
+      "http://localhost:8090/video/dubai.jpg",
+      198809
+     ],
+     [
+      "http://localhost:8090/shots/home.jpg",
+      159691
+     ],
+     [
+      "http://localhost:8090/shots/story-en-2.jpg",
+      159223
+     ],
+     [
+      "http://localhost:8090/shots/story-en-5.jpg",
+      182194
+     ]
+    ],
+    "lcp": {
+     "t": 196,
+     "el": "SPAN.",
+     "url": ""
+    },
+    "title": "IRLY — Meet People. Do Things. Live IRL.",
+    "description": "New to Dubai? IRLY helps you meet people who share your interests, join communities, find things to do together and turn online connections into real-life moments. Starting in Dubai.",
+    "ogTitle": "IRLY — Meet People. Do Things. Live IRL.",
+    "ogDescription": "New to Dubai? Meet people who share your interests, join communities and do things together, in real life. Starting in Dubai.",
+    "ogImage": "https://getirly.com/og.jpg",
+    "twitterCard": "summary_large_image",
+    "canonical": "https://getirly.com/",
+    "hreflang": [
+     "en https://getirly.com/?lang=en",
+     "fr https://getirly.com/?lang=fr",
+     "ar https://getirly.com/?lang=ar",
+     "x-default https://getirly.com/"
+    ],
+    "lang": "en",
+    "dir": "ltr",
+    "h1": [
+     "New to Dubai? You don’t have to be alone."
+    ],
+    "h2": [
+     "A city full of people. Still feeling alone?",
+     "You’re not the only one looking.",
+     "You don’t need to know anyone to get started.",
+     "Pick what you’re into.",
+     "Say hello. Then go.",
+     "From a conversation to a real-life moment.",
+     "",
+     "Whatever you’re into, do it with people.",
+     "",
+     "",
+     "See IRLY in action.",
+     "Meet people who actually match your vibe.",
+     "Dubai, live.",
+     "Start in Dubai. Built for everywhere.",
+     "From a new city to your city.",
+     "Be there when IRLY launches."
+    ],
+    "imgs": 62,
+    "imgsNoAlt": 0,
+    "imgsEmptyAlt": 53,
+    "videos": [
+     {
+      "src": "http://localhost:8090/video/dubai.mp4",
+      "preload": "none",
+      "autoplay": false
+     },
+     {
+      "src": "http://localhost:8090/video/night.mp4",
+      "preload": "none",
+      "autoplay": false
+     },
+     {
+      "src": "http://localhost:8090/video/marina.mp4",
+      "preload": "none",
+      "autoplay": false
+     }
+    ],
+    "jsonld": [
+     "{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type\":\"WebSite\",\"name\":\"IRLY\",\"url\":\"https://getirly.com/\",\"inLanguage\":[\"en\",\"fr\",\"ar\"]},{\"@type\":\"Organization\",\"name\":\"IRLY\",\"url\":\"https://getirly.com/\",\"logo\":\"https://getirly.com/apple-touch-icon.png\",\"slogan\":\"Meet people. Do things. Live IRL.\"}]}"
+    ],
+    "height": 46913,
+    "links": [
+     "#main",
+     "#top",
+     "#film",
+     "#communities",
+     "#app",
+     "#dubai",
+     "#waitlist",
+     "https://getirly.com/app/",
+     "#why",
+     "https://en.wikipedia.org/wiki/Expatriates_in_the_United_Arab_Emirates",
+     "https://news.gallup.com/opinion/gallup/512618/almost-quarter-world-feels-lonely.aspx",
+     "https://alafrench7593-a11y.github.io/irly/legal/privacy",
+     "https://alafrench7593-a11y.github.io/irly/support",
+     "https://alafrench7593-a11y.github.io/irly/legal/terms"
+    ],
+    "buttons": [
+     "EN",
+     "FR",
+     "ع",
+     "Find my people",
+     "Menu",
+     "Find my people →",
+     "See how IRLY works",
+     "iFitness",
+     "iFootball",
+     "iTravel",
+     "iNetworking",
+     "iBusiness",
+     "iFood",
+     "Running",
+     "Beach",
+     "Tech",
+     "New in town",
+     "Join the waitlist"
+    ]
+   },
+   "frames": 79
+  },
+  "site-phone-fr": {
+   "url": "http://localhost:8090/?lang=fr",
+   "errors": [],
+   "failed": [
+    "net::ERR_ABORTED http://localhost:8090/video/night.mp4",
+    "net::ERR_ABORTED http://localhost:8090/video/night.mp4"
+   ],
+   "status": 200,
+   "loadMs": 237,
+   "metrics": {
+    "dir": "ltr",
+    "lang": "fr",
+    "h1": [
+     "Nouveau à Dubaï ?\nTu n’as pas à rester seul."
+    ]
+   },
+   "frames": 11
+  },
+  "site-phone-ar": {
+   "url": "http://localhost:8090/?lang=ar",
+   "errors": [],
+   "failed": [
+    "net::ERR_ABORTED http://localhost:8090/video/night.mp4",
+    "net::ERR_ABORTED http://localhost:8090/video/night.mp4"
+   ],
+   "status": 200,
+   "loadMs": 333,
+   "metrics": {
+    "dir": "rtl",
+    "lang": "ar",
+    "h1": [
+     "جديد في دبي؟\nلست مضطرًا لأن تبقى وحيدًا."
+    ]
+   },
+   "frames": 11
+  }
+ }
+}
