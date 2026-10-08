@@ -76,8 +76,9 @@ export const CATEGORIES: CatalogCategory[] = [
     color: '#34C759',
     photo: 'padel',
     subs: list(
-      'Football', 'Padel', 'Tennis', 'Basketball', 'Volleyball', 'Beach volley', 'Running', 'Cycling', 'Gym', 'CrossFit',
-      'Boxing', 'Kickboxing', 'MMA', 'Wrestling', 'Swimming', 'Diving', 'Snorkelling', 'Kayak', 'Paddleboard', 'Kitesurf',
+      // Padel and MMA first: the two sports IRLY puts forward in Dubai.
+      'Padel', 'MMA', 'Football', 'Gym', 'Boxing', 'Tennis', 'Basketball', 'Volleyball', 'Beach volley', 'Running', 'Cycling', 'CrossFit',
+      'Kickboxing', 'Wrestling', 'Swimming', 'Diving', 'Snorkelling', 'Kayak', 'Paddleboard', 'Kitesurf',
       'Surf', 'Sailing', 'Golf', 'Cricket', 'Badminton', 'Table tennis', 'Horse riding', 'Yoga', 'Pilates', 'Martial arts',
       'Climbing', 'Skateboard', 'Rollerblading', 'Archery', 'Dance', 'Water sports',
     ),

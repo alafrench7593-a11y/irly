@@ -179,13 +179,14 @@
   ]
  ],
  "gym": [
-  "Dubai gym",
+  "Dubai gym fitness",
   [
    "gym",
    "fitness",
    "workout",
-   "training",
-   "weights"
+   "weights",
+   "dumbbell",
+   "dumbbells"
   ]
  ],
  "crossfit": [
@@ -221,10 +222,14 @@
   ]
  ],
  "boxing": [
-  "Dubai boxing",
+  "Dubai MMA boxing",
   [
    "boxing",
-   "boxer"
+   "boxer",
+   "mma",
+   "martial arts",
+   "kickboxing",
+   "fighter"
   ]
  ],
  "yoga": [
@@ -878,11 +883,17 @@
   ]
  ],
  "fashion": [
-  "Dubai fashion",
+  "Dubai fashion boutique",
   [
-   "fashion",
-   "model",
-   "style"
+   [
+    "fashion",
+    "boutique",
+    "clothes",
+    "clothing",
+    "dress",
+    "style",
+    "outfit"
+   ]
   ]
  ],
  "festival": [
