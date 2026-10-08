@@ -118,7 +118,7 @@ select pg_temp.check((select count(*) from public.irly_my_matches()) = 1, 'match
 select pg_temp.as_admin();
 select pg_temp.check((select count(*) from public.irly_matches) = 1, 'exactly one match row');
 select pg_temp.check((select count(*) from public.conversations where kind = 'match') = 1, 'exactly one match chat');
-select pg_temp.check((select count(*) from public.messages where kind in ('system', 'starter')) = 3, 'starters written');
+select pg_temp.check((select count(*) from public.messages m join public.conversations v on v.id = m.conversation_id where v.kind = 'match' and m.kind in ('system', 'starter')) = 3, 'starters written');
 select pg_temp.check((select count(*) from public.notifications where kind = 'MATCH_CREATED') = 2, 'both notified');
 
 -- ───── Chat privacy ─────
@@ -174,7 +174,8 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select public.join_community('20000000-0000-0000-0000-000000000001');
 select pg_temp.check((select count(*) from public.conversations where community_id = '20000000-0000-0000-0000-000000000001') = 1, 'community chat joined automatically');
 select pg_temp.expect_denied($$select public.join_community('20000000-0000-0000-0000-000000000002')$$, 'man cannot join girl-only community');
-select pg_temp.check((select count(*) from public.communities) = 1, 'girl-only community invisible to a man');
+select pg_temp.check((select count(*) from public.communities where not official) = 1, 'girl-only community invisible to a man');
+select pg_temp.check(not exists (select 1 from public.communities where girl_only), 'official girls-only communities invisible to a man too');
 
 -- ───── Anonymous callers get nothing ─────
 select pg_temp.as_admin();
@@ -817,6 +818,24 @@ select pg_temp.check((select cover_path from public.communities where name = 'Ma
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select pg_temp.expect_denied($$select public.set_community_cover((select id from public.communities where name = 'Marina Padel Girls'), '00000000-0000-0000-0000-00000000000b/x.jpg')$$, 'a non-owner cannot change the community photo');
 select pg_temp.expect_denied($$select public.set_conversation_photo((select id from public.conversations where title = 'Marina Padel Girls'), '00000000-0000-0000-0000-00000000000b/x.jpg')$$, 'a non-admin cannot change the chat photo');
+select pg_temp.as_admin();
+
+-- ───── IRLY Community: official communities ─────
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.communities where official and topic = 'gym' and city_id = 'dubai') = 1, 'one official IRLY Gym in Dubai');
+select pg_temp.check(private.ensure_official_communities() = 0, 'creating official communities again makes no duplicate');
+select pg_temp.check(exists (select 1 from public.messages m join public.conversations v on v.id = m.conversation_id join public.communities c on c.id = v.community_id where c.official and c.topic = 'newcomers' and m.kind = 'system'), 'official chats open with a welcome');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check((select topic from public.community_recommend('dubai', '{newcomer,activity:gym,goal:networking}') limit 1) in ('newcomers', 'gym'), 'recommendations follow the answers');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer}') where topic = 'football'), 'nothing recommended without a matching answer');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{}')), 'no answers, no recommendations');
+select pg_temp.check((select count(*) from public.community_recommend('sharjah', '{activity:gym}')) = 1, 'a city without its own gets the nearest one, once');
+select pg_temp.check(public.join_communities(array(select id from public.community_recommend('dubai', '{newcomer,activity:gym}'))) = 2, 'join all');
+select pg_temp.check((select count(*) from public.community_recommend('dubai', '{newcomer,activity:gym}') where is_member) = 2, 'joined communities show as joined');
+select pg_temp.check(exists (select 1 from public.messages m join public.conversations v on v.id = m.conversation_id join public.communities c on c.id = v.community_id where c.topic = 'gym' and c.city_id = 'dubai' and m.kind = 'system' and m.body like '% just joined 👋%'), 'a new member is announced in the chat');
+select pg_temp.expect_denied($$insert into public.communities (city_id, name, official, topic, created_by) values ('dubai', 'Fake IRLY Gym', true, 'gym', '00000000-0000-0000-0000-00000000000b')$$, 'members cannot create official communities');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{goal:irlygirl,goal:friends}') where topic = 'girls'), 'IRLY Girls is not recommended to men');
 select pg_temp.as_admin();
 
 -- ───── Account deletion cascades ─────

@@ -16,6 +16,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
+import { isAvatar } from '@/features/avatar/avatar';
+import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
@@ -103,7 +105,11 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
           <View style={styles.stage}>
             <Animated.View style={[styles.halo, halo]} />
             <Animated.View style={[styles.photoCard, left]}>
-              {me.photoUri ? (
+              {me.photoUri && isAvatar(me.photoUri) ? (
+                <View style={[StyleSheet.absoluteFill, styles.center]}>
+                  <IrlyAvatar config={me.photoUri} size={160} />
+                </View>
+              ) : me.photoUri ? (
                 <Image source={{ uri: me.photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
               ) : (
                 <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: girl.blush }]}>

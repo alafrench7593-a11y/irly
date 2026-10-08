@@ -76,7 +76,7 @@ async function main() {
   await page.evaluate(() => {
     localStorage.setItem(
       'irly-v2',
-      JSON.stringify({ state: { onboarded: true, destinationId: 'bali', cityId: 'bali', profile: { name: 'Uma', types: [], interests: [], activities: [], languages: ['English'], lookingFor: [], gender: 'woman', age: 32 } }, version: 1 }),
+      JSON.stringify({ state: { onboarded: true, destinationId: 'bali', cityId: 'bali', profile: { name: 'Uma', types: ['nomad'], interests: [], activities: [], languages: ['English'], lookingFor: ['friends'], gender: 'woman', age: 32, since: 'new' } }, version: 1 }),
     );
     localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   });
@@ -101,7 +101,7 @@ async function main() {
   const click = (text) => page.getByText(text, { exact: true }).first().click();
 
   await check('sign in through the app (email + password)', '/account', [], async () => {
-    await click('Continue with email');
+    // Email and password are on the first screen.
     await page.getByPlaceholder('you@email.com').fill(EMAIL);
     await page.getByPlaceholder('Password').fill(PASSWORD);
     const buttons = page.getByRole('button', { name: 'Sign in', exact: true });
@@ -110,6 +110,16 @@ async function main() {
   }, 'Signed in');
   // The session must survive a full reload (stored by the app).
   await check('session persists after reload', '/account', [], null, 'Signed in');
+  // IRLY Community, once after signing in: intro, then recommendations from the answers.
+  // Nothing is joined here: a join would post "Uma just joined" in a real community chat.
+  await check('IRLY Community intro', '/onboarding/communities', ['Meet people. Find your community.']);
+  await check('Your communities: newcomers recommended, join or skip', null, ['Your communities', 'IRLY Newcomers', 'Join all', 'Choose my communities', 'Skip for now'], async () => {
+    await click('Skip');
+  });
+  await check('Skip for now goes Home', null, ['Live Bali'], async () => {
+    await click('Skip for now');
+  });
+  await check('Communities page: IRLY communities with filters', '/communities', ['Recommended', 'Popular', 'IRLY Newcomers']);
   await check('Home shows Live Bali', '/', ['Live Bali']);
   await check('Discover shows Bali and restaurants doors', '/discover?tab=places', ['Discover', 'Live Bali', 'Where to eat']);
   await check('Bali hub', '/bali', ["Don't just visit", 'Where should I live?', 'Areas, explained']);

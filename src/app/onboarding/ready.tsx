@@ -77,7 +77,7 @@ export default function Ready() {
               ? () => {
                   completeOnboarding();
                   // New here: offer an account (Apple, Google, email) before Home; skippable.
-                  router.replace(hasBackend && !account ? '/account?from=onboarding' : '/(tabs)');
+                  router.replace(!hasBackend ? '/(tabs)' : account ? '/onboarding/communities' : '/account?from=onboarding');
                 }
               : undefined
           }

@@ -13,15 +13,17 @@ import { Chip, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { ACTIVITIES } from '@/data/catalog';
+import { ACTIVITIES , INTERESTS } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import type { LightId } from '@/theme/lights';
 import { dateFor, planDay, type Day, type GeoIndex } from '@/features/ai/intent';
 import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type PlanDraft } from '@/features/community/assist';
-import { fetchDigest, joinCommunity, leaveCommunity, useCommunity, useCommunityActivities, useCommunityFeed, type CommunityPost } from '@/features/community/data';
+import { fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
 import { pickPhoto, setCommunityCover, usePhotoLink } from '@/features/server/covers';
+import { GUIDELINES, introDraft } from '@/features/community/official';
+import { useStore } from '@/state/store';
 import { Photo } from '@/components/visual/Photo';
 import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { openReport } from '@/features/moderation/reportStore';
@@ -102,7 +104,7 @@ export default function CommunityScreen() {
     try {
       await joinCommunity(c.id);
       haptic('success');
-      toast(tx('You joined {name}', { name: c.name }), 'users', 'brand');
+      toast(c.official ? tx('Welcome to {name} 👋', { name: c.name }) : tx('You joined {name}', { name: c.name }), 'users', 'brand');
       refresh();
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live');
@@ -150,7 +152,7 @@ export default function CommunityScreen() {
           <CommunityCover id={c.id} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
           <View style={[styles.pad, { gap: 6 }]}>
             <Text variant="overline" tone="accent">
-              {[city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
+              {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
             </Text>
             <Text variant="displayM">{c.name}</Text>
             {c.tagline ? (
@@ -188,6 +190,8 @@ export default function CommunityScreen() {
               <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
             )}
           </View>
+
+          {c.official ? <OfficialBlock c={c} cityName={city.name} onMuted={refresh} /> : null}
 
           <View style={styles.pad}>
             <Segmented
@@ -617,6 +621,71 @@ function PostCard({
 function Centered({ children }: { children: React.ReactNode }) {
   const t = useTheme();
   return <View style={[styles.centered, { backgroundColor: t.c.bg }]}>{children}</View>;
+}
+
+/**
+ * IRLY's own communities: say hello first (strongly suggested for
+ * newcomers), the house rules, and the member's controls (mute, report).
+ */
+function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName: string; onMuted: () => void }) {
+  const t = useTheme();
+  const router = useRouter();
+  const profile = useStore((s) => s.profile);
+  const [rules, setRules] = useState(!c.isMember);
+  const introduce = () => {
+    if (!c.conversationId) return;
+    const draft = introDraft(profile, cityName, profile.interests.map((i) => tx(INTERESTS[i]?.label ?? i)));
+    router.push({ pathname: '/messages/[id]', params: { id: c.conversationId, draft } });
+  };
+  return (
+    <View style={[styles.pad, { gap: 10 }]}>
+      {c.isMember ? (
+        <Animated.View entering={FadeInDown.springify(480).dampingRatio(0.85)} style={[styles.card, { backgroundColor: c.introFirst ? t.c.text : t.c.surface }]}>
+          <Text variant="titleS" color={c.introFirst ? t.c.bg : undefined}>
+            Introduce yourself
+          </Text>
+          <Text variant="bodyS" color={c.introFirst ? t.c.bg : undefined} tone={c.introFirst ? undefined : 'secondary'}>
+            {c.introFirst ? 'Say hello and tell people what you’re looking for: it’s the fastest way to meet someone here.' : 'Tell the community a little about yourself.'}
+          </Text>
+          <Button label="Introduce myself" icon="message" variant={c.introFirst ? 'inverse' : 'secondary'} onPress={introduce} />
+        </Animated.View>
+      ) : null}
+      <PressableScale haptic="select" onPress={() => setRules((x) => !x)} style={[styles.card, { backgroundColor: t.c.surface }]} accessibilityRole="button" accessibilityState={{ expanded: rules }} accessibilityLabel="Community guidelines">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="shield" size={16} color={t.c.text} />
+          <Text variant="label" style={{ flex: 1 }}>
+            Keep IRLY welcoming
+          </Text>
+          <Icon name={rules ? 'chevronUp' : 'chevronDown'} size={16} color={t.c.textTertiary} />
+        </View>
+        {rules
+          ? GUIDELINES.map((g) => (
+              <Text key={g} variant="bodyS" tone="secondary">
+                {`· ${tx(g)}`}
+              </Text>
+            ))
+          : null}
+      </PressableScale>
+      {c.isMember && c.conversationId ? (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Button
+            label={c.muted ? 'Unmute chat' : 'Mute chat'}
+            icon={c.muted ? 'bell' : 'bellOff'}
+            variant="ghost"
+            onPress={() =>
+              setCommunityMuted(c.conversationId!, !c.muted)
+                .then(() => {
+                  toast(c.muted ? 'Chat notifications on' : 'Chat muted', 'check', 'brand');
+                  onMuted();
+                })
+                .catch(() => toast('Could not change it', 'x', 'live'))
+            }
+          />
+          <Button label="Report" icon="flag" variant="ghost" onPress={() => openReport({ kind: 'community', id: c.id })} />
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 /** The community's photo: its own, or the app's photo for its category. The owner and moderators can change it. */

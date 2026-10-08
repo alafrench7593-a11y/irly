@@ -106,7 +106,7 @@ export default function AccountScreen() {
     haptic('success');
     track(creating ? 'SIGNUP' : 'LOGIN', { method: how });
     toast("You're signed in", 'check', 'positive');
-    if (fromOnboarding) router.replace('/(tabs)');
+    if (fromOnboarding) router.replace('/onboarding/communities');
     else if (router.canGoBack()) router.back();
   };
 
@@ -157,7 +157,7 @@ export default function AccountScreen() {
             </Text>
           </View>
           {onboarded && cityId ? (
-            <Button label="Continue to IRLY" icon="arrowRight" full onPress={() => router.replace('/(tabs)')} />
+            <Button label="Continue to IRLY" icon="arrowRight" full onPress={() => router.replace(fromOnboarding ? '/onboarding/communities' : '/(tabs)')} />
           ) : (
             <>
               <Text variant="body" tone="secondary">

@@ -31,6 +31,7 @@ import { pickPhoto, setChatPhoto, useChatPhoto, usePhotoLink } from '@/features/
 import { Photo } from '@/components/visual/Photo';
 import { allMessages, cannedReply, resolveConversation, senderName } from '@/features/messages/conversations';
 import { haptic } from '@/motion/haptics';
+import { useNow } from '@/lib/useNow';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
@@ -61,6 +62,9 @@ function ServerThreadView({ id }: { id: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const thread = useServerThread(id);
+  const now = useNow();
+  // A first message prepared elsewhere (Introduce myself): editable, never sent by itself.
+  const { draft } = useLocalSearchParams<{ draft?: string }>();
   const chatPhoto = useChatPhoto(id);
   const chatPhotoUri = usePhotoLink(chatPhoto.path);
   const [photoMenu, setPhotoMenu] = useState(false);
@@ -82,7 +86,7 @@ function ServerThreadView({ id }: { id: string }) {
       setPhotoBusy(false);
     }
   };
-  const [text, setText] = useState('');
+  const [text, setText] = useState(typeof draft === 'string' ? draft.slice(0, 600) : '');
   const [sending, setSending] = useState(false);
   const [earlier, setEarlier] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -182,14 +186,27 @@ function ServerThreadView({ id }: { id: string }) {
               </Text>
             ) : null;
             if (m.from === 'irly') {
+              // "Sara just joined 👋 Say hello!" in a community: one tap to welcome them.
+              const joined = /^(.+) just joined 👋/.exec(m.text)?.[1];
+              const recent = now - m.at < 3 * 86_400_000;
               return (
                 <View key={m.id}>
                   {day}
-                  <View style={styles.note}>
+                  <Animated.View entering={joined ? FadeInDown.springify(420).dampingRatio(0.8) : undefined} style={styles.note}>
                     <Text variant="bodyS" tone="secondary" align="center">
                       {m.text}
                     </Text>
-                  </View>
+                    {joined && recent ? (
+                      <PressableScale
+                        haptic="select"
+                        onPress={() => setText(tx('Welcome {name}! 👋', { name: joined }))}
+                        style={[styles.hello, { borderColor: t.c.line }]}
+                        accessibilityLabel={tx('Say hello to {name}', { name: joined })}
+                      >
+                        <Text variant="label">Say hello</Text>
+                      </PressableScale>
+                    ) : null}
+                  </Animated.View>
                 </View>
               );
             }
@@ -543,6 +560,7 @@ function Dot({ delay }: { delay: number }) {
 }
 
 const styles = StyleSheet.create({
+  hello: { alignSelf: 'center', marginTop: 6, paddingHorizontal: 14, height: 32, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center' },
   chatPhoto: { width: 36, height: 36, borderRadius: 18, overflow: 'hidden' },
   shared: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   earlier: { alignSelf: 'center', height: 36, paddingHorizontal: 16, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center', marginBottom: 8 },

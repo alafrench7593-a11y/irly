@@ -59,6 +59,8 @@ if (typeof document !== 'undefined') {
  * when there is no exact key, their parts translated on their own.
  */
 const PATTERNS: [RegExp, string, string[]][] = [
+  [/^(.+) just joined 👋 Say hello!$/, '{name} just joined 👋 Say hello!', ['name']],
+  [/^Welcome to (.+) 👋 Introduce yourself, be kind and help others feel welcome\.$/, 'Welcome to {name} 👋 Introduce yourself, be kind and help others feel welcome.', ['name']],
   [/^In (.+) since (\d{4})$/, 'In {city} since {year}', ['city', 'year']],
   [/^(.+)\. Members across (.+) meet in real life, then keep the conversation going here\.$/, '{tagline}. Members across {city} meet in real life, then keep the conversation going here.', ['tagline', 'city']],
   [/^Welcome to (.+)! Next meetup is on the calendar, see you there\?$/, 'Welcome to {city}! Next meetup is on the calendar, see you there?', ['city']],

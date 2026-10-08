@@ -9,6 +9,7 @@ import Banknote from 'lucide-react-native/icons/banknote';
 import Bath from 'lucide-react-native/icons/bath';
 import BedDouble from 'lucide-react-native/icons/bed-double';
 import Bell from 'lucide-react-native/icons/bell';
+import BellOff from 'lucide-react-native/icons/bell-off';
 import Bike from 'lucide-react-native/icons/bike';
 import Bookmark from 'lucide-react-native/icons/bookmark';
 import BookOpen from 'lucide-react-native/icons/book-open';
@@ -137,6 +138,7 @@ export const icons = {
   bath: Bath,
   bed: BedDouble,
   bell: Bell,
+  bellOff: BellOff,
   bike: Bike,
   bookmark: Bookmark,
   book: BookOpen,
