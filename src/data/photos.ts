@@ -89,6 +89,8 @@ const ids = {
  * and served with the web app.
  */
 export const LIBRARY = [
+  // Provided by IRLY
+  'marathon',
   // IRLY Girl and IRLY Moms
   'girlFriends',
   'girlSunset',
