@@ -1,7 +1,8 @@
 name: Site review
 
-# Captures the live getirly.com (website and web app) for a design review and
-# publishes the frames, metrics and Lighthouse reports on the review/getirly branch.
+# Captures getirly.com for a design review: the live site and web app (LIVE=1),
+# and the newest website on main built and served on the runner (NEXT=1).
+# Publishes the frames, metrics and Lighthouse reports on review/getirly[-next].
 
 on:
   push:
@@ -11,6 +12,10 @@ on:
 
 permissions:
   contents: write
+
+env:
+  LIVE: '0'
+  NEXT: '1'
 
 jobs:
   review:
@@ -25,11 +30,12 @@ jobs:
           mkdir -p /tmp/pw && cd /tmp/pw && npm init -y > /dev/null
           npm i playwright@1.56.1 > /dev/null
           npx playwright install --with-deps chromium > /dev/null
+          cp $GITHUB_WORKSPACE/.github/scripts/site-review.mjs /tmp/pw/
       - name: Capture getirly.com
-        run: |
-          cp .github/scripts/site-review.mjs /tmp/pw/
-          REVIEW_OUT=$GITHUB_WORKSPACE/review node /tmp/pw/site-review.mjs
+        if: env.LIVE == '1'
+        run: REVIEW_OUT=$GITHUB_WORKSPACE/review node /tmp/pw/site-review.mjs
       - name: Lighthouse
+        if: env.LIVE == '1'
         run: |
           cd /tmp/pw
           export CHROME_PATH=$(node -e "console.log(require('playwright').chromium.executablePath())")
@@ -38,12 +44,23 @@ jobs:
           lh https://getirly.com/ site-desktop --preset=desktop
           lh https://getirly.com/app/ app-mobile
           REVIEW_OUT=$GITHUB_WORKSPACE/review node /tmp/pw/site-review.mjs lh || true
-      - name: Publish on review/getirly
+      - name: Capture the newest website (main, built here)
+        if: env.NEXT == '1'
         run: |
+          git fetch -q --depth=1 origin main
+          git worktree add -q /tmp/main FETCH_HEAD
+          (cd /tmp/main && git log -1 --format='%h %ci %s' > /tmp/next-commit.txt && node .github/scripts/site-build.mjs /tmp/site-next)
+          (python3 -m http.server 8090 --directory /tmp/site-next > /dev/null 2>&1 &)
+          sleep 2
+          mkdir -p review && cp /tmp/next-commit.txt review/next-commit.txt
+          REVIEW_OUT=$GITHUB_WORKSPACE/review SITE=http://localhost:8090/ ONLY_SITE=1 TAG=next- node /tmp/pw/site-review.mjs
+      - name: Publish
+        run: |
+          B=review/getirly; [ "$LIVE" = "1" ] || B=review/getirly-next
           git config user.name irly-bot
           git config user.email bot@irly.app
-          git checkout --orphan review/getirly
+          git checkout --orphan "$B"
           git rm -rfq --cached . > /dev/null
           git add review
           git commit -qm "Review captures of getirly.com"
-          git push -f origin review/getirly
+          git push -f origin "$B"

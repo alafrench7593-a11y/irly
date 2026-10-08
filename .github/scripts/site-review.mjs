@@ -25,7 +25,9 @@ if (process.argv[2] === 'lh') {
   process.exit(0);
 }
 
-const SITE = 'https://getirly.com/';
+const SITE = process.env.SITE || 'https://getirly.com/';
+const TAG = process.env.TAG || '';
+const ONLY_SITE = process.env.ONLY_SITE === '1';
 const APP = 'https://getirly.com/app/';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const report = { when: new Date().toISOString(), runs: {} };
@@ -91,7 +93,7 @@ async function scrollThrough(page, prefix, { step = 0.7, max = 80, quality = 78 
   await page.mouse.move(width / 2, height / 2);
   let n = 0;
   for (; n < max; n++) {
-    await page.screenshot({ path: `${OUT}/${prefix}-${String(n).padStart(2, '0')}.jpg`, type: 'jpeg', quality });
+    await page.screenshot({ path: `${OUT}/${TAG}${prefix}-${String(n).padStart(2, '0')}.jpg`, type: 'jpeg', quality });
     const y0 = await page.evaluate(() => scrollY);
     for (let k = 0; k < 8; k++) { await page.mouse.wheel(0, (height * step) / 8); await sleep(70); }
     await sleep(1100);
@@ -127,7 +129,7 @@ async function labels(page) {
   if (await menu.isVisible().catch(() => false)) {
     await menu.click();
     await sleep(900);
-    await page.screenshot({ path: `${OUT}/phone-menu.jpg`, type: 'jpeg', quality: 78 });
+    await page.screenshot({ path: `${OUT}/${TAG}phone-menu.jpg`, type: 'jpeg', quality: 78 });
   }
   await ctx.close();
 }
@@ -141,7 +143,7 @@ for (const lang of ['fr', 'ar']) {
 }
 
 // 4. The web app, as a first-time visitor on a phone
-{
+if (!ONLY_SITE) {
   const { ctx, page } = await open(PHONE, APP, 'app-phone');
   await sleep(2500);
   await page.screenshot({ path: `${OUT}/app-00.jpg`, type: 'jpeg', quality: 80 });
@@ -155,7 +157,7 @@ for (const lang of ['fr', 'ar']) {
 }
 
 // 5. The web app on a desktop screen
-{
+if (!ONLY_SITE) {
   const { ctx, page } = await open(DESK, APP, 'app-desktop');
   await sleep(2500);
   await page.screenshot({ path: `${OUT}/app-desk-00.jpg`, type: 'jpeg', quality: 80 });
@@ -163,5 +165,5 @@ for (const lang of ['fr', 'ar']) {
 }
 
 await browser.close();
-fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 1));
+fs.writeFileSync(path.join(OUT, `${TAG}report.json`), JSON.stringify(report, null, 1));
 console.log(JSON.stringify(Object.fromEntries(Object.entries(report.runs).map(([k, v]) => [k, { status: v.status, loadMs: v.loadMs, errors: v.errors.length, failed: v.failed.length, frames: v.frames }])), null, 1));
