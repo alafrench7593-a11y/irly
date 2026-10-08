@@ -16,10 +16,14 @@ import { toast } from '@/components/ui/Toast';
 import { ACTIVITIES } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
+import type { LightId } from '@/theme/lights';
 import { dateFor, planDay, type Day, type GeoIndex } from '@/features/ai/intent';
 import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type PlanDraft } from '@/features/community/assist';
 import { fetchDigest, joinCommunity, leaveCommunity, useCommunity, useCommunityActivities, useCommunityFeed, type CommunityPost } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
+import { pickPhoto, setCommunityCover, usePhotoLink } from '@/features/server/covers';
+import { Photo } from '@/components/visual/Photo';
+import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { openReport } from '@/features/moderation/reportStore';
 import { useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
@@ -143,6 +147,7 @@ export default function CommunityScreen() {
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
+          <CommunityCover id={c.id} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
           <View style={[styles.pad, { gap: 6 }]}>
             <Text variant="overline" tone="accent">
               {[city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
@@ -614,7 +619,54 @@ function Centered({ children }: { children: React.ReactNode }) {
   return <View style={[styles.centered, { backgroundColor: t.c.bg }]}>{children}</View>;
 }
 
+/** The community's photo: its own, or the app's photo for its category. The owner and moderators can change it. */
+function CommunityCover({ id, categoryId, coverPath, light, canEdit, onChanged }: { id: string; categoryId: string | null; coverPath: string | null; light: LightId; canEdit: boolean; onChanged: () => void }) {
+  const uri = usePhotoLink(coverPath);
+  const [saving, setSaving] = useState(false);
+  const fallback = CATEGORY_BY_ID[categoryId as CategoryKey]?.photo ?? 'meeting';
+  const change = async (next: 'pick' | 'reset') => {
+    if (saving) return;
+    try {
+      const picked = next === 'pick' ? await pickPhoto() : null;
+      if (next === 'pick' && !picked) return;
+      setSaving(true);
+      await setCommunityCover(id, picked);
+      haptic('success');
+      toast(next === 'pick' ? 'Photo updated' : 'Back to the IRLY photo', 'check', 'brand');
+      onChanged();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not change the photo', 'x', 'live');
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <View style={styles.pad}>
+      <Photo visual={{ photo: fallback, uri: uri ?? undefined }} light={light} scrim="soft" style={styles.coverPhoto} width={1000} recyclingKey={`community-${id}-${coverPath ?? 'app'}`}>
+        {canEdit ? (
+          <View style={styles.coverActions}>
+            <PressableScale haptic="select" onPress={() => change('pick')} style={styles.coverPill} accessibilityLabel="Change the photo">
+              {saving ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Icon name="camera" size={16} color="#FFFFFF" />}
+              <Text variant="label" style={{ color: '#FFFFFF' }}>
+                Change the photo
+              </Text>
+            </PressableScale>
+            {coverPath ? (
+              <PressableScale haptic="select" onPress={() => change('reset')} style={styles.coverPill} accessibilityLabel="Use the IRLY photo">
+                <Icon name="x" size={16} color="#FFFFFF" />
+              </PressableScale>
+            ) : null}
+          </View>
+        ) : null}
+      </Photo>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  coverPhoto: { height: 190, borderRadius: radius.xl, overflow: 'hidden' },
+  coverActions: { position: 'absolute', left: 12, bottom: 12, flexDirection: 'row', gap: 8 },
+  coverPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.55)' },
   root: { flex: 1 },
   pad: { paddingHorizontal: space.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },

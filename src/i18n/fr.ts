@@ -3228,4 +3228,14 @@ export const fr: Record<string, string> = {
   // ───── Intro story
   'Also into padel': 'Fan de padel aussi',
   'Night out': 'Soirée',
+  // ───── Photos of sessions, communities and chats
+  'Your photo': 'Ta photo',
+  'Use the IRLY photo': 'Remettre la photo IRLY',
+  'Photo updated': 'Photo mise à jour',
+  'Back to the IRLY photo': 'Photo IRLY remise',
+  'Could not change the photo': 'Impossible de changer la photo',
+  'Chat photo': 'Photo du chat',
+  'Everyone in the chat sees it': 'Tout le monde dans le chat la voit',
+  'only the community owner or a moderator can change its photo': 'Seuls le créateur et les modérateurs peuvent changer la photo',
+  'only the chat admin can change its photo': 'Seul l’admin du chat peut changer la photo',
 };

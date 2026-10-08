@@ -30,6 +30,8 @@ export type CommunityDetail = {
   isMember: boolean;
   myRole: string | null;
   conversationId: string | null;
+  /** Its own photo (a storage path); null: the app's photo for the category. */
+  coverPath: string | null;
 };
 
 export type CommunityPost = {
@@ -66,7 +68,10 @@ export function useCommunity(id: string) {
 
   const load = useCallback(async (): Promise<CommunityDetail | null> => {
     if (!uid) return null;
-    const { data, error: e } = await sb().rpc('community_detail', { p_id: id });
+    const [{ data, error: e }, { data: cover }] = await Promise.all([
+      sb().rpc('community_detail', { p_id: id }),
+      sb().from('communities').select('cover_path').eq('id', id).maybeSingle(),
+    ]);
     if (e) throw new Error(e.message);
     const r = ((data as Row[]) ?? [])[0];
     if (!r) return null;
@@ -82,6 +87,7 @@ export function useCommunity(id: string) {
       isMember: Boolean(r.is_member),
       myRole: (r.my_role as string) ?? null,
       conversationId: (r.conversation_id as string) ?? null,
+      coverPath: (cover?.cover_path as string | null) ?? null,
     };
   }, [id, uid]);
 
