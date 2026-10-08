@@ -539,6 +539,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
           <div class="scr"><div class="island"></div><div class="glare"></div>
             <img class="on" src="shots/home.jpg" alt="" data-scene="0">
             <img src="shots/home-scroll.jpg" alt="" data-scene="1">
+            <img alt="" data-story="1"><img alt="" data-story="2"><img alt="" data-story="3"><img alt="" data-story="4"><img alt="" data-story="5">
           </div>
         </div>
       </div>
@@ -1010,12 +1011,39 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
   // Hero: the copy dissolves, the phone comes closer and straightens, its screen scrolls.
   const hero = $('.hero'), heroCopy = $('#heroCopy'), heroPhone = $('#heroPhone');
   heroPhone.addEventListener('animationend', () => { heroPhone.classList.add('live'); tick(); });
-  const heroShots = $$('img', heroPhone);
+  // Before any scroll, the phone plays the app's own intro story (captured from
+  // the app on every change), scene after scene; scrolling hands over to Home.
+  const storyShots = $$('img[data-story]', heroPhone);
+  let storyOn = false, storyAt = 0, storyReady = 0, heroP = 0;
+  const loadStory = () => {
+    const set = lang === 'fr' ? 'fr' : 'en';
+    storyReady = 0;
+    storyShots.forEach((img) => {
+      img.onload = () => { storyReady += 1; };
+      img.onerror = () => { storyReady = -99; };
+      img.src = `shots/story-${set}-${img.dataset.story}.jpg`;
+    });
+  };
+  const showStory = () => {
+    const play = storyReady >= storyShots.length && heroP < 0.04 && heroPhone.classList.contains('live');
+    if (play !== storyOn) storyOn = play;
+    storyShots.forEach((img, i) => img.classList.toggle('on', play && i === storyAt));
+    if (play) heroShots.forEach((img) => img.classList.remove('on'));
+  };
+  if (!reduce) {
+    setInterval(() => { storyAt = (storyAt + 1) % storyShots.length; showStory(); }, 2600);
+    document.addEventListener('irly:lang', loadStory);
+  }
+  const heroShots = $$('img[data-scene]', heroPhone);
   heroCopy.style.willChange = 'transform, opacity';
   onScroll(hero, (p) => {
     heroCopy.style.opacity = String(1 - clamp(p * 2.2));
     heroCopy.style.transform = `translateY(${-p * 120}px) scale(${1 - p * 0.08})`;
     if (heroPhone.classList.contains('live')) heroPhone.style.transform = `translateY(${-p * 30}vh) rotateX(${12 - p * 12}deg) rotateY(${mouse.x * 10}deg) scale(${1 + p * 0.3})`;
+    heroP = p;
+    if (storyOn && p < 0.04) return showStory();
+    storyShots.forEach((img) => img.classList.remove('on'));
+    storyOn = false;
     heroShots.forEach((img) => img.classList.toggle('on', (p > 0.45) === (img.dataset.scene === '1')));
   });
   if (finePointer && !reduce) addEventListener('pointermove', (e) => { mouse.x = e.clientX / innerWidth - 0.5; tick(); }, { passive: true });

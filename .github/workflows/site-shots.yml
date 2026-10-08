@@ -2,11 +2,12 @@ name: Website screens
 
 # Example portraits (demo build only) and screens of the app for the website,
 # taken where photos and map tiles load. Commits public-photos/faces and site/shots.
+# Runs on every app change (src/**), so the website always shows the app as it is.
 
 on:
   push:
     branches: [claude/confident-ride-1o2o3x]
-    paths: ['.github/scripts/faces*', '.github/scripts/site-shots.mjs', '.github/workflows/site-shots.yml', 'site/index.html']
+    paths: ['.github/scripts/faces*', '.github/scripts/site-shots.mjs', '.github/workflows/site-shots.yml', 'site/index.html', 'src/**']
   workflow_dispatch:
 
 permissions:
