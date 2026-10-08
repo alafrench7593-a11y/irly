@@ -12,7 +12,7 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **beachSunset**: by [hanmei](https://pixabay.com/users/hanmei-13048335/), https://pixabay.com/photos/dubai-beach-sunset-holiday-sun-4340895/
 - **boxing**: by [IRLY](https://getirly.com), provided by IRLY
 - **brunch**: by [IRLY](https://getirly.com), provided by IRLY
-- **burjKhalifa**: by [8268513](https://pixabay.com/users/8268513-8268513/), https://pixabay.com/photos/burj-khalifa-dubai-buildings-4922317/
+- **burjKhalifa**: by [8268513](https://pixabay.com/users/8268513-8268513/), https://pixabay.com/photos/burj-khalifa-dubai-architecture-uae-4926554/
 - **camping**: by [Schmid-Reportagen](https://pixabay.com/users/Schmid-Reportagen-646138/), https://pixabay.com/photos/desert-camels-dubai-639297/
 - **car**: by [themotion](https://pixabay.com/users/themotion-15582551/), https://pixabay.com/photos/aspiration-auto-automobile-4927227/
 - **coffeeBar**: by [atulknareda](https://pixabay.com/users/atulknareda-1067150/), https://pixabay.com/photos/coffee-airport-travel-business-787927/

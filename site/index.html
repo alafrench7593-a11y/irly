@@ -163,7 +163,7 @@ html.lenis { scroll-behavior: auto; }
 .hero { position: relative; height: 165vh; }
 .hero .pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; display: grid; grid-template-rows: auto 1fr; padding-top: clamp(96px, 15vh, 140px); }
 .hero .bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
-.hero .bg :is(img, video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(.55) brightness(.42) contrast(1.05); transform: scale(1.08); animation: drift 24s ease-in-out infinite alternate; }
+.hero .bg :is(img, video) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(.1) brightness(.78) contrast(1.05); transform: scale(1.08); animation: drift 24s ease-in-out infinite alternate; }
 .hero .bg video { opacity: 0; transition: opacity 1.4s var(--ease); }
 .hero .bg video.on { opacity: 1; }
 .hero .bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(70% 60% at 50% 35%, rgba(5,5,5,.15), rgba(5,5,5,.75) 70%), linear-gradient(rgba(5,5,5,.5), transparent 30%, transparent 55%, var(--bg)); }
@@ -176,6 +176,8 @@ html.lenis { scroll-behavior: auto; }
 .hero .tag { font-size: 12px; font-weight: 800; letter-spacing: .5em; padding-inline-start: .5em; color: var(--muted); font-family: "Manrope", sans-serif; animation: fade .9s calc(var(--t0)) var(--ease) both; }
 .hero .sub { font-size: var(--t-lede); max-width: 46ch; color: var(--grey-1); animation: fade 1s calc(var(--t0) + .45s) var(--ease) both; }
 .hero .ctas { margin-top: 6px; animation: fade 1s calc(var(--t0) + .6s) var(--ease) both; }
+.hero .try { margin: 2px 0 0; animation: fade 1s calc(var(--t0) + .7s) var(--ease) both; }
+.hero .try a { color: var(--fg); font-weight: 800; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
 .hero .meta { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-size: var(--t-small); color: var(--muted); animation: fade 1s calc(var(--t0) + .75s) var(--ease) both; }
 .hero .meta span { display: inline-flex; align-items: center; gap: 8px; }
 .hero .stage { position: relative; z-index: 2; perspective: 1600px; display: grid; justify-items: center; align-items: start; margin-top: clamp(24px, 4vh, 48px); }
@@ -671,8 +673,7 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
   <section class="hero" id="top" aria-labelledby="h1">
     <div class="pin">
       <div class="bg" aria-hidden="true">
-        <img src="video/dubai.jpg" alt="" fetchpriority="high">
-        <video id="heroVideo" muted playsinline loop preload="none" poster="video/dubai.jpg"><source src="video/dubai.mp4" type="video/mp4"></video>
+        <img src="img/heroBurj.webp" srcset="img/heroBurj-sm.webp 960w, img/heroBurj.webp 1280w" sizes="100vw" alt="" fetchpriority="high">
       </div>
       <div class="copy" id="heroCopy">
         <span class="tag notranslate" dir="ltr" translate="no">IN REAL LIFE.</span>
@@ -682,7 +683,8 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
           <a class="btn mag" href="https://getirly.com/app/" data-cta="hero"><span data-i="ctaFind">Find my people</span><span class="arr" aria-hidden="true">→</span></a>
           <a class="btn ghost" href="#film" data-i="ctaHow">See how IRLY works</a>
         </div>
-        <p class="meta"><span data-i="heroMeta1">Starting in Dubai</span><span aria-hidden="true">·</span><span><span class="dot" aria-hidden="true"></span><span data-i="heroMeta2">iOS &amp; Android coming soon</span></span></p>
+        <p class="try"><a href="https://getirly.com/app/" data-cta="try"><span data-i="tryWeb">Try the app in your browser</span> <span aria-hidden="true">→</span></a></p>
+        <p class="meta"><span data-i="heroMeta1">Starting in Dubai</span><span aria-hidden="true">·</span><span><span class="dot" aria-hidden="true"></span><span data-i="heroMeta2" data-days="heroMeta2Soon">iOS &amp; Android in {n} days</span></span></p>
       </div>
       <div class="stage">
         <div class="pop glass p1"><img class="ava" src="faces/p-layla.jpg" alt="" width="34" height="34"><span><span data-i="pop1">Layla joined IRLY Running</span><small data-i="pop1s">Sunrise run · Kite Beach</small></span></div>
@@ -993,8 +995,8 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
         <p data-i="done2">We’ll let you know when IRLY goes live.</p>
       </div>
       <div class="badges" style="margin-top:36px" role="group" aria-label="Coming soon on the App Store and Google Play" data-i-aria="badgesAria">
-        <span class="badge" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.6-1.9-1.5-.2-3 .9-3.7.9-.8 0-2-.9-3.2-.9-1.7 0-3.2 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.3-.9-2.3-3.8zM14 5.3c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/></svg><span><small data-i="soonOn">Coming soon on</small><b>App Store</b></span></span>
-        <span class="badge" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.5-9.7-9.5-9.7zm10.7 8.5 2.7-2.8L5.5 1.5c-.4-.2-.8-.3-1.1-.2l9.9 9.5zm0 2.4-9.9 9.5c.3.1.7 0 1.1-.2l11.5-6.5-2.7-2.8zm6.6-3.5L18 8.2l-3 3.8 3 3.8 2.9-1.6c.8-.5.8-1.7 0-2.2l-.2-.1z"/></svg><span><small data-i="soonOn">Coming soon on</small><b>Google Play</b></span></span>
+        <span class="badge" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.4 12.6c0-2.4 2-3.6 2.1-3.7-1.1-1.7-2.9-1.9-3.6-1.9-1.5-.2-3 .9-3.7.9-.8 0-2-.9-3.2-.9-1.7 0-3.2 1-4 2.4-1.7 3-.4 7.4 1.2 9.8.8 1.2 1.8 2.5 3 2.4 1.2 0 1.7-.8 3.1-.8s1.9.8 3.2.8c1.3 0 2.1-1.2 2.9-2.4.9-1.4 1.3-2.7 1.3-2.8 0 0-2.3-.9-2.3-3.8zM14 5.3c.7-.8 1.1-1.9 1-3-1 0-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.1-.6 2.8-1.4z"/></svg><span><small data-i="soonOnDays" data-days="soonOn">In {n} days on</small><b>App Store</b></span></span>
+        <span class="badge" aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.6 2.3c-.3.3-.4.7-.4 1.2v17c0 .5.1.9.4 1.2l9.5-9.7-9.5-9.7zm10.7 8.5 2.7-2.8L5.5 1.5c-.4-.2-.8-.3-1.1-.2l9.9 9.5zm0 2.4-9.9 9.5c.3.1.7 0 1.1-.2l11.5-6.5-2.7-2.8zm6.6-3.5L18 8.2l-3 3.8 3 3.8 2.9-1.6c.8-.5.8-1.7 0-2.2l-.2-.1z"/></svg><span><small data-i="soonOnDays" data-days="soonOn">In {n} days on</small><b>Google Play</b></span></span>
       </div>
       <p class="webnote" data-i="webNote">Can’t wait? IRLY already works in your browser: <a href="https://getirly.com/app/" data-cta="waitlist">find your people now</a>.</p>
     </div>
@@ -1010,7 +1012,7 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
         <div class="logo-big notranslate" dir="ltr" translate="no" aria-label="IRLY"><span>I</span><span>R</span><span>L</span><span>Y</span></div>
         <span class="irl-line notranslate" dir="ltr" translate="no">IN REAL LIFE.</span>
         <div class="ctas"><a class="btn mag" href="https://getirly.com/app/" data-cta="finale"><span data-i="ctaFind">Find my people</span><span class="arr" aria-hidden="true">→</span></a></div>
-        <p class="soonline"><span class="dot" aria-hidden="true"></span><span data-i="finSoon">Coming soon on iOS &amp; Android</span></p>
+        <p class="soonline"><span class="dot" aria-hidden="true"></span><span data-i="finSoon" data-days="finSoonLater">On iOS &amp; Android in {n} days</span></p>
       </div>
     </div>
   </section>
@@ -1090,7 +1092,7 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
     fr: {
       skip: 'Aller au contenu', navMain: 'Principale', langGroup: 'Langue', navHow: 'Comment ça marche', navComm: 'Communautés', navApp: 'L’app', navDubai: 'Dubaï', navWait: 'Liste d’attente', menu: 'Menu', ctaFind: 'Trouver mes gens', ctaHow: 'Voir comment ça marche',
       h1a: 'Nouveau à Dubaï ?', h1b: 'Tu n’as pas à rester seul.', heroSub: 'Rencontre des gens qui partagent tes passions, rejoins des communautés, trouve quoi faire et transforme tes échanges en ligne en vrais moments, dans la vraie vie.',
-      heroMeta1: 'Ça commence à Dubaï', heroMeta2: 'Bientôt sur iOS et Android', heroPhoneAria: 'L’app IRLY',
+      heroMeta1: 'Ça commence à Dubaï', heroMeta2: 'iOS et Android dans {n} jours', heroMeta2Soon: 'Bientôt sur iOS et Android', tryWeb: 'Teste l’app dans ton navigateur', heroPhoneAria: 'L’app IRLY',
       pop1: 'Layla a rejoint IRLY Running', pop1s: 'Course au lever du soleil · Kite Beach', pop2: 'IRLY Gym · samedi 8h', pop2s: 'Dis bonjour dans le chat', pop3: '« Salut tout le monde, je suis nouveau »', pop3s: 'IRLY Newcomers · Dubaï',
       filmAria: 'Comment marche IRLY, en huit scènes', f1: 'Tu t’es installé à Dubaï.', f2: 'Mais connaître une ville, ce n’est pas connaître des gens.', f3: 'Trouver ses gens ne devrait pas être si difficile.', typed: 'comment se faire des amis à Dubaï', f5: 'Dis-nous ce qui te plaît.', f6: 'On te montre où est ta place.',
       iFitness: 'Fitness', iFootball: 'Foot', iTravel: 'Voyage', iBusiness: 'Business', iFood: 'Food', iMusic: 'Musique', iFashion: 'Mode', iNetworking: 'Networking', iNewcomer: 'Nouveau en ville', iRunning: 'Running', iBeach: 'Plage', iTech: 'Tech',
@@ -1115,15 +1117,15 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
       kDubai: 'Pourquoi Dubaï d’abord', dubaiT1: 'Ça commence à Dubaï.', dubaiT2: 'Pensé pour partout.', dubaiP: 'Dubaï est une ville de gens venus d’ailleurs : pour travailler, entreprendre, étudier, recommencer. Elle bouge vite et il y a toujours quelque chose à faire. L’endroit idéal pour rencontrer du monde, à condition de savoir où chercher.', w1: 'Internationale', w2: 'Nouveaux arrivants', w3: 'Toujours en mouvement', w4: 'Mille choses à faire', w5: 'Networking', w6: 'Expériences', w7: 'Communautés internationales', r1: 'Dubaï', r2: 'Émirats', r3: 'Golfe', r4: 'Le monde', aerialAria: 'Dubai Marina vue du ciel', altJbr: 'Dubai Marina et JBR depuis la plage', altBurj: 'Burj Khalifa', altDhow: 'Un boutre sur l’eau au coucher du soleil',
       kDays: 'Dix jours à Dubaï', exStory: 'Histoire d’exemple', daysT: 'D’une nouvelle ville à ta ville.', d1k: 'JOUR 1', d1: 'Nouvelle à Dubaï.', d1p: 'Un nouveau job, un nouvel appart. Personne à appeler.', d2k: 'JOUR 2', d2: 'Elle découvre IRLY.', d2p: 'Un profil, quelques passions. Deux minutes.', d3k: 'JOUR 3', d3: 'Elle trouve IRLY Gym.', d3p: 'Elle rejoint, dit bonjour. On lui répond.', d4k: 'JOUR 4', d4: 'Elle rencontre du monde.', d4p: 'Premier entraînement, de vrais visages.', d5k: 'JOUR 5', d5: 'Elle rejoint une activité.', d5p: 'Padel à 19h30. Dîner après.', d10k: 'JOUR 10', d10: 'Dubaï commence à ressembler à chez elle.',
       comingSoon: 'Bientôt', soonT: 'Sois là au lancement d’IRLY.', soonP: 'Fais partie des premiers à découvrir IRLY à Dubaï.', emailLabel: 'Ton e-mail', emailPh: 'E-mail', notify: 'Rejoindre la liste d’attente', formLegal: 'Ton e-mail sert uniquement à te prévenir du lancement d’IRLY.', privacy: 'Politique de confidentialité', terms: 'Conditions d’utilisation',
-      done1: 'Tu es sur la liste.', done2: 'On te prévient dès qu’IRLY est en ligne.', badgesAria: 'Bientôt sur l’App Store et Google Play', soonOn: 'Bientôt sur', webNote: 'Pas envie d’attendre ? IRLY marche déjà dans ton navigateur : <a href="https://getirly.com/app/" data-cta="waitlist">trouve tes gens maintenant</a>.',
-      fin1: 'Ta ville est pleine de gens.', fin2: 'Tu n’as juste pas encore rencontré les tiens.', finSoon: 'Bientôt sur iOS et Android',
+      done1: 'Tu es sur la liste.', done2: 'On te prévient dès qu’IRLY est en ligne.', badgesAria: 'Bientôt sur l’App Store et Google Play', soonOn: 'Bientôt sur', soonOnDays: 'Dans {n} jours sur', webNote: 'Pas envie d’attendre ? IRLY marche déjà dans ton navigateur : <a href="https://getirly.com/app/" data-cta="waitlist">trouve tes gens maintenant</a>.',
+      fin1: 'Ta ville est pleine de gens.', fin2: 'Tu n’as juste pas encore rencontré les tiens.', finSoon: 'Sur iOS et Android dans {n} jours', finSoonLater: 'Bientôt sur iOS et Android',
       fNav: 'Navigation', fWeb: 'IRLY sur le web', fContact: 'Contact', fSocial: 'Réseaux', fApp: 'App', soonShort: 'Bientôt', rights: 'Tous droits réservés.', operator: 'IRLY est exploité par Samuel Princivil, Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.', fineNote: 'Les écrans, profils, messages et l’histoire en dix jours sont des exemples. Photos et vidéos : Pixabay, Pexels, domaine public, CC0 et photos fournies par IRLY. Données cartographiques © contributeurs OpenStreetMap.',
       errEmpty: 'Entre ton adresse e-mail.', errInvalid: 'Cette adresse e-mail ne semble pas valide.', errNet: 'Impossible de t’inscrire pour le moment. Vérifie ta connexion et réessaie.', errBusy: 'Trop de tentatives. Réessaie dans quelques minutes.', example: 'Photo de profil d’exemple',
     },
     ar: {
       skip: 'انتقل إلى المحتوى', navMain: 'الرئيسية', langGroup: 'اللغة', navHow: 'كيف يعمل', navComm: 'المجتمعات', navApp: 'التطبيق', navDubai: 'دبي', navWait: 'قائمة الانتظار', menu: 'القائمة', ctaFind: 'اعثر على ناسك', ctaHow: 'شاهد كيف يعمل IRLY',
       h1a: 'جديد في دبي؟', h1b: 'لست مضطرًا لأن تبقى وحيدًا.', heroSub: 'تعرّف على أشخاص يشاركونك اهتماماتك، وانضم إلى مجتمعات، واكتشف ما تفعله، وحوّل التواصل عبر الإنترنت إلى لحظات حقيقية.',
-      heroMeta1: 'البداية من دبي', heroMeta2: 'قريبًا على iOS وAndroid', heroPhoneAria: 'تطبيق IRLY',
+      heroMeta1: 'البداية من دبي', heroMeta2: 'على iOS وAndroid بعد {n} أيام', heroMeta2Soon: 'قريبًا على iOS وAndroid', tryWeb: 'جرّب التطبيق في متصفحك', heroPhoneAria: 'تطبيق IRLY',
       pop1: 'ليلى انضمت إلى IRLY Running', pop1s: 'جري عند الشروق – كايت بيتش', pop2: 'IRLY Gym – السبت ٨:٠٠', pop2s: 'قل مرحبًا في الدردشة', pop3: '«مرحبًا بالجميع، أنا جديد هنا»', pop3s: 'IRLY Newcomers – دبي',
       filmAria: 'كيف يعمل IRLY في ثمانية مشاهد', f1: 'انتقلت إلى دبي.', f2: 'لكن معرفة المدينة ليست كمعرفة الناس.', f3: 'العثور على ناسك لا يجب أن يكون بهذه الصعوبة.', typed: 'كيف أكوّن صداقات في دبي', f5: 'أخبرنا بما تحب.', f6: 'وسنريك أين مكانك.',
       iFitness: 'اللياقة', iFootball: 'كرة القدم', iTravel: 'السفر', iBusiness: 'الأعمال', iFood: 'الطعام', iMusic: 'الموسيقى', iFashion: 'الأزياء', iNetworking: 'التواصل المهني', iNewcomer: 'جديد في المدينة', iRunning: 'الجري', iBeach: 'الشاطئ', iTech: 'التقنية',
@@ -1148,19 +1150,22 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
       kDubai: 'لماذا دبي أولًا', dubaiT1: 'البداية من دبي.', dubaiT2: 'ومصمّم لكل مكان.', dubaiP: 'دبي مدينة أناس جاؤوا من أماكن أخرى: للعمل والبناء والدراسة والبدء من جديد. إيقاعها سريع وفيها دائمًا ما تفعله. المكان المثالي للتعرّف على الناس، إن عرفت أين تبحث.', w1: 'دولية', w2: 'قادمون جدد', w3: 'حركة دائمة', w4: 'الكثير لتفعله', w5: 'تواصل مهني', w6: 'تجارب', w7: 'مجتمعات دولية', r1: 'دبي', r2: 'الإمارات', r3: 'الخليج', r4: 'العالم', aerialAria: 'دبي مارينا من الجو', altJbr: 'دبي مارينا وجي بي آر من الشاطئ', altBurj: 'برج خليفة', altDhow: 'مركب شراعي على الماء عند الغروب',
       kDays: 'عشرة أيام في دبي', exStory: 'قصة توضيحية', daysT: 'من مدينة جديدة إلى مدينتك.', d1k: 'اليوم ١', d1: 'جديدة في دبي.', d1p: 'عمل جديد وشقة جديدة. ولا أحد تتصل به.', d2k: 'اليوم ٢', d2: 'تكتشف IRLY.', d2p: 'ملف شخصي وبعض الاهتمامات. دقيقتان.', d3k: 'اليوم ٣', d3: 'تجد IRLY Gym.', d3p: 'تنضم وتقول مرحبًا، فيردّون.', d4k: 'اليوم ٤', d4: 'تلتقي بالناس.', d4p: 'أول تمرين، ووجوه حقيقية.', d5k: 'اليوم ٥', d5: 'تنضم إلى نشاط.', d5p: 'بادل الساعة ٧:٣٠، ثم عشاء.', d10k: 'اليوم ١٠', d10: 'دبي بدأت تشبه البيت.',
       comingSoon: 'قريبًا', soonT: 'كن هناك عند إطلاق IRLY.', soonP: 'كن من أوائل من يكتشفون IRLY في دبي.', emailLabel: 'بريدك الإلكتروني', emailPh: 'البريد الإلكتروني', notify: 'انضم إلى قائمة الانتظار', formLegal: 'نستخدم بريدك الإلكتروني فقط لإبلاغك عند إطلاق IRLY.', privacy: 'سياسة الخصوصية', terms: 'شروط الاستخدام',
-      done1: 'أنت على القائمة.', done2: 'سنخبرك فور إطلاق IRLY.', badgesAria: 'قريبًا على App Store وGoogle Play', soonOn: 'قريبًا على', webNote: 'لا تريد الانتظار؟ IRLY يعمل الآن في متصفحك: <a href="https://getirly.com/app/" data-cta="waitlist">اعثر على ناسك الآن</a>.',
-      fin1: 'مدينتك مليئة بالناس.', fin2: 'لكنك لم تلتقِ بناسك بعد.', finSoon: 'قريبًا على iOS وAndroid',
+      done1: 'أنت على القائمة.', done2: 'سنخبرك فور إطلاق IRLY.', badgesAria: 'قريبًا على App Store وGoogle Play', soonOn: 'قريبًا على', soonOnDays: 'بعد {n} أيام على', webNote: 'لا تريد الانتظار؟ IRLY يعمل الآن في متصفحك: <a href="https://getirly.com/app/" data-cta="waitlist">اعثر على ناسك الآن</a>.',
+      fin1: 'مدينتك مليئة بالناس.', fin2: 'لكنك لم تلتقِ بناسك بعد.', finSoon: 'على iOS وAndroid بعد {n} أيام', finSoonLater: 'قريبًا على iOS وAndroid',
       fNav: 'التنقل', fWeb: 'IRLY على الويب', fContact: 'تواصل معنا', fSocial: 'التواصل الاجتماعي', fApp: 'التطبيق', soonShort: 'قريبًا', rights: 'جميع الحقوق محفوظة.', operator: 'يُشغّل IRLY سامويل برينسيفيل، دبي ديجيتال بارك، واحة دبي للسيليكون، دبي، الإمارات العربية المتحدة.', fineNote: 'الشاشات والملفات الشخصية والرسائل وقصة الأيام العشرة أمثلة توضيحية. الصور ومقاطع الفيديو: Pixabay وPexels وملكية عامة وCC0 وصور قدّمها IRLY. بيانات الخريطة © مساهمو OpenStreetMap.',
       errEmpty: 'أدخل بريدك الإلكتروني.', errInvalid: 'يبدو أن هذا البريد الإلكتروني غير صالح.', errNet: 'تعذّر تسجيلك الآن. تحقّق من اتصالك وحاول مجددًا.', errBusy: 'محاولات كثيرة. حاول مجددًا بعد بضع دقائق.', example: 'صورة ملف شخصي توضيحية',
     },
   };
   const EN = {
+    heroMeta2Soon: 'iOS &amp; Android coming soon', soonOn: 'Coming soon on', finSoonLater: 'Coming soon on iOS &amp; Android',
     typed: 'how to make friends in dubai', analysing: 'Analysing…', matched: '{n} communities', matchedOne: '1 community', pickOne: 'Pick at least one interest.',
     iRunning: 'Running', iBeach: 'Beach', iTech: 'Tech', iNewcomer: 'New in town',
     sc1t: 'Your profile, in two minutes.', sc1p: 'A photo or your avatar, a few words, your languages.', sc2t: 'Say what you’re into.', sc2p: 'Your interests guide everything else.', sc3t: 'Your communities.', sc3p: 'IRLY suggests where to start.', sc4t: 'What’s happening around you.', sc4p: 'People and plans near you.', sc5t: 'People like you.', sc5p: 'What you have in common, at a glance.', sc6t: 'Things to do tonight.', sc6p: 'Sport, food, nights out: who’s going, how many spots.', sc7t: 'Your city, live.', sc7p: 'On a real map. Never an exact address.', sc8t: 'Create a plan in seconds.', sc8p: 'What, when, where. IRLY finds the people.', sc9t: 'Talk, then meet.', sc9p: 'Every conversation leads to a real moment.',
     errEmpty: 'Enter your email address.', errInvalid: 'That email address doesn’t look right.', errNet: 'We couldn’t sign you up just now. Check your connection and try again.', errBusy: 'Too many attempts. Please try again in a few minutes.', example: 'Example profile photo',
   };
   let lang = 'en';
+  // iOS & Android launch: 19 October 2026, midnight in Dubai.
+  const DAYS = Math.ceil((Date.UTC(2026, 9, 18, 20) - Date.now()) / 864e5);
   const tr = (k) => (lang !== 'en' && T[lang][k]) || EN[k] || k;
   const num = (n) => (lang === 'ar' ? String(n).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[d]) : String(n));
   const english = new Map();
@@ -1178,6 +1183,8 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
       if (!(k in el.dataset)) el.dataset[k] = el.getAttribute(attr) || '';
       el.setAttribute(attr, (lang !== 'en' && T[lang][el.dataset[key]]) || el.dataset[k]);
     }));
+    // Launch countdown; once the day has passed, the plain "coming soon" line.
+    $$('[data-days]').forEach((el) => (el.innerHTML = DAYS > 0 ? el.innerHTML.replace('{n}', num(DAYS)) : tr(el.dataset.days)));
     $$('.pcard .face').forEach((img) => (img.alt = tr('example')));
     $$('.langs button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
     if (save) store.set('irly-site-lang', lang);
@@ -1227,8 +1234,6 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
     video.addEventListener('loadeddata', () => onReady && onReady());
     io.observe(video);
   };
-  const heroVideo = $('#heroVideo');
-  if (!small()) lazyVideo(heroVideo, () => heroVideo.classList.add('on'));
   const aerial = $('#aerial'), aerialVideo = $('#aerial video');
   lazyVideo(aerialVideo, () => { aerial.hidden = false; });
   if (reduce || saveData) aerial.remove();
