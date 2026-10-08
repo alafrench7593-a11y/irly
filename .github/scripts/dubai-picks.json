@@ -418,5 +418,19 @@
   "page": "https://pixabay.com/photos/surf-beach-sunset-sea-ocean-4087278/",
   "by": "mariamza",
   "byUrl": "https://pixabay.com/users/mariamza-6544182/"
+ },
+ "girlFitness": {
+  "id": "own-fitness-burj-al-arab",
+  "tags": "fitness, woman, Burj Al Arab, Dubai",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
+ },
+ "gym": {
+  "id": "own-fitness-burj-al-arab",
+  "tags": "fitness, woman, Burj Al Arab, Dubai",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
  }
 }
