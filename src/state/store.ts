@@ -124,6 +124,8 @@ type State = {
   myPlans: MyPlan[];
   /** Emirates: show only my emirate (false = all seven, the default). */
   emirateOnly: boolean;
+  /** Version of the intro story this person has seen (a new story plays once for everyone). */
+  storySeen: number;
 };
 
 type Actions = {
@@ -132,6 +134,7 @@ type Actions = {
   setEmirateOnly: (on: boolean) => void;
   updateProfile: (patch: Partial<Profile>) => void;
   completeOnboarding: () => void;
+  markStorySeen: (version: number) => void;
   resetOnboarding: () => void;
   /** Wipes everything on this device: profile, plans, messages, connections. */
   deleteAccount: () => void;
@@ -218,6 +221,7 @@ export const useStore = create<State & Actions>()(
       lastIntent: null,
       myPlans: [],
       emirateOnly: false,
+      storySeen: 0,
 
       setDestination: (destinationId, cityId) =>
         set({ destinationId, cityId: cityId ?? DESTINATIONS[destinationId].defaultCity ?? null }),
@@ -230,6 +234,7 @@ export const useStore = create<State & Actions>()(
       setEmirateOnly: (on) => set({ emirateOnly: on }),
       updateProfile: (patch) => set({ profile: { ...get().profile, ...patch } }),
       completeOnboarding: () => set({ onboarded: true }),
+      markStorySeen: (version) => set({ storySeen: version }),
       deleteAccount: () =>
         set({
           onboarded: false,
