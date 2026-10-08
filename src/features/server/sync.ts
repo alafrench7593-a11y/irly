@@ -53,25 +53,32 @@ export function SyncBridge() {
   const uid = useAccount()?.userId;
   useEffect(() => {
     if (!supabase || !uid) return;
-    let first = true;
-    const channel = supabase
-      .channel(topic(`sync:${uid}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activities' }, () => changed('activities'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, () => changed('activities'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'communities' }, () => changed('communities', 'inbox'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_members' }, () => changed('communities'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_members', filter: `user_id=eq.${uid}` }, () => changed('inbox', 'activities', 'communities'))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'conversations' }, () => changed('inbox'))
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => changed('people'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'saves', filter: `user_id=eq.${uid}` }, () => changed('saved'))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` }, () => changed('notifs'))
-      .subscribe((status) => {
-        // A (re)connection may have missed events: catch up once.
-        if (status === 'SUBSCRIBED') {
-          if (!first) changedAll();
-          first = false;
-        }
-      });
+    // One channel per table: a table the server does not publish (yet) can
+    // only silence itself, never the others.
+    const TABLES: { table: string; filter?: string; event?: '*' | 'UPDATE'; kinds: SyncKind[] }[] = [
+      { table: 'activities', kinds: ['activities'] },
+      { table: 'activity_participants', kinds: ['activities'] },
+      { table: 'communities', kinds: ['communities', 'inbox'] },
+      { table: 'community_members', kinds: ['communities'] },
+      { table: 'conversation_members', filter: `user_id=eq.${uid}`, kinds: ['inbox', 'activities', 'communities'] },
+      { table: 'conversations', event: 'UPDATE', kinds: ['inbox'] },
+      { table: 'profiles', event: 'UPDATE', kinds: ['people'] },
+      { table: 'saves', filter: `user_id=eq.${uid}`, kinds: ['saved'] },
+      { table: 'notifications', filter: `user_id=eq.${uid}`, kinds: ['notifs'] },
+    ];
+    const channels = TABLES.map(({ table, filter, event = '*', kinds }) => {
+      let first = true;
+      return supabase!
+        .channel(topic(`sync:${table}:${uid}`))
+        .on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, () => changed(...kinds))
+        .subscribe((status) => {
+          // A (re)connection may have missed events: catch up once.
+          if (status === 'SUBSCRIBED') {
+            if (!first) changed(...kinds);
+            first = false;
+          }
+        });
+    });
     // Back to the app: whatever happened meanwhile.
     const app = AppState.addEventListener('change', (s) => s === 'active' && changedAll());
     // Back online (web): resync; offline: screens can say so.
@@ -86,7 +93,7 @@ export function SyncBridge() {
       window.addEventListener('offline', offline);
     }
     return () => {
-      supabase?.removeChannel(channel);
+      channels.forEach((c) => supabase?.removeChannel(c));
       app.remove();
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
         window.removeEventListener('online', online);
