@@ -83,6 +83,8 @@ async function portrait(url, out) {
 for (const p of people) {
   let pick = picks[p.id];
   const out = `public-photos/faces/${p.id}.jpg`;
+  // Photos provided by IRLY are kept as they are.
+  if (String(pick?.id).startsWith('own-')) continue;
   // Openverse picks are replaced once Pixabay is available (better portraits, a varied cast).
   if (!pick || exclude.has(pick.id) || (PIXABAY && p.q && !String(pick.id).startsWith('pixabay-'))) {
     let list = PIXABAY && p.q ? await pixabay(p) : [];
