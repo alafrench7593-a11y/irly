@@ -481,5 +481,12 @@
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
+ },
+ "vr": {
+  "id": "own-vr",
+  "tags": "VR, gaming, friends",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
  }
 }

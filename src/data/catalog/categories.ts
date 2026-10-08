@@ -452,7 +452,7 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\barcade\b/i, 'arcade'],
   [/\bbowling\b/i, 'bowling'],
   [/\bkarting\b/i, 'karting'],
-  [/\b(vr|virtual reality)\b/i, 'vr'],
+  [/\b(vr|virtual reality|gaming|esports?)\b/i, 'vr'],
   [/\bwater parks?\b/i, 'waterPark'],
   [/\b(theme parks?|ferrari world|warner bros|seaworld)\b/i, 'themePark'],
   [/\bfestivals?\b/i, 'festival'],
