@@ -103,11 +103,10 @@ async function signedInPage(browser, who) {
   page.on('pageerror', (e) => page.errors.push(e.message));
   await page.goto(BASE);
   await page.evaluate((name) => {
-    localStorage.setItem('irly-v2', JSON.stringify({ state: { onboarded: true, destinationId: 'bali', cityId: 'bali', profile: { name, types: [], interests: [], activities: [], languages: ['English'], lookingFor: [], gender: 'woman', age: 32 } }, version: 1 }));
+    localStorage.setItem('irly-v2', JSON.stringify({ state: { onboarded: true, communityIntroSeen: true, destinationId: 'bali', cityId: 'bali', profile: { name, types: [], interests: [], activities: [], languages: ['English'], lookingFor: [], gender: 'woman', age: 32 } }, version: 1 }));
     localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   }, who.name);
   await page.goto(`${BASE}/account`);
-  await page.getByText('Continue with email', { exact: true }).click();
   await page.getByPlaceholder('you@email.com').fill(who.email);
   await page.getByPlaceholder('Password').fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
