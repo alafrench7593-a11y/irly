@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { t as tx } from '@/i18n';
 import { memo, useEffect, useState } from 'react';
@@ -23,10 +24,10 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { LiveDot } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
-import { Icon, type IconName } from '@/components/ui/Icon';
+import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { CITIES } from '@/data/destinations';
-import { MapArt } from '@/features/map/MapArt';
+import { Film } from '@/components/visual/Film';
+import { filmFor, photo as photoUrl, portrait, type PhotoKey } from '@/data/photos';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
@@ -38,21 +39,21 @@ const SCENE_MS = 3000;
 type Scene = { key: string; word: string; line: string };
 
 const SCENES: Scene[] = [
-  { key: 'people', word: 'People.', line: "Who's around you, right now." },
-  { key: 'places', word: 'Places.', line: 'Cafés, courts, rooftops, beaches.' },
-  { key: 'activities', word: 'Activities.', line: 'Padel at 7. Brunch on Sunday. A run at sunrise.' },
-  { key: 'real', word: 'Real life.', line: 'Then you meet. For real.' },
-  { key: 'irly', word: 'Find someone to do something with.', line: "That's IRLY." },
+  { key: 'friends', word: 'Make friends.', line: 'People near you who love what you love.' },
+  { key: 'activities', word: 'Do things together.', line: 'Padel at 7. Brunch on Sunday. The desert at sunset.' },
+  { key: 'network', word: 'Grow your network.', line: 'Founders, creatives and professionals around you.' },
+  { key: 'real', word: 'Meet in real life.', line: 'Join a plan, meet up, become friends.' },
+  { key: 'irly', word: 'Friends. Activities. Network.', line: "In real life. That's IRLY." },
 ];
 
 /**
- * What IRLY is, in five scenes, before you choose where you are going.
- * PEOPLE. PLACES. ACTIVITIES. REAL LIFE. Then the promise: find someone
- * to do something with. Each scene plays by itself for three seconds (the
- * bars at the top fill like stories); tap the right side to go on, the
- * left side to go back, or skip. Every scene is drawn from the app's own
- * pieces: faces, the dark map, activity chips, the meeting. Reduce Motion:
- * the same scenes, still, cross-faded.
+ * What IRLY is, in five scenes, before you choose where you are going:
+ * make friends, do things together, grow your network, meet in real life,
+ * then the promise over Dubai. Real photographs throughout (example
+ * portraits and Dubai photos from the library). Each scene plays by itself
+ * for three seconds (the bars at the top fill like stories); tap the right
+ * side to go on, the left side to go back, or skip. Reduce Motion: the same
+ * scenes, still, cross-faded.
  */
 export function IrlyStory({ onDone }: { onDone: () => void }) {
   const insets = useSafeAreaInsets();
@@ -107,17 +108,17 @@ export function IrlyStory({ onDone }: { onDone: () => void }) {
 
       <View style={[styles.stage, { top: stageTop, height: stageH }]} pointerEvents="none">
         <Animated.View key={scene.key} entering={FadeIn.duration(380)} exiting={FadeOut.duration(220)} style={StyleSheet.absoluteFill}>
-          {scene.key === 'people' ? <PeopleScene h={stageH} w={frame.width} reduced={reduced} /> : null}
-          {scene.key === 'places' ? <PlacesScene h={stageH} w={frame.width} reduced={reduced} /> : null}
+          {scene.key === 'friends' ? <PeopleScene h={stageH} w={frame.width} reduced={reduced} /> : null}
           {scene.key === 'activities' ? <ActivitiesScene h={stageH} w={frame.width} reduced={reduced} /> : null}
+          {scene.key === 'network' ? <NetworkScene h={stageH} w={frame.width} reduced={reduced} /> : null}
           {scene.key === 'real' ? <RealLifeScene h={stageH} w={frame.width} reduced={reduced} /> : null}
-          {scene.key === 'irly' ? <IrlyScene h={stageH} /> : null}
+          {scene.key === 'irly' ? <IrlyScene h={stageH} reduced={reduced} /> : null}
         </Animated.View>
       </View>
 
       <View style={[styles.words, { bottom: insets.bottom + (last ? 112 : 56) }]} pointerEvents="none">
         <Animated.View key={`w-${scene.key}`} entering={reduced ? FadeIn.duration(300) : FadeInDown.springify(620).dampingRatio(0.82).delay(80)}>
-          <Text variant={last ? 'displayL' : 'displayXL'} tone="onDark" style={last ? undefined : styles.word} accessibilityRole="header">
+          <Text variant="displayL" tone="onDark" accessibilityRole="header">
             {scene.word}
           </Text>
         </Animated.View>
@@ -159,25 +160,34 @@ function Bar({ state, reduced }: { state: 'done' | 'now' | 'later'; reduced: boo
 
 type SceneProps = { w: number; h: number; reduced: boolean };
 
-type FaceDef = { name: string; hue: number; x: number; y: number; size: number; live?: boolean; online?: boolean };
+type FaceDef = { id: string; name: string; hue: number; x: number; y: number; size: number; live?: boolean; online?: boolean };
 
+/** Example portraits (stock photos), never presented as members. */
 const FACES: FaceDef[] = [
-  { name: 'Layla', hue: 12, x: 0.5, y: 0.42, size: 84, live: true },
-  { name: 'Samuel', hue: 210, x: 0.22, y: 0.25, size: 62 },
-  { name: 'Chloé', hue: 330, x: 0.78, y: 0.22, size: 66, online: true },
-  { name: 'Arjun', hue: 40, x: 0.16, y: 0.62, size: 56, online: true },
-  { name: 'Kadek', hue: 150, x: 0.83, y: 0.6, size: 58 },
-  { name: 'Nadia', hue: 280, x: 0.36, y: 0.82, size: 50 },
-  { name: 'Omar', hue: 95, x: 0.66, y: 0.84, size: 54, online: true },
+  { id: 'p-layla', name: 'Layla', hue: 12, x: 0.5, y: 0.4, size: 96, live: true },
+  { id: 'p-samuel', name: 'Samuel', hue: 210, x: 0.2, y: 0.22, size: 66 },
+  { id: 'p-chloe', name: 'Chloé', hue: 330, x: 0.8, y: 0.2, size: 70, online: true },
+  { id: 'p-arjun', name: 'Arjun', hue: 40, x: 0.15, y: 0.6, size: 60, online: true },
+  { id: 'p-sofia', name: 'Sofia', hue: 150, x: 0.85, y: 0.58, size: 62 },
+  { id: 'p-nadia', name: 'Nadia', hue: 280, x: 0.34, y: 0.84, size: 54 },
+  { id: 'p-omar', name: 'Omar', hue: 95, x: 0.68, y: 0.86, size: 58, online: true },
 ];
 
-/** PEOPLE: faces drift in from everywhere and gather, then breathe. */
+/** FRIENDS: real faces drift in from everywhere and gather; what you share shows. */
 const PeopleScene = memo(function PeopleScene({ w, h, reduced }: SceneProps) {
   return (
     <View style={StyleSheet.absoluteFill}>
       {FACES.map((f, i) => (
         <Face key={f.name} face={f} index={i} w={w} h={h} reduced={reduced} />
       ))}
+      <Animated.View entering={reduced ? undefined : FadeInDown.delay(900).duration(500)} style={[styles.shared, { top: h * 0.4 + 66, left: w / 2 - 90 }]}>
+        <Glass dark level="regular" style={styles.sharedGlass}>
+          <Icon name="sparkles" size={14} color="#FFFFFF" />
+          <Text variant="caption" color="#FFFFFF" numberOfLines={1}>
+            Also into padel
+          </Text>
+        </Glass>
+      </Animated.View>
     </View>
   );
 });
@@ -203,7 +213,7 @@ function Face({ face, index, w, h, reduced }: { face: FaceDef; index: number; w:
   return (
     <Animated.View style={[styles.face, { left: face.x * w - face.size / 2, top: face.y * h - face.size / 2 }, style]}>
       <View style={[styles.faceRing, face.live ? { borderColor: '#FF453A' } : null]}>
-        <Avatar name={face.name} hue={face.hue} size={face.size} online={face.online} />
+        <Avatar name={face.name} hue={face.hue} size={face.size} online={face.online} photo={portrait(face.id)} />
       </View>
       {face.live ? (
         <View style={styles.livePill}>
@@ -217,115 +227,40 @@ function Face({ face, index, w, h, reduced }: { face: FaceDef; index: number; w:
   );
 }
 
-const PINS: { icon: IconName; label: string; x: number; y: number }[] = [
-  { icon: 'coffee', label: 'Café', x: 0.26, y: 0.32 },
-  { icon: 'target', label: 'Padel court', x: 0.7, y: 0.26 },
-  { icon: 'martini', label: 'Rooftop', x: 0.62, y: 0.66 },
-  { icon: 'palm', label: 'Beach', x: 0.22, y: 0.72 },
-];
-
-/** PLACES: the city at night, and the places where things happen drop in. */
-const PlacesScene = memo(function PlacesScene({ w, h, reduced }: SceneProps) {
-  const zoom = useSharedValue(reduced ? 1 : 0);
-  useEffect(() => {
-    if (!reduced) zoom.set(withTiming(1, { duration: 2600, easing: Easing.out(Easing.cubic) }));
-  }, [reduced, zoom]);
-  const mapStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1.18 - zoom.value * 0.12 }] }));
-  return (
-    <View style={[StyleSheet.absoluteFill, styles.clip]}>
-      <Animated.View style={[StyleSheet.absoluteFill, mapStyle]}>
-        <MapArt city={CITIES.dubai} mode="night" width={w} height={h} showAreas={false} />
-      </Animated.View>
-      <LinearGradient
-        colors={['#050506', 'rgba(5,5,6,0)', 'rgba(5,5,6,0)', '#050506']}
-        locations={[0, 0.2, 0.75, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      {PINS.map((p, i) => (
-        <Pin key={p.label} pin={p} index={i} w={w} h={h} reduced={reduced} />
-      ))}
-    </View>
-  );
-});
-
-function Pin({ pin, index, w, h, reduced }: { pin: (typeof PINS)[number]; index: number; w: number; h: number; reduced: boolean }) {
-  const drop = useSharedValue(reduced ? 1 : 0);
-  const ripple = useSharedValue(0);
-  useEffect(() => {
-    if (reduced) return;
-    drop.set(withDelay(250 + index * 260, withSpring(1, { duration: 560, dampingRatio: 0.55 })));
-    ripple.set(withDelay(450 + index * 260, withRepeat(withTiming(1, { duration: 1600, easing: Easing.out(Easing.quad) }), -1, false)));
-  }, [reduced, drop, ripple, index]);
-  const body = useAnimatedStyle(() => ({ opacity: Math.min(1, drop.value * 1.4), transform: [{ translateY: (1 - drop.value) * -70 }, { scale: 0.7 + drop.value * 0.3 }] }));
-  const ring = useAnimatedStyle(() => ({ opacity: 0.6 * (1 - ripple.value) * Math.min(1, drop.value), transform: [{ scale: 1 + ripple.value * 1.6 }] }));
-  return (
-    <View style={[styles.pinBox, { left: pin.x * w - 60, top: pin.y * h - 26 }]}>
-      <Animated.View style={[styles.pinRing, ring]} />
-      <Animated.View style={[{ alignItems: 'center', gap: 6 }, body]}>
-        <View style={styles.pin}>
-          <Icon name={pin.icon} size={20} color="#050506" strokeWidth={2.1} />
-        </View>
-        <Glass dark level="thin" style={styles.pinLabel}>
-          <Text variant="caption" color="#FFFFFF">
-            {pin.label}
-          </Text>
-        </Glass>
-      </Animated.View>
-    </View>
-  );
-}
-
-const ROWS: { icon: IconName; label: string }[][] = [
+// Dubai photos only (checked, served from the photo library).
+const ROWS: { photo: PhotoKey; label: string }[][] = [
   [
-    { icon: 'target', label: 'Padel' },
-    { icon: 'coffee', label: 'Coffee' },
-    { icon: 'utensils', label: 'Dinner' },
-    { icon: 'palm', label: 'Beach' },
-    { icon: 'dumbbell', label: 'Gym' },
+    { photo: 'gym', label: 'Gym' },
+    { photo: 'beachSunset', label: 'Beach' },
+    { photo: 'yacht', label: 'Boat day' },
+    { photo: 'streetFood', label: 'Street food' },
   ],
   [
-    { icon: 'sunrise', label: 'Brunch' },
-    { icon: 'footprints', label: 'Run' },
-    { icon: 'disc', label: 'Party' },
-    { icon: 'laptop', label: 'Coworking' },
-    { icon: 'plane', label: 'Travel' },
+    { photo: 'dunes', label: 'Desert' },
+    { photo: 'souk', label: 'Souk' },
+    { photo: 'djSunset', label: 'Sunset' },
+    { photo: 'coffeeBar', label: 'Coffee' },
   ],
   [
-    { icon: 'leaf', label: 'Yoga' },
-    { icon: 'waves', label: 'Surf' },
-    { icon: 'trophy', label: 'Football' },
-    { icon: 'palette', label: 'Gallery' },
-    { icon: 'music', label: 'Concert' },
+    { photo: 'kayak', label: 'Hatta' },
+    { photo: 'rooftopNeon', label: 'Night out' },
+    { photo: 'dubaiMarina', label: 'Marina walk' },
+    { photo: 'steak', label: 'Dinner' },
   ],
 ];
 
-/** ACTIVITIES: rows of things to do flow past in opposite directions. */
+/** ACTIVITIES: rows of real things to do in Dubai flow past in opposite directions. */
 const ActivitiesScene = memo(function ActivitiesScene({ h, reduced }: SceneProps) {
   return (
-    <View style={[StyleSheet.absoluteFill, styles.clip, { justifyContent: 'center', gap: 14 }]}>
+    <View style={[StyleSheet.absoluteFill, styles.clip, { justifyContent: 'center', gap: 12 }]}>
       {ROWS.map((row, i) => (
-        <Marquee key={i} items={row} dir={i % 2 ? 1 : -1} speed={9000 + i * 2200} highlight={i === 1 ? 0 : -1} reduced={reduced} delay={i * 120} />
+        <Marquee key={i} items={row} dir={i % 2 ? 1 : -1} speed={12000 + i * 2400} reduced={reduced} delay={i * 120} tileH={Math.min(118, Math.max(84, h * 0.2))} />
       ))}
-      <View style={{ height: h * 0.05 }} />
     </View>
   );
 });
 
-function Marquee({
-  items,
-  dir,
-  speed,
-  highlight,
-  reduced,
-  delay,
-}: {
-  items: { icon: IconName; label: string }[];
-  dir: 1 | -1;
-  speed: number;
-  highlight: number;
-  reduced: boolean;
-  delay: number;
-}) {
+function Marquee({ items, dir, speed, reduced, delay, tileH }: { items: { photo: PhotoKey; label: string }[]; dir: 1 | -1; speed: number; reduced: boolean; delay: number; tileH: number }) {
   const [rowW, setRowW] = useState(0);
   const x = useSharedValue(0);
   const appear = useSharedValue(reduced ? 1 : 0);
@@ -338,11 +273,12 @@ function Marquee({
     opacity: appear.value,
     transform: [{ translateX: dir < 0 ? -x.value * rowW : (x.value - 1) * rowW }],
   }));
-  const chips = (copy: number) =>
-    items.map((c, i) => (
-      <View key={`${copy}-${c.label}`} style={[styles.chip, i === highlight ? styles.chipOn : null]}>
-        <Icon name={c.icon} size={17} color={i === highlight ? '#050506' : '#FFFFFF'} strokeWidth={2} />
-        <Text variant="label" color={i === highlight ? '#050506' : '#FFFFFF'} style={{ fontSize: 15 }}>
+  const tiles = (copy: number) =>
+    items.map((c) => (
+      <View key={`${copy}-${c.label}`} style={[styles.tile, { height: tileH, width: tileH * 1.45 }]}>
+        <Image source={{ uri: photoUrl(c.photo, 480) }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+        <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']} start={{ x: 0, y: 0.45 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
+        <Text variant="label" color="#FFFFFF" style={styles.tileLabel}>
           {c.label}
         </Text>
       </View>
@@ -350,13 +286,64 @@ function Marquee({
   return (
     <Animated.View style={[styles.marquee, style]}>
       <View style={styles.marqueeRow} onLayout={(e) => setRowW(e.nativeEvent.layout.width + 12)}>
-        {chips(0)}
+        {tiles(0)}
       </View>
-      <View style={styles.marqueeRow}>{chips(1)}</View>
-      <View style={styles.marqueeRow}>{chips(2)}</View>
+      <View style={styles.marqueeRow}>{tiles(1)}</View>
+      <View style={styles.marqueeRow}>{tiles(2)}</View>
     </Animated.View>
   );
 }
+
+const PROS: { id: string; name: string; role: string; hue: number }[] = [
+  { id: 'p-james', name: 'James', role: 'Founder · Fintech', hue: 210 },
+  { id: 'p-amira', name: 'Amira', role: 'Product designer', hue: 330 },
+  { id: 'p-khalid', name: 'Khalid', role: 'Investor · Real estate', hue: 40 },
+];
+
+/** NETWORK: professional cards fan in; one request turns into a connection. */
+const NetworkScene = memo(function NetworkScene({ w, h, reduced }: SceneProps) {
+  const [connected, setConnected] = useState(reduced);
+  useEffect(() => {
+    if (reduced) return;
+    const id = setTimeout(() => {
+      setConnected(true);
+      haptic('tap');
+    }, 1500);
+    return () => clearTimeout(id);
+  }, [reduced]);
+  const cardW = Math.min(300, w - space.gutter * 2);
+  return (
+    <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', gap: 12, paddingBottom: h * 0.06 }]}>
+      {PROS.map((p, i) => (
+        <Animated.View key={p.id} entering={reduced ? undefined : FadeInDown.springify(620).dampingRatio(0.8).delay(120 + i * 180)} style={{ width: cardW, transform: [{ rotate: `${(i - 1) * -1.5}deg` }] }}>
+          <Glass dark level="regular" style={styles.proCard}>
+            <Avatar name={p.name} hue={p.hue} size={52} photo={portrait(p.id)} />
+            <View style={{ flex: 1 }}>
+              <Text variant="titleS" tone="onDark" numberOfLines={1}>
+                {p.name}
+              </Text>
+              <Text variant="caption" color="rgba(255,255,255,0.7)" numberOfLines={1}>
+                {p.role}
+              </Text>
+            </View>
+            {i === 1 && connected ? (
+              <Animated.View entering={reduced ? undefined : FadeIn.duration(250)} style={[styles.connect, styles.connected]}>
+                <Icon name="check" size={14} color="#050506" strokeWidth={2.6} />
+                <Text variant="caption" color="#050506" style={{ fontWeight: '700' }}>
+                  Connected
+                </Text>
+              </Animated.View>
+            ) : (
+              <View style={[styles.connect, styles.connectRound]}>
+                <Icon name="plus" size={16} color="#FFFFFF" strokeWidth={2.4} />
+              </View>
+            )}
+          </Glass>
+        </Animated.View>
+      ))}
+    </View>
+  );
+});
 
 /** REAL LIFE: two people come from either side and meet over a plan. */
 const RealLifeScene = memo(function RealLifeScene({ w, h, reduced }: SceneProps) {
@@ -382,10 +369,10 @@ const RealLifeScene = memo(function RealLifeScene({ w, h, reduced }: SceneProps)
         <BurstDot key={i} angle={(i / 14) * Math.PI * 2} reach={110 + (i % 3) * 30} burst={burst} cx={w / 2} cy={cy} />
       ))}
       <Animated.View style={[styles.meetFace, { left: w / 2 - 40, top: cy - 40 }, left]}>
-        <Avatar name="Layla" hue={12} size={80} />
+        <Avatar name="Layla" hue={12} size={80} photo={portrait('p-layla')} />
       </Animated.View>
       <Animated.View style={[styles.meetFace, { left: w / 2 - 40, top: cy - 40 }, right]}>
-        <Avatar name="Samuel" hue={210} size={80} />
+        <Avatar name="Samuel" hue={210} size={80} photo={portrait('p-samuel')} />
       </Animated.View>
       <Animated.View style={[styles.planCard, { top: cy + 64, left: w / 2 - 118 }, cardStyle]}>
         <Glass dark level="regular" style={styles.planGlass}>
@@ -415,11 +402,17 @@ function BurstDot({ angle, reach, burst, cx, cy }: { angle: number; reach: numbe
   return <Animated.View style={[styles.burst, { left: cx - 3, top: cy - 3 }, style]} />;
 }
 
-/** The promise: the wordmark lights up, dot by dot. */
-const IrlyScene = memo(function IrlyScene({ h }: { h: number }) {
+/** The promise over Dubai: the city (photo, then its film) and the wordmark lighting up, dot by dot. */
+const IrlyScene = memo(function IrlyScene({ h, reduced }: { h: number; reduced: boolean }) {
+  const film = filmFor('dubai');
   return (
-    <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', paddingBottom: h * 0.1 }]}>
-      <IrlyWordmark size={72} color="#FFFFFF" animated />
+    <View style={[StyleSheet.absoluteFill, styles.clip, styles.cityFrame]}>
+      <Image source={{ uri: photoUrl('dubai', 900) }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+      {film && !reduced ? <Film uri={film} /> : null}
+      <LinearGradient colors={['#050506', 'rgba(5,5,6,0.35)', 'rgba(5,5,6,0.35)', '#050506']} locations={[0, 0.25, 0.7, 1]} style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', paddingBottom: h * 0.1 }]}>
+        <IrlyWordmark size={72} color="#FFFFFF" animated />
+      </View>
     </View>
   );
 });
@@ -434,7 +427,6 @@ const styles = StyleSheet.create({
   stage: { position: 'absolute', left: 0, right: 0 },
   clip: { overflow: 'hidden' },
   words: { position: 'absolute', left: space.gutter, right: space.gutter, gap: 10 },
-  word: { textTransform: 'uppercase' },
   cta: { position: 'absolute', left: space.gutter, right: space.gutter },
   face: { position: 'absolute', alignItems: 'center' },
   faceRing: { borderRadius: 999, borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)', padding: 2, boxShadow: '0px 12px 32px rgba(0,0,0,0.6)' },
@@ -444,6 +436,15 @@ const styles = StyleSheet.create({
   pin: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', boxShadow: '0px 8px 24px rgba(255,255,255,0.25)' },
   pinLabel: { paddingHorizontal: 10, height: 24, borderRadius: 12, justifyContent: 'center' },
   marquee: { flexDirection: 'row', gap: 12 },
+  tile: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.08)', justifyContent: 'flex-end' },
+  tileLabel: { margin: 10, fontSize: 15 },
+  shared: { position: 'absolute', width: 180, alignItems: 'center' },
+  sharedGlass: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, height: 28, borderRadius: 14 },
+  proCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg },
+  connect: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, height: 30, borderRadius: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' },
+  connected: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
+  connectRound: { width: 32, height: 32, paddingHorizontal: 0, borderRadius: 16, justifyContent: 'center' },
+  cityFrame: { borderRadius: 0 },
   marqueeRow: { flexDirection: 'row', gap: 12 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, paddingHorizontal: 18, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'rgba(255,255,255,0.16)' },
   chipOn: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
