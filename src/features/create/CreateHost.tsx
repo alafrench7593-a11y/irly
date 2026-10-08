@@ -23,6 +23,8 @@ import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { createServerActivity } from '@/features/server/activities';
+import { useAccount } from '@/features/auth/account';
+import { useRouter } from 'expo-router';
 import { pickPhoto } from '@/features/server/covers';
 import { useCreateStore, type CreateFormat } from './createStore';
 
@@ -204,8 +206,11 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     setStep(2);
   };
 
-  const post = () => {
-    if (!pick || !title) return;
+  const [publishing, setPublishing] = useState(false);
+  const signedIn = Boolean(useAccount());
+  const router = useRouter();
+  const post = async () => {
+    if (!pick || !title || publishing) return;
     const plan = {
       cityId,
       categoryId: pick.categoryId,
@@ -224,16 +229,28 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       price: paid ? price : 0,
       currency: city.currency,
     };
-    const local = postPlan({ ...plan, ...(cover ? { coverUri: cover } : {}) });
-    // Signed in: the session also goes to the server, where members can join it.
-    createServerActivity(plan, undefined, { coverUri: cover })
-      .then((serverId) => {
-        if (serverId) useStore.getState().linkPlan(local.id, serverId);
-      })
-      .catch((e) => toast(tx('Saved on this phone only: {why}', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live'));
-    haptic('success');
-    toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
-    hide();
+    // Signed out: the plan lives on this phone only, and says so.
+    if (!signedIn) {
+      postPlan({ ...plan, ...(cover ? { coverUri: cover } : {}) });
+      haptic('success');
+      toast(tx('{title} saved on this phone. Sign in to share it', { title }), 'send', 'brand');
+      hide();
+      return;
+    }
+    // Signed in: the server is the only copy. "Live" only once it really is;
+    // a failure keeps the form so the same plan can be sent again (never twice).
+    setPublishing(true);
+    try {
+      const serverId = await createServerActivity(plan, undefined, { coverUri: cover });
+      haptic('success');
+      toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
+      hide();
+      if (serverId) router.push(`/a/${serverId}`);
+    } catch (e) {
+      toast(tx('Not published: {why}. Try again', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live');
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const canNext = step === 0 ? false : step === 1 ? Boolean(pick?.sub || pick?.custom) : true;
@@ -548,7 +565,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             {step < 3 ? (
               <Button label="Next" iconRight="arrowRight" full disabled={!canNext} haptic="select" onPress={() => setStep(step + 1)} />
             ) : (
-              <Button label={FORMAT[format].cta} icon="send" full haptic={false} onPress={post} />
+              <Button label={publishing ? 'Publishing…' : FORMAT[format].cta} icon="send" full haptic={false} loading={publishing} disabled={publishing} onPress={post} />
             )}
           </View>
         ) : null}

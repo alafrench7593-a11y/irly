@@ -19,7 +19,8 @@ import type { CityId } from '@/data/types';
 import type { LightId } from '@/theme/lights';
 import { dateFor, planDay, type Day, type GeoIndex } from '@/features/ai/intent';
 import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type PlanDraft } from '@/features/community/assist';
-import { fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost } from '@/features/community/data';
+import { confirm } from '@/lib/confirm';
+import { deleteCommunity, fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
 import { pickPhoto, setCommunityCover, usePhotoLink } from '@/features/server/covers';
 import { communityPhoto, GUIDELINES, introDraft } from '@/features/community/official';
@@ -170,7 +171,25 @@ export default function CommunityScreen() {
                 <View style={{ flex: 1 }}>
                   <Button label="Open chat" icon="message" full onPress={() => (c.conversationId ? router.push(`/messages/${c.conversationId}`) : join())} />
                 </View>
-                {c.myRole === 'owner' ? null : (
+                {c.myRole === 'owner' ? (
+                  c.official ? null : (
+                    <Button
+                      label="Delete"
+                      variant="danger"
+                      onPress={() =>
+                        confirm('Delete this community? It disappears for everyone, and its chat leaves every inbox.', () =>
+                          deleteCommunity(c.id)
+                            .then(() => {
+                              toast('Community deleted', 'check', 'brand');
+                              if (router.canGoBack()) router.back();
+                              else router.replace('/communities');
+                            })
+                            .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')),
+                        )
+                      }
+                    />
+                  )
+                ) : (
                   <Button
                     label="Leave"
                     variant="secondary"

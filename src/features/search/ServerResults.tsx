@@ -11,6 +11,7 @@ import { toggleSave } from '@/features/server/engage';
 import { addFriend } from '@/features/server/social';
 import { track } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
+import { useSyncVersion } from '@/features/server/sync';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
@@ -47,6 +48,8 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
   // Results belong to the query that produced them (no stale list while typing).
   const [res, setRes] = useState<{ key: string; hits: SearchHit[] }>({ key: '', hits: [] });
   const uid = account?.userId;
+  // A new, renamed or deleted activity or community is found (or not) at once.
+  const fresh = useSyncVersion('activities') + useSyncVersion('communities');
 
   useEffect(() => {
     if (!uid || q.trim().length < 2) return;
@@ -62,7 +65,7 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
       alive = false;
       clearTimeout(timer);
     };
-  }, [q, cityId, uid]);
+  }, [q, cityId, uid, fresh]);
 
   const shown = uid && q.trim().length >= 2 && res.key === `${q}|${cityId}|${uid}` ? res.hits : [];
   if (!shown.length) return null;

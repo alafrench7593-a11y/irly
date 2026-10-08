@@ -475,8 +475,5 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
   return { ...q, data };
 }
 
-export async function joinCommunity(id: string): Promise<string> {
-  const { data, error } = await sb().rpc('join_community', { p_community: id });
-  if (error) throw new Error(error.message);
-  return data as string;
-}
+// One join for the whole app: the same function as the community pages, so every list hears about it.
+export { joinCommunity } from '@/features/community/data';

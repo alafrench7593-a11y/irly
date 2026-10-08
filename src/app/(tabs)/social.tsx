@@ -47,7 +47,7 @@ export default function Social() {
   const profile = useStore((s) => s.profile);
   const lastIntent = useStore((s) => s.lastIntent);
   const setIntent = useStore((s) => s.setIntent);
-  const myPlans = upcomingPlans(useStore((s) => s.myPlans).filter((p) => p.cityId === cityId));
+  const myPlans = upcomingPlans(useStore((s) => s.myPlans).filter((p) => p.cityId === cityId && !p.serverId));
   const [composer, setComposer] = useState(false);
   const intent: Intent = lastIntent ?? 'friends';
 

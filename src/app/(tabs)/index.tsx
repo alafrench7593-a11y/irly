@@ -66,7 +66,8 @@ export default function Home() {
   const dest = DESTINATIONS[city.destinationId];
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
-  const myPlans = useStore((s) => s.myPlans).filter((p) => p.cityId === cityId);
+  // Plans the server has are listed from the server (one copy, live); these are the phone-only ones.
+  const myPlans = useStore((s) => s.myPlans).filter((p) => p.cityId === cityId && !p.serverId);
   const upcoming = upcomingPlans(myPlans);
   const lives = useLives();
   const [sheet, setSheet] = useState(false);

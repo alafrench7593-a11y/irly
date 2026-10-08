@@ -1,9 +1,6 @@
 import { DEMO } from '@/config/app';
 import { GIRLS as EXAMPLE_GIRLS } from '@/data/content/girls';
 import { isAvatar } from '@/features/avatar/avatar';
-
-// Example members exist only in the demo build; real members come from the server.
-const GIRLS = DEMO ? EXAMPLE_GIRLS : [];
 import { hasSession, supabase } from '@/lib/supabase';
 import { useStore } from '@/state/store';
 import { portrait } from '@/data/photos';
@@ -11,6 +8,9 @@ import { DEFAULT_WEIGHTS, matchScore, normalizeReasons, type MatchProfile, type 
 import { useGirlStore } from './girlStore';
 import type { Candidate, Filters, MatchAction, MatchProfileDraft, MatchResult, MatchState, MatchSummary, ReportCategory } from './types';
 import { imageBytes, imageType } from '@/lib/media';
+
+// Example members exist only in the demo build; real members come from the server.
+const GIRLS = DEMO ? EXAMPLE_GIRLS : [];
 
 /**
  * IRLY Match data access. Screens only talk to this.

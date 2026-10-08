@@ -70,7 +70,7 @@ export default function CategoryScreen() {
   );
   // Plans on this phone, minus those already listed from the server.
   const mine = myPlans.filter(
-    (p) => p.cityId === cityId && planDisplay(p).categoryId === category?.id && (!sub || p.subId === sub.id) && !(p.serverId && server.some((a) => a.id === p.serverId)),
+    (p) => p.cityId === cityId && planDisplay(p).categoryId === category?.id && (!sub || p.subId === sub.id) && !p.serverId,
   );
   const serverCommunities = useCommunityList(cityId);
   const myCommunities = useMemo(() => (category && !isGirl ? serverCommunities.filter((c) => c.categoryId === category.id) : []), [serverCommunities, category, isGirl]);

@@ -1,6 +1,5 @@
 import { webLink } from '@/config/app';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import type { CityId } from '@/data/types';
 import { CITIES, cityScope } from '@/data/destinations';
@@ -8,6 +7,8 @@ import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
+import { changed, useRefreshOn, useSyncVersion } from './sync';
+import { uuid } from '@/lib/uuid';
 import type { MyPlan } from '@/state/store';
 import { imageBytes, imageType } from '@/lib/media';
 
@@ -38,7 +39,24 @@ export async function coverLinks(paths: (string | null | undefined)[]): Promise<
   return out;
 }
 
-export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, extras: ActivityExtras = {}): Promise<string | null> {
+// One tap = one activity: the same plan sent twice (double tap, retry after a
+// network error) reuses the same request and the same client_ref, and the
+// server refuses a second row with that ref.
+const inFlight = new Map<string, { at: number; ref: string; promise: Promise<string | null> }>();
+
+export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, extras: ActivityExtras = {}): Promise<string | null> {
+  const key = JSON.stringify([plan.title, plan.cityId, plan.areaId, plan.day, plan.time, plan.place, plan.categoryId, plan.activityId, at?.getTime() ?? null, extras.communityId ?? null]);
+  const now = Date.now();
+  for (const [k, v] of inFlight) if (now - v.at > 120_000) inFlight.delete(k);
+  const prev = inFlight.get(key);
+  if (prev && now - prev.at < 10_000) return prev.promise;
+  const ref = prev?.ref ?? uuid();
+  const promise = insertActivity(plan, at, extras, ref);
+  inFlight.set(key, { at: now, ref, promise });
+  return promise;
+}
+
+async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date | undefined, extras: ActivityExtras, clientRef: string): Promise<string | null> {
   if (!supabase) return null;
   const { data: session } = await supabase.auth.getSession();
   const uid = session.session?.user.id;
@@ -79,18 +97,26 @@ export async function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'
       // Girls and moms plans are IRLY Girl plans (enforced server-side).
       girl_only: extras.girlOnly || extras.audience === 'girls' || extras.audience === 'moms',
       community_id: extras.communityId ?? null,
+      client_ref: clientRef,
     })
     .select('id')
     .single();
+  if (error?.code === '23505') {
+    // Already created by the first tap: hand back that one.
+    const { data: same } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).maybeSingle();
+    if (same) {
+      bumpActivities();
+      return same.id as string;
+    }
+  }
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Could not create');
   bumpActivities();
   return data.id as string;
 }
 
-/** Bumped after you create an activity: every list reloads at once (Home, categories). */
-const useActivitiesVersion = create<{ n: number }>(() => ({ n: 0 }));
-export const bumpActivities = () => useActivitiesVersion.setState((v) => ({ n: v.n + 1 }));
+/** Activities changed (created, joined, left, edited, cancelled, deleted): every screen showing them reloads. */
+export const bumpActivities = () => changed('activities');
 
 export type ServerActivity = {
   id: string;
@@ -128,7 +154,8 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
       .select('id, title, category_id, sub_id, area_id, city_id, girl_only, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
       .in('city_id', cityScope(cityId))
       .is('cancelled_at', null)
-      .gte('starts_at', new Date().toISOString());
+      // Upcoming and happening now (started less than two hours ago).
+      .gte('starts_at', new Date(Date.now() - 2 * 3600_000).toISOString());
     // A category or IRLY Girl page asks the server for its own sessions, not the first 60 of everything.
     if (categoryId) q = q.eq('category_id', categoryId);
     if (girlOnly) q = q.eq('girl_only', true);
@@ -167,10 +194,7 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
     load().then(setActivities).catch(() => undefined);
   }, [load]);
 
-  const version = useActivitiesVersion((v) => v.n);
-  useEffect(() => {
-    if (version) refresh();
-  }, [version, refresh]);
+  useRefreshOn(['activities'], refresh);
 
   useEffect(() => {
     let alive = true;
@@ -195,6 +219,7 @@ export async function joinServerActivity(activityId: string): Promise<string | '
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data, error } = await supabase.rpc('join_activity', { p_activity: activityId, p_status: 'going' });
   if (error) throw new Error(error.message);
+  changed('activities', 'inbox');
   if (data === 'full') return 'full';
   const { data: conv } = await supabase.from('conversations').select('id').eq('activity_id', activityId).maybeSingle();
   return (conv?.id as string) ?? '';
@@ -213,6 +238,7 @@ export async function createServerCommunity(input: { name: string; cityId: strin
     p_girl_only: Boolean(input.girlOnly),
   });
   if (error) throw new Error(error.message);
+  changed('communities', 'inbox');
   const { data: conv } = await supabase.from('conversations').select('id').eq('community_id', data).maybeSingle();
   return (conv?.id as string) ?? '';
 }
@@ -333,7 +359,7 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
     const channel = supabase
       .channel(topic(`activity-${id}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `activity_id=eq.${id}` }, reload)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'activities', filter: `id=eq.${id}` }, reload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activities', filter: `id=eq.${id}` }, reload)
       .subscribe();
     return () => {
       alive = false;
@@ -341,6 +367,7 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
     };
   }, [id, uid, load]);
 
+  useRefreshOn(['activities'], refresh);
   return { detail: uid ? detail : null, loading: uid ? loading : false, error: uid ? error : null, refresh };
 }
 
@@ -348,12 +375,38 @@ export async function leaveServerActivity(activityId: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { error } = await supabase.rpc('leave_activity', { p_activity: activityId });
   if (error) throw new Error(error.message);
+  changed('activities', 'inbox');
 }
 
 export async function cancelServerActivity(activityId: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { error } = await supabase.from('activities').update({ cancelled_at: new Date().toISOString() }).eq('id', activityId);
   if (error) throw new Error(error.message);
+  changed('activities', 'inbox');
+}
+
+/** The host edits a plan: every screen showing it (lists, map, calendar, chat) gets the new version. */
+export async function updateServerActivity(activityId: string, patch: { title?: string; description?: string | null; placeName?: string | null; areaId?: string; startsAt?: Date; priceMinor?: number; capacity?: number | null }): Promise<void> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const row: Record<string, unknown> = {};
+  if (patch.title !== undefined) row.title = patch.title.trim().slice(0, 80);
+  if (patch.description !== undefined) row.description = patch.description;
+  if (patch.placeName !== undefined) row.place_name = patch.placeName;
+  if (patch.areaId !== undefined) row.area_id = patch.areaId;
+  if (patch.startsAt !== undefined) row.starts_at = patch.startsAt.toISOString();
+  if (patch.priceMinor !== undefined) row.price_minor = patch.priceMinor;
+  if (patch.capacity !== undefined) row.capacity = patch.capacity;
+  const { error } = await supabase.from('activities').update(row).eq('id', activityId);
+  if (error) throw new Error(error.message);
+  changed('activities', 'inbox');
+}
+
+/** The host deletes a plan: gone from every list, the map, calendars and inboxes (its chat goes with it). */
+export async function deleteServerActivity(activityId: string): Promise<void> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const { error } = await supabase.rpc('delete_activity', { p_activity: activityId });
+  if (error) throw new Error(error.message);
+  changed('activities', 'inbox', 'notifs');
 }
 
 export type CalendarItem = {
@@ -372,6 +425,7 @@ export type CalendarItem = {
 
 /** Everything I'm going to, soonest first. Live when I join or leave. */
 export function useCalendar(): { items: CalendarItem[]; loading: boolean; error: string | null; signedIn: boolean } {
+  const version = useSyncVersion('activities');
   const account = useAccount();
   const uid = account?.userId;
   const [items, setItems] = useState<CalendarItem[]>([]);
@@ -408,15 +462,11 @@ export function useCalendar(): { items: CalendarItem[]; loading: boolean; error:
         .catch((e) => alive && setError(e instanceof Error ? e.message : 'offline'))
         .finally(() => alive && setLoading(false));
     reload();
-    const channel = supabase
-      .channel(topic(`calendar-${uid}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `user_id=eq.${uid}` }, reload)
-      .subscribe();
     return () => {
       alive = false;
-      supabase?.removeChannel(channel);
     };
-  }, [uid, load]);
+    // Joins, leaves, edits and cancellations reach it through the app's sync channel.
+  }, [uid, load, version]);
   return { items: uid ? items : NONE, loading: uid ? loading : false, error: uid ? error : null, signedIn: Boolean(uid) };
 }
 
@@ -445,6 +495,7 @@ export type Recommendation = { id: string; title: string; format: string; catego
 
 /** Ranked for me: interests, friends going, what I liked before, never what I hid. */
 export function useRecommendations(cityId: string): Recommendation[] {
+  const version = useSyncVersion('activities');
   const account = useAccount();
   const uid = account?.userId;
   const [list, setList] = useState<Recommendation[]>([]);
@@ -472,7 +523,7 @@ export function useRecommendations(cityId: string): Recommendation[] {
     return () => {
       alive = false;
     };
-  }, [cityId, uid]);
+  }, [cityId, uid, version]);
   const { keep } = useCityFilter(cityId as CityId);
   const shown = useMemo(() => list.filter((r) => keep(r.cityId)), [list, keep]);
   return uid ? shown : NONE;

@@ -120,7 +120,8 @@ export function QuickPlan({
         currency: city.currency,
       };
       const id = await createServerActivity(plan, dateFor(day, time, new Date(), city.utcOffset), { placeId: place?.id ?? null, activityType: type.id, audience: type.audience });
-      postPlan(plan);
+      // The server has it: no second copy on the phone.
+      if (!id) postPlan(plan);
       haptic('success');
       track('ACTIVITY_CREATE', { type: type.id, audience: type.audience, place: Boolean(place) });
       toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
