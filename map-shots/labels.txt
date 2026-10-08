@@ -1,0 +1,330 @@
+
+== map-0
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @146,350
+"Mei is live. the rooftop · now" @146,350
+"Mei" @-20,455
+"Mei. Architecture student" @-20,455
+"2 places" @52,475
+"2 places here. Zoom in" @52,475
+"2 places" @292,355
+"2 places here. Zoom in" @292,355
+"2 places" @280,242
+"2 places here. Zoom in" @280,242
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+== out1
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @153,361
+"Mei is live. the rooftop · now" @153,361
+"Mei" @11,452
+"Mei. Architecture student" @11,452
+"2 places" @72,468
+"2 places here. Zoom in" @72,468
+"2 places" @278,366
+"2 places here. Zoom in" @278,366
+"Nook Coffee Lab" @259,264
+"Nook Coffee Lab. Café · ★ 4.8" @259,264
+"Lume Gallery" @276,274
+"Lume Gallery. Gallery · ★ 4.7" @276,274
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people out1: 1
+
+== pan-w
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @383,361
+"Mei is live. the rooftop · now" @383,361
+"Mei" @241,452
+"Mei. Architecture student" @241,452
+"2 places" @302,468
+"2 places here. Zoom in" @302,468
+"2 places" @508,366
+"2 places here. Zoom in" @508,366
+"Nook Coffee Lab" @489,264
+"Nook Coffee Lab. Café · ★ 4.8" @489,264
+"Lume Gallery" @506,274
+"Lume Gallery. Gallery · ★ 4.7" @506,274
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people pan-w: 1
+
+== pan-e
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @-77,361
+"Mei is live. the rooftop · now" @-77,361
+"Mei" @-219,452
+"Mei. Architecture student" @-219,452
+"2 places" @-157,468
+"2 places here. Zoom in" @-157,468
+"2 places" @48,366
+"2 places here. Zoom in" @48,366
+"Nook Coffee Lab" @29,264
+"Nook Coffee Lab. Café · ★ 4.8" @29,264
+"Lume Gallery" @46,274
+"Lume Gallery. Gallery · ★ 4.7" @46,274
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people pan-e: 0
+
+== pan-n
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @153,661
+"Mei is live. the rooftop · now" @153,661
+"Mei" @11,752
+"Mei. Architecture student" @11,752
+"2 places" @72,768
+"2 places here. Zoom in" @72,768
+"2 places" @278,666
+"2 places here. Zoom in" @278,666
+"Nook Coffee Lab" @259,564
+"Nook Coffee Lab. Café · ★ 4.8" @259,564
+"Lume Gallery" @276,574
+"Lume Gallery. Gallery · ★ 4.7" @276,574
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people pan-n: 1
+
+== pan-s
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @153,61
+"Mei is live. the rooftop · now" @153,61
+"Mei" @11,152
+"Mei. Architecture student" @11,152
+"Hana" @498,801
+"Hana. Paediatrician" @498,801
+"2 places" @72,168
+"2 places here. Zoom in" @72,168
+"2 places" @278,66
+"2 places here. Zoom in" @278,66
+"Nook Coffee Lab" @259,-36
+"Lume Gallery" @276,-26
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people pan-s: 0
+
+== pan-nw
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @353,621
+"Mei is live. the rooftop · now" @353,621
+"Mei" @211,712
+"Mei. Architecture student" @211,712
+"2 places" @272,728
+"2 places here. Zoom in" @272,728
+"2 places" @478,626
+"2 places here. Zoom in" @478,626
+"Nook Coffee Lab" @459,524
+"Nook Coffee Lab. Café · ★ 4.8" @459,524
+"Lume Gallery" @476,534
+"Lume Gallery. Gallery · ★ 4.7" @476,534
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people pan-nw: 2
+
+== pan-ne
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @-47,621
+"Mei is live. the rooftop · now" @-47,621
+"Mei" @-189,712
+"Mei. Architecture student" @-189,712
+"2 places" @-127,728
+"2 places here. Zoom in" @-127,728
+"2 places" @78,626
+"2 places here. Zoom in" @78,626
+"Nook Coffee Lab" @59,524
+"Nook Coffee Lab. Café · ★ 4.8" @59,524
+"Lume Gallery" @76,534
+"Lume Gallery. Gallery · ★ 4.7" @76,534
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people pan-ne: 0
+
+== pan-sw
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @353,101
+"Mei is live. the rooftop · now" @353,101
+"Mei" @211,192
+"Mei. Architecture student" @211,192
+"Hana" @698,841
+"Hana. Paediatrician" @698,841
+"2 places" @272,208
+"2 places here. Zoom in" @272,208
+"2 places" @478,106
+"2 places here. Zoom in" @478,106
+"Nook Coffee Lab" @459,4
+"Nook Coffee Lab. Café · ★ 4.8" @459,4
+"Lume Gallery" @476,14
+"Lume Gallery. Gallery · ★ 4.7" @476,14
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people pan-sw: 1
+
+== pan-se
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @-47,101
+"Mei is live. the rooftop · now" @-47,101
+"Mei" @-189,192
+"Mei. Architecture student" @-189,192
+"Hana" @298,841
+"Hana. Paediatrician" @298,841
+"2 places" @-127,208
+"2 places here. Zoom in" @-127,208
+"2 places" @78,106
+"2 places here. Zoom in" @78,106
+"Nook Coffee Lab" @59,4
+"Nook Coffee Lab. Café · ★ 4.8" @59,4
+"Lume Gallery" @76,14
+"Lume Gallery. Gallery · ★ 4.7" @76,14
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people pan-se: 0
+
+== out2
+"Map" @195,422
+"Toggle attribution" @22,822
+"Mei is live" @159,371
+"Mei is live. the rooftop · now" @159,371
+"Mei" @37,449
+"Mei. Architecture student" @37,449
+"2 places" @90,463
+"2 places here. Zoom in" @90,463
+"2 places" @266,375
+"2 places here. Zoom in" @266,375
+"Nook Coffee Lab" @250,288
+"Nook Coffee Lab. Café · ★ 4.8" @250,288
+"Lume Gallery" @265,296
+"Lume Gallery. Gallery · ★ 4.7" @265,296
+"Search the map" @149,32
+"Destination: Dubai. Change destination" @318,32
+"2D view" @352,144
+"3D view" @352,184
+"My location" @350,238
+"Zoom in" @350,292
+"Zoom out" @350,346
+"Home" @57,794
+"Discover" @127,794
+"Map" @267,794
+"Profile" @337,794
+"IRL: 6 live around you" @195,778
+
+people out2: 2
