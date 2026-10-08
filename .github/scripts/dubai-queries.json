@@ -250,13 +250,14 @@
   "any"
  ],
  "surf": [
-  "Dubai surf beach",
+  "surfing wave surfer",
   [
    "surf",
    "surfing",
-   "wave",
-   "beach"
-  ]
+   "surfer",
+   "surfboard"
+  ],
+  "any"
  ],
  "hikeDesert": [
   "hiking UAE mountains",

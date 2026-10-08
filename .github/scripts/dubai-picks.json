@@ -572,5 +572,12 @@
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
+ },
+ "bali": {
+  "id": "own-bali",
+  "tags": "Bali, Nusa Penida, Kelingking beach",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
  }
 }
