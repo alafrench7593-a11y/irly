@@ -11,7 +11,7 @@ Photos from Pixabay (free licence, https://pixabay.com/service/license-summary/)
 - **p-yusuf**: thobe, man, portrait, male, muslim, traditional clothes, islamic dress, thobe, thobe, thobe, muslim, muslim, muslim, muslim, muslim (pixabay) https://pixabay.com/photos/thobe-man-portrait-male-muslim-805762/
 - **p-kadek**: corset, man, curls, portrait, beauty, fashion, young, lovely, attractive, guy, style, luxury, model, pose, man, man, man, man, man, portrait, portrait, portrait, beauty, fashion, guy, guy, luxury, luxury, model, model (pixabay) https://pixabay.com/photos/corset-man-curls-portrait-beauty-6243486/
 - **p-noah**: man, portrait, photography, people, young, male, happy, person, guy, handsome, smile, adult, looking, attractive, face, confident, lifestyle, smiling, model, men, one, fashion, hair, professional, eyes, beard, haircut, hairstyle, styling, head, glamour, color, new, men, men, men, men, men (pixabay) https://pixabay.com/photos/man-portrait-photography-people-2792505/
-- **p-marco**: man, model, portrait, pose, style, fashion, posing, young man, boy, modeling, male, man portrait, man, man, man, man, man, portrait (pixabay) https://pixabay.com/photos/man-model-portrait-pose-style-7428290/
+- **p-marco**: Photo provided by IRLY
 - **p-tom**: Photo provided by IRLY
 - **p-ketut**: young man, smiling, clipboard, corporate, employee, black man, portrait, employee, employee, employee, employee, employee (pixabay) https://pixabay.com/photos/young-man-smiling-clipboard-7551014/
 - **p-jonas**: man, portrait, photography, people, young, male, happy, person, guy, handsome, smile, adult, looking, attractive, face, confident, lifestyle, smiling, model, men, one, fashion, hair, professional, eyes, beard, haircut, hairstyle, styling, head, glamour, color, new, men, men, men, men, men, haircut (pixabay) https://pixabay.com/photos/man-portrait-photography-people-2792491/
@@ -19,7 +19,7 @@ Photos from Pixabay (free licence, https://pixabay.com/service/license-summary/)
 - **p-layla**: Photo provided by IRLY
 - **p-chloe**: Photo provided by IRLY
 - **p-mei**: portrait, woman, posing, style, fashion (pixabay) https://pixabay.com/photos/portrait-woman-posing-style-10222434/
-- **p-amira**: woman, model, face, hijab, headscarf, islam, arabic, mecca, religion, culture, hijab, hijab, hijab, hijab, hijab (pixabay) https://pixabay.com/photos/woman-model-face-hijab-headscarf-6279458/
+- **p-amira**: Photo provided by IRLY
 - **p-sofia**: woman, model, portrait, pose, style, fashion, posing, young woman, girl, modeling, female, woman portrait, studio, photoshoot, woman, woman, woman, model, model, model, model, model, portrait, portrait, girl, woman portrait, photoshoot (pixabay) https://pixabay.com/photos/woman-model-portrait-pose-style-3567600/
 - **p-nadia**: woman, businesswoman, office, laptop, smiling, modern, professional, success, portrait, leadership, elegant, white suit, confident, style, business, career, female (pixabay) https://pixabay.com/photos/woman-businesswoman-office-laptop-10489004/
 - **p-hana**: japanese, woman, kimono, portrait, beautiful (pixabay) https://pixabay.com/photos/japanese-woman-kimono-portrait-8968638/
@@ -42,3 +42,4 @@ Photos from Pixabay (free licence, https://pixabay.com/service/license-summary/)
 - **g-zara**: beauty, smile, black, teeth, hair, hairstyle, happy, model, woman, portrait, smiling, female, young, person, face, joy, skin, happiness, eyes, expression, makeup, lady, african, attractive, brown model, brown smile, brown makeup, brown hair, brown teeth, brown happiness, brown lady, teeth, teeth, teeth, teeth, teeth (pixabay) https://pixabay.com/photos/beauty-smile-black-teeth-hair-5160173/
 - **g-ayu**: fashion, woman, indian, girl, young, model, pose, smile, dress, traditional wear, culture, asian, india, portrait, indian, indian, indian, india, india, india, india, india (pixabay) https://pixabay.com/photos/fashion-woman-indian-girl-young-5255195/
 - **g-camille**: woman, surprised, portrait, girl, shock, face, hairstyle, hands, young woman, redhead, female portrait, emotion, expression, shocked, studio photography, shock, shock, shock, shocked, shocked, shocked, shocked, shocked (pixabay) https://pixabay.com/photos/woman-surprised-portrait-girl-5892355/
+- **p-kenji**: Photo provided by IRLY
