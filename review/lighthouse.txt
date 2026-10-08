@@ -1,0 +1,64 @@
+lh-app-mobile.json: performance 51 | accessibility 93 | best-practices 100 | seo 83
+  FCP 2.7 s, LCP 11.6 s, TBT 530 ms, CLS 0.01, SI 6.7 s, weight Total size was 2,033 KiB
+  - first-contentful-paint: First Contentful Paint (2.7 s)
+  - largest-contentful-paint: Largest Contentful Paint (11.6 s)
+  - speed-index: Speed Index (6.7 s)
+  - total-blocking-time: Total Blocking Time (530 ms)
+  - max-potential-fid: Max Potential First Input Delay (580 ms)
+  - interactive: Time to Interactive (12.7 s)
+  - redirects: Avoid multiple page redirects (Est savings of 760 ms)
+  - mainthread-work-breakdown: Minimize main-thread work (2.9 s)
+  - bootup-time: Reduce JavaScript execution time (2.2 s)
+  - font-display: Ensure text remains visible during webfont load
+  - largest-contentful-paint-element: Largest Contentful Paint element (11,600 ms)
+  - valid-source-maps: Missing source maps for large first-party JavaScript
+  - image-alt: Image elements do not have `[alt]` attributes
+  - uses-long-cache-ttl: Serve static assets with an efficient cache policy (7 resources found)
+  - unused-javascript: Reduce unused JavaScript (Est savings of 543 KiB)
+  - modern-image-formats: Serve images in next-gen formats (Est savings of 32 KiB)
+  - uses-responsive-images: Properly size images (Est savings of 131 KiB)
+  - legacy-javascript: Avoid serving legacy JavaScript to modern browsers (Est savings of 1 KiB)
+  - meta-description: Document does not have a meta description
+  - cache-insight: Use efficient cache lifetimes (Est savings of 134 KiB)
+  - document-latency-insight: Document request latency
+  - font-display-insight: Font display
+  - image-delivery-insight: Improve image delivery (Est savings of 120 KiB)
+lh-site-desktop.json: performance 88 | accessibility 96 | best-practices 100 | seo 100
+  FCP 1.0 s, LCP 1.7 s, TBT 0 ms, CLS 0.005, SI 2.1 s, weight Total size was 1,431 KiB
+  - first-contentful-paint: First Contentful Paint (1.0 s)
+  - largest-contentful-paint: Largest Contentful Paint (1.7 s)
+  - speed-index: Speed Index (2.1 s)
+  - redirects: Avoid multiple page redirects (Est savings of 210 ms)
+  - largest-contentful-paint-element: Largest Contentful Paint element (1,700 ms)
+  - color-contrast: Background and foreground colors do not have a sufficient contrast ratio.
+  - label-content-name-mismatch: Elements with visible text labels do not have matching accessible names.
+  - render-blocking-resources: Eliminate render-blocking resources (Est savings of 460 ms)
+  - unminified-css: Minify CSS (Est savings of 2 KiB)
+  - unminified-javascript: Minify JavaScript (Est savings of 2 KiB)
+  - modern-image-formats: Serve images in next-gen formats (Est savings of 498 KiB)
+  - uses-responsive-images: Properly size images (Est savings of 940 KiB)
+  - document-latency-insight: Document request latency
+  - dom-size-insight: Optimize DOM size
+  - forced-reflow-insight: Forced reflow
+  - image-delivery-insight: Improve image delivery (Est savings of 758 KiB)
+  - render-blocking-insight: Render blocking requests
+lh-site-mobile.json: performance 66 | accessibility 96 | best-practices 100 | seo 100
+  FCP 3.4 s, LCP 8.6 s, TBT 0 ms, CLS 0, SI 4.7 s, weight Total size was 1,431 KiB
+  - first-contentful-paint: First Contentful Paint (3.4 s)
+  - largest-contentful-paint: Largest Contentful Paint (8.6 s)
+  - speed-index: Speed Index (4.7 s)
+  - interactive: Time to Interactive (8.7 s)
+  - redirects: Avoid multiple page redirects (Est savings of 760 ms)
+  - largest-contentful-paint-element: Largest Contentful Paint element (8,560 ms)
+  - color-contrast: Background and foreground colors do not have a sufficient contrast ratio.
+  - label-content-name-mismatch: Elements with visible text labels do not have matching accessible names.
+  - render-blocking-resources: Eliminate render-blocking resources (Est savings of 1,370 ms)
+  - unminified-css: Minify CSS (Est savings of 2 KiB)
+  - unminified-javascript: Minify JavaScript (Est savings of 2 KiB)
+  - modern-image-formats: Serve images in next-gen formats (Est savings of 498 KiB)
+  - uses-responsive-images: Properly size images (Est savings of 831 KiB)
+  - document-latency-insight: Document request latency
+  - dom-size-insight: Optimize DOM size
+  - forced-reflow-insight: Forced reflow
+  - image-delivery-insight: Improve image delivery (Est savings of 841 KiB)
+  - render-blocking-insight: Render blocking requests
