@@ -1,0 +1,28 @@
+name: iPhone typing check
+
+# Types into every sign-up field with WebKit (iPhone Safari's engine).
+
+on:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/scripts/ios-input.mjs', '.github/workflows/ios-input.yml', 'src/components/ui/Controls.tsx', 'src/app/onboarding/**', 'src/app/account.tsx', 'src/features/onboarding/**']
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx expo export --platform web --output-dir dist-check
+      - run: npm install --no-save playwright@1 && npx playwright install --with-deps webkit
+      - run: node .github/scripts/ios-input.mjs dist-check
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-input
+          path: ios-*.png
