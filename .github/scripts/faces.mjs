@@ -2,7 +2,7 @@
  * Example portraits for the demonstration build (EXPO_PUBLIC_DEMO=1) and the website.
  * Picks a portrait per person on Pixabay (PIXABAY_API_KEY: free licence, each person's
  * own search for a varied cast; colour, single adult, smiling), else CC0 photos on
- * Openverse (StockSnap, Rawpixel); crops them square and writes
+ * Openverse (StockSnap, Rawpixel). Everyone looks 20 to 30; crops them square and writes
  * public-photos/faces/<id>.jpg. faces.json keeps each pick stable between
  * runs; ids listed in faces-exclude.json (rejected after review) are never
  * picked again. Real members never see these photos.
@@ -45,7 +45,7 @@ async function candidates(g) {
 const PIXABAY = process.env.PIXABAY_API_KEY;
 // One person per photo, in colour, an adult of the right gender.
 const GENDER = { f: /\b(woman|women|girl|female|lady)\b/i, m: /\b(man|men|guy|male|boy|businessman)\b/i };
-const NOT = /\b(black and white|monochrome|b&w|grayscale|group|couple|family|child|children|kid|kids|baby|crowd|team|friends|wedding|mask|nude|naked|lingerie|bikini|elderly|old|senior|grandmother|grandfather|painting|art|artwork|drawing|underwater|statue|sculpture|silhouette|dog|cat)\b/i;
+const NOT = /\b(black and white|monochrome|b&w|grayscale|group|couple|family|child|children|kid|kids|baby|crowd|team|friends|wedding|mask|nude|naked|lingerie|bikini|elderly|old|older|senior|mature|middle aged|teen|teenager|grandmother|grandfather|painting|art|artwork|drawing|underwater|statue|sculpture|silhouette|dog|cat)\b/i;
 // A real portrait: the face is the subject.
 const PORTRAIT = /\b(portrait|face|headshot|smile|smiling)\b/i;
 async function pixabay(person) {
