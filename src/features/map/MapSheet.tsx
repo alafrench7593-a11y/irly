@@ -184,7 +184,7 @@ function label(m: MapMarkerData) {
 function Lead({ marker }: { marker: MapMarkerData }) {
   const t = useTheme();
   const p = marker.personId ? findPerson(marker.personId) : undefined;
-  if (p) return <Avatar name={p.name} hue={p.hue} size={48} verified={p.verified} online={p.online} />;
+  if (p) return <Avatar name={p.name} hue={p.hue} size={48} verified={p.verified} online={p.online} photo={p.photo} />;
   return (
     <View style={[styles.lead, { backgroundColor: t.c.overlay }]}>
       <Icon name={marker.icon} size={22} color={marker.color} />
@@ -196,6 +196,7 @@ function HalfContent({ marker }: { marker: MapMarkerData }) {
   const router = useRouter();
   const joined = useStore((s) => Boolean(s.joined[marker.id]));
   const me = useStore((s) => s.profile.name) || 'You';
+  const myPhoto = useStore((s) => s.profile.photoUri);
   const going = peopleByIds(marker.goingIds ?? []).slice(0, 4);
   const person = marker.personId ? findPerson(marker.personId) : undefined;
   if (person) {
@@ -218,9 +219,9 @@ function HalfContent({ marker }: { marker: MapMarkerData }) {
     <View style={{ gap: space[5] }}>
       {going.length ? (
         <View style={styles.people}>
-          {joined ? <PersonDot name={me} hue={0} label="You" /> : null}
+          {joined ? <PersonDot name={me} hue={0} label="You" photo={myPhoto} /> : null}
           {going.map((p) => (
-            <PersonDot key={p.id} name={p.name} hue={p.hue} label={p.name.split(' ')[0]} onPress={() => router.push(`/person/${p.id}`)} />
+            <PersonDot key={p.id} name={p.name} hue={p.hue} photo={p.photo} label={p.name.split(' ')[0]} onPress={() => router.push(`/person/${p.id}`)} />
           ))}
           {more > 0 ? <PersonDot name={`+${more}`} hue={0} label="more" plus /> : null}
         </View>
@@ -243,7 +244,7 @@ function HalfContent({ marker }: { marker: MapMarkerData }) {
   );
 }
 
-function PersonDot({ name, hue, label: text, onPress, plus }: { name: string; hue: number; label: string; onPress?: () => void; plus?: boolean }) {
+function PersonDot({ name, hue, photo, label: text, onPress, plus }: { name: string; hue: number; photo?: string; label: string; onPress?: () => void; plus?: boolean }) {
   const t = useTheme();
   const inner = plus ? (
     <View style={[styles.plus, { backgroundColor: t.c.brand }]}>
@@ -252,7 +253,7 @@ function PersonDot({ name, hue, label: text, onPress, plus }: { name: string; hu
       </Text>
     </View>
   ) : (
-    <Avatar name={name} hue={hue} size={48} />
+    <Avatar name={name} hue={hue} size={48} photo={photo} />
   );
   return (
     <View style={styles.personDot}>
@@ -283,7 +284,7 @@ function FullContent({ marker }: { marker: MapMarkerData }) {
           <Text variant="titleS">{marker.type === 'group' ? 'Members' : "Who's going"}</Text>
           {going.slice(0, 6).map((p) => (
             <PressableScale key={p.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/person/${p.id}`)} style={styles.personRow}>
-              <Avatar name={p.name} hue={p.hue} size={40} online={p.online} />
+              <Avatar name={p.name} hue={p.hue} size={40} online={p.online} photo={p.photo} />
               <View style={{ flex: 1 }}>
                 <Text variant="label" raw>{p.name}</Text>
                 <Text variant="caption" tone="tertiary" numberOfLines={1}>

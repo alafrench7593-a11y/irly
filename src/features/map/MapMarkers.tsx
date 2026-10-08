@@ -18,6 +18,7 @@ import { Text } from '@/components/ui/Text';
 import { findPerson, peopleByIds } from '@/data/repo';
 import { LiveRing } from '@/features/live/LiveStrip';
 import { PressableScale } from '@/motion/PressableScale';
+import { useStore } from '@/state/store';
 import { ease, scale as scaleTokens, spring } from '@/motion/tokens';
 import { status } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -139,6 +140,8 @@ export const MarkerView = memo(function MarkerView({
   // IRLY Noir: markers are chips of smoked glass with white type; on the
   // light map they are white. The category colour stays on the icon.
   const skin = markerSkin(t.mode === 'night');
+  // Your own live plan has no personId: it shows your own photo or avatar.
+  const myPhoto = useStore((s) => s.profile.photoUri);
 
   let content: React.ReactNode;
   let ringShape = { width: 44, height: 44, borderRadius: 22 };
@@ -148,7 +151,7 @@ export const MarkerView = memo(function MarkerView({
       ringShape = { width: 50, height: 50, borderRadius: 25 };
       content = (
         <LiveRing size={50}>
-          <Avatar name={p?.name ?? 'You'} hue={p?.hue ?? 0} size={36} />
+          <Avatar name={p?.name ?? 'You'} hue={p?.hue ?? 0} size={36} photo={p ? p.photo : myPhoto} />
         </LiveRing>
       );
       break;
@@ -157,7 +160,7 @@ export const MarkerView = memo(function MarkerView({
       const p = m.personId ? findPerson(m.personId) : undefined;
       content = (
         <View style={[styles.person, { borderColor: skin.personEdge, boxShadow: `0px 4px 18px ${m.color}88` }]}>
-          <Avatar name={p?.name ?? m.title} hue={p?.hue ?? 0} size={36} />
+          <Avatar name={p?.name ?? m.title} hue={p?.hue ?? 0} size={36} photo={p?.photo} />
           <View style={[styles.personStatus, { backgroundColor: m.color, borderColor: t.c.bg }]} />
         </View>
       );
@@ -199,10 +202,10 @@ export const MarkerView = memo(function MarkerView({
       content = (
         <View style={[styles.group, { backgroundColor: skin.fill, boxShadow: skin.shadow, borderColor: selected ? m.color : skin.edge }]}>
           <View style={{ flexDirection: 'row' }}>
-            {a ? <Avatar name={a.name} hue={a.hue} size={22} ring /> : null}
+            {a ? <Avatar name={a.name} hue={a.hue} size={22} ring photo={a.photo} /> : null}
             {b ? (
               <View style={{ marginLeft: -8 }}>
-                <Avatar name={b.name} hue={b.hue} size={22} ring />
+                <Avatar name={b.name} hue={b.hue} size={22} ring photo={b.photo} />
               </View>
             ) : null}
           </View>
