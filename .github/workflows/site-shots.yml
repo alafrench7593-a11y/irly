@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: sudo apt-get install -y imagemagick >/dev/null
+      - run: sudo apt-get install -y imagemagick >/dev/null && pip install --quiet "opencv-python-headless==4.10.0.84"
       - name: Example portraits
         run: node .github/scripts/faces.mjs
         env:

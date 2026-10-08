@@ -84,16 +84,23 @@ for (const file of files) {
   console.log(`+ ${file}`);
 }
 
-// Where sign-in links may send people back: local web, Vercel, the app.
+// Where sign-in links and Google send people back: getirly.com first (the
+// default), then the other places the app runs. Merged with the list already
+// on the project, never replaced.
+const SITE = 'https://getirly.com/app';
+const WANTED = ['https://getirly.com/**', 'https://www.getirly.com/**', 'https://alafrench7593-a11y.github.io/irly/**', 'https://*.vercel.app/**', 'https://*-link-a664.vercel.app/**', 'http://localhost:8081/**', 'http://localhost:19006/**', 'irly://**', 'exp://**'];
+const current = await fetch(`${api}/config/auth`, { headers }).then((r) => (r.ok ? r.json() : {}));
+const allow = new Set([...String(current.uri_allow_list ?? '').split(','), ...WANTED].map((u) => u.trim()).filter(Boolean));
+// Without a custom SMTP, Supabase's default email only reaches the project's
+// own team: confirmation emails would never arrive, so new accounts are
+// confirmed right away until one is set (Authentication → SMTP).
+const ownSmtp = Boolean(current.smtp_host);
 const urls = await fetch(`${api}/config/auth`, {
   method: 'PATCH',
   headers,
-  body: JSON.stringify({
-    site_url: 'http://localhost:8081',
-    uri_allow_list: 'http://localhost:8081/**,http://localhost:19006/**,https://*.vercel.app/**,irly://**,exp://**',
-  }),
+  body: JSON.stringify({ site_url: SITE, uri_allow_list: [...allow].join(','), ...(ownSmtp ? {} : { mailer_autoconfirm: true }) }),
 });
-console.log(urls.ok ? '✓ sign-in redirect URLs configured' : `! redirect URLs not configured (${urls.status}): ${(await urls.text()).slice(0, 300)}`);
+console.log(urls.ok ? `✓ sign-in: back to ${SITE}; ${ownSmtp ? 'emails confirmed by link' : 'accounts confirmed right away (no custom SMTP yet)'}` : `! redirect URLs not configured (${urls.status}): ${(await urls.text()).slice(0, 300)}`);
 
 // Sign-in email with a 6-digit code (needs a custom SMTP on the free plan;
 // without it Supabase sends its default email with a sign-in link).
