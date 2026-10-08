@@ -1,0 +1,46 @@
+name: Map shots
+
+# The map with profile photos (feat/map-photos), shot from the demo build where
+# tiles load; published on the review/map-shots branch for the cinematic film.
+
+on:
+  push:
+    branches: [film/screens]
+    paths: ['.github/scripts/map-shots.mjs', '.github/workflows/map-shots.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  shoot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/map-photos
+      - uses: actions/checkout@v4
+        with:
+          path: tools
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Demo build
+        run: EXPO_PUBLIC_DEMO=1 npx expo export --platform web --output-dir dist-demo
+      - name: Shoot
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium > /dev/null
+          node tools/.github/scripts/map-shots.mjs dist-demo
+      - name: Publish on review/map-shots
+        run: |
+          git config user.name irly-bot
+          git config user.email bot@irly.app
+          git checkout --orphan review/map-shots
+          git rm -rfq --cached . > /dev/null
+          git add map-shots
+          git commit -qm "Map shots with profile photos"
+          git push -f origin review/map-shots
