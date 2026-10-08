@@ -147,7 +147,8 @@ export default function Assistant() {
     try {
       // Server first: a failed create must not leave a plan on this phone.
       const id = account ? await createServerActivity(plan, dateFor(e.day, e.time, new Date(), city.utcOffset)) : null;
-      postPlan(plan);
+      // The server has it: no second copy on the phone.
+      if (!id) postPlan(plan);
       haptic('success');
       track(cmd.intent === 'CREATE_EVENT' ? 'EVENT_CREATE' : 'ACTIVITY_CREATE', { category: e.category ?? 'other', via: source });
       logCommand(cmd, source, 'executed', id ? { type: 'activity', id } : undefined);

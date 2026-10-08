@@ -74,7 +74,7 @@ export function useRecommendedCommunities(cityId: string, tags: string[], limit 
   const [list, setList] = useState<OfficialCommunity[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const key = tags.slice().sort().join(',');
-  const version = useCommunitiesVersion((x) => x.v);
+  const version = useCommunitiesVersion();
   const [n, setN] = useState(0);
   const refresh = useCallback(() => setN((x) => x + 1), []);
   useEffect(() => {

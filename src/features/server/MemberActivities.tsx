@@ -18,6 +18,7 @@ import { haptic } from '@/motion/haptics';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { PressableScale } from '@/motion/PressableScale';
+import { useAccount } from '@/features/auth/account';
 import { joinServerActivity, useRecommendations, useServerActivities, type ServerActivity } from './activities';
 
 
@@ -60,6 +61,8 @@ function MemberCard({ a, cityId, onChanged, friendsGoing }: { a: ServerActivity;
   const city = CITIES[cityId];
   const category = CATEGORY_BY_ID[a.categoryId as CategoryKey];
   const full = a.capacity != null && a.going >= a.capacity;
+  const me = useAccount()?.userId;
+  const mine = a.creatorId === me;
 
   const join = async () => {
     setBusy(true);
@@ -108,15 +111,20 @@ function MemberCard({ a, cityId, onChanged, friendsGoing }: { a: ServerActivity;
               .join(' · ')}
           </Text>
         </View>
-        <Button
-          label={a.joined ? "You're going" : full ? 'Full' : 'Join'}
-          size="sm"
-          variant={a.joined ? 'secondary' : 'primary'}
-          icon={a.joined ? 'check' : 'plus'}
-          disabled={a.joined || full}
-          loading={busy}
-          onPress={join}
-        />
+        {mine ? (
+          // Your own plan: you organise it, you don't join it.
+          <Button label="Your plan · Manage" size="sm" variant="secondary" icon="settings" onPress={() => router.push(`/a/${a.id}`)} />
+        ) : (
+          <Button
+            label={a.joined ? "You're going" : full ? 'Full' : 'Join'}
+            size="sm"
+            variant={a.joined ? 'secondary' : 'primary'}
+            icon={a.joined ? 'check' : 'plus'}
+            disabled={a.joined || full}
+            loading={busy}
+            onPress={join}
+          />
+        )}
       </View>
     </PressableScale>
   );

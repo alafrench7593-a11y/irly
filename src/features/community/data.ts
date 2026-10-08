@@ -4,12 +4,12 @@ import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
-import { create } from 'zustand';
 import { supabase, topic } from '@/lib/supabase';
+import { changed, useRefreshOn, useSyncVersion } from '@/features/server/sync';
 
-/** Bumped after a join or a leave so every community list reloads. */
-export const useCommunitiesVersion = create<{ v: number }>(() => ({ v: 0 }));
-export const communitiesChanged = () => useCommunitiesVersion.setState((s) => ({ v: s.v + 1 }));
+/** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
+export const communitiesChanged = () => changed('communities', 'inbox');
+export const useCommunitiesVersion = () => useSyncVersion('communities');
 
 /**
  * A community on the IRLY server: detail, live feed (posts, polls, likes,
@@ -165,6 +165,8 @@ export function useCommunity(id: string) {
       alive = false;
     };
   }, [uid, load]);
+  // Members, name, photo and status change from anywhere: same detail everywhere.
+  useRefreshOn(['communities'], refresh);
 
   return { detail: uid ? detail : null, loading: uid ? loading : false, error, refresh, signedIn: Boolean(uid) };
 }
@@ -338,7 +340,7 @@ export function useCommunityList(cityId: string) {
   const account = useAccount();
   const uid = account?.userId;
   const [list, setList] = useState<CommunitySummary[]>([]);
-  const version = useCommunitiesVersion((x) => x.v);
+  const version = useCommunitiesVersion();
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
@@ -423,6 +425,7 @@ export function useCommunityActivities(communityId: string) {
   const refresh = useCallback(() => {
     load().then(setList).catch(() => undefined);
   }, [load]);
+  useRefreshOn(['activities'], refresh);
   return { activities: uid ? list : NONE, refresh };
 }
 
@@ -436,6 +439,24 @@ export async function joinCommunity(id: string): Promise<string> {
 
 export async function leaveCommunity(id: string): Promise<void> {
   const { error } = await sb().rpc('leave_community', { p_community: id });
+  if (error) throw new Error(error.message);
+  communitiesChanged();
+}
+
+/** The owner edits the community: name, tagline, description (its chat is renamed with it). */
+export async function updateCommunity(id: string, patch: { name?: string; tagline?: string | null; description?: string | null }): Promise<void> {
+  const row: Record<string, unknown> = {};
+  if (patch.name !== undefined) row.name = patch.name.trim();
+  if (patch.tagline !== undefined) row.tagline = patch.tagline;
+  if (patch.description !== undefined) row.description = patch.description;
+  const { error } = await sb().from('communities').update(row).eq('id', id);
+  if (error) throw new Error(error.message);
+  communitiesChanged();
+}
+
+/** The owner deletes the community: out of every list, search and inbox. */
+export async function deleteCommunity(id: string): Promise<void> {
+  const { error } = await sb().rpc('delete_community', { p_community: id });
   if (error) throw new Error(error.message);
   communitiesChanged();
 }

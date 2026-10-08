@@ -115,6 +115,7 @@ async function signedInPage(browser, who) {
 }
 
 const visible = (page, text, timeout = 15000) => page.getByText(text, { exact: false }).filter({ visible: true }).first().waitFor({ timeout });
+const gone = (page, text, timeout = 20000) => page.getByText(text, { exact: false }).filter({ visible: true }).first().waitFor({ state: 'hidden', timeout });
 
 async function main() {
   await cleanup();
@@ -126,6 +127,8 @@ async function main() {
   const browser = await chromium.launch();
   const page = await signedInPage(browser, uma);
   globalThis.__page = page;
+  // "Delete…?" and "Cancel…?" confirmations: yes.
+  page.on('dialog', (d) => d.accept().catch(() => undefined));
   const shot = (name) => page.screenshot({ path: path.join(SHOTS, `sync-${String(passed + failed).padStart(2, '0')}-${name}.png`) }).catch(() => undefined);
 
   // ───────── 3. Synchronisation (first: it creates the activity used below) ─────────
@@ -180,6 +183,7 @@ async function main() {
   await step('… and Vera\'s calendar (other member)', async () => must(await veraSb.rpc('my_calendar', {})).some((x) => x.id === actId));
   await step('Uma cancels in the app → Vera is notified and it leaves her calendar', async () => {
     await page.goto(`${BASE}/a/${actId}`);
+    await page.getByLabel('Manage your activity').click();
     await page.getByRole('button', { name: 'Cancel activity' }).click();
     await visible(page, 'This activity was cancelled');
     for (let i = 0; i < 20; i++) {
@@ -191,6 +195,79 @@ async function main() {
     return false;
   });
   await shot('cancelled');
+
+  // ───────── One living system: what Vera does reaches Uma's open screens, no reload ─────────
+  const liveTitle = `Live plan ${run}`;
+  let veraAct;
+  await step('Vera creates a plan → it appears on Uma\'s open Home, no reload', async () => {
+    await page.goto(`${BASE}/`);
+    await page.waitForTimeout(2500);
+    veraAct = must(
+      await veraSb
+        .from('activities')
+        .insert({ creator_id: vera.id, title: liveTitle, category_id: 'sport', city_id: 'bali', area_id: 'canggu', place_name: 'Batu Bolong', starts_at: new Date(Date.now() + 2 * 86400_000).toISOString() })
+        .select('id')
+        .single(),
+    ).id;
+    await visible(page, liveTitle, 20000);
+    return true;
+  });
+  await step('… and in search', async () => (await page.goto(`${BASE}/discover?q=${encodeURIComponent(liveTitle)}`), await visible(page, liveTitle), true));
+  await step('Uma joins it → the plan\'s chat is in her inbox, the count says 2 going', async () => {
+    await page.goto(`${BASE}/a/${veraAct}`);
+    await page.getByRole('button', { name: 'Join', exact: true }).click();
+    await visible(page, '2 going', 20000);
+    await page.goto(`${BASE}/messages`);
+    await visible(page, liveTitle, 20000);
+    return true;
+  });
+  await step('Vera renames it and changes the place → Uma\'s open page shows both, no reload', async () => {
+    await page.goto(`${BASE}/a/${veraAct}`);
+    await visible(page, liveTitle);
+    must(await veraSb.from('activities').update({ title: `${liveTitle} night`, place_name: 'Pererenan beach' }).eq('id', veraAct));
+    await visible(page, `${liveTitle} night`, 20000);
+    await visible(page, 'Pererenan beach', 20000);
+    return true;
+  });
+  await step('… the chat is renamed too', async () => (await page.goto(`${BASE}/messages`), await visible(page, `${liveTitle} night`, 20000), true));
+  await step('Vera deletes it → it leaves Uma\'s open Home and her inbox, no reload', async () => {
+    await page.goto(`${BASE}/`);
+    await visible(page, `${liveTitle} night`, 20000);
+    must(await veraSb.rpc('delete_activity', { p_activity: veraAct }));
+    await gone(page, `${liveTitle} night`);
+    await page.goto(`${BASE}/messages`);
+    await page.waitForTimeout(2500);
+    return (await page.getByText(`${liveTitle} night`).count()) === 0;
+  });
+  const clubName = `Sync club ${run}`;
+  let clubId;
+  await step('Vera creates a community → it appears in Uma\'s open Communities list, no reload', async () => {
+    await page.goto(`${BASE}/communities`);
+    await page.waitForTimeout(2500);
+    clubId = must(await veraSb.rpc('create_community', { p_name: clubName, p_city: 'bali' }));
+    await visible(page, clubName, 20000);
+    return true;
+  });
+  await step('… a double tap made one community, with one chat', async () => {
+    const again = must(await veraSb.rpc('create_community', { p_name: clubName, p_city: 'bali' }));
+    const [{ n }] = await sql(`select count(*)::int as n from public.communities where name = '${clubName}'`);
+    const [{ c }] = await sql(`select count(*)::int as c from public.conversations v join public.communities m on m.id = v.community_id where m.name = '${clubName}'`);
+    return again === clubId && n === 1 && c === 1;
+  });
+  await step('Uma joins it → its chat is in her inbox; Vera deletes it → gone from her list and inbox', async () => {
+    await page.goto(`${BASE}/c/${clubId}`);
+    await page.getByRole('button', { name: 'Join the community' }).click();
+    await visible(page, 'Open chat');
+    await page.goto(`${BASE}/messages`);
+    await visible(page, clubName, 20000);
+    await page.goto(`${BASE}/communities`);
+    await visible(page, clubName, 20000);
+    must(await veraSb.rpc('delete_community', { p_community: clubId }));
+    await gone(page, clubName);
+    await page.goto(`${BASE}/messages`);
+    await page.waitForTimeout(2500);
+    return (await page.getByText(clubName).count()) === 0;
+  });
 
   // ───────── Community: post, live feed, assistant ─────────
   const girlsId = (await sql(`select id from public.communities where city_id = 'bali' and name = 'Bali Girls'`))[0].id;
@@ -396,7 +473,7 @@ async function main() {
   await step('Uma blocks Vera from the chat → it leaves her inbox and Vera can no longer write', async () => {
     await page.goto(`${BASE}/messages/${dm}`);
     await page.getByLabel('Safety: report or block').click();
-    page.once('dialog', (d) => d.accept());
+    // (Confirmations are accepted by the page-wide handler.)
     await page.getByRole('button', { name: 'Block', exact: true }).click();
     for (let i = 0; i < 20; i++) {
       const [b] = await sql(`select count(*)::int as n from public.blocks where blocker_id = '${uma.id}' and blocked_id = '${vera.id}'`);
@@ -412,7 +489,7 @@ async function main() {
   await step('Blocked members → Unblock Vera', async () => {
     await page.goto(`${BASE}/blocked`);
     await visible(page, 'Vera');
-    page.once('dialog', (d) => d.accept());
+    // (Confirmations are accepted by the page-wide handler.)
     await page.getByRole('button', { name: 'Unblock' }).first().click();
     for (let i = 0; i < 20; i++) {
       const [b] = await sql(`select count(*)::int as n from public.blocks where blocker_id = '${uma.id}'`);

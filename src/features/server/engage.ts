@@ -7,6 +7,7 @@ import { Platform, Share } from 'react-native';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { supabase, topic } from '@/lib/supabase';
+import { changed, useRefreshOn } from './sync';
 
 /**
  * One interaction system for the whole app. Anything that can be liked,
@@ -151,6 +152,7 @@ export async function toggleLike(t: Target): Promise<boolean> {
 export async function toggleSave(t: Target): Promise<boolean> {
   const { data, error } = await need().rpc('toggle_save', { p_type: t.type, p_id: t.id });
   if (error) throw new Error(error.message);
+  changed('saved');
   return Boolean(data);
 }
 
@@ -161,6 +163,7 @@ export async function hideItem(t: Target): Promise<void> {
   if (!uid) throw new Error('Sign in first');
   const { error } = await sb.from('hidden_items').upsert({ user_id: uid, target_type: t.type, target_id: t.id });
   if (error) throw new Error(error.message);
+  changed('activities', 'communities');
 }
 
 export async function reportItem(t: Target, category: ReportCategory, ownerId?: string, details?: string): Promise<void> {
@@ -391,5 +394,6 @@ export function useSaved() {
       alive = false;
     };
   }, [load]);
+  useRefreshOn(['saved', 'activities', 'communities'], refresh);
   return { items: uid ? items : NONE, failed: uid ? failed : false, refresh, signedIn: Boolean(uid) };
 }

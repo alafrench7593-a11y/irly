@@ -5,6 +5,7 @@ import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
+import { useSyncVersion } from './sync';
 import { imageBytes, imageType } from '@/lib/media';
 
 /**
@@ -243,7 +244,7 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
       createdAt: Date.parse(n.created_at),
     }));
   }, [uid]);
-  const version = useNotifVersion((s) => s.n);
+  const version = useNotifVersion((s) => s.n) + useSyncVersion('notifs');
   useEffect(() => {
     if (!version) return;
     let alive = true;

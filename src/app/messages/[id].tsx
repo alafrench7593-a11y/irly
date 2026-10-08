@@ -87,7 +87,6 @@ function ServerThreadView({ id }: { id: string }) {
     }
   };
   const [text, setText] = useState(typeof draft === 'string' ? draft.slice(0, 600) : '');
-  const [sending, setSending] = useState(false);
   const [earlier, setEarlier] = useState(false);
   const [menu, setMenu] = useState(false);
   const [reporting, setReporting] = useState<ReportTarget | null>(null);
@@ -98,19 +97,20 @@ function ServerThreadView({ id }: { id: string }) {
 
   const send = async () => {
     const body = text.trim();
-    if (!body || sending) return;
+    if (!body) return;
     haptic('tap');
-    setSending(true);
     setText('');
     stick.current = true;
+    // Shown at once as "sending"; a failure stays in the thread with "Retry".
     try {
       await thread.send(body);
     } catch (e) {
-      setText(body);
       toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live');
-    } finally {
-      setSending(false);
     }
+  };
+  const retry = (id: string) => {
+    haptic('tap');
+    thread.retry(id).catch((e) => toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live'));
   };
 
   const onLong = (m: (typeof thread.messages)[number]) => {
@@ -259,7 +259,17 @@ function ServerThreadView({ id }: { id: string }) {
                       </Text>
                     )}
                   </PressableScale>
-                  {showTime ? (
+                  {m.status === 'failed' ? (
+                    <PressableScale haptic={false} onPress={() => retry(m.id)} accessibilityRole="button" accessibilityLabel={tx('Not sent. Retry')} style={{ alignSelf: 'flex-end', marginTop: 2, marginRight: 6 }}>
+                      <Text variant="caption" color={t.c.live}>
+                        Not sent · Retry
+                      </Text>
+                    </PressableScale>
+                  ) : m.status === 'sending' ? (
+                    <Text variant="caption" tone="tertiary" style={{ marginTop: 2, textAlign: 'right', marginRight: 6 }}>
+                      Sending…
+                    </Text>
+                  ) : showTime ? (
                     <Text variant="caption" tone="tertiary" style={[{ marginTop: 2 }, mine ? { textAlign: 'right', marginRight: 6 } : { marginLeft: 6 }]} raw>
                       {clock(m.at)}
                     </Text>
@@ -295,7 +305,7 @@ function ServerThreadView({ id }: { id: string }) {
             />
           </View>
           <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, opacity: text.trim() ? 1 : 0.4 }]} accessibilityLabel="Send">
-            {sending ? <ActivityIndicator color={t.c.onBrand} /> : <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />}
+            <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />
           </PressableScale>
         </Glass>
       </KeyboardAvoidingView>

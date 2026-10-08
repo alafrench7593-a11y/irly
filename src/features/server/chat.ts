@@ -5,6 +5,8 @@ import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
+import { useRefreshOn, useSyncVersion } from './sync';
+import { uuid } from '@/lib/uuid';
 
 /**
  * Server chats (signed in): the inbox from `my_conversations()` and live
@@ -71,16 +73,17 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
   useEffect(() => {
     if (!supabase || !uid) return;
     refresh();
-    // New messages anywhere you are a member refresh the inbox.
+    // New messages anywhere you are a member refresh the inbox; joins, leaves,
+    // renames and deletions arrive through the app's sync channel.
     const channel = supabase
       .channel(topic(`inbox-${uid}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, refresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_members', filter: `user_id=eq.${uid}` }, refresh)
       .subscribe();
     return () => {
       supabase?.removeChannel(channel);
     };
   }, [uid, refresh]);
+  useRefreshOn(['inbox', 'people'], refresh);
 
   // Memoised: a list rebuilt every render breaks any effect that depends on it.
   const conversations = useMemo(
@@ -118,7 +121,14 @@ function merge(list: MessageRow[], more: MessageRow[]): MessageRow[] {
   return [...seen.values()].sort(byTime);
 }
 
-export type ServerMessage = Message & { at: number; name?: string; senderId: string | null; share?: { type: string; id: string | null } };
+export type ServerMessage = Message & {
+  at: number;
+  name?: string;
+  senderId: string | null;
+  share?: { type: string; id: string | null };
+  /** Your own message on its way, or not delivered (offline, refused): never shown as sent when it is not. */
+  status?: 'sending' | 'failed';
+};
 
 export type ServerThread = {
   loading: boolean;
@@ -132,6 +142,8 @@ export type ServerThread = {
   hasEarlier: boolean;
   loadEarlier: () => Promise<void>;
   send: (text: string) => Promise<void>;
+  /** Sends a message that failed again (same id: it can never arrive twice). */
+  retry: (messageId: string) => Promise<void>;
   remove: (messageId: string) => Promise<void>;
   /** Names of the members typing right now. */
   typing: string[];
@@ -155,6 +167,8 @@ export function useServerThread(conversationId: string): ServerThread {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasEarlier, setHasEarlier] = useState(false);
+  // Your messages not confirmed by the server yet: shown at once, marked "sending" or "failed".
+  const [pending, setPending] = useState<Record<string, { body: string; at: string; failed: boolean }>>({});
   const [typing, setTypingNames] = useState<Record<string, number>>({});
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
   const lastTyping = useRef(0);
@@ -297,18 +311,42 @@ export function useServerThread(conversationId: string): ServerThread {
     setHasEarlier(older.length === PAGE);
   }, [conversationId, rows]);
 
-  const send = useCallback(
-    async (text: string) => {
+  // The id is made here, so the realtime echo, the insert's answer and a retry are one message.
+  const deliver = useCallback(
+    async (id: string, text: string) => {
       if (!supabase || !uid) throw new Error('Sign in to send messages');
-      const { data, error: e } = await supabase.from('messages').insert({ conversation_id: conversationId, sender_id: uid, body: text }).select(COLS).single();
-      if (e) {
+      const { data, error: e } = await supabase.from('messages').insert({ id, conversation_id: conversationId, sender_id: uid, body: text }).select(COLS).single();
+      // Already there (a retry after a lost answer): that is a success.
+      if (e && e.code !== '23505') {
+        setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], failed: true } } : p));
         throw new Error(
           /row-level|policy|blocked|not accept/i.test(e.message) ? 'This member does not accept messages from you' : /fetch|network/i.test(e.message) ? 'No connection: message not sent' : e.message,
         );
       }
-      setRows((list) => merge(list, [data as MessageRow]));
+      if (data) setRows((list) => merge(list, [data as MessageRow]));
+      setPending((p) => {
+        const { [id]: _done, ...rest } = p;
+        return rest;
+      });
     },
     [conversationId, uid],
+  );
+  const send = useCallback(
+    async (text: string) => {
+      const id = uuid();
+      setPending((p) => ({ ...p, [id]: { body: text, at: new Date().toISOString(), failed: false } }));
+      await deliver(id, text);
+    },
+    [deliver],
+  );
+  const retry = useCallback(
+    async (id: string) => {
+      const m = pending[id];
+      if (!m) return;
+      setPending((p) => ({ ...p, [id]: { ...m, failed: false } }));
+      await deliver(id, m.body);
+    },
+    [deliver, pending],
   );
 
   const remove = useCallback(async (messageId: string) => {
@@ -327,7 +365,13 @@ export function useServerThread(conversationId: string): ServerThread {
 
   const messages = useMemo(
     () =>
-      rows.map(
+      [
+        ...rows,
+        // Pending ones, until the server confirms them (then they are in rows with the same id).
+        ...Object.entries(pending)
+          .filter(([id]) => !rows.some((r) => r.id === id))
+          .map(([id, p]): MessageRow => ({ id, sender_id: uid ?? null, kind: 'text', body: p.body, created_at: p.at })),
+      ].map(
         (r): ServerMessage => ({
           id: r.id,
           from: r.sender_id === uid ? 'me' : r.sender_id ? r.sender_id : 'irly',
@@ -337,11 +381,37 @@ export function useServerThread(conversationId: string): ServerThread {
           minAgo: 0,
           at: Date.parse(r.created_at),
           share: r.kind === 'share' && r.ref_type ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
+          status: pending[r.id] ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
         }),
       ),
-    [rows, names, uid],
+    [rows, names, uid, pending],
   );
   const otherId = kind === 'direct' || kind === 'match' ? (Object.keys(names).find((id) => id !== uid) ?? null) : null;
   const typingNames = useMemo(() => Object.keys(typing).map((id) => names[id] ?? 'Someone'), [typing, names]);
-  return { loading: uid ? loading : false, error, title, kind, otherId, messages, hasEarlier, loadEarlier, send, remove, typing: typingNames, setTyping };
+  // Names and the chat's title follow the server: someone who joins later, a new
+  // first name, a renamed activity or community.
+  const unknown = useMemo(() => [...new Set(rows.map((r) => r.sender_id).filter((id): id is string => Boolean(id) && !(id! in names)))].sort().join(','), [rows, names]);
+  const peopleV = useSyncVersion('people');
+  const inboxV = useSyncVersion('inbox');
+  useEffect(() => {
+    if (!supabase || !uid || loading) return;
+    let alive = true;
+    Promise.all([
+      supabase.from('conversations').select('title').eq('id', conversationId).maybeSingle(),
+      supabase.from('conversation_members').select('user_id, profiles(first_name)').eq('conversation_id', conversationId),
+    ]).then(([{ data: conv }, { data: members }]) => {
+      if (!alive) return;
+      const map: Record<string, string> = {};
+      (members ?? []).forEach((m: { user_id: string; profiles: { first_name: string } | { first_name: string }[] | null }) => {
+        const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+        if (p) map[m.user_id] = p.first_name;
+      });
+      setNames((old) => ({ ...old, ...map }));
+      if (conv?.title) setTitle(conv.title);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [conversationId, uid, loading, unknown, peopleV, inboxV]);
+  return { loading: uid ? loading : false, error, title, kind, otherId, messages, hasEarlier, loadEarlier, send, retry, remove, typing: typingNames, setTyping };
 }

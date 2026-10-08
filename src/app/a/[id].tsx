@@ -8,7 +8,7 @@ import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionBar } from '@/components/social/ActionBar';
 import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/Controls';
+import { Field, IconButton } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -19,7 +19,9 @@ import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/cate
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
-import { cancelServerActivity, icsFor, joinServerActivity, leaveServerActivity, useServerActivity } from '@/features/server/activities';
+import { cancelServerActivity, deleteServerActivity, icsFor, joinServerActivity, leaveServerActivity, updateServerActivity, useServerActivity } from '@/features/server/activities';
+import { Sheet } from '@/components/ui/Sheet';
+import { confirm } from '@/lib/confirm';
 import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
@@ -45,6 +47,7 @@ export default function ActivityPage() {
   const { detail: a, loading, error, refresh } = useServerActivity(id);
   const eng = useEngagement('activity', a ? [a.id] : []);
   const [busy, setBusy] = useState(false);
+  const [managing, setManaging] = useState(false);
   const auth = useAuthStatus();
 
   useEffect(() => {
@@ -228,23 +231,95 @@ export default function ActivityPage() {
 
       <View style={[styles.top, { paddingTop: insets.top + 6 }]}>
         <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
-        {hosting && !a.cancelled ? (
-        <IconButton
+        {hosting ? <IconButton icon="settings" label="Manage your activity" variant="glass" onPress={() => setManaging(true)} /> : null}
+      </View>
+      {hosting ? (
+        <HostSheet
+          visible={managing}
+          onClose={() => setManaging(false)}
+          a={a}
+          onCancelled={() => {
+            toast('Cancelled. Participants were notified', 'check', 'brand');
+            refresh();
+          }}
+          onDeleted={() => {
+            toast('Activity deleted', 'check', 'brand');
+            if (router.canGoBack()) router.back();
+            else router.replace('/');
+          }}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * The organiser's tools: edit (name, place, description), cancel, delete.
+ * One write to the server; every screen showing the activity (lists, map,
+ * calendar, chat title, search) follows through the sync channel.
+ */
+function HostSheet({ visible, onClose, a, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; title: string; placeName: string | null; description: string | null; cancelled: boolean }; onCancelled: () => void; onDeleted: () => void }) {
+  const [title, setTitle] = useState(a.title);
+  const [place, setPlace] = useState(a.placeName ?? '');
+  const [about, setAbout] = useState(a.description ?? '');
+  const [saving, setSaving] = useState(false);
+  const save = async () => {
+    if (saving || title.trim().length < 3) return;
+    setSaving(true);
+    try {
+      await updateServerActivity(a.id, { title, placeName: place.trim() || null, description: about.trim() || null });
+      haptic('success');
+      toast('Saved. Everyone sees the new version', 'check', 'brand');
+      onClose();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
+    } finally {
+      setSaving(false);
+    }
+  };
+  return (
+    <Sheet visible={visible} onClose={onClose} title="Your activity" subtitle="You organise it">
+      <View style={{ gap: 12, paddingBottom: 12 }}>
+        <Field value={title} onChangeText={setTitle} placeholder="Name" accessibilityLabel="Name" maxLength={80} />
+        <Field value={place} onChangeText={setPlace} placeholder="Place (e.g. Kite Beach, court 3)" accessibilityLabel="Place" icon="pin" maxLength={120} />
+        <Field value={about} onChangeText={setAbout} placeholder="Description" accessibilityLabel="Description" multiline maxLength={1000} />
+        <Button label="Save changes" icon="check" full loading={saving} disabled={saving || title.trim().length < 3} onPress={save} />
+        {!a.cancelled ? (
+          <Button
+            label="Cancel activity"
+            icon="x"
+            variant="secondary"
+            full
+            onPress={() =>
+              confirm('Cancel this activity? Participants will be notified.', () =>
+                cancelServerActivity(a.id)
+                  .then(() => {
+                    onClose();
+                    onCancelled();
+                  })
+                  .catch(() => toast('Could not cancel', 'x', 'live')),
+              'Cancel activity')
+            }
+          />
+        ) : null}
+        <Button
+          label="Delete activity"
           icon="x"
-          label="Cancel activity"
-          variant="glass"
+          variant="danger"
+          full
           onPress={() =>
-            cancelServerActivity(a.id)
-              .then(() => {
-                toast('Cancelled. Participants were notified', 'check', 'brand');
-                refresh();
-              })
-              .catch(() => toast('Could not cancel', 'x', 'live'))
+            confirm('Delete this activity? It disappears for everyone, with its chat.', () =>
+              deleteServerActivity(a.id)
+                .then(() => {
+                  onClose();
+                  onDeleted();
+                })
+                .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')),
+            )
           }
         />
-        ) : null}
       </View>
-    </View>
+    </Sheet>
   );
 }
 

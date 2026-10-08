@@ -6,6 +6,7 @@ import type { PhotoKey } from '@/data/photos';
 import { useAccount } from '@/features/auth/account';
 import { imageBytes, imageType } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
+import { changed, useSyncVersion } from './sync';
 import { coverLinks } from './activities';
 
 /**
@@ -42,6 +43,7 @@ export async function setCommunityCover(communityId: string, uri: string | null)
   const path = uri ? await upload(uri) : null;
   const { error } = await supabase.rpc('set_community_cover', { p_community: communityId, p_path: path });
   if (error) throw new Error(error.message);
+  changed('communities', 'inbox');
 }
 
 /** A chat's photo: a picked image, or null to go back to the app's photo. */
@@ -50,6 +52,7 @@ export async function setChatPhoto(conversationId: string, uri: string | null): 
   const path = uri ? await upload(uri) : null;
   const { error } = await supabase.rpc('set_conversation_photo', { p_conversation: conversationId, p_path: path });
   if (error) throw new Error(error.message);
+  changed('inbox', 'communities');
 }
 
 /** A viewable link for a stored photo path (null while loading or without one). */
@@ -83,6 +86,8 @@ const one = <T,>(v: One<T>): T | null => (Array.isArray(v) ? (v[0] ?? null) : v)
 /** A server chat's photo and whether you may change it (chat admin, community owner or moderator). */
 export function useChatPhoto(conversationId: string): ChatPhoto {
   const uid = useAccount()?.userId;
+  // A new chat or community photo, set by anyone, shows at once.
+  const inboxV = useSyncVersion('inbox');
   const [state, setState] = useState<Omit<ChatPhoto, 'refresh'>>({ path: null, fallback: 'meeting', hasPhoto: false, canEdit: false });
   const [n, setN] = useState(0);
   const refresh = useCallback(() => setN((x) => x + 1), []);
@@ -116,6 +121,6 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
     return () => {
       alive = false;
     };
-  }, [conversationId, uid, n]);
+  }, [conversationId, uid, n, inboxV]);
   return { ...state, refresh };
 }

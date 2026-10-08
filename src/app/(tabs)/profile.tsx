@@ -3,6 +3,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { LANGS, t as tx, useLangStore, a11y } from '@/i18n';
 import { wipeLocal } from '@/state/wipe';
 import { deleteServerAccount, exportMyData, signOut, useAccount } from '@/features/auth/account';
+import { useCalendar } from '@/features/server/activities';
+import { useCommunityList } from '@/features/community/data';
+import { cityWhen , whenLabel } from '@/lib/time';
+import type { CityId } from '@/data/types';
 import { DEMO } from '@/config/app';
 import { useState } from 'react';
 import { StyleSheet, Switch, View } from 'react-native';
@@ -25,7 +29,6 @@ import { CITIES, DESTINATIONS } from '@/data/destinations';
 import { findCommunity, findEvent, findService, findSession } from '@/data/repo';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { openHero } from '@/features/hero/heroStore';
-import { whenLabel } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { CountUp } from '@/motion/CountUp';
 import { enter } from '@/motion/enter';
@@ -93,6 +96,16 @@ export default function Profile() {
   const communities = Object.keys(memberOf)
     .map((id) => findCommunity(id))
     .filter((c): c is NonNullable<typeof c> => Boolean(c));
+  // Signed in, the server is the only source: what you host and join, and the
+  // communities you are in, live (same objects as every other screen).
+  const calendar = useCalendar();
+  const serverPlans = calendar.items
+    .filter((i) => (i.endsAt ?? i.startsAt + 2 * 3600_000) >= now)
+    .map((i) => ({ id: i.id, title: i.title, when: cityWhen(i.startsAt, (i.cityId as CityId) ?? cityId), hosting: i.hosting }));
+  const myServerCommunities = useCommunityList(cityId).filter((c) => c.isMember);
+  const live = Boolean(account);
+  const planCount = live ? serverPlans.length : plans.length;
+  const communityCount = live ? myServerCommunities.length : communities.length;
   const connected = Object.values(connections).filter((s) => s === 'connected').length;
 
   return (
@@ -149,9 +162,9 @@ export default function Profile() {
           <Animated.View entering={enter.rise(3)} style={[styles.stats, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
             <Stat value={connected} label="Connections" />
             <View style={[styles.vr, { backgroundColor: t.c.line }]} />
-            <Stat value={plans.length} label="Plans" />
+            <Stat value={planCount} label="Plans" />
             <View style={[styles.vr, { backgroundColor: t.c.line }]} />
-            <Stat value={communities.length} label="Communities" />
+            <Stat value={communityCount} label="Communities" />
           </Animated.View>
         </View>
 
@@ -183,8 +196,12 @@ export default function Profile() {
         <Animated.View entering={enter.rise(5)} style={styles.section}>
           <SectionHeader title="Upcoming" overline="In real life" />
           <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
-            {plans.length === 0 ? (
+            {planCount === 0 ? (
               <EmptyRow icon="calendar" text="Nothing planned yet. Join a plan and it lands here." onPress={() => router.push('/social')} />
+            ) : live ? (
+              serverPlans.map((p) => (
+                <Row key={p.id} icon={p.hosting ? 'star' : 'calendar'} title={p.title} meta={p.hosting ? `${tx('You organise it')} · ${p.when}` : p.when} onPress={() => router.push(`/a/${p.id}`)} />
+              ))
             ) : (
               plans.map((p) => (
                 <Row key={p.id} icon={p.icon} title={p.title} meta={p.when} onPress={() => openHero({ kind: p.kind, id: p.id })} />
@@ -205,7 +222,16 @@ export default function Profile() {
           </View>
         </Animated.View>
 
-        {communities.length ? (
+        {live && myServerCommunities.length ? (
+          <Animated.View entering={enter.rise(6)} style={styles.section}>
+            <SectionHeader title="Your communities" />
+            <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+              {myServerCommunities.map((c) => (
+                <Row key={c.id} icon="users" title={c.name} meta={[c.official ? 'IRLY' : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} onPress={() => router.push(`/c/${c.id}`)} />
+              ))}
+            </View>
+          </Animated.View>
+        ) : !live && communities.length ? (
           <Animated.View entering={enter.rise(6)} style={styles.section}>
             <SectionHeader title="Your communities" />
             <Rail itemWidth={250}>
