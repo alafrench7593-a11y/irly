@@ -29,6 +29,8 @@ jobs:
       - run: sudo apt-get install -y imagemagick >/dev/null
       - name: Example portraits
         run: node .github/scripts/faces.mjs
+        env:
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
       - run: npm ci
       - name: Demo build
         run: EXPO_PUBLIC_DEMO=1 npx expo export --platform web --output-dir dist-demo
