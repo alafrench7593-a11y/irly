@@ -453,5 +453,12 @@
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
+ },
+ "fineDining": {
+  "id": "own-resto",
+  "tags": "restaurant, tacos, fine dining, Dubai",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
  }
 }
