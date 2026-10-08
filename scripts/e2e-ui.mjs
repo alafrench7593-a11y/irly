@@ -76,7 +76,7 @@ async function main() {
   await page.evaluate(() => {
     localStorage.setItem(
       'irly-v2',
-      JSON.stringify({ state: { onboarded: true, destinationId: 'bali', cityId: 'bali', profile: { name: 'Uma', types: ['nomad'], interests: [], activities: [], languages: ['English'], lookingFor: ['friends'], gender: 'woman', age: 32, since: 'new' } }, version: 1 }),
+      JSON.stringify({ state: { onboarded: true, storySeen: 99, destinationId: 'bali', cityId: 'bali', profile: { name: 'Uma', types: ['nomad'], interests: [], activities: [], languages: ['English'], lookingFor: ['friends'], gender: 'woman', age: 32, since: 'new' } }, version: 1 }),
     );
     localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   });
