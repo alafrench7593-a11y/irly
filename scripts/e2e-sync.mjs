@@ -103,7 +103,7 @@ async function signedInPage(browser, who) {
   page.on('pageerror', (e) => page.errors.push(e.message));
   await page.goto(BASE);
   await page.evaluate((name) => {
-    localStorage.setItem('irly-v2', JSON.stringify({ state: { onboarded: true, communityIntroSeen: true, destinationId: 'bali', cityId: 'bali', profile: { name, types: [], interests: [], activities: [], languages: ['English'], lookingFor: [], gender: 'woman', age: 32 } }, version: 1 }));
+    localStorage.setItem('irly-v2', JSON.stringify({ state: { onboarded: true, storySeen: 99, communityIntroSeen: true, destinationId: 'bali', cityId: 'bali', profile: { name, types: [], interests: [], activities: [], languages: ['English'], lookingFor: [], gender: 'woman', age: 32 } }, version: 1 }));
     localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   }, who.name);
   await page.goto(`${BASE}/account`);
@@ -222,7 +222,7 @@ async function main() {
     await page.getByRole('button', { name: 'Ask', exact: true }).click();
     await page.getByRole('button', { name: 'Post this poll' }).click();
     await visible(page, 'Saturday or Sunday?');
-    await page.getByRole('button', { name: 'Vote Sunday' }).first().click();
+    await page.getByRole('button', { name: 'Vote: Sunday' }).first().click();
     await visible(page, '1 vote');
     return true;
   });
