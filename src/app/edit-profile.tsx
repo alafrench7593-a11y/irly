@@ -1,14 +1,10 @@
-import * as ImagePicker from 'expo-image-picker';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
-import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { CharCount } from '@/components/ui/CharCount';
 import { Chip, Field } from '@/components/ui/Controls';
-import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { INTERESTS } from '@/data/catalog';
@@ -16,20 +12,19 @@ import { CITIES } from '@/data/destinations';
 import { LANGUAGES } from '@/data/languages';
 import type { CityId, Interest } from '@/data/types';
 import { updateMyProfile, useAccount } from '@/features/auth/account';
+import { AppearanceChoice } from '@/features/avatar/AvatarBuilder';
 import { useT } from '@/i18n';
 import { haptic } from '@/motion/haptics';
-import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * Edit profile: photo, first name, age, bio, where you live, languages and
+ * Edit profile: appearance (photo or IRLY avatar), first name, age, bio, where you live, languages and
  * interests. Saved on the server (what others see) and on this phone.
  * Gender is set at signup (IRLY Girl access) and changes through support.
  */
 export default function EditProfile() {
-  const t = useTheme();
   const tr = useT();
   const router = useRouter();
   const account = useAccount();
@@ -50,18 +45,6 @@ export default function EditProfile() {
     languages: languages.length ? null : tr('Pick at least one language'),
   };
   const valid = !errors.name && !errors.languages;
-
-  const pick = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [1, 1] });
-    const a = !res.canceled ? res.assets[0] : null;
-    if (!a) return;
-    try {
-      const small = await manipulateAsync(a.uri, [{ resize: { width: 768 } }], { compress: 0.75, format: SaveFormat.JPEG, base64: true });
-      setPhoto(small.base64 ? `data:image/jpeg;base64,${small.base64}` : small.uri);
-    } catch {
-      setPhoto(a.uri);
-    }
-  };
 
   const save = async () => {
     setTried(true);
@@ -96,17 +79,15 @@ export default function EditProfile() {
   return (
     <Page overline="Profile" title="Edit profile" subtitle={account ? tr('What other members see.') : tr('Saved on this phone. Sign in to share it with other members.')}>
       <View style={styles.form}>
-        <View style={{ alignItems: 'center', gap: 10 }}>
-          <PressableScale haptic="select" onPress={pick} accessibilityRole="button" accessibilityLabel={tr('Change the photo')}>
-            <Avatar name={name || '?'} hue={210} size={112} photo={photo ?? profile.photoUri} />
-            <View style={[styles.camera, { backgroundColor: t.c.text, borderColor: t.c.bg }]}>
-              <Icon name="camera" size={16} color={t.c.bg} />
-            </View>
-          </PressableScale>
-          <Text variant="caption" tone="tertiary">
-            A real photo of you, face visible.
-          </Text>
-        </View>
+        <Section title="Appearance">
+          <AppearanceChoice
+            value={photo ?? profile.photoUri}
+            onChange={setPhoto}
+            gender={profile.gender}
+            photoWidth={768}
+            photoHint="A real photo of you, face visible."
+          />
+        </Section>
 
         <Section title="First name" error={tried ? errors.name : null}>
           <Field value={name} onChangeText={setName} maxLength={40} autoCapitalize="words" accessibilityLabel={tr('First name')} />
@@ -183,5 +164,4 @@ function Section({ title, error, children }: { title: string; error?: string | n
 const styles = StyleSheet.create({
   form: { paddingHorizontal: space.gutter, gap: space[6] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  camera: { position: 'absolute', right: 0, bottom: 0, width: 34, height: 34, borderRadius: 17, borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
 });

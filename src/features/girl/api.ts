@@ -1,5 +1,6 @@
 import { DEMO } from '@/config/app';
 import { GIRLS as EXAMPLE_GIRLS } from '@/data/content/girls';
+import { isAvatar } from '@/features/avatar/avatar';
 
 // Example members exist only in the demo build; real members come from the server.
 const GIRLS = DEMO ? EXAMPLE_GIRLS : [];
@@ -58,8 +59,11 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 
 async function signedPhotos(paths: string[]): Promise<string[]> {
   if (!paths.length) return [];
-  const { data } = await supabase!.storage.from('match-photos').createSignedUrls(paths, 3600);
-  return (data ?? []).map((d) => d.signedUrl).filter(Boolean) as string[];
+  // IRLY avatars are stored as is and need no signing; order is kept.
+  const files = paths.filter((p) => !isAvatar(p));
+  const { data } = files.length ? await supabase!.storage.from('match-photos').createSignedUrls(files, 3600) : { data: [] };
+  const urls = new Map((data ?? []).filter((d) => d.path && d.signedUrl).map((d) => [d.path, d.signedUrl]));
+  return paths.map((p) => (isAvatar(p) ? p : urls.get(p))).filter(Boolean) as string[];
 }
 
 const hueOf = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
@@ -127,6 +131,10 @@ const serverApi: MatchApi = {
     const paths: string[] = [];
     for (const [i, uri] of d.photoUris.entries()) {
       if (uri.startsWith('http')) continue;
+      if (isAvatar(uri)) {
+        paths.push(uri);
+        continue;
+      }
       const body = await imageBytes(uri);
       const img = imageType(uri);
       const path = `${uid}/${Date.now()}-${i}.${img.ext}`;

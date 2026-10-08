@@ -1,4 +1,6 @@
 import { useRouter } from 'expo-router';
+import { YourCommunities } from '@/features/community/YourCommunities';
+import { useAccount } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
 import { planDayLabel, upcomingPlans } from '@/features/plans/when';
 import { useEffect, useMemo, useState } from 'react';
@@ -70,6 +72,12 @@ export default function Home() {
   const [sheet, setSheet] = useState(false);
   const now = useNow();
   const scrollY = useSharedValue(0);
+  // Signed in and never shown IRLY Community: once, whatever the way in (Google, email, later).
+  const account = useAccount();
+  const communityIntroSeen = useStore((s) => s.communityIntroSeen);
+  useEffect(() => {
+    if (account && !communityIntroSeen) router.push('/onboarding/communities');
+  }, [account, communityIntroSeen, router]);
   const heroH = Math.round(Math.min(560, Math.max(440, frame.height * 0.6)));
 
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -259,13 +267,19 @@ export default function Home() {
         </ScrollReveal>
 
         <ScrollReveal scrollY={scrollY} style={styles.section}>
-          <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />
-          <Rail itemWidth={250}>
-            {content.communities.map((c) => (
-              <CommunityCard key={c.id} community={c} />
-            ))}
-          </Rail>
+          <YourCommunities cityId={cityId} />
         </ScrollReveal>
+
+        {content.communities.length ? (
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />
+            <Rail itemWidth={250}>
+              {content.communities.map((c) => (
+                <CommunityCard key={c.id} community={c} />
+              ))}
+            </Rail>
+          </ScrollReveal>
+        ) : null}
 
         {forYou.map((sec, i) => (
           <ScrollReveal key={sec.category.id} scrollY={scrollY} style={styles.section}>

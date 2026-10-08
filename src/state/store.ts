@@ -56,6 +56,8 @@ export type Profile = {
   faithVisible?: boolean;
   /** When the member arrived in the city (for "New in Dubai · 12 days"). */
   arrivedAt?: number;
+  /** How long they have been in the city, as answered at signup (newcomers get IRLY Newcomers). */
+  since?: 'new' | 'year' | 'years' | 'local';
 };
 
 /**
@@ -126,6 +128,8 @@ type State = {
   emirateOnly: boolean;
   /** Version of the intro story this person has seen (a new story plays once for everyone). */
   storySeen: number;
+  /** The IRLY Community intro has played once. */
+  communityIntroSeen: boolean;
 };
 
 type Actions = {
@@ -135,6 +139,7 @@ type Actions = {
   updateProfile: (patch: Partial<Profile>) => void;
   completeOnboarding: () => void;
   markStorySeen: (version: number) => void;
+  markCommunityIntroSeen: () => void;
   resetOnboarding: () => void;
   /** Wipes everything on this device: profile, plans, messages, connections. */
   deleteAccount: () => void;
@@ -222,6 +227,7 @@ export const useStore = create<State & Actions>()(
       myPlans: [],
       emirateOnly: false,
       storySeen: 0,
+      communityIntroSeen: false,
 
       setDestination: (destinationId, cityId) =>
         set({ destinationId, cityId: cityId ?? DESTINATIONS[destinationId].defaultCity ?? null }),
@@ -235,6 +241,7 @@ export const useStore = create<State & Actions>()(
       updateProfile: (patch) => set({ profile: { ...get().profile, ...patch } }),
       completeOnboarding: () => set({ onboarded: true }),
       markStorySeen: (version) => set({ storySeen: version }),
+      markCommunityIntroSeen: () => set({ communityIntroSeen: true }),
       deleteAccount: () =>
         set({
           onboarded: false,

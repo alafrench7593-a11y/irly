@@ -1,19 +1,15 @@
-import * as ImagePicker from 'expo-image-picker';
 import { CharCount } from '@/components/ui/CharCount';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { t as tx, a11y } from '@/i18n';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StyleSheet, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Chip, Field } from '@/components/ui/Controls';
-import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
 import { LANGUAGES } from '@/data/languages';
+import { AppearanceChoice } from '@/features/avatar/AvatarBuilder';
 import { StepShell } from '@/features/onboarding/StepShell';
 import { enter } from '@/motion/enter';
-import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore, type Gender } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -26,8 +22,9 @@ const GENDERS: { id: Gender; label: string }[] = [
 ];
 
 /**
- * Your profile. A real photo, a short bio and the basics are required:
- * people say yes to meeting a face and a sentence, not an empty card.
+ * Your profile. A face (a real photo or an IRLY avatar), a short bio and
+ * the basics are required: people say yes to meeting a face and a
+ * sentence, not an empty card.
  */
 export default function ProfileStep() {
   const t = useTheme();
@@ -37,22 +34,6 @@ export default function ProfileStep() {
   const update = useStore((s) => s.updateProfile);
   const languages = profile.languages ?? [];
   const bio = profile.bio ?? '';
-
-  const pick = async () => {
-    // Kept as data (not a blob: or cache file:// URI, which die on reload or
-    // when the OS clears its cache) until it is uploaded at sign-in.
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [1, 1] });
-    const a = !res.canceled ? res.assets[0] : null;
-    if (!a) return;
-    // 512 px JPEG as data (~40-80 KB): survives reloads and cache clean-ups,
-    // and stays small enough for the persisted store (web quota, Android 2 MB rows).
-    try {
-      const small = await manipulateAsync(a.uri, [{ resize: { width: 512 } }], { compress: 0.7, format: SaveFormat.JPEG, base64: true });
-      update({ photoUri: small.base64 ? `data:image/jpeg;base64,${small.base64}` : small.uri });
-    } catch {
-      update({ photoUri: a.uri });
-    }
-  };
 
   const ok =
     Boolean(profile.photoUri) &&
@@ -68,27 +49,13 @@ export default function ProfileStep() {
       total={4}
       overline={`IRLY ${city.name}`}
       title="Your profile"
-      subtitle="A real photo and a few words. That is what makes people say yes to meeting."
+      subtitle="A photo or your avatar, and a few words. That is what makes people say yes to meeting."
       cta="Continue"
       canContinue={ok}
       onContinue={() => router.push('/onboarding/looking')}
     >
       <Animated.View entering={enter.rise(1, 80)} style={styles.photoRow}>
-        <PressableScale haptic="select" onPress={pick} scaleTo={0.95} accessibilityLabel={profile.photoUri ? 'Change profile photo' : 'Add a profile photo (required)'}>
-          {profile.photoUri ? (
-            <Image source={{ uri: profile.photoUri }} style={styles.photo} contentFit="cover" />
-          ) : (
-            <View style={[styles.photo, styles.photoEmpty, { borderColor: t.c.lineStrong }]}>
-              <Icon name="camera" size={26} color={t.c.text} />
-            </View>
-          )}
-        </PressableScale>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text variant="titleS">{profile.photoUri ? 'Looking good' : 'Add your photo'}</Text>
-          <Text variant="bodyS" tone="secondary">
-            Required. Your face, clearly visible. No logos or group photos.
-          </Text>
-        </View>
+        <AppearanceChoice value={profile.photoUri} onChange={(photoUri) => update({ photoUri })} gender={profile.gender} />
       </Animated.View>
 
       <Animated.View entering={enter.rise(2, 80)} style={styles.block}>
@@ -172,9 +139,7 @@ export default function ProfileStep() {
 }
 
 const styles = StyleSheet.create({
-  photoRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: space.gutter, marginBottom: space[6] },
-  photo: { width: 96, height: 96, borderRadius: 48 },
-  photoEmpty: { borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  photoRow: { paddingHorizontal: space.gutter, marginBottom: space[6] },
   block: { paddingHorizontal: space.gutter, gap: 10, marginBottom: space[6] },
   bio: { minHeight: 104, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, padding: 14, fontFamily: font.medium, fontSize: 16, textAlignVertical: 'top' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

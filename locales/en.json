@@ -2,5 +2,6 @@
   "CFBundleDisplayName": "IRLY",
   "NSLocationWhenInUseUsageDescription": "IRLY centres the map on where you are when you tap \"My location\". Your position stays on your phone and is never shared with other members.",
   "NSPhotoLibraryUsageDescription": "IRLY uses the photos you choose for your profile picture, your activities and the moments you post live.",
-  "NSMotionUsageDescription": "IRLY uses motion to add a subtle depth effect to destination cards."
+  "NSMotionUsageDescription": "IRLY uses motion to add a subtle depth effect to destination cards.",
+  "NSCameraUsageDescription": "IRLY uses the camera when you take your profile photo or a photo to share."
 }

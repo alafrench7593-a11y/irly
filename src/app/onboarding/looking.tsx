@@ -1,4 +1,4 @@
-import { a11y } from '@/i18n';
+import { a11y , t as tx } from '@/i18n';
 import { useRouter } from 'expo-router';
 import { StyleSheet, Switch, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -6,7 +6,8 @@ import { Chip } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
 import { StepShell } from '@/features/onboarding/StepShell';
 import { enter } from '@/motion/enter';
-import { useStore, type LookingFor } from '@/state/store';
+import { CITIES } from '@/data/destinations';
+import { useCityId, useStore, type LookingFor, type Profile } from '@/state/store';
 import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -23,6 +24,16 @@ const LOOKING: { id: LookingFor; label: string }[] = [
   { id: 'events', label: 'Events' },
 ];
 
+const SINCE: { id: NonNullable<Profile['since']>; label: string }[] = [
+  { id: 'new', label: 'Just arrived' },
+  { id: 'year', label: 'Less than a year' },
+  { id: 'years', label: 'A few years' },
+  { id: 'local', label: 'I’m from here' },
+];
+const DAY = 86_400_000;
+// "New in Dubai · 12 days" only for people who said they just arrived.
+const ARRIVED: Record<NonNullable<Profile['since']>, number | undefined> = { new: 0, year: 120 * DAY, years: 730 * DAY, local: undefined };
+
 const FAITHS = ['Prefer not to say', 'Islam', 'Christianity', 'Hinduism', 'Judaism', 'Buddhism', 'Sikhism', 'Spiritual', 'None', 'Other'];
 
 /**
@@ -35,6 +46,7 @@ export default function LookingStep() {
   const router = useRouter();
   const profile = useStore((s) => s.profile);
   const update = useStore((s) => s.updateProfile);
+  const city = CITIES[useCityId()];
   const looking = profile.lookingFor ?? [];
   const options = profile.gender === 'woman' ? [...LOOKING, { id: 'irlygirl' as const, label: 'IRLY Girl' }] : LOOKING;
   const toggle = (id: LookingFor) => update({ lookingFor: looking.includes(id) ? looking.filter((x) => x !== id) : [...looking, id] });
@@ -49,7 +61,7 @@ export default function LookingStep() {
       cta="Continue"
       canContinue={looking.length > 0}
       onContinue={() => {
-        if (!profile.arrivedAt) update({ arrivedAt: Date.now() });
+        if (!profile.arrivedAt && profile.since !== 'local') update({ arrivedAt: Date.now() - (ARRIVED[profile.since ?? 'new'] ?? 0) });
         router.push('/onboarding/ready');
       }}
     >
@@ -61,7 +73,29 @@ export default function LookingStep() {
         </View>
       </Animated.View>
 
-      <Animated.View entering={enter.rise(2, 80)} style={[styles.block, { marginBottom: space[8] }]}>
+      <Animated.View entering={enter.rise(2, 80)} style={styles.block}>
+        <Text variant="overline" tone="secondary">
+          {tx('How long have you been in {city}?', { city: city.name })}
+        </Text>
+        <View style={styles.wrap}>
+          {SINCE.map((o) => (
+            <Chip
+              key={o.id}
+              size="sm"
+              label={o.label}
+              selected={profile.since === o.id}
+              onPress={() =>
+                update({
+                  since: profile.since === o.id ? undefined : o.id,
+                  arrivedAt: profile.since === o.id || o.id === 'local' ? undefined : Date.now() - (ARRIVED[o.id] ?? 0),
+                })
+              }
+            />
+          ))}
+        </View>
+      </Animated.View>
+
+      <Animated.View entering={enter.rise(3, 80)} style={[styles.block, { marginBottom: space[8] }]}>
         <Text variant="overline" tone="secondary">
           Faith · optional · private
         </Text>

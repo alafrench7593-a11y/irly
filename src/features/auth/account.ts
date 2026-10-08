@@ -8,6 +8,7 @@ import { imageBytes, imageType } from '@/lib/media';
 import { wipeLocal } from '@/state/wipe';
 import { CITIES } from '@/data/destinations';
 import { ACTIVITIES, INTERESTS } from '@/data/catalog';
+import { isAvatar } from '@/features/avatar/avatar';
 
 /** Signup language names → ISO codes stored server-side. */
 const LANG: Record<string, string> = { English: 'en', Français: 'fr', العربية: 'ar', हिन्दी: 'hi', Русский: 'ru', Español: 'es', Italiano: 'it', Deutsch: 'de', Bahasa: 'id', Filipino: 'tl', اردو: 'ur', Português: 'pt' };
@@ -178,7 +179,10 @@ async function readBack(uid: string): Promise<boolean> {
   const back = Object.fromEntries(Object.entries(LANG).map(([name, code]) => [code, name]));
   let photoUri: string | undefined;
   const path = r.photo_paths?.[0];
-  if (path) {
+  if (isAvatar(path)) {
+    // An IRLY avatar is its own description: nothing to sign.
+    photoUri = path;
+  } else if (path) {
     const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 7 * 24 * 3600);
     photoUri = signed?.signedUrl ?? undefined;
   }
@@ -222,6 +226,11 @@ async function writeProfile(uid: string): Promise<void> {
   const { error } = await supabase.from('profiles').upsert(row, { onConflict: 'id', ignoreDuplicates: true });
   if (error) throw new Error(error.message);
   useStore.getState().updateProfile({ ownerId: uid });
+  // An IRLY avatar is stored as is (no file to upload).
+  if (isAvatar(profile.photoUri)) {
+    await supabase.from('profiles').update({ photo_paths: [profile.photoUri] }).eq('id', uid);
+    return;
+  }
   // The signup photo follows to the member's own folder (best effort).
   if (profile.photoUri && !/^https?:/.test(profile.photoUri)) {
     try {
@@ -287,7 +296,17 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
     if (patch.activities !== undefined) row.activity_prefs = patch.activities.map(String);
     if (patch.lookingFor !== undefined) row.intentions = patch.lookingFor.map(String);
     if (patch.cityId !== undefined) row.city_id = patch.cityId;
-    if (patch.photoUri && !/^https?:/.test(patch.photoUri)) {
+    if (isAvatar(patch.photoUri)) {
+      // An IRLY avatar replaces the photo without an upload; the old photo file goes.
+      const { data: old } = await supabase.rpc('my_profile');
+      const before = ((old as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];
+      row.photo_paths = [patch.photoUri];
+      photoUri = patch.photoUri;
+      const { error } = await supabase.from('profiles').update(row).eq('id', uid);
+      if (error) throw new Error(/check constraint/i.test(error.message) ? 'Some fields are not valid' : error.message);
+      const stale = before.filter((p) => !isAvatar(p) && p.startsWith(`${uid}/`));
+      if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
+    } else if (patch.photoUri && !/^https?:/.test(patch.photoUri)) {
       const body = await imageBytes(patch.photoUri);
       const img = imageType(patch.photoUri);
       const path = `${uid}/avatar-${Date.now()}.${img.ext}`;
@@ -306,7 +325,7 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
           throw new Error(error.message);
         }
       }
-      const stale = before.filter((p) => p !== path && p.startsWith(`${uid}/`));
+      const stale = before.filter((p) => p !== path && !isAvatar(p) && p.startsWith(`${uid}/`));
       if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
     } else if (Object.keys(row).length) {
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
@@ -329,6 +348,10 @@ export async function refreshOwnPhoto(uid: string): Promise<void> {
   const { data } = await supabase.rpc('my_profile');
   const path = ((data as ServerProfile[] | null) ?? [])[0]?.photo_paths?.[0];
   if (!path) return;
+  if (isAvatar(path)) {
+    st.updateProfile({ photoUri: path });
+    return;
+  }
   const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 7 * 24 * 3600);
   if (signed?.signedUrl) st.updateProfile({ photoUri: signed.signedUrl });
 }

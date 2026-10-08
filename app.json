@@ -99,7 +99,7 @@
         "expo-image-picker",
         {
           "photosPermission": "IRLY uses the photos you choose for your profile picture, your activities and the moments you post live.",
-          "cameraPermission": false,
+          "cameraPermission": "IRLY uses the camera when you take your profile photo or a photo to share.",
           "microphonePermission": false
         }
       ],

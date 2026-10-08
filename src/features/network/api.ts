@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { useAccount } from '@/features/auth/account';
+import { isAvatar } from '@/features/avatar/avatar';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
 import { supabase, topic } from '@/lib/supabase';
@@ -83,6 +84,8 @@ const DAY = 24 * 3600;
 const signed = new Map<string, { url: string; until: number }>();
 export async function photoUrls(paths: string[]): Promise<Record<string, string>> {
   const now = Date.now();
+  // IRLY avatars are stored as is: they stand for themselves, nothing to sign.
+  for (const p of paths) if (isAvatar(p)) signed.set(p, { url: p, until: Infinity });
   const missing = [...new Set(paths.filter((p) => p && !((signed.get(p)?.until ?? 0) > now)))];
   if (missing.length && supabase) {
     const { data } = await supabase.storage.from('profile-photos').createSignedUrls(missing, DAY);

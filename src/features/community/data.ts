@@ -4,7 +4,12 @@ import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
+import { create } from 'zustand';
 import { supabase, topic } from '@/lib/supabase';
+
+/** Bumped after a join or a leave so every community list reloads. */
+export const useCommunitiesVersion = create<{ v: number }>(() => ({ v: 0 }));
+export const communitiesChanged = () => useCommunitiesVersion.setState((s) => ({ v: s.v + 1 }));
 
 /**
  * A community on the IRLY server: detail, live feed (posts, polls, likes,
@@ -32,6 +37,14 @@ export type CommunityDetail = {
   conversationId: string | null;
   /** Its own photo (a storage path); null: the app's photo for the category. */
   coverPath: string | null;
+  /** Run by IRLY, with its topic (IRLY Gym → gym). */
+  official: boolean;
+  topic: string | null;
+  emoji: string | null;
+  /** Introductions strongly suggested (IRLY Newcomers). */
+  introFirst: boolean;
+  /** My chat notifications are off. */
+  muted: boolean;
 };
 
 export type CommunityPost = {
@@ -53,11 +66,46 @@ export type CommunityPost = {
   pending?: boolean;
 };
 
-export type CommunitySummary = { id: string; name: string; tagline: string | null; categoryId: string | null; girlOnly: boolean; members: number; isMember: boolean; postsWeek: number; cityId: string | null };
+export type CommunitySummary = {
+  id: string;
+  name: string;
+  tagline: string | null;
+  categoryId: string | null;
+  girlOnly: boolean;
+  members: number;
+  isMember: boolean;
+  postsWeek: number;
+  cityId: string | null;
+  /** Run by IRLY (IRLY Gym, IRLY Newcomers…). */
+  official: boolean;
+  topic: string | null;
+  emoji: string | null;
+  createdAt: number | null;
+};
 
 export type Digest = { postsWeek: number; newMembersWeek: number; members: number; upcoming: number; nextTitle: string | null; nextStartsAt: number | null; topPostBody: string | null; topPostLikes: number };
 
 type Row = Record<string, unknown>;
+
+type TopicRow = { emoji: string | null; intro_first: boolean };
+const topicOf = (row: unknown): TopicRow | null => {
+  const t = (row as { community_topics?: TopicRow | TopicRow[] | null } | null)?.community_topics;
+  return Array.isArray(t) ? (t[0] ?? null) : (t ?? null);
+};
+
+async function isMuted(conversationId: string, uid: string): Promise<boolean> {
+  const { data } = await sb().from('conversation_members').select('muted').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle();
+  return Boolean(data?.muted);
+}
+
+/** Community chat notifications on or off (the chat itself stays). */
+export async function setCommunityMuted(conversationId: string, muted: boolean): Promise<void> {
+  const { data: session } = await sb().auth.getSession();
+  const uid = session.session?.user.id;
+  if (!uid) throw new Error('Sign in first');
+  const { error } = await sb().from('conversation_members').update({ muted }).eq('conversation_id', conversationId).eq('user_id', uid);
+  if (error) throw new Error(error.message);
+}
 
 export function useCommunity(id: string) {
   const account = useAccount();
@@ -70,7 +118,7 @@ export function useCommunity(id: string) {
     if (!uid) return null;
     const [{ data, error: e }, { data: cover }] = await Promise.all([
       sb().rpc('community_detail', { p_id: id }),
-      sb().from('communities').select('cover_path').eq('id', id).maybeSingle(),
+      sb().from('communities').select('cover_path, official, topic, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
     ]);
     if (e) throw new Error(e.message);
     const r = ((data as Row[]) ?? [])[0];
@@ -88,6 +136,11 @@ export function useCommunity(id: string) {
       myRole: (r.my_role as string) ?? null,
       conversationId: (r.conversation_id as string) ?? null,
       coverPath: (cover?.cover_path as string | null) ?? null,
+      official: Boolean(cover?.official),
+      topic: (cover?.topic as string | null) ?? null,
+      emoji: topicOf(cover)?.emoji ?? null,
+      introFirst: Boolean(topicOf(cover)?.intro_first),
+      muted: r.conversation_id ? await isMuted(r.conversation_id as string, uid) : false,
     };
   }, [id, uid]);
 
@@ -285,6 +338,7 @@ export function useCommunityList(cityId: string) {
   const account = useAccount();
   const uid = account?.userId;
   const [list, setList] = useState<CommunitySummary[]>([]);
+  const version = useCommunitiesVersion((x) => x.v);
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
@@ -302,13 +356,17 @@ export function useCommunityList(cityId: string) {
           isMember: Boolean(r.is_member),
           postsWeek: Number(r.posts_week ?? 0),
           cityId: (r.city_id as string) ?? null,
+          official: Boolean(r.official),
+          topic: (r.topic as string) ?? null,
+          emoji: (r.emoji as string) ?? null,
+          createdAt: r.created_at ? Date.parse(r.created_at as string) : null,
         })),
       );
     });
     return () => {
       alive = false;
     };
-  }, [cityId, uid]);
+  }, [cityId, uid, version]);
   const { keep } = useCityFilter(cityId as CityId);
   const shown = useMemo(() => list.filter((c) => keep(c.cityId)), [list, keep]);
   return uid ? shown : NONE;
@@ -372,10 +430,12 @@ export async function joinCommunity(id: string): Promise<string> {
   const { data, error } = await sb().rpc('join_community', { p_community: id });
   if (error) throw new Error(error.message);
   track('COMMUNITY_JOIN', {});
+  communitiesChanged();
   return data as string;
 }
 
 export async function leaveCommunity(id: string): Promise<void> {
   const { error } = await sb().rpc('leave_community', { p_community: id });
   if (error) throw new Error(error.message);
+  communitiesChanged();
 }

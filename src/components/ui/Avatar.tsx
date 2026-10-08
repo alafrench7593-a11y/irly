@@ -1,6 +1,8 @@
 import { Image } from 'expo-image';
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { isAvatar } from '@/features/avatar/avatar';
+import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
 import { initials } from '@/lib/format';
 import { font } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -18,7 +20,7 @@ type Props = {
   verified?: boolean;
   /** Draws a ring in the background colour, for stacks and overlaps. */
   ring?: boolean;
-  /** A real photo (member's profile picture). */
+  /** A real photo (member's profile picture), or an IRLY avatar string (`irly-avatar:v1:...`). */
   photo?: string;
 };
 
@@ -52,7 +54,13 @@ export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verif
             {initials(name)}
           </Text>
         </View>
-        {photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
+        {photo && isAvatar(photo) ? (
+          <View style={StyleSheet.absoluteFill}>
+            <IrlyAvatar config={photo} size={size - ringW * 2} />
+          </View>
+        ) : photo ? (
+          <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        ) : null}
       </View>
       {online ? (
         <View
