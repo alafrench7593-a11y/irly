@@ -248,7 +248,9 @@ export const cityFilm = (cityId: string, heroKey: string): string | undefined =>
  * fetched by the photo workflow into /irly/photos/faces/). Real members
  * always show their own photo or their initials.
  */
-export const portrait = (id: string) => `${LIBRARY_BASE}/faces/${id}.jpg`;
+// Bumped when portraits are replaced, so phones fetch the new faces instead of their cached copy.
+const FACES_VERSION = 2;
+export const portrait = (id: string) => `${LIBRARY_BASE}/faces/${id}.jpg?v=${FACES_VERSION}`;
 
 export type PhotoKey = keyof typeof ids | (typeof LIBRARY)[number];
 

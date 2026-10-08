@@ -29,7 +29,7 @@ async function open() {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'en-US', colorScheme: 'dark' });
   // Photos not deployed yet (new portraits) come from this checkout.
   await ctx.route(/alafrench7593-a11y\.github\.io\/irly\/photos\/(.+)$/, (route) => {
-    const f = `public-photos/${route.request().url().split('/photos/')[1]}`;
+    const f = `public-photos/${route.request().url().split('/photos/')[1].split('?')[0]}`;
     return fs.existsSync(f) ? route.fulfill({ path: f, contentType: 'image/jpeg' }) : route.continue();
   });
   // The demo build needs no server.
