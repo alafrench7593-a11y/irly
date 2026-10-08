@@ -4,12 +4,13 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { Rail } from '@/components/cards/Blocks';
 import { Button } from '@/components/ui/Button';
-import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { useAccount } from '@/features/auth/account';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { CITIES } from '@/data/destinations';
+import { CommunityThumb } from './CommunityThumb';
 import { useCommunityList } from './data';
 
 /**
@@ -43,9 +44,7 @@ export function YourCommunities({ cityId }: { cityId: string }) {
           {mine.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(i * 60)}>
               <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
-                <View style={[styles.emoji, { backgroundColor: t.c.overlay }]}>
-                  {c.emoji ? <Text style={{ fontSize: 22 }}>{c.emoji}</Text> : <Icon name="users" size={20} color={t.c.text} />}
-                </View>
+                <CommunityThumb topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member />
                 <Text variant="titleS" numberOfLines={1}>
                   {c.name}
                 </Text>
@@ -71,6 +70,5 @@ export function YourCommunities({ cityId }: { cityId: string }) {
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.gutter },
   card: { width: 200, padding: 14, borderRadius: radius.xl, gap: 8 },
-  emoji: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   cta: { padding: 16, borderRadius: radius.xl, gap: 12 },
 });

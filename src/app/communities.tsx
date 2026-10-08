@@ -10,6 +10,7 @@ import { Chip } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
+import { CommunityThumb } from '@/features/community/CommunityThumb';
 import { ScopeToggle } from '@/components/ui/ScopeToggle';
 import { getCityContent } from '@/data/repo';
 import type { CityId, Community } from '@/data/types';
@@ -106,7 +107,7 @@ export default function Communities() {
           </Text>
           {live.map((c) => (
             <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.live, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
-              {c.emoji ? <Text style={{ fontSize: 20, width: 24, textAlign: 'center' }}>{c.emoji}</Text> : <Icon name={c.isMember ? 'check' : 'users'} size={18} color={t.c.text} />}
+              <CommunityThumb topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={city.light} size={44} member={c.isMember} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" numberOfLines={1}>
                   {c.name}

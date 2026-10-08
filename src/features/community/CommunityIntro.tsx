@@ -238,7 +238,8 @@ function PeopleScene() {
   );
 }
 
-const FACES = ['p-layla', 'p-james', 'p-mei', 'p-arjun'];
+// Photos provided by IRLY.
+const FACES = ['p-layla', 'p-kenji', 'p-chloe', 'p-lucas'];
 
 function ChatScene() {
   return (
