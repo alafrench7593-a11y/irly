@@ -5,21 +5,21 @@ Photos from Pixabay (free licence, https://pixabay.com/service/license-summary/)
 - **p-samuel**: man, smile, smiling, happy, artist, person, portrait (pixabay) https://pixabay.com/photos/man-smile-smiling-happy-artist-7794767/
 - **p-arjun**: man, happy man, portrait, indian, asian, smile, man behind bars (pixabay) https://pixabay.com/photos/man-happy-man-portrait-indian-4551898/
 - **p-omar**: portrait, human, man, camera, photographer, outdoors, hike, adventure, leisure, human, human, human, human, human, man (pixabay) https://pixabay.com/photos/portrait-human-man-camera-7942151/
-- **p-lucas**: Photo provided by IRLY
+- **p-lucas**: Photo provided by IRLY (provided by IRLY) 
 - **p-james**: man, suit, black male, portrait, adult, male, young, professional, corporate, businessman, entrepreneur, successful, career, work, lifestyle, pose, suit, suit, suit, suit, suit, professional, businessman, businessman, entrepreneur, career (pixabay) https://pixabay.com/photos/man-suit-black-male-portrait-adult-4568761/
 - **p-khalid**: fashion, male, man, corporate, business, businessman, boss, senior, mature, executive, human, adult, face, people, young, confident, model, person, portrait, professional, success, work, man, man, businessman, businessman, businessman, boss, boss, human, people, people, people, professional, professional, professional, professional, professional, success, success, success (pixabay) https://pixabay.com/photos/fashion-male-man-corporate-4951644/
 - **p-yusuf**: thobe, man, portrait, male, muslim, traditional clothes, islamic dress, thobe, thobe, thobe, muslim, muslim, muslim, muslim, muslim (pixabay) https://pixabay.com/photos/thobe-man-portrait-male-muslim-805762/
 - **p-kadek**: corset, man, curls, portrait, beauty, fashion, young, lovely, attractive, guy, style, luxury, model, pose, man, man, man, man, man, portrait, portrait, portrait, beauty, fashion, guy, guy, luxury, luxury, model, model (pixabay) https://pixabay.com/photos/corset-man-curls-portrait-beauty-6243486/
 - **p-noah**: man, portrait, photography, people, young, male, happy, person, guy, handsome, smile, adult, looking, attractive, face, confident, lifestyle, smiling, model, men, one, fashion, hair, professional, eyes, beard, haircut, hairstyle, styling, head, glamour, color, new, men, men, men, men, men (pixabay) https://pixabay.com/photos/man-portrait-photography-people-2792505/
-- **p-marco**: Photo provided by IRLY
-- **p-tom**: Photo provided by IRLY
+- **p-marco**: Photo provided by IRLY (provided by IRLY) 
+- **p-tom**: Photo provided by IRLY (provided by IRLY) 
 - **p-ketut**: young man, smiling, clipboard, corporate, employee, black man, portrait, employee, employee, employee, employee, employee (pixabay) https://pixabay.com/photos/young-man-smiling-clipboard-7551014/
 - **p-jonas**: man, portrait, photography, people, young, male, happy, person, guy, handsome, smile, adult, looking, attractive, face, confident, lifestyle, smiling, model, men, one, fashion, hair, professional, eyes, beard, haircut, hairstyle, styling, head, glamour, color, new, men, men, men, men, men, haircut (pixabay) https://pixabay.com/photos/man-portrait-photography-people-2792491/
 - **p-dewa**: fashion, model, man, boy, young, handsome, style, stylish, pose, asian, portrait (pixabay) https://pixabay.com/photos/fashion-model-man-boy-young-6072957/
-- **p-layla**: Photo provided by IRLY
-- **p-chloe**: Photo provided by IRLY
+- **p-layla**: Photo provided by IRLY (provided by IRLY) 
+- **p-chloe**: Photo provided by IRLY (provided by IRLY) 
 - **p-mei**: portrait, woman, posing, style, fashion (pixabay) https://pixabay.com/photos/portrait-woman-posing-style-10222434/
-- **p-amira**: Photo provided by IRLY
+- **p-amira**: Photo provided by IRLY (provided by IRLY) 
 - **p-sofia**: woman, model, portrait, pose, style, fashion, posing, young woman, girl, modeling, female, woman portrait, studio, photoshoot, woman, woman, woman, model, model, model, model, model, portrait, portrait, girl, woman portrait, photoshoot (pixabay) https://pixabay.com/photos/woman-model-portrait-pose-style-3567600/
 - **p-nadia**: woman, businesswoman, office, laptop, smiling, modern, professional, success, portrait, leadership, elegant, white suit, confident, style, business, career, female (pixabay) https://pixabay.com/photos/woman-businesswoman-office-laptop-10489004/
 - **p-hana**: japanese, woman, kimono, portrait, beautiful (pixabay) https://pixabay.com/photos/japanese-woman-kimono-portrait-8968638/
@@ -27,7 +27,7 @@ Photos from Pixabay (free licence, https://pixabay.com/service/license-summary/)
 - **p-ayu**: hijab, asia, girl, indonesian, young, prewedding, woman, moslem, women, indonesia, model, nature, islam, female, ramadan, parade, farmer, potrait, outdoor, smile, radical, ramazan, portrait (pixabay) https://pixabay.com/photos/hijab-asia-girl-indonesian-young-4983594/
 - **p-lea**: girl, fashion, portrait, young woman, woman, female, lady, model, happy, winter fashion, jacket, leather jacket, turtleneck, fashion, lady, lady, lady, lady, lady, happy, happy, winter fashion, jacket, jacket, leather jacket, turtleneck, turtleneck (pixabay) https://pixabay.com/photos/girl-fashion-portrait-young-woman-5662873/
 - **p-priya**: woman, beautiful, portrait, smile, pretty, attractive, girl, female, young woman, indian, south asian (pixabay) https://pixabay.com/photos/woman-beautiful-portrait-smile-5604742/
-- **p-mia**: Photo provided by IRLY
+- **p-mia**: Photo provided by IRLY (provided by IRLY) 
 - **g-ines**: woman, nature, model, young, leaves, autumn, portrait (pixabay) https://pixabay.com/photos/woman-model-young-leaves-autumn-8429860/
 - **g-maya**: woman, model, portrait, pose, style, fashion, posing, young woman, girl, modeling, female, woman portrait, woman, woman, woman, model, model, model, model, portrait, portrait, portrait, portrait, portrait (pixabay) https://pixabay.com/photos/woman-model-portrait-pose-style-3946473/
 - **g-sofia**: woman, female, earrings, young woman, model, female model, make up, cosmetics, beauty, latina, hispanic, portrait, latina, latina, latina, latina, latina, hispanic, hispanic, hispanic, hispanic, hispanic (pixabay) https://pixabay.com/photos/woman-female-earrings-young-woman-7459070/
@@ -42,4 +42,4 @@ Photos from Pixabay (free licence, https://pixabay.com/service/license-summary/)
 - **g-zara**: beauty, smile, black, teeth, hair, hairstyle, happy, model, woman, portrait, smiling, female, young, person, face, joy, skin, happiness, eyes, expression, makeup, lady, african, attractive, brown model, brown smile, brown makeup, brown hair, brown teeth, brown happiness, brown lady, teeth, teeth, teeth, teeth, teeth (pixabay) https://pixabay.com/photos/beauty-smile-black-teeth-hair-5160173/
 - **g-ayu**: fashion, woman, indian, girl, young, model, pose, smile, dress, traditional wear, culture, asian, india, portrait, indian, indian, indian, india, india, india, india, india (pixabay) https://pixabay.com/photos/fashion-woman-indian-girl-young-5255195/
 - **g-camille**: woman, surprised, portrait, girl, shock, face, hairstyle, hands, young woman, redhead, female portrait, emotion, expression, shocked, studio photography, shock, shock, shock, shocked, shocked, shocked, shocked, shocked (pixabay) https://pixabay.com/photos/woman-surprised-portrait-girl-5892355/
-- **p-kenji**: Photo provided by IRLY
+- **p-kenji**: Photo provided by IRLY (provided by IRLY) 
