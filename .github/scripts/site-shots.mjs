@@ -55,6 +55,13 @@ const SHOTS = [
   ['communities', '/communities', 5000],
   ['profile', '/person/p-layla', 5000],
   ['chat', '/messages/cv-d1', 4000],
+  ['onboarding', '/onboarding/profile', 4000],
+  // The IRLY Community intro, held on a scene: interests, communities, chat, real life.
+  ['intro-interests', '/onboarding/communities?scene=2&hold=1', 3500],
+  ['intro-communities', '/onboarding/communities?scene=3&hold=1', 3500],
+  ['intro-people', '/onboarding/communities?scene=4&hold=1', 3500],
+  ['intro-chat', '/onboarding/communities?scene=5&hold=1', 3500],
+  ['intro-real', '/onboarding/communities?scene=6&hold=1', 3500],
 ];
 const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
 for (const [name, url, wait, act] of SHOTS) {
