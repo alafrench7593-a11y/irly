@@ -473,7 +473,7 @@ async function main() {
   await step('Uma blocks Vera from the chat → it leaves her inbox and Vera can no longer write', async () => {
     await page.goto(`${BASE}/messages/${dm}`);
     await page.getByLabel('Safety: report or block').click();
-    page.once('dialog', (d) => d.accept());
+    // (Confirmations are accepted by the page-wide handler.)
     await page.getByRole('button', { name: 'Block', exact: true }).click();
     for (let i = 0; i < 20; i++) {
       const [b] = await sql(`select count(*)::int as n from public.blocks where blocker_id = '${uma.id}' and blocked_id = '${vera.id}'`);
@@ -489,7 +489,7 @@ async function main() {
   await step('Blocked members → Unblock Vera', async () => {
     await page.goto(`${BASE}/blocked`);
     await visible(page, 'Vera');
-    page.once('dialog', (d) => d.accept());
+    // (Confirmations are accepted by the page-wide handler.)
     await page.getByRole('button', { name: 'Unblock' }).first().click();
     for (let i = 0; i < 20; i++) {
       const [b] = await sql(`select count(*)::int as n from public.blocks where blocker_id = '${uma.id}'`);
