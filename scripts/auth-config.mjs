@@ -43,11 +43,28 @@ if (googleId && googleSecret) {
     external_google_secret: googleSecret,
   });
 }
-if (env.APPLE_SERVICES_ID && env.APPLE_CLIENT_SECRET) {
+// Sign in with Apple. The client secret Apple wants is a JWT signed with
+// the .p8 key and valid 6 months at most: it is made here on every run (the
+// workflow runs monthly), so it never expires. APPLE_CLIENT_SECRET (a ready
+// JWT) still works when the key itself is not given.
+const appleServicesId = clean(env.APPLE_SERVICES_ID);
+let appleSecret = clean(env.APPLE_CLIENT_SECRET);
+if (appleServicesId && env.APPLE_PRIVATE_KEY && env.APPLE_TEAM_ID && env.APPLE_KEY_ID) {
+  const { createPrivateKey, sign } = await import('node:crypto');
+  const b64 = (v) => Buffer.from(typeof v === 'string' ? v : JSON.stringify(v)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const head = b64({ alg: 'ES256', kid: clean(env.APPLE_KEY_ID) });
+  const body = b64({ iss: clean(env.APPLE_TEAM_ID), iat: now, exp: now + 180 * 24 * 3600, aud: 'https://appleid.apple.com', sub: appleServicesId });
+  const key = createPrivateKey(env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n').trim());
+  const sig = sign('sha256', Buffer.from(`${head}.${body}`), { key, dsaEncoding: 'ieee-p1363' }).toString('base64url');
+  appleSecret = `${head}.${body}.${sig}`;
+  console.log('Apple client secret made from the key, valid 180 days');
+}
+if (appleServicesId && appleSecret) {
   Object.assign(patch, {
     external_apple_enabled: true,
-    external_apple_client_id: env.APPLE_SERVICES_ID,
-    external_apple_secret: env.APPLE_CLIENT_SECRET,
+    external_apple_client_id: appleServicesId,
+    external_apple_secret: appleSecret,
   });
 }
 
@@ -56,5 +73,5 @@ if (!put.ok) throw new Error(`Updating the auth config failed (${put.status}): $
 const after = await put.json();
 console.log('Redirect URLs:', after.uri_allow_list);
 console.log('Google:', after.external_google_enabled ? 'on' : 'off (add GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET)');
-console.log('Apple:', after.external_apple_enabled ? 'on' : 'off (add APPLE_SERVICES_ID and APPLE_CLIENT_SECRET)');
+console.log('Apple:', after.external_apple_enabled ? 'on' : 'off (add APPLE_SERVICES_ID, APPLE_TEAM_ID, APPLE_KEY_ID and APPLE_PRIVATE_KEY)');
 console.log('Google callback to register in Google Cloud:', `https://${ref}.supabase.co/auth/v1/callback`);
