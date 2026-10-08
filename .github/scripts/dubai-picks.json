@@ -488,5 +488,19 @@
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
+ },
+ "hikeDesert": {
+  "id": "own-wadi",
+  "tags": "wadi, hiking, travel, palms",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
+ },
+ "roadtrip": {
+  "id": "own-wadi",
+  "tags": "wadi, hiking, travel, palms",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
  }
 }
