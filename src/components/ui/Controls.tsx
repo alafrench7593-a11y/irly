@@ -10,7 +10,6 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { SelectionLayers, useSelection } from '@/motion/Selection';
 import { spring } from '@/motion/tokens';
@@ -312,7 +311,6 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
   const focus = useSharedValue(0);
   const animated = useAnimatedStyle(() => ({
     borderColor: focus.value ? t.c.brand : t.c.line,
-    transform: [{ scale: 1 + focus.value * 0.005 }],
   }));
   return (
     <Animated.View
@@ -324,8 +322,8 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
         placeholderTextColor={t.c.textTertiary}
         selectionColor={t.c.brand}
         onFocus={(e) => {
+          // No haptic here: on iPhone and Mac the web haptic took the focus from the field.
           focus.set(withTiming(1, { duration: 160 }));
-          haptic('select');
           onFocus?.(e);
         }}
         onBlur={(e) => {
