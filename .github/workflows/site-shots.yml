@@ -44,4 +44,4 @@ jobs:
           git config user.name irly-bot
           git config user.email bot@irly.app
           git add public-photos/faces .github/scripts/faces.json site/shots site/og.jpg
-          git diff --cached --quiet || (git commit -m "Website screens and example portraits" && git pull --rebase -X theirs && git push)
+          git diff --cached --quiet || (git commit -m "Website screens and example portraits" && for i in 1 2 3 4 5; do git pull --rebase -X theirs && git push && break; sleep $((i * 10)); done)

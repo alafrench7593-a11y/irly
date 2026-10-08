@@ -35,4 +35,4 @@ jobs:
           git config user.name irly-bot
           git config user.email bot@irly.app
           git add public-photos site/img site/video src/data/dubaiKeys.ts .github/scripts/dubai-picks.json
-          git diff --cached --quiet || (git commit -m "Dubai photos and videos" && git pull --rebase && git push)
+          git diff --cached --quiet || (git commit -m "Dubai photos and videos" && for i in 1 2 3 4 5; do git pull --rebase -X theirs && git push && break; sleep $((i * 10)); done)
