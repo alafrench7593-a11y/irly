@@ -23,7 +23,6 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **dubaiNight**: by [bulletrain743](https://pixabay.com/users/bulletrain743-3598825/), https://pixabay.com/photos/dubai-skyscraper-city-lights-1767540/
 - **dunes**: by [hariskhan488](https://pixabay.com/users/hariskhan488-24535975/), https://pixabay.com/photos/dubai-desert-safari-6826298/
 - **emirates**: by [supertranslator](https://pixabay.com/users/supertranslator-2577061/), https://pixabay.com/photos/sharjah-city-lake-cityscape-6399725/
-- **fashion**: by [Sunriseforever](https://pixabay.com/users/Sunriseforever-6314823/), https://pixabay.com/photos/woman-model-portrait-blonde-10176777/
 - **festival**: by [analogicus](https://pixabay.com/users/analogicus-8164369/), https://pixabay.com/photos/fireworks-night-night-sky-landscape-4825599/
 - **finance**: by [cegoh](https://pixabay.com/users/cegoh-94852/), https://pixabay.com/photos/singapore-hdr-2948814/
 - **fort**: by [bhart9070](https://pixabay.com/users/bhart9070-5758980/), https://pixabay.com/photos/fort-wall-uae-fortification-2455043/
@@ -31,7 +30,6 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **girlChill**: by [3239028](https://pixabay.com/users/3239028-3239028/), https://pixabay.com/photos/desert-sand-thin-dubai-girl-woman-4818972/
 - **girlSurf**: by [Sunriseforever](https://pixabay.com/users/Sunriseforever-6314823/), https://pixabay.com/photos/woman-model-blonde-portrait-sea-10188569/
 - **girlTravel**: by [janrye](https://pixabay.com/users/janrye-4611168/), https://pixabay.com/photos/manipulation-old-city-of-dubai-dubai-4412444/
-- **gym**: by [katetrysh](https://pixabay.com/users/katetrysh-4218753/), https://pixabay.com/photos/blur-person-lifestyle-summer-male-1972569/
 - **homeDecor**: by [yesxcom](https://pixabay.com/users/yesxcom-1380857/), https://pixabay.com/photos/architecture-dubai-mall-uae-travel-1815863/
 - **indianFood**: by [GOLDINPIC](https://pixabay.com/users/GOLDINPIC-2820402/), https://pixabay.com/photos/india-indian-indian-food-chicken-1481494/
 - **islands**: by [georgeparisph](https://pixabay.com/users/georgeparisph-7568822/), https://pixabay.com/photos/hotel-building-palm-trees-resort-6565940/
