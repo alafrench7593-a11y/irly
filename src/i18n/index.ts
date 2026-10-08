@@ -42,6 +42,18 @@ export const useLangStore = create<LangState>()(
 
 export const resolveLang = (s: LangSetting): Lang => (s === 'auto' ? deviceLang() : s);
 
+// Web: the page says which language it is in and asks browsers not to
+// translate it. A browser translating the app rewrites its text under React,
+// garbles both languages and can freeze the inputs.
+if (typeof document !== 'undefined') {
+  const mark = () => {
+    document.documentElement.lang = resolveLang(useLangStore.getState().setting);
+    document.documentElement.setAttribute('translate', 'no');
+  };
+  mark();
+  useLangStore.subscribe(mark);
+}
+
 /**
  * Sentences generated from data (regional seed content): matched by shape
  * when there is no exact key, their parts translated on their own.
