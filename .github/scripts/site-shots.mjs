@@ -83,14 +83,10 @@ if (!only || only.includes('story')) {
     const { ctx, page } = await open();
     try {
       await page.evaluate((l) => localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: l }, version: 0 })), lang);
-      await page.goto('http://localhost:8095/story');
-      await page.waitForTimeout(3200);
       for (let i = 1; i <= 5; i++) {
+        await page.goto(`http://localhost:8095/story?scene=${i}&hold=1`);
+        await page.waitForTimeout(3500);
         await page.screenshot({ path: `${OUT}/story-${lang}-${i}.jpg`, type: 'jpeg', quality: 80 });
-        if (i < 5) {
-          await page.mouse.click(330, 420);
-          await page.waitForTimeout(2400);
-        }
       }
       console.log('shot story', lang);
     } catch (e) {

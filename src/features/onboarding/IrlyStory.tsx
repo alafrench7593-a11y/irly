@@ -55,11 +55,12 @@ const SCENES: Scene[] = [
  * side to go on, the left side to go back, or skip. Reduce Motion: the same
  * scenes, still, cross-faded.
  */
-export function IrlyStory({ onDone }: { onDone: () => void }) {
+/** `scene` opens on one scene and `hold` keeps it there (website screenshots). */
+export function IrlyStory({ onDone, scene: startAt = 0, hold = false }: { onDone: () => void; scene?: number; hold?: boolean }) {
   const insets = useSafeAreaInsets();
   const frame = useFrame();
   const reduced = useReducedMotion();
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(Math.max(0, Math.min(SCENES.length - 1, startAt)));
   const last = index === SCENES.length - 1;
   const scene = SCENES[index];
   // The scene fills everything between the bars and the words.
@@ -67,10 +68,10 @@ export function IrlyStory({ onDone }: { onDone: () => void }) {
   const stageH = Math.max(260, frame.height - stageTop - insets.bottom - 56 - 150);
 
   useEffect(() => {
-    if (last) return;
+    if (last || hold) return;
     const id = setTimeout(() => setIndex((i) => Math.min(SCENES.length - 1, i + 1)), SCENE_MS);
     return () => clearTimeout(id);
-  }, [index, last]);
+  }, [index, last, hold]);
 
   const next = () => {
     haptic('select');
