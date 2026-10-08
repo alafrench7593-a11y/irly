@@ -25,11 +25,14 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **emirates**: by [supertranslator](https://pixabay.com/users/supertranslator-2577061/), https://pixabay.com/photos/sharjah-city-lake-cityscape-6399725/
 - **festival**: by [analogicus](https://pixabay.com/users/analogicus-8164369/), https://pixabay.com/photos/fireworks-night-night-sky-landscape-4825599/
 - **finance**: by [cegoh](https://pixabay.com/users/cegoh-94852/), https://pixabay.com/photos/singapore-hdr-2948814/
+- **football**: by [IRLY](https://getirly.com), provided by IRLY
 - **fort**: by [bhart9070](https://pixabay.com/users/bhart9070-5758980/), https://pixabay.com/photos/fort-wall-uae-fortification-2455043/
 - **fujairah**: by [bhart9070](https://pixabay.com/users/bhart9070-5758980/), https://pixabay.com/photos/fort-uae-castle-attraction-2455042/
 - **girlChill**: by [3239028](https://pixabay.com/users/3239028-3239028/), https://pixabay.com/photos/desert-sand-thin-dubai-girl-woman-4818972/
+- **girlFitness**: by [IRLY](https://getirly.com), provided by IRLY
 - **girlSurf**: by [Sunriseforever](https://pixabay.com/users/Sunriseforever-6314823/), https://pixabay.com/photos/woman-model-blonde-portrait-sea-10188569/
 - **girlTravel**: by [janrye](https://pixabay.com/users/janrye-4611168/), https://pixabay.com/photos/manipulation-old-city-of-dubai-dubai-4412444/
+- **gym**: by [IRLY](https://getirly.com), provided by IRLY
 - **homeDecor**: by [yesxcom](https://pixabay.com/users/yesxcom-1380857/), https://pixabay.com/photos/architecture-dubai-mall-uae-travel-1815863/
 - **indianFood**: by [GOLDINPIC](https://pixabay.com/users/GOLDINPIC-2820402/), https://pixabay.com/photos/india-indian-indian-food-chicken-1481494/
 - **islands**: by [georgeparisph](https://pixabay.com/users/georgeparisph-7568822/), https://pixabay.com/photos/hotel-building-palm-trees-resort-6565940/
