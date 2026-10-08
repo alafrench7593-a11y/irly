@@ -460,5 +460,19 @@
   "page": "provided by IRLY",
   "by": "IRLY",
   "byUrl": "https://getirly.com"
+ },
+ "founders": {
+  "id": "own-networking",
+  "tags": "networking, business meeting, office",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
+ },
+ "meeting": {
+  "id": "own-networking",
+  "tags": "networking, business meeting, office",
+  "page": "provided by IRLY",
+  "by": "IRLY",
+  "byUrl": "https://getirly.com"
  }
 }
