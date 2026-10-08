@@ -34,7 +34,7 @@ function need() {
 }
 
 const plain = (m: string) =>
-  /slow down|too many/i.test(m) ? 'You sent many reports in a short time. Try again later.' : /cannot report yourself/i.test(m) ? 'You cannot report yourself' : /not found/i.test(m) ? 'This is no longer available' : m;
+  /slow down|too many/i.test(m) ? "You've sent a lot of reports in a short time. Try again later." : /cannot report yourself/i.test(m) ? 'You cannot report yourself' : /not found/i.test(m) ? 'This is no longer available' : m;
 
 export async function report(t: ReportTarget, category: ReportCategory, details?: string): Promise<void> {
   const { error } = await need().rpc('report', {

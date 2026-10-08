@@ -2,14 +2,18 @@ name: Sign-in setup
 
 # Allows the app's redirect URLs and switches on Google / Apple sign-in on
 # Supabase when their secrets exist (Settings → Secrets and variables →
-# Actions): GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET,
-# APPLE_SERVICES_ID, APPLE_CLIENT_SECRET. Re-run it after adding them.
+# Actions): GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and for Apple
+# APPLE_SERVICES_ID, APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY (the .p8
+# file's content). Runs monthly so Apple's client secret (6 months max) is
+# always renewed. Re-run it after adding them.
 
 on:
   push:
     branches: [main, claude/confident-ride-1o2o3x]
     paths: ['scripts/auth-config.mjs', '.github/workflows/auth.yml']
   workflow_dispatch:
+  schedule:
+    - cron: '17 6 1 * *'
 
 jobs:
   configure:
@@ -26,3 +30,6 @@ jobs:
           GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
           APPLE_SERVICES_ID: ${{ secrets.APPLE_SERVICES_ID }}
           APPLE_CLIENT_SECRET: ${{ secrets.APPLE_CLIENT_SECRET }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_KEY_ID: ${{ secrets.APPLE_KEY_ID }}
+          APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}

@@ -1,0 +1,9 @@
+{
+  "_note": "Films for the website and the app: name → [video search, place]. Only clips whose tags or page name the place are used. The app maps photo keys to these films (src/data/photos.ts, FILMS).",
+  "dubai": ["Dubai skyline aerial", "dubai"],
+  "night": ["Dubai night city", "dubai"],
+  "marina": ["Dubai Marina", "dubai"],
+  "beach": ["Dubai beach", "dubai"],
+  "desert": ["Dubai desert", "uae"],
+  "abudhabi": ["Abu Dhabi", "abu dhabi"]
+}

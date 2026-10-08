@@ -57,7 +57,7 @@ export function Cover({ visual, light, height, scrollY, radius = 34, scrim = 'te
     <View style={[{ height }, corners, shadow ? { boxShadow: shadow } : null, style]}>
       <Animated.View style={[StyleSheet.absoluteFill, corners, styles.clip, stretch]}>
         <Animated.View style={[StyleSheet.absoluteFill, parallax]}>
-          <Photo visual={visual} light={light} width={1400} style={StyleSheet.absoluteFill} />
+          <Photo drift visual={visual} light={light} width={1400} style={StyleSheet.absoluteFill} />
         </Animated.View>
         {s ? <LinearGradient colors={s.colors} locations={s.locations} style={StyleSheet.absoluteFill} pointerEvents="none" /> : null}
       </Animated.View>

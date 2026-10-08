@@ -1,0 +1,38 @@
+name: Dubai photos and videos
+
+# Dubai photos for the app's photo library and the website, and Dubai videos
+# for the website, from Pixabay (PIXABAY_API_KEY, free key: https://pixabay.com/api/docs/)
+# or Pexels (PEXELS_API_KEY). Commits the files and the contact sheets.
+
+on:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/scripts/dubai-*', '.github/workflows/dubai-media.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dubai-media
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get update >/dev/null && sudo apt-get install -y imagemagick ffmpeg >/dev/null
+      - run: node .github/scripts/dubai-media.mjs
+        env:
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+      - name: Commit
+        run: |
+          git config user.name irly-bot
+          git config user.email bot@irly.app
+          git add public-photos site/img site/video src/data/dubaiKeys.ts .github/scripts/dubai-picks.json
+          git diff --cached --quiet || (git commit -m "Dubai photos and videos" && git pull --rebase && git push)

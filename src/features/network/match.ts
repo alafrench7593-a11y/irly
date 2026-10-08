@@ -139,7 +139,7 @@ export function scorePro(me: ProProfile, other: ProProfile): ProMatch {
   if (shared.length) {
     const p = shared.length >= 2 ? 10 : 6;
     raw += p;
-    reasons.push({ points: p, reason: { kind: 'project', text: 'your projects are close ({what})', vars: { what: shared.slice(0, 2).join(', ') } } });
+    reasons.push({ points: p, reason: { kind: 'project', text: 'your projects are similar ({what})', vars: { what: shared.slice(0, 2).join(', ') } } });
   }
 
   return {

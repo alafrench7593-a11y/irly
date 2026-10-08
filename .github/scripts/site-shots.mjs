@@ -75,6 +75,27 @@ for (const [name, url, wait, act] of SHOTS) {
   await ctx.close();
 }
 
+// The app's intro story (make friends, do things together, grow your network,
+// meet IRL, the promise), scene by scene in English and French: the website's
+// hero phone plays them, so the site always shows the app as it is.
+if (!only || only.includes('story')) {
+  for (const lang of ['en', 'fr']) {
+    const { ctx, page } = await open();
+    try {
+      await page.evaluate((l) => localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: l }, version: 0 })), lang);
+      for (let i = 1; i <= 5; i++) {
+        await page.goto(`http://localhost:8095/story?scene=${i}&hold=1`);
+        await page.waitForTimeout(3500);
+        await page.screenshot({ path: `${OUT}/story-${lang}-${i}.jpg`, type: 'jpeg', quality: 80 });
+      }
+      console.log('shot story', lang);
+    } catch (e) {
+      console.log('failed story', lang, e.message);
+    }
+    await ctx.close();
+  }
+}
+
 // A real, quiet map of Dubai (OpenStreetMap via OpenFreeMap) for the website.
 if (!only || only.includes('dubai-map')) {
   const ctx = await browser.newContext({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 2 });

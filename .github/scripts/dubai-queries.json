@@ -1,0 +1,1335 @@
+{
+ "_note": "key → [search, words, place?]. words: any of a list, or a list of lists (one word of each list). Matched on the photo's tags with whole words. place defaults to Dubai; other emirates set theirs. Bali and other destinations are not here.",
+ "emirates": [
+  "United Arab Emirates skyline",
+  [
+   "uae",
+   "emirates",
+   "dubai",
+   "abu dhabi",
+   "skyline"
+  ],
+  "uae"
+ ],
+ "dubai": [
+  "Dubai skyline Burj Khalifa",
+  [
+   "skyline",
+   "burj khalifa",
+   "downtown"
+  ]
+ ],
+ "dubaiNight": [
+  "Dubai night",
+  [
+   "night",
+   "lights",
+   "evening"
+  ]
+ ],
+ "dubaiMarina": [
+  "Dubai Marina",
+  [
+   "marina",
+   "yacht",
+   "tower"
+  ]
+ ],
+ "dubaiCreek": [
+  "Dubai Creek",
+  [
+   "creek",
+   "abra",
+   "boat",
+   "deira"
+  ]
+ ],
+ "jlt": [
+  "Jumeirah Lake Towers Dubai",
+  [
+   "tower",
+   "lake",
+   "jlt",
+   "buildings"
+  ]
+ ],
+ "abudhabi": [
+  "Abu Dhabi",
+  [
+   "abu dhabi",
+   "mosque",
+   "city"
+  ],
+  "abu dhabi"
+ ],
+ "abudhabiSkyline": [
+  "Abu Dhabi skyline",
+  [
+   "skyline",
+   "city",
+   "corniche"
+  ],
+  "abu dhabi"
+ ],
+ "sharjah": [
+  "Sharjah",
+  [
+   [
+    "sharjah"
+   ],
+   [
+    "city",
+    "skyline",
+    "mosque",
+    "heritage",
+    "lagoon",
+    "architecture",
+    "corniche"
+   ]
+  ],
+  "sharjah"
+ ],
+ "ajman": [
+  "Ajman",
+  [
+   "ajman",
+   "beach",
+   "city"
+  ],
+  "ajman"
+ ],
+ "rak": [
+  "Ras Al Khaimah",
+  [
+   "ras al khaimah",
+   "mountain",
+   "jebel"
+  ],
+  "ras al khaimah"
+ ],
+ "fujairah": [
+  "Fujairah",
+  [
+   [
+    "fujairah"
+   ],
+   [
+    "mosque",
+    "mountains",
+    "mountain",
+    "beach",
+    "fort",
+    "sea"
+   ]
+  ],
+  "fujairah"
+ ],
+ "fort": [
+  "UAE fort",
+  [
+   "fort",
+   "heritage",
+   "castle"
+  ],
+  "uae"
+ ],
+ "uaq": [
+  "Umm Al Quwain",
+  [
+   "umm al quwain",
+   "mangrove",
+   "beach"
+  ],
+  "uae"
+ ],
+ "football": [
+  "Dubai football",
+  [
+   "football",
+   "soccer"
+  ]
+ ],
+ "padel": [
+  "Dubai padel",
+  [
+   "padel",
+   "racket",
+   "court"
+  ]
+ ],
+ "basketball": [
+  "Dubai basketball",
+  [
+   "basketball"
+  ]
+ ],
+ "tennis": [
+  "Dubai tennis",
+  [
+   "tennis"
+  ]
+ ],
+ "running": [
+  "Dubai running",
+  [
+   "running",
+   "runner",
+   "jogging",
+   "run"
+  ]
+ ],
+ "gym": [
+  "Dubai gym fitness",
+  [
+   "gym",
+   "fitness",
+   "workout",
+   "weights",
+   "dumbbell",
+   "dumbbells"
+  ]
+ ],
+ "crossfit": [
+  "Dubai fitness workout",
+  [
+   "fitness",
+   "workout",
+   "training",
+   "exercise"
+  ]
+ ],
+ "cycling": [
+  "Dubai cycling",
+  [
+   "cycling",
+   "bike",
+   "bicycle",
+   "cyclist"
+  ]
+ ],
+ "swimming": [
+  "Dubai swimming pool",
+  [
+   "pool",
+   "swimming",
+   "swim"
+  ]
+ ],
+ "volleyball": [
+  "beach volleyball Dubai",
+  [
+   "volleyball"
+  ]
+ ],
+ "boxing": [
+  "Dubai MMA boxing",
+  [
+   "boxing",
+   "boxer",
+   "mma",
+   "martial arts",
+   "kickboxing",
+   "fighter"
+  ]
+ ],
+ "yoga": [
+  "Dubai yoga",
+  [
+   "yoga",
+   "meditation"
+  ]
+ ],
+ "surf": [
+  "Dubai surf beach",
+  [
+   "surf",
+   "surfing",
+   "wave",
+   "beach"
+  ]
+ ],
+ "hikeDesert": [
+  "hiking UAE mountains",
+  [
+   "hiking",
+   "hike",
+   "trekking",
+   "hiker"
+  ],
+  "uae"
+ ],
+ "dunes": [
+  "Dubai desert dunes",
+  [
+   "dune",
+   "desert",
+   "sand"
+  ]
+ ],
+ "kayak": [
+  "Dubai kayak",
+  [
+   "kayak",
+   "paddle",
+   "canoe"
+  ]
+ ],
+ "dinner": [
+  "Dubai restaurant dinner",
+  [
+   "restaurant",
+   "dinner",
+   "dining",
+   "table",
+   "food"
+  ]
+ ],
+ "dinnerGroup": [
+  "Dubai restaurant dinner",
+  [
+   "dinner",
+   "restaurant",
+   "dining"
+  ]
+ ],
+ "rooftop": [
+  "Dubai rooftop bar",
+  [
+   "rooftop",
+   "terrace",
+   "rooftop bar"
+  ]
+ ],
+ "rooftopNeon": [
+  "Dubai rooftop bar night",
+  [
+   "bar",
+   "rooftop",
+   "night",
+   "lounge"
+  ]
+ ],
+ "djSunset": [
+  "Dubai beach sunset party",
+  [
+   "sunset",
+   "party",
+   "beach",
+   "dj"
+  ]
+ ],
+ "brunch": [
+  "Dubai brunch breakfast",
+  [
+   "brunch",
+   "breakfast",
+   "pancakes",
+   "eggs"
+  ]
+ ],
+ "yacht": [
+  "Dubai yacht",
+  [
+   "yacht",
+   "boat"
+  ]
+ ],
+ "coffee": [
+  "Dubai coffee",
+  [
+   "coffee",
+   "latte",
+   "espresso",
+   "cappuccino"
+  ]
+ ],
+ "coffeeBar": [
+  "Dubai cafe",
+  [
+   "cafe",
+   "coffee",
+   "barista"
+  ]
+ ],
+ "beachClub": [
+  "Dubai beach club",
+  [
+   "beach",
+   "pool",
+   "lounger",
+   "club"
+  ]
+ ],
+ "beachSunset": [
+  "Dubai beach sunset",
+  [
+   "beach",
+   "sunset"
+  ]
+ ],
+ "gallery": [
+  "Dubai art gallery",
+  [
+   "art",
+   "gallery",
+   "museum",
+   "exhibition",
+   "painting"
+  ]
+ ],
+ "nightMarket": [
+  "Dubai night market",
+  [
+   "market",
+   "stall",
+   "night market",
+   "bazaar",
+   "global village"
+  ]
+ ],
+ "coworking": [
+  "Dubai coworking",
+  [
+   "coworking",
+   "laptop",
+   "workspace",
+   "desk"
+  ]
+ ],
+ "founders": [
+  "Dubai business meeting",
+  [
+   "meeting",
+   "business people",
+   "businessman",
+   "conference",
+   "team"
+  ]
+ ],
+ "meeting": [
+  "Dubai business meeting",
+  [
+   "meeting",
+   "business people",
+   "conference",
+   "team"
+  ]
+ ],
+ "office": [
+  "Dubai office",
+  [
+   "office",
+   "building",
+   "business",
+   "work"
+  ]
+ ],
+ "apartment": [
+  "Dubai apartment interior",
+  [
+   "apartment",
+   "interior",
+   "living room",
+   "bedroom"
+  ]
+ ],
+ "villa": [
+  "Dubai villa",
+  [
+   "villa",
+   "house",
+   "pool",
+   "home"
+  ]
+ ],
+ "car": [
+  "Dubai car",
+  [
+   "car",
+   "road",
+   "highway"
+  ]
+ ],
+ "newHome": [
+  "Dubai apartment interior",
+  [
+   "apartment",
+   "interior",
+   "home",
+   "living room"
+  ]
+ ],
+ "girlFriends": [
+  "women friends Dubai",
+  [
+   [
+    "women",
+    "girls",
+    "woman",
+    "girl"
+   ],
+   [
+    "friends",
+    "friendship",
+    "together"
+   ]
+  ]
+ ],
+ "girlSunset": [
+  "woman sunset Dubai",
+  [
+   [
+    "woman",
+    "girl"
+   ],
+   [
+    "sunset"
+   ]
+  ]
+ ],
+ "girlShopping": [
+  "woman shopping Dubai",
+  [
+   [
+    "woman",
+    "girl"
+   ],
+   [
+    "shopping",
+    "shopper",
+    "shopping bags",
+    "boutique"
+   ]
+  ]
+ ],
+ "girlSpa": [
+  "spa Dubai",
+  [
+   "spa",
+   "massage",
+   "wellness"
+  ]
+ ],
+ "girlChill": [
+  "woman relaxing Dubai",
+  [
+   "woman",
+   "relax",
+   "pool",
+   "beach"
+  ]
+ ],
+ "girlClass": [
+  "women class Dubai",
+  [
+   "class",
+   "women",
+   "workshop"
+  ]
+ ],
+ "girlCoffee": [
+  "woman coffee Dubai",
+  [
+   "woman",
+   "coffee",
+   "cafe"
+  ]
+ ],
+ "girlCafe": [
+  "women cafe Dubai",
+  [
+   "cafe",
+   "women",
+   "coffee"
+  ]
+ ],
+ "girlWork": [
+  "woman working laptop Dubai",
+  [
+   [
+    "woman",
+    "girl",
+    "businesswoman"
+   ],
+   [
+    "laptop",
+    "office",
+    "working",
+    "computer"
+   ]
+  ]
+ ],
+ "girlLaptop": [
+  "woman laptop Dubai",
+  [
+   "woman",
+   "laptop"
+  ]
+ ],
+ "girlHike": [
+  "woman hiking UAE",
+  [
+   [
+    "woman",
+    "girl"
+   ],
+   [
+    "hiking",
+    "hike",
+    "trekking",
+    "mountain"
+   ]
+  ],
+  "uae"
+ ],
+ "girlTravel": [
+  "woman travel Dubai",
+  [
+   "woman",
+   "travel",
+   "tourist"
+  ]
+ ],
+ "girlFitness": [
+  "woman fitness Dubai",
+  [
+   "woman",
+   "fitness",
+   "workout",
+   "gym"
+  ]
+ ],
+ "girlSurf": [
+  "woman beach Dubai",
+  [
+   "woman",
+   "beach",
+   "surf"
+  ]
+ ],
+ "girlDinner": [
+  "women dinner Dubai",
+  [
+   "dinner",
+   "women",
+   "restaurant",
+   "friends"
+  ]
+ ],
+ "momBaby": [
+  "mother baby Dubai",
+  [
+   "mother",
+   "baby",
+   "mom"
+  ]
+ ],
+ "momBeach": [
+  "mother kids beach Dubai",
+  [
+   [
+    "mother",
+    "mom",
+    "family",
+    "kids",
+    "children"
+   ],
+   [
+    "beach"
+   ]
+  ]
+ ],
+ "momPlaydate": [
+  "kids playground Dubai",
+  [
+   "kids",
+   "children",
+   "playground"
+  ]
+ ],
+ "momYoga": [
+  "yoga Dubai",
+  [
+   "yoga"
+  ]
+ ],
+ "familyBeach": [
+  "family beach Dubai",
+  [
+   [
+    "family",
+    "children",
+    "kids",
+    "child"
+   ],
+   [
+    "beach",
+    "sea"
+   ]
+  ]
+ ],
+ "arcade": [
+  "arcade games",
+  [
+   "arcade",
+   "video game",
+   "video games",
+   "gaming"
+  ]
+ ],
+ "archery": [
+  "archery",
+  [
+   "archery",
+   "archer",
+   "bow and arrow"
+  ]
+ ],
+ "automotive": [
+  "Dubai supercar",
+  [
+   "car",
+   "supercar",
+   "sports car"
+  ]
+ ],
+ "badminton": [
+  "badminton Dubai",
+  [
+   "badminton"
+  ]
+ ],
+ "bakery": [
+  "Dubai bakery",
+  [
+   "bakery",
+   "bread",
+   "pastry"
+  ]
+ ],
+ "bbq": [
+  "barbecue grill",
+  [
+   "bbq",
+   "barbecue",
+   "grill",
+   "grilling"
+  ]
+ ],
+ "beauty": [
+  "Dubai beauty salon",
+  [
+   "beauty",
+   "salon",
+   "makeup",
+   "nails"
+  ]
+ ],
+ "bowling": [
+  "bowling Dubai",
+  [
+   "bowling"
+  ]
+ ],
+ "burger": [
+  "burger",
+  [
+   "burger",
+   "hamburger",
+   "cheeseburger"
+  ]
+ ],
+ "burjKhalifa": [
+  "Burj Khalifa",
+  [
+   "burj",
+   "khalifa",
+   "tower"
+  ]
+ ],
+ "camping": [
+  "Dubai desert camping",
+  [
+   "camp",
+   "tent",
+   "desert"
+  ]
+ ],
+ "cinema": [
+  "cinema",
+  [
+   "cinema",
+   "movie theater",
+   "movie theatre"
+  ]
+ ],
+ "climbing": [
+  "climbing Dubai",
+  [
+   "climbing",
+   "climber",
+   "wall"
+  ]
+ ],
+ "comedy": [
+  "Dubai stage show",
+  [
+   "stage",
+   "show",
+   "microphone",
+   "audience"
+  ]
+ ],
+ "concert": [
+  "Dubai concert",
+  [
+   "concert",
+   "live music",
+   "band",
+   "festival stage"
+  ]
+ ],
+ "cooking": [
+  "cooking class Dubai",
+  [
+   "cooking",
+   "kitchen",
+   "chef"
+  ]
+ ],
+ "cricket": [
+  "cricket Dubai",
+  [
+   "cricket"
+  ]
+ ],
+ "dance": [
+  "Dubai dance",
+  [
+   "dance",
+   "dancer",
+   "dancing"
+  ]
+ ],
+ "designWork": [
+  "designer working",
+  [
+   "designer",
+   "graphic design",
+   "sketch",
+   "drawing"
+  ]
+ ],
+ "dessert": [
+  "Dubai dessert",
+  [
+   "dessert",
+   "cake",
+   "sweets",
+   "pastry",
+   "ice cream",
+   "chocolate",
+   "kunafa",
+   "baklava"
+  ]
+ ],
+ "developer": [
+  "programmer Dubai",
+  [
+   "code",
+   "programmer",
+   "laptop",
+   "developer"
+  ]
+ ],
+ "dhow": [
+  "Dubai dhow",
+  [
+   "dhow",
+   "boat",
+   "creek"
+  ]
+ ],
+ "diving": [
+  "diving UAE",
+  [
+   "diving",
+   "diver",
+   "underwater"
+  ],
+  "uae"
+ ],
+ "dogPark": [
+  "dog Dubai",
+  [
+   "dog"
+  ]
+ ],
+ "education": [
+  "Dubai university",
+  [
+   "university",
+   "student",
+   "campus",
+   "class"
+  ]
+ ],
+ "family": [
+  "family Dubai",
+  [
+   "family",
+   "parents",
+   "children"
+  ]
+ ],
+ "fashion": [
+  "Dubai fashion boutique",
+  [
+   [
+    "fashion",
+    "boutique",
+    "clothes",
+    "clothing",
+    "dress",
+    "style",
+    "outfit"
+   ]
+  ]
+ ],
+ "festival": [
+  "Dubai festival",
+  [
+   "festival",
+   "lights",
+   "event",
+   "fireworks"
+  ]
+ ],
+ "finance": [
+  "Dubai International Financial Centre",
+  [
+   "finance",
+   "financial",
+   "stock market",
+   "bank",
+   "banking"
+  ]
+ ],
+ "fineDining": [
+  "Dubai fine dining",
+  [
+   "dining",
+   "restaurant",
+   "dish",
+   "plate"
+  ]
+ ],
+ "glamping": [
+  "Dubai desert camp",
+  [
+   "camp",
+   "tent",
+   "camping",
+   "glamping"
+  ]
+ ],
+ "golf": [
+  "Dubai golf",
+  [
+   "golf"
+  ]
+ ],
+ "healthyFood": [
+  "healthy food Dubai",
+  [
+   "salad",
+   "bowl",
+   "healthy",
+   "food"
+  ]
+ ],
+ "homeDecor": [
+  "Dubai interior design",
+  [
+   "interior",
+   "living room",
+   "decor"
+  ]
+ ],
+ "horse": [
+  "Arabian horse UAE",
+  [
+   "horse"
+  ],
+  "uae"
+ ],
+ "horseRiding": [
+  "horse riding Dubai desert",
+  [
+   "horse",
+   "riding"
+  ]
+ ],
+ "indianFood": [
+  "indian food",
+  [
+   "indian food",
+   "curry",
+   "biryani",
+   "thali",
+   "naan"
+  ]
+ ],
+ "islands": [
+  "Palm Jumeirah",
+  [
+   "palm",
+   "island",
+   "aerial"
+  ]
+ ],
+ "italianFood": [
+  "italian food pasta",
+  [
+   "pasta",
+   "italian food",
+   "spaghetti",
+   "risotto",
+   "lasagna"
+  ]
+ ],
+ "japaneseFood": [
+  "Dubai japanese restaurant",
+  [
+   "japanese",
+   "sushi",
+   "ramen"
+  ]
+ ],
+ "jbr": [
+  "JBR beach Dubai Marina",
+  [
+   [
+    "beach"
+   ],
+   [
+    "marina",
+    "jbr",
+    "skyline",
+    "jumeirah"
+   ]
+  ]
+ ],
+ "karaoke": [
+  "Dubai karaoke",
+  [
+   "karaoke",
+   "microphone",
+   "singing"
+  ]
+ ],
+ "karting": [
+  "karting Dubai",
+  [
+   "kart",
+   "karting",
+   "race"
+  ]
+ ],
+ "kids": [
+  "kids Dubai",
+  [
+   "kids",
+   "children",
+   "child"
+  ]
+ ],
+ "kitesurf": [
+  "kitesurf Dubai",
+  [
+   "kite",
+   "kitesurf"
+  ]
+ ],
+ "koreanFood": [
+  "korean food Dubai",
+  [
+   "korean",
+   "food",
+   "bbq"
+  ]
+ ],
+ "lake": [
+  "Al Qudra lake Dubai",
+  [
+   "lake"
+  ]
+ ],
+ "liveMusic": [
+  "Dubai live music",
+  [
+   "music",
+   "band",
+   "guitar",
+   "concert"
+  ]
+ ],
+ "lounge": [
+  "Dubai lounge",
+  [
+   "lounge",
+   "bar",
+   "night"
+  ]
+ ],
+ "luxury": [
+  "Dubai luxury",
+  [
+   "luxury",
+   "hotel",
+   "gold"
+  ]
+ ],
+ "mall": [
+  "Dubai mall",
+  [
+   "mall",
+   "shopping"
+  ]
+ ],
+ "massage": [
+  "Dubai spa massage",
+  [
+   "massage",
+   "spa"
+  ]
+ ],
+ "meditation": [
+  "meditation",
+  [
+   "meditation",
+   "meditate",
+   "yoga"
+  ]
+ ],
+ "mosque": [
+  "Dubai mosque",
+  [
+   "mosque",
+   "minaret"
+  ]
+ ],
+ "music": [
+  "Dubai music",
+  [
+   "music",
+   "musician",
+   "guitar"
+  ]
+ ],
+ "nature": [
+  "UAE nature",
+  [
+   "nature",
+   "mountain",
+   "desert",
+   "mangrove"
+  ],
+  "uae"
+ ],
+ "photography": [
+  "photographer Dubai",
+  [
+   "photographer",
+   "camera",
+   "photography"
+  ]
+ ],
+ "picnic": [
+  "picnic park",
+  [
+   "picnic"
+  ]
+ ],
+ "pizza": [
+  "pizza Dubai",
+  [
+   "pizza"
+  ]
+ ],
+ "playground": [
+  "playground Dubai",
+  [
+   "playground",
+   "kids",
+   "children"
+  ]
+ ],
+ "realEstate": [
+  "Dubai real estate",
+  [
+   "building",
+   "tower",
+   "apartment",
+   "real estate"
+  ]
+ ],
+ "roadtrip": [
+  "UAE road trip",
+  [
+   "road",
+   "car",
+   "highway",
+   "mountain"
+  ],
+  "uae"
+ ],
+ "rollerblade": [
+  "skating Dubai",
+  [
+   "skate",
+   "roller",
+   "skating"
+  ]
+ ],
+ "sailing": [
+  "sailing Dubai",
+  [
+   "sail",
+   "sailing",
+   "boat"
+  ]
+ ],
+ "sauna": [
+  "Dubai spa",
+  [
+   "spa",
+   "sauna",
+   "pool",
+   "wellness"
+  ]
+ ],
+ "skate": [
+  "skateboard Dubai",
+  [
+   "skate",
+   "skateboard",
+   "skateboarding"
+  ]
+ ],
+ "sneakers": [
+  "sneakers",
+  [
+   "sneakers",
+   "sneaker",
+   "shoes",
+   "trainers"
+  ]
+ ],
+ "snorkel": [
+  "snorkeling UAE",
+  [
+   "snorkel",
+   "underwater",
+   "sea"
+  ],
+  "uae"
+ ],
+ "souk": [
+  "Dubai souk",
+  [
+   "souk",
+   "market",
+   "spices",
+   "gold"
+  ]
+ ],
+ "spa": [
+  "Dubai spa",
+  [
+   "spa",
+   "wellness",
+   "pool"
+  ]
+ ],
+ "startup": [
+  "Dubai startup office",
+  [
+   "office",
+   "startup",
+   "team",
+   "laptop"
+  ]
+ ],
+ "steak": [
+  "Dubai steak restaurant",
+  [
+   "steak",
+   "meat",
+   "grill"
+  ]
+ ],
+ "streetFood": [
+  "Dubai street food",
+  [
+   "street food",
+   "food",
+   "shawarma",
+   "stall"
+  ]
+ ],
+ "sushi": [
+  "sushi Dubai",
+  [
+   "sushi"
+  ]
+ ],
+ "tableTennis": [
+  "table tennis",
+  [
+   "table tennis",
+   "ping pong"
+  ]
+ ],
+ "theatre": [
+  "Dubai Opera",
+  [
+   "opera",
+   "theatre",
+   "theater",
+   "stage"
+  ]
+ ],
+ "themePark": [
+  "Dubai theme park",
+  [
+   "theme park",
+   "roller coaster",
+   "ride"
+  ]
+ ],
+ "vr": [
+  "virtual reality",
+  [
+   "virtual reality",
+   "vr",
+   "headset"
+  ]
+ ],
+ "waterPark": [
+  "Dubai water park",
+  [
+   "water park",
+   "slide",
+   "pool"
+  ]
+ ],
+ "writing": [
+  "writing cafe Dubai",
+  [
+   "writing",
+   "notebook",
+   "journal"
+  ]
+ ]
+}

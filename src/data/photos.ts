@@ -1,3 +1,4 @@
+import { DUBAI_KEYS } from './dubaiKeys';
 /**
  * Photography registry: real photos only.
  *
@@ -198,8 +199,47 @@ export const LIBRARY = [
   'waterPark',
   'writing',
 ] as const;
-const LIBRARY_SET = new Set<string>(LIBRARY);
+// Keys that now have a Dubai photo (Pixabay / Pexels) are served from the library too.
+const LIBRARY_SET = new Set<string>([...LIBRARY, ...DUBAI_KEYS]);
 const LIBRARY_BASE = 'https://alafrench7593-a11y.github.io/irly/photos';
+
+/**
+ * Silent films (Pixabay / Pexels, fetched by .github/scripts/dubai-media.mjs
+ * and served by the website). A photo key with a matching film plays it over
+ * the photo: the Home hero and the header of an activity without its own photo.
+ */
+const FILM_BASE = 'https://getirly.com/video';
+const FILMS: Partial<Record<string, string>> = {
+  dubai: 'dubai',
+  emirates: 'dubai',
+  burjKhalifa: 'dubai',
+  dubaiNight: 'night',
+  rooftop: 'night',
+  rooftopNeon: 'night',
+  lounge: 'night',
+  dubaiMarina: 'marina',
+  yacht: 'marina',
+  sailing: 'marina',
+  jbr: 'beach',
+  beachSunset: 'beach',
+  beachClub: 'beach',
+  surf: 'beach',
+  kitesurf: 'beach',
+  volleyball: 'beach',
+  familyBeach: 'beach',
+  dunes: 'desert',
+  hikeDesert: 'desert',
+  camping: 'desert',
+  glamping: 'desert',
+  abudhabi: 'abudhabi',
+  abudhabiSkyline: 'abudhabi',
+};
+
+/** The film for a photo key, if there is one. */
+export const filmFor = (key: string): string | undefined => (FILMS[key] ? `${FILM_BASE}/${FILMS[key]}.mp4` : undefined);
+
+/** The Home hero film of a city: Dubai and Abu Dhabi have theirs, by day and by night. */
+export const cityFilm = (cityId: string, heroKey: string): string | undefined => (cityId === 'dubai' || cityId === 'abudhabi' ? filmFor(heroKey) : undefined);
 
 /**
  * Example portraits for the demonstration build only (CC0 stock photos,

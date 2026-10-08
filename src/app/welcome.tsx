@@ -158,6 +158,13 @@ export default function Welcome() {
               </Animated.View>
             ))}
           </View>
+          <Animated.View entering={FadeIn.delay(850).duration(500)} style={{ alignItems: 'center' }}>
+            <PressableScale haptic="select" onPress={() => router.push('/account')} accessibilityRole="link" accessibilityLabel="Already have an account? Sign in" hitSlop={8}>
+              <Text variant="bodyS" color="rgba(255,255,255,0.75)">
+                Already have an account? <Text variant="bodyS" color="#FFFFFF" style={{ fontWeight: '700' }}>Sign in</Text>
+              </Text>
+            </PressableScale>
+          </Animated.View>
           <Animated.View entering={FadeIn.delay(700).duration(500)} style={styles.soon}>
             <Icon name="globe" size={14} color="rgba(255,255,255,0.5)" />
             <Text variant="bodyS" color="rgba(255,255,255,0.5)">
@@ -201,7 +208,7 @@ function DestinationCard({
       accessibilityLabel={`${dest.name}. ${dest.tagline}`}
     >
       <Animated.View style={[StyleSheet.absoluteFill, layer]}>
-        <Photo visual={{ photo: dest.photo }} light={dest.light} scrim="strong" width={1000} style={StyleSheet.absoluteFill} />
+        <Photo drift visual={{ photo: dest.photo }} light={dest.light} scrim="strong" width={1000} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <View style={styles.cardTop}>
         <Glass dark style={styles.flag}>

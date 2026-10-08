@@ -200,7 +200,7 @@ export default function SettingsScreen() {
             : phone === 'denied'
               ? tx('Notifications are off for IRLY in your phone settings.')
               : phone === 'not-configured'
-                ? tx('This build of IRLY cannot receive notifications yet.')
+                ? tx("This version of IRLY can't receive notifications yet.")
                 : tx('Messages, requests and your activities, even when IRLY is closed. Choose which below.')}
         </Text>
         <View style={[styles.group, { backgroundColor: t.c.surface }]}>

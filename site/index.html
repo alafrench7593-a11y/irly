@@ -221,6 +221,9 @@ html[lang="ar"] .alone :is(.big, .stack) { letter-spacing: 0; line-height: 1.3; 
 .fact .n { font-size: clamp(54px, 7vw, 90px); font-weight: 800; letter-spacing: -0.05em; line-height: .9; color: var(--fg); }
 .fact cite { font-style: normal; font-size: var(--t-micro); color: var(--faint); }
 .fact cite a { color: var(--muted); }
+.film { position: relative; margin-top: var(--s-5); border-radius: var(--r-lg); overflow: hidden; aspect-ratio: 16 / 7; background: var(--card); }
+.film video { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(.9); }
+@media (max-width: 760px) { .film { aspect-ratio: 4 / 3; } }
 .hard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
 .hard .card { padding: 26px 28px; display: grid; gap: 8px; align-content: start; }
 .hard h3 { font-size: var(--t-h3, 22px); line-height: 1.15; letter-spacing: -0.02em; color: var(--fg); }
@@ -536,6 +539,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
           <div class="scr"><div class="island"></div><div class="glare"></div>
             <img class="on" src="shots/home.jpg" alt="" data-scene="0">
             <img src="shots/home-scroll.jpg" alt="" data-scene="1">
+            <img alt="" data-story="1"><img alt="" data-story="2"><img alt="" data-story="3"><img alt="" data-story="4"><img alt="" data-story="5">
           </div>
         </div>
       </div>
@@ -744,6 +748,9 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
         </div>
         <div class="globe" aria-hidden="true"><canvas id="globe"></canvas></div>
       </div>
+      <div class="film" id="film" hidden>
+        <video muted playsinline loop preload="none" poster="video/dubai.jpg" aria-label="Dubai, filmed from the air" data-i-aria="filmAria"><source src="video/dubai.mp4" type="video/mp4"></video>
+      </div>
       <div class="photos">
         <img src="img/jbr.webp" alt="Dubai Marina and JBR from the beach" data-i-alt="altJbr" loading="lazy">
         <img src="img/burjKhalifa.webp" alt="Burj Khalifa" data-i-alt="altBurj" loading="lazy">
@@ -829,7 +836,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
     <div class="fine">
       <p>© 2026 IRLY. <span data-i="rights">All rights reserved.</span></p>
       <p data-i="operator">IRLY is operated by Samuel Princivil, Dubai Digital Park, Dubai Silicon Oasis, Dubai, United Arab Emirates.</p>
-      <p data-i="fineNote">App screens and profiles shown are example content. Photos: public domain and CC0. Map data © OpenStreetMap contributors.</p>
+      <p data-i="fineNote">App screens and profiles shown are example content. Photos and videos: Pixabay, Pexels, public domain and CC0. Map data © OpenStreetMap contributors.</p>
     </div>
   </div>
 </footer>
@@ -869,7 +876,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       pop1: 'Layla est en live près de toi', pop1s: 'Kite Beach · course au lever du soleil', pop2: 'Padel · 19h30', pop2s: 'Plus que 2 places · tu y vas', pop3: 'Arjun veut faire ta connaissance', pop3s: 'Vous jouez tous les deux au foot', pop4: '« J’arrive ! »', pop4s: 'Groupe brunch · JLT', heroPhoneAria: 'L’écran d’accueil de l’app IRLY',
       k01: 'On se sent seul', alone1: 'On peut être entouré de monde et se sentir seul.', alone2a: 'Nouvelle ville.', alone2b: 'Nouvelle vie.', alone2c: 'Aucun réseau.', alone3: 'Se faire des amis ne devrait pas être si difficile.',
       voicesT: 'Ce que disent les nouveaux arrivants', v1: 'Je viens d’arriver.', v2: 'Je ne connais personne.', v3: 'Où rencontrer du monde ?', v4: 'Je cherche des amis.', v5: 'J’ai envie de faire un truc ce week-end.', vsrc1: 'Forum d’expats', vsrc2: 'Chat de groupe', vsrc3: 'Questions-réponses', vsrc4: 'Petites annonces', vsrc5: 'Réseaux sociaux', voicesNote: 'Le genre de messages que les nouveaux arrivants à Dubaï publient chaque semaine. Reformulés, non attribués.',
-      k02: 'Se faire des amis est difficile', factsT: 'Une ville où presque tout le monde est arrivé sans connaître personne.', fact1n: '88 %', fact1: 'des habitants des Émirats sont expatriés.', fact2n: '1 sur 4', fact2: 'des adultes dans le monde disent se sentir très ou assez seuls.', src: 'Source :', srcUn: 'estimation de l’ONU, 2021', srcGallup: 'Gallup–Meta, 2023', scrollCue: 'Descends', scrollAria: 'Descendre pour découvrir IRLY', hardT: 'Pourquoi c’est difficile ici', hard1t: 'Tout le monde est débordé.', hard1: 'De longues journées de travail, de longs trajets. Les soirées en semaine disparaissent et les week-ends se remplissent vite.', hard2t: 'Les gens vont et viennent.', hard2: 'Un contrat se termine, un ami repart. Dans une ville de nouveaux arrivants, on recommence souvent à zéro.', hard3t: 'Le networking ressemble à une transaction.', hard3: 'Des événements bondés, des cartes de visite, des banalités. Peu de conversations deviennent des personnes qu’on revoit.', hard4t: 'Personne ne parle aux inconnus.', hard4: 'Les malls, les salles de sport et les cafés sont pleins, mais chacun reste à sa table. Rencontrer du monde n’arrive presque jamais par hasard.', hardEnd: 'Se faire des amis, trouver un partenaire de padel ou rencontrer les bonnes personnes pour ton travail ne devrait pas dépendre de la chance.',
+      k02: 'Se faire des amis est difficile', factsT: 'Une ville où presque tout le monde est arrivé sans connaître personne.', fact1n: '88 %', fact1: 'des habitants des Émirats sont expatriés.', fact2n: '1 sur 4', fact2: 'des adultes dans le monde disent se sentir très ou assez seuls.', src: 'Source :', srcUn: 'estimation de l’ONU, 2021', srcGallup: 'Gallup–Meta, 2023', filmAria: 'Dubaï filmée du ciel', scrollCue: 'Descends', scrollAria: 'Descendre pour découvrir IRLY', hardT: 'Pourquoi c’est difficile ici', hard1t: 'Tout le monde est débordé.', hard1: 'De longues journées de travail, de longs trajets. Les soirées en semaine disparaissent et les week-ends se remplissent vite.', hard2t: 'Les gens vont et viennent.', hard2: 'Un contrat se termine, un ami repart. Dans une ville de nouveaux arrivants, on recommence souvent à zéro.', hard3t: 'Le networking ressemble à une transaction.', hard3: 'Des événements bondés, des cartes de visite, des banalités. Peu de conversations deviennent des personnes qu’on revoit.', hard4t: 'Personne ne parle aux inconnus.', hard4: 'Les malls, les salles de sport et les cafés sont pleins, mais chacun reste à sa table. Rencontrer du monde n’arrive presque jamais par hasard.', hardEnd: 'Se faire des amis, trouver un partenaire de padel ou rencontrer les bonnes personnes pour ton travail ne devrait pas dépendre de la chance.',
       k03: 'IRLY change ça', comes1: 'C’est là qu’IRLY entre en jeu.', comes2: 'Du virtuel au réel.', n1: 'Une personne', n1s: 'Chloé, tout juste arrivée à la Marina', n2b: 'Padel ce soir ?', n2: 'Une activité', n2s: 'Publiée en un geste', n3: '5 personnes s’inscrivent', n3s: 'Le chat de groupe s’ouvre', n4: 'Un dîner ensuite', n4s: 'Un resto à côté', n5: 'La vraie vie', n5s: 'De nouveaux amis, en vrai',
       k04: 'Comment ça marche', howT: 'Sept écrans. Une idée : sortir.', scenesAria: 'Écrans de l’app IRLY',
       s1: 'Ce qui se passe autour de toi.', s1p: 'Ouvre IRLY et vois qui est sorti en ce moment, et ce qui commence bientôt près de toi.', s2: 'Les gens près de toi.', s2p: 'Nouveaux venus, gens du coin, pros. Leurs centres d’intérêt, leur quartier, ce que vous avez en commun.', s3: 'Que faire ce soir.', s3p: 'Sport, restos, culture, bien-être. Chaque activité montre qui y va et combien de places il reste.', s4: 'Ta ville, en direct.', s4p: 'Activités, personnes et lieux sur une vraie carte de Dubaï. Jamais d’adresse exacte.', s5: 'Crée une activité en quelques secondes.', s5p: 'Choisis quoi faire, une heure, un lieu. IRLY trouve les gens.', s6: 'Des communautés qui se retrouvent.', s6p: 'Coureurs, fondateurs, francophones, gamers. Des gens qui se voient pour de vrai.', s7: 'Un profil qui dit « on y va ».', s7p: 'Qui tu es, ce que tu aimes faire, ce que tu cherches. Pas de likes, pas d’abonnés.',
@@ -888,7 +895,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       storyK: 'Pourquoi IRLY ?', story1: 'IRLY est né d’un constat simple. Les gens veulent rencontrer du monde. Mais les apps qu’ils utilisent sont faites pour les garder rivés à l’écran, pas pour les faire sortir.', story2: 'IRLY fait l’inverse. Chaque écran mène à une activité, un lieu et des gens à rencontrer pour de vrai.', story3: 'Moins d’écran.', story4: 'Plus de vie.',
       soonT: 'IRLY arrive.', soonP: 'Bientôt sur l’App Store et Google Play.', emailLabel: 'Ton e-mail', emailPh: 'Ton e-mail', notify: 'Préviens-moi', formLegal: 'Ton e-mail sert uniquement à te prévenir du lancement d’IRLY.', privacy: 'Politique de confidentialité', terms: 'Conditions d’utilisation',
       done1: 'Tu es sur la liste.', done2: 'On te prévient dès qu’IRLY est en ligne.', done3: 'C’est noté. À très vite, IRL.', proof: 'Pensé pour celles et ceux qui veulent vivre plus IRL.',
-      fNav: 'Navigation', fProduct: 'Produit', fAbout: 'À propos', fContact: 'Contact', fSocial: 'Réseaux', fApp: 'App', soonShort: 'Bientôt', rights: 'Tous droits réservés.', operator: 'IRLY est exploité par Samuel Princivil, Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.', fineNote: 'Les écrans et profils présentés sont des exemples. Photos : domaine public et CC0. Données cartographiques © contributeurs OpenStreetMap.',
+      fNav: 'Navigation', fProduct: 'Produit', fAbout: 'À propos', fContact: 'Contact', fSocial: 'Réseaux', fApp: 'App', soonShort: 'Bientôt', rights: 'Tous droits réservés.', operator: 'IRLY est exploité par Samuel Princivil, Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.', fineNote: 'Les écrans et profils présentés sont des exemples. Photos et vidéos : Pixabay, Pexels, domaine public et CC0. Données cartographiques © contributeurs OpenStreetMap.',
       errEmpty: 'Entre ton adresse e-mail.', errInvalid: 'Cette adresse e-mail ne semble pas valide.', errNet: 'Impossible de t’inscrire pour le moment. Vérifie ta connexion et réessaie.', errBusy: 'Trop de tentatives. Réessaie dans quelques minutes.',
       spotsLeft: '{n} places restantes', spotsTwo: '2 places restantes', spotLeft: '1 place restante', full: 'Complet', scene: 'SCÈNE', example: 'Photo de profil d’exemple',
     },
@@ -899,7 +906,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       pop1: 'ليلى متواجدة الآن بالقرب منك', pop1s: 'كايت بيتش – جري عند الشروق', pop2: 'بادل – ٧:٣٠ مساءً', pop2s: 'بقي مكانان – لقد انضممت', pop3: 'أرجون يريد التعرّف عليك', pop3s: 'كلاكما يلعب كرة القدم', pop4: '«أنا في الطريق!»', pop4s: 'مجموعة الفطور المتأخر – JLT', heroPhoneAria: 'الشاشة الرئيسية لتطبيق IRLY',
       k01: 'الناس يشعرون بالوحدة', alone1: 'قد تكون محاطًا بالناس وتشعر بالوحدة رغم ذلك.', alone2a: 'مدينة جديدة.', alone2b: 'حياة جديدة.', alone2c: 'بلا معارف.', alone3: 'تكوين الصداقات لا ينبغي أن يكون بهذه الصعوبة.',
       voicesT: 'ما يقوله القادمون الجدد', v1: 'وصلت للتو.', v2: 'لا أعرف أحدًا.', v3: 'أين أتعرّف على الناس؟', v4: 'أبحث عن أصدقاء.', v5: 'أريد أن أفعل شيئًا في نهاية الأسبوع.', vsrc1: 'منتدى مغتربين', vsrc2: 'دردشة جماعية', vsrc3: 'أسئلة وأجوبة', vsrc4: 'لوحة إعلانات', vsrc5: 'وسائل التواصل', voicesNote: 'نوع المنشورات التي يكتبها القادمون الجدد إلى دبي كل أسبوع. أُعيدت صياغتها ولم تُنسب إلى أحد.',
-      k02: 'تكوين الصداقات صعب', factsT: 'مدينة وصل إليها الجميع تقريبًا دون أن يعرفوا أحدًا.', fact1n: '٨٨٪', fact1: 'من سكان الإمارات وافدون.', fact2n: '١ من ٤', fact2: 'من البالغين حول العالم يقولون إنهم يشعرون بالوحدة كثيرًا أو إلى حدٍّ ما.', src: 'المصدر:', srcUn: 'تقدير الأمم المتحدة، ٢٠٢١', srcGallup: 'غالوب وميتا، ٢٠٢٣', scrollCue: 'مرّر للأسفل', scrollAria: 'مرّر للأسفل لاكتشاف IRLY', hardT: 'لماذا الأمر صعب هنا', hard1t: 'الجميع مشغولون.', hard1: 'أيام عمل طويلة وطرق طويلة إلى البيت. تختفي أمسيات الأسبوع وتمتلئ عطلات نهاية الأسبوع بسرعة.', hard2t: 'الناس يأتون ويرحلون.', hard2: 'ينتهي عقد ويرحل صديق. في مدينة من القادمين الجدد، كثيرًا ما تبدأ من جديد.', hard3t: 'التواصل المهني يبدو كصفقة.', hard3: 'فعاليات مزدحمة وبطاقات عمل وأحاديث عابرة. قليل من هذه المحادثات يتحوّل إلى أشخاص تراهم مجددًا.', hard4t: 'لا أحد يتحدث مع الغرباء.', hard4: 'المراكز التجارية والنوادي الرياضية والمقاهي ممتلئة، لكن كل شخص يبقى على طاولته. التعرّف على أشخاص جدد نادرًا ما يحدث صدفة.', hardEnd: 'تكوين الصداقات أو إيجاد شريك للعب البادل أو لقاء الأشخاص المناسبين لعملك لا يجب أن يعتمد على الحظ.',
+      k02: 'تكوين الصداقات صعب', factsT: 'مدينة وصل إليها الجميع تقريبًا دون أن يعرفوا أحدًا.', fact1n: '٨٨٪', fact1: 'من سكان الإمارات وافدون.', fact2n: '١ من ٤', fact2: 'من البالغين حول العالم يقولون إنهم يشعرون بالوحدة كثيرًا أو إلى حدٍّ ما.', src: 'المصدر:', srcUn: 'تقدير الأمم المتحدة، ٢٠٢١', srcGallup: 'غالوب وميتا، ٢٠٢٣', filmAria: 'دبي مصوّرة من الجو', scrollCue: 'مرّر للأسفل', scrollAria: 'مرّر للأسفل لاكتشاف IRLY', hardT: 'لماذا الأمر صعب هنا', hard1t: 'الجميع مشغولون.', hard1: 'أيام عمل طويلة وطرق طويلة إلى البيت. تختفي أمسيات الأسبوع وتمتلئ عطلات نهاية الأسبوع بسرعة.', hard2t: 'الناس يأتون ويرحلون.', hard2: 'ينتهي عقد ويرحل صديق. في مدينة من القادمين الجدد، كثيرًا ما تبدأ من جديد.', hard3t: 'التواصل المهني يبدو كصفقة.', hard3: 'فعاليات مزدحمة وبطاقات عمل وأحاديث عابرة. قليل من هذه المحادثات يتحوّل إلى أشخاص تراهم مجددًا.', hard4t: 'لا أحد يتحدث مع الغرباء.', hard4: 'المراكز التجارية والنوادي الرياضية والمقاهي ممتلئة، لكن كل شخص يبقى على طاولته. التعرّف على أشخاص جدد نادرًا ما يحدث صدفة.', hardEnd: 'تكوين الصداقات أو إيجاد شريك للعب البادل أو لقاء الأشخاص المناسبين لعملك لا يجب أن يعتمد على الحظ.',
       k03: 'IRLY يغيّر ذلك', comes1: 'وهنا يأتي دور IRLY.', comes2: 'من الشاشة إلى الواقع.', n1: 'شخص', n1s: 'كلوي، وصلت حديثًا إلى المارينا', n2b: 'بادل الليلة؟', n2: 'خطة', n2s: 'تُنشر بلمسة واحدة', n3: '٥ أشخاص ينضمون', n3s: 'تُفتح دردشة المجموعة', n4: 'عشاء بعدها', n4s: 'مطعم قريب', n5: 'الحياة الواقعية', n5s: 'أصدقاء جدد، وجهًا لوجه',
       k04: 'كيف يعمل', howT: 'سبع شاشات. فكرة واحدة: اخرج.', scenesAria: 'شاشات تطبيق IRLY',
       s1: 'ما يحدث حولك.', s1p: 'افتح IRLY وشاهد من في الخارج الآن، وما الذي يبدأ قريبًا بالقرب منك.', s2: 'أشخاص بالقرب منك.', s2p: 'قادمون جدد، سكان محليون، مهنيون. اهتماماتهم وأحياؤهم وما يجمعكم.', s3: 'ماذا تفعل الليلة.', s3p: 'رياضة، طعام، ثقافة، صحة وعافية. كل خطة تُظهر من سيحضر وكم مكانًا تبقّى.', s4: 'مدينتك، مباشرة.', s4p: 'خطط وأشخاص وأماكن على خريطة حقيقية لدبي. ولا عناوين دقيقة أبدًا.', s5: 'أنشئ خطة في ثوانٍ.', s5p: 'اختر نشاطًا ووقتًا ومكانًا، ويتكفّل IRLY بإيجاد الناس.', s6: 'مجتمعات تلتقي فعلًا.', s6p: 'عدّاؤون، روّاد أعمال، متحدثون بالفرنسية، محبّو الألعاب. أشخاص يلتقون حقًا.', s7: 'ملف شخصي يقول «هيا بنا».', s7p: 'من أنت، وما تحب فعله، وما تبحث عنه. بلا إعجابات ولا متابعين.',
@@ -918,7 +925,7 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       storyK: 'لماذا IRLY؟', story1: 'بدأ IRLY من ملاحظة بسيطة: الناس يريدون التعرّف على أشخاص جدد، لكن التطبيقات التي يستخدمونها مصممة لإبقائهم يتصفحون، لا لإخراجهم من البيت.', story2: 'IRLY يقلب المعادلة. كل شاشة تقود إلى خطة ومكان وأشخاص يمكنك لقاؤهم فعلًا.', story3: 'تصفّح أقل.', story4: 'حياة أكثر.',
       soonT: 'IRLY قادم.', soonP: 'قريبًا على App Store وGoogle Play.', emailLabel: 'بريدك الإلكتروني', emailPh: 'بريدك الإلكتروني', notify: 'أبلغني', formLegal: 'نستخدم بريدك الإلكتروني فقط لإبلاغك عند إطلاق IRLY.', privacy: 'سياسة الخصوصية', terms: 'شروط الاستخدام',
       done1: 'أنت على القائمة.', done2: 'سنخبرك فور إطلاق IRLY.', done3: 'تم. نراك في الواقع.', proof: 'مصمّم لمن يريد أن يعيش الواقع أكثر.',
-      fNav: 'التنقل', fProduct: 'المنتج', fAbout: 'من نحن', fContact: 'تواصل معنا', fSocial: 'التواصل الاجتماعي', fApp: 'التطبيق', soonShort: 'قريبًا', rights: 'جميع الحقوق محفوظة.', operator: 'يُشغّل IRLY سامويل برينسيفيل، دبي ديجيتال بارك، واحة دبي للسيليكون، دبي، الإمارات العربية المتحدة.', fineNote: 'الشاشات والملفات الشخصية المعروضة أمثلة توضيحية. الصور: ملكية عامة وCC0. بيانات الخريطة © مساهمو OpenStreetMap.',
+      fNav: 'التنقل', fProduct: 'المنتج', fAbout: 'من نحن', fContact: 'تواصل معنا', fSocial: 'التواصل الاجتماعي', fApp: 'التطبيق', soonShort: 'قريبًا', rights: 'جميع الحقوق محفوظة.', operator: 'يُشغّل IRLY سامويل برينسيفيل، دبي ديجيتال بارك، واحة دبي للسيليكون، دبي، الإمارات العربية المتحدة.', fineNote: 'الشاشات والملفات الشخصية المعروضة أمثلة توضيحية. الصور ومقاطع الفيديو: Pixabay وPexels وملكية عامة وCC0. بيانات الخريطة © مساهمو OpenStreetMap.',
       errEmpty: 'أدخل بريدك الإلكتروني.', errInvalid: 'يبدو أن هذا البريد الإلكتروني غير صالح.', errNet: 'تعذّر تسجيلك الآن. تحقّق من اتصالك وحاول مجددًا.', errBusy: 'محاولات كثيرة. حاول مجددًا بعد بضع دقائق.',
       spotsLeft: '{n} أماكن متبقية', spotsTwo: 'مكانان متبقيان', spotLeft: 'مكان واحد متبقٍ', full: 'اكتمل العدد', scene: 'المشهد', example: 'صورة ملف شخصي توضيحية',
     },
@@ -1004,12 +1011,39 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
   // Hero: the copy dissolves, the phone comes closer and straightens, its screen scrolls.
   const hero = $('.hero'), heroCopy = $('#heroCopy'), heroPhone = $('#heroPhone');
   heroPhone.addEventListener('animationend', () => { heroPhone.classList.add('live'); tick(); });
-  const heroShots = $$('img', heroPhone);
+  // Before any scroll, the phone plays the app's own intro story (captured from
+  // the app on every change), scene after scene; scrolling hands over to Home.
+  const storyShots = $$('img[data-story]', heroPhone);
+  let storyOn = false, storyAt = 0, storyReady = 0, heroP = 0;
+  const loadStory = () => {
+    const set = lang === 'fr' ? 'fr' : 'en';
+    storyReady = 0;
+    storyShots.forEach((img) => {
+      img.onload = () => { storyReady += 1; };
+      img.onerror = () => { storyReady = -99; };
+      img.src = `shots/story-${set}-${img.dataset.story}.jpg`;
+    });
+  };
+  const showStory = () => {
+    const play = storyReady >= storyShots.length && heroP < 0.04 && heroPhone.classList.contains('live');
+    if (play !== storyOn) storyOn = play;
+    storyShots.forEach((img, i) => img.classList.toggle('on', play && i === storyAt));
+    if (play) heroShots.forEach((img) => img.classList.remove('on'));
+  };
+  if (!reduce) {
+    setInterval(() => { storyAt = (storyAt + 1) % storyShots.length; showStory(); }, 2600);
+    document.addEventListener('irly:lang', loadStory);
+  }
+  const heroShots = $$('img[data-scene]', heroPhone);
   heroCopy.style.willChange = 'transform, opacity';
   onScroll(hero, (p) => {
     heroCopy.style.opacity = String(1 - clamp(p * 2.2));
     heroCopy.style.transform = `translateY(${-p * 120}px) scale(${1 - p * 0.08})`;
     if (heroPhone.classList.contains('live')) heroPhone.style.transform = `translateY(${-p * 30}vh) rotateX(${12 - p * 12}deg) rotateY(${mouse.x * 10}deg) scale(${1 + p * 0.3})`;
+    heroP = p;
+    if (storyOn && p < 0.04) return showStory();
+    storyShots.forEach((img) => img.classList.remove('on'));
+    storyOn = false;
     heroShots.forEach((img) => img.classList.toggle('on', (p > 0.45) === (img.dataset.scene === '1')));
   });
   if (finePointer && !reduce) addEventListener('pointermove', (e) => { mouse.x = e.clientX / innerWidth - 0.5; tick(); }, { passive: true });
@@ -1206,6 +1240,14 @@ html.still :is(.manifesto .line, .step, .comm) { opacity: 1; filter: none; trans
       progress.style.setProperty('--p', h > 0 ? (y / h).toFixed(4) : '0');
       root.classList.toggle('scrolled', y > 40);
     });
+  }
+
+  // Dubai on film: shown only once the video file is there, plays only while on screen.
+  const film = $('#film'), filmVideo = $('#film video');
+  filmVideo.addEventListener('loadeddata', () => { film.hidden = false; });
+  fetch('video/dubai.mp4', { method: 'HEAD' }).then((r) => { if (r.ok) { filmVideo.preload = 'metadata'; filmVideo.load(); } }).catch(() => {});
+  if (!reduce && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => (e.isIntersecting ? filmVideo.play().catch(() => {}) : filmVideo.pause()), { threshold: 0.25 }).observe(film);
   }
 
   /* ───────── Waitlist ───────── */

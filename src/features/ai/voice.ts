@@ -55,7 +55,7 @@ export function useVoice(lang: string, onFinal: (text: string) => void) {
       setPartial(text);
       if (done) final.current(text);
     };
-    r.onerror = (e) => setError(e.error === 'not-allowed' ? 'Microphone permission denied' : 'Could not hear you');
+    r.onerror = (e) => setError(e.error === 'not-allowed' ? 'Allow microphone access to use your voice' : 'Could not hear you');
     r.onend = () => setListening(false);
     rec.current = r;
     setError(null);

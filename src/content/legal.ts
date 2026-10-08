@@ -57,7 +57,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
         title: 'How long we keep data',
         body: [
           'Your account and content: until you delete your account.',
-          'When you delete your account, your profile, photos, professional and IRLY Girl profiles, messages, posts, connections and notifications are deleted. Content that was reported to moderators, and the report itself, is kept until the report is handled and then 12 months, unless the law requires longer.',
+          'When you delete your account, your profile, photos, professional and IRLY Girl profiles, messages, posts, connections and notifications are deleted. Content that was reported to moderators, and the report itself, is kept until the report is handled and then for 12 months, unless the law requires longer.',
           'Messages to support: 24 months.',
           'Website waitlist: until launch, and at most 24 months. Ask support to remove your address at any time.',
           'Push notification texts: 7 days. Usage events: 13 months.',
@@ -113,7 +113,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       {
         title: 'Meeting people in real life',
         body: [
-          'IRLY helps people meet. IRLY does not check the identity or background of members unless stated, and is not present at activities. Meet in public places, tell a friend where you go, and leave if you feel unsafe. In an emergency, call local emergency services.',
+          "IRLY helps people meet. IRLY does not check the identity or background of members unless stated, and is not present at activities. Meet in public places, tell a friend where you're going, and leave if you feel unsafe. In an emergency, call local emergency services.",
           'Activities, events, places and services listed by members or third parties are their responsibility.',
         ],
       },

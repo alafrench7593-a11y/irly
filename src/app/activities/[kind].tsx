@@ -67,7 +67,7 @@ export default function ActivityKindScreen() {
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}>
         <Animated.View style={[{ height: HERO + insets.top }, heroStyle]}>
-          <Photo visual={{ photo: a.photo }} light={city.light} scrim="strong" width={1200} style={StyleSheet.absoluteFill} />
+          <Photo drift visual={{ photo: a.photo }} light={city.light} scrim="strong" width={1200} style={StyleSheet.absoluteFill} />
           <LinearGradient colors={['rgba(0,0,0,0)', t.c.bg]} locations={[0.6, 1]} style={StyleSheet.absoluteFill} />
         </Animated.View>
         <View style={[styles.head, { marginTop: -110 }]}>
