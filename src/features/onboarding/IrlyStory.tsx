@@ -33,6 +33,9 @@ import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
 import { radius, space } from '@/theme/tokens';
 
+/** Bump when the story changes: everyone sees the new one once (src/app/index.tsx). */
+export const STORY_VERSION = 2;
+
 /** How long a scene stays before the next one comes in by itself. */
 const SCENE_MS = 3000;
 

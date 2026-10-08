@@ -22,7 +22,7 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { DESTINATIONS, UPCOMING_DESTINATIONS } from '@/data/destinations';
 import type { Destination } from '@/data/types';
-import { IrlyStory } from '@/features/onboarding/IrlyStory';
+import { IrlyStory, STORY_VERSION } from '@/features/onboarding/IrlyStory';
 import { useExpand } from '@/features/onboarding/useExpand';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -36,6 +36,7 @@ let introPlayed = false;
 
 export default function Welcome() {
   const router = useRouter();
+  const markStorySeen = useStore((st) => st.markStorySeen);
   const frame = useFrame();
   const insets = useSafeAreaInsets();
   const setDestination = useStore((s) => s.setDestination);
@@ -63,6 +64,7 @@ export default function Welcome() {
   };
   const toChoose = () => {
     introPlayed = true;
+    markStorySeen(STORY_VERSION);
     dim.set(withTiming(0, { duration: 500 }));
     word.set(withSpring(1, spring.smooth));
     group.set(withSpring(1, { duration: 760, dampingRatio: 0.92 }));
