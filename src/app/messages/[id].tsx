@@ -30,7 +30,6 @@ import { isServerId, useServerThread } from '@/features/server/chat';
 import { leaveGroup, renameGroup } from '@/features/server/groups';
 import { useAccount } from '@/features/auth/account';
 import { pickPhoto, setChatPhoto, setCommunityCover, useChatPhoto, usePhotoLink } from '@/features/server/covers';
-import { coverVariant } from '@/features/server/enhance';
 import { pickChatPhotos, takeChatPhoto, useSignedLinks } from '@/features/server/media';
 import { TapPhoto } from '@/features/photo/TapPhoto';
 import { hueOf } from '@/lib/format';
@@ -73,7 +72,7 @@ function ServerThreadView({ id }: { id: string }) {
   // A first message prepared elsewhere (Introduce myself): editable, never sent by itself.
   const { draft } = useLocalSearchParams<{ draft?: string }>();
   const chatPhoto = useChatPhoto(id);
-  const chatPhotoUri = usePhotoLink(coverVariant(chatPhoto.path, 'square'));
+  const chatPhotoUri = usePhotoLink(chatPhoto.path);
   const [photoMenu, setPhotoMenu] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const changePhoto = async (next: 'pick' | 'reset') => {

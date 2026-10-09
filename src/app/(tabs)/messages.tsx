@@ -15,7 +15,6 @@ import { useGirlStore } from '@/features/girl/girlStore';
 import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
 import { isServerId, useServerInbox } from '@/features/server/chat';
 import { useSignedLinks } from '@/features/server/media';
-import { coverVariant } from '@/features/server/enhance';
 import { a11y, t as tx } from '@/i18n';
 import { hueOf } from '@/lib/format';
 import { timeAgo } from '@/lib/time';
@@ -99,7 +98,7 @@ export default function Messages() {
 
   // One signed link per stored photo: people's photos and chats' own pictures.
   const faces = useSignedLinks('profile-photos', useMemo(() => all.map((c) => c.otherPhoto), [all]));
-  const pictures = useSignedLinks('activity-photos', useMemo(() => all.map((c) => coverVariant(c.photoPath, 'square')), [all]));
+  const pictures = useSignedLinks('activity-photos', useMemo(() => all.map((c) => c.photoPath), [all]));
   const loading = server.loading && !server.conversations.length;
 
   return (
@@ -184,7 +183,7 @@ export default function Messages() {
         ) : shown.length ? (
           shown.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : enter.rise(Math.min(i, 8), 30)} exiting={reduced ? undefined : FadeOut.duration(120)} layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)}>
-              <Row c={c} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} face={c.otherPhoto ? faces[c.otherPhoto] : undefined} picture={c.photoPath ? pictures[coverVariant(c.photoPath, 'square')!] : undefined} />
+              <Row c={c} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} face={c.otherPhoto ? faces[c.otherPhoto] : undefined} picture={c.photoPath ? pictures[c.photoPath] : undefined} />
             </Animated.View>
           ))
         ) : (
