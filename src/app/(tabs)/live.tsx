@@ -306,9 +306,12 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
         return (
           <Animated.View key={p.id} entering={enter.rise(i)} style={[styles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
             <View style={styles.head}>
-              <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} />
+              {/* The author's face and name open their profile. */}
+              <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push(`/person/${p.authorId}`)} accessibilityLabel={p.mine ? 'My profile' : tx('Open {name}’s profile', { name: p.firstName })}>
+                <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} />
+              </PressableScale>
               <View style={{ flex: 1 }}>
-                <Text variant="titleS">{p.mine ? 'You' : p.firstName}</Text>
+                <Text variant="titleS" onPress={() => router.push(`/person/${p.authorId}`)}>{p.mine ? 'You' : p.firstName}</Text>
                 <View style={styles.meta}>
                   <LiveDot size={6} color={t.c.live} />
                   <Text variant="caption" tone="secondary" numberOfLines={1}>
@@ -368,7 +371,13 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
               </View>
             ) : (
-              <FriendButton status={status} name={p.firstName} authorId={p.authorId} onDone={refresh} />
+              // Anyone's post can be hidden or reported, not only friends'.
+              <View style={styles.actions}>
+                <View style={{ flex: 1 }}>
+                  <FriendButton status={status} name={p.firstName} authorId={p.authorId} onDone={refresh} />
+                </View>
+                <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
+              </View>
             )}
           </Animated.View>
         );

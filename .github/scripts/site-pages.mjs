@@ -143,12 +143,24 @@ footer{max-width:760px;margin:0 auto;padding:0 20px 40px;font-size:13px;color:va
 @keyframes rise{from{opacity:0;transform:translateY(14px)}}`;
 
 const L = {
-  en: { home: 'Home', guides: 'Guides', updated: 'Updated', by: 'By the IRLY team', read: 'Read also', other: 'Français', locale: 'en_US' },
-  fr: { home: 'Accueil', guides: 'Guides', updated: 'Mis à jour le', by: 'Par l’équipe IRLY', read: 'À lire aussi', other: 'English', locale: 'fr_FR' },
+  en: { home: 'Home', guides: 'Guides', updated: 'Updated', by: 'By the IRLY team', read: 'Read also', other: 'Français', locale: 'en_US',
+    hubTitle: 'Guides: making friends and settling in, in Dubai and Bali | IRLY',
+    hubDesc: 'Practical guides for newcomers to Dubai and Bali: how to meet people, make friends and build a social life in a new city.',
+    hubLead: 'Practical guides for newcomers: how to meet people, make friends and feel at home in a new city. No statistics, no sponsored lists: advice that works.',
+    readGuide: 'Read the guide' },
+  fr: { home: 'Accueil', guides: 'Guides', updated: 'Mis à jour le', by: 'Par l’équipe IRLY', read: 'À lire aussi', other: 'English', locale: 'fr_FR',
+    hubTitle: 'Guides : se faire des amis et s’installer à Dubaï et à Bali | IRLY',
+    hubDesc: 'Des guides pratiques pour les nouveaux arrivants à Dubaï et à Bali : rencontrer du monde, se faire des amis et construire sa vie sociale dans une nouvelle ville.',
+    hubLead: 'Des guides pratiques pour les nouveaux arrivants : rencontrer du monde, se faire des amis et se sentir chez soi dans une nouvelle ville. Pas de statistiques, pas de listes sponsorisées : des conseils qui marchent.',
+    readGuide: 'Lire le guide' },
 };
-const dateFmt = (l) => new Date(`${UPDATED}T12:00:00Z`).toLocaleDateString(l === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+/** The guides index of each language: /guides/ and /fr/guides/. */
+const hubPath = (l) => (l === 'fr' ? 'fr/guides/' : 'guides/');
+const dateFmt = (l, d = UPDATED) => new Date(`${d}T12:00:00Z`).toLocaleDateString(l === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 for (const a of ARTICLES) {
+  // Each guide carries its own date when it has one (only the guides really changed move).
+  const updated = a.updated ?? UPDATED;
   const depth = a.path.split('/').filter(Boolean).length;
   const up = '../'.repeat(depth);
   const url = SITE + a.path;
@@ -164,8 +176,8 @@ for (const a of ARTICLES) {
         headline: a.h1,
         description: a.description,
         inLanguage: a.lang,
-        datePublished: UPDATED,
-        dateModified: UPDATED,
+        datePublished: a.published ?? updated,
+        dateModified: updated,
         mainEntityOfPage: url,
         image: `${SITE}og.jpg`,
         author: { '@type': 'Organization', name: 'IRLY', url: SITE },
@@ -175,8 +187,8 @@ for (const a of ARTICLES) {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: t.home, item: homeAbs },
-          { '@type': 'ListItem', position: 2, name: a.city, item: url },
-          { '@type': 'ListItem', position: 3, name: a.h1 },
+          { '@type': 'ListItem', position: 2, name: t.guides, item: SITE + hubPath(a.lang) },
+          { '@type': 'ListItem', position: 3, name: a.h1, item: url },
         ],
       },
     ],
@@ -204,7 +216,7 @@ ${alternates.join('\n')}
 <meta property="og:url" content="${url}">
 <meta property="og:image" content="${SITE}og.jpg">
 <meta property="og:locale" content="${t.locale}">
-<meta property="article:modified_time" content="${UPDATED}">
+<meta property="article:modified_time" content="${updated}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -218,9 +230,9 @@ ${alternates.join('\n')}
   ${twin ? `<a class="lang" href="${up + twin.path}" hreflang="${twin.lang}" lang="${twin.lang}">${t.other}</a>` : ''}
 </header>
 <main>
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="${homeRel}">${t.home}</a> › ${a.city}</nav>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="${homeRel}">${t.home}</a> › <a href="${up + hubPath(a.lang)}">${t.guides}</a> › ${a.city}</nav>
   <h1>${a.h1}</h1>
-  <p class="meta">${t.by} · ${t.updated} <time datetime="${UPDATED}">${dateFmt(a.lang)}</time></p>
+  <p class="meta">${t.by} · ${t.updated} <time datetime="${updated}">${dateFmt(a.lang, updated)}</time></p>
   <p class="lead">${a.lead}</p>
 ${body}
   <aside class="cta">
@@ -238,13 +250,118 @@ ${body}
   fs.writeFileSync(path.join(OUT, a.path, 'index.html'), html);
 }
 
+/* ───────── Guides index, one per language ───────── */
+for (const l of ['en', 'fr']) {
+  const t = L[l];
+  const list = ARTICLES.filter((a) => a.lang === l);
+  const url = SITE + hubPath(l);
+  const up = '../'.repeat(hubPath(l).split('/').filter(Boolean).length);
+  const other = l === 'fr' ? 'en' : 'fr';
+  const ld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'CollectionPage', name: t.hubTitle, description: t.hubDesc, url, inLanguage: l },
+      { '@type': 'ItemList', itemListElement: list.map((a, i) => ({ '@type': 'ListItem', position: i + 1, url: SITE + a.path, name: a.h1 })) },
+      { '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: t.home, item: SITE + (l === 'fr' ? 'fr/' : '') },
+        { '@type': 'ListItem', position: 2, name: t.guides, item: url },
+      ] },
+    ],
+  };
+  const cards = list
+    .map((a) => `  <article class="card"><h2><a href="${up + a.path}">${a.h1}</a></h2><p>${a.description}</p><p class="more"><a href="${up + a.path}">${t.readGuide} <span aria-hidden="true">→</span></a></p></article>`)
+    .join('\n');
+  const html = `<!doctype html>
+<html lang="${l}" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${esc(t.hubTitle)}</title>
+<meta name="description" content="${esc(t.hubDesc)}">
+<link rel="canonical" href="${url}">
+<link rel="alternate" hreflang="${l}" href="${url}">
+<link rel="alternate" hreflang="${other}" href="${SITE + hubPath(other)}">
+<link rel="alternate" hreflang="x-default" href="${SITE + hubPath('en')}">
+<meta name="theme-color" content="#050505">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="${up}favicon.png" type="image/png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="IRLY">
+<meta property="og:title" content="${esc(t.hubTitle)}">
+<meta property="og:description" content="${esc(t.hubDesc)}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${SITE}og.jpg">
+<meta property="og:locale" content="${t.locale}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap">
+<style>${css}
+.card{padding:22px 0;border-bottom:1px solid var(--line)}.card h2{margin:0 0 8px;font-size:23px}.card h2 a{text-decoration:none}.card p{margin:0 0 8px}.more a{font-weight:700;font-size:15px}</style>
+<script type="application/ld+json">${JSON.stringify(ld)}</script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="${up + (l === 'fr' ? 'fr/' : '')}" aria-label="IRLY">IRLY</a>
+  <a class="lang" href="${up + hubPath(other)}" hreflang="${other}" lang="${other}">${L[l].other}</a>
+</header>
+<main>
+  <nav class="crumbs" aria-label="Breadcrumb"><a href="${up + (l === 'fr' ? 'fr/' : '')}">${t.home}</a> › ${t.guides}</nav>
+  <h1>${t.guides}</h1>
+  <p class="lead">${t.hubLead}</p>
+${cards}
+</main>
+<footer><a href="${up + (l === 'fr' ? 'fr/' : '')}">IRLY</a> · © 2026 IRLY</footer>
+</body>
+</html>
+`;
+  fs.mkdirSync(path.join(OUT, hubPath(l)), { recursive: true });
+  fs.writeFileSync(path.join(OUT, hubPath(l), 'index.html'), html);
+}
+
+/* ───────── FAQ as FAQPage data on each home page (same words as on the page) ───────── */
+for (const l of LANGS) {
+  const file = `${OUT}/${l === 'en' ? '' : `${l}/`}index.html`;
+  let html = fs.readFileSync(file, 'utf8');
+  const pairs = [];
+  for (let i = 1; i <= 12; i++) {
+    const q = html.match(new RegExp(`data-i="faqQ${i}">([\\s\\S]*?)</summary>`));
+    const a = html.match(new RegExp(`data-i="faqA${i}">([\\s\\S]*?)</p>`));
+    if (!q || !a) break;
+    pairs.push({ '@type': 'Question', name: strip(q[1]).trim(), acceptedAnswer: { '@type': 'Answer', text: strip(a[1]).trim() } });
+  }
+  if (!pairs.length) continue;
+  const faq = { '@context': 'https://schema.org', '@type': 'FAQPage', inLanguage: l, mainEntity: pairs };
+  html = html.replace('</head>', `<script type="application/ld+json">${JSON.stringify(faq)}</script>\n</head>`);
+  fs.writeFileSync(file, html);
+}
+
+/* ───────── llms.txt: what IRLY is and where to read more, for AI assistants ───────── */
+const guideLines = ARTICLES.map((a) => `- [${a.h1}](${SITE + a.path}) (${a.lang}): ${a.description}`).join('\n');
+fs.writeFileSync(
+  `${OUT}/llms.txt`,
+  `# IRLY
+
+> IRLY is an app to meet people who share your interests and do things together in real life: communities, activities and group chats. It starts in Dubai, covers the other emirates of the UAE, and is also available in Bali. It is not a dating app. IRLY Girl is a space reserved for women.
+
+- Website: ${SITE} (English), ${SITE}fr/ (French), ${SITE}ar/ (Arabic)
+- Web app: ${APP_URL} (iOS and Android apps coming soon)
+- Guides: ${SITE}guides/ and ${SITE}fr/guides/
+
+## Guides
+
+${guideLines}
+`,
+);
+
 /* ───────── Sitemap ───────── */
 const homeAlts = LANGS.map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${homeHref(l)}"/>`).concat(`    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}"/>`).join('\n');
 const urls = LANGS.map((l) => `  <url>\n    <loc>${homeHref(l)}</loc>\n    <lastmod>${UPDATED}</lastmod>\n${homeAlts}\n  </url>`);
 for (const a of ARTICLES) {
   const pair = ARTICLES.filter((x) => x.pair === a.pair);
   const alts = pair.map((x) => `    <xhtml:link rel="alternate" hreflang="${x.lang}" href="${SITE + x.path}"/>`).join('\n');
-  urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${UPDATED}</lastmod>\n${alts}\n  </url>`);
+  urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${a.updated ?? UPDATED}</lastmod>\n${alts}\n  </url>`);
 }
+const hubAlts = ['en', 'fr'].map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE + hubPath(l)}"/>`).join('\n');
+for (const l of ['en', 'fr']) urls.push(`  <url>\n    <loc>${SITE + hubPath(l)}</loc>\n    <lastmod>${ARTICLES.map((a) => a.updated ?? UPDATED).sort().at(-1)}</lastmod>\n${hubAlts}\n  </url>`);
 fs.writeFileSync(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
-console.log('site pages: fr, ar,', ARTICLES.map((a) => a.path).join(', '), '+ sitemap');
+console.log('site pages: fr, ar,', ARTICLES.map((a) => a.path).join(', '), '+ guides index, FAQ data, llms.txt, sitemap');

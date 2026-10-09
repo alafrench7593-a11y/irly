@@ -199,7 +199,7 @@ async function main() {
   });
   await step('Uma replies from the app → Vera receives it', async () => {
     await page.getByPlaceholder('Message').fill(`Reply ${run}`);
-    await page.getByRole('button', { name: 'Send' }).click();
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
     for (let i = 0; i < 20; i++) {
       const rows = must(await veraSb.from('messages').select('body').eq('conversation_id', conv));
       if (rows.some((r) => r.body === `Reply ${run}`)) return true;
@@ -489,7 +489,7 @@ async function main() {
   });
   await step('Uma replies → Vera receives it, unread for her until she reads', async () => {
     await page.getByPlaceholder('Message').fill(`Reply to Vera ${run}`);
-    await page.getByRole('button', { name: 'Send' }).click();
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
     for (let i = 0; i < 20; i++) {
       const inbox = must(await veraSb.rpc('my_conversations'));
       const row = inbox.find((c) => c.conversation_id === dm);
@@ -572,6 +572,203 @@ async function main() {
     return false;
   });
 
+  // ───────── Messaging & social: profiles, follows, photos, groups ─────────
+  // Vera accepts messages from people she shares a community with.
+  await sql(`insert into public.safety_settings (user_id, who_can_message) values ('${vera.id}', 'everyone') on conflict (user_id) do update set who_can_message = 'everyone'`);
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAG0lEQVR42mP8z8BQz0AEYBxVSFUAAApzAf/3Kt4wAAAAAElFTkSuQmCC', 'base64');
+  await step('Vera\'s profile opens from the app (a real member, not example data)', async () => {
+    await page.goto(`${BASE}/person/${vera.id}`);
+    await visible(page, 'Followers', 20000);
+    await visible(page, 'Vera');
+    return true;
+  });
+  await step('Follow → recorded once on the server, the button says Following, Vera has 1 follower', async () => {
+    await page.getByRole('button', { name: 'Follow', exact: true }).click();
+    await visible(page, 'Following', 15000);
+    const [f] = await sql(`select count(*)::int as n from public.follows where follower_id = '${uma.id}' and followee_id = '${vera.id}'`);
+    const prof = must(await veraSb.rpc('public_profile', { p_user: vera.id }))[0];
+    const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${vera.id}' and kind = 'NEW_FOLLOWER'`);
+    return f.n === 1 && prof.followers === 1 && n.n === 1;
+  });
+  await step('… still following after a reload; the followers list shows Uma', async () => {
+    await page.reload();
+    await visible(page, 'Following', 20000);
+    await page.getByRole('button', { name: /Followers/ }).first().click();
+    // Uma sees herself in Vera's followers, shown as "You".
+    await visible(page, 'You', 15000);
+    return true;
+  });
+  await step('Unfollow → no follow left, no duplicate', async () => {
+    await page.goto(`${BASE}/person/${vera.id}`);
+    await page.getByRole('button', { name: 'Following', exact: true }).first().click();
+    for (let i = 0; i < 20; i++) {
+      const [f] = await sql(`select count(*)::int as n from public.follows where follower_id = '${uma.id}' and followee_id = '${vera.id}'`);
+      if (f.n === 0) return true;
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
+  let dmId = null;
+  await step('Message from the profile → the private chat opens with Vera\'s name in the header', async () => {
+    await page.getByRole('button', { name: 'Message', exact: true }).click();
+    await page.waitForURL(/\/messages\/[0-9a-f-]{36}/, { timeout: 20000 });
+    dmId = page.url().split('/messages/')[1].split('?')[0];
+    await visible(page, 'Private · see profile', 15000);
+    return true;
+  });
+  await step('Uma sends a photo (pick, preview, send) → stored and on the server; still there after a reload', async () => {
+    await page.getByRole('button', { name: 'Send a photo' }).click();
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 15000 }), page.getByRole('button', { name: 'Choose from my photos' }).click()]);
+    await chooser.setFiles({ name: 'court.png', mimeType: 'image/png', buffer: PNG });
+    await page.getByRole('button', { name: 'Send the photo' }).click({ timeout: 15000 });
+    let row = null;
+    for (let i = 0; i < 40 && !row; i++) {
+      [row] = await sql(`select id, media_path from public.messages where conversation_id = '${dmId}' and kind = 'photo' and sender_id = '${uma.id}' order by created_at desc limit 1`);
+      if (!row) await page.waitForTimeout(500);
+    }
+    if (!row?.media_path) return false;
+    await page.reload();
+    await page.locator('img[aria-label="Photo"], [aria-label="Photo"] img, img').filter({ visible: true }).first().waitFor({ timeout: 20000 });
+    globalThis.__dmPhoto = row.media_path;
+    return true;
+  });
+  await step('… Vera (member of the chat) can open the photo; Vera receives it in her inbox as a photo', async () => {
+    const { data, error } = await veraSb.storage.from('chat-media').createSignedUrl(globalThis.__dmPhoto, 60);
+    const inbox = must(await veraSb.rpc('my_conversations'));
+    const c = inbox.find((x) => x.conversation_id === dmId);
+    return !error && Boolean(data?.signedUrl) && c?.last_kind === 'photo';
+  });
+  await step('Tap the header → Vera\'s profile; Back → the same chat with its history', async () => {
+    await page.getByRole('button', { name: /Open Vera’s profile/ }).first().click();
+    await visible(page, 'Followers', 15000);
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/messages/${dmId}`), { timeout: 15000 });
+    await visible(page, 'Private · see profile', 15000);
+    return true;
+  });
+  await step('Network cut while sending a photo → "Not sent · Retry"; back online, Retry → exactly one photo message', async () => {
+    await page.goto(`${BASE}/messages/${dmId}`);
+    await visible(page, 'Private · see profile', 15000);
+    const [{ n: before }] = await sql(`select count(*)::int as n from public.messages where conversation_id = '${dmId}' and kind = 'photo'`);
+    await page.getByRole('button', { name: 'Send a photo' }).click();
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 15000 }), page.getByRole('button', { name: 'Choose from my photos' }).click()]);
+    await chooser.setFiles({ name: 'offline.png', mimeType: 'image/png', buffer: PNG });
+    await page.context().setOffline(true);
+    await page.getByRole('button', { name: 'Send the photo' }).click({ timeout: 15000 });
+    await visible(page, 'Not sent · Retry', 20000);
+    await page.context().setOffline(false);
+    await page.waitForTimeout(1500);
+    await page.getByRole('button', { name: 'Not sent. Retry' }).first().click();
+    for (let i = 0; i < 40; i++) {
+      const [{ n }] = await sql(`select count(*)::int as n from public.messages where conversation_id = '${dmId}' and kind = 'photo'`);
+      if (n === before + 1) {
+        await page.waitForTimeout(2000);
+        const [{ n: after }] = await sql(`select count(*)::int as n from public.messages where conversation_id = '${dmId}' and kind = 'photo'`);
+        return after === before + 1;
+      }
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
+  let groupId = null;
+  await step('New group with Vera (name, people) → its chat opens; Vera has it in her inbox as a group', async () => {
+    await page.goto(`${BASE}/group/new`);
+    await page.getByPlaceholder('Group name').fill(`Padel crew ${run}`);
+    await page.getByRole('checkbox', { name: 'Vera' }).click({ timeout: 20000 });
+    await page.getByRole('button', { name: 'Create the group' }).click();
+    await page.waitForURL(/\/messages\/[0-9a-f-]{36}/, { timeout: 20000 });
+    groupId = page.url().split('/messages/')[1].split('?')[0];
+    const inbox = must(await veraSb.rpc('my_conversations'));
+    const g = inbox.find((x) => x.conversation_id === groupId);
+    return g?.kind === 'group' && g.members === 2;
+  });
+  await step('Vera writes in the group → it appears live in Uma\'s open group chat', async () => {
+    await page.waitForTimeout(1500);
+    must(await veraSb.from('messages').insert({ conversation_id: groupId, sender_id: vera.id, body: `Group hello ${run}` }));
+    await visible(page, `Group hello ${run}`, 20000);
+    return true;
+  });
+  await step('Messages tabs: the group is under Groups, the chat with Vera under Private, never both', async () => {
+    await page.goto(`${BASE}/messages`);
+    await page.getByRole('tab', { name: /^Groups/ }).click();
+    await visible(page, `Padel crew ${run}`, 20000);
+    const vInGroups = await page.getByText('Vera', { exact: true }).filter({ visible: true }).count();
+    await page.getByRole('tab', { name: /^Private/ }).click();
+    await visible(page, 'Vera', 15000);
+    const gInPrivate = await page.getByText(`Padel crew ${run}`).filter({ visible: true }).count();
+    return vInGroups === 0 && gInPrivate === 0;
+  });
+  await step('Search finds the group by name', async () => {
+    await page.getByRole('tab', { name: /^All/ }).click();
+    await page.getByPlaceholder('Search conversations').fill('Padel crew');
+    await visible(page, `Padel crew ${run}`, 10000);
+    await page.getByPlaceholder('Search conversations').fill('');
+    return true;
+  });
+  // Uma accepts messages from people she shares a community with (Vera adds her to a group).
+  await sql(`insert into public.safety_settings (user_id, who_can_message) values ('${uma.id}', 'everyone') on conflict (user_id) do update set who_can_message = 'everyone'`);
+  let photoGroup = null;
+  await step('Vera creates a group with its photo → Uma sees it under Groups with that photo', async () => {
+    const path1 = `${vera.id}/g1-${run}.png`;
+    must(await veraSb.storage.from('activity-photos').upload(path1, PNG, { contentType: 'image/png', upsert: true }));
+    photoGroup = must(await veraSb.rpc('create_group', { p_title: `Photo group ${run}`, p_members: [uma.id], p_photo: path1 }));
+    await page.goto(`${BASE}/messages`);
+    await page.getByRole('tab', { name: /^Groups/ }).click();
+    await visible(page, `Photo group ${run}`, 20000);
+    await page.locator(`img[src*="g1-${run}"]`).first().waitFor({ timeout: 20000 });
+    return true;
+  });
+  await step('… Vera changes the group photo → Uma\'s open list shows the new one, no reload', async () => {
+    const path2 = `${vera.id}/g2-${run}.png`;
+    must(await veraSb.storage.from('activity-photos').upload(path2, PNG, { contentType: 'image/png', upsert: true }));
+    must(await veraSb.rpc('set_conversation_photo', { p_conversation: photoGroup, p_path: path2 }));
+    await page.locator(`img[src*="g2-${run}"]`).first().waitFor({ timeout: 25000 });
+    return true;
+  });
+  let photoClub = null;
+  await step('Community: Vera creates one, Uma joins → its chat is under Communities with the community\'s photo', async () => {
+    photoClub = must(await veraSb.rpc('create_community', { p_name: `Photo club ${run}`, p_city: 'bali' }));
+    const cover = `${vera.id}/c1-${run}.png`;
+    must(await veraSb.storage.from('activity-photos').upload(cover, PNG, { contentType: 'image/png', upsert: true }));
+    must(await veraSb.rpc('set_community_cover', { p_community: photoClub, p_path: cover }));
+    await page.goto(`${BASE}/c/${photoClub}`);
+    await page.getByRole('button', { name: 'Join the community' }).click();
+    await visible(page, 'Open chat', 20000);
+    await page.goto(`${BASE}/messages`);
+    await page.getByRole('tab', { name: /^Communities/ }).click();
+    await visible(page, `Photo club ${run}`, 20000);
+    try {
+      await page.locator(`img[src*="c1-${run}"]`).first().waitFor({ timeout: 20000 });
+    } catch (e) {
+      // Where the photo got lost: the community row, Uma's inbox row, the pictures on screen.
+      const com = await sql(`select cover_path, deleted_at from public.communities where id = '${photoClub}'`);
+      const inbox = await sql(`select set_config('request.jwt.claims', '{"sub":"${uma.id}","role":"authenticated"}', true); select conversation_id, kind, title, photo_path, photo_bucket from public.my_conversations() where title like 'Photo club%'`);
+      const imgs = await page.locator('img').evaluateAll((els) => els.map((el) => el.getAttribute('src')?.slice(0, 120)));
+      const paths = await sql(`select set_config('request.jwt.claims', '{"sub":"${uma.id}","role":"authenticated"}', true); select title, photo_path from public.my_conversations()`);
+      const umaSb = createClient(URL_, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+      await umaSb.auth.signInWithPassword({ email: uma.email, password: PASSWORD });
+      const one = await umaSb.storage.from('activity-photos').createSignedUrls([cover], 60);
+      const all = await umaSb.storage.from('activity-photos').createSignedUrls(paths.map((r) => r.photo_path).filter(Boolean), 60);
+      const pol = await sql(`select qual from pg_policies where schemaname = 'storage' and policyname = 'activity_photos_read'`);
+      console.log(`   diag one: ${JSON.stringify(one).slice(0, 400)}\n   diag all: ${JSON.stringify(all).slice(0, 900)}\n   diag paths: ${JSON.stringify(paths)}\n   diag policy: ${JSON.stringify(pol).slice(0, 600)}`);
+      console.log(`   diag community: ${JSON.stringify(com)}\n   diag inbox: ${JSON.stringify(inbox)}\n   diag imgs: ${JSON.stringify(imgs)}`);
+      throw e;
+    }
+    return true;
+  });
+  await step('… Vera renames the community → the chat\'s name follows in Uma\'s open list, no reload', async () => {
+    must(await veraSb.from('communities').update({ name: `Photo club ${run} Bali` }).eq('id', photoClub));
+    await visible(page, `Photo club ${run} Bali`, 25000);
+    must(await veraSb.rpc('delete_community', { p_community: photoClub }));
+    return true;
+  });
+  await step('Access: someone outside the group cannot read it, nor open its photos', async () => {
+    // Vera leaves; she can no longer read the group or a photo sent in it.
+    must(await veraSb.rpc('leave_group', { p_conversation: groupId }));
+    const { data: msgs } = await veraSb.from('messages').select('id').eq('conversation_id', groupId);
+    return (msgs ?? []).length === 0;
+  });
+
   // ───────── 1. Paths: every screen opens ─────────
   const areas = (await sql(`select id from public.areas where city_id = 'bali' order by sort`)).map((r) => r.id);
   const sections = ['visa', 'housing', 'banking', 'sim', 'internet', 'transport', 'healthcare', 'insurance', 'schools', 'childcare', 'work', 'coworking', 'business', 'accounting', 'tax', 'legal', 'real_estate', 'moving', 'pets', 'services'];
@@ -581,7 +778,7 @@ async function main() {
   const screens = [
     '/', '/discover', '/soon/pro', '/soon/bonplan', '/soon/visa', '/soon/location', '/live', '/map', '/messages', '/profile', '/social', '/account', '/assistant', '/business', '/calendar', '/communities',
     '/community/new', '/design-system', '/eat', '/events', '/match', '/notifications', '/saved', '/services', '/settings', '/activities',
-    '/network', '/network/profile', `/network/${vera.id}`, '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
+    '/network', '/network/profile', `/network/${vera.id}`, '/group/new', `/follows/${vera.id}`, `/person/${vera.id}`, '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
     `/comments?type=activity&id=${actId}`, `/share?type=activity&id=${actId}&title=x`, '/person/p-kadek',
     ...areas.map((a) => `/bali/area/${a}`),
     ...sections.map((s) => `/bali/guide/${s}`),

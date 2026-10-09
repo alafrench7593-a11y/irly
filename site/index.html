@@ -534,6 +534,16 @@ html[lang="ar"] .day .k { letter-spacing: 0; }
 @media (max-width: 760px) { .day { width: 78vw; } .days .rail { padding-inline-end: 12vw; } }
 
 /* ───────────────────────── Waitlist ───────────────────────── */
+.faq .wrap { max-width: 760px; }
+.faq h2 { font-size: var(--t-h2, clamp(32px, 6vw, 56px)); letter-spacing: -0.04em; }
+.qas { margin-top: 28px; border-top: 1px solid rgba(255,255,255,.12); }
+.qa { border-bottom: 1px solid rgba(255,255,255,.12); }
+.qa summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; gap: 16px; padding: 20px 0; font-weight: 700; font-size: 19px; }
+.qa summary::-webkit-details-marker { display: none; }
+.qa summary::after { content: '+'; font-weight: 400; font-size: 24px; line-height: 1; transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.qa[open] summary::after { transform: rotate(45deg); }
+.qa p { margin: 0 0 20px; color: var(--g1, #c9c9c4); line-height: 1.7; max-width: 62ch; }
+@media (prefers-reduced-motion: reduce) { .qa summary::after { transition: none; } }
 .soon-sec { position: relative; overflow: hidden; text-align: center; }
 .soon-sec .glow { position: absolute; left: 50%; top: 40%; width: 900px; height: 900px; max-width: 200vw; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(255,255,255,.1), transparent 62%); pointer-events: none; z-index: -1; animation: breathe 7s ease-in-out infinite; }
 .soon-sec h2 { font-size: var(--t-display); letter-spacing: -0.06em; max-width: 14ch; margin-inline: auto; }
@@ -676,6 +686,8 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
     <div class="pin">
       <div class="bg" aria-hidden="true">
         <img src="img/heroBurj.webp" srcset="img/heroBurj-sm.webp 960w, img/heroBurj.webp 1280w" sizes="100vw" alt="" fetchpriority="high">
+        <!-- The film fades in over the photo once it can play (never on reduced motion or data saving). -->
+        <video id="heroVideo" muted playsinline loop preload="none" poster="video/hero.jpg"><source src="video/hero.mp4" type="video/mp4"></video>
       </div>
       <div class="copy" id="heroCopy">
         <span class="tag notranslate" dir="ltr" translate="no">IN REAL LIFE.</span>
@@ -975,6 +987,21 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
   </section>
 
   <!-- Waitlist. -->
+  <!-- Questions people ask (also given to search engines and assistants as FAQPage data). -->
+  <section class="chapter faq" id="faq" aria-labelledby="faq-t">
+    <div class="wrap">
+      <h2 class="reveal" id="faq-t" data-i="faqT">Questions about IRLY</h2>
+      <div class="qas">
+        <details class="qa reveal"><summary data-i="faqQ1">What is IRLY?</summary><p data-i="faqA1">IRLY is an app to meet people who share your interests and do things together in real life: join communities, find or create activities, and talk with the group before you meet.</p></details>
+        <details class="qa reveal"><summary data-i="faqQ2">Is IRLY a dating app?</summary><p data-i="faqA2">No. IRLY is about friendship, communities, activities and networking. People join to find friends, sport partners, people from their field or a group to explore the city with.</p></details>
+        <details class="qa reveal"><summary data-i="faqQ3">Where is IRLY available?</summary><p data-i="faqA3">IRLY starts in Dubai and covers the other emirates of the UAE. It is also available in Bali.</p></details>
+        <details class="qa reveal"><summary data-i="faqQ4">Can I use IRLY now?</summary><p data-i="faqA4">Yes. IRLY already works in your browser at getirly.com/app. The iOS and Android apps are coming soon.</p></details>
+        <details class="qa reveal"><summary data-i="faqQ5">How does IRLY keep members safe?</summary><p data-i="faqA5">You choose who can see your profile and who can message you, and your exact location is never shared. You can report or block anyone, and reports are reviewed by the IRLY team.</p></details>
+        <details class="qa reveal"><summary data-i="faqQ6">What is IRLY Girl?</summary><p data-i="faqA6">IRLY Girl is a space reserved for women: women-only communities, activities and conversations, to meet friends in a setting that feels safe.</p></details>
+      </div>
+    </div>
+  </section>
+
   <section class="chapter soon-sec" id="waitlist" aria-labelledby="soon-t">
     <div class="glow" aria-hidden="true"></div>
     <div class="wrap">
@@ -1042,6 +1069,7 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
         <h3 id="f-guides" data-i="fGuides">Guides</h3>
         <a href="dubai/make-friends/" data-href-fr="dubai/se-faire-des-amis/" data-i="gDubai">Making friends in Dubai</a>
         <a href="bali/make-friends/" data-href-fr="bali/se-faire-des-amis/" data-i="gBali">Making friends in Bali</a>
+        <a href="guides/" data-href-fr="guides/" data-i="gAll">All guides</a>
       </nav>
       <div>
         <h3 data-i="fSocial">Social</h3>
@@ -1124,10 +1152,11 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
       ml5: 'Padel', ml6: 'Course au lever du soleil', ml7: 'Foot', ml8: 'IRLY Network', ml9: 'IRLY Newcomers', ml10: 'Brunch', ml11: 'Dîner', ml12: 'Soirée galerie', ml13: 'Fête sur la plage',
       kDubai: 'Pourquoi Dubaï d’abord', dubaiT1: 'Ça commence à Dubaï.', dubaiT2: 'Pensé pour partout.', dubaiP: 'Dubaï est une ville de gens venus d’ailleurs : pour travailler, entreprendre, étudier, recommencer. Elle bouge vite et il y a toujours quelque chose à faire. L’endroit idéal pour rencontrer du monde, à condition de savoir où chercher.', w1: 'Internationale', w2: 'Nouveaux arrivants', w3: 'Toujours en mouvement', w4: 'Mille choses à faire', w5: 'Networking', w6: 'Expériences', w7: 'Communautés internationales', r1: 'Dubaï', r2: 'Émirats', r3: 'Golfe', r4: 'Le monde', aerialAria: 'Dubai Marina vue du ciel', altJbr: 'Dubai Marina et JBR depuis la plage', altBurj: 'Burj Khalifa', altDhow: 'Un boutre sur l’eau au coucher du soleil',
       kDays: 'Dix jours à Dubaï', exStory: 'Histoire d’exemple', daysT: 'D’une nouvelle ville à ta ville.', d1k: 'JOUR 1', d1: 'Nouvelle à Dubaï.', d1p: 'Un nouveau job, un nouvel appart. Personne à appeler.', d2k: 'JOUR 2', d2: 'Elle découvre IRLY.', d2p: 'Un profil, quelques passions. Deux minutes.', d3k: 'JOUR 3', d3: 'Elle trouve IRLY Gym.', d3p: 'Elle rejoint, dit bonjour. On lui répond.', d4k: 'JOUR 4', d4: 'Elle rencontre du monde.', d4p: 'Premier entraînement, de vrais visages.', d5k: 'JOUR 5', d5: 'Elle rejoint une activité.', d5p: 'Padel à 19h30. Dîner après.', d10k: 'JOUR 10', d10: 'Dubaï commence à ressembler à chez elle.',
+      faqT: 'Questions sur IRLY', faqQ1: 'Qu’est-ce qu’IRLY ?', faqA1: 'IRLY est une app pour rencontrer des gens qui partagent tes passions et faire des choses ensemble, dans la vraie vie : rejoins des communautés, trouve ou crée des activités, et échange avec le groupe avant de te retrouver.', faqQ2: 'IRLY est-elle une app de rencontres amoureuses ?', faqA2: 'Non. IRLY est faite pour l’amitié, les communautés, les activités et le networking. On y vient pour trouver des amis, des partenaires de sport, des gens de son domaine ou un groupe pour découvrir la ville.', faqQ3: 'Où IRLY est-elle disponible ?', faqA3: 'IRLY commence à Dubaï et couvre les autres émirats des Émirats arabes unis. Elle est aussi disponible à Bali.', faqQ4: 'Puis-je utiliser IRLY dès maintenant ?', faqA4: 'Oui. IRLY fonctionne déjà dans ton navigateur sur getirly.com/app. Les apps iOS et Android arrivent bientôt.', faqQ5: 'Comment IRLY protège-t-elle ses membres ?', faqA5: 'Tu choisis qui peut voir ton profil et qui peut t’écrire, et ta position exacte n’est jamais partagée. Tu peux signaler ou bloquer n’importe qui, et l’équipe IRLY examine les signalements.', faqQ6: 'Qu’est-ce qu’IRLY Girl ?', faqA6: 'IRLY Girl est un espace réservé aux femmes : communautés, activités et conversations entre femmes, pour se faire des amies dans un cadre rassurant.',
       comingSoon: 'Bientôt', soonT: 'Sois là au lancement d’IRLY.', soonP: 'Fais partie des premiers à découvrir IRLY à Dubaï.', emailLabel: 'Ton e-mail', emailPh: 'E-mail', notify: 'Rejoindre la liste d’attente', formLegal: 'Ton e-mail sert uniquement à te prévenir du lancement d’IRLY.', privacy: 'Politique de confidentialité', terms: 'Conditions d’utilisation',
       done1: 'Tu es sur la liste.', done2: 'On te prévient dès qu’IRLY est en ligne.', badgesAria: 'Bientôt sur l’App Store et Google Play', soonOn: 'Bientôt sur', soonOnDays: 'Dans {n} jours sur', webNote: 'Pas envie d’attendre ? IRLY marche déjà dans ton navigateur : <a href="https://getirly.com/app/" data-cta="waitlist">trouve tes gens maintenant</a>.',
       fin1: 'Ta ville est pleine de gens.', fin2: 'Tu n’as juste pas encore rencontré les tiens.', finSoon: 'Sur iOS et Android dans {n} jours', finSoonLater: 'Bientôt sur iOS et Android',
-      fNav: 'Navigation', fGuides: 'Guides', gDubai: 'Se faire des amis à Dubaï', gBali: 'Se faire des amis à Bali', fWeb: 'IRLY sur le web', fContact: 'Contact', fSocial: 'Réseaux', fApp: 'App', soonShort: 'Bientôt', rights: 'Tous droits réservés.', operator: 'IRLY est exploité par Samuel Princivil, Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.', fineNote: 'Les écrans, profils, messages et l’histoire en dix jours sont des exemples. Photos et vidéos : Pixabay, Pexels, domaine public, CC0 et photos fournies par IRLY. Données cartographiques © contributeurs OpenStreetMap.',
+      fNav: 'Navigation', fGuides: 'Guides', gDubai: 'Se faire des amis à Dubaï', gBali: 'Se faire des amis à Bali', gAll: 'Tous les guides', fWeb: 'IRLY sur le web', fContact: 'Contact', fSocial: 'Réseaux', fApp: 'App', soonShort: 'Bientôt', rights: 'Tous droits réservés.', operator: 'IRLY est exploité par Samuel Princivil, Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.', fineNote: 'Les écrans, profils, messages et l’histoire en dix jours sont des exemples. Photos et vidéos : Pixabay, Pexels, domaine public, CC0 et photos fournies par IRLY. Données cartographiques © contributeurs OpenStreetMap.',
       errEmpty: 'Entre ton adresse e-mail.', errInvalid: 'Cette adresse e-mail ne semble pas valide.', errNet: 'Impossible de t’inscrire pour le moment. Vérifie ta connexion et réessaie.', errBusy: 'Trop de tentatives. Réessaie dans quelques minutes.', example: 'Photo de profil d’exemple',
     },
     ar: {
@@ -1157,10 +1186,11 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
       ml5: 'بادل', ml6: 'جري عند الشروق', ml7: 'كرة القدم', ml8: 'IRLY Network', ml9: 'IRLY Newcomers', ml10: 'فطور متأخر', ml11: 'عشاء', ml12: 'أمسية في معرض فني', ml13: 'حفلة على الشاطئ',
       kDubai: 'لماذا دبي أولًا', dubaiT1: 'البداية من دبي.', dubaiT2: 'ومصمّم لكل مكان.', dubaiP: 'دبي مدينة أناس جاؤوا من أماكن أخرى: للعمل والبناء والدراسة والبدء من جديد. إيقاعها سريع وفيها دائمًا ما تفعله. المكان المثالي للتعرّف على الناس، إن عرفت أين تبحث.', w1: 'دولية', w2: 'قادمون جدد', w3: 'حركة دائمة', w4: 'الكثير لتفعله', w5: 'تواصل مهني', w6: 'تجارب', w7: 'مجتمعات دولية', r1: 'دبي', r2: 'الإمارات', r3: 'الخليج', r4: 'العالم', aerialAria: 'دبي مارينا من الجو', altJbr: 'دبي مارينا وجي بي آر من الشاطئ', altBurj: 'برج خليفة', altDhow: 'مركب شراعي على الماء عند الغروب',
       kDays: 'عشرة أيام في دبي', exStory: 'قصة توضيحية', daysT: 'من مدينة جديدة إلى مدينتك.', d1k: 'اليوم ١', d1: 'جديدة في دبي.', d1p: 'عمل جديد وشقة جديدة. ولا أحد تتصل به.', d2k: 'اليوم ٢', d2: 'تكتشف IRLY.', d2p: 'ملف شخصي وبعض الاهتمامات. دقيقتان.', d3k: 'اليوم ٣', d3: 'تجد IRLY Gym.', d3p: 'تنضم وتقول مرحبًا، فيردّون.', d4k: 'اليوم ٤', d4: 'تلتقي بالناس.', d4p: 'أول تمرين، ووجوه حقيقية.', d5k: 'اليوم ٥', d5: 'تنضم إلى نشاط.', d5p: 'بادل الساعة ٧:٣٠، ثم عشاء.', d10k: 'اليوم ١٠', d10: 'دبي بدأت تشبه البيت.',
+      faqT: 'أسئلة حول IRLY', faqQ1: 'ما هو IRLY؟', faqA1: 'IRLY تطبيق للتعرّف على أشخاص يشاركونك اهتماماتك والقيام بأنشطة معًا في الحياة الواقعية: انضم إلى مجتمعات، وابحث عن أنشطة أو أنشئها، وتحدّث مع المجموعة قبل اللقاء.', faqQ2: 'هل IRLY تطبيق مواعدة؟', faqA2: 'لا. IRLY مخصّص للصداقة والمجتمعات والأنشطة والتواصل المهني. ينضم إليه الناس للعثور على أصدقاء أو شركاء رياضة أو أشخاص من مجالهم أو مجموعة لاكتشاف المدينة.', faqQ3: 'أين يتوفر IRLY؟', faqA3: 'يبدأ IRLY في دبي ويشمل باقي إمارات الدولة. وهو متوفر أيضًا في بالي.', faqQ4: 'هل يمكنني استخدام IRLY الآن؟', faqA4: 'نعم. يعمل IRLY الآن في متصفحك على getirly.com/app. وتطبيقا iOS وAndroid قادمان قريبًا.', faqQ5: 'كيف يحمي IRLY أعضاءه؟', faqA5: 'أنت تختار من يرى ملفك الشخصي ومن يمكنه مراسلتك، ولا تتم مشاركة موقعك الدقيق أبدًا. يمكنك الإبلاغ عن أي شخص أو حظره، ويراجع فريق IRLY البلاغات.', faqQ6: 'ما هو IRLY Girl؟', faqA6: 'IRLY Girl مساحة مخصّصة للنساء: مجتمعات وأنشطة ومحادثات بين النساء، لتكوين صداقات في أجواء آمنة.',
       comingSoon: 'قريبًا', soonT: 'كن هناك عند إطلاق IRLY.', soonP: 'كن من أوائل من يكتشفون IRLY في دبي.', emailLabel: 'بريدك الإلكتروني', emailPh: 'البريد الإلكتروني', notify: 'انضم إلى قائمة الانتظار', formLegal: 'نستخدم بريدك الإلكتروني فقط لإبلاغك عند إطلاق IRLY.', privacy: 'سياسة الخصوصية', terms: 'شروط الاستخدام',
       done1: 'أنت على القائمة.', done2: 'سنخبرك فور إطلاق IRLY.', badgesAria: 'قريبًا على App Store وGoogle Play', soonOn: 'قريبًا على', soonOnDays: 'بعد {n} أيام على', webNote: 'لا تريد الانتظار؟ IRLY يعمل الآن في متصفحك: <a href="https://getirly.com/app/" data-cta="waitlist">اعثر على ناسك الآن</a>.',
       fin1: 'مدينتك مليئة بالناس.', fin2: 'لكنك لم تلتقِ بناسك بعد.', finSoon: 'على iOS وAndroid بعد {n} أيام', finSoonLater: 'قريبًا على iOS وAndroid',
-      fNav: 'التنقل', fGuides: 'أدلة', gDubai: 'تكوين صداقات في دبي (بالإنجليزية)', gBali: 'تكوين صداقات في بالي (بالإنجليزية)', fWeb: 'IRLY على الويب', fContact: 'تواصل معنا', fSocial: 'التواصل الاجتماعي', fApp: 'التطبيق', soonShort: 'قريبًا', rights: 'جميع الحقوق محفوظة.', operator: 'يُشغّل IRLY سامويل برينسيفيل، دبي ديجيتال بارك، واحة دبي للسيليكون، دبي، الإمارات العربية المتحدة.', fineNote: 'الشاشات والملفات الشخصية والرسائل وقصة الأيام العشرة أمثلة توضيحية. الصور ومقاطع الفيديو: Pixabay وPexels وملكية عامة وCC0 وصور قدّمها IRLY. بيانات الخريطة © مساهمو OpenStreetMap.',
+      fNav: 'التنقل', fGuides: 'أدلة', gDubai: 'تكوين صداقات في دبي (بالإنجليزية)', gBali: 'تكوين صداقات في بالي (بالإنجليزية)', gAll: 'كل الأدلة (بالإنجليزية)', fWeb: 'IRLY على الويب', fContact: 'تواصل معنا', fSocial: 'التواصل الاجتماعي', fApp: 'التطبيق', soonShort: 'قريبًا', rights: 'جميع الحقوق محفوظة.', operator: 'يُشغّل IRLY سامويل برينسيفيل، دبي ديجيتال بارك، واحة دبي للسيليكون، دبي، الإمارات العربية المتحدة.', fineNote: 'الشاشات والملفات الشخصية والرسائل وقصة الأيام العشرة أمثلة توضيحية. الصور ومقاطع الفيديو: Pixabay وPexels وملكية عامة وCC0 وصور قدّمها IRLY. بيانات الخريطة © مساهمو OpenStreetMap.',
       errEmpty: 'أدخل بريدك الإلكتروني.', errInvalid: 'يبدو أن هذا البريد الإلكتروني غير صالح.', errNet: 'تعذّر تسجيلك الآن. تحقّق من اتصالك وحاول مجددًا.', errBusy: 'محاولات كثيرة. حاول مجددًا بعد بضع دقائق.', example: 'صورة ملف شخصي توضيحية',
     },
   };
@@ -1246,6 +1276,18 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
     video.addEventListener('loadeddata', () => onReady && onReady());
     io.observe(video);
   };
+  // Hero film: after the page has loaded (the photo stays the first paint), then faded in.
+  const heroVideo = $('#heroVideo');
+  if (heroVideo) {
+    if (reduce || saveData) heroVideo.remove();
+    else {
+      heroVideo.addEventListener('playing', () => heroVideo.classList.add('on'), { once: true });
+      heroVideo.addEventListener('error', () => heroVideo.remove(), true);
+      const start = () => setTimeout(() => lazyVideo(heroVideo), 300);
+      if (document.readyState === 'complete') start();
+      else addEventListener('load', start, { once: true });
+    }
+  }
   const aerial = $('#aerial'), aerialVideo = $('#aerial video');
   lazyVideo(aerialVideo, () => { aerial.hidden = false; });
   if (reduce || saveData) aerial.remove();

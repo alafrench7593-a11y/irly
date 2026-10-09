@@ -23,13 +23,13 @@ type Safety = {
 const DEFAULTS: Safety = { profile_visibility: 'everyone', irl_visibility: 'friends', activity_visibility: 'everyone', location_precision: 'area', show_active: false };
 
 const GROUPS: { label: string; kinds: string[] }[] = [
-  { label: 'Messages', kinds: ['MESSAGE_CREATED'] },
+  { label: 'Messages', kinds: ['MESSAGE_CREATED', 'GROUP_ADDED'] },
   { label: 'Likes', kinds: ['LIKE'] },
   { label: 'Comments and replies', kinds: ['COMMENT', 'COMMENT_REPLY', 'MENTION'] },
-  { label: 'Friends', kinds: ['FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'IRLY_POST_CREATED'] },
+  { label: 'Friends and followers', kinds: ['FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'IRLY_POST_CREATED', 'NEW_FOLLOWER'] },
   { label: 'Activities and events', kinds: ['ACTIVITY_JOINED', 'ACTIVITY_UPDATED', 'ACTIVITY_INVITATION', 'ACTIVITY_REMINDER'] },
   { label: 'Communities', kinds: ['COMMUNITY_JOINED', 'COMMUNITY_INVITATION', 'COMMUNITY_POST'] },
-  { label: 'IRLY Girl matches', kinds: ['MATCH_CREATED', 'MATCH_SUGGESTION'] },
+  { label: 'IRLY Girl matches', kinds: ['MATCH_CREATED', 'MATCH_SUGGESTION', 'MATCH_REMOVED'] },
   { label: 'Networking', kinds: ['PRO_CONNECT_REQUEST', 'PRO_CONNECT_ACCEPTED'] },
 ];
 

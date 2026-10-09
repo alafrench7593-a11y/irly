@@ -220,12 +220,26 @@ export async function shareToChat(conversationId: string, t: Target): Promise<vo
   track('SHARE', { type: t.type, channel: 'chat' });
 }
 
-/** Private chat with a friend or a match. */
-export async function openDirect(userId: string): Promise<string> {
-  const { data, error } = await need().rpc('open_direct', { p_user: userId });
-  if (error) throw new Error(error.message);
-  return data as string;
+/**
+ * Where a thing shared in a chat opens: its own page when it has one. A
+ * community post opens its community (looked up, since the share names the post).
+ */
+export async function sharedHref(type: string, id: string | null, text: string): Promise<string> {
+  const search = `/search?q=${encodeURIComponent(text)}`;
+  if (!id) return type === 'irl_post' ? '/live' : search;
+  if (type === 'activity') return `/a/${id}`;
+  if (type === 'community') return `/c/${id}`;
+  if (type === 'place') return `/place/${id}`;
+  if (type === 'irl_post') return '/live';
+  if (type === 'community_post' && supabase) {
+    const { data } = await supabase.from('community_posts').select('community_id').eq('id', id).maybeSingle();
+    return data?.community_id ? `/c/${data.community_id}` : search;
+  }
+  return search;
 }
+
+/** Private chat with a friend or a match (one implementation, shared with profiles). */
+export { openDirect } from '@/features/profile/member';
 
 /* ───────── Comments ───────── */
 

@@ -20,13 +20,22 @@ import { Cover } from '@/components/visual/Cover';
 import { ACTIVITIES, AVAILABILITY, INTERESTS, USER_TYPES } from '@/data/catalog';
 import { areaName, CITIES, DESTINATIONS } from '@/data/destinations';
 import { findPerson, getCityContent } from '@/data/repo';
+import { isServerId } from '@/features/server/chat';
+import { MemberProfileView } from '@/features/profile/MemberProfileView';
 import { scoreMatch } from '@/features/matching/match';
 import { enter } from '@/motion/enter';
 import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
+/** Example people (demo) have their page here; a real member (UUID) gets their server profile. */
 export default function PersonProfile() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  if (!findPerson(id) && isServerId(id)) return <MemberProfileView userId={id} />;
+  return <SeedProfile />;
+}
+
+function SeedProfile() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();

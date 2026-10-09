@@ -1,14 +1,10 @@
 import { useRouter } from 'expo-router';
-import { t as tx } from '@/i18n';
 import { cityWhen } from '@/lib/time';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
-import { toggleSave } from '@/features/server/engage';
-import { addFriend } from '@/features/server/social';
 import { track } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import { useSyncVersion } from '@/features/server/sync';
@@ -75,18 +71,12 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
     else if (h.kind === 'community') router.push(`/c/${h.id}`);
     else if (h.kind === 'category') router.push(`/category/${h.id}`);
     else if (h.kind === 'city' && setCity) setCity(h.id as never);
-    else if (h.kind === 'place')
-      toggleSave({ type: 'place', id: h.id })
-        .then((saved) => toast(saved ? tx('{name} saved', { name: h.title }) : 'Removed from saved', 'bookmark', 'brand'))
-        .catch(() => undefined);
-    else if (h.kind === 'person')
-      addFriend(h.id)
-        .then(() => toast('Friend request sent', 'user', 'brand'))
-        .catch((e) => toast(e instanceof Error ? e.message : 'Could not add', 'x', 'live'));
+    // A result opens what it names; saving or adding happens there, on purpose.
+    else if (h.kind === 'place') router.push(`/place/${h.id}`);
+    else if (h.kind === 'person') router.push(`/person/${h.id}`);
     else router.push('/map');
   };
 
-  const action: Partial<Record<SearchHit['kind'], string>> = { place: 'Save', person: 'Add' };
 
   return (
     <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
@@ -107,13 +97,7 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
               {h.areaId && h.kind === 'activity' ? ` · ${h.areaId}` : ''}
             </Text>
           </View>
-          {action[h.kind] ? (
-            <Text variant="label" tone="secondary">
-              {action[h.kind]}
-            </Text>
-          ) : (
-            <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
-          )}
+          <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
         </PressableScale>
       ))}
     </View>

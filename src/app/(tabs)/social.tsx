@@ -21,6 +21,8 @@ import { areaName, CITIES } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
 import type { ActivityKind, Intent } from '@/data/types';
 import { rankMatches } from '@/features/matching/match';
+import { useAccount } from '@/features/auth/account';
+import { createServerActivity } from '@/features/server/activities';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -158,6 +160,9 @@ function PlanComposer({ visible, onClose }: { visible: boolean; onClose: () => v
   const cityId = useCityId();
   const city = CITIES[cityId];
   const postPlan = useStore((s) => s.postPlan);
+  const account = useAccount();
+  const router = useRouter();
+  const [posting, setPosting] = useState(false);
   const [kind, setKind] = useState<ActivityKind>(city.activityKinds[0]);
   const [day, setDay] = useState(DAYS[1]);
   const [time, setTime] = useState(TIMES[3]);
@@ -222,10 +227,29 @@ function PlanComposer({ visible, onClose }: { visible: boolean; onClose: () => v
             icon="send"
             full
             haptic={false}
-            onPress={() => {
-              postPlan({ cityId, kind, day, time, spots, areaId: area });
+            loading={posting}
+            onPress={async () => {
+              const plan = { cityId, kind, day, time, spots, areaId: area, title: ACTIVITIES[kind].label };
+              // Signed in: the plan goes to IRLY, where others can see and join it.
+              if (account) {
+                setPosting(true);
+                try {
+                  const id = await createServerActivity(plan);
+                  if (!id) throw new Error('Could not post the plan. Check your connection and try again.');
+                  haptic('success');
+                  toast('Plan posted. Its chat is ready', 'send', 'brand');
+                  onClose();
+                  router.push(`/a/${id}`);
+                } catch (e) {
+                  toast(e instanceof Error ? e.message : 'Could not post the plan', 'x', 'live');
+                } finally {
+                  setPosting(false);
+                }
+                return;
+              }
+              postPlan(plan);
               haptic('success');
-              toast('Plan posted. We will let you know who joins', 'send', 'brand');
+              toast('Plan saved on this phone. Sign in so others can join it', 'send', 'brand');
               onClose();
             }}
           />

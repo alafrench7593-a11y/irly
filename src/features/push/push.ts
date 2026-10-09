@@ -54,10 +54,16 @@ export async function registerPush(lang: Lang, ask = true): Promise<PushState> {
 
 /** Signing out: this phone stops receiving the account's notifications. */
 export async function unregisterPush(): Promise<void> {
-  if (!registered || !supabase) return;
-  const token = registered;
+  if (!native || !supabase) return;
+  // Signed out before registration finished: ask the phone for its token (no prompt) so it is still removed.
+  let token = registered;
+  if (!token && Device.isDevice) {
+    const id = projectId();
+    const granted = (await Notifications.getPermissionsAsync().catch(() => null))?.status === 'granted';
+    if (id && granted) token = (await Notifications.getExpoPushTokenAsync({ projectId: id }).catch(() => null))?.data ?? null;
+  }
   registered = null;
-  await supabase.rpc('unregister_push_token', { p_token: token });
+  if (token) await supabase.rpc('unregister_push_token', { p_token: token });
 }
 
 /** Opens the screen a notification points to. */

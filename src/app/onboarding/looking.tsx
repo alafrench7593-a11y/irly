@@ -108,7 +108,7 @@ export default function LookingStep() {
           <View style={{ flex: 1 }}>
             <Text variant="label">Show on my profile</Text>
             <Text variant="caption" tone="tertiary">
-              Off by default. Never used to rank or filter people.
+              Only you see it, on your own profile screen. Never shown to other members, never used to rank or filter people.
             </Text>
           </View>
           <Switch

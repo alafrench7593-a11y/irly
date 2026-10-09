@@ -25,7 +25,8 @@ export async function pickPhoto(): Promise<string | null> {
   return small.uri;
 }
 
-async function upload(uri: string): Promise<string> {
+/** Uploads one of your photos to "activity-photos" and returns its stored path. */
+export async function uploadCover(uri: string): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data: session } = await supabase.auth.getSession();
   const uid = session.session?.user.id;
@@ -40,7 +41,7 @@ async function upload(uri: string): Promise<string> {
 /** A community's photo: a picked image, or null to go back to the app's photo. */
 export async function setCommunityCover(communityId: string, uri: string | null): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const path = uri ? await upload(uri) : null;
+  const path = uri ? await uploadCover(uri) : null;
   const { error } = await supabase.rpc('set_community_cover', { p_community: communityId, p_path: path });
   if (error) throw new Error(error.message);
   changed('communities', 'inbox');
@@ -49,7 +50,7 @@ export async function setCommunityCover(communityId: string, uri: string | null)
 /** A chat's photo: a picked image, or null to go back to the app's photo. */
 export async function setChatPhoto(conversationId: string, uri: string | null): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const path = uri ? await upload(uri) : null;
+  const path = uri ? await uploadCover(uri) : null;
   const { error } = await supabase.rpc('set_conversation_photo', { p_conversation: conversationId, p_path: path });
   if (error) throw new Error(error.message);
   changed('inbox', 'communities');
@@ -77,6 +78,8 @@ export type ChatPhoto = {
   /** Group, session and community chats have a photo; private chats show the person. */
   hasPhoto: boolean;
   canEdit: boolean;
+  /** A community chat: its photo is the community's. */
+  communityId: string | null;
   refresh: () => void;
 };
 
@@ -88,7 +91,8 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
   const uid = useAccount()?.userId;
   // A new chat or community photo, set by anyone, shows at once.
   const inboxV = useSyncVersion('inbox');
-  const [state, setState] = useState<Omit<ChatPhoto, 'refresh'>>({ path: null, fallback: 'meeting', hasPhoto: false, canEdit: false });
+  const communitiesV = useSyncVersion('communities');
+  const [state, setState] = useState<Omit<ChatPhoto, 'refresh'>>({ path: null, fallback: 'meeting', hasPhoto: false, canEdit: false, communityId: null });
   const [n, setN] = useState(0);
   const refresh = useCallback(() => setN((x) => x + 1), []);
   useEffect(() => {
@@ -99,14 +103,14 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
       const [{ data: conv }, { data: me }] = await Promise.all([
         sb
           .from('conversations')
-          .select('kind, photo_path, community_id, activities(category_id, title), communities(category_id)')
+          .select('kind, photo_path, community_id, activities(category_id, title, cover_path), communities(category_id, cover_path)')
           .eq('id', conversationId)
           .maybeSingle(),
         sb.from('conversation_members').select('role').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
       ]);
       if (!alive || !conv) return;
-      const act = one(conv.activities as One<{ category_id: string; title: string }>);
-      const com = one(conv.communities as One<{ category_id: string | null }>);
+      const act = one(conv.activities as One<{ category_id: string; title: string; cover_path: string | null }>);
+      const com = one(conv.communities as One<{ category_id: string | null; cover_path: string | null }>);
       let canEdit = me?.role === 'admin';
       if (!canEdit && conv.community_id) {
         const { data: cm } = await sb.from('community_members').select('role').eq('community_id', conv.community_id).eq('user_id', uid).maybeSingle();
@@ -116,11 +120,14 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
         ? ideaPhoto((CATEGORY_BY_ID[act.category_id as CategoryKey] ? act.category_id : 'sport') as CategoryKey, act.title)
         : (CATEGORY_BY_ID[com?.category_id as CategoryKey]?.photo ?? 'meeting');
       const hasPhoto = conv.kind === 'group' || conv.kind === 'activity' || conv.kind === 'community';
-      if (alive) setState({ path: (conv.photo_path as string | null) ?? null, fallback, hasPhoto, canEdit: hasPhoto && canEdit });
+      // One source per picture: a community chat shows the community's own photo
+      // (changing it changes the community's), others their chat photo, then the activity's cover.
+      const path = conv.community_id ? (com?.cover_path ?? (conv.photo_path as string | null) ?? null) : ((conv.photo_path as string | null) ?? act?.cover_path ?? null);
+      if (alive) setState({ path, fallback, hasPhoto, canEdit: hasPhoto && canEdit, communityId: (conv.community_id as string | null) ?? null });
     })().catch(() => undefined);
     return () => {
       alive = false;
     };
-  }, [conversationId, uid, n, inboxV]);
+  }, [conversationId, uid, n, inboxV, communitiesV]);
   return { ...state, refresh };
 }

@@ -11,6 +11,8 @@ import type { CityId } from '@/data/types';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
+import { useAccount } from '@/features/auth/account';
+import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { switchCity } from './DestinationTransition';
@@ -24,6 +26,7 @@ export function DestinationSheet({ visible, onClose }: Props) {
   // The last city used in each country, so coming back lands where you were.
   const lastCity = useLastCity(cityId);
   const waitlist = useStore((s) => s.waitlist);
+  const signedIn = Boolean(useAccount());
   const joinWaitlist = useStore((s) => s.joinWaitlist);
 
   const pick = (id: CityId) => {
@@ -133,8 +136,18 @@ export function DestinationSheet({ visible, onClose }: Props) {
               <PressableScale
                 haptic={false}
                 scaleTo={0.92}
-                onPress={() => {
+                onPress={async () => {
                   if (joined) return;
+                  // Kept on the account, so IRLY can actually tell them when it opens.
+                  if (!supabase || !signedIn) {
+                    toast('Sign in so we can tell you when it opens', 'user', 'brand');
+                    return;
+                  }
+                  const { error } = await supabase.rpc('set_service_interest', { p_service: `dest_${destId}`, p_on: true });
+                  if (error) {
+                    toast(/fetch|network/i.test(error.message) ? 'No connection: try again' : error.message, 'x', 'live');
+                    return;
+                  }
                   joinWaitlist(destId);
                   haptic('success');
                   toast(tx('Noted: we will show {place} first when it opens', { place: d.shortName }), 'bell', 'brand');

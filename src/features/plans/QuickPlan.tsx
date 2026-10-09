@@ -17,7 +17,6 @@ import { GButton, GChip } from '@/features/girl/ui';
 import { createServerActivity } from '@/features/server/activities';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
-import { useStore } from '@/state/store';
 
 export type PlanType = { id: string; label: string; icon: IconName; audience: 'all' | 'girls' | 'moms' | 'families'; category: string; title: (where: string) => string };
 
@@ -84,7 +83,6 @@ export function QuickPlan({
 }) {
   const router = useRouter();
   const account = useAccount();
-  const postPlan = useStore((s) => s.postPlan);
   const city = CITIES[cityId];
   const [type, setType] = useState<PlanType>(types[0]);
   const [day, setDay] = useState<Day>('tomorrow');
@@ -120,15 +118,13 @@ export function QuickPlan({
         currency: city.currency,
       };
       const id = await createServerActivity(plan, dateFor(day, time, new Date(), city.utcOffset), { placeId: place?.id ?? null, activityType: type.id, audience: type.audience });
-      // The server has it: no second copy on the phone.
-      if (!id) postPlan(plan);
+      // No id: the session ended or the server is unreachable. Never announce a plan nobody can see.
+      if (!id) throw new Error('Your session has ended. Sign in again to post this plan');
       haptic('success');
       track('ACTIVITY_CREATE', { type: type.id, audience: type.audience, place: Boolean(place) });
       toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
-      if (id) {
-        onCreated?.(id);
-        router.push(`/a/${id}`);
-      }
+      onCreated?.(id);
+      router.push(`/a/${id}`);
     } catch (e) {
       const m = e instanceof Error ? e.message : 'Could not create';
       toast(/girl|row-level|policy/i.test(m) ? 'This plan is for IRLY Girl members' : m, 'x', 'live');

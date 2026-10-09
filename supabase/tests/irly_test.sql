@@ -658,7 +658,7 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select public.pro_connect('00000000-0000-0000-0000-00000000000d');
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000d' and kind = 'PRO_CONNECT_REQUEST'), 'asking again the same day does not notify twice');
-select pg_temp.check((select count(*) from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and url like '/network/%') = 1, 'nor push twice');
+select pg_temp.check((select count(*) from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and url like '/network/%') = 0, 'nor push twice (the withdrawn request took its waiting push too)');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select pg_temp.check(public.pro_connect('00000000-0000-0000-0000-00000000000c') = 'accepted', 'Connect back accepts');
 select pg_temp.as_admin();
@@ -959,12 +959,127 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select pg_temp.check(public.my_girl_status() = 'open', 'reinstated, IRLY Girl opens again');
 select pg_temp.as_admin();
 
+-- ───── Messaging & social: follows, profiles, groups, photos ─────
+select pg_temp.as_admin();
+delete from public.blocks where blocker_id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c') and blocked_id in ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c');
+insert into public.friendships (user_a, user_b, requested_by, status, accepted_at)
+values (least('00000000-0000-0000-0000-00000000000a'::uuid, '00000000-0000-0000-0000-00000000000b'::uuid), greatest('00000000-0000-0000-0000-00000000000a'::uuid, '00000000-0000-0000-0000-00000000000b'::uuid), '00000000-0000-0000-0000-00000000000a', 'accepted', now())
+on conflict (user_a, user_b) do update set status = 'accepted';
+insert into public.safety_settings (user_id, profile_visibility) values ('00000000-0000-0000-0000-00000000000c', 'everyone')
+on conflict (user_id) do update set profile_visibility = 'everyone';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.follow_user('00000000-0000-0000-0000-00000000000c');
+select public.follow_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check((select count(*) from public.follows where follower_id = auth.uid() and followee_id = '00000000-0000-0000-0000-00000000000c') = 1, 'following twice is one follow');
+select pg_temp.expect_denied($$select public.follow_user(auth.uid())$$, 'nobody follows themselves');
+select pg_temp.expect_denied($$insert into public.follows (follower_id, followee_id) values (auth.uid(), '00000000-0000-0000-0000-00000000000a')$$, 'no direct writes to follows');
+select pg_temp.expect_denied($$insert into public.follows (follower_id, followee_id) values ('00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000c')$$, 'nobody creates a follow for someone else');
+select pg_temp.check((select followers from public.public_profile('00000000-0000-0000-0000-00000000000c')) = 1 and (select i_follow from public.public_profile('00000000-0000-0000-0000-00000000000c')), 'the profile shows the new follower and the button state');
+select pg_temp.check(exists (select 1 from public.follow_list('00000000-0000-0000-0000-00000000000c', 'followers') where id = auth.uid()), 'the followers list holds the real relation');
+select pg_temp.check((select following from public.public_profile(auth.uid())) >= 1, 'and the follower''s following count');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-00000000000c' and kind = 'NEW_FOLLOWER') = 1, 'one notification for one new follower');
+update public.safety_settings set profile_visibility = 'nobody' where user_id = '00000000-0000-0000-0000-00000000000c';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(not (select visible from public.public_profile('00000000-0000-0000-0000-00000000000c')) and (select bio from public.public_profile('00000000-0000-0000-0000-00000000000c')) is null, 'a private profile shows only the name and photo');
+select pg_temp.check(not exists (select 1 from public.follow_list('00000000-0000-0000-0000-00000000000c', 'followers')), 'and no lists');
+select pg_temp.as_admin();
+update public.safety_settings set profile_visibility = 'everyone' where user_id = '00000000-0000-0000-0000-00000000000c';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select public.block_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.follows where follower_id = '00000000-0000-0000-0000-00000000000b' and followee_id = '00000000-0000-0000-0000-00000000000c'), 'a block ends the follow');
+delete from public.blocks where blocker_id = '00000000-0000-0000-0000-00000000000c' and blocked_id = '00000000-0000-0000-0000-00000000000b';
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(exists (select 1 from public.public_profile('00000000-0000-0000-0000-00000000000c')), 'unblocked, the profile is back');
+select public.follow_user('00000000-0000-0000-0000-00000000000c');
+select public.unfollow_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.follows where follower_id = auth.uid() and followee_id = '00000000-0000-0000-0000-00000000000c'), 'unfollow removes the follow');
+-- Groups
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select pg_temp.check(exists (select 1 from public.group_candidates() where id = '00000000-0000-0000-0000-00000000000b') and not exists (select 1 from public.group_candidates() where id = '00000000-0000-0000-0000-00000000000c'), 'group candidates: a friend yes, a stranger no');
+select pg_temp.expect_denied($$select public.create_group('Strangers', array['00000000-0000-0000-0000-00000000000c']::uuid[])$$, 'a group only adds people who accept your messages');
+create temp table g as select public.create_group('Padel crew', array['00000000-0000-0000-0000-00000000000b']::uuid[]) as id;
+grant select on g to authenticated;
+select pg_temp.check((select role from public.conversation_members where conversation_id = (select id from g) and user_id = auth.uid()) = 'admin', 'the creator is the group admin');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(exists (select 1 from public.my_conversations() where conversation_id = (select id from g) and kind = 'group' and title = 'Padel crew' and members = 2), 'the group is in the member''s inbox, as a group, with its member count');
+select pg_temp.expect_denied($$select public.rename_group((select id from g), 'Mine now')$$, 'only the admin renames a group');
+insert into public.messages (conversation_id, sender_id, kind, body, media_path) values ((select id from g), auth.uid(), 'photo', 'Photo', '00000000-0000-0000-0000-00000000000b/court.jpg');
+select pg_temp.check(exists (select 1 from public.messages where conversation_id = (select id from g) and media_path is not null), 'a photo message keeps its stored path');
+select pg_temp.expect_denied($$insert into public.messages (conversation_id, sender_id, kind, body, media_path) values ((select id from g), auth.uid(), 'photo', 'Photo', '00000000-0000-0000-0000-00000000000a/hers.jpg')$$, 'a photo message only points at your own upload');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.check(not exists (select 1 from public.messages where conversation_id = (select id from g)), 'outsiders cannot read the group');
+select pg_temp.check(not exists (select 1 from public.chat_members((select id from g))), 'nor its member list');
+select pg_temp.expect_denied($$select public.add_group_members((select id from g), array['00000000-0000-0000-0000-00000000000c']::uuid[])$$, 'outsiders cannot add themselves');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.rename_group((select id from g), 'Padel crew Dubai');
+select pg_temp.check((select title from public.my_conversations() where conversation_id = (select id from g)) = 'Padel crew Dubai', 'a renamed group shows its new name');
+select public.leave_group((select id from g));
+select pg_temp.as_admin();
+select pg_temp.check((select role from public.conversation_members where conversation_id = (select id from g) and user_id = '00000000-0000-0000-0000-00000000000b') = 'admin', 'when the admin leaves, the oldest member becomes admin');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.leave_group((select id from g));
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.conversations where id = (select id from g)), 'the last one out deletes the group: no orphan chat');
+
+-- ───── Audit fixes: groups, follows, covers, leftovers ─────
+-- A member who is not an app admin can leave a group they run (the role passes on).
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+create temp table g2 as select public.create_group('Beach crew', array['00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a']::uuid[]) as id;
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-00000000000a' and kind = 'GROUP_ADDED' and payload ->> 'conversation_id' = (select id from g2)::text) = 1, 'a person listed three times is added and told once');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.leave_group((select id from g2));
+select pg_temp.as_admin();
+select pg_temp.check((select role from public.conversation_members where conversation_id = (select id from g2) and user_id = '00000000-0000-0000-0000-00000000000a') = 'admin', 'a non-admin member running a group can leave it: the other member takes over');
+select pg_temp.check(not exists (select 1 from public.conversation_members where conversation_id = (select id from g2) and user_id = '00000000-0000-0000-0000-00000000000b'), 'and the leaver is out');
+-- Members still cannot promote themselves.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.add_group_members((select id from g2), array['00000000-0000-0000-0000-00000000000b']::uuid[]);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_denied($$update public.conversation_members set role = 'admin' where conversation_id = (select id from g2) and user_id = auth.uid()$$, 'a member cannot make themselves admin');
+-- Follow, unfollow, follow again: one notification.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.unfollow_user('00000000-0000-0000-0000-00000000000c');
+select public.follow_user('00000000-0000-0000-0000-00000000000c');
+select public.unfollow_user('00000000-0000-0000-0000-00000000000c');
+select public.follow_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-00000000000c' and kind = 'NEW_FOLLOWER' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000b' and created_at > now() - interval '1 day') = 1, 'following again and again notifies once a day');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(public.export_my_data() -> 'following' @> '[{"user_id": "00000000-0000-0000-0000-00000000000c"}]', 'Download my data includes who I follow');
+select pg_temp.check(public.export_my_data() ? 'group_chats' and public.export_my_data() ? 'assistant_requests', 'and my groups and assistant requests');
+-- A new community cannot point its cover at someone else's photo.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+do $$
+begin
+  insert into public.communities (name, city_id, created_by, cover_path)
+  values ('Peek', 'dubai', auth.uid(), '00000000-0000-0000-0000-00000000000a/private-group.jpg');
+  raise exception 'FAIL a community was created on someone else''s photo';
+exception when others then
+  if sqlerrm not like '%own uploads%' then raise; end if;
+  raise notice 'ok  a new community cannot use someone else''s photo as cover';
+end $$;
+-- What a removed activity leaves behind goes with it.
+select pg_temp.as_admin();
+select id as gone_id from public.activities order by created_at desc limit 1 \gset
+insert into public.likes (user_id, target_type, target_id) values ('00000000-0000-0000-0000-00000000000b', 'activity', :'gone_id') on conflict do nothing;
+insert into public.saves (user_id, target_type, target_id) values ('00000000-0000-0000-0000-00000000000b', 'activity', :'gone_id') on conflict do nothing;
+delete from public.activities where id = :'gone_id';
+select pg_temp.check(not exists (select 1 from public.likes where target_type = 'activity' and target_id = :'gone_id')
+  and not exists (select 1 from public.saves where target_type = 'activity' and target_id = :'gone_id'), 'a deleted activity takes its likes and saves');
+-- A group run by someone who deletes their account keeps an admin.
+insert into public.conversations (kind, title) values ('group', 'Dina group') returning id \gset dg_
+insert into public.conversation_members (conversation_id, user_id, role) values (:'dg_id', '00000000-0000-0000-0000-00000000000d', 'admin'), (:'dg_id', '00000000-0000-0000-0000-00000000000b', 'member');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.profiles where first_name = 'Dina'), 'deleting the account removes the profile');
 select pg_temp.check(not exists (select 1 from public.irly_match_profiles where user_id = '00000000-0000-0000-0000-00000000000d'), 'and the match profile');
+select pg_temp.check((select role from public.conversation_members where conversation_id = :'dg_id' and user_id = '00000000-0000-0000-0000-00000000000b') = 'admin', 'a group whose admin deleted the account keeps an admin');
 -- A member who sent messages can delete their account (sender_id → null cascade).
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select public.delete_my_account();
