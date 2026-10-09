@@ -138,6 +138,8 @@ export type ServerActivity = {
   cityId: string;
   /** IRLY Girl (girls and moms) sessions: only women see them. */
   girlOnly: boolean;
+  /** Who it is for: everyone, girls, moms (with children) or families. */
+  audience: 'all' | 'girls' | 'moms' | 'families';
 };
 
 /** Upcoming activities members created in this destination (all seven emirates, or Bali), your city first. */
@@ -151,7 +153,7 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
     if (!supabase || !uid) return [];
     let q = supabase
       .from('activities')
-      .select('id, title, category_id, sub_id, area_id, city_id, girl_only, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
+      .select('id, title, category_id, sub_id, area_id, city_id, girl_only, audience, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
       .in('city_id', cityScope(cityId))
       .is('cancelled_at', null)
       // Upcoming and happening now (started less than two hours ago).
@@ -173,6 +175,7 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
           areaId: a.area_id,
           cityId: a.city_id as string,
           girlOnly: Boolean(a.girl_only),
+          audience: ((a.audience as ServerActivity['audience'] | null) ?? 'all'),
           placeName: a.place_name,
           startsAt: Date.parse(a.starts_at),
           capacity: a.capacity,

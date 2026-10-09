@@ -51,6 +51,14 @@ export const LEGAL_VERSIONS = {
  */
 export const DEMO = process.env.EXPO_PUBLIC_DEMO === '1';
 
+/**
+ * Storage name for something kept on the device. The demo is served from the
+ * same site as the real app (getirly.com/demo and /app share one browser
+ * storage), so it keeps everything under its own names and can never touch
+ * a member's real data.
+ */
+export const storageName = (name: string) => (DEMO ? `${name}-demo` : name);
+
 /** A link to a screen of the web app, for sharing. */
 export const webLink = (path: string) => `${APP.webUrl}${path.startsWith('/') ? path : `/${path}`}`;
 

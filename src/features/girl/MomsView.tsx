@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Photo } from '@/components/visual/Photo';
 import { enter } from '@/motion/enter';
@@ -21,6 +21,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { girl } from './theme';
 import { GButton, GChip, GSection, Wrap } from './ui';
+import { GirlFeed, KindRail, MOM_KINDS, Upcoming } from './world';
 
 const AGES = [
   { id: 'baby', label: 'Baby' },
@@ -36,7 +37,7 @@ const AGES = [
  * park, kids sports…) and family-friendly places. Dubai and Bali alike,
  * with each destination's own communities and places.
  */
-export function MomsView({ cityId }: { cityId: CityId }) {
+export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (name: string, y: number) => void }) {
   const router = useRouter();
   const city = CITIES[cityId];
   const extras = useGirlExtras();
@@ -45,7 +46,17 @@ export function MomsView({ cityId }: { cityId: CityId }) {
   const communities = useCommunitiesLike(cityId, 'Moms', true);
   const { activities } = useServerActivities(cityId);
   const family = usePlaces(cityId, { kids: true });
-  const plans = activities.filter((a) => ['family'].includes(a.categoryId) || /kid|mom|family|playdate|picnic/i.test(a.title));
+  const plans = useMemo(
+    () => activities.filter((a) => a.audience === 'moms' || a.audience === 'families' || a.categoryId === 'family' || /kid|mom|family|playdate|picnic/i.test(a.title)),
+    [activities],
+  );
+  const [kind, setKind] = useState<string | null>(null);
+  const counts = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const k of MOM_KINDS) out[k.id] = plans.filter((a) => k.match.test(a.title) || Boolean(k.cats?.includes(a.categoryId))).length;
+    return out;
+  }, [plans]);
+  const mark = (name: string) => (e: LayoutChangeEvent) => onSection?.(name, e.nativeEvent.layout.y);
 
   const toggleMom = (on: boolean) =>
     extras
@@ -72,17 +83,11 @@ export function MomsView({ cityId }: { cityId: CityId }) {
         <Text variant="body" color={girl.inkSoft}>
           {tx('Moms in {city}, plans with children and family-friendly places.', { city: city.name })}
         </Text>
-        <View style={styles.mosaic}>
-          {(['momYoga', 'momBeach', 'momBaby'] as const).map((k, i) => (
-            <Animated.View key={k} entering={enter.pop(i, 120)} style={[styles.tile, i === 0 ? { flex: 1.3 } : null]}>
-              <Photo visual={{ photo: k }} light="dubai" scrim="soft" width={500} style={StyleSheet.absoluteFill} />
-              <Text variant="label" color="#FFFFFF" style={styles.tileLabel}>
-                {['Baby yoga', 'Beach days', 'New moms'][i]}
-              </Text>
-            </Animated.View>
-          ))}
-        </View>
       </Animated.View>
+
+      <View style={{ gap: 10, marginTop: -space[4] }}>
+        <KindRail kinds={MOM_KINDS} value={kind} onChange={setKind} counts={counts} />
+      </View>
 
       {me && me.hasProfile ? (
         <View style={[styles.pad]}>
@@ -123,6 +128,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
         </View>
       ) : null}
 
+      <View onLayout={mark('moms')} />
       {moms.data.length ? (
         <View style={{ gap: 10 }}>
           <Text variant="titleM" color={girl.ink} style={styles.pad}>
@@ -130,7 +136,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 12 }}>
             {moms.data.map((m) => (
-              <View key={m.userId} style={[styles.person]}>
+              <PressableScale key={m.userId} haptic="select" scaleTo={0.96} onPress={() => router.push(`/person/${m.userId}`)} accessibilityLabel={tx("View {name}'s profile", { name: m.firstName })} style={[styles.person]}>
                 <Avatar name={m.firstName} hue={hueOf(m.userId)} size={56} />
                 <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>
                   {m.firstName}
@@ -143,7 +149,7 @@ export function MomsView({ cityId }: { cityId: CityId }) {
                     {m.score}% match
                   </Text>
                 ) : null}
-              </View>
+              </PressableScale>
             ))}
           </ScrollView>
         </View>
@@ -151,9 +157,13 @@ export function MomsView({ cityId }: { cityId: CityId }) {
         <Text variant="bodyS" color={girl.inkSoft} style={styles.pad}>
           No other moms visible yet in this destination. Start a playdate: they will find you.
         </Text>
+      ) : me?.hasProfile ? (
+        <Text variant="bodyS" color={girl.inkSoft} style={styles.pad}>
+          Turn on mom mode to see the moms near you. Photos of your children are never needed.
+        </Text>
       ) : null}
 
-      <View style={[styles.pad]}>
+      <View style={[styles.pad]} onLayout={mark('momsPlan')}>
         <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
           <View style={{ height: 110 }}>
             <Photo visual={{ photo: 'familyBeach' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
@@ -166,30 +176,14 @@ export function MomsView({ cityId }: { cityId: CityId }) {
         </View>
       </View>
 
-      {plans.length ? (
-        <View style={[styles.pad, { gap: 10 }]}>
-          <Text variant="titleM" color={girl.ink}>
-            Coming up with kids
-          </Text>
-          {plans.slice(0, 6).map((a) => (
-            <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { padding: 10 }]} accessibilityLabel={a.title}>
-              <View style={styles.thumb}>
-                <Photo visual={{ photo: girlPhotoFor(a.title, 'momPlaydate') }} light="dubai" width={200} style={StyleSheet.absoluteFill} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text variant="titleS" color={girl.ink} numberOfLines={1}>
-                  {a.title}
-                </Text>
-                <Text variant="caption" color={girl.inkSoft}>
-                  {cityWhen(a.startsAt, cityId, { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {a.going} {tx('going')}
-                </Text>
-              </View>
-            </PressableScale>
-          ))}
-        </View>
-      ) : null}
+      <View style={{ gap: 12 }} onLayout={mark('momsPlans')}>
+        <Text variant="titleM" color={girl.ink} style={styles.pad}>
+          Coming up with kids
+        </Text>
+        <Upcoming activities={plans} kinds={MOM_KINDS} kind={kind} onKind={setKind} onPlan={() => onSection?.('goPlan', 0)} emptyTitle="What if you organised the first playdate?" />
+      </View>
 
-      <View style={[styles.pad, { gap: 10 }]}>
+      <View style={[styles.pad, { gap: 10 }]} onLayout={mark('momsCommunities')}>
         <Text variant="titleM" color={girl.ink}>
           Mom communities
         </Text>
@@ -215,6 +209,18 @@ export function MomsView({ cityId }: { cityId: CityId }) {
             {communities.loading ? '' : communities.error ? tx('Could not load. Check your connection.') : me ? tx('No mom communities here yet.') : tx('Sign in to see and join mom communities.')}
           </Text>
         )}
+      </View>
+
+      <View style={{ gap: 12 }}>
+        <View style={styles.pad}>
+          <Text variant="titleM" color={girl.ink}>
+            From the moms
+          </Text>
+          <Text variant="bodyS" color={girl.inkSoft}>
+            Tips, questions and plans shared in the mom communities.
+          </Text>
+        </View>
+        <GirlFeed cityId={cityId} moms onCommunities={() => onSection?.('goCommunities', 0)} />
       </View>
 
       {family.data.length ? (
@@ -258,8 +264,5 @@ const styles = StyleSheet.create({
   person: { width: 120, alignItems: 'center', gap: 4, padding: 12, borderRadius: radius.xl, backgroundColor: girl.surface },
   place: { width: 170, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: girl.surface },
   placePhoto: { width: 170, height: 100, overflow: 'hidden' },
-  mosaic: { flexDirection: 'row', gap: 8, height: 150 },
-  tile: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end' },
-  tileLabel: { padding: 10 },
   thumb: { width: 56, height: 56, borderRadius: 16, overflow: 'hidden' },
 });

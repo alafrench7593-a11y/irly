@@ -7,6 +7,10 @@
     {
       "source": "/app/((?!_expo|assets|favicon|manifest|icon|apple-touch).*)",
       "destination": "/app/index.html"
+    },
+    {
+      "source": "/demo/((?!_expo|assets|favicon|manifest|icon|apple-touch).*)",
+      "destination": "/demo/index.html"
     }
   ],
   "git": {

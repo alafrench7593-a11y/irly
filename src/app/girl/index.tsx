@@ -1,8 +1,8 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx, useT } from '@/i18n';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
+import Animated, { FadeIn, useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
@@ -24,14 +24,15 @@ import { GirlHero } from '@/features/girl/GirlHero';
 import { girlPhotoFor } from '@/features/girl/photos';
 import { ScrollReveal } from '@/motion/ScrollReveal';
 import { MomsView } from '@/features/girl/MomsView';
+import { GIRL_KINDS, GirlFeed, KindRail, Shortcuts, Upcoming } from '@/features/girl/world';
 import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { useCommunitiesLike } from '@/features/bali/data';
 import { useServerActivities } from '@/features/server/activities';
-import { cityWhen } from '@/lib/time';
-import { CITIES, placeLabel } from '@/data/destinations';
+import { CITIES } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
+import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 
 const SECTIONS: { id: Section; label: (city: string) => string; icon: IconName }[] = [
@@ -43,18 +44,6 @@ const SECTIONS: { id: Section; label: (city: string) => string; icon: IconName }
   { id: 'travel', label: () => 'Travel girls', icon: 'globe' },
   { id: 'nearby', label: () => 'Nearby', icon: 'pin' },
   { id: 'saved', label: () => 'Saved', icon: 'bookmark' },
-];
-
-const COMMUNITIES: { name: string }[] = [
-  { name: 'Dubai Girls' },
-  { name: 'Girls Padel Dubai' },
-  { name: 'Dubai Brunch Girls' },
-  { name: 'Women Entrepreneurs Dubai' },
-  { name: 'Dubai Fitness Girls' },
-  { name: 'Girls Who Travel' },
-  { name: 'French Girls Dubai' },
-  { name: 'Dubai Beauty' },
-  { name: 'Bali Girls' },
 ];
 
 /**
@@ -89,6 +78,37 @@ export default function GirlHome() {
   const serverCommunities = useCommunitiesLike(cityId, '', true);
   // Plans created in IRLY Girl (girls and moms): they show up right here.
   const { activities: girlPlans } = useServerActivities(cityId, { girlOnly: true });
+  const [kind, setKind] = useState<string | null>(null);
+  // Why IRLY Girl is closed for this account (asked only when it is).
+  const [closed, setClosed] = useState<string | null>(null);
+  useEffect(() => {
+    if (state !== 'ineligible' || !supabase) return;
+    let alive = true;
+    supabase.rpc('my_girl_status').then(({ data }) => alive && setClosed((data as string) ?? null));
+    return () => {
+      alive = false;
+    };
+  }, [state]);
+  const kindCounts = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const k of GIRL_KINDS) out[k.id] = girlPlans.filter((a) => k.match.test(a.title) || Boolean(k.cats?.includes(a.categoryId))).length;
+    return out;
+  }, [girlPlans]);
+  // Shortcuts under the hero scroll to these sections (y inside the page).
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const marks = useRef<Record<string, number>>({});
+  const record = (name: string, e: LayoutChangeEvent) => {
+    marks.current[name] = e.nativeEvent.layout.y;
+  };
+  const momsSection = (name: string, y: number) => {
+    if (name === 'goPlan') goTo('momsPlan');
+    else if (name === 'goCommunities') goTo('momsCommunities');
+    else marks.current[name] = (marks.current.momsBase ?? 0) + y;
+  };
+  const goTo = (name: string) => {
+    const y = marks.current[name];
+    if (y != null) scrollRef.current?.scrollTo({ y: Math.max(0, y - insets.top - 8), animated: !reduced });
+  };
   const fling = useSharedValue(0);
   const tr = useT();
   const scrollY = useSharedValue(0);
@@ -247,6 +267,20 @@ export default function GirlHome() {
   }
 
   if (state === 'ineligible') {
+    if (closed === 'suspended')
+      return (
+        <View style={[styles.root, styles.center, { padding: space.gutter + 8, gap: 16, paddingTop: insets.top + 40 }]}>
+          <Icon name="shield" size={28} color={girl.ink} />
+          <Text variant="displayM" align="center" color={girl.ink}>
+            IRLY Girl is paused for your account
+          </Text>
+          <Text variant="body" align="center" color={girl.inkSoft}>
+            After reports, our team paused your access to IRLY Girl. The rest of IRLY works as usual. If you think this is a mistake, write to us.
+          </Text>
+          <GButton label="Contact support" onPress={() => router.push('/support')} />
+          <GButton label="Back" variant="ghost" onPress={() => router.back()} />
+        </View>
+      );
     return (
       <View style={[styles.root, styles.center, { padding: space.gutter + 8, gap: 16, paddingTop: insets.top + 40 }]}>
         <Icon name="lock" size={28} color={girl.ink} />
@@ -263,8 +297,9 @@ export default function GirlHome() {
 
   return (
     <View style={styles.root}>
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView ref={scrollRef} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
         <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => router.back()} onProfile={() => router.push('/girl/profile')} />
+
 
         {matches.length ? (
           <View style={{ marginTop: space[5], gap: 10 }}>
@@ -307,8 +342,28 @@ export default function GirlHome() {
           ))}
         </View>
 
+        <Shortcuts
+          items={
+            mode === 'moms'
+              ? [
+                  { icon: 'baby', label: 'Moms', onPress: () => goTo('moms') },
+                  { icon: 'calendar', label: 'Activities', onPress: () => goTo('momsPlans') },
+                  { icon: 'users', label: 'Communities', onPress: () => goTo('momsCommunities') },
+                  { icon: 'plus', label: 'Plan', onPress: () => goTo('momsPlan') },
+                ]
+              : [
+                  { icon: 'heartHandshake', label: 'Women', onPress: () => goTo('women') },
+                  { icon: 'calendar', label: 'Activities', onPress: () => goTo('plans') },
+                  { icon: 'users', label: 'Communities', onPress: () => goTo('communities') },
+                  { icon: 'message', label: 'Posts', onPress: () => goTo('posts') },
+                ]
+          }
+        />
+
         {mode === 'moms' ? (
-          <MomsView cityId={cityId} />
+          <View onLayout={(e) => record('momsBase', e)}>
+            <MomsView cityId={cityId} onSection={momsSection} />
+          </View>
         ) : (
           <>
         {cityId === 'bali' ? (
@@ -326,6 +381,7 @@ export default function GirlHome() {
           </PressableScale>
         ) : null}
 
+        <View onLayout={(e) => record('women', e)} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sections}>
           {SECTIONS.map((s) => {
             const on = filters.section === s.id;
@@ -410,6 +466,7 @@ export default function GirlHome() {
           </View>
         ) : null}
 
+        <View onLayout={(e) => record('plan', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], marginHorizontal: space.gutter, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft }}>
           <View style={{ height: 120 }}>
             <Photo visual={{ photo: 'girlSunset' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
@@ -422,34 +479,23 @@ export default function GirlHome() {
           </View>
         </ScrollReveal>
 
-        {girlPlans.length ? (
-          <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], gap: 10 }}>
-            <Text variant="titleM" color={girl.ink} style={{ paddingHorizontal: space.gutter }}>
-              {"Girls' plans coming up"}
+        <View onLayout={(e) => record('plans', e)} style={{ marginTop: space[7], gap: 12 }}>
+          <View style={{ paddingHorizontal: space.gutter }}>
+            <Text variant="titleM" color={girl.ink}>
+              What women plan together
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
-              {girlPlans.map((a) => (
-                <PressableScale key={a.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/a/${a.id}`)} style={styles.plan} accessibilityLabel={a.title}>
-                  <View style={styles.planPhoto}>
-                    <Photo visual={{ photo: girlPhotoFor(a.title), uri: a.coverUrl }} light="dubai" width={500} style={StyleSheet.absoluteFill} />
-                  </View>
-                  <View style={{ padding: 12, gap: 2 }}>
-                    <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>
-                      {a.title}
-                    </Text>
-                    <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
-                      {cityWhen(a.startsAt, cityId, { weekday: 'short', hour: '2-digit', minute: '2-digit' })} · {placeLabel(cityId, a.cityId, a.areaId, a.placeName)}
-                    </Text>
-                    <Text variant="caption" color={girl.rose}>
-                      {tx('{n} going', { n: a.going })}
-                    </Text>
-                  </View>
-                </PressableScale>
-              ))}
-            </ScrollView>
-          </ScrollReveal>
-        ) : null}
+            <Text variant="bodyS" color={girl.inkSoft}>
+              Pick a kind of plan to see the next ones.
+            </Text>
+          </View>
+          <KindRail kinds={GIRL_KINDS} value={kind} onChange={setKind} counts={kindCounts} />
+          <Text variant="titleM" color={girl.ink} style={{ paddingHorizontal: space.gutter, marginTop: space[3] }}>
+            {"Girls' plans coming up"}
+          </Text>
+          <Upcoming activities={girlPlans} kinds={GIRL_KINDS} kind={kind} onKind={setKind} onPlan={() => goTo('plan')} emptyTitle="What if you organised the first meetup?" />
+        </View>
 
+        <View onLayout={(e) => record('communities', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], gap: 10 }}>
           <View style={{ paddingHorizontal: space.gutter }}>
             <Text variant="titleM" color={girl.ink}>
@@ -487,16 +533,31 @@ export default function GirlHome() {
                 </View>
               </PressableScale>
             ))}
-            {(serverCommunities.data.length ? [] : COMMUNITIES).map((c) => (
-              <PressableScale key={c.name} haptic="select" scaleTo={0.96} onPress={() => router.push('/category/girl')} style={styles.community} accessibilityLabel={c.name}>
-                <Photo visual={{ photo: girlPhotoFor(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
-                <Text variant="titleS" color="#FFFFFF" numberOfLines={2} style={{ padding: 12 }}>
-                  {c.name}
-                </Text>
-              </PressableScale>
-            ))}
+            <PressableScale haptic="select" scaleTo={0.96} onPress={() => router.push('/community/new')} style={[styles.community, styles.newCommunity]} accessibilityLabel="Create a community">
+              <View style={styles.communityBadge}>
+                <Icon name="plus" size={16} color={girl.rose} />
+              </View>
+              <Text variant="titleS" color={girl.ink}>
+                {serverCommunities.data.length ? 'Create a community' : 'Start the first community'}
+              </Text>
+              <Text variant="caption" color={girl.inkSoft}>
+                Public, private or by invitation.
+              </Text>
+            </PressableScale>
           </ScrollView>
         </ScrollReveal>
+
+        <View onLayout={(e) => record('posts', e)} style={{ marginTop: space[7], gap: 12 }}>
+          <View style={{ paddingHorizontal: space.gutter }}>
+            <Text variant="titleM" color={girl.ink}>
+              Recent posts
+            </Text>
+            <Text variant="bodyS" color={girl.inkSoft}>
+              From the IRLY Girl communities near you.
+            </Text>
+          </View>
+          <GirlFeed cityId={cityId} moms={false} onCommunities={() => goTo('communities')} />
+        </View>
           </>
         )}
       </Animated.ScrollView>
@@ -609,6 +670,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: space[4] },
   action: { alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },
   community: { width: 168, height: 200, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end', boxShadow: girl.shadowSoft },
+  newCommunity: { backgroundColor: girl.surface, padding: 14, gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: girl.blushStrong },
   plan: { width: 220, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
   planPhoto: { height: 120, overflow: 'hidden' },
   communityBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,250,246,0.92)', alignItems: 'center', justifyContent: 'center' },

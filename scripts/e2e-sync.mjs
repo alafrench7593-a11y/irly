@@ -335,6 +335,38 @@ async function main() {
     await visible(page, `Live from Vera ${run}`, 20000);
     return true;
   });
+  await step('IRLY Girl home: the women-only feed shows Vera\'s post (same post as the community page)', async () => {
+    await page.goto(`${BASE}/girl`);
+    await page.getByText('Recent posts').scrollIntoViewIfNeeded({ timeout: 30000 });
+    await visible(page, `Live from Vera ${run}`, 20000);
+    return true;
+  });
+  await step('… Vera posts again → it appears live in Uma\'s open IRLY Girl feed; Uma likes it there → one like on the server', async () => {
+    await page.waitForTimeout(1500);
+    const body = `Girl feed live ${run}`;
+    const [{ id: postId }] = must(await veraSb.from('community_posts').insert({ community_id: girlsId, author_id: vera.id, body }).select('id'));
+    await visible(page, body, 20000);
+    const card = page.locator('div').filter({ hasText: body }).filter({ has: page.getByRole('button', { name: 'Like', exact: true }) }).last();
+    await card.getByRole('button', { name: 'Like', exact: true }).click();
+    for (let i = 0; i < 20; i++) {
+      const [{ n }] = await sql(`select count(*)::int as n from public.likes where target_type = 'community_post' and target_id = '${postId}' and user_id = '${uma.id}'`);
+      if (n === 1) return true;
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
+  await step('IRLY Girl filters: "This weekend" and "Free" never show an error, and an empty result invites to plan', async () => {
+    await page.getByText("Girls' plans coming up").scrollIntoViewIfNeeded();
+    // The plan composer above has its own "This weekend": the filters are the last ones.
+    await page.getByRole('button', { name: 'This weekend', exact: true }).last().click();
+    await page.getByRole('button', { name: 'Free', exact: true }).last().click();
+    const plans = await page.getByText('Nothing planned here yet').count();
+    const rows = await page.getByText(/\d+(\/\d+)? going/).count();
+    return plans + rows > 0;
+  });
+  // Back to the community page for the assistant steps.
+  await page.goto(`${BASE}/c/${girlsId}`);
+  await page.waitForTimeout(1500);
   await step('assistant: "Poll: Saturday or Sunday?" → poll posted, Uma votes', async () => {
     await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Poll: Saturday or Sunday?');
     await page.getByRole('button', { name: 'Ask', exact: true }).click();

@@ -24,6 +24,7 @@ import { HeroHost } from '@/features/hero/HeroHost';
 import { AppIntro } from '@/features/intro/AppIntro';
 import { FlightHost } from '@/features/flight/FlightHost';
 import { PhotoViewerHost } from '@/features/photo/PhotoViewerHost';
+import { DemoBadge } from '@/features/demo/DemoBadge';
 import { MatchHost } from '@/features/match/IrlyMatch';
 import { usePush } from '@/features/push/push';
 import { ReportHost } from '@/features/moderation/ReportSheet';
@@ -118,6 +119,7 @@ function App() {
       <AppIntro />
       <ToastHost />
       <OfflineBar />
+      <DemoBadge />
     </AppFrame>
   );
 }
