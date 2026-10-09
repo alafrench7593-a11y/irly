@@ -744,7 +744,8 @@ async function main() {
       const com = await sql(`select cover_path, deleted_at from public.communities where id = '${photoClub}'`);
       const inbox = await sql(`select set_config('request.jwt.claims', '{"sub":"${uma.id}","role":"authenticated"}', true); select conversation_id, kind, title, photo_path, photo_bucket from public.my_conversations() where title like 'Photo club%'`);
       const imgs = await page.locator('img').evaluateAll((els) => els.map((el) => el.getAttribute('src')?.slice(0, 120)));
-      throw new Error(`${e.message}\n   community: ${JSON.stringify(com)}\n   inbox: ${JSON.stringify(inbox)}\n   imgs: ${JSON.stringify(imgs)}`);
+      console.log(`   diag community: ${JSON.stringify(com)}\n   diag inbox: ${JSON.stringify(inbox)}\n   diag imgs: ${JSON.stringify(imgs)}`);
+      throw e;
     }
     return true;
   });
