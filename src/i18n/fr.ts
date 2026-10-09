@@ -3572,4 +3572,5 @@ export const fr: Record<string, string> = {
   "Open the group chat": "Ouvrir la discussion du groupe",
   "Could not rename": "Impossible de renommer",
   "Post in {name}": "Publication dans {name}",
+  'Live feed: {n} live around you': 'Fil live : {n} en live autour de toi',
 };
