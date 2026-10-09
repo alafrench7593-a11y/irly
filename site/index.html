@@ -639,6 +639,13 @@ html.still .show-still { display: grid; grid-template-columns: repeat(auto-fit, 
 html.still .show-still figure { margin: 0; display: grid; gap: 10px; justify-items: center; text-align: center; }
 html.still .show-still .phone { --pw: 170px; }
 html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
+/* LIVE APP (temporary): the real web app, live in a phone frame. Remove this block, the section and the live* keys to take it off. */
+.live-app { padding: var(--s-5) var(--gutter); display: grid; justify-items: center; gap: var(--s-3); text-align: center; }
+.live-app h2 { font-size: clamp(30px, 4vw, 56px); margin: 0; }
+.live-app p { color: var(--muted); margin: 0; max-width: 560px; }
+.live-app .frame { width: min(390px, calc(100vw - 32px)); height: min(800px, 84svh); border-radius: 44px; border: 10px solid #1c1c1e; box-shadow: var(--shadow), 0 0 0 1px var(--line-strong); overflow: hidden; background: #000; }
+.live-app iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+.live-app a { color: var(--fg); }
 </style>
 
 <a class="skip" href="#main" data-i="skip">Skip to content</a>
@@ -713,6 +720,16 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
       </div>
       <div class="fade-b" aria-hidden="true"></div>
     </div>
+  </section>
+
+  <!-- LIVE APP (temporary): the real IRLY web app, running live. -->
+  <section class="live-app" id="live" aria-labelledby="live-t">
+    <p class="eyebrow" data-i="kLive">Live</p>
+    <h2 id="live-t" data-i="liveT">The real IRLY app, right here.</h2>
+    <p data-i="liveP">This is the app itself, not a video. Tap around, sign up, look at real plans.</p>
+    <div class="frame"><iframe id="liveApp" src="/app/?lang=en" title="IRLY app" data-i-aria="liveAria" aria-label="IRLY app, live" loading="lazy" allow="geolocation; microphone; clipboard-write"></iframe></div>
+    <p><a id="liveOpen" href="/app/?lang=en" data-i="liveOpen">Open the app full screen →</a></p>
+    <script>(() => { const l = document.documentElement.dataset.page === 'fr' ? 'fr' : 'en'; if (l !== 'en') { document.getElementById('liveApp').src = '/app/?lang=' + l; document.getElementById('liveOpen').href = '/app/?lang=' + l; } })();</script>
   </section>
 
   <!-- The film: alone in a new city → find your people → live IRL. -->
@@ -1128,10 +1145,10 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
     fr: {
       skip: 'Aller au contenu', navMain: 'Principale', langGroup: 'Langue', navHow: 'Comment ça marche', navComm: 'Communautés', navApp: 'L’app', navDubai: 'Dubaï', navDemo: 'Démo', navWait: 'Liste d’attente', menu: 'Menu', ctaFind: 'Trouver mes gens', ctaHow: 'Voir comment ça marche',
       h1a: 'Nouveau à Dubaï ?', h1b: 'Tu n’as pas à rester seul.', heroSub: 'Rencontre des gens qui partagent tes passions, rejoins des communautés, trouve quoi faire et transforme tes échanges en ligne en vrais moments, dans la vraie vie.',
-      heroMeta1: 'Ça commence à Dubaï', heroMeta2: 'iOS et Android dans {n} jours', heroMeta2Soon: 'Bientôt sur iOS et Android', tryWeb: 'Teste l’app dans ton navigateur', heroPhoneAria: 'L’app IRLY',
+      heroMeta1: 'Ça commence à Dubaï', heroMeta2: 'iOS et Android dans {n} jours', heroMeta2Soon: 'Bientôt sur iOS et Android', tryWeb: 'Teste l’app dans ton navigateur', kLive: 'En direct', liveT: 'La vraie app IRLY, ici même.', liveP: 'C’est l’app elle-même, pas une vidéo. Explore, inscris-toi, regarde les vrais plans.', liveOpen: 'Ouvrir l’app en plein écran →', liveAria: 'L’app IRLY, en direct', heroPhoneAria: 'L’app IRLY',
       pop1: 'Layla a rejoint IRLY Running', pop1s: 'Course au lever du soleil · Kite Beach', pop2: 'IRLY Gym · samedi 8h', pop2s: 'Dis bonjour dans le chat', pop3: '« Salut tout le monde, je suis nouveau »', pop3s: 'IRLY Newcomers · Dubaï',
       filmAria: 'Comment marche IRLY, en huit scènes', f1: 'Tu t’es installé à Dubaï.', f2: 'Mais connaître une ville, ce n’est pas connaître des gens.', f3: 'Trouver ses gens ne devrait pas être si difficile.', typed: 'comment se faire des amis à Dubaï', f5: 'Dis-nous ce qui te plaît.', f6: 'On te montre où est ta place.',
-      iFitness: 'Fitness', iFootball: 'Foot', iTravel: 'Voyage', iBusiness: 'Business', iFood: 'Food', iMusic: 'Musique', iFashion: 'Mode', iNetworking: 'Networking', iNewcomer: 'Nouveau en ville', iRunning: 'Running', iBeach: 'Plage', iTech: 'Tech',
+      iFitness: 'Fitness', iFootball: 'Foot', iTravel: 'Voyage', iBusiness: 'Business', iFood: 'Cuisine', iMusic: 'Musique', iFashion: 'Mode', iNetworking: 'Networking', iNewcomer: 'Nouveau en ville', iRunning: 'Course à pied', iBeach: 'Plage', iTech: 'Tech',
       tgGym: 'S’entraîner et bouger ensemble.', tgNew: 'Nouveau en ville ? Eux aussi.', tgNet: 'Business et networking.', tgTrip: 'Découvrir la ville et voyager.', tgSport: 'Jouer et s’entraîner ensemble.',
       f7a: 'Ta communauté', f7b: 'Samedi · 8h', f7c: 'Entraînement ensemble · IRLY Gym', f7: 'Des communautés. Des gens. Des plans.', f8a: 'Rencontre.', f8b: 'Bouge.', f8c: 'Vis IRL.', skipFilm: 'Passer l’histoire',
       p1: 'Une ville pleine de monde.', p2: 'Et pourtant seul ?', exTag: 'Exemples', b1: '« Comment se faire des amis à Dubaï ? »', b2: '« Je viens d’arriver. »', b3: '« Je ne connais personne. »', b4: '« Quelqu’un pour sortir ? »', b5: '« Je cherche des gens pour m’entraîner. »', exNote: 'Messages d’illustration, comme en écrivent les gens qui arrivent dans une nouvelle ville. Pas de vrais témoignages.', pAnswer: 'Tu n’es pas le seul à chercher.',
@@ -1140,13 +1157,13 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
       kMatch: 'Essaie', matchT: 'Choisis ce qui te plaît.', matchP: 'IRLY regarde tes passions et te propose les communautés où tu trouveras tes gens.', pickAria: 'Tes passions', matchNote: 'Un aperçu simplifié. Dans l’app, les suggestions viennent de tes propres réponses à l’inscription.', yourComms: 'Tes communautés', found: 'Tes gens sont à Dubaï. IRLY t’aide à les trouver.', analysing: 'Analyse…', matched: '{n} communautés', matchedOne: '1 communauté', pickOne: 'Choisis au moins une passion.',
       kChat: 'Le chat de communauté', chatT: 'Dis bonjour. Et sors.', screensAria: 'Écrans de l’app IRLY', cs1: 'Trouve ta communauté.', cs1p: 'IRLY te propose des communautés selon tes passions : IRLY Gym, IRLY Newcomers, IRLY Trip…', cs2: 'Rejoins-la et dis bonjour.', cs2q: 'Salut tout le monde 👋 Je viens d’arriver à Dubaï.', cs2p: 'Le chat t’accueille. IRLY prépare même ton premier message, tu n’as plus qu’à l’envoyer.', cs3: 'Samedi — IRLY Gym.', cs3p: 'Une conversation devient un plan. Un plan devient des gens que tu vois pour de vrai.', exampleNote: 'Vrais écrans de l’app IRLY, avec du contenu d’exemple.',
       irl1: 'D’une conversation', irl2: 'à un vrai moment.', irl3: 'Tout commence en ligne.', n1: 'Téléphone', n1s: 'Tu ouvres IRLY', n2b: 'Quelqu’un pour courir samedi ?', n2: 'Chat', n2s: 'Quelqu’un propose', n3: 'Communauté', n3s: 'Des gens qui aiment la même chose', n4: 'Activité', n4s: 'Samedi, 7h', n5: 'De vraies personnes', n5s: 'Petit-déj après',
-      kTodo: 'À faire ensemble', todoT: 'Quoi que tu aimes, fais-le avec du monde.', t1: 'Sport', t1s: 'Padel, tennis, escalade', t2: 'Salle de sport', t2s: 'S’entraîner à plusieurs', t3: 'Foot', t3s: 'Trouver un match', t4: 'Running', t4s: 'Courses au lever du soleil', t5: 'Plage', t5s: 'Journées plage, couchers de soleil', t6: 'Restos', t6s: 'Brunchs et dîners', t7: 'Voyages', t7s: 'Escapades du week-end', t8: 'Networking', t8s: 'Fondateurs et pros', t9: 'Événements', t9s: 'Concerts, culture, sorties', t10: 'Et tout ce qui te plaît.',
+      kTodo: 'À faire ensemble', todoT: 'Quoi que tu aimes, fais-le avec du monde.', t1: 'Sport', t1s: 'Padel, tennis, escalade', t2: 'Salle de sport', t2s: 'S’entraîner à plusieurs', t3: 'Foot', t3s: 'Trouver un match', t4: 'Course à pied', t4s: 'Courses au lever du soleil', t5: 'Plage', t5s: 'Journées plage, couchers de soleil', t6: 'Restos', t6s: 'Brunchs et dîners', t7: 'Voyages', t7s: 'Escapades du week-end', t8: 'Networking', t8s: 'Fondateurs et pros', t9: 'Événements', t9s: 'Concerts, culture, sorties', t10: 'Et tout ce qui te plaît.',
       c1: 'Moins d’écran.', c2: 'Plus de vie.', c3: 'Pas de concours de popularité.', c4: 'Pas de compteur d’abonnés.', c5: 'Pas de scroll sans fin.', c6: 'Juste des gens, des passions et de vrais moments.',
       kApp: 'L’app', appT: 'IRLY en action.',
       sc1t: 'Ton profil, en deux minutes.', sc1p: 'Une photo ou ton avatar, quelques mots, tes langues.', sc2t: 'Dis ce qui te plaît.', sc2p: 'Tes passions guident tout le reste.', sc3t: 'Tes communautés.', sc3p: 'IRLY te propose où commencer.', sc4t: 'Ce qui se passe autour de toi.', sc4p: 'Les gens et les plans près de toi.', sc5t: 'Des gens qui te ressemblent.', sc5p: 'Ce que vous avez en commun, d’un coup d’œil.', sc6t: 'Quoi faire ce soir.', sc6p: 'Sport, restos, sorties : qui y va, combien de places.', sc7t: 'Ta ville, en direct.', sc7p: 'Sur une vraie carte. Jamais d’adresse exacte.', sc8t: 'Crée un plan en quelques secondes.', sc8p: 'Quoi, quand, où. IRLY trouve les gens.', sc9t: 'Parle, puis retrouvez-vous.', sc9p: 'Chaque conversation mène à un vrai moment.',
       kPeople: 'Rencontrer des gens', peopleT: 'Rencontre des gens vraiment sur ta longueur d’onde.', peopleP: 'Des gens près de toi qui aiment ce que tu aimes, parlent tes langues et sont libres quand tu l’es. Puis quelque chose à faire ensemble.', val1: 'Amitié.', val2: 'Communauté.', val3: 'Expériences.', notDating: 'Pas une app de rencontres. Profils d’exemple.', deckAria: 'Profils d’exemple',
       pn1: 'Layla, 29', pn2: 'Kenji, 28', pn3: 'Mei, 25', pn4: 'Lucas, 30', pn5: 'Amira, 27', pw1: 'Jumeirah · 2 km', pw2: 'Dubai Marina · 1 km', pw3: 'Downtown · 4 km', pw4: 'JLT · 1,5 km', pw5: 'DIFC · 3 km',
-      tgRunning: 'Running', tgArt: 'Art', tgCoffee: 'Café', tgFootball: 'Foot', tgStartups: 'Startups', tgFashion: 'Mode', tgDesign: 'Design', tgBrunch: 'Brunch', tgYoga: 'Yoga', tgPadel: 'Padel', tgTech: 'Tech', tgMusic: 'Musique', tgBooks: 'Lecture', tgTravel: 'Voyage', tgFood: 'Cuisine',
+      tgRunning: 'Course à pied', tgArt: 'Art', tgCoffee: 'Café', tgFootball: 'Foot', tgStartups: 'Startups', tgFashion: 'Mode', tgDesign: 'Design', tgBrunch: 'Brunch', tgYoga: 'Yoga', tgPadel: 'Padel', tgTech: 'Tech', tgMusic: 'Musique', tgBooks: 'Lecture', tgTravel: 'Voyage', tgFood: 'Cuisine',
       pc1: 'Vous courez tous les deux au lever du soleil', pc2: 'Foot le mardi, comme toi', pc3: 'Vous adorez tous les deux les brunchs', pc4: 'Partenaire de padel pour ce soir ?', pc5: 'Vous venez tous les deux d’arriver',
       kCity: 'Ta ville', cityT: 'Dubaï, en direct.', lg1: 'Personnes', lg2: 'Activités', lg3: 'Communautés', lg4: 'Restos', lg5: 'Événements', cityOutro: 'Ta ville devient ta vie sociale.', mapAlt: 'Carte de Dubaï',
       ml5: 'Padel', ml6: 'Course au lever du soleil', ml7: 'Foot', ml8: 'IRLY Network', ml9: 'IRLY Newcomers', ml10: 'Brunch', ml11: 'Dîner', ml12: 'Soirée galerie', ml13: 'Fête sur la plage',
@@ -1162,7 +1179,7 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
     ar: {
       skip: 'انتقل إلى المحتوى', navMain: 'الرئيسية', langGroup: 'اللغة', navHow: 'كيف يعمل', navComm: 'المجتمعات', navApp: 'التطبيق', navDubai: 'دبي', navDemo: 'عرض تجريبي', navWait: 'قائمة الانتظار', menu: 'القائمة', ctaFind: 'اعثر على ناسك', ctaHow: 'شاهد كيف يعمل IRLY',
       h1a: 'جديد في دبي؟', h1b: 'لست مضطرًا لأن تبقى وحيدًا.', heroSub: 'تعرّف على أشخاص يشاركونك اهتماماتك، وانضم إلى مجتمعات، واكتشف ما تفعله، وحوّل التواصل عبر الإنترنت إلى لحظات حقيقية.',
-      heroMeta1: 'البداية من دبي', heroMeta2: 'على iOS وAndroid بعد {n} أيام', heroMeta2Soon: 'قريبًا على iOS وAndroid', tryWeb: 'جرّب التطبيق في متصفحك', heroPhoneAria: 'تطبيق IRLY',
+      heroMeta1: 'البداية من دبي', heroMeta2: 'على iOS وAndroid بعد {n} أيام', heroMeta2Soon: 'قريبًا على iOS وAndroid', tryWeb: 'جرّب التطبيق في متصفحك', kLive: 'مباشر', liveT: 'تطبيق IRLY الحقيقي، هنا.', liveP: 'هذا هو التطبيق نفسه، وليس فيديو. تصفّح وسجّل وشاهد الخطط الحقيقية.', liveOpen: 'افتح التطبيق بملء الشاشة ←', liveAria: 'تطبيق IRLY مباشرة', heroPhoneAria: 'تطبيق IRLY',
       pop1: 'ليلى انضمت إلى IRLY Running', pop1s: 'جري عند الشروق – كايت بيتش', pop2: 'IRLY Gym – السبت ٨:٠٠', pop2s: 'قل مرحبًا في الدردشة', pop3: '«مرحبًا بالجميع، أنا جديد هنا»', pop3s: 'IRLY Newcomers – دبي',
       filmAria: 'كيف يعمل IRLY في ثمانية مشاهد', f1: 'انتقلت إلى دبي.', f2: 'لكن معرفة المدينة ليست كمعرفة الناس.', f3: 'العثور على ناسك لا يجب أن يكون بهذه الصعوبة.', typed: 'كيف أكوّن صداقات في دبي', f5: 'أخبرنا بما تحب.', f6: 'وسنريك أين مكانك.',
       iFitness: 'اللياقة', iFootball: 'كرة القدم', iTravel: 'السفر', iBusiness: 'الأعمال', iFood: 'الطعام', iMusic: 'الموسيقى', iFashion: 'الأزياء', iNetworking: 'التواصل المهني', iNewcomer: 'جديد في المدينة', iRunning: 'الجري', iBeach: 'الشاطئ', iTech: 'التقنية',

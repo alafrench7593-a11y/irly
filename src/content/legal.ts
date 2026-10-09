@@ -1,4 +1,4 @@
-import { APP, LEGAL_VERSIONS } from '@/config/app';
+import { APP, LEGAL_REQUIRED, LEGAL_VERSIONS } from '@/config/app';
 
 /**
  * The legal texts shown in the app (Profile → Legal & support). They describe what
@@ -184,6 +184,190 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       {
         title: 'What happens when rules are broken',
         body: ['Depending on how serious it is: the content is removed, features are limited, or the account is closed. Serious threats may be passed to the authorities when the law requires it.'],
+      },
+    ],
+  },
+};
+
+const whoFr = `${APP.name} est exploitée par ${APP.legalEntity}, ${APP.operatorType === 'individual' ? 'personne physique (exploitant individuel), ' : ''}Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.`;
+const draft = (v: string) => v.replace('(draft)', '(projet)');
+
+/** The same texts in French, written for French readers (not shown as a machine translation). */
+export const LEGAL_FR: typeof LEGAL = {
+  privacy: {
+    title: 'Politique de confidentialité',
+    ...LEGAL_VERSIONS.privacy,
+    version: draft(LEGAL_VERSIONS.privacy.version),
+    intro: `${whoFr} Cette politique explique ce qu’IRLY collecte, pourquoi, qui peut le voir, combien de temps c’est conservé et comment tu le contrôles. Contact pour les demandes liées à tes données : ${APP.privacyEmail}.`,
+    sections: [
+      {
+        title: 'Ce que nous collectons et pourquoi',
+        body: [
+          'Compte : ton adresse e-mail ou ton numéro de téléphone, pour te connecter et sécuriser ton compte. Si tu te connectes avec Apple ou Google, nous recevons l’adresse e-mail qu’ils partagent.',
+          `Profil : prénom, âge (enregistré sous forme d’année de naissance), genre, ville, pays d’origine, langues, bio, centres d’intérêt, ce que tu recherches et une photo de profil. Utilisés pour montrer ton profil aux autres membres et te suggérer des personnes et des activités. Tu dois avoir au moins ${APP.minimumAge} ans.`,
+          'Détails facultatifs du profil : religion (jamais montrée aux autres membres, jamais utilisée pour classer ou filtrer des personnes) et la date de ton arrivée dans ta ville.',
+          'Profil professionnel (Networking, facultatif) : rôle, intitulé de poste, entreprise, secteurs, compétences, projet en cours, ce que tu cherches et proposes, objectifs et un quartier. Utilisé pour te montrer à d’autres professionnels et calculer les correspondances.',
+          'IRLY Girl (facultatif, réservé aux femmes) : le profil de rencontre que tu remplis (centres d’intérêt, disponibilités, quartiers, préférences de mode de vie, tranche d’âge recherchée, photos), tes likes, passes et favoris, utilisés pour te suggérer des matchs. Si tu prévois un déménagement, ton projet (destination, statut, mois du départ et liste de tâches). Si tu actives le mode Maman, les tranches d’âge de tes enfants (jamais leurs prénoms ni leurs dates de naissance), visibles par les autres membres d’IRLY Girl. Si des signalements montrent un usage abusif d’IRLY Girl, les modérateurs peuvent en retirer l’accès ; la décision et son motif sont conservés tant que ton compte existe.',
+          'Contenus que tu crées : activités, publications dans les communautés, commentaires, publications en direct (IRL), photos, messages et photos envoyés dans les discussions, discussions de groupe que tu crées ou rejoins (nom, photo, membres), photos de couverture des activités, communautés et discussions, likes, favoris, partages, votes aux sondages, réactions aux messages, éléments masqués, amis proches, signalements et blocages. Les personnes que tu suis et celles qui te suivent. Utilisés pour faire fonctionner ces fonctionnalités.',
+          'Localisation : IRLY n’enregistre jamais ta position exacte. Quand tu touches « Ma position » sur la carte, la position de ton téléphone sert uniquement, sur le téléphone, à centrer la carte. Ton profil et tes publications affichent au plus un quartier ou une ville, selon ton choix dans Profil → Confidentialité et notifications.',
+          'Notifications : si tu les autorises, un jeton push pour ton téléphone et sa langue, pour t’envoyer des notifications. Une notification peut afficher le prénom de l’expéditeur et le début d’un message sur ton écran verrouillé ; ce texte passe par le service push d’Expo et par Apple ou Google pour arriver sur ton téléphone. Les textes des notifications sont conservés 7 jours pour être distribués.',
+          'Liste d’attente du site (facultatif) : l’adresse e-mail que tu saisis sur le site IRLY, la langue de la page et l’endroit où tu t’es inscrit. Utilisée uniquement pour te prévenir du lancement d’IRLY. Jamais partagée ni vendue.',
+          'Ce dont tu demandes à être prévenu : les services à venir (IRLY PRO, Bon plan, Visa, Location) et les prochaines destinations pour lesquelles tu touches « Me prévenir ».',
+          'Assistant : les demandes que tu écris ou dictes à l’assistant IRLY (500 caractères au plus), pour y répondre. Sur le web, la dictée utilise le service de reconnaissance vocale de ton navigateur.',
+          'Événements d’utilisation : des événements sur l’usage de l’app (nom de l’événement, quelques détails comme une catégorie, ta plateforme et l’heure, par exemple « activité créée »), liés à l’identifiant de ton compte quand tu es connecté. Ils ne contiennent jamais le texte des messages, d’e-mails, de position exacte, de religion ni de genre. Ils sont conservés 13 mois ; si tu supprimes ton compte, ils restent jusqu’à la fin de cette durée sans aucun lien avec toi. Aucun outil d’analyse ou de publicité tiers n’est utilisé.',
+        ],
+      },
+      {
+        title: 'Qui peut voir tes données',
+        body: [
+          'Les autres membres voient ton profil public (prénom, âge, photo, ville, bio, centres d’intérêt, langues, les communautés dont tu fais partie, ainsi que le nombre et la liste de tes abonnés et abonnements) selon tes réglages de confidentialité (« Qui peut trouver mon profil »). Les personnes qui partagent une discussion avec toi, ou qui peuvent déjà accéder à ton profil, voient toujours ton prénom et ta photo.',
+          'Les messages et photos envoyés dans une discussion ne sont visibles que par les membres de la conversation, y compris les personnes ajoutées plus tard à un groupe. Les publications d’une communauté sont visibles par les personnes qui peuvent voir la communauté. Les publications en direct (IRL) suivent l’audience que tu choisis.',
+          'Bloquer quelqu’un vous masque l’un à l’autre partout.',
+          'Les modérateurs d’IRLY peuvent lire les contenus signalés, pour les examiner.',
+          'Nous ne vendons pas tes données et n’utilisons pas de traceurs publicitaires.',
+        ],
+      },
+      {
+        title: 'Prestataires',
+        body: [
+          'Supabase (base de données, authentification, stockage de fichiers et temps réel). Tes données sont hébergées dans l’Union européenne (Irlande), chez Supabase sur Amazon Web Services.',
+          'Le service de notifications push d’Expo et les services push d’Apple et de Google, pour distribuer les notifications.',
+          'La connexion avec Apple et Google, si tu la choisis.',
+          'Les fonds de carte du fournisseur de ton téléphone (Plans d’Apple sur iPhone, Google Maps sur Android). Sur la version web, les fonds de carte viennent d’OpenFreeMap (données OpenStreetMap).',
+          'Les images et vidéos affichées dans l’app sont chargées depuis des hébergeurs d’images (Unsplash, GitHub Pages et getirly.com), qui reçoivent ton adresse IP comme n’importe quel site. Le site IRLY charge Google Fonts.',
+          `Si la connexion par numéro de téléphone est activée, le SMS contenant ton code est envoyé par un prestataire SMS : ${LEGAL_REQUIRED}.`,
+          `Certains prestataires (le service push d’Expo, Apple et Google) peuvent traiter des données aux États-Unis ou dans d’autres pays. Les garanties contractuelles qui encadrent ces transferts : ${LEGAL_REQUIRED}.`,
+        ],
+      },
+      {
+        title: 'Durée de conservation',
+        body: [
+          'Ton compte et tes contenus : jusqu’à la suppression de ton compte.',
+          'Quand tu supprimes ton compte, ton profil, tes photos, tes profils professionnel et IRLY Girl, tes messages, publications, connexions, abonnements et notifications sont supprimés. Les groupes que tu gérais sont confiés à un autre membre. Le texte des contenus signalés aux modérateurs, et le signalement lui-même, sont conservés jusqu’au traitement du signalement puis pendant 12 mois, sauf si la loi impose plus longtemps ; les photos signalées sont supprimées avec ton compte.',
+          'Quand tu supprimes un message ou un commentaire, son texte est conservé de façon privée pour les modérateurs pendant 12 mois, afin que les abus puissent encore être examinés, puis effacé.',
+          'Messages envoyés au support : 24 mois.',
+          'Liste d’attente du site : jusqu’au lancement, et 24 mois au plus. Tu peux demander au support de retirer ton adresse à tout moment.',
+          'Textes des notifications push : 7 jours. Événements d’utilisation : 13 mois.',
+        ],
+      },
+      {
+        title: 'Tes droits et tes choix',
+        body: [
+          'Accès et portabilité : Profil → Télécharger mes données te donne une copie de tes données (les fichiers photo sont listés par nom ; demande-nous une copie des fichiers eux-mêmes).',
+          'Rectification : Modifier le profil et Profil professionnel.',
+          'Suppression : Profil → Supprimer le compte supprime ton compte et tes données de nos serveurs.',
+          'Visibilité : Profil → Confidentialité et notifications (qui peut te trouver, qui voit tes publications en direct et tes activités, précision de la localisation, notifications).',
+          `Opposition, limitation et réclamations : écris à ${APP.privacyEmail}. Tu peux aussi adresser une réclamation à l’UAE Data Office, ou à l’autorité de protection des données de ton pays (par exemple la CNIL en France).`,
+          `Pourquoi nous pouvons utiliser tes données : pour fournir le service auquel tu t’inscris (compte, profil, discussions, activités), avec ton consentement quand il est nécessaire (notifications, détails facultatifs comme la religion, tes photos), et pour garder IRLY sûre et fonctionnelle (modération, sécurité, statistiques sans contenu personnel). Cela suit la loi émiratie sur la protection des données personnelles (décret-loi fédéral n° 45 de 2021) et, pour les personnes situées dans l’Union européenne, le RGPD (contrat, consentement et intérêts légitimes).`,
+        ],
+      },
+      {
+        title: 'Sécurité',
+        body: [
+          'Les données circulent chiffrées (HTTPS). Chaque table est protégée par des règles d’accès dans la base de données, pour que les membres ne puissent lire que ce qu’ils ont le droit de voir. Aucune méthode n’est parfaitement sûre ; préviens-nous à l’adresse ci-dessus si tu trouves un problème.',
+        ],
+      },
+      {
+        title: 'Mineurs',
+        body: [`IRLY n’est pas destinée aux personnes de moins de ${APP.minimumAge} ans. Nous supprimons les comptes dont nous apprenons qu’ils appartiennent à une personne plus jeune.`],
+      },
+      {
+        title: 'Modifications',
+        body: ['Nous te préviendrons dans l’app avant que des changements importants de cette politique ne prennent effet.'],
+      },
+    ],
+  },
+  terms: {
+    title: 'Conditions d’utilisation',
+    ...LEGAL_VERSIONS.terms,
+    version: draft(LEGAL_VERSIONS.terms.version),
+    intro: `${whoFr} En créant un compte, tu acceptes ces Conditions et les Règles de la communauté. Contact : ${APP.supportEmail}.`,
+    sections: [
+      {
+        title: 'Qui peut utiliser IRLY',
+        body: [`Tu dois avoir au moins ${APP.minimumAge} ans et être capable de conclure un contrat. Un seul compte par personne, avec des informations vraies sur toi.`],
+      },
+      {
+        title: 'Ton compte',
+        body: ['Garde ta connexion sécurisée. Tu es responsable de ce qui se passe sur ton compte. Tu peux le supprimer à tout moment depuis Profil.'],
+      },
+      {
+        title: 'Tes contenus',
+        body: [
+          'Tu gardes les droits sur ce que tu publies. Tu autorises IRLY à l’héberger et à l’afficher aux personnes avec qui tu le partages, uniquement pour faire fonctionner le service.',
+          'Tu dois avoir le droit de publier ce que tu publies. Ne publie rien d’illégal, ni rien qui enfreigne les Règles de la communauté.',
+        ],
+      },
+      {
+        title: 'Se rencontrer en vrai',
+        body: [
+          'IRLY aide les gens à se rencontrer. Sauf mention contraire, IRLY ne vérifie pas l’identité ni les antécédents des membres, et n’est pas présente aux activités. Retrouvez-vous dans des lieux publics, dis à un proche où tu vas, et pars si tu ne te sens pas en sécurité. En cas d’urgence, appelle les services d’urgence locaux.',
+          'Les activités, événements, lieux et services proposés par des membres ou des tiers relèvent de leur responsabilité.',
+        ],
+      },
+      {
+        title: 'IRLY Girl',
+        body: ['IRLY Girl est un espace réservé aux femmes. L’accès dépend du genre déclaré à l’inscription. Un usage abusif (par exemple déclarer un faux genre pour y entrer) entraîne le retrait de l’accès à IRLY Girl et peut entraîner la fermeture du compte.'],
+      },
+      {
+        title: 'Modération',
+        body: [
+          'Tu peux signaler des profils, des messages et des contenus, et bloquer des membres. Les modérateurs examinent les signalements et peuvent retirer des contenus, limiter des fonctionnalités ou fermer les comptes qui enfreignent ces Conditions ou les Règles.',
+        ],
+      },
+      {
+        title: 'Fonctionnalités payantes',
+        body: ['IRLY est actuellement gratuite. Si des fonctionnalités payantes sont ajoutées, leur prix et leurs conditions seront affichés avant tout paiement.'],
+      },
+      {
+        title: 'Responsabilité, droit applicable et litiges',
+        body: [
+          `Limitation de responsabilité et garanties : ${LEGAL_REQUIRED}.`,
+          'Droit applicable et juridiction compétente : le droit de l’Émirat de Dubaï et les lois fédérales applicables des Émirats arabes unis ; les tribunaux de Dubaï sont compétents.',
+        ],
+      },
+      {
+        title: 'Modifications et fin',
+        body: ['Nous pouvons mettre à jour ces Conditions et te préviendrons dans l’app avant tout changement important. Tu peux arrêter d’utiliser IRLY et supprimer ton compte à tout moment.'],
+      },
+    ],
+  },
+  guidelines: {
+    title: 'Règles de la communauté',
+    ...LEGAL_VERSIONS.guidelines,
+    version: draft(LEGAL_VERSIONS.guidelines.version),
+    intro: 'IRLY sert à se rencontrer en vrai, dans le respect. Ces règles s’appliquent partout dans l’app : profils, messages, communautés, commentaires, publications en direct, activités, Networking et IRLY Girl.',
+    sections: [
+      {
+        title: 'Sois authentique',
+        body: ['Utilise ton vrai prénom et une vraie photo récente de toi. Pas de faux profils, pas d’usurpation d’identité, pas de compte pour quelqu’un d’autre.'],
+      },
+      {
+        title: 'Sois respectueux',
+        body: ['Pas de harcèlement, d’intimidation, de messages sexuels non désirés, de discours haineux ni de discrimination fondée sur l’origine, la religion, le genre, l’orientation sexuelle, le handicap ou toute autre caractéristique.'],
+      },
+      {
+        title: 'Protège tout le monde',
+        body: ['Pas de menaces ni de violence, pas d’incitation à l’automutilation, rien qui implique des mineurs, pas de partage des informations privées ou de la position exacte de quelqu’un sans son accord.'],
+      },
+      {
+        title: 'Pas de spam ni d’arnaques',
+        body: ['Pas de publicité non sollicitée, de chaînes, de demandes d’argent, de faux investissements, de liens d’hameçonnage ni de vente de produits illégaux. Le Networking est fait pour de vraies relations professionnelles.'],
+      },
+      {
+        title: 'Reste dans la légalité',
+        body: ['Respecte les lois du pays où tu te trouves, y compris les règles locales sur le comportement en public, l’alcool et les contenus.'],
+      },
+      {
+        title: 'Signaler et bloquer',
+        body: [
+          'Appuie longuement sur un message, ou utilise le bouton bouclier sur un profil ou une discussion, pour signaler ou bloquer. Choisis un motif : harcèlement, discours haineux, spam, arnaque, faux profil, contenu inapproprié, menaces ou autre.',
+          'Bloquer vous masque l’un à l’autre partout et met fin à toute connexion. Les signalements sont confidentiels : la personne ne sait pas qui l’a signalée.',
+        ],
+      },
+      {
+        title: 'Ce qui se passe quand les règles ne sont pas respectées',
+        body: ['Selon la gravité : le contenu est retiré, des fonctionnalités sont limitées, ou le compte est fermé. Les menaces graves peuvent être transmises aux autorités quand la loi l’exige.'],
       },
     ],
   },

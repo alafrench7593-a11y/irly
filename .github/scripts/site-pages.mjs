@@ -251,7 +251,7 @@ ${a.cover ? `<link rel="preload" as="image" href="${up}img/guides/${a.cover}-800
   ${twin ? `<a class="lang" href="${up + twin.path}" hreflang="${twin.lang}" lang="${twin.lang}">${t.other}</a>` : ''}
 </header>
 <main>
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="${homeRel}">${t.home}</a> › <a href="${up + hubPath(a.lang)}">${t.guides}</a> › ${a.city}</nav>
+  <nav class="crumbs" aria-label="${a.lang === 'fr' ? 'Fil d’Ariane' : 'Breadcrumb'}"><a href="${homeRel}">${t.home}</a> › <a href="${up + hubPath(a.lang)}">${t.guides}</a> › ${a.city}</nav>
   <h1>${a.h1}</h1>
   <p class="meta">${t.by} · ${t.updated} <time datetime="${updated}">${dateFmt(a.lang, updated)}</time></p>
   <p class="lead">${a.lead}</p>
@@ -329,7 +329,7 @@ for (const l of ['en', 'fr']) {
   <a class="lang" href="${up + hubPath(other)}" hreflang="${other}" lang="${other}">${L[l].other}</a>
 </header>
 <main>
-  <nav class="crumbs" aria-label="Breadcrumb"><a href="${up + (l === 'fr' ? 'fr/' : '')}">${t.home}</a> › ${t.guides}</nav>
+  <nav class="crumbs" aria-label="${l === 'fr' ? 'Fil d’Ariane' : 'Breadcrumb'}"><a href="${up + (l === 'fr' ? 'fr/' : '')}">${t.home}</a> › ${t.guides}</nav>
   <h1>${t.guides}</h1>
   <p class="lead">${t.hubLead}</p>
 ${cards}
