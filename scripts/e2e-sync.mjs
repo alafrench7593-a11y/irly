@@ -175,6 +175,19 @@ async function main() {
     await page.waitForTimeout(1200);
     return (await page.getByLabel('Close photo').count()) === 0;
   });
+  // ───────── Coming soon: "Tell me when it opens" is stored on the account ─────────
+  await step('IRLY VISA (coming soon): Uma asks to be told, the request is on her account; tapping again withdraws it', async () => {
+    await page.goto(`${BASE}/soon/visa`);
+    await visible(page, 'IRLY is not a government service');
+    await page.getByRole('button', { name: 'Tell me when it opens' }).click();
+    await page.getByRole('button', { name: 'We’ll tell you when it opens' }).waitFor({ timeout: 15000 });
+    const on = (await sql(`select count(*)::int as n from public.service_interest where user_id = '${uma.id}' and service = 'visa'`))[0].n;
+    if (on !== 1) throw new Error(`interest rows: ${on}`);
+    await page.getByRole('button', { name: 'We’ll tell you when it opens' }).click();
+    await page.getByRole('button', { name: 'Tell me when it opens' }).waitFor({ timeout: 15000 });
+    const off = (await sql(`select count(*)::int as n from public.service_interest where user_id = '${uma.id}' and service = 'visa'`))[0].n;
+    return off === 0;
+  });
   let conv;
   await step('Vera writes in the activity chat → it appears live in Uma\'s open chat', async () => {
     conv = must(await veraSb.rpc('activity_detail', { p_id: actId }))[0].conversation_id;
@@ -534,7 +547,7 @@ async function main() {
   const kinds = ['padel', 'football', 'tennis', 'running', 'yoga', 'surf', 'hiking', 'wellness', 'beach', 'networking'];
   const places = (await sql(`select slug from public.places where city_id = 'bali' limit 8`)).map((r) => r.slug);
   const screens = [
-    '/', '/discover', '/live', '/map', '/messages', '/profile', '/social', '/account', '/assistant', '/business', '/calendar', '/communities',
+    '/', '/discover', '/soon/pro', '/soon/bonplan', '/soon/visa', '/soon/location', '/live', '/map', '/messages', '/profile', '/social', '/account', '/assistant', '/business', '/calendar', '/communities',
     '/community/new', '/design-system', '/eat', '/events', '/match', '/notifications', '/saved', '/services', '/settings', '/activities',
     '/network', '/network/profile', `/network/${vera.id}`, '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
     `/comments?type=activity&id=${actId}`, `/share?type=activity&id=${actId}&title=x`, '/person/p-kadek',

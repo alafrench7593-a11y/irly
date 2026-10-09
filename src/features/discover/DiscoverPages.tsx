@@ -24,6 +24,7 @@ import type { LightId } from '@/theme/lights';
 import { GirlPortals } from '@/features/home/Portals';
 import { rankMatches } from '@/features/matching/match';
 import { isWeekend } from '@/lib/time';
+import { SoonRail } from '@/features/soon/SoonRail';
 import { PressableScale } from '@/motion/PressableScale';
 import { ScrollReveal } from '@/motion/ScrollReveal';
 import { useStore } from '@/state/store';
@@ -246,7 +247,7 @@ export function PlacesPage({ cityId, scrollY, top, bottom }: PageProps) {
   const guide: Door[] = [
     ...(cityId === 'bali' ? [{ label: 'Live Bali', caption: 'Areas, moving, test stays', icon: 'palm' as IconName, photo: 'bali' as PhotoKey, href: '/bali' }] : []),
     { label: 'Map', caption: 'Everything around you', icon: 'map', photo: city.photo, href: '/map' },
-    { label: 'Services', caption: 'Curated & verified', icon: 'shield', photo: SERVICE_CATEGORIES[city.serviceCategories[0]].photo ?? 'apartment', href: '/services' },
+    { label: 'Services', caption: 'Coming soon', icon: 'shield', photo: SERVICE_CATEGORIES[city.serviceCategories[0]].photo ?? 'apartment', href: '/services' },
     { label: 'Business', caption: 'Setup, visa, people', icon: 'briefcase', photo: 'meeting', href: '/business' },
   ];
   return (
@@ -311,6 +312,11 @@ export function PlacesPage({ cityId, scrollY, top, bottom }: PageProps) {
             <DoorTile key={d.label} door={d} width={doorW} light={city.light} />
           ))}
         </View>
+      </ScrollReveal>
+
+      <ScrollReveal scrollY={scrollY} style={styles.section}>
+        <SectionHeader overline="Coming soon" title="Coming to IRLY" />
+        <SoonRail light={city.light} />
       </ScrollReveal>
     </PageScroll>
   );

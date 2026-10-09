@@ -42,7 +42,7 @@ export default function Business() {
   const networkingSessions = content.sessions.filter((s) => s.kind === 'networking');
 
   return (
-    <Page overline={`${city.name} · Business`} title="Build here" subtitle="From licence to first hire: guides kept current, people already vetted.">
+    <Page overline={`${city.name} · Business`} title="Build here" subtitle="From licence to first hire: the steps, and people to meet.">
       <View style={{ paddingHorizontal: space.gutter, marginBottom: space[5] }}>
         <NetworkDoor />
       </View>
@@ -85,14 +85,14 @@ export default function Business() {
 
         {(topic === 'setup' || topic === 'visa') && (
           <View style={[styles.expert, { backgroundColor: t.c.brandSoft }]}>
-            <Icon name="shield" size={22} color={t.c.brand} />
+            <Icon name={topic === 'visa' ? 'stamp' : 'briefcase'} size={22} color={t.c.brand} />
             <View style={{ flex: 1 }}>
-              <Text variant="titleS">Talk to a verified expert</Text>
+              <Text variant="titleS">{topic === 'visa' ? 'IRLY VISA is coming' : 'IRLY PRO is coming'}</Text>
               <Text variant="bodyS" tone="secondary">
-                Fixed fees, no commission games. First call is free.
+                {topic === 'visa' ? 'Guides, checklists and qualified advisers. Not available yet.' : 'Company pages, missions and business meetups. Not available yet.'}
               </Text>
             </View>
-            <Button label="Find" size="sm" onPress={() => router.push(`/services?category=${topic}`)} />
+            <Button label="See" size="sm" variant="secondary" onPress={() => router.push(topic === 'visa' ? '/soon/visa' : '/soon/pro')} />
           </View>
         )}
       </Animated.View>

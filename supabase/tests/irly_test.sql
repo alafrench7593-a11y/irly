@@ -896,6 +896,21 @@ select pg_temp.check(not exists (select 1 from public.community_list('dubai') wh
 select pg_temp.check(not exists (select 1 from public.my_conversations() where title = 'Sync Club Dubai'), 'and every inbox');
 select pg_temp.as_admin();
 
+-- ───── Coming soon services: "tell me when it opens" ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.set_service_interest('visa');
+select public.set_service_interest('visa');
+select public.set_service_interest('location', true);
+select pg_temp.check((select count(*) from public.service_interest where user_id = auth.uid()) = 2, 'asking twice is one request; one row per service');
+select pg_temp.expect_denied($$select public.set_service_interest('casino')$$, 'only the four planned services');
+select pg_temp.expect_denied($$insert into public.service_interest (user_id, service) values (auth.uid(), 'pro')$$, 'no direct writes, only the RPC');
+select public.set_service_interest('location', false);
+select pg_temp.check(not exists (select 1 from public.service_interest where user_id = auth.uid() and service = 'location'), 'a member can withdraw');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(not exists (select 1 from public.service_interest), 'members never see each other''s requests');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.service_interest) = 1, 'the team sees every request');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
