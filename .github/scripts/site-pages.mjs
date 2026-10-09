@@ -83,7 +83,7 @@ function translateAttributes(html, dict) {
 
 /** Relative asset paths gain `../` in a page one level down. */
 function deeper(html, prefix) {
-  return html.replace(/(["'`(,]\s?)((?:img|shots|video|faces)\/|favicon\.png|apple-touch-icon\.png|lenis\.min\.js|og\.jpg|sitemap\.xml)/g, `$1${prefix}$2`);
+  return html.replace(/(["'`(,]\s?)((?:img|shots|video|faces)\/|favicon\.png|favicon\.ico|apple-touch-icon\.png|lenis\.min\.js|og\.jpg|sitemap\.xml)/g, `$1${prefix}$2`);
 }
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
@@ -96,8 +96,12 @@ fs.writeFileSync(`${OUT}/index.html`, enHome);
 
 for (const l of ['fr', 'ar']) {
   const d = T[l];
-  const title = `IRLY — ${strip(d.h1a)} ${strip(d.h1b)}`;
-  const desc = strip(d.heroSub);
+  // What Google shows for "IRLY": the brand first, then what it is for, in each language.
+  const META = {
+    fr: ['IRLY — Rencontrer du monde et se faire des amis à Dubaï', 'IRLY, l’app pour rencontrer du monde à Dubaï et à Bali : rejoins des communautés, trouve quoi faire ensemble et fais-toi de vrais amis. Gratuit.'],
+    ar: ['IRLY — تعرّف على أشخاص وكوّن صداقات في دبي', 'IRLY هو التطبيق للتعرّف على أشخاص في دبي وبالي: انضم إلى مجتمعات، واكتشف ما تفعله مع الآخرين، وكوّن صداقات حقيقية. التسجيل مجاني.'],
+  };
+  const [title, desc] = META[l];
   let html = translateAttributes(translateElements(enHome, d), d);
   html = html
     .replace('<html lang="en" dir="ltr" data-page="en" data-home="">', `<html lang="${l}" dir="${l === 'ar' ? 'rtl' : 'ltr'}" data-page="${l}" data-home="../">`)
@@ -218,7 +222,8 @@ for (const a of ARTICLES) {
 ${alternates.join('\n')}
 <meta name="theme-color" content="#050505">
 <meta name="color-scheme" content="dark">
-<link rel="icon" href="${up}favicon.png" type="image/png">
+<link rel="icon" href="${up}favicon.ico" sizes="48x48">
+<link rel="icon" href="${up}favicon.png" type="image/png" sizes="96x96">
 <link rel="apple-touch-icon" href="${up}apple-touch-icon.png">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="IRLY">
@@ -301,7 +306,8 @@ for (const l of ['en', 'fr']) {
 <link rel="alternate" hreflang="x-default" href="${SITE + hubPath('en')}">
 <meta name="theme-color" content="#050505">
 <meta name="color-scheme" content="dark">
-<link rel="icon" href="${up}favicon.png" type="image/png">
+<link rel="icon" href="${up}favicon.ico" sizes="48x48">
+<link rel="icon" href="${up}favicon.png" type="image/png" sizes="96x96">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="IRLY">
 <meta property="og:title" content="${esc(t.hubTitle)}">
