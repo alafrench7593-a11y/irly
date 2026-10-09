@@ -23,6 +23,7 @@ import { DestinationTransition } from '@/features/destination/DestinationTransit
 import { HeroHost } from '@/features/hero/HeroHost';
 import { AppIntro } from '@/features/intro/AppIntro';
 import { FlightHost } from '@/features/flight/FlightHost';
+import { PhotoViewerHost } from '@/features/photo/PhotoViewerHost';
 import { MatchHost } from '@/features/match/IrlyMatch';
 import { usePush } from '@/features/push/push';
 import { ReportHost } from '@/features/moderation/ReportSheet';
@@ -107,6 +108,7 @@ function App() {
       </Stack>
       <HeroHost />
       <FlightHost />
+      <PhotoViewerHost />
       <MatchHost />
       <ReportHost />
       <SyncBridge />

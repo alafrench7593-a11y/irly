@@ -6,6 +6,7 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **abudhabiSkyline**: by [msisakib](https://pixabay.com/users/msisakib-13972005/), https://pixabay.com/photos/abu-dhabi-abu-dhabi-skyline-skyline-5249641/
 - **ajman**: by [palaniselvam16](https://pixabay.com/users/palaniselvam16-14631006/), https://pixabay.com/photos/beach-buildings-architecture-sky-5930110/
 - **automotive**: by [Abdurashidbey](https://pixabay.com/users/Abdurashidbey-7501944/), https://pixabay.com/photos/lamborghini-cars-blue-dubai-3694924/
+- **bali**: by [IRLY](https://getirly.com), provided by IRLY
 - **basketball**: by [TruongDinhAnh](https://pixabay.com/users/TruongDinhAnh-51794135/), https://pixabay.com/photos/ball-sport-beach-player-game-9856638/
 - **bbq**: by [LAWJR](https://pixabay.com/users/LAWJR-4448871/), https://pixabay.com/photos/chicken-grill-bbq-marinade-grilled-4493690/
 - **beachClub**: by [IRLY](https://getirly.com), provided by IRLY
@@ -53,6 +54,7 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **lounge**: by [3282700](https://pixabay.com/users/3282700-3282700/), https://pixabay.com/photos/relax-to-enjoy-view-lounge-1806257/
 - **luxury**: by [3282700](https://pixabay.com/users/3282700-3282700/), https://pixabay.com/photos/hotel-dubai-burj-al-arab-emirates-1673952/
 - **mall**: by [MahiS3010](https://pixabay.com/users/MahiS3010-15279556/), https://pixabay.com/photos/uae-flag-the-dubai-mall-entrance-4853344/
+- **marathon**: by [IRLY](https://getirly.com), provided by IRLY
 - **meeting**: by [IRLY](https://getirly.com), provided by IRLY
 - **mosque**: by [Olgaozik](https://pixabay.com/users/Olgaozik-11540328/), https://pixabay.com/photos/uae-dubai-city-arab-emirates-4010835/
 - **nature**: by [hariskhan488](https://pixabay.com/users/hariskhan488-24535975/), https://pixabay.com/photos/landscapre-desert-safari-6826296/
@@ -71,6 +73,7 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **startup**: by [Martinschuschi](https://pixabay.com/users/Martinschuschi-5260235/), https://pixabay.com/photos/dubai-skyline-city-architecture-2292779/
 - **steak**: by [RitaE](https://pixabay.com/users/RitaE-19628/), https://pixabay.com/photos/steak-meat-beef-steak-food-beef-3640560/
 - **streetFood**: by [koki_4ever](https://pixabay.com/users/koki_4ever-13750559/), https://pixabay.com/photos/pailla-egyptian-food-fish-gourmet-4505214/
+- **surf**: by [mariamza](https://pixabay.com/users/mariamza-6544182/), https://pixabay.com/photos/surf-beach-sunset-sea-ocean-4087278/
 - **swimming**: by [IRLY](https://getirly.com), provided by IRLY
 - **tennis**: by [IRLY](https://getirly.com), provided by IRLY
 - **video:abudhabi**: by [masterbert0427](https://pixabay.com/users/masterbert0427-17843107/), https://pixabay.com/videos/id-47170/
