@@ -1,4 +1,5 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { memo, useEffect } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -27,10 +28,14 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
   profile: { label: 'Profile', icon: 'user' },
 };
 
-/** Slot order in the bar. `live` is IRL, the heart of the app, in the middle. */
-const SLOTS = ['index', 'discover', 'live', 'map', 'profile'] as const;
+/**
+ * Slot order in the bar. `irl` is the IRL disc (actions menu), the heart of
+ * the app; `live` right next to it is the live feed, spelled out so nobody
+ * has to guess where it is; `settings` opens the settings screen.
+ */
+const SLOTS = ['index', 'discover', 'irl', 'live', 'map', 'profile', 'settings'] as const;
 
-const SIDE = 20;
+const SIDE = 12;
 
 /** Space to leave under scrolling content so it clears the floating bar. */
 export function useTabBarSpace(): number {
@@ -49,6 +54,7 @@ export function useTabBarSpace(): number {
  */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const t = useTheme();
+  const router = useRouter();
   const frame = useFrame();
   const window = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -65,8 +71,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
     x.set(withSpring(activeSlot * itemW, spring.medium));
   }, [activeSlot, itemW, x]);
 
-  // IRL has its own ring; stack screens like Messages light no tab.
-  const onIrl = activeName === 'live' || !SLOTS.includes(activeName as (typeof SLOTS)[number]);
+  // Stack screens like Messages light no tab.
+  const offBar = !SLOTS.includes(activeName as (typeof SLOTS)[number]);
   const indicator = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const bottom = Math.max(insets.bottom, layout.tabBarBottomGap);
   const liveRoute = state.routes.find((r) => r.name === 'live');
@@ -87,11 +93,41 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           <Animated.View
             style={[
               styles.indicator,
-              { left: (itemW - 56) / 2, opacity: onIrl ? 0 : 1, backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.09)' : 'rgba(10,10,10,0.07)' },
+              { left: (itemW - Math.min(56, itemW - 4)) / 2, width: Math.min(56, itemW - 4), opacity: offBar ? 0 : 1, backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.09)' : 'rgba(10,10,10,0.07)' },
               indicator,
             ]}
           />
           {SLOTS.map((slot) => {
+            // IRL is drawn above the bar (below), so it can rise out of it.
+            if (slot === 'irl') return <View key={slot} style={{ width: itemW }} />;
+            if (slot === 'live')
+              return (
+                <LiveTab
+                  key={slot}
+                  width={itemW}
+                  focused={activeName === 'live'}
+                  onPress={() => {
+                    haptic('select');
+                    goLive();
+                  }}
+                />
+              );
+            if (slot === 'settings')
+              return (
+                <TabItem
+                  key={slot}
+                  label={tx('Settings')}
+                  icon="settings"
+                  isProfile={false}
+                  badge={0}
+                  focused={false}
+                  width={itemW}
+                  onPress={() => {
+                    haptic('select');
+                    router.push('/preferences' as never);
+                  }}
+                />
+              );
             const route = state.routes.find((r) => r.name === slot);
             if (!route) return <View key={slot} style={{ width: itemW }} />;
             const focused = activeName === slot;
@@ -102,13 +138,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 navigation.navigate(route.name, route.params);
               }
             };
-            // IRL is drawn above the bar (below), so it can rise out of it.
-            if (slot === 'live') return <View key={route.key} style={{ width: itemW }} />;
             const meta = TABS[slot];
             return (
               <TabItem
                 key={route.key}
-                label={meta.label}
+                label={tx(meta.label)}
                 icon={meta.icon}
                 isProfile={slot === 'profile'}
                 badge={0}
@@ -120,10 +154,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           })}
         </Glass>
         {liveRoute ? (
-          <View style={[styles.irlSlot, { left: SLOTS.indexOf('live') * itemW, width: itemW }]} pointerEvents="box-none">
+          <View style={[styles.irlSlot, { left: SLOTS.indexOf('irl') * itemW, width: itemW }]} pointerEvents="box-none">
             <IrlButton
               width={itemW}
-              focused={activeName === 'live'}
+              focused={false}
               hidden={menuOpen}
               onPress={showMenu}
               onLongPress={() => {
@@ -265,6 +299,28 @@ function IrlButton({
   );
 }
 
+/** The live feed, named in the bar: a red dot and « LIVE », lit when you are on it. */
+function LiveTab({ width, focused, onPress }: { width: number; focused: boolean; onPress: () => void }) {
+  const t = useTheme();
+  const lives = useLiveCount();
+  return (
+    <PressableScale
+      onPress={onPress}
+      haptic={false}
+      scaleTo={0.9}
+      style={[styles.item, { width }]}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: focused }}
+      accessibilityLabel={tx('Live feed: {n} live around you', { n: lives })}
+    >
+      <View style={[styles.liveDot, { backgroundColor: t.c.live }]} />
+      <Text variant="caption" color={focused ? t.c.text : t.c.textSecondary} style={styles.liveText}>
+        LIVE
+      </Text>
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', zIndex: 60 },
   bar: {
@@ -281,5 +337,7 @@ const styles = StyleSheet.create({
   irlRing: { position: 'absolute', left: -5, top: -5, width: IRL_DISC + 10, height: IRL_DISC + 10, borderRadius: (IRL_DISC + 10) / 2, borderWidth: 2 },
   sonar: { position: 'absolute', left: 0, top: 0, width: IRL_DISC, height: IRL_DISC, borderRadius: IRL_DISC / 2, borderWidth: 1.5 },
   count: { position: 'absolute', right: -4, top: -2, minWidth: 22, height: 22, borderRadius: 11, borderWidth: 2.5, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
+  liveDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 3 },
+  liveText: { fontSize: 10, lineHeight: 12, letterSpacing: 0.8, fontFamily: font.heavy },
   countText: { fontSize: 11, lineHeight: 13, fontFamily: font.heavy },
 });
