@@ -6,6 +6,7 @@
  *
  * `pair` links the language versions of the same guide (hreflang).
  */
+/** Site-wide last update; each guide may carry its own `updated` date. */
 export const UPDATED = '2026-10-09';
 
 const app = 'https://getirly.com/app/';
@@ -88,7 +89,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'New to Dubai?', body: 'Meet people who share your interests, join communities and do things together, in real life.', label: 'Find my people' },
-    related: [{ label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
   },
   {
     lang: 'fr',
@@ -153,7 +154,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu viens d’arriver à Dubaï ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt, rejoins des communautés et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
-    related: [{ label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
   },
   {
     lang: 'en',
@@ -291,6 +292,122 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu viens d’arriver à Bali ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+  },
+  {
+    lang: 'en',
+    pair: 'dubai-lonely',
+    path: 'dubai/lonely/',
+    cover: 'dubaiCreek',
+    figure: { photo: 'running', after: 1 },
+    city: 'Dubai',
+    updated: '2026-10-09',
+    title: 'Lonely in Dubai? What Actually Helps | IRLY',
+    description: 'Feeling lonely in Dubai is common, especially in the first months. Why it happens here, small steps that help this week, and when to talk to a professional.',
+    h1: 'Lonely in Dubai: what actually helps',
+    lead: 'Feeling lonely in Dubai is common, and it is not a sign that something is wrong with you. It usually eases with routine rather than with one big event: one regular activity, one person you see again, one plan you suggest yourself. Below: why it happens here, what helps this week, and when to ask for more help.',
+    sections: [
+      {
+        h2: 'Why loneliness is common here',
+        html: `<p>Dubai is a city of arrivals. Most people came from somewhere else, many alone, and the people around you are often busy building their own lives. A few things make it harder:</p>
+<ul>
+<li><strong>Your old network is far away.</strong> Friends and family are in other time zones, and calls do not replace seeing someone.</li>
+<li><strong>People come and go.</strong> Friends move on to another job or country, and you start again more often than elsewhere.</li>
+<li><strong>Work takes a lot of room.</strong> Long weeks leave little energy for meeting people.</li>
+<li><strong>Summer moves life indoors.</strong> From roughly June to September, the heat makes spontaneous meetings rarer.</li>
+</ul>
+<p>Knowing this helps: it is the situation, not you.</p>`,
+      },
+      {
+        h2: 'Small steps that help this week',
+        html: `<ol>
+<li><strong>Pick one regular activity.</strong> A weekly class, a run club, a sport, a volunteering shift. Same place, same time, same faces.</li>
+<li><strong>Say yes to one invitation.</strong> Even a short one. You can leave early; going matters more than staying.</li>
+<li><strong>Suggest one simple plan.</strong> A coffee after the activity, a walk, a game. Most people are waiting for someone else to propose.</li>
+<li><strong>Keep in touch with home, on a rhythm.</strong> A fixed call each week keeps those ties without filling every evening.</li>
+<li><strong>Get out of the flat every day.</strong> A café, a library, a park in the cooler hours: being around people helps, even before you talk to them.</li>
+</ol>`,
+      },
+      {
+        h2: 'Places where conversations start easily',
+        html: `<p>Some settings make talking natural because everyone is there for the same thing:</p>
+<ul>
+<li><strong>Group sport:</strong> padel, running, football, climbing, beach volleyball.</li>
+<li><strong>Classes and workshops:</strong> languages, cooking, art, dance.</li>
+<li><strong>Volunteering:</strong> people who care about the same cause, and a task to share.</li>
+<li><strong>Communities of your country or language:</strong> a familiar starting point, then mixed groups to widen your circle.</li>
+<li><strong>Coworking spaces and professional meetups:</strong> if you work alone, they give your week colleagues.</li>
+</ul>`,
+      },
+      {
+        h2: 'When to talk to someone',
+        html: `<p>Loneliness can weigh on your mood, sleep and energy. If it lasts, if you feel low most days, or if daily life becomes hard, talk to a doctor or a mental health professional: it is a normal step, and many clinics in Dubai offer consultations in several languages. Your employer’s health insurance may cover part of it; check your policy.</p>
+<p>If you are in danger or think about harming yourself, call the emergency services: <strong>999</strong> (police) or <strong>998</strong> (ambulance) in the UAE.</p>`,
+      },
+      {
+        h2: 'Where IRLY fits in',
+        html: `<p>IRLY is built to turn “I don’t know anyone” into a plan: join communities around what you like, find an activity this week or create your own, and talk with the group before you meet. IRLY Girl offers spaces for women only. It is one option among others; the regular activity and the plan you suggest are what change things.</p>`,
+      },
+    ],
+    cta: { title: 'Feeling alone in Dubai?', body: 'Join a community around what you like and find a plan this week, in real life.', label: 'Join a community' },
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+  },
+  {
+    lang: 'fr',
+    pair: 'dubai-lonely',
+    path: 'fr/dubai/solitude/',
+    cover: 'dubaiCreek',
+    figure: { photo: 'running', after: 1 },
+    city: 'Dubaï',
+    updated: '2026-10-09',
+    title: 'Se sentir seul à Dubaï : ce qui aide vraiment | IRLY',
+    description: 'Se sentir seul à Dubaï est fréquent, surtout les premiers mois. Pourquoi ça arrive ici, les petits pas qui aident cette semaine, et quand en parler à un professionnel.',
+    h1: 'Se sentir seul à Dubaï : ce qui aide vraiment',
+    lead: 'Se sentir seul à Dubaï est fréquent, et ça ne veut pas dire que quelque chose ne va pas chez toi. La solitude recule surtout avec une routine, pas avec un grand événement : une activité régulière, une personne que tu revois, un plan que tu proposes toi-même. Ci-dessous : pourquoi ça arrive ici, ce qui aide cette semaine, et quand demander plus d’aide.',
+    sections: [
+      {
+        h2: 'Pourquoi la solitude est fréquente ici',
+        html: `<p>Dubaï est une ville d’arrivées. La plupart des gens viennent d’ailleurs, souvent seuls, et ceux qui t’entourent sont occupés à construire leur propre vie. Quelques raisons rendent les choses plus difficiles :</p>
+<ul>
+<li><strong>Ton réseau est loin.</strong> Amis et famille vivent dans d’autres fuseaux horaires, et les appels ne remplacent pas les rencontres.</li>
+<li><strong>Les gens partent et arrivent.</strong> Des amis changent de poste ou de pays, et on recommence plus souvent qu’ailleurs.</li>
+<li><strong>Le travail prend beaucoup de place.</strong> Les semaines longues laissent peu d’énergie pour rencontrer du monde.</li>
+<li><strong>L’été ramène la vie à l’intérieur.</strong> De juin à septembre environ, la chaleur rend les rencontres spontanées plus rares.</li>
+</ul>
+<p>Le savoir aide : c’est la situation, pas toi.</p>`,
+      },
+      {
+        h2: 'Les petits pas qui aident cette semaine',
+        html: `<ol>
+<li><strong>Choisis une activité régulière.</strong> Un cours chaque semaine, un club de course, un sport, du bénévolat. Même lieu, même heure, mêmes visages.</li>
+<li><strong>Dis oui à une invitation.</strong> Même courte. Tu peux partir tôt : y aller compte plus que rester.</li>
+<li><strong>Propose un plan simple.</strong> Un café après l’activité, une balade, un jeu. La plupart des gens attendent que quelqu’un d’autre propose.</li>
+<li><strong>Garde le lien avec chez toi, à un rythme fixe.</strong> Un appel fixe chaque semaine entretient ces liens sans remplir toutes tes soirées.</li>
+<li><strong>Sors de chez toi chaque jour.</strong> Un café, une bibliothèque, un parc aux heures fraîches : être entouré aide, même avant de parler.</li>
+</ol>`,
+      },
+      {
+        h2: 'Les lieux où la conversation vient facilement',
+        html: `<p>Certains cadres rendent la discussion naturelle, parce que tout le monde est là pour la même chose :</p>
+<ul>
+<li><strong>Le sport en groupe :</strong> padel, course, football, escalade, beach-volley.</li>
+<li><strong>Les cours et ateliers :</strong> langues, cuisine, art, danse.</li>
+<li><strong>Le bénévolat :</strong> des gens qui tiennent à la même cause, et une tâche à partager.</li>
+<li><strong>Les communautés de ton pays ou de ta langue :</strong> un point de départ familier, puis des groupes mixtes pour élargir ton cercle.</li>
+<li><strong>Les espaces de coworking et rencontres professionnelles :</strong> si tu travailles seul, ils donnent des collègues à ta semaine.</li>
+</ul>`,
+      },
+      {
+        h2: 'Quand en parler à quelqu’un',
+        html: `<p>La solitude peut peser sur le moral, le sommeil et l’énergie. Si elle dure, si tu te sens mal la plupart des jours, ou si le quotidien devient difficile, parles-en à un médecin ou à un professionnel de santé mentale : c’est une démarche normale, et de nombreuses cliniques à Dubaï proposent des consultations en plusieurs langues. L’assurance santé de ton employeur peut en couvrir une partie ; vérifie ton contrat.</p>
+<p>Si tu es en danger ou si tu penses à te faire du mal, appelle les secours : <strong>999</strong> (police) ou <strong>998</strong> (ambulance) aux Émirats.</p>`,
+      },
+      {
+        h2: 'La place d’IRLY',
+        html: `<p>IRLY est pensée pour transformer « je ne connais personne » en un plan : rejoindre des communautés autour de ce que tu aimes, trouver une activité cette semaine ou créer la tienne, et échanger avec le groupe avant de te rencontrer. IRLY Girl propose des espaces réservés aux femmes. C’est une option parmi d’autres ; ce qui change les choses, c’est l’activité régulière et le plan que tu proposes.</p>`,
+      },
+    ],
+    cta: { title: 'Seul à Dubaï ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve un plan cette semaine, en vrai.', label: 'Rejoindre une communauté' },
     related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
   },
 ];
