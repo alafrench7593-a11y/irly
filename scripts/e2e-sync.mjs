@@ -199,7 +199,7 @@ async function main() {
   });
   await step('Uma replies from the app → Vera receives it', async () => {
     await page.getByPlaceholder('Message').fill(`Reply ${run}`);
-    await page.getByRole('button', { name: 'Send' }).click();
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
     for (let i = 0; i < 20; i++) {
       const rows = must(await veraSb.from('messages').select('body').eq('conversation_id', conv));
       if (rows.some((r) => r.body === `Reply ${run}`)) return true;
@@ -489,7 +489,7 @@ async function main() {
   });
   await step('Uma replies → Vera receives it, unread for her until she reads', async () => {
     await page.getByPlaceholder('Message').fill(`Reply to Vera ${run}`);
-    await page.getByRole('button', { name: 'Send' }).click();
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
     for (let i = 0; i < 20; i++) {
       const inbox = must(await veraSb.rpc('my_conversations'));
       const row = inbox.find((c) => c.conversation_id === dm);
@@ -594,7 +594,8 @@ async function main() {
     await page.reload();
     await visible(page, 'Following', 20000);
     await page.getByRole('button', { name: /Followers/ }).first().click();
-    await visible(page, 'Uma', 15000);
+    // Uma sees herself in Vera's followers, shown as "You".
+    await visible(page, 'You', 15000);
     return true;
   });
   await step('Unfollow → no follow left, no duplicate', async () => {

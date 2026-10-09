@@ -363,7 +363,7 @@ export async function signOut(): Promise<void> {
 }
 
 /** Your files in each storage bucket (they live in a folder named after you). */
-const BUCKETS = ['profile-photos', 'match-photos', 'irl-media', 'activity-photos'];
+const BUCKETS = ['profile-photos', 'match-photos', 'irl-media', 'activity-photos', 'chat-media'];
 async function removeMyFiles(uid: string): Promise<void> {
   if (!supabase) return;
   for (const bucket of BUCKETS) {
