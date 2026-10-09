@@ -80,6 +80,7 @@ From Pixabay (https://pixabay.com/service/license-summary/) and Pexels (https://
 - **video:beach**: by [puhoff](https://pixabay.com/users/puhoff-27507993/), https://pixabay.com/videos/id-117430/
 - **video:desert**: by [Engin_Akyurt](https://pixabay.com/users/Engin_Akyurt-3656355/), https://pixabay.com/videos/id-241694/
 - **video:dubai**: by [Mahi8](https://pixabay.com/users/Mahi8-54853152/), https://pixabay.com/videos/id-339596/
+- **video:hero**: by [engrahmad2653](https://pixabay.com/users/engrahmad2653-24963308/), https://pixabay.com/videos/id-296958/
 - **video:marina**: by [maksoy](https://pixabay.com/users/maksoy-15113309/), https://pixabay.com/videos/id-203951/
 - **video:night**: by [livesmart](https://pixabay.com/users/livesmart-44568/), https://pixabay.com/videos/id-163160/
 - **volleyball**: by [Peggy_Marco](https://pixabay.com/users/Peggy_Marco-1553824/), https://pixabay.com/photos/sunset-volleyball-beach-silhouette-5560658/
