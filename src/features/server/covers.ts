@@ -8,6 +8,8 @@ import { imageBytes, imageType } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 import { changed, useSyncVersion } from './sync';
 import { coverLinks } from './activities';
+import { enhanceCover, type SceneKind } from './enhance';
+export { coverVariant, sceneOf, type SceneKind } from './enhance';
 
 /**
  * Own photos for sessions, communities and chats. Without one, the app shows
@@ -16,17 +18,25 @@ import { coverLinks } from './activities';
  * set a photo (community owner or moderator, chat admin) and who sees it.
  */
 
-/** Picks a photo from the library, cropped to 16:10 and resized for the app (null if cancelled). */
+/**
+ * Picks a photo from the library (null if cancelled). It keeps its own
+ * framing: cards and thumbnails are cropped later, around the subject
+ * (enhance-photo), instead of one fixed crop decided here.
+ */
 export async function pickPhoto(): Promise<string | null> {
-  const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [16, 10] });
+  const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 1 });
   if (res.canceled || !res.assets[0]) return null;
-  // Phone photos are 5–10 MB: 1280 px wide is plenty for a card and a header.
-  const small = await manipulateAsync(res.assets[0].uri, [{ resize: { width: 1280 } }], { compress: 0.75, format: SaveFormat.JPEG });
+  // Phone photos are 5–10 MB: 2048 px keeps them sharp on large screens.
+  const small = await manipulateAsync(res.assets[0].uri, [{ resize: { width: 2048 } }], { compress: 0.86, format: SaveFormat.JPEG });
   return small.uri;
 }
 
-/** Uploads one of your photos to "activity-photos" and returns its stored path. */
-export async function uploadCover(uri: string): Promise<string> {
+/** Uploads one of your photos to "activity-photos", enhances it, and returns the path to show. */
+export async function uploadCover(uri: string, kind: SceneKind = 'default'): Promise<string> {
+  return enhanceCover(await uploadOriginal(uri), kind);
+}
+
+async function uploadOriginal(uri: string): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data: session } = await supabase.auth.getSession();
   const uid = session.session?.user.id;

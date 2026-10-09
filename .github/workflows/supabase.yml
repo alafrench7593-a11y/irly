@@ -76,3 +76,21 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/deploy-db.mjs
+      # Edge functions (enhance-photo: AI cover photos). The Cloudinary key
+      # goes from the repository secret CLOUDINARY_URL to the function's
+      # secrets; it never reaches the app. Without it the function answers
+      # { enabled: false } and the app keeps original photos.
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Deploy edge functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+        run: |
+          supabase functions deploy enhance-photo --project-ref yqutcmgslwxcmnsqmhvy --use-api
+          if [ -n "$CLOUDINARY_URL" ]; then
+            supabase secrets set --project-ref yqutcmgslwxcmnsqmhvy CLOUDINARY_URL="$CLOUDINARY_URL"
+          else
+            echo "CLOUDINARY_URL is not set: photos stay as uploaded until it is."
+          fi

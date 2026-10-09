@@ -13,6 +13,7 @@ import { Photo } from '@/components/visual/Photo';
 import { INTERESTS } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import { useSignedLinks } from '@/features/server/media';
+import { coverVariant } from '@/features/server/enhance';
 import { openReport } from '@/features/moderation/reportStore';
 import { t as tx } from '@/i18n';
 import { hueOf } from '@/lib/format';
@@ -39,7 +40,7 @@ export function MemberProfileView({ userId }: { userId: string }) {
   const { profile: p, communities, posts, loading, error, reload, signedIn } = useMemberProfile(userId);
   const now = useNow();
   const faces = useSignedLinks('profile-photos', [p?.photo]);
-  const covers = useSignedLinks('activity-photos', communities.map((c) => c.cover));
+  const covers = useSignedLinks('activity-photos', communities.map((c) => coverVariant(c.cover, 'square')));
   const [busy, setBusy] = useState<'follow' | 'message' | null>(null);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/messages'));
 
@@ -228,8 +229,8 @@ export function MemberProfileView({ userId }: { userId: string }) {
                 {communities.map((c) => (
                   <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${c.id}`)} style={styles.community} accessibilityLabel={c.name}>
                     <View style={[styles.communityPhoto, { backgroundColor: t.c.overlay }]}>
-                      {c.cover && covers[c.cover] ? (
-                        <Photo visual={{ photo: 'meeting', uri: covers[c.cover] }} light="dubai" width={120} style={StyleSheet.absoluteFill} />
+                      {c.cover && covers[coverVariant(c.cover, 'square')!] ? (
+                        <Photo visual={{ photo: 'meeting', uri: covers[coverVariant(c.cover, 'square')!] }} light="dubai" width={120} style={StyleSheet.absoluteFill} />
                       ) : (
                         <Icon name="heartHandshake" size={18} color={t.c.textSecondary} />
                       )}

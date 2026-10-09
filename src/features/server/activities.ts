@@ -10,6 +10,7 @@ import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import type { MyPlan } from '@/state/store';
+import { coverVariant, enhanceCover, sceneOf } from './enhance';
 import { imageBytes, imageType } from '@/lib/media';
 
 /**
@@ -70,6 +71,8 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
     if (up.error) throw new Error('Could not upload the photo');
   }
   const guess = guessCategory(`${plan.title ?? ''} ${plan.description ?? ''} ${plan.place ?? ''}`);
+  // AI-enhanced, cropped around its subject for cards (the original stays as uploaded).
+  if (coverPath) coverPath = await enhanceCover(coverPath, sceneOf(plan.categoryId ?? guess.category));
   const { data, error } = await supabase
     .from('activities')
     .insert({
@@ -163,7 +166,8 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
     if (girlOnly) q = q.eq('girl_only', true);
     const { data, error } = await q.order('starts_at').limit(60);
     if (error) throw new Error(error.message);
-    const links = await coverLinks((data ?? []).map((a) => a.cover_path as string | null));
+    // Cards show the subject-aware 16:10 crop when the cover was enhanced.
+    const links = await coverLinks((data ?? []).map((a) => coverVariant(a.cover_path as string | null, 'card')));
     return (
       (data ?? []).map((a) => {
         const parts = (a.activity_participants ?? []) as { user_id: string; status: string }[];
@@ -184,7 +188,7 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
           priceMinor: a.price_minor,
           currency: a.currency,
           creatorId: a.creator_id,
-          coverUrl: a.cover_path ? (links[a.cover_path as string] ?? null) : null,
+          coverUrl: a.cover_path ? (links[coverVariant(a.cover_path as string, 'card')!] ?? null) : null,
           joined: parts.some((p) => p.user_id === uid && p.status === 'going'),
         };
       })
