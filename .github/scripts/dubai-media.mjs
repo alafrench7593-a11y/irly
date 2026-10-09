@@ -38,6 +38,8 @@ const videos = read(`${dir}/dubai-videos.json`, {});
 for (const o of [queries, exclude, videos]) delete o._note;
 
 const PLACES = {
+  // The hero film: the tower itself, named in the clip's tags or page.
+  burj: /burj khalifa|burj-khalifa|burjkhalifa/i,
   dubai: /dubai|jumeirah|burj|deira|bur dubai|al quoz|palm jumeirah|al barsha|business bay|difc|marina/i,
   'abu dhabi': /abu dhabi|abudhabi|sheikh zayed|louvre abu/i,
   sharjah: /sharjah/i,

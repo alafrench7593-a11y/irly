@@ -686,6 +686,8 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
     <div class="pin">
       <div class="bg" aria-hidden="true">
         <img src="img/heroBurj.webp" srcset="img/heroBurj-sm.webp 960w, img/heroBurj.webp 1280w" sizes="100vw" alt="" fetchpriority="high">
+        <!-- The film fades in over the photo once it can play (never on reduced motion or data saving). -->
+        <video id="heroVideo" muted playsinline loop preload="none" poster="video/hero.jpg"><source src="video/hero.mp4" type="video/mp4"></video>
       </div>
       <div class="copy" id="heroCopy">
         <span class="tag notranslate" dir="ltr" translate="no">IN REAL LIFE.</span>
@@ -1274,6 +1276,18 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
     video.addEventListener('loadeddata', () => onReady && onReady());
     io.observe(video);
   };
+  // Hero film: after the page has loaded (the photo stays the first paint), then faded in.
+  const heroVideo = $('#heroVideo');
+  if (heroVideo) {
+    if (reduce || saveData) heroVideo.remove();
+    else {
+      heroVideo.addEventListener('playing', () => heroVideo.classList.add('on'), { once: true });
+      heroVideo.addEventListener('error', () => heroVideo.remove(), true);
+      const start = () => setTimeout(() => lazyVideo(heroVideo), 300);
+      if (document.readyState === 'complete') start();
+      else addEventListener('load', start, { once: true });
+    }
+  }
   const aerial = $('#aerial'), aerialVideo = $('#aerial video');
   lazyVideo(aerialVideo, () => { aerial.hidden = false; });
   if (reduce || saveData) aerial.remove();
