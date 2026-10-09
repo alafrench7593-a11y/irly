@@ -25,11 +25,14 @@ export const APP = {
   /** Where the IRLY database and files are hosted. */
   hosting: 'the European Union (Ireland), with Supabase on Amazon Web Services',
   /** Help and account questions. */
-  supportEmail: LEGAL_REQUIRED,
+  supportEmail: 'getirly@gmail.com',
   /** Privacy requests (access, deletion, objections). */
-  privacyEmail: LEGAL_REQUIRED,
+  privacyEmail: 'getirly@gmail.com',
   /** Safety reports that cannot wait (threats, minors, emergencies → local police first). */
-  safetyEmail: LEGAL_REQUIRED,
+  safetyEmail: 'getirly@gmail.com',
+  /** IRLY's own accounts (Profile → Follow IRLY, the website footer). */
+  instagram: 'https://www.instagram.com/irlyofficial/',
+  tiktok: 'https://www.tiktok.com/@irlyofficial',
   /** Minimum age to use IRLY (checked at signup and on the server). */
   minimumAge: 18,
   /** Public web address of the app (links people share). */
