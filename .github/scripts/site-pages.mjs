@@ -9,7 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { ARTICLES, UPDATED, APP_URL } from '../../site/guides/articles.mjs';
+import { ARTICLES, PHOTOS, UPDATED, APP_URL } from '../../site/guides/articles.mjs';
 
 const OUT = process.argv[2] || 'dist/site';
 const SITE = 'https://getirly.com/';
@@ -130,6 +130,7 @@ main{max-width:760px;margin:0 auto;padding:24px 20px 64px}
 h1{font-size:clamp(34px,7vw,52px);line-height:1.05;letter-spacing:-.02em;margin:14px 0 12px;font-weight:800}
 .meta{font-size:13px;color:var(--g2);margin:0 0 28px}
 .lead{font-size:20px;line-height:1.6;color:var(--paper);margin:0 0 8px}
+.ph{margin:28px 0 8px}.ph img{display:block;width:100%;height:auto;aspect-ratio:40/21;object-fit:cover;border-radius:18px;background:#141414}.ph figcaption{font-size:12px;color:var(--g2);margin-top:8px}.ph figcaption a{color:var(--g2)}
 h2{font-size:26px;line-height:1.2;letter-spacing:-.01em;margin:44px 0 12px;font-weight:800}
 h3{font-size:19px;margin:24px 0 6px;font-weight:700}
 p,li{color:var(--g1)}strong{color:var(--paper)}
@@ -158,6 +159,15 @@ const L = {
 const hubPath = (l) => (l === 'fr' ? 'fr/guides/' : 'guides/');
 const dateFmt = (l, d = UPDATED) => new Date(`${d}T12:00:00Z`).toLocaleDateString(l === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
+/** A guide photo: WebP for browsers that take it, the 1200x630 JPEG otherwise (also the share card). */
+const photoUrl = (key) => `${SITE}img/guides/${key}.jpg`;
+function figure(key, lang, up, first) {
+  const p = PHOTOS[key];
+  const credit = p.page ? `<a href="${p.page}" rel="nofollow noopener">${p.by}</a>` : p.by;
+  return `<figure class="ph"><picture><source type="image/webp" srcset="${up}img/guides/${key}-800.webp 800w, ${up}img/guides/${key}.webp 1200w" sizes="(max-width: 800px) 100vw, 720px"><img src="${up}img/guides/${key}.jpg" width="1200" height="630" alt="${esc(p[lang])}" ${first ? 'fetchpriority="high"' : 'loading="lazy"'} decoding="async"></picture><figcaption>Photo${lang === 'fr' ? ' : ' : ': '}${credit}</figcaption></figure>`;
+}
+const imageLd = (key, lang) => ({ '@type': 'ImageObject', url: photoUrl(key), contentUrl: photoUrl(key), width: 1200, height: 630, caption: PHOTOS[key][lang], creditText: PHOTOS[key].by });
+
 for (const a of ARTICLES) {
   // Each guide carries its own date when it has one (only the guides really changed move).
   const updated = a.updated ?? UPDATED;
@@ -179,7 +189,7 @@ for (const a of ARTICLES) {
         datePublished: a.published ?? updated,
         dateModified: updated,
         mainEntityOfPage: url,
-        image: `${SITE}og.jpg`,
+        image: [a.cover, a.figure?.photo].filter(Boolean).map((k) => imageLd(k, a.lang)),
         author: { '@type': 'Organization', name: 'IRLY', url: SITE },
         publisher: { '@type': 'Organization', name: 'IRLY', url: SITE, logo: { '@type': 'ImageObject', url: `${SITE}apple-touch-icon.png` } },
       },
@@ -195,7 +205,8 @@ for (const a of ARTICLES) {
   };
   const alternates = [a, twin].filter(Boolean).map((x) => `<link rel="alternate" hreflang="${x.lang}" href="${SITE + x.path}">`);
   alternates.push(`<link rel="alternate" hreflang="x-default" href="${SITE + (a.lang === 'en' ? a.path : twin?.path ?? a.path)}">`);
-  const body = a.sections.map((s) => `<section><h2>${s.h2}</h2>\n${s.html}</section>`).join('\n');
+  const body = a.sections.map((s, i) => `<section><h2>${s.h2}</h2>\n${s.html}</section>${a.figure && a.figure.after === i ? `\n${figure(a.figure.photo, a.lang, up, false)}` : ''}`).join('\n');
+  const share = a.cover ? photoUrl(a.cover) : `${SITE}og.jpg`;
   const html = `<!doctype html>
 <html lang="${a.lang}" dir="ltr">
 <head>
@@ -214,10 +225,15 @@ ${alternates.join('\n')}
 <meta property="og:title" content="${esc(a.h1)}">
 <meta property="og:description" content="${esc(a.description)}">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="${SITE}og.jpg">
+<meta property="og:image" content="${share}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+${a.cover ? `<meta property="og:image:alt" content="${esc(PHOTOS[a.cover][a.lang])}">` : ''}
 <meta property="og:locale" content="${t.locale}">
 <meta property="article:modified_time" content="${updated}">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="${share}">
+${a.cover ? `<link rel="preload" as="image" href="${up}img/guides/${a.cover}-800.webp" type="image/webp">` : ''}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap">
@@ -234,6 +250,7 @@ ${alternates.join('\n')}
   <h1>${a.h1}</h1>
   <p class="meta">${t.by} · ${t.updated} <time datetime="${updated}">${dateFmt(a.lang, updated)}</time></p>
   <p class="lead">${a.lead}</p>
+${a.cover ? figure(a.cover, a.lang, up, true) : ''}
 ${body}
   <aside class="cta">
     <h2>${a.cta.title}</h2>
@@ -269,7 +286,7 @@ for (const l of ['en', 'fr']) {
     ],
   };
   const cards = list
-    .map((a) => `  <article class="card"><h2><a href="${up + a.path}">${a.h1}</a></h2><p>${a.description}</p><p class="more"><a href="${up + a.path}">${t.readGuide} <span aria-hidden="true">→</span></a></p></article>`)
+    .map((a) => `  <article class="card">${a.cover ? `<a class="thumb" href="${up + a.path}" tabindex="-1" aria-hidden="true"><img src="${up}img/guides/${a.cover}-800.webp" width="800" height="420" alt="" loading="lazy" decoding="async"></a>` : ''}<h2><a href="${up + a.path}">${a.h1}</a></h2><p>${a.description}</p><p class="more"><a href="${up + a.path}">${t.readGuide} <span aria-hidden="true">→</span></a></p></article>`)
     .join('\n');
   const html = `<!doctype html>
 <html lang="${l}" dir="ltr">
@@ -290,13 +307,14 @@ for (const l of ['en', 'fr']) {
 <meta property="og:title" content="${esc(t.hubTitle)}">
 <meta property="og:description" content="${esc(t.hubDesc)}">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="${SITE}og.jpg">
+<meta property="og:image" content="${list[0]?.cover ? photoUrl(list[0].cover) : `${SITE}og.jpg`}">
 <meta property="og:locale" content="${t.locale}">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap">
 <style>${css}
-.card{padding:22px 0;border-bottom:1px solid var(--line)}.card h2{margin:0 0 8px;font-size:23px}.card h2 a{text-decoration:none}.card p{margin:0 0 8px}.more a{font-weight:700;font-size:15px}</style>
+.card{padding:22px 0;border-bottom:1px solid var(--line)}.thumb img{display:block;width:100%;height:auto;aspect-ratio:40/21;object-fit:cover;border-radius:16px;margin-bottom:14px;background:#141414}.card h2{margin:0 0 8px;font-size:23px}.card h2 a{text-decoration:none}.card p{margin:0 0 8px}.more a{font-weight:700;font-size:15px}</style>
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
 </head>
 <body>
@@ -355,13 +373,19 @@ ${guideLines}
 
 /* ───────── Sitemap ───────── */
 const homeAlts = LANGS.map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${homeHref(l)}"/>`).concat(`    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}"/>`).join('\n');
-const urls = LANGS.map((l) => `  <url>\n    <loc>${homeHref(l)}</loc>\n    <lastmod>${UPDATED}</lastmod>\n${homeAlts}\n  </url>`);
+// The home page's own photos (Google Images): the hero and the Dubai pictures.
+const homeImgs = ['img/heroBurj.webp', 'img/jbr.webp', 'img/burjKhalifa.webp', 'img/dhow.webp', 'img/dubaiMarina.webp', 'video/hero.jpg']
+  .filter((f) => fs.existsSync(`site/${f}`))
+  .map((f) => `    <image:image><image:loc>${SITE}${f}</image:loc></image:image>`)
+  .join('\n');
+const urls = LANGS.map((l) => `  <url>\n    <loc>${homeHref(l)}</loc>\n    <lastmod>${UPDATED}</lastmod>\n${homeAlts}\n${homeImgs}\n  </url>`);
 for (const a of ARTICLES) {
   const pair = ARTICLES.filter((x) => x.pair === a.pair);
   const alts = pair.map((x) => `    <xhtml:link rel="alternate" hreflang="${x.lang}" href="${SITE + x.path}"/>`).join('\n');
-  urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${a.updated ?? UPDATED}</lastmod>\n${alts}\n  </url>`);
+  const imgs = [a.cover, a.figure?.photo].filter(Boolean).map((k) => `    <image:image><image:loc>${photoUrl(k)}</image:loc></image:image>`).join('\n');
+  urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${a.updated ?? UPDATED}</lastmod>\n${alts}${imgs ? `\n${imgs}` : ''}\n  </url>`);
 }
 const hubAlts = ['en', 'fr'].map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE + hubPath(l)}"/>`).join('\n');
 for (const l of ['en', 'fr']) urls.push(`  <url>\n    <loc>${SITE + hubPath(l)}</loc>\n    <lastmod>${ARTICLES.map((a) => a.updated ?? UPDATED).sort().at(-1)}</lastmod>\n${hubAlts}\n  </url>`);
-fs.writeFileSync(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
+fs.writeFileSync(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls.join('\n')}\n</urlset>\n`);
 console.log('site pages: fr, ar,', ARTICLES.map((a) => a.path).join(', '), '+ guides index, FAQ data, llms.txt, sitemap');
