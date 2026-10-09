@@ -658,7 +658,7 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select public.pro_connect('00000000-0000-0000-0000-00000000000d');
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000d' and kind = 'PRO_CONNECT_REQUEST'), 'asking again the same day does not notify twice');
-select pg_temp.check((select count(*) from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and url like '/network/%') = 1, 'nor push twice');
+select pg_temp.check((select count(*) from public.push_outbox where user_id = '00000000-0000-0000-0000-00000000000d' and url like '/network/%') = 0, 'nor push twice (the withdrawn request took its waiting push too)');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select pg_temp.check(public.pro_connect('00000000-0000-0000-0000-00000000000c') = 'accepted', 'Connect back accepts');
 select pg_temp.as_admin();
@@ -1023,12 +1023,63 @@ select public.leave_group((select id from g));
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.conversations where id = (select id from g)), 'the last one out deletes the group: no orphan chat');
 
+-- ───── Audit fixes: groups, follows, covers, leftovers ─────
+-- A member who is not an app admin can leave a group they run (the role passes on).
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+create temp table g2 as select public.create_group('Beach crew', array['00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a']::uuid[]) as id;
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-00000000000a' and kind = 'GROUP_ADDED' and payload ->> 'conversation_id' = (select id from g2)::text) = 1, 'a person listed three times is added and told once');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.leave_group((select id from g2));
+select pg_temp.as_admin();
+select pg_temp.check((select role from public.conversation_members where conversation_id = (select id from g2) and user_id = '00000000-0000-0000-0000-00000000000a') = 'admin', 'a non-admin member running a group can leave it: the other member takes over');
+select pg_temp.check(not exists (select 1 from public.conversation_members where conversation_id = (select id from g2) and user_id = '00000000-0000-0000-0000-00000000000b'), 'and the leaver is out');
+-- Members still cannot promote themselves.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.add_group_members((select id from g2), array['00000000-0000-0000-0000-00000000000b']::uuid[]);
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_denied($$update public.conversation_members set role = 'admin' where conversation_id = (select id from g2) and user_id = auth.uid()$$, 'a member cannot make themselves admin');
+-- Follow, unfollow, follow again: one notification.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.unfollow_user('00000000-0000-0000-0000-00000000000c');
+select public.follow_user('00000000-0000-0000-0000-00000000000c');
+select public.unfollow_user('00000000-0000-0000-0000-00000000000c');
+select public.follow_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-00000000000c' and kind = 'NEW_FOLLOWER' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000b' and created_at > now() - interval '1 day') = 1, 'following again and again notifies once a day');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(public.export_my_data() -> 'following' @> '[{"user_id": "00000000-0000-0000-0000-00000000000c"}]', 'Download my data includes who I follow');
+select pg_temp.check(public.export_my_data() ? 'group_chats' and public.export_my_data() ? 'assistant_requests', 'and my groups and assistant requests');
+-- A new community cannot point its cover at someone else's photo.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+do $$
+begin
+  insert into public.communities (name, city_id, created_by, cover_path)
+  values ('Peek', 'dubai', auth.uid(), '00000000-0000-0000-0000-00000000000a/private-group.jpg');
+  raise exception 'FAIL a community was created on someone else''s photo';
+exception when others then
+  if sqlerrm not like '%own uploads%' then raise; end if;
+  raise notice 'ok  a new community cannot use someone else''s photo as cover';
+end $$;
+-- What a removed activity leaves behind goes with it.
+select pg_temp.as_admin();
+select id as gone_id from public.activities order by created_at desc limit 1 \gset
+insert into public.likes (user_id, target_type, target_id) values ('00000000-0000-0000-0000-00000000000b', 'activity', :'gone_id') on conflict do nothing;
+insert into public.saves (user_id, target_type, target_id) values ('00000000-0000-0000-0000-00000000000b', 'activity', :'gone_id') on conflict do nothing;
+delete from public.activities where id = :'gone_id';
+select pg_temp.check(not exists (select 1 from public.likes where target_type = 'activity' and target_id = :'gone_id')
+  and not exists (select 1 from public.saves where target_type = 'activity' and target_id = :'gone_id'), 'a deleted activity takes its likes and saves');
+-- A group run by someone who deletes their account keeps an admin.
+insert into public.conversations (kind, title) values ('group', 'Dina group') returning id \gset dg_
+insert into public.conversation_members (conversation_id, user_id, role) values (:'dg_id', '00000000-0000-0000-0000-00000000000d', 'admin'), (:'dg_id', '00000000-0000-0000-0000-00000000000b', 'member');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.profiles where first_name = 'Dina'), 'deleting the account removes the profile');
 select pg_temp.check(not exists (select 1 from public.irly_match_profiles where user_id = '00000000-0000-0000-0000-00000000000d'), 'and the match profile');
+select pg_temp.check((select role from public.conversation_members where conversation_id = :'dg_id' and user_id = '00000000-0000-0000-0000-00000000000b') = 'admin', 'a group whose admin deleted the account keeps an admin');
 -- A member who sent messages can delete their account (sender_id → null cascade).
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select public.delete_my_account();

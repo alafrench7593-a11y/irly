@@ -59,7 +59,13 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": [
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -98,7 +104,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "IRLY uses the photos you choose for your profile picture, your activities and the moments you post live.",
+          "photosPermission": "IRLY uses the photos you choose for your profile and IRLY Girl profile, activity, community and group covers, the moments you post live, and the photos you send in chats.",
           "cameraPermission": "IRLY uses the camera when you take your profile photo or a photo to share.",
           "microphonePermission": false
         }

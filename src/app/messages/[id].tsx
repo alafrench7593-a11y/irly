@@ -28,6 +28,7 @@ import { findPerson } from '@/data/repo';
 import { toast } from '@/components/ui/Toast';
 import { isServerId, useServerThread } from '@/features/server/chat';
 import { leaveGroup, renameGroup } from '@/features/server/groups';
+import { sharedHref } from '@/features/server/engage';
 import { useAccount } from '@/features/auth/account';
 import { pickPhoto, setChatPhoto, setCommunityCover, useChatPhoto, usePhotoLink } from '@/features/server/covers';
 import { pickChatPhotos, takeChatPhoto, useSignedLinks } from '@/features/server/media';
@@ -307,10 +308,7 @@ function ServerThreadView({ id }: { id: string }) {
                       m.share
                         ? () => {
                             const sh = m.share;
-                            if (sh?.id && sh.type === 'activity') router.push(`/a/${sh.id}`);
-                            else if (sh?.id && sh.type === 'community') router.push(`/c/${sh.id}`);
-                            else if (sh?.type === 'irl_post') router.push('/live');
-                            else router.push(`/search?q=${encodeURIComponent(m.text)}`);
+                            if (sh) sharedHref(sh.type, sh.id, m.text).then((href) => router.push(href as never));
                           }
                         : undefined
                     }

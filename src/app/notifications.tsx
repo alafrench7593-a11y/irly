@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { proConnect } from '@/features/network/api';
@@ -92,11 +93,35 @@ export default function Notifications() {
 const ago = (ms: number) => timeAgo(Math.max(1, (Date.now() - ms) / 60000));
 
 /** Signed in: real notifications from the server, live, marked read on open. */
+/** First names of the people behind notifications (followers, commenters…), not only friends. */
+function useNames(ids: string[]) {
+  const [names, setNames] = useState<Record<string, string>>({});
+  const key = [...new Set(ids)].sort().join(',');
+  useEffect(() => {
+    const want = key ? key.split(',') : [];
+    if (!supabase || !want.length) return;
+    let alive = true;
+    supabase
+      .from('profiles_public')
+      .select('id, first_name')
+      .in('id', want)
+      .then(({ data }) => {
+        if (!alive || !data) return;
+        setNames((prev) => ({ ...prev, ...Object.fromEntries((data as { id: string; first_name: string }[]).map((r) => [r.id, r.first_name])) }));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [key]);
+  return names;
+}
+
 function ServerNotifications() {
   const t = useTheme();
   const router = useRouter();
   const { items, markAllRead } = useServerNotifications();
   const { friends, refresh } = useFriends();
+  const names = useNames(items.map((n) => (typeof n.payload?.from === 'string' ? n.payload.from : '')).filter((x) => /^[0-9a-f-]{36}$/.test(x)));
   const unread = items.some((n) => !n.readAt);
   useEffect(() => {
     if (unread) {
@@ -114,7 +139,7 @@ function ServerNotifications() {
       </View>
     );
   }
-  const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? 'Someone';
+  const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? (id ? names[id] : undefined) ?? 'Someone';
   const describe = (n: ServerNotification): { icon: IconName; title: string; body: string; go?: () => void; accept?: string; pro?: boolean } => {
     const p = n.payload;
     switch (n.kind) {
