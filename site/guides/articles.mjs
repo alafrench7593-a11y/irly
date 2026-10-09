@@ -10,11 +10,27 @@ export const UPDATED = '2026-10-09';
 
 const app = 'https://getirly.com/app/';
 
+/**
+ * Photos of the guides (free stock libraries or IRLY's own), in
+ * site/img/guides/<key>.jpg (1200x630, share card) and <key>-800.webp.
+ * Alt texts say what is in the picture, never more.
+ */
+export const PHOTOS = {
+  brunch: { en: 'Friends sharing a brunch on a terrace in downtown Dubai', fr: 'Des amies partagent un brunch sur une terrasse du centre de Dubaï', by: 'IRLY', page: null },
+  dubaiMarina: { en: 'Dubai Marina towers and the marina walk on a sunny day', fr: 'Les tours et la promenade de Dubai Marina par une journée ensoleillée', by: 'Ameia-Ka (Pixabay)', page: 'https://pixabay.com/photos/dubai-city-architecture-skyscrapers-1351569/' },
+  volleyball: { en: 'A group playing beach volleyball at sunset', fr: 'Un groupe joue au beach-volley au coucher du soleil', by: 'Peggy_Marco (Pixabay)', page: 'https://pixabay.com/photos/sunset-volleyball-beach-silhouette-5560658/' },
+  surf: { en: 'A surfer walking along the beach with his board at sunset', fr: 'Un surfeur marche sur la plage avec sa planche au coucher du soleil', by: 'mariamza (Pixabay)', page: 'https://pixabay.com/photos/surf-beach-sunset-sea-ocean-4087278/' },
+  dubaiCreek: { en: 'A man sitting alone on a terrace by Dubai Creek', fr: 'Un homme assis seul sur une terrasse au bord de Dubai Creek', by: 'katetrysh (Pixabay)', page: 'https://pixabay.com/photos/dubai-creek-waterfront-man-sitting-9060098/' },
+  running: { en: 'Two people running side by side', fr: 'Deux personnes courent côte à côte', by: 'IRLY', page: null },
+};
+
 export const ARTICLES = [
   {
     lang: 'en',
     pair: 'dubai-friends',
     path: 'dubai/make-friends/',
+    cover: 'brunch',
+    figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubai',
     title: 'How to Make Friends in Dubai: A Practical Guide for Newcomers | IRLY',
     description: 'New to Dubai and don’t know anyone yet? Why it can feel hard to make friends here, and practical ways to meet people who share your interests.',
@@ -78,6 +94,8 @@ export const ARTICLES = [
     lang: 'fr',
     pair: 'dubai-friends',
     path: 'fr/dubai/se-faire-des-amis/',
+    cover: 'brunch',
+    figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubaï',
     title: 'Se faire des amis à Dubaï : le guide pour les nouveaux arrivants | IRLY',
     description: 'Tu viens d’arriver à Dubaï et tu ne connais personne ? Pourquoi c’est parfois difficile de se faire des amis ici, et des façons concrètes de rencontrer du monde.',
@@ -141,6 +159,8 @@ export const ARTICLES = [
     lang: 'en',
     pair: 'bali-friends',
     path: 'bali/make-friends/',
+    cover: 'volleyball',
+    figure: { photo: 'surf', after: 1 },
     city: 'Bali',
     title: 'How to Make Friends in Bali: Travellers, Nomads and Newcomers | IRLY',
     description: 'Arriving in Bali alone? How friendships work on an island where people come and go, and practical ways to meet people in Canggu, Ubud and beyond.',
@@ -208,6 +228,8 @@ export const ARTICLES = [
     lang: 'fr',
     pair: 'bali-friends',
     path: 'fr/bali/se-faire-des-amis/',
+    cover: 'volleyball',
+    figure: { photo: 'surf', after: 1 },
     city: 'Bali',
     title: 'Se faire des amis à Bali : voyageurs, nomades et nouveaux arrivants | IRLY',
     description: 'Tu arrives seul à Bali ? Comment fonctionnent les amitiés sur une île où les gens vont et viennent, et des façons concrètes de rencontrer du monde à Canggu, Ubud et ailleurs.',
