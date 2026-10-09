@@ -146,9 +146,11 @@ const L = {
   en: { home: 'Home', guides: 'Guides', updated: 'Updated', by: 'By the IRLY team', read: 'Read also', other: 'Français', locale: 'en_US' },
   fr: { home: 'Accueil', guides: 'Guides', updated: 'Mis à jour le', by: 'Par l’équipe IRLY', read: 'À lire aussi', other: 'English', locale: 'fr_FR' },
 };
-const dateFmt = (l) => new Date(`${UPDATED}T12:00:00Z`).toLocaleDateString(l === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+const dateFmt = (l, d = UPDATED) => new Date(`${d}T12:00:00Z`).toLocaleDateString(l === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 for (const a of ARTICLES) {
+  // Each guide carries its own date when it has one (only the guides really changed move).
+  const updated = a.updated ?? UPDATED;
   const depth = a.path.split('/').filter(Boolean).length;
   const up = '../'.repeat(depth);
   const url = SITE + a.path;
@@ -164,8 +166,8 @@ for (const a of ARTICLES) {
         headline: a.h1,
         description: a.description,
         inLanguage: a.lang,
-        datePublished: UPDATED,
-        dateModified: UPDATED,
+        datePublished: a.published ?? updated,
+        dateModified: updated,
         mainEntityOfPage: url,
         image: `${SITE}og.jpg`,
         author: { '@type': 'Organization', name: 'IRLY', url: SITE },
@@ -204,7 +206,7 @@ ${alternates.join('\n')}
 <meta property="og:url" content="${url}">
 <meta property="og:image" content="${SITE}og.jpg">
 <meta property="og:locale" content="${t.locale}">
-<meta property="article:modified_time" content="${UPDATED}">
+<meta property="article:modified_time" content="${updated}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -220,7 +222,7 @@ ${alternates.join('\n')}
 <main>
   <nav class="crumbs" aria-label="Breadcrumb"><a href="${homeRel}">${t.home}</a> › ${a.city}</nav>
   <h1>${a.h1}</h1>
-  <p class="meta">${t.by} · ${t.updated} <time datetime="${UPDATED}">${dateFmt(a.lang)}</time></p>
+  <p class="meta">${t.by} · ${t.updated} <time datetime="${updated}">${dateFmt(a.lang, updated)}</time></p>
   <p class="lead">${a.lead}</p>
 ${body}
   <aside class="cta">
@@ -244,7 +246,7 @@ const urls = LANGS.map((l) => `  <url>\n    <loc>${homeHref(l)}</loc>\n    <last
 for (const a of ARTICLES) {
   const pair = ARTICLES.filter((x) => x.pair === a.pair);
   const alts = pair.map((x) => `    <xhtml:link rel="alternate" hreflang="${x.lang}" href="${SITE + x.path}"/>`).join('\n');
-  urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${UPDATED}</lastmod>\n${alts}\n  </url>`);
+  urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${a.updated ?? UPDATED}</lastmod>\n${alts}\n  </url>`);
 }
 fs.writeFileSync(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls.join('\n')}\n</urlset>\n`);
 console.log('site pages: fr, ar,', ARTICLES.map((a) => a.path).join(', '), '+ sitemap');
