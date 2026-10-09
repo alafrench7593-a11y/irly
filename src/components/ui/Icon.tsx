@@ -112,6 +112,9 @@ import TreePalm from 'lucide-react-native/icons/tree-palm';
 import Trophy from 'lucide-react-native/icons/trophy';
 import Truck from 'lucide-react-native/icons/truck';
 import User from 'lucide-react-native/icons/user';
+import UserCheck from 'lucide-react-native/icons/user-check';
+import UserPlus from 'lucide-react-native/icons/user-plus';
+import ImageIcon from 'lucide-react-native/icons/image';
 import Users from 'lucide-react-native/icons/users';
 import UtensilsCrossed from 'lucide-react-native/icons/utensils-crossed';
 import Volleyball from 'lucide-react-native/icons/volleyball';
@@ -242,6 +245,9 @@ export const icons = {
   truck: Truck,
   user: User,
   users: Users,
+  userPlus: UserPlus,
+  userCheck: UserCheck,
+  image: ImageIcon,
   utensils: UtensilsCrossed,
   volleyball: Volleyball,
   waves: Waves,

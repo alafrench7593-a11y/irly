@@ -27,7 +27,13 @@ import { Text } from '@/components/ui/Text';
 import { findPerson } from '@/data/repo';
 import { toast } from '@/components/ui/Toast';
 import { isServerId, useServerThread } from '@/features/server/chat';
-import { pickPhoto, setChatPhoto, useChatPhoto, usePhotoLink } from '@/features/server/covers';
+import { leaveGroup, renameGroup } from '@/features/server/groups';
+import { useAccount } from '@/features/auth/account';
+import { pickPhoto, setChatPhoto, setCommunityCover, useChatPhoto, usePhotoLink } from '@/features/server/covers';
+import { pickChatPhotos, takeChatPhoto, useSignedLinks } from '@/features/server/media';
+import { TapPhoto } from '@/features/photo/TapPhoto';
+import { hueOf } from '@/lib/format';
+import { Image } from 'expo-image';
 import { Photo } from '@/components/visual/Photo';
 import { allMessages, cannedReply, resolveConversation, senderName } from '@/features/messages/conversations';
 import { haptic } from '@/motion/haptics';
@@ -75,7 +81,9 @@ function ServerThreadView({ id }: { id: string }) {
       const picked = next === 'pick' ? await pickPhoto() : null;
       if (next === 'pick' && !picked) return;
       setPhotoBusy(true);
-      await setChatPhoto(id, picked);
+      // A community chat's picture is the community's photo: one source, shown everywhere.
+      if (chatPhoto.communityId) await setCommunityCover(chatPhoto.communityId, picked);
+      else await setChatPhoto(id, picked);
       haptic('success');
       toast(next === 'pick' ? 'Photo updated' : 'Back to the IRLY photo', 'check', 'brand');
       setPhotoMenu(false);
@@ -108,6 +116,40 @@ function ServerThreadView({ id }: { id: string }) {
       toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live');
     }
   };
+  // Photos to send: picked, previewed, then sent (or cancelled).
+  const [attach, setAttach] = useState(false);
+  const [preview, setPreview] = useState<string[]>([]);
+  const choose = async (from: 'library' | 'camera') => {
+    try {
+      let picked: string[] | null;
+      if (from === 'camera') {
+        const one = await takeChatPhoto();
+        picked = one ? [one] : null;
+      } else picked = await pickChatPhotos();
+      setAttach(false);
+      if (picked && picked.length) setPreview(picked);
+    } catch (e) {
+      setAttach(false);
+      toast(e instanceof Error ? e.message : 'Could not open your photos', 'x', 'live');
+    }
+  };
+  const sendPreview = async () => {
+    const uris = preview;
+    setPreview([]);
+    stick.current = true;
+    haptic('tap');
+    try {
+      await thread.sendPhotos(uris);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Photo not sent', 'x', 'live');
+    }
+  };
+  const [info, setInfo] = useState(false);
+  const faces = useSignedLinks('profile-photos', Object.values(thread.members).map((m) => m.photo));
+  const media = useSignedLinks(
+    'chat-media',
+    thread.messages.map((m) => m.media?.path),
+  );
   const retry = (id: string) => {
     haptic('tap');
     thread.retry(id).catch((e) => toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live'));
@@ -212,15 +254,50 @@ function ServerThreadView({ id }: { id: string }) {
             }
             const mine = m.from === 'me';
             const showName = !mine && group && prev?.from !== m.from;
+            // In a group, the sender's face sits by the last message of their run; tap it for their profile.
+            const showFace = !mine && group && (!next || next.from !== m.from);
+            const sender = m.senderId ? thread.members[m.senderId] : undefined;
+            const openSender = m.senderId ? () => router.push(`/person/${m.senderId}`) : undefined;
+            const photoUri = m.media ? (m.media.path ? media[m.media.path] : null) ?? m.media.local : null;
             return (
               <View key={m.id}>
                 {day}
                 <Animated.View entering={FadeInDown.springify(380).dampingRatio(0.8)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
                   {showName ? (
-                    <Text variant="caption" tone="tertiary" style={{ marginLeft: 12, marginBottom: 2 }} raw>
-                      {m.name ?? tx('Member')}
-                    </Text>
+                    <PressableScale haptic="select" onPress={openSender} hitSlop={6} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })} style={{ marginLeft: group ? 46 : 12, marginBottom: 2 }}>
+                      <Text variant="caption" tone="tertiary" raw>
+                        {m.name ?? tx('Member')}
+                      </Text>
+                    </PressableScale>
                   ) : null}
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '100%' }}>
+                    {!mine && group ? (
+                      showFace ? (
+                        <PressableScale haptic="select" scaleTo={0.9} onPress={openSender} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })}>
+                          <Avatar name={m.name ?? '?'} hue={hueOf(m.senderId ?? m.id)} size={30} photo={sender?.photo ? faces[sender.photo] : undefined} />
+                        </PressableScale>
+                      ) : (
+                        <View style={{ width: 30 }} />
+                      )
+                    ) : null}
+                    {m.media ? (
+                      <PressableScale haptic={false} onLongPress={() => onLong(m)} delayLongPress={350} accessibilityHint={mine ? tx('Long press to delete') : tx('Long press to report')}>
+                        {photoUri ? (
+                          <TapPhoto photo={{ uri: photoUri }} style={[styles.photoBubble, { opacity: m.status === 'sending' ? 0.6 : 1 }]}>
+                            <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={180} accessibilityLabel={tx('Photo')} />
+                          </TapPhoto>
+                        ) : (
+                          <View style={[styles.photoBubble, { backgroundColor: t.c.overlay, alignItems: 'center', justifyContent: 'center' }]}>
+                            <ActivityIndicator color={t.c.textSecondary} />
+                          </View>
+                        )}
+                        {m.status === 'sending' ? (
+                          <View style={styles.photoSending}>
+                            <ActivityIndicator color="#FFFFFF" />
+                          </View>
+                        ) : null}
+                      </PressableScale>
+                    ) : (
                   <PressableScale
                     haptic={false}
                     scaleTo={0.98}
@@ -259,6 +336,8 @@ function ServerThreadView({ id }: { id: string }) {
                       </Text>
                     )}
                   </PressableScale>
+                    )}
+                  </View>
                   {m.status === 'failed' ? (
                     <PressableScale haptic={false} onPress={() => retry(m.id)} accessibilityRole="button" accessibilityLabel={tx('Not sent. Retry')} style={{ alignSelf: 'flex-end', marginTop: 2, marginRight: 6 }}>
                       <Text variant="caption" color={t.c.live}>
@@ -288,6 +367,9 @@ function ServerThreadView({ id }: { id: string }) {
           ) : null}
         </ScrollView>
         <Glass style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+          <PressableScale haptic="select" onPress={() => setAttach(true)} scaleTo={0.88} style={[styles.attach, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel="Send a photo">
+            <Icon name="image" size={19} color={t.c.text} />
+          </PressableScale>
           <View style={[styles.inputWrap, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
             <TextInput
               value={text}
@@ -314,21 +396,31 @@ function ServerThreadView({ id }: { id: string }) {
         <View style={styles.headerRow}>
           <IconButton icon="chevronLeft" label="Back" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
           <PressableScale
-            haptic={chatPhoto.canEdit ? 'select' : false}
-            scaleTo={chatPhoto.canEdit ? 0.97 : 1}
-            onPress={chatPhoto.canEdit ? () => setPhotoMenu(true) : undefined}
+            haptic="select"
+            scaleTo={0.97}
+            onPress={() => (other ? router.push(`/person/${other}`) : thread.kind ? setInfo(true) : undefined)}
             style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}
-            accessibilityLabel={chatPhoto.canEdit ? 'Change the photo' : undefined}
+            accessibilityLabel={other ? tx('Open {name}’s profile', { name: thread.title }) : tx('About {title}', { title: thread.title })}
           >
-            {chatPhoto.hasPhoto ? (
+            {other ? (
+              <Avatar name={thread.title} hue={hueOf(other)} size={36} photo={thread.members[other]?.photo ? faces[thread.members[other].photo!] : undefined} />
+            ) : chatPhoto.hasPhoto ? (
               <Photo visual={{ photo: chatPhoto.fallback, uri: chatPhotoUri ?? undefined }} light="dubai" style={styles.chatPhoto} width={120} recyclingKey={`chat-${id}-${chatPhoto.path ?? 'app'}`} />
             ) : null}
-            <View style={{ flexShrink: 1, alignItems: chatPhoto.hasPhoto ? 'flex-start' : 'center' }}>
+            <View style={{ flexShrink: 1, alignItems: other || chatPhoto.hasPhoto ? 'flex-start' : 'center' }}>
               <Text variant="titleS" numberOfLines={1} raw>
                 {thread.title}
               </Text>
               <Text variant="caption" tone="tertiary">
-                {thread.kind === null ? '' : group ? 'Group' : 'Private'}
+                {thread.kind === null
+                  ? ''
+                  : other
+                    ? tx('Private · see profile')
+                    : thread.kind === 'community'
+                      ? tx('Community · {n} members', { n: Object.keys(thread.members).length })
+                      : thread.kind === 'activity'
+                        ? tx('Activity · {n} going', { n: Object.keys(thread.members).length })
+                        : tx('Group · {n} members', { n: Object.keys(thread.members).length })}
               </Text>
             </View>
           </PressableScale>
@@ -383,6 +475,39 @@ function ServerThreadView({ id }: { id: string }) {
           </View>
         </Sheet>
       ) : null}
+      <Sheet visible={attach} onClose={() => setAttach(false)} title="Send a photo" subtitle={tx('Everyone in this chat will see it')}>
+        <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+          <Button label="Choose from my photos" icon="image" full onPress={() => choose('library')} />
+          {Platform.OS !== 'web' ? <Button label="Take a photo" icon="camera" variant="secondary" full onPress={() => choose('camera')} /> : null}
+        </View>
+      </Sheet>
+      <Sheet visible={preview.length > 0} onClose={() => setPreview([])} title={preview.length > 1 ? tx('{n} photos', { n: preview.length }) : tx('Photo')} subtitle={tx('Check it before sending')}>
+        <View style={{ paddingHorizontal: space.gutter, gap: 12 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {preview.map((u) => (
+              <Image key={u} source={{ uri: u }} style={styles.previewPhoto} contentFit="cover" accessibilityLabel={tx('Photo')} />
+            ))}
+          </ScrollView>
+          <Button label={preview.length > 1 ? tx('Send {n} photos', { n: preview.length }) : tx('Send the photo')} icon="send" full onPress={sendPreview} />
+          <Button label="Cancel" variant="secondary" full onPress={() => setPreview([])} />
+        </View>
+      </Sheet>
+      <ChatInfo
+        visible={info}
+        onClose={() => setInfo(false)}
+        id={id}
+        title={thread.title}
+        kind={thread.kind}
+        members={thread.members}
+        faces={faces}
+        communityId={thread.communityId}
+        activityId={thread.activityId}
+        canEditPhoto={chatPhoto.canEdit}
+        onEditPhoto={() => {
+          setInfo(false);
+          setPhotoMenu(true);
+        }}
+      />
       <ReportSheet target={reporting} name={reportName} onClose={() => setReporting(null)} onBlocked={() => (router.canGoBack() ? router.back() : router.replace('/messages'))} />
       <Sheet visible={photoMenu} onClose={() => setPhotoMenu(false)} title="Chat photo" subtitle={tx('Everyone in the chat sees it')}>
         <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
@@ -391,6 +516,113 @@ function ServerThreadView({ id }: { id: string }) {
         </View>
       </Sheet>
     </View>
+  );
+}
+
+/** About a group, community or activity chat: its page, its members (tap for a profile), and for groups rename and leave. */
+function ChatInfo({
+  visible,
+  onClose,
+  id,
+  title,
+  kind,
+  members,
+  faces,
+  communityId,
+  activityId,
+  canEditPhoto,
+  onEditPhoto,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  id: string;
+  title: string;
+  kind: string | null;
+  members: Record<string, { name: string; photo: string | null; admin: boolean }>;
+  faces: Record<string, string>;
+  communityId: string | null;
+  activityId: string | null;
+  canEditPhoto: boolean;
+  onEditPhoto: () => void;
+}) {
+  const t = useTheme();
+  const router = useRouter();
+  const me = useAccount()?.userId;
+  const [name, setName] = useState(title);
+  const [busy, setBusy] = useState(false);
+  const list = Object.entries(members);
+  const isAdmin = Boolean(me && members[me]?.admin);
+  const go = (path: string) => {
+    onClose();
+    router.push(path as never);
+  };
+  return (
+    <Sheet visible={visible} onClose={onClose} title={title} subtitle={tx('{n} members', { n: list.length })}>
+      <ScrollView style={{ maxHeight: 460 }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+        {communityId ? <Button label="Open the community" icon="heartHandshake" variant="secondary" full onPress={() => go(`/c/${communityId}`)} /> : null}
+        {activityId ? <Button label="Open the activity" icon="calendar" variant="secondary" full onPress={() => go(`/a/${activityId}`)} /> : null}
+        {canEditPhoto ? <Button label={communityId ? 'Change the community photo' : 'Change the photo'} icon="camera" variant="secondary" full onPress={onEditPhoto} /> : null}
+        {kind === 'group' && isAdmin ? (
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+            <TextInput value={name} onChangeText={setName} maxLength={60} style={[styles.rename, { color: t.c.text, borderColor: t.c.line, backgroundColor: t.c.surface }]} accessibilityLabel={a11y('Group name')} />
+            <Button
+              label="Rename"
+              size="sm"
+              loading={busy}
+              onPress={async () => {
+                if (!name.trim() || name.trim() === title) return;
+                setBusy(true);
+                try {
+                  await renameGroup(id, name.trim());
+                  haptic('success');
+                  toast('Group renamed', 'check', 'brand');
+                } catch (e) {
+                  toast(e instanceof Error ? e.message : 'Could not rename', 'x', 'live');
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
+          </View>
+        ) : null}
+        <Text variant="overline" tone="tertiary" style={{ marginTop: space[3] }}>
+          Members
+        </Text>
+        {list.map(([uid, m]) => (
+          <PressableScale key={uid} haptic="select" scaleTo={0.98} onPress={() => go(`/person/${uid}`)} style={styles.memberRow} accessibilityLabel={tx('Open {name}’s profile', { name: m.name })}>
+            <Avatar name={m.name} hue={hueOf(uid)} size={40} photo={m.photo ? faces[m.photo] : undefined} />
+            <Text variant="titleS" style={{ flex: 1 }} raw>
+              {uid === me ? tx('You') : m.name}
+            </Text>
+            {m.admin ? (
+              <Text variant="caption" tone="tertiary">
+                Admin
+              </Text>
+            ) : null}
+            <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+          </PressableScale>
+        ))}
+        {kind === 'group' ? (
+          <Button
+            label="Leave the group"
+            icon="x"
+            variant="danger"
+            full
+            onPress={() =>
+              confirm(tx('Leave {title}? You will no longer receive its messages.', { title }), () =>
+                leaveGroup(id)
+                  .then(() => {
+                    onClose();
+                    toast('You left the group', 'check', 'brand');
+                    router.replace('/messages');
+                  })
+                  .catch((e) => toast(e instanceof Error ? e.message : 'Could not leave', 'x', 'live')),
+              )
+            }
+          />
+        ) : null}
+      </ScrollView>
+    </Sheet>
   );
 }
 
@@ -576,6 +808,12 @@ const styles = StyleSheet.create({
   earlier: { alignSelf: 'center', height: 36, paddingHorizontal: 16, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center', marginBottom: 8 },
   root: { flex: 1 },
   intro: { alignItems: 'center', gap: 6, marginBottom: space[6] },
+  attach: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth * 2 },
+  previewPhoto: { width: 200, height: 240, borderRadius: radius.lg },
+  memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
+  rename: { flex: 1, height: 44, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, paddingHorizontal: 12, fontFamily: font.medium, fontSize: 15 },
+  photoBubble: { width: 220, height: 260, borderRadius: 18, overflow: 'hidden' },
+  photoSending: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
   bubbleRow: { maxWidth: '80%' },
   note: { alignSelf: 'center', maxWidth: '85%', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(200,100,122,0.08)' },
   left: { alignSelf: 'flex-start' },

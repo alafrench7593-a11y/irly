@@ -323,6 +323,16 @@ export type Conversation = {
   messages: Message[];
   unread: number;
   refId?: string;
+  /** Server chats: the other member of a private chat, and each chat's own picture. */
+  otherId?: string;
+  /** The other member's profile photo (a storage path or an IRLY avatar). */
+  otherPhoto?: string;
+  /** The chat's own photo: the community's, the group's or the activity's (in "activity-photos"). */
+  photoPath?: string;
+  members?: number;
+  /** The last message was a photo. */
+  lastIsPhoto?: boolean;
+  lastSenderName?: string;
 };
 
 /** Everything IRLY knows about one city. */

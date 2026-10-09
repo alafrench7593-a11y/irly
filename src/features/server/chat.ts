@@ -7,6 +7,7 @@ import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
 import { useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
+import { uploadChatPhoto } from './media';
 
 /**
  * Server chats (signed in): the inbox from `my_conversations()` and live
@@ -27,12 +28,18 @@ type InboxRow = {
   last_at: string;
   unread: number;
   ref_id: string | null;
+  other_photo: string | null;
+  photo_path: string | null;
+  members: number | null;
+  last_kind: string | null;
+  last_sender_name: string | null;
 };
 
 const KIND: Record<InboxRow['kind'], Conversation['kind']> = {
   direct: 'direct',
   match: 'direct',
-  activity: 'group',
+  // Activity chats are their own category (event), apart from groups people make.
+  activity: 'event',
   community: 'community',
   group: 'group',
 };
@@ -51,9 +58,10 @@ export function UnreadSync() {
 }
 
 /** The signed-in member's conversations, in the app's Conversation shape. */
-export function useServerInbox(): { conversations: Conversation[]; refresh: () => void } {
+export function useServerInbox(): { conversations: Conversation[]; refresh: () => void; loading: boolean; error: string | null } {
   const account = useAccount();
   const [rows, setRows] = useState<InboxRow[]>([]);
+  const [state, setState] = useState<{ for: string; error: string | null }>({ for: '', error: null });
   const uid = account?.userId;
   const currentUid = useRef(uid);
   useEffect(() => {
@@ -65,8 +73,13 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
     const asked = uid;
     supabase.rpc('my_conversations').then(({ data, error }) => {
       // Keep the inbox on a failed refresh; drop a late answer for a previous account.
-      if (error || currentUid.current !== asked) return;
+      if (currentUid.current !== asked) return;
+      if (error) {
+        setState({ for: asked, error: /fetch|network/i.test(error.message) ? 'Can’t reach IRLY right now' : error.message });
+        return;
+      }
       setRows((data as InboxRow[]) ?? []);
+      setState({ for: asked, error: null });
     });
   }, [uid]);
 
@@ -97,6 +110,12 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
       personIds: [],
       unread: r.unread,
       refId: r.ref_id ?? undefined,
+      otherId: r.other_user_id ?? undefined,
+      otherPhoto: r.other_photo ?? undefined,
+      photoPath: r.photo_path ?? undefined,
+      members: r.members ?? undefined,
+      lastIsPhoto: r.last_kind === 'photo',
+      lastSenderName: r.last_sender_name ?? undefined,
       messages: r.last_body
         ? [{ id: `${r.conversation_id}-last`, from: r.last_sender === uid ? 'me' : r.last_sender ? 'member' : 'irly', text: r.last_body, minAgo: 0, at: Date.parse(r.last_at) }]
         : [],
@@ -104,13 +123,13 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
       ),
     [rows, uid],
   );
-  return { conversations, refresh };
+  return { conversations, refresh, loading: Boolean(uid) && state.for !== uid, error: state.for === uid ? state.error : null };
 }
 
-type MessageRow = { id: string; sender_id: string | null; kind: string; body: string; created_at: string; ref_type?: string | null; ref_id?: string | null };
+type MessageRow = { id: string; sender_id: string | null; kind: string; body: string; created_at: string; ref_type?: string | null; ref_id?: string | null; media_path?: string | null };
 
 const PAGE = 50;
-const COLS = 'id, sender_id, kind, body, created_at, ref_type, ref_id';
+const COLS = 'id, sender_id, kind, body, created_at, ref_type, ref_id, media_path';
 // Oldest first; equal times keep a stable order.
 const byTime = (a: MessageRow, b: MessageRow) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id);
 /** Adds rows (new or refetched) without duplicates, in time order. */
@@ -126,6 +145,8 @@ export type ServerMessage = Message & {
   name?: string;
   senderId: string | null;
   share?: { type: string; id: string | null };
+  /** A photo message: its stored path in "chat-media", or a local file while it uploads. */
+  media?: { path: string | null; local: string | null };
   /** Your own message on its way, or not delivered (offline, refused): never shown as sent when it is not. */
   status?: 'sending' | 'failed';
 };
@@ -137,6 +158,13 @@ export type ServerThread = {
   kind: InboxRow['kind'] | null;
   /** The other member of a private chat (to report or block them). */
   otherId: string | null;
+  /** Members by id: name, profile photo path, admin (from chat_members, kept live). */
+  members: Record<string, { name: string; photo: string | null; admin: boolean }>;
+  /** What the chat belongs to: its community or activity page. */
+  communityId: string | null;
+  activityId: string | null;
+  /** Sends photos (each one message), shown at once and marked failed if the upload or send fails. */
+  sendPhotos: (uris: string[]) => Promise<void>;
   messages: ServerMessage[];
   /** True while older messages may exist above the first one shown. */
   hasEarlier: boolean;
@@ -162,13 +190,15 @@ export function useServerThread(conversationId: string): ServerThread {
   const uid = account?.userId;
   const [rows, setRows] = useState<MessageRow[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [people, setPeople] = useState<Record<string, { name: string; photo: string | null; admin: boolean }>>({});
+  const [refs, setRefs] = useState<{ community: string | null; activity: string | null }>({ community: null, activity: null });
   const [title, setTitle] = useState('');
   const [kind, setKind] = useState<InboxRow['kind'] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasEarlier, setHasEarlier] = useState(false);
   // Your messages not confirmed by the server yet: shown at once, marked "sending" or "failed".
-  const [pending, setPending] = useState<Record<string, { body: string; at: string; failed: boolean }>>({});
+  const [pending, setPending] = useState<Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null }>>({});
   const [typing, setTypingNames] = useState<Record<string, number>>({});
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
   const lastTyping = useRef(0);
@@ -191,7 +221,7 @@ export function useServerThread(conversationId: string): ServerThread {
     (async () => {
       try {
         const [{ data: conv, error: e1 }, msgs, { data: members }] = await Promise.all([
-          supabase!.from('conversations').select('id, kind, title').eq('id', conversationId).maybeSingle(),
+          supabase!.from('conversations').select('id, kind, title, community_id, activity_id').eq('id', conversationId).maybeSingle(),
           latest(),
           supabase!.from('conversation_members').select('user_id, profiles(first_name)').eq('conversation_id', conversationId),
         ]);
@@ -210,6 +240,7 @@ export function useServerThread(conversationId: string): ServerThread {
         const other = Object.entries(map).find(([id]) => id !== uid)?.[1];
         setTitle(conv.title ?? other ?? 'IRLY');
         setKind(conv.kind);
+        setRefs({ community: (conv.community_id as string | null) ?? null, activity: (conv.activity_id as string | null) ?? null });
         setRows(msgs.slice().sort(byTime));
         setHasEarlier(msgs.length === PAGE);
         setLoading(false);
@@ -313,9 +344,11 @@ export function useServerThread(conversationId: string): ServerThread {
 
   // The id is made here, so the realtime echo, the insert's answer and a retry are one message.
   const deliver = useCallback(
-    async (id: string, text: string) => {
+    async (id: string, text: string, media?: string) => {
       if (!supabase || !uid) throw new Error('Sign in to send messages');
-      const { data, error: e } = await supabase.from('messages').insert({ id, conversation_id: conversationId, sender_id: uid, body: text }).select(COLS).single();
+      const row: Record<string, string> = { id, conversation_id: conversationId, sender_id: uid, body: text };
+      if (media) Object.assign(row, { kind: 'photo', media_path: media });
+      const { data, error: e } = await supabase.from('messages').insert(row).select(COLS).single();
       // Already there (a retry after a lost answer): that is a success.
       if (e && e.code !== '23505') {
         setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], failed: true } } : p));
@@ -339,14 +372,41 @@ export function useServerThread(conversationId: string): ServerThread {
     },
     [deliver],
   );
+  // A photo: uploaded under the message's own id (a retry re-uses the same file), then sent.
+  const deliverPhoto = useCallback(
+    async (id: string, local: string) => {
+      let path: string;
+      try {
+        path = await uploadChatPhoto(local, id);
+      } catch (e) {
+        setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], failed: true } } : p));
+        throw e;
+      }
+      setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], media: path } } : p));
+      await deliver(id, 'Photo', path);
+    },
+    [deliver],
+  );
+  const sendPhotos = useCallback(
+    async (uris: string[]) => {
+      const now = Date.now();
+      const items = uris.map((local, i) => ({ id: uuid(), local, at: new Date(now + i).toISOString() }));
+      setPending((p) => ({ ...p, ...Object.fromEntries(items.map((x) => [x.id, { body: 'Photo', at: x.at, failed: false, local: x.local, media: null }])) }));
+      const results = await Promise.allSettled(items.map((x) => deliverPhoto(x.id, x.local)));
+      const failed = results.find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined;
+      if (failed) throw failed.reason instanceof Error ? failed.reason : new Error('Photo not sent');
+    },
+    [deliverPhoto],
+  );
   const retry = useCallback(
     async (id: string) => {
       const m = pending[id];
       if (!m) return;
       setPending((p) => ({ ...p, [id]: { ...m, failed: false } }));
-      await deliver(id, m.body);
+      if (m.local && !m.media) await deliverPhoto(id, m.local);
+      else await deliver(id, m.body, m.media ?? undefined);
     },
-    [deliver, pending],
+    [deliver, deliverPhoto, pending],
   );
 
   const remove = useCallback(async (messageId: string) => {
@@ -370,9 +430,9 @@ export function useServerThread(conversationId: string): ServerThread {
         // Pending ones, until the server confirms them (then they are in rows with the same id).
         ...Object.entries(pending)
           .filter(([id]) => !rows.some((r) => r.id === id))
-          .map(([id, p]): MessageRow => ({ id, sender_id: uid ?? null, kind: 'text', body: p.body, created_at: p.at })),
+          .map(([id, p]): MessageRow & { local?: string } => ({ id, sender_id: uid ?? null, kind: p.local ? 'photo' : 'text', body: p.body, created_at: p.at, media_path: p.media ?? null, local: p.local })),
       ].map(
-        (r): ServerMessage => ({
+        (r: MessageRow & { local?: string }): ServerMessage => ({
           id: r.id,
           from: r.sender_id === uid ? 'me' : r.sender_id ? r.sender_id : 'irly',
           senderId: r.sender_id,
@@ -381,6 +441,7 @@ export function useServerThread(conversationId: string): ServerThread {
           minAgo: 0,
           at: Date.parse(r.created_at),
           share: r.kind === 'share' && r.ref_type ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
+          media: r.kind === 'photo' && (r.media_path || r.local) ? { path: r.media_path ?? null, local: r.local ?? (r.id in pending ? (pending[r.id].local ?? null) : null) } : undefined,
           status: pending[r.id] ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
         }),
       ),
@@ -398,20 +459,40 @@ export function useServerThread(conversationId: string): ServerThread {
     let alive = true;
     Promise.all([
       supabase.from('conversations').select('title').eq('id', conversationId).maybeSingle(),
-      supabase.from('conversation_members').select('user_id, profiles(first_name)').eq('conversation_id', conversationId),
+      supabase.rpc('chat_members', { p_conversation: conversationId }),
     ]).then(([{ data: conv }, { data: members }]) => {
       if (!alive) return;
       const map: Record<string, string> = {};
-      (members ?? []).forEach((m: { user_id: string; profiles: { first_name: string } | { first_name: string }[] | null }) => {
-        const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
-        if (p) map[m.user_id] = p.first_name;
+      const full: Record<string, { name: string; photo: string | null; admin: boolean }> = {};
+      ((members as { user_id: string; first_name: string; photo_path: string | null; role: string }[] | null) ?? []).forEach((m) => {
+        map[m.user_id] = m.first_name;
+        full[m.user_id] = { name: m.first_name, photo: m.photo_path, admin: m.role === 'admin' };
       });
       setNames((old) => ({ ...old, ...map }));
+      setPeople(full);
       if (conv?.title) setTitle(conv.title);
     });
     return () => {
       alive = false;
     };
   }, [conversationId, uid, loading, unknown, peopleV, inboxV]);
-  return { loading: uid ? loading : false, error, title, kind, otherId, messages, hasEarlier, loadEarlier, send, retry, remove, typing: typingNames, setTyping };
+  return {
+    loading: uid ? loading : false,
+    error,
+    title,
+    kind,
+    otherId,
+    members: people,
+    communityId: refs.community,
+    activityId: refs.activity,
+    messages,
+    hasEarlier,
+    loadEarlier,
+    send,
+    sendPhotos,
+    retry,
+    remove,
+    typing: typingNames,
+    setTyping,
+  };
 }

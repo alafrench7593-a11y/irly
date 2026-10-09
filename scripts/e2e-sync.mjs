@@ -572,6 +572,121 @@ async function main() {
     return false;
   });
 
+  // ───────── Messaging & social: profiles, follows, photos, groups ─────────
+  // Vera accepts messages from people she shares a community with.
+  await sql(`insert into public.safety_settings (user_id, who_can_message) values ('${vera.id}', 'everyone') on conflict (user_id) do update set who_can_message = 'everyone'`);
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAG0lEQVR42mP8z8BQz0AEYBxVSFUAAApzAf/3Kt4wAAAAAElFTkSuQmCC', 'base64');
+  await step('Vera\'s profile opens from the app (a real member, not example data)', async () => {
+    await page.goto(`${BASE}/person/${vera.id}`);
+    await visible(page, 'Followers', 20000);
+    await visible(page, 'Vera');
+    return true;
+  });
+  await step('Follow → recorded once on the server, the button says Following, Vera has 1 follower', async () => {
+    await page.getByRole('button', { name: 'Follow', exact: true }).click();
+    await visible(page, 'Following', 15000);
+    const [f] = await sql(`select count(*)::int as n from public.follows where follower_id = '${uma.id}' and followee_id = '${vera.id}'`);
+    const prof = must(await veraSb.rpc('public_profile', { p_user: vera.id }))[0];
+    const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${vera.id}' and kind = 'NEW_FOLLOWER'`);
+    return f.n === 1 && prof.followers === 1 && n.n === 1;
+  });
+  await step('… still following after a reload; the followers list shows Uma', async () => {
+    await page.reload();
+    await visible(page, 'Following', 20000);
+    await page.getByRole('button', { name: /Followers/ }).first().click();
+    await visible(page, 'Uma', 15000);
+    return true;
+  });
+  await step('Unfollow → no follow left, no duplicate', async () => {
+    await page.goto(`${BASE}/person/${vera.id}`);
+    await page.getByRole('button', { name: 'Following', exact: true }).first().click();
+    for (let i = 0; i < 20; i++) {
+      const [f] = await sql(`select count(*)::int as n from public.follows where follower_id = '${uma.id}' and followee_id = '${vera.id}'`);
+      if (f.n === 0) return true;
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
+  let dmId = null;
+  await step('Message from the profile → the private chat opens with Vera\'s name in the header', async () => {
+    await page.getByRole('button', { name: 'Message', exact: true }).click();
+    await page.waitForURL(/\/messages\/[0-9a-f-]{36}/, { timeout: 20000 });
+    dmId = page.url().split('/messages/')[1].split('?')[0];
+    await visible(page, 'Private · see profile', 15000);
+    return true;
+  });
+  await step('Uma sends a photo (pick, preview, send) → stored and on the server; still there after a reload', async () => {
+    await page.getByRole('button', { name: 'Send a photo' }).click();
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 15000 }), page.getByRole('button', { name: 'Choose from my photos' }).click()]);
+    await chooser.setFiles({ name: 'court.png', mimeType: 'image/png', buffer: PNG });
+    await page.getByRole('button', { name: 'Send the photo' }).click({ timeout: 15000 });
+    let row = null;
+    for (let i = 0; i < 40 && !row; i++) {
+      [row] = await sql(`select id, media_path from public.messages where conversation_id = '${dmId}' and kind = 'photo' and sender_id = '${uma.id}' order by created_at desc limit 1`);
+      if (!row) await page.waitForTimeout(500);
+    }
+    if (!row?.media_path) return false;
+    await page.reload();
+    await page.locator('img[aria-label="Photo"], [aria-label="Photo"] img, img').filter({ visible: true }).first().waitFor({ timeout: 20000 });
+    globalThis.__dmPhoto = row.media_path;
+    return true;
+  });
+  await step('… Vera (member of the chat) can open the photo; Vera receives it in her inbox as a photo', async () => {
+    const { data, error } = await veraSb.storage.from('chat-media').createSignedUrl(globalThis.__dmPhoto, 60);
+    const inbox = must(await veraSb.rpc('my_conversations'));
+    const c = inbox.find((x) => x.conversation_id === dmId);
+    return !error && Boolean(data?.signedUrl) && c?.last_kind === 'photo';
+  });
+  await step('Tap the header → Vera\'s profile; Back → the same chat with its history', async () => {
+    await page.getByRole('button', { name: /Open Vera’s profile/ }).first().click();
+    await visible(page, 'Followers', 15000);
+    await page.goBack();
+    await page.waitForURL(new RegExp(`/messages/${dmId}`), { timeout: 15000 });
+    await visible(page, 'Private · see profile', 15000);
+    return true;
+  });
+  let groupId = null;
+  await step('New group with Vera (name, people) → its chat opens; Vera has it in her inbox as a group', async () => {
+    await page.goto(`${BASE}/group/new`);
+    await page.getByPlaceholder('Group name').fill(`Padel crew ${run}`);
+    await page.getByRole('checkbox', { name: 'Vera' }).click({ timeout: 20000 });
+    await page.getByRole('button', { name: 'Create the group' }).click();
+    await page.waitForURL(/\/messages\/[0-9a-f-]{36}/, { timeout: 20000 });
+    groupId = page.url().split('/messages/')[1].split('?')[0];
+    const inbox = must(await veraSb.rpc('my_conversations'));
+    const g = inbox.find((x) => x.conversation_id === groupId);
+    return g?.kind === 'group' && g.members === 2;
+  });
+  await step('Vera writes in the group → it appears live in Uma\'s open group chat', async () => {
+    await page.waitForTimeout(1500);
+    must(await veraSb.from('messages').insert({ conversation_id: groupId, sender_id: vera.id, body: `Group hello ${run}` }));
+    await visible(page, `Group hello ${run}`, 20000);
+    return true;
+  });
+  await step('Messages tabs: the group is under Groups, the chat with Vera under Private, never both', async () => {
+    await page.goto(`${BASE}/messages`);
+    await page.getByRole('tab', { name: /^Groups/ }).click();
+    await visible(page, `Padel crew ${run}`, 20000);
+    const vInGroups = await page.getByText('Vera', { exact: true }).filter({ visible: true }).count();
+    await page.getByRole('tab', { name: /^Private/ }).click();
+    await visible(page, 'Vera', 15000);
+    const gInPrivate = await page.getByText(`Padel crew ${run}`).filter({ visible: true }).count();
+    return vInGroups === 0 && gInPrivate === 0;
+  });
+  await step('Search finds the group by name', async () => {
+    await page.getByRole('tab', { name: /^All/ }).click();
+    await page.getByPlaceholder('Search conversations').fill('Padel crew');
+    await visible(page, `Padel crew ${run}`, 10000);
+    await page.getByPlaceholder('Search conversations').fill('');
+    return true;
+  });
+  await step('Access: someone outside the group cannot read it, nor open its photos', async () => {
+    // Vera leaves; she can no longer read the group or a photo sent in it.
+    must(await veraSb.rpc('leave_group', { p_conversation: groupId }));
+    const { data: msgs } = await veraSb.from('messages').select('id').eq('conversation_id', groupId);
+    return (msgs ?? []).length === 0;
+  });
+
   // ───────── 1. Paths: every screen opens ─────────
   const areas = (await sql(`select id from public.areas where city_id = 'bali' order by sort`)).map((r) => r.id);
   const sections = ['visa', 'housing', 'banking', 'sim', 'internet', 'transport', 'healthcare', 'insurance', 'schools', 'childcare', 'work', 'coworking', 'business', 'accounting', 'tax', 'legal', 'real_estate', 'moving', 'pets', 'services'];
@@ -581,7 +696,7 @@ async function main() {
   const screens = [
     '/', '/discover', '/soon/pro', '/soon/bonplan', '/soon/visa', '/soon/location', '/live', '/map', '/messages', '/profile', '/social', '/account', '/assistant', '/business', '/calendar', '/communities',
     '/community/new', '/design-system', '/eat', '/events', '/match', '/notifications', '/saved', '/services', '/settings', '/activities',
-    '/network', '/network/profile', `/network/${vera.id}`, '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
+    '/network', '/network/profile', `/network/${vera.id}`, '/group/new', `/follows/${vera.id}`, `/person/${vera.id}`, '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
     `/comments?type=activity&id=${actId}`, `/share?type=activity&id=${actId}&title=x`, '/person/p-kadek',
     ...areas.map((a) => `/bali/area/${a}`),
     ...sections.map((s) => `/bali/guide/${s}`),

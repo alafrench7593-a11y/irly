@@ -169,6 +169,10 @@ function ServerNotifications() {
       }
       case 'PRO_CONNECT_ACCEPTED':
         return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: 'Networking · say hi', go: () => router.push(`/network/${p.from}`) };
+      case 'NEW_FOLLOWER':
+        return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: 'See their profile', go: () => router.push(`/person/${p.from}`) };
+      case 'GROUP_ADDED':
+        return { icon: 'users', title: tx('{name} added you to {title}', { name: name(p.from), title: String(p.title ?? '') }), body: 'Open the group chat', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'FRIEND_ACCEPTED':
         return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends' };
       case 'COMMUNITY_JOINED':
