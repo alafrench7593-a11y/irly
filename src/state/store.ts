@@ -1,3 +1,4 @@
+import { DEMO, storageName } from '@/config/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
@@ -208,10 +209,11 @@ export const useStore = create<State & Actions>()(
   persist(
     (set, get) => ({
       hydrated: false,
-      onboarded: false,
-      destinationId: null,
-      cityId: null,
-      profile: emptyProfile,
+      // The demo opens straight into Dubai as a guest.
+      onboarded: DEMO,
+      destinationId: DEMO ? 'emirates' : null,
+      cityId: DEMO ? 'dubai' : null,
+      profile: DEMO ? { ...emptyProfile, name: 'Guest', interests: ['food', 'startups'], activities: ['padel'], languages: ['English'] } : emptyProfile,
       appearance: 'auto',
       hapticsOn: true,
       joined: {},
@@ -333,7 +335,7 @@ export const useStore = create<State & Actions>()(
       linkPlan: (id, serverId) => set({ myPlans: get().myPlans.map((p) => (p.id === id ? { ...p, serverId } : p)) }),
     }),
     {
-      name: 'irly-v2',
+      name: storageName('irly-v2'),
       version: 1,
       storage: createJSONStorage(() => safeStorage),
       partialize: ({ hydrated: _h, ...rest }) => rest,

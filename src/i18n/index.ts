@@ -1,3 +1,4 @@
+import { storageName } from '@/config/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
 import { useCallback } from 'react';
@@ -35,7 +36,7 @@ type LangState = { setting: LangSetting; set: (s: LangSetting) => void };
 
 export const useLangStore = create<LangState>()(
   persist((set) => ({ setting: 'auto', set: (setting) => set({ setting }) }), {
-    name: 'irly-lang',
+    name: storageName('irly-lang'),
     storage: createJSONStorage(() => AsyncStorage),
   }),
 );

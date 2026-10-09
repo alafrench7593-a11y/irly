@@ -18,5 +18,12 @@ fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT);
 fs.renameSync('dist', `${OUT}/app`);
 
+// The demo under /demo: example people and plans, no server, nothing saved.
+config.expo.experiments = { ...(config.expo.experiments || {}), baseUrl: '/demo' };
+fs.writeFileSync('app.json', JSON.stringify(config, null, 2));
+execSync('npx expo export --platform web', { stdio: 'inherit', env: { ...process.env, EXPO_PUBLIC_DEMO: '1' } });
+run('node .github/scripts/pages-html.mjs /demo');
+fs.renameSync('dist', `${OUT}/demo`);
+
 // The website at the root.
 run(`node .github/scripts/site-build.mjs ${OUT}`);

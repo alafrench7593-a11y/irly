@@ -3448,4 +3448,7 @@ export const fr: Record<string, string> = {
   "Guides, checklists and qualified advisers. Not available yet.": "Guides, listes de documents et conseillers qualifiés. Pas encore disponible.",
   "Company pages, missions and business meetups. Not available yet.": "Pages entreprises, missions et rencontres business. Pas encore disponible.",
   "See": "Voir",
+  "Demo · nothing is saved": "Démo · rien n’est enregistré",
+  "Create my account →": "Créer mon compte →",
+  "Demo: example content, nothing is saved. Create my account": "Démo : contenu d’exemple, rien n’est enregistré. Créer mon compte",
 };

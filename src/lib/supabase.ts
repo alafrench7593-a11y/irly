@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { DEMO } from '@/config/app';
 
 /**
  * The IRLY backend (Supabase: Postgres + auth + storage + realtime).
@@ -17,7 +18,8 @@ const url = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://yqutcmgslwxcmnsqmhv
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v';
 
 export const supabase: SupabaseClient | null =
-  url && anonKey.length > 20
+  // The demo never talks to the server: nothing a visitor does is saved.
+  !DEMO && url && anonKey.length > 20
     ? createClient(url, anonKey, {
         auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: Platform.OS === 'web', flowType: 'implicit' },
       })

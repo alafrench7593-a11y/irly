@@ -38,8 +38,8 @@ async function open() {
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('http://localhost:8095/');
   await page.evaluate(() => {
-    localStorage.setItem('irly-v2', JSON.stringify({ state: { onboarded: true, destinationId: 'emirates', cityId: 'dubai', profile: { name: 'Sara', gender: 'woman', age: 29, types: [], interests: ['startups', 'food'], activities: ['padel'], languages: ['English'], lookingFor: [] } }, version: 1 }));
-    localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
+    localStorage.setItem('irly-v2-demo', JSON.stringify({ state: { onboarded: true, destinationId: 'emirates', cityId: 'dubai', profile: { name: 'Sara', gender: 'woman', age: 29, types: [], interests: ['startups', 'food'], activities: ['padel'], languages: ['English'], lookingFor: [] } }, version: 1 }));
+    localStorage.setItem('irly-lang-demo', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   });
   return { ctx, page };
 }
@@ -89,7 +89,7 @@ if (!only || only.includes('story')) {
   for (const lang of ['en', 'fr']) {
     const { ctx, page } = await open();
     try {
-      await page.evaluate((l) => localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: l }, version: 0 })), lang);
+      await page.evaluate((l) => localStorage.setItem('irly-lang-demo', JSON.stringify({ state: { setting: l }, version: 0 })), lang);
       for (let i = 1; i <= 5; i++) {
         await page.goto(`http://localhost:8095/story?scene=${i}&hold=1`);
         await page.waitForTimeout(3500);

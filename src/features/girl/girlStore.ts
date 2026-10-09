@@ -1,3 +1,4 @@
+import { storageName } from '@/config/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -71,6 +72,6 @@ export const useGirlStore = create<GirlState & GirlActions>()(
       report: (userId, category, details) => set({ reports: [...get().reports, { userId, category, details, at: Date.now() }] }),
       reset: () => set(initial),
     }),
-    { name: 'irly-girl', version: 1, storage: createJSONStorage(() => AsyncStorage) },
+    { name: storageName('irly-girl'), version: 1, storage: createJSONStorage(() => AsyncStorage) },
   ),
 );
