@@ -357,12 +357,16 @@ async function main() {
   });
   await step('IRLY Girl filters: "This weekend" and "Free" never show an error, and an empty result invites to plan', async () => {
     await page.getByText("Girls' plans coming up").scrollIntoViewIfNeeded();
-    await page.getByRole('button', { name: 'This weekend', exact: true }).click();
-    await page.getByRole('button', { name: 'Free', exact: true }).click();
+    // The plan composer above has its own "This weekend": the filters are the last ones.
+    await page.getByRole('button', { name: 'This weekend', exact: true }).last().click();
+    await page.getByRole('button', { name: 'Free', exact: true }).last().click();
     const plans = await page.getByText('Nothing planned here yet').count();
     const rows = await page.getByText(/\d+(\/\d+)? going/).count();
     return plans + rows > 0;
   });
+  // Back to the community page for the assistant steps.
+  await page.goto(`${BASE}/c/${girlsId}`);
+  await page.waitForTimeout(1500);
   await step('assistant: "Poll: Saturday or Sunday?" → poll posted, Uma votes', async () => {
     await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Poll: Saturday or Sunday?');
     await page.getByRole('button', { name: 'Ask', exact: true }).click();
