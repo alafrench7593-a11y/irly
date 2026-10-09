@@ -645,6 +645,30 @@ async function main() {
     await visible(page, 'Private · see profile', 15000);
     return true;
   });
+  await step('Network cut while sending a photo → "Not sent · Retry"; back online, Retry → exactly one photo message', async () => {
+    await page.goto(`${BASE}/messages/${dmId}`);
+    await visible(page, 'Private · see profile', 15000);
+    const [{ n: before }] = await sql(`select count(*)::int as n from public.messages where conversation_id = '${dmId}' and kind = 'photo'`);
+    await page.getByRole('button', { name: 'Send a photo' }).click();
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser', { timeout: 15000 }), page.getByRole('button', { name: 'Choose from my photos' }).click()]);
+    await chooser.setFiles({ name: 'offline.png', mimeType: 'image/png', buffer: PNG });
+    await page.context().setOffline(true);
+    await page.getByRole('button', { name: 'Send the photo' }).click({ timeout: 15000 });
+    await visible(page, 'Not sent · Retry', 20000);
+    await page.context().setOffline(false);
+    await page.waitForTimeout(1500);
+    await page.getByRole('button', { name: 'Not sent. Retry' }).first().click();
+    for (let i = 0; i < 40; i++) {
+      const [{ n }] = await sql(`select count(*)::int as n from public.messages where conversation_id = '${dmId}' and kind = 'photo'`);
+      if (n === before + 1) {
+        await page.waitForTimeout(2000);
+        const [{ n: after }] = await sql(`select count(*)::int as n from public.messages where conversation_id = '${dmId}' and kind = 'photo'`);
+        return after === before + 1;
+      }
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
   let groupId = null;
   await step('New group with Vera (name, people) → its chat opens; Vera has it in her inbox as a group', async () => {
     await page.goto(`${BASE}/group/new`);
@@ -678,6 +702,47 @@ async function main() {
     await page.getByPlaceholder('Search conversations').fill('Padel crew');
     await visible(page, `Padel crew ${run}`, 10000);
     await page.getByPlaceholder('Search conversations').fill('');
+    return true;
+  });
+  // Uma accepts messages from people she shares a community with (Vera adds her to a group).
+  await sql(`insert into public.safety_settings (user_id, who_can_message) values ('${uma.id}', 'everyone') on conflict (user_id) do update set who_can_message = 'everyone'`);
+  let photoGroup = null;
+  await step('Vera creates a group with its photo → Uma sees it under Groups with that photo', async () => {
+    const path1 = `${vera.id}/g1-${run}.png`;
+    must(await veraSb.storage.from('activity-photos').upload(path1, PNG, { contentType: 'image/png', upsert: true }));
+    photoGroup = must(await veraSb.rpc('create_group', { p_title: `Photo group ${run}`, p_members: [uma.id], p_photo: path1 }));
+    await page.goto(`${BASE}/messages`);
+    await page.getByRole('tab', { name: /^Groups/ }).click();
+    await visible(page, `Photo group ${run}`, 20000);
+    await page.locator(`img[src*="g1-${run}"]`).first().waitFor({ timeout: 20000 });
+    return true;
+  });
+  await step('… Vera changes the group photo → Uma\'s open list shows the new one, no reload', async () => {
+    const path2 = `${vera.id}/g2-${run}.png`;
+    must(await veraSb.storage.from('activity-photos').upload(path2, PNG, { contentType: 'image/png', upsert: true }));
+    must(await veraSb.rpc('set_conversation_photo', { p_conversation: photoGroup, p_path: path2 }));
+    await page.locator(`img[src*="g2-${run}"]`).first().waitFor({ timeout: 25000 });
+    return true;
+  });
+  let photoClub = null;
+  await step('Community: Vera creates one, Uma joins → its chat is under Communities with the community\'s photo', async () => {
+    photoClub = must(await veraSb.rpc('create_community', { p_name: `Photo club ${run}`, p_city: 'bali' }));
+    const cover = `${vera.id}/c1-${run}.png`;
+    must(await veraSb.storage.from('activity-photos').upload(cover, PNG, { contentType: 'image/png', upsert: true }));
+    must(await veraSb.rpc('set_community_cover', { p_community: photoClub, p_path: cover }));
+    await page.goto(`${BASE}/c/${photoClub}`);
+    await page.getByRole('button', { name: 'Join the community' }).click();
+    await visible(page, 'Open chat', 20000);
+    await page.goto(`${BASE}/messages`);
+    await page.getByRole('tab', { name: /^Communities/ }).click();
+    await visible(page, `Photo club ${run}`, 20000);
+    await page.locator(`img[src*="c1-${run}"]`).first().waitFor({ timeout: 20000 });
+    return true;
+  });
+  await step('… Vera renames the community → the chat\'s name follows in Uma\'s open list, no reload', async () => {
+    must(await veraSb.from('communities').update({ name: `Photo club ${run} Bali` }).eq('id', photoClub));
+    await visible(page, `Photo club ${run} Bali`, 25000);
+    must(await veraSb.rpc('delete_community', { p_community: photoClub }));
     return true;
   });
   await step('Access: someone outside the group cannot read it, nor open its photos', async () => {

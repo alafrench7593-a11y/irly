@@ -16,6 +16,8 @@ import { useSignedLinks } from '@/features/server/media';
 import { openReport } from '@/features/moderation/reportStore';
 import { t as tx } from '@/i18n';
 import { hueOf } from '@/lib/format';
+import { timeAgo } from '@/lib/time';
+import { useNow } from '@/lib/useNow';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -34,7 +36,8 @@ export function MemberProfileView({ userId }: { userId: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
-  const { profile: p, communities, loading, error, reload, signedIn } = useMemberProfile(userId);
+  const { profile: p, communities, posts, loading, error, reload, signedIn } = useMemberProfile(userId);
+  const now = useNow();
   const faces = useSignedLinks('profile-photos', [p?.photo]);
   const covers = useSignedLinks('activity-photos', communities.map((c) => c.cover));
   const [busy, setBusy] = useState<'follow' | 'message' | null>(null);
@@ -200,8 +203,25 @@ export function MemberProfileView({ userId }: { userId: string }) {
                 </View>
               </Animated.View>
             ) : null}
-            {communities.length ? (
+            {posts.length ? (
               <Animated.View entering={reduced ? undefined : enter.rise(6)} style={styles.section}>
+                <Text variant="overline" tone="tertiary">
+                  Posts
+                </Text>
+                {posts.map((x) => (
+                  <PressableScale key={x.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${x.communityId}`)} style={[styles.post, { backgroundColor: t.c.surface }]} accessibilityLabel={tx('Post in {name}', { name: x.communityName })}>
+                    <Text variant="caption" tone="tertiary" raw>
+                      {x.communityName} · {timeAgo(Math.max(0, Math.round((now - x.at) / 60000)))}
+                    </Text>
+                    <Text variant="body" numberOfLines={4} raw>
+                      {x.body}
+                    </Text>
+                  </PressableScale>
+                ))}
+              </Animated.View>
+            ) : null}
+            {communities.length ? (
+              <Animated.View entering={reduced ? undefined : enter.rise(7)} style={styles.section}>
                 <Text variant="overline" tone="tertiary">
                   Communities
                 </Text>
@@ -289,6 +309,7 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: space.gutter, marginTop: space[6], gap: 10 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: 17, borderWidth: StyleSheet.hairlineWidth * 2 },
+  post: { gap: 6, padding: 14, borderRadius: radius.lg },
   community: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
   communityPhoto: { width: 48, height: 48, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   report: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: space[7], padding: 10 },

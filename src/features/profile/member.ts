@@ -27,6 +27,7 @@ export type MemberProfile = {
   isMe: boolean;
 };
 
+export type MemberPost = { id: string; body: string; at: number; communityId: string; communityName: string };
 export type MemberCommunity = { id: string; name: string; cityId: string; cover: string | null; members: number };
 export type FollowPerson = { id: string; firstName: string; photo: string | null; iFollow: boolean };
 
@@ -55,21 +56,40 @@ type Row = {
 
 export function useMemberProfile(userId: string) {
   const uid = useAccount()?.userId;
-  const [state, setState] = useState<{ for: string; profile: MemberProfile | null; communities: MemberCommunity[]; error: string | null }>({ for: '', profile: null, communities: [], error: null });
+  const [state, setState] = useState<{ for: string; profile: MemberProfile | null; communities: MemberCommunity[]; posts: MemberPost[]; error: string | null }>({ for: '', profile: null, communities: [], posts: [], error: null });
   const seq = useRef(0);
   const key = `${uid}|${userId}`;
 
   const load = useCallback(() => {
     if (!supabase || !uid) return;
     const n = ++seq.current;
-    Promise.all([sb().rpc('public_profile', { p_user: userId }), sb().rpc('member_communities', { p_user: userId })])
-      .then(([p, c]) => {
+    // Their posts in communities you can read (the read rules decide; nothing else is asked).
+    const posts = sb()
+      .from('community_posts')
+      .select('id, body, created_at, community_id, communities(name)')
+      .eq('author_id', userId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    Promise.all([sb().rpc('public_profile', { p_user: userId }), sb().rpc('member_communities', { p_user: userId }), posts])
+      .then(([p, c, ps]) => {
         if (n !== seq.current) return;
         if (p.error) throw new Error(p.error.message);
         const r = ((p.data as Row[] | null) ?? [])[0];
+        const visible = Boolean(r?.visible);
         setState({
           for: key,
           error: null,
+          // A hidden profile shows no posts here, even ones you could read in a shared community.
+          posts: visible
+            ? ((ps.data as { id: string; body: string; created_at: string; community_id: string; communities: { name: string } | { name: string }[] | null }[] | null) ?? []).map((x) => ({
+                id: x.id,
+                body: x.body,
+                at: Date.parse(x.created_at),
+                communityId: x.community_id,
+                communityName: (Array.isArray(x.communities) ? x.communities[0]?.name : x.communities?.name) ?? '',
+              }))
+            : [],
           profile: r
             ? {
                 id: r.id,
@@ -106,7 +126,7 @@ export function useMemberProfile(userId: string) {
   useRefreshOn(['follows', 'people'], load);
 
   const ready = state.for === key;
-  return { profile: ready ? state.profile : null, communities: ready ? state.communities : [], loading: Boolean(uid) && !ready, error: ready ? state.error : null, reload: load, signedIn: Boolean(uid) };
+  return { profile: ready ? state.profile : null, communities: ready ? state.communities : [], posts: ready ? state.posts : [], loading: Boolean(uid) && !ready, error: ready ? state.error : null, reload: load, signedIn: Boolean(uid) };
 }
 
 // One request per person at a time: a double tap never sends two.

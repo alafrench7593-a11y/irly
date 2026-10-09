@@ -3562,4 +3562,5 @@ export const fr: Record<string, string> = {
   "{name} added you to {title}": "{name} t’a ajouté·e à {title}",
   "Open the group chat": "Ouvrir la discussion du groupe",
   "Could not rename": "Impossible de renommer",
+  "Post in {name}": "Publication dans {name}",
 };
