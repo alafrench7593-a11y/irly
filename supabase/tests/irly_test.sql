@@ -911,6 +911,54 @@ select pg_temp.check(not exists (select 1 from public.service_interest), 'member
 select pg_temp.as_admin();
 select pg_temp.check((select count(*) from public.service_interest) = 1, 'the team sees every request');
 
+-- ───── IRLY Girl / Moms: feed and moderation ─────
+select pg_temp.as_admin();
+alter table public.profiles disable trigger profiles_guard;
+update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-00000000000a';
+alter table public.profiles enable trigger profiles_guard;
+insert into public.communities (id, city_id, name, category_id, girl_only) values
+  ('40000000-0000-0000-0000-0000000000a1', 'dubai', 'Feed Girls Dubai', 'girl', true),
+  ('40000000-0000-0000-0000-0000000000a2', 'dubai', 'Feed Moms Dubai', 'family', true),
+  ('40000000-0000-0000-0000-0000000000a3', 'dubai', 'Feed Open Club', 'food', false);
+insert into public.community_members (community_id, user_id, role) values
+  ('40000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-00000000000b', 'member'),
+  ('40000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-00000000000b', 'member'),
+  ('40000000-0000-0000-0000-0000000000a3', '00000000-0000-0000-0000-00000000000b', 'member');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+insert into public.community_posts (community_id, author_id, body) values
+  ('40000000-0000-0000-0000-0000000000a1', auth.uid(), 'Girls brunch on Saturday?'),
+  ('40000000-0000-0000-0000-0000000000a2', auth.uid(), 'Park meetup with the kids'),
+  ('40000000-0000-0000-0000-0000000000a3', auth.uid(), 'Open club post');
+select pg_temp.check((select count(*) from public.girl_feed('dubai')) = 2, 'the Girl feed holds the women-only communities, not the open ones');
+select pg_temp.check((select count(*) from public.girl_feed('dubai', true)) = 1 and (select body from public.girl_feed('dubai', true)) = 'Park meetup with the kids', 'the Moms feed holds the family communities');
+select pg_temp.check((select is_member from public.girl_feed('dubai', true)), 'the feed says when you are a member');
+select pg_temp.check(public.my_girl_status() = 'open', 'a woman sees IRLY Girl open');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+select pg_temp.expect_denied($$select * from public.girl_feed('dubai')$$, 'a man cannot read the Girl feed');
+select pg_temp.check(not exists (select 1 from public.community_posts where body = 'Girls brunch on Saturday?'), 'nor its posts directly');
+select pg_temp.check(public.my_girl_status() = 'not_eligible', 'a man sees IRLY Girl closed');
+select pg_temp.expect_denied($$select public.girl_suspend('00000000-0000-0000-0000-00000000000b', 'test')$$, 'only admins withdraw Girl access');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.expect_denied($$insert into public.girl_suspensions (user_id, reason) values ('00000000-0000-0000-0000-00000000000d', 'nope')$$, 'no direct writes to suspensions');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.girl_suspend('00000000-0000-0000-0000-00000000000b', 'Reported several times by members');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(public.my_girl_status() = 'suspended', 'a suspended account is told so');
+select pg_temp.check(not public.my_girl_access(), 'and loses IRLY Girl');
+select pg_temp.expect_denied($$select * from public.girl_feed('dubai')$$, 'including the feed');
+select pg_temp.check(not exists (select 1 from public.communities where girl_only), 'and the women-only communities');
+update public.irly_match_profiles set visible = true where user_id = auth.uid();
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.irly_match_profiles where user_id = '00000000-0000-0000-0000-00000000000b' and visible), 'and cannot reappear in discovery');
+select pg_temp.check(not exists (select 1 from public.community_members where user_id = '00000000-0000-0000-0000-00000000000b' and community_id in ('40000000-0000-0000-0000-0000000000a1', '40000000-0000-0000-0000-0000000000a2')), 'suspension removes the women-only memberships');
+select pg_temp.check(exists (select 1 from public.community_members where user_id = '00000000-0000-0000-0000-00000000000b' and community_id = '40000000-0000-0000-0000-0000000000a3'), 'and nothing else');
+select pg_temp.check(exists (select 1 from public.community_posts where body = 'Girls brunch on Saturday?'), 'her posts are not deleted');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.girl_reinstate('00000000-0000-0000-0000-00000000000b');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(public.my_girl_status() = 'open', 'reinstated, IRLY Girl opens again');
+select pg_temp.as_admin();
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

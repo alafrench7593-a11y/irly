@@ -49,7 +49,7 @@ export function GirlHero({
     transform: [{ translateY: interpolate(scrollY.value, [0, h * 0.5], [0, -24], Extrapolation.CLAMP) }],
   }));
 
-  const headline = mode === 'moms' ? tr('Meet moms. Find activities.') : tr('Find girls you actually get along with');
+  const headline = mode === 'moms' ? tr('Friends for you, memories for them.') : tr('Sincere friendships. Moments that matter.');
   const parts = headline.split(' ');
 
   return (

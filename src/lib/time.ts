@@ -111,7 +111,7 @@ export function isHappeningNow(when: When, city: Pick<City, 'utcOffset'>, now = 
 }
 
 const HOUR_MS = 60 * 60 * 1000;
-const offsetOf = (cityId: string | null | undefined) => (cityId === 'bali' ? 8 : 4);
+export const offsetOf = (cityId: string | null | undefined) => (cityId === 'bali' ? 8 : 4);
 
 /**
  * A server timestamp written as the city's wall clock ("Sat 12 Oct, 19:00"
