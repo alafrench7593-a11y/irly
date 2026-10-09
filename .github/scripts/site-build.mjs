@@ -5,6 +5,7 @@
  * the example portraits.
  */
 import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
 
 const OUT = process.argv[2] || 'dist/site';
 fs.mkdirSync(OUT, { recursive: true });
@@ -22,4 +23,6 @@ if (fs.existsSync('public-photos/faces')) {
   fs.mkdirSync(`${OUT}/faces`, { recursive: true });
   for (const f of fs.readdirSync('public-photos/faces')) if (f.endsWith('.jpg')) fs.copyFileSync(`public-photos/faces/${f}`, `${OUT}/faces/${f}`);
 }
+// French and Arabic home pages, guides and the sitemap.
+execFileSync('node', ['.github/scripts/site-pages.mjs', OUT], { stdio: 'inherit' });
 console.log('website built:', fs.readdirSync(OUT).join(', '));

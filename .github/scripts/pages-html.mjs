@@ -9,7 +9,10 @@ const file = 'dist/index.html';
 let html = fs.readFileSync(file, 'utf8');
 // The app is in English or French by itself: browsers must not translate it.
 html = html.replace(/<html lang="en">/, '<html lang="en" translate="no">');
+// The web app is for members, not for search results: the website and its
+// guides are the pages to index.
 const head = `
+<meta name="robots" content="noindex">
 <meta name="google" content="notranslate">
 <link rel="manifest" href="${base}/manifest.json">
 <link rel="apple-touch-icon" href="${base}/apple-touch-icon.png">
