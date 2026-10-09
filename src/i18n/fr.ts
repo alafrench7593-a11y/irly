@@ -1353,6 +1353,7 @@ export const fr: Record<string, string> = {
   "Could not post the plan": "Impossible de publier le plan",
   "Your session has ended. Sign in again to post this plan": "Ta session a expiré. Reconnecte-toi pour publier ce plan",
   'Sign in so we can tell you when it opens': 'Connecte-toi pour qu’on te prévienne à l’ouverture',
+  'Follow IRLY': 'Suivre IRLY',
   'Comments and replies': 'Commentaires et réponses',
   'Activities and events': 'Activités et événements',
   'IRLY Girl matches': 'Matchs IRLY Girl',

@@ -7,9 +7,9 @@ import { useCalendar } from '@/features/server/activities';
 import { useCommunityList } from '@/features/community/data';
 import { cityWhen , whenLabel } from '@/lib/time';
 import type { CityId } from '@/data/types';
-import { DEMO } from '@/config/app';
+import { APP, DEMO } from '@/config/app';
 import { useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { Linking, StyleSheet, Switch, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
@@ -337,6 +337,17 @@ export default function Profile() {
             <SettingLink icon="users" label="Community Guidelines" onPress={() => router.push('/legal/guidelines')} />
             <Divider inset={16} />
             <SettingLink icon="message" label="Help & contact" value="Report a problem" onPress={() => router.push('/support')} />
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={enter.rise(11)} style={styles.section}>
+          <SectionHeader title="Follow IRLY" />
+          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <SettingLink icon="camera" label="Instagram" value="@irlyofficial" onPress={() => Linking.openURL(APP.instagram)} />
+            <Divider inset={16} />
+            <SettingLink icon="music" label="TikTok" value="@irlyofficial" onPress={() => Linking.openURL(APP.tiktok)} />
+            <Divider inset={16} />
+            <SettingLink icon="send" label="Email" value={APP.supportEmail} onPress={() => Linking.openURL(`mailto:${APP.supportEmail}`)} />
           </View>
         </Animated.View>
 
