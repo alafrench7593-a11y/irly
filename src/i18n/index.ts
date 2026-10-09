@@ -24,7 +24,19 @@ export const LANGS: { id: LangSetting; label: string }[] = [
   { id: 'fr', label: 'Français' },
 ];
 
+// Web: `?lang=fr` or `?lang=en` (links from the website) picks the language
+// the app starts in when the member has not chosen one.
+const urlLang: Lang | undefined = (() => {
+  try {
+    const l = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lang') : null;
+    return l === 'fr' || l === 'en' ? l : undefined;
+  } catch {
+    return undefined;
+  }
+})();
+
 function deviceLang(): Lang {
+  if (urlLang) return urlLang;
   try {
     return getLocales()[0]?.languageCode === 'fr' ? 'fr' : 'en';
   } catch {

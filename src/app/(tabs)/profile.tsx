@@ -317,7 +317,7 @@ export default function Profile() {
               onPress={() => setAppearance(t.mode === 'night' ? 'day' : 'night')}
             />
             <Divider inset={16} />
-            <SettingLink icon="globe" label="Destination" value={`${tx(dest.shortName)} · ${city.name}`} onPress={() => setDestSheet(true)} />
+            <SettingLink icon="globe" label="Destination" value={`${tx(dest.shortName)} · ${tx(city.name)}`} onPress={() => setDestSheet(true)} />
             {DEMO ? (
               <>
                 <Divider inset={16} />
