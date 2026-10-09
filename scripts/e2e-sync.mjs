@@ -744,6 +744,13 @@ async function main() {
       const com = await sql(`select cover_path, deleted_at from public.communities where id = '${photoClub}'`);
       const inbox = await sql(`select set_config('request.jwt.claims', '{"sub":"${uma.id}","role":"authenticated"}', true); select conversation_id, kind, title, photo_path, photo_bucket from public.my_conversations() where title like 'Photo club%'`);
       const imgs = await page.locator('img').evaluateAll((els) => els.map((el) => el.getAttribute('src')?.slice(0, 120)));
+      const paths = await sql(`select set_config('request.jwt.claims', '{"sub":"${uma.id}","role":"authenticated"}', true); select title, photo_path from public.my_conversations()`);
+      const umaSb = createClient(URL_, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+      await umaSb.auth.signInWithPassword({ email: uma.email, password: PASSWORD });
+      const one = await umaSb.storage.from('activity-photos').createSignedUrls([cover], 60);
+      const all = await umaSb.storage.from('activity-photos').createSignedUrls(paths.map((r) => r.photo_path).filter(Boolean), 60);
+      const pol = await sql(`select qual from pg_policies where schemaname = 'storage' and policyname = 'activity_photos_read'`);
+      console.log(`   diag one: ${JSON.stringify(one).slice(0, 400)}\n   diag all: ${JSON.stringify(all).slice(0, 900)}\n   diag paths: ${JSON.stringify(paths)}\n   diag policy: ${JSON.stringify(pol).slice(0, 600)}`);
       console.log(`   diag community: ${JSON.stringify(com)}\n   diag inbox: ${JSON.stringify(inbox)}\n   diag imgs: ${JSON.stringify(imgs)}`);
       throw e;
     }
