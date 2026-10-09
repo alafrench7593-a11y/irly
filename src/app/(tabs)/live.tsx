@@ -27,6 +27,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
+import { TapPhoto } from '@/features/photo/TapPhoto';
 import { areaName, CITIES, placeLabel } from '@/data/destinations';
 import { ScopeToggle } from '@/components/ui/ScopeToggle';
 import { useCityFilter } from '@/features/server/scope';
@@ -118,11 +119,13 @@ function LiveCard({ live }: { live: Live }) {
         </View>
       </View>
       {hasPhoto ? (
-        live.photoUri ? (
-          <Image source={{ uri: live.photoUri }} style={styles.photo} contentFit="cover" />
-        ) : (
-          <Photo visual={{ photo: live.photo! }} light={city.light} style={styles.photo} width={800} recyclingKey={live.id} />
-        )
+        <TapPhoto photo={live.photoUri ? { uri: live.photoUri } : { visual: { photo: live.photo! }, light: city.light }} style={styles.photo}>
+          {live.photoUri ? (
+            <Image source={{ uri: live.photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          ) : (
+            <Photo visual={{ photo: live.photo! }} light={city.light} style={StyleSheet.absoluteFill} width={800} recyclingKey={live.id} />
+          )}
+        </TapPhoto>
       ) : null}
       <Text variant={hasPhoto ? 'body' : 'titleM'}>{live.text}</Text>
       {person ? (
@@ -314,7 +317,22 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 </View>
               </View>
             </View>
-            {p.mediaUrl ? <Image source={{ uri: p.mediaUrl }} style={styles.photo} contentFit="cover" /> : null}
+            {p.mediaUrl ? (
+              <TapPhoto
+                photo={{ uri: p.mediaUrl }}
+                style={styles.photo}
+                liked={eng.get(p.id).liked}
+                onLike={() => {
+                  if (!eng.signedIn) {
+                    toast('Sign in to interact', 'user', 'brand');
+                    return;
+                  }
+                  eng.like(p.id).catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
+                }}
+              >
+                <Image source={{ uri: p.mediaUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+              </TapPhoto>
+            ) : null}
             <Text variant={p.mediaUrl ? 'body' : 'titleM'} raw>
               {p.body}
             </Text>
@@ -350,26 +368,43 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
               </View>
             ) : (
-              <Button
-                label={status === 'incoming' ? 'Accept friend' : status === 'sent' ? 'Request sent' : 'Add friend'}
-                size="sm"
-                variant={status === 'sent' ? 'secondary' : 'primary'}
-                icon={status === 'sent' ? 'check' : 'plus'}
-                disabled={status === 'sent'}
-                onPress={() =>
-                  addFriend(p.authorId)
-                    .then((r) => {
-                      toast(r === 'accepted' ? tx('You and {name} are friends', { name: p.firstName }) : tx('Request sent to {name}', { name: p.firstName }), 'user', 'brand');
-                      refresh();
-                    })
-                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
-                }
-              />
+              <FriendButton status={status} name={p.firstName} authorId={p.authorId} onDone={refresh} />
             )}
           </Animated.View>
         );
       })}
     </View>
+  );
+}
+
+/**
+ * Add friend → (sending) → Request sent; Accept friend → (sending) → Friends.
+ * The button only changes once the server has answered: a failure leaves it
+ * as it was, and a double tap never sends twice.
+ */
+function FriendButton({ status, name, authorId, onDone }: { status: 'incoming' | 'sent' | 'none'; name: string; authorId: string; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button
+      label={status === 'incoming' ? 'Accept friend' : status === 'sent' ? 'Request sent' : 'Add friend'}
+      size="sm"
+      variant={status === 'sent' ? 'secondary' : 'primary'}
+      icon={status === 'sent' ? 'check' : 'plus'}
+      disabled={status === 'sent'}
+      loading={busy}
+      onPress={() => {
+        if (busy) return;
+        setBusy(true);
+        addFriend(authorId)
+          .then((r) => {
+            haptic('success');
+            toast(r === 'accepted' ? tx('You and {name} are friends', { name }) : tx('Request sent to {name}', { name }), 'user', 'brand');
+            onDone();
+          })
+          .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
+          .finally(() => setBusy(false));
+      }}
+    />
   );
 }
 
@@ -567,7 +602,7 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.xl, padding: 16, gap: 12 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  photo: { height: 220, borderRadius: radius.lg },
+  photo: { height: 220, borderRadius: radius.lg, overflow: 'hidden' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg },
   goLive: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, paddingLeft: 12, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },

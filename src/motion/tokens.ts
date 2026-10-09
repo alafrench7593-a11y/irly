@@ -135,3 +135,21 @@ export const transition = {
   /** IT'S AN IRLY MATCH: cards meet, glass merges, text and actions follow. */
   match: { approach: 520, merge: 280, text: 360, actions: 420 },
 } as const;
+
+/**
+ * The four families of IRLY motion. Every animation belongs to one: pick
+ * its family first, then the token. Durations are starting points; springs
+ * stay interruptible (a new touch takes over from wherever they are).
+ *
+ * - micro (100–220 ms): like, buttons, chips, toggles, reactions.
+ * - component (180–350 ms): cards, menus, sheets, previews, comments.
+ * - navigation (250–450 ms): screens, opening a profile, an activity.
+ * - immersive (400–800 ms, only when it earns it): photo full screen,
+ *   avatar → profile, onboarding, the match.
+ */
+export const family = {
+  micro: { duration: motion.fast, spring: spring.press },
+  component: { duration: motion.normal, spring: spring.fast },
+  navigation: { duration: motion.standard, spring: spring.medium },
+  immersive: { duration: motion.emphasized, spring: spring.soft },
+} as const;

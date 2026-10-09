@@ -147,6 +147,34 @@ async function main() {
     await visible(page, '2 going', 20000);
     return true;
   });
+  // ───────── Motion: double tap to like, tap to open full screen ─────────
+  let postId;
+  await step('Vera posts a photo on IRL → Uma double-taps it: liked once, a second double tap keeps it liked', async () => {
+    const file = `${vera.id}/e2e-${run}.jpg`;
+    must(await veraSb.storage.from('irl-media').upload(file, fs.readFileSync('public-photos/padel-480.jpg'), { contentType: 'image/jpeg' }));
+    postId = must(await veraSb.from('irl_posts').insert({ author_id: vera.id, city_id: 'bali', area_id: 'canggu', body: `Padel photo ${run}`, media_path: file, visibility: 'everyone' }).select('id').single()).id;
+    await page.goto(`${BASE}/live`);
+    await visible(page, `Padel photo ${run}`, 20000);
+    const card = page.locator('div').filter({ hasText: `Padel photo ${run}` }).filter({ has: page.getByLabel('Open photo') }).last();
+    const photo = card.getByLabel('Open photo');
+    await photo.dblclick();
+    await card.getByRole('button', { name: 'Unlike' }).waitFor({ timeout: 15000 });
+    await page.waitForTimeout(1200);
+    await photo.dblclick();
+    await page.waitForTimeout(2500);
+    const n = (await sql(`select count(*)::int as n from public.likes where target_type = 'irl_post' and target_id = '${postId}'`))[0].n;
+    if (n !== 1) throw new Error(`likes: ${n}`);
+    return card.getByRole('button', { name: 'Unlike' }).isVisible();
+  });
+  await step('… a tap opens the photo full screen, Escape sends it back', async () => {
+    const card = page.locator('div').filter({ hasText: `Padel photo ${run}` }).filter({ has: page.getByLabel('Open photo') }).last();
+    await card.getByLabel('Open photo').click();
+    await page.getByLabel('Close photo').last().waitFor({ timeout: 10000 });
+    await shot('photo-open');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(1200);
+    return (await page.getByLabel('Close photo').count()) === 0;
+  });
   let conv;
   await step('Vera writes in the activity chat → it appears live in Uma\'s open chat', async () => {
     conv = must(await veraSb.rpc('activity_detail', { p_id: actId }))[0].conversation_id;
