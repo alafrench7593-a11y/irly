@@ -13,7 +13,6 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IrlyWordmark } from '@/brand/IrlyLogo';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -101,7 +100,7 @@ type HomeHeaderProps = {
 };
 
 /**
- * Home header: IRLY on the left, Messages and notifications on the right.
+ * Home header: Communities on the left, Messages and notifications on the right.
  * IRL lives in the centre of the tab bar. It sits
  * on the page and turns into glass as content scrolls under it.
  */
@@ -116,12 +115,31 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
       </Animated.View>
       <View style={styles.row}>
-        <IrlyWordmark size={24} />
+        <CommunitiesButton />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <InboxButtons />
         </View>
       </View>
     </View>
+  );
+}
+
+/** Top left of Home: the way into communities (the heart of IRLY), in place of the logo. */
+function CommunitiesButton() {
+  const t = useTheme();
+  const router = useRouter();
+  return (
+    <PressableScale
+      haptic="select"
+      scaleTo={0.95}
+      onPress={() => router.push('/communities')}
+      accessibilityRole="button"
+      accessibilityLabel={tx('Communities')}
+      style={[styles.communities, { backgroundColor: t.c.overlay, borderColor: t.c.line }]}
+    >
+      <Icon name="users" size={16} color={t.c.text} />
+      <Text variant="label">Communities</Text>
+    </PressableScale>
   );
 }
 
@@ -199,6 +217,7 @@ export function PageHeader({ title, scrollY, right, back = true }: PageHeaderPro
 const styles = StyleSheet.create({
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
+  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
   row: {
     flex: 1,
     flexDirection: 'row',
