@@ -88,7 +88,7 @@ Rythme réaliste : **1 guide de fond par semaine** (EN + FR), relu par un humain
 | 1 | ✅ Se faire des amis à Bali / How to make friends in Bali | `/fr/bali/se-faire-des-amis/` | se faire des amis à Bali | B | Trouver mes gens | Entrée |
 | 2 | ✅ Se sentir seul à Dubaï : ce qui aide vraiment | `/fr/dubai/solitude/` | se sentir seul à Dubaï | A | Rejoindre une communauté | Entrée |
 | 3 | ✅ Lonely in Dubai: what actually helps | `/dubai/lonely/` | lonely in Dubai | A | Find my people | Entrée |
-| 4 | 15 activités de groupe pour rencontrer du monde à Dubaï | `/fr/dubai/activites-de-groupe/` | activités pour rencontrer des gens à Dubaï | C | Trouver une activité | Considération |
+| 4 | ✅ 15 activités de groupe pour rencontrer du monde à Dubaï | `/fr/dubai/activites-de-groupe/` | activités pour rencontrer des gens à Dubaï | C | Trouver une activité | Considération |
 | 5 | Networking à Dubaï : où rencontrer des entrepreneurs | `/fr/dubai/networking/` | networking Dubaï | D | Créer son profil pro | Considération |
 | 6 | Bali pour les digital nomads : communauté et coworking | `/fr/bali/digital-nomads/` | communauté digital nomads Bali | B/E | Rejoindre une communauté | Entrée |
 | 7 | Sortir seul à Dubaï sans être mal à l'aise | `/fr/dubai/sortir-seul/` | sortir seul à Dubaï | A/C | Trouver une activité | Entrée |
