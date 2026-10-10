@@ -48,7 +48,7 @@ export default function EditProfile() {
   const [photo, setPhoto] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [tried, setTried] = useState(false);
-  const [check, setCheck] = useState<{ for: string; free: boolean } | null>(null);
+  const [check, setCheck] = useState<{ for: string; free: boolean | null } | null>(null);
 
   // The server's current values (name, bio, country, @username).
   useEffect(() => {
@@ -71,14 +71,15 @@ export default function EditProfile() {
     if (!changedHandle || !wellFormed || !supabase) return;
     let alive = true;
     const h = setTimeout(() => {
-      supabase?.rpc('username_available', { p_username: wanted }).then(({ data, error }) => alive && !error && setCheck({ for: wanted, free: Boolean(data) }));
+      // Unreachable check: not a reason to block saving; the server still refuses a taken name.
+      supabase?.rpc('username_available', { p_username: wanted }).then(({ data, error }) => alive && setCheck({ for: wanted, free: error ? null : Boolean(data) }));
     }, 400);
     return () => {
       alive = false;
       clearTimeout(h);
     };
   }, [wanted, wellFormed, changedHandle]);
-  const handle: 'idle' | 'checking' | 'free' | 'taken' | 'invalid' = !changedHandle || !wanted ? 'idle' : !wellFormed ? 'invalid' : check?.for === wanted ? (check.free ? 'free' : 'taken') : 'checking';
+  const handle: 'idle' | 'checking' | 'free' | 'taken' | 'invalid' = !changedHandle || !wanted ? 'idle' : !wellFormed ? 'invalid' : check?.for === wanted ? (check.free === null ? 'idle' : check.free ? 'free' : 'taken') : 'checking';
 
   const errors = {
     name: name.trim() ? null : tr('Add your first name'),
