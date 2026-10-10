@@ -33,6 +33,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubai',
+    updated: '2026-10-10',
     title: 'How to Make Friends in Dubai: A Practical Guide for Newcomers | IRLY',
     description: 'New to Dubai and don’t know anyone yet? Why it can feel hard to make friends here, and practical ways to meet people who share your interests.',
     h1: 'How to make friends in Dubai',
@@ -89,7 +90,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'New to Dubai?', body: 'Meet people who share your interests, join communities and do things together, in real life.', label: 'Find my people' },
-    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
   },
   {
     lang: 'fr',
@@ -154,7 +155,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu viens d’arriver à Dubaï ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt, rejoins des communautés et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
-    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
   },
   {
     lang: 'en',
@@ -301,6 +302,7 @@ export const ARTICLES = [
     cover: 'dubaiCreek',
     figure: { photo: 'running', after: 1 },
     city: 'Dubai',
+    updated: '2026-10-10',
     updated: '2026-10-09',
     title: 'Lonely in Dubai? What Actually Helps | IRLY',
     description: 'Feeling lonely in Dubai is common, especially in the first months. Why it happens here, small steps that help this week, and when to talk to a professional.',
@@ -409,6 +411,144 @@ export const ARTICLES = [
     ],
     cta: { title: 'Seul à Dubaï ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve un plan cette semaine, en vrai.', label: 'Rejoindre une communauté' },
     related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+  },
+  {
+    lang: 'en',
+    pair: 'dubai-group-activities',
+    path: 'dubai/group-activities/',
+    cover: 'volleyball',
+    figure: { photo: 'running', after: 2 },
+    city: 'Dubai',
+    updated: '2026-10-10',
+    title: '15 Group Activities to Meet People in Dubai | IRLY',
+    description: 'Fifteen group activities that make it easy to meet people in Dubai, from run clubs and padel to classes and volunteering, and how to pick the right ones for you.',
+    h1: '15 group activities to meet people in Dubai',
+    lead: 'The group activities that work best for meeting people in Dubai are the ones that meet every week with the same faces: run clubs, padel, team sports, classes, volunteering and hobby groups. Pick two from the list below that you would enjoy even without meeting anyone, go back every week, and suggest a coffee after the third session.',
+    sections: [
+      {
+        h2: 'What makes an activity good for meeting people',
+        html: `<p>Not every activity helps you make friends. The ones that do share three things:</p>
+<ul>
+<li><strong>They repeat.</strong> Same day, same time, every week. Familiar faces turn into conversations.</li>
+<li><strong>They give you something to do together.</strong> A game, a route, a recipe: you talk about it before you talk about yourselves.</li>
+<li><strong>They leave time around them.</strong> A coffee after the run, a drink after the match. That is where friendships start.</li>
+</ul>`,
+      },
+      {
+        h2: 'Sport and outdoors',
+        html: `<ol>
+<li><strong>Run clubs.</strong> Groups meet early in the morning or after sunset, all paces welcome in most of them. Often followed by breakfast.</li>
+<li><strong>Padel.</strong> Played in fours, so you always meet three people. Many groups mix levels and look for a fourth player.</li>
+<li><strong>Football and other team sports.</strong> Casual leagues and weekly pick-up games, for men, women and mixed teams.</li>
+<li><strong>Beach volleyball.</strong> Easy to join, played in small teams, best in the cooler hours.</li>
+<li><strong>Cycling.</strong> Group rides at dawn on dedicated tracks, with a coffee stop that is half the point.</li>
+<li><strong>Hiking.</strong> In the cooler months, groups head to the Hajar Mountains for day hikes. A day on a trail with the same group goes a long way.</li>
+<li><strong>Climbing and bouldering.</strong> Indoor, so it works all year, and people naturally help each other with routes.</li>
+<li><strong>Yoga and group fitness.</strong> Regular classes, outdoor sessions in the cooler months. Arrive a little early and stay a little after.</li>
+</ol>`,
+      },
+      {
+        h2: 'Classes and creative groups',
+        html: `<ol start="9">
+<li><strong>Language classes and language exchanges.</strong> Learning Arabic or another language puts you in a room of people who also chose to stay a while.</li>
+<li><strong>Cooking classes.</strong> You cook together, then eat together: a natural way to talk.</li>
+<li><strong>Dance classes.</strong> Salsa, bachata and other social dances rotate partners, so you meet everyone in the class.</li>
+<li><strong>Photography walks and art workshops.</strong> A shared eye for the city, and something to show each other afterwards.</li>
+</ol>`,
+      },
+      {
+        h2: 'Social and community groups',
+        html: `<ol start="13">
+<li><strong>Volunteering.</strong> Shifts with the same team, a cause you care about, and no need for small talk.</li>
+<li><strong>Board game and quiz nights.</strong> Small tables, easy jokes, and a reason to come back next week.</li>
+<li><strong>Book clubs and professional meetups.</strong> One conversation topic chosen in advance, and people who like talking about it.</li>
+</ol>`,
+      },
+      {
+        h2: 'How to choose your two',
+        html: `<ul>
+<li><strong>Pick one you love and one that is new.</strong> The first keeps you going back; the second widens your circle.</li>
+<li><strong>Check the time and the place.</strong> An activity across the city at rush hour will not last. Choose what fits your week.</li>
+<li><strong>Plan for the summer.</strong> From roughly June to September, prefer indoor activities or very early and late sessions.</li>
+<li><strong>Give it two months.</strong> One session tells you little. Eight tell you whether the group is yours.</li>
+</ul>`,
+      },
+      {
+        h2: 'Where IRLY fits in',
+        html: `<p>IRLY lets you find group activities by interest, join the communities that run them, or create your own plan, a run, a padel game, a brunch, and invite people who like the same thing. IRLY Girl offers spaces for women only. It is one option among others; going back every week is what turns an activity into friends.</p>`,
+      },
+    ],
+    cta: { title: 'Looking for a plan this week?', body: 'Find a group activity around what you like, or create your own, and meet in real life.', label: 'Find an activity' },
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }],
+  },
+  {
+    lang: 'fr',
+    pair: 'dubai-group-activities',
+    path: 'fr/dubai/activites-de-groupe/',
+    cover: 'volleyball',
+    figure: { photo: 'running', after: 2 },
+    city: 'Dubai',
+    updated: '2026-10-10',
+    title: '15 activités de groupe pour rencontrer du monde à Dubaï | IRLY',
+    description: 'Quinze activités de groupe qui facilitent les rencontres à Dubaï, des clubs de course au padel en passant par les cours et le bénévolat, et comment choisir les tiennes.',
+    h1: '15 activités de groupe pour rencontrer du monde à Dubaï',
+    lead: 'Les activités de groupe qui marchent le mieux pour rencontrer du monde à Dubaï sont celles qui se retrouvent chaque semaine avec les mêmes visages : clubs de course, padel, sports d’équipe, cours, bénévolat et groupes de loisirs. Choisis-en deux dans la liste ci-dessous que tu aimerais même sans rencontrer personne, reviens chaque semaine, et propose un café après la troisième séance.',
+    sections: [
+      {
+        h2: 'Ce qui fait une bonne activité pour rencontrer des gens',
+        html: `<p>Toutes les activités n’aident pas à se faire des amis. Celles qui marchent ont trois points communs :</p>
+<ul>
+<li><strong>Elles se répètent.</strong> Même jour, même heure, chaque semaine. Les visages familiers deviennent des conversations.</li>
+<li><strong>Elles donnent quelque chose à faire ensemble.</strong> Un match, un parcours, une recette : on en parle avant de parler de soi.</li>
+<li><strong>Elles laissent du temps autour.</strong> Un café après la course, un verre après le match. C’est là que les amitiés commencent.</li>
+</ul>`,
+      },
+      {
+        h2: 'Sport et plein air',
+        html: `<ol>
+<li><strong>Les clubs de course.</strong> Les groupes se retrouvent tôt le matin ou après le coucher du soleil, et la plupart accueillent tous les niveaux. Souvent suivis d’un petit-déjeuner.</li>
+<li><strong>Le padel.</strong> Il se joue à quatre, donc tu rencontres toujours trois personnes. Beaucoup de groupes mélangent les niveaux et cherchent un quatrième joueur.</li>
+<li><strong>Le football et les autres sports d’équipe.</strong> Ligues loisir et matchs hebdomadaires ouverts, pour hommes, femmes et équipes mixtes.</li>
+<li><strong>Le beach-volley.</strong> Facile à rejoindre, en petites équipes, idéal aux heures plus fraîches.</li>
+<li><strong>Le vélo.</strong> Sorties en groupe à l’aube sur des pistes dédiées, avec une pause café qui compte autant que la sortie.</li>
+<li><strong>La randonnée.</strong> Pendant les mois plus frais, des groupes partent marcher à la journée dans les montagnes du Hajar. Une journée sur un sentier avec le même groupe rapproche vite.</li>
+<li><strong>L’escalade et le bloc.</strong> En salle, donc toute l’année, et on s’aide naturellement sur les voies.</li>
+<li><strong>Le yoga et les cours collectifs.</strong> Des cours réguliers, en extérieur pendant les mois plus frais. Arrive un peu en avance et reste un peu après.</li>
+</ol>`,
+      },
+      {
+        h2: 'Cours et groupes créatifs',
+        html: `<ol start="9">
+<li><strong>Les cours de langue et les échanges linguistiques.</strong> Apprendre l’arabe ou une autre langue te met dans une salle de gens qui ont aussi choisi de rester un moment.</li>
+<li><strong>Les cours de cuisine.</strong> On cuisine ensemble, puis on mange ensemble : une façon naturelle de discuter.</li>
+<li><strong>Les cours de danse.</strong> La salsa, la bachata et les autres danses de couple font tourner les partenaires, donc tu rencontres tout le cours.</li>
+<li><strong>Les balades photo et les ateliers d’art.</strong> Un regard partagé sur la ville, et quelque chose à se montrer ensuite.</li>
+</ol>`,
+      },
+      {
+        h2: 'Groupes sociaux et communautés',
+        html: `<ol start="13">
+<li><strong>Le bénévolat.</strong> Des créneaux avec la même équipe, une cause qui te tient à cœur, et pas besoin de bavardage.</li>
+<li><strong>Les soirées jeux de société et quiz.</strong> Des petites tables, des blagues faciles, et une raison de revenir la semaine suivante.</li>
+<li><strong>Les clubs de lecture et les rencontres professionnelles.</strong> Un sujet choisi à l’avance, et des gens qui aiment en parler.</li>
+</ol>`,
+      },
+      {
+        h2: 'Comment choisir les deux tiennes',
+        html: `<ul>
+<li><strong>Prends-en une que tu adores et une nouvelle.</strong> La première te fait revenir ; la seconde élargit ton cercle.</li>
+<li><strong>Vérifie l’heure et le lieu.</strong> Une activité à l’autre bout de la ville à l’heure de pointe ne durera pas. Choisis ce qui rentre dans ta semaine.</li>
+<li><strong>Anticipe l’été.</strong> De juin à septembre environ, préfère les activités en intérieur ou les séances très tôt et tard.</li>
+<li><strong>Donne-toi deux mois.</strong> Une séance ne dit pas grand-chose. Huit te disent si ce groupe est le tien.</li>
+</ul>`,
+      },
+      {
+        h2: 'La place d’IRLY',
+        html: `<p>IRLY permet de trouver des activités de groupe par centre d’intérêt, de rejoindre les communautés qui les organisent, ou de créer ton propre plan, une course, un match de padel, un brunch, et d’inviter des gens qui aiment la même chose. IRLY Girl propose des espaces réservés aux femmes. C’est une option parmi d’autres ; c’est en revenant chaque semaine qu’une activité devient des amis.</p>`,
+      },
+    ],
+    cta: { title: 'Tu cherches un plan cette semaine ?', body: 'Trouve une activité de groupe autour de ce que tu aimes, ou crée la tienne, et retrouvez-vous en vrai.', label: 'Trouver une activité' },
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }],
   },
 ];
 
