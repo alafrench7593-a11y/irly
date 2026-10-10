@@ -1,7 +1,7 @@
 import { APP, LEGAL_REQUIRED, LEGAL_VERSIONS } from '@/config/app';
 
 /**
- * The legal texts shown in the app (Profile → Legal & support). They describe what
+ * The legal texts shown in the app (Settings → Legal). They describe what
  * the app actually does, from the code and the database. They are drafts:
  * a lawyer must review them, and every [LEGAL INFORMATION REQUIRED] must be
  * filled in (src/config/app.ts) before launch.
@@ -27,7 +27,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
           'Professional profile (Networking, optional): role, job title, company, industries, skills, current project, what you look for and offer, goals and a neighbourhood. Used to show you to other professionals and calculate matches.',
           'IRLY Girl (optional, women only): the matching profile you fill in (interests, availability, areas, lifestyle preferences, age range you look for, photos), your likes, passes and saves, used to suggest matches. If you plan a move, your relocation plans (destination, status, move month and checklist). If you turn on Mom mode, your children’s age groups (never their names or birthdays), shown to other IRLY Girl members. If reports show IRLY Girl is misused, moderators can withdraw access to it; the decision and its reason are kept while your account exists.',
           'Content you create: activities, community posts, comments, live (IRL) posts, photos, messages and photos you send in chats, group chats you create or join (name, photo, members), cover photos for activities, communities and chats, likes, saves, shares, poll votes, message reactions, hidden items, close friends, reports and blocks. Who you follow and who follows you. Used to provide these features.',
-          'Location: IRLY never stores your exact position. When you tap "My location" on the map, your phone position is used on the phone only to centre the map. Your profile and posts show a neighbourhood or a city at most, as you choose in Profile → Privacy & notifications.',
+          'Location: IRLY never stores your exact position. When you tap "My location" on the map, your phone position is used on the phone only to centre the map. Your profile and posts show a neighbourhood or a city at most, as you choose in Settings → Privacy.',
           'Notifications: if you allow them, a push token for your phone and its language, used to send you notifications. A notification can show the sender’s first name and the start of a message on your lock screen; this text passes through the Expo push service and Apple or Google to reach your phone. Notification texts are kept 7 days to deliver them.',
           'Website waitlist (optional): the email address you enter on the IRLY website, the language of the page and where you signed up. Used only to tell you when IRLY launches. Never shared or sold.',
           'Things you ask to be told about: coming-soon services (IRLY PRO, Bon plan, Visa, Location) and upcoming destinations you tap “Notify me” on.',
@@ -71,10 +71,10 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       {
         title: 'Your rights and choices',
         body: [
-          'Access and portability: Profile → Download my data gives you a copy of your data (photo files are listed by name; ask us for copies of the files themselves).',
+          'Access and portability: Settings → Download my data gives you a copy of your data (photo files are listed by name; ask us for copies of the files themselves).',
           'Correction: Edit profile and Professional profile.',
-          'Deletion: Profile → Delete account deletes your account and data from our servers.',
-          'Visibility: Profile → Privacy & notifications (who can find you, who sees your live posts and activities, location precision, notifications).',
+          'Deletion: Settings → Delete account deletes your account and data from our servers.',
+          'Visibility: Settings → Privacy (who can find you, who sees your live posts and activities, location precision, notifications).',
           `Objection, restriction and complaints: write to ${APP.privacyEmail}. You may also complain to the UAE Data Office, or to the data protection authority where you live (for example the CNIL in France).`,
           `Why we may use your data: to provide the service you sign up for (account, profile, chats, activities), with your consent where it is needed (notifications, optional details such as faith, your photos), and to keep IRLY safe and working (moderation, security, statistics without personal content). This follows ${APP.dataLaw} and, for people in the European Union, the GDPR (contract, consent and legitimate interests).`,
         ],
@@ -106,7 +106,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       },
       {
         title: 'Your account',
-        body: ['Keep your sign-in secure. You are responsible for what happens on your account. You can delete it at any time in Profile.'],
+        body: ['Keep your sign-in secure. You are responsible for what happens on your account. You can delete it at any time in Settings.'],
       },
       {
         title: 'Your content',
@@ -209,7 +209,7 @@ export const LEGAL_FR: typeof LEGAL = {
           'Profil professionnel (Networking, facultatif) : rôle, intitulé de poste, entreprise, secteurs, compétences, projet en cours, ce que tu cherches et proposes, objectifs et un quartier. Utilisé pour te montrer à d’autres professionnels et calculer les correspondances.',
           'IRLY Girl (facultatif, réservé aux femmes) : le profil de rencontre que tu remplis (centres d’intérêt, disponibilités, quartiers, préférences de mode de vie, tranche d’âge recherchée, photos), tes likes, passes et favoris, utilisés pour te suggérer des matchs. Si tu prévois un déménagement, ton projet (destination, statut, mois du départ et liste de tâches). Si tu actives le mode Maman, les tranches d’âge de tes enfants (jamais leurs prénoms ni leurs dates de naissance), visibles par les autres membres d’IRLY Girl. Si des signalements montrent un usage abusif d’IRLY Girl, les modérateurs peuvent en retirer l’accès ; la décision et son motif sont conservés tant que ton compte existe.',
           'Contenus que tu crées : activités, publications dans les communautés, commentaires, publications en direct (IRL), photos, messages et photos envoyés dans les discussions, discussions de groupe que tu crées ou rejoins (nom, photo, membres), photos de couverture des activités, communautés et discussions, likes, favoris, partages, votes aux sondages, réactions aux messages, éléments masqués, amis proches, signalements et blocages. Les personnes que tu suis et celles qui te suivent. Utilisés pour faire fonctionner ces fonctionnalités.',
-          'Localisation : IRLY n’enregistre jamais ta position exacte. Quand tu touches « Ma position » sur la carte, la position de ton téléphone sert uniquement, sur le téléphone, à centrer la carte. Ton profil et tes publications affichent au plus un quartier ou une ville, selon ton choix dans Profil → Confidentialité et notifications.',
+          'Localisation : IRLY n’enregistre jamais ta position exacte. Quand tu touches « Ma position » sur la carte, la position de ton téléphone sert uniquement, sur le téléphone, à centrer la carte. Ton profil et tes publications affichent au plus un quartier ou une ville, selon ton choix dans Réglages → Confidentialité.',
           'Notifications : si tu les autorises, un jeton push pour ton téléphone et sa langue, pour t’envoyer des notifications. Une notification peut afficher le prénom de l’expéditeur et le début d’un message sur ton écran verrouillé ; ce texte passe par le service push d’Expo et par Apple ou Google pour arriver sur ton téléphone. Les textes des notifications sont conservés 7 jours pour être distribués.',
           'Liste d’attente du site (facultatif) : l’adresse e-mail que tu saisis sur le site IRLY, la langue de la page et l’endroit où tu t’es inscrit. Utilisée uniquement pour te prévenir du lancement d’IRLY. Jamais partagée ni vendue.',
           'Ce dont tu demandes à être prévenu : les services à venir (IRLY PRO, Bon plan, Visa, Location) et les prochaines destinations pour lesquelles tu touches « Me prévenir ».',
@@ -253,10 +253,10 @@ export const LEGAL_FR: typeof LEGAL = {
       {
         title: 'Tes droits et tes choix',
         body: [
-          'Accès et portabilité : Profil → Télécharger mes données te donne une copie de tes données (les fichiers photo sont listés par nom ; demande-nous une copie des fichiers eux-mêmes).',
+          'Accès et portabilité : Réglages → Télécharger mes données te donne une copie de tes données (les fichiers photo sont listés par nom ; demande-nous une copie des fichiers eux-mêmes).',
           'Rectification : Modifier le profil et Profil professionnel.',
-          'Suppression : Profil → Supprimer le compte supprime ton compte et tes données de nos serveurs.',
-          'Visibilité : Profil → Confidentialité et notifications (qui peut te trouver, qui voit tes publications en direct et tes activités, précision de la localisation, notifications).',
+          'Suppression : Réglages → Supprimer le compte supprime ton compte et tes données de nos serveurs.',
+          'Visibilité : Réglages → Confidentialité (qui peut te trouver, qui voit tes publications en direct et tes activités, précision de la localisation, notifications).',
           `Opposition, limitation et réclamations : écris à ${APP.privacyEmail}. Tu peux aussi adresser une réclamation à l’UAE Data Office, ou à l’autorité de protection des données de ton pays (par exemple la CNIL en France).`,
           `Pourquoi nous pouvons utiliser tes données : pour fournir le service auquel tu t’inscris (compte, profil, discussions, activités), avec ton consentement quand il est nécessaire (notifications, détails facultatifs comme la religion, tes photos), et pour garder IRLY sûre et fonctionnelle (modération, sécurité, statistiques sans contenu personnel). Cela suit la loi émiratie sur la protection des données personnelles (décret-loi fédéral n° 45 de 2021) et, pour les personnes situées dans l’Union européenne, le RGPD (contrat, consentement et intérêts légitimes).`,
         ],
@@ -289,7 +289,7 @@ export const LEGAL_FR: typeof LEGAL = {
       },
       {
         title: 'Ton compte',
-        body: ['Garde ta connexion sécurisée. Tu es responsable de ce qui se passe sur ton compte. Tu peux le supprimer à tout moment depuis Profil.'],
+        body: ['Garde ta connexion sécurisée. Tu es responsable de ce qui se passe sur ton compte. Tu peux le supprimer à tout moment depuis les Réglages.'],
       },
       {
         title: 'Tes contenus',

@@ -10,7 +10,7 @@ import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * Privacy Policy, Terms of Use and Community Guidelines (Profile → Legal &
+ * Privacy Policy, Terms of Use and Community Guidelines (Settings → Legal &
  * support). The texts are drafts pending legal review, written in English
  * and in French (src/content/legal.ts); each language shows its own text.
  */

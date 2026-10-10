@@ -30,7 +30,7 @@ export const APP = {
   privacyEmail: 'getirly@gmail.com',
   /** Safety reports that cannot wait (threats, minors, emergencies → local police first). */
   safetyEmail: 'getirly@gmail.com',
-  /** IRLY's own accounts (Profile → Follow IRLY, the website footer). */
+  /** IRLY's own accounts (Settings → Follow IRLY, the website footer). */
   instagram: 'https://www.instagram.com/irlyofficial/',
   tiktok: 'https://www.tiktok.com/@irlyofficial',
   /** Minimum age to use IRLY (checked at signup and on the server). */

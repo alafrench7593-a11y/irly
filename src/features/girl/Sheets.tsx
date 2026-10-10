@@ -253,7 +253,7 @@ export function SafetySheet({
         {mode === 'confirmBlock' ? (
           <>
             <Text variant="body" color={girl.inkSoft}>
-              You won&apos;t see each other in IRLY Girl, chats or activities. Any match ends. You can unblock them later in Profile → Blocked members.
+              You won&apos;t see each other in IRLY Girl, chats or activities. Any match ends. You can unblock them later in Settings → Blocked members.
             </Text>
             <GButton
               label={tx('Block {name}', { name })}

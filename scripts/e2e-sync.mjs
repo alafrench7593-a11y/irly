@@ -682,6 +682,99 @@ async function main() {
   });
   await wesPage.context().close();
 
+  // ───────── Profile v2: identity, counts, tabs, @username, settings ─────────
+  const handle = `uma.${run}`.slice(0, 24);
+  await step('Edit profile: @username is checked live, saved on the server, shown on the profile after a reload', async () => {
+    await page.goto(`${BASE}/edit-profile`);
+    await page.getByLabel('Username', { exact: true }).fill(handle);
+    await visible(page, `@${handle} is available`, 15000);
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    for (let i = 0; i < 20; i++) {
+      const [row] = await sql(`select username from public.profiles where id = '${uma.id}'`);
+      if (row?.username === handle) break;
+      await page.waitForTimeout(500);
+    }
+    await page.goto(`${BASE}/profile`);
+    await page.reload();
+    await visible(page, `@${handle}`, 20000);
+    await visible(page, `Building things in Bali ${run}`);
+    return true;
+  });
+  await step('… a taken @username is refused before saving (Vera tries Uma\'s)', async () => {
+    const free = must(await veraSb.rpc('username_available', { p_username: handle }));
+    const { error } = await veraSb.from('profiles').update({ username: handle }).eq('id', vera.id);
+    return free === false && Boolean(error);
+  });
+  await step('Own profile: followers, following and friends match the server; the lists open', async () => {
+    const [c] = await sql(`select (select count(*)::int from public.follows where followee_id = '${uma.id}') as followers,
+      (select count(*)::int from public.follows where follower_id = '${uma.id}') as following,
+      (select count(*)::int from public.friendships where status = 'accepted' and '${uma.id}' in (user_a, user_b)) as friends`);
+    await page.goto(`${BASE}/profile`);
+    await page.getByLabel(`${c.followers} Followers`).first().waitFor({ timeout: 20000 });
+    await page.getByLabel(`${c.following} Following`).first().waitFor({ timeout: 5000 });
+    await page.getByLabel(`${c.friends} Friends`).first().click();
+    await visible(page, 'Wes', 15000);
+    return c.friends === 1;
+  });
+  await step('Posts tab: Uma\'s own post is on her profile, Vera\'s is not', async () => {
+    await page.goto(`${BASE}/profile`);
+    await visible(page, `Hello girls ${run}`, 20000);
+    return !(await page.getByText(`Live from Vera ${run}`).first().isVisible().catch(() => false));
+  });
+  await step('… and on Vera\'s profile it is the other way round', async () => {
+    await page.goto(`${BASE}/person/${vera.id}`);
+    await visible(page, `Live from Vera ${run}`, 20000);
+    return !(await page.getByText(`Hello girls ${run}`).first().isVisible().catch(() => false));
+  });
+  await step('Activities tab: Created and Joined match the server', async () => {
+    const acts = await sql(`select a.title, case when a.creator_id = '${uma.id}' then 'created' else 'joined' end as role
+      from public.activities a where a.creator_id = '${uma.id}' or exists (select 1 from public.activity_participants x where x.activity_id = a.id and x.user_id = '${uma.id}' and x.status = 'going')`);
+    await page.goto(`${BASE}/profile`);
+    await page.getByRole('tab', { name: 'Activities', exact: true }).first().click();
+    const created = acts.filter((a) => a.role === 'created');
+    if (created.length) await visible(page, created[0].title, 15000);
+    else await visible(page, 'You have not organised anything yet', 15000);
+    await page.getByRole('tab', { name: /^Joined/ }).first().click();
+    const joined = acts.filter((a) => a.role === 'joined');
+    if (joined.length) await visible(page, joined[0].title, 15000);
+    else await visible(page, 'You have not joined an activity yet', 15000);
+    return true;
+  });
+  await step('Communities tab: Bali Girls is listed under Joined', async () => {
+    await page.getByRole('tab', { name: 'Communities', exact: true }).first().click();
+    await visible(page, 'Bali Girls', 15000);
+    return true;
+  });
+  await step('Lives tab: an honest empty state when Uma has no live post', async () => {
+    const [n] = await sql(`select count(*)::int as n from public.irl_posts where author_id = '${uma.id}'`);
+    await page.getByRole('tab', { name: 'Lives', exact: true }).first().click();
+    if (n.n === 0) await visible(page, 'You are not live', 15000);
+    return true;
+  });
+  await step('Someone else\'s profile: the … menu offers Share, Report and Block (no personal settings)', async () => {
+    await page.goto(`${BASE}/person/${vera.id}`);
+    await page.getByLabel('More actions').first().click();
+    await visible(page, 'Share profile', 10000);
+    await visible(page, 'Report');
+    await visible(page, 'Block Vera');
+    return !(await page.getByLabel('Settings').first().isVisible().catch(() => false));
+  });
+  await step('Gear → Settings: every section is there; Language → Français changes the app and stays after a reload', async () => {
+    await page.goto(`${BASE}/profile`);
+    await page.getByLabel('Settings').first().click();
+    await page.waitForURL(/\/preferences/, { timeout: 15000 });
+    for (const s of ['My account', 'Privacy', 'Notifications', 'Security', 'Language & preferences', 'Help & support', 'Legal']) await visible(page, s, 10000);
+    await page.getByText('Language', { exact: true }).first().click();
+    await page.getByRole('radio', { name: 'Français' }).click();
+    await visible(page, 'Mon compte', 10000);
+    await page.reload();
+    await visible(page, 'Mon compte', 20000);
+    await page.getByText('Langue', { exact: true }).first().click();
+    await page.getByRole('radio', { name: 'English' }).click();
+    await visible(page, 'My account', 10000);
+    return true;
+  });
+
   // ───────── Messaging & social: profiles, follows, photos, groups ─────────
   // Vera accepts messages from people she shares a community with.
   await sql(`insert into public.safety_settings (user_id, who_can_message) values ('${vera.id}', 'everyone') on conflict (user_id) do update set who_can_message = 'everyone'`);
@@ -886,7 +979,7 @@ async function main() {
   const kinds = ['padel', 'football', 'tennis', 'running', 'yoga', 'surf', 'hiking', 'wellness', 'beach', 'networking'];
   const places = (await sql(`select slug from public.places where city_id = 'bali' limit 8`)).map((r) => r.slug);
   const screens = [
-    '/', '/discover', '/soon/pro', '/soon/bonplan', '/soon/visa', '/soon/location', '/live', '/map', '/messages', '/profile', '/social', '/account', '/assistant', '/business', '/calendar', '/communities',
+    '/', '/discover', '/soon/pro', '/soon/bonplan', '/soon/visa', '/soon/location', '/live', '/map', '/messages', '/profile', '/preferences', '/social', '/account', '/assistant', '/business', '/calendar', '/communities',
     '/community/new', '/design-system', '/eat', '/events', '/match', '/notifications', '/saved', '/services', '/settings', '/activities',
     '/network', '/network/profile', `/network/${vera.id}`, '/group/new', `/follows/${vera.id}`, `/person/${vera.id}`, '/bali', '/bali/move', '/bali/quiz', '/bali/test', '/girl', '/girl/moving', `/a/${actId}`, `/messages/${conv}`, `/c/${girlsId}`,
     `/comments?type=activity&id=${actId}`, `/share?type=activity&id=${actId}&title=x`, '/person/p-kadek',
@@ -952,8 +1045,8 @@ async function main() {
     return true;
   });
   // ───────── Last: Uma deletes her account from the app ─────────
-  await step('Delete account (Profile → Delete account): server data gone, back to the start', async () => {
-    await page.goto(`${BASE}/profile`);
+  await step('Delete account (Settings → Delete account): server data gone, back to the start', async () => {
+    await page.goto(`${BASE}/preferences`);
     await page.getByLabel('Delete account', { exact: true }).click();
     await page.getByRole('button', { name: 'Delete my account' }).click();
     await page.waitForURL(/welcome/, { timeout: 30000 });

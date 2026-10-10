@@ -1,3 +1,4 @@
+import { changed } from '@/features/server/sync';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { create } from 'zustand';
@@ -271,6 +272,8 @@ function toRow(uid: string, p: Profile, cityId: string) {
 
 /** The fields a member can change after signup (gender and birth date stay as declared: the server refuses changes). */
 export type ProfilePatch = Partial<Pick<Profile, 'name' | 'bio' | 'country' | 'languages' | 'interests' | 'activities' | 'lookingFor'>> & {
+  /** Unique @username (server only); empty clears it. */
+  username?: string;
   /** A new photo picked on the phone (local or data URI). */
   photoUri?: string;
   cityId?: string;
@@ -296,6 +299,7 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
     if (patch.activities !== undefined) row.activity_prefs = patch.activities.map(String);
     if (patch.lookingFor !== undefined) row.intentions = patch.lookingFor.map(String);
     if (patch.cityId !== undefined) row.city_id = patch.cityId;
+    if (patch.username !== undefined) row.username = patch.username.trim().toLowerCase() || null;
     if (isAvatar(patch.photoUri)) {
       // An IRLY avatar replaces the photo without an upload; the old photo file goes.
       const { data: old } = await supabase.rpc('my_profile');
@@ -303,7 +307,7 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
       row.photo_paths = [patch.photoUri];
       photoUri = patch.photoUri;
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
-      if (error) throw new Error(/check constraint/i.test(error.message) ? 'Some fields are not valid' : error.message);
+      if (error) throw new Error(profileError(error.message));
       const stale = before.filter((p) => !isAvatar(p) && p.startsWith(`${uid}/`));
       if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
     } else if (patch.photoUri && !/^https?:/.test(patch.photoUri)) {
@@ -322,19 +326,31 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
         const { error } = await supabase.from('profiles').update(row).eq('id', uid);
         if (error) {
           await supabase.storage.from('profile-photos').remove([path]);
-          throw new Error(error.message);
+          throw new Error(profileError(error.message));
         }
       }
       const stale = before.filter((p) => p !== path && !isAvatar(p) && p.startsWith(`${uid}/`));
       if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
     } else if (Object.keys(row).length) {
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
-      if (error) throw new Error(/check constraint/i.test(error.message) ? 'Some fields are not valid' : error.message);
+      if (error) throw new Error(profileError(error.message));
     }
   }
-  const { cityId, photoUri: picked, ...rest } = patch;
+  // Every screen that shows this profile (yours, lists, chats) reloads.
+  if (supabase && uid) changed('people');
+  const { cityId, photoUri: picked, username: _handle, ...rest } = patch;
+  void _handle;
   st.updateProfile({ ...rest, ...(picked ? { photoUri: photoUri ?? picked } : {}) });
   if (cityId && cityId in CITIES) st.setDestination(CITIES[cityId as keyof typeof CITIES].destinationId, cityId as keyof typeof CITIES);
+}
+
+function profileError(m: string): string {
+  if (/profiles_username_key|duplicate key/i.test(m)) return 'This username is taken';
+  if (/username is reserved/i.test(m)) return 'This username is reserved';
+  if (/profiles_username_format/i.test(m)) return 'Usernames: 3 to 24 characters, letters, numbers, dots and underscores';
+  if (/fetch|network/i.test(m)) return 'No connection: try again';
+  if (/check constraint/i.test(m)) return 'Some fields are not valid';
+  return m;
 }
 
 /**
