@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, StyleSheet, Switch, View } from 'react-native';
@@ -21,8 +22,10 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * Account, app, legal and IRLY's own accounts: the settings, shown in
- * Profile and on their own screen (the gear in the tab bar, /preferences).
+ * Settings, in one place (the gear on your profile and in the tab bar):
+ * my account, privacy, notifications, security, language & preferences,
+ * IRLY features, help, legal. Every row opens a screen or does something
+ * real; nothing here only looks like a setting.
  */
 export function SettingsSections() {
   const t = useTheme();
@@ -56,20 +59,16 @@ export function SettingsSections() {
     }
   };
 
+  const [langSheet, setLangSheet] = useState(false);
+  const version = Constants.expoConfig?.version ?? '';
   return (
     <>
-        <Animated.View entering={enter.rise(8)} style={styles.section}>
-          <SectionHeader title="Account" />
-          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-            <SettingLink icon="user" label="Edit profile" value="Photo, name, bio" onPress={() => router.push('/edit-profile')} />
+      <Section index={8} title="My account">
+        {account ? (
+          <>
+            <SettingLink icon="send" label="Email" value={account.email ?? '—'} onPress={() => router.push('/account')} />
             <Divider inset={16} />
-            <SettingLink icon="briefcase" label="Professional" value="Job, project, goals" onPress={() => router.push('/network/profile')} />
-            <Divider inset={16} />
-            <SettingLink icon="shield" label="Privacy & notifications" value="Visibility, alerts" onPress={() => router.push('/settings')} />
-            <Divider inset={16} />
-            <SettingLink icon="lock" label="Security" value={account ? 'Sign-in & password' : 'Sign in to sync'} onPress={() => router.push('/account')} />
-            <Divider inset={16} />
-            <SettingLink icon="x" label="Blocked members" onPress={() => router.push('/blocked')} />
+            <SettingLink icon="user" label="Edit profile" value="Photo, name, @username, bio" onPress={() => router.push('/edit-profile')} />
             <Divider inset={16} />
             <SettingLink icon="file" label="Download my data" value={exporting ? 'Preparing…' : 'A copy of what IRLY stores'} onPress={downloadData} />
             <Divider inset={16} />
@@ -84,74 +83,141 @@ export function SettingsSections() {
             />
             <Divider inset={16} />
             <SettingLink icon="x" label="Delete account" danger onPress={() => setConfirmDelete(true)} />
-          </View>
-        </Animated.View>
+          </>
+        ) : (
+          <>
+            <SettingLink icon="user" label="Sign in or create an account" value="To share your profile" onPress={() => router.push('/account')} />
+            <Divider inset={16} />
+            <SettingLink icon="user" label="Edit profile" value="On this phone" onPress={() => router.push('/edit-profile')} />
+          </>
+        )}
+      </Section>
 
-        <Animated.View entering={enter.rise(9)} style={styles.section}>
-          <SectionHeader title="App" />
-          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-            <View style={[styles.settingRow]}>
-              <Icon name="zap" size={18} color={t.c.text} />
-              <Text variant="titleS" style={{ flex: 1 }}>
-                Haptic feedback
-              </Text>
-              <Switch
-                value={hapticsOn}
-                onValueChange={setHaptics}
-                trackColor={{ true: t.c.brand, false: t.c.overlay }}
-                thumbColor="#FFFFFF"
-                accessibilityLabel={a11y('Haptic feedback')}
-              />
+      <Section index={9} title="Privacy">
+        <SettingLink icon="eye" label="Who sees what" value="Profile, messages, live" onPress={() => router.push('/settings')} />
+        <Divider inset={16} />
+        <SettingLink icon="pin" label="Location" value="Neighbourhood at most" onPress={() => router.push('/settings')} />
+        <Divider inset={16} />
+        <SettingLink icon="x" label="Blocked members" onPress={() => router.push('/blocked')} />
+      </Section>
+
+      <Section index={10} title="Notifications">
+        <SettingLink icon="bell" label="Notifications" value="In the app and on your phone" onPress={() => router.push('/settings')} />
+      </Section>
+
+      <Section index={11} title="Security">
+        <SettingLink icon="lock" label="Sign-in & password" value={account ? 'Change your password' : 'Sign in first'} onPress={() => router.push('/account')} />
+        <Divider inset={16} />
+        <SettingLink icon="shield" label="Account compromised?" value="What to do" onPress={() => router.push('/support')} />
+      </Section>
+
+      <Section index={12} title="Language & preferences">
+        <SettingLink icon="languages" label="Language" value={LANGS.find((l) => l.id === langSetting)?.label} onPress={() => setLangSheet(true)} />
+        <Divider inset={16} />
+        <SettingLink
+          icon={t.mode === 'night' ? 'moon' : 'sun'}
+          label="Appearance"
+          value={t.mode === 'night' ? 'Dark' : 'Light'}
+          onPress={() => setAppearance(t.mode === 'night' ? 'day' : 'night')}
+        />
+        <Divider inset={16} />
+        <View style={[styles.settingRow]}>
+          <Icon name="zap" size={18} color={t.c.text} />
+          <Text variant="titleS" style={{ flex: 1 }}>
+            Haptic feedback
+          </Text>
+          <Switch
+            value={hapticsOn}
+            onValueChange={setHaptics}
+            trackColor={{ true: t.c.brand, false: t.c.overlay }}
+            thumbColor="#FFFFFF"
+            accessibilityLabel={a11y('Haptic feedback')}
+          />
+        </View>
+        <Divider inset={16} />
+        <SettingLink icon="globe" label="Destination" value={`${tx(dest.shortName)} · ${tx(city.name)}`} onPress={() => setDestSheet(true)} />
+      </Section>
+
+      <Section index={13} title="IRLY">
+        <SettingLink icon="calendar" label="Calendar" value="Everything you're going to" onPress={() => router.push('/calendar')} />
+        <Divider inset={16} />
+        <SettingLink icon="bookmark" label="Saved" value="Plans, places, people" onPress={() => router.push('/saved')} />
+        <Divider inset={16} />
+        <SettingLink icon="briefcase" label="Professional profile" value="Networking" onPress={() => router.push('/network/profile')} />
+        <Divider inset={16} />
+        <SettingLink icon="heartHandshake" label="IRLY Girl" value="Women only" onPress={() => router.push('/girl')} />
+        <Divider inset={16} />
+        <SettingLink icon="sparkles" label="Assistant" value="Ask or speak" onPress={() => router.push('/assistant')} />
+        <Divider inset={16} />
+        <SettingLink icon="orbit" label="What is IRLY?" value="Five scenes, 15 seconds" onPress={() => router.push('/story')} />
+        {DEMO ? (
+          <>
+            <Divider inset={16} />
+            <SettingLink icon="palette" label="IRLY Design System" value="Tokens & components" onPress={() => router.push('/design-system')} />
+          </>
+        ) : null}
+      </Section>
+
+      <Section index={14} title="Help & support">
+        <SettingLink icon="message" label="Help center & FAQ" onPress={() => router.push('/support')} />
+        <Divider inset={16} />
+        <SettingLink icon="send" label="Contact support" value={APP.supportEmail} onPress={() => Linking.openURL(`mailto:${APP.supportEmail}`)} />
+        <Divider inset={16} />
+        <SettingLink icon="wrench" label="Report a problem" onPress={() => router.push('/support?kind=problem' as never)} />
+        <Divider inset={16} />
+        <SettingLink icon="flag" label="Report a member" value="Safety" onPress={() => router.push('/support?kind=safety' as never)} />
+        <Divider inset={16} />
+        <SettingLink icon="users" label="Community Guidelines" onPress={() => router.push('/legal/guidelines')} />
+      </Section>
+
+      <Section index={15} title="Legal">
+        <SettingLink icon="shield" label="Privacy Policy" onPress={() => router.push('/legal/privacy')} />
+        <Divider inset={16} />
+        <SettingLink icon="file" label="Terms of Use" onPress={() => router.push('/legal/terms')} />
+        <Divider inset={16} />
+        <SettingLink icon="users" label="Community Guidelines" onPress={() => router.push('/legal/guidelines')} />
+        <Divider inset={16} />
+        <View style={styles.settingRow}>
+          <Icon name="idCard" size={18} color={t.c.text} />
+          <Text variant="titleS" style={{ flex: 1 }}>
+            Version
+          </Text>
+          <Text variant="bodyS" tone="tertiary">
+            {version}
+          </Text>
+        </View>
+      </Section>
+
+      <Section index={16} title="Follow IRLY">
+        <SettingLink icon="camera" label="Instagram" value="@irlyofficial" onPress={() => Linking.openURL(APP.instagram)} />
+        <Divider inset={16} />
+        <SettingLink icon="music" label="TikTok" value="@irlyofficial" onPress={() => Linking.openURL(APP.tiktok)} />
+      </Section>
+
+      <Sheet visible={langSheet} onClose={() => setLangSheet(false)} title="Language">
+        <View style={{ paddingHorizontal: space.gutter }}>
+          {LANGS.map((l, n) => (
+            <View key={l.id}>
+              {n ? <Divider /> : null}
+              <PressableScale
+                haptic="select"
+                onPress={() => {
+                  setLang(l.id);
+                  setLangSheet(false);
+                }}
+                style={styles.settingRow}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: langSetting === l.id }}
+              >
+                <Text variant="titleS" style={{ flex: 1 }} raw>
+                  {l.id === 'auto' ? tx('Same as my phone') : l.label}
+                </Text>
+                {langSetting === l.id ? <Icon name="check" size={18} color={t.c.text} /> : null}
+              </PressableScale>
             </View>
-            <Divider inset={16} />
-            <SettingLink
-              icon="languages"
-              label="Language"
-              value={LANGS.find((l) => l.id === langSetting)?.label}
-              onPress={() => setLang(langSetting === 'auto' ? 'fr' : langSetting === 'fr' ? 'en' : 'auto')}
-            />
-            <Divider inset={16} />
-            <SettingLink
-              icon={t.mode === 'night' ? 'moon' : 'sun'}
-              label="Appearance"
-              value={t.mode === 'night' ? 'Dark' : 'Light'}
-              onPress={() => setAppearance(t.mode === 'night' ? 'day' : 'night')}
-            />
-            <Divider inset={16} />
-            <SettingLink icon="globe" label="Destination" value={`${tx(dest.shortName)} · ${tx(city.name)}`} onPress={() => setDestSheet(true)} />
-            {DEMO ? (
-              <>
-                <Divider inset={16} />
-                <SettingLink icon="palette" label="IRLY Design System" value="Tokens & components" onPress={() => router.push('/design-system')} />
-              </>
-            ) : null}
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={enter.rise(10)} style={styles.section}>
-          <SectionHeader title="Legal & support" />
-          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-            <SettingLink icon="shield" label="Privacy Policy" onPress={() => router.push('/legal/privacy')} />
-            <Divider inset={16} />
-            <SettingLink icon="file" label="Terms of Use" onPress={() => router.push('/legal/terms')} />
-            <Divider inset={16} />
-            <SettingLink icon="users" label="Community Guidelines" onPress={() => router.push('/legal/guidelines')} />
-            <Divider inset={16} />
-            <SettingLink icon="message" label="Help & contact" value="Report a problem" onPress={() => router.push('/support')} />
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={enter.rise(11)} style={styles.section}>
-          <SectionHeader title="Follow IRLY" />
-          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-            <SettingLink icon="camera" label="Instagram" value="@irlyofficial" onPress={() => Linking.openURL(APP.instagram)} />
-            <Divider inset={16} />
-            <SettingLink icon="music" label="TikTok" value="@irlyofficial" onPress={() => Linking.openURL(APP.tiktok)} />
-            <Divider inset={16} />
-            <SettingLink icon="send" label="Email" value={APP.supportEmail} onPress={() => Linking.openURL(`mailto:${APP.supportEmail}`)} />
-          </View>
-        </Animated.View>
-
+          ))}
+        </View>
+      </Sheet>
       <DestinationSheet visible={destSheet} onClose={() => setDestSheet(false)} />
       <Sheet
         visible={confirmDelete}
@@ -198,6 +264,16 @@ export function SettingsSections() {
   );
 }
 
+function Section({ index, title, children }: { index: number; title: string; children: React.ReactNode }) {
+  const t = useTheme();
+  return (
+    <Animated.View entering={enter.rise(index)} style={styles.section}>
+      <SectionHeader title={title} />
+      <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>{children}</View>
+    </Animated.View>
+  );
+}
+
 export function SettingLink({ icon, label, value, onPress, danger }: { icon: IconName; label: string; value?: string; onPress: () => void; danger?: boolean }) {
   const t = useTheme();
   return (
@@ -213,7 +289,7 @@ export function SettingLink({ icon, label, value, onPress, danger }: { icon: Ico
         {label}
       </Text>
       {value ? (
-        <Text variant="bodyS" tone="tertiary">
+        <Text variant="bodyS" tone="tertiary" numberOfLines={1} style={styles.value}>
           {value}
         </Text>
       ) : null}
@@ -223,6 +299,7 @@ export function SettingLink({ icon, label, value, onPress, danger }: { icon: Ico
 }
 
 const styles = StyleSheet.create({
+  value: { maxWidth: '48%', textAlign: 'right' },
   section: { marginBottom: space[8] },
   group: { marginHorizontal: space.gutter, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
   settingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, height: 56 },

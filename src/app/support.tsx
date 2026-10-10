@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -24,9 +24,11 @@ const KINDS: { id: Kind; label: string }[] = [
 
 const FAQ: { q: string; a: string }[] = [
   { q: 'How do I report or block someone?', a: 'Open their profile or your chat with them and tap the shield button. In a chat you can also long-press a message to report it.' },
-  { q: 'How do I change my profile?', a: 'Profile → Edit profile. Your professional profile is in Profile → Professional.' },
-  { q: 'Who can see me?', a: 'Profile → Privacy & notifications: choose who can find your profile, who sees your live posts and activities, and how precise your location is (neighbourhood, city or hidden).' },
-  { q: 'How do I get a copy of my data or delete my account?', a: 'Profile → Download my data, and Profile → Delete account. Deleting removes your account and data from IRLY’s servers.' },
+  { q: 'How do I change my profile?', a: 'Profile → Edit profile. Your professional profile is in Settings → Professional profile.' },
+  { q: 'Who can see me?', a: 'Settings → Privacy: choose who can find your profile, who sees your live posts and activities, and how precise your location is (neighbourhood, city or hidden).' },
+  { q: 'How do I get a copy of my data or delete my account?', a: 'Settings → Download my data, and Settings → Delete account. Deleting removes your account and data from IRLY’s servers.' },
+  { q: 'Someone else is using my account', a: 'Change your password now in Settings → Sign-in & password, then write to us below with "Safety concern" so we can check the account.' },
+  { q: 'How do I report a member?', a: 'Open their profile, tap … then Report. In a chat, long-press a message. Or write to us below with "Safety concern".' },
   { q: 'Someone is in danger', a: 'Contact local emergency services first. Then report the profile in the app or write to us below with "Safety concern".' },
 ];
 
@@ -36,7 +38,8 @@ export default function Support() {
   const tr = useT();
   const router = useRouter();
   const account = useAccount();
-  const [kind, setKind] = useState<Kind>('problem');
+  const { kind: asked } = useLocalSearchParams<{ kind?: string }>();
+  const [kind, setKind] = useState<Kind>(KINDS.some((k) => k.id === asked) ? (asked as Kind) : 'problem');
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<number | null>(null);

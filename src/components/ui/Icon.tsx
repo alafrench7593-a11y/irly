@@ -42,6 +42,7 @@ import Eye from 'lucide-react-native/icons/eye';
 import Flag from 'lucide-react-native/icons/flag';
 import Disc3 from 'lucide-react-native/icons/disc-3';
 import Dumbbell from 'lucide-react-native/icons/dumbbell';
+import Ellipsis from 'lucide-react-native/icons/ellipsis';
 import FileText from 'lucide-react-native/icons/file-text';
 import Flame from 'lucide-react-native/icons/flame';
 import Flower2 from 'lucide-react-native/icons/flower-2';
@@ -174,6 +175,7 @@ export const icons = {
   flag: Flag,
   disc: Disc3,
   dumbbell: Dumbbell,
+  more: Ellipsis,
   file: FileText,
   flame: Flame,
   flower: Flower2,

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,7 @@ import { CITIES } from '@/data/destinations';
 import { LANGUAGES } from '@/data/languages';
 import type { CityId, Interest } from '@/data/types';
 import { updateMyProfile, useAccount } from '@/features/auth/account';
+import { supabase } from '@/lib/supabase';
 import { AppearanceChoice } from '@/features/avatar/AvatarBuilder';
 import { useT } from '@/i18n';
 import { haptic } from '@/motion/haptics';
@@ -30,21 +31,62 @@ export default function EditProfile() {
   const account = useAccount();
   const profile = useStore((s) => s.profile);
   const currentCity = useCityId();
-  const [name, setName] = useState(profile.name);
-  const [bio, setBio] = useState(profile.bio ?? '');
-  const [country, setCountry] = useState(profile.country ?? '');
+  // Each field: what you typed, else the server's value, else this phone's copy (never blanked by a slow load).
+  const [server, setServer] = useState<{ first_name: string | null; bio: string | null; country: string | null; username: string | null } | null>(null);
+  const [nameEdit, setName] = useState<string>();
+  const [bioEdit, setBio] = useState<string>();
+  const [countryEdit, setCountry] = useState<string>();
+  const [usernameEdit, setUsername] = useState<string>();
+  const name = nameEdit ?? server?.first_name ?? profile.name;
+  const bio = bioEdit ?? (server ? (server.bio ?? '') : (profile.bio ?? ''));
+  const country = countryEdit ?? server?.country ?? profile.country ?? '';
+  const savedUsername = server?.username ?? null;
+  const username = usernameEdit ?? savedUsername ?? '';
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? []);
   const [interests, setInterests] = useState<Interest[]>(profile.interests);
   const [cityId, setCityId] = useState<CityId>(currentCity);
   const [photo, setPhoto] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [tried, setTried] = useState(false);
+  const [check, setCheck] = useState<{ for: string; free: boolean | null } | null>(null);
+
+  // The server's current values (name, bio, country, @username).
+  useEffect(() => {
+    if (!supabase || !account) return;
+    let alive = true;
+    supabase.rpc('my_profile').then(({ data }) => {
+      const r = ((data as { first_name: string | null; bio: string | null; country: string | null; username: string | null }[] | null) ?? [])[0];
+      if (alive && r) setServer(r);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [account]);
+
+  // Availability, checked on the server as you type (after a short pause).
+  const wanted = username.trim().toLowerCase();
+  const wellFormed = /^[a-z0-9][a-z0-9._]{1,22}[a-z0-9]$/.test(wanted);
+  const changedHandle = Boolean(account) && wanted !== (savedUsername ?? '');
+  useEffect(() => {
+    if (!changedHandle || !wellFormed || !supabase) return;
+    let alive = true;
+    const h = setTimeout(() => {
+      // Unreachable check: not a reason to block saving; the server still refuses a taken name.
+      supabase?.rpc('username_available', { p_username: wanted }).then(({ data, error }) => alive && setCheck({ for: wanted, free: error ? null : Boolean(data) }));
+    }, 400);
+    return () => {
+      alive = false;
+      clearTimeout(h);
+    };
+  }, [wanted, wellFormed, changedHandle]);
+  const handle: 'idle' | 'checking' | 'free' | 'taken' | 'invalid' = !changedHandle || !wanted ? 'idle' : !wellFormed ? 'invalid' : check?.for === wanted ? (check.free === null ? 'idle' : check.free ? 'free' : 'taken') : 'checking';
 
   const errors = {
     name: name.trim() ? null : tr('Add your first name'),
     languages: languages.length ? null : tr('Pick at least one language'),
+    username: handle === 'taken' ? tr('This username is taken') : handle === 'invalid' ? tr('Usernames: 3 to 24 characters, letters, numbers, dots and underscores') : null,
   };
-  const valid = !errors.name && !errors.languages;
+  const valid = !errors.name && !errors.languages && !errors.username && handle !== 'checking';
 
   const save = async () => {
     setTried(true);
@@ -62,6 +104,7 @@ export default function EditProfile() {
         interests,
         ...(cityId !== currentCity ? { cityId } : {}),
         ...(photo ? { photoUri: photo } : {}),
+        ...(changedHandle ? { username: wanted } : {}),
       });
       haptic('success');
       toast(tr('Profile saved'), 'check', 'positive');
@@ -92,6 +135,30 @@ export default function EditProfile() {
         <Section title="First name" error={tried ? errors.name : null}>
           <Field value={name} onChangeText={setName} maxLength={40} autoCapitalize="words" accessibilityLabel={tr('First name')} />
         </Section>
+
+        {account ? (
+          <Section title="Username" error={errors.username}>
+            <Field
+              value={username}
+              onChangeText={(v: string) => setUsername(v.replace(/\s/g, '').toLowerCase())}
+              maxLength={24}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="yourname"
+              icon="user"
+              accessibilityLabel={tr('Username')}
+            />
+            <Text variant="caption" tone={handle === 'free' ? 'positive' : 'tertiary'}>
+              {handle === 'checking'
+                ? tr('Checking…')
+                : handle === 'free'
+                  ? tr('@{name} is available', { name: username.trim().toLowerCase() })
+                  : username
+                    ? `@${username.trim().toLowerCase()}`
+                    : tr('Optional. Others can find and mention you with it.')}
+            </Text>
+          </Section>
+        ) : null}
 
         <Section title="Age">
           <Text variant="body" raw>
@@ -137,7 +204,7 @@ export default function EditProfile() {
 
         <Button label="Save" icon="check" full loading={busy} onPress={save} />
         <Text variant="caption" tone="tertiary" align="center">
-          Gender and age are set at signup. To change them, write to us from Profile → Help &amp; contact.
+          Gender and age are set at signup. To change them, write to us from Settings → Help &amp; contact.
         </Text>
       </View>
     </Page>

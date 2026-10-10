@@ -49,7 +49,7 @@ async function titlesFor(items: SavedItem[]): Promise<Record<string, string>> {
   return out;
 }
 
-/** Profile → Saved: activities, events, places, communities, posts, people. */
+/** Settings → IRLY → Saved: activities, events, places, communities, posts, people. */
 export default function SavedScreen() {
   const t = useTheme();
   const router = useRouter();

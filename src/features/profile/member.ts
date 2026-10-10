@@ -27,12 +27,16 @@ export type MemberProfile = {
   isMe: boolean;
   /** Where your friendship stands, from the server: none, sent by you, waiting for you, or friends. */
   friendStatus: FriendStatus;
+  /** Unique @username, if the member chose one. */
+  username: string | null;
+  /** Accepted friendships, counted on the server. */
+  friends: number;
 };
 
 export type FriendStatus = 'none' | 'outgoing' | 'incoming' | 'friends';
 
 export type MemberPost = { id: string; body: string; at: number; communityId: string; communityName: string };
-export type MemberCommunity = { id: string; name: string; cityId: string; cover: string | null; members: number };
+export type MemberCommunity = { id: string; name: string; cityId: string; cover: string | null; members: number; tagline: string | null; role: 'created' | 'joined' };
 export type FollowPerson = { id: string; firstName: string; photo: string | null; iFollow: boolean };
 
 function sb() {
@@ -57,6 +61,8 @@ type Row = {
   direct_id: string | null;
   is_me: boolean;
   friend_status: FriendStatus | null;
+  username: string | null;
+  friends: number | null;
 };
 
 export function useMemberProfile(userId: string) {
@@ -68,33 +74,15 @@ export function useMemberProfile(userId: string) {
   const load = useCallback(() => {
     if (!supabase || !uid) return;
     const n = ++seq.current;
-    // Their posts in communities you can read (the read rules decide; nothing else is asked).
-    const posts = sb()
-      .from('community_posts')
-      .select('id, body, created_at, community_id, communities(name)')
-      .eq('author_id', userId)
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    Promise.all([sb().rpc('public_profile', { p_user: userId }), sb().rpc('member_communities', { p_user: userId }), posts])
-      .then(([p, c, ps]) => {
+    Promise.all([sb().rpc('public_profile', { p_user: userId }), sb().rpc('member_communities', { p_user: userId })])
+      .then(([p, c]) => {
         if (n !== seq.current) return;
         if (p.error) throw new Error(p.error.message);
         const r = ((p.data as Row[] | null) ?? [])[0];
-        const visible = Boolean(r?.visible);
         setState({
           for: key,
           error: null,
-          // A hidden profile shows no posts here, even ones you could read in a shared community.
-          posts: visible
-            ? ((ps.data as { id: string; body: string; created_at: string; community_id: string; communities: { name: string } | { name: string }[] | null }[] | null) ?? []).map((x) => ({
-                id: x.id,
-                body: x.body,
-                at: Date.parse(x.created_at),
-                communityId: x.community_id,
-                communityName: (Array.isArray(x.communities) ? x.communities[0]?.name : x.communities?.name) ?? '',
-              }))
-            : [],
+          posts: [],
           profile: r
             ? {
                 id: r.id,
@@ -113,14 +101,18 @@ export function useMemberProfile(userId: string) {
                 directId: r.direct_id,
                 isMe: r.is_me,
                 friendStatus: r.friend_status ?? 'none',
+                username: r.username ?? null,
+                friends: r.friends ?? 0,
               }
             : null,
-          communities: ((c.data as { id: string; name: string; city_id: string; cover_path: string | null; members: number }[] | null) ?? []).map((x) => ({
+          communities: ((c.data as { id: string; name: string; city_id: string; cover_path: string | null; members: number; tagline: string | null; role: 'created' | 'joined' | null }[] | null) ?? []).map((x) => ({
             id: x.id,
             name: x.name,
             cityId: x.city_id,
             cover: x.cover_path,
             members: x.members,
+            tagline: x.tagline ?? null,
+            role: x.role === 'created' ? 'created' : 'joined',
           })),
         });
       })
@@ -129,7 +121,7 @@ export function useMemberProfile(userId: string) {
 
   useEffect(load, [load]);
   // A follow anywhere (yours, theirs, on another device), a new photo or name.
-  useRefreshOn(['follows', 'people', 'friends'], load);
+  useRefreshOn(['follows', 'people', 'friends', 'communities'], load);
 
   const ready = state.for === key;
   return { profile: ready ? state.profile : null, communities: ready ? state.communities : [], posts: ready ? state.posts : [], loading: Boolean(uid) && !ready, error: ready ? state.error : null, reload: load, signedIn: Boolean(uid) };
@@ -181,14 +173,13 @@ function friendError(m: string): string {
 }
 
 /** Followers or following of a member (empty when their profile is hidden from you). */
-export function useFollowList(userId: string, which: 'followers' | 'following') {
+export function useFollowList(userId: string, which: 'followers' | 'following' | 'friends') {
   const uid = useAccount()?.userId;
   const [state, setState] = useState<{ for: string; people: FollowPerson[]; error: string | null }>({ for: '', people: [], error: null });
   const key = `${uid}|${userId}|${which}`;
   const load = useCallback(() => {
     if (!supabase || !uid) return;
-    sb()
-      .rpc('follow_list', { p_user: userId, p_which: which })
+    (which === 'friends' ? sb().rpc('friend_list', { p_user: userId }) : sb().rpc('follow_list', { p_user: userId, p_which: which }))
       .then(({ data, error }) => {
         if (error) {
           setState({ for: key, people: [], error: error.message });
@@ -202,7 +193,7 @@ export function useFollowList(userId: string, which: 'followers' | 'following') 
       });
   }, [uid, userId, which, key]);
   useEffect(load, [load]);
-  useRefreshOn(['follows', 'people'], load);
+  useRefreshOn(['follows', 'people', 'friends'], load);
   const ready = state.for === key;
   return { people: ready ? state.people : [], loading: Boolean(uid) && !ready, error: ready ? state.error : null, reload: load, me: uid };
 }
@@ -214,3 +205,149 @@ export async function openDirect(userId: string): Promise<string> {
   changed('inbox');
   return data as string;
 }
+
+/* ───────── Profile tabs: posts, lives, activities (server, as the viewer may see them) ───────── */
+
+export type ProfilePost = MemberPost & { likes: number; comments: number; liked: boolean; media: string | null };
+export type ProfileLive = { id: string; body: string; media: string | null; areaId: string; placeName: string | null; at: number; expiresAt: number; live: boolean };
+export type ProfileActivity = {
+  id: string;
+  title: string;
+  categoryId: string;
+  cityId: string;
+  areaId: string;
+  placeName: string | null;
+  startsAt: number;
+  endsAt: number | null;
+  cover: string | null;
+  going: number;
+  role: 'created' | 'joined';
+  state: 'upcoming' | 'live' | 'past' | 'cancelled';
+};
+
+const PAGE = 20;
+const netError = (e: unknown) => (/fetch|network/i.test(String(e)) ? 'Can’t reach IRLY right now' : e instanceof Error ? e.message : 'Could not load');
+
+/**
+ * A member's community posts, newest first, 20 at a time ("more" loads the
+ * next page). The community read rules decide what the viewer may see;
+ * likes and comments come from the same counts as everywhere else.
+ */
+export function useMemberPosts(userId: string, enabled = true) {
+  const uid = useAccount()?.userId;
+  const key = `${uid}|${userId}`;
+  const [state, setState] = useState<{ for: string; items: ProfilePost[]; done: boolean; error: string | null; loadingMore: boolean }>({ for: '', items: [], done: false, error: null, loadingMore: false });
+  const seq = useRef(0);
+  const fetchPage = useCallback(
+    async (before: string | null): Promise<ProfilePost[]> => {
+      let q = sb()
+        .from('community_posts')
+        .select('id, body, media_path, created_at, community_id, communities(name)')
+        .eq('author_id', userId)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(PAGE);
+      if (before) q = q.lt('created_at', before);
+      const { data, error } = await q;
+      if (error) throw new Error(error.message);
+      const rows = (data as { id: string; body: string; media_path: string | null; created_at: string; community_id: string; communities: { name: string } | { name: string }[] | null }[] | null) ?? [];
+      const counts = rows.length ? await sb().rpc('engagement', { p_type: 'community_post', p_ids: rows.map((r) => r.id) }) : { data: [] };
+      const by = new Map(((counts.data as { target_id: string; likes: number; comments: number; liked: boolean }[] | null) ?? []).map((c) => [c.target_id, c]));
+      return rows.map((x) => ({
+        id: x.id,
+        body: x.body,
+        media: x.media_path,
+        at: Date.parse(x.created_at),
+        communityId: x.community_id,
+        communityName: (Array.isArray(x.communities) ? x.communities[0]?.name : x.communities?.name) ?? '',
+        likes: by.get(x.id)?.likes ?? 0,
+        comments: by.get(x.id)?.comments ?? 0,
+        liked: by.get(x.id)?.liked ?? false,
+      }));
+    },
+    [userId],
+  );
+  const load = useCallback(() => {
+    if (!supabase || !uid || !enabled) return;
+    const n = ++seq.current;
+    fetchPage(null)
+      .then((items) => n === seq.current && setState({ for: key, items, done: items.length < PAGE, error: null, loadingMore: false }))
+      .catch((e) => n === seq.current && setState((s) => ({ ...s, for: key, error: netError(e), loadingMore: false })));
+  }, [uid, key, enabled, fetchPage]);
+  useEffect(load, [load]);
+  useRefreshOn(['communities', 'people'], load);
+  const more = useCallback(() => {
+    if (state.for !== key || state.done || state.loadingMore || !state.items.length) return;
+    const n = seq.current;
+    const last = new Date(state.items[state.items.length - 1].at).toISOString();
+    setState((s) => ({ ...s, loadingMore: true }));
+    fetchPage(last)
+      .then((next) => n === seq.current && setState((s) => ({ ...s, items: [...s.items, ...next.filter((x) => !s.items.some((y) => y.id === x.id))], done: next.length < PAGE, loadingMore: false })))
+      .catch((e) => n === seq.current && setState((s) => ({ ...s, error: netError(e), loadingMore: false })));
+  }, [state, key, fetchPage]);
+  const ready = state.for === key;
+  return { items: ready ? state.items : [], loading: Boolean(uid) && enabled && !ready, error: ready ? state.error : null, done: ready ? state.done : false, loadingMore: state.loadingMore, more, reload: load };
+}
+
+/** Rows of a profile RPC, reloaded when its kinds of data change anywhere. */
+function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds: Parameters<typeof useRefreshOn>[0], enabled: boolean) {
+  const uid = useAccount()?.userId;
+  const key = `${uid}|${userId}`;
+  const [state, setState] = useState<{ for: string; items: T[]; error: string | null }>({ for: '', items: [], error: null });
+  const seq = useRef(0);
+  const mapRef = useRef(map);
+  useEffect(() => {
+    mapRef.current = map;
+  });
+  const load = useCallback(() => {
+    if (!supabase || !uid || !enabled) return;
+    const n = ++seq.current;
+    sb()
+      .rpc(fn, { p_user: userId })
+      .then(({ data, error }) => {
+        if (n !== seq.current) return;
+        if (error) setState((s) => ({ ...s, for: key, error: netError(error.message) }));
+        else setState({ for: key, items: ((data as R[] | null) ?? []).map((r) => mapRef.current(r)), error: null });
+      });
+  }, [uid, key, userId, fn, enabled]);
+  useEffect(load, [load]);
+  useRefreshOn(kinds, load);
+  const ready = state.for === key;
+  return { items: ready ? state.items : [], loading: Boolean(uid) && enabled && !ready, error: ready ? state.error : null, reload: load };
+}
+
+type ActivityRow = { id: string; title: string; category_id: string; city_id: string; area_id: string; place_name: string | null; starts_at: string; ends_at: string | null; cover_path: string | null; going: number; role: 'created' | 'joined'; state: ProfileActivity['state'] };
+type LiveRow = { id: string; body: string; media_path: string | null; area_id: string; place_name: string | null; created_at: string; expires_at: string; live: boolean };
+
+/** Activities a member created or joined (the activity rules and their activity visibility decide). */
+export const useMemberActivities = (userId: string, enabled = true) =>
+  useProfileRpc<ActivityRow, ProfileActivity>(
+    'member_activities',
+    userId,
+    (r) => ({
+      id: r.id,
+      title: r.title,
+      categoryId: r.category_id,
+      cityId: r.city_id,
+      areaId: r.area_id,
+      placeName: r.place_name,
+      startsAt: Date.parse(r.starts_at),
+      endsAt: r.ends_at ? Date.parse(r.ends_at) : null,
+      cover: r.cover_path,
+      going: r.going,
+      role: r.role,
+      state: r.state,
+    }),
+    ['activities'],
+    enabled,
+  );
+
+/** Their IRL posts: live ones in their audience; the author also sees past ones. */
+export const useMemberLives = (userId: string, enabled = true) =>
+  useProfileRpc<LiveRow, ProfileLive>(
+    'member_lives',
+    userId,
+    (r) => ({ id: r.id, body: r.body, media: r.media_path, areaId: r.area_id, placeName: r.place_name, at: Date.parse(r.created_at), expiresAt: Date.parse(r.expires_at), live: r.live }),
+    ['friends', 'people'],
+    enabled,
+  );

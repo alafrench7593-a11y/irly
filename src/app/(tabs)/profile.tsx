@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { t as tx } from '@/i18n';
 import { useAccount } from '@/features/auth/account';
-import { SettingLink, SettingsSections } from '@/features/settings/SettingsSections';
+import { MemberProfileView } from '@/features/profile/MemberProfileView';
 import { useCalendar } from '@/features/server/activities';
 import { useCommunityList } from '@/features/community/data';
 import { cityWhen , whenLabel } from '@/lib/time';
@@ -15,7 +15,8 @@ import { Rail } from '@/components/cards/Blocks';
 import { CommunityCard } from '@/components/cards/ThingCards';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Avatar } from '@/components/ui/Avatar';
-import { Badge, Divider, SectionHeader } from '@/components/ui/Controls';
+import { Badge, IconButton, SectionHeader } from '@/components/ui/Controls';
+import { Button } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Cover } from '@/components/visual/Cover';
@@ -31,7 +32,18 @@ import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
+/**
+ * Your profile. Signed in: the same profile other members see (identity,
+ * followers, friends, Posts / Lives / Activities / Communities), with Edit
+ * profile and the gear for Settings. Signed out: what is on this phone.
+ */
 export default function Profile() {
+  const account = useAccount();
+  if (account?.userId) return <MemberProfileView userId={account.userId} own />;
+  return <LocalProfile />;
+}
+
+function LocalProfile() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
@@ -98,7 +110,7 @@ export default function Profile() {
           <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 4 }}>
             <Text variant="displayL">{name}</Text>
             <Text variant="body" tone="secondary">
-              {[profile.age, profile.country, city.name].filter(Boolean).join(' · ')} {city.destinationId === 'bali' ? '🌴' : dest.flag}
+              {[profile.age, profile.country, tx(city.name)].filter(Boolean).join(' · ')} {city.destinationId === 'bali' ? '🌴' : dest.flag}
             </Text>
             {profile.arrivedAt ? (
               <View style={[styles.newHere, { backgroundColor: t.c.brand }]}>
@@ -212,22 +224,13 @@ export default function Profile() {
           </Animated.View>
         ) : null}
 
-        <Animated.View entering={enter.rise(7)} style={styles.section}>
-          <SectionHeader title="Your IRLY" />
-          <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-            <SettingLink icon="calendar" label="Calendar" value="Everything you're going to" onPress={() => router.push('/calendar')} />
-            <Divider inset={16} />
-            <SettingLink icon="bookmark" label="Saved" value="Plans, places, people" onPress={() => router.push('/saved')} />
-            <Divider inset={16} />
-            <SettingLink icon="network" label="Networking" value="Professionals near you" onPress={() => router.push('/network')} />
-            <Divider inset={16} />
-            <SettingLink icon="sparkles" label="Assistant" value="Ask or speak" onPress={() => router.push('/assistant')} />
-            <Divider inset={16} />
-            <SettingLink icon="orbit" label="What is IRLY?" value="Five scenes, 15 seconds" onPress={() => router.push('/story')} />
-          </View>
+        <Animated.View entering={enter.rise(7)} style={[styles.signin, { backgroundColor: t.c.surface }]}>
+          <Text variant="titleS">Your profile is on this phone only</Text>
+          <Text variant="bodyS" tone="secondary">
+            Sign in to share it with other members: followers, friends, posts, lives, activities and communities.
+          </Text>
+          <Button label="Sign in" icon="user" onPress={() => router.push('/account')} />
         </Animated.View>
-
-        <SettingsSections />
 
         <View style={styles.about}>
           <IrlyMark size={40} state="idle" ringColor={t.c.textTertiary} lensColor={t.c.brand} glow={false} />
@@ -236,6 +239,9 @@ export default function Profile() {
           </Text>
         </View>
       </Animated.ScrollView>
+      <View style={[styles.gear, { top: insets.top + 10 }]}>
+        <IconButton icon="settings" label={tx('Settings')} variant="glass" onPress={() => router.push('/preferences')} />
+      </View>
     </View>
   );
 }
@@ -285,6 +291,8 @@ function EmptyRow({ icon, text, onPress }: { icon: IconName; text: string; onPre
 
 
 const styles = StyleSheet.create({
+  signin: { marginHorizontal: space.gutter, marginBottom: space[8], padding: 16, gap: 8, borderRadius: radius.lg },
+  gear: { position: 'absolute', right: space.gutter },
   coverFade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 140 },
   newHere: { marginTop: 8, height: 26, paddingHorizontal: 12, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   root: { flex: 1 },

@@ -1142,6 +1142,75 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
 select pg_temp.check(not exists (select 1 from public.friendships where '00000000-0000-0000-0000-00000000000f' in (user_a, user_b)), 'a block ends the friendship');
 select pg_temp.expect_denied($$select public.add_friend('00000000-0000-0000-0000-00000000000f')$$, 'no friend request to someone who blocked you');
 
+-- ───── Profile v2: @username, friends count, activities, lives, friends list (H, I) ─────
+select pg_temp.as_admin();
+insert into auth.users (id) values ('00000000-0000-0000-0000-000000000011'), ('00000000-0000-0000-0000-000000000012');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-000000000011', 'Hana', '1994-04-04', 'woman', 'dubai');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-000000000012', 'Ivo', '1990-05-05', 'man', 'dubai');
+
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check(public.username_available('hana.dxb'), 'a free username is available');
+update public.profiles set username = '  Hana.DXB ' where id = auth.uid();
+select pg_temp.check((select username from public.profiles where id = auth.uid()) = 'hana.dxb', 'username saved trimmed and lowercase');
+select pg_temp.expect_denied($$update public.profiles set username = 'irly_team' where id = auth.uid()$$, 'reserved usernames are refused');
+select pg_temp.expect_denied($$update public.profiles set username = 'a b' where id = auth.uid()$$, 'usernames with spaces are refused');
+select pg_temp.expect_denied($$update public.profiles set username = 'x' where id = auth.uid()$$, 'usernames under 3 characters are refused');
+select pg_temp.check(public.username_available('hana.dxb'), 'your own username counts as available to you');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check(not public.username_available('Hana.dxb'), 'a taken username is not available');
+select pg_temp.expect_denied($$update public.profiles set username = 'hana.dxb' where id = auth.uid()$$, 'two members cannot share a username');
+select pg_temp.check((select username from public.public_profile('00000000-0000-0000-0000-000000000011')) = 'hana.dxb', 'the profile shows @username');
+select pg_temp.check((select friends from public.public_profile('00000000-0000-0000-0000-000000000011')) = 0, 'no friends yet');
+
+-- Hana creates an activity, Ivo creates one Hana joins.
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at) values (auth.uid(), 'Hana run club', 'sport', 'dubai', 'marina', now() + interval '1 day');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at) values (auth.uid(), 'Ivo padel', 'sport', 'dubai', 'marina', now() + interval '2 days') returning id as ivo_act \gset
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select public.join_activity(:'ivo_act');
+select pg_temp.check((select role from public.member_activities(auth.uid()) where title = 'Hana run club') = 'created', 'own profile: created activity under Created');
+select pg_temp.check((select role from public.member_activities(auth.uid()) where title = 'Ivo padel') = 'joined', 'own profile: joined activity under Joined');
+select pg_temp.check((select state from public.member_activities(auth.uid()) where title = 'Hana run club') = 'upcoming', 'activity state comes from its dates');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select count(*) from public.member_activities('00000000-0000-0000-0000-000000000011')) = 2, 'another member sees both on Hana''s profile');
+-- Hana hides her activities: Ivo still sees the one she created, not what she joined elsewhere... unless he is going too.
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+insert into public.safety_settings (user_id, activity_visibility) values (auth.uid(), 'nobody')
+  on conflict (user_id) do update set activity_visibility = 'nobody';
+select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
+select pg_temp.check(not exists (select 1 from public.member_activities('00000000-0000-0000-0000-000000000011') where role = 'joined'), 'activity visibility "nobody" hides what Hana joined from others');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select public.leave_activity(:'ivo_act');
+select pg_temp.check(not exists (select 1 from public.member_activities(auth.uid()) where title = 'Ivo padel'), 'leaving removes it from Joined');
+
+-- Lives: a live post shows; a friends-only one only to friends; the author sees past ones.
+insert into public.irl_posts (author_id, city_id, area_id, body, visibility) values (auth.uid(), 'dubai', 'marina', 'Live at the marina', 'everyone');
+insert into public.irl_posts (author_id, city_id, area_id, body, visibility) values (auth.uid(), 'dubai', 'marina', 'Friends only live', 'friends');
+select pg_temp.as_admin();
+insert into public.irl_posts (author_id, city_id, area_id, body, visibility, created_at, expires_at) values ('00000000-0000-0000-0000-000000000011', 'dubai', 'marina', 'Old live', 'everyone', now() - interval '1 day', now() - interval '20 hours');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check((select count(*) from public.member_lives(auth.uid())) = 3 and (select count(*) from public.member_lives(auth.uid()) where not live) = 1, 'the author sees live and past lives');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select count(*) from public.member_lives('00000000-0000-0000-0000-000000000011')) = 1, 'a stranger sees only the public live post, not past or friends-only ones');
+
+-- Friends: count and list on both profiles.
+select public.add_friend('00000000-0000-0000-0000-000000000011');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select public.add_friend('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select friends from public.public_profile(auth.uid())) = 1, 'friends count updates on acceptance');
+select pg_temp.check((select username from public.friend_list(auth.uid()) where first_name = 'Ivo') is null and exists (select 1 from public.friend_list(auth.uid()) where first_name = 'Ivo'), 'Hana''s friends list shows Ivo');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select count(*) from public.member_lives('00000000-0000-0000-0000-000000000011')) = 2, 'a friend also sees the friends-only live');
+-- A hidden profile hides its lists and contents.
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+update public.safety_settings set profile_visibility = 'nobody' where user_id = auth.uid();
+select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
+select pg_temp.check(not exists (select 1 from public.friend_list('00000000-0000-0000-0000-000000000011')), 'a hidden profile shows no friends list');
+select pg_temp.check(not exists (select 1 from public.member_lives('00000000-0000-0000-0000-000000000011')) and not exists (select 1 from public.member_activities('00000000-0000-0000-0000-000000000011')), 'a hidden profile shows no lives or activities');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
