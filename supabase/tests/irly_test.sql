@@ -1073,6 +1073,75 @@ select pg_temp.check(not exists (select 1 from public.likes where target_type = 
 insert into public.conversations (kind, title) values ('group', 'Dina group') returning id \gset dg_
 insert into public.conversation_members (conversation_id, user_id, role) values (:'dg_id', '00000000-0000-0000-0000-00000000000d', 'admin'), (:'dg_id', '00000000-0000-0000-0000-00000000000b', 'member');
 
+-- ───── Friends → notification → private chat, end to end (E, F; G is a stranger) ─────
+select pg_temp.as_admin();
+insert into auth.users (id) values ('00000000-0000-0000-0000-00000000000e'), ('00000000-0000-0000-0000-00000000000f'), ('00000000-0000-0000-0000-000000000010');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-00000000000e', 'Eli', '1992-02-02', 'man', 'dubai');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-00000000000f', 'Fay', '1993-03-03', 'woman', 'dubai');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-000000000010', 'Gus', '1991-01-01', 'man', 'dubai');
+
+-- Strangers cannot open a private chat by default (friends and matches only).
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check((select friend_status from public.public_profile('00000000-0000-0000-0000-00000000000f')) = 'none', 'profile: no friendship yet');
+select pg_temp.check(not (select can_message from public.public_profile('00000000-0000-0000-0000-00000000000f')), 'profile: a stranger cannot be messaged by default');
+select pg_temp.expect_denied($$select public.open_direct('00000000-0000-0000-0000-00000000000f')$$, 'no private chat with a stranger by default');
+select pg_temp.expect_denied($$select public.add_friend('00000000-0000-0000-0000-00000000000e')$$, 'cannot befriend yourself');
+select pg_temp.expect_denied($$select public.add_friend('00000000-0000-0000-0000-0000000000ff')$$, 'cannot befriend a member who does not exist');
+
+-- E asks F; asking twice keeps one request and one notification.
+select pg_temp.check(public.add_friend('00000000-0000-0000-0000-00000000000f') = 'pending', 'E asks F');
+select pg_temp.check(public.add_friend('00000000-0000-0000-0000-00000000000f') = 'pending', 'asking again is a no-op');
+select pg_temp.check((select friend_status from public.public_profile('00000000-0000-0000-0000-00000000000f')) = 'outgoing', 'E sees Requested');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.friendships where '00000000-0000-0000-0000-00000000000e' in (user_a, user_b)) = 1, 'one request row for the pair');
+select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-00000000000f' and kind = 'FRIEND_REQUEST' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000e') = 1, 'F gets exactly one request notification, from E');
+
+-- F sees it (and only F), then accepts.
+select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
+select pg_temp.check(not exists (select 1 from public.notifications where kind = 'FRIEND_REQUEST' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000e'), 'G cannot read F''s notifications');
+select pg_temp.check(not exists (select 1 from public.friendships where '00000000-0000-0000-0000-00000000000e' in (user_a, user_b)), 'G cannot read E and F''s request');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f');
+select pg_temp.check(exists (select 1 from public.notifications where kind = 'FRIEND_REQUEST' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000e' and read_at is null), 'F has the unread request in the bell');
+select pg_temp.check(exists (select 1 from public.my_friends() where user_id = '00000000-0000-0000-0000-00000000000e' and incoming), 'F sees the incoming request');
+select pg_temp.check((select friend_status from public.public_profile('00000000-0000-0000-0000-00000000000e')) = 'incoming', 'F sees Accept on E''s profile');
+select pg_temp.check(public.add_friend('00000000-0000-0000-0000-00000000000e') = 'accepted', 'F accepts');
+select pg_temp.check(exists (select 1 from public.notifications where kind = 'FRIEND_REQUEST' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000e' and read_at is not null), 'accepting marks the request notification read');
+select pg_temp.check((select friend_status from public.public_profile('00000000-0000-0000-0000-00000000000e')) = 'friends', 'F sees Friends');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check((select friend_status from public.public_profile('00000000-0000-0000-0000-00000000000f')) = 'friends', 'E sees Friends');
+select pg_temp.check(exists (select 1 from public.notifications where kind = 'FRIEND_ACCEPTED' and payload ->> 'from' = '00000000-0000-0000-0000-00000000000f'), 'E is told F accepted');
+select pg_temp.check((select can_message from public.public_profile('00000000-0000-0000-0000-00000000000f')), 'friends can message each other');
+
+-- The private chat: one per pair, both ways, messages kept.
+select public.open_direct('00000000-0000-0000-0000-00000000000f') as ef_id \gset
+select pg_temp.check(public.open_direct('00000000-0000-0000-0000-00000000000f') = :'ef_id', 'opening again reuses the chat');
+insert into public.messages (conversation_id, sender_id, body) values (:'ef_id', auth.uid(), 'Salut, comment vas-tu ?');
+select pg_temp.expect_denied($$insert into public.messages (conversation_id, sender_id, body) values ('$$ || :'ef_id' || $$', '00000000-0000-0000-0000-00000000000f', 'forged')$$, 'cannot send as someone else');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f');
+select pg_temp.check(public.open_direct('00000000-0000-0000-0000-00000000000e') = :'ef_id', 'F lands in the same chat');
+select pg_temp.check(exists (select 1 from public.messages where conversation_id = :'ef_id' and body = 'Salut, comment vas-tu ?' and sender_id = '00000000-0000-0000-0000-00000000000e'), 'F reads E''s message');
+insert into public.messages (conversation_id, sender_id, body) values (:'ef_id', auth.uid(), 'Très bien, et toi ?');
+select pg_temp.check((select direct_id from public.public_profile('00000000-0000-0000-0000-00000000000e')) = :'ef_id', 'the profile knows the existing chat');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check((select count(*) from public.messages where conversation_id = :'ef_id') = 2, 'E reads the whole conversation');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
+select pg_temp.check(not exists (select 1 from public.messages where conversation_id = :'ef_id'), 'G cannot read E and F''s chat');
+select pg_temp.expect_denied($$insert into public.messages (conversation_id, sender_id, body) values ('$$ || :'ef_id' || $$', auth.uid(), 'intrusion')$$, 'G cannot write in E and F''s chat');
+
+-- Withdrawing a request takes its notification; a block ends the friendship and stops requests.
+select pg_temp.check(public.add_friend('00000000-0000-0000-0000-00000000000e') = 'pending', 'G asks E');
+select public.remove_friend('00000000-0000-0000-0000-00000000000e');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-00000000000e' and kind = 'FRIEND_REQUEST' and payload ->> 'from' = '00000000-0000-0000-0000-000000000010'), 'a withdrawn request leaves no Accept behind');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f');
+select public.block_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check(not exists (select 1 from public.friendships where '00000000-0000-0000-0000-00000000000f' in (user_a, user_b)), 'a block ends the friendship');
+select pg_temp.expect_denied($$select public.add_friend('00000000-0000-0000-0000-00000000000f')$$, 'no friend request to someone who blocked you');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();

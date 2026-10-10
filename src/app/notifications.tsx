@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { proConnect } from '@/features/network/api';
-import { addFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
+import { addFriend, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
 import { timeAgo } from '@/lib/time';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -179,7 +179,13 @@ function ServerNotifications() {
       }
       case 'FRIEND_REQUEST': {
         const pending = friends.find((f) => f.userId === p.from && f.incoming);
-        return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: 'Friends see each other’s IRL posts', accept: pending ? p.from : undefined };
+        return {
+          icon: 'user',
+          title: tx('{name} wants to be friends', { name: name(p.from) }),
+          body: pending ? 'Accept to chat and see each other’s IRL posts' : friends.some((f) => f.userId === p.from && f.status === 'accepted') ? 'You are now friends' : 'See their profile',
+          go: () => router.push(`/person/${p.from}`),
+          accept: pending ? p.from : undefined,
+        };
       }
       case 'PRO_CONNECT_REQUEST': {
         const pending = friends.find((f) => f.userId === p.from && f.incoming);
@@ -199,7 +205,7 @@ function ServerNotifications() {
       case 'GROUP_ADDED':
         return { icon: 'users', title: tx('{name} added you to {title}', { name: name(p.from), title: String(p.title ?? '') }), body: 'Open the group chat', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'FRIEND_ACCEPTED':
-        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends' };
+        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends: say hi', go: () => router.push(`/person/${p.from}`) };
       case 'COMMUNITY_JOINED':
         return { icon: 'heartHandshake', title: 'You joined a community', body: 'Its chat is in Messages', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'IRLY_POST_CREATED':
@@ -236,7 +242,18 @@ function ServerNotifications() {
                 ) : null}
               </View>
               {d.accept ? (
-                <Button
+                <View style={styles.actions}>
+                  <Button
+                    label="Decline"
+                    size="sm"
+                    variant="secondary"
+                    onPress={() =>
+                      removeFriend(d.accept!)
+                        .then(() => toast('Request declined', 'check', 'brand'))
+                        .catch((e) => toast(e instanceof Error ? e.message : 'Could not decline', 'x', 'live'))
+                    }
+                  />
+                  <Button
                   label="Accept"
                   size="sm"
                   onPress={() =>
@@ -248,6 +265,7 @@ function ServerNotifications() {
                       .catch((e) => toast(e instanceof Error ? e.message : 'Could not accept', 'x', 'live'))
                   }
                 />
+                </View>
               ) : (
                 <Text variant="caption" tone="tertiary">
                   {ago(n.createdAt)}
@@ -262,6 +280,7 @@ function ServerNotifications() {
 }
 
 const styles = StyleSheet.create({
+  actions: { flexDirection: 'row', gap: 6 },
   list: { paddingHorizontal: space.gutter, gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg },
   icon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
