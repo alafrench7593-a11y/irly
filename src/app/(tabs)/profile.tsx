@@ -55,7 +55,6 @@ function LocalProfile() {
   const profile = useStore((s) => s.profile);
   const joined = useStore((s) => s.joined);
   const memberOf = useStore((s) => s.memberOf);
-  const connections = useStore((s) => s.connections);
   const bookings = useStore((s) => s.bookings);
   const now = useNow();
   const days = profile.arrivedAt ? Math.max(1, Math.round((now - profile.arrivedAt) / 86_400_000)) : 0;
@@ -87,8 +86,6 @@ function LocalProfile() {
   const myServerCommunities = useCommunityList(cityId).filter((c) => c.isMember);
   const live = Boolean(account);
   const planCount = live ? serverPlans.length : plans.length;
-  const communityCount = live ? myServerCommunities.length : communities.length;
-  const connected = Object.values(connections).filter((s) => s === 'connected').length;
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
@@ -142,11 +139,12 @@ function LocalProfile() {
 
           </Animated.View>
           <Animated.View entering={enter.rise(3)} style={[styles.stats, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-            <Stat value={connected} label="Connections" />
+            {/* Same counters as a signed-in profile; without an account nobody can follow you yet. */}
+            <Stat value={0} label="Followers" onPress={() => router.push('/account')} />
             <View style={[styles.vr, { backgroundColor: t.c.line }]} />
-            <Stat value={planCount} label="Plans" />
+            <Stat value={0} label="Following" onPress={() => router.push('/account')} />
             <View style={[styles.vr, { backgroundColor: t.c.line }]} />
-            <Stat value={communityCount} label="Communities" />
+            <Stat value={0} label="Friends" onPress={() => router.push('/account')} />
           </Animated.View>
         </View>
 
@@ -246,14 +244,14 @@ function LocalProfile() {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({ value, label, onPress }: { value: number; label: string; onPress?: () => void }) {
   return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+    <PressableScale haptic="select" onPress={onPress} disabled={!onPress} accessibilityRole="button" accessibilityLabel={`${value} ${tx(label)}`} style={{ flex: 1, alignItems: 'center', gap: 2 }}>
       <CountUp value={value} />
       <Text variant="caption" tone="tertiary">
         {label}
       </Text>
-    </View>
+    </PressableScale>
   );
 }
 
