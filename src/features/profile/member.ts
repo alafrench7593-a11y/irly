@@ -25,7 +25,11 @@ export type MemberProfile = {
   canMessage: boolean;
   directId: string | null;
   isMe: boolean;
+  /** Where your friendship stands, from the server: none, sent by you, waiting for you, or friends. */
+  friendStatus: FriendStatus;
 };
+
+export type FriendStatus = 'none' | 'outgoing' | 'incoming' | 'friends';
 
 export type MemberPost = { id: string; body: string; at: number; communityId: string; communityName: string };
 export type MemberCommunity = { id: string; name: string; cityId: string; cover: string | null; members: number };
@@ -52,6 +56,7 @@ type Row = {
   can_message: boolean;
   direct_id: string | null;
   is_me: boolean;
+  friend_status: FriendStatus | null;
 };
 
 export function useMemberProfile(userId: string) {
@@ -107,6 +112,7 @@ export function useMemberProfile(userId: string) {
                 canMessage: r.can_message,
                 directId: r.direct_id,
                 isMe: r.is_me,
+                friendStatus: r.friend_status ?? 'none',
               }
             : null,
           communities: ((c.data as { id: string; name: string; city_id: string; cover_path: string | null; members: number }[] | null) ?? []).map((x) => ({
@@ -123,7 +129,7 @@ export function useMemberProfile(userId: string) {
 
   useEffect(load, [load]);
   // A follow anywhere (yours, theirs, on another device), a new photo or name.
-  useRefreshOn(['follows', 'people'], load);
+  useRefreshOn(['follows', 'people', 'friends'], load);
 
   const ready = state.for === key;
   return { profile: ready ? state.profile : null, communities: ready ? state.communities : [], posts: ready ? state.posts : [], loading: Boolean(uid) && !ready, error: ready ? state.error : null, reload: load, signedIn: Boolean(uid) };
@@ -144,6 +150,34 @@ export function setFollow(userId: string, on: boolean): Promise<void> {
   })().finally(() => inFlight.delete(k));
   inFlight.set(k, p);
   return p;
+}
+
+/**
+ * Friend request, acceptance, withdrawal or unfriending. Resolves once the
+ * server has recorded it (never shown as done before); a double tap sends
+ * one request. `add` asks, or accepts a request waiting for you; `remove`
+ * withdraws, declines or unfriends.
+ */
+export function setFriend(userId: string, action: 'add' | 'remove'): Promise<FriendStatus> {
+  const k = `friend|${userId}|${action}`;
+  const running = inFlight.get(k) as Promise<FriendStatus> | undefined;
+  if (running) return running;
+  const p = (async (): Promise<FriendStatus> => {
+    const { data, error } = await sb().rpc(action === 'add' ? 'add_friend' : 'remove_friend', { p_user: userId });
+    if (error) throw new Error(friendError(error.message));
+    changed('friends', 'notifs', 'inbox');
+    return action === 'remove' ? 'none' : data === 'accepted' ? 'friends' : 'outgoing';
+  })().finally(() => inFlight.delete(k));
+  inFlight.set(k, p as unknown as Promise<void>);
+  return p;
+}
+
+function friendError(m: string): string {
+  if (/fetch|network/i.test(m)) return 'No connection: try again';
+  if (/sign in|JWT|token/i.test(m)) return 'Your session has ended. Sign in again';
+  if (/not available/i.test(m)) return 'This member is not available';
+  if (/that is you/i.test(m)) return 'This is your own profile';
+  return m;
 }
 
 /** Followers or following of a member (empty when their profile is hidden from you). */

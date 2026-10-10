@@ -572,6 +572,116 @@ async function main() {
     return false;
   });
 
+  // ───────── Friends, end to end, with default settings (no shortcut): Wes and Xan are new ─────────
+  // Two real browsers: Uma (page) adds Wes (wesPage); nobody's "who can message me" is changed.
+  const wes = await createWoman('Wes');
+  const xan = await createWoman('Xan');
+  const xanSb = createClient(URL_, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  must(await xanSb.auth.signInWithPassword({ email: xan.email, password: PASSWORD }));
+  const wesPage = await signedInPage(browser, wes);
+  const friendRow = async (a, b) => (await sql(`select status, requested_by from public.friendships where user_a = least('${a}'::uuid, '${b}'::uuid) and user_b = greatest('${a}'::uuid, '${b}'::uuid)`))[0];
+  await step('Wes\'s profile: no chat with a stranger, it says how (Add friend), Message is disabled', async () => {
+    await page.goto(`${BASE}/person/${wes.id}`);
+    await visible(page, 'Add friend', 20000);
+    await visible(page, 'Add Wes as a friend to send a message');
+    return page.getByRole('button', { name: 'Message', exact: true }).isDisabled();
+  });
+  await step('Wes has her notifications open; Uma taps Add friend twice → one request, one notification, "Request sent"', async () => {
+    await wesPage.goto(`${BASE}/notifications`);
+    await wesPage.waitForTimeout(1500);
+    const add = page.getByRole('button', { name: 'Add friend', exact: true });
+    await Promise.all([add.click(), add.click({ timeout: 2000 }).catch(() => undefined)]);
+    await visible(page, 'Request sent', 15000);
+    const row = await friendRow(uma.id, wes.id);
+    const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${wes.id}' and kind = 'FRIEND_REQUEST' and payload ->> 'from' = '${uma.id}'`);
+    const [rows] = await sql(`select count(*)::int as n from public.friendships where '${wes.id}' in (user_a, user_b)`);
+    return row?.status === 'pending' && row.requested_by === uma.id && n.n === 1 && rows.n === 1;
+  });
+  await step('… Wes sees "Uma wants to be friends" appear live in her open notifications, with Accept', async () => {
+    await visible(wesPage, 'Uma wants to be friends', 20000);
+    await wesPage.getByRole('button', { name: 'Accept', exact: true }).first().waitFor({ timeout: 10000 });
+    return true;
+  });
+  await step('… still "Request sent" for Uma after a reload (from the server)', async () => {
+    await page.reload();
+    await visible(page, 'Request sent', 20000);
+    await visible(page, 'You can message Wes once they accept your request');
+    return true;
+  });
+  await step('Wes accepts in her app → recorded; Uma\'s open profile turns to Friends and Message opens, no reload', async () => {
+    await wesPage.getByRole('button', { name: 'Accept', exact: true }).first().click();
+    await visible(wesPage, 'You are now friends', 15000);
+    const row = await friendRow(uma.id, wes.id);
+    if (row?.status !== 'accepted') throw new Error(`status ${row?.status}`);
+    await visible(page, 'Friends', 20000);
+    await page.getByRole('button', { name: 'Message', exact: true }).waitFor({ timeout: 15000 });
+    for (let i = 0; i < 30; i++) {
+      if (!(await page.getByRole('button', { name: 'Message', exact: true }).isDisabled())) break;
+      await page.waitForTimeout(500);
+    }
+    const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${uma.id}' and kind = 'FRIEND_ACCEPTED' and payload ->> 'from' = '${wes.id}'`);
+    return n.n === 1 && !(await page.getByRole('button', { name: 'Message', exact: true }).isDisabled());
+  });
+  let wesDm = null;
+  const hello = `Salut, comment vas-tu ? ${run}`;
+  await step('Uma taps Message (twice) → one private chat; she sends "Salut, comment vas-tu ?" → stored, sender Uma', async () => {
+    const msg = page.getByRole('button', { name: 'Message', exact: true });
+    await Promise.all([msg.click(), msg.click({ timeout: 1500 }).catch(() => undefined)]);
+    await page.waitForURL(/\/messages\/[0-9a-f-]{36}/, { timeout: 20000 });
+    wesDm = page.url().split('/messages/')[1].split('?')[0];
+    const [c] = await sql(`select count(*)::int as n from public.conversations c where c.kind = 'direct'
+      and exists (select 1 from public.conversation_members m where m.conversation_id = c.id and m.user_id = '${uma.id}')
+      and exists (select 1 from public.conversation_members m where m.conversation_id = c.id and m.user_id = '${wes.id}')`);
+    if (c.n !== 1) throw new Error(`${c.n} private chats`);
+    await wesPage.goto(`${BASE}/messages/${wesDm}`);
+    await visible(wesPage, 'Private · see profile', 20000);
+    await page.getByPlaceholder('Message').fill(hello);
+    await page.getByRole('button', { name: 'Send', exact: true }).click();
+    for (let i = 0; i < 30; i++) {
+      const [m] = await sql(`select sender_id from public.messages where conversation_id = '${wesDm}' and body = '${hello.replace(/'/g, "''")}'`);
+      if (m) return m.sender_id === uma.id;
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
+  await step('… it appears live in Wes\'s open chat; Wes replies in her app → it appears live in Uma\'s', async () => {
+    await visible(wesPage, hello, 20000);
+    await wesPage.getByPlaceholder('Message').fill(`Très bien, et toi ? ${run}`);
+    await wesPage.getByRole('button', { name: 'Send', exact: true }).click();
+    await visible(page, `Très bien, et toi ? ${run}`, 20000);
+    return true;
+  });
+  await step('… both messages are still there after closing and reopening (reload, both sides)', async () => {
+    await page.reload();
+    await wesPage.reload();
+    await visible(page, hello, 20000);
+    await visible(page, `Très bien, et toi ? ${run}`, 20000);
+    await visible(wesPage, hello, 20000);
+    return true;
+  });
+  await step('A third member (Xan) cannot read Uma and Wes\'s chat, their request or Wes\'s notifications', async () => {
+    const msgs = must(await xanSb.from('messages').select('id').eq('conversation_id', wesDm));
+    const fr = must(await xanSb.from('friendships').select('user_a').or(`user_a.eq.${wes.id},user_b.eq.${wes.id}`));
+    const notes = must(await xanSb.from('notifications').select('id').eq('user_id', wes.id));
+    const write = await xanSb.from('messages').insert({ conversation_id: wesDm, sender_id: xan.id, body: 'intrusion' });
+    const dm = await xanSb.rpc('open_direct', { p_user: wes.id });
+    return msgs.length === 0 && fr.length === 0 && notes.length === 0 && Boolean(write.error) && Boolean(dm.error);
+  });
+  await step('Xan asks Uma → Uma accepts from her notifications; then Uma unfriends from the profile → gone for both', async () => {
+    must(await xanSb.rpc('add_friend', { p_user: uma.id }));
+    await page.goto(`${BASE}/notifications`);
+    await visible(page, 'Xan wants to be friends', 20000);
+    await page.getByRole('button', { name: 'Accept', exact: true }).first().click();
+    for (let i = 0; i < 20 && (await friendRow(uma.id, xan.id))?.status !== 'accepted'; i++) await page.waitForTimeout(500);
+    if ((await friendRow(uma.id, xan.id))?.status !== 'accepted') return false;
+    await page.goto(`${BASE}/person/${xan.id}`);
+    await visible(page, 'Friends', 20000);
+    await page.getByRole('button', { name: /Remove Xan from your friends/ }).click();
+    await visible(page, 'Add friend', 20000);
+    return !(await friendRow(uma.id, xan.id)) && must(await xanSb.rpc('my_friends')).length === 0;
+  });
+  await wesPage.context().close();
+
   // ───────── Messaging & social: profiles, follows, photos, groups ─────────
   // Vera accepts messages from people she shares a community with.
   await sql(`insert into public.safety_settings (user_id, who_can_message) values ('${vera.id}', 'everyone') on conflict (user_id) do update set who_can_message = 'everyone'`);

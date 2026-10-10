@@ -5,7 +5,7 @@ import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
-import { useSyncVersion } from './sync';
+import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { imageBytes, imageType } from '@/lib/media';
 
 /**
@@ -193,17 +193,12 @@ export function useFriends(): { friends: Friend[]; refresh: () => void } {
     if (!supabase || !uid) return;
     let alive = true;
     load().then((f) => alive && setFriends(f)).catch(() => undefined);
-    const channel = supabase
-      .channel(topic(`friends-${uid}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, () => {
-        load().then((f) => alive && setFriends(f)).catch(() => undefined);
-      })
-      .subscribe();
     return () => {
       alive = false;
-      supabase?.removeChannel(channel);
     };
   }, [uid, load]);
+  // Requests and friendships change through the app's one realtime channel (SyncBridge).
+  useRefreshOn(['friends'], refresh);
   return { friends: uid ? friends : NONE, refresh };
 }
 
@@ -212,6 +207,7 @@ export async function addFriend(userId: string): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data, error } = await supabase.rpc('add_friend', { p_user: userId });
   if (error) throw new Error(error.message);
+  changed('friends', 'notifs');
   return data as string;
 }
 
@@ -219,6 +215,7 @@ export async function removeFriend(userId: string): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.rpc('remove_friend', { p_user: userId });
   if (error) throw new Error(error.message);
+  changed('friends', 'notifs');
 }
 
 /* ───────────────────────── Notifications ───────────────────────── */

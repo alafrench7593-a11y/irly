@@ -295,16 +295,12 @@ export const useStore = create<State & Actions>()(
         set({ memberOf });
         return on;
       },
+      // Example people only (demo build): nobody is behind them, so a request
+      // stays "Requested" and is never shown as accepted. Real members use the
+      // server (Add friend on their profile).
       connect: (personId) => {
         if (get().connections[personId]) return;
         set({ connections: { ...get().connections, [personId]: 'pending' } });
-        // Simulates the other person accepting: real-life apps feel alive.
-        setTimeout(() => {
-          const current = useStore.getState().connections;
-          if (current[personId] === 'pending') {
-            useStore.setState({ connections: { ...current, [personId]: 'connected' } });
-          }
-        }, 2600);
       },
       book: (b) => {
         const booking: Booking = { ...b, id: `bk-${Date.now()}`, createdAt: Date.now() };

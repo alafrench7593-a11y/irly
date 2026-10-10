@@ -23,7 +23,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { openDirect, setFollow, useMemberProfile } from './member';
+import { openDirect, setFollow, setFriend, useMemberProfile } from './member';
 
 /**
  * A real member's profile (server): only what they let you see. Followers
@@ -40,7 +40,7 @@ export function MemberProfileView({ userId }: { userId: string }) {
   const now = useNow();
   const faces = useSignedLinks('profile-photos', [p?.photo]);
   const covers = useSignedLinks('activity-photos', communities.map((c) => c.cover));
-  const [busy, setBusy] = useState<'follow' | 'message' | null>(null);
+  const [busy, setBusy] = useState<'follow' | 'message' | 'friend' | 'unfriend' | null>(null);
   const back = () => (router.canGoBack() ? router.back() : router.replace('/messages'));
 
   const follow = async () => {
@@ -52,6 +52,24 @@ export function MemberProfileView({ userId }: { userId: string }) {
       reload();
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
+    } finally {
+      setBusy(null);
+    }
+  };
+  // Friend request, accept, withdraw, decline, unfriend: shown as done only once the server has it.
+  const friend = async (action: 'add' | 'remove') => {
+    if (!p || busy) return;
+    setBusy(action === 'add' ? 'friend' : 'unfriend');
+    try {
+      const next = await setFriend(p.id, action);
+      haptic(action === 'add' ? 'success' : 'select');
+      if (action === 'add')
+        toast(next === 'friends' ? tx('You and {name} are now friends', { name: p.firstName }) : tx('Request sent to {name}', { name: p.firstName }), next === 'friends' ? 'check' : 'send', 'positive');
+      else toast(p.friendStatus === 'friends' ? tx('{name} is no longer your friend', { name: p.firstName }) : p.friendStatus === 'incoming' ? 'Request declined' : 'Request withdrawn', 'check', 'brand');
+      reload();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
+      reload();
     } finally {
       setBusy(null);
     }
@@ -143,25 +161,55 @@ export function MemberProfileView({ userId }: { userId: string }) {
           {p.isMe ? (
             <Button label="Edit my profile" icon="user" variant="secondary" onPress={() => router.push('/edit-profile')} />
           ) : (
-            <Animated.View entering={reduced ? undefined : enter.rise(3)} style={styles.buttons}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  label={p.iFollow ? 'Following' : p.followsMe ? 'Follow back' : 'Follow'}
-                  icon={p.iFollow ? 'userCheck' : 'userPlus'}
-                  variant={p.iFollow ? 'secondary' : 'primary'}
-                  loading={busy === 'follow'}
-                  full
-                  onPress={follow}
-                />
+            <Animated.View entering={reduced ? undefined : enter.rise(3)} style={{ alignSelf: 'stretch', gap: 10 }}>
+              <View style={styles.buttons}>
+                <View style={{ flex: 1 }}>
+                  <Button
+                    label={p.friendStatus === 'friends' ? 'Friends' : p.friendStatus === 'outgoing' ? 'Request sent' : p.friendStatus === 'incoming' ? 'Accept' : 'Add friend'}
+                    icon={p.friendStatus === 'friends' ? 'userCheck' : p.friendStatus === 'outgoing' ? 'clock' : p.friendStatus === 'incoming' ? 'check' : 'userPlus'}
+                    variant={p.friendStatus === 'friends' ? 'done' : p.friendStatus === 'outgoing' ? 'secondary' : 'primary'}
+                    loading={busy === 'friend'}
+                    full
+                    haptic={false}
+                    onPress={p.friendStatus === 'none' || p.friendStatus === 'incoming' ? () => friend('add') : undefined}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Button
+                    label={p.iFollow ? 'Following' : p.followsMe ? 'Follow back' : 'Follow'}
+                    icon={p.iFollow ? 'userCheck' : 'userPlus'}
+                    variant="secondary"
+                    loading={busy === 'follow'}
+                    full
+                    onPress={follow}
+                  />
+                </View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Button label="Message" icon="message" variant="secondary" loading={busy === 'message'} full disabled={!p.canMessage} onPress={message} />
-              </View>
+              <Button label="Message" icon="message" variant={p.canMessage ? 'primary' : 'secondary'} loading={busy === 'message'} full disabled={!p.canMessage} onPress={message} />
+              {p.friendStatus !== 'none' ? (
+                <PressableScale
+                  onPress={() => friend('remove')}
+                  disabled={Boolean(busy)}
+                  style={styles.link}
+                  accessibilityRole="button"
+                  accessibilityLabel={p.friendStatus === 'friends' ? tx('Remove {name} from your friends', { name: p.firstName }) : p.friendStatus === 'incoming' ? 'Decline the request' : 'Cancel the request'}
+                >
+                  <Text variant="caption" tone="tertiary">
+                    {busy === 'unfriend' ? 'One moment…' : p.friendStatus === 'friends' ? 'Remove from friends' : p.friendStatus === 'incoming' ? 'Decline the request' : 'Cancel the request'}
+                  </Text>
+                </PressableScale>
+              ) : null}
             </Animated.View>
           )}
           {!p.isMe && !p.canMessage ? (
             <Text variant="caption" tone="tertiary" align="center" style={{ paddingHorizontal: space.gutter }}>
-              {tx('{name} only accepts messages from friends or people met on IRLY. Following does not open a chat.', { name: p.firstName })}
+              {p.friendStatus === 'friends'
+                ? tx('{name} does not accept private messages right now.', { name: p.firstName })
+                : p.friendStatus === 'incoming'
+                  ? tx('Accept {name}’s request to start chatting.', { name: p.firstName })
+                  : p.friendStatus === 'outgoing'
+                    ? tx('You can message {name} once they accept your request.', { name: p.firstName })
+                    : tx('Add {name} as a friend to send a message. Following does not open a chat.', { name: p.firstName })}
             </Text>
           ) : null}
         </View>
@@ -304,6 +352,7 @@ const styles = StyleSheet.create({
   counts: { flexDirection: 'row', alignItems: 'center', gap: 18 },
   count: { alignItems: 'center', minWidth: 90, paddingVertical: 4 },
   sep: { width: StyleSheet.hairlineWidth * 2, height: 30 },
+  link: { alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 12 },
   buttons: { flexDirection: 'row', gap: 10, alignSelf: 'stretch' },
   card: { flexDirection: 'row', gap: 10, alignItems: 'center', margin: space.gutter, marginTop: space[6], padding: 14, borderRadius: radius.lg },
   section: { paddingHorizontal: space.gutter, marginTop: space[6], gap: 10 },

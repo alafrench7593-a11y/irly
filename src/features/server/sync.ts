@@ -16,11 +16,11 @@ import { supabase, topic } from '@/lib/supabase';
  * So an activity created, joined, renamed or deleted on one screen (or on
  * another phone) shows up, updated, on every screen that shows it.
  */
-export type SyncKind = 'activities' | 'communities' | 'inbox' | 'people' | 'saved' | 'notifs' | 'follows';
-const KINDS: SyncKind[] = ['activities', 'communities', 'inbox', 'people', 'saved', 'notifs', 'follows'];
+export type SyncKind = 'activities' | 'communities' | 'inbox' | 'people' | 'saved' | 'notifs' | 'follows' | 'friends';
+const KINDS: SyncKind[] = ['activities', 'communities', 'inbox', 'people', 'saved', 'notifs', 'follows', 'friends'];
 
 type Versions = Record<SyncKind, number> & { online: boolean };
-const useVersions = create<Versions>(() => ({ activities: 0, communities: 0, inbox: 0, people: 0, saved: 0, notifs: 0, follows: 0, online: true }));
+const useVersions = create<Versions>(() => ({ activities: 0, communities: 0, inbox: 0, people: 0, saved: 0, notifs: 0, follows: 0, friends: 0, online: true }));
 
 /** The version of a kind of data: put it in an effect's dependencies to reload when it changes. */
 export const useSyncVersion = (kind: SyncKind) => useVersions((s) => s[kind]);
@@ -67,6 +67,9 @@ export function SyncBridge() {
       { table: 'notifications', filter: `user_id=eq.${uid}`, kinds: ['notifs'] },
       // Follows you are part of (the read rule limits them): counts and buttons everywhere.
       { table: 'follows', kinds: ['follows'] },
+      // Friend requests and friendships you are part of (the read rule limits them):
+      // Add / Requested / Accept / Friends, the bell and who may message whom.
+      { table: 'friendships', kinds: ['friends'] },
     ];
     const channels = TABLES.map(({ table, filter, event = '*', kinds }) => {
       let first = true;
