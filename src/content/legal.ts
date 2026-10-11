@@ -10,7 +10,7 @@ import { APP, LEGAL_REQUIRED, LEGAL_VERSIONS } from '@/config/app';
 export type LegalDoc = 'privacy' | 'terms' | 'guidelines';
 export type LegalSection = { title: string; body: string[] };
 
-const who = `${APP.name} is operated by ${APP.legalEntity}, ${APP.operatorType === 'individual' ? 'an individual (sole operator), ' : ''}${APP.legalAddress}.`;
+const who = `${APP.name} is operated by ${APP.legalEntity}${APP.operatorType === 'company' ? ` (trade licence ${APP.licence}, represented by ${APP.representative})` : ', an individual (sole operator)'}, ${APP.legalAddress}.`;
 
 export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: string; intro: string; sections: LegalSection[] }> = {
   privacy: {
@@ -40,6 +40,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
         body: [
           'Other members see your public profile (first name, age, photo, city, bio, interests, languages, the communities you belong to, and your follower and following counts and lists) according to your Privacy settings ("Who can find my profile"). People who share a chat with you, or who can already reach your profile, still see your first name and photo.',
           'Messages and photos sent in a chat are visible only to the members of the conversation, including people added to a group later. Community posts are visible to people who can see the community. Live (IRL) posts follow the audience you choose.',
+          'Anything other members can see can be copied or saved by them (for example with a screenshot). Check who will see something before you share personal information.',
           'Blocking someone hides you from each other everywhere.',
           'IRLY moderators can read content that was reported, to review it.',
           'We do not sell your data and do not use advertising trackers.',
@@ -73,7 +74,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
         body: [
           'Access and portability: Settings → Download my data gives you a copy of your data (photo files are listed by name; ask us for copies of the files themselves).',
           'Correction: Edit profile and Professional profile.',
-          'Deletion: Settings → Delete account deletes your account and data from our servers.',
+          'Deletion: Settings → Delete account deletes your account and data from our servers. Uninstalling the app does not delete your account.',
           'Visibility: Settings → Privacy (who can find you, who sees your live posts and activities, location precision, notifications).',
           `Objection, restriction and complaints: write to ${APP.privacyEmail}. You may also complain to the UAE Data Office, or to the data protection authority where you live (for example the CNIL in France).`,
           `Why we may use your data: to provide the service you sign up for (account, profile, chats, activities), with your consent where it is needed (notifications, optional details such as faith, your photos), and to keep IRLY safe and working (moderation, security, statistics without personal content). This follows ${APP.dataLaw} and, for people in the European Union, the GDPR (contract, consent and legitimate interests).`,
@@ -82,7 +83,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       {
         title: 'Security',
         body: [
-          'Data travels encrypted (HTTPS). Every table is protected by access rules in the database so that members can only read what they are allowed to see. No method is perfectly secure; tell us at the address above if you find a problem.',
+          'Data travels encrypted (HTTPS). Every table is protected by access rules in the database so that members can only read what they are allowed to see. Messages are not end-to-end encrypted: they are stored on our servers, protected by these access rules; moderators read reported messages to review them. No method is perfectly secure; tell us at the address above if you find a problem.',
         ],
       },
       {
@@ -139,8 +140,11 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       {
         title: 'Liability, law and disputes',
         body: [
-          'Limitation of liability and warranties: [LEGAL INFORMATION REQUIRED].',
-          `Governing law and competent courts: ${APP.governingLaw}.`,
+          'IRLY provides tools that make it easier to meet people. IRLY does not guarantee that friendships will form, the quality of the relationships, or that members will actually take part in the activities they join.',
+          'Each member remains responsible for their decisions, their posts and their interactions with other members. IRLY does not guarantee the accuracy of everything members publish, or their real identity, unless a verification is expressly offered.',
+          'IRLY works to keep the service available but does not guarantee it will always be available or free of errors: maintenance, updates, technical or network problems and failures of service providers can interrupt it.',
+          'To the extent allowed by law, IRLY is not liable for damage caused solely by third parties or by events outside its responsibility. Nothing in these Terms excludes or limits a liability that cannot legally be excluded or limited, or affects consumers’ mandatory rights.',
+          `Governing law and competent courts: ${APP.governingLaw}. This does not deprive you of the mandatory protections of the country where you live.`,
         ],
       },
       {
@@ -189,7 +193,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
   },
 };
 
-const whoFr = `${APP.name} est exploitée par ${APP.legalEntity}, ${APP.operatorType === 'individual' ? 'personne physique (exploitant individuel), ' : ''}Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.`;
+const whoFr = `${APP.name} est exploitée par ${APP.legalEntity}${APP.operatorType === 'company' ? ` (licence n° ${APP.licence}, représentée par ${APP.representative})` : ', personne physique (exploitant individuel)'}, ${APP.legalAddressFr}.`;
 const draft = (v: string) => v.replace('(draft)', '(projet)');
 
 /** The same texts in French, written for French readers (not shown as a machine translation). */
@@ -222,6 +226,7 @@ export const LEGAL_FR: typeof LEGAL = {
         body: [
           'Les autres membres voient ton profil public (prénom, âge, photo, ville, bio, centres d’intérêt, langues, les communautés dont tu fais partie, ainsi que le nombre et la liste de tes abonnés et abonnements) selon tes réglages de confidentialité (« Qui peut trouver mon profil »). Les personnes qui partagent une discussion avec toi, ou qui peuvent déjà accéder à ton profil, voient toujours ton prénom et ta photo.',
           'Les messages et photos envoyés dans une discussion ne sont visibles que par les membres de la conversation, y compris les personnes ajoutées plus tard à un groupe. Les publications d’une communauté sont visibles par les personnes qui peuvent voir la communauté. Les publications en direct (IRL) suivent l’audience que tu choisis.',
+          'Ce que d’autres membres peuvent voir peut être copié ou enregistré par eux (par exemple par une capture d’écran). Vérifie qui verra une information avant de la partager.',
           'Bloquer quelqu’un vous masque l’un à l’autre partout.',
           'Les modérateurs d’IRLY peuvent lire les contenus signalés, pour les examiner.',
           'Nous ne vendons pas tes données et n’utilisons pas de traceurs publicitaires.',
@@ -255,7 +260,7 @@ export const LEGAL_FR: typeof LEGAL = {
         body: [
           'Accès et portabilité : Réglages → Télécharger mes données te donne une copie de tes données (les fichiers photo sont listés par nom ; demande-nous une copie des fichiers eux-mêmes).',
           'Rectification : Modifier le profil et Profil professionnel.',
-          'Suppression : Réglages → Supprimer le compte supprime ton compte et tes données de nos serveurs.',
+          'Suppression : Réglages → Supprimer le compte supprime ton compte et tes données de nos serveurs. Désinstaller l’app ne supprime pas ton compte.',
           'Visibilité : Réglages → Confidentialité (qui peut te trouver, qui voit tes publications en direct et tes activités, précision de la localisation, notifications).',
           `Opposition, limitation et réclamations : écris à ${APP.privacyEmail}. Tu peux aussi adresser une réclamation à l’UAE Data Office, ou à l’autorité de protection des données de ton pays (par exemple la CNIL en France).`,
           `Pourquoi nous pouvons utiliser tes données : pour fournir le service auquel tu t’inscris (compte, profil, discussions, activités), avec ton consentement quand il est nécessaire (notifications, détails facultatifs comme la religion, tes photos), et pour garder IRLY sûre et fonctionnelle (modération, sécurité, statistiques sans contenu personnel). Cela suit la loi émiratie sur la protection des données personnelles (décret-loi fédéral n° 45 de 2021) et, pour les personnes situées dans l’Union européenne, le RGPD (contrat, consentement et intérêts légitimes).`,
@@ -264,7 +269,7 @@ export const LEGAL_FR: typeof LEGAL = {
       {
         title: 'Sécurité',
         body: [
-          'Les données circulent chiffrées (HTTPS). Chaque table est protégée par des règles d’accès dans la base de données, pour que les membres ne puissent lire que ce qu’ils ont le droit de voir. Aucune méthode n’est parfaitement sûre ; préviens-nous à l’adresse ci-dessus si tu trouves un problème.',
+          'Les données circulent chiffrées (HTTPS). Chaque table est protégée par des règles d’accès dans la base de données, pour que les membres ne puissent lire que ce qu’ils ont le droit de voir. Les messages ne sont pas chiffrés de bout en bout : ils sont stockés sur nos serveurs, protégés par ces règles d’accès ; les modérateurs lisent les messages signalés pour les examiner. Aucune méthode n’est parfaitement sûre ; préviens-nous à l’adresse ci-dessus si tu trouves un problème.',
         ],
       },
       {
@@ -322,8 +327,11 @@ export const LEGAL_FR: typeof LEGAL = {
       {
         title: 'Responsabilité, droit applicable et litiges',
         body: [
-          `Limitation de responsabilité et garanties : ${LEGAL_REQUIRED}.`,
-          'Droit applicable et juridiction compétente : le droit de l’Émirat de Dubaï et les lois fédérales applicables des Émirats arabes unis ; les tribunaux de Dubaï sont compétents.',
+          'IRLY fournit des outils destinés à faciliter les rencontres. IRLY ne garantit ni la formation d’amitiés, ni la qualité des relations établies, ni la participation effective des membres aux activités qu’ils rejoignent.',
+          'Chaque membre reste responsable de ses décisions, de ses publications et de ses échanges avec les autres membres. IRLY ne garantit pas l’exactitude de tout ce que les membres publient, ni leur identité réelle, sauf vérification expressément proposée.',
+          'IRLY s’efforce d’assurer la disponibilité du service mais ne garantit pas une disponibilité permanente ni l’absence d’erreurs : maintenances, mises à jour, difficultés techniques ou réseau et défaillances de prestataires peuvent l’interrompre.',
+          'Dans les limites autorisées par la loi, IRLY ne saurait être tenue responsable des dommages exclusivement imputables à des tiers ou à des événements qui ne relèvent pas de sa responsabilité. Aucune disposition des présentes conditions n’exclut ni ne limite une responsabilité qui ne peut légalement l’être, ni ne porte atteinte aux droits impératifs des consommateurs.',
+          'Droit applicable et juridiction compétente : le droit de l’Émirat de Dubaï et les lois fédérales applicables des Émirats arabes unis ; les tribunaux de Dubaï sont compétents. Cela ne te prive pas des protections impératives du pays où tu vis.',
         ],
       },
       {

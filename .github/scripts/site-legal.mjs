@@ -36,24 +36,24 @@ function prose(s, lang) {
 }
 const dateFmt = (lang, d) => new Date(`${d}T12:00:00Z`).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-const PAGES = ['privacy', 'terms', 'guidelines', 'support', 'delete-account'];
+const PAGES = ['privacy', 'terms', 'guidelines', 'support', 'delete-account', 'legal-notice'];
 const href = (lang, page) => `${lang === 'fr' ? '/fr' : ''}/${page}`;
 const homeOf = (lang) => (lang === 'fr' ? '/fr/' : '/');
 
 const UI = {
   en: {
     locale: 'en_US', other: 'Français', home: 'Home', updated: 'Last updated', version: 'Version', contents: 'On this page',
-    nav: { privacy: 'Privacy', terms: 'Terms', guidelines: 'Community guidelines', support: 'Support', 'delete-account': 'Delete account' },
+    nav: { privacy: 'Privacy', terms: 'Terms', guidelines: 'Community guidelines', support: 'Support', 'delete-account': 'Delete account', 'legal-notice': 'Legal notice' },
     draft: 'This text describes how IRLY works today. It is being reviewed by a lawyer; parts marked as required are being completed.',
-    operator: `IRLY is operated by ${APP.legalEntity}, ${APP.legalAddress}.`,
+    operator: `IRLY is operated by ${APP.legalEntity} (trade licence ${APP.licence}), ${APP.legalAddress}.`,
     contact: 'Contact',
     tagline: 'Less loneliness. More life.',
   },
   fr: {
     locale: 'fr_FR', other: 'English', home: 'Accueil', updated: 'Dernière mise à jour', version: 'Version', contents: 'Sur cette page',
-    nav: { privacy: 'Confidentialité', terms: 'Conditions', guidelines: 'Règles de la communauté', support: 'Assistance', 'delete-account': 'Supprimer son compte' },
+    nav: { privacy: 'Confidentialité', terms: 'Conditions', guidelines: 'Règles de la communauté', support: 'Assistance', 'delete-account': 'Supprimer son compte', 'legal-notice': 'Mentions légales' },
     draft: 'Ce texte décrit le fonctionnement actuel d’IRLY. Il est en cours de relecture par un juriste ; les parties marquées comme requises sont en cours de complément.',
-    operator: `IRLY est exploitée par ${APP.legalEntity}, Dubai Digital Park, Dubai Silicon Oasis, Dubaï, Émirats arabes unis.`,
+    operator: `IRLY est exploitée par ${APP.legalEntity} (licence n° ${APP.licence}), ${APP.legalAddressFr}.`,
     contact: 'Contact',
     tagline: 'Moins de solitude. Plus de vie.',
   },
@@ -492,6 +492,36 @@ for (const lang of ['en', 'fr']) {
 <section><h2 id="deleted">${s.what}</h2><p>${s.whatP}</p></section>
 <section><h2 id="kept">${s.kept}</h2><ul>${s.keptL.map((x) => `<li>${x}</li>`).join('')}</ul><p>${s.keptNote} <a href="${href(lang, 'privacy')}">${s.privacy}</a>.</p><p>${s.app}</p></section>`;
   write(lang, 'delete-account', shell({ lang, page: 'delete-account', title: s.title, description: s.description, h1: s.h1, body, ld: {} }));
+}
+
+/* ───────── Legal notice ───────── */
+const NOTICE = {
+  en: {
+    title: 'Legal notice | IRLY', h1: 'Legal notice',
+    description: 'Who publishes the IRLY website and app: operating company, licence, representative, contact, hosting and intellectual property.',
+    rows: [['Operator', APP.legalEntity], ['Trade licence', APP.licence], ['Represented by', APP.representative], ['Address', APP.legalAddress], ['Email', `<a href="mailto:${APP.supportEmail}">${APP.supportEmail}</a>`], ['Website', '<a href="https://getirly.com">https://getirly.com</a>'], ['App development', APP.developer]],
+    hosting: 'Hosting', hostingP: 'The website and the web app are served by Vercel. Accounts, profiles, messages and photos are stored by Supabase, in ' + APP.hosting + '.',
+    ip: 'Intellectual property', ipP: 'The IRLY name and logo, its visual identity, interface, texts and other protected elements of the service are subject to the applicable intellectual property rights. Any reproduction, modification or use without permission is prohibited, except where the law allows it. Content posted by members remains subject to the rights of its authors.',
+    more: 'See also', missing: 'The legal form shown on the licence, the issuing free zone and the full registered address are being completed from the company documents.',
+  },
+  fr: {
+    title: 'Mentions légales | IRLY', h1: 'Mentions légales',
+    description: 'Qui édite le site et l’application IRLY : société exploitante, licence, représentant, contact, hébergement et propriété intellectuelle.',
+    rows: [['Exploitant', APP.legalEntity], ['Licence', APP.licence], ['Représentée par', APP.representative], ['Adresse', APP.legalAddressFr], ['E-mail', `<a href="mailto:${APP.supportEmail}">${APP.supportEmail}</a>`], ['Site', '<a href="https://getirly.com">https://getirly.com</a>'], ['Développement de l’application', APP.developer]],
+    hosting: 'Hébergement', hostingP: 'Le site et l’application web sont servis par Vercel. Les comptes, profils, messages et photos sont stockés par Supabase, dans l’Union européenne (Irlande), sur Amazon Web Services.',
+    ip: 'Propriété intellectuelle', ipP: 'Le nom et le logo IRLY, son identité visuelle, son interface, ses textes et les autres éléments protégés du service sont soumis aux droits de propriété intellectuelle applicables. Toute reproduction, modification ou exploitation non autorisée est interdite, sous réserve des exceptions prévues par la loi. Les contenus publiés par les membres restent soumis aux droits de leurs auteurs.',
+    more: 'Voir aussi', missing: 'La forme juridique figurant sur la licence, la zone franche émettrice et l’adresse complète du siège sont en cours de complément à partir des documents de la société.',
+  },
+};
+for (const lang of ['en', 'fr']) {
+  const s = NOTICE[lang];
+  const body = `<h1>${s.h1}</h1>
+<section><table style="width:100%;border-collapse:collapse;font-size:16px">${s.rows.map(([k, v]) => `<tr><th scope="row" style="text-align:left;vertical-align:top;padding:10px 16px 10px 0;color:var(--g2);font-weight:600;border-bottom:1px solid var(--line);width:40%">${k}</th><td style="padding:10px 0;border-bottom:1px solid var(--line)">${v}</td></tr>`).join('')}</table>
+<p class="note">${s.missing}</p></section>
+<section><h2 id="hosting">${s.hosting}</h2><p>${s.hostingP}</p></section>
+<section><h2 id="ip">${s.ip}</h2><p>${s.ipP}</p></section>
+<p>${s.more} : <a href="${href(lang, 'privacy')}">${UI[lang].nav.privacy}</a> · <a href="${href(lang, 'terms')}">${UI[lang].nav.terms}</a> · <a href="${href(lang, 'support')}">${UI[lang].nav.support}</a></p>`.replace(`${s.more} : `, lang === 'fr' ? `${s.more} : ` : `${s.more}: `);
+  write(lang, 'legal-notice', shell({ lang, page: 'legal-notice', title: s.title, description: s.description, h1: s.h1, body, ld: {} }));
 }
 
 /* ───────── Sitemap ───────── */

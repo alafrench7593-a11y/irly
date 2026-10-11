@@ -40,6 +40,8 @@ const PAGES = [
   ['/fr/support', /Aide et assistance/],
   ['/delete-account', /Delete your IRLY account/],
   ['/fr/delete-account', /Supprimer ton compte IRLY/],
+  ['/legal-notice', /Legal notice/],
+  ['/fr/legal-notice', /Mentions légales/],
   ['/app/', /<div id="root"|IRLY/],
 ];
 
