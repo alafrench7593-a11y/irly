@@ -37,6 +37,14 @@ begin
   raise notice 'ok  %', label;
 end $$;
 
+create or replace function pg_temp.verify_all() returns void language plpgsql as $$
+begin
+  -- Match needs verified members with 3 photos of themselves: test members are verified here.
+  update public.profiles set photo_paths = array[id::text || '/1.jpg', id::text || '/2.jpg', id::text || '/3.jpg'],
+    verified_at = now(), verified_photos = array[id::text || '/1.jpg', id::text || '/2.jpg', id::text || '/3.jpg']
+  where verified_at is null and deleted_at is null;
+end $$;
+
 -- People: three women, one man.
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-00000000000b'),
@@ -93,6 +101,8 @@ insert into public.irly_match_profiles (user_id, goals, interests, sports, langu
 values (auth.uid(), '{networking}', '{career}', '{gym}', '{ar}', '{downtown}', '{"chronotype":1,"social":-1}', '{age,areas}');
 
 -- ───── Discovery and scoring ─────
+select pg_temp.as_admin();
+select pg_temp.verify_all();
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select pg_temp.check((select count(*) from public.irly_match_profiles) = 1, 'match profiles of others are not readable directly');
 select pg_temp.check((select count(*) from public.irly_match_discover()) = 2, 'discover lists the two other women');
@@ -1306,6 +1316,9 @@ select pg_temp.check(not exists (select 1 from public.member_communities(auth.ui
 select pg_temp.check(exists (select 1 from public.communities where id = :'football_id' and deleted_at is null), 'leaving never deletes the community');
 
 -- Match IRLY: real shared answers, best first; strangers with nothing in common are not suggested.
+select pg_temp.as_admin();
+select pg_temp.verify_all();
+select pg_temp.as_user('00000000-0000-0000-0000-000000000013');
 select pg_temp.check((select id from public.people_match('dubai') limit 1) = '00000000-0000-0000-0000-000000000014', 'Kai (sports, football) is suggested to Jade');
 select pg_temp.check((select shared_activities from public.people_match('dubai') where id = '00000000-0000-0000-0000-000000000014') = '{football}', 'only what they share is returned');
 select pg_temp.check(not exists (select 1 from public.people_match('dubai') where id = '00000000-0000-0000-0000-000000000015'), 'Lou shares nothing with Jade and is not suggested');
@@ -1514,5 +1527,36 @@ select pg_temp.check(exists (select 1 from public.girl_feed('dubai', true) where
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
 select pg_temp.expect_denied(format('select public.join_community(%L)', :'bump_id'), 'spaces: men cannot join a mums group');
 select pg_temp.as_admin();
+
+-- ───── Verified profiles for Match ─────
+insert into auth.users (id) values ('00000000-0000-0000-0000-000000000018');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000018');
+insert into public.profiles (id, first_name, birthdate, gender, city_id, photo_paths, interests) values ('00000000-0000-0000-0000-000000000018', 'Rina', '1994-08-08', 'woman', 'dubai', '{00000000-0000-0000-0000-000000000018/a.jpg}', '{sports}');
+select pg_temp.expect_denied('select * from public.start_verification()', 'verify: three photos first');
+select pg_temp.expect_denied('select * from public.people_match(''dubai'')', 'verify: Match is closed until verified');
+update public.profiles set photo_paths = '{00000000-0000-0000-0000-000000000018/a.jpg,00000000-0000-0000-0000-000000000018/b.jpg,irly-avatar:v1:x}' where id = auth.uid();
+select pg_temp.expect_denied('select * from public.start_verification()', 'verify: an IRLY avatar is not a photo of you');
+update public.profiles set photo_paths = '{00000000-0000-0000-0000-000000000018/a.jpg,00000000-0000-0000-0000-000000000018/b.jpg,00000000-0000-0000-0000-000000000018/c.jpg}' where id = auth.uid();
+select request_id as vr_id, gesture as vr_gesture from public.start_verification() \gset
+select pg_temp.check(:'vr_gesture' in ('peace', 'thumb', 'nose', 'ear', 'three'), 'verify: the server picks the gesture');
+select pg_temp.expect_denied(format('select public.submit_verification(%L, %L)', :'vr_id', '00000000-0000-0000-0000-000000000011/x.jpg'), 'verify: only your own selfie');
+select public.submit_verification(:'vr_id', '00000000-0000-0000-0000-000000000018/selfie.jpg');
+select pg_temp.check((select status from public.my_verification()) = 'pending', 'verify: the selfie waits for a person');
+select pg_temp.expect_denied('update public.profiles set verified_at = now() where id = auth.uid()', 'verify: nobody verifies themselves');
+select pg_temp.expect_denied('select * from public.verification_queue()', 'verify: the queue is for IRLY admins');
+select pg_temp.expect_denied(format('select public.decide_verification(%L, true)', :'vr_id'), 'verify: members cannot decide');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check(exists (select 1 from public.verification_queue() where request_id = :'vr_id' and selfie_path is not null), 'verify: an admin sees the selfie and the photos');
+select pg_temp.check(public.decide_verification(:'vr_id', true) = '00000000-0000-0000-0000-000000000018/selfie.jpg', 'verify: approving returns the selfie to delete');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000018');
+select pg_temp.check((select ready and verified_at is not null from public.my_verification()), 'verify: approved, Match opens');
+select pg_temp.check(exists (select 1 from public.notifications where user_id = auth.uid() and kind = 'PROFILE_UPDATED' and payload ->> 'type' = 'verified'), 'verify: the member is told');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check(exists (select 1 from public.verified_members(array['00000000-0000-0000-0000-000000000018']::uuid[])), 'verify: others see the badge');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000018');
+update public.profiles set photo_paths = photo_paths || '{00000000-0000-0000-0000-000000000018/new.jpg}' where id = auth.uid();
+select pg_temp.check((select verified_at is null from public.my_verification()), 'verify: a photo nobody reviewed removes the badge');
+select pg_temp.as_admin();
+select pg_temp.check((select selfie_path is null from public.verification_requests where id = :'vr_id'), 'verify: no selfie kept after the decision');
 
 \echo 'ALL TESTS PASSED'

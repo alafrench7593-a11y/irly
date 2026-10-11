@@ -275,19 +275,44 @@ try {
     }
     return must(await A.sb.rpc('irly_match_state')) === 'ready';
   });
-  await step('Alice discovers Bea with a score', async () => {
-    const list = must(await A.sb.rpc('irly_match_discover', { p_filters: {}, p_limit: 50, p_offset: 0 }));
-    const bea = list.find((x) => x.user_id === B.id);
-    return Boolean(bea) && bea.score > 0;
-  });
+  // Match needs a verified profile (a selfie reviewed by an IRLY admin) once
+  // that migration is live: test members are not verified, so Match must
+  // refuse them, and the private chat below is opened directly instead.
+  const verification = !(await A.sb.rpc('my_verification')).error;
+  if (verification) {
+    await step('Match refuses members whose profile is not verified', async () => {
+      const r = await A.sb.rpc('irly_match_discover', { p_filters: {}, p_limit: 50, p_offset: 0 });
+      const p = await A.sb.rpc('people_match', { p_city: 'dubai' });
+      return /verify your profile/i.test(r.error?.message ?? '') && /verify your profile/i.test(p.error?.message ?? '');
+    });
+    await step('nobody can give themselves the verified badge', async () => {
+      await A.sb.from('profiles').update({ verified_at: new Date().toISOString() }).eq('id', A.id);
+      const v = must(await A.sb.rpc('my_verification'));
+      return !v[0]?.verified_at;
+    });
+  } else {
+    await step('Alice discovers Bea with a score', async () => {
+      const list = must(await A.sb.rpc('irly_match_discover', { p_filters: {}, p_limit: 50, p_offset: 0 }));
+      const bea = list.find((x) => x.user_id === B.id);
+      return Boolean(bea) && bea.score > 0;
+    });
+  }
   let matchConv;
-  await step('mutual like → match → private chat', async () => {
-    must(await A.sb.rpc('irly_match_act', { p_target: B.id, p_action: 'like' }));
-    const r = must(await B.sb.rpc('irly_match_act', { p_target: A.id, p_action: 'like' }));
-    matchConv = r[0]?.conversation_id;
-    return Boolean(matchConv);
-  });
-  await step('the match chat has conversation starters and both can write', async () => {
+  if (verification) {
+    await step('a private chat between Alice and Bea', async () => {
+      matchConv = must(await A.sb.rpc('open_direct', { p_user: B.id }));
+      must(await A.sb.from('messages').insert({ conversation_id: matchConv, sender_id: A.id, body: 'Hi Bea!' }));
+      return Boolean(matchConv);
+    });
+  } else {
+    await step('mutual like → match → private chat', async () => {
+      must(await A.sb.rpc('irly_match_act', { p_target: B.id, p_action: 'like' }));
+      const r = must(await B.sb.rpc('irly_match_act', { p_target: A.id, p_action: 'like' }));
+      matchConv = r[0]?.conversation_id;
+      return Boolean(matchConv);
+    });
+  }
+  await step('the private chat: both can write', async () => {
     must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body: 'Brunch this weekend?' }));
     return must(await A.sb.from('messages').select('body').eq('conversation_id', matchConv)).length >= 2;
   });

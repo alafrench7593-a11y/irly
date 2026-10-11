@@ -552,6 +552,9 @@ begin
       body := case n.payload ->> 'type'
         when 'friend_request' then coalesce(who, someone) || case when fr then ' veut être ton ami·e' else ' wants to be friends' end
         when 'friend_accepted' then coalesce(who, someone) || case when fr then ' a accepté ta demande' else ' accepted your request' end
+        when 'verified' then case when fr then 'Ton profil est vérifié ✓ Match est ouvert.' else 'Your profile is verified ✓ Match is open.' end
+        when 'verification_rejected' then case when fr then 'Vérification refusée' else 'Verification declined' end
+          || coalesce(': ' || (n.payload ->> 'reason'), case when fr then '. Tu peux réessayer.' else '. You can try again.' end)
         else case when fr then 'Ton profil a été mis à jour' else 'Your profile was updated' end end;
     when 'MATCH_CREATED' then
       title := 'IRLY Girl';

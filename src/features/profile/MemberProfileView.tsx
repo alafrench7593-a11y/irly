@@ -20,6 +20,7 @@ import { blockUser } from '@/features/moderation/moderation';
 import { openReport } from '@/features/moderation/reportStore';
 import { useSignedLinks } from '@/features/server/media';
 import { PostMedia } from '@/features/posts/PostMedia';
+import { useVerified } from '@/features/verify/verify';
 import { removePost } from '@/features/posts/posts';
 import { confirm } from '@/lib/confirm';
 import { changed } from '@/features/server/sync';
@@ -64,6 +65,8 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
   const reduced = useReducedMotion();
   const { profile: p, communities, loading, error, reload, signedIn } = useMemberProfile(userId);
   const faces = useSignedLinks('profile-photos', [p?.photo]);
+  // The badge only after a person at IRLY checked the selfie against the photos.
+  const verified = useVerified(p?.id ? [p.id] : []).has(p?.id ?? '');
   const [busy, setBusy] = useState<'follow' | 'message' | 'friend' | 'unfriend' | 'block' | null>(null);
   const [tab, setTab] = useState<Tab>('posts');
   const [menu, setMenu] = useState(false);
@@ -185,12 +188,26 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
         {/* Identity */}
         <View style={styles.identity}>
           <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-            <Avatar name={p.firstName} hue={hueOf(p.id)} size={96} photo={photo} userId={p.id} />
+            <Avatar name={p.firstName} hue={hueOf(p.id)} size={96} photo={photo} userId={p.id} verified={verified} />
           </Animated.View>
           <Animated.View entering={reduced ? undefined : enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
             <Text variant="displayL" align="center" raw>
               {p.firstName}
             </Text>
+            {verified ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="shield" size={14} color={t.c.text} />
+                <Text variant="caption" tone="secondary">
+                  {tr('Verified profile')}
+                </Text>
+              </View>
+            ) : own ? (
+              <PressableScale onPress={() => router.push('/verify')} accessibilityRole="button">
+                <Text variant="caption" tone="tertiary">
+                  {tr('Verify my profile')}
+                </Text>
+              </PressableScale>
+            ) : null}
             {p.username ? (
               <Text variant="body" tone="secondary" raw>
                 @{p.username}

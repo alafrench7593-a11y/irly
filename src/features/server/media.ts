@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
  * Links are cached until shortly before they expire, so a list does not ask
  * again on every render, and a new path (a changed photo) is a new link.
  */
-export type Bucket = 'profile-photos' | 'activity-photos' | 'chat-media' | 'irl-media' | 'post-media';
+export type Bucket = 'profile-photos' | 'activity-photos' | 'chat-media' | 'irl-media' | 'post-media' | 'verifications';
 
 const TTL = 6 * 3600;
 const cache = new Map<string, { url: string; until: number }>();
