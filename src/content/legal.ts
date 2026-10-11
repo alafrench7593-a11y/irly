@@ -1,4 +1,4 @@
-import { APP, LEGAL_REQUIRED, LEGAL_VERSIONS } from '@/config/app';
+import { APP, LEGAL_VERSIONS } from '@/config/app';
 
 /**
  * The legal texts shown in the app (Settings → Legal). They describe what
@@ -55,7 +55,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
           'Map tiles from the map provider of your phone (Apple Maps on iPhone, Google Maps on Android). On the web version, map tiles come from OpenFreeMap (OpenStreetMap data).',
           'Pictures and videos shown in the app are loaded from image hosts (Unsplash, GitHub Pages and getirly.com), which receive your IP address like any website. The IRLY website loads Google Fonts.',
           'IRLY does not offer sign-in by phone number and uses no SMS provider.',
-          'Some providers (the Expo push service, Apple and Google) may process data in the United States or other countries. The contractual safeguards that cover these transfers: [LEGAL INFORMATION REQUIRED].',
+          'Some providers (the Expo push service, Apple and Google), and some technical operations of Supabase (support, account and operational data, file delivery), may involve processing outside the European Economic Area, for example in the United States. When personal data is transferred outside the EEA, IRLY relies on a mechanism recognised by the GDPR: an adequacy decision of the European Commission, the Commission’s standard contractual clauses, or another recognised mechanism. The safeguards that apply depend on the provider, the service, the destination country and the contract terms in force. You can ask us for details about these transfers and their safeguards.',
         ],
       },
       {
@@ -67,6 +67,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
           'Messages to support: 24 months.',
           'Website waitlist: until launch, and at most 24 months. Ask support to remove your address at any time.',
           'Push notification texts: 7 days. Usage events: 13 months.',
+          'Deleted data can remain for a short time in our hosting provider’s backups before they are overwritten.',
         ],
       },
       {
@@ -241,7 +242,7 @@ export const LEGAL_FR: typeof LEGAL = {
           'Les fonds de carte du fournisseur de ton téléphone (Plans d’Apple sur iPhone, Google Maps sur Android). Sur la version web, les fonds de carte viennent d’OpenFreeMap (données OpenStreetMap).',
           'Les images et vidéos affichées dans l’app sont chargées depuis des hébergeurs d’images (Unsplash, GitHub Pages et getirly.com), qui reçoivent ton adresse IP comme n’importe quel site. Le site IRLY charge Google Fonts.',
           'IRLY ne propose pas de connexion par numéro de téléphone et n’utilise aucun prestataire SMS.',
-          `Certains prestataires (le service push d’Expo, Apple et Google) peuvent traiter des données aux États-Unis ou dans d’autres pays. Les garanties contractuelles qui encadrent ces transferts : ${LEGAL_REQUIRED}.`,
+          'Certains prestataires (le service push d’Expo, Apple et Google), et certains traitements techniques de Supabase (support, données de compte et d’exploitation, diffusion de fichiers), peuvent impliquer un traitement hors de l’Espace économique européen, par exemple aux États-Unis. Lorsque des données personnelles sont transférées hors de l’EEE, IRLY s’appuie sur un mécanisme reconnu par le RGPD : une décision d’adéquation de la Commission européenne, les clauses contractuelles types de la Commission, ou un autre mécanisme reconnu. Les garanties applicables dépendent du prestataire, du service, du pays de destination et des conditions contractuelles en vigueur. Tu peux nous demander des informations sur ces transferts et leurs garanties.',
         ],
       },
       {
@@ -253,6 +254,7 @@ export const LEGAL_FR: typeof LEGAL = {
           'Messages envoyés au support : 24 mois.',
           'Liste d’attente du site : jusqu’au lancement, et 24 mois au plus. Tu peux demander au support de retirer ton adresse à tout moment.',
           'Textes des notifications push : 7 jours. Événements d’utilisation : 13 mois.',
+          'Les données supprimées peuvent subsister peu de temps dans les sauvegardes de notre hébergeur avant d’être écrasées.',
         ],
       },
       {

@@ -47,7 +47,7 @@ export const APP = {
 
 /** Versions and dates of the legal texts shown in the app. */
 export const LEGAL_VERSIONS = {
-  privacy: { version: '0.5 (draft)', updated: '2026-10-11' },
+  privacy: { version: '0.6 (draft)', updated: '2026-10-11' },
   terms: { version: '0.4 (draft)', updated: '2026-10-11' },
   guidelines: { version: '0.2 (draft)', updated: '2026-10-07' },
 } as const;
