@@ -1022,7 +1022,12 @@ async function main() {
     const got = new URL(page.url()).pathname;
     if (want !== '/' && got === '/') bounced.push(`${route} → ${got}`);
     if (page.errors.length > before) crashed.push(`${route}: ${page.errors.slice(before).join(' | ').slice(0, 160)}`);
-    const text = await page.evaluate(() => document.body.innerText.trim().length);
+    // A screen may show only a spinner while it loads: give it a few seconds before calling it blank.
+    let text = await page.evaluate(() => document.body.innerText.trim().length);
+    for (let i = 0; text < 20 && i < 10; i++) {
+      await page.waitForTimeout(500);
+      text = await page.evaluate(() => document.body.innerText.trim().length);
+    }
     if (text < 20) blank.push(route);
   }
   await step(`all ${screens.length} screens open on their own path (no bounce to Home)`, async () => {
