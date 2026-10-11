@@ -18,7 +18,8 @@ const wanted = ['exp://**', 'irly://**', 'https://*.trycloudflare.com/**', 'http
 const allow = new Set((current.uri_allow_list ?? '').split(',').map((s) => s.trim()).filter(Boolean));
 wanted.forEach((u) => allow.add(u));
 
-const patch = { uri_allow_list: [...allow].join(',') };
+// Passwords: 8 characters at least, as the app already asks (the server allowed 6).
+const patch = { uri_allow_list: [...allow].join(','), password_min_length: Math.max(8, current.password_min_length ?? 0) };
 const env = process.env;
 // Pasted values often carry spaces, quotes or line breaks.
 const clean = (v) => (v ?? '').trim().replace(/^["']|["']$/g, '').trim();

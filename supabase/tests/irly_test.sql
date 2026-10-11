@@ -575,9 +575,10 @@ begin
   gcid := public.create_community('Sync girls ' || c, c, null, null, null, true);
   perform pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
   perform pg_temp.expect_denied(format('select public.join_community(%L)', gcid), c || ': a man cannot join an IRLY Girl community');
-  -- The daily limit on new communities is not what this test is about.
+  -- The daily limit on new communities and activities is not what this test is about.
   perform pg_temp.as_admin();
   update public.communities set created_at = now() - interval '2 days' where created_by = '00000000-0000-0000-0000-00000000000d';
+  update public.activities set created_at = now() - interval '2 days' where created_at > now() - interval '1 day';
 end $$;
 select pg_temp.sync_city(c) from unnest(array['dubai', 'abudhabi', 'sharjah', 'ajman', 'rak', 'fujairah', 'uaq', 'bali']) as c;
 select pg_temp.as_admin();
@@ -1089,6 +1090,13 @@ select pg_temp.check(not exists (select 1 from public.likes where target_type = 
 -- A group run by someone who deletes their account keeps an admin.
 insert into public.conversations (kind, title) values ('group', 'Dina group') returning id \gset dg_
 insert into public.conversation_members (conversation_id, user_id, role) values (:'dg_id', '00000000-0000-0000-0000-00000000000d', 'admin'), (:'dg_id', '00000000-0000-0000-0000-00000000000b', 'member');
+-- Spam limit: a burst of 40 messages in a minute is refused as a whole; a normal message still goes.
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select pg_temp.check(pg_temp.error_of($$insert into public.messages (conversation_id, sender_id, body) select '$$ || :'dg_id' || $$', auth.uid(), 'burst ' || g from generate_series(1, 40) g$$) like '%slow down%', 'a burst of messages is refused');
+select pg_temp.check(not exists (select 1 from public.messages where body like 'burst %'), 'nothing from the burst is kept');
+insert into public.messages (conversation_id, sender_id, body) values (:'dg_id', auth.uid(), 'Normal message');
+select pg_temp.check(exists (select 1 from public.messages where body = 'Normal message'), 'a normal message still goes through');
+select pg_temp.as_admin();
 
 -- ───── Friends → notification → private chat, end to end (E, F; G is a stranger) ─────
 select pg_temp.as_admin();

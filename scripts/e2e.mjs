@@ -306,11 +306,55 @@ try {
     return Boolean(r.error);
   });
 
+  // ───── Attacks (security audit): a stranger, a visitor, the wrong owner ─────
+  await step('a stranger reads none of a private chat', async () => (must(await C.sb.from('messages').select('id').eq('conversation_id', matchConv))).length === 0);
+  await step('a stranger cannot write into a private chat', () => denied(C.sb.from('messages').insert({ conversation_id: matchConv, sender_id: C.id, body: 'let me in' })));
+  await step('a stranger cannot add himself to a private chat', () => denied(C.sb.from('conversation_members').insert({ conversation_id: matchConv, user_id: C.id })));
+  await step('a member cannot edit someone else\'s message', async () => (must(await A.sb.from('messages').update({ body: 'forged' }).eq('conversation_id', matchConv).neq('sender_id', A.id).select('id'))).length === 0);
+  await step('a member cannot make herself an admin', () => denied(B.sb.from('profiles').update({ is_admin: true }).eq('id', B.id).select().single()));
+  await step('a member cannot send a message in someone else\'s name', () => denied(B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: A.id, body: 'forged sender' })));
+  const jpeg = Uint8Array.from(atob('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA='), (c) => c.charCodeAt(0));
+  const own = `${A.id}/sec-${run}.jpg`;
+  await step('a member uploads a photo into her own folder', async () => (must(await A.sb.storage.from('chat-media').upload(own, jpeg, { contentType: 'image/jpeg' })), true));
+  await step('nobody can upload into someone else\'s folder', () => denied(B.sb.storage.from('chat-media').upload(`${A.id}/intruder-${run}.jpg`, jpeg, { contentType: 'image/jpeg' })));
+  await step('nobody can delete someone else\'s photo', async () => {
+    await B.sb.storage.from('chat-media').remove([own]);
+    return Boolean((await A.sb.storage.from('chat-media').download(own)).data);
+  });
+  await step('a stranger cannot download a chat photo', async () => Boolean((await C.sb.storage.from('chat-media').download(own)).error));
+  await step('a stranger cannot get a link to a chat photo', async () => Boolean((await C.sb.storage.from('chat-media').createSignedUrl(own, 60)).error));
+  await step('a visitor cannot download a chat photo', async () => Boolean((await anon.storage.from('chat-media').download(own)).error));
+  await step('a file that is not an image is refused', () => denied(A.sb.storage.from('chat-media').upload(`${A.id}/page-${run}.html`, new TextEncoder().encode('<script>alert(1)</script>'), { contentType: 'text/html' })));
+  await A.sb.storage.from('chat-media').remove([own]);
+  await step('Realtime: a stranger receives nothing from a private chat, a member does', async () => {
+    const got = { a: 0, c: 0 };
+    const sub = (who, key) =>
+      new Promise((resolve) => {
+        const ch = who.sb.channel(`sec-${key}-${run}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${matchConv}` }, () => got[key]++);
+        ch.subscribe((status) => status === 'SUBSCRIBED' && resolve(ch));
+        setTimeout(() => resolve(ch), 8000);
+      });
+    for (const p of [A, C]) await p.sb.realtime.setAuth((await p.sb.auth.getSession()).data.session.access_token);
+    const chans = [await sub(A, 'a'), await sub(C, 'c')];
+    await new Promise((r) => setTimeout(r, 1500));
+    must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body: 'Realtime check' }));
+    await new Promise((r) => setTimeout(r, 5000));
+    for (const ch of chans) await ch.unsubscribe();
+    if (got.c > 0) throw new Error(`the stranger received ${got.c} event(s)`);
+    if (got.a === 0) throw new Error('the member received nothing (Realtime not working)');
+    return true;
+  });
+
   // ───── Account deletion ─────
   await step('Carl deletes his account (everything goes with it)', async () => {
     must(await C.sb.rpc('delete_my_account'));
     const left = await sql(`select count(*)::int as n from public.profiles where id = '${C.id}'`);
     return left[0].n === 0;
+  });
+  await step('a deleted account\'s old session can no longer act', async () => {
+    const r1 = await C.sb.from('irl_posts').insert({ author_id: C.id, city_id: 'bali', area_id: 'canggu', body: 'ghost', visibility: 'friends' });
+    const r2 = await C.sb.rpc('open_direct', { p_user: B.id });
+    return Boolean(r1.error) && Boolean(r2.error);
   });
 } finally {
   await sql(`delete from public.reports where details = 'e2e'`).catch(() => undefined);
