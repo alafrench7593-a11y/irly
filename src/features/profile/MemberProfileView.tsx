@@ -21,6 +21,7 @@ import { openReport } from '@/features/moderation/reportStore';
 import { useSignedLinks } from '@/features/server/media';
 import { PostMedia } from '@/features/posts/PostMedia';
 import { useVerified } from '@/features/verify/verify';
+import { BadgesRow } from '@/features/engage/EngageUI';
 import { removePost } from '@/features/posts/posts';
 import { confirm } from '@/lib/confirm';
 import { changed } from '@/features/server/sync';
@@ -194,6 +195,7 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
             <Text variant="displayL" align="center" raw>
               {p.firstName}
             </Text>
+            <BadgesRow userId={p.id} />
             {verified ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Icon name="shield" size={14} color={t.c.text} />

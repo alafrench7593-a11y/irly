@@ -1587,4 +1587,24 @@ select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
 select pg_temp.check((select count(*) from public.news_feed('dubai')) = 1, 'news: hidden by an admin, gone for members');
 select pg_temp.as_admin();
 
+-- ───── Engagement, from real activity ─────
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, capacity)
+values (auth.uid(), 'Padel tonight', 'sport', 'dubai', 'marina', ((now() at time zone 'Asia/Dubai')::date + time '23:30') at time zone 'Asia/Dubai', 4) returning id as today_id \gset
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select public.join_activity(:'today_id');
+select pg_temp.check(exists (select 1 from public.today_activities('dubai') where id = :'today_id' and organizer_name = 'Hana' and going >= 1 and spots_left <= 3)
+  or (now() at time zone 'Asia/Dubai')::time > time '23:30', 'today: an activity of the day with organiser and spots left');
+select pg_temp.check((select count(*) from public.city_challenges('dubai')) = 3, 'challenges: three shared goals with real counts');
+select pg_temp.check(exists (select 1 from public.my_recap('dubai') where section = 'upcoming' and ref_id = :'today_id')
+  or (now() at time zone 'Asia/Dubai')::time > time '23:30', 'recap: my next activities');
+select pg_temp.as_admin();
+insert into public.activities (id, creator_id, title, category_id, city_id, area_id, starts_at)
+values ('60000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000011', 'Past brunch', 'food', 'dubai', 'marina', now() - interval '3 days');
+insert into public.activity_participants (activity_id, user_id, status) values ('60000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000012', 'going') on conflict do nothing;
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check(exists (select 1 from public.member_badges('00000000-0000-0000-0000-000000000011') where badge = 'organizer' and count >= 1), 'badges: organising a real activity earns the organiser badge');
+select pg_temp.check(not exists (select 1 from public.member_badges('00000000-0000-0000-0000-000000000018') where badge = 'organizer'), 'badges: nothing without real activity');
+select pg_temp.as_admin();
+
 \echo 'ALL TESTS PASSED'
