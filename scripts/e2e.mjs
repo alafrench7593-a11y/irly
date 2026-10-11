@@ -38,6 +38,12 @@ const people = {
 
 let passed = 0;
 const timings = {};
+const timed = async (label, fn) => {
+  const t0 = performance.now();
+  const r = await fn();
+  timings[label] = Math.round(performance.now() - t0);
+  return r;
+};
 let failed = 0;
 const failures = [];
 async function step(label, fn) {
@@ -89,6 +95,34 @@ const anon = createClient(URL, KEY, { auth: { persistSession: false } });
 try {
   await cleanup();
 
+  // ───── Sign-up by email, as the app does it (real Supabase Auth) ─────
+  await step('email sign-up: account, one profile, sign out, sign in again, no duplicate, then deletion', async () => {
+    const email = `e2e-${run}-signup@irly.test`;
+    const pw = `Signup-${run}-pw!`;
+    const sb = createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+    const weak = await sb.auth.signUp({ email, password: 'short' });
+    if (!weak.error) throw new Error('a 5-character password was accepted');
+    const up = await timed('sign up (email)', () => sb.auth.signUp({ email, password: pw }));
+    if (up.error) throw new Error(up.error.message);
+    if (!up.data.session) {
+      // Email confirmation is on: the account exists but needs the link. Remove it and say so.
+      await sql(`delete from auth.users where email = '${email}'`);
+      console.log('   (email confirmation required: the sign-in part needs the emailed link, not testable here)');
+      return true;
+    }
+    const uid = up.data.user.id;
+    must(await sb.from('profiles').insert({ id: uid, first_name: 'Sig', birthdate: '1994-01-01', gender: 'woman', city_id: 'dubai', languages: ['en'], interests: ['sport', 'food', 'art'] }));
+    const dup = await sb.from('profiles').insert({ id: uid, first_name: 'Sig2', birthdate: '1994-01-01', gender: 'woman', city_id: 'dubai' });
+    await sb.auth.signOut();
+    const back = await timed('sign in (email)', () => sb.auth.signInWithPassword({ email, password: pw }));
+    if (back.error) throw new Error(back.error.message);
+    const wrong = await sb.auth.signInWithPassword({ email, password: 'Wrong-password-1' });
+    const mine = must(await sb.from('profiles').select('id, first_name').eq('id', uid));
+    must(await sb.rpc('delete_my_account'));
+    const [left] = await sql(`select count(*)::int as n from auth.users where id = '${uid}'`);
+    return Boolean(dup.error) && !back.error && Boolean(wrong.error) && mine.length === 1 && mine[0].first_name === 'Sig' && left.n === 0;
+  });
+
   // ───── Accounts and profiles ─────
   await step('3 members sign in with email + password', async () => {
     for (const p of Object.values(people)) await createUser(p);
@@ -135,12 +169,6 @@ try {
   // ───── Friends, IRL, likes, comments ─────
   let postId;
   // Speed: real round trips against the live project, measured.
-  const timed = async (label, fn) => {
-    const t0 = performance.now();
-    const r = await fn();
-    timings[label] = Math.round(performance.now() - t0);
-    return r;
-  };
   await step('Alice and Carl become friends (request, notification, accept, both sides agree)', async () => {
     const sent = must(await timed('add friend (request)', () => A.sb.rpc('add_friend', { p_user: C.id })));
     const notified = must(await C.sb.from('notifications').select('kind, payload')).some((n) => n.kind === 'FRIEND_REQUEST' && n.payload?.from === A.id);
@@ -262,6 +290,13 @@ try {
   await step('the match chat has conversation starters and both can write', async () => {
     must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body: 'Brunch this weekend?' }));
     return must(await A.sb.from('messages').select('body').eq('conversation_id', matchConv)).length >= 2;
+  });
+  await step('a new message notifies Alice (unread), and reading the chat clears it: the bell badge follows', async () => {
+    const unreadBefore = must(await A.sb.from('notifications').select('id').eq('kind', 'MESSAGE_CREATED').is('read_at', null)).length;
+    must(await timed('open a conversation (mark read)', () => A.sb.rpc('mark_conversation_read', { p_conversation: matchConv })));
+    const unreadAfter = must(await A.sb.from('notifications').select('id').eq('kind', 'MESSAGE_CREATED').is('read_at', null)).length;
+    const inbox = must(await A.sb.rpc('my_conversations', {})).find((c) => c.conversation_id === matchConv);
+    return unreadBefore >= 1 && unreadAfter === 0 && inbox?.unread === 0;
   });
   // Tidying a chat is personal: delete for me, archive, delete conversation.
   await step('delete for me: Alice no longer sees the message, Bea still does', async () => {
