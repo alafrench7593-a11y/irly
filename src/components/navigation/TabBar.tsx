@@ -27,12 +27,12 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
 };
 
 /**
- * Slot order in the bar. `match` is the Match IRLY disc in the middle
- * (people to meet); `live` right next to it is the live feed, spelled out so
+ * Slot order in the bar. `match` is the Match IRLY disc, exactly in the middle
+ * (people to meet); `live` just left of it is the live feed, spelled out so
  * nobody has to guess where it is; `settings` opens the settings screen.
  * Creating (activity, event, post, live, community) starts from Create on Home.
  */
-const SLOTS = ['index', 'discover', 'match', 'live', 'map', 'profile', 'settings'] as const;
+const SLOTS = ['index', 'discover', 'live', 'match', 'map', 'profile', 'settings'] as const;
 
 const SIDE = 12;
 
