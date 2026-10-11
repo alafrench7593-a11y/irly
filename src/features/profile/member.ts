@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
+import { askPushInContext } from '@/features/push/push';
 
 /**
  * A member's profile from the server, as the viewer may see it (their
@@ -158,6 +159,8 @@ export function setFriend(userId: string, action: 'add' | 'remove'): Promise<Fri
     const { data, error } = await sb().rpc(action === 'add' ? 'add_friend' : 'remove_friend', { p_user: userId });
     if (error) throw new Error(friendError(error.message));
     changed('friends', 'notifs', 'inbox');
+    // A request sent: the moment a notification for the answer makes sense.
+    if (action === 'add') void askPushInContext();
     return action === 'remove' ? 'none' : data === 'accepted' ? 'friends' : 'outgoing';
   })().finally(() => inFlight.delete(k));
   inFlight.set(k, p as unknown as Promise<void>);

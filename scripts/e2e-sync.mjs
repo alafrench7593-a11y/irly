@@ -1044,6 +1044,39 @@ async function main() {
     await page.unroute(/rest\/v1\/rpc\/toggle_like/);
     return true;
   });
+  // ───────── Phone notifications, server side, on the real backend ─────────
+  // A made-up Expo token stands for Vera's phone. A real event (Uma sends a
+  // friend request) must queue a push for Vera only, send it to Expo through
+  // pg_net, read Expo's answer, and drop the token Expo does not know.
+  // (A notification row is what every event writes; this one stands for a request.)
+  const fakeToken = `ExponentPushToken[irly-e2e-${run}]`;
+  await step('Push: a real event queues one push for the right person and sends it to Expo', async () => {
+    must(await veraSb.rpc('register_push_token', { p_token: fakeToken, p_platform: 'ios', p_lang: 'en' }));
+    // The same path every notification takes (notifications row → push trigger).
+    await sql(`select private.notify('${vera.id}', 'FRIEND_REQUEST', jsonb_build_object('from', '${uma.id}'))`);
+    for (let i = 0; i < 20; i++) {
+      const rows = await sql(`select o.request_id, o.attempts, o.user_id from public.push_outbox o where o.token = '${fakeToken}'`);
+      if (rows.length && rows.every((r) => r.user_id === vera.id) && rows.some((r) => r.request_id)) return true;
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+    const rows = await sql(`select request_id, attempts, error from public.push_outbox where token = '${fakeToken}'`);
+    throw new Error(`push not sent: ${JSON.stringify(rows)} (pg_net: ${JSON.stringify(await sql(`select extname from pg_extension where extname in ('pg_net','pg_cron')`))})`);
+  });
+  await step('… Expo answers, the answer is read once, and a token Expo does not know is removed (no retry loop)', async () => {
+    for (let i = 0; i < 30; i++) {
+      const [{ handled }] = await sql(`select count(*) filter (where handled_at is not null)::int as handled from public.push_outbox where token = '${fakeToken}'`);
+      if (handled > 0) {
+        const rows = await sql(`select error, attempts from public.push_outbox where token = '${fakeToken}'`);
+        const [{ left }] = await sql(`select count(*)::int as left from public.push_tokens where token = '${fakeToken}'`);
+        console.log(`   Expo answer: ${JSON.stringify(rows)}, token left: ${left}`);
+        return rows.every((r) => r.attempts <= 3) && (left === 0 || rows.some((r) => r.error !== 'DeviceNotRegistered'));
+      }
+      await new Promise((r) => setTimeout(r, 4000));
+    }
+    throw new Error('Expo answer never read (is pg_cron enabled?)');
+  });
+  await sql(`delete from public.push_tokens where token = '${fakeToken}'`).catch(() => null);
+
   // ───────── Last: Uma deletes her account from the app ─────────
   await step('Delete account (Settings → Delete account): server data gone, back to the start', async () => {
     await page.goto(`${BASE}/preferences`);

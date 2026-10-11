@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -5,15 +6,20 @@ import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useAccount } from '@/features/auth/account';
-import { useLang, type Lang } from '@/i18n';
+import { dateLocale, useLang, type Lang } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
 /**
  * Phone notifications. Each signed-in phone registers its Expo push token
  * on the server (register_push_token); the server pushes every
- * notification you have not muted (see migration 2700), titled in the
- * phone's language, with the screen to open. Tapping one opens that
+ * notification you have not muted (migrations 2700 and 20261013), titled in
+ * the phone's language, with the screen to open. Tapping one opens that
  * screen. On the web nothing happens here.
+ *
+ * Permission is asked in context, never on the first screen: the first time
+ * you send a friend request, join an activity or a community, or write a
+ * message (askPushInContext), or when you turn notifications on in
+ * Settings. Once granted, the phone registers by itself at every launch.
  */
 
 export type PushState = 'on' | 'denied' | 'unsupported' | 'not-configured';
@@ -66,6 +72,32 @@ export async function unregisterPush(): Promise<void> {
   if (token) await supabase.rpc('unregister_push_token', { p_token: token });
 }
 
+/** What iOS / Android allow for IRLY right now, without asking. */
+export async function phonePermission(): Promise<'granted' | 'denied' | 'undetermined' | 'unsupported'> {
+  if (!native || !Device.isDevice) return 'unsupported';
+  const p = await Notifications.getPermissionsAsync().catch(() => null);
+  if (!p) return 'unsupported';
+  return p.status === 'granted' ? 'granted' : p.canAskAgain ? 'undetermined' : 'denied';
+}
+
+const ASKED = 'irly-push-asked';
+
+/**
+ * After an action where notifications help (a request sent, an activity or a
+ * community joined, a message written): asks once per phone, never again if
+ * the person said no (iOS only shows its prompt once anyway).
+ */
+export async function askPushInContext(lang: Lang = dateLocale() === 'fr-FR' ? 'fr' : 'en'): Promise<void> {
+  if (!native || !Device.isDevice) return;
+  try {
+    if (await AsyncStorage.getItem(ASKED)) return;
+    await AsyncStorage.setItem(ASKED, '1');
+  } catch {
+    return;
+  }
+  await registerPush(lang, true).catch(() => undefined);
+}
+
 /** Opens the screen a notification points to. */
 function open(response: Notifications.NotificationResponse | null) {
   const url = (response?.notification.request.content.data as { url?: unknown } | undefined)?.url;
@@ -81,9 +113,19 @@ export function usePush() {
   const uid = useAccount()?.userId;
   const lang = useLang();
 
+  // Signed in: register if this phone already allows notifications (no prompt here).
   useEffect(() => {
     if (!native || !uid) return;
-    registerPush(lang).catch(() => undefined);
+    registerPush(lang, false).catch(() => undefined);
+  }, [uid, lang]);
+
+  // Apple or Google can renew the phone's token: the server gets the new one.
+  useEffect(() => {
+    if (!native || !uid) return;
+    const sub = Notifications.addPushTokenListener(() => {
+      registerPush(lang, false).catch(() => undefined);
+    });
+    return () => sub.remove();
   }, [uid, lang]);
 
   useEffect(() => {

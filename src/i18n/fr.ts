@@ -3692,4 +3692,5 @@ export const fr: Record<string, string> = {
   "Rooftops, live music and evenings out with good people.": "Rooftops, musique live et soirées avec des gens bien.",
   "Markets, malls and fashion finds to share.": "Marchés, malls et trouvailles mode à partager.",
   "Parents and kids: weekend plans and playdates.": "Parents et enfants : sorties du week-end et rencontres entre familles.",
+  "Show message previews": "Afficher l’aperçu des messages",
 };

@@ -11,6 +11,7 @@ import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import type { MyPlan } from '@/state/store';
 import { imageBytes, imageType } from '@/lib/media';
+import { askPushInContext } from '@/features/push/push';
 
 /**
  * Activities on the server (signed in). Creating a session in the app also
@@ -224,6 +225,7 @@ export async function joinServerActivity(activityId: string): Promise<string | '
   if (error) throw new Error(error.message);
   changed('activities', 'inbox');
   if (data === 'full') return 'full';
+  void askPushInContext();
   const { data: conv } = await supabase.from('conversations').select('id').eq('activity_id', activityId).maybeSingle();
   return (conv?.id as string) ?? '';
 }

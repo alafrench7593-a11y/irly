@@ -7,7 +7,7 @@ import { Chip, Divider } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
-import { registerPush, type PushState } from '@/features/push/push';
+import { phonePermission, registerPush, type PushState } from '@/features/push/push';
 import { t as tx, useLang, a11y } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
@@ -53,6 +53,7 @@ export default function SettingsScreen() {
   const [safety, setSafety] = useState<Safety>(DEFAULTS);
   const [muted, setMuted] = useState<string[]>([]);
   const [push, setPush] = useState(true);
+  const [previews, setPreviews] = useState(true);
   const [phone, setPhone] = useState<PushState | null>(null);
   const lang = useLang();
   // Saving before the server values arrive would write the defaults over them.
@@ -62,10 +63,10 @@ export default function SettingsScreen() {
     if (!supabase || !uid) return null;
     const [s, n] = await Promise.all([
       supabase.from('safety_settings').select('profile_visibility, irl_visibility, activity_visibility, location_precision, show_active').eq('user_id', uid).maybeSingle(),
-      supabase.from('notification_prefs').select('muted_kinds, push_enabled').eq('user_id', uid).maybeSingle(),
+      supabase.from('notification_prefs').select('muted_kinds, push_enabled, push_previews').eq('user_id', uid).maybeSingle(),
     ]);
     if (s.error || n.error) throw new Error(s.error?.message ?? n.error?.message);
-    return { safety: { ...DEFAULTS, ...(s.data ?? {}) } as Safety, muted: (n.data?.muted_kinds as string[]) ?? [], push: (n.data?.push_enabled as boolean | undefined) ?? true };
+    return { safety: { ...DEFAULTS, ...(s.data ?? {}) } as Safety, muted: (n.data?.muted_kinds as string[]) ?? [], push: (n.data?.push_enabled as boolean | undefined) ?? true, previews: (n.data?.push_previews as boolean | undefined) ?? true };
   }, [uid]);
 
   const [failed, setFailed] = useState(false);
@@ -86,6 +87,7 @@ export default function SettingsScreen() {
         setSafety(r.safety);
         setMuted(r.muted);
         setPush(r.push);
+        setPreviews(r.previews);
         setLoaded(true);
       })
       .catch(() => {
@@ -102,6 +104,14 @@ export default function SettingsScreen() {
       alive.current = false;
     };
   }, [reload]);
+
+  // What the phone itself allows: blocked in iOS Settings shows here, not as an error.
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    phonePermission()
+      .then((p) => setPhone(p === 'granted' ? 'on' : p === 'denied' ? 'denied' : p === 'unsupported' ? 'unsupported' : null))
+      .catch(() => undefined);
+  }, []);
 
   const notReady = () => {
     if (loaded) return false;
@@ -139,6 +149,13 @@ export default function SettingsScreen() {
           if (st === 'denied') toast('Notifications are off for IRLY in your phone settings', 'bell', 'brand');
         })
         .catch(() => undefined);
+  };
+
+  // Message pushes with or without the text (who wrote is always shown).
+  const togglePreviews = (on: boolean) => {
+    if (!supabase || !uid || notReady()) return;
+    setPreviews(on);
+    enqueue(() => supabase!.from('notification_prefs').upsert({ user_id: uid, push_previews: on, muted_kinds: mutedNow.current, updated_at: new Date().toISOString() }));
   };
 
   const toggleGroup = (kinds: string[], on: boolean) => {
@@ -193,6 +210,8 @@ export default function SettingsScreen() {
         </Text>
         <View style={[styles.group, { backgroundColor: t.c.surface }]}>
           <Row label="Notifications on my phone" value={push} onChange={togglePush} />
+          <Divider inset={16} />
+          <Row label="Show message previews" value={previews} onChange={togglePreviews} />
         </View>
         <Text variant="caption" tone="tertiary">
           {Platform.OS === 'web'

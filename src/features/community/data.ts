@@ -6,6 +6,7 @@ import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from '@/features/server/sync';
+import { askPushInContext } from '@/features/push/push';
 
 /** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
 export const communitiesChanged = () => changed('communities', 'inbox');
@@ -434,6 +435,7 @@ export async function joinCommunity(id: string): Promise<string> {
   if (error) throw new Error(error.message);
   track('COMMUNITY_JOIN', {});
   communitiesChanged();
+  void askPushInContext();
   return data as string;
 }
 
