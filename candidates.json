@@ -1,0 +1,664 @@
+{
+ "girlsBrunch": [
+  {
+   "source": "openverse",
+   "id": "a946664f-841d-43e6-a3d2-07e9b4b7688a",
+   "url": "https://live.staticflickr.com/872/40377173854_4d9c271b72_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/a946664f-841d-43e6-a3d2-07e9b4b7688a/thumb/",
+   "alt": "Stephanie Bension",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/140989647@N04/40377173854",
+   "file": "photo-candidates/thumbs/girlsBrunch-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "12e77652-0382-4c17-8f97-7c326366b91d",
+   "url": "https://live.staticflickr.com/799/27214038488_68729de103_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/12e77652-0382-4c17-8f97-7c326366b91d/thumb/",
+   "alt": "Stephanie Bension",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/140989647@N04/27214038488",
+   "file": "photo-candidates/thumbs/girlsBrunch-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "b1c5d75b-ea48-4f70-94af-87ccf1097a09",
+   "url": "https://live.staticflickr.com/65535/54134256264_e407b18e09_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/b1c5d75b-ea48-4f70-94af-87ccf1097a09/thumb/",
+   "alt": "Latham Staples with friends",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/37404197@N00/54134256264",
+   "file": "photo-candidates/thumbs/girlsBrunch-2.jpg"
+  }
+ ],
+ "girlsCoffee": [
+  {
+   "source": "openverse",
+   "id": "86e77b4b-265c-4c33-b4a1-e5587456afc4",
+   "url": "https://live.staticflickr.com/3311/3511538503_ac40e8af2c_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/86e77b4b-265c-4c33-b4a1-e5587456afc4/thumb/",
+   "alt": "girl with coffee",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/63584234@N00/3511538503",
+   "file": "photo-candidates/thumbs/girlsCoffee-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "4752b72a-d916-445e-bab5-5b4fce2c9526",
+   "url": "https://live.staticflickr.com/8120/8695424207_c433a3733e_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/4752b72a-d916-445e-bab5-5b4fce2c9526/thumb/",
+   "alt": "Banana Hostel, San Diego, California",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/8398907@N02/8695424207",
+   "file": "photo-candidates/thumbs/girlsCoffee-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "020123e2-ce48-4ec2-aeb7-4c57a6e4dbb9",
+   "url": "https://live.staticflickr.com/3943/34006156965_6d5f8f1380_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/020123e2-ce48-4ec2-aeb7-4c57a6e4dbb9/thumb/",
+   "alt": "K-178-Ae-04038-id-420049",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/147875007@N03/34006156965",
+   "file": "photo-candidates/thumbs/girlsCoffee-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "b3431fe7-4589-4568-bdca-f06df1fec321",
+   "url": "https://live.staticflickr.com/5554/31540749992_30cbb7d58c_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/b3431fe7-4589-4568-bdca-f06df1fec321/thumb/",
+   "alt": "Christmas lights and girl holding coffee",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/135396164@N05/31540749992",
+   "file": "photo-candidates/thumbs/girlsCoffee-3.jpg"
+  }
+ ],
+ "girlsLaugh": [
+  {
+   "source": "openverse",
+   "id": "c150cab8-69e4-45bd-bd05-c4abfe3ce9f0",
+   "url": "https://live.staticflickr.com/3838/15032000352_271969ed46_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/c150cab8-69e4-45bd-bd05-c4abfe3ce9f0/thumb/",
+   "alt": "Four girls having a laugh",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/121282668@N03/15032000352",
+   "file": "photo-candidates/thumbs/girlsLaugh-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "cf50899a-25e0-4f86-877a-507bee957b94",
+   "url": "https://live.staticflickr.com/5513/11369119315_e57c583dd4_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/cf50899a-25e0-4f86-877a-507bee957b94/thumb/",
+   "alt": "",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/11234074@N05/11369119315",
+   "file": "photo-candidates/thumbs/girlsLaugh-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "b2d57149-ad51-4de9-9355-7ca3c391fd09",
+   "url": "https://cdn.stocksnap.io/img-thumbs/960w/TFGZBZ1EEV.jpg",
+   "thumb": "https://api.openverse.org/v1/images/b2d57149-ad51-4de9-9355-7ca3c391fd09/thumb/",
+   "alt": "Girls Woman",
+   "license": "cc0",
+   "landing": "https://stocksnap.io/photo/girls-woman-TFGZBZ1EEV",
+   "file": "photo-candidates/thumbs/girlsLaugh-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "74184616-47b2-4e42-b884-a35c735e789c",
+   "url": "https://live.staticflickr.com/65535/55124095768_f30f6855f5_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/74184616-47b2-4e42-b884-a35c735e789c/thumb/",
+   "alt": "She's laughing when he asks to prove he can still do it",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/199047989@N04/55124095768",
+   "file": "photo-candidates/thumbs/girlsLaugh-3.jpg"
+  }
+ ],
+ "girlsDinner": [
+  {
+   "source": "openverse",
+   "id": "bef7cf23-2038-4ede-8091-d96a323694e8",
+   "url": "https://live.staticflickr.com/445/31964649862_8b05d0f297_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/bef7cf23-2038-4ede-8091-d96a323694e8/thumb/",
+   "alt": "Photograph taken of scene at the Queensland Dinner to children of soldiers at the Guildhall, London, January 7, 1916.",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/60455048@N02/31964649862",
+   "file": "photo-candidates/thumbs/girlsDinner-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "813b66ac-61d4-4f69-9b59-2a386881188c",
+   "url": "https://live.staticflickr.com/4317/35638074130_20e1ec9cfa_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/813b66ac-61d4-4f69-9b59-2a386881188c/thumb/",
+   "alt": "",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/150938310@N02/35638074130",
+   "file": "photo-candidates/thumbs/girlsDinner-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "2774a15c-8203-4656-a9c7-66631e16cc60",
+   "url": "https://live.staticflickr.com/4303/35187895824_e1dc3aec19_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/2774a15c-8203-4656-a9c7-66631e16cc60/thumb/",
+   "alt": "",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/150938310@N02/35187895824",
+   "file": "photo-candidates/thumbs/girlsDinner-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "781620e4-fc82-4a35-ab84-024477e3c445",
+   "url": "https://live.staticflickr.com/4293/35638073790_c8b7ce3e24_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/781620e4-fc82-4a35-ab84-024477e3c445/thumb/",
+   "alt": "",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/150938310@N02/35638073790",
+   "file": "photo-candidates/thumbs/girlsDinner-3.jpg"
+  }
+ ],
+ "girlsWork": [
+  {
+   "source": "openverse",
+   "id": "91591617-0fbf-4d04-bf16-b5b25c53f571",
+   "url": "https://live.staticflickr.com/1569/24217008462_b280cafb5d_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/91591617-0fbf-4d04-bf16-b5b25c53f571/thumb/",
+   "alt": "hands-woman-laptop-notebook",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/137643065@N06/24217008462",
+   "file": "photo-candidates/thumbs/girlsWork-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "9299f9c9-8dbe-456f-9a63-f69db44f5c2f",
+   "url": "https://cdn.stocksnap.io/img-thumbs/960w/NJVNNNG7TM.jpg",
+   "thumb": "https://api.openverse.org/v1/images/9299f9c9-8dbe-456f-9a63-f69db44f5c2f/thumb/",
+   "alt": "Woman Laptop",
+   "license": "cc0",
+   "landing": "https://stocksnap.io/photo/woman-laptop-NJVNNNG7TM",
+   "file": "photo-candidates/thumbs/girlsWork-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "3fed5483-edcd-4508-9bbf-85e287ba74cb",
+   "url": "https://cdn.stocksnap.io/img-thumbs/960w/TSVQYTBDPE.jpg",
+   "thumb": "https://api.openverse.org/v1/images/3fed5483-edcd-4508-9bbf-85e287ba74cb/thumb/",
+   "alt": "Woman Laptop",
+   "license": "cc0",
+   "landing": "https://stocksnap.io/photo/woman-laptop-TSVQYTBDPE",
+   "file": "photo-candidates/thumbs/girlsWork-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "6719ca0a-0c23-4fde-a74f-769f514516b5",
+   "url": "https://cdn.stocksnap.io/img-thumbs/960w/C7ARZC9TPU.jpg",
+   "thumb": "https://api.openverse.org/v1/images/6719ca0a-0c23-4fde-a74f-769f514516b5/thumb/",
+   "alt": "Woman Laptop",
+   "license": "cc0",
+   "landing": "https://stocksnap.io/photo/woman-laptop-C7ARZC9TPU",
+   "file": "photo-candidates/thumbs/girlsWork-3.jpg"
+  }
+ ],
+ "girlsDance": [
+  {
+   "source": "openverse",
+   "id": "4ecba7da-b352-4b82-bde3-bbf1252811f8",
+   "url": "https://live.staticflickr.com/65535/50303046488_365e9913a3_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/4ecba7da-b352-4b82-bde3-bbf1252811f8/thumb/",
+   "alt": "Just finish my pole dancing class 💃",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/135511057@N03/50303046488",
+   "file": "photo-candidates/thumbs/girlsDance-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "3a132989-872c-46b9-8935-bf2cf8abd78b",
+   "url": "https://live.staticflickr.com/65535/53763870979_059a07b0d4_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/3a132989-872c-46b9-8935-bf2cf8abd78b/thumb/",
+   "alt": "Dance Class",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/156515782@N02/53763870979",
+   "file": "photo-candidates/thumbs/girlsDance-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "2d9b15ac-a196-43fb-952a-a2ab7c984989",
+   "url": "https://live.staticflickr.com/4222/34834688092_42b81559c2_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/2d9b15ac-a196-43fb-952a-a2ab7c984989/thumb/",
+   "alt": "Dance Class",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/130774101@N06/34834688092",
+   "file": "photo-candidates/thumbs/girlsDance-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "4f75ae03-18eb-4e99-8045-e7ffabdcf3a9",
+   "url": "https://live.staticflickr.com/4201/34866366471_648dc40c04_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/4f75ae03-18eb-4e99-8045-e7ffabdcf3a9/thumb/",
+   "alt": "Dance Class",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/130774101@N06/34866366471",
+   "file": "photo-candidates/thumbs/girlsDance-3.jpg"
+  }
+ ],
+ "girlsFriends": [
+  {
+   "source": "openverse",
+   "id": "2e54df6d-7106-46f1-a49c-547da920ba59",
+   "url": "https://live.staticflickr.com/5156/14269689753_a7c9017d95_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/2e54df6d-7106-46f1-a49c-547da920ba59/thumb/",
+   "alt": "Posed portrait of Matthew Carrell of Stompz and girlfriend Kristina Mullen at SVVR expo",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/29507259@N02/14269689753",
+   "file": "photo-candidates/thumbs/girlsFriends-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "6c110e6f-ee39-49dd-9c58-ec6ab652a459",
+   "url": "https://live.staticflickr.com/893/39813776980_f68a40b37a_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/6c110e6f-ee39-49dd-9c58-ec6ab652a459/thumb/",
+   "alt": "Girlfriends",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/136665246@N05/39813776980",
+   "file": "photo-candidates/thumbs/girlsFriends-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "5e5b42a6-1841-4c40-bd9f-10c11156f3bd",
+   "url": "https://live.staticflickr.com/65535/53386592633_7f21a7f21b_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/5e5b42a6-1841-4c40-bd9f-10c11156f3bd/thumb/",
+   "alt": "Portrait! I would be excited if you posted my pic on Social Media as a girlfriend!",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/195712456@N03/53386592633",
+   "file": "photo-candidates/thumbs/girlsFriends-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "86581bfe-929a-45e2-907e-171e7b657fdf",
+   "url": "https://live.staticflickr.com/891/39813777670_72d70e260c_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/86581bfe-929a-45e2-907e-171e7b657fdf/thumb/",
+   "alt": "Girlfriends",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/136665246@N05/39813777670",
+   "file": "photo-candidates/thumbs/girlsFriends-3.jpg"
+  }
+ ],
+ "girlsSelfie": [
+  {
+   "source": "openverse",
+   "id": "ba4d5fb4-1229-4d9a-a83b-d94be4895670",
+   "url": "https://live.staticflickr.com/482/18373250760_82fb1ba762_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/ba4d5fb4-1229-4d9a-a83b-d94be4895670/thumb/",
+   "alt": "SELFIE",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/53812099@N04/18373250760",
+   "file": "photo-candidates/thumbs/girlsSelfie-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "408ab43a-d528-4608-ba1b-8e80830a8598",
+   "url": "https://live.staticflickr.com/4215/35342493542_8a6e961382_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/408ab43a-d528-4608-ba1b-8e80830a8598/thumb/",
+   "alt": "20170624-OSEC-PJK-0479",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/41284017@N08/35342493542",
+   "file": "photo-candidates/thumbs/girlsSelfie-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "d9e45cba-680b-4d58-80b4-13e9c34f6e62",
+   "url": "https://live.staticflickr.com/4253/35123225380_b28da2e1f0_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/d9e45cba-680b-4d58-80b4-13e9c34f6e62/thumb/",
+   "alt": "20170624-OSEC-PJK-1230",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/41284017@N08/35123225380",
+   "file": "photo-candidates/thumbs/girlsSelfie-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "fefb86c1-d110-49e5-b203-51d57ea7a9cf",
+   "url": "https://live.staticflickr.com/4258/35123225100_a35864c50f_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/fefb86c1-d110-49e5-b203-51d57ea7a9cf/thumb/",
+   "alt": "20170624-OSEC-PJK-1271",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/41284017@N08/35123225100",
+   "file": "photo-candidates/thumbs/girlsSelfie-3.jpg"
+  }
+ ],
+ "girlsCocktail": [
+  {
+   "source": "openverse",
+   "id": "1a1b5049-9659-4896-a474-2feaf7276554",
+   "url": "https://live.staticflickr.com/2470/3891226804_52d88d3f26_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/1a1b5049-9659-4896-a474-2feaf7276554/thumb/",
+   "alt": "Project 365 #248: 050909 Warming Up The House",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/23408922@N07/3891226804",
+   "file": "photo-candidates/thumbs/girlsCocktail-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "ba42bfdc-12bb-45a7-9029-38189f4a4cdd",
+   "url": "https://live.staticflickr.com/1736/28768162108_0258511f72_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/ba42bfdc-12bb-45a7-9029-38189f4a4cdd/thumb/",
+   "alt": "20180606-OSEC-PJK-2747_TONED",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/41284017@N08/28768162108",
+   "file": "photo-candidates/thumbs/girlsCocktail-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "f60a539b-b42e-42ae-8f83-29804c1aa517",
+   "url": "https://live.staticflickr.com/1752/42641258031_caff224cb7_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/f60a539b-b42e-42ae-8f83-29804c1aa517/thumb/",
+   "alt": "20180606-OSEC-PJK-0106_TONED",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/41284017@N08/42641258031",
+   "file": "photo-candidates/thumbs/girlsCocktail-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "585d184c-0873-4a32-810e-8fed8b8d4f2e",
+   "url": "https://live.staticflickr.com/1736/41922759314_bd03e72523_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/585d184c-0873-4a32-810e-8fed8b8d4f2e/thumb/",
+   "alt": "20180606-OSEC-PJK-2292_TONED",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/41284017@N08/41922759314",
+   "file": "photo-candidates/thumbs/girlsCocktail-3.jpg"
+  }
+ ],
+ "girlsHike": [
+  {
+   "source": "openverse",
+   "id": "b8b810de-a2a3-4c9b-8b81-c08fe89ee166",
+   "url": "https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9zdGF0aWMvaW1hZ2Uvd2Vic2l0ZS8yMDIyLTA0L2xyL2ZydW5zcGxhc2gyMzAxMC1pbWFnZS1rd3Z3d2I3OC5qcGc.jpg",
+   "thumb": "https://api.openverse.org/v1/images/b8b810de-a2a3-4c9b-8b81-c08fe89ee166/thumb/",
+   "alt": "Free women hiking image",
+   "license": "cc0",
+   "landing": "https://www.rawpixel.com/image/5917740/image-public-domain-leaves-plants",
+   "file": "photo-candidates/thumbs/girlsHike-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "836b51d3-2be4-4816-84d0-bdc9ca7c124c",
+   "url": "https://live.staticflickr.com/8736/16794843895_29997d9fda_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/836b51d3-2be4-4816-84d0-bdc9ca7c124c/thumb/",
+   "alt": "Kathy Reshetiloff, #ScienceWoman",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/43322816@N08/16794843895",
+   "file": "photo-candidates/thumbs/girlsHike-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "810ce89b-4510-4aa2-8ccd-2a56b0925db7",
+   "url": "https://live.staticflickr.com/1905/45517854902_65465a58e2_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/810ce89b-4510-4aa2-8ccd-2a56b0925db7/thumb/",
+   "alt": "stocks-1709",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/157635012@N07/45517854902",
+   "file": "photo-candidates/thumbs/girlsHike-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "2b27c338-bf5a-4262-a52c-8727f5b6f853",
+   "url": "https://live.staticflickr.com/8589/16670213356_06153626d1_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/2b27c338-bf5a-4262-a52c-8727f5b6f853/thumb/",
+   "alt": "Chelsea DiAntonio, #ScienceWoman",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/43322816@N08/16670213356",
+   "file": "photo-candidates/thumbs/girlsHike-3.jpg"
+  }
+ ],
+ "girlsSurf": [
+  {
+   "source": "openverse",
+   "id": "1c1c9b3c-427b-4784-b65b-6cd7a9efe844",
+   "url": "https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvdXB3azYxODM5Mzg1LXdpa2ltZWRpYS1pbWFnZS1rcDY4dTJ6eC1remVtMjdrMi5qcGc.jpg",
+   "thumb": "https://api.openverse.org/v1/images/1c1c9b3c-427b-4784-b65b-6cd7a9efe844/thumb/",
+   "alt": "Woman surfing Knysna, South Africa",
+   "license": "cc0",
+   "landing": "https://www.rawpixel.com/image/3336787/free-photo-image-public-domain-sea-ocean-waves",
+   "file": "photo-candidates/thumbs/girlsSurf-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "626a281f-b496-40c6-a3b9-3ce84fbab1ac",
+   "url": "https://live.staticflickr.com/3913/14437196593_42fef7b3e2_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/626a281f-b496-40c6-a3b9-3ce84fbab1ac/thumb/",
+   "alt": "Beach scene, Maroochydore, January 1931",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/60455048@N02/14437196593",
+   "file": "photo-candidates/thumbs/girlsSurf-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "9f3e52cd-acfa-4494-b164-6e2f53f09cb2",
+   "url": "https://live.staticflickr.com/7408/10900423186_024f2f97a8_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/9f3e52cd-acfa-4494-b164-6e2f53f09cb2/thumb/",
+   "alt": "Encapsulation",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/89525842@N00/10900423186",
+   "file": "photo-candidates/thumbs/girlsSurf-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "a00c10fa-26d2-4759-b61b-036eea0f5e79",
+   "url": "https://live.staticflickr.com/7164/26477932704_89502d9acc_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/a00c10fa-26d2-4759-b61b-036eea0f5e79/thumb/",
+   "alt": "Govt. Sale of allotments Main Beach Southport",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/60455048@N02/26477932704",
+   "file": "photo-candidates/thumbs/girlsSurf-3.jpg"
+  }
+ ],
+ "girlsPilates": [
+  {
+   "source": "openverse",
+   "id": "5f2e74ba-a958-45ac-bfd3-a2409d721a7c",
+   "url": "https://live.staticflickr.com/65535/52409079541_03cb747651_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/5f2e74ba-a958-45ac-bfd3-a2409d721a7c/thumb/",
+   "alt": "PILATES (27)",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/164280250@N04/52409079541",
+   "file": "photo-candidates/thumbs/girlsPilates-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "6af26c47-52d3-4317-84d3-78d20dd41624",
+   "url": "https://live.staticflickr.com/65535/52409337469_dcce7a2f5b_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/6af26c47-52d3-4317-84d3-78d20dd41624/thumb/",
+   "alt": "PILATES (4)",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/164280250@N04/52409337469",
+   "file": "photo-candidates/thumbs/girlsPilates-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "267ffda6-0588-4995-90f2-71d632a6a6fa",
+   "url": "https://live.staticflickr.com/1943/43116815470_034a605a7f_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/267ffda6-0588-4995-90f2-71d632a6a6fa/thumb/",
+   "alt": "'Pontius Pilate washes its hands' and 'Jesus follows the Simon of Cyrene' - fresco (1072-1087) by unknown painter, following Montecassino's style - Sant'Angelo in Formis Church / Caserta",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/70125105@N06/43116815470",
+   "file": "photo-candidates/thumbs/girlsPilates-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "6f8e43b4-94bb-4f5b-a305-a4d783d7efd0",
+   "url": "https://live.staticflickr.com/4784/39912741935_fc7f374df8_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/6f8e43b4-94bb-4f5b-a305-a4d783d7efd0/thumb/",
+   "alt": "Dune du Pilat",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/157272674@N07/39912741935",
+   "file": "photo-candidates/thumbs/girlsPilates-3.jpg"
+  }
+ ],
+ "momsStroller": [
+  {
+   "source": "openverse",
+   "id": "ea409d1d-499f-49c0-98ff-56deac1a160c",
+   "url": "https://live.staticflickr.com/1778/42124261850_4bc07bdbf7_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/ea409d1d-499f-49c0-98ff-56deac1a160c/thumb/",
+   "alt": "An empty stroller in a crowded Old Town square",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/135396164@N05/42124261850",
+   "file": "photo-candidates/thumbs/momsStroller-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "eb17333c-1f5a-403d-b167-27dbde20ceb6",
+   "url": "https://live.staticflickr.com/8063/8256465139_1dfbb6b48c_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/eb17333c-1f5a-403d-b167-27dbde20ceb6/thumb/",
+   "alt": "Women with strollers on sidewalk blocked by large truck",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/29507259@N02/8256465139",
+   "file": "photo-candidates/thumbs/momsStroller-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "e72a9bd1-a6ff-4fb9-ae6c-3ed367c4b99a",
+   "url": "https://live.staticflickr.com/1677/24914600836_c9f15df32e_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/e72a9bd1-a6ff-4fb9-ae6c-3ed367c4b99a/thumb/",
+   "alt": "John Gannam - Biggest Baby News in Years!, Thayer Stroller advertisement, 1951",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/38137363@N05/24914600836",
+   "file": "photo-candidates/thumbs/momsStroller-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "07e3af8f-f6d8-40f9-bf4f-dac34f00e3d9",
+   "url": "https://live.staticflickr.com/23/24724805_09bcab9edc_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/07e3af8f-f6d8-40f9-bf4f-dac34f00e3d9/thumb/",
+   "alt": "Strollers at my brother and K-A's place",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/35034347371@N01/24724805",
+   "file": "photo-candidates/thumbs/momsStroller-3.jpg"
+  }
+ ],
+ "momsCafe": [
+  {
+   "source": "openverse",
+   "id": "bd662403-0806-4d2b-9180-7af8a4d79909",
+   "url": "https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9zdGF0aWMvaW1hZ2Uvd2Vic2l0ZS8yMDIyLTA0L2xyL3B4OTA3NTQ0LWltYWdlLWt3dnV1MDZwLmpwZw.jpg",
+   "thumb": "https://api.openverse.org/v1/images/bd662403-0806-4d2b-9180-7af8a4d79909/thumb/",
+   "alt": "Mom baby",
+   "license": "cc0",
+   "landing": "https://www.rawpixel.com/image/5904390/mom-and-baby-free-public-domain-cc0-photo",
+   "file": "photo-candidates/thumbs/momsCafe-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "bfdd788b-021f-408a-aab3-6184892e4be8",
+   "url": "https://images.rawpixel.com/editor_1024/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTExL2ZsNTEzOTA1NzU4MTYtaW1hZ2UuanBn.jpg",
+   "thumb": "https://api.openverse.org/v1/images/bfdd788b-021f-408a-aab3-6184892e4be8/thumb/",
+   "alt": "Mom baby their mosquito bed",
+   "license": "cc0",
+   "landing": "https://www.rawpixel.com/image/8759324/mom-and-baby-and-their-mosquito-bed-net",
+   "file": "photo-candidates/thumbs/momsCafe-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "3cd4c8e2-664e-4ff6-aa66-05b768b48584",
+   "url": "https://images.rawpixel.com/image_1300/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA0L2ZsNTEwMTg2NDk0NzctaW1hZ2UuanBn.jpg",
+   "thumb": "https://api.openverse.org/v1/images/3cd4c8e2-664e-4ff6-aa66-05b768b48584/thumb/",
+   "alt": "Mom & baby are fine",
+   "license": "cc0",
+   "landing": "https://www.rawpixel.com/image/3388694/mom-baby-are-fine",
+   "file": "photo-candidates/thumbs/momsCafe-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "4e1ea2fd-7f45-44d2-8edd-59ff58b2589b",
+   "url": "https://live.staticflickr.com/1676/26005025555_29d4ea8bc8_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/4e1ea2fd-7f45-44d2-8edd-59ff58b2589b/thumb/",
+   "alt": "Pregnant Woman",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/135396164@N05/26005025555",
+   "file": "photo-candidates/thumbs/momsCafe-3.jpg"
+  }
+ ],
+ "momsFamily": [
+  {
+   "source": "openverse",
+   "id": "01c9de60-2986-4aab-a20a-ead950fcaa71",
+   "url": "https://live.staticflickr.com/5653/20293438983_85a26e19b4_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/01c9de60-2986-4aab-a20a-ead950fcaa71/thumb/",
+   "alt": "Mother daughter",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/43288043@N04/20293438983",
+   "file": "photo-candidates/thumbs/momsFamily-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "45b12263-ecdf-484c-bea7-9dab8356f379",
+   "url": "https://live.staticflickr.com/2240/2445705823_10655b620b_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/45b12263-ecdf-484c-bea7-9dab8356f379/thumb/",
+   "alt": "Mother Daughter Pedestrian",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/96425387@N00/2445705823",
+   "file": "photo-candidates/thumbs/momsFamily-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "dbd7383f-539b-4f82-96d0-3caa0295bcea",
+   "url": "https://live.staticflickr.com/4207/35752679461_a4fb5a98df_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/dbd7383f-539b-4f82-96d0-3caa0295bcea/thumb/",
+   "alt": "Mother & Daughter",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/52775988@N00/35752679461",
+   "file": "photo-candidates/thumbs/momsFamily-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "0a2365f7-7514-47c1-9774-433486bbe30d",
+   "url": "https://live.staticflickr.com/7315/9192648760_b590266f7e_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/0a2365f7-7514-47c1-9774-433486bbe30d/thumb/",
+   "alt": "Mother & daughter",
+   "license": "pdm",
+   "landing": "https://www.flickr.com/photos/28310050@N02/9192648760",
+   "file": "photo-candidates/thumbs/momsFamily-3.jpg"
+  }
+ ],
+ "momsBeach": [
+  {
+   "source": "openverse",
+   "id": "a3cddc7d-4282-46c9-8a56-9cf170707a8f",
+   "url": "https://live.staticflickr.com/7847/47263551981_05137bc546_b.jpg",
+   "thumb": "https://api.openverse.org/v1/images/a3cddc7d-4282-46c9-8a56-9cf170707a8f/thumb/",
+   "alt": "Silhouettes of Parents Taking Photos of Their Son on the Beach at Sunset",
+   "license": "cc0",
+   "landing": "https://www.flickr.com/photos/136375272@N05/47263551981",
+   "file": "photo-candidates/thumbs/momsBeach-0.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "7ec28190-41e9-461e-8b41-1a87849bef1c",
+   "url": "https://cdn.stocksnap.io/img-thumbs/960w/Z59RZ5SREK.jpg",
+   "thumb": "https://api.openverse.org/v1/images/7ec28190-41e9-461e-8b41-1a87849bef1c/thumb/",
+   "alt": "People Family",
+   "license": "cc0",
+   "landing": "https://stocksnap.io/photo/people-family-Z59RZ5SREK",
+   "file": "photo-candidates/thumbs/momsBeach-1.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "055588e4-859c-45ad-9c6a-54490812f8fd",
+   "url": "https://cdn.stocksnap.io/img-thumbs/960w/06SNH84TA8.jpg",
+   "thumb": "https://api.openverse.org/v1/images/055588e4-859c-45ad-9c6a-54490812f8fd/thumb/",
+   "alt": "People Woman",
+   "license": "cc0",
+   "landing": "https://stocksnap.io/photo/people-woman-06SNH84TA8",
+   "file": "photo-candidates/thumbs/momsBeach-2.jpg"
+  },
+  {
+   "source": "openverse",
+   "id": "119e257e-09ab-48ba-a028-da7f9d5ba303",
+   "url": "https://images.rawpixel.com/editor_1024/czNmcy1wcml2YXRlL3Jhd3BpeGVsX2ltYWdlcy93ZWJzaXRlX2NvbnRlbnQvbHIvZnJsb3ZlX2ZhbWlseV9iZWFjaF8xMTExODE1LWltYWdlLWt5YmQ4dWVxLmpwZw.jpg",
+   "thumb": "https://api.openverse.org/v1/images/119e257e-09ab-48ba-a028-da7f9d5ba303/thumb/",
+   "alt": "Family beach vacation",
+   "license": "cc0",
+   "landing": "https://www.rawpixel.com/image/6035106/photo-image-public-domain-kid-people",
+   "file": "photo-candidates/thumbs/momsBeach-3.jpg"
+  }
+ ]
+}
