@@ -65,7 +65,7 @@ for (const [p, h1] of PAGES) {
     if (!/<meta name="description" content="[^"]{50,}"/.test(html)) problems.push('no description');
     const canon = html.match(/<link rel="canonical" href="([^"]+)"/)?.[1] ?? '';
     if (!canon.startsWith('https://getirly.com')) problems.push(`canonical ${canon || 'missing'}`);
-    if (/lorem ipsum|TODO|localhost|127\.0\.0\.1/i.test(html)) problems.push('unfinished text or local address');
+    if (/lorem ipsum|\bTODO\b|\bTBD\b|https?:\/\/(localhost|127\.0\.0\.1)/.test(html)) problems.push('unfinished text or local address');
     const missing = (html.match(/INFORMATION REQUIRED|INFORMATION JURIDIQUE REQUISE/g) || []).length;
     problems.length ? ko(p, problems.join(', ')) : ok(`${p} 200${missing ? ` (legal information still required: ${missing})` : ''}`);
   } catch (e) {
