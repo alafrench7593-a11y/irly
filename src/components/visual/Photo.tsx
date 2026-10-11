@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { memo, useEffect, useState, type ReactNode } from "react";
+import { memo, useEffect, useMemo, useState, type ReactNode } from "react";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import Animated, {
   cancelAnimation,
@@ -61,6 +61,9 @@ export const Photo = memo(function Photo({
   // loading: breathing placeholder · done: photo shown, or the plain
   // destination colours if the network refused it (no endless pulse).
   const [status, setStatus] = useState<"loading" | "done">("loading");
+  // Chosen once per place on screen (never on every render): this place keeps
+  // its photo, the next place showing the same subject gets another one.
+  const stockUrl = useMemo(() => photoUrl(visual.photo, width, recyclingKey), [visual.photo, width, recyclingKey]);
   const t = useTheme();
   const night = t.mode === "night";
   void light;
@@ -128,7 +131,7 @@ export const Photo = memo(function Photo({
         style={[StyleSheet.absoluteFill, drift && !reduced ? driftStyle : null]}
       >
         <Image
-          source={{ uri: visual.uri || photoUrl(visual.photo, width) }}
+          source={{ uri: visual.uri || stockUrl }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={{ duration: 520, effect: "cross-dissolve" }}

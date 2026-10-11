@@ -286,7 +286,7 @@ function ServerThreadView({ id }: { id: string }) {
                     {!mine && group ? (
                       showFace ? (
                         <PressableScale haptic="select" scaleTo={0.9} onPress={openSender} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })}>
-                          <Avatar name={m.name ?? '?'} hue={hueOf(m.senderId ?? m.id)} size={30} photo={sender?.photo ? faces[sender.photo] : undefined} />
+                          <Avatar name={m.name ?? '?'} hue={hueOf(m.senderId ?? m.id)} size={30} photo={sender?.photo ? faces[sender.photo] : undefined} userId={m.senderId} />
                         </PressableScale>
                       ) : (
                         <View style={{ width: 30 }} />
@@ -412,7 +412,7 @@ function ServerThreadView({ id }: { id: string }) {
             accessibilityLabel={other ? tx('Open {name}’s profile', { name: thread.title }) : tx('About {title}', { title: thread.title })}
           >
             {other ? (
-              <Avatar name={thread.title} hue={hueOf(other)} size={36} photo={thread.members[other]?.photo ? faces[thread.members[other].photo!] : undefined} />
+              <Avatar name={thread.title} hue={hueOf(other)} size={36} photo={thread.members[other]?.photo ? faces[thread.members[other].photo!] : undefined} userId={other} />
             ) : chatPhoto.hasPhoto ? (
               <Photo visual={{ photo: chatPhoto.fallback, uri: chatPhotoUri ?? undefined }} light="dubai" style={styles.chatPhoto} width={120} recyclingKey={`chat-${id}-${chatPhoto.path ?? 'app'}`} />
             ) : null}
@@ -710,7 +710,7 @@ function ChatInfo({
         </Text>
         {list.map(([uid, m]) => (
           <PressableScale key={uid} haptic="select" scaleTo={0.98} onPress={() => go(`/person/${uid}`)} style={styles.memberRow} accessibilityLabel={tx('Open {name}’s profile', { name: m.name })}>
-            <Avatar name={m.name} hue={hueOf(uid)} size={40} photo={m.photo ? faces[m.photo] : undefined} />
+            <Avatar name={m.name} hue={hueOf(uid)} size={40} photo={m.photo ? faces[m.photo] : undefined} userId={uid} />
             <Text variant="titleS" style={{ flex: 1 }} raw>
               {uid === me ? tx('You') : m.name}
             </Text>

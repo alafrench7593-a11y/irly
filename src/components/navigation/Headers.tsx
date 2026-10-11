@@ -3,7 +3,7 @@ import { useServerUnread } from '@/features/server/chat';
 import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
-import { useServerNotifications } from '@/features/server/social';
+import { useServerBell } from '@/features/server/social';
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -155,9 +155,9 @@ export function InboxButtons() {
   const unread = useUnread();
   const account = useAccount();
   const auth = useAuthStatus();
-  const server = useServerNotifications();
+  const serverBell = useServerBell((st) => st.n);
   // Signed in: the bell counts real notifications (the demo build shows its examples).
-  const bell = account ? server.unread : DEMO && auth === 'out' ? 2 : 0;
+  const bell = account ? serverBell : DEMO && auth === 'out' ? 2 : 0;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />

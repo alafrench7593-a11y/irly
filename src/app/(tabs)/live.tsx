@@ -1,4 +1,3 @@
-import * as ImagePicker from 'expo-image-picker';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx, a11y } from '@/i18n';
 import { Image } from 'expo-image';
@@ -11,6 +10,8 @@ import { Page } from '@/components/layout/Page';
 import { InboxButtons } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { LiveRing } from '@/features/live/LiveStrip';
+import { pickLiveMedia, type LiveMedia } from '@/features/live/liveMedia';
+import { LiveVideo } from '@/features/live/LiveVideo';
 import { useAccount } from '@/features/auth/account';
 import { addFriend, deleteServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
 import { ActionBar } from '@/components/social/ActionBar';
@@ -308,7 +309,7 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
             <View style={styles.head}>
               {/* The author's face and name open their profile. */}
               <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push(`/person/${p.authorId}`)} accessibilityLabel={p.mine ? 'My profile' : tx('Open {name}’s profile', { name: p.firstName })}>
-                <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} />
+                <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} userId={p.authorId} />
               </PressableScale>
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" onPress={() => router.push(`/person/${p.authorId}`)}>{p.mine ? 'You' : p.firstName}</Text>
@@ -320,7 +321,9 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 </View>
               </View>
             </View>
-            {p.mediaUrl ? (
+            {p.mediaUrl && p.mediaKind === 'video' ? (
+              <LiveVideo url={p.mediaUrl} poster={p.posterUrl} seconds={p.seconds} style={styles.photo} />
+            ) : p.mediaUrl ? (
               <TapPhoto
                 photo={{ uri: p.mediaUrl }}
                 style={styles.photo}
@@ -336,9 +339,11 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 <Image source={{ uri: p.mediaUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
               </TapPhoto>
             ) : null}
-            <Text variant={p.mediaUrl ? 'body' : 'titleM'} raw>
-              {p.body}
-            </Text>
+            {p.body ? (
+              <Text variant={p.mediaUrl ? 'body' : 'titleM'} raw>
+                {p.body}
+              </Text>
+            ) : null}
             {p.activityId ? (
               <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={p.activityTitle ? tx('Join {title}', { title: p.activityTitle }) : tx('Join the activity')}>
                 <Icon name="calendar" size={18} color={t.c.text} />
@@ -463,7 +468,9 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const [picked, setArea] = useState(city.areas[0].id);
   // Switching destination keeps the composer mounted: never post a Dubai area in Bali.
   const area = city.areas.some((a) => a.id === picked) ? picked : city.areas[0].id;
-  const [uri, setUri] = useState<string | undefined>();
+  const [media, setMedia] = useState<LiveMedia | undefined>();
+  const uri = media?.uri;
+  const [progress, setProgress] = useState<number | null>(null);
   // Untouched, the post follows the member's IRL visibility setting; the chips show it.
   const [chosen, setChosen] = useState<'friends' | 'everyone' | null>(null);
   const [setting, setSetting] = useState<'friends' | 'everyone' | 'private'>('friends');
@@ -488,16 +495,20 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     };
   }, [account]);
 
-  const pick = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true });
-    if (!res.canceled && res.assets[0]) setUri(res.assets[0].uri);
+  const pick = async (kind: 'photo' | 'video' = 'photo') => {
+    try {
+      const m = await pickLiveMedia(kind);
+      if (m) setMedia(m);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not open this file', 'x', 'live');
+    }
   };
 
   const createdActivity = useRef<string | null>(null);
   // A double tap must never post twice: the ref flips before React re-renders.
   const sending = useRef(false);
   const submit = async () => {
-    if (!text.trim() || busy || sending.current) return;
+    if ((!text.trim() && !media) || busy || sending.current) return;
     if (account) {
       // Signed in: the post goes to the server, friends see it live.
       sending.current = true;
@@ -526,25 +537,28 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           createdActivity.current = activityId;
           track('ACTIVITY_CREATE', { via: 'irl' });
         }
-        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), photoUri: uri, visibility: chosen ?? undefined, activityId });
+        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), media, onProgress: media?.kind === 'video' ? setProgress : undefined, visibility: chosen ?? undefined, activityId });
         createdActivity.current = null;
         setChosen(null);
-        track('IRL_CREATE', { photo: Boolean(uri), activity: Boolean(activityId) });
+        track('IRL_CREATE', { photo: media?.kind === 'photo', video: media?.kind === 'video', activity: Boolean(activityId) });
       } catch (e) {
+        // The text and the photo or video stay: the member taps Post live again.
         toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
         sending.current = false;
         setBusy(false);
+        setProgress(null);
         return;
       }
       sending.current = false;
       setBusy(false);
+      setProgress(null);
     } else {
-      post({ cityId, kind: uri ? 'photo' : 'text', text: text.trim(), photoUri: uri, place: areaName(city, area), areaId: area });
+      post({ cityId, kind: media?.kind === 'photo' ? 'photo' : 'text', text: text.trim(), photoUri: media?.kind === 'photo' ? uri : undefined, place: areaName(city, area), areaId: area });
     }
     haptic('success');
     toast("You're live for 4 hours", 'zap', 'live');
     setText('');
-    setUri(undefined);
+    setMedia(undefined);
     onClose();
   };
 
@@ -569,7 +583,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         showsVerticalScrollIndicator={false}
       >
         {mode === 'post' && !uri ? (
-          <PressableScale haptic="select" onPress={pick} style={[styles.photoFrame, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
+          <PressableScale haptic="select" onPress={() => pick('photo')} style={[styles.photoFrame, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
             <Icon name="camera" size={26} color={t.c.text} />
             <Text variant="label">Add a photo</Text>
           </PressableScale>
@@ -584,16 +598,39 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]}
           accessibilityLabel={a11y('What are you doing right now?')}
         />
-        {uri ? (
+        {media ? (
           <Animated.View entering={FadeIn}>
-            <Image source={{ uri }} style={styles.preview} contentFit="cover" />
+            {media.kind === 'video' ? (
+              <LiveVideo url={media.uri} poster={media.poster} seconds={media.seconds} style={styles.preview} />
+            ) : (
+              <Image source={{ uri: media.uri }} style={styles.preview} contentFit="cover" />
+            )}
+            <PressableScale haptic="select" onPress={() => setMedia(undefined)} disabled={busy} hitSlop={8} style={styles.removeMedia} accessibilityLabel={media.kind === 'video' ? 'Remove the video' : 'Remove the photo'}>
+              <Icon name="x" size={16} color="#fff" />
+            </PressableScale>
           </Animated.View>
         ) : null}
+        {progress !== null ? (
+          <View style={{ gap: 6 }}>
+            <View style={[styles.bar, { backgroundColor: t.c.overlay }]}>
+              <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: t.c.text }]} />
+            </View>
+            <Text variant="caption" tone="secondary">
+              {tx('Sending the video… {n}%', { n: Math.round(progress * 100) })}
+            </Text>
+          </View>
+        ) : null}
         {mode === 'post' && !uri ? null : (
-          <PressableScale haptic="select" onPress={pick} style={[styles.addPhoto, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
-            <Icon name="camera" size={18} color={t.c.text} />
-            <Text variant="label">{uri ? 'Change photo' : 'Add a photo'}</Text>
-          </PressableScale>
+          <View style={styles.wrap}>
+            <PressableScale haptic="select" onPress={() => pick('photo')} disabled={busy} style={[styles.addPhoto, { borderColor: t.c.lineStrong, flex: 1 }]} accessibilityLabel="Add a photo">
+              <Icon name="camera" size={18} color={t.c.text} />
+              <Text variant="label">{media?.kind === 'photo' ? 'Change photo' : 'Photo'}</Text>
+            </PressableScale>
+            <PressableScale haptic="select" onPress={() => pick('video')} disabled={busy} style={[styles.addPhoto, { borderColor: t.c.lineStrong, flex: 1 }]} accessibilityLabel="Add a video">
+              <Icon name="video" size={18} color={t.c.text} />
+              <Text variant="label">{media?.kind === 'video' ? 'Change video' : 'Video'}</Text>
+            </PressableScale>
+          </View>
         )}
         <View style={{ gap: 8 }}>
           <Text variant="overline" tone="tertiary">
@@ -613,7 +650,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
             <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => setOpenUp(!openUp)} />
           </View>
         ) : null}
-        <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim()} onPress={submit} />
+        <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim() && !media} onPress={submit} />
       </ScrollView>
     </Sheet>
   );
@@ -637,4 +674,7 @@ const styles = StyleSheet.create({
   photoFrame: { height: 168, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
   addPhoto: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', justifyContent: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  removeMedia: { position: 'absolute', top: 10, right: 10, width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  bar: { height: 6, borderRadius: 3, overflow: 'hidden' },
+  barFill: { height: 6, borderRadius: 3 },
 });

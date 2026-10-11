@@ -807,9 +807,9 @@ async function main() {
     await visible(page, 'Vera');
     return true;
   });
-  await step('Follow → recorded once on the server, the button says Following, Vera has 1 follower', async () => {
+  await step('Follow → recorded once on the server, the button says You follow, Vera has 1 follower', async () => {
     await page.getByRole('button', { name: 'Follow', exact: true }).click();
-    await visible(page, 'Following', 15000);
+    await visible(page, 'You follow', 15000);
     const [f] = await sql(`select count(*)::int as n from public.follows where follower_id = '${uma.id}' and followee_id = '${vera.id}'`);
     const prof = must(await veraSb.rpc('public_profile', { p_user: vera.id }))[0];
     const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${vera.id}' and kind = 'NEW_FOLLOWER'`);
@@ -817,7 +817,7 @@ async function main() {
   });
   await step('… still following after a reload; the followers list shows Uma', async () => {
     await page.reload();
-    await visible(page, 'Following', 20000);
+    await visible(page, 'You follow', 20000);
     await page.getByRole('button', { name: /Followers/ }).first().click();
     // Uma sees herself in Vera's followers, shown as "You".
     await visible(page, 'You', 15000);
@@ -825,7 +825,7 @@ async function main() {
   });
   await step('Unfollow → no follow left, no duplicate', async () => {
     await page.goto(`${BASE}/person/${vera.id}`);
-    await page.getByRole('button', { name: 'Following', exact: true }).first().click();
+    await page.getByRole('button', { name: 'You follow', exact: true }).first().click();
     for (let i = 0; i < 20; i++) {
       const [f] = await sql(`select count(*)::int as n from public.follows where follower_id = '${uma.id}' and followee_id = '${vera.id}'`);
       if (f.n === 0) return true;

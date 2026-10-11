@@ -1,6 +1,7 @@
 import { useBaliStore } from '@/features/bali/baliStore';
 import { useGirlStore } from '@/features/girl/girlStore';
 import { useLiveStore } from '@/features/live/liveStore';
+import { clearFaces } from '@/features/server/faces';
 import { useStore } from './store';
 
 /**
@@ -11,6 +12,7 @@ import { useStore } from './store';
  */
 export function wipeLocal(): void {
   useStore.getState().deleteAccount();
+  clearFaces();
   useStore.setState({ waitlist: {} });
   useGirlStore.getState().reset();
   useBaliStore.getState().setAnswers({});

@@ -217,6 +217,12 @@ select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select pg_temp.check((select count(*) from public.irl_feed('dubai')) = 0, 'non-friend does not');
 select pg_temp.expect_denied($$select private.are_friends('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000d')$$, 'cannot probe other people''s friendships');
 select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id, area_id, body, expires_at) values (auth.uid(), 'dubai', 'marina', 'forever', now() + interval '3 days')$$, 'IRL posts cannot outlive 4 hours');
+-- Live with photos and videos
+insert into public.irl_posts (author_id, city_id, area_id, body, media_path, media_kind, thumb_path, media_seconds) values (auth.uid(), 'dubai', 'marina', '', auth.uid()::text || '/clip.mp4', 'video', auth.uid()::text || '/clip.jpg', 12);
+select pg_temp.check(exists (select 1 from public.irl_posts where media_kind = 'video' and body = ''), 'a video can be posted without text');
+select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id, area_id, body) values (auth.uid(), 'dubai', 'marina', '')$$, 'an empty post without media is refused');
+select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id, area_id, body, media_path, media_kind) values (auth.uid(), 'dubai', 'marina', 'x', '00000000-0000-0000-0000-00000000000b/theirs.mp4', 'video')$$, 'a post cannot point at someone else''s file');
+delete from public.irl_posts where media_kind = 'video' and author_id = auth.uid();
 select pg_temp.as_admin();
 select pg_temp.check((select count(*) from public.notifications n where n.kind = 'IRLY_POST_CREATED') = 1, 'friend notified of the IRL post');
 
@@ -1384,5 +1390,14 @@ select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.profiles where first_name = 'Carl'), 'a member with messages can delete the account');
 select pg_temp.check(not exists (select 1 from public.messages where body = 'Carl message'), 'their messages go with the account (never shown as IRLY''s own)');
 select pg_temp.check(exists (select 1 from public.community_members m join public.communities c on c.id = m.community_id where c.name = 'Carl Club' and m.role = 'owner') or not exists (select 1 from public.community_members m join public.communities c on c.id = m.community_id where c.name = 'Carl Club'), 'their communities keep an owner if anyone is left');
+
+-- ───── Faces: one source for members' photos ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check((select count(*) from public.profile_faces(array['00000000-0000-0000-0000-00000000000e', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000012']::uuid[])) = 3, 'faces: members see each other''s photo path');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select public.block_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check((select count(*) from public.profile_faces(array['00000000-0000-0000-0000-000000000011']::uuid[])) = 0, 'faces: nothing across a block');
+select public.unblock_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.as_admin();
 
 \echo 'ALL TESTS PASSED'

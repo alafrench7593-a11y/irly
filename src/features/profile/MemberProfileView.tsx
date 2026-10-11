@@ -12,6 +12,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
+import { LiveVideo } from '@/features/live/LiveVideo';
 import { webLink } from '@/config/app';
 import { INTERESTS } from '@/data/catalog';
 import { areaName, CITIES } from '@/data/destinations';
@@ -181,7 +182,7 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
         {/* Identity */}
         <View style={styles.identity}>
           <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-            <Avatar name={p.firstName} hue={hueOf(p.id)} size={96} photo={photo} />
+            <Avatar name={p.firstName} hue={hueOf(p.id)} size={96} photo={photo} userId={p.id} />
           </Animated.View>
           <Animated.View entering={reduced ? undefined : enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
             <Text variant="displayL" align="center" raw>
@@ -327,7 +328,7 @@ function Actions({ p, busy, onFriend, onFollow, onMessage }: { p: MemberProfile;
       <View style={styles.buttons}>
         <View style={{ flex: 1 }}>
           <Button
-            label={p.iFollow ? 'Following' : p.followsMe ? 'Follow back' : 'Follow'}
+            label={p.iFollow ? 'You follow' : p.followsMe ? 'Follow back' : 'Follow'}
             icon={p.iFollow ? 'userCheck' : 'userPlus'}
             variant={p.iFollow ? 'secondary' : 'primary'}
             loading={busy === 'follow'}
@@ -347,6 +348,10 @@ function Actions({ p, busy, onFriend, onFollow, onMessage }: { p: MemberProfile;
           />
         </View>
       </View>
+      {/* Two different links, said plainly: following needs no approval; a friend request does. */}
+      <Text variant="caption" tone="tertiary" align="center">
+        Follow: see their posts, no approval needed. Friends: they accept, then you can chat and see each other’s Lives.
+      </Text>
       <Button label="Message" icon="message" variant="secondary" loading={busy === 'message'} full disabled={!p.canMessage} onPress={onMessage} />
       {p.friendStatus !== 'none' ? (
         <PressableScale
@@ -435,7 +440,7 @@ function LivesTab({ userId, own, name, cityId }: { userId: string; own: boolean;
   const router = useRouter();
   const now = useNow();
   const lives = useMemberLives(userId);
-  const pics = useSignedLinks('irl-media', lives.items.map((l) => l.media));
+  const pics = useSignedLinks('irl-media', lives.items.flatMap((l) => [l.media, l.poster]));
   if (lives.loading) return <Loading />;
   if (lives.error) return <Failed message={lives.error} onRetry={lives.reload} />;
   const live = lives.items.filter((l) => l.live && l.expiresAt > now);
@@ -461,7 +466,13 @@ function LivesTab({ userId, own, name, cityId }: { userId: string; own: boolean;
           {l.placeName ?? (cityId && cityId in CITIES ? areaName(CITIES[cityId as keyof typeof CITIES], l.areaId) : l.areaId)}
         </Text>
       </View>
-      {l.media && pics[l.media] ? <Photo visual={{ photo: 'meeting', uri: pics[l.media] }} light="dubai" width={700} style={styles.livePhoto} /> : null}
+      {l.media && pics[l.media] ? (
+        l.video ? (
+          <LiveVideo url={pics[l.media]} poster={l.poster ? pics[l.poster] : null} seconds={l.seconds} style={styles.livePhoto} />
+        ) : (
+          <Photo visual={{ photo: 'meeting', uri: pics[l.media] }} light="dubai" width={700} style={styles.livePhoto} />
+        )
+      ) : null}
       <Text variant="body" raw>
         {l.body}
       </Text>

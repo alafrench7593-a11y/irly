@@ -47,3 +47,4 @@ out
 credentials.json
 ios-signing/
 asc-api-key.p8
+public-photos/_variants/

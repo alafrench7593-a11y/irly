@@ -48,7 +48,8 @@
             ]
           }
         ]
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "app.irly.mobile",
@@ -130,7 +131,8 @@
           "writeOnlyCalendarPermission": "IRLY adds the activities you choose to your calendar, only when you tap “Add to my calendar”. IRLY never reads your calendar.",
           "remindersPermission": false
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": false

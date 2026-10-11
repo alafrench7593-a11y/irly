@@ -187,7 +187,7 @@ export default function BaliArea() {
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 12 }}>
               {girls.data.slice(0, 12).map((g) => (
                 <PressableScale key={g.userId} onPress={() => router.push('/girl')} haptic="select" scaleTo={0.95} style={styles.girl} accessibilityLabel={g.firstName}>
-                  <Avatar name={g.firstName} hue={hueOf(g.userId)} size={52} />
+                  <Avatar name={g.firstName} hue={hueOf(g.userId)} size={52} userId={g.userId} />
                   <Text variant="caption" numberOfLines={1} raw>
                     {g.firstName}
                   </Text>

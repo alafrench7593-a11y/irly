@@ -170,7 +170,7 @@ function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () =>
   const now = useNow();
   return (
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={styles.row}>
-      <Avatar name={c.firstName} hue={hueOf(c.authorId)} size={32} />
+      <Avatar name={c.firstName} hue={hueOf(c.authorId)} size={32} userId={c.authorId} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="label">
           {c.firstName}{' '}

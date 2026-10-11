@@ -37,6 +37,13 @@ const people = {
 };
 
 let passed = 0;
+const timings = {};
+const timed = async (label, fn) => {
+  const t0 = performance.now();
+  const r = await fn();
+  timings[label] = Math.round(performance.now() - t0);
+  return r;
+};
 let failed = 0;
 const failures = [];
 async function step(label, fn) {
@@ -88,6 +95,34 @@ const anon = createClient(URL, KEY, { auth: { persistSession: false } });
 try {
   await cleanup();
 
+  // ───── Sign-up by email, as the app does it (real Supabase Auth) ─────
+  await step('email sign-up: account, one profile, sign out, sign in again, no duplicate, then deletion', async () => {
+    const email = `e2e-${run}-signup@irly.test`;
+    const pw = `Signup-${run}-pw!`;
+    const sb = createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+    const weak = await sb.auth.signUp({ email, password: 'short' });
+    if (!weak.error) throw new Error('a 5-character password was accepted');
+    const up = await timed('sign up (email)', () => sb.auth.signUp({ email, password: pw }));
+    if (up.error) throw new Error(up.error.message);
+    if (!up.data.session) {
+      // Email confirmation is on: the account exists but needs the link. Remove it and say so.
+      await sql(`delete from auth.users where email = '${email}'`);
+      console.log('   (email confirmation required: the sign-in part needs the emailed link, not testable here)');
+      return true;
+    }
+    const uid = up.data.user.id;
+    must(await sb.from('profiles').insert({ id: uid, first_name: 'Sig', birthdate: '1994-01-01', gender: 'woman', city_id: 'dubai', languages: ['en'], interests: ['sport', 'food', 'art'] }));
+    const dup = await sb.from('profiles').insert({ id: uid, first_name: 'Sig2', birthdate: '1994-01-01', gender: 'woman', city_id: 'dubai' });
+    await sb.auth.signOut();
+    const back = await timed('sign in (email)', () => sb.auth.signInWithPassword({ email, password: pw }));
+    if (back.error) throw new Error(back.error.message);
+    const wrong = await sb.auth.signInWithPassword({ email, password: 'Wrong-password-1' });
+    const mine = must(await sb.from('profiles').select('id, first_name').eq('id', uid));
+    must(await sb.rpc('delete_my_account'));
+    const [left] = await sql(`select count(*)::int as n from auth.users where id = '${uid}'`);
+    return Boolean(dup.error) && !back.error && Boolean(wrong.error) && mine.length === 1 && mine[0].first_name === 'Sig' && left.n === 0;
+  });
+
   // ───── Accounts and profiles ─────
   await step('3 members sign in with email + password', async () => {
     for (const p of Object.values(people)) await createUser(p);
@@ -133,10 +168,19 @@ try {
 
   // ───── Friends, IRL, likes, comments ─────
   let postId;
-  await step('Alice and Carl become friends', async () => {
-    must(await A.sb.rpc('add_friend', { p_user: C.id }));
-    return must(await C.sb.rpc('add_friend', { p_user: A.id })) === 'accepted';
+  // Speed: real round trips against the live project, measured.
+  await step('Alice and Carl become friends (request, notification, accept, both sides agree)', async () => {
+    const sent = must(await timed('add friend (request)', () => A.sb.rpc('add_friend', { p_user: C.id })));
+    const notified = must(await C.sb.from('notifications').select('kind, payload')).some((n) => n.kind === 'FRIEND_REQUEST' && n.payload?.from === A.id);
+    const asked = must(await A.sb.rpc('public_profile', { p_user: C.id }))[0]?.friend_status === 'outgoing';
+    const accepted = must(await timed('add friend (accept)', () => C.sb.rpc('add_friend', { p_user: A.id }))) === 'accepted';
+    const both = must(await A.sb.rpc('public_profile', { p_user: C.id }))[0]?.friend_status === 'friends' && must(await C.sb.rpc('public_profile', { p_user: A.id }))[0]?.friend_status === 'friends';
+    const told = must(await A.sb.from('notifications').select('kind, payload')).some((n) => n.kind === 'FRIEND_ACCEPTED' && n.payload?.from === C.id);
+    // A second tap changes nothing and never fails.
+    const again = must(await A.sb.rpc('add_friend', { p_user: C.id }));
+    return sent === 'pending' && notified && asked && accepted && both && told && again === 'accepted';
   });
+  await step('a friend request cannot be sent in someone else\'s name', () => denied(A.sb.from('friendships').insert({ user_a: B.id < C.id ? B.id : C.id, user_b: B.id < C.id ? C.id : B.id, requested_by: B.id })));
   await step('Alice posts an IRL moment for friends', async () => {
     const d = must(await A.sb.from('irl_posts').insert({ author_id: A.id, city_id: 'bali', area_id: 'canggu', body: 'E2E coffee at Canggu, anyone?', visibility: 'friends' }).select('id').single());
     postId = d.id;
@@ -155,6 +199,35 @@ try {
     return kinds.includes('LIKE') && kinds.includes('COMMENT');
   });
   await step('Bea cannot like a post she cannot see', () => denied(B.sb.rpc('toggle_like', { p_type: 'irl_post', p_id: postId })));
+  // Live with a video: stored, poster stored, seen by a friend, gone with the post.
+  let videoPost;
+  const videoPath = `${A.id}/e2e-${run}.mp4`;
+  const posterPath = `${A.id}/e2e-${run}-poster.jpg`;
+  await step('Alice posts a video on the Live (file, poster, then the post)', async () => {
+    must(await timed('upload video (100 kB)', () => A.sb.storage.from('irl-media').upload(videoPath, new Uint8Array(100 * 1024), { contentType: 'video/mp4' })));
+    must(await A.sb.storage.from('irl-media').upload(posterPath, new Uint8Array(2048), { contentType: 'image/jpeg' }));
+    const d = must(await timed('publish a Live post', () => A.sb.from('irl_posts').insert({ author_id: A.id, city_id: 'bali', area_id: 'canggu', body: '', media_path: videoPath, media_kind: 'video', thumb_path: posterPath, media_seconds: 9, visibility: 'friends' }).select('id').single()));
+    videoPost = d.id;
+    return true;
+  });
+  await step('Carl (friend) gets it in the feed as a video with its poster, and can open both files', async () => {
+    const row = must(await timed('open the Live feed', () => C.sb.rpc('irl_feed', { p_city: 'bali' }))).find((p) => p.id === videoPost);
+    if (!row || row.media_kind !== 'video' || row.thumb_path !== posterPath || row.media_seconds !== 9) return false;
+    const links = must(await C.sb.storage.from('irl-media').createSignedUrls([videoPath, posterPath], 60));
+    return links.every((l) => l.signedUrl);
+  });
+  await step('Bea (not a friend) can open neither the post nor its files', async () => {
+    const inFeed = must(await B.sb.rpc('irl_feed', { p_city: 'bali' })).some((p) => p.id === videoPost);
+    const { data } = await B.sb.storage.from('irl-media').createSignedUrls([videoPath, posterPath], 60);
+    return !inFeed && !(data ?? []).some((l) => l.signedUrl);
+  });
+  await step('Carl cannot post pointing at Alice\'s video', () => denied(C.sb.from('irl_posts').insert({ author_id: C.id, city_id: 'bali', area_id: 'canggu', body: 'mine', media_path: videoPath, media_kind: 'video' })));
+  await step('Alice deletes the video post: the post and both files are gone', async () => {
+    must(await A.sb.from('irl_posts').delete().eq('id', videoPost));
+    must(await A.sb.storage.from('irl-media').remove([videoPath, posterPath]));
+    const { data } = await A.sb.storage.from('irl-media').list(A.id, { search: `e2e-${run}` });
+    return !(data ?? []).length;
+  });
 
   // ───── Share, save, private chat ─────
   await step('Carl shares the session to Alice in a private chat', async () => {
@@ -217,6 +290,13 @@ try {
   await step('the match chat has conversation starters and both can write', async () => {
     must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body: 'Brunch this weekend?' }));
     return must(await A.sb.from('messages').select('body').eq('conversation_id', matchConv)).length >= 2;
+  });
+  await step('a new message notifies Alice (unread), and reading the chat clears it: the bell badge follows', async () => {
+    const unreadBefore = must(await A.sb.from('notifications').select('id').eq('kind', 'MESSAGE_CREATED').eq('payload->>conversation_id', matchConv).is('read_at', null)).length;
+    must(await timed('open a conversation (mark read)', () => A.sb.rpc('mark_conversation_read', { p_conversation: matchConv })));
+    const unreadAfter = must(await A.sb.from('notifications').select('id').eq('kind', 'MESSAGE_CREATED').eq('payload->>conversation_id', matchConv).is('read_at', null)).length;
+    const inbox = must(await A.sb.rpc('my_conversations', {})).find((c) => c.conversation_id === matchConv);
+    return unreadBefore >= 1 && unreadAfter === 0 && inbox?.unread === 0;
   });
   // Tidying a chat is personal: delete for me, archive, delete conversation.
   await step('delete for me: Alice no longer sees the message, Bea still does', async () => {
@@ -395,6 +475,7 @@ try {
   await cleanup();
 }
 
+console.log('\nSpeed (ms, real round trips to the live project):', JSON.stringify(timings));
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) {
   console.log('Failed:\n- ' + failures.join('\n- '));

@@ -69,13 +69,13 @@ export default function FollowsScreen() {
           list.people.map((p, i) => (
             <Animated.View key={p.id} entering={enter.rise(Math.min(i, 8), 20)} style={styles.row}>
               <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(`/person/${p.id}`)} style={styles.who} accessibilityLabel={tx('Open {name}’s profile', { name: p.firstName })}>
-                <Avatar name={p.firstName} hue={hueOf(p.id)} size={48} photo={p.photo ? faces[p.photo] : undefined} />
+                <Avatar name={p.firstName} hue={hueOf(p.id)} size={48} photo={p.photo ? faces[p.photo] : undefined} userId={p.id} />
                 <Text variant="titleS" style={{ flex: 1 }} raw>
                   {p.id === list.me ? tx('You') : p.firstName}
                 </Text>
               </PressableScale>
               {p.id !== list.me ? (
-                <Button label={p.iFollow ? 'Following' : 'Follow'} size="sm" variant={p.iFollow ? 'secondary' : 'primary'} loading={busy === p.id} onPress={() => toggle(p.id, !p.iFollow)} />
+                <Button label={p.iFollow ? 'You follow' : 'Follow'} size="sm" variant={p.iFollow ? 'secondary' : 'primary'} loading={busy === p.id} onPress={() => toggle(p.id, !p.iFollow)} />
               ) : null}
             </Animated.View>
           ))

@@ -29,6 +29,7 @@ import { MatchHost } from '@/features/match/IrlyMatch';
 import { usePush } from '@/features/push/push';
 import { ReportHost } from '@/features/moderation/ReportSheet';
 import { UnreadSync } from '@/features/server/chat';
+import { BellSync } from '@/features/server/social';
 import { SyncBridge } from '@/features/server/sync';
 import { OfflineBar } from '@/features/server/OfflineBar';
 import { useStore } from '@/state/store';
@@ -114,6 +115,7 @@ function App() {
       <ReportHost />
       <SyncBridge />
       <UnreadSync />
+      <BellSync />
       <CreateHost />
       <DestinationTransition />
       <AppIntro />

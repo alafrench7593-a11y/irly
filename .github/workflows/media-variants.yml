@@ -1,0 +1,46 @@
+name: HD photo variants and films
+
+# Several HD photos per subject and one film per subject, from every free
+# bank we have a key for (UNSPLASH_ACCESS_KEY, PEXELS_API_KEY,
+# PIXABAY_API_KEY) plus Openverse public domain (no key). No picture used
+# twice. Commits the choices; contact sheets are kept as an artifact.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/scripts/media-variants.mjs', '.github/workflows/media-variants.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: media-variants
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get update >/dev/null && sudo apt-get install -y imagemagick ffmpeg >/dev/null
+      - run: git pull --ff-only origin "${GITHUB_REF_NAME}"
+      - run: node .github/scripts/media-variants.mjs
+        env:
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contact-sheets
+          path: public-photos/_variants/
+      - name: Commit
+        run: |
+          git config user.name irly-bot
+          git config user.email bot@irly.app
+          git add public-photos/v public-photos/VARIANTS.md site/video src/data/photoVariants.ts .github/scripts/media-variants-picks.json
+          git diff --cached --quiet || (git commit -m "HD photo variants and films" && for i in 1 2 3 4 5; do git pull --rebase -X ours && git push && break; sleep $((i * 10)); done)

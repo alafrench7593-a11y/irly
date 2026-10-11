@@ -420,7 +420,7 @@ const PostCard = memo(function PostCard({ p, eng, cityId }: { p: GirlPost; eng: 
     <View style={styles.post}>
       <View style={styles.postHead}>
         <PressableScale haptic="select" scaleTo={0.94} onPress={() => (p.mine ? router.push('/girl/profile') : router.push(`/person/${p.authorId}`))} accessibilityLabel={p.mine ? 'My profile' : tx("View {name}'s profile", { name: p.firstName })}>
-          <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={38} />
+          <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={38} userId={p.authorId} />
         </PressableScale>
         <View style={{ flex: 1 }}>
           <Text variant="titleS" color={girl.ink} raw>

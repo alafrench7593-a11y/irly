@@ -129,7 +129,7 @@ export default function NewGroup() {
             return (
               <Animated.View key={p.id} entering={enter.rise(Math.min(i, 8), 20)}>
                 <PressableScale onPress={() => toggle(p.id)} scaleTo={0.98} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={p.first_name} style={styles.row}>
-                  <Avatar name={p.first_name} hue={hueOf(p.id)} size={46} photo={p.photo_path ? faces[p.photo_path] : undefined} />
+                  <Avatar name={p.first_name} hue={hueOf(p.id)} size={46} photo={p.photo_path ? faces[p.photo_path] : undefined} userId={p.id} />
                   <Text variant="titleS" style={{ flex: 1 }} raw>
                     {p.first_name}
                   </Text>

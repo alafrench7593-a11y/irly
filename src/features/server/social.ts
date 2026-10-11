@@ -4,9 +4,10 @@ import { useCityFilter } from './scope';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
-import { supabase, topic } from '@/lib/supabase';
+import { friendlyError, supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { cleanImage } from '@/lib/media';
+import { uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
 
 /**
  * IRL posts, friends and notifications on the server (signed in), live
@@ -28,6 +29,10 @@ export type ServerIrlPost = {
   mine: boolean;
   activityId: string | null;
   activityTitle: string | null;
+  /** 'photo' or 'video'; a video's poster image (never the video itself until played) and length. */
+  mediaKind?: 'photo' | 'video';
+  posterUrl?: string | null;
+  seconds?: number | null;
   /** Its emirate: the feed covers the whole destination. */
   cityId: string | null;
 };
@@ -45,6 +50,9 @@ type FeedRow = {
   friend: boolean;
   activity_id?: string | null;
   activity_title?: string | null;
+  media_kind?: 'photo' | 'video' | null;
+  thumb_path?: string | null;
+  media_seconds?: number | null;
 };
 
 /** Every photo of a feed signed in ONE request (was one request per photo). */
@@ -93,7 +101,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     const { data, error } = await supabase.rpc('irl_feed', { p_city: cityId });
     if (error) throw new Error(error.message);
     const rows = (data as FeedRow[]) ?? [];
-    const links = await signedAll(rows.map((r) => r.media_path));
+    const links = await signedAll(rows.flatMap((r) => [r.media_path, r.thumb_path ?? null]));
     return rows.map((r) => ({
         id: r.id,
         authorId: r.author_id,
@@ -108,6 +116,9 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         mine: r.author_id === uid,
         activityId: r.activity_id ?? null,
         activityTitle: r.activity_title ?? null,
+        mediaKind: r.media_path ? (r.media_kind === 'video' ? 'video' : 'photo') : undefined,
+        posterUrl: r.thumb_path ? (links[r.thumb_path] ?? null) : null,
+        seconds: r.media_seconds ?? null,
         cityId: (r as { city_id?: string }).city_id ?? null,
       }));
   }, [cityId, uid]);
@@ -165,6 +176,10 @@ export async function postServerIrl(input: {
   placeName?: string;
   body: string;
   photoUri?: string;
+  /** A photo or a video (with its poster); wins over photoUri. */
+  media?: LiveMedia;
+  /** Upload progress of a video, 0 → 1. */
+  onProgress?: (p: number) => void;
   /** Left out: the member's IRL visibility setting applies (server default). */
   visibility?: 'everyone' | 'friends';
   /** IRL → activity: the post points at the activity, never a copy of it. */
@@ -175,11 +190,29 @@ export async function postServerIrl(input: {
   const uid = s.session?.user.id;
   if (!uid) return false;
   let media_path: string | null = null;
-  if (input.photoUri) {
-    const img = await cleanImage(input.photoUri);
-    media_path = `${uid}/${Date.now()}.${img.ext}`;
+  let thumb_path: string | null = null;
+  const media: LiveMedia | undefined = input.media ?? (input.photoUri ? { kind: 'photo', uri: input.photoUri } : undefined);
+  const stamp = Date.now();
+  if (media?.kind === 'photo') {
+    const img = await cleanImage(media.uri);
+    media_path = `${uid}/${stamp}.${img.ext}`;
     const { error } = await supabase.storage.from('irl-media').upload(media_path, img.body, { contentType: img.contentType });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(friendlyError(error.message));
+  } else if (media?.kind === 'video') {
+    const ext = media.type === 'video/quicktime' ? 'mov' : 'mp4';
+    if (media.poster) {
+      const img = await cleanImage(media.poster);
+      thumb_path = `${uid}/${stamp}-poster.${img.ext}`;
+      const { error } = await supabase.storage.from('irl-media').upload(thumb_path, img.body, { contentType: img.contentType });
+      if (error) thumb_path = null; // The video still goes; the feed shows a plain tile.
+    }
+    media_path = `${uid}/${stamp}.${ext}`;
+    try {
+      await uploadLiveFile(media_path, media.uri, media.type ?? 'video/mp4', input.onProgress);
+    } catch (e) {
+      if (thumb_path) await supabase.storage.from('irl-media').remove([thumb_path]);
+      throw e;
+    }
   }
   const { data: row, error } = await supabase.from('irl_posts').insert({
     author_id: uid,
@@ -188,10 +221,18 @@ export async function postServerIrl(input: {
     place_name: input.placeName ?? null,
     body: input.body,
     media_path,
+    ...(media ? { media_kind: media.kind } : {}),
+    ...(thumb_path ? { thumb_path } : {}),
+    ...(media?.seconds !== undefined ? { media_seconds: Math.min(120, media.seconds) } : {}),
     ...(input.visibility ? { visibility: input.visibility } : {}),
     activity_id: input.activityId ?? null,
   }).select('id, created_at, visibility').single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    // The post was refused: its files must not stay behind.
+    const files = [media_path, thumb_path].filter((x): x is string => Boolean(x));
+    if (files.length) await supabase.storage.from('irl-media').remove(files);
+    throw new Error(friendlyError(error.message));
+  }
   // On screen at once, with the photo already on the phone; the reload confirms it.
   useIrlMine.setState((s) => ({
     posts: [
@@ -202,7 +243,10 @@ export async function postServerIrl(input: {
         areaId: input.areaId,
         placeName: input.placeName ?? null,
         body: input.body,
-        mediaUrl: input.photoUri ?? null,
+        mediaUrl: media?.uri ?? null,
+        mediaKind: media?.kind,
+        posterUrl: media?.poster ?? null,
+        seconds: media?.seconds ?? null,
         visibility: row.visibility,
         createdAt: Date.parse(row.created_at),
         friend: false,
@@ -221,8 +265,12 @@ export async function postServerIrl(input: {
 
 export async function deleteServerIrl(id: string): Promise<void> {
   if (!supabase) return;
+  const { data: row } = await supabase.from('irl_posts').select('media_path, thumb_path').eq('id', id).maybeSingle();
   const { error } = await supabase.from('irl_posts').delete().eq('id', id);
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
+  // Its photo or video (and poster) go with it.
+  const files = [row?.media_path, row?.thumb_path].filter((x): x is string => Boolean(x));
+  if (files.length) await supabase.storage.from('irl-media').remove(files).catch(() => undefined);
   useIrlMine.setState((s) => ({ posts: s.posts.filter((p) => p.id !== id) }));
   bumpIrl();
 }
@@ -266,7 +314,7 @@ export function useFriends(): { friends: Friend[]; refresh: () => void } {
 export async function addFriend(userId: string): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data, error } = await supabase.rpc('add_friend', { p_user: userId });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
   changed('friends', 'notifs');
   return data as string;
 }
@@ -342,4 +390,20 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   const list = uid ? items : NONE;
   // Messages have their own badge (the chat icon): the bell never counts them twice.
   return { items: list, unread: list.filter((n) => !n.readAt && n.kind !== 'MESSAGE_CREATED').length, markAllRead };
+}
+
+/** Unread notifications (the bell badge), fed once by <BellSync /> for every header. */
+export const useServerBell = create<{ n: number }>(() => ({ n: 0 }));
+
+/**
+ * Mounted once at the root. Every tab keeps its header mounted: a bell hook
+ * in each header opened one Realtime channel and one reload per tab for every
+ * notification. Now there is one, and the headers read its count.
+ */
+export function BellSync() {
+  const { unread } = useServerNotifications();
+  useEffect(() => {
+    useServerBell.setState({ n: unread });
+  }, [unread]);
+  return null;
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
-import { supabase } from '@/lib/supabase';
+import { friendlyError, supabase } from '@/lib/supabase';
 import { askPushInContext } from '@/features/push/push';
 
 /**
@@ -138,7 +138,7 @@ export function setFollow(userId: string, on: boolean): Promise<void> {
   if (running) return running;
   const p = (async () => {
     const { error } = await sb().rpc(on ? 'follow_user' : 'unfollow_user', { p_user: userId });
-    if (error) throw new Error(/fetch|network/i.test(error.message) ? 'No connection: try again' : error.message);
+    if (error) throw new Error(friendlyError(error.message));
     changed('follows');
   })().finally(() => inFlight.delete(k));
   inFlight.set(k, p);
@@ -168,8 +168,7 @@ export function setFriend(userId: string, action: 'add' | 'remove'): Promise<Fri
 }
 
 function friendError(m: string): string {
-  if (/fetch|network/i.test(m)) return 'No connection: try again';
-  if (/sign in|JWT|token/i.test(m)) return 'Your session has ended. Sign in again';
+  if (/did not answer|abort|fetch|network|JWT|token is expired|sign in required/i.test(m)) return friendlyError(m);
   if (/not available/i.test(m)) return 'This member is not available';
   if (/that is you/i.test(m)) return 'This is your own profile';
   return m;
@@ -212,7 +211,7 @@ export async function openDirect(userId: string): Promise<string> {
 /* ───────── Profile tabs: posts, lives, activities (server, as the viewer may see them) ───────── */
 
 export type ProfilePost = MemberPost & { likes: number; comments: number; liked: boolean; media: string | null };
-export type ProfileLive = { id: string; body: string; media: string | null; areaId: string; placeName: string | null; at: number; expiresAt: number; live: boolean };
+export type ProfileLive = { id: string; body: string; media: string | null; video: boolean; poster: string | null; seconds: number | null; areaId: string; placeName: string | null; at: number; expiresAt: number; live: boolean };
 export type ProfileActivity = {
   id: string;
   title: string;
@@ -320,7 +319,7 @@ function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds
 }
 
 type ActivityRow = { id: string; title: string; category_id: string; city_id: string; area_id: string; place_name: string | null; starts_at: string; ends_at: string | null; cover_path: string | null; going: number; role: 'created' | 'joined'; state: ProfileActivity['state'] };
-type LiveRow = { id: string; body: string; media_path: string | null; area_id: string; place_name: string | null; created_at: string; expires_at: string; live: boolean };
+type LiveRow = { id: string; body: string; media_path: string | null; area_id: string; place_name: string | null; created_at: string; expires_at: string; live: boolean; media_kind?: string | null; thumb_path?: string | null; media_seconds?: number | null };
 
 /** Activities a member created or joined (the activity rules and their activity visibility decide). */
 export const useMemberActivities = (userId: string, enabled = true) =>
@@ -350,7 +349,7 @@ export const useMemberLives = (userId: string, enabled = true) =>
   useProfileRpc<LiveRow, ProfileLive>(
     'member_lives',
     userId,
-    (r) => ({ id: r.id, body: r.body, media: r.media_path, areaId: r.area_id, placeName: r.place_name, at: Date.parse(r.created_at), expiresAt: Date.parse(r.expires_at), live: r.live }),
+    (r) => ({ id: r.id, body: r.body, media: r.media_path, video: r.media_kind === 'video', poster: r.thumb_path ?? null, seconds: r.media_seconds ?? null, areaId: r.area_id, placeName: r.place_name, at: Date.parse(r.created_at), expiresAt: Date.parse(r.expires_at), live: r.live }),
     ['friends', 'people'],
     enabled,
   );
