@@ -120,7 +120,9 @@ async function main() {
     await click('Skip for now');
   });
   await check('Communities: For you recommends IRLY Newcomers (not joined)', '/communities', ['For you', 'IRLY Newcomers', 'Join']);
-  await check('Communities: All lists the IRLY catalogue with search and themes', '/communities?tab=all', ['Search by name or theme', 'Sports', 'IRLY Expats']);
+  await check('Communities: All lists the IRLY catalogue; search finds IRLY Expats (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expats'], async () => {
+    await page.getByPlaceholder('Search by name or theme').fill('expats');
+  });
   await check('Match IRLY in the bar opens people to meet', '/', ['People to meet'], async () => {
     await page.getByRole('button', { name: 'Match IRLY' }).first().click();
   });
