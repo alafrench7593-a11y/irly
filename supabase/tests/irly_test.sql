@@ -805,6 +805,23 @@ insert into public.waitlist (email, created_at) values ('old@example.com', now()
 select private.purge_retention();
 select pg_temp.check(not exists (select 1 from public.waitlist where email = 'old@example.com'), 'waitlist addresses are kept 24 months');
 
+-- ───── Contact form (website) ─────
+set role anon;
+select pg_temp.check(public.contact_support(' Visitor@Example.com ', 'delete', 'Please delete my IRLY account.', 'fr') = 'ok', 'a visitor sends a support request');
+select pg_temp.check(public.contact_support('bot@example.com', 'other', 'Buy cheap followers now!!', 'en', 'http://spam.example') = 'ok', 'a bot gets the same answer');
+select pg_temp.check(pg_temp.error_of($$select public.contact_support('not-an-email', 'other', 'Hello there, a question.')$$) like '%invalid email%', 'an invalid reply address is refused');
+select pg_temp.check(pg_temp.error_of($$select public.contact_support('a@example.com', 'free text', 'Hello there, a question.')$$) like '%invalid subject%', 'an unknown topic is refused');
+select pg_temp.check(pg_temp.error_of($$select public.contact_support('a@example.com', 'other', 'Hi')$$) like '%invalid message%', 'a message too short is refused');
+select public.contact_support('flood@example.com', 'bug', 'First message about a bug.');
+select public.contact_support('flood@example.com', 'bug', 'Second message about a bug.');
+select public.contact_support('flood@example.com', 'bug', 'Third message about a bug.');
+select pg_temp.check(pg_temp.error_of($$select public.contact_support('flood@example.com', 'bug', 'Fourth message about a bug.')$$) like '%slow down%', 'one address cannot flood the team');
+select pg_temp.check(not exists (select 1 from public.support_requests), 'visitors cannot read support requests');
+select pg_temp.expect_denied($$insert into public.support_requests (kind, body, source) values ('question', 'direct insert', 'web')$$, 'visitors cannot write the table directly');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.support_requests where contact = 'visitor@example.com' and kind = 'privacy' and subject = 'delete' and source = 'web' and lang = 'fr' and user_id is null) = 1, 'stored for the team, address lower-cased, with topic and language');
+select pg_temp.check(not exists (select 1 from public.support_requests where contact = 'bot@example.com'), 'what a bot sends is not stored');
+
 -- ───── Own photos for communities and chats ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select public.set_community_cover((select id from public.communities where name = 'Marina Padel Girls'), '00000000-0000-0000-0000-00000000000a/cover.jpg');

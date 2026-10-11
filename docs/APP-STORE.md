@@ -12,17 +12,19 @@ Limites App Store Connect : nom 30, sous-titre 30, texte promotionnel 170, descr
 | Catégorie principale | Social Networking (Réseaux sociaux) |
 | Catégorie secondaire | Lifestyle (Style de vie) |
 | Classification d'âge | 17+ conseillé : contenus publiés par les membres et messagerie entre adultes ; l'inscription est réservée aux 18 ans et plus (contrôle à l'inscription) |
-| URL de confidentialité | `https://getirly.com/app/legal/privacy` (à ouvrir une fois dans un navigateur pour vérifier) |
-| URL d'assistance | `https://getirly.com/app/support` (même vérification) |
+| URL de confidentialité | `https://getirly.com/privacy` (page publique, sans connexion ; FR : `/fr/privacy`) |
+| URL d'assistance | `https://getirly.com/support` (formulaire de contact relié au serveur ; FR : `/fr/support`) |
+| Suppression du compte | `https://getirly.com/delete-account` (procédure ; la suppression se fait dans l'app) |
+| Conditions d'utilisation | `https://getirly.com/terms` (à coller dans la description ou le contrat de licence si tu utilises le tien) |
 | URL marketing | `https://getirly.com` |
 | Contact | getirly@gmail.com |
 
 ## 2. English listing
 
-**Subtitle (30)**: `Friends, plans & communities` (28)
+**Subtitle (30)**: `Less loneliness. More life.` (27), slogan officiel. Le sous-titre proposé « Less loneliness. More real connections. » fait 39 caractères : refusé par App Store Connect (30 max). Autre option : `Friends, plans & communities` (28).
 
 **Promotional text (170)**:
-New in town or ready to widen your circle? Join communities, find plans that match your interests and meet people in real life, in Dubai and Bali.
+Feeling alone in a new city? IRLY helps you meet people, find your community and share real experiences. Less loneliness. More life. (132)
 
 **Keywords (100 bytes)**:
 `friends,meet people,expat,newcomer,dubai,bali,activities,community,social,meetup,events,nomad`
@@ -43,7 +45,7 @@ MESSAGES
 Private chats with friends, group chats and community chats, with photos.
 
 PROFILE
-Your photo, a short bio, your interests and the activities and communities you are part of. You choose who can see your profile and who can message you.
+Your photo, a short bio, your interests and the activities and communities you are part of. You choose who can see your profile and the activities you join.
 
 IRLY GIRL
 Spaces reserved for women: women-only communities, plans and matching.
@@ -55,10 +57,10 @@ IRLY is available in English and French, starting with Dubai, Abu Dhabi and Bali
 
 ## 3. Fiche française
 
-**Sous-titre (30)** : `Amis, sorties et communautés` (28)
+**Sous-titre (30)** : `Moins de solitude, plus de vie` (30) — « Moins de solitude. Plus de vie. » fait 31 caractères. Autre option : `Amis, sorties et communautés` (28).
 
 **Texte promotionnel (170)** :
-Nouveau en ville ou envie d'élargir ton cercle ? Rejoins des communautés, trouve des sorties qui te ressemblent et rencontre des gens en vrai, à Dubaï et à Bali.
+Seul dans une nouvelle ville ? IRLY t'aide à rencontrer du monde, trouver ta communauté et partager de vrais moments. Moins de solitude. Plus de vie.
 
 **Mots-clés (100 octets)** :
 `amis,rencontrer,expatrié,expat,dubai,bali,activités,communauté,sorties,nouveaux arrivants,social`
@@ -79,7 +81,7 @@ MESSAGES
 Discussions privées avec tes amis, chats de groupe et chats de communauté, avec photos.
 
 PROFIL
-Ta photo, une courte bio, tes centres d'intérêt, tes activités et tes communautés. Tu choisis qui peut voir ton profil et qui peut t'écrire.
+Ta photo, une courte bio, tes centres d'intérêt, tes activités et tes communautés. Tu choisis qui peut voir ton profil et les activités que tu rejoins.
 
 IRLY GIRL
 Des espaces réservés aux femmes : communautés, sorties et rencontres entre femmes.
@@ -146,7 +148,7 @@ Mise en forme conseillée : fond noir IRLY, titre en blanc (Manrope, gras), capt
 | Signalement, blocage, modération (1.2) | ✅ Signaler / bloquer depuis profils, messages, publications ; table des signalements ; règles de la communauté |
 | Conditions d'utilisation acceptées, tolérance zéro pour les contenus abusifs (1.2) | ✅ CGU et règles de la communauté acceptées à la création du compte (« En continuant… »), consultables dans Réglages → Légal |
 | Connexion avec Apple si connexion tierce (4.8) | ✅ Sur iPhone, Google n'apparaît que si « Continuer avec Apple » est activé ; sinon e-mail seulement |
-| Politique de confidentialité accessible (5.1.1) | ✅ Dans l'app (Réglages → Légal) ; ⚠️ URL publique à vérifier dans un navigateur |
+| Politique de confidentialité accessible (5.1.1) | ✅ Dans l'app (Réglages → Légal) et publique sur `getirly.com/privacy` (même texte, généré depuis `src/content/legal.ts`) ; ⚠️ 3 informations juridiques encore requises |
 | Textes d'autorisation (localisation, photos, caméra) | ✅ Présents en anglais et en français, appareil photo et photos utilisés uniquement à l'initiative de l'utilisateur |
 | Notifications demandées au bon moment | ✅ Plus de demande au lancement : après une première demande d'ami, une inscription à une activité ou une communauté, un premier message, ou depuis les Réglages |
 | Manifeste de confidentialité (PrivacyInfo) | ✅ Déclaré dans `app.json` |
