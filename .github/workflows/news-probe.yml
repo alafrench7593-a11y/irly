@@ -4,6 +4,9 @@ name: News sources probe
 # type and the first items. Nothing is stored or published.
 on:
   workflow_dispatch:
+  push:
+    branches: [claude/irly-features-v2]
+    paths: ['.github/workflows/news-probe.yml']
 
 jobs:
   probe:
