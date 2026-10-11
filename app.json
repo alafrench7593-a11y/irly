@@ -94,7 +94,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "IRLY centres the map on where you are when you tap \"My location\". Your position stays on your phone and is never shared with other members.",
+          "locationWhenInUsePermission": "IRLY centres the map on where you are when you tap “My location”. Your position stays on your phone and is never shared with other members.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
           "isIosBackgroundLocationEnabled": false
