@@ -8,8 +8,9 @@ import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { joinCommunity } from '@/features/community/data';
+import { deleteCommunity, joinCommunity } from '@/features/community/data';
 import { a11y, t as tx } from '@/i18n';
+import { confirm } from '@/lib/confirm';
 import { hueOf } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
@@ -55,10 +56,10 @@ export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChan
             <Text style={{ fontSize: 24 }} raw>
               {g.emoji ?? '💬'}
             </Text>
-            <Text variant="titleS" numberOfLines={1} raw>
+            <Text variant="titleS" numberOfLines={1}>
               {g.name}
             </Text>
-            <Text variant="caption" tone="tertiary" numberOfLines={2} raw>
+            <Text variant="caption" tone="tertiary" numberOfLines={2}>
               {g.tagline ?? ''}
             </Text>
             <Text variant="caption" tone="secondary">
@@ -146,10 +147,24 @@ export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: st
 }
 
 /** Hosts' tools: notify every member, add a group, name moderators. */
-export function HostTools({ communityId, name, rights, isTop, onChanged }: { communityId: string; name: string; rights: Rights; isTop: boolean; onChanged: () => void }) {
+export function HostTools({ communityId, name, rights, isTop, official, parentId, onChanged }: { communityId: string; name: string; rights: Rights; isTop: boolean; official: boolean; parentId: string | null; onChanged: () => void }) {
   const t = useTheme();
+  const router = useRouter();
   const [sheet, setSheet] = useState<'announce' | 'group' | 'people' | null>(null);
   if (!rights.canModerate) return null;
+  // A group (not a top community) can be deleted by its moderators; IRLY's own groups only by an IRLY admin.
+  const canDelete = !isTop && (!official || rights.isAdmin);
+  const remove = () =>
+    confirm(tx('Delete this group? It disappears for everyone, and its chat leaves every inbox.'), () =>
+      deleteCommunity(communityId)
+        .then(() => {
+          toast(tx('Group deleted'), 'check', 'brand');
+          if (parentId) router.replace(`/c/${parentId}`);
+          else if (router.canGoBack()) router.back();
+          else router.replace('/communities');
+        })
+        .catch((e) => toast(e instanceof Error ? e.message : tx('Could not delete'), 'x', 'live')),
+    );
   return (
     <View style={[styles.pad, styles.tools, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
       <View style={styles.row}>
@@ -162,6 +177,7 @@ export function HostTools({ communityId, name, rights, isTop, onChanged }: { com
         <Chip size="sm" icon="megaphone" label={tx('Notify all members')} onPress={() => setSheet('announce')} />
         {isTop ? <Chip size="sm" icon="plus" label={tx('Add a group')} onPress={() => setSheet('group')} /> : null}
         {rights.isOwner ? <Chip size="sm" icon="users" label={tx('Moderators')} onPress={() => setSheet('people')} /> : null}
+        {canDelete ? <Chip size="sm" icon="x" label={tx('Delete this group')} onPress={remove} /> : null}
       </View>
       <AnnounceSheet visible={sheet === 'announce'} communityId={communityId} name={name} rights={rights} onClose={() => setSheet(null)} onSent={onChanged} />
       <NewGroupSheet visible={sheet === 'group'} parentId={communityId} onClose={() => setSheet(null)} onMade={onChanged} />

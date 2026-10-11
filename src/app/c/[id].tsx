@@ -219,7 +219,7 @@ export default function CommunityScreen() {
               <NotifyPrefs communityId={c.id} prefs={extras.prefs} onChanged={extras.reload} />
             </View>
           ) : null}
-          <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} onChanged={() => (extras.reload(), feed.refresh())} />
+          <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} official={c.official} parentId={extras.parent?.id ?? null} onChanged={() => (extras.reload(), feed.refresh())} />
           {!extras.parent ? <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), refresh())} /> : null}
 
           {c.official ? <OfficialBlock c={c} cityName={city.name} onMuted={refresh} /> : null}
