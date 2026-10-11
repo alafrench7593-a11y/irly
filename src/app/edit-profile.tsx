@@ -84,14 +84,18 @@ export default function EditProfile() {
   const errors = {
     name: name.trim() ? null : tr('Add your first name'),
     languages: languages.length ? null : tr('Pick at least one language'),
+    interests: interests.length >= 3 ? null : tr('Pick at least 3 interests'),
     username: handle === 'taken' ? tr('This username is taken') : handle === 'invalid' ? tr('Usernames: 3 to 24 characters, letters, numbers, dots and underscores') : null,
   };
-  const valid = !errors.name && !errors.languages && !errors.username && handle !== 'checking';
+  const valid = !errors.name && !errors.languages && !errors.interests && !errors.username && handle !== 'checking';
 
   const save = async () => {
     setTried(true);
     if (!valid || busy) {
       haptic('warning');
+      // The reason may be far down the form: say it where it is seen.
+      const reason = errors.name ?? errors.languages ?? errors.interests ?? errors.username;
+      if (reason) toast(reason, 'x', 'live');
       return;
     }
     setBusy(true);
@@ -194,7 +198,7 @@ export default function EditProfile() {
           </View>
         </Section>
 
-        <Section title="Interests">
+        <Section title="Interests" error={tried ? errors.interests : null}>
           <View style={styles.wrap}>
             {(Object.keys(INTERESTS) as Interest[]).map((i) => (
               <Chip key={i} size="sm" icon={INTERESTS[i].icon} label={INTERESTS[i].label} selected={interests.includes(i)} onPress={() => setInterests((x) => toggle(x, i))} />

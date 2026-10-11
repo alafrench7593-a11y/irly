@@ -5,7 +5,7 @@ import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
-import { useRefreshOn, useSyncVersion } from './sync';
+import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import { uploadChatPhoto } from './media';
 import { askPushInContext } from '@/features/push/push';
@@ -34,6 +34,7 @@ type InboxRow = {
   members: number | null;
   last_kind: string | null;
   last_sender_name: string | null;
+  archived?: boolean;
 };
 
 const KIND: Record<InboxRow['kind'], Conversation['kind']> = {
@@ -117,6 +118,7 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
       members: r.members ?? undefined,
       lastIsPhoto: r.last_kind === 'photo',
       lastSenderName: r.last_sender_name ?? undefined,
+      archived: Boolean(r.archived),
       messages: r.last_body
         ? [{ id: `${r.conversation_id}-last`, from: r.last_sender === uid ? 'me' : r.last_sender ? 'member' : 'irly', text: r.last_body, minAgo: 0, at: Date.parse(r.last_at) }]
         : [],
@@ -173,7 +175,12 @@ export type ServerThread = {
   send: (text: string) => Promise<void>;
   /** Sends a message that failed again (same id: it can never arrive twice). */
   retry: (messageId: string) => Promise<void>;
+  /** Deletes my message for everyone (author only). */
   remove: (messageId: string) => Promise<void>;
+  /** Removes a message from my view only; the others keep it. */
+  hideForMe: (messageId: string) => Promise<void>;
+  /** This chat is archived in my list. */
+  archived: boolean;
   /** Names of the members typing right now. */
   typing: string[];
   /** Call while the member types (sent at most every 2 seconds). */
@@ -198,6 +205,7 @@ export function useServerThread(conversationId: string): ServerThread {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasEarlier, setHasEarlier] = useState(false);
+  const [archived, setArchived] = useState(false);
   // Your messages not confirmed by the server yet: shown at once, marked "sending" or "failed".
   const [pending, setPending] = useState<Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null }>>({});
   const [typing, setTypingNames] = useState<Record<string, number>>({});
@@ -221,11 +229,13 @@ export function useServerThread(conversationId: string): ServerThread {
     };
     (async () => {
       try {
-        const [{ data: conv, error: e1 }, msgs, { data: members }] = await Promise.all([
+        const [{ data: conv, error: e1 }, msgs, { data: members }, { data: mine }] = await Promise.all([
           supabase!.from('conversations').select('id, kind, title, community_id, activity_id').eq('id', conversationId).maybeSingle(),
           latest(),
           supabase!.from('conversation_members').select('user_id, profiles(first_name)').eq('conversation_id', conversationId),
+          supabase!.from('conversation_members').select('archived_at').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
         ]);
+        setArchived(Boolean((mine as { archived_at: string | null } | null)?.archived_at));
         if (!alive) return;
         if (e1 || !conv) {
           setError(e1?.message ?? 'This conversation is not available');
@@ -417,6 +427,14 @@ export function useServerThread(conversationId: string): ServerThread {
     const { error: e } = await supabase.rpc('delete_my_message', { p_message: messageId });
     if (e) throw new Error(e.message);
     setRows((list) => list.filter((x) => x.id !== messageId));
+    changed('inbox');
+  }, []);
+  const hideForMe = useCallback(async (messageId: string) => {
+    if (!supabase) return;
+    const { error: e } = await supabase.rpc('hide_message_for_me', { p_message: messageId });
+    if (e) throw new Error(/fetch|network/i.test(e.message) ? 'No connection: try again' : e.message);
+    setRows((list) => list.filter((x) => x.id !== messageId));
+    changed('inbox');
   }, []);
 
   const setTyping = useCallback(() => {
@@ -495,7 +513,28 @@ export function useServerThread(conversationId: string): ServerThread {
     sendPhotos,
     retry,
     remove,
+    hideForMe,
+    archived,
     typing: typingNames,
     setTyping,
   };
+}
+
+/** Archives (or brings back) a conversation in MY list only; the others are not affected. */
+export async function setConversationArchived(conversationId: string, archived: boolean): Promise<void> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const { error } = await supabase.rpc('set_conversation_archived', { p_conversation: conversationId, p_archived: archived });
+  if (error) throw new Error(/fetch|network/i.test(error.message) ? 'No connection: try again' : error.message);
+  changed('inbox');
+}
+
+/**
+ * Removes a conversation and its history from MY list only. The others keep
+ * everything; if someone writes again, it comes back with the new messages.
+ */
+export async function removeConversationForMe(conversationId: string): Promise<void> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const { error } = await supabase.rpc('remove_conversation_for_me', { p_conversation: conversationId });
+  if (error) throw new Error(/fetch|network/i.test(error.message) ? 'No connection: try again' : error.message);
+  changed('inbox');
 }

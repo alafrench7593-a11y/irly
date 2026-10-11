@@ -523,6 +523,8 @@ async function main() {
     await page.mouse.down();
     await page.waitForTimeout(900);
     await page.mouse.up();
+    // The long press opens the message menu: Delete for me / Report.
+    await page.getByRole('button', { name: 'Report', exact: true }).last().click();
     await page.getByRole('radio', { name: 'Scam' }).click();
     await page.getByRole('button', { name: 'Send report' }).click();
     for (let i = 0; i < 20; i++) {
@@ -532,8 +534,28 @@ async function main() {
     }
     return false;
   });
+  await step('Edit profile: fewer than 3 interests is refused, with the reason on screen', async () => {
+    const [p] = await sql(`select coalesce(cardinality(interests), 0) as n from public.profiles where id = '${uma.id}'`);
+    if (p.n >= 3) return true;
+    await page.goto(`${BASE}/edit-profile`);
+    await page.getByLabel('Bio', { exact: true }).fill(`Not saved ${run}`);
+    await page.getByRole('button', { name: 'Save', exact: true }).click();
+    await visible(page, 'Pick at least 3 interests', 10000);
+    const [row] = await sql(`select bio from public.profiles where id = '${uma.id}'`);
+    return row?.bio !== `Not saved ${run}`;
+  });
   await step('Edit profile → the new bio is on the server', async () => {
     await page.goto(`${BASE}/edit-profile`);
+    // At least 3 interests are required: pick the missing ones.
+    const [p] = await sql(`select coalesce(interests, '{}') as i from public.profiles where id = '${uma.id}'`);
+    const have = new Set(p.i);
+    let n = have.size;
+    for (const [id, label] of [['sports', 'Sports'], ['wellness', 'Wellness'], ['food', 'Food'], ['business', 'Business']]) {
+      if (n >= 3) break;
+      if (have.has(id)) continue;
+      await page.getByRole('button', { name: label, exact: true }).first().click();
+      n++;
+    }
     await page.getByLabel('Bio', { exact: true }).fill(`Building things in Bali ${run}`);
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     for (let i = 0; i < 20; i++) {

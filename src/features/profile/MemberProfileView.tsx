@@ -231,9 +231,8 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
               <View style={{ flex: 1 }}>
                 <Button label="Edit profile" icon="user" variant="secondary" full onPress={() => router.push('/edit-profile')} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Button label="Share profile" icon="share" variant="secondary" full onPress={share} />
-              </View>
+              {/* Icon only: two long labels side by side were cut off on small phones (and in French). */}
+              <IconButton icon="share" label="Share profile" size={52} onPress={share} />
             </View>
           ) : (
             <Actions p={p} busy={busy} onFriend={friend} onFollow={follow} onMessage={message} />

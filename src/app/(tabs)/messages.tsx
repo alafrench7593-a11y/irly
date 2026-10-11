@@ -1,10 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { memo, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
@@ -13,10 +15,13 @@ import { findCommunity, findPerson } from '@/data/repo';
 import type { Conversation } from '@/data/types';
 import { useGirlStore } from '@/features/girl/girlStore';
 import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
-import { isServerId, useServerInbox } from '@/features/server/chat';
+import { isServerId, removeConversationForMe, setConversationArchived, useServerInbox } from '@/features/server/chat';
 import { useSignedLinks } from '@/features/server/media';
 import { a11y, t as tx } from '@/i18n';
+import { confirm } from '@/lib/confirm';
 import { hueOf } from '@/lib/format';
+import { haptic } from '@/motion/haptics';
+import { toast } from '@/components/ui/Toast';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
@@ -67,16 +72,41 @@ export default function Messages() {
   const server = useServerInbox();
   const [tab, setTab] = useState<Tab>('all');
   const [q, setQ] = useState('');
+  // Archived chats live in their own list, never in the tabs.
+  const [archivedView, setArchivedView] = useState(false);
+  const [menu, setMenu] = useState<Conversation | null>(null);
+  const [busy, setBusy] = useState(false);
+  const archivedCount = useMemo(() => server.conversations.filter((c) => c.archived).length, [server.conversations]);
+  const showArchived = archivedView && archivedCount > 0;
+  const openMenu = useCallback((c: Conversation) => {
+    if (!isServerId(c.id)) return;
+    haptic('select');
+    setMenu(c);
+  }, []);
+  const act = async (action: () => Promise<void>, done: string) => {
+    setBusy(true);
+    try {
+      await action();
+      haptic('success');
+      toast(done, 'check', 'brand');
+      setMenu(null);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Something went wrong', 'x', 'live');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const all = useMemo(() => {
-    const list = [...server.conversations, ...cityConversations(cityId, connections, memberOf, matches)];
+    const mine = server.conversations.filter((c) => Boolean(c.archived) === showArchived);
+    const list = showArchived ? mine : [...mine, ...cityConversations(cityId, connections, memberOf, matches)];
     // Latest first, by the last message; chats without one go last.
     const age = (c: Conversation) => {
       const last = allMessages(c, sent).at(-1);
       return last ? minutesAgo(last) : Infinity;
     };
     return list.map((c) => ({ c, age: age(c) })).sort((a, b) => a.age - b.age).map((x) => x.c);
-  }, [server.conversations, cityId, connections, memberOf, matches, sent]);
+  }, [server.conversations, showArchived, cityId, connections, memberOf, matches, sent]);
 
   const counts = useMemo(() => {
     const n: Record<Tab, number> = { all: all.length, private: 0, groups: 0, communities: 0, activities: 0 };
@@ -156,6 +186,28 @@ export default function Messages() {
         <Action icon="users" label="New group" onPress={() => router.push('/group/new')} />
         <Action icon="heartHandshake" label="Find communities" onPress={() => router.push('/communities')} />
       </View>
+      {archivedCount > 0 ? (
+        <View style={[styles.pad, { marginBottom: space[3] }]}>
+          <PressableScale
+            haptic="select"
+            onPress={() => setArchivedView((v) => !v)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: showArchived }}
+            accessibilityLabel={showArchived ? tx('Back to messages') : tx('Archived, {n}', { n: archivedCount })}
+            style={[styles.banner, { backgroundColor: showArchived ? t.c.text : t.c.surface, borderColor: t.c.line }]}
+          >
+            <Icon name={showArchived ? 'chevronLeft' : 'file'} size={16} color={showArchived ? t.c.bg : t.c.textSecondary} />
+            <Text variant="label" color={showArchived ? t.c.bg : t.c.text} style={{ flex: 1 }}>
+              {showArchived ? 'Back to messages' : 'Archived'}
+            </Text>
+            {!showArchived ? (
+              <Text variant="caption" tone="tertiary">
+                {archivedCount}
+              </Text>
+            ) : null}
+          </PressableScale>
+        </View>
+      ) : null}
 
       {server.error ? (
         <View style={[styles.pad, { marginBottom: space[3] }]}>
@@ -183,7 +235,7 @@ export default function Messages() {
         ) : shown.length ? (
           shown.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : enter.rise(Math.min(i, 8), 30)} exiting={reduced ? undefined : FadeOut.duration(120)} layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)}>
-              <Row c={c} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} face={c.otherPhoto ? faces[c.otherPhoto] : undefined} picture={c.photoPath ? pictures[c.photoPath] : undefined} />
+              <Row c={c} onLong={openMenu} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} face={c.otherPhoto ? faces[c.otherPhoto] : undefined} picture={c.photoPath ? pictures[c.photoPath] : undefined} />
             </Animated.View>
           ))
         ) : (
@@ -198,6 +250,30 @@ export default function Messages() {
           </Animated.View>
         )}
       </Animated.View>
+      <Sheet visible={menu !== null} onClose={() => setMenu(null)} title={menu?.title} subtitle="Only for you: the others keep the conversation.">
+        <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+          <Button
+            label={menu?.archived ? 'Unarchive' : 'Archive'}
+            icon="file"
+            variant="secondary"
+            full
+            loading={busy}
+            onPress={() => menu && act(() => setConversationArchived(menu.id, !menu.archived), menu.archived ? tx('Back in your messages') : tx('Archived. Find it under Archived'))}
+          />
+          <Button
+            label="Delete conversation"
+            icon="x"
+            variant="danger"
+            full
+            disabled={busy}
+            onPress={() => {
+              const c = menu;
+              if (!c) return;
+              confirm('Delete this conversation from your list? Its messages are removed for you only; the others keep them.', () => act(() => removeConversationForMe(c.id), tx('Conversation deleted')), 'Delete');
+            }}
+          />
+        </View>
+      </Sheet>
     </Page>
   );
 }
@@ -214,7 +290,7 @@ function Action({ icon, label, onPress }: { icon: IconName; label: string; onPre
 
 const KIND_ICON: Record<Exclude<Tab, 'all'>, IconName> = { private: 'user', groups: 'users', communities: 'heartHandshake', activities: 'calendar' };
 
-const Row = memo(function Row({ c, lit, unread, face, picture }: { c: Conversation; lit: boolean; unread: number; face?: string; picture?: string }) {
+const Row = memo(function Row({ c, lit, unread, face, picture, onLong }: { c: Conversation; lit: boolean; unread: number; face?: string; picture?: string; onLong: (c: Conversation) => void }) {
   const t = useTheme();
   const router = useRouter();
   const sent = useStore((s) => s.sent);
@@ -229,6 +305,8 @@ const Row = memo(function Row({ c, lit, unread, face, picture }: { c: Conversati
   return (
     <PressableScale
       onPress={() => router.push(`/messages/${c.id}`)}
+      onLongPress={server ? () => onLong(c) : undefined}
+      delayLongPress={350}
       scaleTo={0.98}
       style={[styles.row, { backgroundColor: unread ? t.c.surface : 'transparent', borderColor: lit ? t.c.text : unread ? t.c.line : 'transparent' }]}
       accessibilityLabel={`${c.title}${unread ? `, ${tx('{n} unread', { n: unread })}` : ''}`}

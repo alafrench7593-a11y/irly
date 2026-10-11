@@ -66,7 +66,8 @@ export default function Interests() {
       activities: profile.activities.includes(a) ? profile.activities.filter((x) => x !== a) : [...profile.activities, a],
     });
 
-  const count = profile.interests.length + profile.activities.length;
+  // At least 3 interests: that is what matching runs on (activities are a bonus).
+  const count = profile.interests.length;
 
   return (
     <StepShell
@@ -74,7 +75,7 @@ export default function Interests() {
       total={4}
       overline={`IRLY ${city.name}`}
       title="What do you love?"
-      subtitle="Three or more picks and IRLY can start introducing you to people and plans."
+      subtitle="Pick at least 3 interests and IRLY can start introducing you to people and plans."
       cta={count >= 3 ? tx('Build my {city}', { city: city.name }) : tx('Pick {n} more', { n: 3 - count })}
       canContinue={count >= 3}
       onContinue={() => router.push('/onboarding/profile')}

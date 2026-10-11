@@ -185,8 +185,8 @@ export default function AccountScreen() {
   }
 
   const titles: Record<Mode, [string, string]> = {
-    choose: ['Join IRLY', fromOnboarding ? 'Create your account to save your profile and meet people for real.' : 'Find someone to do something with.'],
-    email: [creating ? 'Create your account' : 'Sign in with email', creating ? 'Email and a password. We send a link to confirm it’s you.' : 'Welcome back.'],
+    choose: ['Join IRLY', 'Create your account to meet people, join activities and discover your city.'],
+    email: [creating ? 'Create your account' : 'Sign in with email', creating ? 'Create your account to meet people, join activities and discover your city.' : 'Welcome back.'],
     link: ['Email me a link', 'No password: we email you a sign-in link.'],
     code: ['Check your email', tx('Sent to {email}. Open the link on this device, or enter the 6-digit code if the email shows one.', { email: email.trim() })],
     forgot: ['Forgot your password?', 'We email you a link to choose a new one.'],

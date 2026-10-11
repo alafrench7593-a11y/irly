@@ -333,6 +333,8 @@ export type Conversation = {
   /** The last message was a photo. */
   lastIsPhoto?: boolean;
   lastSenderName?: string;
+  /** Server chats: archived by me (my list only). */
+  archived?: boolean;
 };
 
 /** Everything IRLY knows about one city. */

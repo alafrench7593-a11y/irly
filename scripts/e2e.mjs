@@ -218,6 +218,39 @@ try {
     must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body: 'Brunch this weekend?' }));
     return must(await A.sb.from('messages').select('body').eq('conversation_id', matchConv)).length >= 2;
   });
+  // Tidying a chat is personal: delete for me, archive, delete conversation.
+  await step('delete for me: Alice no longer sees the message, Bea still does', async () => {
+    const m = must(await B.sb.from('messages').select('id').eq('conversation_id', matchConv).eq('body', 'Brunch this weekend?').single());
+    must(await A.sb.rpc('hide_message_for_me', { p_message: m.id }));
+    const forA = must(await A.sb.from('messages').select('id').eq('id', m.id));
+    const forB = must(await B.sb.from('messages').select('id').eq('id', m.id));
+    return forA.length === 0 && forB.length === 1;
+  });
+  await step('a stranger cannot hide or archive in someone else\'s chat', async () => {
+    await denied(C.sb.rpc('set_conversation_archived', { p_conversation: matchConv, p_archived: true }));
+    return denied(C.sb.rpc('remove_conversation_for_me', { p_conversation: matchConv }));
+  });
+  await step('archive: the chat moves to Alice\'s Archived list only', async () => {
+    must(await A.sb.rpc('set_conversation_archived', { p_conversation: matchConv, p_archived: true }));
+    const a = must(await A.sb.rpc('my_conversations', {})).find((c) => c.conversation_id === matchConv);
+    const b = must(await B.sb.rpc('my_conversations', {})).find((c) => c.conversation_id === matchConv);
+    return a?.archived === true && b?.archived === false;
+  });
+  await step('unarchive brings it back', async () => {
+    must(await A.sb.rpc('set_conversation_archived', { p_conversation: matchConv, p_archived: false }));
+    return must(await A.sb.rpc('my_conversations', {})).find((c) => c.conversation_id === matchConv)?.archived === false;
+  });
+  await step('delete conversation: gone for Alice, kept for Bea; a new message brings it back alone', async () => {
+    must(await A.sb.rpc('remove_conversation_for_me', { p_conversation: matchConv }));
+    const goneForA = !must(await A.sb.rpc('my_conversations', {})).some((c) => c.conversation_id === matchConv);
+    const oldForA = must(await A.sb.from('messages').select('id').eq('conversation_id', matchConv)).length;
+    const keptForB = must(await B.sb.from('messages').select('id').eq('conversation_id', matchConv)).length;
+    await new Promise((r) => setTimeout(r, 50));
+    must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body: 'Still on for brunch?' }));
+    const back = must(await A.sb.from('messages').select('body').eq('conversation_id', matchConv));
+    const row = must(await A.sb.rpc('my_conversations', {})).find((c) => c.conversation_id === matchConv);
+    return goneForA && oldForA === 0 && keptForB >= 2 && back.length === 1 && back[0].body === 'Still on for brunch?' && row?.unread === 1;
+  });
 
   // ───── Moms and moving to Bali ─────
   await step('Bea turns on Mom mode, moving soon, looking for coworking', async () => {
