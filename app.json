@@ -63,7 +63,9 @@
         "android.permission.ACTIVITY_RECOGNITION",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.SYSTEM_ALERT_WINDOW"
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR"
       ]
     },
     "web": {
@@ -118,6 +120,15 @@
         "expo-notifications",
         {
           "color": "#000000"
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "writeOnlyAccess": true,
+          "calendarPermission": "IRLY adds the activities you choose to your calendar, only when you tap “Add to my calendar”. IRLY never reads your calendar.",
+          "writeOnlyCalendarPermission": "IRLY adds the activities you choose to your calendar, only when you tap “Add to my calendar”. IRLY never reads your calendar.",
+          "remindersPermission": false
         }
       ]
     ],
