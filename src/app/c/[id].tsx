@@ -32,6 +32,9 @@ import { track } from '@/lib/analytics';
 import { hueOf } from '@/lib/format';
 import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
+import { PostMedia } from '@/features/posts/PostMedia';
+import { pinPost, useCommunityExtras } from '@/features/community/groups';
+import { HostTools, NotifyPrefs, ParentLink, SubgroupList } from '@/features/community/GroupsUI';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
@@ -55,6 +58,7 @@ export default function CommunityScreen() {
   const auth = useAuthStatus();
   const feed = useCommunityFeed(id);
   const acts = useCommunityActivities(id);
+  const extras = useCommunityExtras(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
   const [tab, setTab] = useState<Tab>('posts');
   const [busy, setBusy] = useState(false);
@@ -151,6 +155,7 @@ export default function CommunityScreen() {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
           <CommunityCover id={c.id} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
           <View style={[styles.pad, { gap: 6 }]}>
+            <ParentLink parent={extras.parent} />
             <Text variant="overline" tone="accent">
               {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
             </Text>
@@ -209,6 +214,14 @@ export default function CommunityScreen() {
             )}
           </View>
 
+          {c.isMember ? (
+            <View style={[styles.pad, styles.row]}>
+              <NotifyPrefs communityId={c.id} prefs={extras.prefs} onChanged={extras.reload} />
+            </View>
+          ) : null}
+          <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} onChanged={() => (extras.reload(), feed.refresh())} />
+          {!extras.parent ? <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), refresh())} /> : null}
+
           {c.official ? <OfficialBlock c={c} cityName={city.name} onMuted={refresh} /> : null}
 
           <View style={styles.pad}>
@@ -226,7 +239,7 @@ export default function CommunityScreen() {
           {tab === 'posts' ? (
             <>
               <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
-              {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll })} /> : null}
+              {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll })} onMedia={(body) => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body } })} /> : null}
               {feed.error && !feed.posts.length ? (
                 <Text variant="body" tone="secondary" style={styles.pad}>
                   Can’t reach IRLY right now. Check your connection.
@@ -245,7 +258,12 @@ export default function CommunityScreen() {
                     key={p.id}
                     p={p}
                     eng={eng}
-                    canModerate={c.myRole === 'owner' || c.myRole === 'moderator'}
+                    canModerate={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate}
+                    onPin={(on) =>
+                      pinPost(p.id, on)
+                        .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
+                        .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
+                    }
                     isMember={c.isMember}
                     plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo) : null}
                     onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
@@ -476,7 +494,7 @@ function Assistant({
 
 /* ───────── Composer ───────── */
 
-function Composer({ initial = '', onPost }: { initial?: string; onPost: (body: string, poll: string[] | null) => Promise<void> }) {
+function Composer({ initial = '', onPost, onMedia }: { initial?: string; onPost: (body: string, poll: string[] | null) => Promise<void>; onMedia: (body: string) => void }) {
   const t = useTheme();
   const [body, setBody] = useState(initial);
   const [poll, setPoll] = useState<string[] | null>(null);
@@ -525,6 +543,17 @@ function Composer({ initial = '', onPost }: { initial?: string; onPost: (body: s
       ) : null}
       <View style={styles.row}>
         <Chip size="sm" icon="layers" label={poll ? tx('Remove poll') : tx('Add a poll')} selected={Boolean(poll)} onPress={() => setPoll(poll ? null : ['', ''])} />
+        {!poll ? (
+          <Chip
+            size="sm"
+            icon="camera"
+            label={tx('Photos / video')}
+            onPress={() => {
+              onMedia(body);
+              setBody('');
+            }}
+          />
+        ) : null}
         <View style={{ flex: 1 }} />
         <Button label="Post" icon="send" size="sm" loading={busy} disabled={!body.trim()} onPress={send} />
       </View>
@@ -543,6 +572,7 @@ function PostCard({
   onVote,
   onRemove,
   onPlan,
+  onPin,
   cityId,
 }: {
   p: CommunityPost;
@@ -553,6 +583,7 @@ function PostCard({
   onVote: (o: number) => void;
   onRemove: () => void;
   onPlan: (d: PlanDraft) => void;
+  onPin: (on: boolean) => void;
   cityId: string;
 }) {
   const t = useTheme();
@@ -569,6 +600,16 @@ function PostCard({
             {p.pending ? tx('Sending…') : timeAgo(Math.max(0, Math.round((now - p.createdAt) / 60000)))}
           </Text>
         </View>
+        {canModerate && !p.pending ? (
+          <PressableScale onPress={() => onPin(!p.pinnedAt)} haptic="select" hitSlop={8} accessibilityLabel={p.pinnedAt ? 'Unpin' : 'Pin at the top'}>
+            <Icon name="pinPost" size={16} color={p.pinnedAt ? t.c.text : t.c.textTertiary} />
+          </PressableScale>
+        ) : null}
+        {p.mine && !p.pending ? (
+          <PressableScale onPress={() => router.push({ pathname: '/post/new', params: { edit: p.id } })} haptic="select" hitSlop={8} accessibilityLabel="Edit post">
+            <Icon name="edit" size={16} color={t.c.textTertiary} />
+          </PressableScale>
+        ) : null}
         {p.mine || canModerate ? (
           <PressableScale onPress={onRemove} haptic="select" hitSlop={8} accessibilityLabel="Remove post">
             <Icon name="x" size={18} color={t.c.textTertiary} />
@@ -584,9 +625,25 @@ function PostCard({
           </PressableScale>
         )}
       </View>
-      <Text variant="body" raw>
-        {p.body}
-      </Text>
+      {p.pinnedAt || (p.kind && p.kind !== 'post') ? (
+        <View style={[styles.row, { gap: 6 }]}>
+          {p.pinnedAt ? <Icon name="pinPost" size={13} color={t.c.textSecondary} /> : null}
+          <Text variant="overline" tone="secondary">
+            {[p.pinnedAt ? tx('Pinned') : null, p.kind === 'announcement' ? tx('Announcement') : p.kind === 'question' ? tx('Question') : p.kind === 'recommendation' ? tx('Recommendation') : null].filter(Boolean).join(' · ')}
+          </Text>
+        </View>
+      ) : null}
+      {p.body ? (
+        <Text variant="body" raw>
+          {p.body}
+        </Text>
+      ) : null}
+      {p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} /> : null}
+      {p.edited ? (
+        <Text variant="caption" tone="tertiary">
+          {tx('Edited')}
+        </Text>
+      ) : null}
 
       {p.poll ? (
         <View style={{ gap: 6 }}>

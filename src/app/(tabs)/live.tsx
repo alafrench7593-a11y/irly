@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { InboxButtons } from '@/components/navigation/Headers';
@@ -13,7 +13,8 @@ import { LiveRing } from '@/features/live/LiveStrip';
 import { pickLiveMedia, type LiveMedia } from '@/features/live/liveMedia';
 import { LiveVideo } from '@/features/live/LiveVideo';
 import { useAccount } from '@/features/auth/account';
-import { addFriend, deleteServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
+import { addFriend, deleteServerIrl, editServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
+import { useDrafts } from '@/features/posts/posts';
 import { ActionBar } from '@/components/social/ActionBar';
 import { createServerActivity } from '@/features/server/activities';
 import { openReport } from '@/features/moderation/reportStore';
@@ -287,6 +288,7 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
       else next.delete(id);
       return next;
     });
+  const [editing, setEditing] = useState<{ id: string; body: string } | null>(null);
   const visible = posts.filter((p) => !gone.has(p.id));
   if (!visible.length && !narrow) return null;
   const sorted = [...visible].sort((a, b) => Number(b.friend) - Number(a.friend) || b.createdAt - a.createdAt);
@@ -355,19 +357,22 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
             ) : null}
             <ActionBar target={{ type: 'irl_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} />
             {status === 'mine' ? (
-              <Button
-                label="Remove"
-                variant="secondary"
-                size="sm"
-                icon="x"
-                onPress={() => {
-                  drop(p.id, true);
-                  deleteServerIrl(p.id).catch((e) => {
-                    drop(p.id, false);
-                    toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live');
-                  });
-                }}
-              />
+              <View style={styles.actions}>
+                <Button label="Edit" variant="secondary" size="sm" icon="edit" onPress={() => setEditing({ id: p.id, body: p.body })} />
+                <Button
+                  label="Remove"
+                  variant="secondary"
+                  size="sm"
+                  icon="x"
+                  onPress={() => {
+                    drop(p.id, true);
+                    deleteServerIrl(p.id).catch((e) => {
+                      drop(p.id, false);
+                      toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live');
+                    });
+                  }}
+                />
+              </View>
             ) : status === 'friend' ? (
               <View style={styles.actions}>
                 <Text variant="caption" tone="tertiary" style={{ flex: 1 }}>
@@ -387,7 +392,49 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
           </Animated.View>
         );
       })}
+      <EditLive value={editing} onClose={() => setEditing(null)} />
     </View>
+  );
+}
+
+/** Corrects the text of my Live (photo, video and place stay). */
+function EditLive({ value, onClose }: { value: { id: string; body: string } | null; onClose: () => void }) {
+  const t = useTheme();
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [for_, setFor] = useState<string | null>(null);
+  if (value && for_ !== value.id) {
+    setFor(value.id);
+    setText(value.body);
+  }
+  const save = async () => {
+    if (!value || busy) return;
+    setBusy(true);
+    try {
+      await editServerIrl(value.id, text);
+      haptic('success');
+      toast('Live updated', 'check', 'brand');
+      onClose();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Sheet
+      visible={Boolean(value)}
+      onClose={() => {
+        setFor(null);
+        onClose();
+      }}
+      title="Edit your Live"
+    >
+      <View style={{ paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[2] }}>
+        <TextInput value={text} onChangeText={setText} multiline maxLength={160} autoFocus style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]} accessibilityLabel={a11y('Your Live')} />
+        <Button label="Save" icon="check" full loading={busy} disabled={!text.trim()} onPress={save} />
+      </View>
+    </Sheet>
   );
 }
 
@@ -464,7 +511,9 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const cityId = useCityId();
   const city = CITIES[cityId];
   const post = useLiveStore((s) => s.post);
-  const [text, setText] = useState('');
+  const liveDraft = useDrafts((s) => s.byKey.live);
+  const saveDraft = useDrafts((s) => s.save);
+  const [text, setText] = useState(() => liveDraft?.body ?? '');
   const [picked, setArea] = useState(city.areas[0].id);
   // Switching destination keeps the composer mounted: never post a Dubai area in Bali.
   const area = city.areas.some((a) => a.id === picked) ? picked : city.areas[0].id;
@@ -494,6 +543,41 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
       alive = false;
     };
   }, [account]);
+
+  // The words written last time come back (the draft may load just after the screen).
+  const restored = useRef(Boolean(liveDraft));
+  useEffect(() => {
+    if (restored.current || !liveDraft?.body) return;
+    restored.current = true;
+    setText((v) => v || liveDraft.body);
+  }, [liveDraft]);
+
+  // Closing by a swipe or a tap outside keeps what was written as a draft;
+  // the back arrow asks: keep the draft or discard it.
+  const close = () => {
+    if (!busy) saveDraft('live', text.trim() ? { body: text, media: null, at: Date.now() } : null);
+    onClose();
+  };
+  const askClose = () => {
+    if (busy) return;
+    if (!text.trim() && !media) return close();
+    const discard = () => {
+      saveDraft('live', null);
+      setText('');
+      setMedia(undefined);
+      onClose();
+    };
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm?.(tx('Keep this post as a draft?'))) close();
+      else discard();
+      return;
+    }
+    Alert.alert(tx('Leave without posting?'), tx('You can keep it as a draft and finish it later.'), [
+      { text: tx('Keep editing'), style: 'cancel' },
+      { text: tx('Save draft'), onPress: close },
+      { text: tx('Discard'), style: 'destructive', onPress: discard },
+    ]);
+  };
 
   const pick = async (kind: 'photo' | 'video' = 'photo') => {
     try {
@@ -557,6 +641,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     }
     haptic('success');
     toast("You're live for 4 hours", 'zap', 'live');
+    saveDraft('live', null);
     setText('');
     setMedia(undefined);
     onClose();
@@ -565,7 +650,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   return (
     <Sheet
       visible={visible}
-      onClose={onClose}
+      onClose={close}
       title={mode === 'post' ? 'Post IRL' : 'Go live'}
       subtitle={
         mode === 'post'
@@ -582,6 +667,10 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         automaticallyAdjustKeyboardInsets={false}
         showsVerticalScrollIndicator={false}
       >
+        <PressableScale haptic="select" onPress={askClose} hitSlop={8} style={styles.back} accessibilityRole="button" accessibilityLabel={a11y('Back')}>
+          <Icon name="chevronLeft" size={18} color={t.c.text} />
+          <Text variant="label">Back</Text>
+        </PressableScale>
         {mode === 'post' && !uri ? (
           <PressableScale haptic="select" onPress={() => pick('photo')} style={[styles.photoFrame, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
             <Icon name="camera" size={26} color={t.c.text} />
@@ -658,6 +747,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
 
 const styles = StyleSheet.create({
   list: { paddingHorizontal: space.gutter, gap: 14 },
+  back: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', marginBottom: -space[2] },
   card: { borderRadius: radius.xl, padding: 16, gap: 12 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },

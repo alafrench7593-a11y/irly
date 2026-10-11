@@ -14,6 +14,7 @@ import type { CityId } from '@/data/types';
 import { usePeopleMatch, type PeopleMatch } from '@/features/match/people';
 import { setFriend, type FriendStatus } from '@/features/profile/member';
 import { useSignedLinks } from '@/features/server/media';
+import { useMyVerification } from '@/features/verify/verify';
 import { t as tx } from '@/i18n';
 import { hueOf } from '@/lib/format';
 import { PressableScale } from '@/motion/PressableScale';
@@ -64,6 +65,8 @@ export default function Match() {
   const cityId = useCityId();
   const city = CITIES[cityId];
   const m = usePeopleMatch(cityId);
+  const ver = useMyVerification();
+  const locked = m.signedIn && ver.v !== null && !ver.v.ready;
   const faces = useSignedLinks(
     'profile-photos',
     m.list.map((x) => x.photo),
@@ -74,6 +77,14 @@ export default function Match() {
       <View style={styles.pad}>
         {!m.signedIn ? (
           <Empty icon="users" title="Sign in to see your matches" body="Matching uses your own answers and real IRLY members." action="Sign in" onAction={() => router.push('/account')} />
+        ) : locked ? (
+          <Empty
+            icon="shield"
+            title={ver.v?.status === 'pending' ? 'Your selfie is being reviewed' : 'Verify your profile to use Match'}
+            body={ver.v?.status === 'pending' ? 'Match opens as soon as a person at IRLY has checked it. You will get a notification.' : 'Only verified members are in Match: 3 photos of you and a selfie reviewed by IRLY. Everyone you meet here did the same.'}
+            action={ver.v?.status === 'pending' ? 'See my verification' : 'Verify my profile'}
+            onAction={() => router.push('/verify')}
+          />
         ) : m.loading ? (
           <View style={{ gap: 12 }} accessibilityLabel={tx('Loading')}>
             {[0, 1, 2].map((i) => (
@@ -150,7 +161,7 @@ function MatchCard({ person, photo, cityId, onSkip }: { person: PeopleMatch; pho
   return (
     <View style={[styles.card, { backgroundColor: t.c.surface }]}>
       <PressableScale onPress={() => router.push(`/person/${person.id}`)} haptic="select" scaleTo={0.98} style={styles.head} accessibilityLabel={tx('Open {name}’s profile', { name: person.firstName })}>
-        <Avatar name={person.firstName} hue={hueOf(person.id)} size={56} photo={photo} />
+        <Avatar name={person.firstName} hue={hueOf(person.id)} size={56} photo={photo} userId={person.id} verified />
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="titleS" numberOfLines={1} raw>
             {person.firstName}

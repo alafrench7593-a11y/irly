@@ -208,6 +208,10 @@ function ServerNotifications() {
         return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends: say hi', go: () => router.push(`/person/${p.from}`) };
       case 'COMMUNITY_JOINED':
         return { icon: 'heartHandshake', title: 'You joined a community', body: 'Its chat is in Messages', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
+      case 'COMMUNITY_ANNOUNCEMENT':
+        return { icon: 'megaphone', title: tx('Announcement · {name}', { name: String(p.community ?? 'IRLY') }), body: p.body ?? '', go: () => router.push(p.community_id ? `/c/${p.community_id}` : '/communities') };
+      case 'COMMUNITY_POST':
+        return { icon: 'message', title: tx('{name} posted in {community}', { name: name(p.from), community: String(p.community ?? '') }), body: p.body ?? '', go: () => router.push(p.community_id ? `/c/${p.community_id}` : '/communities') };
       case 'IRLY_POST_CREATED':
         return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? 'See what they are doing', go: () => router.push('/live') };
       case 'PROFILE_UPDATED':
@@ -216,6 +220,8 @@ function ServerNotifications() {
           return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: 'Friends see each other’s IRL posts', accept: pending ? p.from : undefined };
         }
         if (p.type === 'friend_accepted') return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends' };
+        if (p.type === 'verified') return { icon: 'shield', title: 'Your profile is verified ✓', body: 'Match is open', go: () => router.push('/match') };
+        if (p.type === 'verification_rejected') return { icon: 'x', title: 'Verification declined', body: p.reason ? tx('Reason: {reason}. You can try again.', { reason: p.reason }) : 'You can try again', go: () => router.push('/verify') };
         return { icon: 'user', title: 'Profile update', body: '' };
       default:
         return { icon: 'bell', title: 'IRLY', body: '' };

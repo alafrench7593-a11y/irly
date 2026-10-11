@@ -2,6 +2,7 @@ import { useBaliStore } from '@/features/bali/baliStore';
 import { useGirlStore } from '@/features/girl/girlStore';
 import { useLiveStore } from '@/features/live/liveStore';
 import { clearFaces } from '@/features/server/faces';
+import { useDrafts } from '@/features/posts/posts';
 import { useStore } from './store';
 
 /**
@@ -17,4 +18,6 @@ export function wipeLocal(): void {
   useGirlStore.getState().reset();
   useBaliStore.getState().setAnswers({});
   useLiveStore.setState({ mine: [] });
+  // Unsent posts and Lives: never offered to the next person on this phone.
+  useDrafts.setState({ byKey: {} });
 }

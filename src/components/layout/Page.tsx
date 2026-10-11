@@ -20,10 +20,12 @@ type Props = {
   bottomInset?: number;
   /** Tab roots have no back button. */
   back?: boolean;
+  /** Replaces the default back (e.g. to ask before leaving a draft). */
+  onBack?: () => void;
 };
 
 /** Standard stack page: large editorial title that hands over to a compact header on scroll. */
-export function Page({ title, overline, subtitle, right, children, overlay, contentStyle, bottomInset = 40, back = true }: Props) {
+export function Page({ title, overline, subtitle, right, children, overlay, contentStyle, bottomInset = 40, back = true, onBack }: Props) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
@@ -59,7 +61,7 @@ export function Page({ title, overline, subtitle, right, children, overlay, cont
           {children}
         </Animated.ScrollView>
       </KeyboardAvoidingView>
-      <PageHeader title={title} scrollY={scrollY} right={right} back={back} />
+      <PageHeader title={title} scrollY={scrollY} right={right} back={back} onBack={onBack} />
       {overlay}
     </View>
   );

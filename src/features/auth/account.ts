@@ -308,11 +308,12 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
       // An IRLY avatar replaces the photo without an upload; the old photo file goes.
       const { data: old } = await supabase.rpc('my_profile');
       const before = ((old as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];
-      row.photo_paths = [patch.photoUri];
+      // Only the main picture changes: the other photos of the profile stay.
+      row.photo_paths = [patch.photoUri, ...before.slice(1)];
       photoUri = patch.photoUri;
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
       if (error) throw new Error(profileError(error.message));
-      const stale = before.filter((p) => !isAvatar(p) && p.startsWith(`${uid}/`));
+      const stale = before.slice(0, 1).filter((p) => !isAvatar(p) && p.startsWith(`${uid}/`));
       if (stale.length) await supabase.storage.from('profile-photos').remove([...stale, ...stale.map(thumbOf)]);
     } else if (patch.photoUri && !/^https?:/.test(patch.photoUri)) {
       const img = await cleanImage(patch.photoUri);
@@ -322,7 +323,8 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
       await uploadThumb(path, patch.photoUri);
       const { data: old } = await supabase.rpc('my_profile');
       const before = ((old as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];
-      row.photo_paths = [path];
+      // Only the main picture changes: the other photos of the profile stay.
+      row.photo_paths = [path, ...before.slice(1).filter((p) => p !== path)];
       const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 7 * 24 * 3600);
       photoUri = signed?.signedUrl ?? patch.photoUri;
       // The previous photo file goes once the new one is saved (below).
@@ -333,7 +335,7 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
           throw new Error(profileError(error.message));
         }
       }
-      const stale = before.filter((p) => p !== path && !isAvatar(p) && p.startsWith(`${uid}/`));
+      const stale = before.slice(0, 1).filter((p) => p !== path && !isAvatar(p) && p.startsWith(`${uid}/`));
       if (stale.length) await supabase.storage.from('profile-photos').remove([...stale, ...stale.map(thumbOf)]);
     } else if (Object.keys(row).length) {
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
@@ -383,7 +385,7 @@ export async function signOut(): Promise<void> {
 }
 
 /** Your files in each storage bucket (they live in a folder named after you). */
-const BUCKETS = ['profile-photos', 'match-photos', 'irl-media', 'activity-photos', 'chat-media'];
+const BUCKETS = ['profile-photos', 'match-photos', 'irl-media', 'activity-photos', 'chat-media', 'post-media', 'verifications'];
 async function removeMyFiles(uid: string): Promise<void> {
   if (!supabase) return;
   for (const bucket of BUCKETS) {

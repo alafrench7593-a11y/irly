@@ -438,9 +438,13 @@ export default function GirlHome() {
             <View style={[styles.empty, { width, height }]}>
               <Icon name="globe" size={24} color={girl.ink} />
               <Text variant="titleS" color={girl.ink} align="center">
-                {deckError}
+                {/verify your profile/i.test(deckError) ? tx('Verify your profile to use Match: 3 photos of you and a selfie reviewed by IRLY.') : deckError}
               </Text>
-              <GButton label="Retry" variant="secondary" onPress={() => loadDeck(filters, 0)} />
+              {/verify your profile/i.test(deckError) ? (
+                <GButton label="Verify my profile" onPress={() => router.push('/verify')} />
+              ) : (
+                <GButton label="Retry" variant="secondary" onPress={() => loadDeck(filters, 0)} />
+              )}
             </View>
           ) : (
             <Animated.View entering={FadeIn} style={[styles.empty, { width, height }]}>
