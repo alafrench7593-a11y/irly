@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { DEMO } from '@/config/app';
+import { secureSessionStorage } from '@/lib/secureSession';
 
 /**
  * The IRLY backend (Supabase: Postgres + auth + storage + realtime).
@@ -21,7 +22,8 @@ export const supabase: SupabaseClient | null =
   // The demo never talks to the server: nothing a visitor does is saved.
   !DEMO && url && anonKey.length > 20
     ? createClient(url, anonKey, {
-        auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: Platform.OS === 'web', flowType: 'implicit' },
+        // Phones keep the session in the Keychain / Keystore; the web keeps it in the browser.
+        auth: { storage: Platform.OS === 'web' ? AsyncStorage : secureSessionStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: Platform.OS === 'web', flowType: 'implicit' },
       })
     : null;
 

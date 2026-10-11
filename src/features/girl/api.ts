@@ -7,7 +7,7 @@ import { portrait } from '@/data/photos';
 import { DEFAULT_WEIGHTS, matchScore, normalizeReasons, type MatchProfile, type Reasons, type Weights } from './compat';
 import { useGirlStore } from './girlStore';
 import type { Candidate, Filters, MatchAction, MatchProfileDraft, MatchResult, MatchState, MatchSummary, ReportCategory } from './types';
-import { imageBytes, imageType } from '@/lib/media';
+import { cleanImage } from '@/lib/media';
 
 // Example members exist only in the demo build; real members come from the server.
 const GIRLS = DEMO ? EXAMPLE_GIRLS : [];
@@ -135,10 +135,9 @@ const serverApi: MatchApi = {
         paths.push(uri);
         continue;
       }
-      const body = await imageBytes(uri);
-      const img = imageType(uri);
+      const img = await cleanImage(uri);
       const path = `${uid}/${Date.now()}-${i}.${img.ext}`;
-      const { error } = await supabase!.storage.from('match-photos').upload(path, body, { contentType: img.contentType, upsert: false });
+      const { error } = await supabase!.storage.from('match-photos').upload(path, img.body, { contentType: img.contentType, upsert: false });
       if (error) throw new Error(error.message);
       paths.push(path);
     }

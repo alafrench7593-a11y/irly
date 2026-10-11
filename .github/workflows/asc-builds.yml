@@ -10,6 +10,14 @@ on:
         description: Add the team's App Store Connect users as internal TestFlight testers
         type: boolean
         default: false
+      invite_email:
+        description: Invite this address to the App Store Connect team (Developer role)
+        type: string
+        default: ''
+      cancel_invite_email:
+        description: Withdraw the pending team invitation of this address
+        type: string
+        default: ''
 
 jobs:
   status:
@@ -26,3 +34,5 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
           ADD_TEAM_TESTERS: ${{ inputs.add_team_testers && '1' || '0' }}
+          INVITE_EMAIL: ${{ inputs.invite_email }}
+          CANCEL_INVITE_EMAIL: ${{ inputs.cancel_invite_email }}

@@ -18,7 +18,8 @@ const wanted = ['exp://**', 'irly://**', 'https://*.trycloudflare.com/**', 'http
 const allow = new Set((current.uri_allow_list ?? '').split(',').map((s) => s.trim()).filter(Boolean));
 wanted.forEach((u) => allow.add(u));
 
-const patch = { uri_allow_list: [...allow].join(',') };
+// Passwords: 8 characters at least, as the app already asks (the server allowed 6).
+const patch = { uri_allow_list: [...allow].join(','), password_min_length: Math.max(8, current.password_min_length ?? 0) };
 const env = process.env;
 // Pasted values often carry spaces, quotes or line breaks.
 const clean = (v) => (v ?? '').trim().replace(/^["']|["']$/g, '').trim();
@@ -66,6 +67,29 @@ if (appleServicesId && appleSecret) {
     external_apple_client_id: appleServicesId,
     external_apple_secret: appleSecret,
   });
+}
+
+// Own email sender (SMTP_HOST, SMTP_USER, SMTP_PASS; SMTP_PORT 465 by
+// default): Supabase's built-in sender allows 2 emails an hour for the whole
+// project. With it, new accounts must confirm their address (nobody can
+// sign up with someone else's email) and 60 emails an hour can go out.
+const smtpHost = clean(env.SMTP_HOST);
+const smtpUser = clean(env.SMTP_USER);
+const smtpPass = (env.SMTP_PASS ?? '').trim();
+if (smtpHost && smtpUser && smtpPass) {
+  Object.assign(patch, {
+    smtp_host: smtpHost,
+    smtp_port: clean(env.SMTP_PORT) || '465',
+    smtp_user: smtpUser,
+    smtp_pass: smtpPass,
+    smtp_admin_email: clean(env.SMTP_SENDER) || smtpUser,
+    smtp_sender_name: 'IRLY',
+    rate_limit_email_sent: 60,
+    mailer_autoconfirm: false,
+  });
+  console.log(`Own email sender configured (${smtpHost}); email confirmation required for new accounts`);
+} else {
+  console.log('No own email sender (SMTP_HOST, SMTP_USER, SMTP_PASS): email confirmation stays off, 2 emails an hour');
 }
 
 const put = await fetch(api, { method: 'PATCH', headers, body: JSON.stringify(patch) });

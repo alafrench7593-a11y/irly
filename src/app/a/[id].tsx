@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionBar } from '@/components/social/ActionBar';
@@ -26,6 +26,7 @@ import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
+import { addToPhoneCalendar } from '@/lib/phoneCalendar';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -143,15 +144,18 @@ export default function ActivityPage() {
   };
 
   const addToCalendar = async () => {
-    const ics = icsFor(a);
-    if (Platform.OS === 'web') {
-      const blob = new Blob([ics], { type: 'text/calendar' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `${a.title}.ics`;
-      link.click();
-    } else {
-      await Share.share({ message: `${a.title} · ${when(a.startsAt, a.cityId)} · ${a.placeName ?? areaName(city, a.areaId)}\n${webLink(`/a/${a.id}`)}` });
+    try {
+      const res = await addToPhoneCalendar({
+        title: a.title,
+        startsAt: a.startsAt,
+        endsAt: a.endsAt,
+        location: `${a.placeName ? `${a.placeName}, ` : ''}${city ? areaName(city, a.areaId) : a.areaId}`,
+        url: webLink(`/a/${a.id}`),
+        ics: icsFor(a),
+      });
+      if (res === 'saved') toast('Added to your calendar', 'calendar', 'positive');
+    } catch {
+      toast('Could not open your calendar', 'x', 'live');
     }
   };
 

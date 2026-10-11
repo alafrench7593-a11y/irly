@@ -3,5 +3,7 @@
   "NSLocationWhenInUseUsageDescription": "IRLY centres the map on where you are when you tap “My location”. Your position stays on your phone and is never shared with other members.",
   "NSPhotoLibraryUsageDescription": "IRLY uses the photos you choose for your profile picture, your activities and the moments you post live.",
   "NSMotionUsageDescription": "IRLY uses motion to add a subtle depth effect to destination cards.",
-  "NSCameraUsageDescription": "IRLY uses the camera when you take your profile photo or a photo to share."
+  "NSCameraUsageDescription": "IRLY uses the camera when you take your profile photo or a photo to share.",
+  "NSCalendarsUsageDescription": "IRLY adds the activities you choose to your calendar, only when you tap “Add to my calendar”. IRLY never reads your calendar.",
+  "NSCalendarsWriteOnlyAccessUsageDescription": "IRLY adds the activities you choose to your calendar, only when you tap “Add to my calendar”. IRLY never reads your calendar."
 }
