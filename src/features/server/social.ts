@@ -275,6 +275,16 @@ export async function deleteServerIrl(id: string): Promise<void> {
   bumpIrl();
 }
 
+/** Corrects the text of my Live while it is on (the author only). */
+export async function editServerIrl(id: string, body: string): Promise<void> {
+  if (!supabase) return;
+  const text = body.trim();
+  if (!text) throw new Error('Write something');
+  const { error } = await supabase.rpc('edit_live_post', { p_id: id, p_body: text.slice(0, 160) });
+  if (error) throw new Error(friendlyError(error.message));
+  bumpIrl();
+}
+
 /* ───────────────────────── Friends ───────────────────────── */
 
 export type Friend = { userId: string; firstName: string; status: 'pending' | 'accepted'; incoming: boolean };

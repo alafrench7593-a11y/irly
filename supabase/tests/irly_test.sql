@@ -1400,4 +1400,33 @@ select pg_temp.check((select count(*) from public.profile_faces(array['00000000-
 select public.unblock_user('00000000-0000-0000-0000-000000000011');
 select pg_temp.as_admin();
 
+-- ───── Publications v2: profile posts, photos, video, edits ─────
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+insert into public.community_posts (author_id, body) values (auth.uid(), 'Just a thought, no photo') returning id as pp_id \gset
+insert into public.community_posts (author_id, body, media_paths, media_kind) values (auth.uid(), '', array['00000000-0000-0000-0000-000000000011/p1.jpg', '00000000-0000-0000-0000-000000000011/p2.jpg'], 'photo') returning id as pp2_id \gset
+select pg_temp.check(:'pp2_id' is not null, 'posts: several photos without text');
+select pg_temp.expect_denied($$insert into public.community_posts (author_id, body) values (auth.uid(), '   ')$$, 'posts: empty text without media');
+select pg_temp.expect_denied($$insert into public.community_posts (author_id, body, media_paths, media_kind) values (auth.uid(), 'x', array['00000000-0000-0000-0000-000000000012/theirs.jpg'], 'photo')$$, 'posts: never someone else''s file');
+select pg_temp.expect_denied($$insert into public.community_posts (author_id, body, media_paths, media_kind) values (auth.uid(), 'x', array['00000000-0000-0000-0000-000000000011/a.mp4', '00000000-0000-0000-0000-000000000011/b.mp4'], 'video')$$, 'posts: one video at most');
+select pg_temp.expect_denied($$insert into public.community_posts (author_id, body) values ('00000000-0000-0000-0000-000000000012', 'forged')$$, 'posts: never in someone else''s name');
+update public.community_posts set body = 'Just a thought, edited' where id = :'pp_id';
+select pg_temp.check((select edited_at is not null from public.community_posts where id = :'pp_id'), 'posts: the author edits, the edit is dated');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check(exists (select 1 from public.community_posts where id = :'pp_id'), 'posts: a profile post is readable by members');
+update public.community_posts set body = 'hacked' where id = :'pp_id';
+select pg_temp.as_admin();
+select pg_temp.check((select body from public.community_posts where id = :'pp_id') = 'Just a thought, edited', 'posts: nobody else edits it');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select public.block_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check(not exists (select 1 from public.community_posts where id = :'pp_id'), 'posts: nothing across a block');
+select public.unblock_user('00000000-0000-0000-0000-000000000011');
+-- A Live's text can be corrected by its author only.
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+insert into public.irl_posts (author_id, city_id, area_id, body, visibility) values (auth.uid(), 'dubai', 'marina', 'Coffe at the Marina', 'everyone') returning id as live_id \gset
+select public.edit_live_post(:'live_id', 'Coffee at the Marina');
+select pg_temp.check((select body = 'Coffee at the Marina' and edited_at is not null from public.irl_posts where id = :'live_id'), 'Live: the author corrects the text');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.expect_denied(format('select public.edit_live_post(%L, %L)', :'live_id', 'hacked'), 'Live: nobody else edits it');
+select pg_temp.as_admin();
+
 \echo 'ALL TESTS PASSED'

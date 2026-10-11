@@ -175,10 +175,12 @@ type PageHeaderProps = {
   overImage?: boolean;
   /** Tab roots have no back button. */
   back?: boolean;
+  /** Replaces the default back (e.g. to ask before leaving a draft). */
+  onBack?: () => void;
 };
 
 /** Stack page header: back button, title that appears once the large title scrolls away. */
-export function PageHeader({ title, scrollY, right, back = true }: PageHeaderProps) {
+export function PageHeader({ title, scrollY, right, back = true, onBack }: PageHeaderProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -200,7 +202,7 @@ export function PageHeader({ title, scrollY, right, back = true }: PageHeaderPro
           <IconButton
             icon="chevronLeft"
             label="Back"
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+            onPress={onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))}
           />
         ) : (
           <View style={{ width: 40 }} />

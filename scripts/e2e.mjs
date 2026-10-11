@@ -459,6 +459,35 @@ try {
     return res.ok;
   });
   await A.sb.storage.from('profile-photos').remove([face, faceThumb]);
+  // Publications v2: a profile post with photos, readable by members, files follow the post.
+  // Skipped (and said so) until its migration is on the live database.
+  const postsV2 = !(await A.sb.from('community_posts').select('media_paths').limit(1)).error;
+  if (!postsV2) console.log('○ publications v2: migration not deployed yet, steps skipped');
+  const pm = [`${A.id}/post-${run}-0.jpg`, `${A.id}/post-${run}-1.jpg`];
+  let profilePost;
+  if (postsV2) await step('a profile post with two photos and no text is published', async () => {
+    for (const p of pm) must(await A.sb.storage.from('post-media').upload(p, jpeg, { contentType: 'image/jpeg' }));
+    profilePost = must(await timed('publish a post with 2 photos', () => A.sb.from('community_posts').insert({ author_id: A.id, body: '', media_paths: pm, media_kind: 'photo' }).select('id').single())).id;
+    return Boolean(profilePost);
+  });
+  if (postsV2) await step('another member sees the post on the profile and opens its photos', async () => {
+    const rows = must(await B.sb.from('community_posts').select('id, media_paths').eq('author_id', A.id).is('community_id', null));
+    if (!rows.some((r) => r.id === profilePost)) throw new Error('post not visible');
+    const links = must(await B.sb.storage.from('post-media').createSignedUrls(pm, 600));
+    return links.every((l) => l.signedUrl);
+  });
+  if (postsV2) await step('the author edits the post; nobody else can', async () => {
+    must(await A.sb.from('community_posts').update({ body: 'Sunset at JBR' }).eq('id', profilePost));
+    await B.sb.from('community_posts').update({ body: 'hacked' }).eq('id', profilePost);
+    const r = must(await C.sb.from('community_posts').select('body, edited_at').eq('id', profilePost).single());
+    return r.body === 'Sunset at JBR' && Boolean(r.edited_at);
+  });
+  if (postsV2) await step('a deleted post\'s photos are no longer readable by others', async () => {
+    must(await A.sb.from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', profilePost));
+    const links = (await B.sb.storage.from('post-media').createSignedUrls(pm, 600)).data ?? [];
+    return links.every((l) => !l.signedUrl);
+  });
+  if (postsV2) await A.sb.storage.from('post-media').remove(pm);
   await step('opening a chat is one round trip: chat, messages, members with names and photos, my state', async () => {
     const [conv, msgs, members, mine] = await timed('open a chat', () =>
       Promise.all([

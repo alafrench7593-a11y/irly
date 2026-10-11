@@ -19,6 +19,9 @@ import { areaName, CITIES } from '@/data/destinations';
 import { blockUser } from '@/features/moderation/moderation';
 import { openReport } from '@/features/moderation/reportStore';
 import { useSignedLinks } from '@/features/server/media';
+import { PostMedia } from '@/features/posts/PostMedia';
+import { removePost } from '@/features/posts/posts';
+import { confirm } from '@/lib/confirm';
 import { changed } from '@/features/server/sync';
 import { t as tx, useT } from '@/i18n';
 import { hueOf } from '@/lib/format';
@@ -388,36 +391,84 @@ function PostsTab({ userId, own, name }: { userId: string; own: boolean; name: s
   const router = useRouter();
   const now = useNow();
   const posts = useMemberPosts(userId);
+  // Removed here: gone from the list at once.
+  const [gone, setGone] = useState<Set<string>>(() => new Set());
+  const create = own ? <Button label="Create a post" icon="edit" variant="secondary" full onPress={() => router.push('/post/new')} /> : null;
   if (posts.loading) return <Loading />;
   if (posts.error && !posts.items.length) return <Failed message={posts.error} onRetry={posts.reload} />;
-  if (!posts.items.length)
+  const items = posts.items.filter((x) => !gone.has(x.id));
+  if (!items.length)
     return (
-      <Empty
-        icon="message"
-        title={own ? 'No posts yet' : tx('{name} has not posted yet', { name })}
-        body={own ? 'What you post in your communities shows here.' : 'Posts in communities you can see show here.'}
-        cta={own ? { label: 'Open my communities', go: () => router.push('/communities') } : undefined}
-      />
+      <View style={styles.list}>
+        {create}
+        <Empty
+          icon="message"
+          title={own ? 'No posts yet' : tx('{name} has not posted yet', { name })}
+          body={own ? 'Share a thought, photos or a video on your profile, or post in your communities.' : 'Posts in communities you can see show here.'}
+          cta={own ? { label: 'Open my communities', go: () => router.push('/communities') } : undefined}
+        />
+      </View>
     );
+  const remove = (id: string) =>
+    confirm('Delete this post?', () => {
+      setGone((g) => new Set(g).add(id));
+      removePost(id)
+        .then(() => toast('Post deleted', 'check', 'brand'))
+        .catch((e) => {
+          setGone((g) => {
+            const next = new Set(g);
+            next.delete(id);
+            return next;
+          });
+          toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live');
+        });
+    });
   return (
     <View style={styles.list}>
-      {posts.items.map((x) => (
+      {create}
+      {items.map((x) => (
         <PressableScale
           key={x.id}
           haptic="select"
           scaleTo={0.98}
           onPress={() => router.push(`/comments?type=community_post&id=${x.id}`)}
           style={[styles.post, { backgroundColor: t.c.surface, borderColor: t.c.line }]}
-          accessibilityLabel={tx('Post in {name}', { name: x.communityName })}
+          accessibilityLabel={x.communityId ? tx('Post in {name}', { name: x.communityName }) : tx('Post on the profile')}
         >
-          <PressableScale onPress={() => router.push(`/c/${x.communityId}`)} accessibilityRole="link" style={{ alignSelf: 'flex-start' }}>
-            <Text variant="caption" tone="tertiary" raw>
-              {x.communityName} · {timeAgo(Math.max(0, Math.round((now - x.at) / 60000)))}
+          <View style={styles.meta}>
+            {x.communityId ? (
+              <PressableScale onPress={() => router.push(`/c/${x.communityId}`)} accessibilityRole="link" style={{ flex: 1 }}>
+                <Text variant="caption" tone="tertiary" raw>
+                  {x.communityName} · {timeAgo(Math.max(0, Math.round((now - x.at) / 60000)))}
+                </Text>
+              </PressableScale>
+            ) : (
+              <Text variant="caption" tone="tertiary" style={{ flex: 1 }} raw>
+                {tx('Profile')} · {timeAgo(Math.max(0, Math.round((now - x.at) / 60000)))}
+                {x.edited ? ` · ${tx('Edited')}` : ''}
+              </Text>
+            )}
+            {own ? (
+              <>
+                <PressableScale onPress={() => router.push({ pathname: '/post/new', params: { edit: x.id } })} haptic="select" hitSlop={8} accessibilityLabel="Edit post">
+                  <Icon name="edit" size={16} color={t.c.textTertiary} />
+                </PressableScale>
+                <PressableScale onPress={() => remove(x.id)} haptic="select" hitSlop={8} accessibilityLabel="Delete post">
+                  <Icon name="x" size={18} color={t.c.textTertiary} />
+                </PressableScale>
+              </>
+            ) : (
+              <PressableScale onPress={() => openReport({ kind: 'community_post', id: x.id, userId }, name)} haptic="select" hitSlop={8} accessibilityLabel="Report post">
+                <Icon name="flag" size={16} color={t.c.textTertiary} />
+              </PressableScale>
+            )}
+          </View>
+          {x.body ? (
+            <Text variant="body" raw>
+              {x.body}
             </Text>
-          </PressableScale>
-          <Text variant="body" raw>
-            {x.body}
-          </Text>
+          ) : null}
+          {x.mediaPaths.length ? <PostMedia paths={x.mediaPaths} kind={x.mediaKind} thumb={x.thumbPath} seconds={x.mediaSeconds} height={220} /> : null}
           <View style={styles.meta}>
             <Icon name="heart" size={14} color={x.liked ? t.c.live : t.c.textTertiary} />
             <Text variant="caption" tone="tertiary">

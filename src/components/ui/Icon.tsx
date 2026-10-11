@@ -73,6 +73,12 @@ import MessageCircle from 'lucide-react-native/icons/message-circle';
 import Mic from 'lucide-react-native/icons/mic';
 import Minus from 'lucide-react-native/icons/minus';
 import Moon from 'lucide-react-native/icons/moon';
+import Pencil from 'lucide-react-native/icons/pencil';
+import Pin from 'lucide-react-native/icons/pin';
+import Megaphone from 'lucide-react-native/icons/megaphone';
+import CircleQuestionMark from 'lucide-react-native/icons/circle-question-mark';
+import Newspaper from 'lucide-react-native/icons/newspaper';
+import ScanFace from 'lucide-react-native/icons/scan-face';
 import Mountain from 'lucide-react-native/icons/mountain';
 import Music from 'lucide-react-native/icons/music';
 import Navigation from 'lucide-react-native/icons/navigation';
@@ -139,6 +145,12 @@ export const icons = {
   arrowRight: ArrowRight,
   arrowUpRight: ArrowUpRight,
   award: Award,
+  edit: Pencil,
+  pinPost: Pin,
+  megaphone: Megaphone,
+  question: CircleQuestionMark,
+  news: Newspaper,
+  scanFace: ScanFace,
   badgeCheck: BadgeCheck,
   banknote: Banknote,
   bath: Bath,

@@ -32,6 +32,7 @@ import { track } from '@/lib/analytics';
 import { hueOf } from '@/lib/format';
 import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
+import { PostMedia } from '@/features/posts/PostMedia';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
@@ -226,7 +227,7 @@ export default function CommunityScreen() {
           {tab === 'posts' ? (
             <>
               <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
-              {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll })} /> : null}
+              {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll })} onMedia={(body) => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body } })} /> : null}
               {feed.error && !feed.posts.length ? (
                 <Text variant="body" tone="secondary" style={styles.pad}>
                   Can’t reach IRLY right now. Check your connection.
@@ -476,7 +477,7 @@ function Assistant({
 
 /* ───────── Composer ───────── */
 
-function Composer({ initial = '', onPost }: { initial?: string; onPost: (body: string, poll: string[] | null) => Promise<void> }) {
+function Composer({ initial = '', onPost, onMedia }: { initial?: string; onPost: (body: string, poll: string[] | null) => Promise<void>; onMedia: (body: string) => void }) {
   const t = useTheme();
   const [body, setBody] = useState(initial);
   const [poll, setPoll] = useState<string[] | null>(null);
@@ -525,6 +526,17 @@ function Composer({ initial = '', onPost }: { initial?: string; onPost: (body: s
       ) : null}
       <View style={styles.row}>
         <Chip size="sm" icon="layers" label={poll ? tx('Remove poll') : tx('Add a poll')} selected={Boolean(poll)} onPress={() => setPoll(poll ? null : ['', ''])} />
+        {!poll ? (
+          <Chip
+            size="sm"
+            icon="camera"
+            label={tx('Photos / video')}
+            onPress={() => {
+              onMedia(body);
+              setBody('');
+            }}
+          />
+        ) : null}
         <View style={{ flex: 1 }} />
         <Button label="Post" icon="send" size="sm" loading={busy} disabled={!body.trim()} onPress={send} />
       </View>
@@ -569,6 +581,11 @@ function PostCard({
             {p.pending ? tx('Sending…') : timeAgo(Math.max(0, Math.round((now - p.createdAt) / 60000)))}
           </Text>
         </View>
+        {p.mine && !p.pending ? (
+          <PressableScale onPress={() => router.push({ pathname: '/post/new', params: { edit: p.id } })} haptic="select" hitSlop={8} accessibilityLabel="Edit post">
+            <Icon name="edit" size={16} color={t.c.textTertiary} />
+          </PressableScale>
+        ) : null}
         {p.mine || canModerate ? (
           <PressableScale onPress={onRemove} haptic="select" hitSlop={8} accessibilityLabel="Remove post">
             <Icon name="x" size={18} color={t.c.textTertiary} />
@@ -584,9 +601,17 @@ function PostCard({
           </PressableScale>
         )}
       </View>
-      <Text variant="body" raw>
-        {p.body}
-      </Text>
+      {p.body ? (
+        <Text variant="body" raw>
+          {p.body}
+        </Text>
+      ) : null}
+      {p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} /> : null}
+      {p.edited ? (
+        <Text variant="caption" tone="tertiary">
+          {tx('Edited')}
+        </Text>
+      ) : null}
 
       {p.poll ? (
         <View style={{ gap: 6 }}>

@@ -101,6 +101,7 @@ function App() {
         <Stack.Screen name="girl/onboarding" options={{ animation: 'slide_from_bottom', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="girl/moving" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="comments" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="post/new" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="share" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="a/[id]" options={{ animation: 'fade_from_bottom' }} />
