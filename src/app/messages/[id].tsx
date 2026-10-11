@@ -26,7 +26,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { findPerson } from '@/data/repo';
 import { toast } from '@/components/ui/Toast';
-import { isServerId, useServerThread } from '@/features/server/chat';
+import { isServerId, removeConversationForMe, setConversationArchived, useServerThread } from '@/features/server/chat';
 import { leaveGroup, renameGroup } from '@/features/server/groups';
 import { sharedHref } from '@/features/server/engage';
 import { useAccount } from '@/features/auth/account';
@@ -156,14 +156,25 @@ function ServerThreadView({ id }: { id: string }) {
     thread.retry(id).catch((e) => toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live'));
   };
 
+  // Long press on a message: delete it for me, for everyone (mine only), or report it.
+  const [msgMenu, setMsgMenu] = useState<(typeof thread.messages)[number] | null>(null);
+  const [msgBusy, setMsgBusy] = useState(false);
   const onLong = (m: (typeof thread.messages)[number]) => {
     if (m.from === 'irly') return;
     haptic('select');
-    if (m.from === 'me') {
-      confirm('Delete this message for everyone?', () => thread.remove(m.id).catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')));
-    } else {
-      setReportName(m.name);
-      setReporting({ kind: 'message', id: m.id, userId: m.senderId });
+    setMsgMenu(m);
+  };
+  const runOnMessage = async (action: () => Promise<void>, done: string) => {
+    setMsgBusy(true);
+    try {
+      await action();
+      haptic('success');
+      toast(done, 'check', 'brand');
+      setMsgMenu(null);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live');
+    } finally {
+      setMsgBusy(false);
     }
   };
 
@@ -438,6 +449,7 @@ function ServerThreadView({ id }: { id: string }) {
                 router.push(`/network/${other}`);
               }}
             />
+            <ConversationActions id={id} archived={thread.archived} onDone={() => setMenu(false)} />
             <Button
               label="Report"
               icon="flag"
@@ -505,7 +517,46 @@ function ServerThreadView({ id }: { id: string }) {
           setInfo(false);
           setPhotoMenu(true);
         }}
+        archived={thread.archived}
       />
+      <Sheet visible={msgMenu !== null} onClose={() => setMsgMenu(null)} title="Message" subtitle={msgMenu?.from === 'me' ? tx('Your message') : msgMenu?.name}>
+        <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+          <Button
+            label="Delete for me"
+            icon="eye"
+            variant="secondary"
+            full
+            loading={msgBusy}
+            onPress={() => msgMenu && runOnMessage(() => thread.hideForMe(msgMenu.id), tx('Deleted for you'))}
+          />
+          {msgMenu?.from === 'me' ? (
+            <Button
+              label="Delete for everyone"
+              icon="x"
+              variant="danger"
+              full
+              disabled={msgBusy}
+              onPress={() => {
+                const m = msgMenu;
+                confirm('Delete this message for everyone? It cannot be undone.', () => runOnMessage(() => thread.remove(m.id), tx('Deleted for everyone')), 'Delete');
+              }}
+            />
+          ) : msgMenu ? (
+            <Button
+              label="Report"
+              icon="flag"
+              variant="ghost"
+              full
+              onPress={() => {
+                const m = msgMenu;
+                setMsgMenu(null);
+                setReportName(m.name);
+                setReporting({ kind: 'message', id: m.id, userId: m.senderId });
+              }}
+            />
+          ) : null}
+        </View>
+      </Sheet>
       <ReportSheet target={reporting} name={reportName} onClose={() => setReporting(null)} onBlocked={() => (router.canGoBack() ? router.back() : router.replace('/messages'))} />
       <Sheet visible={photoMenu} onClose={() => setPhotoMenu(false)} title="Chat photo" subtitle={tx('Everyone in the chat sees it')}>
         <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
@@ -514,6 +565,74 @@ function ServerThreadView({ id }: { id: string }) {
         </View>
       </Sheet>
     </View>
+  );
+}
+
+/**
+ * Archive (or unarchive) the chat, or delete it from my list. Mine only: the
+ * other members keep the conversation and its history.
+ */
+function ConversationActions({ id, archived, onDone }: { id: string; archived: boolean; onDone: () => void }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState<'archive' | 'delete' | null>(null);
+  // What I just chose wins over the screen's last load until it reloads.
+  const [chosen, setIsArchived] = useState<boolean | null>(null);
+  const isArchived = chosen ?? archived;
+  const leave = () => (router.canGoBack() ? router.back() : router.replace('/messages'));
+  return (
+    <>
+      <Button
+        label={isArchived ? 'Unarchive' : 'Archive'}
+        icon="file"
+        variant="secondary"
+        full
+        loading={busy === 'archive'}
+        disabled={busy !== null}
+        onPress={async () => {
+          setBusy('archive');
+          try {
+            await setConversationArchived(id, !isArchived);
+            haptic('success');
+            toast(isArchived ? tx('Back in your messages') : tx('Archived. Find it under Archived'), 'check', 'brand');
+            setIsArchived(!isArchived);
+            onDone();
+            if (!isArchived) leave();
+          } catch (e) {
+            toast(e instanceof Error ? e.message : 'Could not archive', 'x', 'live');
+          } finally {
+            setBusy(null);
+          }
+        }}
+      />
+      <Button
+        label="Delete conversation"
+        icon="x"
+        variant="danger"
+        full
+        loading={busy === 'delete'}
+        disabled={busy !== null}
+        onPress={() =>
+          confirm(
+            'Delete this conversation from your list? Its messages are removed for you only; the others keep them.',
+            async () => {
+              setBusy('delete');
+              try {
+                await removeConversationForMe(id);
+                haptic('success');
+                toast(tx('Conversation deleted'), 'check', 'brand');
+                onDone();
+                leave();
+              } catch (e) {
+                toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live');
+              } finally {
+                setBusy(null);
+              }
+            },
+            'Delete',
+          )
+        }
+      />
+    </>
   );
 }
 
@@ -530,6 +649,7 @@ function ChatInfo({
   activityId,
   canEditPhoto,
   onEditPhoto,
+  archived,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -542,6 +662,7 @@ function ChatInfo({
   activityId: string | null;
   canEditPhoto: boolean;
   onEditPhoto: () => void;
+  archived: boolean;
 }) {
   const t = useTheme();
   const router = useRouter();
@@ -583,6 +704,7 @@ function ChatInfo({
             />
           </View>
         ) : null}
+        <ConversationActions id={id} archived={archived} onDone={onClose} />
         <Text variant="overline" tone="tertiary" style={{ marginTop: space[3] }}>
           Members
         </Text>

@@ -1155,6 +1155,37 @@ select pg_temp.check((select count(*) from public.messages where conversation_id
 select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
 select pg_temp.check(not exists (select 1 from public.messages where conversation_id = :'ef_id'), 'G cannot read E and F''s chat');
 select pg_temp.expect_denied($$insert into public.messages (conversation_id, sender_id, body) values ('$$ || :'ef_id' || $$', auth.uid(), 'intrusion')$$, 'G cannot write in E and F''s chat');
+-- Each member tidies their own view: delete for me, archive, delete the conversation.
+select pg_temp.expect_denied($$select public.hide_message_for_me((select id from public.messages where body = 'Salut, comment vas-tu ?' limit 1))$$, 'G cannot hide a message of a chat he is not in');
+select pg_temp.expect_denied($$select public.set_conversation_archived('$$ || :'ef_id' || $$', true)$$, 'G cannot archive a chat he is not in');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select public.hide_message_for_me((select id from public.messages where conversation_id = :'ef_id' and body = 'Très bien, et toi ?'));
+select pg_temp.check((select count(*) from public.messages where conversation_id = :'ef_id') = 1, 'delete for me: the message leaves E''s view');
+select pg_temp.check((select last_body from public.my_conversations() where conversation_id = :'ef_id') = 'Salut, comment vas-tu ?', 'and E''s inbox shows the message before it');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f');
+select pg_temp.check((select count(*) from public.messages where conversation_id = :'ef_id') = 2, 'F still has both messages');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select public.set_conversation_archived(:'ef_id', true);
+select pg_temp.check((select archived from public.my_conversations() where conversation_id = :'ef_id'), 'E archives the chat');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f');
+select pg_temp.check(not (select archived from public.my_conversations() where conversation_id = :'ef_id'), 'archiving is E''s only: F''s list is unchanged');
+insert into public.messages (conversation_id, sender_id, body) values (:'ef_id', auth.uid(), 'Tu es là ?');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check((select archived and unread = 1 from public.my_conversations() where conversation_id = :'ef_id'), 'a new message keeps it archived, with its unread count');
+select public.set_conversation_archived(:'ef_id', false);
+select pg_temp.check(not (select archived from public.my_conversations() where conversation_id = :'ef_id'), 'unarchived: back in the main list');
+select pg_temp.check((select count(*) from public.my_conversations() where conversation_id = :'ef_id') = 1, 'listed once, never twice');
+select public.remove_conversation_for_me(:'ef_id');
+select pg_temp.check(not exists (select 1 from public.my_conversations() where conversation_id = :'ef_id'), 'delete conversation: it leaves E''s list');
+select pg_temp.check(not exists (select 1 from public.messages where conversation_id = :'ef_id'), 'and E no longer reads its history');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000f');
+select pg_temp.check((select count(*) from public.messages where conversation_id = :'ef_id') = 3, 'F keeps the whole history');
+select pg_temp.check(exists (select 1 from public.my_conversations() where conversation_id = :'ef_id'), 'and the chat in her list');
+insert into public.messages (conversation_id, sender_id, body) values (:'ef_id', auth.uid(), 'Nouveau départ');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check((select last_body = 'Nouveau départ' and unread = 1 from public.my_conversations() where conversation_id = :'ef_id'), 'a new message brings the chat back to E');
+select pg_temp.check((select count(*) from public.messages where conversation_id = :'ef_id') = 1, 'with the new message only');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
 
 -- Withdrawing a request takes its notification; a block ends the friendship and stops requests.
 select pg_temp.check(public.add_friend('00000000-0000-0000-0000-00000000000e') = 'pending', 'G asks E');
