@@ -3712,4 +3712,7 @@ export const fr: Record<string, string> = {
   'Only for you: the others keep the conversation.': 'Pour toi seulement : les autres gardent la conversation.',
   'Could not archive': 'Impossible d’archiver',
   'Something went wrong': 'Un problème est survenu',
+  'Pick at least 3 interests': 'Choisis au moins 3 centres d’intérêt',
+  'Pick at least 3 interests and IRLY can start introducing you to people and plans.': 'Choisis au moins 3 centres d’intérêt et IRLY pourra te présenter des personnes et des plans.',
+  'Create your account to meet people, join activities and discover your city.': 'Crée ton compte pour rencontrer des personnes, rejoindre des activités et découvrir ta ville.',
 };

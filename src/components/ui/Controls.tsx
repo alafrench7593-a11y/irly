@@ -291,6 +291,9 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
               variant="label"
               tone={selected ? 'primary' : night ? 'secondary' : 'tertiary'}
               color={selected && night ? t.c.onBrand : undefined}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
             >
               {o.label}
             </Text>
@@ -398,7 +401,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     borderWidth: StyleSheet.hairlineWidth * 2,
   },
-  segItem: { flex: 1, height: 36, alignItems: 'center', justifyContent: 'center' },
+  segItem: { flex: 1, height: 36, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   field: {
     flexDirection: 'row',
     alignItems: 'center',

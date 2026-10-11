@@ -316,7 +316,8 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     load().then((n) => alive && setItems(n)).catch(() => undefined);
     const channel = supabase
       .channel(topic(`notifications-${uid}`))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` }, () => {
+      // New ones, and ones read elsewhere (another phone, a chat opened): the badge follows.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` }, () => {
         load().then((n) => alive && setItems(n)).catch(() => undefined);
       })
       .subscribe();
@@ -339,5 +340,6 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
       });
   }, [uid]);
   const list = uid ? items : NONE;
-  return { items: list, unread: list.filter((n) => !n.readAt).length, markAllRead };
+  // Messages have their own badge (the chat icon): the bell never counts them twice.
+  return { items: list, unread: list.filter((n) => !n.readAt && n.kind !== 'MESSAGE_CREATED').length, markAllRead };
 }

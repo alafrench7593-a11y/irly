@@ -134,6 +134,11 @@ select pg_temp.check((select count(*) from public.messages) = 0, 'Dina cannot re
 select pg_temp.check((select count(*) from public.conversations) = 0, 'Dina cannot see their conversation');
 select pg_temp.as_admin();
 select pg_temp.check((select count(*) from public.notifications n join public.profiles p on p.id = n.user_id where p.first_name = 'Bea' and n.kind = 'MESSAGE_CREATED') = 1, 'Bea notified of the message');
+-- Reading the chat clears its message notifications (no phantom bell badge).
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
+select public.mark_conversation_read((select n.payload ->> 'conversation_id' from public.notifications n where n.kind = 'MESSAGE_CREATED' limit 1)::uuid);
+select pg_temp.check((select count(*) from public.notifications where kind = 'MESSAGE_CREATED' and read_at is null) = 0, 'reading the chat marks its message notifications read');
+select pg_temp.as_admin();
 
 -- ───── Block ends everything ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');

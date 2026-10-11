@@ -138,7 +138,9 @@ function CommunitiesButton() {
       style={[styles.communities, { backgroundColor: t.c.overlay, borderColor: t.c.line }]}
     >
       <Icon name="users" size={16} color={t.c.text} />
-      <Text variant="label">Communities</Text>
+      <Text variant="label" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flexShrink: 1 }}>
+        Communities
+      </Text>
     </PressableScale>
   );
 }
@@ -217,7 +219,7 @@ export function PageHeader({ title, scrollY, right, back = true }: PageHeaderPro
 const styles = StyleSheet.create({
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
-  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
   row: {
     flex: 1,
     flexDirection: 'row',
