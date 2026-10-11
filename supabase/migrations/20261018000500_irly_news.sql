@@ -141,10 +141,13 @@ begin
   for item in
     select unnest(xpath('//item', doc)) union all select unnest(xpath('//a:entry', doc, ns))
   loop
-    t := private.news_text((xpath('/item/title/text()|/a:entry/a:title/text()', item, ns))[1]::text, 300);
-    link := btrim(coalesce((xpath('/item/link/text()', item, ns))[1]::text, (xpath('/a:entry/a:link[not(@rel) or @rel="alternate"]/@href', item, ns))[1]::text, ''));
-    descr := private.news_text(coalesce((xpath('/item/description/text()', item, ns))[1]::text, (xpath('/a:entry/a:summary/text()|/a:entry/a:content/text()', item, ns))[1]::text), 400);
-    pub := coalesce((xpath('/item/pubDate/text()', item, ns))[1]::text, (xpath('/a:entry/a:published/text()|/a:entry/a:updated/text()', item, ns))[1]::text);
+    -- Every text node (a CDATA block often sits between line breaks).
+    t := private.news_text(array_to_string(xpath('/item/title//text()|/a:entry/a:title//text()', item, ns)::text[], ''), 300);
+    link := btrim(coalesce(nullif(btrim(array_to_string(xpath('/item/link//text()', item, ns)::text[], '')), ''), (xpath('/a:entry/a:link[not(@rel) or @rel="alternate"]/@href', item, ns))[1]::text, ''));
+    descr := private.news_text(coalesce(nullif(array_to_string(xpath('/item/description//text()', item, ns)::text[], ''), ''),
+      array_to_string(xpath('/a:entry/a:summary//text()', item, ns)::text[], '')), 400);
+    pub := btrim(coalesce(nullif(btrim(array_to_string(xpath('/item/pubDate//text()', item, ns)::text[], '')), ''),
+      (xpath('/a:entry/a:published/text()|/a:entry/a:updated/text()', item, ns))[1]::text));
     img := coalesce((xpath('/item/enclosure[starts-with(@type,"image")]/@url', item, ns))[1]::text, (xpath('/item/media:content/@url|/item/media:thumbnail/@url', item, ns))[1]::text);
     begin
       at := pub::timestamptz;

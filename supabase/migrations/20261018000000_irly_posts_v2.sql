@@ -3,7 +3,7 @@
 -- Builds on community_posts (comments, likes, saves, reports, moderation and
 -- removal already work on it); nothing is removed or rewritten.
 -- 1. A post may belong to no community: a profile post, shown on its author's
---    profile, readable by signed-in members who are not blocked.
+--    profile, readable as the profile is (its visibility setting, blocks).
 -- 2. Media: up to 10 photos (media_paths) or one video (+ poster, length).
 --    Text is optional when there is media. Files live in the private
 --    post-media bucket, in the author's own folder, readable by whoever may
@@ -18,7 +18,9 @@ alter table public.community_posts alter column community_id drop not null;
 drop policy if exists community_posts_read on public.community_posts;
 create policy community_posts_read on public.community_posts for select to authenticated
   using (
-    (community_id is null or exists (select 1 from public.communities c where c.id = community_id))
+    -- A profile post follows the profile's own visibility (everyone, friends or nobody).
+    (case when community_id is null then author_id = auth.uid() or private.discoverable(author_id)
+      else exists (select 1 from public.communities c where c.id = community_id) end)
     and not private.is_blocked(auth.uid(), author_id)
     and (deleted_at is null or author_id = auth.uid() or (community_id is not null and private.moderates(community_id)))
   );
@@ -92,7 +94,10 @@ begin
   elsif p_type = 'community_post' then
     select community_id, author_id into cid, author from public.community_posts where id = p_id::uuid and deleted_at is null;
     if author is null then return false; end if;
-    if cid is null then return not private.blocked_unchecked(p_user, author); end if;
+    if cid is null then
+      return author = p_user or (not private.blocked_unchecked(p_user, author)
+        and private.visible_to(p_user, author, (select st.profile_visibility from public.safety_settings st where st.user_id = author)));
+    end if;
     return exists (select 1 from public.community_members where community_id = cid and user_id = p_user);
   elsif p_type = 'activity' then
     select * into a from public.activities where id = p_id::uuid;

@@ -1283,7 +1283,7 @@ select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
 select pg_temp.check((select count(*) from public.member_lives('00000000-0000-0000-0000-000000000011')) = 2, 'a friend also sees the friends-only live');
 -- A hidden profile hides its lists and contents.
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
-update public.safety_settings set profile_visibility = 'nobody' where user_id = auth.uid();
+insert into public.safety_settings (user_id, profile_visibility) values (auth.uid(), 'nobody') on conflict (user_id) do update set profile_visibility = 'nobody';
 select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
 select pg_temp.check(not exists (select 1 from public.friend_list('00000000-0000-0000-0000-000000000011')), 'a hidden profile shows no friends list');
 select pg_temp.check(not exists (select 1 from public.member_lives('00000000-0000-0000-0000-000000000011')) and not exists (select 1 from public.member_activities('00000000-0000-0000-0000-000000000011')), 'a hidden profile shows no lives or activities');
@@ -1415,6 +1415,7 @@ select pg_temp.as_admin();
 
 -- ───── Publications v2: profile posts, photos, video, edits ─────
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+insert into public.safety_settings (user_id, profile_visibility) values (auth.uid(), 'everyone') on conflict (user_id) do update set profile_visibility = 'everyone';
 insert into public.community_posts (author_id, body) values (auth.uid(), 'Just a thought, no photo') returning id as pp_id \gset
 insert into public.community_posts (author_id, body, media_paths, media_kind) values (auth.uid(), '', array['00000000-0000-0000-0000-000000000011/p1.jpg', '00000000-0000-0000-0000-000000000011/p2.jpg'], 'photo') returning id as pp2_id \gset
 select pg_temp.check(:'pp2_id' is not null, 'posts: several photos without text');
@@ -1606,5 +1607,33 @@ select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
 select pg_temp.check(exists (select 1 from public.member_badges('00000000-0000-0000-0000-000000000011') where badge = 'organizer' and count >= 1), 'badges: organising a real activity earns the organiser badge');
 select pg_temp.check(not exists (select 1 from public.member_badges('00000000-0000-0000-0000-000000000018') where badge = 'organizer'), 'badges: nothing without real activity');
 select pg_temp.as_admin();
+
+-- ───── Review fixes ─────
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.expect_denied(format('insert into public.communities (city_id, name, parent_id, created_by) values (%L, %L, %L, auth.uid())', 'dubai', 'Sneaky group', :'sport_id'), 'groups: no group added straight into a community without being its moderator');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+insert into public.community_posts (author_id, body) values (auth.uid(), 'Only for those who can see my profile') returning id as hidden_post \gset
+insert into public.safety_settings (user_id, profile_visibility) values (auth.uid(), 'nobody') on conflict (user_id) do update set profile_visibility = 'nobody';
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check(not exists (select 1 from public.community_posts where id = :'hidden_post'), 'posts: a profile post follows the profile''s visibility');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check(exists (select 1 from public.community_posts where id = :'hidden_post'), 'posts: the author still sees it');
+update public.safety_settings set profile_visibility = 'everyone' where user_id = auth.uid();
+select public.create_community('Hana Club', 'dubai') as club_id \gset
+select public.create_subgroup(:'club_id', 'Hana Padel') as club_group \gset
+select public.delete_community(:'club_group');
+select pg_temp.check(not exists (select 1 from public.communities where id = :'club_group'), 'groups: the community''s owner deletes a group');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select public.create_subgroup(:'club_id', 'Hana Yoga') as club_group2 \gset
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select public.delete_community(:'club_id');
+select pg_temp.as_admin();
+select pg_temp.check((select deleted_at is not null from public.communities where id = :'club_group2'), 'groups: deleting a community deletes its groups');
+select pg_temp.check(private.news_ingest('50000000-0000-0000-0000-000000000001', format($x$<rss><channel><item><title>
+<![CDATA[Dubai Marina walk reopens]]>
+</title><link>https://example.ae/cdata</link><description>
+<![CDATA[<p>New lights</p>]]>
+</description><pubDate>%s</pubDate></item></channel></rss>$x$, to_char(now() - interval '1 hour', 'Dy, DD Mon YYYY HH24:MI:SS "+0000"'))) = 1, 'news: CDATA titles between line breaks are read');
+select pg_temp.check((select title from public.news_articles where url = 'https://example.ae/cdata') = 'Dubai Marina walk reopens', 'news: the CDATA title is clean');
 
 \echo 'ALL TESTS PASSED'

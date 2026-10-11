@@ -67,6 +67,8 @@ create table if not exists public.verification_requests (
   user_id uuid not null references public.profiles (id) on delete cascade,
   gesture text not null check (gesture in ('peace', 'thumb', 'nose', 'ear', 'three')),
   selfie_path text,
+  -- The photos the selfie is compared with, as they were when it was sent.
+  photos text[],
   status text not null default 'started' check (status in ('started', 'pending', 'approved', 'rejected')),
   reason text check (reason is null or char_length(reason) <= 200),
   reviewer_id uuid references public.profiles (id) on delete set null,
@@ -153,7 +155,8 @@ declare
 begin
   if me is null then raise exception 'sign in required' using errcode = '42501'; end if;
   if p_path is null or p_path not like me::text || '/%' then raise exception 'invalid file' using errcode = '22023'; end if;
-  update public.verification_requests set selfie_path = p_path, status = 'pending', submitted_at = now()
+  update public.verification_requests set selfie_path = p_path, status = 'pending', submitted_at = now(),
+    photos = (select array(select x from unnest(p.photo_paths) x where x not like 'irly-avatar:%') from public.profiles p where p.id = me)
   where id = p_request and user_id = me and status = 'started';
   if not found then raise exception 'start again: this request is no longer open' using errcode = 'P0002'; end if;
 end $$;
@@ -165,7 +168,7 @@ language plpgsql stable security definer set search_path = public as $$
 begin
   if not private.is_admin(auth.uid()) then raise exception 'IRLY admins only' using errcode = '42501'; end if;
   return query
-    select v.id, v.user_id, p.first_name, p.photo_paths, v.selfie_path, v.gesture, v.submitted_at
+    select v.id, v.user_id, p.first_name, coalesce(v.photos, p.photo_paths), v.selfie_path, v.gesture, v.submitted_at
     from public.verification_requests v
     join public.profiles p on p.id = v.user_id and p.deleted_at is null
     where v.status = 'pending'
@@ -190,9 +193,12 @@ begin
         reviewer_id = me, decided_at = now(), selfie_path = null
   where id = v.id;
   if p_approve then
-    update public.profiles set verified_at = now(),
-      verified_photos = array(select x from unnest(photo_paths) x where x not like 'irly-avatar:%')
-    where id = v.user_id;
+    -- Only the photos the admin saw: if the member changed them since, they ask again.
+    if exists (select 1 from public.profiles p, unnest(p.photo_paths) x
+               where p.id = v.user_id and x not like 'irly-avatar:%' and not x = any (coalesce(v.photos, '{}'))) then
+      raise exception 'the photos changed since the selfie: decline and ask for a new one' using errcode = 'P0001';
+    end if;
+    update public.profiles set verified_at = now(), verified_photos = v.photos where id = v.user_id;
   end if;
   perform private.notify(v.user_id, 'PROFILE_UPDATED',
     jsonb_build_object('type', case when p_approve then 'verified' else 'verification_rejected' end, 'reason', nullif(btrim(coalesce(p_reason, '')), '')));

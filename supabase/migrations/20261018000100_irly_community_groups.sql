@@ -42,6 +42,10 @@ begin
     raise exception 'a group cannot move' using errcode = '42501';
   end if;
   if new.parent_id is null then return new; end if;
+  -- Groups are added by the community's moderators (create_subgroup) or IRLY.
+  if tg_op = 'INSERT' and auth.uid() is not null and not private.moderates(new.parent_id) then
+    raise exception 'only the community''s moderators can add a group' using errcode = '42501';
+  end if;
   select * into p from public.communities where id = new.parent_id;
   if not found or p.parent_id is not null then
     raise exception 'a group belongs to a top community' using errcode = '22023';
@@ -612,3 +616,28 @@ begin
   end case;
 end $$;
 revoke all on function private.push_text(public.notifications, text) from public, anon, authenticated;
+
+-- Deleting: a community takes its groups with it; a group can be deleted by
+-- its community's owner or moderators (or IRLY), not only by an owner.
+create or replace function public.delete_community(p_community uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  c public.communities;
+begin
+  if auth.uid() is null then raise exception 'sign in required' using errcode = '42501'; end if;
+  select * into c from public.communities where id = p_community and deleted_at is null;
+  if not found then raise exception 'community not found' using errcode = 'P0002'; end if;
+  if not (
+    (c.parent_id is null and not c.official and exists (
+      select 1 from public.community_members m where m.community_id = p_community and m.user_id = auth.uid() and m.role = 'owner'))
+    or (c.parent_id is not null and private.moderates(p_community) and (not c.official or private.is_admin(auth.uid())))
+  ) then
+    raise exception 'only the owner can delete this community' using errcode = '42501';
+  end if;
+  update public.communities set deleted_at = now() where (id = p_community or parent_id = p_community) and deleted_at is null;
+  -- The chats leave every inbox; their history is kept for moderation.
+  delete from public.conversation_members cm using public.conversations v, public.communities x
+  where v.community_id = x.id and (x.id = p_community or x.parent_id = p_community) and cm.conversation_id = v.id;
+end $$;
+revoke all on function public.delete_community(uuid) from public, anon;
+grant execute on function public.delete_community(uuid) to authenticated;
