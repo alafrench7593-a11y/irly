@@ -12,12 +12,18 @@ export const LEGAL_REQUIRED = '[LEGAL INFORMATION REQUIRED]';
 export const APP = {
   /** Trade name shown in the app. */
   name: 'IRLY',
-  /** Who operates IRLY: an individual (sole operator), not a company. */
-  operatorType: 'individual' as 'individual' | 'company',
-  /** Full legal name of the person who operates IRLY. */
-  legalEntity: 'Samuel Princivil',
+  /** Who operates IRLY: a company (dossier juridique of 11 October 2026). */
+  operatorType: 'company' as 'individual' | 'company',
+  /** Legal name of the company that operates IRLY. */
+  legalEntity: 'ALF FASHION BRAND FZCO',
+  /** Trade licence number, and the person who represents the company. */
+  licence: '73910',
+  representative: 'Samuel Princivil',
+  /** Who develops the app (named in the legal notice only). */
+  developer: 'David Princivil',
   /** Postal address of the operator. */
-  legalAddress: 'Dubai Digital Park, Dubai Silicon Oasis, Dubai, United Arab Emirates',
+  legalAddress: 'Azizi Riviera 3, Dubai, United Arab Emirates',
+  legalAddressFr: 'Azizi Riviera 3, Dubaï, Émirats arabes unis',
   /** Law that governs the Terms, and the competent courts. */
   governingLaw: 'the laws of the Emirate of Dubai and the applicable federal laws of the United Arab Emirates, and the courts of Dubai have jurisdiction',
   /** Data protection law that applies to the operator. */
@@ -41,8 +47,8 @@ export const APP = {
 
 /** Versions and dates of the legal texts shown in the app. */
 export const LEGAL_VERSIONS = {
-  privacy: { version: '0.3 (draft)', updated: '2026-10-09' },
-  terms: { version: '0.3 (draft)', updated: '2026-10-09' },
+  privacy: { version: '0.4 (draft)', updated: '2026-10-11' },
+  terms: { version: '0.4 (draft)', updated: '2026-10-11' },
   guidelines: { version: '0.2 (draft)', updated: '2026-10-07' },
 } as const;
 

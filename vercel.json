@@ -5,6 +5,14 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/:page(privacy|terms|guidelines|support|delete-account|legal-notice)",
+      "destination": "/:page/index.html"
+    },
+    {
+      "source": "/fr/:page(privacy|terms|guidelines|support|delete-account|legal-notice)",
+      "destination": "/fr/:page/index.html"
+    },
+    {
       "source": "/app/((?!_expo|assets|favicon|manifest|icon|apple-touch).*)",
       "destination": "/app/index.html"
     },

@@ -25,4 +25,6 @@ if (fs.existsSync('public-photos/faces')) {
 }
 // French and Arabic home pages, guides and the sitemap.
 execFileSync('node', ['.github/scripts/site-pages.mjs', OUT], { stdio: 'inherit' });
+// Privacy, terms, guidelines, support and account deletion (EN and FR), added to the sitemap.
+execFileSync('node', ['.github/scripts/site-legal.mjs', OUT], { stdio: 'inherit' });
 console.log('website built:', fs.readdirSync(OUT).join(', '));

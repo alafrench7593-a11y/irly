@@ -98,8 +98,8 @@ for (const l of ['fr', 'ar']) {
   const d = T[l];
   // What Google shows for "IRLY": the brand first, then what it is for, in each language.
   const META = {
-    fr: ['IRLY — Rencontrer du monde et se faire des amis à Dubaï', 'IRLY, l’app pour rencontrer du monde à Dubaï et à Bali : rejoins des communautés, trouve quoi faire ensemble et fais-toi de vrais amis. Gratuit.'],
-    ar: ['IRLY — تعرّف على أشخاص وكوّن صداقات في دبي', 'IRLY هو التطبيق للتعرّف على أشخاص في دبي وبالي: انضم إلى مجتمعات، واكتشف ما تفعله مع الآخرين، وكوّن صداقات حقيقية. التسجيل مجاني.'],
+    fr: ['IRLY — Moins de solitude. Plus de vie. Rencontrer du monde à Dubaï', 'Se faire des amis dans une nouvelle ville ne devrait pas être si difficile. IRLY t’aide à rencontrer du monde, trouver ta communauté et faire des choses ensemble, à Dubaï et à Bali. Gratuit.'],
+    ar: ['IRLY — وحدة أقل. حياة أكثر. تعرّف على أشخاص في دبي', 'IRLY هو التطبيق للتعرّف على أشخاص في دبي وبالي: انضم إلى مجتمعات، واكتشف ما تفعله مع الآخرين، وكوّن صداقات حقيقية. التسجيل مجاني.'],
   };
   const [title, desc] = META[l];
   let html = translateAttributes(translateElements(enHome, d), d);
@@ -115,7 +115,11 @@ for (const l of ['fr', 'ar']) {
     .replace(/(<meta property="og:locale" content=")[^"]*"/, `$1${l === 'fr' ? 'fr_FR' : 'ar_AE'}"`)
     .replace(/(<link rel="canonical" href=")[^"]*"/, `$1${homeHref(l)}"`)
     // Guides: French ones from the French page, English ones (one level up) from the Arabic page.
-    .replace(/<a href="([^"]+)" data-href-fr="([^"]+)"/g, (_m, en, fr) => (l === 'fr' ? `<a href="${fr}" data-href-fr="${fr}" data-href-en="../${en}"` : `<a href="../${en}" data-href-fr="../fr/${fr}" data-href-en="../${en}"`));
+    .replace(/<a href="([^"]+)" data-href-fr="([^"]+)"/g, (_m, en, fr) => {
+      // Site-wide pages (/privacy, /support…) have absolute addresses: nothing to adjust.
+      if (en.startsWith('/')) return `<a href="${l === 'fr' ? fr : en}" data-href-fr="${fr}" data-href-en="${en}"`;
+      return l === 'fr' ? `<a href="${fr}" data-href-fr="${fr}" data-href-en="../${en}"` : `<a href="../${en}" data-href-fr="../fr/${fr}" data-href-en="../${en}"`;
+    });
   html = deeper(html, '../');
   fs.mkdirSync(`${OUT}/${l}`, { recursive: true });
   fs.writeFileSync(`${OUT}/${l}/index.html`, html);
