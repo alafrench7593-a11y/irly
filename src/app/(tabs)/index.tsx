@@ -30,6 +30,7 @@ import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { momentFor } from '@/features/home/moment';
 import { HomeHero } from '@/features/home/HomeHero';
 import { GirlPortals } from '@/features/home/Portals';
+import { ExploreDoors } from '@/features/home/Explore';
 import { LiveStrip } from '@/features/live/LiveStrip';
 import { useLives } from '@/features/live/liveStore';
 import { isHappeningNow } from '@/lib/time';
@@ -220,6 +221,11 @@ export default function Home() {
         <ScrollReveal scrollY={scrollY} style={styles.section}>
           <SectionHeader title="People near you" action="See all" onAction={() => router.push('/match?intent=friends')} />
           <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
+        </ScrollReveal>
+
+        <ScrollReveal scrollY={scrollY} style={styles.section}>
+          <SectionHeader overline="Help, news and spaces" title="Explore IRLY" />
+          <ExploreDoors />
         </ScrollReveal>
 
         {girl ? (

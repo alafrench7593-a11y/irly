@@ -1500,4 +1500,19 @@ select public.toggle_save('community_post', :'q_id');
 select pg_temp.check((select saved from public.help_feed('dubai', 'visa') where id = :'q_id'), 'help: a question with its answers can be saved');
 select pg_temp.as_admin();
 
+-- ───── Spaces: IRLY Mom, Family, Only Girls ─────
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select count(*) from public.space_community('moms', 'dubai')) = 0, 'spaces: IRLY Mom stays hidden from men');
+select pg_temp.check((select count(*) from public.space_community('families', 'dubai')) = 1, 'spaces: IRLY Family is open to all');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select id as moms_id from public.space_community('moms', 'dubai') \gset
+select pg_temp.check((select count(*) from public.community_subgroups(:'moms_id')) = 8, 'spaces: IRLY Mom has its groups');
+select id as bump_id from public.community_subgroups(:'moms_id') where name like 'Bump%' \gset
+select public.join_community(:'bump_id');
+insert into public.community_posts (community_id, author_id, body) values (:'bump_id', auth.uid(), 'Any good prenatal yoga in Marina?') returning id as mom_post \gset
+select pg_temp.check(exists (select 1 from public.girl_feed('dubai', true) where id = :'mom_post'), 'spaces: IRLY Mom posts show in the Moms feed');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.expect_denied(format('select public.join_community(%L)', :'bump_id'), 'spaces: men cannot join a mums group');
+select pg_temp.as_admin();
+
 \echo 'ALL TESTS PASSED'

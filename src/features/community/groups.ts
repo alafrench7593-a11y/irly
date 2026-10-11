@@ -35,7 +35,7 @@ export function useCommunityExtras(id: string) {
   });
   const seq = useRef(0);
   const load = useCallback(() => {
-    if (!uid || !supabase) return;
+    if (!uid || !supabase || !id) return;
     const n = ++seq.current;
     Promise.all([
       sb().rpc('community_subgroups', { p_parent: id }),
