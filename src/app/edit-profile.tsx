@@ -93,6 +93,9 @@ export default function EditProfile() {
     setTried(true);
     if (!valid || busy) {
       haptic('warning');
+      // The reason may be far down the form: say it where it is seen.
+      const reason = errors.name ?? errors.languages ?? errors.interests ?? errors.username;
+      if (reason) toast(reason, 'x', 'live');
       return;
     }
     setBusy(true);
