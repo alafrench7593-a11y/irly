@@ -439,6 +439,40 @@ try {
   await step('a visitor cannot download a chat photo', async () => Boolean((await anon.storage.from('chat-media').download(own)).error));
   await step('a file that is not an image is refused', () => denied(A.sb.storage.from('chat-media').upload(`${A.id}/page-${run}.html`, new TextEncoder().encode('<script>alert(1)</script>'), { contentType: 'text/html' })));
   await A.sb.storage.from('chat-media').remove([own]);
+  // Avatars show a small copy ("-s.jpg") of the profile photo when it exists, else the photo itself.
+  const face = `${A.id}/avatar-${run}.jpg`;
+  const faceThumb = `${A.id}/avatar-${run}-s.jpg`;
+  await step('profile photo without a small copy: the app gets a link for the photo only', async () => {
+    must(await A.sb.storage.from('profile-photos').upload(face, jpeg, { contentType: 'image/jpeg' }));
+    const links = must(await timed('sign 2 faces', () => B.sb.storage.from('profile-photos').createSignedUrls([faceThumb, face], 3600)));
+    const byPath = Object.fromEntries(links.map((l) => [l.path, l.signedUrl]));
+    if (byPath[faceThumb]) throw new Error('a missing small copy got a link');
+    if (!byPath[face]) throw new Error('the photo got no link');
+    return true;
+  });
+  await step('profile photo with its small copy: both get links, the small copy downloads', async () => {
+    must(await A.sb.storage.from('profile-photos').upload(faceThumb, jpeg, { contentType: 'image/jpeg', upsert: true }));
+    const links = must(await B.sb.storage.from('profile-photos').createSignedUrls([faceThumb, face], 3600));
+    const small = links.find((l) => l.path === faceThumb)?.signedUrl;
+    if (!small || !links.find((l) => l.path === face)?.signedUrl) throw new Error('missing link');
+    const res = await timed('download a face (small copy)', () => fetch(small));
+    return res.ok;
+  });
+  await A.sb.storage.from('profile-photos').remove([face, faceThumb]);
+  await step('opening a chat is one round trip: chat, messages, members with names and photos, my state', async () => {
+    const [conv, msgs, members, mine] = await timed('open a chat', () =>
+      Promise.all([
+        A.sb.from('conversations').select('id, kind, title, community_id, activity_id').eq('id', matchConv).maybeSingle(),
+        A.sb.from('messages').select('id, sender_id, kind, body, created_at, ref_type, ref_id, media_path').eq('conversation_id', matchConv).is('deleted_at', null).order('created_at', { ascending: false }).limit(50),
+        A.sb.rpc('chat_members', { p_conversation: matchConv }),
+        A.sb.from('conversation_members').select('archived_at').eq('conversation_id', matchConv).eq('user_id', A.id).maybeSingle(),
+      ]),
+    );
+    for (const r of [conv, msgs, members, mine]) if (r.error) throw new Error(r.error.message);
+    const ids = members.data.map((m) => m.user_id);
+    return Boolean(conv.data) && msgs.data.length > 0 && ids.includes(A.id) && ids.includes(B.id) && members.data.every((m) => m.first_name && 'photo_path' in m);
+  });
+  await step('a stranger gets no members of a private chat', async () => (must(await C.sb.rpc('chat_members', { p_conversation: matchConv })) ?? []).length === 0);
   await step('Realtime: a stranger receives nothing from a private chat, a member does', async () => {
     const got = { a: 0, c: 0 };
     const sub = (who, key) =>

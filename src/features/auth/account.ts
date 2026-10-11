@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import * as Crypto from 'expo-crypto';
 import { useStore, type Profile } from '@/state/store';
 import { cleanImage } from '@/lib/media';
+import { thumbOf, uploadFaceThumb as uploadThumb } from '@/features/server/media';
 import { wipeLocal } from '@/state/wipe';
 import { CITIES } from '@/data/destinations';
 import { ACTIVITIES, INTERESTS } from '@/data/catalog';
@@ -239,7 +240,10 @@ async function writeProfile(uid: string): Promise<void> {
       const img = await cleanImage(profile.photoUri);
       const path = `${uid}/avatar-${Date.now()}.${img.ext}`;
       const up = await supabase.storage.from('profile-photos').upload(path, img.body, { contentType: img.contentType });
-      if (!up.error) await supabase.from('profiles').update({ photo_paths: [path] }).eq('id', uid);
+      if (!up.error) {
+        await uploadThumb(path, profile.photoUri);
+        await supabase.from('profiles').update({ photo_paths: [path] }).eq('id', uid);
+      }
     } catch {
       // The profile works without it; the photo can be added later.
     }
@@ -309,12 +313,13 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
       if (error) throw new Error(profileError(error.message));
       const stale = before.filter((p) => !isAvatar(p) && p.startsWith(`${uid}/`));
-      if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
+      if (stale.length) await supabase.storage.from('profile-photos').remove([...stale, ...stale.map(thumbOf)]);
     } else if (patch.photoUri && !/^https?:/.test(patch.photoUri)) {
       const img = await cleanImage(patch.photoUri);
       const path = `${uid}/avatar-${Date.now()}.${img.ext}`;
       const up = await supabase.storage.from('profile-photos').upload(path, img.body, { contentType: img.contentType });
       if (up.error) throw new Error('Could not upload the photo. Try again.');
+      await uploadThumb(path, patch.photoUri);
       const { data: old } = await supabase.rpc('my_profile');
       const before = ((old as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];
       row.photo_paths = [path];
@@ -324,12 +329,12 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
       if (Object.keys(row).length) {
         const { error } = await supabase.from('profiles').update(row).eq('id', uid);
         if (error) {
-          await supabase.storage.from('profile-photos').remove([path]);
+          await supabase.storage.from('profile-photos').remove([path, thumbOf(path)]);
           throw new Error(profileError(error.message));
         }
       }
       const stale = before.filter((p) => p !== path && !isAvatar(p) && p.startsWith(`${uid}/`));
-      if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
+      if (stale.length) await supabase.storage.from('profile-photos').remove([...stale, ...stale.map(thumbOf)]);
     } else if (Object.keys(row).length) {
       const { error } = await supabase.from('profiles').update(row).eq('id', uid);
       if (error) throw new Error(profileError(error.message));
@@ -542,3 +547,4 @@ export async function verifyPhoneCode(phone: string, code: string): Promise<void
   if (error) throw new Error(authMessage(error));
   if (data.user) await syncProfile(data.user.id).catch(() => undefined);
 }
+

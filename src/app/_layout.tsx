@@ -30,6 +30,7 @@ import { usePush } from '@/features/push/push';
 import { ReportHost } from '@/features/moderation/ReportSheet';
 import { UnreadSync } from '@/features/server/chat';
 import { BellSync } from '@/features/server/social';
+import { FaceSync } from '@/features/server/faces';
 import { SyncBridge } from '@/features/server/sync';
 import { OfflineBar } from '@/features/server/OfflineBar';
 import { useStore } from '@/state/store';
@@ -116,6 +117,7 @@ function App() {
       <SyncBridge />
       <UnreadSync />
       <BellSync />
+      <FaceSync />
       <CreateHost />
       <DestinationTransition />
       <AppIntro />

@@ -8,6 +8,7 @@ import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import { uploadChatPhoto } from './media';
+import { primeFaces } from './faces';
 import { askPushInContext } from '@/features/push/push';
 
 /**
@@ -59,12 +60,22 @@ export function UnreadSync() {
   return null;
 }
 
+let inboxCache: { uid: string; rows: InboxRow[] } = { uid: '', rows: [] };
+
 /** The signed-in member's conversations, in the app's Conversation shape. */
 export function useServerInbox(): { conversations: Conversation[]; refresh: () => void; loading: boolean; error: string | null } {
   const account = useAccount();
-  const [rows, setRows] = useState<InboxRow[]>([]);
-  const [state, setState] = useState<{ for: string; error: string | null }>({ for: '', error: null });
   const uid = account?.userId;
+  // The last inbox seen (this launch) shows at once while it refreshes.
+  const [rows, setRowsState] = useState<InboxRow[]>(() => (uid && inboxCache.uid === uid ? inboxCache.rows : []));
+  const [state, setState] = useState<{ for: string; error: string | null }>(() => ({ for: uid && inboxCache.uid === uid ? uid : '', error: null }));
+  const setRows = useCallback(
+    (next: InboxRow[]) => {
+      if (uid) inboxCache = { uid, rows: next };
+      setRowsState(next);
+    },
+    [uid],
+  );
   const currentUid = useRef(uid);
   useEffect(() => {
     currentUid.current = uid;
@@ -83,7 +94,7 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
       setRows((data as InboxRow[]) ?? []);
       setState({ for: asked, error: null });
     });
-  }, [uid]);
+  }, [uid, setRows]);
 
   useEffect(() => {
     if (!supabase || !uid) return;
@@ -128,6 +139,20 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
   );
   return { conversations, refresh, loading: Boolean(uid) && state.for !== uid, error: state.for === uid ? state.error : null };
 }
+
+type MemberRow = { user_id: string; first_name: string; photo_path: string | null; role: string };
+type ThreadSnapshot = {
+  rows: MessageRow[];
+  names: Record<string, string>;
+  people: Record<string, { name: string; photo: string | null; admin: boolean }>;
+  refs: { community: string | null; activity: string | null };
+  title: string;
+  kind: InboxRow['kind'] | null;
+  hasEarlier: boolean;
+  archived: boolean;
+};
+/** Chats opened since launch (memory only, the 30 most recent), to reopen them instantly. */
+const threadCache = new Map<string, ThreadSnapshot>();
 
 type MessageRow = { id: string; sender_id: string | null; kind: string; body: string; created_at: string; ref_type?: string | null; ref_id?: string | null; media_path?: string | null };
 
@@ -196,16 +221,18 @@ export type ServerThread = {
 export function useServerThread(conversationId: string): ServerThread {
   const account = useAccount();
   const uid = account?.userId;
-  const [rows, setRows] = useState<MessageRow[]>([]);
-  const [names, setNames] = useState<Record<string, string>>({});
-  const [people, setPeople] = useState<Record<string, { name: string; photo: string | null; admin: boolean }>>({});
-  const [refs, setRefs] = useState<{ community: string | null; activity: string | null }>({ community: null, activity: null });
-  const [title, setTitle] = useState('');
-  const [kind, setKind] = useState<InboxRow['kind'] | null>(null);
-  const [loading, setLoading] = useState(true);
+  // A chat opened before (this launch) shows at once, then catches up with the server.
+  const seen = uid ? threadCache.get(`${uid}|${conversationId}`) : undefined;
+  const [rows, setRows] = useState<MessageRow[]>(seen?.rows ?? []);
+  const [names, setNames] = useState<Record<string, string>>(seen?.names ?? {});
+  const [people, setPeople] = useState<Record<string, { name: string; photo: string | null; admin: boolean }>>(seen?.people ?? {});
+  const [refs, setRefs] = useState<{ community: string | null; activity: string | null }>(seen?.refs ?? { community: null, activity: null });
+  const [title, setTitle] = useState(seen?.title ?? '');
+  const [kind, setKind] = useState<InboxRow['kind'] | null>(seen?.kind ?? null);
+  const [loading, setLoading] = useState(!seen);
   const [error, setError] = useState<string | null>(null);
-  const [hasEarlier, setHasEarlier] = useState(false);
-  const [archived, setArchived] = useState(false);
+  const [hasEarlier, setHasEarlier] = useState(seen?.hasEarlier ?? false);
+  const [archived, setArchived] = useState(seen?.archived ?? false);
   // Your messages not confirmed by the server yet: shown at once, marked "sending" or "failed".
   const [pending, setPending] = useState<Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null }>>({});
   const [typing, setTypingNames] = useState<Record<string, number>>({});
@@ -229,10 +256,11 @@ export function useServerThread(conversationId: string): ServerThread {
     };
     (async () => {
       try {
+        // One round trip: the chat, its newest messages, its members (names, photos, roles) and my own state.
         const [{ data: conv, error: e1 }, msgs, { data: members }, { data: mine }] = await Promise.all([
           supabase!.from('conversations').select('id, kind, title, community_id, activity_id').eq('id', conversationId).maybeSingle(),
           latest(),
-          supabase!.from('conversation_members').select('user_id, profiles(first_name)').eq('conversation_id', conversationId),
+          supabase!.rpc('chat_members', { p_conversation: conversationId }),
           supabase!.from('conversation_members').select('archived_at').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
         ]);
         setArchived(Boolean((mine as { archived_at: string | null } | null)?.archived_at));
@@ -243,11 +271,14 @@ export function useServerThread(conversationId: string): ServerThread {
           return;
         }
         const map: Record<string, string> = {};
-        (members ?? []).forEach((m: { user_id: string; profiles: { first_name: string } | { first_name: string }[] | null }) => {
-          const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
-          if (p) map[m.user_id] = p.first_name;
+        const full: Record<string, { name: string; photo: string | null; admin: boolean }> = {};
+        ((members as MemberRow[] | null) ?? []).forEach((m) => {
+          map[m.user_id] = m.first_name;
+          full[m.user_id] = { name: m.first_name, photo: m.photo_path, admin: m.role === 'admin' };
         });
-        setNames(map);
+        primeFaces(Object.entries(full).map(([id, m]) => ({ id, path: m.photo })));
+        setNames((old) => ({ ...old, ...map }));
+        setPeople(full);
         const other = Object.entries(map).find(([id]) => id !== uid)?.[1];
         setTitle(conv.title ?? other ?? 'IRLY');
         setKind(conv.kind);
@@ -475,8 +506,15 @@ export function useServerThread(conversationId: string): ServerThread {
   const unknown = useMemo(() => [...new Set(rows.map((r) => r.sender_id).filter((id): id is string => Boolean(id) && !(id! in names)))].sort().join(','), [rows, names]);
   const peopleV = useSyncVersion('people');
   const inboxV = useSyncVersion('inbox');
+  const membersAsked = useRef('');
   useEffect(() => {
     if (!supabase || !uid || loading) return;
+    // The first load brought the members already; asked again when someone new writes or a profile changes.
+    const ask = `${conversationId}|${unknown}|${peopleV}|${inboxV}`;
+    const first = !membersAsked.current;
+    const same = membersAsked.current === ask;
+    membersAsked.current = ask;
+    if (first || same) return;
     let alive = true;
     Promise.all([
       supabase.from('conversations').select('title').eq('id', conversationId).maybeSingle(),
@@ -485,10 +523,11 @@ export function useServerThread(conversationId: string): ServerThread {
       if (!alive) return;
       const map: Record<string, string> = {};
       const full: Record<string, { name: string; photo: string | null; admin: boolean }> = {};
-      ((members as { user_id: string; first_name: string; photo_path: string | null; role: string }[] | null) ?? []).forEach((m) => {
+      ((members as MemberRow[] | null) ?? []).forEach((m) => {
         map[m.user_id] = m.first_name;
         full[m.user_id] = { name: m.first_name, photo: m.photo_path, admin: m.role === 'admin' };
       });
+      primeFaces(Object.entries(full).map(([id, m]) => ({ id, path: m.photo })));
       setNames((old) => ({ ...old, ...map }));
       setPeople(full);
       if (conv?.title) setTitle(conv.title);
@@ -497,6 +536,14 @@ export function useServerThread(conversationId: string): ServerThread {
       alive = false;
     };
   }, [conversationId, uid, loading, unknown, peopleV, inboxV]);
+  // Kept for the next opening of this chat.
+  useEffect(() => {
+    if (!uid || loading || error) return;
+    const k = `${uid}|${conversationId}`;
+    threadCache.delete(k);
+    threadCache.set(k, { rows: rows.slice(-PAGE), names, people, refs, title, kind, hasEarlier: hasEarlier || rows.length > PAGE, archived });
+    if (threadCache.size > 30) threadCache.delete(threadCache.keys().next().value!);
+  }, [uid, conversationId, loading, error, rows, names, people, refs, title, kind, hasEarlier, archived]);
   return {
     loading: uid ? loading : false,
     error,

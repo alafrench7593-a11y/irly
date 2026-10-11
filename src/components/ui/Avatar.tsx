@@ -35,7 +35,9 @@ type Props = {
  */
 export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring, photo: given, userId }: Props) {
   const face = useFace(userId);
-  const photo = (userId && face) || given;
+  const photo = (userId && face?.uri) || given;
+  // Cached on the phone under the file's stored path, not its signed link (which changes).
+  const cacheKey = userId && face?.uri === photo ? face?.key : undefined;
   const t = useTheme();
   const night = t.mode === 'night';
   const ringW = ring ? Math.max(2, size * 0.06) : 0;
@@ -64,7 +66,7 @@ export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verif
             <IrlyAvatar config={photo} size={size - ringW * 2} />
           </View>
         ) : photo ? (
-          <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          <Image source={{ uri: photo, cacheKey }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={120} />
         ) : null}
       </View>
       {online ? (

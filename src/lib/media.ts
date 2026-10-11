@@ -38,3 +38,23 @@ export async function cleanImage(uri: string): Promise<{ body: ArrayBuffer; ext:
   }
   return { body: await imageBytes(out.uri), ext: 'jpg', contentType: 'image/jpeg' };
 }
+
+/**
+ * The small copy of a profile photo (256 px, light JPEG): what avatars show,
+ * so a list of faces never downloads full-size photos. Takes a local file or
+ * a link (an existing photo whose small copy is missing).
+ */
+export async function faceThumb(uri: string): Promise<ArrayBuffer> {
+  if (/^https?:/.test(uri)) {
+    const { Image } = await import('expo-image');
+    const { ImageManipulator } = await import('expo-image-manipulator');
+    const ref = await Image.loadAsync(uri);
+    const side = ref.width >= ref.height ? { width: 256 } : { height: 256 };
+    const out = await (await ImageManipulator.manipulate(ref).resize(side).renderAsync()).saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
+    return imageBytes(out.uri);
+  }
+  const first = await manipulateAsync(uri, [], { format: SaveFormat.JPEG });
+  const side = first.width >= first.height ? { width: 256 } : { height: 256 };
+  const out = await manipulateAsync(first.uri, [{ resize: side }], { compress: 0.8, format: SaveFormat.JPEG });
+  return imageBytes(out.uri);
+}

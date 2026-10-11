@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
@@ -17,6 +17,7 @@ import { useGirlStore } from '@/features/girl/girlStore';
 import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
 import { isServerId, removeConversationForMe, setConversationArchived, useServerInbox } from '@/features/server/chat';
 import { useSignedLinks } from '@/features/server/media';
+import { primeFaces } from '@/features/server/faces';
 import { a11y, t as tx } from '@/i18n';
 import { confirm } from '@/lib/confirm';
 import { hueOf } from '@/lib/format';
@@ -126,8 +127,8 @@ export default function Messages() {
     [all, tab, needle, sent],
   );
 
-  // One signed link per stored photo: people's photos and chats' own pictures.
-  const faces = useSignedLinks('profile-photos', useMemo(() => all.map((c) => c.otherPhoto), [all]));
+  // People's faces come from the shared faces (small copies, cached); chats' own pictures are signed here.
+  useEffect(() => primeFaces(server.conversations.filter((c) => c.otherId).map((c) => ({ id: c.otherId!, path: c.otherPhoto }))), [server.conversations]);
   const pictures = useSignedLinks('activity-photos', useMemo(() => all.map((c) => c.photoPath), [all]));
   const loading = server.loading && !server.conversations.length;
 
@@ -235,7 +236,7 @@ export default function Messages() {
         ) : shown.length ? (
           shown.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : enter.rise(Math.min(i, 8), 30)} exiting={reduced ? undefined : FadeOut.duration(120)} layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)}>
-              <Row c={c} onLong={openMenu} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} face={c.otherPhoto ? faces[c.otherPhoto] : undefined} picture={c.photoPath ? pictures[c.photoPath] : undefined} />
+              <Row c={c} onLong={openMenu} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} picture={c.photoPath ? pictures[c.photoPath] : undefined} />
             </Animated.View>
           ))
         ) : (
@@ -290,7 +291,7 @@ function Action({ icon, label, onPress }: { icon: IconName; label: string; onPre
 
 const KIND_ICON: Record<Exclude<Tab, 'all'>, IconName> = { private: 'user', groups: 'users', communities: 'heartHandshake', activities: 'calendar' };
 
-const Row = memo(function Row({ c, lit, unread, face, picture, onLong }: { c: Conversation; lit: boolean; unread: number; face?: string; picture?: string; onLong: (c: Conversation) => void }) {
+const Row = memo(function Row({ c, lit, unread, picture, onLong }: { c: Conversation; lit: boolean; unread: number; picture?: string; onLong: (c: Conversation) => void }) {
   const t = useTheme();
   const router = useRouter();
   const sent = useStore((s) => s.sent);
@@ -312,7 +313,7 @@ const Row = memo(function Row({ c, lit, unread, face, picture, onLong }: { c: Co
       accessibilityLabel={`${c.title}${unread ? `, ${tx('{n} unread', { n: unread })}` : ''}`}
     >
       {kind === 'private' ? (
-        <Avatar name={c.title} hue={hueOf(c.otherId ?? c.id)} size={56} photo={person?.photo ?? face} online={person?.online} userId={server ? c.otherId : undefined} />
+        <Avatar name={c.title} hue={hueOf(c.otherId ?? c.id)} size={56} photo={person?.photo} online={person?.online} userId={server ? c.otherId : undefined} />
       ) : (
         <View style={[styles.picture, { backgroundColor: t.c.overlay }]}>
           {picture || community ? (
