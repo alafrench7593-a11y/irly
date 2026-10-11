@@ -283,7 +283,7 @@ async function main() {
   const clubName = `Sync club ${run}`;
   let clubId;
   await step('Vera creates a community → it appears in Uma\'s open Communities list, no reload', async () => {
-    await page.goto(`${BASE}/communities`);
+    await page.goto(`${BASE}/communities?tab=all`);
     await page.waitForTimeout(2500);
     clubId = must(await veraSb.rpc('create_community', { p_name: clubName, p_city: 'bali' }));
     await visible(page, clubName, 20000);
@@ -301,7 +301,7 @@ async function main() {
     await visible(page, 'Open chat');
     await page.goto(`${BASE}/messages`);
     await visible(page, clubName, 20000);
-    await page.goto(`${BASE}/communities`);
+    await page.goto(`${BASE}/communities?tab=mine`);
     await visible(page, clubName, 20000);
     must(await veraSb.rpc('delete_community', { p_community: clubId }));
     await gone(page, clubName);

@@ -110,12 +110,13 @@ export async function joinCommunities(ids: string[]): Promise<number> {
 /** Discover groups for the official topics (filters on the Communities page). */
 export const TOPIC_GROUPS: Record<string, string[]> = {
   sports: ['sport', 'football', 'running', 'beach'],
-  fitness: ['gym', 'running'],
+  fitness: ['gym', 'running', 'wellness'],
   networking: ['network', 'entrepreneurs', 'tech', 'ai', 'ecom'],
   business: ['entrepreneurs', 'ecom', 'network'],
   travel: ['trip', 'beach'],
-  food: ['food'],
-  lifestyle: ['newcomers', 'girls', 'moms', 'food', 'beach'],
+  food: ['food', 'nights'],
+  culture: ['culture', 'nights'],
+  lifestyle: ['newcomers', 'expats', 'girls', 'moms', 'families', 'food', 'beach', 'shopping', 'nights'],
 };
 
 /** The photo of each IRLY community (IRLY's own photos where there are some). */
@@ -136,6 +137,12 @@ export const TOPIC_PHOTO = {
   ai: 'startup',
   girls: 'girlFitness',
   moms: 'momPlaydate',
+  expats: 'coffee',
+  wellness: 'yoga',
+  culture: 'gallery',
+  nights: 'rooftopNeon',
+  shopping: 'mall',
+  families: 'family',
 } as Record<string, PhotoKey>;
 
 /** A community's photo: its IRLY topic, else its category, else none. */

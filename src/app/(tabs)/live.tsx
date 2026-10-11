@@ -55,7 +55,7 @@ export default function LiveScreen() {
   const { compose } = useLocalSearchParams<{ compose?: string }>();
   const router = useRouter();
   const [manual, setManual] = useState<false | 'now' | 'post'>(false);
-  // Opened from the IRL menu (Post IRL, Share what I'm doing): the composer is already up.
+  // Opened from Create (Post, Live): the composer is already up.
   const composer = Boolean(manual) || Boolean(compose);
   const mode = compose === 'photo' || manual === 'post' ? 'post' : 'now';
   const setComposer = (on: false | 'now' | 'post') => {
@@ -148,7 +148,7 @@ function LiveCard({ live }: { live: Live }) {
 
 /**
  * « What are you doing right now? »: the door to going live, at the top of
- * the feed, so it never floats over the IRL button. The whole card opens
+ * the feed, so it never floats over the Match IRLY button. The whole card opens
  * the words; the camera opens the photo-first composer.
  */
 function GoLiveCard({ onText, onPhoto }: { onText: () => void; onPhoto: () => void }) {

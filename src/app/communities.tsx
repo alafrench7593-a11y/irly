@@ -1,151 +1,365 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Rail } from '@/components/cards/Blocks';
-import { CommunityCard } from '@/components/cards/ThingCards';
-import { useFrame } from '@/components/layout/AppFrame';
 import { Page } from '@/components/layout/Page';
-import { Chip } from '@/components/ui/Controls';
-import { Icon } from '@/components/ui/Icon';
-import { Text } from '@/components/ui/Text';
-import { CITIES } from '@/data/destinations';
-import { CommunityThumb } from '@/features/community/CommunityThumb';
-import { ScopeToggle } from '@/components/ui/ScopeToggle';
-import { getCityContent } from '@/data/repo';
-import type { CityId, Community } from '@/data/types';
-import { enter } from '@/motion/enter';
-import { PressableScale } from '@/motion/PressableScale';
-import { useCommunityList, type CommunitySummary } from '@/features/community/data';
-import { profileTags, TOPIC_GROUPS, useRecommendedCommunities } from '@/features/community/official';
-import { useStore , useCityId } from '@/state/store';
 import { Button } from '@/components/ui/Button';
+import { Chip, Field, Segmented } from '@/components/ui/Controls';
+import { Icon, type IconName } from '@/components/ui/Icon';
+import { ScopeToggle } from '@/components/ui/ScopeToggle';
+import { Text } from '@/components/ui/Text';
+import { toast } from '@/components/ui/Toast';
+import { CITIES } from '@/data/destinations';
+import type { CityId } from '@/data/types';
+import { useAccount } from '@/features/auth/account';
+import { CommunityThumb } from '@/features/community/CommunityThumb';
+import { joinCommunity, leaveCommunity, useCommunityList, type CommunitySummary } from '@/features/community/data';
+import { profileTags, TOPIC_GROUPS, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
+import { useMemberProfile, type MemberCommunity } from '@/features/profile/member';
 import { t as tx } from '@/i18n';
+import { PressableScale } from '@/motion/PressableScale';
+import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const KINDS: { id: Community['kind'] | 'all'; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'interest', label: 'Interests' },
-  { id: 'sport', label: 'Sport' },
-  { id: 'professional', label: 'Professional' },
-  { id: 'neighbourhood', label: 'Neighbourhood' },
-];
+type Tab = 'foryou' | 'all' | 'mine';
 
-const LIVE_FILTERS = [
-  { id: 'recommended', label: 'Recommended' },
-  { id: 'popular', label: 'Popular' },
-  { id: 'new', label: 'New' },
+const GROUPS = [
+  { id: 'all', label: 'All' },
   { id: 'sports', label: 'Sports' },
+  { id: 'fitness', label: 'Fitness' },
   { id: 'networking', label: 'Networking' },
+  { id: 'business', label: 'Business' },
   { id: 'travel', label: 'Travel' },
   { id: 'food', label: 'Food' },
-  { id: 'fitness', label: 'Fitness' },
-  { id: 'business', label: 'Business' },
+  { id: 'culture', label: 'Culture' },
   { id: 'lifestyle', label: 'Lifestyle' },
 ] as const;
-type LiveFilter = (typeof LIVE_FILTERS)[number]['id'];
-// Members' own communities follow their category.
-const CATEGORY_GROUP: Record<string, string> = { sport: 'sports', networking: 'networking', travel: 'travel', food: 'food', wellness: 'fitness', outdoor: 'travel', nightlife: 'lifestyle', culture: 'lifestyle', family: 'lifestyle' };
-const inGroup = (c: CommunitySummary, group: string) =>
-  c.topic ? (TOPIC_GROUPS[group] ?? []).includes(c.topic) : CATEGORY_GROUP[c.categoryId ?? ''] === group || (group === 'business' && c.categoryId === 'networking');
+type Group = (typeof GROUPS)[number]['id'];
 
+// Members' own communities follow their category.
+const CATEGORY_GROUP: Record<string, Group> = { sport: 'sports', networking: 'networking', travel: 'travel', food: 'food', wellness: 'fitness', outdoor: 'travel', nightlife: 'lifestyle', culture: 'culture', family: 'lifestyle' };
+const inGroup = (c: CommunitySummary, group: Group) =>
+  group === 'all' ||
+  (c.topic ? (TOPIC_GROUPS[group] ?? []).includes(c.topic) : CATEGORY_GROUP[c.categoryId ?? ''] === group || (group === 'business' && c.categoryId === 'networking'));
+
+const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/**
+ * Communities: every community this member may see, not only theirs.
+ * For you: IRLY's own communities recommended from their onboarding answers
+ * (never joined for them). All: the whole catalogue of the city (IRLY's and
+ * members'), searchable and filtered by theme. Mine: the ones they really
+ * belong to, created or joined, with Leave. Everything comes from the server
+ * and reloads on any join or leave, here or on another phone.
+ */
 export default function Communities() {
-  const t = useTheme();
-  const frame = useFrame();
   const cityId = useCityId();
   const city = CITIES[cityId];
-  const content = getCityContent(cityId);
-  const [kind, setKind] = useState<(typeof KINDS)[number]['id']>('all');
-  const list = content.communities.filter((c) => kind === 'all' || c.kind === kind);
   const router = useRouter();
+  const uid = useAccount()?.userId;
+  const params = useLocalSearchParams<{ tab?: Tab }>();
+  const [tab, setTab] = useState<Tab>(params.tab === 'all' || params.tab === 'mine' ? params.tab : 'foryou');
   const all = useCommunityList(cityId);
   const profile = useStore((s) => s.profile);
   const tags = useMemo(() => profileTags(profile), [profile]);
   const rec = useRecommendedCommunities(cityId, tags, 12);
-  const [filter, setFilter] = useState<LiveFilter>('recommended');
-  const live = useMemo(() => {
-    if (filter === 'recommended') {
-      const order = new Map((rec.list ?? []).map((r, i) => [r.id, i]));
-      const top = all.filter((c) => order.has(c.id)).sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
-      // Nothing matches the answers yet: the official ones first, then the rest.
-      return top.length ? top : [...all].sort((a, b) => Number(b.official) - Number(a.official));
-    }
-    if (filter === 'popular') return [...all].sort((a, b) => b.members - a.members || b.postsWeek - a.postsWeek);
-    if (filter === 'new') return [...all].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
-    return all.filter((c) => inGroup(c, filter));
-  }, [all, filter, rec.list]);
+  const mine = useMemberProfile(uid ?? '');
+  const mineCount = uid ? mine.communities.length : 0;
 
   return (
-    <Page overline={city.name} title="Communities" subtitle="Optional, by interest or neighbourhood. Meet the same faces again: that's how trust grows.">
-      <View style={{ marginBottom: space[6] }}>
-        <Rail gap={8}>
-          {KINDS.map((k) => (
-            <Chip key={k.id} size="sm" label={k.label} selected={kind === k.id} onPress={() => setKind(k.id)} />
-          ))}
-        </Rail>
-      </View>
-      <ScopeToggle cityId={cityId} />
-      {all.length ? (
-        <View style={{ marginBottom: space[4] }}>
-          <Rail gap={8}>
-            {LIVE_FILTERS.map((f) => (
-              <Chip key={f.id} size="sm" label={f.label} selected={filter === f.id} onPress={() => setFilter(f.id)} />
-            ))}
-          </Rail>
+    <Page overline={city.name} title="Communities" subtitle="IRLY's communities and the ones members start. Meet the same faces again: that's how trust grows.">
+      {!uid ? (
+        <View style={styles.pad}>
+          <Empty icon="users" title="Sign in to see the communities" body="Communities, their chats and their members are on the IRLY server." action="Sign in" onAction={() => router.push('/account')} />
         </View>
-      ) : null}
-      {all.length && !live.length ? (
-        <Text variant="body" tone="secondary" style={{ paddingHorizontal: space.gutter, marginBottom: space[6] }}>
-          No community here yet. Try another filter, or create one.
-        </Text>
-      ) : null}
-      {live.length ? (
-        <View style={{ paddingHorizontal: space.gutter, gap: 10, marginBottom: space[7] }}>
-          <Text variant="overline" tone="tertiary">
-            On IRLY now
-          </Text>
-          {live.map((c) => (
-            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.live, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
-              <CommunityThumb topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={city.light} size={44} member={c.isMember} />
-              <View style={{ flex: 1 }}>
-                <Text variant="titleS" numberOfLines={1}>
-                  {c.name}
-                </Text>
-                <Text variant="caption" tone="tertiary" numberOfLines={1}>
-                  {[c.official ? 'IRLY' : null, c.isMember ? tx('Joined') : null, c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null, c.postsWeek ? tx('{n} posts this week', { n: c.postsWeek }) : null, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
-                </Text>
-              </View>
-              <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
-            </PressableScale>
-          ))}
-        </View>
-      ) : null}
-      {/* Always reachable, even in a city with no server communities yet. */}
-      <View style={{ paddingHorizontal: space.gutter, marginBottom: space[6] }}>
+      ) : (
+        <>
+          <View style={[styles.pad, { marginBottom: space[5] }]}>
+            <Segmented<Tab>
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: 'foryou', label: tx('For you') },
+                { value: 'all', label: all.length ? `${tx('All')} · ${all.length}` : tx('All') },
+                { value: 'mine', label: mineCount ? `${tx('Mine')} · ${mineCount}` : tx('Mine') },
+              ]}
+            />
+          </View>
+          {tab === 'foryou' ? <ForYou rec={rec} cityId={cityId} onSeeAll={() => setTab('all')} /> : null}
+          {tab === 'all' ? <All list={all} cityId={cityId} /> : null}
+          {tab === 'mine' ? <Mine list={mine.communities} loading={mine.loading} error={mine.error} onReload={mine.reload} onBrowse={() => setTab('all')} /> : null}
+        </>
+      )}
+      <View style={[styles.pad, { marginTop: space[6] }]}>
         <Button label="Create a community" icon="plus" variant="secondary" full onPress={() => router.push('/community/new')} />
-      </View>
-      <View style={{ paddingHorizontal: space.gutter, gap: 14 }}>
-        {list.map((c, i) => (
-          <Animated.View key={c.id} entering={enter.rise(i, 60)} exiting={FadeOut.duration(140)} layout={LinearTransition.springify(420)}>
-            <CommunityCard community={c} width={frame.width - space.gutter * 2} />
-          </Animated.View>
-        ))}
-        <View style={[styles.create, { borderColor: t.c.lineStrong }]}>
-          <Icon name="sprout" size={22} color={t.accent} />
-          <Text variant="titleS" align="center">
-            Missing your people?
-          </Text>
-          <Text variant="bodyS" tone="secondary" align="center">
-            Start a community with five members and IRLY helps you host the first meetup.
-          </Text>
-        </View>
       </View>
     </Page>
   );
 }
 
+function ForYou({ rec, cityId, onSeeAll }: { rec: ReturnType<typeof useRecommendedCommunities>; cityId: CityId; onSeeAll: () => void }) {
+  const router = useRouter();
+  const city = CITIES[cityId];
+  if (rec.loading) return <Loading />;
+  if (rec.error && !rec.list?.length)
+    return (
+      <View style={styles.pad}>
+        <Empty icon="repeat" title="Can’t reach IRLY right now" body="Your recommendations will be back as soon as the connection is." action="Try again" onAction={rec.refresh} />
+      </View>
+    );
+  const list = rec.list ?? [];
+  if (!list.length)
+    return (
+      <View style={styles.pad}>
+        <Empty
+          icon="sparkles"
+          title="Tell IRLY what you like"
+          body="Recommendations come only from the interests you choose. Pick a few, or browse every community."
+          action="Choose my interests"
+          onAction={() => router.push('/onboarding/interests')}
+          secondary="See all communities"
+          onSecondary={onSeeAll}
+        />
+      </View>
+    );
+  const newcomers = list.filter((c) => c.introFirst);
+  const rest = list.filter((c) => !c.introFirst);
+  return (
+    <View style={[styles.pad, { gap: 10 }]}>
+      {newcomers.length ? <Text variant="overline" tone="tertiary">{tx('New in {city}', { city: city.name })}</Text> : null}
+      {newcomers.map((c) => (
+        <Row key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId)} action="join" />
+      ))}
+      {rest.length ? (
+        <Text variant="overline" tone="tertiary" style={{ marginTop: newcomers.length ? space[3] : 0 }}>
+          From your interests
+        </Text>
+      ) : null}
+      {rest.map((c) => (
+        <Row key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId)} action="join" />
+      ))}
+    </View>
+  );
+}
+
+const meta = (c: OfficialCommunity, cityId: string) =>
+  [c.tagline || null, c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null, c.girlOnly ? 'IRLY Girl' : null]
+    .filter(Boolean)
+    .join(' · ');
+
+function All({ list, cityId }: { list: CommunitySummary[]; cityId: CityId }) {
+  const t = useTheme();
+  const [query, setQuery] = useState('');
+  const [group, setGroup] = useState<Group>('all');
+  const shown = useMemo(() => {
+    const q = norm(query.trim());
+    return list.filter((c) => inGroup(c, group) && (!q || norm(`${c.name} ${c.tagline ?? ''} ${c.topic ?? ''} ${c.categoryId ?? ''}`).includes(q)));
+  }, [list, group, query]);
+  return (
+    <View>
+      <View style={[styles.pad, { marginBottom: space[3] }]}>
+        <Field icon="search" value={query} onChangeText={setQuery} placeholder="Search by name or theme" accessibilityLabel={tx('Search communities')} autoCorrect={false} returnKeyType="search" />
+      </View>
+      <View style={{ marginBottom: space[3] }}>
+        <Rail gap={8}>
+          {GROUPS.map((g) => (
+            <Chip key={g.id} size="sm" label={g.label} selected={group === g.id} onPress={() => setGroup(g.id)} />
+          ))}
+        </Rail>
+      </View>
+      <ScopeToggle cityId={cityId} />
+      <View style={[styles.pad, { gap: 10 }]}>
+        {shown.map((c) => (
+          <Row
+            key={c.id}
+            id={c.id}
+            name={c.name}
+            topic={c.topic}
+            categoryId={c.categoryId}
+            emoji={c.emoji}
+            isMember={c.isMember}
+            meta={[
+              c.official ? 'IRLY' : tx('By a member'),
+              c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null,
+              c.members > 0 ? tx('{n} members', { n: c.members }) : null,
+              c.postsWeek ? tx('{n} posts this week', { n: c.postsWeek }) : null,
+              c.girlOnly ? 'IRLY Girl' : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            action="join"
+          />
+        ))}
+        {!shown.length ? (
+          <Text variant="body" tone="secondary" style={{ color: t.c.textSecondary, paddingVertical: space[4] }}>
+            {list.length ? 'No community matches. Try another word or theme.' : 'No community here yet. Start the first one.'}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function Mine({ list, loading, error, onReload, onBrowse }: { list: MemberCommunity[]; loading: boolean; error: string | null; onReload: () => void; onBrowse: () => void }) {
+  if (loading) return <Loading />;
+  if (error && !list.length)
+    return (
+      <View style={styles.pad}>
+        <Empty icon="repeat" title={error} body="Your communities are safe; they will show as soon as IRLY answers." action="Try again" onAction={onReload} />
+      </View>
+    );
+  if (!list.length)
+    return (
+      <View style={styles.pad}>
+        <Empty icon="users" title="No community yet" body="Join the ones that fit you: their chat and their plans open to you." action="Browse communities" onAction={onBrowse} />
+      </View>
+    );
+  const created = list.filter((c) => c.role === 'created');
+  const joined = list.filter((c) => c.role !== 'created');
+  const cityName = (id: string) => CITIES[id as CityId]?.name ?? null;
+  return (
+    <View style={[styles.pad, { gap: 10 }]}>
+      {created.length ? <Text variant="overline" tone="tertiary">Created</Text> : null}
+      {created.map((c) => (
+        <Row key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={[c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} action="none" />
+      ))}
+      {joined.length ? (
+        <Text variant="overline" tone="tertiary" style={{ marginTop: created.length ? space[3] : 0 }}>
+          Joined
+        </Text>
+      ) : null}
+      {joined.map((c) => (
+        <Row key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={[c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} action="leave" />
+      ))}
+    </View>
+  );
+}
+
+/**
+ * One community: tap to open it. Join answers only once the server has
+ * recorded it; Leave asks once more, then the row goes when the server
+ * confirms (the lists reload from the sync bus).
+ */
+function Row({
+  id,
+  name,
+  topic,
+  categoryId,
+  emoji,
+  isMember,
+  meta: line,
+  action,
+}: {
+  id: string;
+  name: string;
+  topic: string | null;
+  categoryId: string | null;
+  emoji: string | null;
+  isMember: boolean;
+  meta: string;
+  action: 'join' | 'leave' | 'none';
+}) {
+  const t = useTheme();
+  const router = useRouter();
+  const city = CITIES[useCityId()];
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const join = () => {
+    setBusy(true);
+    joinCommunity(id)
+      .then(() => toast(tx('You joined {name}', { name })))
+      .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'))
+      .finally(() => setBusy(false));
+  };
+  const leave = () => {
+    if (!confirm) {
+      setConfirm(true);
+      return;
+    }
+    setBusy(true);
+    leaveCommunity(id)
+      .then(() => toast(tx('You left {name}', { name })))
+      .catch((e) => toast(e instanceof Error ? e.message : 'Could not leave', 'x', 'live'))
+      .finally(() => {
+        setBusy(false);
+        setConfirm(false);
+      });
+  };
+  return (
+    <Animated.View entering={FadeIn.duration(180)}>
+      <PressableScale onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={name}>
+        <CommunityThumb topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size={44} member={isMember} />
+        <View style={{ flex: 1 }}>
+          <Text variant="titleS" numberOfLines={1} raw>
+            {name}
+          </Text>
+          {line ? (
+            <Text variant="caption" tone="tertiary" numberOfLines={2}>
+              {line}
+            </Text>
+          ) : null}
+        </View>
+        {action === 'join' && !isMember ? <Button label="Join" size="sm" loading={busy} onPress={join} /> : null}
+        {action === 'join' && isMember ? (
+          <Text variant="caption" tone="secondary">
+            Joined
+          </Text>
+        ) : null}
+        {action === 'leave' ? <Button label={confirm ? 'Leave?' : 'Leave'} size="sm" variant={confirm ? 'danger' : 'ghost'} loading={busy} onPress={leave} /> : null}
+        {action === 'none' ? <Icon name="chevronRight" size={16} color={t.c.textTertiary} /> : null}
+      </PressableScale>
+    </Animated.View>
+  );
+}
+
+function Loading() {
+  const t = useTheme();
+  return (
+    <View style={[styles.pad, { gap: 10 }]} accessibilityLabel={tx('Loading')}>
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={[styles.row, { backgroundColor: t.c.surface, height: 72, opacity: 0.6 }]} />
+      ))}
+    </View>
+  );
+}
+
+function Empty({
+  icon,
+  title,
+  body,
+  action,
+  onAction,
+  secondary,
+  onSecondary,
+}: {
+  icon: IconName;
+  title: string;
+  body: string;
+  action: string;
+  onAction: () => void;
+  secondary?: string;
+  onSecondary?: () => void;
+}) {
+  const t = useTheme();
+  return (
+    <View style={[styles.empty, { borderColor: t.c.lineStrong }]}>
+      <Icon name={icon} size={22} color={t.c.text} />
+      <Text variant="titleS" align="center">
+        {title}
+      </Text>
+      <Text variant="bodyS" tone="secondary" align="center">
+        {body}
+      </Text>
+      <Button label={action} size="sm" onPress={onAction} style={{ marginTop: 6 }} />
+      {secondary && onSecondary ? <Button label={secondary} size="sm" variant="ghost" onPress={onSecondary} /> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  live: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg },
-  create: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, borderWidth: 1.5, borderStyle: 'dashed' },
+  pad: { paddingHorizontal: space.gutter },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg },
+  empty: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, borderWidth: 1.5, borderStyle: 'dashed' },
 });

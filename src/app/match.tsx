@@ -1,81 +1,113 @@
-import { useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeOut, LinearTransition } from 'react-native-reanimated';
-import { Rail } from '@/components/cards/Blocks';
-import { PersonCard } from '@/components/cards/PeopleCards';
+import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
-import { Chip } from '@/components/ui/Controls';
+import { Avatar } from '@/components/ui/Avatar';
+import { Button } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { INTENTS } from '@/data/catalog';
-import { areaName, CITIES } from '@/data/destinations';
-import { getCityContent } from '@/data/repo';
-import type { Intent } from '@/data/types';
-import { rankMatches } from '@/features/matching/match';
-import { enter } from '@/motion/enter';
-import { useCityId, useStore } from '@/state/store';
+import { toast } from '@/components/ui/Toast';
+import { ACTIVITIES, INTERESTS } from '@/data/catalog';
+import { CITIES } from '@/data/destinations';
+import type { CityId } from '@/data/types';
+import { usePeopleMatch, type PeopleMatch } from '@/features/match/people';
+import { setFriend, type FriendStatus } from '@/features/profile/member';
+import { useSignedLinks } from '@/features/server/media';
+import { t as tx } from '@/i18n';
+import { hueOf } from '@/lib/format';
+import { PressableScale } from '@/motion/PressableScale';
+import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const ORDER: Intent[] = ['similar', 'friends', 'sports', 'business', 'activities', 'explore'];
+const GOALS: Record<string, string> = {
+  friends: 'Friends',
+  sport: 'Sport',
+  networking: 'Networking',
+  activities: 'Activities',
+  travel: 'Travel',
+  food: 'Food',
+  nightlife: 'Nightlife',
+  communities: 'Communities',
+  dogwalk: 'Dog walk',
+  events: 'Events',
+};
 
 const SIGNALS: { icon: IconName; label: string }[] = [
-  { icon: 'pin', label: 'Location' },
   { icon: 'heart', label: 'Interests' },
-  { icon: 'clock', label: 'Availability' },
   { icon: 'activity', label: 'Activities' },
   { icon: 'target', label: 'Goals' },
-  { icon: 'user', label: 'Profile type' },
+  { icon: 'languages', label: 'Languages' },
+  { icon: 'pin', label: 'City' },
 ];
 
+/** What two people share, in words: only from what both declared. */
+function sharedLabels(m: PeopleMatch): string[] {
+  const out = [
+    ...m.activities.map((a) => (ACTIVITIES as Record<string, { label: string }>)[a]?.label),
+    ...m.interests.map((i) => (INTERESTS as Record<string, { label: string }>)[i]?.label),
+    ...m.goals.map((g) => GOALS[g]),
+  ].filter((x): x is string => Boolean(x));
+  return [...new Set(out)].slice(0, 5);
+}
+
+/**
+ * Match IRLY: real members to meet, ranked on the server by what you share.
+ * Each card says why. Add friend sends a request the other person accepts;
+ * Not now hides them for 30 days. Nothing here follows anyone or opens a
+ * chat on its own.
+ */
 export default function Match() {
   const t = useTheme();
-  const params = useLocalSearchParams<{ intent?: Intent }>();
+  const router = useRouter();
   const cityId = useCityId();
   const city = CITIES[cityId];
-  const content = getCityContent(cityId);
-  const profile = useStore((s) => s.profile);
-  const setIntent = useStore((s) => s.setIntent);
-  const [intent, setLocal] = useState<Intent>(params.intent && ORDER.includes(params.intent) ? params.intent : 'friends');
-  const matches = useMemo(
-    () => rankMatches(profile, content.people, intent, (id) => areaName(city, id)),
-    [profile, content.people, intent, city],
+  const m = usePeopleMatch(cityId);
+  const faces = useSignedLinks(
+    'profile-photos',
+    m.list.map((x) => x.photo),
   );
 
   return (
-    <Page overline={`Smart matching · ${city.name}`} title="Who would you like to meet?" subtitle={INTENTS[intent].blurb}>
-      <View style={{ marginBottom: space[6] }}>
-        <Rail gap={8}>
-          {ORDER.map((i) => (
-            <Chip
-              key={i}
-              label={INTENTS[i].label}
-              icon={INTENTS[i].icon}
-              selected={i === intent}
-              onPress={() => {
-                setLocal(i);
-                setIntent(i);
-              }}
-            />
-          ))}
-        </Rail>
-      </View>
-
-      <View style={{ paddingHorizontal: space.gutter, gap: 12 }}>
-        {matches.map((m, i) => (
-          <Animated.View key={`${intent}-${m.person.id}`} entering={enter.rise(i, 40)} exiting={FadeOut.duration(120)} layout={LinearTransition.springify(420)}>
-            <PersonCard match={m} />
-          </Animated.View>
-        ))}
+    <Page overline={`Match IRLY · ${city.name}`} title="People to meet" subtitle="Real members who share your interests and plans. Always with the reason why.">
+      <View style={styles.pad}>
+        {!m.signedIn ? (
+          <Empty icon="users" title="Sign in to see your matches" body="Matching uses your own answers and real IRLY members." action="Sign in" onAction={() => router.push('/account')} />
+        ) : m.loading ? (
+          <View style={{ gap: 12 }} accessibilityLabel={tx('Loading')}>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={[styles.card, { backgroundColor: t.c.surface, height: 132, opacity: 0.6 }]} />
+            ))}
+          </View>
+        ) : m.error && !m.list.length ? (
+          <Empty icon="repeat" title={m.error} body="Your matches will be back as soon as IRLY answers." action="Try again" onAction={m.reload} />
+        ) : !m.list.length ? (
+          <Empty
+            icon="sparkles"
+            title="No match yet"
+            body="Nobody shares your answers here yet. Add more interests and activities, or come back as more people join."
+            action="Edit my interests"
+            onAction={() => router.push('/onboarding/interests')}
+          />
+        ) : (
+          <View style={{ gap: 12 }}>
+            {m.list.map((p, i) => (
+              <Animated.View key={p.id} entering={FadeInDown.delay(Math.min(i, 6) * 50).duration(260)} exiting={FadeOut.duration(140)} layout={LinearTransition.springify(420)}>
+                <MatchCard person={p} photo={p.photo ? faces[p.photo] : undefined} cityId={cityId} onSkip={() => m.skip(p.id)} />
+              </Animated.View>
+            ))}
+            {m.more ? <Button label="Show more" variant="secondary" loading={m.loadingMore} onPress={m.loadMore} full /> : null}
+          </View>
+        )}
       </View>
 
       <View style={[styles.how, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
         <Text variant="overline" tone="tertiary">
-          How IRLY matches
+          How Match IRLY works
         </Text>
         <Text variant="bodyS" tone="secondary">
-          No swiping, no score on people. We look at a few signals and always tell you why someone is suggested.
+          No swiping, no score on people. We compare what you both chose and show what you share. Hidden profiles, blocked members and your friends are never suggested.
         </Text>
         <View style={styles.signals}>
           {SIGNALS.map((s) => (
@@ -90,7 +122,92 @@ export default function Match() {
   );
 }
 
+function MatchCard({ person, photo, cityId, onSkip }: { person: PeopleMatch; photo?: string; cityId: CityId; onSkip: () => Promise<void> }) {
+  const t = useTheme();
+  const router = useRouter();
+  const [status, setStatus] = useState<FriendStatus>(person.friendStatus);
+  const [busy, setBusy] = useState<'friend' | 'skip' | null>(null);
+  const shared = sharedLabels(person);
+  const elsewhere = person.cityId && person.cityId !== cityId ? CITIES[person.cityId as CityId]?.name : null;
+
+  const add = () => {
+    setBusy('friend');
+    setFriend(person.id, 'add')
+      .then((s) => {
+        setStatus(s);
+        toast(s === 'friends' ? tx('You and {name} are friends', { name: person.firstName }) : tx('Request sent to {name}', { name: person.firstName }));
+      })
+      .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
+      .finally(() => setBusy(null));
+  };
+  const skip = () => {
+    setBusy('skip');
+    onSkip()
+      .catch((e) => toast(e instanceof Error ? e.message : 'Could not hide', 'x', 'live'))
+      .finally(() => setBusy(null));
+  };
+
+  return (
+    <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+      <PressableScale onPress={() => router.push(`/person/${person.id}`)} haptic="select" scaleTo={0.98} style={styles.head} accessibilityLabel={tx('Open {name}’s profile', { name: person.firstName })}>
+        <Avatar name={person.firstName} hue={hueOf(person.id)} size={56} photo={photo} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text variant="titleS" numberOfLines={1} raw>
+            {person.firstName}
+          </Text>
+          <Text variant="caption" tone="tertiary" numberOfLines={1} raw>
+            {[person.username ? `@${person.username}` : null, elsewhere].filter(Boolean).join(' · ')}
+          </Text>
+        </View>
+        <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+      </PressableScale>
+      {shared.length ? (
+        <View style={styles.tags}>
+          <Text variant="caption" tone="secondary">
+            You both like
+          </Text>
+          {shared.map((s) => (
+            <View key={s} style={[styles.tag, { backgroundColor: t.c.overlay }]}>
+              <Text variant="caption">{s}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      <View style={styles.actions}>
+        {status === 'none' ? <Button label="Add friend" icon="userPlus" size="sm" loading={busy === 'friend'} onPress={add} style={{ flex: 1 }} /> : null}
+        {status === 'outgoing' ? <Button label="Request sent" icon="check" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
+        {status === 'incoming' ? <Button label="Accept request" icon="userCheck" size="sm" loading={busy === 'friend'} onPress={add} style={{ flex: 1 }} /> : null}
+        {status === 'friends' ? <Button label="Friends" icon="userCheck" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
+        <Button label="Not now" size="sm" variant="ghost" loading={busy === 'skip'} onPress={skip} />
+      </View>
+    </View>
+  );
+}
+
+function Empty({ icon, title, body, action, onAction }: { icon: IconName; title: string; body: string; action: string; onAction: () => void }) {
+  const t = useTheme();
+  return (
+    <View style={[styles.empty, { borderColor: t.c.lineStrong }]}>
+      <Icon name={icon} size={22} color={t.c.text} />
+      <Text variant="titleS" align="center">
+        {title}
+      </Text>
+      <Text variant="bodyS" tone="secondary" align="center">
+        {body}
+      </Text>
+      <Button label={action} size="sm" onPress={onAction} style={{ marginTop: 6 }} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  pad: { paddingHorizontal: space.gutter },
+  card: { padding: 14, gap: 12, borderRadius: radius.xl },
+  head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  tag: { paddingHorizontal: 10, height: 26, borderRadius: radius.pill, justifyContent: 'center' },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  empty: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, borderWidth: 1.5, borderStyle: 'dashed' },
   how: { margin: space.gutter, marginTop: space[8], padding: 18, gap: 10, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },
   signals: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   signal: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 10, borderRadius: radius.pill },
