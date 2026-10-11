@@ -195,6 +195,7 @@ export default function SettingsScreen() {
         <View style={{ gap: 8 }}>
           <Button label="Verify my profile (for Match)" icon="shield" variant="secondary" full onPress={() => router.push('/verify')} />
           {admin ? <Button label="IRLY admin: verifications" icon="scanFace" variant="ghost" full onPress={() => router.push('/admin/verifications')} /> : null}
+          {admin ? <Button label="IRLY admin: news sources" icon="news" variant="ghost" full onPress={() => router.push('/admin/news')} /> : null}
         </View>
         <Audience label="Who can find my profile" value={safety.profile_visibility} onChange={(v) => saveSafety({ profile_visibility: v })} />
         <Audience label="Who sees my IRL moments by default" value={safety.irl_visibility} onChange={(v) => saveSafety({ irl_visibility: v })} />

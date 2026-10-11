@@ -13,6 +13,7 @@ type Door = { title: string; line: string; icon: IconName; route: string; women?
 
 const DOORS: Door[] = [
   { title: 'Help & Questions', line: 'Ask, answer, recommend', icon: 'question', route: '/help' },
+  { title: 'Dubai News & Life', line: 'What’s happening, from the sources', icon: 'news', route: '/news' },
   { title: 'IRLY Family', line: 'Outings, schools, families nearby', icon: 'home', route: '/space/families' },
   { title: 'IRLY Mom', line: 'Mums meeting mums', icon: 'heart', route: '/space/moms', women: true },
   { title: 'IRLY Only Girls', line: 'Plans and a network between women', icon: 'sparkles', route: '/space/girls', women: true },

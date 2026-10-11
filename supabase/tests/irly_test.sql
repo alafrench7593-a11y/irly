@@ -1559,4 +1559,32 @@ select pg_temp.check((select verified_at is null from public.my_verification()),
 select pg_temp.as_admin();
 select pg_temp.check((select selfie_path is null from public.verification_requests where id = :'vr_id'), 'verify: no selfie kept after the decision');
 
+-- ───── Dubai News & Life ─────
+select pg_temp.as_admin();
+insert into public.news_sources (id, name, site_url, feed_url, kind, default_category, active, terms_checked)
+values ('50000000-0000-0000-0000-000000000001', 'Test Media Office', 'https://example.ae', 'https://example.ae/rss', 'official', 'local', true, true);
+select pg_temp.check(private.news_ingest('50000000-0000-0000-0000-000000000001', format($x$<?xml version="1.0"?><rss version="2.0"><channel><title>T</title>
+<item><title><![CDATA[Metro hours extended for the weekend]]></title><link>https://example.ae/a1</link><description>&lt;p&gt;The &amp;amp; metro runs later.&lt;/p&gt;</description><pubDate>%s</pubDate></item>
+<item><title>Old story</title><link>https://example.ae/old</link><pubDate>Mon, 01 Jan 2024 08:00:00 +0400</pubDate></item>
+<item><title>No date</title><link>https://example.ae/nodate</link></item>
+</channel></rss>$x$, to_char(now() - interval '2 hours', 'Dy, DD Mon YYYY HH24:MI:SS "+0000"'))) = 1, 'news: an RSS item is added; old and undated ones are not');
+select pg_temp.check(private.news_ingest('50000000-0000-0000-0000-000000000001', format($x$<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><title>A</title>
+<entry><title>Beach clean-up on Saturday</title><link href="https://example.ae/a2"/><updated>%s</updated><summary>Join the volunteers.</summary></entry></feed>$x$, to_char(now() - interval '1 hour', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))) = 1, 'news: Atom feeds too');
+select pg_temp.check(private.news_ingest('50000000-0000-0000-0000-000000000001', format($x$<rss><channel><item><title>Metro hours extended for the weekend</title><link>https://example.ae/a1</link><pubDate>%s</pubDate></item></channel></rss>$x$, to_char(now(), 'Dy, DD Mon YYYY HH24:MI:SS "+0000"'))) = 0, 'news: an article is never added twice');
+select pg_temp.check(private.news_ingest('50000000-0000-0000-0000-000000000001', 'not xml at all') = 0, 'news: a broken feed is recorded, nothing added');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check((select count(*) from public.news_feed('dubai')) = 2, 'news: members read the latest');
+select pg_temp.check((select summary from public.news_feed('dubai') where title like 'Metro%') = 'The & metro runs later.', 'news: summaries are plain text');
+select pg_temp.expect_denied($$select public.news_add_article('Fake', null, 'https://x.ae', 'local')$$, 'news: only admins add articles');
+select pg_temp.expect_denied($$insert into public.news_articles (title, url, published_at) values ('Fake', 'https://x.ae/f', now())$$, 'news: no direct writes');
+select id as news_id from public.news_feed('dubai') where title like 'Beach%' \gset
+select public.toggle_save('news', :'news_id');
+select pg_temp.check((select count(*) from public.news_feed('dubai', null, null, true)) = 1, 'news: saved articles');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.expect_denied($$select public.news_save_source(null, 'X', 'https://x.ae', 'https://x.ae/rss', 'media', 'local', true, false)$$, 'news: a source is turned on only after checking its terms');
+select public.news_update_article(:'news_id', 'hidden', null, null);
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check((select count(*) from public.news_feed('dubai')) = 1, 'news: hidden by an admin, gone for members');
+select pg_temp.as_admin();
+
 \echo 'ALL TESTS PASSED'
