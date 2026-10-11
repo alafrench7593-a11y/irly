@@ -494,10 +494,13 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   };
 
   const createdActivity = useRef<string | null>(null);
+  // A double tap must never post twice: the ref flips before React re-renders.
+  const sending = useRef(false);
   const submit = async () => {
-    if (!text.trim() || busy) return;
+    if (!text.trim() || busy || sending.current) return;
     if (account) {
       // Signed in: the post goes to the server, friends see it live.
+      sending.current = true;
       setBusy(true);
       try {
         // "Anyone want to join?" becomes a real activity the post points at.
@@ -529,9 +532,11 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         track('IRL_CREATE', { photo: Boolean(uri), activity: Boolean(activityId) });
       } catch (e) {
         toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
+        sending.current = false;
         setBusy(false);
         return;
       }
+      sending.current = false;
       setBusy(false);
     } else {
       post({ cityId, kind: uri ? 'photo' : 'text', text: text.trim(), photoUri: uri, place: areaName(city, area), areaId: area });
@@ -554,7 +559,15 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           : 'What are you doing right now? Only your area is shown, never your address.'
       }
     >
-      <View style={{ paddingHorizontal: space.gutter, gap: space[5] }}>
+      {/* Scrolls when the keyboard is up, so the field and Post live stay reachable. */}
+      <ScrollView
+        style={{ flexShrink: 1 }}
+        contentContainerStyle={{ paddingHorizontal: space.gutter, gap: space[5], paddingBottom: space[2] }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets={false}
+        showsVerticalScrollIndicator={false}
+      >
         {mode === 'post' && !uri ? (
           <PressableScale haptic="select" onPress={pick} style={[styles.photoFrame, { borderColor: t.c.lineStrong }]} accessibilityLabel="Add a photo">
             <Icon name="camera" size={26} color={t.c.text} />
@@ -601,7 +614,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           </View>
         ) : null}
         <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim()} onPress={submit} />
-      </View>
+      </ScrollView>
     </Sheet>
   );
 }

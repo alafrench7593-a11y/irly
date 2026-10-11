@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CityId } from '@/data/types';
 import { useCityFilter } from './scope';
 import { create } from 'zustand';
@@ -47,35 +47,61 @@ type FeedRow = {
   activity_title?: string | null;
 };
 
-async function signed(path: string | null): Promise<string | null> {
-  if (!path || !supabase) return null;
-  const { data } = await supabase.storage.from('irl-media').createSignedUrl(path, 4 * 3600);
-  return data?.signedUrl ?? null;
+/** Every photo of a feed signed in ONE request (was one request per photo). */
+async function signedAll(paths: (string | null)[]): Promise<Record<string, string>> {
+  const wanted = [...new Set(paths.filter((p): p is string => Boolean(p)))];
+  if (!wanted.length || !supabase) return {};
+  const { data } = await supabase.storage.from('irl-media').createSignedUrls(wanted, 4 * 3600);
+  const out: Record<string, string> = {};
+  for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
+  return out;
 }
 
 /** Bumped after your own post or removal: every IRL feed reloads at once, without waiting for Realtime. */
 const useIrlVersion = create<{ n: number }>(() => ({ n: 0 }));
 const bumpIrl = () => useIrlVersion.setState((s) => ({ n: s.n + 1 }));
 
+/**
+ * Your own posts, shown the moment the server accepts them (with the photo
+ * already on the phone), until the feed's next load includes them.
+ */
+const useIrlMine = create<{ posts: ServerIrlPost[] }>(() => ({ posts: [] }));
+/** Last feed loaded per city: coming back to the tab shows it at once, never an empty screen. */
+const irlCache = new Map<string, ServerIrlPost[]>();
+
 export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh: () => void } {
   const account = useAccount();
   const uid = account?.userId;
-  const [posts, setPosts] = useState<ServerIrlPost[]>([]);
+  const key = `${uid ?? ''}:${cityId}`;
+  const [posts, setPostsState] = useState<ServerIrlPost[]>(() => irlCache.get(key) ?? []);
+  // Loads can overlap (Realtime, your own post, focus): only the latest one
+  // started may write, so an older, slower answer never hides a newer post.
+  const seq = useRef(0);
+  const setPosts = useCallback(
+    (p: ServerIrlPost[]) => {
+      irlCache.set(key, p);
+      setPostsState(p);
+      // Confirmed by the server: from now on the feed alone decides (expiry, removal).
+      const ids = new Set(p.map((x) => x.id));
+      if (useIrlMine.getState().posts.some((x) => ids.has(x.id))) useIrlMine.setState((s) => ({ posts: s.posts.filter((x) => !ids.has(x.id)) }));
+    },
+    [key],
+  );
 
   const load = useCallback(async (): Promise<ServerIrlPost[]> => {
     if (!supabase || !uid) return [];
     const { data, error } = await supabase.rpc('irl_feed', { p_city: cityId });
     if (error) throw new Error(error.message);
     const rows = (data as FeedRow[]) ?? [];
-    return Promise.all(
-      rows.map(async (r) => ({
+    const links = await signedAll(rows.map((r) => r.media_path));
+    return rows.map((r) => ({
         id: r.id,
         authorId: r.author_id,
         firstName: r.first_name,
         areaId: r.area_id,
         placeName: r.place_name,
         body: r.body,
-        mediaUrl: await signed(r.media_path),
+        mediaUrl: r.media_path ? (links[r.media_path] ?? null) : null,
         visibility: r.visibility,
         createdAt: Date.parse(r.created_at),
         friend: r.friend,
@@ -83,13 +109,22 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         activityId: r.activity_id ?? null,
         activityTitle: r.activity_title ?? null,
         cityId: (r as { city_id?: string }).city_id ?? null,
-      })),
-    );
+      }));
   }, [cityId, uid]);
 
-  const refresh = useCallback(() => {
-    load().then(setPosts).catch(() => undefined);
-  }, [load]);
+  /** Loads and applies the result if no newer load started meanwhile. On error, what is shown stays. */
+  const reload = useCallback(
+    (alive: () => boolean = () => true) => {
+      const n = ++seq.current;
+      load()
+        .then((p) => {
+          if (alive() && n === seq.current) setPosts(p);
+        })
+        .catch(() => undefined);
+    },
+    [load, setPosts],
+  );
+  const refresh = useCallback(() => reload(), [reload]);
 
   const version = useIrlVersion((s) => s.n);
   useEffect(() => {
@@ -99,25 +134,27 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    load().then((p) => alive && setPosts(p)).catch(() => undefined);
+    const isAlive = () => alive;
+    reload(isAlive);
     const channel = supabase
       .channel(topic(`irl-${cityId}-${uid}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, () => {
-        load().then((p) => alive && setPosts(p)).catch(() => undefined);
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, () => reload(isAlive))
       // Realtime cannot filter DELETE events (the old row only has its id): listen unfiltered.
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, () => {
-        load().then((p) => alive && setPosts(p)).catch(() => undefined);
-      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, () => reload(isAlive))
       .subscribe();
     return () => {
       alive = false;
       supabase?.removeChannel(channel);
     };
-  }, [cityId, uid, load]);
+  }, [cityId, uid, reload]);
 
   const { keep } = useCityFilter(cityId as CityId);
-  const shown = useMemo(() => posts.filter((p) => keep(p.cityId)), [posts, keep]);
+  const mine = useIrlMine((s) => s.posts);
+  const shown = useMemo(() => {
+    const ids = new Set(posts.map((p) => p.id));
+    const fresh = mine.filter((p) => !ids.has(p.id) && (p.cityId === cityId || keep(p.cityId)));
+    return [...fresh, ...posts.filter((p) => keep(p.cityId))];
+  }, [posts, mine, keep, cityId]);
   return { posts: uid ? shown : NONE, refresh };
 }
 
@@ -144,7 +181,7 @@ export async function postServerIrl(input: {
     const { error } = await supabase.storage.from('irl-media').upload(media_path, img.body, { contentType: img.contentType });
     if (error) throw new Error(error.message);
   }
-  const { error } = await supabase.from('irl_posts').insert({
+  const { data: row, error } = await supabase.from('irl_posts').insert({
     author_id: uid,
     city_id: input.cityId,
     area_id: input.areaId,
@@ -153,8 +190,31 @@ export async function postServerIrl(input: {
     media_path,
     ...(input.visibility ? { visibility: input.visibility } : {}),
     activity_id: input.activityId ?? null,
-  });
+  }).select('id, created_at, visibility').single();
   if (error) throw new Error(error.message);
+  // On screen at once, with the photo already on the phone; the reload confirms it.
+  useIrlMine.setState((s) => ({
+    posts: [
+      {
+        id: row.id,
+        authorId: uid,
+        firstName: '',
+        areaId: input.areaId,
+        placeName: input.placeName ?? null,
+        body: input.body,
+        mediaUrl: input.photoUri ?? null,
+        visibility: row.visibility,
+        createdAt: Date.parse(row.created_at),
+        friend: false,
+        mine: true,
+        activityId: input.activityId ?? null,
+        activityTitle: null,
+        cityId: input.cityId,
+      },
+      // Live posts last 4 hours: older ones are dropped here.
+      ...s.posts.filter((p) => p.createdAt > Date.now() - 4 * 3600 * 1000),
+    ].slice(0, 20),
+  }));
   bumpIrl();
   return true;
 }
@@ -163,6 +223,7 @@ export async function deleteServerIrl(id: string): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.from('irl_posts').delete().eq('id', id);
   if (error) throw new Error(error.message);
+  useIrlMine.setState((s) => ({ posts: s.posts.filter((p) => p.id !== id) }));
   bumpIrl();
 }
 
