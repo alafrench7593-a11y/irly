@@ -74,3 +74,19 @@ if (process.env.ADD_TEAM_TESTERS === '1' && !users.error) {
     }
   }
 }
+
+// INVITE_EMAIL: invites that address to the App Store Connect team with the
+// Developer role (needed to be an internal TestFlight tester). Once the
+// invitation email is accepted, run again with ADD_TEAM_TESTERS=1.
+const invite = (process.env.INVITE_EMAIL || '').trim().toLowerCase();
+if (invite) {
+  const r = await fetch('https://api.appstoreconnect.apple.com/v1/userInvitations', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      data: { type: 'userInvitations', attributes: { email: invite, firstName: 'Samuel', lastName: 'Princivil', roles: ['DEVELOPER'], allAppsVisible: true, provisioningAllowed: false } },
+    }),
+  });
+  const j = await r.json().catch(() => ({}));
+  console.log(`invite ${mask(invite)} to the team: ${r.ok ? 'sent, Apple emails an invitation to accept' : `${r.status} ${JSON.stringify(j.errors?.[0]?.detail ?? j).slice(0, 200)}`}`);
+}
