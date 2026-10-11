@@ -8,6 +8,7 @@ import { supabase, topic } from '@/lib/supabase';
 import { useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import { uploadChatPhoto } from './media';
+import { askPushInContext } from '@/features/push/push';
 
 /**
  * Server chats (signed in): the inbox from `my_conversations()` and live
@@ -357,6 +358,8 @@ export function useServerThread(conversationId: string): ServerThread {
         );
       }
       if (data) setRows((list) => merge(list, [data as MessageRow]));
+      // First message written: replies are worth a notification.
+      void askPushInContext();
       setPending((p) => {
         const { [id]: _done, ...rest } = p;
         return rest;

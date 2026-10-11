@@ -1261,6 +1261,54 @@ set role anon;
 select pg_temp.expect_denied($$select * from public.people_match('dubai')$$, 'signed out: no matching');
 reset role;
 
+-- ───── Push reliability: Expo replies, dead tokens, retries, previews, reminders (M, N) ─────
+select pg_temp.as_admin();
+insert into auth.users (id) values ('00000000-0000-0000-0000-000000000016'), ('00000000-0000-0000-0000-000000000017');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000016');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-000000000016', 'Mia', '1993-06-06', 'woman', 'dubai');
+select public.register_push_token('ExponentPushToken[mia-phone-one]', 'ios', 'en');
+select public.register_push_token('ExponentPushToken[mia-phone-two]', 'ios', 'fr');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000017');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-000000000017', 'Noa', '1992-07-07', 'man', 'dubai');
+select public.add_friend('00000000-0000-0000-0000-000000000016');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.push_outbox o join public.notifications n on n.id = o.notification_id where o.user_id = '00000000-0000-0000-0000-000000000016' and n.kind = 'FRIEND_REQUEST') = 2, 'a friend request queues one push per phone of the right person');
+select pg_temp.check(not exists (select 1 from public.push_outbox where user_id = '00000000-0000-0000-0000-000000000017'), 'the sender gets no push for their own action');
+-- Expo answers: phone one is gone, phone two is fine.
+update public.push_outbox set request_id = 9001, attempts = 1 where user_id = '00000000-0000-0000-0000-000000000016';
+select private.push_handle_reply(9001, 200, '{"data":[{"status":"error","message":"not registered","details":{"error":"DeviceNotRegistered"}},{"status":"ok","id":"x"}]}');
+select pg_temp.check(not exists (select 1 from public.push_tokens where token = 'ExponentPushToken[mia-phone-one]'), 'a phone Expo reports as gone loses its token');
+select pg_temp.check(exists (select 1 from public.push_tokens where token = 'ExponentPushToken[mia-phone-two]'), 'the other phone keeps its token');
+select pg_temp.check(not exists (select 1 from public.push_outbox where request_id = 9001 and handled_at is null), 'every row of the answer is closed (never read again)');
+-- Expo down: tried again, never more than 3 times.
+insert into public.push_outbox (user_id, token, title, body, url, request_id, attempts) values ('00000000-0000-0000-0000-000000000016', 'ExponentPushToken[mia-phone-two]', 't', 'b', '/', 9002, 1);
+select private.push_handle_reply(9002, 503, null);
+select pg_temp.check((select request_id is null and handled_at is null from public.push_outbox where token = 'ExponentPushToken[mia-phone-two]' and title = 't'), 'a failed send waits for another try');
+update public.push_outbox set request_id = 9003, attempts = 3 where title = 't';
+select private.push_handle_reply(9003, null, null);
+select pg_temp.check((select handled_at is not null from public.push_outbox where title = 't'), 'after 3 sends it gives up (no loop)');
+select private.push_housekeeping();
+-- Previews off: a message push says who wrote, not what.
+insert into public.notification_prefs (user_id, push_previews) values ('00000000-0000-0000-0000-000000000016', false)
+  on conflict (user_id) do update set push_previews = false;
+insert into public.notifications (user_id, kind, payload) values ('00000000-0000-0000-0000-000000000016', 'MESSAGE_CREATED', jsonb_build_object('conversation_id', gen_random_uuid(), 'message_id', gen_random_uuid()));
+select pg_temp.check((select body from public.push_outbox o join public.notifications n on n.id = o.notification_id where n.kind = 'MESSAGE_CREATED' and o.user_id = '00000000-0000-0000-0000-000000000016' limit 1) = 'Nouveau message', 'previews off: the push hides the message text');
+-- Category muted: no notification, so no push.
+update public.notification_prefs set muted_kinds = '{COMMUNITY_POST}' where user_id = '00000000-0000-0000-0000-000000000016';
+select private.notify('00000000-0000-0000-0000-000000000016', 'COMMUNITY_POST', '{"post_id":"x"}');
+select pg_temp.check(not exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000016' and kind = 'COMMUNITY_POST'), 'a muted category creates no notification');
+select pg_temp.check(not exists (select 1 from public.push_outbox o where o.user_id = '00000000-0000-0000-0000-000000000016' and o.title <> 't' and o.notification_id not in (select id from public.notifications)), 'and so no push');
+-- Reminders: once, two hours before, to people going.
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at) values ('00000000-0000-0000-0000-000000000017', 'Sunset run', 'sport', 'dubai', 'marina', now() + interval '115 minutes') returning id as run_id \gset
+insert into public.activity_participants (activity_id, user_id, status) values (:'run_id', '00000000-0000-0000-0000-000000000016', 'going') on conflict do nothing;
+select pg_temp.check(private.send_activity_reminders() >= 1, 'a reminder goes out two hours before');
+select private.send_activity_reminders();
+select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-000000000016' and kind = 'ACTIVITY_REMINDER' and payload ->> 'activity_id' = :'run_id') = 1, 'only one reminder per activity and person');
+-- Signing out: the phone leaves the account.
+select pg_temp.as_user('00000000-0000-0000-0000-000000000016');
+select public.unregister_push_token('ExponentPushToken[mia-phone-two]');
+select pg_temp.check(not exists (select 1 from public.push_tokens where user_id = auth.uid()), 'signing out removes the phone from the account');
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
