@@ -5,7 +5,7 @@ import { create } from 'zustand';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { useStore, type Profile } from '@/state/store';
-import { imageBytes, imageType } from '@/lib/media';
+import { cleanImage } from '@/lib/media';
 import { wipeLocal } from '@/state/wipe';
 import { CITIES } from '@/data/destinations';
 import { ACTIVITIES, INTERESTS } from '@/data/catalog';
@@ -235,10 +235,9 @@ async function writeProfile(uid: string): Promise<void> {
   // The signup photo follows to the member's own folder (best effort).
   if (profile.photoUri && !/^https?:/.test(profile.photoUri)) {
     try {
-      const body = await imageBytes(profile.photoUri);
-      const img = imageType(profile.photoUri);
+      const img = await cleanImage(profile.photoUri);
       const path = `${uid}/avatar-${Date.now()}.${img.ext}`;
-      const up = await supabase.storage.from('profile-photos').upload(path, body, { contentType: img.contentType });
+      const up = await supabase.storage.from('profile-photos').upload(path, img.body, { contentType: img.contentType });
       if (!up.error) await supabase.from('profiles').update({ photo_paths: [path] }).eq('id', uid);
     } catch {
       // The profile works without it; the photo can be added later.
@@ -311,10 +310,9 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
       const stale = before.filter((p) => !isAvatar(p) && p.startsWith(`${uid}/`));
       if (stale.length) await supabase.storage.from('profile-photos').remove(stale);
     } else if (patch.photoUri && !/^https?:/.test(patch.photoUri)) {
-      const body = await imageBytes(patch.photoUri);
-      const img = imageType(patch.photoUri);
+      const img = await cleanImage(patch.photoUri);
       const path = `${uid}/avatar-${Date.now()}.${img.ext}`;
-      const up = await supabase.storage.from('profile-photos').upload(path, body, { contentType: img.contentType });
+      const up = await supabase.storage.from('profile-photos').upload(path, img.body, { contentType: img.contentType });
       if (up.error) throw new Error('Could not upload the photo. Try again.');
       const { data: old } = await supabase.rpc('my_profile');
       const before = ((old as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];

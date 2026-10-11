@@ -6,7 +6,7 @@ import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
-import { imageBytes, imageType } from '@/lib/media';
+import { cleanImage } from '@/lib/media';
 
 /**
  * IRL posts, friends and notifications on the server (signed in), live
@@ -139,10 +139,9 @@ export async function postServerIrl(input: {
   if (!uid) return false;
   let media_path: string | null = null;
   if (input.photoUri) {
-    const body = await imageBytes(input.photoUri);
-    const img = imageType(input.photoUri);
+    const img = await cleanImage(input.photoUri);
     media_path = `${uid}/${Date.now()}.${img.ext}`;
-    const { error } = await supabase.storage.from('irl-media').upload(media_path, body, { contentType: img.contentType });
+    const { error } = await supabase.storage.from('irl-media').upload(media_path, img.body, { contentType: img.contentType });
     if (error) throw new Error(error.message);
   }
   const { error } = await supabase.from('irl_posts').insert({

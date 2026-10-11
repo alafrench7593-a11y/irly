@@ -1,0 +1,26 @@
+name: Security audit
+
+# Read-only security audit of the live Supabase project (RLS, storage,
+# functions, Realtime, sign-in settings). Writes nothing, prints no secret.
+# Needs SUPABASE_ACCESS_TOKEN.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths:
+      - 'scripts/security-audit.mjs'
+      - '.github/workflows/security-audit.yml'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Audit the live project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/security-audit.mjs

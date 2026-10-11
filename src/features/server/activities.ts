@@ -10,7 +10,7 @@ import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import type { MyPlan } from '@/state/store';
-import { imageBytes, imageType } from '@/lib/media';
+import { cleanImage } from '@/lib/media';
 import { askPushInContext } from '@/features/push/push';
 
 /**
@@ -65,9 +65,9 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   // The member's own photo goes up first, into their folder.
   let coverPath: string | null = null;
   if (extras.coverUri) {
-    const img = imageType(extras.coverUri);
+    const img = await cleanImage(extras.coverUri);
     coverPath = `${uid}/${Date.now()}.${img.ext}`;
-    const up = await supabase.storage.from('activity-photos').upload(coverPath, await imageBytes(extras.coverUri), { contentType: img.contentType });
+    const up = await supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType });
     if (up.error) throw new Error('Could not upload the photo');
   }
   const guess = guessCategory(`${plan.title ?? ''} ${plan.description ?? ''} ${plan.place ?? ''}`);
