@@ -119,7 +119,11 @@ async function main() {
   await check('Skip for now goes Home', null, ['Live Bali'], async () => {
     await click('Skip for now');
   });
-  await check('Communities page: IRLY communities with filters', '/communities', ['Recommended', 'Popular', 'IRLY Newcomers']);
+  await check('Communities: For you recommends IRLY Newcomers (not joined)', '/communities', ['For you', 'IRLY Newcomers', 'Join']);
+  await check('Communities: All lists the IRLY catalogue with search and themes', '/communities?tab=all', ['Search by name or theme', 'Sports', 'IRLY Expats']);
+  await check('Match IRLY in the bar opens people to meet', '/', ['People to meet'], async () => {
+    await page.getByRole('button', { name: 'Match IRLY' }).first().click();
+  });
   await check('Home shows Live Bali', '/', ['Live Bali']);
   await check('Discover shows Bali and restaurants doors', '/discover?tab=places', ['Discover', 'Live Bali', 'Where to eat']);
   await check('Bali hub', '/bali', ["Don't just visit", 'Where should I live?', 'Areas, explained']);

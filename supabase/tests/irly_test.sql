@@ -1211,6 +1211,56 @@ select pg_temp.as_user('00000000-0000-0000-0000-000000000010');
 select pg_temp.check(not exists (select 1 from public.friend_list('00000000-0000-0000-0000-000000000011')), 'a hidden profile shows no friends list');
 select pg_temp.check(not exists (select 1 from public.member_lives('00000000-0000-0000-0000-000000000011')) and not exists (select 1 from public.member_activities('00000000-0000-0000-0000-000000000011')), 'a hidden profile shows no lives or activities');
 
+-- ───── Community catalog and Match IRLY (J, K, L) ─────
+select pg_temp.as_admin();
+select pg_temp.check(private.ensure_official_communities() = 0, 'running the catalog again creates no duplicate');
+select pg_temp.check((select count(*) from public.communities where official and topic = 'expats' and city_id = 'dubai' and deleted_at is null) = 1, 'one IRLY Expats in Dubai');
+insert into auth.users (id) values ('00000000-0000-0000-0000-000000000013'), ('00000000-0000-0000-0000-000000000014'), ('00000000-0000-0000-0000-000000000015');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000013');
+insert into public.profiles (id, first_name, birthdate, gender, city_id, interests, activity_prefs, languages) values ('00000000-0000-0000-0000-000000000013', 'Jade', '1995-01-01', 'woman', 'dubai', '{sports,startups}', '{football}', '{en,fr}');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000014');
+insert into public.profiles (id, first_name, birthdate, gender, city_id, interests, activity_prefs, languages) values ('00000000-0000-0000-0000-000000000014', 'Kai', '1992-02-02', 'man', 'dubai', '{sports}', '{football}', '{en}');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000015');
+insert into public.profiles (id, first_name, birthdate, gender, city_id, interests) values ('00000000-0000-0000-0000-000000000015', 'Lou', '1991-03-03', 'man', 'dubai', '{art}');
+
+-- A new member sees the whole public catalogue, without having joined anything.
+select pg_temp.as_user('00000000-0000-0000-0000-000000000013');
+select pg_temp.check((select count(*) from public.community_list('dubai') where official and not is_member) >= 10, 'a new member sees IRLY communities without joining');
+select pg_temp.check(not exists (select 1 from public.community_members where user_id = auth.uid()), 'nobody is joined to anything silently');
+select pg_temp.check(exists (select 1 from public.community_recommend('dubai', array['newcomer', 'interest:sports', 'activity:football'], 12) where topic = 'newcomers')
+  and exists (select 1 from public.community_recommend('dubai', array['newcomer', 'interest:sports', 'activity:football'], 12) where topic = 'football'), 'newcomer + football answers recommend IRLY Newcomers and IRLY Football');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', array['interest:sports'], 12) where topic = 'girls'), 'IRLY Girls is not recommended to someone who did not ask for it');
+select id as football_id from public.communities where official and topic = 'football' and city_id = 'dubai' \gset
+select public.join_community(:'football_id');
+select pg_temp.check((select is_member from public.community_list('dubai') where id = :'football_id'), 'joining shows it as mine in the list');
+select pg_temp.check(exists (select 1 from public.member_communities(auth.uid()) where id = :'football_id' and role = 'joined'), 'joining shows it under Joined on the profile');
+select public.leave_community(:'football_id');
+select pg_temp.check(not exists (select 1 from public.member_communities(auth.uid()) where id = :'football_id'), 'leaving removes it from my communities');
+select pg_temp.check(exists (select 1 from public.communities where id = :'football_id' and deleted_at is null), 'leaving never deletes the community');
+
+-- Match IRLY: real shared answers, best first; strangers with nothing in common are not suggested.
+select pg_temp.check((select id from public.people_match('dubai') limit 1) = '00000000-0000-0000-0000-000000000014', 'Kai (sports, football) is suggested to Jade');
+select pg_temp.check((select shared_activities from public.people_match('dubai') where id = '00000000-0000-0000-0000-000000000014') = '{football}', 'only what they share is returned');
+select pg_temp.check(not exists (select 1 from public.people_match('dubai') where id = '00000000-0000-0000-0000-000000000015'), 'Lou shares nothing with Jade and is not suggested');
+select pg_temp.check(not exists (select 1 from public.people_match('dubai') where id = auth.uid()), 'never myself');
+select public.people_match_skip('00000000-0000-0000-0000-000000000014');
+select pg_temp.check(not exists (select 1 from public.people_match('dubai') where id = '00000000-0000-0000-0000-000000000014'), '« Not now » hides Kai for a while');
+select pg_temp.as_admin();
+delete from public.people_match_skips where user_id = '00000000-0000-0000-0000-000000000013';
+select pg_temp.as_user('00000000-0000-0000-0000-000000000014');
+select public.block_user('00000000-0000-0000-0000-000000000013');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000013');
+select pg_temp.check(not exists (select 1 from public.people_match('dubai') where id = '00000000-0000-0000-0000-000000000014'), 'someone who blocked me is never suggested');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000014');
+select public.unblock_user('00000000-0000-0000-0000-000000000013');
+insert into public.safety_settings (user_id, profile_visibility) values (auth.uid(), 'nobody') on conflict (user_id) do update set profile_visibility = 'nobody';
+select pg_temp.as_user('00000000-0000-0000-0000-000000000013');
+select pg_temp.check(not exists (select 1 from public.people_match('dubai') where id = '00000000-0000-0000-0000-000000000014'), 'a hidden profile is never suggested');
+select pg_temp.as_admin();
+set role anon;
+select pg_temp.expect_denied($$select * from public.people_match('dubai')$$, 'signed out: no matching');
+reset role;
+
 -- ───── Account deletion cascades ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000d');
 select public.delete_my_account();
