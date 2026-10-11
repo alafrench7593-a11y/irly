@@ -74,7 +74,8 @@ const csr = fs.readFileSync(`${DIR}/dist.csr`, 'utf8');
 const cert = await api('POST', '/v1/certificates', { data: { type: 'certificates', attributes: { certificateType: 'DISTRIBUTION', csrContent: csr } } });
 fs.writeFileSync(`${DIR}/dist.cer`, Buffer.from(cert.data.attributes.certificateContent, 'base64'));
 execFileSync('openssl', ['x509', '-inform', 'DER', '-in', `${DIR}/dist.cer`, '-out', `${DIR}/dist.pem`]);
-const password = crypto.randomBytes(18).toString('base64url');
+// A password you chose (IOS_P12_PASSWORD) when the files go to Expo; otherwise a random one.
+const password = (process.env.IOS_P12_PASSWORD || '').trim() || crypto.randomBytes(18).toString('base64url');
 // 3DES/SHA1 so the macOS keychain on the build machine can import it.
 execFileSync('openssl', ['pkcs12', '-export', '-inkey', `${DIR}/dist.key`, '-in', `${DIR}/dist.pem`, '-out', `${DIR}/dist.p12`, '-passout', `pass:${password}`, '-keypbe', 'PBE-SHA1-3DES', '-certpbe', 'PBE-SHA1-3DES', '-macalg', 'sha1']);
 console.log('distribution certificate created');
