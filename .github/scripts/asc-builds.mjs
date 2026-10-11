@@ -90,3 +90,14 @@ if (invite) {
   const j = await r.json().catch(() => ({}));
   console.log(`invite ${mask(invite)} to the team: ${r.ok ? 'sent, Apple emails an invitation to accept' : `${r.status} ${JSON.stringify(j.errors?.[0]?.detail ?? j).slice(0, 200)}`}`);
 }
+
+// CANCEL_INVITE_EMAIL: withdraws a pending team invitation (a mistyped address).
+const cancel = (process.env.CANCEL_INVITE_EMAIL || '').trim().toLowerCase();
+if (cancel) {
+  const list = await get(`/v1/userInvitations?filter[email]=${encodeURIComponent(cancel)}&limit=5`);
+  if (list.error || !list.data.length) console.log(`cancel ${mask(cancel)}: ${list.error ?? 'no pending invitation'}`);
+  for (const inv of list.data ?? []) {
+    const r = await fetch(`https://api.appstoreconnect.apple.com/v1/userInvitations/${inv.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${jwt}` } });
+    console.log(`cancel ${mask(cancel)}: ${r.ok ? 'invitation withdrawn' : r.status}`);
+  }
+}

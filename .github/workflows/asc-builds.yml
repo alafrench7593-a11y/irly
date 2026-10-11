@@ -14,6 +14,10 @@ on:
         description: Invite this address to the App Store Connect team (Developer role)
         type: string
         default: ''
+      cancel_invite_email:
+        description: Withdraw the pending team invitation of this address
+        type: string
+        default: ''
 
 jobs:
   status:
@@ -31,3 +35,4 @@ jobs:
           ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
           ADD_TEAM_TESTERS: ${{ inputs.add_team_testers && '1' || '0' }}
           INVITE_EMAIL: ${{ inputs.invite_email }}
+          CANCEL_INVITE_EMAIL: ${{ inputs.cancel_invite_email }}
