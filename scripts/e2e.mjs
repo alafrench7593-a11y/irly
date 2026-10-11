@@ -292,9 +292,9 @@ try {
     return must(await A.sb.from('messages').select('body').eq('conversation_id', matchConv)).length >= 2;
   });
   await step('a new message notifies Alice (unread), and reading the chat clears it: the bell badge follows', async () => {
-    const unreadBefore = must(await A.sb.from('notifications').select('id').eq('kind', 'MESSAGE_CREATED').is('read_at', null)).length;
+    const unreadBefore = must(await A.sb.from('notifications').select('id').eq('kind', 'MESSAGE_CREATED').eq('payload->>conversation_id', matchConv).is('read_at', null)).length;
     must(await timed('open a conversation (mark read)', () => A.sb.rpc('mark_conversation_read', { p_conversation: matchConv })));
-    const unreadAfter = must(await A.sb.from('notifications').select('id').eq('kind', 'MESSAGE_CREATED').is('read_at', null)).length;
+    const unreadAfter = must(await A.sb.from('notifications').select('id').eq('kind', 'MESSAGE_CREATED').eq('payload->>conversation_id', matchConv).is('read_at', null)).length;
     const inbox = must(await A.sb.rpc('my_conversations', {})).find((c) => c.conversation_id === matchConv);
     return unreadBefore >= 1 && unreadAfter === 0 && inbox?.unread === 0;
   });
