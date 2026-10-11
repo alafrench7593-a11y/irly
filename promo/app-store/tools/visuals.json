@@ -1,0 +1,182 @@
+{
+ "visuals": [
+  {
+   "name": "a1",
+   "file": "01-autour-de-toi.png",
+   "canvas": "dark",
+   "status": "light",
+   "text": {
+    "title": "What if you weren’t alone anymore?",
+    "sub": "The friendships that change everything start somewhere."
+   },
+   "phone": {
+    "cx": 660,
+    "top": 700,
+    "S": 920
+   },
+   "screen": "home-top.png",
+   "logo": "light",
+   "copy": {
+    "y": 186
+   },
+   "logoY": 96,
+   "logoH": 56
+  },
+  {
+   "name": "a2",
+   "file": "02-match.png",
+   "canvas": "light",
+   "status": "dark",
+   "text": {
+    "title": "New people.<br>Real connections.",
+    "sub": "Meet people who share what you love."
+   },
+   "phone": {
+    "cx": 660,
+    "top": 700,
+    "S": 920
+   },
+   "screen": "match-day.png",
+   "callouts": [
+    {
+     "crop": [
+      60,
+      768,
+      1260,
+      1272
+     ],
+     "zoom": 1.2,
+     "radius": 72
+    }
+   ]
+  },
+  {
+   "name": "a3",
+   "file": "03-activites.png",
+   "canvas": "dark",
+   "status": "light",
+   "text": {
+    "title": "Less scrolling. More living.",
+    "sub": "Find activities and enjoy them together."
+   },
+   "phone": {
+    "cx": 660,
+    "top": 700,
+    "S": 920
+   },
+   "screen": "category-night.png"
+  },
+  {
+   "name": "a4",
+   "file": "04-communautes.png",
+   "canvas": "light",
+   "status": "dark",
+   "text": {
+    "title": "Your community is already out there.",
+    "sub": "Find people like you."
+   },
+   "phone": {
+    "cx": 660,
+    "top": 700,
+    "S": 920
+   },
+   "screen": "communities-day.png",
+   "callouts": [
+    {
+     "crop": [
+      60,
+      1032,
+      1260,
+      1275
+     ],
+     "zoom": 1.2,
+     "radius": 60,
+     "dy": 8
+    }
+   ]
+  },
+  {
+   "name": "a5",
+   "file": "05-communaute.png",
+   "canvas": "dark",
+   "status": "light",
+   "text": {
+    "title": "One hello can start it all.",
+    "sub": "Chat, connect and get to know each other."
+   },
+   "phone": {
+    "cx": 660,
+    "top": 700,
+    "S": 920
+   },
+   "screen": "newcomers-chat-night.png"
+  },
+  {
+   "name": "a6",
+   "file": "06-live-irl.png",
+   "canvas": "light",
+   "status": "dark",
+   "text": {
+    "title": "Real moments, right now.",
+    "sub": "See what people around you are up to."
+   },
+   "phone": {
+    "cx": 660,
+    "top": 700,
+    "S": 920
+   },
+   "screen": "live-day-scroll.png"
+  },
+  {
+   "name": "a7",
+   "file": "07-decouvrir.png",
+   "canvas": "dark",
+   "status": "light",
+   "text": {
+    "title": "New in town?",
+    "sub": "Turn your new city into<br>a chance to meet people."
+   },
+   "phone": {
+    "cx": 660,
+    "top": 700,
+    "S": 920
+   },
+   "screen": "discover-scroll.png"
+  },
+  {
+   "name": "a8",
+   "file": "08-autour-de-toi-suite.png",
+   "canvas": "light",
+   "status": "light",
+   "text": {
+    "title": "Your next connection starts here.",
+    "sub": "Join a community where you belong."
+   },
+   "phone": {
+    "cx": 660,
+    "top": 700,
+    "S": 920
+   },
+   "screen": "home-scroll.png",
+   "callouts": [
+    {
+     "crop": [
+      0,
+      1581,
+      1320,
+      2145
+     ],
+     "zoom": 1.2,
+     "radius": 60,
+     "dy": 18
+    }
+   ],
+   "logo": "dark",
+   "copy": {
+    "y": 186
+   },
+   "logoY": 96,
+   "logoH": 56
+  }
+ ]
+}
