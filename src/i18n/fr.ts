@@ -3729,4 +3729,5 @@ export const fr: Record<string, string> = {
   'This file is too large.': 'Ce fichier est trop lourd.',
   'Could not open this file': 'Impossible d’ouvrir ce fichier',
   'Could not start the upload': 'Impossible de lancer l’envoi',
+  'Apple sign-in did not complete. Try again.': 'La connexion avec Apple n’a pas abouti. Réessaie.',
 };

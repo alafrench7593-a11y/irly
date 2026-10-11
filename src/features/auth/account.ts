@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { create } from 'zustand';
 import { Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
+import * as Crypto from 'expo-crypto';
 import { useStore, type Profile } from '@/state/store';
 import { cleanImage } from '@/lib/media';
 import { wipeLocal } from '@/state/wipe';
@@ -485,6 +486,8 @@ export async function updatePassword(password: string): Promise<void> {
  * The provider must be switched on in Supabase (Authentication → Providers).
  */
 export async function signInWithProvider(provider: 'google' | 'apple'): Promise<void> {
+  // iPhone: Apple's own sheet (Face ID), no browser.
+  if (provider === 'apple' && Platform.OS === 'ios' && (await signInWithAppleNative())) return;
   const web = Platform.OS === 'web';
   const { data, error } = await client().auth.signInWithOAuth({ provider, options: { redirectTo: redirectTo(), skipBrowserRedirect: !web } });
   if (error) throw new Error(authMessage(error));
@@ -496,6 +499,37 @@ export async function signInWithProvider(provider: 'google' | 'apple'): Promise<
     if (failed) throw new Error(decodeURIComponent(failed[1].replace(/\+/g, ' ')));
     if (!(await completeFromUrl(res.url))) throw new Error('Sign-in did not complete. Try again.');
   }
+}
+
+/**
+ * Sign in with Apple, the native way: Apple's sheet returns a signed token,
+ * Supabase checks it (with a one-time nonce, so a stolen token cannot be
+ * replayed) and opens the session. An Apple account whose verified email
+ * already has an IRLY account signs into that account; one that hides its
+ * email (an @privaterelay.appleid.com address) gets its own account, never
+ * merged with another without proof it is the same person. Apple gives the
+ * name only the first time: it fills the profile name if there is none.
+ * Returns false when Apple sign-in is not available on this device.
+ */
+async function signInWithAppleNative(): Promise<boolean> {
+  const Apple = await import('expo-apple-authentication');
+  if (!(await Apple.isAvailableAsync())) return false;
+  const raw = `${Crypto.randomUUID()}${Crypto.randomUUID()}`;
+  const hashed = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, raw);
+  let cred: Awaited<ReturnType<typeof Apple.signInAsync>>;
+  try {
+    cred = await Apple.signInAsync({ requestedScopes: [Apple.AppleAuthenticationScope.FULL_NAME, Apple.AppleAuthenticationScope.EMAIL], nonce: hashed });
+  } catch (e) {
+    // Closed by the member: nothing to say.
+    if ((e as { code?: string })?.code === 'ERR_REQUEST_CANCELED') return true;
+    throw new Error('Apple sign-in did not complete. Try again.');
+  }
+  if (!cred.identityToken) throw new Error('Apple sign-in did not complete. Try again.');
+  const { error } = await client().auth.signInWithIdToken({ provider: 'apple', token: cred.identityToken, nonce: raw });
+  if (error) throw new Error(authMessage(error));
+  const given = cred.fullName?.givenName?.trim();
+  if (given && !useStore.getState().profile.name) useStore.getState().updateProfile({ name: given });
+  return true;
 }
 
 export async function sendPhoneCode(phone: string): Promise<void> {

@@ -200,7 +200,8 @@ export default function AccountScreen() {
       <Animated.View key={mode} entering={FadeIn.duration(220)} style={styles.body}>
         {mode === 'choose' ? (
           <>
-            {providers?.apple && Platform.OS !== 'android' ? <Button label="Continue with Apple" variant="inverse" leading={(c) => <AppleLogo size={18} color={c} />} full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
+            {/* Apple: the native sheet on iPhone (the web flow would need a Services ID and secret key). */}
+            {providers?.apple && Platform.OS === 'ios' ? <Button label="Continue with Apple" variant="inverse" leading={(c) => <AppleLogo size={18} color={c} />} full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
             {/* App Store rule 4.8: on iPhone, Google sign-in is only offered next to Sign in with Apple. */}
             {providers?.google && (Platform.OS !== 'ios' || providers.apple) ? <Button label="Continue with Google" leading={() => <GoogleG size={18} />} full variant="secondary" loading={busy} onPress={() => act(() => signInWithProvider('google'))} /> : null}
             {providers?.phone ? <Button label="Continue with phone" icon="message" full variant="secondary" onPress={() => setMode('phone')} /> : null}
