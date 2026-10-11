@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, BackHandler, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -27,7 +28,7 @@ export default function NewPost() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
-  const params = useLocalSearchParams<{ community?: string; name?: string; edit?: string; body?: string }>();
+  const params = useLocalSearchParams<{ community?: string; name?: string; edit?: string; body?: string; kind?: string }>();
   const editing = params.edit ?? null;
   const [communityId, setCommunityId] = useState<string | null>(params.community ?? null);
   const key = draftKey(communityId);
@@ -39,6 +40,8 @@ export default function NewPost() {
   const [loading, setLoading] = useState(Boolean(editing));
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
+  // In Help & Questions: a question or a recommendation.
+  const [kind, setKind] = useState<'question' | 'recommendation' | null>(params.kind === 'question' || params.kind === 'recommendation' ? params.kind : null);
   const [original, setOriginal] = useState<{ body: string; media: string }>({ body: '', media: 'null' });
 
   // A draft kept on the phone comes back (it may load just after the screen opens).
@@ -171,7 +174,7 @@ export default function NewPost() {
     try {
       const onProgress = media?.kind === 'video' || files.length > 1 ? setProgress : undefined;
       if (editing) await updatePost(editing, { body, media, before, onProgress });
-      else await createPost({ communityId, body, media, onProgress });
+      else await createPost({ communityId, body, media, onProgress, kind: kind ?? 'post' });
       if (!editing) saveDraft(key, null);
       haptic('success');
       toast(editing ? 'Post updated' : communityId ? 'Posted in the community' : 'Posted on your profile', 'check', 'brand');
@@ -186,14 +189,21 @@ export default function NewPost() {
     }
   };
 
+  const title = editing ? 'Edit post' : kind === 'question' ? 'Ask a question' : kind === 'recommendation' ? 'Recommend' : 'New post';
   const where = communityId ? (params.name ? tx('In {name}', { name: params.name }) : tx('In the community')) : tx('On your profile');
   return (
-    <Page title={editing ? 'Edit post' : 'New post'} subtitle={where} onBack={askLeave}>
+    <Page title={title} subtitle={where} onBack={askLeave}>
       <View style={styles.body}>
+        {kind ? (
+          <View style={styles.row}>
+            <Chip size="sm" icon="question" label={tx('Question')} selected={kind === 'question'} onPress={() => setKind('question')} />
+            <Chip size="sm" icon="star" label={tx('Recommendation')} selected={kind === 'recommendation'} onPress={() => setKind('recommendation')} />
+          </View>
+        ) : null}
         <TextInput
           value={body}
           onChangeText={(v) => setBody(v.slice(0, 2000))}
-          placeholder={tx('What do you want to share?')}
+          placeholder={kind === 'question' ? tx('Your question, with the details that help people answer') : kind === 'recommendation' ? tx('The place or professional, where, and why you recommend them') : tx('What do you want to share?')}
           placeholderTextColor={t.c.textTertiary}
           multiline
           autoFocus={!editing}

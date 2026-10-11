@@ -1485,4 +1485,19 @@ select public.leave_community(:'sport_id');
 select pg_temp.check(not private.i_belong(:'padel_id'), 'groups: leaving a community leaves its groups');
 select pg_temp.as_admin();
 
+-- ───── Help & Questions ─────
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select count(*) from public.help_groups('dubai')) = 8, 'help: eight groups in Dubai');
+select id as visa_id from public.help_groups('dubai') where category = 'visa' \gset
+select public.join_community(:'visa_id');
+insert into public.community_posts (community_id, author_id, body, kind) values (:'visa_id', auth.uid(), 'How long does the Emirates ID renewal take?', 'question') returning id as q_id \gset
+insert into public.comments (target_type, target_id, author_id, body) values ('community_post', :'q_id', auth.uid(), 'About two weeks for me');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check((select count(*) from public.help_feed('dubai', 'visa', 'emirates renewal')) = 1, 'help: search by category and every keyword');
+select pg_temp.check((select count(*) from public.help_feed('dubai', 'schools', 'emirates')) = 0, 'help: another category does not match');
+select pg_temp.check((select answers from public.help_feed('dubai', null, 'renewal') limit 1) = 1, 'help: answers are counted');
+select public.toggle_save('community_post', :'q_id');
+select pg_temp.check((select saved from public.help_feed('dubai', 'visa') where id = :'q_id'), 'help: a question with its answers can be saved');
+select pg_temp.as_admin();
+
 \echo 'ALL TESTS PASSED'

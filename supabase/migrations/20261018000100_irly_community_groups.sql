@@ -172,7 +172,7 @@ revoke all on function private.ensure_official_subgroups() from public, anon, au
 -- A new official top community for lifestyle (restaurants, shopping, wellness, good addresses).
 insert into public.community_topics (topic, name, tagline, emoji, match_tags, cities, girl_only, intro_first, sort) values
   ('lifestyle', 'IRLY Lifestyle', 'Restaurants, shopping, wellness and the city''s best addresses.', '✨',
-    '{interest:food,interest:shopping,interest:wellness,goal:food}', '{dubai,abudhabi}', false, false, 23)
+    '{}', '{dubai,abudhabi}', false, false, 23)
 on conflict (topic) do nothing;
 select private.ensure_official_communities();
 

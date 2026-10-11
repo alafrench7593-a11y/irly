@@ -502,6 +502,19 @@ try {
     await A.sb.rpc('leave_community', { p_community: sport.id });
     return both.length === 2 && Boolean(notHost);
   });
+  const helpV = groupsV2 && !(await A.sb.rpc('help_groups', { p_city: 'dubai' })).error;
+  if (helpV) await step('Help & Questions: ask in Visa, another member finds it by keywords and answers', async () => {
+    const groups = must(await A.sb.rpc('help_groups', { p_city: 'dubai' }));
+    const visa = groups.find((g) => g.category === 'visa');
+    must(await A.sb.rpc('join_community', { p_community: visa.id }));
+    const q = must(await A.sb.from('community_posts').insert({ community_id: visa.id, author_id: A.id, body: `E2E ${run}: how long is the Emirates ID renewal?`, kind: 'question' }).select('id').single());
+    const found = must(await timed('search help', () => B.sb.rpc('help_feed', { p_city: 'dubai', p_category: 'visa', p_query: `${run} renewal` })));
+    must(await B.sb.from('comments').insert({ target_type: 'community_post', target_id: q.id, author_id: B.id, body: 'About two weeks' }));
+    const again = must(await A.sb.rpc('help_feed', { p_city: 'dubai', p_category: 'visa', p_query: `${run}` }));
+    await A.sb.from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', q.id);
+    await A.sb.rpc('leave_community', { p_community: visa.id });
+    return found.some((x) => x.id === q.id) && again.find((x) => x.id === q.id)?.answers === 1;
+  });
   await step('opening a chat is one round trip: chat, messages, members with names and photos, my state', async () => {
     const [conv, msgs, members, mine] = await timed('open a chat', () =>
       Promise.all([
