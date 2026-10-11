@@ -30,3 +30,47 @@ for (const b of data.data) {
       ` · expired: ${b.attributes.expired} · internal TestFlight: ${beta?.attributes?.internalBuildState ?? '?'} · external: ${beta?.attributes?.externalBuildState ?? '?'}`,
   );
 }
+
+// TestFlight groups: who can test, and which builds each group gets.
+// Email addresses are shortened in the log (j***@gmail.com).
+const get = async (path) => {
+  const r = await fetch(`https://api.appstoreconnect.apple.com${path}`, { headers: { Authorization: `Bearer ${jwt}` } });
+  const j = await r.json();
+  if (!r.ok) return { error: `${r.status} ${JSON.stringify(j.errors?.[0]?.detail ?? j).slice(0, 160)}` };
+  return j;
+};
+const mask = (e = '') => e.replace(/^(.).*?(@.*)$/, '$1***$2');
+const groups = await get(`/v1/apps/${APP}/betaGroups?limit=20`);
+if (groups.error) console.log('TestFlight groups: could not read:', groups.error);
+else if (!groups.data.length) console.log('TestFlight groups: NONE (no group, so nobody can see a build)');
+for (const g of groups.data ?? []) {
+  const testers = await get(`/v1/betaGroups/${g.id}/betaTesters?limit=50`);
+  const builds = await get(`/v1/betaGroups/${g.id}/builds?limit=10`);
+  console.log(`\nGroup "${g.attributes.name}" · ${g.attributes.isInternalGroup ? 'internal' : 'external'}${g.attributes.hasAccessToAllBuilds ? ' · gets every build automatically' : ''}`);
+  console.log(`  testers: ${testers.error ?? (testers.data.length ? testers.data.map((t) => `${mask(t.attributes.email)} (${t.attributes.state ?? 'state ?'})`).join(', ') : 'NONE')}`);
+  console.log(`  builds: ${builds.error ?? (builds.data.length ? builds.data.map((b) => b.attributes.version).join(', ') : 'NONE')}`);
+}
+const users = await get('/v1/users?limit=20');
+console.log(`\nApp Store Connect users: ${users.error ?? users.data.map((u) => `${mask(u.attributes.username)} [${(u.attributes.roles || []).join('/')}]`).join(', ')}`);
+
+// ADD_TEAM_TESTERS=1: every App Store Connect user of the team becomes a
+// tester of the internal groups (internal testers must be team users).
+if (process.env.ADD_TEAM_TESTERS === '1' && !users.error) {
+  for (const g of (groups.data ?? []).filter((x) => x.attributes.isInternalGroup)) {
+    for (const u of users.data) {
+      const r = await fetch('https://api.appstoreconnect.apple.com/v1/betaTesters', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: {
+            type: 'betaTesters',
+            attributes: { email: u.attributes.username, firstName: u.attributes.firstName, lastName: u.attributes.lastName },
+            relationships: { betaGroups: { data: [{ type: 'betaGroups', id: g.id }] } },
+          },
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      console.log(`add ${mask(u.attributes.username)} to "${g.attributes.name}": ${r.ok ? 'done, Apple emails an invitation' : `${r.status} ${JSON.stringify(j.errors?.[0]?.detail ?? j).slice(0, 200)}`}`);
+    }
+  }
+}
