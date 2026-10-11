@@ -391,3 +391,19 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   // Messages have their own badge (the chat icon): the bell never counts them twice.
   return { items: list, unread: list.filter((n) => !n.readAt && n.kind !== 'MESSAGE_CREATED').length, markAllRead };
 }
+
+/** Unread notifications (the bell badge), fed once by <BellSync /> for every header. */
+export const useServerBell = create<{ n: number }>(() => ({ n: 0 }));
+
+/**
+ * Mounted once at the root. Every tab keeps its header mounted: a bell hook
+ * in each header opened one Realtime channel and one reload per tab for every
+ * notification. Now there is one, and the headers read its count.
+ */
+export function BellSync() {
+  const { unread } = useServerNotifications();
+  useEffect(() => {
+    useServerBell.setState({ n: unread });
+  }, [unread]);
+  return null;
+}
