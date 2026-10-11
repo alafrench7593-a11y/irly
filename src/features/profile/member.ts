@@ -211,7 +211,7 @@ export async function openDirect(userId: string): Promise<string> {
 /* ───────── Profile tabs: posts, lives, activities (server, as the viewer may see them) ───────── */
 
 export type ProfilePost = MemberPost & { likes: number; comments: number; liked: boolean; media: string | null };
-export type ProfileLive = { id: string; body: string; media: string | null; areaId: string; placeName: string | null; at: number; expiresAt: number; live: boolean };
+export type ProfileLive = { id: string; body: string; media: string | null; video: boolean; poster: string | null; seconds: number | null; areaId: string; placeName: string | null; at: number; expiresAt: number; live: boolean };
 export type ProfileActivity = {
   id: string;
   title: string;
@@ -319,7 +319,7 @@ function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds
 }
 
 type ActivityRow = { id: string; title: string; category_id: string; city_id: string; area_id: string; place_name: string | null; starts_at: string; ends_at: string | null; cover_path: string | null; going: number; role: 'created' | 'joined'; state: ProfileActivity['state'] };
-type LiveRow = { id: string; body: string; media_path: string | null; area_id: string; place_name: string | null; created_at: string; expires_at: string; live: boolean };
+type LiveRow = { id: string; body: string; media_path: string | null; area_id: string; place_name: string | null; created_at: string; expires_at: string; live: boolean; media_kind?: string | null; thumb_path?: string | null; media_seconds?: number | null };
 
 /** Activities a member created or joined (the activity rules and their activity visibility decide). */
 export const useMemberActivities = (userId: string, enabled = true) =>
@@ -349,7 +349,7 @@ export const useMemberLives = (userId: string, enabled = true) =>
   useProfileRpc<LiveRow, ProfileLive>(
     'member_lives',
     userId,
-    (r) => ({ id: r.id, body: r.body, media: r.media_path, areaId: r.area_id, placeName: r.place_name, at: Date.parse(r.created_at), expiresAt: Date.parse(r.expires_at), live: r.live }),
+    (r) => ({ id: r.id, body: r.body, media: r.media_path, video: r.media_kind === 'video', poster: r.thumb_path ?? null, seconds: r.media_seconds ?? null, areaId: r.area_id, placeName: r.place_name, at: Date.parse(r.created_at), expiresAt: Date.parse(r.expires_at), live: r.live }),
     ['friends', 'people'],
     enabled,
   );

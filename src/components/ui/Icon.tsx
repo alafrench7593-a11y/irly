@@ -116,6 +116,8 @@ import User from 'lucide-react-native/icons/user';
 import UserCheck from 'lucide-react-native/icons/user-check';
 import UserPlus from 'lucide-react-native/icons/user-plus';
 import ImageIcon from 'lucide-react-native/icons/image';
+import Play from 'lucide-react-native/icons/play';
+import Video from 'lucide-react-native/icons/video';
 import Users from 'lucide-react-native/icons/users';
 import UtensilsCrossed from 'lucide-react-native/icons/utensils-crossed';
 import Volleyball from 'lucide-react-native/icons/volleyball';
@@ -250,6 +252,8 @@ export const icons = {
   userPlus: UserPlus,
   userCheck: UserCheck,
   image: ImageIcon,
+  play: Play,
+  video: Video,
   utensils: UtensilsCrossed,
   volleyball: Volleyball,
   waves: Waves,

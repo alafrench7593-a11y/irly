@@ -12,6 +12,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
+import { LiveVideo } from '@/features/live/LiveVideo';
 import { webLink } from '@/config/app';
 import { INTERESTS } from '@/data/catalog';
 import { areaName, CITIES } from '@/data/destinations';
@@ -439,7 +440,7 @@ function LivesTab({ userId, own, name, cityId }: { userId: string; own: boolean;
   const router = useRouter();
   const now = useNow();
   const lives = useMemberLives(userId);
-  const pics = useSignedLinks('irl-media', lives.items.map((l) => l.media));
+  const pics = useSignedLinks('irl-media', lives.items.flatMap((l) => [l.media, l.poster]));
   if (lives.loading) return <Loading />;
   if (lives.error) return <Failed message={lives.error} onRetry={lives.reload} />;
   const live = lives.items.filter((l) => l.live && l.expiresAt > now);
@@ -465,7 +466,13 @@ function LivesTab({ userId, own, name, cityId }: { userId: string; own: boolean;
           {l.placeName ?? (cityId && cityId in CITIES ? areaName(CITIES[cityId as keyof typeof CITIES], l.areaId) : l.areaId)}
         </Text>
       </View>
-      {l.media && pics[l.media] ? <Photo visual={{ photo: 'meeting', uri: pics[l.media] }} light="dubai" width={700} style={styles.livePhoto} /> : null}
+      {l.media && pics[l.media] ? (
+        l.video ? (
+          <LiveVideo url={pics[l.media]} poster={l.poster ? pics[l.poster] : null} seconds={l.seconds} style={styles.livePhoto} />
+        ) : (
+          <Photo visual={{ photo: 'meeting', uri: pics[l.media] }} light="dubai" width={700} style={styles.livePhoto} />
+        )
+      ) : null}
       <Text variant="body" raw>
         {l.body}
       </Text>
