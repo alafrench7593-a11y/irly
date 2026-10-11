@@ -17,9 +17,13 @@ import { execFileSync } from 'node:child_process';
 const BUNDLE = 'app.irly.mobile';
 const PROFILE_NAME = 'IRLY EAS App Store';
 const DIR = 'ios-signing';
-const { ASC_KEY_ID, ASC_ISSUER_ID } = process.env;
+// Pasted secrets often carry a stray space or line break.
+const ASC_KEY_ID = (process.env.ASC_KEY_ID || '').trim();
+const ASC_ISSUER_ID = (process.env.ASC_ISSUER_ID || '').trim();
 if (!ASC_KEY_ID || !ASC_ISSUER_ID) throw new Error('ASC_KEY_ID and ASC_ISSUER_ID are required');
-const p8 = fs.readFileSync('asc-api-key.p8', 'utf8');
+const p8 = fs.readFileSync('asc-api-key.p8', 'utf8').trim() + '\n';
+// Rewritten clean, for EAS Submit which reads the same file.
+fs.writeFileSync('asc-api-key.p8', p8);
 
 const b64url = (b) => Buffer.from(b).toString('base64url');
 function token() {

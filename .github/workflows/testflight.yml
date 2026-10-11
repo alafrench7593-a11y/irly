@@ -68,4 +68,7 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
-        run: eas build --platform ios --profile production --non-interactive --auto-submit --wait
+        run: |
+          export ASC_KEY_ID="$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')" ASC_ISSUER_ID="$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')" ASC_APP_ID="$(printf '%s' "$ASC_APP_ID" | tr -d '[:space:]')"
+          export EXPO_ASC_KEY_ID="$ASC_KEY_ID" EXPO_ASC_ISSUER_ID="$ASC_ISSUER_ID" EXPO_APPLE_TEAM_ID="$(printf '%s' "$EXPO_APPLE_TEAM_ID" | tr -d '[:space:]')"
+          eas build --platform ios --profile production --non-interactive --auto-submit --wait
