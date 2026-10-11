@@ -11,8 +11,7 @@
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://yqutcmgslwxcmnsqmhvy.supabase.co"
-      },
-      "credentialsSource": "local"
+      }
     }
   },
   "submit": {

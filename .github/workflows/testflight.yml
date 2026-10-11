@@ -49,13 +49,9 @@ jobs:
       - name: App Store Connect key
         run: printf '%s' "${{ secrets.ASC_KEY_P8 }}" > asc-api-key.p8
       # The Expo project (@alafre/irly) is pinned in app.json (extra.eas.projectId).
-      # Signing is made here with the App Store Connect key (EAS will not
-      # create it in a non-interactive build): see .github/scripts/ios-credentials.mjs.
-      - name: iOS signing (certificate + provisioning profile)
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-        run: node .github/scripts/ios-credentials.mjs
+      # Signing and the push key live on Expo (uploaded once from the
+      # "iOS credentials for Expo" workflow): builds reuse them, nothing is
+      # revoked or made here.
       - run: npm i -g eas-cli@latest
       - name: Build and send to TestFlight
         env:
