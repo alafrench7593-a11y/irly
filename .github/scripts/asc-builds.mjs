@@ -52,3 +52,25 @@ for (const g of groups.data ?? []) {
 }
 const users = await get('/v1/users?limit=20');
 console.log(`\nApp Store Connect users: ${users.error ?? users.data.map((u) => `${mask(u.attributes.username)} [${(u.attributes.roles || []).join('/')}]`).join(', ')}`);
+
+// ADD_TEAM_TESTERS=1: every App Store Connect user of the team becomes a
+// tester of the internal groups (internal testers must be team users).
+if (process.env.ADD_TEAM_TESTERS === '1' && !users.error) {
+  for (const g of (groups.data ?? []).filter((x) => x.attributes.isInternalGroup)) {
+    for (const u of users.data) {
+      const r = await fetch('https://api.appstoreconnect.apple.com/v1/betaTesters', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          data: {
+            type: 'betaTesters',
+            attributes: { email: u.attributes.username, firstName: u.attributes.firstName, lastName: u.attributes.lastName },
+            relationships: { betaGroups: { data: [{ type: 'betaGroups', id: g.id }] } },
+          },
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      console.log(`add ${mask(u.attributes.username)} to "${g.attributes.name}": ${r.ok ? 'done, Apple emails an invitation' : `${r.status} ${JSON.stringify(j.errors?.[0]?.detail ?? j).slice(0, 200)}`}`);
+    }
+  }
+}

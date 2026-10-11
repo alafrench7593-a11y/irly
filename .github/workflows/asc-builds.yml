@@ -5,6 +5,11 @@ name: Apple build status
 
 on:
   workflow_dispatch:
+    inputs:
+      add_team_testers:
+        description: Add the team's App Store Connect users as internal TestFlight testers
+        type: boolean
+        default: false
 
 jobs:
   status:
@@ -20,3 +25,4 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
+          ADD_TEAM_TESTERS: ${{ inputs.add_team_testers && '1' || '0' }}
