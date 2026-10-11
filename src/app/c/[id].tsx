@@ -33,6 +33,8 @@ import { hueOf } from '@/lib/format';
 import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { PostMedia } from '@/features/posts/PostMedia';
+import { pinPost, useCommunityExtras } from '@/features/community/groups';
+import { HostTools, NotifyPrefs, ParentLink, SubgroupList } from '@/features/community/GroupsUI';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
@@ -56,6 +58,7 @@ export default function CommunityScreen() {
   const auth = useAuthStatus();
   const feed = useCommunityFeed(id);
   const acts = useCommunityActivities(id);
+  const extras = useCommunityExtras(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
   const [tab, setTab] = useState<Tab>('posts');
   const [busy, setBusy] = useState(false);
@@ -152,6 +155,7 @@ export default function CommunityScreen() {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
           <CommunityCover id={c.id} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
           <View style={[styles.pad, { gap: 6 }]}>
+            <ParentLink parent={extras.parent} />
             <Text variant="overline" tone="accent">
               {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
             </Text>
@@ -210,6 +214,14 @@ export default function CommunityScreen() {
             )}
           </View>
 
+          {c.isMember ? (
+            <View style={[styles.pad, styles.row]}>
+              <NotifyPrefs communityId={c.id} prefs={extras.prefs} onChanged={extras.reload} />
+            </View>
+          ) : null}
+          <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} onChanged={() => (extras.reload(), feed.refresh())} />
+          {!extras.parent ? <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), refresh())} /> : null}
+
           {c.official ? <OfficialBlock c={c} cityName={city.name} onMuted={refresh} /> : null}
 
           <View style={styles.pad}>
@@ -246,7 +258,12 @@ export default function CommunityScreen() {
                     key={p.id}
                     p={p}
                     eng={eng}
-                    canModerate={c.myRole === 'owner' || c.myRole === 'moderator'}
+                    canModerate={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate}
+                    onPin={(on) =>
+                      pinPost(p.id, on)
+                        .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
+                        .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
+                    }
                     isMember={c.isMember}
                     plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo) : null}
                     onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
@@ -555,6 +572,7 @@ function PostCard({
   onVote,
   onRemove,
   onPlan,
+  onPin,
   cityId,
 }: {
   p: CommunityPost;
@@ -565,6 +583,7 @@ function PostCard({
   onVote: (o: number) => void;
   onRemove: () => void;
   onPlan: (d: PlanDraft) => void;
+  onPin: (on: boolean) => void;
   cityId: string;
 }) {
   const t = useTheme();
@@ -581,6 +600,11 @@ function PostCard({
             {p.pending ? tx('Sending…') : timeAgo(Math.max(0, Math.round((now - p.createdAt) / 60000)))}
           </Text>
         </View>
+        {canModerate && !p.pending ? (
+          <PressableScale onPress={() => onPin(!p.pinnedAt)} haptic="select" hitSlop={8} accessibilityLabel={p.pinnedAt ? 'Unpin' : 'Pin at the top'}>
+            <Icon name="pinPost" size={16} color={p.pinnedAt ? t.c.text : t.c.textTertiary} />
+          </PressableScale>
+        ) : null}
         {p.mine && !p.pending ? (
           <PressableScale onPress={() => router.push({ pathname: '/post/new', params: { edit: p.id } })} haptic="select" hitSlop={8} accessibilityLabel="Edit post">
             <Icon name="edit" size={16} color={t.c.textTertiary} />
@@ -601,6 +625,14 @@ function PostCard({
           </PressableScale>
         )}
       </View>
+      {p.pinnedAt || (p.kind && p.kind !== 'post') ? (
+        <View style={[styles.row, { gap: 6 }]}>
+          {p.pinnedAt ? <Icon name="pinPost" size={13} color={t.c.textSecondary} /> : null}
+          <Text variant="overline" tone="secondary">
+            {[p.pinnedAt ? tx('Pinned') : null, p.kind === 'announcement' ? tx('Announcement') : p.kind === 'question' ? tx('Question') : p.kind === 'recommendation' ? tx('Recommendation') : null].filter(Boolean).join(' · ')}
+          </Text>
+        </View>
+      ) : null}
       {p.body ? (
         <Text variant="body" raw>
           {p.body}

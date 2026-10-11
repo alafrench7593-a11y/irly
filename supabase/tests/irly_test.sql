@@ -1429,4 +1429,60 @@ select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
 select pg_temp.expect_denied(format('select public.edit_live_post(%L, %L)', :'live_id', 'hacked'), 'Live: nobody else edits it');
 select pg_temp.as_admin();
 
+-- ───── Communities v2: groups, roles, pins, announcements ─────
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.communities c join public.communities p on p.id = c.parent_id where p.topic = 'sport' and c.subtopic = 'padel' and c.city_id = 'dubai') = 1, 'groups: IRLY Sport Dubai has its Padel group');
+select pg_temp.check(exists (select 1 from public.communities where official and topic = 'lifestyle' and city_id = 'dubai'), 'groups: IRLY Lifestyle exists');
+select id as sport_id from public.communities where official and topic = 'sport' and city_id = 'dubai' and parent_id is null \gset
+select id as padel_id from public.communities where parent_id = :'sport_id' and subtopic = 'padel' \gset
+alter table public.profiles disable trigger profiles_guard;
+update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-00000000000e';
+alter table public.profiles enable trigger profiles_guard;
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check(not exists (select 1 from public.community_list('dubai') where id = :'padel_id'), 'groups: top lists do not show groups');
+select pg_temp.check(exists (select 1 from public.community_subgroups(:'sport_id') where id = :'padel_id'), 'groups: a community lists its groups');
+select public.join_community(:'padel_id');
+select pg_temp.check(private.i_belong(:'sport_id'), 'groups: joining a group joins its community');
+select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'padel_id', 'Hello everyone'), 'announce: members cannot notify everyone');
+select pg_temp.expect_denied(format('select public.set_community_role(%L, %L, %L)', :'sport_id', '00000000-0000-0000-0000-000000000011', 'moderator'), 'roles: a member cannot name themself moderator');
+select pg_temp.expect_denied(format('insert into public.community_posts (community_id, author_id, body, kind) values (%L, auth.uid(), %L, %L)', :'padel_id', 'Fake announcement', 'announcement'), 'announce: no announcement posts from members');
+insert into public.community_posts (community_id, author_id, body) values (:'padel_id', auth.uid(), 'Who plays Saturday?') returning id as padel_post \gset
+select pg_temp.expect_denied(format('select public.pin_post(%L)', :'padel_post'), 'pins: members cannot pin');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select public.join_community(:'padel_id');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check(public.am_i_admin(), 'roles: IRLY admin is known to the app');
+select public.set_community_role(:'sport_id', '00000000-0000-0000-0000-000000000011', 'moderator');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check((select can_moderate from public.community_rights(:'padel_id')), 'roles: a community moderator moderates its groups');
+select pg_temp.check(public.pin_post(:'padel_post'), 'pins: a moderator pins');
+insert into public.community_posts (community_id, author_id, body) values (:'padel_id', auth.uid(), 'Newer post') ;
+select pg_temp.check((select id from public.community_feed(:'padel_id') limit 1) = :'padel_post'::uuid, 'pins: the pinned post comes first');
+select pg_temp.check(public.announce(:'padel_id', 'Courts booked Saturday 9am at Padel Pro') >= 1, 'announce: a moderator notifies the group');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000012' and kind = 'COMMUNITY_ANNOUNCEMENT'), 'announce: members receive it');
+select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-000000000012' and kind = 'COMMUNITY_POST' and payload ->> 'body' like 'Courts booked%') = 0, 'announce: never twice (no extra post notification)');
+select pg_temp.check((select title from private.push_text((select n from public.notifications n where user_id = '00000000-0000-0000-0000-000000000012' and kind = 'COMMUNITY_ANNOUNCEMENT' limit 1), 'en')) like '📣%', 'announce: push text');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'padel_id', 'Another one'), 'announce: one per hour');
+select pg_temp.as_admin();
+update public.community_broadcasts set created_at = now() - interval '2 hours' where community_id = :'padel_id';
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'padel_id', 'Courts booked Saturday 9am at Padel Pro'), 'announce: never the same text twice in a week');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+insert into public.community_notification_prefs (user_id, community_id, announcements) values (auth.uid(), :'padel_id', false);
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select public.announce(:'padel_id', 'Tournament registration is open');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000012' and payload ->> 'body' = 'Tournament registration is open'), 'announce: a member who turned it off is not notified');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check(public.create_subgroup(:'sport_id', 'Tennis') is not null, 'groups: a moderator adds a group');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.expect_denied(format('select public.create_subgroup(%L, %L)', :'sport_id', 'Spam group'), 'groups: members cannot add groups');
+select pg_temp.expect_denied(format('select public.community_people(%L)', :'sport_id'), 'roles: member lists are for moderators');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
+select public.leave_community(:'sport_id');
+select pg_temp.check(not private.i_belong(:'padel_id'), 'groups: leaving a community leaves its groups');
+select pg_temp.as_admin();
+
 \echo 'ALL TESTS PASSED'

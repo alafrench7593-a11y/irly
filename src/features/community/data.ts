@@ -71,6 +71,10 @@ export type CommunityPost = {
   thumbPath?: string | null;
   mediaSeconds?: number | null;
   edited?: boolean;
+  /** post, question, recommendation or announcement (hosts only). */
+  kind?: 'post' | 'question' | 'recommendation' | 'announcement';
+  category?: string | null;
+  pinnedAt?: number | null;
 };
 
 export type CommunitySummary = {
@@ -200,6 +204,9 @@ function toPost(r: Row, uid: string | undefined): CommunityPost {
     thumbPath: (r.thumb_path as string | null) ?? null,
     mediaSeconds: (r.media_seconds as number | null) ?? null,
     edited: Boolean(r.edited_at),
+    kind: ((r.kind as string) ?? 'post') as CommunityPost['kind'],
+    category: (r.category as string | null) ?? null,
+    pinnedAt: r.pinned_at ? Date.parse(r.pinned_at as string) : null,
   };
 }
 

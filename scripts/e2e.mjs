@@ -488,6 +488,20 @@ try {
     return links.every((l) => !l.signedUrl);
   });
   if (postsV2) await A.sb.storage.from('post-media').remove(pm);
+  // Communities v2: groups inside communities, hosts-only announcements and pins.
+  const groupsV2 = !(await A.sb.rpc('community_rights', { p_community: '00000000-0000-0000-0000-000000000000' })).error;
+  if (!groupsV2) console.log('○ communities v2: migration not deployed yet, steps skipped');
+  if (groupsV2) await step('a group (Padel) is joined from its community, and joining it joins the community', async () => {
+    const sport = must(await A.sb.from('communities').select('id').eq('official', true).eq('topic', 'sport').eq('city_id', 'dubai').is('parent_id', null).single());
+    const groups = must(await A.sb.rpc('community_subgroups', { p_parent: sport.id }));
+    const padel = groups.find((g) => g.name === 'Padel');
+    if (!padel) throw new Error('no Padel group');
+    must(await timed('join a group', () => A.sb.rpc('join_community', { p_community: padel.id })));
+    const both = must(await A.sb.from('community_members').select('community_id').eq('user_id', A.id).in('community_id', [sport.id, padel.id]));
+    const notHost = (await A.sb.rpc('announce', { p_community: padel.id, p_body: 'Hello everyone' })).error;
+    await A.sb.rpc('leave_community', { p_community: sport.id });
+    return both.length === 2 && Boolean(notHost);
+  });
   await step('opening a chat is one round trip: chat, messages, members with names and photos, my state', async () => {
     const [conv, msgs, members, mine] = await timed('open a chat', () =>
       Promise.all([
