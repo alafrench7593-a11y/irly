@@ -1,0 +1,35 @@
+name: News sources probe
+
+# Read-only check of candidate RSS sources for Dubai News & Life: status,
+# type and the first items. Nothing is stored or published.
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe feeds
+        run: |
+          for u in \
+            "https://www.wam.ae/en/rss" \
+            "https://www.wam.ae/en/rss/uae" \
+            "https://www.mediaoffice.ae/en/rss" \
+            "https://www.mediaoffice.ae/en/rss-feed" \
+            "https://u.ae/en/rss" \
+            "https://www.rta.ae/wps/portal/rta/ae/home/rss" \
+            "https://www.khaleejtimes.com/stories.rss" \
+            "https://www.khaleejtimes.com/rss" \
+            "https://gulfnews.com/feed" \
+            "https://gulfnews.com/rss" \
+            "https://www.thenationalnews.com/arc/outboundfeeds/rss/?outputType=xml" \
+            "https://www.timeoutdubai.com/feed" \
+            "https://whatson.ae/feed/" \
+            "https://www.arabianbusiness.com/feed" \
+            "https://www.zawya.com/en/rss" \
+            "https://www.visitdubai.com/en/rss" ; do
+            code=$(curl -sL -A "Mozilla/5.0 IRLY-news-probe" -o f.xml -w "%{http_code} %{content_type}" --max-time 20 "$u" || echo "fail")
+            echo "=== $code $u"
+            head -c 1500 f.xml | tr '\n' ' ' | sed 's/></>\n</g' | head -25
+            echo
+          done
