@@ -48,10 +48,22 @@ jobs:
           echo "All secrets present"
       - name: App Store Connect key
         run: printf '%s' "${{ secrets.ASC_KEY_P8 }}" > asc-api-key.p8
-      - name: Link the Expo project
+      # The Expo project (@alafre/irly) is pinned in app.json (extra.eas.projectId).
+      # EAS only creates the Apple certificate and provisioning profile in
+      # interactive mode. With the App Store Connect key in the environment it
+      # needs no Apple login, so the defaults are accepted in a pseudo-terminal.
+      # Once they exist on Expo's servers, this step finds them and changes nothing.
+      - name: iOS credentials (created once, then reused)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npx --yes eas-cli@latest init --non-interactive --force
+          EXPO_ASC_API_KEY_PATH: ./asc-api-key.p8
+          EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          EXPO_APPLE_TEAM_TYPE: ${{ secrets.APPLE_TEAM_TYPE || 'INDIVIDUAL' }}
+        run: |
+          npm i -g eas-cli@latest >/dev/null 2>&1
+          yes '' | timeout 600 script -qefc "eas credentials:configure-build -p ios -e production" /dev/null || true
       - name: Build and send to TestFlight
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -64,4 +76,4 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
-        run: npx --yes eas-cli@latest build --platform ios --profile production --non-interactive --auto-submit --wait
+        run: eas build --platform ios --profile production --non-interactive --auto-submit --wait

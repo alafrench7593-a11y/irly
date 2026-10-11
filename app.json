@@ -19,7 +19,6 @@
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleAllowMixedLocalizations": true
       },
-      "buildNumber": "1",
       "privacyManifests": {
         "NSPrivacyTracking": false,
         "NSPrivacyTrackingDomains": [],
@@ -124,6 +123,12 @@
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "owner": "alafre",
+    "extra": {
+      "eas": {
+        "projectId": "9cf85d68-dddb-45da-9ccc-4a4b358e83c2"
+      }
     }
   }
 }
