@@ -69,6 +69,29 @@ if (appleServicesId && appleSecret) {
   });
 }
 
+// Own email sender (SMTP_HOST, SMTP_USER, SMTP_PASS; SMTP_PORT 465 by
+// default): Supabase's built-in sender allows 2 emails an hour for the whole
+// project. With it, new accounts must confirm their address (nobody can
+// sign up with someone else's email) and 60 emails an hour can go out.
+const smtpHost = clean(env.SMTP_HOST);
+const smtpUser = clean(env.SMTP_USER);
+const smtpPass = (env.SMTP_PASS ?? '').trim();
+if (smtpHost && smtpUser && smtpPass) {
+  Object.assign(patch, {
+    smtp_host: smtpHost,
+    smtp_port: clean(env.SMTP_PORT) || '465',
+    smtp_user: smtpUser,
+    smtp_pass: smtpPass,
+    smtp_admin_email: clean(env.SMTP_SENDER) || smtpUser,
+    smtp_sender_name: 'IRLY',
+    rate_limit_email_sent: 60,
+    mailer_autoconfirm: false,
+  });
+  console.log(`Own email sender configured (${smtpHost}); email confirmation required for new accounts`);
+} else {
+  console.log('No own email sender (SMTP_HOST, SMTP_USER, SMTP_PASS): email confirmation stays off, 2 emails an hour');
+}
+
 const put = await fetch(api, { method: 'PATCH', headers, body: JSON.stringify(patch) });
 if (!put.ok) throw new Error(`Updating the auth config failed (${put.status}): ${(await put.text()).slice(0, 200)}`);
 const after = await put.json();
