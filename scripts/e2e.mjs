@@ -300,6 +300,9 @@ try {
   let matchConv;
   if (verification) {
     await step('a private chat between Alice and Bea', async () => {
+      // Without a match, a private chat needs the other member's consent: they become friends first.
+      must(await A.sb.rpc('add_friend', { p_user: B.id }));
+      must(await B.sb.rpc('add_friend', { p_user: A.id }));
       matchConv = must(await A.sb.rpc('open_direct', { p_user: B.id }));
       must(await A.sb.from('messages').insert({ conversation_id: matchConv, sender_id: A.id, body: 'Hi Bea!' }));
       return Boolean(matchConv);
@@ -504,7 +507,8 @@ try {
   if (postsV2) await step('the author edits the post; nobody else can', async () => {
     must(await A.sb.from('community_posts').update({ body: 'Sunset at JBR' }).eq('id', profilePost));
     await B.sb.from('community_posts').update({ body: 'hacked' }).eq('id', profilePost);
-    const r = must(await C.sb.from('community_posts').select('body, edited_at').eq('id', profilePost).single());
+    // Bea reads it back (Alice blocked Carl earlier, so he sees none of her posts).
+    const r = must(await B.sb.from('community_posts').select('body, edited_at').eq('id', profilePost).single());
     return r.body === 'Sunset at JBR' && Boolean(r.edited_at);
   });
   if (postsV2) await step('a deleted post\'s photos are no longer readable by others', async () => {
