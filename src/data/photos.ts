@@ -1,4 +1,6 @@
+import { PixelRatio } from 'react-native';
 import { DUBAI_KEYS } from './dubaiKeys';
+import { KEY_FILMS, VARIANTS } from './photoVariants';
 /**
  * Photography registry: real photos only.
  *
@@ -237,8 +239,10 @@ const FILMS: Partial<Record<string, string>> = {
   abudhabiSkyline: 'abudhabi',
 };
 
-/** The film for a photo key, if there is one. */
-export const filmFor = (key: string): string | undefined => (FILMS[key] ? `${FILM_BASE}/${FILMS[key]}.mp4` : undefined);
+const OWN_FILM = new Set(KEY_FILMS);
+/** The film for a photo key, if there is one: its own clip first, never one shared with another subject. */
+export const filmFor = (key: string): string | undefined =>
+  OWN_FILM.has(key) ? `${FILM_BASE}/k-${key}.mp4` : FILMS[key] ? `${FILM_BASE}/${FILMS[key]}.mp4` : undefined;
 
 /** The Home hero film of a city: Dubai and Abu Dhabi have theirs, by day and by night. */
 export const cityFilm = (cityId: string, heroKey: string): string | undefined => (cityId === 'dubai' || cityId === 'abudhabi' ? filmFor(heroKey) : undefined);
@@ -256,7 +260,39 @@ export type PhotoKey = keyof typeof ids | (typeof LIBRARY)[number];
 
 export const PHOTO_IDS = ids;
 
-export function photo(key: PhotoKey, width = 900): string {
-  if (LIBRARY_SET.has(key)) return `${LIBRARY_BASE}/${key}-${width <= 500 ? 480 : 1200}.jpg`;
-  return `https://images.unsplash.com/photo-${ids[key as keyof typeof ids]}?auto=format&fit=crop&w=${width}&q=72`;
+/** Pixels to ask for: the layout width times the screen density, in steps (better caching), up to 2400. */
+const pixels = (width: number) => Math.min(2400, Math.ceil((width * Math.min(3, PixelRatio.get())) / 400) * 400);
+
+/** The key's first picture (the one chosen by hand). */
+function primary(key: PhotoKey, px: number): string {
+  if (LIBRARY_SET.has(key)) return `${LIBRARY_BASE}/${key}-${px <= 600 ? 480 : 1200}.jpg`;
+  return `https://images.unsplash.com/photo-${ids[key as keyof typeof ids]}?auto=format&fit=crop&w=${px}&q=80`;
+}
+
+/** A variant URL at the right size ({w}: any width on a CDN; our own files exist at 800, 1600 and 2400). */
+const sized = (template: string, px: number) => template.replace('{w}', String(template.includes('/irly/photos/v/') ? (px <= 800 ? 800 : px <= 1600 ? 1600 : 2400) : px));
+
+/**
+ * Never the same picture twice: each thing shown with a key (an activity, a
+ * community, a card) gets its own photo of that subject. With a seed (the
+ * thing's id) the choice is stable everywhere it appears; without one, each
+ * new place showing the key takes the next photo.
+ */
+const bySeed = new Map<string, number>();
+const next = new Map<string, number>();
+function pick(key: string, count: number, seed?: string): number {
+  if (count <= 1) return 0;
+  const id = seed ? `${key}|${seed}` : undefined;
+  if (id && bySeed.has(id)) return bySeed.get(id)!;
+  const n = next.get(key) ?? 0;
+  next.set(key, n + 1);
+  if (id) bySeed.set(id, n % count);
+  return n % count;
+}
+
+export function photo(key: PhotoKey, width = 900, seed?: string): string {
+  const px = pixels(width);
+  const variants = VARIANTS[key] ?? [];
+  const i = pick(key, variants.length + 1, seed);
+  return i === 0 ? primary(key, px) : sized(variants[i - 1], px);
 }
