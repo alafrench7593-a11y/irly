@@ -65,6 +65,16 @@ export type CommunityPost = {
   createdAt: number;
   mine: boolean;
   pending?: boolean;
+  /** Photos (several) or one video, from the post-media bucket. */
+  mediaPaths?: string[];
+  mediaKind?: 'photo' | 'video' | null;
+  thumbPath?: string | null;
+  mediaSeconds?: number | null;
+  edited?: boolean;
+  /** post, question, recommendation or announcement (hosts only). */
+  kind?: 'post' | 'question' | 'recommendation' | 'announcement';
+  category?: string | null;
+  pinnedAt?: number | null;
 };
 
 export type CommunitySummary = {
@@ -189,6 +199,14 @@ function toPost(r: Row, uid: string | undefined): CommunityPost {
     liked: Boolean(r.liked),
     createdAt: Date.parse(r.created_at as string),
     mine: r.author_id === uid,
+    mediaPaths: (r.media_paths as string[] | null) ?? [],
+    mediaKind: (r.media_kind as 'photo' | 'video' | null) ?? null,
+    thumbPath: (r.thumb_path as string | null) ?? null,
+    mediaSeconds: (r.media_seconds as number | null) ?? null,
+    edited: Boolean(r.edited_at),
+    kind: ((r.kind as string) ?? 'post') as CommunityPost['kind'],
+    category: (r.category as string | null) ?? null,
+    pinnedAt: r.pinned_at ? Date.parse(r.pinned_at as string) : null,
   };
 }
 

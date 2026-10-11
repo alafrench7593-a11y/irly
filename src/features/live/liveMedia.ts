@@ -42,20 +42,20 @@ async function posterOf(uri: string): Promise<string | undefined> {
 }
 
 /**
- * Uploads a file to irl-media with progress (0 → 1). Phones send it straight
+ * Uploads a file (irl-media, or post-media for publications) with progress (0 → 1). Phones send it straight
  * from disk through a signed upload link (no copy in memory); the web uses
  * the regular upload.
  */
-export async function uploadLiveFile(path: string, uri: string, type: string, onProgress?: (p: number) => void): Promise<void> {
+export async function uploadLiveFile(path: string, uri: string, type: string, onProgress?: (p: number) => void, bucket: 'irl-media' | 'post-media' = 'irl-media'): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   if (Platform.OS === 'web') {
     const blob = await (await fetch(uri)).blob();
-    const { error } = await supabase.storage.from('irl-media').upload(path, blob, { contentType: type });
+    const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType: type });
     if (error) throw new Error(error.message);
     onProgress?.(1);
     return;
   }
-  const { data, error } = await supabase.storage.from('irl-media').createSignedUploadUrl(path);
+  const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
   if (error || !data) throw new Error(error?.message ?? 'Could not start the upload');
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();

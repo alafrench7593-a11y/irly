@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { isAvatar } from '@/features/avatar/avatar';
-import { imageBytes, imageType } from '@/lib/media';
+import { faceThumb, imageBytes, imageType } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
  * Links are cached until shortly before they expire, so a list does not ask
  * again on every render, and a new path (a changed photo) is a new link.
  */
-export type Bucket = 'profile-photos' | 'activity-photos' | 'chat-media' | 'irl-media';
+export type Bucket = 'profile-photos' | 'activity-photos' | 'chat-media' | 'irl-media' | 'post-media' | 'verifications';
 
 const TTL = 6 * 3600;
 const cache = new Map<string, { url: string; until: number }>();
@@ -41,6 +41,20 @@ export async function signedLinks(bucket: Bucket, paths: (string | null | undefi
     }
   }
   return out;
+}
+
+/** Where the small copy (256 px) of a profile photo lives, next to it. */
+export const thumbOf = (path: string) => path.replace(/(\.[a-z0-9]+)?$/i, '-s.jpg');
+
+/** Stores the small copy of a profile photo next to it (best effort: avatars fall back to the photo). */
+export async function uploadFaceThumb(path: string, source: string): Promise<void> {
+  if (!supabase || Platform.OS === 'web') return;
+  try {
+    const body = await faceThumb(source);
+    await supabase.storage.from('profile-photos').upload(thumbOf(path), body, { contentType: 'image/jpeg', upsert: true });
+  } catch {
+    // The full photo still shows.
+  }
 }
 
 /** Signed links for a list of paths in one bucket (unchanged paths keep their links). */

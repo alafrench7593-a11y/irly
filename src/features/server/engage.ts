@@ -17,7 +17,7 @@ import { changed, useRefreshOn } from './sync';
  * (row level security: only with what you can already see).
  */
 
-export type TargetType = 'irl_post' | 'activity' | 'community' | 'community_post' | 'comment' | 'profile' | 'place' | 'catalog';
+export type TargetType = 'irl_post' | 'activity' | 'community' | 'community_post' | 'comment' | 'profile' | 'place' | 'catalog' | 'news';
 export type Target = { type: TargetType; id: string; title?: string };
 
 /** What a member can report something for (stored with the report). */

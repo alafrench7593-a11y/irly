@@ -146,7 +146,6 @@ function ServerThreadView({ id }: { id: string }) {
     }
   };
   const [info, setInfo] = useState(false);
-  const faces = useSignedLinks('profile-photos', Object.values(thread.members).map((m) => m.photo));
   const media = useSignedLinks(
     'chat-media',
     thread.messages.map((m) => m.media?.path),
@@ -268,7 +267,6 @@ function ServerThreadView({ id }: { id: string }) {
             const showName = !mine && group && prev?.from !== m.from;
             // In a group, the sender's face sits by the last message of their run; tap it for their profile.
             const showFace = !mine && group && (!next || next.from !== m.from);
-            const sender = m.senderId ? thread.members[m.senderId] : undefined;
             const openSender = m.senderId ? () => router.push(`/person/${m.senderId}`) : undefined;
             const photoUri = m.media ? (m.media.path ? media[m.media.path] : null) ?? m.media.local : null;
             return (
@@ -286,7 +284,7 @@ function ServerThreadView({ id }: { id: string }) {
                     {!mine && group ? (
                       showFace ? (
                         <PressableScale haptic="select" scaleTo={0.9} onPress={openSender} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })}>
-                          <Avatar name={m.name ?? '?'} hue={hueOf(m.senderId ?? m.id)} size={30} photo={sender?.photo ? faces[sender.photo] : undefined} userId={m.senderId} />
+                          <Avatar name={m.name ?? '?'} hue={hueOf(m.senderId ?? m.id)} size={30} userId={m.senderId} />
                         </PressableScale>
                       ) : (
                         <View style={{ width: 30 }} />
@@ -412,7 +410,7 @@ function ServerThreadView({ id }: { id: string }) {
             accessibilityLabel={other ? tx('Open {name}’s profile', { name: thread.title }) : tx('About {title}', { title: thread.title })}
           >
             {other ? (
-              <Avatar name={thread.title} hue={hueOf(other)} size={36} photo={thread.members[other]?.photo ? faces[thread.members[other].photo!] : undefined} userId={other} />
+              <Avatar name={thread.title} hue={hueOf(other)} size={36} userId={other} />
             ) : chatPhoto.hasPhoto ? (
               <Photo visual={{ photo: chatPhoto.fallback, uri: chatPhotoUri ?? undefined }} light="dubai" style={styles.chatPhoto} width={120} recyclingKey={`chat-${id}-${chatPhoto.path ?? 'app'}`} />
             ) : null}
@@ -509,7 +507,6 @@ function ServerThreadView({ id }: { id: string }) {
         title={thread.title}
         kind={thread.kind}
         members={thread.members}
-        faces={faces}
         communityId={thread.communityId}
         activityId={thread.activityId}
         canEditPhoto={chatPhoto.canEdit}
@@ -644,7 +641,6 @@ function ChatInfo({
   title,
   kind,
   members,
-  faces,
   communityId,
   activityId,
   canEditPhoto,
@@ -657,7 +653,6 @@ function ChatInfo({
   title: string;
   kind: string | null;
   members: Record<string, { name: string; photo: string | null; admin: boolean }>;
-  faces: Record<string, string>;
   communityId: string | null;
   activityId: string | null;
   canEditPhoto: boolean;
@@ -710,7 +705,7 @@ function ChatInfo({
         </Text>
         {list.map(([uid, m]) => (
           <PressableScale key={uid} haptic="select" scaleTo={0.98} onPress={() => go(`/person/${uid}`)} style={styles.memberRow} accessibilityLabel={tx('Open {name}’s profile', { name: m.name })}>
-            <Avatar name={m.name} hue={hueOf(uid)} size={40} photo={m.photo ? faces[m.photo] : undefined} userId={uid} />
+            <Avatar name={m.name} hue={hueOf(uid)} size={40} userId={uid} />
             <Text variant="titleS" style={{ flex: 1 }} raw>
               {uid === me ? tx('You') : m.name}
             </Text>

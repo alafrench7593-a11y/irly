@@ -36,7 +36,8 @@ export type MemberProfile = {
 
 export type FriendStatus = 'none' | 'outgoing' | 'incoming' | 'friends';
 
-export type MemberPost = { id: string; body: string; at: number; communityId: string; communityName: string };
+/** A post on a profile: in a community, or on the profile itself (communityId null). */
+export type MemberPost = { id: string; body: string; at: number; communityId: string | null; communityName: string };
 export type MemberCommunity = { id: string; name: string; cityId: string; cover: string | null; members: number; tagline: string | null; role: 'created' | 'joined' };
 export type FollowPerson = { id: string; firstName: string; photo: string | null; iFollow: boolean };
 
@@ -210,7 +211,7 @@ export async function openDirect(userId: string): Promise<string> {
 
 /* ───────── Profile tabs: posts, lives, activities (server, as the viewer may see them) ───────── */
 
-export type ProfilePost = MemberPost & { likes: number; comments: number; liked: boolean; media: string | null };
+export type ProfilePost = MemberPost & { likes: number; comments: number; liked: boolean; media: string | null; mediaPaths: string[]; mediaKind: 'photo' | 'video' | null; thumbPath: string | null; mediaSeconds: number | null; edited: boolean };
 export type ProfileLive = { id: string; body: string; media: string | null; video: boolean; poster: string | null; seconds: number | null; areaId: string; placeName: string | null; at: number; expiresAt: number; live: boolean };
 export type ProfileActivity = {
   id: string;
@@ -244,7 +245,7 @@ export function useMemberPosts(userId: string, enabled = true) {
     async (before: string | null): Promise<ProfilePost[]> => {
       let q = sb()
         .from('community_posts')
-        .select('id, body, media_path, created_at, community_id, communities(name)')
+        .select('id, body, media_path, media_paths, media_kind, thumb_path, media_seconds, edited_at, created_at, community_id, communities(name)')
         .eq('author_id', userId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
@@ -252,13 +253,33 @@ export function useMemberPosts(userId: string, enabled = true) {
       if (before) q = q.lt('created_at', before);
       const { data, error } = await q;
       if (error) throw new Error(error.message);
-      const rows = (data as { id: string; body: string; media_path: string | null; created_at: string; community_id: string; communities: { name: string } | { name: string }[] | null }[] | null) ?? [];
+      const rows =
+        (data as
+          | {
+              id: string;
+              body: string;
+              media_path: string | null;
+              media_paths: string[] | null;
+              media_kind: 'photo' | 'video' | null;
+              thumb_path: string | null;
+              media_seconds: number | null;
+              edited_at: string | null;
+              created_at: string;
+              community_id: string | null;
+              communities: { name: string } | { name: string }[] | null;
+            }[]
+          | null) ?? [];
       const counts = rows.length ? await sb().rpc('engagement', { p_type: 'community_post', p_ids: rows.map((r) => r.id) }) : { data: [] };
       const by = new Map(((counts.data as { target_id: string; likes: number; comments: number; liked: boolean }[] | null) ?? []).map((c) => [c.target_id, c]));
       return rows.map((x) => ({
         id: x.id,
         body: x.body,
         media: x.media_path,
+        mediaPaths: x.media_paths ?? [],
+        mediaKind: x.media_kind,
+        thumbPath: x.thumb_path,
+        mediaSeconds: x.media_seconds,
+        edited: Boolean(x.edited_at),
         at: Date.parse(x.created_at),
         communityId: x.community_id,
         communityName: (Array.isArray(x.communities) ? x.communities[0]?.name : x.communities?.name) ?? '',

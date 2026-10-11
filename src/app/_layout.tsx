@@ -30,6 +30,7 @@ import { usePush } from '@/features/push/push';
 import { ReportHost } from '@/features/moderation/ReportSheet';
 import { UnreadSync } from '@/features/server/chat';
 import { BellSync } from '@/features/server/social';
+import { FaceSync } from '@/features/server/faces';
 import { SyncBridge } from '@/features/server/sync';
 import { OfflineBar } from '@/features/server/OfflineBar';
 import { useStore } from '@/state/store';
@@ -100,6 +101,7 @@ function App() {
         <Stack.Screen name="girl/onboarding" options={{ animation: 'slide_from_bottom', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="girl/moving" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="comments" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="post/new" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="share" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="assistant" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="a/[id]" options={{ animation: 'fade_from_bottom' }} />
@@ -116,6 +118,7 @@ function App() {
       <SyncBridge />
       <UnreadSync />
       <BellSync />
+      <FaceSync />
       <CreateHost />
       <DestinationTransition />
       <AppIntro />

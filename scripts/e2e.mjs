@@ -275,19 +275,44 @@ try {
     }
     return must(await A.sb.rpc('irly_match_state')) === 'ready';
   });
-  await step('Alice discovers Bea with a score', async () => {
-    const list = must(await A.sb.rpc('irly_match_discover', { p_filters: {}, p_limit: 50, p_offset: 0 }));
-    const bea = list.find((x) => x.user_id === B.id);
-    return Boolean(bea) && bea.score > 0;
-  });
+  // Match needs a verified profile (a selfie reviewed by an IRLY admin) once
+  // that migration is live: test members are not verified, so Match must
+  // refuse them, and the private chat below is opened directly instead.
+  const verification = !(await A.sb.rpc('my_verification')).error;
+  if (verification) {
+    await step('Match refuses members whose profile is not verified', async () => {
+      const r = await A.sb.rpc('irly_match_discover', { p_filters: {}, p_limit: 50, p_offset: 0 });
+      const p = await A.sb.rpc('people_match', { p_city: 'dubai' });
+      return /verify your profile/i.test(r.error?.message ?? '') && /verify your profile/i.test(p.error?.message ?? '');
+    });
+    await step('nobody can give themselves the verified badge', async () => {
+      await A.sb.from('profiles').update({ verified_at: new Date().toISOString() }).eq('id', A.id);
+      const v = must(await A.sb.rpc('my_verification'));
+      return !v[0]?.verified_at;
+    });
+  } else {
+    await step('Alice discovers Bea with a score', async () => {
+      const list = must(await A.sb.rpc('irly_match_discover', { p_filters: {}, p_limit: 50, p_offset: 0 }));
+      const bea = list.find((x) => x.user_id === B.id);
+      return Boolean(bea) && bea.score > 0;
+    });
+  }
   let matchConv;
-  await step('mutual like → match → private chat', async () => {
-    must(await A.sb.rpc('irly_match_act', { p_target: B.id, p_action: 'like' }));
-    const r = must(await B.sb.rpc('irly_match_act', { p_target: A.id, p_action: 'like' }));
-    matchConv = r[0]?.conversation_id;
-    return Boolean(matchConv);
-  });
-  await step('the match chat has conversation starters and both can write', async () => {
+  if (verification) {
+    await step('a private chat between Alice and Bea', async () => {
+      matchConv = must(await A.sb.rpc('open_direct', { p_user: B.id }));
+      must(await A.sb.from('messages').insert({ conversation_id: matchConv, sender_id: A.id, body: 'Hi Bea!' }));
+      return Boolean(matchConv);
+    });
+  } else {
+    await step('mutual like → match → private chat', async () => {
+      must(await A.sb.rpc('irly_match_act', { p_target: B.id, p_action: 'like' }));
+      const r = must(await B.sb.rpc('irly_match_act', { p_target: A.id, p_action: 'like' }));
+      matchConv = r[0]?.conversation_id;
+      return Boolean(matchConv);
+    });
+  }
+  await step('the private chat: both can write', async () => {
     must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body: 'Brunch this weekend?' }));
     return must(await A.sb.from('messages').select('body').eq('conversation_id', matchConv)).length >= 2;
   });
@@ -439,6 +464,96 @@ try {
   await step('a visitor cannot download a chat photo', async () => Boolean((await anon.storage.from('chat-media').download(own)).error));
   await step('a file that is not an image is refused', () => denied(A.sb.storage.from('chat-media').upload(`${A.id}/page-${run}.html`, new TextEncoder().encode('<script>alert(1)</script>'), { contentType: 'text/html' })));
   await A.sb.storage.from('chat-media').remove([own]);
+  // Avatars show a small copy ("-s.jpg") of the profile photo when it exists, else the photo itself.
+  const face = `${A.id}/avatar-${run}.jpg`;
+  const faceThumb = `${A.id}/avatar-${run}-s.jpg`;
+  await step('profile photo without a small copy: the app gets a link for the photo only', async () => {
+    must(await A.sb.storage.from('profile-photos').upload(face, jpeg, { contentType: 'image/jpeg' }));
+    const links = must(await timed('sign 2 faces', () => B.sb.storage.from('profile-photos').createSignedUrls([faceThumb, face], 3600)));
+    const byPath = Object.fromEntries(links.map((l) => [l.path, l.signedUrl]));
+    if (byPath[faceThumb]) throw new Error('a missing small copy got a link');
+    if (!byPath[face]) throw new Error('the photo got no link');
+    return true;
+  });
+  await step('profile photo with its small copy: both get links, the small copy downloads', async () => {
+    must(await A.sb.storage.from('profile-photos').upload(faceThumb, jpeg, { contentType: 'image/jpeg', upsert: true }));
+    const links = must(await B.sb.storage.from('profile-photos').createSignedUrls([faceThumb, face], 3600));
+    const small = links.find((l) => l.path === faceThumb)?.signedUrl;
+    if (!small || !links.find((l) => l.path === face)?.signedUrl) throw new Error('missing link');
+    const res = await timed('download a face (small copy)', () => fetch(small));
+    return res.ok;
+  });
+  await A.sb.storage.from('profile-photos').remove([face, faceThumb]);
+  // Publications v2: a profile post with photos, readable by members, files follow the post.
+  // Skipped (and said so) until its migration is on the live database.
+  const postsV2 = !(await A.sb.from('community_posts').select('media_paths').limit(1)).error;
+  if (!postsV2) console.log('○ publications v2: migration not deployed yet, steps skipped');
+  const pm = [`${A.id}/post-${run}-0.jpg`, `${A.id}/post-${run}-1.jpg`];
+  let profilePost;
+  if (postsV2) await step('a profile post with two photos and no text is published', async () => {
+    for (const p of pm) must(await A.sb.storage.from('post-media').upload(p, jpeg, { contentType: 'image/jpeg' }));
+    profilePost = must(await timed('publish a post with 2 photos', () => A.sb.from('community_posts').insert({ author_id: A.id, body: '', media_paths: pm, media_kind: 'photo' }).select('id').single())).id;
+    return Boolean(profilePost);
+  });
+  if (postsV2) await step('another member sees the post on the profile and opens its photos', async () => {
+    const rows = must(await B.sb.from('community_posts').select('id, media_paths').eq('author_id', A.id).is('community_id', null));
+    if (!rows.some((r) => r.id === profilePost)) throw new Error('post not visible');
+    const links = must(await B.sb.storage.from('post-media').createSignedUrls(pm, 600));
+    return links.every((l) => l.signedUrl);
+  });
+  if (postsV2) await step('the author edits the post; nobody else can', async () => {
+    must(await A.sb.from('community_posts').update({ body: 'Sunset at JBR' }).eq('id', profilePost));
+    await B.sb.from('community_posts').update({ body: 'hacked' }).eq('id', profilePost);
+    const r = must(await C.sb.from('community_posts').select('body, edited_at').eq('id', profilePost).single());
+    return r.body === 'Sunset at JBR' && Boolean(r.edited_at);
+  });
+  if (postsV2) await step('a deleted post\'s photos are no longer readable by others', async () => {
+    must(await A.sb.from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', profilePost));
+    const links = (await B.sb.storage.from('post-media').createSignedUrls(pm, 600)).data ?? [];
+    return links.every((l) => !l.signedUrl);
+  });
+  if (postsV2) await A.sb.storage.from('post-media').remove(pm);
+  // Communities v2: groups inside communities, hosts-only announcements and pins.
+  const groupsV2 = !(await A.sb.rpc('community_rights', { p_community: '00000000-0000-0000-0000-000000000000' })).error;
+  if (!groupsV2) console.log('○ communities v2: migration not deployed yet, steps skipped');
+  if (groupsV2) await step('a group (Padel) is joined from its community, and joining it joins the community', async () => {
+    const sport = must(await A.sb.from('communities').select('id').eq('official', true).eq('topic', 'sport').eq('city_id', 'dubai').is('parent_id', null).single());
+    const groups = must(await A.sb.rpc('community_subgroups', { p_parent: sport.id }));
+    const padel = groups.find((g) => g.name === 'Padel');
+    if (!padel) throw new Error('no Padel group');
+    must(await timed('join a group', () => A.sb.rpc('join_community', { p_community: padel.id })));
+    const both = must(await A.sb.from('community_members').select('community_id').eq('user_id', A.id).in('community_id', [sport.id, padel.id]));
+    const notHost = (await A.sb.rpc('announce', { p_community: padel.id, p_body: 'Hello everyone' })).error;
+    await A.sb.rpc('leave_community', { p_community: sport.id });
+    return both.length === 2 && Boolean(notHost);
+  });
+  const helpV = groupsV2 && !(await A.sb.rpc('help_groups', { p_city: 'dubai' })).error;
+  if (helpV) await step('Help & Questions: ask in Visa, another member finds it by keywords and answers', async () => {
+    const groups = must(await A.sb.rpc('help_groups', { p_city: 'dubai' }));
+    const visa = groups.find((g) => g.category === 'visa');
+    must(await A.sb.rpc('join_community', { p_community: visa.id }));
+    const q = must(await A.sb.from('community_posts').insert({ community_id: visa.id, author_id: A.id, body: `E2E ${run}: how long is the Emirates ID renewal?`, kind: 'question' }).select('id').single());
+    const found = must(await timed('search help', () => B.sb.rpc('help_feed', { p_city: 'dubai', p_category: 'visa', p_query: `${run} renewal` })));
+    must(await B.sb.from('comments').insert({ target_type: 'community_post', target_id: q.id, author_id: B.id, body: 'About two weeks' }));
+    const again = must(await A.sb.rpc('help_feed', { p_city: 'dubai', p_category: 'visa', p_query: `${run}` }));
+    await A.sb.from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', q.id);
+    await A.sb.rpc('leave_community', { p_community: visa.id });
+    return found.some((x) => x.id === q.id) && again.find((x) => x.id === q.id)?.answers === 1;
+  });
+  await step('opening a chat is one round trip: chat, messages, members with names and photos, my state', async () => {
+    const [conv, msgs, members, mine] = await timed('open a chat', () =>
+      Promise.all([
+        A.sb.from('conversations').select('id, kind, title, community_id, activity_id').eq('id', matchConv).maybeSingle(),
+        A.sb.from('messages').select('id, sender_id, kind, body, created_at, ref_type, ref_id, media_path').eq('conversation_id', matchConv).is('deleted_at', null).order('created_at', { ascending: false }).limit(50),
+        A.sb.rpc('chat_members', { p_conversation: matchConv }),
+        A.sb.from('conversation_members').select('archived_at').eq('conversation_id', matchConv).eq('user_id', A.id).maybeSingle(),
+      ]),
+    );
+    for (const r of [conv, msgs, members, mine]) if (r.error) throw new Error(r.error.message);
+    const ids = members.data.map((m) => m.user_id);
+    return Boolean(conv.data) && msgs.data.length > 0 && ids.includes(A.id) && ids.includes(B.id) && members.data.every((m) => m.first_name && 'photo_path' in m);
+  });
+  await step('a stranger gets no members of a private chat', async () => (must(await C.sb.rpc('chat_members', { p_conversation: matchConv })) ?? []).length === 0);
   await step('Realtime: a stranger receives nothing from a private chat, a member does', async () => {
     const got = { a: 0, c: 0 };
     const sub = (who, key) =>

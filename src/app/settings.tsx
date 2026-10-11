@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
+import { useIsAdmin } from '@/features/verify/verify';
 import { Button } from '@/components/ui/Button';
 import { Chip, Divider } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
@@ -28,7 +29,7 @@ const GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Comments and replies', kinds: ['COMMENT', 'COMMENT_REPLY', 'MENTION'] },
   { label: 'Friends and followers', kinds: ['FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'IRLY_POST_CREATED', 'NEW_FOLLOWER'] },
   { label: 'Activities and events', kinds: ['ACTIVITY_JOINED', 'ACTIVITY_UPDATED', 'ACTIVITY_INVITATION', 'ACTIVITY_REMINDER'] },
-  { label: 'Communities', kinds: ['COMMUNITY_JOINED', 'COMMUNITY_INVITATION', 'COMMUNITY_POST'] },
+  { label: 'Communities', kinds: ['COMMUNITY_JOINED', 'COMMUNITY_INVITATION', 'COMMUNITY_POST', 'COMMUNITY_ANNOUNCEMENT'] },
   { label: 'IRLY Girl matches', kinds: ['MATCH_CREATED', 'MATCH_SUGGESTION', 'MATCH_REMOVED'] },
   { label: 'Networking', kinds: ['PRO_CONNECT_REQUEST', 'PRO_CONNECT_ACCEPTED'] },
 ];
@@ -46,6 +47,7 @@ const AUDIENCE = [
  * muted notification is never created).
  */
 export default function SettingsScreen() {
+  const admin = useIsAdmin();
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
@@ -190,6 +192,11 @@ export default function SettingsScreen() {
             <Button label="Try again" onPress={reload} />
           </View>
         ) : null}
+        <View style={{ gap: 8 }}>
+          <Button label="Verify my profile (for Match)" icon="shield" variant="secondary" full onPress={() => router.push('/verify')} />
+          {admin ? <Button label="IRLY admin: verifications" icon="scanFace" variant="ghost" full onPress={() => router.push('/admin/verifications')} /> : null}
+          {admin ? <Button label="IRLY admin: news sources" icon="news" variant="ghost" full onPress={() => router.push('/admin/news')} /> : null}
+        </View>
         <Audience label="Who can find my profile" value={safety.profile_visibility} onChange={(v) => saveSafety({ profile_visibility: v })} />
         <Audience label="Who sees my IRL moments by default" value={safety.irl_visibility} onChange={(v) => saveSafety({ irl_visibility: v })} />
         <Audience label="Who sees which activities I join" value={safety.activity_visibility} onChange={(v) => saveSafety({ activity_visibility: v })} />
