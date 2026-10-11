@@ -1385,4 +1385,13 @@ select pg_temp.check(not exists (select 1 from public.profiles where first_name 
 select pg_temp.check(not exists (select 1 from public.messages where body = 'Carl message'), 'their messages go with the account (never shown as IRLY''s own)');
 select pg_temp.check(exists (select 1 from public.community_members m join public.communities c on c.id = m.community_id where c.name = 'Carl Club' and m.role = 'owner') or not exists (select 1 from public.community_members m join public.communities c on c.id = m.community_id where c.name = 'Carl Club'), 'their communities keep an owner if anyone is left');
 
+-- ───── Faces: one source for members' photos ─────
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select pg_temp.check((select count(*) from public.profile_faces(array['00000000-0000-0000-0000-00000000000e', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000012']::uuid[])) = 3, 'faces: members see each other''s photo path');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select public.block_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.check((select count(*) from public.profile_faces(array['00000000-0000-0000-0000-000000000011']::uuid[])) = 0, 'faces: nothing across a block');
+select public.unblock_user('00000000-0000-0000-0000-000000000011');
+select pg_temp.as_admin();
+
 \echo 'ALL TESTS PASSED'

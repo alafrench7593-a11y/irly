@@ -123,7 +123,7 @@ export default function GirlsMoving() {
           ) : (
             circle.data.map((m) => (
               <View key={m.userId} style={[styles.card, styles.row]}>
-                <Avatar name={m.firstName} hue={hueOf(m.userId)} size={48} />
+                <Avatar name={m.firstName} hue={hueOf(m.userId)} size={48} userId={m.userId} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="titleS" color={girl.ink} raw>
                     {m.firstName}

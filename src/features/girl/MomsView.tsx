@@ -137,7 +137,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 12 }}>
             {moms.data.map((m) => (
               <PressableScale key={m.userId} haptic="select" scaleTo={0.96} onPress={() => router.push(`/person/${m.userId}`)} accessibilityLabel={tx("View {name}'s profile", { name: m.firstName })} style={[styles.person]}>
-                <Avatar name={m.firstName} hue={hueOf(m.userId)} size={56} />
+                <Avatar name={m.firstName} hue={hueOf(m.userId)} size={56} userId={m.userId} />
                 <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>
                   {m.firstName}
                 </Text>

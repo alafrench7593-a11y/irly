@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { isAvatar } from '@/features/avatar/avatar';
+import { useFace } from '@/features/server/faces';
 import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
 import { initials } from '@/lib/format';
 import { font } from '@/theme/tokens';
@@ -22,6 +23,8 @@ type Props = {
   ring?: boolean;
   /** A real photo (member's profile picture), or an IRLY avatar string (`irly-avatar:v1:...`). */
   photo?: string;
+  /** The member's id: their current profile photo is fetched (shared, kept in sync) and wins over `photo`. */
+  userId?: string | null;
 };
 
 /**
@@ -30,7 +33,9 @@ type Props = {
  * when there is one, covers the initials. Real members show their own
  * photo; example portraits exist only in the demonstration build.
  */
-export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring, photo }: Props) {
+export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring, photo: given, userId }: Props) {
+  const face = useFace(userId);
+  const photo = (userId && face) || given;
   const t = useTheme();
   const night = t.mode === 'night';
   const ringW = ring ? Math.max(2, size * 0.06) : 0;

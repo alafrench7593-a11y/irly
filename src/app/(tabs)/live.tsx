@@ -308,7 +308,7 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
             <View style={styles.head}>
               {/* The author's face and name open their profile. */}
               <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push(`/person/${p.authorId}`)} accessibilityLabel={p.mine ? 'My profile' : tx('Open {name}’s profile', { name: p.firstName })}>
-                <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} />
+                <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} userId={p.authorId} />
               </PressableScale>
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" onPress={() => router.push(`/person/${p.authorId}`)}>{p.mine ? 'You' : p.firstName}</Text>

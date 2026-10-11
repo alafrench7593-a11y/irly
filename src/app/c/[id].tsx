@@ -562,7 +562,7 @@ function PostCard({
   return (
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
       <View style={styles.row}>
-        <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={36} />
+        <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
         <View style={{ flex: 1 }}>
           <Text variant="titleS">{p.mine ? tx('You') : p.firstName}</Text>
           <Text variant="caption" tone="tertiary">

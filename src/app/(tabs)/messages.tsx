@@ -312,7 +312,7 @@ const Row = memo(function Row({ c, lit, unread, face, picture, onLong }: { c: Co
       accessibilityLabel={`${c.title}${unread ? `, ${tx('{n} unread', { n: unread })}` : ''}`}
     >
       {kind === 'private' ? (
-        <Avatar name={c.title} hue={hueOf(c.otherId ?? c.id)} size={56} photo={person?.photo ?? face} online={person?.online} />
+        <Avatar name={c.title} hue={hueOf(c.otherId ?? c.id)} size={56} photo={person?.photo ?? face} online={person?.online} userId={server ? c.otherId : undefined} />
       ) : (
         <View style={[styles.picture, { backgroundColor: t.c.overlay }]}>
           {picture || community ? (

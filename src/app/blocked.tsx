@@ -43,7 +43,7 @@ export default function BlockedMembers() {
         ) : (
           list.map((b) => (
             <View key={b.userId} style={[styles.row, { backgroundColor: t.c.surface }]}>
-              <Avatar name={b.firstName} hue={hueOf(b.userId)} size={44} />
+              <Avatar name={b.firstName} hue={hueOf(b.userId)} size={44} userId={b.userId} />
               <Text variant="titleS" style={{ flex: 1 }} raw>
                 {b.firstName}
               </Text>

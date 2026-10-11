@@ -181,7 +181,7 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
         {/* Identity */}
         <View style={styles.identity}>
           <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-            <Avatar name={p.firstName} hue={hueOf(p.id)} size={96} photo={photo} />
+            <Avatar name={p.firstName} hue={hueOf(p.id)} size={96} photo={photo} userId={p.id} />
           </Animated.View>
           <Animated.View entering={reduced ? undefined : enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
             <Text variant="displayL" align="center" raw>
