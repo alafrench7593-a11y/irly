@@ -48,14 +48,18 @@ jobs:
           echo "All secrets present"
       - name: App Store Connect key
         run: printf '%s' "${{ secrets.ASC_KEY_P8 }}" > asc-api-key.p8
-      - name: Link the Expo project
+      # The Expo project (@alafre/irly) is pinned in app.json (extra.eas.projectId).
+      # Signing is made here with the App Store Connect key (EAS will not
+      # create it in a non-interactive build): see .github/scripts/ios-credentials.mjs.
+      - name: iOS signing (certificate + provisioning profile)
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npx --yes eas-cli@latest init --non-interactive --force
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: node .github/scripts/ios-credentials.mjs
+      - run: npm i -g eas-cli@latest
       - name: Build and send to TestFlight
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          # Lets EAS create the certificate and provisioning profile on its own.
           EXPO_ASC_API_KEY_PATH: ./asc-api-key.p8
           EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
@@ -64,4 +68,9 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
-        run: npx --yes eas-cli@latest build --platform ios --profile production --non-interactive --auto-submit --wait
+        run: |
+          export ASC_KEY_ID="$(printf '%s' "$ASC_KEY_ID" | tr -d '[:space:]')" ASC_ISSUER_ID="$(printf '%s' "$ASC_ISSUER_ID" | tr -d '[:space:]')" ASC_APP_ID="$(printf '%s' "$ASC_APP_ID" | tr -d '[:space:]')"
+          export EXPO_ASC_KEY_ID="$ASC_KEY_ID" EXPO_ASC_ISSUER_ID="$ASC_ISSUER_ID" EXPO_APPLE_TEAM_ID="$(printf '%s' "$EXPO_APPLE_TEAM_ID" | tr -d '[:space:]')"
+          # eas.json cannot read environment variables: fill the submit settings here.
+          node -e "const f='eas.json',j=require('./'+f),i=j.submit.production.ios;i.ascAppId=process.env.ASC_APP_ID;i.ascApiKeyId=process.env.ASC_KEY_ID;i.ascApiKeyIssuerId=process.env.ASC_ISSUER_ID;require('fs').writeFileSync(f,JSON.stringify(j,null,2))"
+          eas build --platform ios --profile production --non-interactive --auto-submit --wait

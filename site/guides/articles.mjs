@@ -7,7 +7,7 @@
  * `pair` links the language versions of the same guide (hreflang).
  */
 /** Site-wide last update; each guide may carry its own `updated` date. */
-export const UPDATED = '2026-10-09';
+export const UPDATED = '2026-10-11';
 
 const app = 'https://getirly.com/app/';
 
@@ -419,7 +419,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-10',
+    updated: '2026-10-11',
     title: '15 Group Activities to Meet People in Dubai | IRLY',
     description: 'Fifteen group activities that make it easy to meet people in Dubai, from run clubs and padel to classes and volunteering, and how to pick the right ones for you.',
     h1: '15 group activities to meet people in Dubai',
@@ -479,7 +479,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Looking for a plan this week?', body: 'Find a group activity around what you like, or create your own, and meet in real life.', label: 'Find an activity' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' }],
   },
   {
     lang: 'fr',
@@ -488,7 +488,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-10',
+    updated: '2026-10-11',
     title: '15 activités de groupe pour rencontrer du monde à Dubaï | IRLY',
     description: 'Quinze activités de groupe qui facilitent les rencontres à Dubaï, des clubs de course au padel en passant par les cours et le bénévolat, et comment choisir les tiennes.',
     h1: '15 activités de groupe pour rencontrer du monde à Dubaï',
@@ -548,7 +548,151 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu cherches un plan cette semaine ?', body: 'Trouve une activité de groupe autour de ce que tu aimes, ou crée la tienne, et retrouvez-vous en vrai.', label: 'Trouver une activité' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' }],
+  },
+  {
+    lang: 'en',
+    pair: 'dubai-networking',
+    path: 'dubai/networking/',
+    cover: 'dubaiMarina',
+    figure: { photo: 'brunch', after: 3 },
+    city: 'Dubai',
+    updated: '2026-10-11',
+    title: 'Networking in Dubai: Where to Meet Entrepreneurs | IRLY',
+    description: 'Where to meet entrepreneurs and professionals in Dubai, from meetups and coworking events to business groups, and how to turn a first conversation into a real contact.',
+    h1: 'Networking in Dubai: where to meet entrepreneurs',
+    lead: 'The best places to meet entrepreneurs in Dubai are small, regular gatherings: industry meetups, coworking community events, business groups and startup evenings. Big conferences help you discover a sector, but contacts are built in rooms where you see the same people again. Pick one or two recurring events in your field, go back several times, and follow up within two days.',
+    sections: [
+      {
+        h2: 'Small and regular beats big and once',
+        html: `<p>A large conference puts you in front of hundreds of people for a few minutes each. A monthly meetup puts you in front of the same twenty people again and again. The second is where trust, and therefore business, comes from.</p>
+<ul>
+<li><strong>Recurring events</strong> let people remember your name and what you do.</li>
+<li><strong>Small groups</strong> leave time for real conversations, not just card swapping.</li>
+<li><strong>A shared topic</strong> (a sector, a skill, a stage of company) gives you something to talk about from the first minute.</li>
+</ul>`,
+      },
+      {
+        h2: 'Where to meet entrepreneurs and professionals',
+        html: `<h3>Industry and startup meetups</h3>
+<p>Tech, marketing, e-commerce, finance, design: most sectors have regular meetups, talks and pitch evenings. Look for the ones that happen every month rather than one-off events.</p>
+<h3>Coworking community events</h3>
+<p>Many coworking spaces run breakfasts, workshops and talks, often open to non-members. Even a day pass can put you in a room with founders and freelancers.</p>
+<h3>Business groups and chambers of commerce</h3>
+<p>Business councils, chambers of commerce and groups organised by nationality or by industry hold regular networking events. They are useful if you work with a specific market or country.</p>
+<h3>Free zone and accelerator communities</h3>
+<p>Companies set up in a free zone, or taking part in an incubator or accelerator programme, often have access to their own events and member networks. Ask what is available when you register.</p>
+<h3>Conferences and trade shows</h3>
+<p>Dubai hosts large events across many sectors throughout the year. Use them to understand a market and meet a few people, then continue the conversation at smaller events.</p>
+<h3>Alumni and professional associations</h3>
+<p>University alumni groups and professional associations bring together people who already share something with you, which makes the first conversation easier.</p>`,
+      },
+      {
+        h2: 'How to make a first conversation count',
+        html: `<ul>
+<li><strong>Say clearly what you do and what you are looking for.</strong> One sentence each. People help those who are easy to help.</li>
+<li><strong>Ask more than you pitch.</strong> What are they working on? What would help them right now?</li>
+<li><strong>Offer something small.</strong> An introduction, an article, a contact. Giving first is remembered.</li>
+<li><strong>Follow up within two days.</strong> A short message recalling where you met and suggesting a coffee works better than a connection request alone.</li>
+<li><strong>Meet again.</strong> One coffee rarely makes a contact. The second and third conversations do.</li>
+</ul>`,
+      },
+      {
+        h2: 'Timing in Dubai',
+        html: `<ul>
+<li><strong>The busy season</strong> runs through the cooler months, when most events and conferences take place.</li>
+<li><strong>Summer</strong> is often quieter, with more people travelling. It can be a good time for one-to-one coffees.</li>
+<li><strong>During Ramadan</strong>, many events move to the evening and the pace changes. Adapt your plans and timing.</li>
+</ul>`,
+      },
+      {
+        h2: 'Mistakes to avoid',
+        html: `<ul>
+<li><strong>Selling in the first minute.</strong> People came to meet, not to be pitched.</li>
+<li><strong>Collecting contacts you never follow up.</strong> Ten real conversations are worth more than a hundred cards.</li>
+<li><strong>Going to everything once.</strong> Choose a few events and become a familiar face.</li>
+<li><strong>Only meeting people from your own sector.</strong> Clients, partners and good ideas often come from next door.</li>
+</ul>`,
+      },
+      {
+        h2: 'Where IRLY fits in',
+        html: `<p>IRLY has a professional networking space: you create a professional profile with your field and what you are looking for, see people whose goals match yours with the reason why, and send a request they can accept before you start a conversation. You can also join professional communities and create small meetups, a coffee, a breakfast, with people from your field. It is one option among others; going back to the same rooms is what builds a network.</p>`,
+      },
+    ],
+    cta: { title: 'Building your network in Dubai?', body: 'Create your professional profile and meet people whose goals match yours.', label: 'Create my pro profile' },
+    related: [{ label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+  },
+  {
+    lang: 'fr',
+    pair: 'dubai-networking',
+    path: 'fr/dubai/networking/',
+    cover: 'dubaiMarina',
+    figure: { photo: 'brunch', after: 3 },
+    city: 'Dubai',
+    updated: '2026-10-11',
+    title: 'Networking à Dubaï : où rencontrer des entrepreneurs | IRLY',
+    description: 'Où rencontrer des entrepreneurs et des professionnels à Dubaï, des meetups aux événements de coworking et aux groupes d’affaires, et comment transformer une première conversation en vrai contact.',
+    h1: 'Networking à Dubaï : où rencontrer des entrepreneurs',
+    lead: 'Les meilleurs endroits pour rencontrer des entrepreneurs à Dubaï sont les rendez-vous petits et réguliers : meetups de secteur, événements de coworking, groupes d’affaires et soirées startup. Les grandes conférences aident à découvrir un secteur, mais les contacts se construisent dans des salles où l’on revoit les mêmes personnes. Choisis un ou deux événements récurrents dans ton domaine, retournes-y plusieurs fois, et relance dans les deux jours.',
+    sections: [
+      {
+        h2: 'Petit et régulier vaut mieux que grand et ponctuel',
+        html: `<p>Une grande conférence te met face à des centaines de personnes, quelques minutes chacune. Un meetup mensuel te met face aux vingt mêmes personnes, encore et encore. C’est le second qui crée la confiance, et donc les affaires.</p>
+<ul>
+<li><strong>Les événements récurrents</strong> permettent aux gens de retenir ton nom et ce que tu fais.</li>
+<li><strong>Les petits groupes</strong> laissent le temps de vraies conversations, pas seulement d’échanger des cartes.</li>
+<li><strong>Un sujet commun</strong> (un secteur, une compétence, un stade d’entreprise) donne de quoi parler dès la première minute.</li>
+</ul>`,
+      },
+      {
+        h2: 'Où rencontrer des entrepreneurs et des professionnels',
+        html: `<h3>Les meetups de secteur et de startups</h3>
+<p>Tech, marketing, e-commerce, finance, design : la plupart des secteurs ont leurs meetups, conférences et soirées de pitch réguliers. Cherche ceux qui ont lieu chaque mois plutôt que les événements uniques.</p>
+<h3>Les événements des espaces de coworking</h3>
+<p>Beaucoup d’espaces de coworking organisent des petits-déjeuners, des ateliers et des conférences, souvent ouverts aux non-membres. Même un pass à la journée peut te mettre dans une salle avec des fondateurs et des freelances.</p>
+<h3>Les groupes d’affaires et chambres de commerce</h3>
+<p>Les conseils d’affaires, les chambres de commerce et les groupes organisés par nationalité ou par secteur tiennent des soirées de networking régulières. Utile si tu travailles avec un marché ou un pays précis.</p>
+<h3>Les communautés de free zones et d’accélérateurs</h3>
+<p>Les entreprises installées en free zone, ou qui suivent un programme d’incubation ou d’accélération, ont souvent accès à leurs propres événements et réseaux de membres. Demande ce qui existe au moment de ton enregistrement.</p>
+<h3>Les conférences et salons professionnels</h3>
+<p>Dubaï accueille de grands événements dans de nombreux secteurs tout au long de l’année. Sers-t’en pour comprendre un marché et rencontrer quelques personnes, puis poursuis la conversation lors d’événements plus petits.</p>
+<h3>Les associations d’anciens élèves et professionnelles</h3>
+<p>Les réseaux d’anciens élèves et les associations professionnelles réunissent des gens qui partagent déjà quelque chose avec toi, ce qui facilite la première conversation.</p>`,
+      },
+      {
+        h2: 'Comment réussir une première conversation',
+        html: `<ul>
+<li><strong>Dis clairement ce que tu fais et ce que tu cherches.</strong> Une phrase pour chaque. On aide plus volontiers ceux qu’il est facile d’aider.</li>
+<li><strong>Pose plus de questions que tu ne présentes.</strong> Sur quoi travaillent-ils ? Qu’est-ce qui les aiderait en ce moment ?</li>
+<li><strong>Propose quelque chose de simple.</strong> Une mise en relation, un article, un contact. Donner en premier, ça se retient.</li>
+<li><strong>Relance dans les deux jours.</strong> Un message court qui rappelle où vous vous êtes rencontrés et propose un café marche mieux qu’une simple demande de connexion.</li>
+<li><strong>Revois-les.</strong> Un café fait rarement un contact. Ce sont la deuxième et la troisième conversation qui comptent.</li>
+</ul>`,
+      },
+      {
+        h2: 'Le bon moment à Dubaï',
+        html: `<ul>
+<li><strong>La haute saison</strong> couvre les mois plus frais, quand se tiennent la plupart des événements et conférences.</li>
+<li><strong>L’été</strong> est souvent plus calme, beaucoup de gens voyagent. C’est un bon moment pour des cafés en tête-à-tête.</li>
+<li><strong>Pendant le Ramadan</strong>, beaucoup d’événements passent en soirée et le rythme change. Adapte tes plans et tes horaires.</li>
+</ul>`,
+      },
+      {
+        h2: 'Les erreurs à éviter',
+        html: `<ul>
+<li><strong>Vendre dès la première minute.</strong> Les gens sont venus rencontrer, pas écouter un pitch.</li>
+<li><strong>Collectionner des contacts sans jamais relancer.</strong> Dix vraies conversations valent mieux que cent cartes.</li>
+<li><strong>Aller à tout, une seule fois.</strong> Choisis quelques événements et deviens un visage familier.</li>
+<li><strong>Ne rencontrer que des gens de ton secteur.</strong> Clients, partenaires et bonnes idées viennent souvent d’à côté.</li>
+</ul>`,
+      },
+      {
+        h2: 'La place d’IRLY',
+        html: `<p>IRLY a un espace de networking professionnel : tu crées un profil pro avec ton domaine et ce que tu cherches, tu vois les personnes dont les objectifs correspondent aux tiens, avec la raison, et tu envoies une demande qu’elles peuvent accepter avant de commencer à discuter. Tu peux aussi rejoindre des communautés professionnelles et créer de petits rendez-vous, un café, un petit-déjeuner, avec des gens de ton secteur. C’est une option parmi d’autres ; c’est en retournant dans les mêmes salles qu’on construit un réseau.</p>`,
+      },
+    ],
+    cta: { title: 'Tu construis ton réseau à Dubaï ?', body: 'Crée ton profil pro et rencontre des personnes dont les objectifs correspondent aux tiens.', label: 'Créer mon profil pro' },
+    related: [{ label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
   },
 ];
 

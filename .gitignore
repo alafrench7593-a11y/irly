@@ -42,3 +42,8 @@ yarn-error.*
 .env
 asc-api-key.p8
 out
+
+# iOS signing made in CI (never committed)
+credentials.json
+ios-signing/
+asc-api-key.p8

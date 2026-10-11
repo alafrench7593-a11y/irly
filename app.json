@@ -19,7 +19,6 @@
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleAllowMixedLocalizations": true
       },
-      "buildNumber": "1",
       "privacyManifests": {
         "NSPrivacyTracking": false,
         "NSPrivacyTrackingDomains": [],
@@ -95,7 +94,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "IRLY centres the map on where you are when you tap \"My location\". Your position stays on your phone and is never shared with other members.",
+          "locationWhenInUsePermission": "IRLY centres the map on where you are when you tap “My location”. Your position stays on your phone and is never shared with other members.",
           "locationAlwaysAndWhenInUsePermission": false,
           "locationAlwaysPermission": false,
           "isIosBackgroundLocationEnabled": false
@@ -124,6 +123,12 @@
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "owner": "alafre",
+    "extra": {
+      "eas": {
+        "projectId": "9cf85d68-dddb-45da-9ccc-4a4b358e83c2"
+      }
     }
   }
 }
