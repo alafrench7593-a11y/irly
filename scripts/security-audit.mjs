@@ -107,5 +107,21 @@ show(c.external_phone_enabled ? 'INFO' : 'OK', 'phone sign-in', c.external_phone
 show('INFO', 'MFA (TOTP) available', !!c.mfa_totp_enroll_enabled);
 show('INFO', 'redirect URLs allowed', (c.uri_allow_list ?? '').split(',').filter(Boolean).length);
 
+
+// Push notifications, in figures only (no address, no token, no text):
+// are phones registered, do pushes leave, what do Expo and Apple answer?
+section('Push notifications (last 24 hours)');
+const tokens = await sql(`select platform, count(*)::int as n, max(updated_at) as last from public.push_tokens group by platform order by 1`);
+tokens.length ? tokens.forEach((t) => line('INFO', `${t.platform ?? '?'} phones registered: ${t.n} (last ${t.last})`)) : line('INFO', 'no phone registered for notifications yet');
+const outbox = await sql(`select count(*)::int as total, count(*) filter (where handled_at is not null and error is null)::int as delivered_to_expo,
+  count(*) filter (where error is not null)::int as errors, count(*) filter (where handled_at is null)::int as waiting
+  from public.push_outbox where created_at > now() - interval '24 hours'`);
+const o = outbox[0];
+line('INFO', `pushes: ${o.total} · accepted by Expo: ${o.delivered_to_expo} · errors: ${o.errors} · waiting: ${o.waiting}`);
+const errs = await sql(`select error, count(*)::int as n from public.push_outbox where error is not null and created_at > now() - interval '24 hours' group by 1 order by 2 desc limit 5`);
+errs.forEach((e) => line('INFO', `error "${e.error}": ${e.n}`));
+const cron = await sql(`select jobname, active from cron.job where jobname like 'irly-%' order by 1`).catch(() => []);
+cron.length ? cron.forEach((j) => line(j.active ? 'OK' : 'MEDIUM', `scheduled job ${j.jobname}: ${j.active ? 'active' : 'inactive'}`)) : line('MEDIUM', 'no scheduled push job found');
+
 console.log(critical ? `\n${critical} critical finding(s)` : '\nNo critical finding');
 process.exit(critical ? 1 : 0);
