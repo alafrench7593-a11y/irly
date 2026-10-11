@@ -84,7 +84,7 @@ if (invite) {
     method: 'POST',
     headers: { Authorization: `Bearer ${jwt}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      data: { type: 'userInvitations', attributes: { email: invite, firstName: 'Samuel', lastName: 'Princivil', roles: ['DEVELOPER'], allAppsVisible: true, provisioningAllowed: false } },
+      data: { type: 'userInvitations', attributes: { email: invite, firstName: 'IRLY', lastName: 'Team', roles: ['DEVELOPER'], allAppsVisible: true, provisioningAllowed: false } },
     }),
   });
   const j = await r.json().catch(() => ({}));
