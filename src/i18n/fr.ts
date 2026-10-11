@@ -3715,4 +3715,7 @@ export const fr: Record<string, string> = {
   'Pick at least 3 interests': 'Choisis au moins 3 centres d’intérêt',
   'Pick at least 3 interests and IRLY can start introducing you to people and plans.': 'Choisis au moins 3 centres d’intérêt et IRLY pourra te présenter des personnes et des plans.',
   'Create your account to meet people, join activities and discover your city.': 'Crée ton compte pour rencontrer des personnes, rejoindre des activités et découvrir ta ville.',
+  'You follow': 'Abonné·e ✓',
+  'Follow: see their posts, no approval needed. Friends: they accept, then you can chat and see each other’s Lives.': 'Suivre : tu vois ses publications, sans validation. Amis : la personne accepte, puis vous pouvez discuter et voir vos Lives.',
+  'IRLY did not answer in time. Check your connection and try again.': 'IRLY n’a pas répondu à temps. Vérifie ta connexion et réessaie.',
 };

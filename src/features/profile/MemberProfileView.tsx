@@ -327,7 +327,7 @@ function Actions({ p, busy, onFriend, onFollow, onMessage }: { p: MemberProfile;
       <View style={styles.buttons}>
         <View style={{ flex: 1 }}>
           <Button
-            label={p.iFollow ? 'Following' : p.followsMe ? 'Follow back' : 'Follow'}
+            label={p.iFollow ? 'You follow' : p.followsMe ? 'Follow back' : 'Follow'}
             icon={p.iFollow ? 'userCheck' : 'userPlus'}
             variant={p.iFollow ? 'secondary' : 'primary'}
             loading={busy === 'follow'}
@@ -347,6 +347,10 @@ function Actions({ p, busy, onFriend, onFollow, onMessage }: { p: MemberProfile;
           />
         </View>
       </View>
+      {/* Two different links, said plainly: following needs no approval; a friend request does. */}
+      <Text variant="caption" tone="tertiary" align="center">
+        Follow: see their posts, no approval needed. Friends: they accept, then you can chat and see each other’s Lives.
+      </Text>
       <Button label="Message" icon="message" variant="secondary" loading={busy === 'message'} full disabled={!p.canMessage} onPress={onMessage} />
       {p.friendStatus !== 'none' ? (
         <PressableScale

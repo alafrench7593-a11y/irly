@@ -18,12 +18,46 @@ import { secureSessionStorage } from '@/lib/secureSession';
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://yqutcmgslwxcmnsqmhvy.supabase.co';
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v';
 
+/**
+ * No request may wait forever: a phone on a bad network can leave a request
+ * hanging, and every button waiting on it spins without end. Reads and
+ * actions give up after 20 s, file uploads after 3 min; the caller then shows
+ * an error and lets the member try again.
+ */
+export class TimeoutError extends Error {
+  constructor() {
+    super('IRLY did not answer in time. Check your connection and try again.');
+  }
+}
+/** A server or network error in words a member understands (the server's own refusals pass through). */
+export function friendlyError(message: string): string {
+  if (/did not answer|abort/i.test(message)) return 'IRLY did not answer in time. Check your connection and try again.';
+  if (/fetch|network|Failed to fetch|Network request failed/i.test(message)) return 'No connection: try again';
+  if (/JWT|token is expired|sign in required/i.test(message)) return 'Your session has ended. Sign in again';
+  return message;
+}
+const timedFetch: typeof fetch = (input, init) => {
+  const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  const limit = /\/storage\/v1\/object/.test(href) && init?.method && init.method !== 'GET' ? 180_000 : 20_000;
+  const ctrl = new AbortController();
+  const outer = init?.signal;
+  if (outer) outer.addEventListener('abort', () => ctrl.abort(), { once: true });
+  const timer = setTimeout(() => ctrl.abort(), limit);
+  return fetch(input, { ...init, signal: ctrl.signal })
+    .catch((e) => {
+      if (ctrl.signal.aborted && !outer?.aborted) throw new TimeoutError();
+      throw e;
+    })
+    .finally(() => clearTimeout(timer));
+};
+
 export const supabase: SupabaseClient | null =
   // The demo never talks to the server: nothing a visitor does is saved.
   !DEMO && url && anonKey.length > 20
     ? createClient(url, anonKey, {
         // Phones keep the session in the Keychain / Keystore; the web keeps it in the browser.
         auth: { storage: Platform.OS === 'web' ? AsyncStorage : secureSessionStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: Platform.OS === 'web', flowType: 'implicit' },
+        global: { fetch: timedFetch },
       })
     : null;
 

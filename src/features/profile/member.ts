@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
-import { supabase } from '@/lib/supabase';
+import { friendlyError, supabase } from '@/lib/supabase';
 import { askPushInContext } from '@/features/push/push';
 
 /**
@@ -138,7 +138,7 @@ export function setFollow(userId: string, on: boolean): Promise<void> {
   if (running) return running;
   const p = (async () => {
     const { error } = await sb().rpc(on ? 'follow_user' : 'unfollow_user', { p_user: userId });
-    if (error) throw new Error(/fetch|network/i.test(error.message) ? 'No connection: try again' : error.message);
+    if (error) throw new Error(friendlyError(error.message));
     changed('follows');
   })().finally(() => inFlight.delete(k));
   inFlight.set(k, p);
@@ -168,8 +168,7 @@ export function setFriend(userId: string, action: 'add' | 'remove'): Promise<Fri
 }
 
 function friendError(m: string): string {
-  if (/fetch|network/i.test(m)) return 'No connection: try again';
-  if (/sign in|JWT|token/i.test(m)) return 'Your session has ended. Sign in again';
+  if (/did not answer|abort|fetch|network|JWT|token is expired|sign in required/i.test(m)) return friendlyError(m);
   if (/not available/i.test(m)) return 'This member is not available';
   if (/that is you/i.test(m)) return 'This is your own profile';
   return m;

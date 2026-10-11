@@ -75,7 +75,7 @@ export default function FollowsScreen() {
                 </Text>
               </PressableScale>
               {p.id !== list.me ? (
-                <Button label={p.iFollow ? 'Following' : 'Follow'} size="sm" variant={p.iFollow ? 'secondary' : 'primary'} loading={busy === p.id} onPress={() => toggle(p.id, !p.iFollow)} />
+                <Button label={p.iFollow ? 'You follow' : 'Follow'} size="sm" variant={p.iFollow ? 'secondary' : 'primary'} loading={busy === p.id} onPress={() => toggle(p.id, !p.iFollow)} />
               ) : null}
             </Animated.View>
           ))

@@ -4,7 +4,7 @@ import { useCityFilter } from './scope';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
-import { supabase, topic } from '@/lib/supabase';
+import { friendlyError, supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { cleanImage } from '@/lib/media';
 
@@ -266,7 +266,7 @@ export function useFriends(): { friends: Friend[]; refresh: () => void } {
 export async function addFriend(userId: string): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data, error } = await supabase.rpc('add_friend', { p_user: userId });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
   changed('friends', 'notifs');
   return data as string;
 }

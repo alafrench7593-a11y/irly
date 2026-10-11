@@ -39,7 +39,21 @@ async function writeSecure(key: string, value: string): Promise<void> {
   await SecureStore.setItemAsync(`${safe(key)}.n`, String(n), OPTS);
 }
 
-export const secureSessionStorage = {
+/**
+ * Supabase reads the session before every request. The Keychain is slow
+ * (several calls per read), so the session is kept in memory after the first
+ * read and written through: one Keychain read per launch, not one per request.
+ * Writes are queued so two refreshes never interleave their parts.
+ */
+const memory = new Map<string, string | null>();
+let writes: Promise<unknown> = Promise.resolve();
+const queue = <T>(job: () => Promise<T>): Promise<T> => {
+  const run = writes.then(job, job);
+  writes = run.catch(() => undefined);
+  return run;
+};
+
+const stored = {
   async getItem(key: string): Promise<string | null> {
     try {
       const v = await readSecure(key);
@@ -66,5 +80,22 @@ export const secureSessionStorage = {
   async removeItem(key: string): Promise<void> {
     await clearSecure(key).catch(() => undefined);
     await AsyncStorage.removeItem(key);
+  },
+};
+
+export const secureSessionStorage = {
+  async getItem(key: string): Promise<string | null> {
+    if (memory.has(key)) return memory.get(key)!;
+    const v = await queue(() => stored.getItem(key));
+    memory.set(key, v);
+    return v;
+  },
+  async setItem(key: string, value: string): Promise<void> {
+    memory.set(key, value);
+    await queue(() => stored.setItem(key, value));
+  },
+  async removeItem(key: string): Promise<void> {
+    memory.set(key, null);
+    await queue(() => stored.removeItem(key));
   },
 };
