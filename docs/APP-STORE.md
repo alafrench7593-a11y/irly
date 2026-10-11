@@ -157,5 +157,5 @@ Mise en forme conseillée : fond noir IRLY, titre en blanc (Manrope, gras), capt
 | Classification d'âge | ⏳ À remplir (17+ conseillé) |
 
 **Étiquettes de confidentialité (App Privacy)** — données liées à l'utilisateur, utilisées pour le fonctionnement de l'app, non utilisées pour le suivi (tracking) :
-Contact (e-mail ; téléphone si connexion par SMS) · Contenu utilisateur (photos, messages, publications) · Identifiants (ID utilisateur) · Localisation approximative (quartier choisi ; la position exacte n'est pas envoyée) · Données d'utilisation (interactions dans l'app) · Diagnostic si un outil de crash est ajouté plus tard.
+Contact (e-mail uniquement : pas de connexion par téléphone) · Contenu utilisateur (photos, messages, publications) · Identifiants (ID utilisateur) · Localisation approximative (quartier choisi ; la position exacte n'est pas envoyée) · Données d'utilisation (interactions dans l'app) · Diagnostic si un outil de crash est ajouté plus tard.
 À confirmer ligne à ligne avec la politique de confidentialité avant l'envoi.

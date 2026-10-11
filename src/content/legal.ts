@@ -21,7 +21,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       {
         title: 'What we collect and why',
         body: [
-          'Account: your email address or phone number, used to sign you in and secure your account. If you sign in with Apple or Google, we receive the email address they share.',
+          'Account: your email address, used to sign you in and secure your account. If you sign in with Apple or Google, we receive the email address they share.',
           `Profile: first name, age (stored as a birth year), gender, city, country of origin, languages, bio, interests, what you are looking for and a profile photo. Used to show your profile to other members and to suggest people and activities. You must be ${APP.minimumAge} or older.`,
           'Optional profile details: faith (never shown to other members, never used to rank or filter people) and the date you arrived in your city.',
           'Professional profile (Networking, optional): role, job title, company, industries, skills, current project, what you look for and offer, goals and a neighbourhood. Used to show you to other professionals and calculate matches.',
@@ -54,7 +54,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
           'Apple and Google sign-in, if you choose them.',
           'Map tiles from the map provider of your phone (Apple Maps on iPhone, Google Maps on Android). On the web version, map tiles come from OpenFreeMap (OpenStreetMap data).',
           'Pictures and videos shown in the app are loaded from image hosts (Unsplash, GitHub Pages and getirly.com), which receive your IP address like any website. The IRLY website loads Google Fonts.',
-          'If phone-number sign-in is turned on, the text message with your code is sent by an SMS provider: [LEGAL INFORMATION REQUIRED].',
+          'IRLY does not offer sign-in by phone number and uses no SMS provider.',
           'Some providers (the Expo push service, Apple and Google) may process data in the United States or other countries. The contractual safeguards that cover these transfers: [LEGAL INFORMATION REQUIRED].',
         ],
       },
@@ -207,7 +207,7 @@ export const LEGAL_FR: typeof LEGAL = {
       {
         title: 'Ce que nous collectons et pourquoi',
         body: [
-          'Compte : ton adresse e-mail ou ton numéro de téléphone, pour te connecter et sécuriser ton compte. Si tu te connectes avec Apple ou Google, nous recevons l’adresse e-mail qu’ils partagent.',
+          'Compte : ton adresse e-mail, pour te connecter et sécuriser ton compte. Si tu te connectes avec Apple ou Google, nous recevons l’adresse e-mail qu’ils partagent.',
           `Profil : prénom, âge (enregistré sous forme d’année de naissance), genre, ville, pays d’origine, langues, bio, centres d’intérêt, ce que tu recherches et une photo de profil. Utilisés pour montrer ton profil aux autres membres et te suggérer des personnes et des activités. Tu dois avoir au moins ${APP.minimumAge} ans.`,
           'Détails facultatifs du profil : religion (jamais montrée aux autres membres, jamais utilisée pour classer ou filtrer des personnes) et la date de ton arrivée dans ta ville.',
           'Profil professionnel (Networking, facultatif) : rôle, intitulé de poste, entreprise, secteurs, compétences, projet en cours, ce que tu cherches et proposes, objectifs et un quartier. Utilisé pour te montrer à d’autres professionnels et calculer les correspondances.',
@@ -240,7 +240,7 @@ export const LEGAL_FR: typeof LEGAL = {
           'La connexion avec Apple et Google, si tu la choisis.',
           'Les fonds de carte du fournisseur de ton téléphone (Plans d’Apple sur iPhone, Google Maps sur Android). Sur la version web, les fonds de carte viennent d’OpenFreeMap (données OpenStreetMap).',
           'Les images et vidéos affichées dans l’app sont chargées depuis des hébergeurs d’images (Unsplash, GitHub Pages et getirly.com), qui reçoivent ton adresse IP comme n’importe quel site. Le site IRLY charge Google Fonts.',
-          `Si la connexion par numéro de téléphone est activée, le SMS contenant ton code est envoyé par un prestataire SMS : ${LEGAL_REQUIRED}.`,
+          'IRLY ne propose pas de connexion par numéro de téléphone et n’utilise aucun prestataire SMS.',
           `Certains prestataires (le service push d’Expo, Apple et Google) peuvent traiter des données aux États-Unis ou dans d’autres pays. Les garanties contractuelles qui encadrent ces transferts : ${LEGAL_REQUIRED}.`,
         ],
       },
