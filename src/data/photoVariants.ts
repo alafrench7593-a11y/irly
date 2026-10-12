@@ -26,7 +26,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/dubaiCreek-2-{w}.jpg"
  ],
  "jlt": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/jlt-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/jlt-2-{w}.jpg"
  ],
  "abudhabi": [
@@ -49,22 +48,16 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/rak-3-{w}.jpg"
  ],
  "fujairah": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/fujairah-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/fujairah-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/fujairah-3-{w}.jpg"
  ],
  "fort": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/fort-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/fort-2-{w}.jpg"
- ],
- "uaq": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/uaq-1-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/fort-1-{w}.jpg"
  ],
  "bali": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/bali-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/bali-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/bali-3-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/bali-4-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/bali-5-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/bali-6-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/bali-7-{w}.jpg"
@@ -107,15 +100,9 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/paris-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/paris-2-{w}.jpg"
  ],
- "football": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/football-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/football-2-{w}.jpg"
- ],
  "padel": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/padel-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/padel-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/padel-3-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/padel-4-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/padel-5-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/padel-6-{w}.jpg"
  ],
@@ -165,7 +152,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-3-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-4-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-5-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-6-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-7-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-8-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-9-{w}.jpg"
@@ -174,15 +160,9 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/surf-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/surf-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/surf-3-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/surf-4-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/surf-5-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/surf-6-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/surf-7-{w}.jpg"
- ],
- "hikeDesert": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/hikeDesert-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/hikeDesert-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/hikeDesert-3-{w}.jpg"
  ],
  "waterfall": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/waterfall-1-{w}.jpg",
@@ -206,7 +186,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-3-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-4-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-5-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-6-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-7-{w}.jpg"
@@ -214,23 +193,19 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
  "dinnerGroup": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-3-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-4-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-3-{w}.jpg"
  ],
  "rooftop": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-3-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-2-{w}.jpg"
  ],
  "rooftopNeon": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/rooftopNeon-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/rooftopNeon-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/rooftopNeon-3-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/rooftopNeon-4-{w}.jpg"
  ],
  "djSunset": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/djSunset-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/djSunset-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/djSunset-3-{w}.jpg"
  ],
  "brunch": [
@@ -263,20 +238,14 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/coffeeBar-3-{w}.jpg"
  ],
  "beachClub": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/beachClub-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/beachClub-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/beachClub-3-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/beachClub-1-{w}.jpg"
  ],
  "beachSunset": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-3-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-4-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-5-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-6-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-7-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-8-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-9-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-7-{w}.jpg"
  ],
  "gallery": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-1-{w}.jpg",
@@ -284,15 +253,12 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-3-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-4-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-5-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-6-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-7-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-8-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-9-{w}.jpg"
  ],
  "nightMarket": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/nightMarket-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/nightMarket-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/nightMarket-3-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/nightMarket-4-{w}.jpg"
  ],
  "coworking": [
@@ -323,11 +289,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/meeting-10-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/meeting-11-{w}.jpg"
  ],
- "office": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/office-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/office-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/office-3-{w}.jpg"
- ],
  "accountant": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/accountant-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/accountant-2-{w}.jpg",
@@ -341,13 +302,10 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/apartment-5-{w}.jpg"
  ],
  "cleanHome": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/cleanHome-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/cleanHome-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/cleanHome-3-{w}.jpg"
  ],
  "villa": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/villa-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/villa-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/villa-3-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/villa-4-{w}.jpg"
  ],
@@ -357,9 +315,7 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/scooter-3-{w}.jpg"
  ],
  "car": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/car-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/car-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/car-3-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/car-2-{w}.jpg"
  ],
  "passport": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/passport-1-{w}.jpg",
@@ -367,18 +323,14 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/passport-3-{w}.jpg"
  ],
  "boxes": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/boxes-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/boxes-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/boxes-3-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/boxes-1-{w}.jpg"
  ],
  "newHome": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/newHome-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/newHome-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/newHome-3-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/newHome-4-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/newHome-3-{w}.jpg"
  ],
  "tools": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/tools-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/tools-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/tools-3-{w}.jpg"
  ],
@@ -392,7 +344,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/burjKhalifa-2-{w}.jpg"
  ],
  "sailing": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/sailing-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/sailing-2-{w}.jpg"
  ],
  "jbr": [
@@ -400,11 +351,9 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/jbr-2-{w}.jpg"
  ],
  "kitesurf": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/kitesurf-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/kitesurf-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/kitesurf-1-{w}.jpg"
  ],
  "familyBeach": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/familyBeach-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/familyBeach-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/familyBeach-3-{w}.jpg"
  ],
@@ -413,11 +362,9 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/camping-2-{w}.jpg"
  ],
  "glamping": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/glamping-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/glamping-2-{w}.jpg"
  ],
  "marathon": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/marathon-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/marathon-2-{w}.jpg"
  ],
  "girlFriends": [
@@ -427,8 +374,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
  ],
  "girlSunset": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/girlSunset-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlSunset-2-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlSunset-3-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/girlSunset-4-{w}.jpg"
  ],
  "girlShopping": [
@@ -448,12 +393,10 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/girlWaterfall-2-{w}.jpg"
  ],
  "girlClass": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlClass-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlClass-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/girlClass-1-{w}.jpg"
  ],
  "girlBookClub": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/girlBookClub-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlBookClub-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/girlBookClub-3-{w}.jpg"
  ],
  "momPlaydate": [
@@ -498,21 +441,12 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/girlFitness-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/girlFitness-3-{w}.jpg"
  ],
- "girlSurf": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlSurf-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlSurf-2-{w}.jpg"
- ],
- "girlDinner": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlDinner-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/girlDinner-2-{w}.jpg"
- ],
  "momBaby": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/momBaby-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/momBaby-2-{w}.jpg"
  ],
  "momBeach": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/momBeach-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/momBeach-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/momBeach-1-{w}.jpg"
  ],
  "arcade": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/arcade-1-{w}.jpg",
@@ -543,8 +477,7 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/beauty-2-{w}.jpg"
  ],
  "bowling": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-1-{w}.jpg"
  ],
  "burger": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/burger-1-{w}.jpg",
@@ -562,21 +495,15 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/climbing-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/climbing-2-{w}.jpg"
  ],
- "comedy": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/comedy-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/comedy-2-{w}.jpg"
- ],
  "concert": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/concert-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/concert-2-{w}.jpg"
  ],
  "cooking": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-1-{w}.jpg"
  ],
  "cricket": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/cricket-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/cricket-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/cricket-1-{w}.jpg"
  ],
  "dance": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/dance-1-{w}.jpg",
@@ -590,8 +517,7 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/developer-1-{w}.jpg"
  ],
  "dhow": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/dhow-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/dhow-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/dhow-1-{w}.jpg"
  ],
  "diving": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/diving-1-{w}.jpg",
@@ -610,8 +536,7 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/education-2-{w}.jpg"
  ],
  "family": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/family-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/family-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/family-1-{w}.jpg"
  ],
  "fashion": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/fashion-1-{w}.jpg",
@@ -645,8 +570,7 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/horse-2-{w}.jpg"
  ],
  "horseRiding": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/horseRiding-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/horseRiding-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/horseRiding-1-{w}.jpg"
  ],
  "indianFood": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/indianFood-1-{w}.jpg",
@@ -661,16 +585,14 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/italianFood-2-{w}.jpg"
  ],
  "japaneseFood": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/japaneseFood-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/japaneseFood-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/japaneseFood-1-{w}.jpg"
  ],
  "karaoke": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/karaoke-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/karaoke-2-{w}.jpg"
  ],
  "karting": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/karting-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/karting-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/karting-1-{w}.jpg"
  ],
  "kids": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/kids-1-{w}.jpg",
@@ -679,9 +601,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
  "koreanFood": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/koreanFood-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/koreanFood-2-{w}.jpg"
- ],
- "lake": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/lake-1-{w}.jpg"
  ],
  "legal": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/legal-1-{w}.jpg",
@@ -696,12 +615,10 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/logistics-2-{w}.jpg"
  ],
  "luxury": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/luxury-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/luxury-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/luxury-1-{w}.jpg"
  ],
  "mall": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/mall-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/mall-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/mall-3-{w}.jpg"
  ],
  "massage": [
@@ -724,7 +641,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/nature-2-{w}.jpg"
  ],
  "petCafe": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/petCafe-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/petCafe-2-{w}.jpg"
  ],
  "photography": [
@@ -751,13 +667,8 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/roadtrip-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/roadtrip-2-{w}.jpg"
  ],
- "rollerblade": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/rollerblade-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/rollerblade-2-{w}.jpg"
- ],
  "sauna": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/sauna-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/sauna-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/sauna-1-{w}.jpg"
  ],
  "skate": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/skate-1-{w}.jpg",
@@ -772,7 +683,6 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/snorkel-2-{w}.jpg"
  ],
  "souk": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/souk-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/souk-2-{w}.jpg"
  ],
  "spa": [
@@ -799,25 +709,19 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/tableTennis-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/tableTennis-2-{w}.jpg"
  ],
- "theatre": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/theatre-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/theatre-2-{w}.jpg"
- ],
  "themePark": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/themePark-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/themePark-2-{w}.jpg"
  ],
  "vr": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/vr-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/vr-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/vr-1-{w}.jpg"
  ],
  "waterPark": [
   "https://alafrench7593-a11y.github.io/irly/photos/v/waterPark-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/waterPark-2-{w}.jpg"
  ],
  "writing": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/writing-1-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/writing-2-{w}.jpg"
+  "https://alafrench7593-a11y.github.io/irly/photos/v/writing-1-{w}.jpg"
  ]
 };
 // Photo keys with a film of their own (site/video/k-<key>.mp4).

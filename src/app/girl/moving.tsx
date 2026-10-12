@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { destinationOpen } from '@/data/destinations';
 import { dateLocale, t as tx } from '@/i18n';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -196,6 +197,8 @@ export default function GirlsMoving() {
           ))}
         </View>
 
+        {/* Bali's guides, while Bali is open (it is coming soon for now). */}
+        {destinationOpen('bali') ? (
         <View style={[styles.pad, { gap: 10 }]}>
           <Text variant="titleM" color={girl.ink}>
             Before you land
@@ -205,6 +208,7 @@ export default function GirlsMoving() {
           <GButton label="Housing guide" icon="home" variant="secondary" onPress={() => router.push('/bali/guide/housing')} />
           <GButton label="My Bali move checklist" icon="package" variant="secondary" onPress={() => router.push('/bali/move')} />
         </View>
+        ) : null}
       </ScrollView>
     </View>
   );

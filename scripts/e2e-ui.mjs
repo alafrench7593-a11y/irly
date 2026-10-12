@@ -78,6 +78,8 @@ async function main() {
       'irly-v2',
       JSON.stringify({ state: { onboarded: true, storySeen: 99, destinationId: 'bali', cityId: 'bali', profile: { name: 'Uma', types: ['nomad'], interests: [], activities: [], languages: ['English'], lookingFor: ['friends'], gender: 'woman', age: 32, since: 'new' } }, version: 1 }),
     );
+    // Bali is coming soon for people; the tests preview it (its screens stay covered).
+    localStorage.setItem('irly-preview', 'bali');
     localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   });
 

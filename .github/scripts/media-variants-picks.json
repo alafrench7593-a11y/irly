@@ -124,14 +124,6 @@
   ],
   "jlt": [
    {
-    "id": "pixabay-8357170",
-    "hash": "0011011101110011011010100001010100010110001100111001010111000100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/jlt-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/hallstatt-lake-village-tourism-8357170/",
-    "by": "Leonhard_Niederwimmer",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-5740306",
     "hash": "0000110000100100001001001010010010100100101001000010010100011101",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/jlt-2-{w}.jpg",
@@ -239,14 +231,6 @@
   ],
   "fujairah": [
    {
-    "id": "pixabay-5111755",
-    "hash": "0111101111111001011111101001100110100001001100101011110110100001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/fujairah-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/oil-industry-mountain-oil-farm-5111755/",
-    "by": "Capt-M",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-3106509",
     "hash": "0000111100011010100101101001001100111101001100000011011110001101",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/fujairah-2-{w}.jpg",
@@ -271,26 +255,9 @@
     "page": "https://pixabay.com/photos/old-fort-jahili-fort-al-ain-2280457/",
     "by": "Lloyd_De_Jongh",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4782737",
-    "hash": "0000010100001111001101100001001000011111000110111001001110011011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/fort-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/fort-rajgad-fort-india-maharashtra-4782737/",
-    "by": "kiranbobde2607",
-    "license": "Pixabay licence"
    }
   ],
-  "uaq": [
-   {
-    "id": "pixabay-4960004",
-    "hash": "0000000100000001000000110000000100000101010001010111001100010000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/uaq-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/burj-al-arab-dubai-hotel-4960004/",
-    "by": "8268513",
-    "license": "Pixabay licence"
-   }
-  ],
+  "uaq": [],
   "bali": [
    {
     "id": "pixabay-7969001",
@@ -314,14 +281,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/bali-3-{w}.jpg",
     "page": "https://pixabay.com/photos/woman-rituals-tradition-bali-7790612/",
     "by": "18531141",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-7831449",
-    "hash": "1100111110011001100101110001011100010011001100111001010110101101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/bali-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/bali-myna-bali-starling-myna-7831449/",
-    "by": "ambquinn",
     "license": "Pixabay licence"
    },
    {
@@ -541,24 +500,7 @@
     "license": "Pixabay licence"
    }
   ],
-  "football": [
-   {
-    "id": "pixabay-1867185",
-    "hash": "0001111100001111000011110001111101001101000001110000111100001011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/football-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/athletes-american-football-players-1867185/",
-    "by": "Pexels",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-1851168",
-    "hash": "0000000000011000100110101001100000111100001111000001110010011000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/football-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/american-football-athlete-ball-1851168/",
-    "by": "Pexels",
-    "license": "Pixabay licence"
-   }
-  ],
+  "football": [],
   "padel": [
    {
     "id": "pixabay-6612340",
@@ -574,22 +516,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/padel-2-{w}.jpg",
     "page": "https://pixabay.com/photos/racket-padel-ball-padel-tennis-6308994/",
     "by": "IGfotojonas",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2523536",
-    "hash": "0010111100100110001101111011101100111010001101101010100110100101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/padel-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/shovel-paddle-blade-paddle-kuumax-2523536/",
-    "by": "kuumaxpadel",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3366162",
-    "hash": "0110010100100100001001100000101100100011001000010000000110100100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/padel-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/rowboat-lake-fun-swim-summer-3366162/",
-    "by": "Tommy_Rau",
     "license": "Pixabay licence"
    },
    {
@@ -845,14 +771,6 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-1205631",
-    "hash": "0000001000001010001101110011011100110111001100110111100100000001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-6-{w}.jpg",
-    "page": "https://pixabay.com/photos/lotus-flower-lily-pad-pond-1205631/",
-    "by": "ha11ok",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-1854265",
     "hash": "0011011101110111111101111110100111110001111100011111001101110011",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/yoga-7-{w}.jpg",
@@ -903,14 +821,6 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-5462849",
-    "hash": "0000100000100100100000101101100011011000101010110110001111001010",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/surf-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/man-board-ocean-kite-surfing-5462849/",
-    "by": "Anestiev",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-5111131",
     "hash": "1000101100010011000000110000011100010011000001110000111100001111",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/surf-5-{w}.jpg",
@@ -935,32 +845,7 @@
     "license": "Pixabay licence"
    }
   ],
-  "hikeDesert": [
-   {
-    "id": "pixabay-2914157",
-    "hash": "1100000001100010001101100110010000011110110010100100101001000010",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/hikeDesert-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/dolomites-mountains-italy-alps-2914157/",
-    "by": "kordi_vahle",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-772991",
-    "hash": "0000111000001110100010111100111101101111010010000101100000111001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/hikeDesert-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/backpacker-mountains-panorama-772991/",
-    "by": "Sorbyphoto",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4355469",
-    "hash": "0100010001001100010011000100110101101000111000011000001101001010",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/hikeDesert-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/children-girl-hiking-trail-4355469/",
-    "by": "MaBraS",
-    "license": "Pixabay licence"
-   }
-  ],
+  "hikeDesert": [],
   "waterfall": [
    {
     "id": "pixabay-7921517",
@@ -1089,14 +974,6 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-1807617",
-    "hash": "1110010011101100100110001010010110001001100001011010010010000000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/happy-valentines-day-couple-1807617/",
-    "by": "sasint",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-518032",
     "hash": "1001101101001101110011001101001001001101101101101001010011110001",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-5-{w}.jpg",
@@ -1145,14 +1022,6 @@
     "page": "https://pixabay.com/photos/restaurant-dining-dinner-cafe-6784529/",
     "by": "Mariakray",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3993785",
-    "hash": "0010010100010011101010110000110111011110011010100110010000101111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/cockle-seafood-shellfish-shell-sea-3993785/",
-    "by": "Dannysee",
-    "license": "Pixabay licence"
    }
   ],
   "rooftop": [
@@ -1170,14 +1039,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-2-{w}.jpg",
     "page": "https://pixabay.com/photos/drinking-rooftop-bar-evening-men-6876592/",
     "by": "TheOtherKev",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-10176801",
-    "hash": "0001011100011001000110010101100101011011110110011101100111100111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/woman-blonde-model-red-swimwear-10176801/",
-    "by": "Sunriseforever",
     "license": "Pixabay licence"
    }
   ],
@@ -1199,14 +1060,6 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-2772941",
-    "hash": "0100011001001010010010100011101110011011101100110010111100100111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rooftopNeon-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/hildesheim-night-city-germany-2772941/",
-    "by": "KaiPilger",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-7951411",
     "hash": "0100111110001011000110110001111100001110000111101001111010011101",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rooftopNeon-4-{w}.jpg",
@@ -1222,14 +1075,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/djSunset-1-{w}.jpg",
     "page": "https://pixabay.com/photos/sunset-beach-sea-ocean-summer-5383043/",
     "by": "kucukgulberkan",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4045035",
-    "hash": "1101110011010111010001110011011010001100010000011111001011000000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/djSunset-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/downtown-dubai-uae-tourism-city-4045035/",
-    "by": "Olgaozik",
     "license": "Pixabay licence"
    },
    {
@@ -1425,22 +1270,6 @@
     "page": "https://pixabay.com/photos/cape-verde-boa-vista-3442859/",
     "by": "Matthias_Lemm",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3216250",
-    "hash": "1101101101111001011010001011011000110110011001111110011111100100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachClub-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/golf-golf-ball-golfers-golf-club-3216250/",
-    "by": "lpegasu",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-8026582",
-    "hash": "0100111110011111001100110110011111100111111001110111001010011111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachClub-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/hamburger-sandwich-chicken-healthy-8026582/",
-    "by": "SylwesterL",
-    "license": "Pixabay licence"
    }
   ],
   "beachSunset": [
@@ -1450,14 +1279,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-1-{w}.jpg",
     "page": "https://pixabay.com/photos/dubai-beach-sunset-holiday-sun-4340895/",
     "by": "hanmei",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-7157841",
-    "hash": "1110011111100111011000010110100001101000010010100000011000000011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/skyscraper-luxury-building-dubai-7157841/",
-    "by": "designerpoint",
     "license": "Pixabay licence"
    },
    {
@@ -1477,14 +1298,6 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-230078",
-    "hash": "0111111101111111011111110111111101111010111110000000000100011011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-5-{w}.jpg",
-    "page": "https://pixabay.com/photos/dubai-uae-day-and-night-230078/",
-    "by": "AngusFraserPublishing",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-1845321",
     "hash": "0000000100000111000011000011000000110100000100100000111000000110",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-6-{w}.jpg",
@@ -1498,22 +1311,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-7-{w}.jpg",
     "page": "https://pixabay.com/photos/burj-al-arab-dubai-twilight-uae-230077/",
     "by": "AngusFraserPublishing",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3232183",
-    "hash": "0000000000000011001001001101001111010011001001001000001000000000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-8-{w}.jpg",
-    "page": "https://pixabay.com/photos/desert-sand-landscape-panoramic-3232183/",
-    "by": "MichyDev",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-1089035",
-    "hash": "0010001100000011100001110000111100100010010110011000111010100001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/beachSunset-9-{w}.jpg",
-    "page": "https://pixabay.com/photos/jurassic-coast-sunset-ocean-dorset-1089035/",
-    "by": "diego_torres",
     "license": "Pixabay licence"
    }
   ],
@@ -1559,14 +1356,6 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-3488306",
-    "hash": "0110010011011000001000101100011101011011100110000011110001111100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-6-{w}.jpg",
-    "page": "https://pixabay.com/photos/architecture-human-city-road-art-3488306/",
-    "by": "EvgeniT",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-2590655",
     "hash": "0100111001001100010011000100111010001010010010010010100100101001",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/gallery-7-{w}.jpg",
@@ -1598,22 +1387,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/nightMarket-1-{w}.jpg",
     "page": "https://pixabay.com/photos/global-village-india-global-village-679413/",
     "by": "ksreekanth6",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-7637669",
-    "hash": "0010011101001111010001110000011100001011000010111001111100010111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/nightMarket-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/ferris-wheel-christmas-market-7637669/",
-    "by": "mariya_m",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4705882",
-    "hash": "1001110111001101011011110100011011000111010001010111111100000111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/nightMarket-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/lights-christmas-market-christmas-4705882/",
-    "by": "chriswanders",
     "license": "Pixabay licence"
    },
    {
@@ -1807,32 +1580,7 @@
     "license": "Pixabay licence"
    }
   ],
-  "office": [
-   {
-    "id": "pixabay-6887717",
-    "hash": "0000010100000111000011110001110100110100011001000100010001100100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/office-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887717/",
-    "by": "katetrysh",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-6887721",
-    "hash": "0001011000000110000111010000111001001001001110000000001010001001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/office-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887721/",
-    "by": "katetrysh",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-6887718",
-    "hash": "1100101001100011011000100100101110100011001110100001101100010010",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/office-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/aerial-apartment-architecture-6887718/",
-    "by": "katetrysh",
-    "license": "Pixabay licence"
-   }
-  ],
+  "office": [],
   "accountant": [
    {
     "id": "pixabay-620822",
@@ -1903,22 +1651,6 @@
   ],
   "cleanHome": [
    {
-    "id": "pixabay-1851043",
-    "hash": "0111111101111111101111111101100101011000110110001101100011001101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cleanHome-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/desktop-home-office-laptop-1851043/",
-    "by": "Pexels",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-5727263",
-    "hash": "1000000001100101011001000010100000011010100011101100001010100101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cleanHome-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/chair-home-room-plant-ivy-5727263/",
-    "by": "Space_Zandria",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-657719",
     "hash": "1100111011001100111001001101000011011010110011000110011001000011",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cleanHome-3-{w}.jpg",
@@ -1934,14 +1666,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/villa-1-{w}.jpg",
     "page": "https://pixabay.com/photos/villa-balbiano-fontana-garden-6154200/",
     "by": "Camera-man",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3237114",
-    "hash": "1000001100001111011010100101011000011100010011100100111101000101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/villa-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/villa-house-grim-dark-old-villa-3237114/",
-    "by": "Tama66",
     "license": "Pixabay licence"
    },
    {
@@ -1989,26 +1713,10 @@
   ],
   "car": [
    {
-    "id": "pixabay-4010834",
-    "hash": "1000100010000001000001110100111100100111100000110101001100110000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/car-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/uae-dubai-city-arab-emirates-4010834/",
-    "by": "Olgaozik",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-3150505",
     "hash": "0010011011001001110110110001101010001110000011010001100100111011",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/car-2-{w}.jpg",
     "page": "https://pixabay.com/photos/adventure-sand-safaris-desert-car-3150505/",
-    "by": "sharonang",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3162600",
-    "hash": "0000000000101011011011110001001101001101001011110001011101001001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/car-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/adventure-sand-safaris-desert-car-3162600/",
     "by": "sharonang",
     "license": "Pixabay licence"
    }
@@ -2047,22 +1755,6 @@
     "page": "https://pixabay.com/photos/cardboard-wave-boxes-2111107/",
     "by": "JustynaKoniecz",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4110207",
-    "hash": "1111111111001101010011011000110110001110100011101000110101111010",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/boxes-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/poster-frame-wall-boxes-4110207/",
-    "by": "RaniRamli",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4119746",
-    "hash": "0010001101101000110101001101010011010100100101001111100000101001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/boxes-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/poster-frame-toys-boxes-4119746/",
-    "by": "RaniRamli",
-    "license": "Pixabay licence"
    }
   ],
   "newHome": [
@@ -2089,25 +1781,9 @@
     "page": "https://pixabay.com/photos/kitchen-kitchenette-apartment-room-2094707/",
     "by": "jarmoluk",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-7710506",
-    "hash": "0100110011001100110011001100010000000101101101110110011001111001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/newHome-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/nyc-nyc-skyline-nyc-apartment-7710506/",
-    "by": "jothamsutharson",
-    "license": "Pixabay licence"
    }
   ],
   "tools": [
-   {
-    "id": "pixabay-1866497",
-    "hash": "1011101110101001101100010111010101011101000111011110110001011000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/tools-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/abacus-classroom-count-counter-1866497/",
-    "by": "Pexels",
-    "license": "Pixabay licence"
-   },
    {
     "id": "pixabay-4863393",
     "hash": "0011111101001111101111111011111110010111001001100110011101100101",
@@ -2172,14 +1848,6 @@
   "lounge": [],
   "sailing": [
    {
-    "id": "pixabay-3671752",
-    "hash": "0001111100011111000111110001101100011011000011011011001111001110",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/sailing-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/dubai-burj-al-arab-uae-building-3671752/",
-    "by": "nextvoyage",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-701079",
     "hash": "0010111100001111000001110000110100101101100010010110110101001101",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/sailing-2-{w}.jpg",
@@ -2214,25 +1882,9 @@
     "page": "https://pixabay.com/photos/kitesurfing-kiteboarding-kitesurf-4961059/",
     "by": "michaelhumenberger",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4961047",
-    "hash": "1001010000001100000010000010010000110001011110000111110100110110",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/kitesurf-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/kitesurfing-kiteboarding-kitesurf-4961047/",
-    "by": "michaelhumenberger",
-    "license": "Pixabay licence"
    }
   ],
   "familyBeach": [
-   {
-    "id": "pixabay-5003667",
-    "hash": "0100110001101001001110011000011100111111101111111111111101111111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/familyBeach-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/sea-bird-ocean-sea-beach-bird-5003667/",
-    "by": "Janzen_5050_Creations",
-    "license": "Pixabay licence"
-   },
    {
     "id": "pixabay-656734",
     "hash": "0110101000011100001110100001101000011011000110110011001100011011",
@@ -2270,14 +1922,6 @@
   ],
   "glamping": [
    {
-    "id": "pixabay-7593192",
-    "hash": "0000111100000011000000110000001100000001000111110001011100010111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/glamping-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/dead-sea-israel-desert-coast-7593192/",
-    "by": "Pix-Off",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-5983064",
     "hash": "1000000101000001000000001001100101111000011100101100111111001111",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/glamping-2-{w}.jpg",
@@ -2287,14 +1931,6 @@
    }
   ],
   "marathon": [
-   {
-    "id": "pixabay-4333580",
-    "hash": "0100110110000011101101010011110101001010000110110011000111000101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/marathon-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/zumba-marathon-sport-exercise-4333580/",
-    "by": "AndrzejRembowski",
-    "license": "Pixabay licence"
-   },
    {
     "id": "pixabay-7111384",
     "hash": "1100001101000101101001101100110001011010100010001010011011100111",
@@ -2336,22 +1972,6 @@
     "hash": "0000000000000000001000000000000010010000111010010011100100000101",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlSunset-1-{w}.jpg",
     "page": "https://pixabay.com/photos/al-qudra-desert-dubai-sand-uae-4897898/",
-    "by": "8268513",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4897901",
-    "hash": "1111101111111111111111111111101101100010001101101000110101100101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlSunset-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/al-qudra-desert-dubai-sand-uae-4897901/",
-    "by": "8268513",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4897896",
-    "hash": "0001110000001111000101110001101100011011010110100111111100000111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlSunset-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/al-qudra-desert-dubai-sand-uae-4897896/",
     "by": "8268513",
     "license": "Pixabay licence"
    },
@@ -2444,14 +2064,6 @@
     "page": "https://pixabay.com/photos/women-yoga-class-asana-fitness-1178187/",
     "by": "janeb13",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-5963960",
-    "hash": "1001011110010010110011011100101101001011001010011010010101100100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlClass-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/women-crowd-protest-protesters-5963960/",
-    "by": "19661338",
-    "license": "Pixabay licence"
    }
   ],
   "girlBookClub": [
@@ -2461,14 +2073,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlBookClub-1-{w}.jpg",
     "page": "https://pixabay.com/photos/book-club-girl-research-learn-park-753891/",
     "by": "jundercheng",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-8922130",
-    "hash": "0100110011001110111011001100110011001100110011001100110011000010",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlBookClub-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/glasses-girl-woman-portrait-8922130/",
-    "by": "Umermustafa01",
     "license": "Pixabay licence"
    },
    {
@@ -2690,42 +2294,8 @@
     "license": "Pixabay licence"
    }
   ],
-  "girlSurf": [
-   {
-    "id": "pixabay-10188437",
-    "hash": "1001111110001110100011111100110000111101111100011111000110110001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlSurf-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/woman-bikini-pool-ocean-panorama-10188437/",
-    "by": "Sunriseforever",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-1845311",
-    "hash": "1001001110000101100000110010001111000110110000111100101100100111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlSurf-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/woman-beach-beach-chair-feet-1845311/",
-    "by": "Pexels",
-    "license": "Pixabay licence"
-   }
-  ],
-  "girlDinner": [
-   {
-    "id": "pixabay-3051614",
-    "hash": "0011111100111111000111110001011000010110000101001001100000011001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlDinner-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/women-jetty-sea-shawl-pier-sky-3051614/",
-    "by": "Quangpraha",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-5488183",
-    "hash": "0000110000001101000111100001110101011011010111100000110100001111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/girlDinner-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/women-vietnam-asia-hung-yen-5488183/",
-    "by": "11153496",
-    "license": "Pixabay licence"
-   }
-  ],
+  "girlSurf": [],
+  "girlDinner": [],
   "momBaby": [
    {
     "id": "pixabay-6189040",
@@ -2751,14 +2321,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/momBeach-1-{w}.jpg",
     "page": "https://pixabay.com/photos/beach-motherhood-love-mother-son-4182974/",
     "by": "shanghaistoneman",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-345678",
-    "hash": "1100100111111001001111011111010111111100000111000011111011111100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/momBeach-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/sea-snail-gyroscope-trochidae-snail-345678/",
-    "by": "stux",
     "license": "Pixabay licence"
    }
   ],
@@ -2896,14 +2458,6 @@
     "page": "https://pixabay.com/photos/bowling-colorful-bowling-balls-237905/",
     "by": "sharonang",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3451727",
-    "hash": "1001100101101001001001000011101001001101010011011110001111100011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/tree-spruce-bowling-pinecone-jaw-3451727/",
-    "by": "ulleo",
-    "license": "Pixabay licence"
    }
   ],
   "burger": [
@@ -2978,24 +2532,7 @@
     "license": "Pixabay licence"
    }
   ],
-  "comedy": [
-   {
-    "id": "pixabay-1838653",
-    "hash": "0010101000000111100100100010001101100011011010111010100110100101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/comedy-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/dua-lipa-concert-audience-crowd-1838653/",
-    "by": "Pexels",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-5361245",
-    "hash": "1011010000110011001110110100101101001111000011110100111101000110",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/comedy-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/music-band-child-wheelchair-5361245/",
-    "by": "imaginacioncreativos",
-    "license": "Pixabay licence"
-   }
-  ],
+  "comedy": [],
   "concert": [
    {
     "id": "pixabay-7424190",
@@ -3022,14 +2559,6 @@
     "page": "https://pixabay.com/photos/cooking-pies-vareniki-pelmeni-cook-2132874/",
     "by": "Daria-Yakovleva",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-1846142",
-    "hash": "0001011010010110110100101000011010011000000110100001101101101011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/campfire-burning-camping-close-up-1846142/",
-    "by": "Pexels",
-    "license": "Pixabay licence"
    }
   ],
   "cricket": [
@@ -3039,14 +2568,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cricket-1-{w}.jpg",
     "page": "https://pixabay.com/photos/cricketer-athlete-cricket-sports-7015983/",
     "by": "yogendras31",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-7530156",
-    "hash": "0001111100101111000100110000001010100011011000111000100100011001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cricket-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/cricket-insect-grasshopper-bug-7530156/",
-    "by": "maryannandco",
     "license": "Pixabay licence"
    }
   ],
@@ -3103,14 +2624,6 @@
     "hash": "1001001010011001100001101010011010111001100110010101100111011000",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dhow-1-{w}.jpg",
     "page": "https://pixabay.com/photos/city-creek-lg-dubai-balconies-1283778/",
-    "by": "Pexels",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-1283779",
-    "hash": "0000100000010001110100101001000101010110010101100111100011000110",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dhow-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/city-creek-lg-dubai-balconies-1283779/",
     "by": "Pexels",
     "license": "Pixabay licence"
    }
@@ -3194,14 +2707,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/family-1-{w}.jpg",
     "page": "https://pixabay.com/photos/family-newborn-baby-child-infant-2610205/",
     "by": "smpratt90",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2494952",
-    "hash": "1101000101101001011010010100100101010110010100100011111100111011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/family-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/geese-goose-family-goslings-family-2494952/",
-    "by": "NoName_13",
     "license": "Pixabay licence"
    }
   ],
@@ -3302,7 +2807,7 @@
     "hash": "0010001101001001100100111010011111001110100111101110101011100101",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/healthyFood-2-{w}.jpg",
     "page": "https://pixabay.com/photos/vegetables-water-droplets-fresh-1584999/",
-    "by": "JerzyGórecki",
+    "by": "JerzyG\u00f3recki",
     "license": "Pixabay licence"
    }
   ],
@@ -3349,14 +2854,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/horseRiding-1-{w}.jpg",
     "page": "https://pixabay.com/photos/boy-horse-riding-galloping-horse-7143682/",
     "by": "Kanenori",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3223302",
-    "hash": "0010111100111111000011010000111100001111000011110000111100001111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/horseRiding-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/sand-camel-desert-cairo-egypt-3223302/",
-    "by": "8moments",
     "license": "Pixabay licence"
    }
   ],
@@ -3422,14 +2919,6 @@
     "page": "https://pixabay.com/photos/food-sushi-seafood-japan-oriental-3581341/",
     "by": "Adamsov",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-4806610",
-    "hash": "1100110100110001001011000010010000001101100010010000100101011000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/japaneseFood-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/shop-city-night-neon-advertising-4806610/",
-    "by": "RahulPandit",
-    "license": "Pixabay licence"
    }
   ],
   "karaoke": [
@@ -3456,14 +2945,6 @@
     "hash": "0100111100010001000011010010011101100101110100111110001101001111",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/karting-1-{w}.jpg",
     "page": "https://pixabay.com/photos/go-kart-racing-karting-circuit-6777143/",
-    "by": "ajgpfotografia",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-6777162",
-    "hash": "1101101100100101001001011111001011010101110011101110001001110111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/karting-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/go-kart-racing-karting-circuit-6777162/",
     "by": "ajgpfotografia",
     "license": "Pixabay licence"
    }
@@ -3504,16 +2985,7 @@
     "license": "Pixabay licence"
    }
   ],
-  "lake": [
-   {
-    "id": "pixabay-1681485",
-    "hash": "0110011001100110010001110000111110001111001101000010001100010011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/lake-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/lake-mountains-hut-mountain-lake-1681485/",
-    "by": "TeeFarm",
-    "license": "Pixabay licence"
-   }
-  ],
+  "lake": [],
   "legal": [
    {
     "id": "pixabay-2492011",
@@ -3576,14 +3048,6 @@
     "page": "https://pixabay.com/photos/dubai-atlantis-hotel-emirates-4722074/",
     "by": "schliff",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2094359",
-    "hash": "0010100100101111001011110100110100101111001001110001001110000011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/luxury-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/assortments-to-turkish-furniture-2094359/",
-    "by": "fyz6363",
-    "license": "Pixabay licence"
    }
   ],
   "mall": [
@@ -3593,14 +3057,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/mall-1-{w}.jpg",
     "page": "https://pixabay.com/photos/dubai-uae-emirates-emirate-106209/",
     "by": "31774",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-491430",
-    "hash": "1001110100001101100111011100110100101101000110110011100100001101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/mall-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/cliff-jumping-waterfall-leap-491430/",
-    "by": "LollemyArtPhotography",
     "license": "Pixabay licence"
    },
    {
@@ -3695,14 +3151,6 @@
    }
   ],
   "petCafe": [
-   {
-    "id": "pixabay-3587033",
-    "hash": "0001100000001100010010000000000000100001001000111100010011100100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/petCafe-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/raccoon-cafe-animal-pets-3587033/",
-    "by": "fudowakira0",
-    "license": "Pixabay licence"
-   },
    {
     "id": "pixabay-3539492",
     "hash": "0001110110000111010001111100111111001111110011111100111110010011",
@@ -3820,24 +3268,7 @@
     "license": "Pixabay licence"
    }
   ],
-  "rollerblade": [
-   {
-    "id": "pixabay-3817358",
-    "hash": "0111001011111011101100111011100011110101011101101111101001011101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rollerblade-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/skating-skates-winter-sports-3817358/",
-    "by": "995645",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-5563464",
-    "hash": "0001100100011101000110010011001100010111000010110000011100000101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rollerblade-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/skateboard-skate-skater-skate-park-5563464/",
-    "by": "taniaferreiralourenco",
-    "license": "Pixabay licence"
-   }
-  ],
+  "rollerblade": [],
   "sauna": [
    {
     "id": "pixabay-3141766",
@@ -3845,14 +3276,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/sauna-1-{w}.jpg",
     "page": "https://pixabay.com/photos/woman-beauty-spa-wellness-portrait-3141766/",
     "by": "silviarita",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2357980",
-    "hash": "0101000101111101001011100111111000111111101011110001111000001110",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/sauna-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/skincare-coconut-oil-therapy-exotic-2357980/",
-    "by": "dungthuyvunguyen",
     "license": "Pixabay licence"
    }
   ],
@@ -3911,14 +3334,6 @@
    }
   ],
   "souk": [
-   {
-    "id": "pixabay-3144295",
-    "hash": "0110101010101010100010111010111010001111100000101001001011100011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/souk-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/colorful-beautiful-sand-design-3144295/",
-    "by": "sharonang",
-    "license": "Pixabay licence"
-   },
    {
     "id": "pixabay-4959998",
     "hash": "0010001100101011000111000100010001000101001000010101101111011000",
@@ -4036,24 +3451,7 @@
     "license": "Pixabay licence"
    }
   ],
-  "theatre": [
-   {
-    "id": "pixabay-4337422",
-    "hash": "1010000010010100111100001001000010011100000001100000101110000111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/theatre-1-{w}.jpg",
-    "page": "https://pixabay.com/photos/bridge-opera-house-sydney-opera-4337422/",
-    "by": "moremilu",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2306937",
-    "hash": "0000100011001100001101100010101101101001011010010110100101101001",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/theatre-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/dresden-places-of-interest-2306937/",
-    "by": "paulsteuber",
-    "license": "Pixabay licence"
-   }
-  ],
+  "theatre": [],
   "themePark": [
    {
     "id": "pixabay-6925693",
@@ -4079,14 +3477,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/vr-1-{w}.jpg",
     "page": "https://pixabay.com/photos/augmented-reality-bicycle-girl-bike-1853592/",
     "by": "Pexels",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-1875813",
-    "hash": "0011110100101111000110011011010001100000000111001000100100010011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/vr-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/mobile-phone-smartphone-1875813/",
-    "by": "FunkyFocus",
     "license": "Pixabay licence"
    }
   ],
@@ -4115,14 +3505,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/writing-1-{w}.jpg",
     "page": "https://pixabay.com/photos/diary-ipad-write-blog-workplace-968592/",
     "by": "Edar",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2425303",
-    "hash": "1000111100100011011010010110100111101001011000100101001111000111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/writing-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/coffee-caffeine-beverage-table-2425303/",
-    "by": "Engin_Akyurt",
     "license": "Pixabay licence"
    }
   ]

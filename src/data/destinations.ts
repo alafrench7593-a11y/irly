@@ -28,7 +28,7 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
     flag: '🇮🇩',
     country: 'Indonesia',
     tagline: 'Discover, connect & belong in Bali',
-    status: 'live',
+    status: 'soon',
     light: 'bali',
     photo: 'bali',
     cities: ['bali'],
@@ -84,8 +84,34 @@ export const DESTINATIONS: Record<DestinationId, Destination> = {
   },
 };
 
-export const LIVE_DESTINATIONS: DestinationId[] = ['emirates', 'bali'];
-export const UPCOMING_DESTINATIONS: DestinationId[] = ['thailand', 'singapore', 'london', 'paris'];
+/**
+ * A destination marked soon can still be opened for a preview on the web
+ * (localStorage 'irly-preview' lists destination ids), so the end-to-end
+ * tests keep exercising its screens while users cannot choose it.
+ */
+function previewed(): string[] {
+  try {
+    return (globalThis.localStorage?.getItem('irly-preview') ?? '').split(',');
+  } catch {
+    return [];
+  }
+}
+const PREVIEW = previewed();
+
+/** Whether people can choose this destination (live, or previewed). */
+export function destinationOpen(id: DestinationId | null | undefined): boolean {
+  return !!id && (DESTINATIONS[id].status === 'live' || PREVIEW.includes(id));
+}
+
+/** Whether a city belongs to a destination people can choose. */
+export function cityOpen(id: CityId | null | undefined): boolean {
+  return !!id && destinationOpen(CITIES[id]?.destinationId);
+}
+
+export const LIVE_DESTINATIONS: DestinationId[] = (['emirates', 'bali'] as DestinationId[]).filter(destinationOpen);
+export const UPCOMING_DESTINATIONS: DestinationId[] = (
+  ['bali', 'thailand', 'singapore', 'london', 'paris'] as DestinationId[]
+).filter((d) => !destinationOpen(d));
 
 const EMIRATES_SERVICES: City['serviceCategories'] = [
   'housing',

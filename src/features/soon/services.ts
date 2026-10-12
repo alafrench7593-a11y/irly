@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/ui/Icon';
+import { destinationOpen } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 
 export type SoonId = 'pro' | 'bonplan' | 'visa' | 'location';
@@ -68,7 +69,8 @@ export const SOON: Record<SoonId, SoonService> = {
       { icon: 'bell', title: 'Reminders', body: 'Your renewal and expiry dates, so they never surprise you.' },
       { icon: 'users', title: 'Help from qualified advisers', body: 'For the cases a guide cannot answer.' },
     ],
-    liveNow: { label: 'Bali visa & stay guide', caption: 'Already in the Bali guide', icon: 'book', href: '/bali/guide/visa' },
+    // The Bali guide, while Bali is open (coming soon for now).
+    ...(destinationOpen('bali') ? { liveNow: { label: 'Bali visa & stay guide', caption: 'Already in the Bali guide', icon: 'book', href: '/bali/guide/visa' } } : {}),
     notice: 'IRLY is not a government service. No visa can be applied for or processed through IRLY.',
   },
   location: {

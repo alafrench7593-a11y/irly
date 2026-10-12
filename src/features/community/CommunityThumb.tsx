@@ -8,9 +8,10 @@ import { communityPhoto } from './official';
 
 /**
  * A community at a glance: its photo with its emoji on a small badge, or
- * just the emoji when it has no photo.
+ * just the emoji when it has no photo. With its id, the same photo as on its
+ * page (each community its own picture of the subject).
  */
-export function CommunityThumb({ topic, categoryId, emoji, light, size = 44, member }: { topic?: string | null; categoryId?: string | null; emoji?: string | null; light: LightId; size?: number; member?: boolean }) {
+export function CommunityThumb({ id, topic, categoryId, emoji, light, size = 44, member }: { id?: string; topic?: string | null; categoryId?: string | null; emoji?: string | null; light: LightId; size?: number; member?: boolean }) {
   const t = useTheme();
   const key = communityPhoto(topic, categoryId);
   const radius = Math.round(size * 0.3);
@@ -23,7 +24,7 @@ export function CommunityThumb({ topic, categoryId, emoji, light, size = 44, mem
   }
   return (
     <View style={{ width: size, height: size }}>
-      <Photo visual={{ photo: key }} light={light} style={{ width: size, height: size, borderRadius: radius, overflow: 'hidden' }} width={240} />
+      <Photo visual={{ photo: key }} light={light} style={{ width: size, height: size, borderRadius: radius, overflow: 'hidden' }} width={240} recyclingKey={id ? `community-${id}-app` : undefined} />
       {emoji ? (
         <View style={[styles.badge, { backgroundColor: t.c.surface, borderColor: t.c.bg }]}>
           <Text style={{ fontSize: 11 }}>{emoji}</Text>

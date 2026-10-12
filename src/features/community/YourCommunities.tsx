@@ -45,7 +45,7 @@ export function YourCommunities({ cityId }: { cityId: string }) {
           {mine.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(i * 60)}>
               <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
-                <CommunityThumb topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member />
+                <CommunityThumb id={c.id} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member />
                 <Text variant="titleS" numberOfLines={1}>
                   {c.name}
                 </Text>
@@ -70,7 +70,7 @@ export function YourCommunities({ cityId }: { cityId: string }) {
           <Rail itemWidth={200}>
             {ranked.map((c) => (
               <PressableScale key={c.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
-                <CommunityThumb topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member={c.isMember} />
+                <CommunityThumb id={c.id} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member={c.isMember} />
                 <Text variant="titleS" numberOfLines={1}>
                   {c.name}
                 </Text>

@@ -1,4 +1,5 @@
 import { toast } from '@/components/ui/Toast';
+import { cityOpen } from '@/data/destinations';
 import { useStore } from '@/state/store';
 
 /**
@@ -8,7 +9,8 @@ import { useStore } from '@/state/store';
  */
 export function switchToBali(): void {
   const s = useStore.getState();
-  if (s.cityId === 'bali') return;
+  // Bali is not open yet (coming soon): its guides stay readable, the city does not change.
+  if (s.cityId === 'bali' || !cityOpen('bali')) return;
   s.setCity('bali');
   toast('Now showing Bali. Switch back anytime from the destination menu', 'globe', 'brand');
 }

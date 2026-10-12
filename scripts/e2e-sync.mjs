@@ -104,6 +104,8 @@ async function signedInPage(browser, who) {
   await page.goto(BASE);
   await page.evaluate((name) => {
     localStorage.setItem('irly-v2', JSON.stringify({ state: { onboarded: true, storySeen: 99, communityIntroSeen: true, destinationId: 'bali', cityId: 'bali', profile: { name, types: [], interests: [], activities: [], languages: ['English'], lookingFor: [], gender: 'woman', age: 32 } }, version: 1 }));
+    // Bali is coming soon for people; the tests preview it (its screens stay covered).
+    localStorage.setItem('irly-preview', 'bali');
     localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   }, who.name);
   await page.goto(`${BASE}/account`);

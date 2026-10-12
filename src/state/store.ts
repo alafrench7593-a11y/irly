@@ -2,7 +2,7 @@ import { DEMO, storageName } from '@/config/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
-import { DESTINATIONS } from '@/data/destinations';
+import { DESTINATIONS, cityOpen, destinationOpen } from '@/data/destinations';
 import type {
   ActivityKind,
   CityId,
@@ -232,8 +232,11 @@ export const useStore = create<State & Actions>()(
       communityIntroSeen: false,
 
       setDestination: (destinationId, cityId) =>
-        set({ destinationId, cityId: cityId ?? DESTINATIONS[destinationId].defaultCity ?? null }),
+        destinationOpen(destinationId)
+          ? set({ destinationId, cityId: cityId ?? DESTINATIONS[destinationId].defaultCity ?? null })
+          : set({ destinationId: 'emirates', cityId: 'dubai' }),
       setCity: (cityId) => {
+        if (!cityOpen(cityId)) return set({ destinationId: 'emirates', cityId: 'dubai' });
         const destinationId = (Object.keys(DESTINATIONS) as DestinationId[]).find((d) =>
           DESTINATIONS[d].cities.includes(cityId),
         );
@@ -337,6 +340,8 @@ export const useStore = create<State & Actions>()(
       partialize: ({ hydrated: _h, ...rest }) => rest,
       onRehydrateStorage: () => (state) => {
         if (state) setHapticsEnabled(state.hapticsOn);
+        // A destination that closed (now "soon") sends its people to Dubai.
+        if (state?.cityId && !cityOpen(state.cityId)) useStore.setState({ destinationId: 'emirates', cityId: 'dubai' });
         useStore.setState({ hydrated: true });
       },
     },

@@ -14,7 +14,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { ACTIVITIES } from '@/data/catalog';
-import { CITIES } from '@/data/destinations';
+import { CITIES, cityOpen } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
 import type { CityId } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
@@ -196,6 +196,10 @@ export default function Assistant() {
             <Animated.View entering={FadeInDown.springify(420).dampingRatio(0.85)} style={{ gap: space[6] }}>
               <Understood cmd={cmd} cityName={city.name} areas={city.areas} onEdit={edit} />
               <Act cmd={cmd} cityId={city.id} busy={busy} onCreate={create} onSwitch={() => {
+                if (!cityOpen(targetCity)) {
+                  toast('Coming soon', 'globe', 'brand');
+                  return;
+                }
                 setCity(targetCity);
                 logCommand(cmd, source, 'executed');
                 toast(tx('Now exploring {city}', { city: city.name }), 'globe', 'brand');

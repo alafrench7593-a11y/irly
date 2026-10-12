@@ -4145,4 +4145,8 @@ export const fr: Record<string, string> = {
   'Category name': 'Nom de la catégorie',
   'New category': 'Nouvelle catégorie',
   'Exact address': 'Adresse exacte',
+  'IRLY Bali is coming soon': 'IRLY Bali arrive bientôt',
+  'We are preparing Bali. IRLY is open in the Emirates today.': "Nous préparons Bali. IRLY est ouvert aux Émirats dès aujourd'hui.",
+  'You will be told': 'Vous serez prévenu·e',
+  "We'll tell you when IRLY Bali opens": "On vous prévient à l'ouverture d'IRLY Bali",
 };
