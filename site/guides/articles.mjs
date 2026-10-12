@@ -164,6 +164,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
+    updated: '2026-10-12',
     title: 'How to Make Friends in Bali: Travellers, Nomads and Newcomers | IRLY',
     description: 'Arriving in Bali alone? How friendships work on an island where people come and go, and practical ways to meet people in Canggu, Ubud and beyond.',
     h1: 'How to make friends in Bali',
@@ -224,7 +225,10 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Just arrived in Bali?', body: 'Meet people who share your interests and do things together, in real life.', label: 'Find my people' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'Bali for digital nomads', path: 'bali/digital-nomads/' },
+    ],
   },
   {
     lang: 'fr',
@@ -233,6 +237,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
+    updated: '2026-10-12',
     title: 'Se faire des amis à Bali : voyageurs, nomades et nouveaux arrivants | IRLY',
     description: 'Tu arrives seul à Bali ? Comment fonctionnent les amitiés sur une île où les gens vont et viennent, et des façons concrètes de rencontrer du monde à Canggu, Ubud et ailleurs.',
     h1: 'Comment se faire des amis à Bali',
@@ -293,7 +298,148 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu viens d’arriver à Bali ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Bali pour les digital nomads', path: 'fr/bali/digital-nomads/' },
+    ],
+  },
+  {
+    lang: 'en',
+    pair: 'bali-nomads',
+    path: 'bali/digital-nomads/',
+    cover: 'surf',
+    figure: { photo: 'volleyball', after: 1 },
+    city: 'Bali',
+    updated: '2026-10-12',
+    title: 'Bali for Digital Nomads: Finding Community and Coworking | IRLY',
+    description: 'Working remotely from Bali? How to find a community, choose an area and a coworking space, and build a routine that keeps you social without losing your workdays.',
+    h1: 'Bali for digital nomads: community and coworking',
+    lead: 'Bali makes it easy to meet other remote workers, but a good stay depends on three choices you make early: the area you live in, the place you work from, and the few regular activities you commit to. Get those right and the community usually follows. Below: how to choose each one, and how to stay social without losing your workdays.',
+    sections: [
+      {
+        h2: 'Start with the area, not the café',
+        html: `<p>Bali is bigger than it looks, and traffic makes short distances slow. Your area decides who you see every day:</p>
+<ul>
+<li><strong>Canggu and Pererenan:</strong> the busiest remote-work scene, with many cafés, coworking spaces and events.</li>
+<li><strong>Ubud:</strong> greener and quieter, popular with people who want focus, yoga and a slower rhythm.</li>
+<li><strong>Sanur:</strong> calmer, with more long-term residents and families.</li>
+<li><strong>Uluwatu:</strong> beaches and surf, more spread out, so you will rely more on transport.</li>
+</ul>
+<p>If you can, book your first two weeks only, then choose a longer stay once you know which area suits your days.</p>`,
+      },
+      {
+        h2: 'Choosing a coworking space',
+        html: `<p>A coworking space is often the quickest way into a community, because the same people are there every day. Before you sign up for a month, try a day pass and check:</p>
+<ul>
+<li><strong>Internet:</strong> run a speed test at the time you usually take calls, and ask whether there is a backup connection.</li>
+<li><strong>Calls:</strong> are there phone booths or quiet rooms you can actually book?</li>
+<li><strong>Community:</strong> does the space organise lunches, talks or skill-sharing, and do members come to them?</li>
+<li><strong>Your time zone:</strong> if you work evenings for clients in Europe or the Americas, check the opening hours.</li>
+</ul>
+<p>Cafés work for some days, but a fixed place to work makes it easier to see the same faces and keep a routine.</p>`,
+      },
+      {
+        h2: 'Where remote workers meet each other',
+        html: `<ul>
+<li><strong>Coworking events:</strong> the easiest first step, even for introverts, because you already have work in common.</li>
+<li><strong>Skill-sharing and talks:</strong> offering a short talk on what you do is a simple way to be remembered.</li>
+<li><strong>Sport after work:</strong> surf, yoga, running or a gym class at the same time each week.</li>
+<li><strong>Group trips at weekends:</strong> a waterfall, a temple visit or a day on another part of the island.</li>
+<li><strong>Online groups for your area</strong> to find what is happening this week, then show up in person.</li>
+</ul>`,
+      },
+      {
+        h2: 'Stay social without losing your workdays',
+        html: `<ol>
+<li><strong>Protect your work hours:</strong> decide when you work and when you are free, and say no to invitations that fall inside them.</li>
+<li><strong>Put social plans after work,</strong> not in the middle of the day: a sunset, a dinner, a class.</li>
+<li><strong>Keep one or two fixed weekly activities</strong> rather than many one-offs. Regulars become friends.</li>
+<li><strong>Plan for goodbyes:</strong> people leave often. Building a few friendships with people staying as long as you makes a big difference.</li>
+</ol>`,
+      },
+      {
+        h2: 'Check the rules before you work from Bali',
+        html: `<p>Entry and stay rules for Indonesia change, and what applies to you depends on your nationality, how long you stay and what kind of work you do. Before you travel, check the current visa options on the official Indonesian immigration website, <a href="https://www.imigrasi.go.id" rel="noopener">imigrasi.go.id</a>, and ask a qualified adviser if your situation is not clear. Do not rely on what other travellers tell you, and check your health and travel insurance too.</p>`,
+      },
+      {
+        h2: 'Where IRLY fits in',
+        html: `<p>IRLY helps you meet people around what you like and then meet in real life: join communities by topic, find or create activities (a surf session, a coworking lunch, a weekend trip) and talk in the group chat first. The app also has a guide to Bali’s areas. It is one way among others; a good area, a regular place to work and a few weekly habits matter more than any app.</p>`,
+      },
+    ],
+    cta: { title: 'Working remotely from Bali?', body: 'Meet people who share your interests and do things together, in real life.', label: 'Find my people' },
+    related: [
+      { label: 'How to make friends in Bali', path: 'bali/make-friends/' },
+      { label: 'Bali pour les digital nomads', path: 'fr/bali/digital-nomads/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'bali-nomads',
+    path: 'fr/bali/digital-nomads/',
+    cover: 'surf',
+    figure: { photo: 'volleyball', after: 1 },
+    city: 'Bali',
+    updated: '2026-10-12',
+    title: 'Bali pour les digital nomads : communauté et coworking | IRLY',
+    description: 'Tu travailles à distance depuis Bali ? Comment trouver une communauté, choisir un quartier et un coworking, et garder une vie sociale sans sacrifier tes journées de travail.',
+    h1: 'Bali pour les digital nomads : communauté et coworking',
+    lead: 'À Bali, il est facile de rencontrer d’autres travailleurs à distance, mais un bon séjour dépend de trois choix à faire tôt : le quartier où tu vis, l’endroit où tu travailles et les quelques activités régulières auxquelles tu t’engages. Si tu fais bien ces choix, la communauté suit en général. Ci-dessous : comment choisir chacun, et comment rester sociable sans perdre tes journées de travail.',
+    sections: [
+      {
+        h2: 'Commence par le quartier, pas par le café',
+        html: `<p>Bali est plus grande qu’elle n’en a l’air, et la circulation rend les petites distances longues. Ton quartier décide qui tu croises tous les jours :</p>
+<ul>
+<li><strong>Canggu et Pererenan :</strong> la scène du travail à distance la plus animée, avec beaucoup de cafés, de coworkings et d’événements.</li>
+<li><strong>Ubud :</strong> plus vert et plus calme, apprécié par ceux qui cherchent la concentration, le yoga et un rythme plus lent.</li>
+<li><strong>Sanur :</strong> plus tranquille, avec davantage de résidents de longue durée et de familles.</li>
+<li><strong>Uluwatu :</strong> plages et surf, plus étendu, donc tu dépendras davantage des transports.</li>
+</ul>
+<p>Si tu peux, ne réserve que tes deux premières semaines, puis choisis un séjour plus long une fois que tu sais quel quartier convient à tes journées.</p>`,
+      },
+      {
+        h2: 'Choisir un coworking',
+        html: `<p>Un coworking est souvent le moyen le plus rapide d’entrer dans une communauté, parce que ce sont les mêmes personnes chaque jour. Avant de t’engager pour un mois, prends un pass journée et vérifie :</p>
+<ul>
+<li><strong>Internet :</strong> fais un test de débit à l’heure où tu as habituellement tes appels, et demande s’il y a une connexion de secours.</li>
+<li><strong>Les appels :</strong> y a-t-il des cabines ou des salles calmes que tu peux vraiment réserver ?</li>
+<li><strong>La communauté :</strong> l’espace organise-t-il des déjeuners, des talks ou des échanges de compétences, et les membres y vont-ils ?</li>
+<li><strong>Ton fuseau horaire :</strong> si tu travailles le soir pour des clients en Europe ou en Amérique, vérifie les horaires d’ouverture.</li>
+</ul>
+<p>Les cafés conviennent certains jours, mais un lieu de travail fixe aide à revoir les mêmes visages et à garder une routine.</p>`,
+      },
+      {
+        h2: 'Où les travailleurs à distance se rencontrent',
+        html: `<ul>
+<li><strong>Les événements des coworkings :</strong> la première étape la plus simple, même pour les introvertis, car vous avez déjà le travail en commun.</li>
+<li><strong>Les échanges de compétences et talks :</strong> proposer une courte présentation de ton métier est une façon simple qu’on se souvienne de toi.</li>
+<li><strong>Le sport après le travail :</strong> surf, yoga, course ou cours en salle, à la même heure chaque semaine.</li>
+<li><strong>Les sorties en groupe le week-end :</strong> une cascade, la visite d’un temple ou une journée dans une autre partie de l’île.</li>
+<li><strong>Les groupes en ligne de ton quartier</strong> pour savoir ce qui se passe cette semaine, puis y aller en vrai.</li>
+</ul>`,
+      },
+      {
+        h2: 'Rester sociable sans perdre tes journées de travail',
+        html: `<ol>
+<li><strong>Protège tes heures de travail :</strong> décide quand tu travailles et quand tu es libre, et refuse les invitations qui tombent pendant ces heures.</li>
+<li><strong>Place les sorties après le travail,</strong> pas au milieu de la journée : un coucher de soleil, un dîner, un cours.</li>
+<li><strong>Garde une ou deux activités fixes par semaine</strong> plutôt que beaucoup de sorties ponctuelles. Les habitués deviennent des amis.</li>
+<li><strong>Prévois les au revoir :</strong> les gens partent souvent. Quelques amitiés avec des personnes qui restent aussi longtemps que toi changent tout.</li>
+</ol>`,
+      },
+      {
+        h2: 'Vérifie les règles avant de travailler depuis Bali',
+        html: `<p>Les règles d’entrée et de séjour en Indonésie évoluent, et ce qui s’applique à toi dépend de ta nationalité, de la durée de ton séjour et du type de travail que tu fais. Avant de partir, vérifie les options de visa en vigueur sur le site officiel de l’immigration indonésienne, <a href="https://www.imigrasi.go.id" rel="noopener">imigrasi.go.id</a>, et consulte un conseiller qualifié si ta situation n’est pas claire. Ne te fie pas à ce que disent les autres voyageurs, et vérifie aussi ton assurance santé et voyage.</p>`,
+      },
+      {
+        h2: 'Et IRLY dans tout ça',
+        html: `<p>IRLY t’aide à rencontrer des personnes autour de ce que tu aimes, puis à te voir en vrai : rejoins des communautés par thème, trouve ou crée une activité (une session de surf, un déjeuner entre coworkers, une sortie le week-end) et discute d’abord dans le chat du groupe. L’app propose aussi un guide des quartiers de Bali. C’est une façon parmi d’autres ; un bon quartier, un lieu de travail régulier et quelques habitudes hebdomadaires comptent plus que n’importe quelle app.</p>`,
+      },
+    ],
+    cta: { title: 'Tu travailles à distance depuis Bali ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
+    related: [
+      { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' },
+      { label: 'Bali for digital nomads', path: 'bali/digital-nomads/' },
+    ],
   },
   {
     lang: 'en',
@@ -302,7 +448,6 @@ export const ARTICLES = [
     cover: 'dubaiCreek',
     figure: { photo: 'running', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-10',
     updated: '2026-10-09',
     title: 'Lonely in Dubai? What Actually Helps | IRLY',
     description: 'Feeling lonely in Dubai is common, especially in the first months. Why it happens here, small steps that help this week, and when to talk to a professional.',
