@@ -1636,4 +1636,76 @@ select pg_temp.check(private.news_ingest('50000000-0000-0000-0000-000000000001',
 </description><pubDate>%s</pubDate></item></channel></rss>$x$, to_char(now() - interval '1 hour', 'Dy, DD Mon YYYY HH24:MI:SS "+0000"'))) = 1, 'news: CDATA titles between line breaks are read');
 select pg_temp.check((select title from public.news_articles where url = 'https://example.ae/cdata') = 'Dubai Marina walk reopens', 'news: the CDATA title is clean');
 
+-- ───── Hierarchy, ranking, spaces, activities and the map ─────
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.communities c where c.members_count <> (select count(*) from public.community_members m where m.community_id = c.id)), 'ranking: every member count matches the real members');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select members_count as sport_before from public.communities where id = :'sport_id' \gset
+select public.join_community(:'sport_id');
+select pg_temp.check((select members_count from public.communities where id = :'sport_id') = (select count(*) from public.community_members where community_id = :'sport_id'), 'ranking: a join counts once');
+select public.join_community(:'sport_id');
+select pg_temp.check((select members_count from public.communities where id = :'sport_id') = (select count(*) from public.community_members where community_id = :'sport_id'), 'ranking: joining twice still counts once');
+select public.create_community('Count Club', 'dubai') as count_club \gset
+select pg_temp.check((select members_count from public.communities where id = :'count_club') = 1, 'ranking: a new community counts its owner');
+select pg_temp.expect_denied(format('update public.communities set members_count = 99999 where id = %L', :'count_club'), 'ranking: nobody writes a member count by hand, owners included');
+select pg_temp.as_admin();
+select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (), true) as ok from (select members from public.community_list('dubai') where city_id = 'dubai') l) x), 'ranking: main communities come most members first');
+select pg_temp.check(not exists (select 1 from public.community_list('dubai') l join public.communities c on c.id = l.id where c.parent_id is not null), 'ranking: no group among main communities');
+select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (), true) as ok from (select members from public.community_subgroups(:'sport_id')) l) x), 'ranking: groups come most members first');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select public.join_community(:'padel_id');
+select pg_temp.check(not exists (select 1 from public.member_communities(auth.uid()) m join public.communities c on c.id = m.id where c.parent_id is not null), 'mine: groups are not listed as main communities');
+select pg_temp.check(exists (select 1 from public.search_all('Padel', 'dubai') where kind = 'community' and subtitle like 'Group of %'), 'search: a group says which community it belongs to');
+select pg_temp.expect_denied(format($q$insert into public.community_channels (community_id, slug, name) values (%L, 'deals', 'Good deals')$q$, :'sport_id'), 'spaces: members cannot add categories');
+select pg_temp.expect_denied(format($q$insert into public.community_posts (community_id, author_id, body, category) values (%L, auth.uid(), 'x', 'nowhere')$q$, :'sport_id'), 'spaces: no post in a category that does not exist');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+insert into public.community_channels (community_id, slug, name) values (:'sport_id', 'deals', 'Good deals');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+insert into public.community_posts (community_id, author_id, body, category) values (:'sport_id', auth.uid(), 'Rackets at half price', 'deals') returning id as deal_post \gset
+insert into public.community_posts (community_id, author_id, body) values (:'sport_id', auth.uid(), 'Anyone for a run?') returning id as general_post \gset
+select pg_temp.check(exists (select 1 from public.community_space_feed(:'sport_id', 'deals') where id = :'deal_post') and not exists (select 1 from public.community_space_feed(:'sport_id', 'deals') where id = :'general_post'), 'spaces: a category shows its own posts');
+select pg_temp.check(exists (select 1 from public.community_space_feed(:'sport_id', null) where id = :'general_post') and not exists (select 1 from public.community_space_feed(:'sport_id', null) where id = :'deal_post'), 'spaces: General shows posts without a category');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+delete from public.community_channels where community_id = :'sport_id' and slug = 'deals';
+select pg_temp.as_admin();
+select pg_temp.check((select category is null and deleted_at is null from public.community_posts where id = :'deal_post'), 'spaces: deleting a category moves its posts to General');
+select pg_temp.check(public.activity_status(now() + interval '1 hour', null, null) = 'upcoming' and public.activity_status(now() - interval '1 hour', null, null) = 'ongoing'
+  and public.activity_status(now() - interval '3 hours', null, null) = 'finished' and public.activity_status(now() + interval '1 hour', null, now()) = 'cancelled', 'activities: status follows the dates');
+insert into public.places (id, slug, city_id, area_id, name, kind, lat, lng) values ('60000000-0000-0000-0000-000000000001', 'test-padel-court', 'dubai', 'marina', 'Test Padel Court', 'court', 25.08, 55.14) on conflict (id) do nothing;
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, community_id, privacy, place_id)
+values (auth.uid(), 'PSG night', 'sport', 'dubai', 'marina', now() + interval '1 day', :'padel_id', 'community', '60000000-0000-0000-0000-000000000001') returning id as group_act \gset
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, address)
+values (auth.uid(), 'Beach walk', 'outdoor', 'dubai', 'marina', now() + interval '1 day', 'Somewhere on the beach') returning id as free_act \gset
+select pg_temp.check((select lat = 25.08 and geo_source = 'place' from public.activities where id = :'group_act'), 'map: a listed place gives its coordinates');
+select pg_temp.check((select lat is null and geo_status = 'off' from public.activities where id = :'free_act'), 'map: an address waits for the geocoder, never placed by guess');
+update public.activities set lat = 1, lng = 1 where id = :'free_act';
+select pg_temp.check((select lat is null from public.activities where id = :'free_act'), 'map: coordinates cannot be typed in by hand');
+select pg_temp.as_admin();
+begin;
+select set_config('irly.geo_collect', 'on', true);
+update public.activities set lat = 25.2, lng = 55.27, geo_source = 'geocoded', geo_status = 'ok' where id = :'free_act';
+commit;
+select pg_temp.check((select lat = 25.2 and geo_status = 'ok' from public.activities where id = :'free_act'), 'map: the geocoder''s precise answer is kept');
+update public.activities set title = 'Beach walk at sunset' where id = :'free_act';
+select pg_temp.check((select lat = 25.2 from public.activities where id = :'free_act'), 'map: editing the title keeps the position');
+update public.activities set address = 'Another place' where id = :'free_act';
+select pg_temp.check((select lat is null from public.activities where id = :'free_act'), 'map: a new address drops the old position until it is matched again');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check(exists (select 1 from public.community_activities(:'sport_id') where id = :'group_act') and exists (select 1 from public.community_activities(:'padel_id') where id = :'group_act'), 'activities: a group activity shows in the group and its community (one row)');
+select pg_temp.check((select count(*) from public.activities where title = 'PSG night') = 1, 'activities: never copied');
+select pg_temp.expect_denied(format('select public.pin_activity(%L, %L)', :'sport_id', :'group_act'), 'activities: members cannot pin');
+select pg_temp.check(exists (select 1 from public.map_activities('dubai') where id = :'group_act'), 'map: a located activity is on the map');
+select pg_temp.check(not exists (select 1 from public.map_activities('dubai') where id = :'free_act'), 'map: an activity without a reliable position is not');
+select pg_temp.check(exists (select 1 from public.map_activities('dubai', p_community => :'sport_id') where id = :'group_act'), 'map: filtering by a community includes its groups');
+select pg_temp.check(exists (select 1 from public.map_activities('dubai', p_lat => 25.08, p_lng => 55.14, p_km => 1) where id = :'group_act')
+  and not exists (select 1 from public.map_activities('dubai', p_lat => 25.30, p_lng => 55.40, p_km => 1) where id = :'group_act'), 'map: distance filter');
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
+select public.pin_activity(:'sport_id', :'group_act');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select pinned_at is not null from public.community_activities(:'sport_id') where id = :'group_act'), 'activities: a host pins a group activity in the community');
+update public.activities set cancelled_at = now() where id = :'group_act';
+select pg_temp.check(not exists (select 1 from public.map_activities('dubai') where id = :'group_act'), 'map: a cancelled activity leaves the map');
+select pg_temp.check((select status from public.community_activities(:'padel_id') where id = :'group_act') = 'cancelled', 'activities: its community shows it as cancelled');
+
 \echo 'ALL TESTS PASSED'

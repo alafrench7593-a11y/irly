@@ -20,7 +20,7 @@ import type { LightId } from '@/theme/lights';
 import { dateFor, planDay, type Day, type GeoIndex } from '@/features/ai/intent';
 import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type PlanDraft } from '@/features/community/assist';
 import { confirm } from '@/lib/confirm';
-import { deleteCommunity, fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost } from '@/features/community/data';
+import { deleteCommunity, fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost, pinActivity, type ActivityStatus } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
 import { pickPhoto, setCommunityCover, usePhotoLink } from '@/features/server/covers';
 import { communityPhoto, GUIDELINES, introDraft } from '@/features/community/official';
@@ -33,8 +33,9 @@ import { hueOf } from '@/lib/format';
 import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { PostMedia } from '@/features/posts/PostMedia';
-import { pinPost, useCommunityExtras } from '@/features/community/groups';
-import { HostTools, NotifyPrefs, ParentLink, SubgroupList } from '@/features/community/GroupsUI';
+import { pinPost, useChannels, useCommunityExtras } from '@/features/community/groups';
+import { openCreate } from '@/features/create/createStore';
+import { HostTools, NotifyPrefs, ParentLink, SpaceChips, SubgroupList } from '@/features/community/GroupsUI';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
@@ -42,6 +43,8 @@ import { useTheme } from '@/theme/useTheme';
 
 type Tab = 'posts' | 'activities' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
+// Upcoming needs no label; the others say what they are.
+const STATUS_LABEL: Partial<Record<ActivityStatus, string>> = { ongoing: 'Happening now', finished: 'Finished', cancelled: 'Cancelled' };
 
 /**
  * A community: posts (text, polls, plans) with likes and comments, its chat,
@@ -56,8 +59,12 @@ export default function CommunityScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { detail: c, loading, error, refresh, signedIn } = useCommunity(id);
   const auth = useAuthStatus();
-  const feed = useCommunityFeed(id);
-  const acts = useCommunityActivities(id);
+  // Posts by space: General, or one of the community's categories (when it has some).
+  const { channels } = useChannels(id);
+  const [postSpace, setPostSpace] = useState<string | null>(null);
+  const feed = useCommunityFeed(id, channels.length ? postSpace : undefined);
+  const [past, setPast] = useState(false);
+  const acts = useCommunityActivities(id, past);
   const extras = useCommunityExtras(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
   const [tab, setTab] = useState<Tab>('posts');
@@ -117,8 +124,7 @@ export default function CommunityScreen() {
     }
   };
 
-  /** A plan from the assistant or a post: a real activity of this community, announced in the feed. */
-  /** True once the activity exists; the announcement post is best effort. */
+  /** A plan from the assistant or a post: a real activity of this community, in its Activities space. */
   const createPlan = async (d: PlanDraft): Promise<boolean> => {
     if (!c.isMember) {
       toast('Join the community first', 'users', 'brand');
@@ -135,13 +141,8 @@ export default function CommunityScreen() {
       haptic('success');
       track('ACTIVITY_CREATE', { via: 'community' });
       acts.refresh();
-      const announced = actId
-        ? await feed
-            .post({ body: tx('New plan: {title}, {when}. Join below 👇', { title: d.title, when: `${tx(planDay(d.day))} ${d.time}` }), activityId: actId })
-            .then(() => true)
-            .catch(() => false)
-        : true;
-      toast(announced ? tx('{title} is live. Chat created', { title: d.title }) : tx('Plan created, but it could not be posted in the community'), announced ? 'send' : 'x', announced ? 'brand' : 'live');
+      // The activity is its own record, shown in Activities (no copy in the posts).
+      toast(actId ? tx('{title} is live. Chat created', { title: d.title }) : tx('Could not create'), actId ? 'send' : 'x', actId ? 'brand' : 'live');
       return true;
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create', 'x', 'live');
@@ -239,7 +240,15 @@ export default function CommunityScreen() {
           {tab === 'posts' ? (
             <>
               <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
-              {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll })} onMedia={(body) => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body } })} /> : null}
+              <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate} communityId={c.id} />
+              {c.isMember ? (
+                <Composer
+                  key={idea.n}
+                  initial={idea.text}
+                  onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })}
+                  onMedia={(body) => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body, ...(channels.length && postSpace !== null ? { category: postSpace } : {}) } })}
+                />
+              ) : null}
               {feed.error && !feed.posts.length ? (
                 <Text variant="body" tone="secondary" style={styles.pad}>
                   Can’t reach IRLY right now. Check your connection.
@@ -277,23 +286,42 @@ export default function CommunityScreen() {
 
           {tab === 'activities' ? (
             <View style={[styles.pad, { gap: 10 }]}>
+              <View style={[styles.row, { flexWrap: 'wrap' }]}>
+                <Chip size="sm" label={tx('Coming up')} selected={!past} onPress={() => setPast(false)} />
+                <Chip size="sm" label={tx('Past')} selected={past} onPress={() => setPast(true)} />
+                {c.isMember ? <Chip size="sm" icon="plus" label={tx('Create an activity')} onPress={() => openCreate(null, { communityId: c.id })} /> : null}
+              </View>
               {acts.activities.length ? (
                 acts.activities.map((a) => (
                   <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
-                    <Icon name="calendar" size={18} color={t.c.text} />
+                    <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
                     <View style={{ flex: 1 }}>
-                      <Text variant="titleS" numberOfLines={1}>
+                      <Text variant="titleS" numberOfLines={1} raw>
                         {a.title}
                       </Text>
-                      <Text variant="caption" tone="tertiary">
-                        {when(a.startsAt, city.id)} · {a.going} {tx('going')}
+                      <Text variant="caption" tone="tertiary" raw>
+                        {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`, a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : null]
+                          .filter(Boolean)
+                          .join(' · ')}
                       </Text>
                     </View>
+                    {(c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate) && a.status !== 'finished' && a.status !== 'cancelled' ? (
+                      <Chip
+                        size="sm"
+                        icon="pinPost"
+                        label={a.pinnedAt ? tx('Unpin') : tx('Pin')}
+                        onPress={() =>
+                          pinActivity(c.id, a.id, !a.pinnedAt)
+                            .then(() => toast(a.pinnedAt ? 'Unpinned' : 'Pinned at the top', 'pinPost', 'brand'))
+                            .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
+                        }
+                      />
+                    ) : null}
                   </PressableScale>
                 ))
               ) : (
                 <Text variant="body" tone="secondary">
-                  Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.
+                  {past ? 'No past activities yet.' : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
                 </Text>
               )}
             </View>

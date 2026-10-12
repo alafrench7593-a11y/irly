@@ -28,7 +28,7 @@ export function startsAt(day: string, time: string, now = new Date(), utcOffset?
 }
 
 /** Extras that tie an activity to a place, a type (PLAYDATE, DINNER…) and an audience. */
-export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean; coverUri?: string | null };
+export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean; coverUri?: string | null; address?: string | null };
 
 /** Signed links for uploaded activity photos (private bucket); other values pass through. */
 // Through the shared link cache: a refresh keeps the same link, so the image cache keeps the photo.
@@ -92,6 +92,8 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
       // Girls and moms plans are IRLY Girl plans (enforced server-side).
       girl_only: extras.girlOnly || extras.audience === 'girls' || extras.audience === 'moms',
       community_id: extras.communityId ?? null,
+      // An exact address puts it on the map once the server's geocoder matched it precisely (never a guess).
+      ...(extras.address?.trim() ? { address: extras.address.trim().slice(0, 200) } : {}),
       client_ref: clientRef,
     })
     .select('id')
@@ -526,4 +528,56 @@ export function useRecommendations(cityId: string): Recommendation[] {
   const { keep } = useCityFilter(cityId as CityId);
   const shown = useMemo(() => list.filter((r) => keep(r.cityId)), [list, keep]);
   return uid ? shown : NONE;
+}
+
+/** Is the address search for the map switched on (an IRLY admin set up the geocoder)? */
+export function useGeocoderOn(): boolean {
+  const uid = useAccount()?.userId;
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!uid || !supabase) return;
+    let alive = true;
+    supabase.rpc('geocoder_on').then(
+      ({ data }) => alive && setOn(data === true),
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [uid]);
+  return on;
+}
+
+export type MyCommunityOption = { id: string; name: string; groupOf: string | null; girlOnly: boolean };
+/** Communities and groups I belong to, for attaching an activity to one (optional). */
+export function useMyCommunityOptions(): MyCommunityOption[] {
+  const uid = useAccount()?.userId;
+  const [list, setList] = useState<MyCommunityOption[]>([]);
+  useEffect(() => {
+    if (!uid || !supabase) return;
+    let alive = true;
+    supabase
+      .from('community_members')
+      .select('community_id, communities!inner(id, name, girl_only, deleted_at, parent:communities!parent_id(name))')
+      .eq('user_id', uid)
+      .is('communities.deleted_at', null)
+      .limit(100)
+      .then(
+        ({ data }) => {
+          if (!alive) return;
+          type R = { communities: { id: string; name: string; girl_only: boolean; parent: { name: string } | { name: string }[] | null } | { id: string; name: string; girl_only: boolean; parent: { name: string } | { name: string }[] | null }[] };
+          const rows = ((data as R[] | null) ?? []).map((r) => (Array.isArray(r.communities) ? r.communities[0] : r.communities)).filter(Boolean);
+          setList(
+            rows
+              .map((c) => ({ id: c.id, name: c.name, girlOnly: Boolean(c.girl_only), groupOf: (Array.isArray(c.parent) ? c.parent[0]?.name : c.parent?.name) ?? null }))
+              .sort((a, b) => (a.groupOf ?? a.name).localeCompare(b.groupOf ?? b.name) || (a.groupOf ? 1 : 0) - (b.groupOf ? 1 : 0)),
+          );
+        },
+        () => undefined,
+      );
+    return () => {
+      alive = false;
+    };
+  }, [uid]);
+  return list;
 }

@@ -14,6 +14,7 @@ import { blur, motion, spring } from '@/motion/tokens';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { MapMarkerData, MarkerType } from './markers';
+import type { MapFilters } from './serverActivities';
 
 export type Layer = 'all' | MarkerType;
 
@@ -56,6 +57,9 @@ export function MapTopBar({
   layer,
   onLayer,
   onDestination,
+  filters,
+  onFilters,
+  filterOptions,
 }: {
   top: number;
   cityName: string;
@@ -66,6 +70,10 @@ export function MapTopBar({
   layer: Layer;
   onLayer: (l: Layer) => void;
   onDestination: () => void;
+  /** Activities filters, shown under the layers when Activities is chosen. */
+  filters?: MapFilters;
+  onFilters?: (f: MapFilters) => void;
+  filterOptions?: { categories: { id: string; label: string }[]; communities: { id: string; name: string }[]; canDistance: boolean };
 }) {
   const t = useTheme();
   return (
@@ -118,7 +126,27 @@ export function MapTopBar({
           ))}
         </ScrollView>
       )}
+      {!results.length && layer === 'activity' && filters && onFilters && filterOptions ? <ActivityFilters filters={filters} onFilters={onFilters} options={filterOptions} /> : null}
     </Animated.View>
+  );
+}
+
+/** When, what, which community, how far: filters for activities on the map. */
+function ActivityFilters({ filters, onFilters, options }: { filters: MapFilters; onFilters: (f: MapFilters) => void; options: { categories: { id: string; label: string }[]; communities: { id: string; name: string }[]; canDistance: boolean } }) {
+  const chip = (key: string, label: string, on: boolean, next: MapFilters) => (
+    <Glass key={key} style={{ borderRadius: radius.pill }} border={false} intensity={blur.light}>
+      <Chip size="sm" label={label} selected={on} onPress={() => onFilters(next)} />
+    </Glass>
+  );
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
+      {chip('w-any', tx('Any time'), filters.when === 'any', { ...filters, when: 'any' })}
+      {chip('w-today', tx('Today'), filters.when === 'today', { ...filters, when: 'today' })}
+      {chip('w-week', tx('This week'), filters.when === 'week', { ...filters, when: 'week' })}
+      {options.canDistance ? [1, 5, 10].map((km) => chip(`d-${km}`, `≤ ${km} km`, filters.km === km, { ...filters, km: filters.km === km ? null : km })) : null}
+      {options.categories.map((c) => chip(`c-${c.id}`, tx(c.label), filters.category === c.id, { ...filters, category: filters.category === c.id ? null : c.id }))}
+      {options.communities.map((c) => chip(`m-${c.id}`, tx(c.name), filters.community === c.id, { ...filters, community: filters.community === c.id ? null : c.id }))}
+    </ScrollView>
   );
 }
 

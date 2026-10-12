@@ -33,6 +33,7 @@ import { MapSheet, type Snap } from '@/features/map/MapSheet';
 import { hasRealMap, RealCityMap } from '@/features/map/RealMap';
 import { useLives } from '@/features/live/liveStore';
 import { buildMarkers, placeMarkers, ZOOM, type MapMarkerData } from '@/features/map/markers';
+import { useActivityLayer } from '@/features/map/useActivityLayer';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { blur, ease, motion, spring } from '@/motion/tokens';
@@ -104,7 +105,8 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const sheetArea = H - sheetBottom;
 
   const lives = useLives();
-  const all = useMemo(() => buildMarkers(city, content, lives), [city, content, lives]);
+  const acts = useActivityLayer(city);
+  const all = useMemo(() => [...buildMarkers(city, content, lives), ...acts.markers], [city, content, lives, acts.markers]);
   const layerMarkers = useMemo(() => (layer === 'all' ? all : all.filter((m) => m.type === layer)), [all, layer]);
   // A chosen layer shows all its markers whatever the zoom.
   const placed = useMemo(
@@ -280,6 +282,9 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
         layer={layer}
         onLayer={setLayer}
         onDestination={() => setDestSheet(true)}
+        filters={acts.filters}
+        onFilters={acts.setFilters}
+        filterOptions={acts.filterOptions}
       />
 
       <Animated.View entering={enter.fade(1, 160)} style={[styles.controls, { top: insets.top + 118 }]} pointerEvents="box-none">

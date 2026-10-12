@@ -231,7 +231,9 @@ function HalfContent({ marker }: { marker: MapMarkerData }) {
         </Text>
       ) : null}
       <View style={styles.actions}>
-        {marker.type === 'activity' || marker.type === 'event' ? (
+        {marker.href ? (
+          <Button label="Open" iconRight="arrowUpRight" size="lg" full onPress={() => marker.href && router.push(marker.href as never)} />
+        ) : marker.type === 'activity' || marker.type === 'event' ? (
           <JoinButton id={marker.id} full style={{ flex: 1 }} />
         ) : marker.type === 'group' ? (
           <JoinButton id={marker.id} membership label="JOIN GROUP" full style={{ flex: 1 }} />
