@@ -40,12 +40,14 @@ export function useCommunityExtras(id: string) {
     Promise.all([
       sb().rpc('community_subgroups', { p_parent: id }),
       sb().rpc('community_rights', { p_community: id }),
-      sb().from('communities').select('parent_id').eq('id', id).maybeSingle(),
+      // The parent in the same round trip (no second, sequential read).
+      sb().from('communities').select('parent_id, parent:communities!parent_id(id, name)').eq('id', id).maybeSingle(),
       sb().from('community_notification_prefs').select('posts, announcements').eq('community_id', id).eq('user_id', uid).maybeSingle(),
     ])
-      .then(async ([g, r, me, pr]) => {
-        const parentId = (me.data as { parent_id: string | null } | null)?.parent_id ?? null;
-        const parent = parentId ? ((await sb().from('communities').select('id, name').eq('id', parentId).maybeSingle()).data as Parent) : null;
+      .then(([g, r, me, pr]) => {
+        const row = me.data as { parent_id: string | null; parent: Parent | Parent[] | null } | null;
+        const embedded = Array.isArray(row?.parent) ? (row?.parent[0] ?? null) : (row?.parent ?? null);
+        const parent = row?.parent_id && embedded ? embedded : null;
         if (n !== seq.current) return;
         const rr = ((r.data as Record<string, unknown>[] | null) ?? [])[0];
         setState({

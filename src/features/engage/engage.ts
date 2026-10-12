@@ -26,9 +26,13 @@ function useRpc<T>(fn: string, args: Record<string, unknown> | null, map: (r: Ro
   const load = useCallback(() => {
     if (!uid || !supabase || !args) return;
     const n = ++seq.current;
-    supabase.rpc(fn, args).then(({ data }) => {
-      if (n === seq.current) setState({ for: key, items: ((data as Row[] | null) ?? []).map((r) => mapRef.current(r)) });
-    });
+    supabase.rpc(fn, args).then(
+      ({ data }) => {
+        if (n === seq.current) setState({ for: key, items: ((data as Row[] | null) ?? []).map((r) => mapRef.current(r)) });
+      },
+      // Never a spinner forever: a failed read ends the load (empty).
+      () => n === seq.current && setState({ for: key, items: [] }),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, key]);
   useEffect(load, [load]);

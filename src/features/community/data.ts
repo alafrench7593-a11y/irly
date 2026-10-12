@@ -104,11 +104,6 @@ const topicOf = (row: unknown): TopicRow | null => {
   return Array.isArray(t) ? (t[0] ?? null) : (t ?? null);
 };
 
-async function isMuted(conversationId: string, uid: string): Promise<boolean> {
-  const { data } = await sb().from('conversation_members').select('muted').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle();
-  return Boolean(data?.muted);
-}
-
 /** Community chat notifications on or off (the chat itself stays). */
 export async function setCommunityMuted(conversationId: string, muted: boolean): Promise<void> {
   const { data: session } = await sb().auth.getSession();
@@ -127,9 +122,11 @@ export function useCommunity(id: string) {
 
   const load = useCallback(async (): Promise<CommunityDetail | null> => {
     if (!uid) return null;
-    const [{ data, error: e }, { data: cover }] = await Promise.all([
+    // One round trip: detail, cover and my mute setting for its chat, side by side.
+    const [{ data, error: e }, { data: cover }, { data: mine }] = await Promise.all([
       sb().rpc('community_detail', { p_id: id }),
       sb().from('communities').select('cover_path, official, topic, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
+      sb().from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', uid).eq('conversations.community_id', id).limit(1),
     ]);
     if (e) throw new Error(e.message);
     const r = ((data as Row[]) ?? [])[0];
@@ -151,7 +148,7 @@ export function useCommunity(id: string) {
       topic: (cover?.topic as string | null) ?? null,
       emoji: topicOf(cover)?.emoji ?? null,
       introFirst: Boolean(topicOf(cover)?.intro_first),
-      muted: r.conversation_id ? await isMuted(r.conversation_id as string, uid) : false,
+      muted: Boolean(r.conversation_id && (mine as { muted: boolean }[] | null)?.[0]?.muted),
     };
   }, [id, uid]);
 
@@ -257,15 +254,26 @@ export function useCommunityFeed(communityId: string) {
         .finally(() => alive && setLoading(false));
     };
     reload();
+    // Likes, comments and votes arrive from every community: gather a burst
+    // into one reload instead of one full feed per event.
+    let soon: ReturnType<typeof setTimeout> | null = null;
+    const later = () => {
+      if (soon) return;
+      soon = setTimeout(() => {
+        soon = null;
+        reload();
+      }, 800);
+    };
     const channel = supabase
       .channel(topic(`community-${communityId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes' }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.community_post' }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: 'target_type=eq.community_post' }, reload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes' }, later)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.community_post' }, later)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: 'target_type=eq.community_post' }, later)
       .subscribe();
     return () => {
       alive = false;
+      if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);
     };
   }, [communityId, uid, load, land]);

@@ -43,6 +43,21 @@ export function changed(...kinds: SyncKind[]) {
   kinds.forEach((k) => pending.add(k));
   if (!timer) timer = setTimeout(flush, 120);
 }
+
+// Other people's changes: a little slower, so a lively chat or a wave of
+// joins becomes one reload per kind instead of one per event.
+let remoteTimer: ReturnType<typeof setTimeout> | null = null;
+const remote = new Set<SyncKind>();
+function changedRemotely(kinds: SyncKind[]) {
+  kinds.forEach((k) => remote.add(k));
+  if (remoteTimer) return;
+  remoteTimer = setTimeout(() => {
+    remoteTimer = null;
+    const ks = [...remote];
+    remote.clear();
+    changed(...ks);
+  }, 1000);
+}
 export const changedAll = () => changed(...KINDS);
 
 /**
@@ -55,12 +70,16 @@ export function SyncBridge() {
     if (!supabase || !uid) return;
     // One channel per table: a table the server does not publish (yet) can
     // only silence itself, never the others.
-    const TABLES: { table: string; filter?: string; event?: '*' | 'UPDATE'; kinds: SyncKind[] }[] = [
+    const TABLES: { table: string; filter?: string; event?: '*' | 'INSERT' | 'UPDATE' | 'DELETE'; kinds: SyncKind[] }[] = [
       { table: 'activities', kinds: ['activities'] },
       { table: 'activity_participants', kinds: ['activities'] },
       { table: 'communities', kinds: ['communities', 'inbox'] },
       { table: 'community_members', kinds: ['communities'] },
-      { table: 'conversation_members', filter: `user_id=eq.${uid}`, kinds: ['inbox', 'activities', 'communities'] },
+      // Joining or leaving a chat follows a join or leave elsewhere; reading,
+      // archiving or hiding a chat (an UPDATE, on every message read) is the inbox only.
+      { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['inbox', 'activities', 'communities'] },
+      { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'DELETE', kinds: ['inbox', 'activities', 'communities'] },
+      { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'UPDATE', kinds: ['inbox'] },
       { table: 'conversations', event: 'UPDATE', kinds: ['inbox'] },
       { table: 'profiles', event: 'UPDATE', kinds: ['people'] },
       { table: 'saves', filter: `user_id=eq.${uid}`, kinds: ['saved'] },
@@ -74,8 +93,8 @@ export function SyncBridge() {
     const channels = TABLES.map(({ table, filter, event = '*', kinds }) => {
       let first = true;
       return supabase!
-        .channel(topic(`sync:${table}:${uid}`))
-        .on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, () => changed(...kinds))
+        .channel(topic(`sync:${table}:${event}:${uid}`))
+        .on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, () => changedRemotely(kinds))
         .subscribe((status) => {
           // A (re)connection may have missed events: catch up once.
           if (status === 'SUBSCRIBED') {

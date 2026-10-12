@@ -6,6 +6,7 @@ import { CITIES, cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount } from '@/features/auth/account';
+import { signedLinks } from '@/features/server/media';
 import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
@@ -30,15 +31,8 @@ export function startsAt(day: string, time: string, now = new Date(), utcOffset?
 export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean; coverUri?: string | null };
 
 /** Signed links for uploaded activity photos (private bucket); other values pass through. */
-export async function coverLinks(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
-  const own = [...new Set(paths.filter((p): p is string => Boolean(p) && !/^https?:/.test(p as string)))];
-  const out: Record<string, string> = {};
-  for (const p of paths) if (p && /^https?:/.test(p)) out[p] = p;
-  if (!supabase || !own.length) return out;
-  const { data } = await supabase.storage.from('activity-photos').createSignedUrls(own, 6 * 3600);
-  for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
-  return out;
-}
+// Through the shared link cache: a refresh keeps the same link, so the image cache keeps the photo.
+export const coverLinks = (paths: (string | null | undefined)[]): Promise<Record<string, string>> => signedLinks('activity-photos', paths);
 
 // One tap = one activity: the same plan sent twice (double tap, retry after a
 // network error) reuses the same request and the same client_ref, and the
