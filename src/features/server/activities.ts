@@ -558,7 +558,7 @@ export function useMyCommunityOptions(): MyCommunityOption[] {
     let alive = true;
     supabase
       .from('community_members')
-      .select('community_id, communities!inner(id, name, girl_only, deleted_at, parent:communities!parent_id(name))')
+      .select('community_id, communities!inner(id, name, girl_only, deleted_at, parent:parent_id(name))')
       .eq('user_id', uid)
       .is('communities.deleted_at', null)
       .limit(100)

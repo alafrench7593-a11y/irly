@@ -529,7 +529,7 @@ try {
     const both = must(await A.sb.from('community_members').select('community_id').eq('user_id', A.id).in('community_id', [sport.id, padel.id]));
     const notHost = (await A.sb.rpc('announce', { p_community: padel.id, p_body: 'Hello everyone' })).error;
     // The community page reads the parent and my chat mute setting in one round trip each.
-    const withParent = must(await A.sb.from('communities').select('parent_id, parent:communities!parent_id(id, name)').eq('id', padel.id).maybeSingle());
+    const withParent = must(await A.sb.from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', padel.id).maybeSingle());
     const parent = Array.isArray(withParent?.parent) ? withParent.parent[0] : withParent?.parent;
     const mine = must(await A.sb.from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', A.id).eq('conversations.community_id', sport.id).limit(1));
     await A.sb.rpc('leave_community', { p_community: sport.id });

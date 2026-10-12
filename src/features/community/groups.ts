@@ -41,7 +41,7 @@ export function useCommunityExtras(id: string) {
       sb().rpc('community_subgroups', { p_parent: id }),
       sb().rpc('community_rights', { p_community: id }),
       // The parent in the same round trip (no second, sequential read).
-      sb().from('communities').select('parent_id, parent:communities!parent_id(id, name)').eq('id', id).maybeSingle(),
+      sb().from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', id).maybeSingle(),
       sb().from('community_notification_prefs').select('posts, announcements').eq('community_id', id).eq('user_id', uid).maybeSingle(),
     ])
       .then(([g, r, me, pr]) => {
