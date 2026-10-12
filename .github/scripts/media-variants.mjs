@@ -39,7 +39,10 @@ const picksFile = `${dir}/media-variants-picks.json`;
 const picks = read(picksFile, { photos: {}, films: {} });
 const exclude = new Set([...Object.values(read(`${dir}/dubai-exclude.json`, {})).flat().filter((x) => typeof x === 'string'), ...read(`${dir}/media-variants-exclude.json`, [])]);
 const dubaiQueries = read(`${dir}/dubai-queries.json`, {});
-const extraQueries = { ...read(`${dir}/photo-queries.json`, {}), ...read(`${dir}/media-variants-queries.json`, {}) };
+const extraQueries = read(`${dir}/photo-queries.json`, {});
+// Stricter searches (search, subject words, words to avoid) for the most used activities; they win over the others.
+const strictQueries = read(`${dir}/media-variants-queries.json`, {});
+delete strictQueries._note;
 delete dubaiQueries._note;
 
 // ── Keys, how often the app uses each, and the films ──
@@ -56,19 +59,20 @@ for (const l of src) {
   const k = l.match(/'([A-Za-z]+)'|"([A-Za-z]+)"/)?.slice(1).find(Boolean);
   if (k) uses[k] = (uses[k] ?? 0) + 1;
 }
-const wanted = (key) => Math.min(12, Math.max(3, (uses[key] ?? 1) + 2));
+const wanted = (key) => Math.min(12, Math.max(strictQueries[key] ? 8 : 3, (uses[key] ?? 1) + 2));
 
 /** Search words for a key: the Dubai query when there is one, else the key's own words. */
 function queryFor(key) {
+  if (strictQueries[key]) return { q: strictQueries[key][0], words: strictQueries[key][1], avoid: strictQueries[key][2] };
   if (dubaiQueries[key]) return { q: dubaiQueries[key][0], words: dubaiQueries[key][1] };
   if (extraQueries[key]) return { q: extraQueries[key] };
   return { q: key.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() };
 }
 const escape = (w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const subjectTest = (words) => {
-  if (!words) return () => true;
-  const groups = (Array.isArray(words[0]) ? words : [words]).map((g) => new RegExp(`\\b(${g.map(escape).join('|')})\\b`, 'i'));
-  return (tags) => groups.every((re) => re.test(tags));
+const subjectTest = (words, avoid = []) => {
+  const groups = words ? (Array.isArray(words[0]) ? words : [words]).map((g) => new RegExp(`\\b(${g.map(escape).join('|')})\\b`, 'i')) : [];
+  const off = avoid.length ? new RegExp(`\\b(${avoid.map(escape).join('|')})\\b`, 'i') : null;
+  return (tags) => groups.every((re) => re.test(tags)) && !(off && off.test(tags));
 };
 
 // ── Banks ──
@@ -154,8 +158,8 @@ for (const key of allKeys) {
   // The key's current photo is the first picture; variants come after it.
   const need = wanted(key) - 1;
   if (list.length >= need) continue;
-  const { q, words } = queryFor(key);
-  const fits = subjectTest(words);
+  const { q, words, avoid } = queryFor(key);
+  const fits = subjectTest(words, avoid);
   for (const bank of BANKS) {
     if (list.length >= need) break;
     let found = [];
