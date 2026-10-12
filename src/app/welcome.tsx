@@ -20,10 +20,11 @@ import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
-import { DESTINATIONS, UPCOMING_DESTINATIONS } from '@/data/destinations';
+import { DESTINATIONS, UPCOMING_DESTINATIONS, destinationOpen } from '@/data/destinations';
 import type { Destination } from '@/data/types';
 import { IrlyStory, STORY_VERSION } from '@/features/onboarding/IrlyStory';
 import { useExpand } from '@/features/onboarding/useExpand';
+import { SoonPill } from '@/features/soon/SoonPill';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -201,13 +202,17 @@ function DestinationCard({
     ],
   }));
   const isEmirates = dest.id === 'emirates';
+  // A destination not open yet shows as Soon and cannot be chosen.
+  const open = destinationOpen(dest.id);
   return (
     <PressableScale
       ref={ref}
       haptic={false}
-      onPress={() => onChoose(dest, ref)}
-      style={[styles.card, { boxShadow: '0px 20px 50px rgba(0,0,0,0.5)' }]}
-      accessibilityLabel={`${dest.name}. ${dest.tagline}`}
+      onPress={open ? () => onChoose(dest, ref) : undefined}
+      disabled={!open}
+      style={[styles.card, { boxShadow: '0px 20px 50px rgba(0,0,0,0.5)' }, !open && { opacity: 0.72 }]}
+      accessibilityLabel={`${dest.name}. ${open ? dest.tagline : 'Coming soon'}`}
+      accessibilityState={{ disabled: !open }}
     >
       <Animated.View style={[StyleSheet.absoluteFill, layer]}>
         <Photo drift visual={{ photo: dest.photo }} light={dest.light} scrim="strong" width={1000} style={StyleSheet.absoluteFill} />
@@ -216,7 +221,7 @@ function DestinationCard({
         <Glass dark style={styles.flag}>
           <Text style={{ fontSize: 20 }}>{isEmirates ? dest.flag : '🌴'}</Text>
         </Glass>
-        <Badge kind="live" onDark label={isEmirates ? '7 emirates · live' : 'Island-wide · live'} />
+        {open ? <Badge kind="live" onDark label={isEmirates ? '7 emirates · live' : 'Island-wide · live'} /> : <SoonPill />}
       </View>
       <Glass dark style={styles.cardPanel} intensity={30}>
         <View style={{ flex: 1 }}>
@@ -227,9 +232,11 @@ function DestinationCard({
             {dest.tagline}
           </Text>
         </View>
-        <View style={styles.arrow}>
-          <Icon name="arrowRight" size={20} color="#000000" strokeWidth={2.4} />
-        </View>
+        {open ? (
+          <View style={styles.arrow}>
+            <Icon name="arrowRight" size={20} color="#000000" strokeWidth={2.4} />
+          </View>
+        ) : null}
       </Glass>
     </PressableScale>
   );

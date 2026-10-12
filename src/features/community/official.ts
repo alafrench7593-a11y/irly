@@ -89,6 +89,11 @@ export function useRecommendedCommunities(cityId: string, tags: string[], limit 
       }
       setError(null);
       setList(((data as Row[]) ?? []).map(toCommunity));
+    }, (e: unknown) => {
+      // Never a spinner forever: an unreachable server ends the load with a message.
+      if (!alive) return;
+      setError(e instanceof Error ? e.message : 'offline');
+      setList((l) => l ?? []);
     });
     return () => {
       alive = false;

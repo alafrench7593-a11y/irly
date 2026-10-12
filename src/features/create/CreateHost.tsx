@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { Image } from 'expo-image';
-import { t as tx } from '@/i18n';
+import { a11y, t as tx } from '@/i18n';
 import { BackHandler, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,7 +22,7 @@ import { ease, motion, scale as scaleTokens, spring } from '@/motion/tokens';
 import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { createServerActivity } from '@/features/server/activities';
+import { createServerActivity, useGeocoderOn, useMyCommunityOptions } from '@/features/server/activities';
 import { useAccount } from '@/features/auth/account';
 import { useRouter } from 'expo-router';
 import { pickPhoto } from '@/features/server/covers';
@@ -121,7 +121,13 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [day, setDay] = useState(DAYS[0]);
   const [time, setTime] = useState(TIMES[5]);
   const [area, setArea] = useState(city.areas[0].id);
-  const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>('public');
+  const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>(preset?.communityId ? 'community' : 'public');
+  // Optional: the community (or group) it belongs to. Not needed to create an activity.
+  const [communityId, setCommunityId] = useState<string | null>(preset?.communityId ?? null);
+  const myCommunities = useMyCommunityOptions();
+  // Optional: an exact address, so the activity can appear on the map once the server matched it.
+  const geocoderOn = useGeocoderOn();
+  const [address, setAddress] = useState('');
   const [spots, setSpots] = useState(6);
   const [description, setDescription] = useState('');
   // Optional: the creator's own photo instead of the catalogue one.
@@ -211,6 +217,11 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const router = useRouter();
   const post = async () => {
     if (!pick || !title || publishing) return;
+    // "Community" visibility needs a community, otherwise nobody else could see it.
+    if (privacy === 'community' && !communityId) {
+      toast(tx('Choose the community it is for, or another visibility'), 'users', 'brand');
+      return;
+    }
     const plan = {
       cityId,
       categoryId: pick.categoryId,
@@ -241,7 +252,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     // a failure keeps the form so the same plan can be sent again (never twice).
     setPublishing(true);
     try {
-      const serverId = await createServerActivity(plan, undefined, { coverUri: cover });
+      const chosen = myCommunities.find((x) => x.id === communityId);
+      const serverId = await createServerActivity(plan, undefined, { coverUri: cover, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
       haptic('success');
       toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
       hide();
@@ -466,6 +478,34 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   ))}
                 </View>
               </Animated.View>
+              {signedIn && myCommunities.length ? (
+                <Animated.View entering={enter.rise(5)} style={styles.block}>
+                  <Text variant="overline" tone="secondary">
+                    In a community (optional)
+                  </Text>
+                  <View style={styles.wrap}>
+                    <Chip size="sm" label={tx('None')} selected={!communityId} onPress={() => (setCommunityId(null), privacy === 'community' && setPrivacy('public'))} />
+                    {myCommunities.map((x) => (
+                      <Chip key={x.id} size="sm" label={x.groupOf ? `${tx(x.name)} · ${tx(x.groupOf)}` : tx(x.name)} selected={communityId === x.id} onPress={() => setCommunityId(x.id)} />
+                    ))}
+                  </View>
+                </Animated.View>
+              ) : null}
+              {geocoderOn ? (
+                <Animated.View entering={enter.rise(6)} style={styles.block}>
+                  <Text variant="overline" tone="secondary">
+                    Exact address (optional)
+                  </Text>
+                  <TextInput
+                    value={address}
+                    onChangeText={(v) => setAddress(v.slice(0, 200))}
+                    placeholder={tx('Building, street, place: to appear on the map')}
+                    placeholderTextColor={t.c.textTertiary}
+                    style={[styles.address, { color: t.c.text, backgroundColor: t.c.surface }]}
+                    accessibilityLabel={a11y('Exact address')}
+                  />
+                </Animated.View>
+              ) : null}
             </View>
           ) : null}
 
@@ -596,6 +636,7 @@ function CustomButton({ text, onPress }: { text: string; onPress: () => void }) 
 }
 
 const styles = StyleSheet.create({
+  address: { height: 48, borderRadius: radius.lg, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
   cover: { height: 170, borderRadius: radius.lg, overflow: 'hidden' },
   coverRemove: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   coverPill: { position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },

@@ -165,7 +165,7 @@ function CommunityRow({ c, index, reduced, choosing, picked, onToggle }: { c: Of
         accessibilityState={choosing ? { checked: picked } : undefined}
         accessibilityLabel={c.name}
       >
-        <CommunityThumb topic={c.topic} emoji={c.emoji} light={CITIES[c.cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={52} />
+        <CommunityThumb id={c.id} topic={c.topic} emoji={c.emoji} light={CITIES[c.cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={52} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="titleS" numberOfLines={1}>
             {c.name}

@@ -89,7 +89,7 @@ const friendly = (msg: string) =>
   /row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down|rate/i.test(msg) ? 'Slow down a little' : /author''s own files|own files/i.test(msg) ? 'This file cannot be used' : msg;
 
 /** Publishes a post (profile when no community). Files already sent are removed if the post is refused. */
-export async function createPost(input: { communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; onProgress?: (p: number) => void }): Promise<string> {
+export async function createPost(input: { communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; onProgress?: (p: number) => void }): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
@@ -97,7 +97,7 @@ export async function createPost(input: { communityId: string | null; body: stri
   const body = input.body.trim();
   if (!body && !input.media?.files.length) throw new Error('Write something or add a photo');
   const { row, fresh } = await store(uid, input.media, input.onProgress);
-  const { data, error } = await supabase.from('community_posts').insert({ community_id: input.communityId, author_id: uid, body, kind: input.kind ?? 'post', ...row }).select('id').single();
+  const { data, error } = await supabase.from('community_posts').insert({ community_id: input.communityId, author_id: uid, body, kind: input.kind ?? 'post', ...(input.communityId && input.category ? { category: input.category } : {}), ...row }).select('id').single();
   if (error || !data) {
     if (fresh.length) await supabase.storage.from('post-media').remove(fresh);
     throw new Error(friendly(error?.message ?? 'Could not post'));

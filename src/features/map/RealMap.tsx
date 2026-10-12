@@ -23,6 +23,7 @@ import { MapButton, MapTopBar, ModeSwitch, searchMap, type Layer } from './MapCo
 import { ClusterView, MarkerView } from './MapMarkers';
 import { MapSheet, type Snap } from './MapSheet';
 import { buildMarkers, type MapMarkerData } from './markers';
+import { useActivityLayer } from './useActivityLayer';
 import { placeMarkers, STREET, type Located, type Region } from './place';
 
 export const hasRealMap = true;
@@ -59,13 +60,16 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const [destSheet, setDestSheet] = useState(false);
   const [three, setThree] = useState(false);
   const [query, setQuery] = useState('');
+  // Where the member is (once they tapped locate): for the distance filter.
+  const [origin, setOrigin] = useState<LatLng | null>(null);
+  const acts = useActivityLayer(city, origin);
   // Bumped on every camera frame so the IRLY layer follows the map.
   const [, setFrameTick] = useState(0);
 
   const sheetBottom = tabSpace - 28;
   const sheetArea = frame.height - sheetBottom;
 
-  const all = useMemo(() => buildMarkers(city, content, lives).filter((m): m is Located => Boolean(m.coords)), [city, content, lives]);
+  const all = useMemo(() => [...buildMarkers(city, content, lives), ...acts.markers].filter((m): m is Located => Boolean(m.coords)), [city, content, lives, acts.markers]);
 
   const start = useMemo<Region>(() => {
     const counts = new Map<string, number>();
@@ -182,6 +186,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
       toast(tx('You are not in {city} right now. Showing {city}', { city: city.name }), 'pin', 'brand');
       centerOn(start, start.latitudeDelta);
     } else {
+      setOrigin(here);
       centerOn(here, 0.02);
     }
   };
@@ -243,6 +248,9 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
         layer={layer}
         onLayer={setLayer}
         onDestination={() => setDestSheet(true)}
+        filters={acts.filters}
+        onFilters={acts.setFilters}
+        filterOptions={acts.filterOptions}
       />
 
       <Animated.View entering={enter.fade(1, 160)} style={[styles.controls, { top: insets.top + 118 }]} pointerEvents="box-none">

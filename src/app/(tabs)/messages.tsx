@@ -26,6 +26,8 @@ import { toast } from '@/components/ui/Toast';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
+import type { PhotoKey } from '@/data/photos';
+import { useCommunityPhotoKeys } from '@/features/server/covers';
 import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -130,6 +132,8 @@ export default function Messages() {
   // People's faces come from the shared faces (small copies, cached); chats' own pictures are signed here.
   useEffect(() => primeFaces(server.conversations.filter((c) => c.otherId).map((c) => ({ id: c.otherId!, path: c.otherPhoto }))), [server.conversations]);
   const pictures = useSignedLinks('activity-photos', useMemo(() => all.map((c) => c.photoPath), [all]));
+  // A community chat without a photo of its own shows its community's picture, as on the community's page.
+  const appPhotos = useCommunityPhotoKeys(useMemo(() => all.filter((c) => isServerId(c.id) && tabOf(c) === 'communities' && c.refId).map((c) => c.refId!), [all]));
   const loading = server.loading && !server.conversations.length;
 
   return (
@@ -236,7 +240,7 @@ export default function Messages() {
         ) : shown.length ? (
           shown.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : enter.rise(Math.min(i, 8), 30)} exiting={reduced ? undefined : FadeOut.duration(120)} layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)}>
-              <Row c={c} onLong={openMenu} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} picture={c.photoPath ? pictures[c.photoPath] : undefined} />
+              <Row c={c} onLong={openMenu} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} picture={c.photoPath ? pictures[c.photoPath] : undefined} appPhoto={c.refId ? appPhotos[c.refId] : undefined} />
             </Animated.View>
           ))
         ) : (
@@ -291,7 +295,7 @@ function Action({ icon, label, onPress }: { icon: IconName; label: string; onPre
 
 const KIND_ICON: Record<Exclude<Tab, 'all'>, IconName> = { private: 'user', groups: 'users', communities: 'heartHandshake', activities: 'calendar' };
 
-const Row = memo(function Row({ c, lit, unread, picture, onLong }: { c: Conversation; lit: boolean; unread: number; picture?: string; onLong: (c: Conversation) => void }) {
+const Row = memo(function Row({ c, lit, unread, picture, appPhoto, onLong }: { c: Conversation; lit: boolean; unread: number; picture?: string; appPhoto?: PhotoKey; onLong: (c: Conversation) => void }) {
   const t = useTheme();
   const router = useRouter();
   const sent = useStore((s) => s.sent);
@@ -316,8 +320,14 @@ const Row = memo(function Row({ c, lit, unread, picture, onLong }: { c: Conversa
         <Avatar name={c.title} hue={hueOf(c.otherId ?? c.id)} size={56} photo={person?.photo} online={person?.online} userId={server ? c.otherId : undefined} />
       ) : (
         <View style={[styles.picture, { backgroundColor: t.c.overlay }]}>
-          {picture || community ? (
-            <Photo visual={community?.visual ?? { photo: 'meeting', uri: picture }} light="dubai" width={160} style={StyleSheet.absoluteFill} recyclingKey={`conv-${c.id}-${c.photoPath ?? 'app'}`} />
+          {picture || community || appPhoto ? (
+            <Photo
+              visual={community?.visual ?? { photo: appPhoto ?? 'meeting', uri: picture }}
+              light="dubai"
+              width={160}
+              style={StyleSheet.absoluteFill}
+              recyclingKey={picture ? `conv-${c.id}-${c.photoPath}` : appPhoto && c.refId ? `community-${c.refId}-app` : `conv-${c.id}-app`}
+            />
           ) : (
             <Icon name={KIND_ICON[kind]} size={22} color={t.c.textSecondary} />
           )}

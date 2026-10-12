@@ -8,7 +8,7 @@ import { Chip, Field } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { INTERESTS } from '@/data/catalog';
-import { CITIES } from '@/data/destinations';
+import { CITIES, cityOpen } from '@/data/destinations';
 import { LANGUAGES } from '@/data/languages';
 import type { CityId, Interest } from '@/data/types';
 import { updateMyProfile, useAccount } from '@/features/auth/account';
@@ -184,7 +184,7 @@ export default function EditProfile() {
 
         <Section title="City">
           <View style={styles.wrap}>
-            {(Object.keys(CITIES) as CityId[]).map((id) => (
+            {(Object.keys(CITIES) as CityId[]).filter((id) => cityOpen(id) || id === cityId).map((id) => (
               <Chip key={id} size="sm" label={CITIES[id].name} selected={cityId === id} onPress={() => setCityId(id)} />
             ))}
           </View>

@@ -280,9 +280,11 @@ const sized = (template: string, px: number) => template.replace('{w}', String(t
  */
 const bySeed = new Map<string, number>();
 const next = new Map<string, number>();
+/** One thing, one seed: a list card ("srv-<id>"), its page ("a-<id>") and its thumb ("<id>-thumb") share the photo. */
+const seedOf = (seed: string) => seed.replace(/^(srv|act|a|c)-/, '').replace(/-thumb$/, '');
 function pick(key: string, count: number, seed?: string): number {
   if (count <= 1) return 0;
-  const id = seed ? `${key}|${seed}` : undefined;
+  const id = seed ? `${key}|${seedOf(seed)}` : undefined;
   if (id && bySeed.has(id)) return bySeed.get(id)!;
   const n = next.get(key) ?? 0;
   next.set(key, n + 1);
@@ -290,9 +292,13 @@ function pick(key: string, count: number, seed?: string): number {
   return n % count;
 }
 
+/** Keys whose first picture is the same file as another key's (jbr = surf, roadtrip = hikeDesert, meeting = founders): only their own variants are shown. */
+const SHARED_PRIMARY = new Set<string>(['jbr', 'roadtrip', 'meeting']);
+
 export function photo(key: PhotoKey, width = 900, seed?: string): string {
   const px = pixels(width);
   const variants = VARIANTS[key] ?? [];
+  if (SHARED_PRIMARY.has(key) && variants.length) return sized(variants[pick(key, variants.length, seed)], px);
   const i = pick(key, variants.length + 1, seed);
   return i === 0 ? primary(key, px) : sized(variants[i - 1], px);
 }

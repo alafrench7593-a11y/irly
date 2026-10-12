@@ -130,7 +130,7 @@ export default function RecapScreen() {
                   {g.emoji ?? '💬'}
                 </Text>
                 <View style={{ flex: 1 }}>
-                  <Text variant="label" raw>
+                  <Text variant="label">
                     {g.name}
                   </Text>
                   <Text variant="caption" tone="tertiary" raw>

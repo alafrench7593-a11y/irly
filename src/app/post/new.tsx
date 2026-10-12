@@ -28,7 +28,7 @@ export default function NewPost() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
-  const params = useLocalSearchParams<{ community?: string; name?: string; edit?: string; body?: string; kind?: string }>();
+  const params = useLocalSearchParams<{ community?: string; name?: string; edit?: string; body?: string; kind?: string; category?: string }>();
   const editing = params.edit ?? null;
   const [communityId, setCommunityId] = useState<string | null>(params.community ?? null);
   const key = draftKey(communityId);
@@ -174,7 +174,7 @@ export default function NewPost() {
     try {
       const onProgress = media?.kind === 'video' || files.length > 1 ? setProgress : undefined;
       if (editing) await updatePost(editing, { body, media, before, onProgress });
-      else await createPost({ communityId, body, media, onProgress, kind: kind ?? 'post' });
+      else await createPost({ communityId, body, media, onProgress, kind: kind ?? 'post', category: communityId === params.community ? (params.category ?? null) : null });
       if (!editing) saveDraft(key, null);
       haptic('success');
       toast(editing ? 'Post updated' : communityId ? 'Posted in the community' : 'Posted on your profile', 'check', 'brand');

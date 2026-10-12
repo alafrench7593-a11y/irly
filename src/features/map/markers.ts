@@ -1,7 +1,7 @@
 import type { IconName } from '@/components/ui/Icon';
 import { t as tx } from '@/i18n';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
-import { toLatLng, type LatLng } from '@/data/geo';
+import { areaCoords, toLatLng, type LatLng } from '@/data/geo';
 import type { City, CityContent, MapPoint } from '@/data/types';
 import type { HeroKind } from '@/features/hero/heroStore';
 import type { Live } from '@/features/live/liveStore';
@@ -35,6 +35,8 @@ export type MapMarkerData = {
   day?: string;
   /** Free text for the sheet. */
   body?: string;
+  /** A server activity: its page (the same record everywhere). */
+  href?: string;
 };
 
 export type Cluster = { id: string; point: MapPoint; members: MapMarkerData[]; colors: string[] };
@@ -72,6 +74,44 @@ export function jitter(p: MapPoint, id: string, spread = 0.045): MapPoint {
 }
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+/**
+ * Server activities at their real position (a listed place, or an address
+ * matched precisely by the server). On the IRLY canvas the same position is
+ * drawn relative to the nearest neighbourhood; on real maps it is exact.
+ */
+export function activityMarkers(city: City, rows: MapActivityRow[], whenText: (ms: number) => string): MapMarkerData[] {
+  const anchors = city.areas
+    .map((a) => ({ a, c: areaCoords(city.id, a.id) }))
+    .filter((x): x is { a: City['areas'][number]; c: LatLng } => Boolean(x.c));
+  if (!anchors.length) return [];
+  const k = 0.16;
+  return rows.map((r) => {
+    const near = anchors.reduce((best, x) =>
+      Math.hypot(x.c.latitude - r.latitude, x.c.longitude - r.longitude) < Math.hypot(best.c.latitude - r.latitude, best.c.longitude - r.longitude) ? x : best,
+    );
+    const point = {
+      x: Math.min(0.99, Math.max(0.01, near.a.point.x + (r.longitude - near.c.longitude) / k)),
+      y: Math.min(0.99, Math.max(0.01, near.a.point.y - (r.latitude - near.c.latitude) / k)),
+    };
+    return {
+      id: `a:${r.id}`,
+      type: 'activity' as const,
+      areaId: near.a.id,
+      point,
+      coords: { latitude: r.latitude, longitude: r.longitude },
+      title: r.title,
+      subtitle: [r.status === 'ongoing' ? tx('Happening now') : whenText(r.startsAt), r.place ?? r.address, r.communityName ? tx(r.communityName) : null].filter(Boolean).join(' · '),
+      icon: 'calendar' as const,
+      color: category.business,
+      count: r.going,
+      live: r.status === 'ongoing',
+      body: r.description ?? r.address ?? undefined,
+      href: `/a/${r.id}`,
+    };
+  });
+}
+export type MapActivityRow = { id: string; title: string; description: string | null; startsAt: number; place: string | null; address: string | null; latitude: number; longitude: number; communityName: string | null; status: 'upcoming' | 'ongoing'; going: number };
 
 export function buildMarkers(city: City, content: CityContent, lives: Live[] = []): MapMarkerData[] {
   const pt = (areaId: string) => (city.areas.find((a) => a.id === areaId) ?? city.areas[0]).point;

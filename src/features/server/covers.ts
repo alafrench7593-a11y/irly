@@ -8,6 +8,7 @@ import { imageBytes, imageType } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 import { changed, useSyncVersion } from './sync';
 import { coverLinks } from './activities';
+import { communityPhoto } from '@/features/community/official';
 
 /**
  * Own photos for sessions, communities and chats. Without one, the app shows
@@ -75,6 +76,8 @@ export type ChatPhoto = {
   path: string | null;
   /** The app's photo: the session's or the community's, else a meetup. */
   fallback: PhotoKey;
+  /** Same seed as the subject's own page, so the same picture shows. */
+  seed?: string;
   /** Group, session and community chats have a photo; private chats show the person. */
   hasPhoto: boolean;
   canEdit: boolean;
@@ -103,14 +106,14 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
       const [{ data: conv }, { data: me }] = await Promise.all([
         sb
           .from('conversations')
-          .select('kind, photo_path, community_id, activities(category_id, title, cover_path), communities(category_id, cover_path)')
+          .select('kind, photo_path, community_id, activity_id, activities(category_id, title, cover_path), communities(category_id, topic, cover_path)')
           .eq('id', conversationId)
           .maybeSingle(),
         sb.from('conversation_members').select('role').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
       ]);
       if (!alive || !conv) return;
       const act = one(conv.activities as One<{ category_id: string; title: string; cover_path: string | null }>);
-      const com = one(conv.communities as One<{ category_id: string | null; cover_path: string | null }>);
+      const com = one(conv.communities as One<{ category_id: string | null; topic: string | null; cover_path: string | null }>);
       let canEdit = me?.role === 'admin';
       if (!canEdit && conv.community_id) {
         const { data: cm } = await sb.from('community_members').select('role').eq('community_id', conv.community_id).eq('user_id', uid).maybeSingle();
@@ -118,16 +121,45 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
       }
       const fallback: PhotoKey = act
         ? ideaPhoto((CATEGORY_BY_ID[act.category_id as CategoryKey] ? act.category_id : 'sport') as CategoryKey, act.title)
-        : (CATEGORY_BY_ID[com?.category_id as CategoryKey]?.photo ?? 'meeting');
+        : ((communityPhoto(com?.topic, com?.category_id) as PhotoKey | null) ?? 'meeting');
       const hasPhoto = conv.kind === 'group' || conv.kind === 'activity' || conv.kind === 'community';
       // One source per picture: a community chat shows the community's own photo
       // (changing it changes the community's), others their chat photo, then the activity's cover.
       const path = conv.community_id ? (com?.cover_path ?? (conv.photo_path as string | null) ?? null) : ((conv.photo_path as string | null) ?? act?.cover_path ?? null);
-      if (alive) setState({ path, fallback, hasPhoto, canEdit: hasPhoto && canEdit, communityId: (conv.community_id as string | null) ?? null });
+      // Same seed as the community's page and the activity's page: the same picture of the subject.
+      const seed = conv.community_id ? `community-${conv.community_id}-app` : conv.activity_id ? `a-${conv.activity_id}` : undefined;
+      if (alive) setState({ path, fallback, seed, hasPhoto, canEdit: hasPhoto && canEdit, communityId: (conv.community_id as string | null) ?? null });
     })().catch(() => undefined);
     return () => {
       alive = false;
     };
   }, [conversationId, uid, n, inboxV, communitiesV]);
   return { ...state, refresh };
+}
+
+/**
+ * The app's picture for each community (by id) that has no photo of its own:
+ * the inbox shows a community chat with the same picture as the community's page.
+ */
+export function useCommunityPhotoKeys(ids: string[]): Record<string, PhotoKey> {
+  const [keys, setKeys] = useState<Record<string, PhotoKey>>({});
+  const list = [...new Set(ids)].sort().join(',');
+  useEffect(() => {
+    if (!supabase || !list) return;
+    let alive = true;
+    supabase
+      .from('communities')
+      .select('id, topic, category_id')
+      .in('id', list.split(','))
+      .then(({ data }) => {
+        if (!alive || !data) return;
+        const out: Record<string, PhotoKey> = {};
+        for (const c of data as { id: string; topic: string | null; category_id: string | null }[]) out[c.id] = (communityPhoto(c.topic, c.category_id) as PhotoKey | null) ?? 'meeting';
+        setKeys(out);
+      }, () => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [list]);
+  return keys;
 }

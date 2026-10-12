@@ -104,6 +104,8 @@ async function signedInPage(browser, who) {
   await page.goto(BASE);
   await page.evaluate((name) => {
     localStorage.setItem('irly-v2', JSON.stringify({ state: { onboarded: true, storySeen: 99, communityIntroSeen: true, destinationId: 'bali', cityId: 'bali', profile: { name, types: [], interests: [], activities: [], languages: ['English'], lookingFor: [], gender: 'woman', age: 32 } }, version: 1 }));
+    // Bali is coming soon for people; the tests preview it (its screens stay covered).
+    localStorage.setItem('irly-preview', 'bali');
     localStorage.setItem('irly-lang', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
   }, who.name);
   await page.goto(`${BASE}/account`);
@@ -376,13 +378,18 @@ async function main() {
     await visible(page, '1 vote');
     return true;
   });
-  await step('assistant: "Organise padel Saturday 9am" → activity created and announced', async () => {
+  // A plan is an activity of the community (its Activities space), not a post in the feed.
+  await step('assistant: "Organise padel Saturday 9am" → activity created in the community, no announcement post', async () => {
     await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Organise padel Saturday 9am');
     await page.getByRole('button', { name: 'Ask', exact: true }).click();
     await page.getByRole('button', { name: 'Create it for the community' }).click();
-    await visible(page, 'New plan: Padel', 20000);
-    const acts = must(await veraSb.from('activities').select('title').eq('community_id', girlsId));
-    return acts.some((a) => a.title.startsWith('Padel'));
+    let acts = [];
+    for (let i = 0; i < 20 && !acts.some((a) => a.title.startsWith('Padel')); i++) {
+      await page.waitForTimeout(1000);
+      acts = must(await veraSb.from('activities').select('title').eq('community_id', girlsId));
+    }
+    const posts = must(await veraSb.from('community_posts').select('body').eq('community_id', girlsId).like('body', 'New plan:%'));
+    return acts.some((a) => a.title.startsWith('Padel')) && posts.length === 0;
   });
   await step('assistant: weekly digest from real data', async () => {
     await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill("What's new this week?");
@@ -1022,7 +1029,12 @@ async function main() {
     const got = new URL(page.url()).pathname;
     if (want !== '/' && got === '/') bounced.push(`${route} → ${got}`);
     if (page.errors.length > before) crashed.push(`${route}: ${page.errors.slice(before).join(' | ').slice(0, 160)}`);
-    const text = await page.evaluate(() => document.body.innerText.trim().length);
+    // A screen may show only a spinner while it loads: give it a few seconds before calling it blank.
+    let text = await page.evaluate(() => document.body.innerText.trim().length);
+    for (let i = 0; text < 20 && i < 10; i++) {
+      await page.waitForTimeout(500);
+      text = await page.evaluate(() => document.body.innerText.trim().length);
+    }
     if (text < 20) blank.push(route);
   }
   await step(`all ${screens.length} screens open on their own path (no bounce to Home)`, async () => {

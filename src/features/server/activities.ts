@@ -6,6 +6,7 @@ import { CITIES, cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount } from '@/features/auth/account';
+import { signedLinks } from '@/features/server/media';
 import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
@@ -27,18 +28,11 @@ export function startsAt(day: string, time: string, now = new Date(), utcOffset?
 }
 
 /** Extras that tie an activity to a place, a type (PLAYDATE, DINNER…) and an audience. */
-export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean; coverUri?: string | null };
+export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean; coverUri?: string | null; address?: string | null };
 
 /** Signed links for uploaded activity photos (private bucket); other values pass through. */
-export async function coverLinks(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
-  const own = [...new Set(paths.filter((p): p is string => Boolean(p) && !/^https?:/.test(p as string)))];
-  const out: Record<string, string> = {};
-  for (const p of paths) if (p && /^https?:/.test(p)) out[p] = p;
-  if (!supabase || !own.length) return out;
-  const { data } = await supabase.storage.from('activity-photos').createSignedUrls(own, 6 * 3600);
-  for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
-  return out;
-}
+// Through the shared link cache: a refresh keeps the same link, so the image cache keeps the photo.
+export const coverLinks = (paths: (string | null | undefined)[]): Promise<Record<string, string>> => signedLinks('activity-photos', paths);
 
 // One tap = one activity: the same plan sent twice (double tap, retry after a
 // network error) reuses the same request and the same client_ref, and the
@@ -98,6 +92,8 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
       // Girls and moms plans are IRLY Girl plans (enforced server-side).
       girl_only: extras.girlOnly || extras.audience === 'girls' || extras.audience === 'moms',
       community_id: extras.communityId ?? null,
+      // An exact address puts it on the map once the server's geocoder matched it precisely (never a guess).
+      ...(extras.address?.trim() ? { address: extras.address.trim().slice(0, 200) } : {}),
       client_ref: clientRef,
     })
     .select('id')
@@ -532,4 +528,56 @@ export function useRecommendations(cityId: string): Recommendation[] {
   const { keep } = useCityFilter(cityId as CityId);
   const shown = useMemo(() => list.filter((r) => keep(r.cityId)), [list, keep]);
   return uid ? shown : NONE;
+}
+
+/** Is the address search for the map switched on (an IRLY admin set up the geocoder)? */
+export function useGeocoderOn(): boolean {
+  const uid = useAccount()?.userId;
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!uid || !supabase) return;
+    let alive = true;
+    supabase.rpc('geocoder_on').then(
+      ({ data }) => alive && setOn(data === true),
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [uid]);
+  return on;
+}
+
+export type MyCommunityOption = { id: string; name: string; groupOf: string | null; girlOnly: boolean };
+/** Communities and groups I belong to, for attaching an activity to one (optional). */
+export function useMyCommunityOptions(): MyCommunityOption[] {
+  const uid = useAccount()?.userId;
+  const [list, setList] = useState<MyCommunityOption[]>([]);
+  useEffect(() => {
+    if (!uid || !supabase) return;
+    let alive = true;
+    supabase
+      .from('community_members')
+      .select('community_id, communities!inner(id, name, girl_only, deleted_at, parent:parent_id(name))')
+      .eq('user_id', uid)
+      .is('communities.deleted_at', null)
+      .limit(100)
+      .then(
+        ({ data }) => {
+          if (!alive) return;
+          type R = { communities: { id: string; name: string; girl_only: boolean; parent: { name: string } | { name: string }[] | null } | { id: string; name: string; girl_only: boolean; parent: { name: string } | { name: string }[] | null }[] };
+          const rows = ((data as R[] | null) ?? []).map((r) => (Array.isArray(r.communities) ? r.communities[0] : r.communities)).filter(Boolean);
+          setList(
+            rows
+              .map((c) => ({ id: c.id, name: c.name, girlOnly: Boolean(c.girl_only), groupOf: (Array.isArray(c.parent) ? c.parent[0]?.name : c.parent?.name) ?? null }))
+              .sort((a, b) => (a.groupOf ?? a.name).localeCompare(b.groupOf ?? b.name) || (a.groupOf ? 1 : 0) - (b.groupOf ? 1 : 0)),
+          );
+        },
+        () => undefined,
+      );
+    return () => {
+      alive = false;
+    };
+  }, [uid]);
+  return list;
 }

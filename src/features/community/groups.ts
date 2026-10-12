@@ -40,12 +40,14 @@ export function useCommunityExtras(id: string) {
     Promise.all([
       sb().rpc('community_subgroups', { p_parent: id }),
       sb().rpc('community_rights', { p_community: id }),
-      sb().from('communities').select('parent_id').eq('id', id).maybeSingle(),
+      // The parent in the same round trip (no second, sequential read).
+      sb().from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', id).maybeSingle(),
       sb().from('community_notification_prefs').select('posts, announcements').eq('community_id', id).eq('user_id', uid).maybeSingle(),
     ])
-      .then(async ([g, r, me, pr]) => {
-        const parentId = (me.data as { parent_id: string | null } | null)?.parent_id ?? null;
-        const parent = parentId ? ((await sb().from('communities').select('id, name').eq('id', parentId).maybeSingle()).data as Parent) : null;
+      .then(([g, r, me, pr]) => {
+        const row = me.data as { parent_id: string | null; parent: Parent | Parent[] | null } | null;
+        const embedded = Array.isArray(row?.parent) ? (row?.parent[0] ?? null) : (row?.parent ?? null);
+        const parent = row?.parent_id && embedded ? embedded : null;
         if (n !== seq.current) return;
         const rr = ((r.data as Record<string, unknown>[] | null) ?? [])[0];
         setState({
@@ -123,4 +125,69 @@ export async function communityPeople(communityId: string, query?: string): Prom
 export async function setRole(communityId: string, userId: string, role: 'moderator' | 'member'): Promise<void> {
   const { error } = await sb().rpc('set_community_role', { p_community: communityId, p_user: userId, p_role: role });
   if (error) throw new Error(friendly(error.message));
+}
+
+/* ───────── Discussion categories (inside a community, no members of their own) ───────── */
+
+export type Channel = { id: string; slug: string; name: string };
+
+/** A community's categories, in their order; empty when it has none (or the server is not updated yet). */
+export function useChannels(communityId: string | undefined) {
+  const uid = useAccount()?.userId;
+  const [state, setState] = useState<{ for: string; list: Channel[] }>({ for: '', list: [] });
+  const seq = useRef(0);
+  const key = `${uid}|${communityId}`;
+  const load = useCallback(() => {
+    if (!uid || !supabase || !communityId) return;
+    const n = ++seq.current;
+    sb()
+      .from('community_channels')
+      .select('id, slug, name')
+      .eq('community_id', communityId)
+      .order('sort')
+      .order('created_at')
+      .then(
+        ({ data }) => n === seq.current && setState({ for: key, list: ((data as Channel[] | null) ?? []).map((c) => ({ id: c.id, slug: c.slug, name: c.name })) }),
+        () => n === seq.current && setState({ for: key, list: [] }),
+      );
+  }, [uid, communityId, key]);
+  useEffect(load, [load]);
+  useRefreshOn(['communities'], load);
+  return { channels: state.for === key ? state.list : [], reload: load };
+}
+
+/** "Good deals" → "good_deals" (the category's stable id inside its community). */
+const slugOf = (name: string) =>
+  name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/^([^a-z])/, 'c_$1')
+    .slice(0, 30);
+
+export async function addChannel(communityId: string, name: string): Promise<void> {
+  const clean = name.trim();
+  if (clean.length < 2) throw new Error('Give it a name (2 letters or more)');
+  const base = slugOf(clean);
+  const slug = base === 'general' ? 'general_2' : base.length < 2 ? `c_${base || 'x'}` : base;
+  const { error } = await sb().from('community_channels').insert({ community_id: communityId, slug, name: clean });
+  if (error) throw new Error(/duplicate|unique/i.test(error.message) ? 'This category already exists' : /row-level|policy/i.test(error.message) ? 'Only the hosts can add categories' : friendly(error.message));
+  changed('communities');
+}
+
+export async function renameChannel(id: string, name: string): Promise<void> {
+  const clean = name.trim();
+  if (clean.length < 2) throw new Error('Give it a name (2 letters or more)');
+  const { error } = await sb().from('community_channels').update({ name: clean }).eq('id', id);
+  if (error) throw new Error(friendly(error.message));
+  changed('communities');
+}
+
+/** Its posts move back to General; nothing is deleted. */
+export async function deleteChannel(id: string): Promise<void> {
+  const { error } = await sb().from('community_channels').delete().eq('id', id);
+  if (error) throw new Error(friendly(error.message));
+  changed('communities');
 }

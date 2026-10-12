@@ -104,11 +104,6 @@ const topicOf = (row: unknown): TopicRow | null => {
   return Array.isArray(t) ? (t[0] ?? null) : (t ?? null);
 };
 
-async function isMuted(conversationId: string, uid: string): Promise<boolean> {
-  const { data } = await sb().from('conversation_members').select('muted').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle();
-  return Boolean(data?.muted);
-}
-
 /** Community chat notifications on or off (the chat itself stays). */
 export async function setCommunityMuted(conversationId: string, muted: boolean): Promise<void> {
   const { data: session } = await sb().auth.getSession();
@@ -127,9 +122,11 @@ export function useCommunity(id: string) {
 
   const load = useCallback(async (): Promise<CommunityDetail | null> => {
     if (!uid) return null;
-    const [{ data, error: e }, { data: cover }] = await Promise.all([
+    // One round trip: detail, cover and my mute setting for its chat, side by side.
+    const [{ data, error: e }, { data: cover }, { data: mine }] = await Promise.all([
       sb().rpc('community_detail', { p_id: id }),
       sb().from('communities').select('cover_path, official, topic, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
+      sb().from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', uid).eq('conversations.community_id', id).limit(1),
     ]);
     if (e) throw new Error(e.message);
     const r = ((data as Row[]) ?? [])[0];
@@ -151,7 +148,7 @@ export function useCommunity(id: string) {
       topic: (cover?.topic as string | null) ?? null,
       emoji: topicOf(cover)?.emoji ?? null,
       introFirst: Boolean(topicOf(cover)?.intro_first),
-      muted: r.conversation_id ? await isMuted(r.conversation_id as string, uid) : false,
+      muted: Boolean(r.conversation_id && (mine as { muted: boolean }[] | null)?.[0]?.muted),
     };
   }, [id, uid]);
 
@@ -211,7 +208,11 @@ function toPost(r: Row, uid: string | undefined): CommunityPost {
 }
 
 /** The feed, live: new posts, votes, likes and comments from anyone appear without refreshing. */
-export function useCommunityFeed(communityId: string) {
+/**
+ * A community's posts. `space` undefined: every post (communities without
+ * categories); null: General (posts without a category); a slug: that category.
+ */
+export function useCommunityFeed(communityId: string, space?: string | null) {
   const account = useAccount();
   const uid = account?.userId;
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -227,10 +228,13 @@ export function useCommunityFeed(communityId: string) {
 
   const load = useCallback(async (): Promise<CommunityPost[]> => {
     if (!uid) return [];
-    const { data, error: e } = await sb().rpc('community_feed', { p_community: communityId, p_limit: 50 });
+    const { data, error: e } =
+      space === undefined
+        ? await sb().rpc('community_feed', { p_community: communityId, p_limit: 50 })
+        : await sb().rpc('community_space_feed', { p_community: communityId, p_category: space, p_limit: 50 });
     if (e) throw new Error(e.message);
     return ((data as Row[]) ?? []).map((r) => toPost(r, uid));
-  }, [communityId, uid]);
+  }, [communityId, uid, space]);
 
   /** The server list, plus our posts still on their way (they are not in it yet). */
   const land = useCallback((server: CommunityPost[]) => setPosts((prev) => [...prev.filter((x) => x.pending), ...server]), []);
@@ -257,15 +261,26 @@ export function useCommunityFeed(communityId: string) {
         .finally(() => alive && setLoading(false));
     };
     reload();
+    // Likes, comments and votes arrive from every community: gather a burst
+    // into one reload instead of one full feed per event.
+    let soon: ReturnType<typeof setTimeout> | null = null;
+    const later = () => {
+      if (soon) return;
+      soon = setTimeout(() => {
+        soon = null;
+        reload();
+      }, 800);
+    };
     const channel = supabase
       .channel(topic(`community-${communityId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes' }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.community_post' }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: 'target_type=eq.community_post' }, reload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes' }, later)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.community_post' }, later)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: 'target_type=eq.community_post' }, later)
       .subscribe();
     return () => {
       alive = false;
+      if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);
     };
   }, [communityId, uid, load, land]);
@@ -284,7 +299,7 @@ export function useCommunityFeed(communityId: string) {
 
   /** Optimistic: the post shows at once, then takes its real id; a vote cast meanwhile follows it. */
   const post = useCallback(
-    async (input: { body: string; poll?: string[] | null; activityId?: string | null }) => {
+    async (input: { body: string; poll?: string[] | null; activityId?: string | null; category?: string | null }) => {
       if (!uid) throw new Error('Sign in to post');
       const body = input.body.trim();
       if (!body) return;
@@ -296,7 +311,7 @@ export function useCommunityFeed(communityId: string) {
       setPosts((p) => [temp, ...p]);
       const { data, error: e } = await sb()
         .from('community_posts')
-        .insert({ community_id: communityId, author_id: uid, body, poll, activity_id: input.activityId ?? null })
+        .insert({ community_id: communityId, author_id: uid, body, poll, activity_id: input.activityId ?? null, ...(input.category ? { category: input.category } : {}) })
         .select('id')
         .single();
       const vote = queued.current.get(temp.id);
@@ -409,15 +424,47 @@ export async function fetchDigest(communityId: string): Promise<Digest> {
   };
 }
 
-export type CommunityActivity = { id: string; title: string; startsAt: number; areaId: string; going: number };
+export type ActivityStatus = 'upcoming' | 'ongoing' | 'finished' | 'cancelled';
+export type CommunityActivity = {
+  id: string;
+  title: string;
+  startsAt: number;
+  areaId: string;
+  going: number;
+  status: ActivityStatus;
+  /** Set when it belongs to one of this community's groups (same activity, shown here too). */
+  groupName: string | null;
+  pinnedAt: number | null;
+  onMap: boolean;
+};
 
-export function useCommunityActivities(communityId: string) {
+/**
+ * A community's Activities space: its own and its groups' activities (one
+ * record each, never copied), pinned first. `past` lists recent finished ones.
+ */
+export function useCommunityActivities(communityId: string, past = false) {
   const account = useAccount();
   const uid = account?.userId;
   const [list, setList] = useState<CommunityActivity[]>([]);
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<CommunityActivity[]> => {
     if (!uid || !supabase) return [];
-    const { data, error } = await supabase
+    const { data, error } = await supabase.rpc('community_activities', { p_community: communityId, p_past: past, p_limit: 40 });
+    if (!error) {
+      return ((data as Row[]) ?? []).map((a) => ({
+        id: a.id as string,
+        title: a.title as string,
+        startsAt: Date.parse(a.starts_at as string),
+        areaId: a.area_id as string,
+        going: Number(a.going ?? 0),
+        status: a.status as ActivityStatus,
+        groupName: a.community_id !== communityId ? ((a.community_name as string | null) ?? null) : null,
+        pinnedAt: a.pinned_at ? Date.parse(a.pinned_at as string) : null,
+        onMap: Boolean(a.has_location),
+      }));
+    }
+    if (past) return [];
+    // Server not updated yet: this community's upcoming activities, as before.
+    const old = await supabase
       .from('activities')
       .select('id, title, starts_at, area_id, going')
       .eq('community_id', communityId)
@@ -425,15 +472,19 @@ export function useCommunityActivities(communityId: string) {
       .gte('starts_at', new Date(Date.now() - 2 * 3600_000).toISOString())
       .order('starts_at')
       .limit(30);
-    if (error) throw new Error(error.message);
-    return (data ?? []).map((a) => ({
+    if (old.error) throw new Error(old.error.message);
+    return (old.data ?? []).map((a) => ({
       id: a.id as string,
       title: a.title as string,
       startsAt: Date.parse(a.starts_at as string),
       areaId: a.area_id as string,
       going: (a.going as number | null) ?? 0,
+      status: 'upcoming' as const,
+      groupName: null,
+      pinnedAt: null,
+      onMap: false,
     }));
-  }, [communityId, uid]);
+  }, [communityId, uid, past]);
   useEffect(() => {
     let alive = true;
     load().then((l) => alive && setList(l)).catch(() => undefined);
@@ -446,6 +497,13 @@ export function useCommunityActivities(communityId: string) {
   }, [load]);
   useRefreshOn(['activities'], refresh);
   return { activities: uid ? list : NONE, refresh };
+}
+
+/** Hosts pin (or unpin) an activity of their community or of one of its groups. */
+export async function pinActivity(communityId: string, activityId: string, pin: boolean): Promise<void> {
+  const { error } = await sb().rpc('pin_activity', { p_community: communityId, p_activity: activityId, p_pin: pin });
+  if (error) throw new Error(error.message);
+  changed('activities');
 }
 
 export async function joinCommunity(id: string): Promise<string> {

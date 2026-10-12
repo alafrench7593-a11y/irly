@@ -372,16 +372,10 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     if (!supabase || !uid) return;
     let alive = true;
     load().then((n) => alive && setItems(n)).catch(() => undefined);
-    const channel = supabase
-      .channel(topic(`notifications-${uid}`))
-      // New ones, and ones read elsewhere (another phone, a chat opened): the badge follows.
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${uid}` }, () => {
-        load().then((n) => alive && setItems(n)).catch(() => undefined);
-      })
-      .subscribe();
+    // New ones, and ones read elsewhere (another phone, a chat opened), arrive
+    // through the app's sync channel ('notifs'): one reload per change, not two.
     return () => {
       alive = false;
-      supabase?.removeChannel(channel);
     };
   }, [uid, load]);
   const markAllRead = useCallback(() => {

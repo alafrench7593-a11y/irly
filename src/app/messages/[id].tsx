@@ -412,7 +412,7 @@ function ServerThreadView({ id }: { id: string }) {
             {other ? (
               <Avatar name={thread.title} hue={hueOf(other)} size={36} userId={other} />
             ) : chatPhoto.hasPhoto ? (
-              <Photo visual={{ photo: chatPhoto.fallback, uri: chatPhotoUri ?? undefined }} light="dubai" style={styles.chatPhoto} width={120} recyclingKey={`chat-${id}-${chatPhoto.path ?? 'app'}`} />
+              <Photo visual={{ photo: chatPhoto.fallback, uri: chatPhotoUri ?? undefined }} light="dubai" style={styles.chatPhoto} width={120} recyclingKey={chatPhoto.path ? `chat-${id}-${chatPhoto.path}` : (chatPhoto.seed ?? `chat-${id}-app`)} />
             ) : null}
             <View style={{ flexShrink: 1, alignItems: other || chatPhoto.hasPhoto ? 'flex-start' : 'center' }}>
               <Text variant="titleS" numberOfLines={1} raw>

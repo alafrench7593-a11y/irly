@@ -300,6 +300,9 @@ try {
   let matchConv;
   if (verification) {
     await step('a private chat between Alice and Bea', async () => {
+      // Without a match, a private chat needs the other member's consent: they become friends first.
+      must(await A.sb.rpc('add_friend', { p_user: B.id }));
+      must(await B.sb.rpc('add_friend', { p_user: A.id }));
       matchConv = must(await A.sb.rpc('open_direct', { p_user: B.id }));
       must(await A.sb.from('messages').insert({ conversation_id: matchConv, sender_id: A.id, body: 'Hi Bea!' }));
       return Boolean(matchConv);
@@ -504,7 +507,8 @@ try {
   if (postsV2) await step('the author edits the post; nobody else can', async () => {
     must(await A.sb.from('community_posts').update({ body: 'Sunset at JBR' }).eq('id', profilePost));
     await B.sb.from('community_posts').update({ body: 'hacked' }).eq('id', profilePost);
-    const r = must(await C.sb.from('community_posts').select('body, edited_at').eq('id', profilePost).single());
+    // Bea reads it back (Alice blocked Carl earlier, so he sees none of her posts).
+    const r = must(await B.sb.from('community_posts').select('body, edited_at').eq('id', profilePost).single());
     return r.body === 'Sunset at JBR' && Boolean(r.edited_at);
   });
   if (postsV2) await step('a deleted post\'s photos are no longer readable by others', async () => {
@@ -524,8 +528,16 @@ try {
     must(await timed('join a group', () => A.sb.rpc('join_community', { p_community: padel.id })));
     const both = must(await A.sb.from('community_members').select('community_id').eq('user_id', A.id).in('community_id', [sport.id, padel.id]));
     const notHost = (await A.sb.rpc('announce', { p_community: padel.id, p_body: 'Hello everyone' })).error;
+    // The community page reads the parent and my chat mute setting in one round trip each.
+    const withParent = must(await A.sb.from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', padel.id).maybeSingle());
+    const parent = Array.isArray(withParent?.parent) ? withParent.parent[0] : withParent?.parent;
+    const mine = must(await A.sb.from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', A.id).eq('conversations.community_id', sport.id).limit(1));
     await A.sb.rpc('leave_community', { p_community: sport.id });
-    return both.length === 2 && Boolean(notHost);
+    if (both.length !== 2) throw new Error(`member of ${both.length} of the community and its group (expected 2)`);
+    if (!notHost) throw new Error('a member could announce in a group she does not host');
+    if (parent?.id !== sport.id) throw new Error(`the group's parent read back as ${JSON.stringify(withParent)}`);
+    if (mine.length !== 1 || typeof mine[0].muted !== 'boolean') throw new Error(`the community chat membership read back as ${JSON.stringify(mine)}`);
+    return true;
   });
   const helpV = groupsV2 && !(await A.sb.rpc('help_groups', { p_city: 'dubai' })).error;
   if (helpV) await step('Help & Questions: ask in Visa, another member finds it by keywords and answers', async () => {

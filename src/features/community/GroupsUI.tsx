@@ -8,15 +8,16 @@ import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { joinCommunity } from '@/features/community/data';
+import { deleteCommunity, joinCommunity } from '@/features/community/data';
 import { a11y, t as tx } from '@/i18n';
+import { confirm } from '@/lib/confirm';
 import { hueOf } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { announce, communityPeople, createSubgroup, setCommunityPrefs, setRole, type CommunityPrefs, type Parent, type Person, type Rights, type Subgroup } from './groups';
+import { addChannel, announce, communityPeople, createSubgroup, deleteChannel, renameChannel, setCommunityPrefs, setRole, type Channel, type CommunityPrefs, type Parent, type Person, type Rights, type Subgroup } from './groups';
 
 /** "← IRLY Sport" on a group's page. */
 export function ParentLink({ parent }: { parent: Parent }) {
@@ -55,10 +56,10 @@ export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChan
             <Text style={{ fontSize: 24 }} raw>
               {g.emoji ?? '💬'}
             </Text>
-            <Text variant="titleS" numberOfLines={1} raw>
+            <Text variant="titleS" numberOfLines={1}>
               {g.name}
             </Text>
-            <Text variant="caption" tone="tertiary" numberOfLines={2} raw>
+            <Text variant="caption" tone="tertiary" numberOfLines={2}>
               {g.tagline ?? ''}
             </Text>
             <Text variant="caption" tone="secondary">
@@ -146,10 +147,24 @@ export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: st
 }
 
 /** Hosts' tools: notify every member, add a group, name moderators. */
-export function HostTools({ communityId, name, rights, isTop, onChanged }: { communityId: string; name: string; rights: Rights; isTop: boolean; onChanged: () => void }) {
+export function HostTools({ communityId, name, rights, isTop, official, parentId, onChanged }: { communityId: string; name: string; rights: Rights; isTop: boolean; official: boolean; parentId: string | null; onChanged: () => void }) {
   const t = useTheme();
+  const router = useRouter();
   const [sheet, setSheet] = useState<'announce' | 'group' | 'people' | null>(null);
   if (!rights.canModerate) return null;
+  // A group (not a top community) can be deleted by its moderators; IRLY's own groups only by an IRLY admin.
+  const canDelete = !isTop && (!official || rights.isAdmin);
+  const remove = () =>
+    confirm(tx('Delete this group? It disappears for everyone, and its chat leaves every inbox.'), () =>
+      deleteCommunity(communityId)
+        .then(() => {
+          toast(tx('Group deleted'), 'check', 'brand');
+          if (parentId) router.replace(`/c/${parentId}`);
+          else if (router.canGoBack()) router.back();
+          else router.replace('/communities');
+        })
+        .catch((e) => toast(e instanceof Error ? e.message : tx('Could not delete'), 'x', 'live')),
+    );
   return (
     <View style={[styles.pad, styles.tools, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
       <View style={styles.row}>
@@ -162,6 +177,7 @@ export function HostTools({ communityId, name, rights, isTop, onChanged }: { com
         <Chip size="sm" icon="megaphone" label={tx('Notify all members')} onPress={() => setSheet('announce')} />
         {isTop ? <Chip size="sm" icon="plus" label={tx('Add a group')} onPress={() => setSheet('group')} /> : null}
         {rights.isOwner ? <Chip size="sm" icon="users" label={tx('Moderators')} onPress={() => setSheet('people')} /> : null}
+        {canDelete ? <Chip size="sm" icon="x" label={tx('Delete this group')} onPress={remove} /> : null}
       </View>
       <AnnounceSheet visible={sheet === 'announce'} communityId={communityId} name={name} rights={rights} onClose={() => setSheet(null)} onSent={onChanged} />
       <NewGroupSheet visible={sheet === 'group'} parentId={communityId} onClose={() => setSheet(null)} onMade={onChanged} />
@@ -317,6 +333,95 @@ function PeopleSheet({ visible, communityId, onClose }: { visible: boolean; comm
             </View>
           ))}
         </ScrollView>
+      </View>
+    </Sheet>
+  );
+}
+
+/* ───────── Discussion spaces: General + the community's categories ───────── */
+
+/** "General · Good deals · Questions" chips above the posts; hosts can manage them. */
+export function SpaceChips({ channels, value, onChange, canManage, communityId }: { channels: Channel[]; value: string | null; onChange: (slug: string | null) => void; canManage: boolean; communityId: string }) {
+  const [open, setOpen] = useState(false);
+  if (!channels.length && !canManage) return null;
+  return (
+    <>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
+        <Chip size="sm" label={tx('General')} selected={value === null} onPress={() => onChange(null)} />
+        {channels.map((c) => (
+          <Chip key={c.id} size="sm" label={c.name} selected={value === c.slug} onPress={() => onChange(c.slug)} />
+        ))}
+        {canManage ? <Chip size="sm" icon="settings" label={tx('Categories')} onPress={() => setOpen(true)} /> : null}
+      </ScrollView>
+      {canManage ? (
+        <ChannelsSheet
+          visible={open}
+          communityId={communityId}
+          channels={channels}
+          onClose={() => setOpen(false)}
+          onRemoved={(slug) => value === slug && onChange(null)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function ChannelsSheet({ visible, communityId, channels, onClose, onRemoved }: { visible: boolean; communityId: string; channels: Channel[]; onClose: () => void; onRemoved: (slug: string) => void }) {
+  const t = useTheme();
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const [edit, setEdit] = useState<{ id: string; name: string } | null>(null);
+  const run = async (key: string, action: () => Promise<void>, done: string) => {
+    if (busy) return;
+    setBusy(key);
+    try {
+      await action();
+      haptic('success');
+      toast(tx(done), 'check', 'brand');
+    } catch (e) {
+      toast(e instanceof Error ? tx(e.message) : tx('Could not save'), 'x', 'live');
+    } finally {
+      setBusy(null);
+    }
+  };
+  const input = [styles.line, { color: t.c.text, backgroundColor: t.c.overlay }];
+  return (
+    <Sheet visible={visible} onClose={onClose} title="Categories" subtitle="Themes inside this community (not groups): members choose one when they post. General always stays.">
+      <View style={{ paddingHorizontal: space.gutter, gap: space[3], paddingBottom: space[2] }}>
+        {channels.map((c) =>
+          edit?.id === c.id ? (
+            <View key={c.id} style={styles.row}>
+              <TextInput value={edit.name} onChangeText={(v) => setEdit({ id: c.id, name: v.slice(0, 40) })} style={[input, { flex: 1 }]} accessibilityLabel={a11y('Category name')} />
+              <Button label="Save" size="sm" loading={busy === `r${c.id}`} onPress={() => run(`r${c.id}`, () => renameChannel(c.id, edit.name), 'Category renamed').then(() => setEdit(null))} />
+            </View>
+          ) : (
+            <View key={c.id} style={styles.row}>
+              <Text variant="titleS" style={{ flex: 1 }} raw>
+                {c.name}
+              </Text>
+              <Chip size="sm" icon="edit" label={tx('Rename')} onPress={() => setEdit({ id: c.id, name: c.name })} />
+              <Chip
+                size="sm"
+                icon="x"
+                label={tx('Delete')}
+                onPress={() =>
+                  confirm(tx('Delete this category? Its posts move to General.'), () =>
+                    run(`d${c.id}`, () => deleteChannel(c.id), 'Category deleted').then(() => onRemoved(c.slug)),
+                  )
+                }
+              />
+            </View>
+          ),
+        )}
+        <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 40))} placeholder={tx('Questions & advice, Good deals, Restaurants…')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('New category')} />
+        <Button
+          label="Add the category"
+          icon="plus"
+          full
+          loading={busy === 'add'}
+          disabled={name.trim().length < 2}
+          onPress={() => run('add', () => addChannel(communityId, name), 'Category added').then(() => setName(''))}
+        />
       </View>
     </Sheet>
   );
