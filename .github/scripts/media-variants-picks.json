@@ -730,14 +730,6 @@
     "page": "https://pixabay.com/photos/tennis-tennis-player-tennis-court-4922792/",
     "by": "This_is_Engineering",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-288567",
-    "hash": "0101101100010111001001110100101000110011011000011010010110100100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/tennis-7-{w}.jpg",
-    "page": "https://pixabay.com/photos/kim-clijsters-tennis-288567/",
-    "by": "moerschy",
-    "license": "Pixabay licence"
    }
   ],
   "running": [
@@ -821,14 +813,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/gym-3-{w}.jpg",
     "page": "https://pixabay.com/photos/crossfit-sports-fitness-training-534615/",
     "by": "Ichigo121212",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-595529",
-    "hash": "0100110101100110001101110010010101101001110110011101001011010011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/gym-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/physiotherapy-weight-training-595529/",
-    "by": "stevepb",
     "license": "Pixabay licence"
    },
    {
@@ -1466,7 +1450,7 @@
     "hash": "0110001101110000000000111111111101011111101011111011000101011011",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/kayak-6-{w}.jpg",
     "page": "https://pixabay.com/photos/beach-kayaking-sea-ocean-vacation-7116584/",
-    "by": "江枫临雪",
+    "by": "\u6c5f\u67ab\u4e34\u96ea",
     "license": "Pixabay licence"
    },
    {
@@ -1526,14 +1510,6 @@
     "page": "https://pixabay.com/photos/restaurant-table-setting-table-449952/",
     "by": "neshom",
     "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2443699",
-    "hash": "1100111100000111111001011010010111010011000100110001001110011011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dinner-7-{w}.jpg",
-    "page": "https://pixabay.com/photos/red-wine-glasses-log-fire-red-wine-2443699/",
-    "by": "stevepb",
-    "license": "Pixabay licence"
    }
   ],
   "dinnerGroup": [
@@ -1570,27 +1546,11 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-791142",
-    "hash": "0001001010011000000110011000111000100111000001100010011100000011",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-5-{w}.jpg",
-    "page": "https://pixabay.com/photos/dinner-family-christmas-holidays-791142/",
-    "by": "kaboompics",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-581753",
     "hash": "0110011001101111110011111001001101110100100011111100101111000011",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-6-{w}.jpg",
     "page": "https://pixabay.com/photos/friends-celebration-dinner-table-581753/",
     "by": "vivienviv0",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-7677696",
-    "hash": "0011000101001011010111110001010111000101011000110010100110111000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/dinnerGroup-7-{w}.jpg",
-    "page": "https://pixabay.com/photos/xmas-christmas-fondue-eating-7677696/",
-    "by": "Michael_Pointner",
     "license": "Pixabay licence"
    }
   ],
@@ -1620,14 +1580,6 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-2931883",
-    "hash": "0001001110101100101111000101110000011100001101101011100001011000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/camera-photographer-city-view-2931883/",
-    "by": "Lukas_Rychvalsky",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-734809",
     "hash": "0010011110110000111101001110100110011110110100111110000110100011",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-5-{w}.jpg",
@@ -1641,14 +1593,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-6-{w}.jpg",
     "page": "https://pixabay.com/photos/people-couple-dating-sunset-view-2562438/",
     "by": "StockSnap",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-1284260",
-    "hash": "0001111100001111001100110011001100110010011000111100101111001111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/rooftop-7-{w}.jpg",
-    "page": "https://pixabay.com/photos/city-street-rooftop-apple-camera-1284260/",
-    "by": "Pexels",
     "license": "Pixabay licence"
    }
   ],
@@ -2255,14 +2199,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/coworking-6-{w}.jpg",
     "page": "https://pixabay.com/photos/startup-girls-women-laptop-office-4777863/",
     "by": "Tumisu",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2181920",
-    "hash": "0000001110000100100001001001010010001100100010000001000000000000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/coworking-7-{w}.jpg",
-    "page": "https://pixabay.com/photos/bricks-chairs-classroom-empty-2181920/",
-    "by": "Pexels",
     "license": "Pixabay licence"
    }
   ],
@@ -3514,14 +3450,6 @@
     "license": "Pixabay licence"
    },
    {
-    "id": "pixabay-2440984",
-    "hash": "0110100101110001001011110000100100010011000101010101110111011000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-2-{w}.jpg",
-    "page": "https://pixabay.com/photos/bowling-bocce-entertainment-2440984/",
-    "by": "gkgegk",
-    "license": "Pixabay licence"
-   },
-   {
     "id": "pixabay-4791830",
     "hash": "1000001000001111011100010111000101101001010101110001001100110011",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-3-{w}.jpg",
@@ -3535,22 +3463,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-4-{w}.jpg",
     "page": "https://pixabay.com/photos/bowling-sport-game-play-floor-2585602/",
     "by": "StockSnap",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-424774",
-    "hash": "0010000100011011011010110101101101100001001100110001001100000101",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-5-{w}.jpg",
-    "page": "https://pixabay.com/photos/bowling-game-entertainment-crutches-424774/",
-    "by": "jarmoluk",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-424776",
-    "hash": "0000111000000011001100110101101000010011010100110010100100100111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/bowling-6-{w}.jpg",
-    "page": "https://pixabay.com/photos/bowling-game-entertainment-crutches-424776/",
-    "by": "jarmoluk",
     "license": "Pixabay licence"
    },
    {
@@ -3613,14 +3525,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cinema-2-{w}.jpg",
     "page": "https://pixabay.com/photos/movie-theater-room-movie-2502213/",
     "by": "Derks24",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-2974645",
-    "hash": "1110010110100101001110000011101010111011100111011000110001100000",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cinema-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/ticket-coupon-admission-carnival-2974645/",
-    "by": "igorovsyannykov",
     "license": "Pixabay licence"
    },
    {
@@ -3689,14 +3593,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/comedy-2-{w}.jpg",
     "page": "https://pixabay.com/photos/microphone-vintage-brick-wall-retro-6046111/",
     "by": "Tumisu",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-5619912",
-    "hash": "1101011110010111101010011001100100100111001001110111101101000111",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/comedy-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/standup-paddleboarding-5619912/",
-    "by": "Tho-Ge",
     "license": "Pixabay licence"
    },
    {
@@ -3781,38 +3677,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-2-{w}.jpg",
     "page": "https://pixabay.com/photos/meal-kitchen-yummy-seafood-2812909/",
     "by": "amiena1966",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3086743",
-    "hash": "0000000110010000110110011000100100100011000001100000001010010110",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-3-{w}.jpg",
-    "page": "https://pixabay.com/photos/roulades-beef-flesh-connoisseur-3086743/",
-    "by": "webandi",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3086740",
-    "hash": "0001101010100001100100101100011000001000010110010100010011100010",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-4-{w}.jpg",
-    "page": "https://pixabay.com/photos/roulades-beef-flesh-connoisseur-3086740/",
-    "by": "webandi",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3086741",
-    "hash": "0001110111010000110110111001010111000110011000000000001111001100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-5-{w}.jpg",
-    "page": "https://pixabay.com/photos/roulades-beef-flesh-connoisseur-3086741/",
-    "by": "webandi",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-3086742",
-    "hash": "0010001111100001110001100001110000011100101101100010111100011100",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/cooking-6-{w}.jpg",
-    "page": "https://pixabay.com/photos/roulades-beef-flesh-connoisseur-3086742/",
-    "by": "webandi",
     "license": "Pixabay licence"
    },
    {
@@ -4264,7 +4128,7 @@
     "hash": "0010001101001001100100111010011111001110100111101110101011100101",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/healthyFood-2-{w}.jpg",
     "page": "https://pixabay.com/photos/vegetables-water-droplets-fresh-1584999/",
-    "by": "JerzyGórecki",
+    "by": "JerzyG\u00f3recki",
     "license": "Pixabay licence"
    }
   ],
@@ -4853,7 +4717,7 @@
     "hash": "1010001111100011011000111110001110100011111001111011001110100100",
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/sauna-2-{w}.jpg",
     "page": "https://pixabay.com/photos/stones-rocks-stack-pebbles-2040340/",
-    "by": "Schäferle",
+    "by": "Sch\u00e4ferle",
     "license": "Pixabay licence"
    }
   ],
@@ -5068,14 +4932,6 @@
     "url": "https://alafrench7593-a11y.github.io/irly/photos/v/theatre-4-{w}.jpg",
     "page": "https://pixabay.com/photos/ramayana-festival-dancer-woman-1807516/",
     "by": "sasint",
-    "license": "Pixabay licence"
-   },
-   {
-    "id": "pixabay-1868137",
-    "hash": "0000011100000011000011110000111100001111100011011010100101000010",
-    "url": "https://alafrench7593-a11y.github.io/irly/photos/v/theatre-5-{w}.jpg",
-    "page": "https://pixabay.com/photos/audience-backlit-band-battle-1868137/",
-    "by": "Pexels",
     "license": "Pixabay licence"
    },
    {
