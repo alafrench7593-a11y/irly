@@ -533,7 +533,11 @@ try {
     const parent = Array.isArray(withParent?.parent) ? withParent.parent[0] : withParent?.parent;
     const mine = must(await A.sb.from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', A.id).eq('conversations.community_id', sport.id).limit(1));
     await A.sb.rpc('leave_community', { p_community: sport.id });
-    return both.length === 2 && Boolean(notHost) && parent?.id === sport.id && mine.length === 1 && typeof mine[0].muted === 'boolean';
+    if (both.length !== 2) throw new Error(`member of ${both.length} of the community and its group (expected 2)`);
+    if (!notHost) throw new Error('a member could announce in a group she does not host');
+    if (parent?.id !== sport.id) throw new Error(`the group's parent read back as ${JSON.stringify(withParent)}`);
+    if (mine.length !== 1 || typeof mine[0].muted !== 'boolean') throw new Error(`the community chat membership read back as ${JSON.stringify(mine)}`);
+    return true;
   });
   const helpV = groupsV2 && !(await A.sb.rpc('help_groups', { p_city: 'dubai' })).error;
   if (helpV) await step('Help & Questions: ask in Visa, another member finds it by keywords and answers', async () => {

@@ -378,13 +378,18 @@ async function main() {
     await visible(page, '1 vote');
     return true;
   });
-  await step('assistant: "Organise padel Saturday 9am" → activity created and announced', async () => {
+  // A plan is an activity of the community (its Activities space), not a post in the feed.
+  await step('assistant: "Organise padel Saturday 9am" → activity created in the community, no announcement post', async () => {
     await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Organise padel Saturday 9am');
     await page.getByRole('button', { name: 'Ask', exact: true }).click();
     await page.getByRole('button', { name: 'Create it for the community' }).click();
-    await visible(page, 'New plan: Padel', 20000);
-    const acts = must(await veraSb.from('activities').select('title').eq('community_id', girlsId));
-    return acts.some((a) => a.title.startsWith('Padel'));
+    let acts = [];
+    for (let i = 0; i < 20 && !acts.some((a) => a.title.startsWith('Padel')); i++) {
+      await page.waitForTimeout(1000);
+      acts = must(await veraSb.from('activities').select('title').eq('community_id', girlsId));
+    }
+    const posts = must(await veraSb.from('community_posts').select('body').eq('community_id', girlsId).like('body', 'New plan:%'));
+    return acts.some((a) => a.title.startsWith('Padel')) && posts.length === 0;
   });
   await step('assistant: weekly digest from real data', async () => {
     await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill("What's new this week?");
