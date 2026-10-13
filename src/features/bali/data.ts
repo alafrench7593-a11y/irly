@@ -28,29 +28,17 @@ function useQuery<T>(key: string, run: () => Promise<T>, initial: T): { data: T;
   }
   useEffect(() => {
     let alive = true;
-    let retry: ReturnType<typeof setTimeout> | null = null;
-    const attempt = (left: number) =>
-      run()
-        .then((d) => {
-          if (!alive) return;
-          setData(d);
-          setError(null);
-          setLoading(false);
-        })
-        .catch((e) => {
-          if (!alive) return;
-          // One quiet retry: a single dropped request (cold server, network blip) must not leave the page half empty.
-          if (left > 0) {
-            retry = setTimeout(() => attempt(left - 1), 1500);
-            return;
-          }
-          setError(e instanceof Error ? e.message : 'Could not load');
-          setLoading(false);
-        });
-    attempt(1);
+    // No retry of our own here: the Supabase client already retries a dropped request.
+    run()
+      .then((d) => {
+        if (!alive) return;
+        setData(d);
+        setError(null);
+      })
+      .catch((e) => alive && setError(e instanceof Error ? e.message : 'Could not load'))
+      .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
-      if (retry) clearTimeout(retry);
     };
     // `key` captures every input of `run`.
   }, [key, tick]); // eslint-disable-line react-hooks/exhaustive-deps
