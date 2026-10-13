@@ -34,8 +34,14 @@ export default function NewPost() {
   const key = draftKey(communityId);
   const saved = useDrafts((s) => (editing ? undefined : s.byKey[key]));
   const saveDraft = useDrafts((s) => s.save);
-  const [body, setBody] = useState(() => params.body ?? saved?.body ?? '');
-  const [media, setMedia] = useState<DraftMedia | null>(() => (params.body ? null : (saved?.media ?? null)));
+  // Text typed on the community page is added to a kept draft, never in its place (the draft is cleared once posted).
+  const merge = (typed: string | undefined, kept: string | undefined) => {
+    const a = (kept ?? '').trim();
+    const b = (typed ?? '').trim();
+    return !a ? b : !b || a.includes(b) ? a : `${a}\n\n${b}`;
+  };
+  const [body, setBody] = useState(() => (editing ? '' : merge(params.body, saved?.body)));
+  const [media, setMedia] = useState<DraftMedia | null>(() => (editing ? null : (saved?.media ?? null)));
   const [before, setBefore] = useState<string[]>([]);
   const [loading, setLoading] = useState(Boolean(editing));
   const [busy, setBusy] = useState(false);
@@ -47,11 +53,11 @@ export default function NewPost() {
   // A draft kept on the phone comes back (it may load just after the screen opens).
   const adopted = useRef(Boolean(saved));
   useEffect(() => {
-    if (editing || params.body || adopted.current || !saved) return;
+    if (editing || adopted.current || !saved) return;
     adopted.current = true;
-    setBody((b) => b || saved.body);
+    setBody((b) => merge(b, saved.body));
     setMedia((m) => m ?? saved.media);
-  }, [editing, params.body, saved]);
+  }, [editing, saved]);
 
   // Editing: the post as stored.
   useEffect(() => {

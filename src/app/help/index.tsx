@@ -47,7 +47,11 @@ export default function HelpScreen() {
 
   const ask = async (k: 'question' | 'recommendation', categoryId: string) => {
     const g = feed.groups.find((x) => x.category === categoryId);
-    if (!g) return;
+    if (!g) {
+      // Never a silent tap.
+      toast(feed.error ? 'Can’t reach IRLY right now' : 'Not open in this city yet', 'x', 'live');
+      return;
+    }
     try {
       if (!g.isMember) await joinCommunity(g.id);
       setAsking(null);
@@ -205,7 +209,9 @@ function HelpCard({ p, onSaved }: { p: HelpPost; onSaved: () => void }) {
           onPress={() => {
             setSaved(!saved);
             toggleSave({ type: 'community_post', id: p.id })
-              .then(() => {
+              .then((now) => {
+                // The server toggles: its answer is the truth.
+                setSaved(now);
                 haptic('success');
                 onSaved();
               })

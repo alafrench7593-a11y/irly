@@ -42,6 +42,17 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
   const city = CITIES[cityId];
   const extras = useGirlExtras();
   const me = extras.data;
+  // Ages picked here, ahead of the server's answer: two quick taps both count.
+  const [kids, setKids] = useState<string[] | null>(null);
+  const toggleAge = (id: string) => {
+    const current = kids ?? me?.kidsAgeGroups ?? [];
+    const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
+    setKids(next);
+    extras.save({ kidsAgeGroups: next }).catch((e) => {
+      setKids(null);
+      toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
+    });
+  };
   const moms = useGirlCircle(cityId, { moms: true });
   const communities = useCommunitiesLike(cityId, 'Moms', true);
   const { activities } = useServerActivities(cityId);
@@ -110,14 +121,14 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
                 </Text>
                 <Wrap>
                   {AGES.map((a) => {
-                    const on = (me.kidsAgeGroups ?? []).includes(a.id);
+                    const on = (kids ?? me.kidsAgeGroups ?? []).includes(a.id);
                     return (
                       <GChip
                         key={a.id}
                         small
                         label={a.label}
                         selected={on}
-                        onPress={() => extras.save({ kidsAgeGroups: on ? (me.kidsAgeGroups ?? []).filter((x) => x !== a.id) : [...(me.kidsAgeGroups ?? []), a.id] }).catch(() => undefined)}
+                        onPress={() => toggleAge(a.id)}
                       />
                     );
                   })}

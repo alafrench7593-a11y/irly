@@ -51,6 +51,12 @@ export default function CategoryScreen() {
   const uid = useAccount()?.userId;
   const category = isGirl ? GIRL_CATEGORY : CATEGORY_BY_ID[id as CategoryKey];
   const [sub, setSub] = useState<CatalogSub | null>(null);
+  // Another category on the same screen: its sub-categories differ, the filter starts over.
+  const [forId, setForId] = useState(id);
+  if (forId !== id) {
+    setForId(id);
+    setSub(null);
+  }
 
   const sessions = useMemo(() => {
     if (!category || isGirl) return [];

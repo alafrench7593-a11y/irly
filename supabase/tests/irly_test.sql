@@ -1746,7 +1746,7 @@ select pg_temp.check(exists (select 1 from pg_publication_tables where pubname =
 -- Join without a profile on the server: a clear refusal, nothing written.
 select pg_temp.as_admin();
 insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000f1');
-select id as pub_act from public.activities where privacy = 'public' and cancelled_at is null and creator_id <> '00000000-0000-0000-0000-0000000000f1' limit 1 \gset
+select id as pub_act from public.activities where privacy = 'public' and cancelled_at is null and starts_at > now() and not girl_only and creator_id <> '00000000-0000-0000-0000-0000000000f1' limit 1 \gset
 select id as any_comm from public.communities where not girl_only and deleted_at is null limit 1 \gset
 create or replace function pg_temp.error_of(stmt text) returns text language plpgsql as $$
 begin
@@ -1768,5 +1768,14 @@ select pg_temp.check(public.join_activity(:'pub_act') in ('going', 'full'), 'joi
 select public.join_activity(:'pub_act');
 select pg_temp.as_admin();
 select pg_temp.check((select count(*) from public.activity_participants where user_id = '00000000-0000-0000-0000-0000000000f1' and activity_id = :'pub_act') <= 1, 'joining twice keeps one participation');
+
+-- An activity that is over cannot be joined (an old link), and nothing is written.
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at)
+values ('00000000-0000-0000-0000-000000000011', 'Audit past run', 'sport', 'dubai', 'marina', now() - interval '1 day');
+select id as past_act from public.activities where title = 'Audit past run' \gset
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.check(pg_temp.error_of($$select public.join_activity('$$ || :'past_act' || $$')$$) = 'This activity is over', 'join: an activity that is over is refused');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.activity_participants where activity_id = :'past_act' and user_id = '00000000-0000-0000-0000-0000000000f1'), 'join of an activity that is over wrote nothing');
 
 \echo 'ALL TESTS PASSED'

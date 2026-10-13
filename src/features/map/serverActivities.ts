@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
+import { offsetOf } from '@/lib/time';
 
 /**
  * Activities on the map: the server's, only those the member may see, only
@@ -29,12 +30,14 @@ export type MapActivity = {
   distanceKm: number | null;
 };
 
-const until = (when: MapWhen): string | null => {
+const until = (when: MapWhen, cityId: string): string | null => {
   if (when === 'any') return null;
-  const d = new Date();
-  if (when === 'today') d.setHours(23, 59, 59, 999);
-  else d.setDate(d.getDate() + 7);
-  return d.toISOString();
+  if (when === 'week') return new Date(Date.now() + 7 * 86_400_000).toISOString();
+  // "Today" ends at midnight in the city shown, not on the phone's clock (a Dubai phone browsing Bali).
+  const shift = offsetOf(cityId) * 3_600_000;
+  const local = new Date(Date.now() + shift);
+  const endLocal = Date.UTC(local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate() + 1) - 1;
+  return new Date(endLocal - shift).toISOString();
 };
 
 export function useMapActivities(cityId: string, filters: MapFilters, origin: { latitude: number; longitude: number } | null) {
@@ -49,7 +52,7 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
     supabase
       .rpc('map_activities', {
         p_city: cityId,
-        p_to: until(filters.when),
+        p_to: until(filters.when, cityId),
         p_category: filters.category,
         p_community: filters.community,
         p_lat: filters.km && lat != null ? lat : null,

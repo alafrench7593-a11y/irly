@@ -92,11 +92,16 @@ export default function GirlsMoving() {
               </Wrap>
             </View>
           </View>
-        ) : (
+        ) : extras.error ? (
+          // Could not read the profile: never tell a member to create one she may have.
+          <View style={styles.pad}>
+            <GButton label="Try again" icon="user" onPress={extras.reload} />
+          </View>
+        ) : !extras.loading ? (
           <View style={styles.pad}>
             <GButton label="Create my IRLY Girl profile first" icon="user" onPress={() => router.push('/girl')} />
           </View>
-        )}
+        ) : null}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
           <GChip small label="Everyone" selected={!status} onPress={() => setStatus(null)} />

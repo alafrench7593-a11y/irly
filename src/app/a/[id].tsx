@@ -241,6 +241,8 @@ export default function ActivityPage() {
       </View>
       {hosting ? (
         <HostSheet
+          // Its fields start from this activity: another activity gets a fresh sheet.
+          key={a.id}
           visible={managing}
           onClose={() => setManaging(false)}
           a={a}

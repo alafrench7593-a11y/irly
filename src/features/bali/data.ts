@@ -432,11 +432,13 @@ export function useGirlExtras() {
     `extras-${uid ?? 'anon'}`,
     async () => {
       if (!uid) return null;
-      const { data } = await sb()
+      const { data, error } = await sb()
         .from('irly_match_profiles')
         .select('destination, destination_status, move_month, mom_mode, kids_age_groups, looking_for')
         .eq('user_id', uid)
         .maybeSingle();
+      // A failed read is not "no profile": a member must not be told to create one she has.
+      if (error) throw new Error(error.message);
       if (!data) return { hasProfile: false };
       return {
         hasProfile: true,

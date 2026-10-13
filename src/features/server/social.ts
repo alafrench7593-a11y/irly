@@ -344,10 +344,13 @@ export type ServerNotification = { id: string; kind: string; payload: Record<str
 /** Bumped when notifications are marked read: the header badge and the list stay in step. */
 const useNotifVersion = create<{ n: number }>(() => ({ n: 0 }));
 
-export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => void } {
+export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => void; status: 'loading' | 'ok' | 'failed'; reload: () => void } {
   const account = useAccount();
   const uid = account?.userId;
   const [items, setItems] = useState<ServerNotification[]>([]);
+  // Loading or unreachable is not "nothing new".
+  const [status, setStatus] = useState<'loading' | 'ok' | 'failed'>('loading');
+  const [retry, setRetry] = useState(0);
   const load = useCallback(async (): Promise<ServerNotification[]> => {
     if (!supabase || !uid) return [];
     const { data, error } = await supabase.from('notifications').select('id, kind, payload, read_at, created_at').order('created_at', { ascending: false }).limit(50);
@@ -364,7 +367,14 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   useEffect(() => {
     if (!version) return;
     let alive = true;
-    load().then((n) => alive && setItems(n)).catch(() => undefined);
+    load().then(
+      (n) => {
+        if (!alive) return;
+        setItems(n);
+        setStatus('ok');
+      },
+      () => alive && setStatus((s) => (s === 'ok' ? s : 'failed')),
+    );
     return () => {
       alive = false;
     };
@@ -372,13 +382,20 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    load().then((n) => alive && setItems(n)).catch(() => undefined);
+    load().then(
+      (n) => {
+        if (!alive) return;
+        setItems(n);
+        setStatus('ok');
+      },
+      () => alive && setStatus((s) => (s === 'ok' ? s : 'failed')),
+    );
     // New ones, and ones read elsewhere (another phone, a chat opened), arrive
     // through the app's sync channel ('notifs'): one reload per change, not two.
     return () => {
       alive = false;
     };
-  }, [uid, load]);
+  }, [uid, load, retry]);
   const markAllRead = useCallback(() => {
     if (!supabase || !uid) return;
     const now = new Date().toISOString();
@@ -394,7 +411,11 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   }, [uid]);
   const list = uid ? items : NONE;
   // Messages have their own badge (the chat icon): the bell never counts them twice.
-  return { items: list, unread: list.filter((n) => !n.readAt && n.kind !== 'MESSAGE_CREATED').length, markAllRead };
+  const reload = useCallback(() => {
+    setStatus('loading');
+    setRetry((n) => n + 1);
+  }, []);
+  return { items: list, unread: list.filter((n) => !n.readAt && n.kind !== 'MESSAGE_CREATED').length, markAllRead, status, reload };
 }
 
 /** Unread notifications (the bell badge), fed once by <BellSync /> for every header. */

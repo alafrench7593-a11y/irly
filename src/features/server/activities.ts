@@ -103,6 +103,8 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
     })
     .select('id')
     .single();
+  // Not saved (refused, or the first tap already saved it with its own photo): this photo is not left behind.
+  if (error && coverPath) await supabase.storage.from('activity-photos').remove([coverPath]).catch(() => undefined);
   if (error?.code === '23505') {
     // Already created by the first tap: hand back that one.
     const { data: same } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).maybeSingle();
@@ -229,7 +231,8 @@ export async function joinServerActivity(activityId: string): Promise<string | '
   const sb = supabase;
   const data = await withProfile(async () => {
     const { data: res, error } = await sb.rpc('join_activity', { p_activity: activityId, p_status: 'going' });
-    if (error) throw new Error(error.message);
+    // Cancelled, deleted or not visible to you: said in words, not as the server's code text.
+    if (error) throw new Error(/activity not found/i.test(error.message) ? 'This activity is no longer available' : error.message);
     return res;
   });
   changed('activities', 'inbox');
@@ -317,6 +320,14 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
   const [detail, setDetail] = useState<ActivityDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Same screen, another activity: never show (or join) the previous one while the new one loads.
+  const [shownId, setShownId] = useState(id);
+  if (shownId !== id) {
+    setShownId(id);
+    setDetail(null);
+    setLoading(true);
+    setError(null);
+  }
 
   const load = useCallback(async (): Promise<ActivityDetail | null> => {
     if (!supabase || !uid) return null;

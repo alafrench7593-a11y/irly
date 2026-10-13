@@ -243,7 +243,7 @@ export default function CommunityScreen() {
 
           {tab === 'posts' ? (
             <>
-              <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
+              <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
               <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate} communityId={c.id} />
               {c.isMember ? (
                 <Composer
