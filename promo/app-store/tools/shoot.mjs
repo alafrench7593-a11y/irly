@@ -48,7 +48,7 @@ const seedFor = (kind, over) => {
 const mock = makeMock({ user, session });
 // Photos the app loads from Unsplash (unreachable here): the closest photo of the project's own library.
 const LIBP = `${REPO}/public-photos`;
-const UNSPLASH = { '1567880905822-56f8e06fe630': 'coffeeBar', '1688437307687-fe226bddfab1': 'girlDinner', '1688437310009-ed23b2188d38': 'brunch', '1563138216-8ff2e182ccbd': 'lounge', '1578855019520-af8101c056e2': 'photography', '1714577419068-45189e7bda58': 'fort' };
+const UNSPLASH = { '1567880905822-56f8e06fe630': 'coffeeBar', '1688437307687-fe226bddfab1': 'founders', '1688437310009-ed23b2188d38': 'brunch', '1563138216-8ff2e182ccbd': 'lounge', '1578855019520-af8101c056e2': 'photography', '1714577419068-45189e7bda58': 'fort' };
 const unsplashMap = (url) => {
   const id = Object.keys(UNSPLASH).find((k) => url.includes(k));
   return id ? `${LIBP}/${UNSPLASH[id]}-1200.jpg` : null;

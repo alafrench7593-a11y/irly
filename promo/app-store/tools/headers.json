@@ -1,108 +1,108 @@
 {
  "headers": [
   {
-   "name": "h16",
-   "file": "universel-16x9-5244x2950.png",
-   "width": 5244,
-   "height": 2950,
-   "safe": [
-    409,
-    351,
-    4834,
-    2598
-   ],
-   "logo": {
-    "x": 704,
-    "y": 1122,
-    "h": 120
-   },
-   "title": {
-    "text": "Less loneliness.<br>More life.",
-    "x": 700,
-    "y": 1312,
-    "size": 250
-   },
-   "glow": {
-    "x": 3750,
-    "y": 1475,
-    "rx": 2300,
-    "ry": 1500
-   },
-   "phones": [
-    {
-     "screen": "match-day.png",
-     "status": "dark",
-     "cx": 3173,
-     "top": 691,
-     "S": 700
-    },
-    {
-     "screen": "live-day-scroll.png",
-     "status": "dark",
-     "cx": 4327,
-     "top": 691,
-     "S": 700
-    },
-    {
-     "screen": "home-top.png",
-     "status": "light",
-     "cx": 3750,
-     "top": 557,
-     "S": 820
-    }
-   ]
-  },
-  {
-   "name": "h21",
-   "file": "en-tete-21x9-3840x1646.png",
+   "name": "header",
+   "file": "IRLY_Header_Asset.png",
    "width": 3840,
    "height": 1646,
    "safe": [
-    300,
-    120,
+    380,
+    100,
     3540,
-    1526
+    99999
    ],
-   "logo": {
-    "x": 363,
-    "y": 561,
-    "h": 84
-   },
-   "title": {
-    "text": "Less loneliness.<br>More life.",
-    "x": 360,
-    "y": 695,
-    "size": 190
-   },
    "glow": {
-    "x": 2715,
+    "x": 2550,
     "y": 823,
     "rx": 1700,
-    "ry": 1100
+    "ry": 1000
    },
+   "tiles": [
+    {
+     "src": "photos/desert-friends.png",
+     "crop": [
+      0,
+      200,
+      736,
+      715
+     ],
+     "x": 1560,
+     "y": 130,
+     "w": 1980,
+     "h": 1386,
+     "r": 72,
+     "grain": 5,
+     "filter": "saturate(0.88) contrast(1.03)",
+     "shadow": "0 60px 140px rgba(0,0,0,0.6), 0 0 0 1.5px rgba(255,255,255,0.06)"
+    }
+   ],
    "phones": [
-    {
-     "screen": "match-day.png",
-     "status": "dark",
-     "cx": 2214,
-     "top": 269,
-     "S": 495
-    },
-    {
-     "screen": "live-day-scroll.png",
-     "status": "dark",
-     "cx": 3216,
-     "top": 269,
-     "S": 495
-    },
     {
      "screen": "home-top.png",
      "status": "light",
-     "cx": 2715,
-     "top": 174,
-     "S": 580
+     "cx": 572,
+     "top": 960,
+     "S": 360
     }
-   ]
+   ],
+   "logo": {
+    "x": 380,
+    "y": 330,
+    "h": 170
+   },
+   "title": {
+    "text": "Real connections.<br>Real life.",
+    "x": 380,
+    "y": 560,
+    "size": 130,
+    "weight": 700,
+    "ls": "-0.03em",
+    "lh": 1.06
+   }
+  },
+  {
+   "name": "search",
+   "file": "IRLY_Search_Results_Header.png",
+   "width": 3840,
+   "height": 2560,
+   "safe": [
+    384,
+    256,
+    3456,
+    2304
+   ],
+   "glow": {
+    "x": 1920,
+    "y": 1280,
+    "rx": 10,
+    "ry": 10
+   },
+   "tiles": [
+    {
+     "src": "photos/desert-friends.png",
+     "crop": [
+      0,
+      180,
+      736,
+      671
+     ],
+     "x": 0,
+     "y": 0,
+     "w": 3840,
+     "h": 2560,
+     "grain": 6,
+     "filter": "saturate(0.9) contrast(1.03)"
+    }
+   ],
+   "shade": "linear-gradient(180deg, rgba(5,5,6,0.62) 0%, rgba(5,5,6,0.32) 22%, rgba(5,5,6,0) 42%), linear-gradient(0deg, rgba(5,5,6,0.38) 0%, rgba(5,5,6,0) 26%)",
+   "logo": {
+    "x": "center",
+    "y": 330,
+    "h": 360
+   },
+   "title": {
+    "text": ""
+   }
   }
  ]
 }

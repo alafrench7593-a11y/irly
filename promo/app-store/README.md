@@ -75,6 +75,7 @@ L'ordre 01 → 08 est l'ordre conseillé dans App Store Connect : les trois prem
 - **Live now (Accueil)** : la rangée ne lit pas le fil Live IRL du serveur (`useLives` dans `src/features/live/liveStore.ts`). En production, elle ne montre que les publications de l'utilisateur lui-même, alors que l'écran Live IRL affiche celles des autres membres.
 - **Live IRL** : chaque publication montre l'initiale de l'auteur, pas sa photo de profil (`Avatar` sans photo dans `src/app/(tabs)/live.tsx`). Passer la photo rendrait le fil plus humain, sur l'app comme sur le visuel 06.
 - **En-tête des chats de communauté** : les communautés officielles sont créées sans catégorie ni photo (`supabase/migrations/20261008003400_irly_official_communities.sql`). L'en-tête du chat retombe donc sur la photo « meeting » (salle de réunion, `src/features/server/covers.ts`), alors que la liste des communautés montre la photo du thème (la skyline pour IRLY Newcomers). Visible en petit sur le visuel 05.
+- **Photo « girlDinner » de la photothèque** : elle vient de Flickr (« Latham Staples with friends », domaine public) et montre une personne réelle identifiée. Le domaine public couvre le droit d'auteur, pas le droit à l'image : les visuels ne l'utilisent plus (la carte Founders' Table des visuels 01 et 08 montre la photo « founders », fournie par IRLY), mais l'app l'affiche encore dans IRLY Girl (`src/features/girl/world.tsx`). À remplacer pour un usage commercial.
 - **Contenu d'exemple de l'Accueil** : la carte Founders' Table affiche « Private dining room, DIFC · DIFC », le quartier apparaît deux fois (`src/data/content/dubai.ts`, le lieu contient déjà le quartier). Sans effet une fois l'Accueil branché sur les vraies données.
 
 ## 7. Importer dans App Store Connect
@@ -104,22 +105,30 @@ node promo/app-store/tools/compose-header.mjs     # les images larges dans en-te
 
 ## 9. En-tête de fiche et résultats de recherche (iOS 27)
 
-Ce ne sont pas des captures d'écran : App Store Connect refuse ces tailles dans « Previews and Screenshots », et les captures restent obligatoires. Ce sont deux emplacements facultatifs, affichés sur iOS 27 et iPadOS 27 ou plus récent.
+Deux visuels de marque, un par emplacement. Ce ne sont pas des captures d'écran : App Store Connect refuse ces tailles dans « Previews and Screenshots », et les captures restent obligatoires. Ces emplacements sont facultatifs et s'affichent sur iOS 27 et iPadOS 27 ou plus récent.
 
-| Fichier | Taille | Emplacement |
-|---|---|---|
-| `en-tete/universel-16x9-5244x2950.png` | 5244 × 2950 px (16:9, PNG) | En-tête de la fiche et résultats de recherche, avec une seule image |
-| `en-tete/en-tete-21x9-3840x1646.png` | 3840 × 1646 px (21:9, PNG) | En-tête de la fiche uniquement |
+| Fichier | Taille | Format | Emplacement |
+|---|---|---|---|
+| `en-tete/IRLY_Header_Asset.png` et `.jpg` | 3840 × 1646 px (21:9) | PNG ou JPEG, RGB, sRGB, sans transparence | En-tête de la fiche (Product Page Header) |
+| `en-tete/IRLY_Search_Results_Header.png` et `.jpg` | 3840 × 2560 px (3:2) | PNG ou JPEG, RGB, sRGB, sans transparence | Résultats de recherche (Search Results) |
+
+Les deux formats sont acceptés pour ces deux tailles : envoie le PNG (qualité maximale) ou le JPEG (plus léger), pas les deux.
 
 - **Spécifications Apple** (page [Creative asset specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications) consultée le 13 octobre 2026) :
-  - en-tête : 21:9 en 3840 × 1646 px (JPEG ou PNG), ou 16:9 en 5244 × 2950 px (PNG) ;
-  - résultats de recherche : 3:2, de 1920 × 1280 à 3840 × 2560 px (JPEG ou PNG), ou 16:9 en 5244 × 2950 px (PNG) ;
-  - pas de canal alpha ni de transparence.
-- **Contenu** : le logo, le slogan officiel « Less loneliness. More life. » (sous-titre de la fiche dans `docs/APP-STORE.md`) et trois vrais écrans : Match IRLY, l'Accueil (« What's happening around you? », Live now) et Live IRL. Les réserves du point 4 sur l'Accueil s'appliquent aussi ici.
-- **Recadrage** : Apple ne publie pas la zone gardée par chaque emplacement, seulement le conseil de garder l'essentiel au centre. L'image 16:9 est construite pour que le logo, le slogan et les trois iPhone restent dans un recadrage centré en 21:9 (5244 × 2247 px, pour l'en-tête) comme en 3:2 (4425 × 2950 px, pour la carte de recherche). Vérifie le rendu dans l'aperçu d'App Store Connect (iPhone, iPad, orientations, mode sombre) avant d'envoyer.
-- **Texte** : le slogan fait environ 20 points sur l'écran d'un iPhone, donc il reste lisible. Il est en anglais : Apple demande un texte traduit pour chaque langue de la fiche. Pour la fiche française, il faut une version française (« Moins de solitude. Plus de vie. », avec des écrans capturés en `LANG_UI=fr`).
+  - en-tête : 21:9 en 3840 × 1646 px (JPEG ou PNG), ou 16:9 en 5244 × 2950 px (PNG seulement) ;
+  - résultats de recherche : 3:2, de 1920 × 1280 à 3840 × 2560 px (JPEG ou PNG), ou 16:9 en 5244 × 2950 px (PNG seulement) ;
+  - pas de canal alpha ni de transparence ; aucun poids maximal n'est indiqué pour ces emplacements.
+- **Pourquoi 3840 × 1646 pour l'en-tête** : le 3840 × 2560 n'est pas accepté pour l'en-tête. Le 21:9 est le format natif de l'en-tête : l'image s'affiche telle quelle, alors qu'Apple recadre le 16:9 sans dire comment. Le 16:9 ne sert que si une seule image doit aller dans les deux emplacements (option « Use header asset in search results »), ce qui n'est pas le cas ici.
+- **Contenu** :
+  - en-tête : le logo IRLY, l'accroche « Real connections. Real life. », la photo du groupe d'amies dans le désert dans une carte arrondie, et un iPhone qui montre le vrai écran d'Accueil (capture du build démo, voir le point 4) ;
+  - résultats de recherche : la même photo en plein cadre, le logo IRLY seul dans le ciel. Pas de petit texte : l'App Store affiche déjà le nom et le sous-titre de l'app à côté.
+- **Photo** : `tools/photos/desert-friends.png`, fournie le 13 octobre 2026, 736 × 981 px. Quatre reflets d'objectif (deux points verts, deux dans le ciel) ont été retirés. Agrandie environ 2,7 fois dans l'en-tête et 5,2 fois dans la recherche, avec un grain fin : nette sur iPhone, un peu douce sur iPad. **Droits à vérifier** : 736 px est la largeur standard des images Pinterest ; sans l'accord du photographe, remplace-la avant publication. Avec l'original en grand format, il suffit de changer le fichier et de relancer le script.
+- **Zones de sécurité** :
+  - en-tête : logo et accroche à 380 px du bord gauche et à 330 px du haut ; l'iPhone sort volontairement par le bas ;
+  - recherche : le logo est centré dans le tiers haut. Il reste visible même si la carte est recadrée en 16:9 au centre.
+- **Texte et règles Apple** : pas de prix, d'URL, de badge Apple ni de logo d'une autre plateforme ; contenu compatible avec la classification 4+ demandée par Apple pour les visuels. Le logo fait environ 18 points de haut et l'accroche environ 14 points sur un iPhone ; le logo de la carte de recherche, environ 33 points. L'accroche de l'en-tête est en anglais : pour la fiche française, il faut une version française. Le visuel de recherche n'a pas de texte à traduire.
 - **Importer** :
-  1. App Store Connect → Apps → IRLY → Asset Library → « + » → « Upload Creative Assets » : choisis le fichier, puis soumets-le à la revue. L'image peut être approuvée sans nouvelle version de l'app.
-  2. Sur la fiche, choisis l'image pour l'en-tête (Product Page Header).
-  3. Avec l'image 16:9, active « Use header asset in search results » pour la réutiliser dans les résultats de recherche. Sans image de recherche, ceux-ci continuent d'afficher les captures.
-- **Régénérer** : `node promo/app-store/tools/compose-header.mjs`. La mise en page (écrans, tailles, positions, slogan) est dans `tools/headers.json` ; le script vérifie que tout le contenu reste dans la zone gardée par les recadrages.
+  1. App Store Connect → Apps → IRLY → Asset Library → « + » → « Upload Creative Assets » : choisis les deux fichiers, puis soumets-les à la revue. Ils peuvent être approuvés sans nouvelle version de l'app.
+  2. Sur la fiche, choisis `IRLY_Header_Asset` pour l'en-tête (Product Page Header) et `IRLY_Search_Results_Header` pour les résultats de recherche (Search Results). Laisse « Use header asset in search results » désactivé.
+  3. Vérifie le rendu dans l'aperçu (iPhone, iPad, orientations, mode sombre).
+- **Régénérer** : `node promo/app-store/tools/compose-header.mjs`. La mise en page (photo, recadrage, grain, logo, accroche, iPhone) est dans `tools/headers.json` ; le script vérifie que le contenu important reste dans la zone de sécurité. Il écrit le PNG et sa copie JPEG, en RGB avec un profil sRGB.
