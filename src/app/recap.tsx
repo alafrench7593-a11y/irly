@@ -39,11 +39,11 @@ export default function RecapScreen() {
   const forYou = useForYou();
   const groups = useGroupSuggestions(cityId);
   const challenges = useChallenges(cityId);
-  const { markSeen, loading } = recap;
-  // Seen once shown: next time, the recap starts from now.
+  const { markSeen, loading, failed } = recap;
+  // Seen once shown: next time, the recap starts from now. A failed load was not seen: it stays for next time.
   useEffect(() => {
-    if (!loading) markSeen();
-  }, [loading, markSeen]);
+    if (!loading && !failed) markSeen();
+  }, [loading, failed, markSeen]);
 
   if (!account) {
     return (

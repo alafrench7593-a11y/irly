@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { confirm } from '@/lib/confirm';
 import { t as tx, a11y } from '@/i18n';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -70,10 +70,15 @@ export default function CommentsScreen() {
     }
   };
 
+  // The server toggles: a second tap before the first answer would undo the like.
+  const liking = useRef(new Set<string>());
   const onLike = (c: Comment) => {
+    if (liking.current.has(c.id)) return;
+    liking.current.add(c.id);
     toggleLike({ type: 'comment', id: c.id })
       .then(refresh)
-      .catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
+      .catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'))
+      .finally(() => liking.current.delete(c.id));
   };
 
   return (

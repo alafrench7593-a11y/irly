@@ -17,7 +17,7 @@ type Row = Record<string, unknown>;
 function useRpc<T>(fn: string, args: Record<string, unknown> | null, map: (r: Row) => T, kinds: Parameters<typeof useRefreshOn>[0]) {
   const uid = useAccount()?.userId;
   const key = `${uid}|${fn}|${JSON.stringify(args)}`;
-  const [state, setState] = useState<{ for: string; items: T[] }>({ for: '', items: [] });
+  const [state, setState] = useState<{ for: string; items: T[]; failed?: boolean }>({ for: '', items: [] });
   const mapRef = useRef(map);
   useEffect(() => {
     mapRef.current = map;
@@ -27,17 +27,18 @@ function useRpc<T>(fn: string, args: Record<string, unknown> | null, map: (r: Ro
     if (!uid || !supabase || !args) return;
     const n = ++seq.current;
     supabase.rpc(fn, args).then(
-      ({ data }) => {
-        if (n === seq.current) setState({ for: key, items: ((data as Row[] | null) ?? []).map((r) => mapRef.current(r)) });
+      // A refused or unreachable read resolves with `error`: it ends the load, flagged as failed.
+      ({ data, error }) => {
+        if (n === seq.current) setState({ for: key, items: ((data as Row[] | null) ?? []).map((r) => mapRef.current(r)), failed: Boolean(error) });
       },
       // Never a spinner forever: a failed read ends the load (empty).
-      () => n === seq.current && setState({ for: key, items: [] }),
+      () => n === seq.current && setState({ for: key, items: [], failed: true }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, key]);
   useEffect(load, [load]);
   useRefreshOn(kinds, load);
-  return { items: state.for === key ? state.items : [], loading: Boolean(uid) && state.for !== key, reload: load };
+  return { items: state.for === key ? state.items : [], loading: Boolean(uid) && state.for !== key, failed: state.for === key && Boolean(state.failed), reload: load };
 }
 
 export type TodayActivity = { id: string; title: string; startsAt: number; place: string | null; areaId: string; organizer: string | null; going: number; spotsLeft: number | null; iGo: boolean };

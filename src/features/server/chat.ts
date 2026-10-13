@@ -99,13 +99,22 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
   useEffect(() => {
     if (!supabase || !uid) return;
     refresh();
+    let burst: ReturnType<typeof setTimeout> | null = null;
     // New messages anywhere you are a member refresh the inbox; joins, leaves,
     // renames and deletions arrive through the app's sync channel.
     const channel = supabase
       .channel(topic(`inbox-${uid}`))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, refresh)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
+        // A burst of messages (busy group chat) is one inbox read, not one per message.
+        if (burst) return;
+        burst = setTimeout(() => {
+          burst = null;
+          refresh();
+        }, 800);
+      })
       .subscribe();
     return () => {
+      if (burst) clearTimeout(burst);
       supabase?.removeChannel(channel);
     };
   }, [uid, refresh]);
@@ -387,7 +396,11 @@ export function useServerThread(conversationId: string): ServerThread {
   // The id is made here, so the realtime echo, the insert's answer and a retry are one message.
   const deliver = useCallback(
     async (id: string, text: string, media?: string) => {
-      if (!supabase || !uid) throw new Error('Sign in to send messages');
+      if (!supabase || !uid) {
+        // Not left "sending" forever: the bubble shows Retry.
+        setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], failed: true } } : p));
+        throw new Error('Sign in to send messages');
+      }
       const row: Record<string, string> = { id, conversation_id: conversationId, sender_id: uid, body: text };
       if (media) Object.assign(row, { kind: 'photo', media_path: media });
       const { data, error: e } = await supabase.from('messages').insert(row).select(COLS).single();
@@ -453,20 +466,32 @@ export function useServerThread(conversationId: string): ServerThread {
     [deliver, deliverPhoto, pending],
   );
 
+  // A message that never reached the server (failed, shows Retry) is only on this phone: it goes from here.
+  const discardUnsent = useCallback(
+    (messageId: string) => {
+      if (!pending[messageId]?.failed || rows.some((r) => r.id === messageId)) return false;
+      setPending((p) => {
+        const { [messageId]: _gone, ...rest } = p;
+        return rest;
+      });
+      return true;
+    },
+    [pending, rows],
+  );
   const remove = useCallback(async (messageId: string) => {
-    if (!supabase) return;
+    if (!supabase || discardUnsent(messageId)) return;
     const { error: e } = await supabase.rpc('delete_my_message', { p_message: messageId });
     if (e) throw new Error(e.message);
     setRows((list) => list.filter((x) => x.id !== messageId));
     changed('inbox');
-  }, []);
+  }, [discardUnsent]);
   const hideForMe = useCallback(async (messageId: string) => {
-    if (!supabase) return;
+    if (!supabase || discardUnsent(messageId)) return;
     const { error: e } = await supabase.rpc('hide_message_for_me', { p_message: messageId });
     if (e) throw new Error(/fetch|network/i.test(e.message) ? 'No connection: try again' : e.message);
     setRows((list) => list.filter((x) => x.id !== messageId));
     changed('inbox');
-  }, []);
+  }, [discardUnsent]);
 
   const setTyping = useCallback(() => {
     const now = Date.now();
@@ -507,18 +532,26 @@ export function useServerThread(conversationId: string): ServerThread {
   const peopleV = useSyncVersion('people');
   const inboxV = useSyncVersion('inbox');
   const membersAsked = useRef('');
+  const membersAt = useRef(0);
   useEffect(() => {
     if (!supabase || !uid || loading) return;
     // The first load brought the members already; asked again when someone new writes or a profile changes.
     const ask = `${conversationId}|${unknown}|${peopleV}|${inboxV}`;
     const first = !membersAsked.current;
     const same = membersAsked.current === ask;
+    const onlyInbox = membersAsked.current.slice(0, membersAsked.current.lastIndexOf('|')) === ask.slice(0, ask.lastIndexOf('|'));
     membersAsked.current = ask;
+    if (first) membersAt.current = Date.now();
     if (first || same) return;
     let alive = true;
+    const sb = supabase;
+    // Every message bumps the inbox: then the member list (hundreds in a community) is read at most every 15 s, never skipped.
+    const wait = onlyInbox ? Math.max(0, membersAt.current + 15_000 - Date.now()) : 0;
+    const timer = setTimeout(() => {
+    membersAt.current = Date.now();
     Promise.all([
-      supabase.from('conversations').select('title').eq('id', conversationId).maybeSingle(),
-      supabase.rpc('chat_members', { p_conversation: conversationId }),
+      sb.from('conversations').select('title').eq('id', conversationId).maybeSingle(),
+      sb.rpc('chat_members', { p_conversation: conversationId }),
     ]).then(([{ data: conv }, { data: members }]) => {
       if (!alive) return;
       const map: Record<string, string> = {};
@@ -532,8 +565,10 @@ export function useServerThread(conversationId: string): ServerThread {
       setPeople(full);
       if (conv?.title) setTitle(conv.title);
     });
+    }, wait);
     return () => {
       alive = false;
+      clearTimeout(timer);
     };
   }, [conversationId, uid, loading, unknown, peopleV, inboxV]);
   // Kept for the next opening of this chat.

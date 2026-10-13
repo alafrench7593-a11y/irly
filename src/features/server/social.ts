@@ -185,10 +185,11 @@ export async function postServerIrl(input: {
   /** IRL → activity: the post points at the activity, never a copy of it. */
   activityId?: string | null;
 }): Promise<boolean> {
-  if (!supabase) return false;
+  // Never a silent no-op: the composer would close as if the post were live.
+  if (!supabase) throw new Error('The IRLY server is not configured');
   const { data: s } = await supabase.auth.getSession();
   const uid = s.session?.user.id;
-  if (!uid) return false;
+  if (!uid) throw new Error('Sign in to post');
   let media_path: string | null = null;
   let thumb_path: string | null = null;
   const media: LiveMedia | undefined = input.media ?? (input.photoUri ? { kind: 'photo', uri: input.photoUri } : undefined);

@@ -46,6 +46,10 @@ export default function EditProfile() {
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? []);
   const [interests, setInterests] = useState<Interest[]>(profile.interests);
   const [lookingFor, setLookingFor] = useState<LookingFor[]>(profile.lookingFor ?? []);
+  // Only what you changed is sent: this phone's copy may be older than the server's (another device).
+  const [initial] = useState(() => JSON.stringify([profile.languages ?? [], profile.interests, profile.lookingFor ?? []]));
+  const [initLangs, initInterests, initLooking] = JSON.parse(initial) as [unknown, unknown, unknown];
+  const edited = (now: unknown, before: unknown) => JSON.stringify(now) !== JSON.stringify(before);
   const [cityId, setCityId] = useState<CityId>(currentCity);
   const [photo, setPhoto] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
@@ -103,12 +107,12 @@ export default function EditProfile() {
     setBusy(true);
     try {
       await updateMyProfile({
-        name: name.trim(),
-        bio: bio.trim(),
-        country: country.trim(),
-        languages,
-        interests,
-        lookingFor,
+        ...(nameEdit !== undefined ? { name: name.trim() } : {}),
+        ...(bioEdit !== undefined ? { bio: bio.trim() } : {}),
+        ...(countryEdit !== undefined ? { country: country.trim() } : {}),
+        ...(edited(languages, initLangs) ? { languages } : {}),
+        ...(edited(interests, initInterests) ? { interests } : {}),
+        ...(edited(lookingFor, initLooking) ? { lookingFor } : {}),
         ...(cityId !== currentCity ? { cityId } : {}),
         ...(photo ? { photoUri: photo } : {}),
         ...(changedHandle ? { username: wanted } : {}),

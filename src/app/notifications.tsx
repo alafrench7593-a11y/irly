@@ -264,8 +264,10 @@ function ServerNotifications() {
                   size="sm"
                   onPress={() =>
                     (d.pro ? proConnect(d.accept!) : addFriend(d.accept!))
-                      .then(() => {
-                        toast(d.pro ? 'You are now connected' : 'You are now friends', 'check', 'positive');
+                      .then((status) => {
+                        // The request may have been withdrawn meanwhile: then this only sent yours.
+                        if (status === 'accepted') toast(d.pro ? 'You are now connected' : 'You are now friends', 'check', 'positive');
+                        else toast('Request sent', 'check', 'brand');
                         refresh();
                       })
                       .catch((e) => toast(e instanceof Error ? e.message : 'Could not accept', 'x', 'live'))
