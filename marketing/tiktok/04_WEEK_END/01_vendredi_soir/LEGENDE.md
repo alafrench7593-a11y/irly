@@ -11,10 +11,10 @@
 Le plus dur, ce n'est pas d'être seul. C'est d'oser y aller seul.
 C'est quoi ton plan ce vendredi ? Quelqu'un a peut-être le même 👇
 
-#dubai #dubaiweekend #dubaiexpat #fridaynight #choseafaireadubai #sortiradubai #runclubdubai #expatlife #solotrip #selfconfidence #motivation
+#Dubai #DubaiEvents #DubaiLifestyle #DubaiCommunity #MeetNewPeople #FeelingAlone #RealConnections #MyDubai #DubaiPeople #solotrip #selfconfidence #motivation
 
 ## Caption EN
 The hardest part isn't being alone. It's showing up alone.
 What's your plan this Friday? Someone might have the same one 👇
 
-#dubai #dubaiweekend #thingstodoindubai #fridaynight #dubaiexpat #dubairunclub #expatlife #solotrip #selfconfidence #motivation
+#Dubai #DubaiEvents #DubaiLifestyle #DubaiCommunity #MeetNewPeople #FeelingAlone #RealConnections #MyDubai #DubaiPeople #solotrip #selfconfidence #motivation

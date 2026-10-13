@@ -10,10 +10,10 @@
 Dubaï, c'est la ville où tout avance. Sauf parfois ce qui compte le plus.
 Tu es là depuis combien de temps ? 👇
 
-#dubai #dubaiexpat #expatlife #vieadubai #expatriation #solitude #nouvelleville #amitie #solotrip #selfconfidence #motivation
+#Dubai #DubaiLife #DubaiExpats #NewToDubai #Loneliness #MakingFriends #FindYourPeople #LifeAbroad #ExpatLife #solotrip #selfconfidence #motivation
 
 ## Caption EN
 Dubai is the city where everything moves fast. Except, sometimes, the part that matters most.
 How long have you been here? 👇
 
-#dubai #dubaiexpat #expatlife #dubailife #movingtodubai #newcity #makingfriends #lonelyinthecity #solotrip #selfconfidence #motivation
+#Dubai #DubaiLife #DubaiExpats #NewToDubai #Loneliness #MakingFriends #FindYourPeople #LifeAbroad #ExpatLife #solotrip #selfconfidence #motivation
