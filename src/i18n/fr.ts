@@ -1416,6 +1416,7 @@ export const fr: Record<string, string> = {
   '{title} was deleted': 'Supprimée : {title}',
   'Not open in this city yet': 'Pas encore ouvert dans cette ville',
   'This activity is over': 'Cette activité est terminée',
+  'Your files are deleted but your account is not yet. Try again to finish.': 'Tes fichiers sont supprimés mais pas encore ton compte. Réessaie pour terminer.',
   'This video format is not supported. Pick an MP4 or MOV video.': 'Ce format vidéo n’est pas accepté. Choisis une vidéo MP4 ou MOV.',
   '{title} changed': 'Modification : {title}',
   'It\'s been removed from your calendar': 'Retiré de ton calendrier',

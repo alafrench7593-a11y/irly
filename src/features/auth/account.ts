@@ -439,7 +439,10 @@ async function removeMyFiles(uid: string): Promise<void> {
 /**
  * Deletes the server account: your photos and files first (the database
  * cannot remove files), then every row that belongs to you, then the
- * session. If any step fails nothing is wiped on the phone, so you can retry.
+ * session. Files go first on purpose: if the account step then fails, a retry
+ * finishes it; the other way round, a failure would leave your photos on the
+ * server with no account left to remove them. Nothing is wiped on the phone
+ * until the server has finished, so you can retry.
  */
 export async function deleteServerAccount(): Promise<void> {
   if (!supabase) return;
@@ -452,7 +455,7 @@ export async function deleteServerAccount(): Promise<void> {
   await removeMyFiles(data.session.user.id);
   await import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
   const { error } = await supabase.rpc('delete_my_account');
-  if (error) throw new Error(error.message);
+  if (error) throw new Error('Your files are deleted but your account is not yet. Try again to finish.');
   // The account no longer exists on the server: forget the session on this phone.
   await supabase.auth.signOut({ scope: 'local' });
 }

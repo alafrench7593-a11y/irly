@@ -80,7 +80,7 @@ export default function Assistant() {
   const [source, setSource] = useState<'text' | 'voice'>('text');
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<TextInput>(null);
-  const started = useRef(false);
+  const started = useRef<string | null>(null);
 
   const run = (input: string, from: 'text' | 'voice') => {
     if (!input.trim()) return;
@@ -99,8 +99,9 @@ export default function Assistant() {
 
   // Opened with a question (deep link, Home search): answer it straight away.
   useEffect(() => {
-    if (started.current || !params.q) return;
-    started.current = true;
+    // Each new question (deep link while open) is answered, not only the first one.
+    if (!params.q || started.current === params.q) return;
+    started.current = params.q;
     const timer = setTimeout(() => run(params.q as string, 'text'), 0);
     return () => clearTimeout(timer);
   }, [params.q]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -122,6 +123,11 @@ export default function Assistant() {
 
   const create = async () => {
     if (!cmd) return;
+    // A plan in a destination that is not open yet (asked from elsewhere) is not created, as for "switch".
+    if (targetCity !== cityId && !cityOpen(targetCity)) {
+      toast('Coming soon', 'globe', 'brand');
+      return;
+    }
     const e = cmd.entities;
     const kind = Object.entries(ACTIVITIES).find(([k]) => k === e.activity)?.[1];
     const label = kind?.label ?? (e.activity ? e.activity[0].toUpperCase() + e.activity.slice(1) : 'Meetup');

@@ -120,6 +120,11 @@ function ServerThreadView({ id }: { id: string }) {
   const scrollRef = useRef<ScrollView>(null);
   // Keep the view at the bottom, except right after loading older messages.
   const stick = useRef(true);
+  // Only messages that arrive while the chat is open slide in; the history appears at once
+  // (dozens of entry animations on opening a chat cost frames for nothing).
+  const [openedAt, setOpenedAt] = useState<number | null>(null);
+  if (openedAt === null && !thread.loading) setOpenedAt(thread.messages.length ? thread.messages[thread.messages.length - 1].at : 0);
+  const slideIn = (at: number) => (openedAt !== null && at > openedAt ? FadeInDown.springify(380).dampingRatio(0.8) : undefined);
 
   const send = async () => {
     const body = text.trim();
@@ -289,7 +294,7 @@ function ServerThreadView({ id }: { id: string }) {
             return (
               <View key={m.id}>
                 {day}
-                <Animated.View entering={FadeInDown.springify(380).dampingRatio(0.8)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
+                <Animated.View entering={slideIn(m.at)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
                   {showName ? (
                     <PressableScale haptic="select" onPress={openSender} hitSlop={6} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })} style={{ marginLeft: group ? 46 : 12, marginBottom: 2 }}>
                       <Text variant="caption" tone="tertiary" raw>
