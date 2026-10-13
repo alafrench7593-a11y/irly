@@ -2,6 +2,8 @@
 
 Huit visuels pour la fiche App Store d'IRLY, en anglais, faits uniquement à partir d'écrans de l'application : un titre, un sous-titre et un iPhone qui affiche un vrai écran d'IRLY. Trois visuels (02, 04 et 08) ajoutent un agrandissement d'un élément du même écran : une carte, une ligne ou une rangée de profils.
 
+En plus : deux images larges pour l'en-tête de la fiche et les résultats de recherche (iOS 27 et iPadOS 27), voir le point 9.
+
 ## 1. Fichiers
 
 | Fichier | Titre | Sous-titre | Écran de l'app | Source |
@@ -15,7 +17,7 @@ Huit visuels pour la fiche App Store d'IRLY, en anglais, faits uniquement à par
 | `07-decouvrir.png` | New in town? | Turn your new city into a chance to meet people. | Découvrir, onglet People (catégories, « People for you ») | Build démo |
 | `08-autour-de-toi-suite.png` | Your next connection starts here. | Join a community where you belong. | Accueil, suite de la page (Happening now, Create, People near you, Find your people) + rangée « People near you » agrandie | Build démo |
 
-L'ordre 01 → 08 est l'ordre conseillé dans App Store Connect : les trois premiers visuels sont ceux qui s'affichent dans les résultats de recherche.
+L'ordre 01 → 08 est l'ordre conseillé dans App Store Connect : les trois premiers visuels sont ceux qui s'affichent dans les résultats de recherche, sauf si une image « résultats de recherche » est fournie (point 9).
 
 ## 2. Dimensions et format
 
@@ -92,9 +94,32 @@ Prérequis : `npm ci`, puis `npm install --no-save playwright@1` et `npx playwri
 promo/app-store/tools/build.sh                    # builds web démo et production dans dist/ (ignoré par git)
 promo/app-store/tools/capture.sh                  # les 8 écrans dans tools/screens (1320 × 2868 px)
 node promo/app-store/tools/compose.mjs            # les visuels dans iphone-6.9/ et iphone-6.3/
+node promo/app-store/tools/compose-header.mjs     # les images larges dans en-tete/ (point 9)
 ```
 
 - Pour modifier les titres, la mise en page ou les agrandissements, édite `tools/visuals.json`.
 - Pour modifier les membres, messages, activités ou compteurs fictifs, édite `tools/mock.mjs`.
 - Pour choisir une autre position de défilement, `DUMP=1 node shoot.mjs <dossier> 1 'nom=/route@attente~défilement|demo'` liste chaque ligne de texte et chaque photo visibles, avec leur position : aucun texte ne doit croiser la barre du haut ni la barre d'onglets.
 - Pour une version française, ajoute `LANG_UI=fr` devant les commandes de `capture.sh` et traduis les titres de `visuals.json`.
+
+## 9. En-tête de fiche et résultats de recherche (iOS 27)
+
+Ce ne sont pas des captures d'écran : App Store Connect refuse ces tailles dans « Previews and Screenshots », et les captures restent obligatoires. Ce sont deux emplacements facultatifs, affichés sur iOS 27 et iPadOS 27 ou plus récent.
+
+| Fichier | Taille | Emplacement |
+|---|---|---|
+| `en-tete/universel-16x9-5244x2950.png` | 5244 × 2950 px (16:9, PNG) | En-tête de la fiche et résultats de recherche, avec une seule image |
+| `en-tete/en-tete-21x9-3840x1646.png` | 3840 × 1646 px (21:9, PNG) | En-tête de la fiche uniquement |
+
+- **Spécifications Apple** (page [Creative asset specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications) consultée le 13 octobre 2026) :
+  - en-tête : 21:9 en 3840 × 1646 px (JPEG ou PNG), ou 16:9 en 5244 × 2950 px (PNG) ;
+  - résultats de recherche : 3:2, de 1920 × 1280 à 3840 × 2560 px (JPEG ou PNG), ou 16:9 en 5244 × 2950 px (PNG) ;
+  - pas de canal alpha ni de transparence.
+- **Contenu** : le logo, le slogan officiel « Less loneliness. More life. » (sous-titre de la fiche dans `docs/APP-STORE.md`) et trois vrais écrans : Match IRLY, l'Accueil (« What's happening around you? », Live now) et Live IRL. Les réserves du point 4 sur l'Accueil s'appliquent aussi ici.
+- **Recadrage** : Apple ne publie pas la zone gardée par chaque emplacement, seulement le conseil de garder l'essentiel au centre. L'image 16:9 est construite pour que le logo, le slogan et les trois iPhone restent dans un recadrage centré en 21:9 (5244 × 2247 px, pour l'en-tête) comme en 3:2 (4425 × 2950 px, pour la carte de recherche). Vérifie le rendu dans l'aperçu d'App Store Connect (iPhone, iPad, orientations, mode sombre) avant d'envoyer.
+- **Texte** : le slogan fait environ 20 points sur l'écran d'un iPhone, donc il reste lisible. Il est en anglais : Apple demande un texte traduit pour chaque langue de la fiche. Pour la fiche française, il faut une version française (« Moins de solitude. Plus de vie. », avec des écrans capturés en `LANG_UI=fr`).
+- **Importer** :
+  1. App Store Connect → Apps → IRLY → Asset Library → « + » → « Upload Creative Assets » : choisis le fichier, puis soumets-le à la revue. L'image peut être approuvée sans nouvelle version de l'app.
+  2. Sur la fiche, choisis l'image pour l'en-tête (Product Page Header).
+  3. Avec l'image 16:9, active « Use header asset in search results » pour la réutiliser dans les résultats de recherche. Sans image de recherche, ceux-ci continuent d'afficher les captures.
+- **Régénérer** : `node promo/app-store/tools/compose-header.mjs`. La mise en page (écrans, tailles, positions, slogan) est dans `tools/headers.json` ; le script vérifie que tout le contenu reste dans la zone gardée par les recadrages.

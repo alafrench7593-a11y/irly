@@ -1,0 +1,108 @@
+{
+ "headers": [
+  {
+   "name": "h16",
+   "file": "universel-16x9-5244x2950.png",
+   "width": 5244,
+   "height": 2950,
+   "safe": [
+    409,
+    351,
+    4834,
+    2598
+   ],
+   "logo": {
+    "x": 704,
+    "y": 1122,
+    "h": 120
+   },
+   "title": {
+    "text": "Less loneliness.<br>More life.",
+    "x": 700,
+    "y": 1312,
+    "size": 250
+   },
+   "glow": {
+    "x": 3750,
+    "y": 1475,
+    "rx": 2300,
+    "ry": 1500
+   },
+   "phones": [
+    {
+     "screen": "match-day.png",
+     "status": "dark",
+     "cx": 3173,
+     "top": 691,
+     "S": 700
+    },
+    {
+     "screen": "live-day-scroll.png",
+     "status": "dark",
+     "cx": 4327,
+     "top": 691,
+     "S": 700
+    },
+    {
+     "screen": "home-top.png",
+     "status": "light",
+     "cx": 3750,
+     "top": 557,
+     "S": 820
+    }
+   ]
+  },
+  {
+   "name": "h21",
+   "file": "en-tete-21x9-3840x1646.png",
+   "width": 3840,
+   "height": 1646,
+   "safe": [
+    300,
+    120,
+    3540,
+    1526
+   ],
+   "logo": {
+    "x": 363,
+    "y": 561,
+    "h": 84
+   },
+   "title": {
+    "text": "Less loneliness.<br>More life.",
+    "x": 360,
+    "y": 695,
+    "size": 190
+   },
+   "glow": {
+    "x": 2715,
+    "y": 823,
+    "rx": 1700,
+    "ry": 1100
+   },
+   "phones": [
+    {
+     "screen": "match-day.png",
+     "status": "dark",
+     "cx": 2214,
+     "top": 269,
+     "S": 495
+    },
+    {
+     "screen": "live-day-scroll.png",
+     "status": "dark",
+     "cx": 3216,
+     "top": 269,
+     "S": 495
+    },
+    {
+     "screen": "home-top.png",
+     "status": "light",
+     "cx": 2715,
+     "top": 174,
+     "S": 580
+    }
+   ]
+  }
+ ]
+}
