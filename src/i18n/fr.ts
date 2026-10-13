@@ -3230,6 +3230,7 @@ export const fr: Record<string, string> = {
   'Dubai': 'Dubaï',
   // ───── Audit: missing translations
   'Something went wrong on our side. Try again in a moment': 'Un problème est survenu de notre côté. Réessaie dans un instant',
+  'Finish your profile first': 'Termine d’abord ton profil',
   // ───── Audit: missing translations
   'Create your account to save your profile and meet people for real.': 'Crée ton compte pour enregistrer ton profil et rencontrer des gens pour de vrai.',
   'Already have an account?': 'Tu as déjà un compte ?',

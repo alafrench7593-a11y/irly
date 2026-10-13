@@ -5,7 +5,7 @@ import type { CityId } from '@/data/types';
 import { CITIES, cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
-import { useAccount } from '@/features/auth/account';
+import { useAccount, withProfile } from '@/features/auth/account';
 import { signedLinks } from '@/features/server/media';
 import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
@@ -46,7 +46,7 @@ export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?
   const prev = inFlight.get(key);
   if (prev && now - prev.at < 10_000) return prev.promise;
   const ref = prev?.ref ?? uuid();
-  const promise = insertActivity(plan, at, extras, ref);
+  const promise = withProfile(() => insertActivity(plan, at, extras, ref));
   inFlight.set(key, { at: now, ref, promise });
   return promise;
 }
@@ -218,8 +218,12 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
 /** Join (capacity-checked server-side). Returns the activity chat id, or 'full'. */
 export async function joinServerActivity(activityId: string): Promise<string | 'full'> {
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const { data, error } = await supabase.rpc('join_activity', { p_activity: activityId, p_status: 'going' });
-  if (error) throw new Error(error.message);
+  const sb = supabase;
+  const data = await withProfile(async () => {
+    const { data: res, error } = await sb.rpc('join_activity', { p_activity: activityId, p_status: 'going' });
+    if (error) throw new Error(error.message);
+    return res;
+  });
   changed('activities', 'inbox');
   if (data === 'full') return 'full';
   void askPushInContext();

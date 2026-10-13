@@ -54,8 +54,10 @@ if (supabase) {
       // Still signed in but this device never finished signup (or was reset).
       if (data.session?.user) {
         const uid = data.session.user.id;
+        // A profile whose first publish failed (offline at signup) is published now:
+        // without it every join is refused by the server.
         restoreProfile(uid)
-          .then((restored) => (restored ? undefined : refreshOwnPhoto(uid)))
+          .then((restored) => (restored ? undefined : syncProfile(uid).catch(() => undefined).then(() => refreshOwnPhoto(uid))))
           .catch(() => undefined);
       }
     })
@@ -132,6 +134,21 @@ export async function verifyCode(email: string, code: string): Promise<void> {
  * locked server-side after this first write (IRLY Girl access).
  */
 const syncing = new Map<string, Promise<void>>();
+
+/**
+ * Runs a server action; when the server answers that this account has no
+ * profile yet (its publish failed earlier), publishes it and tries once more.
+ */
+export async function withProfile<T>(action: () => Promise<T>): Promise<T> {
+  try {
+    return await action();
+  } catch (e) {
+    const uid = useAuthStore.getState().account?.userId;
+    if (!uid || !(e instanceof Error) || !/Finish your profile first|profiles_?\w*fkey|foreign key constraint/i.test(e.message)) throw e;
+    await syncProfile(uid);
+    return action();
+  }
+}
 
 export function syncProfile(uid: string): Promise<void> {
   // Every mounted useAccount() and verifyCode() call this on sign-in: share one run.

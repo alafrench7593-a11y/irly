@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CityId } from '@/data/types';
 import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
-import { useAccount } from '@/features/auth/account';
+import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from '@/features/server/sync';
@@ -528,8 +528,11 @@ export async function pinActivity(communityId: string, activityId: string, pin: 
 }
 
 export async function joinCommunity(id: string): Promise<string> {
-  const { data, error } = await sb().rpc('join_community', { p_community: id });
-  if (error) throw new Error(error.message);
+  const data = await withProfile(async () => {
+    const { data: conv, error } = await sb().rpc('join_community', { p_community: id });
+    if (error) throw new Error(error.message);
+    return conv;
+  });
   track('COMMUNITY_JOIN', {});
   communitiesChanged();
   void askPushInContext();

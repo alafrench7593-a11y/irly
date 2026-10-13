@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { t } from '@/i18n';
-import { useAccount } from '@/features/auth/account';
+import { useAccount, withProfile } from '@/features/auth/account';
 import { communitiesChanged, useCommunitiesVersion } from './data';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
@@ -98,8 +98,12 @@ export function useRecommendedCommunities(cityId: string, tags: string[], limit 
 export async function joinCommunities(ids: string[]): Promise<number> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   if (!ids.length) return 0;
-  const { data, error } = await supabase.rpc('join_communities', { p_ids: ids });
-  if (error) throw new Error(error.message);
+  const sb = supabase;
+  const data = await withProfile(async () => {
+    const { data: n, error } = await sb.rpc('join_communities', { p_ids: ids });
+    if (error) throw new Error(error.message);
+    return n;
+  });
   communitiesChanged();
   return Number(data ?? 0);
 }
