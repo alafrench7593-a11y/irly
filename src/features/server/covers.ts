@@ -106,13 +106,13 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
       const [{ data: conv }, { data: me }] = await Promise.all([
         sb
           .from('conversations')
-          .select('kind, photo_path, community_id, activity_id, activities(category_id, title, cover_path), communities(category_id, topic, cover_path)')
+          .select('kind, photo_path, community_id, activity_id, activities(category_id, title, sub_id, place_name, cover_path), communities(category_id, topic, cover_path)')
           .eq('id', conversationId)
           .maybeSingle(),
         sb.from('conversation_members').select('role').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
       ]);
       if (!alive || !conv) return;
-      const act = one(conv.activities as One<{ category_id: string; title: string; cover_path: string | null }>);
+      const act = one(conv.activities as One<{ category_id: string; title: string; sub_id: string | null; place_name: string | null; cover_path: string | null }>);
       const com = one(conv.communities as One<{ category_id: string | null; topic: string | null; cover_path: string | null }>);
       let canEdit = me?.role === 'admin';
       if (!canEdit && conv.community_id) {
@@ -120,7 +120,7 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
         canEdit = cm?.role === 'owner' || cm?.role === 'moderator';
       }
       const fallback: PhotoKey = act
-        ? ideaPhoto((CATEGORY_BY_ID[act.category_id as CategoryKey] ? act.category_id : 'sport') as CategoryKey, act.title)
+        ? ideaPhoto((CATEGORY_BY_ID[act.category_id as CategoryKey] ? act.category_id : 'sport') as CategoryKey, act.title, act.place_name ?? undefined, act.sub_id)
         : ((communityPhoto(com?.topic, com?.category_id) as PhotoKey | null) ?? 'meeting');
       const hasPhoto = conv.kind === 'group' || conv.kind === 'activity' || conv.kind === 'community';
       // One source per picture: a community chat shows the community's own photo

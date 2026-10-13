@@ -34,22 +34,14 @@ export type OfficialCommunity = {
 
 type Row = Record<string, unknown>;
 
-const GOALS: Record<string, string> = {
-  friends: 'goal:friends',
-  sport: 'goal:sport',
-  networking: 'goal:networking',
-  travel: 'goal:travel',
-  food: 'goal:food',
-  irlygirl: 'goal:irlygirl',
-};
-
 /** Tags from what the member actually answered: nothing is guessed. */
 export function profileTags(p: Profile): string[] {
   const tags = new Set<string>();
   p.types.forEach((x) => tags.add(`type:${x}`));
   p.interests.forEach((x) => tags.add(`interest:${x}`));
   p.activities.forEach((x) => tags.add(`activity:${x}`));
-  (p.lookingFor ?? []).forEach((x) => GOALS[x] && tags.add(GOALS[x]));
+  // Every answer to "What are you looking for?" is a goal the server can match.
+  (p.lookingFor ?? []).forEach((x) => tags.add(`goal:${x}`));
   if (p.since === 'new' || p.since === 'year') tags.add('newcomer');
   return [...tags];
 }

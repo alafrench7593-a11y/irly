@@ -52,7 +52,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const [query, setQuery] = useState('');
   // Where the member is (once they tapped locate): for the distance filter.
   const [origin, setOrigin] = useState<LatLng | null>(null);
-  const acts = useActivityLayer(city, origin);
+  const acts = useActivityLayer(city, origin, layer);
   const [me, setMe] = useState(false);
 
   const sheetBottom = tabSpace - 28;

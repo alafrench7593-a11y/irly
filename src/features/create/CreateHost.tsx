@@ -14,6 +14,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, ideaPhoto, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
+import type { CityId } from '@/data/types';
 import { photo } from '@/data/photos';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -102,7 +103,9 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const hide = useCreateStore((s) => s.hide);
   const preset = useCreateStore((s) => s.preset);
   const origin = useCreateStore((s) => s.origin) ?? { x: frame.width / 2, y: frame.height - layout.tabBarHeight };
-  const cityId = useCityId();
+  // Created from a community: the activity takes place in that community's emirate.
+  const myCity = useCityId();
+  const cityId = preset?.cityId && preset.cityId in CITIES ? (preset.cityId as CityId) : myCity;
   const city = CITIES[cityId];
   const postPlan = useStore((s) => s.postPlan);
 
@@ -552,7 +555,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
               <Animated.View entering={enter.rise(2)} style={styles.block}>
                 {/* The session's photo: the app's photo for this activity, or the creator's own. */}
                 <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={styles.cover} accessibilityLabel="Change the photo">
-                  <Image source={{ uri: cover ?? (pick ? photo(ideaPhoto(pick.categoryId, title ?? '', place), 900) : undefined) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
+                  <Image source={{ uri: cover ?? (pick ? photo(ideaPhoto(pick.categoryId, pick.custom ?? pick.activity?.label ?? '', place, pick.sub?.id), 900) : undefined) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
                   <View style={[styles.coverPill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
                     <Icon name="camera" size={16} color="#FFFFFF" />
                     <Text variant="label" style={{ color: '#FFFFFF' }}>

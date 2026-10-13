@@ -4,7 +4,7 @@ import type { CategoryKey } from '@/data/catalog/categories';
 /** What the member is creating. Every format becomes a session with its own chat. */
 export type CreateFormat = 'activity' | 'sport' | 'event' | 'session' | 'meetup' | 'trip';
 
-export type CreatePreset = { categoryId?: CategoryKey; subId?: string; activityId?: string; format?: CreateFormat; communityId?: string };
+export type CreatePreset = { categoryId?: CategoryKey; subId?: string; activityId?: string; format?: CreateFormat; communityId?: string; /** The community's emirate: its activities belong there. */ cityId?: string };
 
 type CreateState = {
   open: boolean;

@@ -75,6 +75,9 @@ export function SyncBridge() {
       { table: 'activity_participants', kinds: ['activities'] },
       { table: 'communities', kinds: ['communities', 'inbox'] },
       { table: 'community_members', kinds: ['communities'] },
+      { table: 'community_activity_pins', kinds: ['activities'] },
+      { table: 'community_channels', kinds: ['communities'] },
+      { table: 'community_pins', kinds: ['communities'] },
       // Joining or leaving a chat follows a join or leave elsewhere; reading,
       // archiving or hiding a chat (an UPDATE, on every message read) is the inbox only.
       { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['inbox', 'activities', 'communities'] },
@@ -104,7 +107,16 @@ export function SyncBridge() {
         });
     });
     // Back to the app: whatever happened meanwhile.
-    const app = AppState.addEventListener('change', (s) => s === 'active' && changedAll());
+    // A quick switch to another app (a link, a photo) reloads nothing.
+    let away = 0;
+    const app = AppState.addEventListener('change', (s) => {
+      if (s !== 'active') {
+        if (!away) away = Date.now();
+        return;
+      }
+      if (away && Date.now() - away > 30_000) changedAll();
+      away = 0;
+    });
     // Back online (web): resync; offline: screens can say so.
     const online = () => {
       useVersions.setState({ online: true });

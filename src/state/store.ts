@@ -31,6 +31,16 @@ export type LookingFor =
   | 'communities'
   | 'dogwalk'
   | 'events'
+  | 'wellness'
+  | 'beach'
+  | 'outdoors'
+  | 'business'
+  | 'tech'
+  | 'culture'
+  | 'shopping'
+  | 'languages'
+  | 'family'
+  | 'help'
   | 'irlygirl';
 
 export type Profile = {

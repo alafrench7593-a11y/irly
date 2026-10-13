@@ -41,6 +41,16 @@ export default function Welcome() {
   const frame = useFrame();
   const insets = useSafeAreaInsets();
   const setDestination = useStore((s) => s.setDestination);
+  // A member who signs in from here gets their profile back (in the
+  // background): once it is restored, go Home instead of onboarding again.
+  const restored = useStore((s) => s.onboarded && !!s.cityId);
+  // Only while this screen is in front: onboarding steps stacked above it
+  // finish on their own.
+  useFocusEffect(
+    useCallback(() => {
+      if (restored) router.replace('/(tabs)');
+    }, [restored, router]),
+  );
   // intro (the logo) → story (what IRLY is) → choose (where you are going)
   const [phase, setPhase] = useState<'intro' | 'story' | 'choose'>(introPlayed ? 'choose' : 'intro');
   const { overlay, expand, reset } = useExpand();

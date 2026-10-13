@@ -125,6 +125,7 @@ export async function communityPeople(communityId: string, query?: string): Prom
 export async function setRole(communityId: string, userId: string, role: 'moderator' | 'member'): Promise<void> {
   const { error } = await sb().rpc('set_community_role', { p_community: communityId, p_user: userId, p_role: role });
   if (error) throw new Error(friendly(error.message));
+  changed('communities');
 }
 
 /* ───────── Discussion categories (inside a community, no members of their own) ───────── */

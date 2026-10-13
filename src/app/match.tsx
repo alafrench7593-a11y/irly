@@ -18,22 +18,12 @@ import { useMyVerification } from '@/features/verify/verify';
 import { t as tx } from '@/i18n';
 import { hueOf } from '@/lib/format';
 import { PressableScale } from '@/motion/PressableScale';
+import { LOOKING_LABEL } from '@/data/lookingFor';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const GOALS: Record<string, string> = {
-  friends: 'Friends',
-  sport: 'Sport',
-  networking: 'Networking',
-  activities: 'Activities',
-  travel: 'Travel',
-  food: 'Food',
-  nightlife: 'Nightlife',
-  communities: 'Communities',
-  dogwalk: 'Dog walk',
-  events: 'Events',
-};
+const GOALS = LOOKING_LABEL;
 
 const SIGNALS: { icon: IconName; label: string }[] = [
   { icon: 'heart', label: 'Interests' },
