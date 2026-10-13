@@ -48,11 +48,18 @@ export function useMyVerification() {
   const uid = useAccount()?.userId;
   const [state, setState] = useState<{ for: string; v: MyVerification | null; paths: string[] }>({ for: '', v: null, paths: [] });
   const seq = useRef(0);
+  const [failed, setFailed] = useState(false);
   const load = useCallback(() => {
     if (!uid || !supabase) return;
     const n = ++seq.current;
     Promise.all([sb().rpc('my_verification'), sb().rpc('my_profile')]).then(([v, p]) => {
       if (n !== seq.current) return;
+      // A failed read is not "no photos": the screen keeps what it had (or keeps loading) instead of offering to overwrite them.
+      if (v.error || p.error) {
+        setFailed(true);
+        return;
+      }
+      setFailed(false);
       const r = ((v.data as Record<string, unknown>[] | null) ?? [])[0];
       const paths = ((((p.data as { photo_paths: string[] | null }[] | null) ?? [])[0]?.photo_paths ?? []) as string[]).filter(Boolean);
       setState({
@@ -70,12 +77,12 @@ export function useMyVerification() {
             }
           : null,
       });
-    });
+    }, () => n === seq.current && setFailed(true));
   }, [uid]);
   useEffect(load, [load]);
   useRefreshOn(['people'], load);
   const ready = state.for === uid;
-  return { v: ready ? state.v : null, paths: ready ? state.paths : [], loading: Boolean(uid) && !ready, reload: load };
+  return { v: ready ? state.v : null, paths: ready ? state.paths : [], loading: Boolean(uid) && !ready, failed: failed && !ready, reload: load };
 }
 
 async function me(): Promise<string> {
@@ -93,18 +100,28 @@ export async function addProfilePhotos(current: string[]): Promise<void> {
   if (res.canceled || !res.assets.length) return;
   const uid = await me();
   const added: string[] = [];
-  for (const [i, a] of res.assets.slice(0, room).entries()) {
-    const img = await cleanImage(a.uri);
-    const path = `${uid}/photo-${Date.now()}-${i}.${img.ext}`;
-    const { error } = await sb().storage.from('profile-photos').upload(path, img.body, { contentType: img.contentType });
-    if (error) throw new Error('A photo could not be sent. Try again.');
-    await uploadFaceThumb(path, a.uri);
-    added.push(path);
-  }
-  const { error } = await sb().from('profiles').update({ photo_paths: [...current, ...added] }).eq('id', uid);
-  if (error) {
-    await sb().storage.from('profile-photos').remove([...added, ...added.map(thumbOf)]);
-    throw new Error(friendly(error.message));
+  const undo = () => (added.length ? sb().storage.from('profile-photos').remove([...added, ...added.map(thumbOf)]).then(() => undefined, () => undefined) : Promise.resolve());
+  try {
+    for (const [i, a] of res.assets.slice(0, room).entries()) {
+      const img = await cleanImage(a.uri);
+      const path = `${uid}/photo-${Date.now()}-${i}.${img.ext}`;
+      const { error } = await sb().storage.from('profile-photos').upload(path, img.body, { contentType: img.contentType });
+      if (error) throw new Error('A photo could not be sent. Try again.');
+      added.push(path);
+      await uploadFaceThumb(path, a.uri);
+    }
+    // The photos on the server right now, not the screen's copy (it may be older than an Edit profile change).
+    const { data: mine, error: readError } = await sb().rpc('my_profile');
+    if (readError) throw new Error(friendly(readError.message));
+    const now = (((mine as { photo_paths: string[] | null }[] | null) ?? [])[0]?.photo_paths ?? []).filter(Boolean);
+    if (now.length + added.length > MAX_PHOTOS) throw new Error(`${MAX_PHOTOS} photos at most`);
+    const { data: saved, error } = await sb().from('profiles').update({ photo_paths: [...now, ...added] }).eq('id', uid).select('id');
+    if (error) throw new Error(friendly(error.message));
+    if (!saved?.length) throw new Error('Finish your profile first');
+  } catch (e) {
+    // Nothing half-done: the files sent before the failure go too.
+    await undo();
+    throw e;
   }
   changed('people');
 }

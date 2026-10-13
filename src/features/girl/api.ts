@@ -57,6 +57,9 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
+/** Signed link shown in the editor → the stored path it stands for. */
+const linkToPath = new Map<string, string>();
+
 async function signedPhotos(paths: string[]): Promise<string[]> {
   if (!paths.length) return [];
   // IRLY avatars are stored as is and need no signing; order is kept.
@@ -104,9 +107,15 @@ const serverApi: MatchApi = {
     const { data, error } = await supabase!.from('irly_match_profiles').select('*').maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) return null;
+    const saved: string[] = data.photo_paths ?? [];
+    const photoUris = await signedPhotos(saved);
+    // A photo that could not be signed would be missing from the editor, then from the saved profile.
+    if (photoUris.length !== saved.length) throw new Error('Could not load your photos. Try again.');
+    // Saving sends storage paths, never the temporary links shown here.
+    photoUris.forEach((u, i) => linkToPath.set(u, saved[i]));
     return {
       bio: data.bio ?? '',
-      photoUris: await signedPhotos(data.photo_paths ?? []),
+      photoUris,
       interests: data.interests,
       sports: data.sports,
       activities: data.activities,
@@ -130,7 +139,13 @@ const serverApi: MatchApi = {
     // Local photos are uploaded to the member's own folder first.
     const paths: string[] = [];
     for (const [i, uri] of d.photoUris.entries()) {
-      if (uri.startsWith('http')) continue;
+      // A photo already saved comes back as a signed link: its stored path is kept.
+      if (uri.startsWith('http')) {
+        const kept = linkToPath.get(uri);
+        if (!kept) throw new Error('Could not keep one of your photos. Reopen your profile and try again.');
+        paths.push(kept);
+        continue;
+      }
       if (isAvatar(uri)) {
         paths.push(uri);
         continue;
@@ -160,7 +175,8 @@ const serverApi: MatchApi = {
       visible: d.visible,
     });
     if (error) throw new Error(error.message);
-    await supabase!.from('safety_settings').upsert({ user_id: uid, show_active: d.showActive });
+    const { error: e2 } = await supabase!.from('safety_settings').upsert({ user_id: uid, show_active: d.showActive });
+    if (e2) throw new Error(e2.message);
   },
   async discover(filters, offset = 0) {
     const rows = await rpc<DiscoverRow[]>('irly_match_discover', { p_filters: toFilters(filters), p_limit: PAGE_SIZE, p_offset: offset });

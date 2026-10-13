@@ -77,6 +77,15 @@ export default function BaliArea() {
           <Photo visual={{ photo: id === 'ubud' ? 'baliTemple' : id === 'uluwatu' || id === 'bingin' ? 'surf' : 'bali' }} light="bali" scrim="soft" style={[styles.hero, { borderRadius: radius.xl }]} width={900} />
         </View>
 
+        {areas.error && !area ? (
+          <View style={[styles.pad, { gap: space[3] }]}>
+            <Text variant="bodyS" tone="secondary">
+              Could not load this area. Check your connection.
+            </Text>
+            <Button label="Try again" size="sm" variant="secondary" onPress={areas.reload} />
+          </View>
+        ) : null}
+
         {profile ? (
           <View style={[styles.pad, { gap: 14 }]}>
             {parent ? (

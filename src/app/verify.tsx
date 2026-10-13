@@ -26,7 +26,7 @@ export default function VerifyScreen() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
-  const { v, paths, loading, reload } = useMyVerification();
+  const { v, paths, loading, failed, reload } = useMyVerification();
   const links = useSignedLinks('profile-photos', paths);
   const [busy, setBusy] = useState<'photos' | 'selfie' | null>(null);
   const [challenge, setChallenge] = useState<{ requestId: string; gesture: Gesture } | null>(null);
@@ -80,6 +80,13 @@ export default function VerifyScreen() {
       <View style={styles.body}>
         {!account ? (
           <Button label="Sign in" onPress={() => router.push('/account')} />
+        ) : failed ? (
+          <View style={{ gap: 12 }}>
+            <Text variant="bodyS" tone="secondary">
+              Could not load your photos. Try again.
+            </Text>
+            <Button label="Try again" variant="secondary" onPress={reload} />
+          </View>
         ) : loading ? (
           <ActivityIndicator color={t.c.text} />
         ) : (

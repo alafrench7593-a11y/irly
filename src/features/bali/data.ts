@@ -28,16 +28,29 @@ function useQuery<T>(key: string, run: () => Promise<T>, initial: T): { data: T;
   }
   useEffect(() => {
     let alive = true;
-    run()
-      .then((d) => {
-        if (!alive) return;
-        setData(d);
-        setError(null);
-      })
-      .catch((e) => alive && setError(e instanceof Error ? e.message : 'Could not load'))
-      .finally(() => alive && setLoading(false));
+    let retry: ReturnType<typeof setTimeout> | null = null;
+    const attempt = (left: number) =>
+      run()
+        .then((d) => {
+          if (!alive) return;
+          setData(d);
+          setError(null);
+          setLoading(false);
+        })
+        .catch((e) => {
+          if (!alive) return;
+          // One quiet retry: a single dropped request (cold server, network blip) must not leave the page half empty.
+          if (left > 0) {
+            retry = setTimeout(() => attempt(left - 1), 1500);
+            return;
+          }
+          setError(e instanceof Error ? e.message : 'Could not load');
+          setLoading(false);
+        });
+    attempt(1);
     return () => {
       alive = false;
+      if (retry) clearTimeout(retry);
     };
     // `key` captures every input of `run`.
   }, [key, tick]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -58,11 +71,12 @@ export function useDestAreas(cityId: string) {
   return useQuery<DestArea[]>(
     `areas-${cityId}`,
     async () => {
-      const [{ data: areas, error }, { data: admins }] = await Promise.all([
+      const [{ data: areas, error }, { data: admins, error: adminError }] = await Promise.all([
         sb().from('areas').select('id, name, parent_area_id, admin_area_id, kind, lat, lng, sort').eq('city_id', cityId).order('sort'),
         sb().from('admin_areas').select('id, name'),
       ]);
-      if (error) throw new Error(error.message);
+      // The regency names are part of the page (« Badung regency »): a failed read is a failed load.
+      if (error || adminError) throw new Error((error ?? adminError)!.message);
       const adminName = new Map((admins ?? []).map((a) => [a.id as string, a.name as string]));
       return (areas ?? []).map((a) => ({
         id: a.id,
