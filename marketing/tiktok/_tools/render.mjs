@@ -42,6 +42,8 @@ html,body{width:1080px;height:1920px;background:#0b0b0c;overflow:hidden}
 .tt .t em{color:inherit;font-style:normal}
 .tt .sub{font-weight:700;font-size:44px;line-height:1.3;color:#fff;text-shadow:0 0 4px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.8)}
 .tt .mark{left:0;right:0;text-align:center;font-weight:800}
+/* soft: the photo stays close to the original (no grey, lighter shade). */
+.soft .shade{opacity:.45}.soft .grain{opacity:.06}
 `;
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/\n/g, '<br>');
 
@@ -58,9 +60,10 @@ fs.mkdirSync(out, { recursive: true });
 for (const [i, slide] of post.slides.entries()) {
   const s = { ...slide, ...(slide[lang] ?? {}) };
   const img = s.img ? `file://${path.isAbsolute(s.img) ? s.img : path.resolve(root, '_photos', s.img)}` : '';
+  const ext = post.ext === 'png' ? 'png' : 'jpg';
   const vars = [s.pos && `--pos:${s.pos}`, s.size && `--size:${s.size}px`, s.bright && `--bright:${s.bright}`, s.gray != null && `--gray:${s.gray}`].filter(Boolean).join(';');
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css.replaceAll('1920px', H + 'px')}${post.format === 'ig' ? '.tt .top{top:150px}.mark{bottom:90px}' : ''}</style></head><body>
-<div class="s ${img ? '' : 'plain'} ${s.warm ? 'warm' : ''} ${(post.style ?? 'tiktok') === 'tiktok' ? 'tt' : ''}" style="${vars}">
+<div class="s ${img ? '' : 'plain'} ${s.warm ? 'warm' : ''} ${(post.style ?? 'tiktok') === 'tiktok' ? 'tt' : ''} ${post.soft ? 'soft' : ''}" style="${vars}">
 <div class="bg" style="background-image:url('${img}')"></div><div class="shade"></div><div class="grain"></div>
 <div class="txt ${s.at || 'mid'}"><div class="t"><span class="box">${esc(s.text)}</span></div>${s.sub ? `<div class="sub">${esc(s.sub)}</div>` : ''}</div>
 ${s.mark ? `<div class="mark">IRLY</div>` : ''}
@@ -70,7 +73,7 @@ ${s.mark ? `<div class="mark">IRLY</div>` : ''}
   await page.goto(`file://${tmp}`);
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(150);
-  await page.screenshot({ path: path.join(out, `${String(i + 1).padStart(2, '0')}.jpg`), type: 'jpeg', quality: 95 });
+  await page.screenshot({ path: path.join(out, `${String(i + 1).padStart(2, '0')}.${ext}`), ...(ext === 'png' ? { type: 'png' } : { type: 'jpeg', quality: 95 }) });
   fs.rmSync(tmp);
 }
 }
