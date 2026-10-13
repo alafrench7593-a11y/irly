@@ -85,10 +85,18 @@ export function phoneHTML(g, screenSrc, status, shadow, time = '9:41') {
   </div>`;
 }
 
+// The same measures for a screen shown without a device: p = { cx, top, S }.
+export function screenGeometry(p) {
+  const S = p.S;
+  const k = S / 440;
+  return { S, k, H: (S * 2868) / 1320, left: p.cx - S / 2, top: p.top, screenLeft: p.cx - S / 2, screenTop: p.top, scale: S / 1320, R: 55 * k };
+}
+
 // A real capture shown as a screen alone, without a device. Apple's marketing guidelines ask
 // not to draw an Apple product, nor to tilt it or add shadows to it: here the perspective
 // (ry, rotation in degrees; z, depth in px) and the shadow apply to the app screen only.
-// s = { cx, top, S, status, ry, z, dim }: dim darkens a screen set further back (0 to 1).
+// s = { cx, top, S, status, ry, z, dim, edge }: dim darkens a screen set further back (0 to 1);
+// edge is the colour of its hairline outline (light by default, for dark screens).
 export function screenHTML(s, screenSrc, shadow, time = '9:41') {
   const S = s.S;
   const k = S / 440;
@@ -98,6 +106,6 @@ export function screenHTML(s, screenSrc, shadow, time = '9:41') {
   <div class="scr" style="left:${s.cx - S / 2}px; top:${s.top}px; width:${S}px; height:${H}px; border-radius:${R}px; transform:translateZ(${s.z ?? 0}px) rotateY(${s.ry ?? 0}deg); box-shadow:${shadow};">
     <img src="${screenSrc}" style="width:${S}px; height:${H}px;" />${systemUI(k, S, s.status, time, false)}
     ${s.dim ? `<div class="veil" style="background:rgba(0,0,0,${s.dim});"></div>` : ''}
-    <div class="edge" style="border-radius:${R}px;"></div>
+    <div class="edge" style="border-radius:${R}px;${s.edge ? ` box-shadow: inset 0 0 0 2px ${s.edge};` : ''}"></div>
   </div>`;
 }

@@ -29,7 +29,7 @@ const token = `${b64u({ alg: 'HS256', typ: 'JWT' })}.${b64u({ sub: ME, role: 'au
 const session = { access_token: token, token_type: 'bearer', expires_in: 3600 * 24 * 300, expires_at: exp, refresh_token: 'mockrefresh', user };
 
 const profile = {
-  ownerId: ME, name: 'Sara', gender: 'woman', age: 29, country: 'France', types: ['expat', 'professional'], interests: ['startups', 'food', 'travel'], activities: ['padel', 'running'],
+  ownerId: ME, name: 'Sara', gender: 'woman', age: 29, country: 'France', types: ['expat', 'professional'], interests: ['startups', 'business', 'food', 'travel'], activities: ['padel', 'running'],
   languages: ['Français', 'English'], lookingFor: ['friends', 'activities'], since: 'new', arrivedAt: NOW - 30 * 86400000, bio: 'French in Dubai since this summer. Padel, brunch and sunrise runs.',
   photoUri: `${HOST}/media/faces/${PEOPLE.me.face}.jpg`,
 };
@@ -51,6 +51,7 @@ const LIBP = `${REPO}/public-photos`;
 const UNSPLASH = { '1567880905822-56f8e06fe630': 'coffeeBar', '1688437307687-fe226bddfab1': 'founders', '1688437310009-ed23b2188d38': 'brunch', '1563138216-8ff2e182ccbd': 'lounge', '1578855019520-af8101c056e2': 'photography', '1714577419068-45189e7bda58': 'fort' };
 const unsplashMap = (url) => {
   const id = Object.keys(UNSPLASH).find((k) => url.includes(k));
+  if (process.env.LOG_UNSPLASH) console.log('UNSPLASH-REQUEST', url.split('?')[0]);
   return id ? `${LIBP}/${UNSPLASH[id]}-1200.jpg` : null;
 };
 const routes = { ...IDS };
@@ -142,7 +143,7 @@ for (const spec of specs) {
       console.log(`DUMP ${name}\n` + items.map((i) => `  ${i[0]} y ${i[1]}-${i[2]}  x ${i[3]}-${i[4]}  ${i[5]}`).join('\n'));
     }
     const notes = [...new Set(log)].filter((l) => !l.includes('safe-area override: ok'));
-    console.log('shot', name, '->', page.url().replace(/http:\/\/localhost:\d+/, ''), notes.length ? '\n   ' + notes.slice(0, 12).join('\n   ') : '');
+    console.log('shot', name, '->', page.url().replace(/http:\/\/localhost:\d+/, ''), notes.length ? '\n   ' + notes.slice(0, Number(process.env.NOTES || 12)).join('\n   ') : '');
   } catch (e) {
     console.log('failed', name, e.message.split('\n')[0]);
   }

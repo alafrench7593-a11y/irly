@@ -7,8 +7,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
-// promo/app-store/tools → repository root.
-export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+// promo/app-store/tools → repository root. IRLY_REPO points at another checkout of the app
+// (e.g. a worktree of main): its web builds (dist/), photos and videos are used instead.
+export const REPO = process.env.IRLY_REPO ? path.resolve(process.env.IRLY_REPO) : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const types = { '.js': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.ttf': 'font/ttf', '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg', '.ico': 'image/x-icon', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.mp4': 'video/mp4' };
 
 export function serve(root, port) {

@@ -1,35 +1,38 @@
 # Visuels App Store IRLY (iPhone)
 
-Huit visuels pour la fiche App Store d'IRLY, en anglais, faits uniquement à partir d'écrans de l'application : un titre, un sous-titre et un iPhone qui affiche un vrai écran d'IRLY. Trois visuels (02, 04 et 08) ajoutent un agrandissement d'un élément du même écran : une carte, une ligne ou une rangée de profils.
+Dix visuels pour la fiche App Store d'IRLY, en anglais, faits uniquement à partir de vrais écrans de l'application, version de `main` du 13 octobre 2026 (commit `522eede`), remplis de profils et de contenus d'exemple. Chaque visuel a un titre, un sous-titre, l'écran de l'app seul (sans iPhone dessiné) et, en bas, la mention « Example profiles and content ». Trois visuels (01, 02 et 03) ajoutent un agrandissement d'un élément du même écran.
 
 En plus : deux images larges pour l'en-tête de la fiche et les résultats de recherche (iOS 27 et iPadOS 27), voir le point 9.
 
 ## 1. Fichiers
 
-| Fichier | Titre | Sous-titre | Écran de l'app | Source |
+| Fichier | Titre | Sous-titre | Écran de l'app | Mode |
 |---|---|---|---|---|
-| `01-autour-de-toi.png` | What if you weren’t alone anymore? | The friendships that change everything start somewhere. | Accueil, haut de page (« What's happening around you? », Live now) | Build démo |
-| `02-match.png` | New people. Real connections. | Meet people who share what you love. | Match IRLY (« People to meet ») + carte de Layla agrandie | Production, données fictives |
-| `03-activites.png` | Less scrolling. More living. | Find activities and enjoy them together. | Catégorie Sport, sessions planifiées par des membres | Production, données fictives |
-| `04-communautes.png` | Your community is already out there. | Find people like you. | Communautés, onglet « For you » + ligne IRLY Newcomers agrandie | Production, données fictives |
-| `05-communaute.png` | One hello can start it all. | Chat, connect and get to know each other. | Chat de la communauté IRLY Newcomers | Production, données fictives |
-| `06-live-irl.png` | Real moments, right now. | See what people around you are up to. | Live IRL, fil des publications | Production, données fictives |
-| `07-decouvrir.png` | New in town? | Turn your new city into a chance to meet people. | Découvrir, onglet People (catégories, « People for you ») | Build démo |
-| `08-autour-de-toi-suite.png` | Your next connection starts here. | Join a community where you belong. | Accueil, suite de la page (Happening now, Create, People near you, Find your people) + rangée « People near you » agrandie | Build démo |
+| `01-amis.png` | Make friends in Dubai. | People near you who love what you love. | Match IRLY (« People to meet ») + carte de Layla agrandie | Clair |
+| `02-activites.png` | Do things together. | Sunset swims, sunrise paddles, desert drives. | Catégorie « Beach & outdoor » : trois sessions de membres + carte IRLY Beach agrandie | Sombre |
+| `03-reseau.png` | Grow your network. | Founders and professionals around you. | Professionals (IRLY Network) + raison du « 86% match » agrandie | Clair |
+| `04-irl.png` | Meet in real life. | Join a plan, meet up, become friends. | Page d'une session : « Beach volleyball at sunset » | Sombre |
+| `05-communautes.png` | Find your communities. | Newcomers, runners, foodies: people like you. | Communautés, onglet « For you » | Clair |
+| `06-live.png` | See who’s out right now. | A coffee by the marina? Join people nearby. | IRL, publications du moment | Sombre |
+| `07-communaute.png` | Never arrive alone. | Get tips, share photos, join the next meetup. | IRLY Newcomers : annonce épinglée, publication avec photos | Clair |
+| `08-profil.png` | Know who you’re meeting. | Verified profiles, interests and communities. | Profil de Nadia (profil vérifié, pas encore amie) | Sombre |
+| `09-chat.png` | One hello is enough. | Chat with the community before you meet. | Chat de la communauté IRLY Newcomers | Clair |
+| `10-messages.png` | Friends. Activities. Network. | In real life. That’s IRLY. | Messages : communauté, session, privé, groupe | Sombre |
 
-L'ordre 01 → 08 est l'ordre conseillé dans App Store Connect : les trois premiers visuels sont ceux qui s'affichent dans les résultats de recherche, sauf si une image « résultats de recherche » est fournie (point 9).
+L'ordre 01 → 10 suit la démo officielle (getirly.com/demo/story) : « Make friends », « Do things together », « Grow your network », « Meet in real life », puis les communautés, et la fin de la démo, « Friends. Activities. Network. In real life. That's IRLY. ». Les trois premiers visuels sont les plus vus sur la fiche : ils couvrent les trois piliers (amis, activités, réseau).
 
 ## 2. Dimensions et format
 
-| Dossier | Taille | Catégorie Apple |
+| Dossier | Taille | Emplacement Apple |
 |---|---|---|
-| `iphone-6.3/` | 1206 × 2622 px | iPhone with Dynamic Island (medium display) : iPhone 17 Pro, 16 Pro… |
-| `iphone-6.9/` | 1320 × 2868 px | iPhone with Dynamic Island (large display) : iPhone 17 Pro Max, 16 Pro Max… |
+| `iphone-6.3/` | 1206 × 2622 px | iPhone with Dynamic Island (medium display) : iPhone 18 Pro, 17 Pro, 17, 16 Pro, 16, 15 Pro, 15, 14 Pro |
+| `iphone-6.9/` | 1320 × 2868 px | iPhone with Dynamic Island (large display) : iPhone Air, 18 Pro Max, 17 Pro Max, 16 Pro Max, 16 Plus… |
 
-- PNG, couleurs RGB, sans canal alpha ni transparence, portrait.
-- Page Apple consultée le 11 octobre 2026 ([Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)) :
-  - obligatoire : au moins une capture « iPhone with Dynamic Island (medium display) », donc le jeu `iphone-6.3/` ;
-  - obligatoire aussi, sauf si un jeu « iPhone with Dynamic Island (large display) » est fourni : un jeu « iPhone with Face ID (large display) » en 1284 × 2778 px. Le jeu `iphone-6.9/` sert à ça : avec les deux jeux, il n'y a rien d'autre à fournir ;
+- PNG, RGB 8 bits, profil sRGB, sans canal alpha ni transparence, portrait. Vérifié sur les 20 fichiers (dimensions, mode, profil, alpha).
+- Page Apple consultée le 13 octobre 2026 ([Screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)) :
+  - 1179 × 2556 et 1206 × 2622 px (et leurs versions paysage) vont dans le **même** emplacement « medium display », qui couvre les iPhone de 6,1" (14 Pro, 15, 15 Pro, 16) et de 6,3" (16 Pro, 17, 17 Pro). On n'y envoie qu'un jeu : 1206 × 2622, la plus grande taille ; Apple réduit pour les autres modèles ;
+  - cet emplacement est obligatoire ;
+  - obligatoire aussi, sauf si un jeu « large display » est fourni : un jeu « iPhone with Face ID (large display) » en 1284 × 2778 px. Le jeu `iphone-6.9/` sert à ça : avec les deux jeux, il n'y a rien d'autre à fournir ;
   - de 1 à 10 captures par taille.
 - `docs/APP-STORE.md` indique que le 6,9" est le seul obligatoire : ce n'est plus ce que dit la page Apple. Envoie les deux jeux.
 - iPad : non requis, l'app ne tourne pas sur iPad (`"supportsTablet": false` dans `app.json`).
@@ -37,70 +40,64 @@ L'ordre 01 → 08 est l'ordre conseillé dans App Store Connect : les trois prem
 
 ## 3. Comment les écrans ont été produits
 
-- **Captures réelles du code d'IRLY.** Le build web Expo exécute le même code React Native que l'app iOS. Il est affiché dans un iPhone de 440 × 956 points à l'échelle 3, avec les zones sûres d'un iPhone (barre d'état, barre d'accueil). L'heure, le réseau et la batterie sont dessinés par-dessus, comme sur un iPhone : 9:41 partout. L'Accueil et Découvrir sont capturés à 21 h 41, heure de Dubaï : l'Accueil affiche « Dubai · 21:41 », cohérent avec le 9:41 (du soir) de la barre d'état.
-- **Mode clair ou sombre** : chaque écran est rendu avec le réglage d'apparence de l'app forcé (clair pour Match, Communautés et Live IRL, sombre pour les autres). Un rendu web peut différer de l'iPhone sur des détails (polices, flou, ombres) : compare chaque écran avec le build TestFlight avant d'envoyer, et remplace par une vraie capture iPhone celui qui diffère.
-- **Positions de défilement** : choisies pour qu'aucun texte ne soit coupé par la barre du haut ou la barre d'onglets (voir `tools/capture.sh`). Seule exception : sur Sport, le bouton flottant « Create session » de l'app cache en partie la mention répétée « Planned by a member ».
-- **Découvrir** : Layla y apparaît comme déjà en contact avec l'utilisatrice (bouton « Message », un état réel de l'app). Avec le bouton blanc « Connect », il se confondait avec le bouton MATCH IRLY de la barre d'onglets.
-- **Version de l'app** : captures faites le 11 octobre 2026 sur le commit `af7406e`. D'après leur relecture, les commits suivants ne changent pas la mise en page de ces huit écrans (menu des messages, archivage, composeur Live, libellés qui rétrécissent au lieu d'être coupés).
-- **Écrans de production** (Match, Sport, Communautés, chat, Live IRL) : le build de production est branché sur un faux serveur (`tools/mock.mjs`). Les membres, messages, activités et compteurs y sont inventés. Aucun vrai compte et aucun vrai message ne sont utilisés. Le faux serveur suit l'API de cette version : si une capture de production ne charge plus après une évolution du serveur, adapte `tools/mock.mjs`.
-- **Accueil (2 captures) et Découvrir** : ils viennent du build de démonstration, avec le contenu d'exemple de l'app. Ce choix a été validé le 11 octobre 2026 (voir le point 4).
-- **Retouches faites à la capture, sans modifier l'app :**
-  - la pastille « Demo · nothing is saved » est masquée, car elle n'existe que dans la démo ;
-  - les badges « Verified » et les pastilles « en ligne » des profils d'exemple sont désactivés, car IRLY n'a ni vérification d'identité ni présence en ligne ;
-  - les photos hébergées sur Unsplash, injoignables pendant la capture, sont remplacées par une photo proche de la photothèque du projet (`public-photos/`). Sur le build TestFlight, l'Accueil affichera les photos Unsplash d'origine.
+- **Captures réelles du code d'IRLY, version de `main`.** Le build web Expo de production exécute le même code React Native que l'app iOS. Il est affiché à 440 × 956 points à l'échelle 3, avec les zones sûres d'un iPhone. Les dix écrans viennent du build de **production** branché sur un faux serveur (`tools/mock.mjs`) : seules des fonctions reliées au serveur apparaissent. Le build de démonstration n'est plus utilisé.
+- **Écran sans iPhone** : les règles marketing d'Apple demandent de ne pas dessiner d'appareil Apple ([Marketing Resources and Identity Guidelines](https://developer.apple.com/app-store/marketing/guidelines/)). L'écran est montré seul, coins arrondis, avec la barre d'état d'iOS (9:41, réseau, Wi-Fi et batterie pleins) et la barre d'accueil, sans Dynamic Island. Même style que l'image des résultats de recherche.
+- **Mode clair ou sombre** : le réglage d'apparence de l'app est forcé, en alternance d'un visuel à l'autre. Un rendu web peut différer de l'iPhone sur des détails (polices, flou, ombres) : compare chaque écran avec le build TestFlight avant d'envoyer.
+- **Positions de défilement** : choisies pour qu'aucune ligne de texte ne soit coupée par une barre ou par le bord de l'écran (voir `tools/capture.sh`). Seule exception : sur 06, le nom de l'auteur de la publication suivante passe sous la barre d'onglets translucide, comme sur un iPhone.
+- **Agrandissement de 02** : le bouton flottant « Create session » de l'app recouvre la carte placée sous lui. La carte IRLY Beach agrandie le masque ; elle est découpée dans une deuxième capture du même écran, défilé de 100 points, où le bouton ne la recouvre pas.
+- **Aucune retouche de l'app** : les photos de la photothèque et leurs variantes HD sont servies depuis `public-photos/`, comme sur le site. Contrôle fait sur les dix écrans : aucune photo Unsplash, aucune photo manquante, aucun appel au serveur sans réponse, aucune erreur de page (`LOG_UNSPLASH=1 NOTES=60` affiche ces lignes pendant la capture).
 
 ## 4. Ce que les visuels montrent vraiment
 
-- **Présent dans l'app publiée et branché sur le serveur :** Match IRLY, communautés officielles, chat de communauté et chat d'activité, activités planifiées par les membres, Live IRL.
-- **À traiter avant la mise en ligne :** sur l'Accueil et Découvrir, ces éléments n'affichent aujourd'hui que du contenu d'exemple :
-  - Accueil (01 et 08) : « Live now » et le compteur « 6 people live right now », la carte « Happening now » (l'événement Founders' Table), « People near you » et ses pastilles de disponibilité ;
-  - Découvrir (07) : « People for you », avec les mentions « Strong match » et « Good match ».
-
-  Dans l'app publiée, ces éléments restent vides (ou absents, pour « Happening now ») tant qu'ils ne sont pas reliés au serveur, même avec de vrais membres. Les brancher sur les vraies données avant la sortie rend les visuels 01, 07 et 08 exacts. Sinon, un relecteur Apple qui compare la fiche à l'app peut invoquer la règle 2.3 (métadonnées exactes).
-- **Chiffres affichés** (486 membres, « 9 going », « 12 going »…) : ce sont des exemples. Aucun titre ni sous-titre n'annonce de chiffre.
+- **Toutes les fonctions visibles existent dans `main` et passent par le serveur** : Match IRLY (réservé aux membres vérifiés : 3 photos et un selfie contrôlés par IRLY), IRLY Network (profils professionnels et pourcentage de compatibilité calculé par l'app), sessions créées par des membres et leur page, IRL, communautés officielles (annonce épinglée, publications avec photos, sondage, activités de la communauté), chat de communauté, profil d'un membre (badge vérifié, suivre, ajouter en ami), Messages.
+- **Pas de fonction inventée.** L'Accueil et Découvrir ne sont plus montrés : sur `main`, leurs rubriques d'exemple (Live now, Happening now, People near you, People for you) n'affichent toujours que du contenu de démonstration, que l'app retire en production (`src/data/repo.ts`, « never shown as if they were real »).
+- **Données d'exemple** : chaque personne, message, session, publication et compteur vient de `tools/mock.mjs`. La mention « Example profiles and content » en bas de chaque visuel le dit. Aucun titre ni sous-titre n'annonce de chiffre, de nombre de membres ou de récompense.
+- **Cohérence d'un visuel à l'autre** : 9:41 partout, mêmes personnes et mêmes photos de profil, dates de la semaine du 13 octobre 2026, aperçus de Messages identiques aux derniers messages des chats. Chaque photo de contenu n'apparaît qu'une fois (la photo du brunch ne reste que comme vignette de la communauté IRLY Food, choisie par l'app).
+- **Classification 4+** demandée par Apple : ni alcool, ni prix (seulement « Free »), ni URL, ni logo de marque, ni photo suggestive. Les emojis 🥂 et les « drinks » des exemples ont été remplacés.
 
 ## 5. Photos de personnes
 
 - Les visages viennent des portraits d'exemple du projet (`public-photos/faces/`, sources dans `public-photos/faces/CREDITS.md`) : photos Pixabay ou fournies par IRLY.
-- Les photos d'activités viennent de la photothèque du projet : Pixabay, Pexels, CC0 ou IRLY, voir `public-photos/CREDITS.md` et `public-photos/DUBAI.md`.
+- Les photos de contenu viennent de la photothèque du projet (Pixabay, Pexels, CC0 ou IRLY, voir `public-photos/CREDITS.md` et `public-photos/DUBAI.md`) : `dunes` (02), `volleyball` (04), `coffeeBar` (06), `concert` (07), `founders` (08), `djSunset` (09), `frenchFood` (10).
 - La licence Pixabay laisse à l'utilisateur la charge de vérifier l'accord des personnes photographiées (« It is your responsibility to check whether you require the consent of a third party »).
-- Pour une publicité, il est plus sûr de remplacer ces visages par :
-  - des portraits générés par IA (avec Higgsfield, environ 0,25 crédit par image) ;
-  - ou des photos de membres, avec leur accord écrit.
+- Pour une publicité, il est plus sûr de remplacer ces visages par des portraits générés par IA ou par des photos de membres, avec leur accord écrit.
 
 ## 6. Points relevés dans l'app pendant le travail
 
-- **Chat** : dans les conversations serveur, un message long ne revient pas à la ligne. La bulle déborde de l'écran, car elle est placée dans une ligne flex sans `flexShrink` (`src/app/messages/[id].tsx`, autour de la ligne 285). Les messages des visuels ont été gardés courts. Correctif probable : `flexShrink: 1` sur la bulle. À vérifier sur le build TestFlight.
-- **Accueil en production** : « People near you », « Activities near you » et « Events this week » s'affichent sans contenu en dessous, et « Happening now » n'apparaît pas (voir le point 4).
-- **Live now (Accueil)** : la rangée ne lit pas le fil Live IRL du serveur (`useLives` dans `src/features/live/liveStore.ts`). En production, elle ne montre que les publications de l'utilisateur lui-même, alors que l'écran Live IRL affiche celles des autres membres.
-- **Live IRL** : chaque publication montre l'initiale de l'auteur, pas sa photo de profil (`Avatar` sans photo dans `src/app/(tabs)/live.tsx`). Passer la photo rendrait le fil plus humain, sur l'app comme sur le visuel 06.
-- **En-tête des chats de communauté** : les communautés officielles sont créées sans catégorie ni photo (`supabase/migrations/20261008003400_irly_official_communities.sql`). L'en-tête du chat retombe donc sur la photo « meeting » (salle de réunion, `src/features/server/covers.ts`), alors que la liste des communautés montre la photo du thème (la skyline pour IRLY Newcomers). Visible en petit sur le visuel 05.
-- **Photo « girlDinner » de la photothèque** : elle vient de Flickr (« Latham Staples with friends », domaine public) et montre une personne réelle identifiée. Le domaine public couvre le droit d'auteur, pas le droit à l'image : les visuels ne l'utilisent plus (la carte Founders' Table des visuels 01 et 08 montre la photo « founders », fournie par IRLY), mais l'app l'affiche encore dans IRLY Girl (`src/features/girl/world.tsx`). À remplacer pour un usage commercial.
-- **Contenu d'exemple de l'Accueil** : la carte Founders' Table affiche « Private dining room, DIFC · DIFC », le quartier apparaît deux fois (`src/data/content/dubai.ts`, le lieu contient déjà le quartier). Sans effet une fois l'Accueil branché sur les vraies données.
+- **Accueil en production** : « People near you » s'affiche avec un carrousel vide, et « Activities near you » et « Events this week » sans contenu ; « Happening now » n'apparaît pas. Ces rubriques lisent le contenu d'exemple, retiré en production (`src/app/(tabs)/index.tsx`).
+- **Live now (Accueil)** : la rangée ne lit toujours pas le fil IRL du serveur (`useLives` dans `src/features/live/liveStore.ts` : mes publications et celles de la démo). En production, elle ne montre que les publications de l'utilisateur.
+- **Ponctuation des communautés** : la description se termine par un point et l'app ajoute « · 312 members » : « race days. · 312 members » (liste des communautés, page d'une catégorie). Retirer le point final des descriptions officielles, ou ne pas l'ajouter avant « · ».
+- **Bouton flottant des catégories** : « Create session » est toujours posé sur la dernière carte visible (02). Une marge basse égale à la hauteur du bouton éviterait de cacher du texte.
+- **Profil d'un membre** : bouton retour en flèche, alors que les autres écrans utilisent un chevron.
+- **Chat** (relevé sur `af7406e`, à revérifier) : un message long ne revenait pas à la ligne, la bulle n'avait pas de `flexShrink` (`src/app/messages/[id].tsx`).
+- **Photo « girlDinner » de la photothèque** : elle vient de Flickr (« Latham Staples with friends », domaine public) et montre une personne réelle identifiée. Le domaine public couvre le droit d'auteur, pas le droit à l'image. L'app l'affiche encore dans IRLY Girl (`src/features/girl/world.tsx`). À remplacer pour un usage commercial.
+- **Contenu d'exemple de l'Accueil** : la carte Founders' Table affiche « Private dining room, DIFC · DIFC » (`src/data/content/dubai.ts`).
 
 ## 7. Importer dans App Store Connect
 
 1. App Store Connect → Apps → IRLY → la version iOS en préparation.
 2. Section « Previews and Screenshots » (Aperçus et captures d'écran) : choisis la langue de la fiche en haut à droite, la langue principale en premier.
-3. Onglet iPhone, taille 6,3" (iPhone with Dynamic Island, medium display) : glisse les 8 fichiers de `iphone-6.3/`, de 01 à 08.
-4. Taille 6,9" (iPhone with Dynamic Island, large display) : glisse les 8 fichiers de `iphone-6.9/`. Sans ce jeu, Apple exige un jeu 6,5" en 1284 × 2778 px.
+3. Onglet iPhone, emplacement « iPhone with Dynamic Island (medium display) » (6,3") : glisse les 10 fichiers de `iphone-6.3/`, de 01 à 10. Retire d'abord les 8 anciens visuels s'ils sont déjà en ligne.
+4. Emplacement « large display » (6,9") : glisse les 10 fichiers de `iphone-6.9/`. Sans ce jeu, Apple exige un jeu 6,5" en 1284 × 2778 px.
 5. Vérifie l'ordre (glisser-déposer pour le changer), puis enregistre.
 6. Fiche française : les mêmes visuels anglais peuvent servir. Pour une fiche entièrement en français, il faut générer une version avec l'interface et les titres en français (voir le point 8).
 
 ## 8. Régénérer les visuels
 
-Prérequis : `npm ci`, puis `npm install --no-save playwright@1` et `npx playwright install chromium` (ou `CHROMIUM_PATH=/chemin/vers/chrome`), et Python 3 avec Pillow.
+Prérequis : `npm ci`, puis `npm install --no-save playwright@1` et `npx playwright install chromium` (ou `CHROMIUM_PATH=/chemin/vers/chrome`), et Python 3 avec Pillow. Les écrans viennent d'une copie de `main` :
 
 ```bash
-promo/app-store/tools/build.sh                    # builds web démo et production dans dist/ (ignoré par git)
-promo/app-store/tools/capture.sh                  # les 9 écrans dans tools/screens (1320 × 2868 px)
-node promo/app-store/tools/compose.mjs            # les visuels dans iphone-6.9/ et iphone-6.3/
-node promo/app-store/tools/compose-header.mjs     # les images larges dans en-tete/ (point 9)
+git worktree add ../irly-main origin/main && (cd ../irly-main && npm ci)
+promo/app-store/tools/build.sh ../irly-main                       # builds web démo et production dans ../irly-main/dist/
+IRLY_REPO=../irly-main promo/app-store/tools/capture.sh            # les écrans dans tools/screens (1320 × 2868 px)
+node promo/app-store/tools/compose.mjs                             # les visuels dans iphone-6.9/ et iphone-6.3/
+node promo/app-store/tools/compose-header.mjs                      # les images larges dans en-tete/ (point 9)
 ```
 
-- Pour modifier les titres, la mise en page ou les agrandissements, édite `tools/visuals.json`.
-- Pour modifier les membres, messages, activités ou compteurs fictifs, édite `tools/mock.mjs`.
-- Pour choisir une autre position de défilement, `DUMP=1 node shoot.mjs <dossier> 1 'nom=/route@attente~défilement|demo'` liste chaque ligne de texte et chaque photo visibles, avec leur position : aucun texte ne doit croiser la barre du haut ni la barre d'onglets.
+- `IRLY_REPO` fait lire les builds, les photos et les vidéos de cette copie ; `HEADER_SCREENS=1` recapture aussi les trois écrans des images larges.
+- Pour modifier les titres, la mise en page ou les agrandissements, édite `tools/visuals.json` (`"device": "none"` : écran sans iPhone ; `"note"` : la ligne du bas).
+- Pour modifier les membres, messages, sessions, publications ou compteurs fictifs, édite `tools/mock.mjs`. Il suit l'API de `main` du 13 octobre 2026 : si une capture ne charge plus après une évolution du serveur, adapte-le (les appels qu'il ne connaît pas sont listés pendant la capture).
+- Pour choisir une autre position de défilement, `DUMP=1 node shoot.mjs <dossier> 1 'nom=/route@attente~défilement'` liste chaque ligne de texte et chaque photo visibles, avec leur position.
 - Pour une version française, ajoute `LANG_UI=fr` devant les commandes de `capture.sh` et traduis les titres de `visuals.json`.
 
 ## 9. En-tête de fiche et résultats de recherche (iOS 27)
@@ -133,4 +130,5 @@ Les deux formats sont acceptés pour ces deux tailles : envoie le PNG (qualité 
   1. App Store Connect → Apps → IRLY → Asset Library → « + » → « Upload Creative Assets » : choisis les deux fichiers, puis soumets-les à la revue. Ils peuvent être approuvés sans nouvelle version de l'app.
   2. Sur la fiche, choisis `IRLY_Header_Asset` pour l'en-tête (Product Page Header) et `IRLY_Search_Results_Header` pour les résultats de recherche (Search Results). Laisse « Use header asset in search results » désactivé.
   3. Vérifie le rendu dans l'aperçu (iPhone, iPad, orientations, mode sombre).
+- **Captures utilisées** : l'Accueil (build démo), Match et « Beach & outdoor » capturés sur `af7406e` (point 8, `HEADER_SCREENS=1`).
 - **Régénérer** : `node promo/app-store/tools/compose-header.mjs`. La mise en page (photo, recadrage, grain, logo, accroche, iPhone, écrans et perspective) est dans `tools/headers.json` ; le script vérifie que le contenu important reste dans la zone de sécurité. Il écrit le PNG et sa copie JPEG, en RGB avec un profil sRGB.

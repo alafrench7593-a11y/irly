@@ -44,15 +44,18 @@ export const PEOPLE = {
   ayu: { id: uid(25), name: 'Ayu', face: 'p-ayu' },
   arjun: { id: uid(26), name: 'Arjun', face: 'p-arjun' },
   hana: { id: uid(27), name: 'Hana', face: 'p-hana' },
+  samuel: { id: uid(28), name: 'Samuel', face: 'p-samuel' },
+  khalid: { id: uid(29), name: 'Khalid', face: 'p-khalid' },
+  sofia: { id: uid(30), name: 'Sofia', face: 'p-sofia' },
 };
 const photoOf = (p) => media(`faces/${p.face}.jpg`);
 
 // ───────── Match IRLY ─────────
 const MATCHES = [
   ['layla', 'layla.k', 'dubai', ['startups', 'food'], ['padel'], ['friends']],
-  ['kenji', 'kenji.runs', 'dubai', ['tech', 'startups'], ['running'], ['friends', 'sport']],
-  ['nadia', 'nadia.builds', 'dubai', ['startups', 'business'], [], ['networking']],
-  ['marco', null, 'dubai', ['food', 'travel'], ['padel'], ['friends']],
+  ['kenji', 'kenji.runs', 'dubai', ['startups'], ['running'], ['friends']],
+  ['nadia', 'nadia.builds', 'dubai', ['startups', 'business'], [], []],
+  ['marco', 'marco.cooks', 'dubai', ['food', 'travel'], ['padel'], ['friends']],
   ['priya', 'priya.yoga', 'dubai', ['wellness', 'food'], ['yoga'], ['friends']],
   ['omar', 'omar.outdoors', 'abudhabi', ['outdoors', 'travel'], ['hiking'], ['activities']],
 ].map(([k, username, city, interests, activities, goals], i) => ({
@@ -65,22 +68,38 @@ const ACT = {
   run: uid(101), padel: uid(102), volley: uid(103), football: uid(104), gym: uid(105), tennis: uid(106), climb: uid(107), boxing: uid(108),
   jbr: uid(112), kite: uid(113), desert: uid(114),
 };
+// Photos members added to their sessions (library photos) and what each session says.
+const COVERS = {
+  [ACT.padel]: 'lib/padel.jpg', [ACT.run]: 'lib/running.jpg', [ACT.volley]: 'lib/volleyball.jpg', [ACT.football]: 'lib/football.jpg',
+  [ACT.gym]: 'lib/gym.jpg', [ACT.tennis]: 'lib/tennis.jpg', [ACT.boxing]: 'lib/boxing.jpg',
+  [ACT.jbr]: 'lib/beachSunset.jpg', [ACT.kite]: 'lib/surf.jpg', [ACT.desert]: 'lib/dunes.jpg',
+};
+const DESCRIPTIONS = {
+  [ACT.padel]: 'Mixed doubles, all levels. We rotate partners every set, so you play with everyone. Rackets to lend if you need one.',
+  [ACT.run]: 'An easy 5K along the beach at sunrise, all paces welcome. Coffee together after the run.',
+  [ACT.volley]: 'Friendly games on the sand until the sun goes down. Teams are made on the spot, so come alone or with friends. All levels: we explain the rules, and there is always a speaker and cold water. Last week we were 14, from 9 countries.',
+  [ACT.football]: '5-a-side on the floodlit pitches. Bring a dark and a light shirt.',
+  [ACT.tennis]: 'Doubles for every level: we mix the pairs after each set, so you meet everyone. Balls and water on us. Most of us stay for a juice at the café by the courts. New in Dubai? Half of us were too.',
+  [ACT.desert]: 'We drive out to Al Qudra for the sunset, then tea and a small fire. Two cars, room for six.',
+  [ACT.jbr]: 'A swim at golden hour, then a picnic on the sand. Bring something to share.',
+  [ACT.kite]: 'Paddleboards from the rental at Kite Beach, calm water at 6:30. Beginners welcome.',
+};
 const activityRows = [
   { id: ACT.padel, title: 'Padel social · mixed doubles', category_id: 'sport', sub_id: 'padel', area_id: 'alquoz', place_name: 'Al Quoz courts', starts_at: day(0, 19, 30), capacity: 8, going: 6, creator: 'layla' },
   { id: ACT.run, title: 'Sunrise run · 5K by the sea', category_id: 'sport', sub_id: 'running', area_id: 'kitebeach', place_name: 'Kite Beach', starts_at: day(1, 6, 30), capacity: 20, going: 12, creator: 'kenji' },
-  { id: ACT.volley, title: 'Beach volleyball at sunset', category_id: 'sport', sub_id: 'volleyball', area_id: 'kitebeach', place_name: 'Kite Beach', starts_at: day(1, 17, 30), capacity: 12, going: 9, creator: 'marco' },
+  { id: ACT.volley, title: 'Beach volleyball at sunset', category_id: 'sport', sub_id: 'volleyball', area_id: 'kitebeach', place_name: 'By the lifeguard tower', starts_at: day(1, 17, 30), capacity: 12, going: 9, creator: 'marco' },
   { id: ACT.football, title: '5-a-side under the lights', category_id: 'sport', sub_id: 'football', area_id: 'barsha', place_name: 'Al Barsha pitches', starts_at: day(2, 20, 0), capacity: 10, going: 8, creator: 'omar' },
   { id: ACT.gym, title: 'Strength club · partner workout', category_id: 'sport', sub_id: 'gym', area_id: 'alquoz', place_name: 'Al Quoz', starts_at: day(3, 7, 0), capacity: 10, going: 5, creator: 'lucas' },
-  { id: ACT.tennis, title: 'Tennis doubles · all levels', category_id: 'sport', sub_id: 'tennis', area_id: 'jlt', place_name: 'JLT', starts_at: day(4, 18, 0), capacity: 4, going: 3, creator: 'james' },
+  { id: ACT.tennis, title: 'Tennis doubles · all levels', category_id: 'sport', sub_id: 'tennis', area_id: 'jlt', place_name: 'JLT Park courts', starts_at: day(4, 18, 0), capacity: 4, going: 3, creator: 'james' },
   { id: ACT.boxing, title: 'Boxing basics for beginners', category_id: 'sport', sub_id: 'boxing', area_id: 'difc', place_name: 'DIFC', starts_at: day(5, 19, 0), capacity: 12, going: 7, creator: 'tom' },
   // Beach & outdoor (search results image): Omar's desert drive is the one his post talks about.
   { id: ACT.jbr, title: 'Sunset swim and picnic', category_id: 'outdoor', sub_id: 'beach', area_id: 'jbr', place_name: 'JBR Beach', starts_at: day(1, 17, 0), capacity: 15, going: 9, creator: 'priya' },
   { id: ACT.kite, title: 'Paddleboard at sunrise', category_id: 'outdoor', sub_id: 'paddleboard', area_id: 'kitebeach', place_name: 'Kite Beach', starts_at: day(2, 6, 30), capacity: 10, going: 6, creator: 'marco' },
-  { id: ACT.desert, title: 'Desert drive · dunes at sunset', category_id: 'outdoor', sub_id: 'desert', area_id: 'alqudra', place_name: 'Al Qudra', starts_at: day(3, 15, 30), capacity: 8, going: 6, creator: 'omar' },
+  { id: ACT.desert, title: 'Desert drive · dunes at sunset', category_id: 'outdoor', sub_id: 'desert', area_id: 'alqudra', place_name: 'Al Qudra Lakes', starts_at: day(3, 15, 30), capacity: 8, going: 6, creator: 'omar' },
 ].map((a) => ({
   id: a.id, title: a.title, category_id: a.category_id, sub_id: a.sub_id, area_id: a.area_id, city_id: 'dubai', girl_only: false, audience: 'all',
   place_name: a.place_name, starts_at: a.starts_at, capacity: a.capacity, price_minor: 0, currency: 'AED', creator_id: PEOPLE[a.creator].id, going: a.going,
-  cover_path: null, activity_participants: [], community_id: null,
+  cover_path: COVERS[a.id] ?? null, activity_participants: [], community_id: null,
 }));
 
 // ───────── Communities (IRLY's real official catalog, example member counts) ─────────
@@ -100,13 +119,13 @@ const officialRows = [
 }));
 
 // ───────── Conversations ─────────
-const CONV = { run: uid(301), layla: uid(302), newcomers: uid(303), brunch: uid(304), marco: uid(305), padel: uid(306) };
+const CONV = { run: uid(301), layla: uid(302), newcomers: uid(303), brunch: uid(304), marco: uid(305), padel: uid(306), samuel: uid(307), desert: uid(308), chloe: uid(309) };
 const inbox = [
-  { conversation_id: CONV.run, kind: 'activity', title: 'Sunrise run · 5K by the sea', other_user_id: null, other_name: null, last_body: 'Count me in ☕️', last_sender: PEOPLE.nadia.id, last_at: at(-4), unread: 3, ref_id: ACT.run, other_photo: null, photo_path: null, members: 12, last_kind: 'text', last_sender_name: 'Nadia' },
+  { conversation_id: CONV.run, kind: 'activity', title: 'Sunrise run · 5K by the sea', other_user_id: null, other_name: null, last_body: 'Yes! I know the best place ☕️', last_sender: PEOPLE.nadia.id, last_at: at(-4), unread: 3, ref_id: ACT.run, other_photo: null, photo_path: null, members: 12, last_kind: 'text', last_sender_name: 'Nadia' },
   { conversation_id: CONV.layla, kind: 'direct', title: 'Layla', other_user_id: PEOPLE.layla.id, other_name: 'Layla', last_body: 'See you at the court tonight! 🎾', last_sender: PEOPLE.layla.id, last_at: at(-26), unread: 1, ref_id: null, other_photo: photoOf(PEOPLE.layla), photo_path: null, members: 2, last_kind: 'text', last_sender_name: 'Layla' },
-  { conversation_id: CONV.newcomers, kind: 'community', title: 'IRLY Newcomers', other_user_id: null, other_name: null, last_body: 'Welcome to everyone who landed this week 👋', last_sender: PEOPLE.kenji.id, last_at: at(-75), unread: 0, ref_id: COM.newcomers, other_photo: null, photo_path: null, members: 486, last_kind: 'text', last_sender_name: 'Kenji' },
-  { conversation_id: CONV.brunch, kind: 'group', title: 'Friday brunch crew', other_user_id: null, other_name: null, last_body: 'I booked a table for 6 at 12:30', last_sender: PEOPLE.priya.id, last_at: at(-140), unread: 0, ref_id: null, other_photo: null, photo_path: null, members: 6, last_kind: 'text', last_sender_name: 'Priya' },
-  { conversation_id: CONV.marco, kind: 'direct', title: 'Marco', other_user_id: PEOPLE.marco.id, other_name: 'Marco', last_body: 'Great game yesterday, rematch soon?', last_sender: ME, last_at: at(-60 * 20), unread: 0, ref_id: null, other_photo: photoOf(PEOPLE.marco), photo_path: null, members: 2, last_kind: 'text', last_sender_name: 'Sara' },
+  { conversation_id: CONV.newcomers, kind: 'community', title: 'IRLY Newcomers', other_user_id: null, other_name: null, last_body: 'Count me in ☕️', last_sender: PEOPLE.omar.id, last_at: at(-3), unread: 0, ref_id: COM.newcomers, other_photo: null, photo_path: null, members: 486, last_kind: 'text', last_sender_name: 'Omar' },
+  { conversation_id: CONV.brunch, kind: 'group', title: 'Friday brunch crew', other_user_id: null, other_name: null, last_body: 'I booked a table for 6 at 12:30', last_sender: PEOPLE.priya.id, last_at: at(-140), unread: 0, ref_id: null, other_photo: null, photo_path: 'lib/frenchFood.jpg', members: 6, last_kind: 'text', last_sender_name: 'Priya' },
+  { conversation_id: CONV.samuel, kind: 'direct', title: 'Samuel', other_user_id: PEOPLE.samuel.id, other_name: 'Samuel', last_body: 'Come hungry and leave the pitch deck at home 😄', last_sender: PEOPLE.samuel.id, last_at: at(-190), unread: 0, ref_id: null, other_photo: photoOf(PEOPLE.samuel), photo_path: null, members: 2, last_kind: 'text', last_sender_name: 'Samuel' },
 ];
 
 // The activity chat shown in the conversation screen.
@@ -117,12 +136,12 @@ const runChat = [
   ['kenji', '__photo__beachSunset.jpg', -120],
   ['chloe', 'Last week was so good 🔥', -118],
   ['me', 'I’ll be there! Coffee after?', -9],
-  ['nadia', 'Count me in ☕️', -4],
+  ['nadia', 'Yes! I know the best place ☕️', -4],
 ];
 const newcomersChat = [
   ['amira', 'Hi all! Just moved from Beirut', -90],
-  ['chloe', '__photo__brunch.jpg', -70],
-  ['chloe', 'Newcomers brunch last week 🥂', -69],
+  ['chloe', '__photo__djSunset.jpg', -70],
+  ['chloe', 'Our sunset walk yesterday 🌅', -69],
   ['me', 'Hi! I’m Sara, new in JLT 👋', -12],
   ['nadia', 'Welcome Sara! Coffee Thursday?', -7],
   ['omar', 'Count me in ☕️', -3],
@@ -143,17 +162,26 @@ const messagesFor = (cid) => {
 const runMembers = ['me', 'kenji', 'layla', 'marco', 'nadia', 'chloe', 'lucas', 'mia', 'tom', 'yusuf', 'priya', 'arjun'];
 const newcomerMembers = ['me', 'kenji', 'layla', 'marco', 'chloe', 'nadia', 'omar', 'mia', 'tom', 'yusuf', 'priya', 'arjun', 'amira', 'hana'];
 
+// Posts of IRLY Newcomers (Communities v2: a pinned announcement, photos, a question, a poll).
+const post = (o) => ({ activity_id: null, activity_title: null, activity_starts_at: null, poll: null, poll_counts: [], my_vote: null, liked: false, media_paths: [], media_kind: null, thumb_path: null, media_seconds: null, edited_at: null, kind: 'post', category: null, pinned_at: null, ...o });
 const newcomerPosts = [
-  { id: uid(701), author_id: PEOPLE.kenji.id, first_name: 'Kenji', body: 'Welcome to everyone who landed this week 👋 Newcomers drinks on Thursday, come say hi!', activity_id: uid(109), activity_title: 'Newcomers drinks · Marina Walk', activity_starts_at: day(2, 19, 0), poll: null, poll_counts: [], my_vote: null, likes: 42, comments: 11, liked: true, created_at: at(-75) },
-  { id: uid(702), author_id: PEOPLE.layla.id, first_name: 'Layla', body: 'Moved here two weeks ago and already found my running group. Thank you all! 🏃‍♀️', activity_id: null, activity_title: null, activity_starts_at: null, poll: null, poll_counts: [], my_vote: null, likes: 28, comments: 6, liked: false, created_at: at(-190) },
-  { id: uid(703), author_id: PEOPLE.omar.id, first_name: 'Omar', body: 'Best area to live when you just arrive?', activity_id: null, activity_title: null, activity_starts_at: null, poll: { options: ['Dubai Marina', 'JLT', 'Downtown', 'Al Barsha'] }, poll_counts: [31, 24, 17, 9], my_vote: 1, likes: 15, comments: 22, liked: false, created_at: at(-60 * 9) },
+  post({ id: uid(701), author_id: PEOPLE.kenji.id, first_name: 'Kenji', kind: 'announcement', pinned_at: at(-70), body: 'Newcomers meetup on Thursday at Marina Walk 👋 Come say hi, the first coffee is on the community.', activity_id: uid(109), activity_title: 'Newcomers meetup · Marina Walk', activity_starts_at: day(2, 19, 0), likes: 42, comments: 11, liked: true, created_at: at(-75) }),
+  post({ id: uid(704), author_id: PEOPLE.chloe.id, first_name: 'Chloé', body: 'Concert night with the newcomers 🎶 14 of us!', media_paths: ['lib/concert.jpg', 'lib/girlSunset.jpg'], media_kind: 'photo', likes: 37, comments: 9, created_at: at(-60 * 4) }),
+  post({ id: uid(702), author_id: PEOPLE.layla.id, first_name: 'Layla', body: 'Moved here two weeks ago and already found my running group. Thank you all! 🏃‍♀️', likes: 28, comments: 6, created_at: at(-60 * 7) }),
+  post({ id: uid(705), author_id: PEOPLE.amira.id, first_name: 'Amira', kind: 'question', body: 'Just arrived from Beirut. Is there a running group for beginners?', likes: 9, comments: 14, created_at: at(-60 * 8) }),
+  post({ id: uid(703), author_id: PEOPLE.omar.id, first_name: 'Omar', body: 'Best area to live when you just arrive?', poll: { options: ['Dubai Marina', 'JLT', 'Downtown', 'Al Barsha'] }, poll_counts: [31, 24, 17, 9], my_vote: 1, likes: 15, comments: 22, created_at: at(-60 * 9) }),
+];
+const newcomerActivities = [
+  { id: uid(109), title: 'Newcomers meetup · Marina Walk', starts_at: day(2, 19, 0), area_id: 'marina', going: 23, status: 'upcoming', community_id: COM.newcomers, community_name: 'IRLY Newcomers', pinned_at: at(-70), on_map: true },
+  { id: uid(115), title: 'Coffee and city tips · Jumeirah', starts_at: day(4, 10, 0), area_id: 'jumeirah', going: 11, status: 'upcoming', community_id: COM.newcomers, community_name: 'IRLY Newcomers', pinned_at: null, on_map: true },
+  { id: uid(116), title: 'Old Dubai walk · Al Fahidi to the souks', starts_at: day(5, 16, 30), area_id: 'burdubai', going: 17, status: 'upcoming', community_id: COM.newcomers, community_name: 'IRLY Newcomers', pinned_at: null, on_map: true },
 ];
 
 const irlFeed = [
-  ['nadia', 'downtown', 'Downtown', 'Brunch table for 6, two seats left 🥂', 'lib/brunch.jpg', -6, true],
-  ['marco', 'jlt', 'JLT courts', 'Tennis doubles tonight, we need a 4th player 🎾', 'lib/tennis.jpg', -14, false],
+  ['nadia', 'marina', 'Marina Walk', 'Coffee and laptop by the marina, anyone around? ☕️', 'lib/coffeeBar.jpg', -6, true],
+  ['marco', 'jlt', 'JLT courts', 'Tennis doubles tonight, we need a 4th player 🎾', null, -14, false],
   ['omar', 'alqudra', 'Al Qudra', 'Desert drive on Friday, 2 spots left in the car', 'lib/dunes.jpg', -31, false],
-  ['kenji', 'kitebeach', 'Kite Beach', 'Sunrise run done, coffee anyone? ☕️', 'lib/running.jpg', -48, true],
+  ['kenji', 'kitebeach', 'Kite Beach', 'Sunrise run done, coffee anyone? ☕️', 'lib/running.jpg', -48, false],
   ['priya', 'jumeirah', 'Safa Park', 'Yoga in the park tomorrow at 7, all levels', 'lib/girlFitness.jpg', -75, false],
 ].map(([k, area, place, body, media, mins, friend], i) => ({
   id: uid(800 + i), author_id: PEOPLE[k].id, first_name: PEOPLE[k].name, area_id: area, place_name: place, body, media_path: media, visibility: 'everyone',
@@ -180,17 +208,97 @@ const girlFeed = [
   { id: uid(602), community_id: COM.girls, community_name: 'IRLY Girls', author_id: uid(501), first_name: 'Zara', body: 'Looking for a pilates buddy in JLT, mornings before work 🧘‍♀️', activity_id: null, activity_title: null, activity_starts_at: null, created_at: at(-120), mine: false, is_member: true },
 ];
 
+// ───────── Members as the latest app reads them (profile_faces, public_profile, verified_members) ─────────
+const keyOf = (id) => Object.keys(PEOPLE).find((k) => PEOPLE[k].id === id);
+const faceRow = (id) => ({ id, photo_path: keyOf(id) ? photoOf(PEOPLE[keyOf(id)]) : null });
+// Verified: 3 photos and a selfie checked by IRLY (everyone in Match is).
+const VERIFIED = new Set(['layla', 'kenji', 'nadia', 'marco', 'priya', 'omar', 'chloe', 'samuel', 'lucas', 'amira', 'arjun']);
+const FRIENDS = new Set(['layla', 'chloe', 'kenji']);
+// [username, bio, interests, languages, followers, following, friends]
+const PROFILES = {
+  layla: ['layla.k', 'Born in Dubai, still discovering it. Sunrise runs, gallery nights and the best karak in Satwa.', ['startups', 'food', 'sports', 'art'], ['العربية', 'English', 'Français'], 214, 180, 46],
+  kenji: ['kenji.runs', 'Product engineer from Tokyo. Running club at Kite Beach on Thursdays, ramen hunter the rest of the week.', ['tech', 'startups', 'sports', 'food'], ['English'], 132, 141, 29],
+  nadia: ['nadia.builds', 'Building a booking app for clinics. Always up for a coffee with other founders in DIFC.', ['startups', 'business', 'wellness'], ['English', 'Français', 'العربية'], 301, 220, 52],
+  marco: [null, 'Italian chef turned brand designer. Padel at 7, dinner at 9.', ['food', 'travel', 'sports', 'art'], ['Italiano', 'English'], 96, 104, 23],
+  priya: ['priya.yoga', 'Data scientist, yoga teacher on weekends. Safa Park at 7, chai after.', ['wellness', 'food', 'tech'], ['English', 'हिन्दी'], 157, 133, 31],
+  omar: ['omar.outdoors', 'Weekends in the desert or up in Hatta. Two seats in the car, always.', ['outdoors', 'travel', 'sports'], ['العربية', 'English'], 188, 120, 38],
+  chloe: [null, 'Event producer. I know every rooftop in Dubai and the best sunset spots.', ['music', 'nightlife', 'art'], ['Français', 'English'], 412, 260, 64],
+  samuel: [null, 'Founder of a streetwear label. Football on Tuesdays, founders dinners on Thursdays.', ['fashion', 'startups', 'sports'], ['English', 'Français'], 233, 190, 44],
+  lucas: [null, 'Angel investor, ex-banker. Coffee in DIFC before 9, padel after 7.', ['business', 'startups', 'sports'], ['English', 'Español'], 175, 98, 27],
+};
+const profileRow = (k) => {
+  const [username, bio, interests, languages, followers, following, friends] = PROFILES[k] ?? [null, null, ['food', 'travel'], ['English'], 24, 30, 6];
+  return {
+    id: PEOPLE[k].id, first_name: PEOPLE[k].name, photo_path: photoOf(PEOPLE[k]), bio, city_id: 'dubai', interests, languages, visible: true,
+    followers, following, i_follow: FRIENDS.has(k), follows_me: FRIENDS.has(k), can_message: FRIENDS.has(k), direct_id: k === 'layla' ? CONV.layla : null,
+    is_me: false, friend_status: FRIENDS.has(k) ? 'friends' : 'none', username, friends,
+  };
+};
+// Communities a member is in (their profile) and the posts they wrote there.
+const MEMBER_COMMUNITIES = { me: ['newcomers', 'running', 'food'], layla: ['newcomers', 'running', 'food'], kenji: ['running', 'network'], nadia: ['network', 'newcomers'], omar: ['beach', 'trip'] };
+const memberCommunities = (k) => (MEMBER_COMMUNITIES[k] ?? ['newcomers', 'food']).map((topic, i) => {
+  const c = officialRows.find((x) => x.topic === topic);
+  return { id: c.id, name: c.name, city_id: 'dubai', cover_path: null, members: c.members, tagline: c.tagline, role: k === 'kenji' && i === 0 ? 'created' : 'joined' };
+});
+const MEMBER_POSTS = {
+  nadia: [
+    ['network', 'Founders coffee in DIFC this morning: 12 of us, three new faces ☕️', ['lib/founders.jpg'], -60 * 2],
+    ['newcomers', 'Moved from Paris last year. Happy to share what I learned about setting up a company here.', [], -60 * 26],
+  ],
+  layla: [
+    ['running', 'Thursday 6:30 at Kite Beach, who is joining? Easy pace, coffee after 🏃‍♀️', ['lib/running.jpg'], -60 * 5],
+    ['food', 'Found the best karak in Satwa. Taking anyone who wants to try it on Saturday ☕️', [], -60 * 30],
+    ['newcomers', 'Moved here two weeks ago and already found my running group. Thank you all!', [], -60 * 54],
+  ],
+};
+const memberPosts = (k) => (MEMBER_POSTS[k] ?? []).map(([topic, body, photos, mins], i) => {
+  const c = officialRows.find((x) => x.topic === topic);
+  return { id: uid(1700 + i), body, media_path: photos[0] ?? null, media_paths: photos, media_kind: photos.length ? 'photo' : null, thumb_path: null, media_seconds: null, edited_at: null, created_at: at(mins), community_id: c.id, communities: { name: c.name } };
+});
+const memberActivities = (k) => activityRows
+  .filter((a) => a.creator_id === PEOPLE[k].id || (k === 'layla' && [ACT.run, ACT.desert].includes(a.id)))
+  .map((a) => ({ id: a.id, title: a.title, category_id: a.category_id, city_id: 'dubai', area_id: a.area_id, place_name: a.place_name, starts_at: a.starts_at, ends_at: null, cover_path: a.cover_path, going: a.going, role: a.creator_id === PEOPLE[k].id ? 'created' : 'joined', state: 'upcoming' }));
+// Likes and comments, stable for each item.
+const hashOf = (id) => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) % 9973, 7);
+const engagementRow = (id) => ({ target_id: id, likes: 6 + (hashOf(id) % 48), comments: 1 + (hashOf(id) % 13), saves: hashOf(id) % 9, liked: hashOf(id) % 3 === 0, saved: false });
+
+// ───────── IRLY Network (pro_discover) ─────────
+// [person, role, job title, company, industries, skills, project, looking for, can offer, intents, area, connection]
+const PROS = [
+  ['nadia', 'founder', 'Founder & CEO', null, ['saas', 'startups'], ['Product', 'Fundraising', 'Sales'], 'A booking app for clinics in the UAE', 'A technical cofounder', 'Intros to clinic owners', ['cofounder', 'investors', 'meet'], 'difc', 'none'],
+  ['lucas', 'investor', 'Angel investor', null, ['fintech', 'saas', 'startups'], ['Fundraising', 'Finance', 'Partnerships'], null, 'Pre-seed founders in the Gulf', 'First cheques and intros', ['opportunities', 'meet'], 'difc', 'requested'],
+  ['samuel', 'founder', 'Founder', null, ['retail', 'ecommerce'], ['Branding', 'Supply chain', 'Social media'], 'A streetwear label made in Dubai', 'Retail partners in the UAE', 'Sourcing contacts in Asia', ['partners', 'suppliers', 'meet'], 'alquoz', 'none'],
+  ['kenji', 'employee', 'Senior product engineer', null, ['tech', 'ai'], ['React', 'AI/ML', 'Product'], null, 'Side projects with founders', 'Code and product feedback', ['meet', 'ideas', 'opportunities'], 'jlt', 'none'],
+  ['chloe', 'freelancer', 'Event producer', null, ['marketing', 'design'], ['Content', 'Video', 'Partnerships'], null, 'Brands launching in Dubai', 'Launch events from A to Z', ['clients', 'partners'], 'marina', 'none'],
+  ['layla', 'employee', 'Product designer', null, ['fintech', 'design'], ['UI/UX', 'Product', 'Branding'], null, 'Designers to share work with', 'Portfolio reviews', ['meet', 'ideas'], 'jumeirah', 'connected'],
+  ['arjun', 'entrepreneur', 'E-commerce founder', null, ['ecommerce', 'marketing'], ['Paid ads', 'SEO', 'Growth'], null, 'A growth freelancer', 'Ads that pay for themselves', ['freelancers', 'partners'], 'businessbay', 'none'],
+  ['khalid', 'investor', 'Family office partner', null, ['realestate', 'fintech'], ['Finance', 'Legal', 'Partnerships'], null, 'Fintech teams raising a seed', 'Board experience', ['opportunities'], 'difc', 'none'],
+].map(([k, role, job, company, industries, skills, project, looking, offer, intents, area, connection]) => ({
+  user_id: PEOPLE[k].id, first_name: PEOPLE[k].name, photo_path: photoOf(PEOPLE[k]), role, job_title: job, company, industries, skills, project,
+  looking_for: looking, can_offer: offer, intents, city_id: 'dubai', area_id: area, lat: null, lng: null, connection,
+}));
+const MY_PRO = {
+  user_id: uid(1), first_name: 'Sara', photo_path: null, role: 'entrepreneur', job_title: 'Brand strategist', company: null, industries: ['marketing', 'startups'],
+  skills: ['Branding', 'Growth', 'Content'], project: 'A studio for brands launching in the Gulf', looking_for: 'Founders who need a brand', can_offer: 'Brand strategy and naming',
+  intents: ['meet', 'clients', 'partners'], city_id: 'dubai', area_id: 'jlt', lat: null, lng: null, connection: 'none',
+};
+
 // ───────── My profile ─────────
 const myProfile = {
   first_name: 'Sara', birthdate: '1997-03-14', gender: 'woman', city_id: 'dubai', country: 'France', languages: ['fr', 'en'],
-  bio: 'French in Dubai since this summer. Padel, brunch and sunrise runs.', faith: null, faith_visible: false, arrived_at: day(-30, 10), interests: ['startups', 'food', 'travel'],
+  bio: 'French in Dubai since this summer. Padel, brunch and sunrise runs.', faith: null, faith_visible: false, arrived_at: day(-30, 10), interests: ['startups', 'business', 'food', 'travel'],
   activity_prefs: ['padel', 'running'], intentions: ['friends', 'activities'], photo_paths: [photoOf(PEOPLE.me)],
 };
 
 // ───────── Request handling ─────────
 const fileFor = (rel0) => {
   const rel = rel0.includes('/media/') ? rel0.slice(rel0.indexOf('/media/') + 7) : rel0;
-  if (rel.startsWith('faces/')) return path.join(FACES, rel.slice(6));
+  if (rel.startsWith('faces/')) {
+    // Small variants (p-layla-s.jpg) are made when the site is deployed: the full portrait stands in.
+    const name = rel.slice(6);
+    for (const f of [path.join(FACES, name), path.join(FACES, name.replace(/-s\.jpg$/, '.jpg'))]) if (fs.existsSync(f)) return f;
+    return null;
+  }
   if (rel.startsWith('lib/')) {
     const name = rel.slice(4);
     for (const f of [path.join(LIB, name), path.join(LIB, name.replace('.jpg', '-1200.jpg'))]) if (fs.existsSync(f)) return f;
@@ -240,11 +348,25 @@ export function makeMock(opts = {}) {
       if (extra[rpc]) return json(extra[rpc](args));
       switch (rpc) {
         case 'my_profile': return json([myProfile]);
-        case 'public_profile': return json([]);
-        case 'member_communities': return json([]);
+        case 'public_profile': {
+          const k = keyOf(args.p_user);
+          return json(k && k !== 'me' ? [profileRow(k)] : []);
+        }
+        case 'member_communities': return json(memberCommunities(keyOf(args.p_user) ?? 'me'));
+        case 'member_activities': return json(keyOf(args.p_user) ? memberActivities(keyOf(args.p_user)) : []);
+        case 'member_lives': return json(keyOf(args.p_user) === 'layla' ? [{ id: uid(1800), body: 'Padel tonight at Al Quoz, we need a 4th 🎾', media_path: 'lib/padel.jpg', area_id: 'alquoz', place_name: 'Al Quoz courts', created_at: at(-25), expires_at: at(215), live: true, media_kind: 'photo', thumb_path: null }] : []);
+        case 'profile_faces': return json((args.p_ids ?? []).map(faceRow));
+        case 'verified_members': return json((args.p_ids ?? []).filter((id) => VERIFIED.has(keyOf(id))).map((id) => ({ id })));
+        case 'my_verification': return json([{ photos: 3, verified_at: '2026-10-05T10:00:00Z', request_id: null, status: 'approved', gesture: null, reason: null, ready: true }]);
+        case 'pro_discover': return json(PROS);
+        case 'pro_profile_of': return json(args.p_user === ME ? [MY_PRO] : PROS.filter((x) => x.user_id === args.p_user));
+        case 'today_activities': return json([]);
+        case 'community_subgroups': return json([]);
+        case 'community_activities': return json(args.p_community === COM.newcomers && !args.p_past ? newcomerActivities : []);
         case 'my_conversations': return json(inbox);
         case 'people_match': return json(args.p_offset ? [] : MATCHES);
-        case 'community_recommend': return json(officialRows.slice(0, args.p_limit || 6));
+        // Five recommendations for Sara's interests (the server ranks them; the list fits the screen).
+        case 'community_recommend': return json(officialRows.slice(0, Math.min(args.p_limit || 6, 5)));
         case 'community_list': return json(officialRows);
         case 'recommend_activities': return json([]);
         case 'irly_match_state': return json('ready');
@@ -264,15 +386,15 @@ export function makeMock(opts = {}) {
           return json(c ? [{ id: c.id, name: c.name, tagline: c.tagline, description: 'IRLY Newcomers is where people who just arrived meet the city together: coffees, walks, tips and first friends. Say hello in the chat, join a plan, or start one.', category_id: c.category_id, city_id: 'dubai', girl_only: false, members: c.members, is_member: true, my_role: 'member', conversation_id: CONV.newcomers }] : []);
         }
         case 'community_feed': return json(args.p_community === COM.newcomers ? newcomerPosts : []);
-        case 'community_digest': return json([{ posts_week: 18, new_members_week: 37, members: 486, upcoming: 3, next_title: 'Newcomers drinks · Marina Walk', next_starts_at: day(2, 19, 0), top_post_body: null, top_post_likes: 0 }]);
+        case 'community_digest': return json([{ posts_week: 18, new_members_week: 37, members: 486, upcoming: 3, next_title: 'Newcomers meetup · Marina Walk', next_starts_at: day(2, 19, 0), top_post_body: null, top_post_likes: 0 }]);
         case 'activity_detail': {
           const a = activityRows.find((x) => x.id === args.p_id);
-          return json(a ? [{ ...a, creator_name: Object.values(PEOPLE).find((x) => x.id === a.creator_id)?.name ?? null, format: 'activity', description: 'An easy 5K along the beach at sunrise, all paces welcome. Coffee together after the run.', ends_at: null, community_id: null, cover_url: null, my_status: null, conversation_id: null, cancelled: false }] : []);
+          return json(a ? [{ ...a, creator_name: Object.values(PEOPLE).find((x) => x.id === a.creator_id)?.name ?? null, format: 'activity', description: DESCRIPTIONS[a.id] ?? null, ends_at: null, community_id: null, cover_url: a.cover_path, my_status: null, conversation_id: null, cancelled: false }] : []);
         }
         case 'irl_feed': return json(irlFeed);
         case 'my_friends': return json([]);
         case 'mark_conversation_read': return json(null);
-        case 'engagement': return json([]);
+        case 'engagement': return json((args.p_ids ?? []).map(engagementRow));
         default:
           log.push(`RPC(default null) ${rpc} ${JSON.stringify(args).slice(0, 120)}`);
           return json(null);
@@ -298,6 +420,10 @@ export function makeMock(opts = {}) {
         }
         case 'communities': {
           if (q.girl_only === 'eq.true') return rows(GIRL_COMMS);
+          if ((q.id || '').startsWith('in.(')) {
+            const ids = q.id.slice(4, -1).split(',');
+            return rows(officialRows.filter((x) => ids.includes(x.id)).map((x) => ({ id: x.id, topic: x.topic, category_id: x.category_id })));
+          }
           if (q.id) {
             const c = officialRows.find((x) => `eq.${x.id}` === q.id);
             return rows(c ? [{ cover_path: null, official: true, topic: c.topic, community_topics: { emoji: c.emoji, intro_first: c.intro_first } }] : []);
@@ -308,7 +434,14 @@ export function makeMock(opts = {}) {
           const id = (q.id || '').replace('eq.', '');
           const r = inbox.find((x) => x.conversation_id === id);
           if (!r) return rows([]);
-          return rows([{ id, kind: r.kind, title: r.kind === 'direct' ? null : r.title, community_id: r.kind === 'community' ? r.ref_id : null, activity_id: r.kind === 'activity' ? r.ref_id : null }]);
+          const com = r.kind === 'community' ? officialRows.find((x) => x.id === r.ref_id) : null;
+          const act = r.kind === 'activity' ? activityRows.find((x) => x.id === r.ref_id) : null;
+          return rows([{
+            id, kind: r.kind, title: r.kind === 'direct' ? null : r.title, photo_path: r.photo_path ?? null,
+            community_id: com ? com.id : null, activity_id: act ? act.id : null,
+            communities: com ? { category_id: com.category_id, topic: com.topic, cover_path: null } : null,
+            activities: act ? { category_id: act.category_id, title: act.title, sub_id: act.sub_id, place_name: act.place_name, cover_path: act.cover_path } : null,
+          }]);
         }
         case 'messages': {
           const cid = (q.conversation_id || '').replace('eq.', '');
@@ -319,6 +452,11 @@ export function makeMock(opts = {}) {
           const cidm = (q.conversation_id || '').replace('eq.', '');
           return rows((chats[cidm]?.members() ?? runMembers).map((k) => ({ user_id: k === 'me' ? ME : PEOPLE[k].id, profiles: { first_name: k === 'me' ? 'Sara' : PEOPLE[k].name } })));
         }
+        case 'community_posts': {
+          const k = keyOf((q.author_id || '').replace('eq.', ''));
+          return rows(k ? memberPosts(k) : []);
+        }
+        case 'pro_profiles': return rows([{ visible: true }]);
         case 'irly_match_config': return rows([]);
         case 'irly_match_profiles':
           return rows([{ bio: 'French in Dubai since this summer.', photo_paths: [`faces/${PEOPLE.me.face}.jpg`], interests: ['brunch', 'travel'], sports: ['padel'], activities: ['brunch', 'beach'], goals: ['new_friends'], languages: ['fr', 'en'], areas: ['marina'], availability: ['weekend_morning'], travel: [], lifestyle: {}, age_min: 24, age_max: 38, hidden_fields: [], visible: true }]);
@@ -333,4 +471,4 @@ export function makeMock(opts = {}) {
   };
 }
 
-export const IDS = { ACT, COM, CONV };
+export const IDS = { ACT, COM, CONV, P: Object.fromEntries(Object.entries(PEOPLE).map(([k, v]) => [k, v.id])) };
