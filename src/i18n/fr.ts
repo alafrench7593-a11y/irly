@@ -4160,4 +4160,8 @@ export const fr: Record<string, string> = {
   'Help & tips': 'Entraide et conseils',
   "What you're looking for": 'Ce que tu cherches',
   'IRLY uses it to suggest communities in your emirate.': "IRLY s'en sert pour te proposer des communautés dans ton émirat.",
+  'Added to your calendar': 'Ajouté à ton calendrier',
+  'Could not open your calendar': 'Impossible d’ouvrir ton calendrier',
+  'Sign in to see this conversation': 'Connecte-toi pour voir cette conversation',
+  'Leave this community?': 'Quitter cette communauté ?',
 };

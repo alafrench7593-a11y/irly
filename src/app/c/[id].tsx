@@ -89,6 +89,7 @@ export default function CommunityScreen() {
           Sign in to see this community
         </Text>
         <Button label="Sign in" onPress={() => router.push('/account')} />
+        <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </Centered>
     );
   }
@@ -105,7 +106,8 @@ export default function CommunityScreen() {
         <Text variant="titleM" align="center">
           {error ? 'Can’t reach IRLY right now' : 'This community is not available'}
         </Text>
-        {error ? <Button label="Try again" onPress={refresh} /> : <Button label="Back" variant="secondary" onPress={() => router.back()} />}
+        {error ? <Button label="Try again" onPress={refresh} /> : null}
+        <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </Centered>
     );
   }
@@ -200,12 +202,14 @@ export default function CommunityScreen() {
                     label="Leave"
                     variant="secondary"
                     onPress={() =>
-                      leaveCommunity(c.id)
-                        .then(() => {
-                          toast('You left the community', 'check', 'brand');
-                          refresh();
-                        })
-                        .catch(() => toast('Could not leave', 'x', 'live'))
+                      confirm('Leave this community?', () =>
+                        leaveCommunity(c.id)
+                          .then(() => {
+                            toast('You left the community', 'check', 'brand');
+                            refresh();
+                          })
+                          .catch(() => toast('Could not leave', 'x', 'live')),
+                      )
                     }
                   />
                 )}
@@ -289,7 +293,7 @@ export default function CommunityScreen() {
               <View style={[styles.row, { flexWrap: 'wrap' }]}>
                 <Chip size="sm" label={tx('Coming up')} selected={!past} onPress={() => setPast(false)} />
                 <Chip size="sm" label={tx('Past')} selected={past} onPress={() => setPast(true)} />
-                {c.isMember ? <Chip size="sm" icon="plus" label={tx('Create an activity')} onPress={() => openCreate(null, { communityId: c.id })} /> : null}
+                {c.isMember ? <Chip size="sm" icon="plus" label={tx('Create an activity')} onPress={() => openCreate(null, { communityId: c.id, cityId: c.cityId })} /> : null}
               </View>
               {acts.activities.length ? (
                 acts.activities.map((a) => (
@@ -321,7 +325,13 @@ export default function CommunityScreen() {
                 ))
               ) : (
                 <Text variant="body" tone="secondary">
-                  {past ? 'No past activities yet.' : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
+                  {acts.loading
+                    ? 'Loading…'
+                    : acts.error
+                      ? 'Can’t reach IRLY right now'
+                      : past
+                        ? 'No past activities yet.'
+                        : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
                 </Text>
               )}
             </View>

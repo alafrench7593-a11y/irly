@@ -29,7 +29,7 @@ import { toast } from '@/components/ui/Toast';
 import { isServerId, removeConversationForMe, setConversationArchived, useServerThread } from '@/features/server/chat';
 import { leaveGroup, renameGroup } from '@/features/server/groups';
 import { sharedHref } from '@/features/server/engage';
-import { useAccount } from '@/features/auth/account';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { pickPhoto, setChatPhoto, setCommunityCover, useChatPhoto, usePhotoLink } from '@/features/server/covers';
 import { pickChatPhotos, takeChatPhoto, useSignedLinks } from '@/features/server/media';
 import { TapPhoto } from '@/features/photo/TapPhoto';
@@ -47,8 +47,25 @@ import { useTheme } from '@/theme/useTheme';
 
 export default function ThreadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const status = useAuthStatus();
   // Server conversations (signed in) have UUIDs; the rest live on the device.
+  if (isServerId(id) && status === 'out') return <SignedOut />;
   return isServerId(id) ? <ServerThreadView id={id} /> : <Thread />;
+}
+
+/** A chat link opened while signed out: say so instead of loading forever. */
+function SignedOut() {
+  const t = useTheme();
+  const router = useRouter();
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24, backgroundColor: t.c.bg }}>
+      <Text variant="titleM" align="center">
+        Sign in to see this conversation
+      </Text>
+      <Button label="Sign in" onPress={() => router.push('/account')} />
+      <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+    </View>
+  );
 }
 
 /** A day line between messages of different days ("Today", "Yesterday", "Mon 5 Oct"). */

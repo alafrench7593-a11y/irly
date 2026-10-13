@@ -69,6 +69,7 @@ export default function ActivityPage() {
           Sign in to see this activity
         </Text>
         <Button label="Sign in" onPress={() => router.push('/account')} />
+        <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </Centered>
     );
   }
@@ -89,6 +90,7 @@ export default function ActivityPage() {
           Check your connection and try again.
         </Text>
         <Button label="Try again" onPress={refresh} />
+        <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </Centered>
     );
   }
@@ -98,7 +100,7 @@ export default function ActivityPage() {
         <Text variant="titleM" align="center">
           This activity is no longer available
         </Text>
-        <Button label="Back" variant="secondary" onPress={() => router.back()} />
+        <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </Centered>
     );
   }
@@ -169,9 +171,9 @@ export default function ActivityPage() {
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
         <View style={styles.cover}>
-          <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined), uri: a.coverUrl }} light={city?.light} scrim="strong" style={StyleSheet.absoluteFill} width={1000} recyclingKey={`a-${a.id}`} drift />
-          {!a.coverUrl && !reducedMotion && filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined)) ? (
-            <Film uri={filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined))!} dim={0.4} />
+          <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, a.subId), uri: a.coverUrl }} light={city?.light} scrim="strong" style={StyleSheet.absoluteFill} width={1000} recyclingKey={`a-${a.id}`} drift />
+          {!a.coverUrl && !reducedMotion && filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, a.subId)) ? (
+            <Film uri={filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, a.subId))!} dim={0.4} />
           ) : null}
           <View style={[styles.coverText, { paddingBottom: space[5] }]}>
             <Text variant="overline" color="#FFFFFF">

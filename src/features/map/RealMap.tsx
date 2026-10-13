@@ -62,7 +62,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const [query, setQuery] = useState('');
   // Where the member is (once they tapped locate): for the distance filter.
   const [origin, setOrigin] = useState<LatLng | null>(null);
-  const acts = useActivityLayer(city, origin);
+  const acts = useActivityLayer(city, origin, layer);
   // Bumped on every camera frame so the IRLY layer follows the map.
   const [, setFrameTick] = useState(0);
 

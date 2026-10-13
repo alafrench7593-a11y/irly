@@ -108,7 +108,8 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   }
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Could not create');
-  bumpActivities();
+  // Its chat is new too.
+  changed('activities', 'inbox');
   return data.id as string;
 }
 
@@ -255,6 +256,8 @@ export type ActivityDetail = {
   cityId: string;
   areaId: string;
   placeName: string | null;
+  /** Catalog subcategory (photo choice); null for older servers. */
+  subId: string | null;
   startsAt: number;
   endsAt: number | null;
   priceMinor: number;
@@ -280,6 +283,7 @@ type DetailRow = {
   city_id: string;
   area_id: string;
   place_name: string | null;
+  sub_id?: string | null;
   starts_at: string;
   ends_at: string | null;
   price_minor: number;
@@ -320,6 +324,7 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
       cityId: r.city_id,
       areaId: r.area_id,
       placeName: r.place_name,
+      subId: r.sub_id ?? null,
       startsAt: Date.parse(r.starts_at),
       endsAt: r.ends_at ? Date.parse(r.ends_at) : null,
       priceMinor: r.price_minor,

@@ -274,6 +274,8 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
     const channel = supabase
       .channel(topic(`community-${communityId}`))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, reload)
+      // Pins are rare: any pin or unpin reloads (an unpin carries no community to filter on).
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins' }, later)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes' }, later)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.community_post' }, later)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: 'target_type=eq.community_post' }, later)
@@ -328,6 +330,7 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       track('COMMUNITY_POST', { poll: Boolean(poll), activity: Boolean(input.activityId) });
       if (vote != null) await sendVote(id, vote).catch(() => undefined);
       refresh();
+      changed('communities');
     },
     [communityId, uid, refresh, sendVote],
   );
@@ -446,6 +449,12 @@ export function useCommunityActivities(communityId: string, past = false) {
   const account = useAccount();
   const uid = account?.userId;
   const [list, setList] = useState<CommunityActivity[]>([]);
+  // Loading and unreachable are not "nothing planned".
+  // Which list has loaded: another community (or past/upcoming) shows Loading again.
+  const key = `${communityId}:${past}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loading = loadedKey !== key;
+  const [error, setError] = useState<string | null>(null);
   const load = useCallback(async (): Promise<CommunityActivity[]> => {
     if (!uid || !supabase) return [];
     const { data, error } = await supabase.rpc('community_activities', { p_community: communityId, p_past: past, p_limit: 40 });
@@ -487,16 +496,28 @@ export function useCommunityActivities(communityId: string, past = false) {
   }, [communityId, uid, past]);
   useEffect(() => {
     let alive = true;
-    load().then((l) => alive && setList(l)).catch(() => undefined);
+    load()
+      .then((l) => {
+        if (!alive) return;
+        setList(l);
+        setError(null);
+      })
+      .catch((e: unknown) => alive && setError(e instanceof Error ? e.message : 'offline'))
+      .finally(() => alive && setLoadedKey(key));
     return () => {
       alive = false;
     };
-  }, [load]);
+  }, [load, key]);
   const refresh = useCallback(() => {
-    load().then(setList).catch(() => undefined);
+    load()
+      .then((l) => {
+        setList(l);
+        setError(null);
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'offline'));
   }, [load]);
   useRefreshOn(['activities'], refresh);
-  return { activities: uid ? list : NONE, refresh };
+  return { activities: uid ? list : NONE, loading: Boolean(uid) && loading && !list.length, error, refresh };
 }
 
 /** Hosts pin (or unpin) an activity of their community or of one of its groups. */

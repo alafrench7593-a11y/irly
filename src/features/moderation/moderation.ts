@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
+import { changed } from '@/features/server/sync';
 import type { ReportCategory } from '@/features/server/engage';
 
 /**
@@ -50,11 +51,13 @@ export async function report(t: ReportTarget, category: ReportCategory, details?
 export async function blockUser(userId: string): Promise<void> {
   const { error } = await need().rpc('block_user', { p_target: userId });
   if (error) throw new Error(plain(error.message));
+  changed('inbox', 'people', 'activities', 'communities');
 }
 
 export async function unblockUser(userId: string): Promise<void> {
   const { error } = await need().rpc('unblock_user', { p_target: userId });
   if (error) throw new Error(error.message);
+  changed('inbox', 'people', 'activities', 'communities');
 }
 
 export type Blocked = { userId: string; firstName: string; at: number };

@@ -1722,4 +1722,25 @@ select pg_temp.check(exists (select 1 from public.community_recommend('sharjah',
 select pg_temp.check(exists (select 1 from public.community_recommend('rak', array['goal:help'], 6) where topic = 'help' and city_id = 'rak'), 'emirates: help & tips leads to IRLY Help & Questions in Ras Al Khaimah');
 select pg_temp.check(exists (select 1 from public.community_recommend('fujairah', array['goal:dogwalk'], 6)), 'emirates: every answer leads somewhere (dog walk)');
 
+-- ===== Pre-launch audit =====
+select pg_temp.as_admin();
+insert into auth.users (id) values ('00000000-0000-0000-0000-000000000019');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000019');
+do $$
+begin
+  begin
+    insert into public.profiles (id, first_name, birthdate, gender, city_id, verified_at, verified_photos)
+    values ('00000000-0000-0000-0000-000000000019', 'Jo', '1992-02-02', 'man', 'dubai', now(), '{x.jpg}');
+  exception when others then
+    insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-000000000019', 'Jo', '1992-02-02', 'man', 'dubai');
+  end;
+end $$;
+select pg_temp.as_admin();
+select pg_temp.check((select verified_at is null and verified_photos is null from public.profiles where id = '00000000-0000-0000-0000-000000000019'), 'audit: nobody creates their profile already verified');
+select id as girls_comm from public.communities where girl_only and deleted_at is null and city_id = 'dubai' limit 1 \gset
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, community_id, girl_only)
+values ('00000000-0000-0000-0000-000000000011', 'Audit girls walk', 'sport', 'dubai', 'marina', now() + interval '3 days', :'girls_comm', false);
+select pg_temp.check((select girl_only from public.activities where title = 'Audit girls walk'), 'audit: an activity of a girls-only community is girls-only');
+select pg_temp.check(exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'community_pins') or not exists (select 1 from pg_publication where pubname = 'supabase_realtime'), 'audit: pinned posts are live');
+
 \echo 'ALL TESTS PASSED'

@@ -118,7 +118,7 @@ function ForYou({ rec, cityId, onSeeAll }: { rec: ReturnType<typeof useRecommend
           title="Tell IRLY what you like"
           body="Recommendations come only from the interests you choose. Pick a few, or browse every community."
           action="Choose my interests"
-          onAction={() => router.push('/onboarding/interests')}
+          onAction={() => router.push('/edit-profile')}
           secondary="See all communities"
           onSecondary={onSeeAll}
         />

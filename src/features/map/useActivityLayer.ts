@@ -7,9 +7,10 @@ import { activityMarkers, type MapMarkerData } from './markers';
 import { NO_FILTERS, useMapActivities, type MapFilters } from './serverActivities';
 
 /** Real activities for a map screen: markers, filters and the options to show. */
-export function useActivityLayer(city: City, origin: { latitude: number; longitude: number } | null = null) {
+export function useActivityLayer(city: City, origin: { latitude: number; longitude: number } | null = null, layer?: string) {
   const [filters, setFilters] = useState<MapFilters>(NO_FILTERS);
-  const rows = useMapActivities(city.id, filters, origin);
+  // The filters are shown on the Activities layer only, so they apply there only.
+  const rows = useMapActivities(city.id, layer && layer !== 'activity' ? NO_FILTERS : filters, origin);
   const mine = useMyCommunityOptions();
   const markers: MapMarkerData[] = useMemo(() => activityMarkers(city, rows, (ms) => cityWhen(ms, city.id)), [city, rows]);
   const filterOptions = useMemo(

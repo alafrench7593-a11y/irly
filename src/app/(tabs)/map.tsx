@@ -105,7 +105,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const sheetArea = H - sheetBottom;
 
   const lives = useLives();
-  const acts = useActivityLayer(city);
+  const acts = useActivityLayer(city, null, layer);
   const all = useMemo(() => [...buildMarkers(city, content, lives), ...acts.markers], [city, content, lives, acts.markers]);
   const layerMarkers = useMemo(() => (layer === 'all' ? all : all.filter((m) => m.type === layer)), [all, layer]);
   // A chosen layer shows all its markers whatever the zoom.
