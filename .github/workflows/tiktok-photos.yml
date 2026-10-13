@@ -1,0 +1,32 @@
+name: TikTok photos
+
+# Vertical Pixabay photos for the TikTok slideshows (marketing/tiktok).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/confident-ride-1o2o3x]
+    paths: ['.github/scripts/tiktok-photos.mjs', '.github/workflows/tiktok-photos.yml', 'marketing/tiktok/photo-queries.json']
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get update >/dev/null && sudo apt-get install -y imagemagick >/dev/null
+      - run: node .github/scripts/tiktok-photos.mjs
+        env:
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+      - name: Commit
+        run: |
+          git config user.name irly-bot
+          git config user.email bot@irly.app
+          git add marketing/tiktok/_photos
+          git diff --cached --quiet || (git commit -m "TikTok photos (Pixabay)" && for i in 1 2 3 4 5; do git pull --rebase && git push && break; sleep $((i * 10)); done)
