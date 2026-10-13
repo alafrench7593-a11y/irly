@@ -869,8 +869,9 @@ select pg_temp.check((select topic from public.community_recommend('dubai', '{ne
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer}') where topic = 'football'), 'nothing recommended without a matching answer');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{}')), 'no answers, no recommendations');
 select pg_temp.check((select count(*) from public.community_recommend('sharjah', '{activity:gym}')) = 1, 'a city without its own gets the nearest one, once');
-select pg_temp.check(public.join_communities(array(select id from public.community_recommend('dubai', '{newcomer,activity:gym}'))) = 2, 'join all');
-select pg_temp.check((select count(*) from public.community_recommend('dubai', '{newcomer,activity:gym}') where is_member) = 2, 'joined communities show as joined');
+-- Newcomers: IRLY Newcomers, IRLY Help & Questions; gym: IRLY Gym.
+select pg_temp.check(public.join_communities(array(select id from public.community_recommend('dubai', '{newcomer,activity:gym}'))) = 3, 'join all');
+select pg_temp.check((select count(*) from public.community_recommend('dubai', '{newcomer,activity:gym}') where is_member) = 3, 'joined communities show as joined');
 select pg_temp.check(exists (select 1 from public.messages m join public.conversations v on v.id = m.conversation_id join public.communities c on c.id = v.community_id where c.topic = 'gym' and c.city_id = 'dubai' and m.kind = 'system' and m.body like '% just joined 👋%'), 'a new member is announced in the chat');
 select pg_temp.expect_denied($$insert into public.communities (city_id, name, official, topic, created_by) values ('dubai', 'Fake IRLY Gym', true, 'gym', '00000000-0000-0000-0000-00000000000b')$$, 'members cannot create official communities');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
@@ -1707,5 +1708,18 @@ select pg_temp.check((select pinned_at is not null from public.community_activit
 update public.activities set cancelled_at = now() where id = :'group_act';
 select pg_temp.check(not exists (select 1 from public.map_activities('dubai') where id = :'group_act'), 'map: a cancelled activity leaves the map');
 select pg_temp.check((select status from public.community_activities(:'padel_id') where id = :'group_act') = 'cancelled', 'activities: its community shows it as cancelled');
+
+-- ===== Every emirate has its IRLY communities, matched to what you look for =====
+select pg_temp.as_admin();
+select pg_temp.check((select count(distinct city_id) from public.communities where official and topic = 'sport' and parent_id is null and deleted_at is null and city_id in ('dubai','abudhabi','sharjah','ajman','rak','fujairah','uaq')) = 7, 'emirates: IRLY Sport in all seven emirates');
+select pg_temp.check(exists (select 1 from public.communities c join public.communities p on p.id = c.parent_id where p.city_id = 'sharjah' and p.topic = 'sport' and c.subtopic is not null), 'emirates: Sharjah communities have their groups');
+select pg_temp.check(not exists (select 1 from public.communities where official and topic = 'nights' and city_id = 'sharjah'), 'emirates: no IRLY Nights in Sharjah');
+select pg_temp.check((select count(*) from public.communities where official and topic = 'sport' and city_id = 'sharjah' and parent_id is null and deleted_at is null) = 1, 'emirates: created once (running it again adds nothing)');
+select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select city_id from public.community_recommend('sharjah', array['goal:sport'], 6) where topic = 'sport') = 'sharjah', 'emirates: a Sharjah member who looks for sport gets IRLY Sport in Sharjah');
+select pg_temp.check(exists (select 1 from public.community_recommend('ajman', array['goal:wellness'], 6) where topic = 'wellness' and city_id = 'ajman'), 'emirates: wellness leads to IRLY Wellness in Ajman');
+select pg_temp.check(exists (select 1 from public.community_recommend('sharjah', array['goal:nightlife'], 6) where topic = 'nights'), 'emirates: nightlife still finds IRLY Nights (another emirate) from Sharjah');
+select pg_temp.check(exists (select 1 from public.community_recommend('rak', array['goal:help'], 6) where topic = 'help' and city_id = 'rak'), 'emirates: help & tips leads to IRLY Help & Questions in Ras Al Khaimah');
+select pg_temp.check(exists (select 1 from public.community_recommend('fujairah', array['goal:dogwalk'], 6)), 'emirates: every answer leads somewhere (dog walk)');
 
 \echo 'ALL TESTS PASSED'

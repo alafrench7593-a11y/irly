@@ -9,6 +9,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { INTERESTS } from '@/data/catalog';
 import { CITIES, cityOpen } from '@/data/destinations';
+import { LOOKING_FOR, LOOKING_FOR_GIRL } from '@/data/lookingFor';
 import { LANGUAGES } from '@/data/languages';
 import type { CityId, Interest } from '@/data/types';
 import { updateMyProfile, useAccount } from '@/features/auth/account';
@@ -16,7 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { AppearanceChoice } from '@/features/avatar/AvatarBuilder';
 import { useT } from '@/i18n';
 import { haptic } from '@/motion/haptics';
-import { useCityId, useStore } from '@/state/store';
+import { useCityId, useStore, type LookingFor } from '@/state/store';
 import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -44,6 +45,7 @@ export default function EditProfile() {
   const username = usernameEdit ?? savedUsername ?? '';
   const [languages, setLanguages] = useState<string[]>(profile.languages ?? []);
   const [interests, setInterests] = useState<Interest[]>(profile.interests);
+  const [lookingFor, setLookingFor] = useState<LookingFor[]>(profile.lookingFor ?? []);
   const [cityId, setCityId] = useState<CityId>(currentCity);
   const [photo, setPhoto] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
@@ -106,6 +108,7 @@ export default function EditProfile() {
         country: country.trim(),
         languages,
         interests,
+        lookingFor,
         ...(cityId !== currentCity ? { cityId } : {}),
         ...(photo ? { photoUri: photo } : {}),
         ...(changedHandle ? { username: wanted } : {}),
@@ -202,6 +205,17 @@ export default function EditProfile() {
           <View style={styles.wrap}>
             {(Object.keys(INTERESTS) as Interest[]).map((i) => (
               <Chip key={i} size="sm" icon={INTERESTS[i].icon} label={INTERESTS[i].label} selected={interests.includes(i)} onPress={() => setInterests((x) => toggle(x, i))} />
+            ))}
+          </View>
+        </Section>
+
+        <Section title="What you're looking for">
+          <Text variant="caption" tone="secondary">
+            IRLY uses it to suggest communities in your emirate.
+          </Text>
+          <View style={styles.wrap}>
+            {(profile.gender === 'woman' ? [...LOOKING_FOR, LOOKING_FOR_GIRL] : LOOKING_FOR).map((o) => (
+              <Chip key={o.id} size="sm" label={o.label} selected={lookingFor.includes(o.id)} onPress={() => setLookingFor((x) => toggle(x, o.id))} />
             ))}
           </View>
         </Section>

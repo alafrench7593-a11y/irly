@@ -7,22 +7,11 @@ import { Text } from '@/components/ui/Text';
 import { StepShell } from '@/features/onboarding/StepShell';
 import { enter } from '@/motion/enter';
 import { CITIES } from '@/data/destinations';
+import { LOOKING_FOR, LOOKING_FOR_GIRL } from '@/data/lookingFor';
 import { useCityId, useStore, type LookingFor, type Profile } from '@/state/store';
 import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const LOOKING: { id: LookingFor; label: string }[] = [
-  { id: 'friends', label: 'Friends' },
-  { id: 'sport', label: 'Sport' },
-  { id: 'networking', label: 'Networking' },
-  { id: 'activities', label: 'Activities' },
-  { id: 'travel', label: 'Travel' },
-  { id: 'food', label: 'Food' },
-  { id: 'nightlife', label: 'Nightlife' },
-  { id: 'communities', label: 'Communities' },
-  { id: 'dogwalk', label: 'Dog walk' },
-  { id: 'events', label: 'Events' },
-];
 
 const SINCE: { id: NonNullable<Profile['since']>; label: string }[] = [
   { id: 'new', label: 'Just arrived' },
@@ -48,7 +37,7 @@ export default function LookingStep() {
   const update = useStore((s) => s.updateProfile);
   const city = CITIES[useCityId()];
   const looking = profile.lookingFor ?? [];
-  const options = profile.gender === 'woman' ? [...LOOKING, { id: 'irlygirl' as const, label: 'IRLY Girl' }] : LOOKING;
+  const options = profile.gender === 'woman' ? [...LOOKING_FOR, LOOKING_FOR_GIRL] : LOOKING_FOR;
   const toggle = (id: LookingFor) => update({ lookingFor: looking.includes(id) ? looking.filter((x) => x !== id) : [...looking, id] });
 
   return (
