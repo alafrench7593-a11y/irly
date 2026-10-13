@@ -448,7 +448,7 @@ export const ARTICLES = [
     cover: 'dubaiCreek',
     figure: { photo: 'running', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-09',
+    updated: '2026-10-13',
     title: 'Lonely in Dubai? What Actually Helps | IRLY',
     description: 'Feeling lonely in Dubai is common, especially in the first months. Why it happens here, small steps that help this week, and when to talk to a professional.',
     h1: 'Lonely in Dubai: what actually helps',
@@ -497,7 +497,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Feeling alone in Dubai?', body: 'Join a community around what you like and find a plan this week, in real life.', label: 'Join a community' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }],
   },
   {
     lang: 'fr',
@@ -506,7 +506,7 @@ export const ARTICLES = [
     cover: 'dubaiCreek',
     figure: { photo: 'running', after: 1 },
     city: 'Dubaï',
-    updated: '2026-10-09',
+    updated: '2026-10-13',
     title: 'Se sentir seul à Dubaï : ce qui aide vraiment | IRLY',
     description: 'Se sentir seul à Dubaï est fréquent, surtout les premiers mois. Pourquoi ça arrive ici, les petits pas qui aident cette semaine, et quand en parler à un professionnel.',
     h1: 'Se sentir seul à Dubaï : ce qui aide vraiment',
@@ -555,7 +555,125 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Seul à Dubaï ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve un plan cette semaine, en vrai.', label: 'Rejoindre une communauté' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }],
+  },
+  {
+    lang: 'en',
+    pair: 'dubai-going-out-alone',
+    path: 'dubai/going-out-alone/',
+    cover: 'dubaiMarina',
+    figure: { photo: 'volleyball', after: 2 },
+    city: 'Dubai',
+    updated: '2026-10-13',
+    title: 'Going Out Alone in Dubai Without Feeling Awkward | IRLY',
+    description: 'How to go out alone in Dubai and enjoy it: plans that work solo, how to start a conversation without forcing it, and simple safety habits.',
+    h1: 'Going out alone in Dubai without feeling awkward',
+    lead: 'Going out alone in Dubai is normal: many people here arrived on their own, and plenty of plans are designed for one person. The trick is to choose places with something to do, arrive with a small plan, and give yourself permission to leave. Below: plans that work solo, how conversations start, and simple habits to feel at ease.',
+    sections: [
+      {
+        h2: 'Why it feels awkward, and why it gets easier',
+        html: `<p>The discomfort is mostly in your head: you notice yourself far more than others notice you. Most people around you are busy with their own evening. It also fades with practice. The first solo dinner feels long; the third feels like time for yourself.</p>
+<p>A city where so many people moved alone also means you are rarely the only one on your own, especially at classes, sports sessions and community events.</p>`,
+      },
+      {
+        h2: 'Plans that work well on your own',
+        html: `<p>Pick plans with a built-in activity, so you are never just “waiting”:</p>
+<ul>
+<li><strong>A class or workshop:</strong> cooking, pottery, dance, a language. Everyone arrives alone and the teacher sets the pace.</li>
+<li><strong>Group sport:</strong> a run club, a padel session for mixed levels, beach volleyball, climbing. You share an effort before you share a conversation.</li>
+<li><strong>Culture:</strong> a museum, a gallery, a cinema, a talk. Being alone is the norm, and there is something to discuss afterwards.</li>
+<li><strong>Markets and walks:</strong> in the cooler months, outdoor markets and waterfront walks are easy to enjoy at your own pace.</li>
+<li><strong>A meal at the counter:</strong> a seat at the bar or counter feels more natural than a table for one, and staff often chat.</li>
+<li><strong>A community event:</strong> a meetup around a hobby, your language or your work. Newcomers are expected there.</li>
+</ul>`,
+      },
+      {
+        h2: 'How conversations start without forcing them',
+        html: `<ol>
+<li><strong>Talk about what is in front of you.</strong> The class, the game, the dish, the film. A shared context makes a first sentence easy.</li>
+<li><strong>Ask a small question.</strong> “Is it your first time here?” or “Do you come every week?” Most people are happy to answer.</li>
+<li><strong>Come back.</strong> The second time at the same class or club, faces are familiar and talking is much easier.</li>
+<li><strong>Suggest a next step only when it fits.</strong> “Same time next week?” is often enough to turn a chat into a habit.</li>
+</ol>
+<p>And if nobody talks to you, the evening still counts: you went, you did something you like, and the next time will be easier.</p>`,
+      },
+      {
+        h2: 'Simple habits to feel at ease',
+        html: `<ul>
+<li><strong>Have a small plan.</strong> Know where you are going and roughly how long you will stay. You can always stay longer.</li>
+<li><strong>Arrive early.</strong> At a class or an event, the first minutes are the easiest moment to talk.</li>
+<li><strong>Bring something to hold your attention.</strong> A book or a notebook makes waiting comfortable; keep the phone for later.</li>
+<li><strong>Share your plans with someone you trust.</strong> Tell a friend where you are, and use registered taxis or ride-hailing apps to get home.</li>
+<li><strong>Respect local rules.</strong> Dress and behaviour expectations vary by place; when in doubt, look at the venue’s guidelines.</li>
+</ul>
+<p>In an emergency in the UAE, call <strong>999</strong> (police) or <strong>998</strong> (ambulance).</p>`,
+      },
+      {
+        h2: 'Where IRLY fits in',
+        html: `<p>IRLY helps you find plans that are made for joining alone: activities this week with people who want to meet, communities around what you like, and a group chat to say hello before you arrive. IRLY Girl offers spaces for women only. It is one option among others; what matters is going, and going back.</p>`,
+      },
+    ],
+    cta: { title: 'Going out on your own?', body: 'Find an activity this week where joining alone is the norm.', label: 'Find an activity' },
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+  },
+  {
+    lang: 'fr',
+    pair: 'dubai-going-out-alone',
+    path: 'fr/dubai/sortir-seul/',
+    cover: 'dubaiMarina',
+    figure: { photo: 'volleyball', after: 2 },
+    city: 'Dubaï',
+    updated: '2026-10-13',
+    title: 'Sortir seul à Dubaï sans être mal à l’aise | IRLY',
+    description: 'Comment sortir seul à Dubaï et en profiter : les sorties qui marchent en solo, lancer une conversation sans forcer, et quelques réflexes de sécurité simples.',
+    h1: 'Sortir seul à Dubaï sans être mal à l’aise',
+    lead: 'Sortir seul à Dubaï est normal : beaucoup de gens sont arrivés ici sans personne, et de nombreuses sorties sont pensées pour une seule personne. L’astuce : choisir des lieux où il y a quelque chose à faire, arriver avec un petit plan, et s’autoriser à partir. Ci-dessous : les sorties qui marchent en solo, comment la conversation démarre, et des réflexes simples pour être à l’aise.',
+    sections: [
+      {
+        h2: 'Pourquoi c’est gênant au début, et pourquoi ça passe',
+        html: `<p>La gêne est surtout dans ta tête : tu te remarques bien plus que les autres ne te remarquent. La plupart des gens autour de toi sont occupés par leur propre soirée. Et ça s’efface avec l’habitude. Le premier dîner seul paraît long ; le troisième devient un moment pour toi.</p>
+<p>Dans une ville où tant de gens sont arrivés seuls, tu es rarement la seule personne seule, surtout aux cours, aux séances de sport et aux événements de communauté.</p>`,
+      },
+      {
+        h2: 'Les sorties qui marchent bien en solo',
+        html: `<p>Choisis des sorties avec une activité intégrée, pour ne jamais simplement « attendre » :</p>
+<ul>
+<li><strong>Un cours ou un atelier :</strong> cuisine, poterie, danse, une langue. Tout le monde arrive seul et le professeur donne le rythme.</li>
+<li><strong>Le sport en groupe :</strong> un club de course, une séance de padel tous niveaux, du beach-volley, de l’escalade. On partage un effort avant de partager une conversation.</li>
+<li><strong>La culture :</strong> un musée, une galerie, un cinéma, une conférence. Être seul y est la norme, et il y a de quoi parler après.</li>
+<li><strong>Les marchés et les balades :</strong> pendant les mois plus frais, les marchés en plein air et les promenades au bord de l’eau se savourent à son rythme.</li>
+<li><strong>Un repas au comptoir :</strong> une place au bar ou au comptoir paraît plus naturelle qu’une table pour un, et le personnel discute souvent.</li>
+<li><strong>Un événement de communauté :</strong> une rencontre autour d’un loisir, de ta langue ou de ton métier. Les nouveaux y sont attendus.</li>
+</ul>`,
+      },
+      {
+        h2: 'Lancer une conversation sans forcer',
+        html: `<ol>
+<li><strong>Parle de ce qui est devant toi.</strong> Le cours, le match, le plat, le film. Un contexte partagé rend la première phrase facile.</li>
+<li><strong>Pose une petite question.</strong> « C’est ta première fois ici ? » ou « Tu viens chaque semaine ? ». La plupart des gens répondent volontiers.</li>
+<li><strong>Reviens.</strong> La deuxième fois au même cours ou au même club, les visages sont familiers et parler devient bien plus simple.</li>
+<li><strong>Propose une suite seulement si ça s’y prête.</strong> « Même heure la semaine prochaine ? » suffit souvent à transformer une discussion en habitude.</li>
+</ol>
+<p>Et si personne ne te parle, la soirée compte quand même : tu y es allé, tu as fait quelque chose que tu aimes, et la prochaine fois sera plus facile.</p>`,
+      },
+      {
+        h2: 'Des réflexes simples pour être à l’aise',
+        html: `<ul>
+<li><strong>Prévois un petit plan.</strong> Sache où tu vas et à peu près combien de temps tu restes. Tu peux toujours rester plus longtemps.</li>
+<li><strong>Arrive en avance.</strong> À un cours ou un événement, les premières minutes sont le moment le plus facile pour parler.</li>
+<li><strong>Emporte de quoi t’occuper.</strong> Un livre ou un carnet rend l’attente agréable ; garde le téléphone pour plus tard.</li>
+<li><strong>Dis à quelqu’un de confiance où tu vas.</strong> Préviens un ami, et rentre en taxi officiel ou avec une application de VTC.</li>
+<li><strong>Respecte les règles locales.</strong> Les attentes de tenue et de comportement varient selon les lieux ; dans le doute, regarde les consignes de l’endroit.</li>
+</ul>
+<p>En cas d’urgence aux Émirats, appelle le <strong>999</strong> (police) ou le <strong>998</strong> (ambulance).</p>`,
+      },
+      {
+        h2: 'La place d’IRLY',
+        html: `<p>IRLY t’aide à trouver des sorties faites pour venir seul : des activités cette semaine avec des gens qui veulent rencontrer du monde, des communautés autour de ce que tu aimes, et un chat de groupe pour dire bonjour avant d’arriver. IRLY Girl propose des espaces réservés aux femmes. C’est une option parmi d’autres ; ce qui compte, c’est d’y aller, et d’y retourner.</p>`,
+      },
+    ],
+    cta: { title: 'Tu sors seul ?', body: 'Trouve une activité cette semaine où venir seul est la norme.', label: 'Trouver une activité' },
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
   },
   {
     lang: 'en',
