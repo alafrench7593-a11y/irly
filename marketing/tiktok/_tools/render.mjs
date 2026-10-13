@@ -47,8 +47,10 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\*(.+
 
 const dir = path.resolve(process.argv[2]);
 const post = JSON.parse(fs.readFileSync(path.join(dir, 'post.json'), 'utf8'));
+// Instagram carousels are 4:5 (1080×1350); TikTok slides are 9:16.
+const H = post.format === 'ig' ? 1350 : 1920;
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
-const page = await browser.newPage({ viewport: { width: 1080, height: 1920 } });
+const page = await browser.newPage({ viewport: { width: 1080, height: H }, deviceScaleFactor: 1 });
 for (const lang of post.langs ?? ['fr']) {
 const out = path.join(dir, lang.toUpperCase());
 fs.rmSync(out, { recursive: true, force: true });
@@ -57,7 +59,7 @@ for (const [i, slide] of post.slides.entries()) {
   const s = { ...slide, ...(slide[lang] ?? {}) };
   const img = s.img ? `file://${path.isAbsolute(s.img) ? s.img : path.resolve(root, '_photos', s.img)}` : '';
   const vars = [s.pos && `--pos:${s.pos}`, s.size && `--size:${s.size}px`, s.bright && `--bright:${s.bright}`, s.gray != null && `--gray:${s.gray}`].filter(Boolean).join(';');
-  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css.replaceAll('1920px', H + 'px')}${post.format === 'ig' ? '.tt .top{top:150px}.mark{bottom:90px}' : ''}</style></head><body>
 <div class="s ${img ? '' : 'plain'} ${s.warm ? 'warm' : ''} ${(post.style ?? 'tiktok') === 'tiktok' ? 'tt' : ''}" style="${vars}">
 <div class="bg" style="background-image:url('${img}')"></div><div class="shade"></div><div class="grain"></div>
 <div class="txt ${s.at || 'mid'}"><div class="t"><span class="box">${esc(s.text)}</span></div>${s.sub ? `<div class="sub">${esc(s.sub)}</div>` : ''}</div>
@@ -68,7 +70,7 @@ ${s.mark ? `<div class="mark">IRLY</div>` : ''}
   await page.goto(`file://${tmp}`);
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(150);
-  await page.screenshot({ path: path.join(out, `${String(i + 1).padStart(2, '0')}.jpg`), type: 'jpeg', quality: 92 });
+  await page.screenshot({ path: path.join(out, `${String(i + 1).padStart(2, '0')}.jpg`), type: 'jpeg', quality: 95 });
   fs.rmSync(tmp);
 }
 }
