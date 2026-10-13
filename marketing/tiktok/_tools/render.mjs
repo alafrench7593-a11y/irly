@@ -55,7 +55,7 @@ fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 for (const [i, slide] of post.slides.entries()) {
   const s = { ...slide, ...(slide[lang] ?? {}) };
-  const img = s.img ? `file://${path.resolve(root, '_photos', s.img)}` : '';
+  const img = s.img ? `file://${path.isAbsolute(s.img) ? s.img : path.resolve(root, '_photos', s.img)}` : '';
   const vars = [s.pos && `--pos:${s.pos}`, s.size && `--size:${s.size}px`, s.bright && `--bright:${s.bright}`, s.gray != null && `--gray:${s.gray}`].filter(Boolean).join(';');
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body>
 <div class="s ${img ? '' : 'plain'} ${s.warm ? 'warm' : ''} ${(post.style ?? 'tiktok') === 'tiktok' ? 'tt' : ''}" style="${vars}">
