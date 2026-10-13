@@ -50,6 +50,9 @@ import { useTheme } from '@/theme/useTheme';
  * a venue or a neighbourhood (never an address), gone after 4 hours. Every
  * post is an invitation: message the person or go there.
  */
+// Who sees a moment, as stored (a private one is not "Everyone").
+const VISIBILITY_LABEL: Record<string, string> = { everyone: 'Everyone', friends: 'Friends', close_friends: 'Close friends', community: 'Communities', private: 'Only me' };
+
 export default function LiveScreen() {
   const cityId = useCityId();
   const city = CITIES[cityId];
@@ -318,7 +321,7 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 <View style={styles.meta}>
                   <LiveDot size={6} color={t.c.live} />
                   <Text variant="caption" tone="secondary" numberOfLines={1}>
-                    {placeLabel(cityId, p.cityId, p.areaId, p.placeName)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {p.visibility === 'friends' ? 'Friends' : 'Everyone'}
+                    {placeLabel(cityId, p.cityId, p.areaId, p.placeName)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {tx(VISIBILITY_LABEL[p.visibility as string] ?? 'Everyone')}
                   </Text>
                 </View>
               </View>

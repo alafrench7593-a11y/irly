@@ -346,6 +346,9 @@ export const useStore = create<State & Actions>()(
     {
       name: storageName('irly-v2'),
       version: 1,
+      // A saved state from another version is kept (missing fields take their defaults), never thrown away:
+      // without this, a version change would send every member back to the welcome screen.
+      migrate: (saved) => saved as never,
       storage: createJSONStorage(() => safeStorage),
       partialize: ({ hydrated: _h, ...rest }) => rest,
       onRehydrateStorage: () => (state) => {

@@ -114,6 +114,8 @@ export function useMyPro() {
       supabase.from('pro_profiles').select('visible').eq('user_id', uid).maybeSingle(),
     ]);
     if (e) throw new Error(e.message);
+    // Unread, "visible" would default to on: saving would publish a hidden profile.
+    if (own.error) throw new Error(own.error.message);
     const r = ((data as Row[]) ?? [])[0];
     return { pro: r ? toPro(r) : null, visible: (own.data as { visible?: boolean } | null)?.visible ?? true };
   }, [uid]);
@@ -172,6 +174,7 @@ export function useMyPro() {
     error: on ? res.error : null,
     save,
     remove,
+    reload: bump,
     signedIn: Boolean(uid),
   };
 }
@@ -258,7 +261,7 @@ export function usePro(userId: string) {
           if (p?.photoPath) {
             const urls = await photoUrls([p.photoPath]);
             if (alive) setPhoto(urls[p.photoPath] ?? null);
-          }
+          } else setPhoto(null); // Removed meanwhile: the old one does not stay.
         })
         .catch(() => alive && setRes((r) => ({ id: userId, pro: r.id === userId ? r.pro : null, failed: true })));
     reload();

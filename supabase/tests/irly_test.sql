@@ -1778,4 +1778,10 @@ select pg_temp.check(pg_temp.error_of($$select public.join_activity('$$ || :'pas
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.activity_participants where activity_id = :'past_act' and user_id = '00000000-0000-0000-0000-0000000000f1'), 'join of an activity that is over wrote nothing');
 
+-- "Notify me" for Bali (an upcoming destination) is stored, like the others.
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.check(public.set_service_interest('dest_bali', true), 'notify me: Bali is accepted');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.service_interest where user_id = '00000000-0000-0000-0000-0000000000f1' and service = 'dest_bali'), 'notify me: Bali interest stored');
+
 \echo 'ALL TESTS PASSED'

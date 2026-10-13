@@ -55,11 +55,29 @@ export default function RecapScreen() {
     );
   }
   const open = (r: RecapItem) => (r.section === 'discussion' ? router.push({ pathname: '/comments', params: { type: 'community_post', id: r.id } }) : r.section === 'community' ? router.push(`/c/${r.id}`) : router.push(`/a/${r.id}`));
-  const nothing = !recap.loading && !recap.items.length && !forYou.items.length && !groups.items.length;
+  // Unreachable is not "nothing new": then it says so, with a retry.
+  const anyFailed = recap.failed || forYou.failed || groups.failed;
+  const nothing = !anyFailed && !recap.loading && !recap.items.length && !forYou.items.length && !groups.items.length;
 
   return (
     <Page overline={city.name} title="My recap" subtitle={recap.since ? tx('Since your last visit, {time}.', { time: timeAgo(Math.max(1, Math.round((now - Date.parse(recap.since)) / 60000))) }) : tx('The last 7 days.')}>
       <View style={{ gap: space[5] }}>
+        {anyFailed && !recap.items.length ? (
+          <View style={[styles.card, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
+            <Text variant="body" tone="secondary">
+              Can’t reach IRLY right now
+            </Text>
+            <Button
+              label="Try again"
+              variant="secondary"
+              onPress={() => {
+                recap.reload();
+                forYou.reload();
+                groups.reload();
+              }}
+            />
+          </View>
+        ) : null}
         {nothing ? (
           <View style={[styles.card, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
             <Text variant="body" tone="secondary">

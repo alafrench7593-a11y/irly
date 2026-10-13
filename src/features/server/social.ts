@@ -67,7 +67,7 @@ async function signedAll(paths: (string | null)[]): Promise<Record<string, strin
 
 /** Bumped after your own post or removal: every IRL feed reloads at once, without waiting for Realtime. */
 const useIrlVersion = create<{ n: number }>(() => ({ n: 0 }));
-const bumpIrl = () => useIrlVersion.setState((s) => ({ n: s.n + 1 }));
+export const bumpIrl = () => useIrlVersion.setState((s) => ({ n: s.n + 1 }));
 
 /**
  * Your own posts, shown the moment the server accepts them (with the photo

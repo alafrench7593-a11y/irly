@@ -58,6 +58,18 @@ export default function ProProfileEditor() {
   const me = useMyPro();
   // The form opens once the saved profile (if any) has loaded, already filled in.
   if (me.signedIn && me.loading) return <Page overline="Networking" title="Professional profile">{null}</Page>;
+  // Unread is not "no profile": an empty form saved here would replace the real one.
+  if (me.signedIn && me.error && !me.pro)
+    return (
+      <Page overline="Networking" title="Professional profile">
+        <View style={{ paddingHorizontal: 20, gap: 12 }}>
+          <Text variant="body" tone="secondary">
+            Can’t reach IRLY right now
+          </Text>
+          <Button label="Try again" variant="secondary" onPress={me.reload} />
+        </View>
+      </Page>
+    );
   return <Editor key={me.pro ? 'edit' : 'new'} me={me} initial={me.pro ? draftOf(me.pro, me.visible) : EMPTY(cityId)} cityId={cityId} />;
 }
 
@@ -232,7 +244,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
           <View style={{ flex: 1, gap: 2 }}>
             <Text variant="titleS">Show me in Networking</Text>
             <Text variant="caption" tone="tertiary">
-              {d.visible ? tr('Professionals across the country can find you') : tr('Hidden: only your connections can see you')}
+              {d.visible ? tr('Professionals across the country can find you') : tr('Hidden from Networking')}
             </Text>
           </View>
           <View style={[styles.switch, { backgroundColor: d.visible ? t.c.text : t.c.line }]}>
