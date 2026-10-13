@@ -414,7 +414,9 @@ export async function refreshOwnPhoto(uid: string): Promise<void> {
 
 export async function signOut(): Promise<void> {
   // This phone stops receiving the account's notifications (needs the session, so first).
-  await import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
+  // Bounded: asking the phone for its token has no timeout of its own, and the sign-out must not hang.
+  const unregister = import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
+  await Promise.race([unregister, new Promise((done) => setTimeout(done, 5000))]);
   await supabase?.auth.signOut();
 }
 

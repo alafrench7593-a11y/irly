@@ -7,6 +7,7 @@ import { track } from '@/lib/analytics';
 import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from '@/features/server/sync';
 import { askPushInContext } from '@/features/push/push';
+import { toast } from '@/components/ui/Toast';
 
 /** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
 export const communitiesChanged = () => changed('communities', 'inbox');
@@ -109,8 +110,10 @@ export async function setCommunityMuted(conversationId: string, muted: boolean):
   const { data: session } = await sb().auth.getSession();
   const uid = session.session?.user.id;
   if (!uid) throw new Error('Sign in first');
-  const { error } = await sb().from('conversation_members').update({ muted }).eq('conversation_id', conversationId).eq('user_id', uid);
+  const { data, error } = await sb().from('conversation_members').update({ muted }).eq('conversation_id', conversationId).eq('user_id', uid).select('user_id');
   if (error) throw new Error(error.message);
+  // Not in this chat (yet): nothing changed, so not a success.
+  if (!data?.length) throw new Error('Could not change this chat. Try again.');
 }
 
 export function useCommunity(id: string) {
@@ -328,7 +331,8 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       // Same card, real id: the server copy will replace it, not sit beside it.
       setPosts((p) => p.filter((x) => x.id !== id).map((x) => (x.id === temp.id ? { ...x, id, pending: false } : x)));
       track('COMMUNITY_POST', { poll: Boolean(poll), activity: Boolean(input.activityId) });
-      if (vote != null) await sendVote(id, vote).catch(() => undefined);
+      // The post is out; a vote that did not follow is said (the refresh below shows the server's count).
+      if (vote != null) await sendVote(id, vote).catch(() => toast('Your vote was not saved. Vote again.', 'x', 'live'));
       refresh();
       changed('communities');
     },

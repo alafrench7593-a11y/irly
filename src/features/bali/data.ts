@@ -333,11 +333,20 @@ export function usePlaceActivities(slug: string) {
   const { reload } = q;
   useEffect(() => {
     if (!supabase) return;
+    // Any join anywhere arrives here (no place to filter on): a burst is one reload.
+    let soon: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel(topic(`place-acts-${slug}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, () => reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, () => {
+        if (soon) return;
+        soon = setTimeout(() => {
+          soon = null;
+          reload();
+        }, 800);
+      })
       .subscribe();
     return () => {
+      if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);
     };
   }, [slug, reload]);

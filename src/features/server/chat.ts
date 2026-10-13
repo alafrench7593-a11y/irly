@@ -408,7 +408,14 @@ export function useServerThread(conversationId: string): ServerThread {
       if (e && e.code !== '23505') {
         setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], failed: true } } : p));
         throw new Error(
-          /row-level|policy|blocked|not accept/i.test(e.message) ? 'This member does not accept messages from you' : /fetch|network/i.test(e.message) ? 'No connection: message not sent' : e.message,
+          /row-level|policy|blocked|not accept/i.test(e.message)
+            ? // Refused in a group, activity or community chat: you are no longer in it (not "this member").
+              kind && kind !== 'direct' && kind !== 'match'
+              ? 'You are no longer in this chat'
+              : 'This member does not accept messages from you'
+            : /fetch|network/i.test(e.message)
+              ? 'No connection: message not sent'
+              : e.message,
         );
       }
       if (data) setRows((list) => merge(list, [data as MessageRow]));
@@ -419,7 +426,7 @@ export function useServerThread(conversationId: string): ServerThread {
         return rest;
       });
     },
-    [conversationId, uid],
+    [conversationId, uid, kind],
   );
   const send = useCallback(
     async (text: string) => {
