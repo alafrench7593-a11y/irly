@@ -63,6 +63,7 @@ const MATCHES = [
 // ───────── Activities ─────────
 const ACT = {
   run: uid(101), padel: uid(102), volley: uid(103), football: uid(104), gym: uid(105), tennis: uid(106), climb: uid(107), boxing: uid(108),
+  jbr: uid(112), kite: uid(113), desert: uid(114),
 };
 const activityRows = [
   { id: ACT.padel, title: 'Padel social · mixed doubles', category_id: 'sport', sub_id: 'padel', area_id: 'alquoz', place_name: 'Al Quoz courts', starts_at: day(0, 19, 30), capacity: 8, going: 6, creator: 'layla' },
@@ -72,6 +73,10 @@ const activityRows = [
   { id: ACT.gym, title: 'Strength club · partner workout', category_id: 'sport', sub_id: 'gym', area_id: 'alquoz', place_name: 'Al Quoz', starts_at: day(3, 7, 0), capacity: 10, going: 5, creator: 'lucas' },
   { id: ACT.tennis, title: 'Tennis doubles · all levels', category_id: 'sport', sub_id: 'tennis', area_id: 'jlt', place_name: 'JLT', starts_at: day(4, 18, 0), capacity: 4, going: 3, creator: 'james' },
   { id: ACT.boxing, title: 'Boxing basics for beginners', category_id: 'sport', sub_id: 'boxing', area_id: 'difc', place_name: 'DIFC', starts_at: day(5, 19, 0), capacity: 12, going: 7, creator: 'tom' },
+  // Beach & outdoor (search results image): Omar's desert drive is the one his post talks about.
+  { id: ACT.jbr, title: 'Sunset swim and picnic', category_id: 'outdoor', sub_id: 'beach', area_id: 'jbr', place_name: 'JBR Beach', starts_at: day(1, 17, 0), capacity: 15, going: 9, creator: 'priya' },
+  { id: ACT.kite, title: 'Paddleboard at sunrise', category_id: 'outdoor', sub_id: 'paddleboard', area_id: 'kitebeach', place_name: 'Kite Beach', starts_at: day(2, 6, 30), capacity: 10, going: 6, creator: 'marco' },
+  { id: ACT.desert, title: 'Desert drive · dunes at sunset', category_id: 'outdoor', sub_id: 'desert', area_id: 'alqudra', place_name: 'Al Qudra', starts_at: day(3, 15, 30), capacity: 8, going: 6, creator: 'omar' },
 ].map((a) => ({
   id: a.id, title: a.title, category_id: a.category_id, sub_id: a.sub_id, area_id: a.area_id, city_id: 'dubai', girl_only: false, audience: 'all',
   place_name: a.place_name, starts_at: a.starts_at, capacity: a.capacity, price_minor: 0, currency: 'AED', creator_id: PEOPLE[a.creator].id, going: a.going,

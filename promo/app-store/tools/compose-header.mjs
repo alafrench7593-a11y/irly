@@ -2,23 +2,25 @@
 // Each image in headers.json is built from optional layers, back to front:
 //   tiles   photos of the app's own library (public-photos/), rounded, edge to edge
 //   shade   a dark veil over the tiles, so black stays the dominant colour
+//   screens real app captures (tools/screens/) without a device, in one shared perspective
 //   phones  real app captures (tools/screens/) in iPhone frames
 //   glass   frosted panels in the iOS style, behind the text they carry
 //   faces   member photos ringed like the app's "Live now" row
 //   logo, title, capsule (a glass pill with one short line)
-// Usage: node compose-header.mjs [names] ; env OUT=dir (default: promo/app-store)
+// Usage: node compose-header.mjs [names] ; env OUT=dir (default: promo/app-store),
+// CFG=file (default: headers.json)
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { FONT_CSS, PHONE_CSS, geometry, phoneHTML } from './phone.mjs';
+import { FONT_CSS, PHONE_CSS, geometry, phoneHTML, screenHTML } from './phone.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const PHOTOS = path.resolve(DIR, '../../../public-photos');
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'irly-header-'));
-const cfg = JSON.parse(fs.readFileSync(`${DIR}/headers.json`, 'utf8'));
+const cfg = JSON.parse(fs.readFileSync(process.env.CFG || `${DIR}/headers.json`, 'utf8'));
 const only = process.argv[2] ? process.argv[2].split(',') : null;
 const OUTDIR = process.env.OUT || path.resolve(DIR, '..');
 
@@ -39,6 +41,13 @@ function tileSrc(t, key) {
 }
 const tileHTML = (t, i, h) =>
   `<div class="tile deco" style="left:${t.x}px; top:${t.y}px; width:${t.w}px; height:${t.h}px; border-radius:${t.r ?? 0}px; ${t.shadow ? `box-shadow:${t.shadow};` : ''}"><img src="file://${tileSrc(t, `${h.name}-tile${i}`)}" style="object-position:${t.pos ?? '50% 50%'}; filter:${t.filter ?? 'none'};" /></div>`;
+
+// The screens share one camera (perspective and vanishing point in headers.json), so the
+// turned side screens recede the same way. Listed back to front: the last one is on top.
+const screensHTML = (sc) =>
+  `<div class="persp" style="perspective:${sc.perspective}px; perspective-origin:${sc.origin[0]}px ${sc.origin[1]}px;">${sc.list
+    .map((s) => screenHTML(s, `file://${DIR}/screens/${s.screen}`, s.shadow ?? sc.shadow))
+    .join('')}</div>`;
 
 const glassHTML = (g) =>
   `<div class="glass" style="left:${g.x}px; top:${g.y}px; width:${g.w}px; height:${g.h}px; border-radius:${g.r}px; --blur:${g.blur ?? 70}px; ${GLASS}"></div>`;
@@ -63,8 +72,9 @@ function html(h) {
     ${FONT_CSS}
     html, body { margin:0; padding:0; background:${BG}; overflow:hidden; }
     #stage { position:relative; width:${h.width}px; height:${h.height}px; background:${BG}; overflow:hidden; }
-    #glow { position:absolute; inset:0; background: radial-gradient(${h.glow.rx}px ${h.glow.ry}px at ${h.glow.x}px ${h.glow.y}px, rgba(255,255,255,0.075), rgba(255,255,255,0) 70%); }
+    #glow { position:absolute; inset:0; background: radial-gradient(${h.glow.rx}px ${h.glow.ry}px at ${h.glow.x}px ${h.glow.y}px, rgba(255,255,255,${h.glow.a ?? 0.075}), rgba(255,255,255,0) 70%); }
     #shade { position:absolute; inset:0; background:${h.shade ?? 'none'}; }
+    .persp { position:absolute; inset:0; }
     ${PHONE_CSS}
     .tile { position:absolute; overflow:hidden; }
     .tile img { width:100%; height:100%; display:block; object-fit:cover; }
@@ -76,6 +86,7 @@ function html(h) {
   </style></head><body><div id="stage"><div id="glow"></div>
     ${(h.tiles || []).map((t, i) => tileHTML(t, i, h)).join('')}
     <div id="shade" class="deco"></div>
+    ${h.screens ? screensHTML(h.screens) : ''}
     ${(h.phones || []).map((p) => phoneHTML(geometry(p), `file://${DIR}/screens/${p.screen}`, p.status, SHADOW)).join('')}
     ${(h.glass || []).map(glassHTML).join('')}
     ${h.faces ? facesHTML(h.faces, h.width) : ''}
@@ -94,10 +105,10 @@ for (const h of cfg.headers) {
   await page.goto(`file://${file}`);
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(600);
-  // Key content (text, logo, glass, phones, faces) must sit inside the zone the placement keeps.
-  // Photo tiles are decoration: they may run to the edges and be cropped.
+  // Key content (text, logo, glass, screens, phones, faces) must sit inside the zone the placement
+  // keeps. Photo tiles are decoration: they may run to the edges and be cropped.
   const box = await page.evaluate(() => {
-    const r = [...document.querySelectorAll('.phone, .av, .glass, .capsule, .logo, h1')].map((el) => el.getBoundingClientRect());
+    const r = [...document.querySelectorAll('.scr, .phone, .av, .glass, .capsule, .logo, h1')].map((el) => el.getBoundingClientRect());
     return [Math.min(...r.map((b) => b.left)), Math.min(...r.map((b) => b.top)), Math.max(...r.map((b) => b.right)), Math.max(...r.map((b) => b.bottom))].map(Math.round);
   });
   const [s0, s1, s2, s3] = h.safe;

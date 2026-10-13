@@ -69,39 +69,66 @@
     384,
     256,
     3456,
-    2304
+    99999
    ],
    "glow": {
     "x": 1920,
-    "y": 1280,
-    "rx": 10,
-    "ry": 10
+    "y": 1500,
+    "rx": 2200,
+    "ry": 1500,
+    "a": 0.1
    },
-   "tiles": [
-    {
-     "src": "photos/desert-friends.png",
-     "crop": [
-      0,
-      180,
-      736,
-      671
-     ],
-     "x": 0,
-     "y": 0,
-     "w": 3840,
-     "h": 2560,
-     "grain": 6,
-     "filter": "saturate(0.9) contrast(1.03)"
-    }
-   ],
-   "shade": "linear-gradient(180deg, rgba(5,5,6,0.62) 0%, rgba(5,5,6,0.32) 22%, rgba(5,5,6,0) 42%), linear-gradient(0deg, rgba(5,5,6,0.38) 0%, rgba(5,5,6,0) 26%)",
+   "screens": {
+    "perspective": 6000,
+    "origin": [
+     1920,
+     1700
+    ],
+    "shadow": "0 80px 160px rgba(0,0,0,0.72), 0 24px 48px rgba(0,0,0,0.45)",
+    "list": [
+     {
+      "screen": "home-top.png",
+      "status": "light",
+      "cx": 905,
+      "top": 1030,
+      "S": 960,
+      "ry": -13,
+      "z": -320,
+      "dim": 0.22
+     },
+     {
+      "screen": "category-outdoor-night.png",
+      "status": "light",
+      "cx": 2935,
+      "top": 1030,
+      "S": 960,
+      "ry": 13,
+      "z": -320,
+      "dim": 0.22
+     },
+     {
+      "screen": "match-day.png",
+      "status": "dark",
+      "cx": 1920,
+      "top": 890,
+      "S": 1080
+     }
+    ]
+   },
    "logo": {
     "x": "center",
-    "y": 330,
-    "h": 360
+    "y": 262,
+    "h": 250
    },
    "title": {
-    "text": ""
+    "text": "Real connections. Real life.",
+    "align": "center",
+    "y": 580,
+    "size": 140,
+    "weight": 700,
+    "ls": "-0.03em",
+    "lh": 1.1,
+    "color": "rgba(255,255,255,0.9)"
    }
   }
  ]

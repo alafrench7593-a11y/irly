@@ -1,6 +1,7 @@
 // iPhone frame shared by the screenshots (compose.mjs) and the wide header images
 // (compose-header.mjs): rim, bezel, Dynamic Island, status bar (9:41, signal, Wi-Fi,
 // battery) and home indicator, drawn over a real 1320 x 2868 capture of the app.
+// screenHTML shows the same capture without a device (search results image).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -29,7 +30,11 @@ export const PHONE_CSS = `
     .time { position:absolute; display:flex; align-items:center; justify-content:center; font-family: InterSB, Manrope; font-weight:600; letter-spacing:-0.01em; }
     .sicons { position:absolute; display:flex; align-items:center; justify-content:center; }
     .sicons span { display:block; }
-    .home { position:absolute; }`;
+    .home { position:absolute; }
+    .scr { position:absolute; overflow:hidden; background:#000; }
+    .scr img { position:absolute; left:0; top:0; display:block; }
+    .scr .veil, .scr .edge { position:absolute; inset:0; }
+    .scr .edge { box-shadow: inset 0 0 0 2px rgba(255,255,255,0.14); }`;
 
 const icons = (c) => ({
   signal: `<svg viewBox="0 0 18 12" width="100%" height="100%"><rect x="0" y="8" width="3.2" height="4" rx="1" fill="${c}"/><rect x="4.9" y="5.6" width="3.2" height="6.4" rx="1" fill="${c}"/><rect x="9.8" y="3" width="3.2" height="9" rx="1" fill="${c}"/><rect x="14.7" y="0" width="3.2" height="12" rx="1" fill="${c}"/></svg>`,
@@ -50,26 +55,49 @@ export function geometry(p) {
   return { S, k, H, b, rim, W, HH, left, top: p.top, screenLeft: left + rim + b, screenTop: p.top + rim + b, scale: S / 1320, R: 55 * k };
 }
 
-// status: 'dark' for dark status bar text (light app screen), 'light' otherwise.
-export function phoneHTML(g, screenSrc, status, shadow, time = '9:41') {
-  const { S, k, H, b, rim, W, HH, left, top, R } = g;
+// Status bar and home indicator over a screen S px wide (k = S / 440): 9:41 with full signal,
+// Wi-Fi and battery. status: 'dark' for dark text (light app screen), 'light' otherwise.
+// island: the Dynamic Island, drawn only inside the iPhone frame.
+function systemUI(k, S, status, time, island) {
   const statusColor = status === 'dark' ? '#000000' : '#FFFFFF';
   const homeColor = status === 'dark' ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.9)';
   const I = icons(statusColor);
-  return `
-  <div class="phone" style="left:${left}px; top:${top}px; width:${W}px; height:${HH}px; border-radius:${R + b + rim}px; box-shadow:${shadow};">
-    <div class="rim" style="border-radius:${R + b + rim}px;"></div>
-    <div class="body" style="left:${rim}px; top:${rim}px; right:${rim}px; bottom:${rim}px; border-radius:${R + b}px;"></div>
-    <div class="screen" style="left:${rim + b}px; top:${rim + b}px; width:${S}px; height:${H}px; border-radius:${R}px;">
-      <img src="${screenSrc}" style="width:${S}px; height:${H}px;" />
-      <div class="island" style="width:${126 * k}px; height:${37 * k}px; top:${11 * k}px; left:${(S - 126 * k) / 2}px; border-radius:${18.5 * k}px;"></div>
+  return `${island ? `
+      <div class="island" style="width:${126 * k}px; height:${37 * k}px; top:${11 * k}px; left:${(S - 126 * k) / 2}px; border-radius:${18.5 * k}px;"></div>` : ''}
       <div class="time" style="left:0; width:${157 * k}px; top:${11 * k}px; height:${37 * k}px; font-size:${17 * k}px; color:${statusColor};">${time}</div>
       <div class="sicons" style="left:${(440 - 157) * k}px; width:${157 * k}px; top:${11 * k}px; height:${37 * k}px; gap:${5.5 * k}px;">
         <span style="width:${18 * k}px; height:${12 * k}px;">${I.signal}</span>
         <span style="width:${16 * k}px; height:${12 * k}px;">${I.wifi}</span>
         <span style="width:${27 * k}px; height:${13 * k}px;">${I.battery}</span>
       </div>
-      <div class="home" style="width:${144 * k}px; height:${5 * k}px; left:${(S - 144 * k) / 2}px; bottom:${8 * k}px; background:${homeColor}; border-radius:${2.5 * k}px;"></div>
+      <div class="home" style="width:${144 * k}px; height:${5 * k}px; left:${(S - 144 * k) / 2}px; bottom:${8 * k}px; background:${homeColor}; border-radius:${2.5 * k}px;"></div>`;
+}
+
+export function phoneHTML(g, screenSrc, status, shadow, time = '9:41') {
+  const { S, k, H, b, rim, W, HH, left, top, R } = g;
+  return `
+  <div class="phone" style="left:${left}px; top:${top}px; width:${W}px; height:${HH}px; border-radius:${R + b + rim}px; box-shadow:${shadow};">
+    <div class="rim" style="border-radius:${R + b + rim}px;"></div>
+    <div class="body" style="left:${rim}px; top:${rim}px; right:${rim}px; bottom:${rim}px; border-radius:${R + b}px;"></div>
+    <div class="screen" style="left:${rim + b}px; top:${rim + b}px; width:${S}px; height:${H}px; border-radius:${R}px;">
+      <img src="${screenSrc}" style="width:${S}px; height:${H}px;" />${systemUI(k, S, status, time, true)}
     </div>
+  </div>`;
+}
+
+// A real capture shown as a screen alone, without a device. Apple's marketing guidelines ask
+// not to draw an Apple product, nor to tilt it or add shadows to it: here the perspective
+// (ry, rotation in degrees; z, depth in px) and the shadow apply to the app screen only.
+// s = { cx, top, S, status, ry, z, dim }: dim darkens a screen set further back (0 to 1).
+export function screenHTML(s, screenSrc, shadow, time = '9:41') {
+  const S = s.S;
+  const k = S / 440;
+  const H = (S * 2868) / 1320;
+  const R = 55 * k;
+  return `
+  <div class="scr" style="left:${s.cx - S / 2}px; top:${s.top}px; width:${S}px; height:${H}px; border-radius:${R}px; transform:translateZ(${s.z ?? 0}px) rotateY(${s.ry ?? 0}deg); box-shadow:${shadow};">
+    <img src="${screenSrc}" style="width:${S}px; height:${H}px;" />${systemUI(k, S, s.status, time, false)}
+    ${s.dim ? `<div class="veil" style="background:rgba(0,0,0,${s.dim});"></div>` : ''}
+    <div class="edge" style="border-radius:${R}px;"></div>
   </div>`;
 }
