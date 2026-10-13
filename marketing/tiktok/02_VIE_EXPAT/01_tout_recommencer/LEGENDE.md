@@ -10,10 +10,10 @@
 Personne ne parle de cette partie du déménagement.
 Toi, il t'a fallu combien de temps pour trouver tes gens ici ?
 
-#dubai #dubaiexpat #expatriation #expatlife #demenagement #nouveaudepart #amitie #vieadubai #solotrip #selfconfidence #motivation #travail #musique #ambition
+#dubai #dubaiexpat #expatriation #expatlife #demenagement #nouveaudepart #amitie #vieadubai #solotrip #selfconfidence #motivation
 
 ## Caption EN
 Nobody talks about this part of moving.
 How long did it take you to find your people here?
 
-#dubai #dubaiexpat #movingtodubai #expatlife #newbeginnings #makingfriendsasanadult #dubailife #solotrip #selfconfidence #motivation #travail #musique #ambition
+#dubai #dubaiexpat #movingtodubai #expatlife #newbeginnings #makingfriendsasanadult #dubailife #solotrip #selfconfidence #motivation
