@@ -14,7 +14,10 @@ const here = path.dirname(new URL(import.meta.url).pathname);
 const root = path.resolve(here, '..');
 const fonts = path.resolve(root, '../../node_modules/@expo-google-fonts/manrope');
 const font = (w, n) => `@font-face{font-family:Manrope;font-weight:${w};src:url(file://${fonts}/${n}/Manrope_${n}.ttf)}`;
+// TikTok's own typeface (TikTok Sans, SIL OFL), for the native text look.
+const tt = (w) => ['latin', 'latin-ext'].map((sub, k) => `@font-face{font-family:'TikTok Sans${k ? ' Ext' : ''}';font-weight:${w};src:url(file://${here}/fonts/tiktok-sans-${sub}-${w}-normal.woff2)}`).join('');
 const css = `
+${tt(600)}${tt(700)}${tt(800)}
 ${font(500, '500Medium')}${font(700, '700Bold')}${font(800, '800ExtraBold')}
 *{margin:0;box-sizing:border-box}
 html,body{width:1080px;height:1920px;background:#0b0b0c;overflow:hidden}
@@ -30,6 +33,15 @@ html,body{width:1080px;height:1920px;background:#0b0b0c;overflow:hidden}
 .sub{font-weight:500;font-size:40px;line-height:1.35;color:rgba(255,255,255,.86);text-shadow:0 2px 16px rgba(0,0,0,.6)}
 .plain .bg{display:none}.plain{background:#0b0b0c}
 .mark{position:absolute;left:84px;bottom:470px;font-weight:800;font-size:30px;letter-spacing:6px;color:rgba(255,255,255,.7)}
+/* TikTok style: centred TikTok Sans, black text on white rounded boxes (the in-app text background), white captions. */
+.tt{font-family:'TikTok Sans','TikTok Sans Ext',sans-serif}
+.tt .txt{left:120px;right:120px;align-items:center;text-align:center;gap:34px}
+.tt .top{top:430px}
+.tt .t{font-weight:700;font-size:var(--size,58px);line-height:1.45;letter-spacing:0;text-shadow:none}
+.tt .t .box{background:#fff;color:#111;padding:5px 22px;border-radius:14px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.tt .t em{color:inherit;font-style:normal}
+.tt .sub{font-weight:700;font-size:44px;line-height:1.3;color:#fff;text-shadow:0 0 4px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.8)}
+.tt .mark{left:0;right:0;text-align:center;font-weight:800}
 `;
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/\n/g, '<br>');
 
@@ -46,9 +58,9 @@ for (const [i, slide] of post.slides.entries()) {
   const img = s.img ? `file://${path.resolve(root, '_photos', s.img)}` : '';
   const vars = [s.pos && `--pos:${s.pos}`, s.size && `--size:${s.size}px`, s.bright && `--bright:${s.bright}`, s.gray != null && `--gray:${s.gray}`].filter(Boolean).join(';');
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css}</style></head><body>
-<div class="s ${img ? '' : 'plain'} ${s.warm ? 'warm' : ''}" style="${vars}">
+<div class="s ${img ? '' : 'plain'} ${s.warm ? 'warm' : ''} ${(post.style ?? 'tiktok') === 'tiktok' ? 'tt' : ''}" style="${vars}">
 <div class="bg" style="background-image:url('${img}')"></div><div class="shade"></div><div class="grain"></div>
-<div class="txt ${s.at || 'mid'}"><div class="t">${esc(s.text)}</div>${s.sub ? `<div class="sub">${esc(s.sub)}</div>` : ''}</div>
+<div class="txt ${s.at || 'mid'}"><div class="t"><span class="box">${esc(s.text)}</span></div>${s.sub ? `<div class="sub">${esc(s.sub)}</div>` : ''}</div>
 ${s.mark ? `<div class="mark">IRLY</div>` : ''}
 </div></body></html>`;
   const tmp = path.join(dir, '.slide.html');

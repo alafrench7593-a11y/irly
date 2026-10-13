@@ -18,8 +18,8 @@ Format TikTok : les carrousels photo fonctionnent avec une émotion par slide et
 ## 2. Direction artistique
 
 - Photo plein cadre, désaturée (55 % de gris), assombrie, avec du grain argentique et un vignettage. Une touche de lumière chaude seulement quand l'histoire s'ouvre (slides « warm »).
-- Typographie : Manrope ExtraBold, blanche, de 70 à 80 px. Un mot clé en ambre (#F2C48D) par post, pas plus.
-- Texte en haut, entre 300 et 1 000 px, dans la zone sûre (à l'écart des onglets en haut, de la colonne d'icônes à droite et de la légende en bas).
+- Typographie : style natif TikTok. Police TikTok Sans (licence SIL OFL, fichiers dans `_tools/fonts`), texte centré, noir sur bandeaux blancs arrondis comme le fond de texte de l'app, phrase secondaire en blanc avec ombre. Le style précédent (Manrope en blanc avec un mot en ambre) reste disponible avec `"style": "cinema"` dans `post.json`.
+- Texte entre 430 et 1 000 px de haut, centré avec 120 px de marge de chaque côté : à l'écart des onglets en haut, de la colonne d'icônes à droite et de la légende en bas.
 - Une idée par slide, lisible en moins de 2 secondes. La dernière slide est noire unie, avec la question et la marque « IRLY » discrète.
 - Photos : Pixabay uniquement (licence commerciale), avec le lien de chaque image dans `SOURCES.md`. Pinterest, Reddit et Instagram restent des références d'ambiance, jamais des sources d'images.
 - À éviter : les monuments reconnaissables d'autres villes (Paris, New York, Berlin, São Paulo sont exclus quand on les reconnaît), les sourires de banque d'images, les citations motivantes.
