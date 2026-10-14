@@ -4,7 +4,12 @@ import { create } from 'zustand';
 import type { Visual } from '@/data/types';
 import type { LightId } from '@/theme/lights';
 
-export type ViewerPhoto = { uri: string } | { visual: Visual; light: LightId };
+/**
+ * `ratio` (width / height of the picture, optional): when given, the photo
+ * opens at its own proportions, whole (nothing cropped); left out, it opens
+ * with the proportions of the frame it comes from, as before.
+ */
+export type ViewerPhoto = { uri: string; ratio?: number } | { visual: Visual; light: LightId };
 type Rect = { x: number; y: number; width: number; height: number };
 
 type ViewerState = {

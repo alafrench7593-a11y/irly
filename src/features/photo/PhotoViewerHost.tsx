@@ -51,8 +51,10 @@ export function PhotoViewerHost() {
       const { origin } = usePhotoViewer.getState();
       const W = size.w || 390;
       const H = size.h || 844;
-      // Full width, the frame's own proportions, never taller than the screen.
-      const ratio = origin ? origin.height / origin.width : 0.75;
+      // Full width, never taller than the screen: the photo's own proportions
+      // when known (the whole photo, uncropped), else the frame's.
+      const own = 'uri' in photo && photo.ratio && photo.ratio > 0 ? 1 / photo.ratio : null;
+      const ratio = own ?? (origin ? origin.height / origin.width : 0.75);
       const h = Math.min(W * ratio, H - insets.top - insets.bottom - 96);
       const w = h / ratio;
       const target = { x: (W - w) / 2, y: (H - h) / 2, width: w, height: h };

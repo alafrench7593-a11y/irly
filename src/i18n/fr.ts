@@ -4187,4 +4187,10 @@ export const fr: Record<string, string> = {
   'Could not open your calendar': 'Impossible d’ouvrir ton calendrier',
   'Sign in to see this conversation': 'Connecte-toi pour voir cette conversation',
   'Leave this community?': 'Quitter cette communauté ?',
+  // Live media
+  'Sending the photo… {n}%': 'Envoi de la photo… {n} %',
+  'This photo could not be loaded': 'Impossible de charger cette photo',
+  'This video could not be loaded': 'Impossible de charger cette vidéo',
+  'Could not read this photo': 'Impossible de lire cette photo',
+  'Upload failed': 'Échec de l’envoi',
 };

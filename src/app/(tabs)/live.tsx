@@ -1,6 +1,5 @@
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx, a11y } from '@/i18n';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -10,8 +9,10 @@ import { Page } from '@/components/layout/Page';
 import { InboxButtons } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { LiveRing } from '@/features/live/LiveStrip';
-import { pickLiveMedia, type LiveMedia } from '@/features/live/liveMedia';
+import { pickLiveMedia, prepareLiveMedia, type LiveMedia, type PreparedLive } from '@/features/live/liveMedia';
+import { uuid } from '@/lib/uuid';
 import { LiveVideo } from '@/features/live/LiveVideo';
+import { LivePhoto } from '@/features/live/LivePhoto';
 import { useAccount } from '@/features/auth/account';
 import { addFriend, deleteServerIrl, editServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
 import { useDrafts } from '@/features/posts/posts';
@@ -124,13 +125,13 @@ function LiveCard({ live }: { live: Live }) {
         </View>
       </View>
       {hasPhoto ? (
-        <TapPhoto photo={live.photoUri ? { uri: live.photoUri } : { visual: { photo: live.photo! }, light: city.light }} style={styles.photo}>
-          {live.photoUri ? (
-            <Image source={{ uri: live.photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
-          ) : (
+        live.photoUri ? (
+          <LivePhoto url={live.photoUri} style={styles.media} />
+        ) : (
+          <TapPhoto photo={{ visual: { photo: live.photo! }, light: city.light }} style={styles.photo}>
             <Photo visual={{ photo: live.photo! }} light={city.light} style={StyleSheet.absoluteFill} width={800} recyclingKey={live.id} />
-          )}
-        </TapPhoto>
+          </TapPhoto>
+        )
       ) : null}
       <Text variant={hasPhoto ? 'body' : 'titleM'}>{live.text}</Text>
       {person ? (
@@ -277,7 +278,7 @@ function FriendsLiveNow() {
 function ServerFeed({ cityId }: { cityId: CityId }) {
   const t = useTheme();
   const { narrow } = useCityFilter(cityId);
-  const { posts } = useServerIrl(cityId);
+  const { posts, refresh: reloadFeed } = useServerIrl(cityId);
   const { friends, refresh } = useFriends();
   const router = useRouter();
   const eng = useEngagement('irl_post', posts.map((p) => p.id));
@@ -326,12 +327,16 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 </View>
               </View>
             </View>
-            {p.mediaUrl && p.mediaKind === 'video' ? (
-              <LiveVideo url={p.mediaUrl} poster={p.posterUrl} seconds={p.seconds} style={styles.photo} />
-            ) : p.mediaUrl ? (
-              <TapPhoto
-                photo={{ uri: p.mediaUrl }}
-                style={styles.photo}
+            {/* The frame follows the media's own shape; one broken media shows its own retry, never breaks the feed. */}
+            {p.mediaKind === 'video' && p.mediaUrl ? (
+              <LiveVideo fit url={p.mediaUrl} poster={p.posterUrl} seconds={p.seconds} ratio={p.mediaRatio} onRetry={reloadFeed} style={styles.media} />
+            ) : p.mediaKind ? (
+              <LivePhoto
+                url={p.mediaUrl}
+                kind={p.mediaKind}
+                ratio={p.mediaRatio}
+                onRetry={reloadFeed}
+                style={styles.media}
                 liked={eng.get(p.id).liked}
                 onLike={() => {
                   if (!eng.signedIn) {
@@ -341,12 +346,10 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                   // A double tap only ever likes, even before the like state has loaded.
                   eng.like(p.id, true).catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
                 }}
-              >
-                <Image source={{ uri: p.mediaUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
-              </TapPhoto>
+              />
             ) : null}
             {p.body ? (
-              <Text variant={p.mediaUrl ? 'body' : 'titleM'} raw>
+              <Text variant={p.mediaKind ? 'body' : 'titleM'} raw>
                 {p.body}
               </Text>
             ) : null}
@@ -523,6 +526,9 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const area = city.areas.some((a) => a.id === picked) ? picked : city.areas[0].id;
   const [media, setMedia] = useState<LiveMedia | undefined>();
   const uri = media?.uri;
+  // The picked photo (or the video's poster) is prepared while the member writes: Post then only uploads.
+  const [prep, setPrep] = useState<{ uri: string; data: PreparedLive } | null>(null);
+  const ready = prep && prep.uri === uri ? prep.data : null;
   const [progress, setProgress] = useState<number | null>(null);
   // Untouched, the post follows the member's IRL visibility setting; the chips show it.
   const [chosen, setChosen] = useState<'friends' | 'everyone' | null>(null);
@@ -586,7 +592,12 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const pick = async (kind: 'photo' | 'video' = 'photo') => {
     try {
       const m = await pickLiveMedia(kind);
-      if (m) setMedia(m);
+      if (!m) return;
+      setMedia(m);
+      prepareLiveMedia(m)
+        .then((data) => setPrep({ uri: m.uri, data }))
+        // A failure shows when posting (which tries again), not now.
+        .catch(() => undefined);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not open this file', 'x', 'live');
     }
@@ -595,40 +606,53 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const createdActivity = useRef<string | null>(null);
   // A double tap must never post twice: the ref flips before React re-renders.
   const sending = useRef(false);
+  // The same post tried again keeps its id: if the first try was saved but its
+  // answer got lost, the retry finds it instead of publishing it twice.
+  const attempt = useRef<{ key: string; id: string } | null>(null);
   const submit = async () => {
     if ((!text.trim() && !media) || busy || sending.current) return;
     if (account) {
       // Signed in: the post goes to the server, friends see it live.
       sending.current = true;
       setBusy(true);
+      const key = JSON.stringify([text.trim(), media?.uri ?? null, area, chosen, openUp, cityId]);
+      if (attempt.current?.key !== key) attempt.current = { key, id: uuid() };
+      if (media) setProgress(0);
       try {
-        // "Anyone want to join?" becomes a real activity the post points at.
-        // A retry after a failed post reuses the activity already created.
-        let activityId: string | null = openUp ? createdActivity.current : null;
-        if (openUp && !activityId) {
-          const start = new Date(Date.now() + 30 * 60 * 1000);
-          activityId = await createServerActivity(
-            {
-              cityId,
-              title: text.trim().slice(0, 80).padEnd(3, '.'),
-              place: areaName(city, area),
-              areaId: area,
-              day: 'Today',
-              time: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
-              spots: 0,
-              privacy: visibility === 'everyone' ? 'public' : 'connections',
-              format: 'meetup',
-              currency: city.currency,
-            },
-            start,
-          );
-          createdActivity.current = activityId;
-          track('ACTIVITY_CREATE', { via: 'irl' });
-        }
-        await postServerIrl({ cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), media, onProgress: media?.kind === 'video' ? setProgress : undefined, visibility: chosen ?? undefined, activityId });
+        // "Anyone want to join?" becomes a real activity the post points at,
+        // created while the photo or video uploads. A retry after a failed
+        // post reuses the activity already created.
+        const activity: Promise<string | null> | null = !openUp
+          ? null
+          : createdActivity.current
+            ? Promise.resolve(createdActivity.current)
+            : (() => {
+                const start = new Date(Date.now() + 30 * 60 * 1000);
+                return createServerActivity(
+                  {
+                    cityId,
+                    title: text.trim().slice(0, 80).padEnd(3, '.'),
+                    place: areaName(city, area),
+                    areaId: area,
+                    day: 'Today',
+                    time: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
+                    spots: 0,
+                    privacy: visibility === 'everyone' ? 'public' : 'connections',
+                    format: 'meetup',
+                    currency: city.currency,
+                  },
+                  start,
+                ).then((id) => {
+                  createdActivity.current = id;
+                  track('ACTIVITY_CREATE', { via: 'irl' });
+                  return id;
+                });
+              })();
+        await postServerIrl({ id: attempt.current.id, cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), media, onProgress: media ? setProgress : undefined, visibility: chosen ?? undefined, activityId: activity });
+        track('IRL_CREATE', { photo: media?.kind === 'photo', video: media?.kind === 'video', activity: Boolean(activity) });
         createdActivity.current = null;
+        attempt.current = null;
         setChosen(null);
-        track('IRL_CREATE', { photo: media?.kind === 'photo', video: media?.kind === 'video', activity: Boolean(activityId) });
       } catch (e) {
         // The text and the photo or video stay: the member taps Post live again.
         toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
@@ -693,10 +717,11 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         />
         {media ? (
           <Animated.View entering={FadeIn}>
+            {/* The same frame as in the feed: what you see here is what gets published. */}
             {media.kind === 'video' ? (
-              <LiveVideo url={media.uri} poster={media.poster} seconds={media.seconds} style={styles.preview} />
+              <LiveVideo fit url={media.uri} poster={media.poster} seconds={media.seconds} ratio={ready?.ratio ?? media.ratio} style={styles.media} />
             ) : (
-              <Image source={{ uri: media.uri }} style={styles.preview} contentFit="cover" />
+              <LivePhoto url={media.uri} ratio={ready?.ratio ?? media.ratio} tappable={false} style={styles.media} />
             )}
             <PressableScale haptic="select" onPress={() => setMedia(undefined)} disabled={busy} hitSlop={8} style={styles.removeMedia} accessibilityLabel={media.kind === 'video' ? 'Remove the video' : 'Remove the photo'}>
               <Icon name="x" size={16} color="#fff" />
@@ -709,7 +734,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
               <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: t.c.text }]} />
             </View>
             <Text variant="caption" tone="secondary">
-              {tx('Sending the video… {n}%', { n: Math.round(progress * 100) })}
+              {tx(media?.kind === 'photo' ? 'Sending the photo… {n}%' : 'Sending the video… {n}%', { n: Math.round(progress * 100) })}
             </Text>
           </View>
         ) : null}
@@ -756,6 +781,8 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   photo: { height: 220, borderRadius: radius.lg, overflow: 'hidden' },
+  // Live photos and videos: the height follows the media's shape (LivePhoto / LiveVideo fit).
+  media: { borderRadius: radius.lg, overflow: 'hidden' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg },
   goLive: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, paddingLeft: 12, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },
@@ -764,7 +791,6 @@ const styles = StyleSheet.create({
   round: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   friend: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, borderRadius: radius.xl },
   input: { minHeight: 96, borderRadius: radius.lg, padding: 16, fontFamily: font.medium, fontSize: 17, textAlignVertical: 'top' },
-  preview: { height: 180, borderRadius: radius.lg },
   photoFrame: { height: 168, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
   addPhoto: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed', justifyContent: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

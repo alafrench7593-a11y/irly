@@ -1,4 +1,4 @@
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { ImageManipulator, manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 /**
  * Type and extension of a picked image, from its URI. iOS (with editing)
@@ -23,20 +23,34 @@ export async function imageBytes(uri: string): Promise<ArrayBuffer> {
   return out.buffer;
 }
 
+/** Longest side of every shared photo. */
+export const SHARE_MAX_EDGE = 1600;
+
 /**
- * A picked photo made safe to share: re-encoded as JPEG, which drops the
- * file's metadata (EXIF: GPS position where the photo was taken, phone
- * model, date), and kept to 1600 px on the long side. Every photo other
- * members can see goes through here before it is uploaded.
+ * A picked photo made safe to share, as a file: decoded once (turned upright
+ * from its EXIF orientation by the manipulator on iOS and Android), kept to
+ * 1600 px on the long side and encoded ONCE as JPEG, which drops the file's
+ * metadata (EXIF: GPS position, phone model, date). HEIC, PNG and WebP come
+ * out as JPEG. Its size is the size of the picture as it is shown.
  */
-export async function cleanImage(uri: string): Promise<{ body: ArrayBuffer; ext: 'jpg'; contentType: 'image/jpeg' }> {
-  let out = await manipulateAsync(uri, [], { compress: 0.85, format: SaveFormat.JPEG });
-  const long = Math.max(out.width, out.height);
-  if (long > 1600) {
-    const resize = out.width >= out.height ? { width: 1600 } : { height: 1600 };
-    out = await manipulateAsync(out.uri, [{ resize }], { compress: 0.85, format: SaveFormat.JPEG });
+export async function prepareImage(uri: string): Promise<{ uri: string; width: number; height: number; ext: 'jpg'; contentType: 'image/jpeg' }> {
+  let ref = await ImageManipulator.manipulate(uri).renderAsync();
+  const long = Math.max(ref.width, ref.height);
+  if (long > SHARE_MAX_EDGE) {
+    const resize = ref.width >= ref.height ? { width: SHARE_MAX_EDGE } : { height: SHARE_MAX_EDGE };
+    ref = await ImageManipulator.manipulate(ref).resize(resize).renderAsync();
   }
-  return { body: await imageBytes(out.uri), ext: 'jpg', contentType: 'image/jpeg' };
+  const out = await ref.saveAsync({ compress: 0.85, format: SaveFormat.JPEG });
+  return { uri: out.uri, width: out.width, height: out.height, ext: 'jpg', contentType: 'image/jpeg' };
+}
+
+/**
+ * A picked photo made safe to share (see prepareImage), as bytes. Every photo
+ * other members can see goes through here or prepareImage before it is uploaded.
+ */
+export async function cleanImage(uri: string): Promise<{ body: ArrayBuffer; ext: 'jpg'; contentType: 'image/jpeg'; width: number; height: number }> {
+  const img = await prepareImage(uri);
+  return { body: await imageBytes(img.uri), ext: 'jpg', contentType: 'image/jpeg', width: img.width, height: img.height };
 }
 
 /**
@@ -47,7 +61,6 @@ export async function cleanImage(uri: string): Promise<{ body: ArrayBuffer; ext:
 export async function faceThumb(uri: string): Promise<ArrayBuffer> {
   if (/^https?:/.test(uri)) {
     const { Image } = await import('expo-image');
-    const { ImageManipulator } = await import('expo-image-manipulator');
     const ref = await Image.loadAsync(uri);
     const side = ref.width >= ref.height ? { width: 256 } : { height: 256 };
     const out = await (await ImageManipulator.manipulate(ref).resize(side).renderAsync()).saveAsync({ compress: 0.8, format: SaveFormat.JPEG });
