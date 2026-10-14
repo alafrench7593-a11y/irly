@@ -125,3 +125,15 @@ const [orphans] = await query(
   "select count(*)::int as n, count(*) filter (where u.created_at > now() - interval '30 days')::int as recent from auth.users u left join public.profiles p on p.id = u.id where p.id is null and u.email not like 'e2e-%@irly.test'",
 );
 console.log(`• accounts without a server profile: ${orphans.n} (${orphans.recent} created in the last 30 days)`);
+
+// Diagnostics (read only, nothing personal): how those accounts signed in, and
+// the causes of errors members saw as "something went wrong" in the last 7 days.
+const how = await query(
+  "select coalesce(u.raw_app_meta_data->>'provider', 'unknown') as provider, (u.email_confirmed_at is not null) as confirmed, to_char(u.created_at, 'YYYY-MM-DD') as day from auth.users u left join public.profiles p on p.id = u.id where p.id is null and u.email not like 'e2e-%@irly.test' order by u.created_at desc limit 10",
+);
+for (const r of how) console.log(`  · no profile: signed in with ${r.provider}, email confirmed ${r.confirmed}, created ${r.day}`);
+const errors = await query(
+  "select name, coalesce(props->>'code', '') as code, coalesce(props->>'where', '') as place, count(*)::int as n from public.analytics_events where name in ('SERVER_ERROR', 'PROFILE_MISSING') and created_at > now() - interval '7 days' group by 1, 2, 3 order by n desc limit 20",
+);
+console.log(errors.length ? '• errors members saw (7 days):' : '• errors members saw (7 days): none recorded');
+for (const r of errors) console.log(`  · ${r.name} ${r.code}${r.place ? ` (${r.place})` : ''}: ${r.n}`);

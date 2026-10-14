@@ -25,6 +25,8 @@ function readable(title: string): string {
   if (/jwt|row-level security|violates|permission denied|duplicate key|pgrst|syntax error|relation .* does not exist|status code 5\d\d|internal server error/i.test(title)) {
     // The member reads a calm message; the developer still sees the real cause in Expo Go.
     if (__DEV__) console.warn('[IRLY] server error shown as generic:', title);
+    // A short label of the cause (a constraint or a rule name, never the member's data) reaches the team.
+    void import('@/features/auth/account').then((m) => import('@/lib/analytics').then((a) => a.track('SERVER_ERROR', { code: m.errorCode(title) })));
     return 'Something went wrong on our side. Try again in a moment';
   }
   return title;

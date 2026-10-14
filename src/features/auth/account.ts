@@ -1,4 +1,6 @@
 import { changed } from '@/features/server/sync';
+import { router } from 'expo-router';
+import { track } from '@/lib/analytics';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { create } from 'zustand';
@@ -57,7 +59,7 @@ if (supabase) {
         // A profile whose first publish failed (offline at signup) is published now:
         // without it every join is refused by the server.
         restoreProfile(uid)
-          .then((restored) => (restored ? undefined : syncProfile(uid).catch(() => undefined).then(() => refreshOwnPhoto(uid))))
+          .then((restored) => (restored ? undefined : syncProfile(uid).catch(publishFailed).then(() => refreshOwnPhoto(uid))))
           .catch(() => undefined);
       }
     })
@@ -72,7 +74,7 @@ if (supabase) {
       const uid = session.user.id;
       restoreProfile(uid)
         .then((restored) => (restored ? undefined : syncProfile(uid)))
-        .catch(() => undefined);
+        .catch(publishFailed);
     }
   });
 }
@@ -145,10 +147,57 @@ export async function withProfile<T>(action: () => Promise<T>): Promise<T> {
     return await action();
   } catch (e) {
     const uid = useAuthStore.getState().account?.userId;
-    if (!uid || !(e instanceof Error) || !/Finish your profile first|profiles_?\w*fkey|foreign key constraint/i.test(e.message)) throw e;
-    await syncProfile(uid);
-    return action();
+    if (!uid || !(e instanceof Error) || !(await profileMissing(uid, e.message))) throw e;
+    // Published now if this phone has the profile; otherwise the member finishes it.
+    const published = await syncProfile(uid).then(
+      () => true,
+      (err: unknown) => {
+        track('SERVER_ERROR', { code: errorCode(err instanceof Error ? err.message : String(err)), where: 'profile_publish' });
+        return false;
+      },
+    );
+    if (published) {
+      try {
+        return await action();
+      } catch (again) {
+        if (!(again instanceof Error) || !(await profileMissing(uid, again.message))) throw again;
+      }
+    }
+    askToFinishProfile();
+    throw new Error('Finish your profile first');
   }
+}
+
+/** The server refused because this account has no profile row (not for another reason, such as a community it is not in). */
+async function profileMissing(uid: string, message: string): Promise<boolean> {
+  if (/Finish your profile first|profiles_?\w*fkey|creator_id_fkey|user_id_fkey|author_id_fkey|foreign key constraint/i.test(message)) return true;
+  if (!/row-level security/i.test(message) || !supabase) return false;
+  const { data, error } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
+  return !error && !data;
+}
+
+/** Opens the profile step of signup, already filled with what this phone knows; finishing it publishes the profile. */
+let asked = 0;
+function askToFinishProfile() {
+  if (Date.now() - asked < 5000) return;
+  asked = Date.now();
+  track('PROFILE_MISSING', {});
+  setTimeout(() => router.push('/onboarding/profile'), 600);
+}
+
+/** A short, non-personal label for a server error (a constraint, a rule): enough to find the cause, never the user's data. */
+// A profile that could not reach the server at sign-in: its cause is recorded
+// (no personal data), the member is asked again on their first action.
+function publishFailed(err: unknown) {
+  track('SERVER_ERROR', { code: errorCode(err instanceof Error ? err.message : String(err)), where: 'profile_signin' });
+}
+
+export function errorCode(message: string): string {
+  const named = /(?:constraint|policy) "([a-z0-9_]{3,60})"/i.exec(message)?.[1];
+  if (named) return named;
+  if (/row-level security/i.test(message)) return `rls:${/table "([a-z_]{3,40})"/i.exec(message)?.[1] ?? 'unknown'}`;
+  const first = message.toLowerCase().replace(/[^a-z_ ]/g, ' ').trim().split(/\s+/).slice(0, 5).join('_');
+  return first.slice(0, 60) || 'unknown';
 }
 
 export function syncProfile(uid: string): Promise<void> {
