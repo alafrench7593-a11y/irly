@@ -65,7 +65,9 @@ export const changedAll = () => changed(...KINDS);
 const SIGNAL_KINDS: Record<string, SyncKind[]> = {
   activities: ['activities'],
   communities: ['communities'],
-  inbox: ['inbox'],
+  // Leaving a chat often means its activity or community went away too (a deleted community is
+  // hidden from you, so its own change never reaches you): reload those as well, as before.
+  inbox: ['inbox', 'activities', 'communities'],
   follows: ['follows'],
   friends: ['friends'],
   saved: ['saved'],
