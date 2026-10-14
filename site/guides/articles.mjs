@@ -957,6 +957,132 @@ export const ARTICLES = [
     cta: { title: 'Tu construis ton réseau à Dubaï ?', body: 'Crée ton profil pro et rencontre des personnes dont les objectifs correspondent aux tiens.', label: 'Créer mon profil pro' },
     related: [{ label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
   },
+  {
+    lang: 'en',
+    pair: 'dubai-women-activities',
+    path: 'dubai/activities-for-women/',
+    cover: 'brunch',
+    figure: { photo: 'running', after: 1 },
+    city: 'Dubai',
+    updated: '2026-10-14',
+    title: 'Activities for Women in Dubai: Where to Meet Other Women | IRLY',
+    description: 'Activities for women in Dubai to meet other women: classes, sport, culture and communities, women-only options, and simple habits to feel at ease.',
+    h1: 'Activities for women in Dubai: where to meet other women',
+    lead: 'The easiest way to meet other women in Dubai is a regular activity in a small group: a class, a sport session, a book club or a community that meets every week. Women-only options exist for those who prefer them, and many mixed activities are just as welcoming. Below: the kinds of activities that work, how to choose, and how to turn a first meeting into a friendship.',
+    sections: [
+      {
+        h2: 'Why a regular activity works better than a one-off night out',
+        html: `<p>Friendships grow from seeing the same faces again. A weekly class or session gives you that without having to organise anything: you come back, people recognise you, and conversation follows. A one-off event can be fun, but it rarely leads to a second meeting on its own.</p>
+<p>Small groups help too. In a group of six to twelve, everyone gets to talk; in a crowd of a hundred, most people stay with whoever they came with.</p>`,
+      },
+      {
+        h2: 'Activities that work well to meet other women',
+        html: `<ul>
+<li><strong>Fitness classes:</strong> yoga, pilates, dance, boxing or spinning. Some studios and gyms offer women-only classes or areas; ask when you visit.</li>
+<li><strong>Run and walk clubs:</strong> early morning or evening groups, at an easy pace, often with a coffee afterwards.</li>
+<li><strong>Team and racket sports:</strong> padel, tennis, volleyball or netball for mixed levels. Look for “beginners welcome” sessions.</li>
+<li><strong>Creative workshops:</strong> pottery, painting, cooking, photography. You have something to do with your hands and something to talk about.</li>
+<li><strong>Book clubs and language exchanges:</strong> a set topic each time, and the same group from one session to the next.</li>
+<li><strong>Brunches and coffee meetups:</strong> organised by communities around a language, a profession or being new in the city.</li>
+<li><strong>Volunteering:</strong> a regular role in a cause you care about puts you next to people who share it.</li>
+<li><strong>Mothers’ groups:</strong> playdates and parent meetups are a natural way to meet other mothers in your area.</li>
+</ul>`,
+      },
+      {
+        h2: 'Women-only or mixed: choosing what suits you',
+        html: `<p>Women-only spaces can feel more relaxed, especially when you are new, when you prefer it for personal or cultural reasons, or for activities such as swimming or fitness. Mixed activities are also a good way to meet women, simply because many of them go alone too.</p>
+<p>Try one of each in your first weeks and keep the one where you felt most at ease. What matters most is the format: small, regular, with something to do.</p>`,
+      },
+      {
+        h2: 'From a first meeting to a friendship',
+        html: `<ol>
+<li><strong>Go back at least three times.</strong> The first session is about finding your way; by the third, people know your name.</li>
+<li><strong>Suggest something small.</strong> A coffee after the class or walking together next time is easier to say yes to than a big plan.</li>
+<li><strong>Swap contacts naturally.</strong> “Shall we make a group for this class?” works well and includes everyone.</li>
+<li><strong>Take the first step.</strong> Many women around you are new too and are waiting for someone to suggest a plan.</li>
+</ol>`,
+      },
+      {
+        h2: 'Simple habits to feel safe and at ease',
+        html: `<ul>
+<li><strong>Meet in public places first.</strong> A studio, a café or a busy park is the right setting for the first meetings.</li>
+<li><strong>Tell someone you trust where you are going,</strong> and use registered taxis or ride-hailing apps to get home.</li>
+<li><strong>Check the organiser.</strong> A group that has met before, with reviews or a clear page, is a good sign.</li>
+<li><strong>Respect local rules.</strong> Dress and behaviour expectations vary by place; when in doubt, look at the venue’s guidelines.</li>
+</ul>
+<p>In an emergency in the UAE, call <strong>999</strong> (police) or <strong>998</strong> (ambulance).</p>`,
+      },
+      {
+        h2: 'Where IRLY fits in',
+        html: `<p>IRLY Girl is a space in the app reserved for women: activities, communities and a feed only women can see, to plan a walk, a class or a brunch together. The rest of IRLY lists mixed activities and communities around what you like. It is one option among others; what matters is finding a group you want to go back to.</p>`,
+      },
+    ],
+    cta: { title: 'Looking for other women to go out with?', body: 'Discover IRLY Girl: activities and communities reserved for women.', label: 'Discover IRLY Girl' },
+    related: [{ label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+  },
+  {
+    lang: 'fr',
+    pair: 'dubai-women-activities',
+    path: 'fr/dubai/activites-entre-femmes/',
+    cover: 'brunch',
+    figure: { photo: 'running', after: 1 },
+    city: 'Dubaï',
+    updated: '2026-10-14',
+    title: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes | IRLY',
+    description: 'Des activités entre femmes à Dubaï pour rencontrer d’autres femmes : cours, sport, culture et communautés, options réservées aux femmes, et réflexes simples pour être à l’aise.',
+    h1: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes',
+    lead: 'Le plus simple pour rencontrer d’autres femmes à Dubaï : une activité régulière en petit groupe, comme un cours, une séance de sport, un club de lecture ou une communauté qui se retrouve chaque semaine. Des options réservées aux femmes existent pour celles qui les préfèrent, et beaucoup d’activités mixtes sont tout aussi accueillantes. Ci-dessous : les activités qui marchent, comment choisir, et comment transformer une première rencontre en amitié.',
+    sections: [
+      {
+        h2: 'Pourquoi une activité régulière marche mieux qu’une soirée ponctuelle',
+        html: `<p>Les amitiés naissent en revoyant les mêmes visages. Un cours ou une séance chaque semaine t’offre ça sans rien organiser : tu reviens, on te reconnaît, et la conversation suit. Un événement ponctuel peut être sympa, mais mène rarement à une deuxième rencontre tout seul.</p>
+<p>Les petits groupes aident aussi. À six ou douze, tout le monde parle ; dans une foule de cent personnes, chacune reste avec celles avec qui elle est venue.</p>`,
+      },
+      {
+        h2: 'Les activités qui marchent pour rencontrer d’autres femmes',
+        html: `<ul>
+<li><strong>Les cours de sport :</strong> yoga, pilates, danse, boxe ou vélo en salle. Certains studios et salles proposent des cours ou des espaces réservés aux femmes ; renseigne-toi sur place.</li>
+<li><strong>Les clubs de course et de marche :</strong> tôt le matin ou en soirée, à un rythme tranquille, souvent suivis d’un café.</li>
+<li><strong>Les sports d’équipe et de raquette :</strong> padel, tennis, volley ou netball tous niveaux. Cherche les séances « débutantes bienvenues ».</li>
+<li><strong>Les ateliers créatifs :</strong> poterie, peinture, cuisine, photo. Les mains sont occupées et on a de quoi parler.</li>
+<li><strong>Les clubs de lecture et les échanges de langues :</strong> un thème à chaque fois, et le même groupe d’une séance à l’autre.</li>
+<li><strong>Les brunchs et cafés rencontres :</strong> organisés par des communautés autour d’une langue, d’un métier ou du fait d’être nouvelle en ville.</li>
+<li><strong>Le bénévolat :</strong> un rôle régulier pour une cause qui te tient à cœur te place à côté de personnes qui la partagent.</li>
+<li><strong>Les groupes de mamans :</strong> les sorties avec les enfants et les rencontres de parents sont un moyen naturel de rencontrer d’autres mères près de chez toi.</li>
+</ul>`,
+      },
+      {
+        h2: 'Entre femmes ou mixte : choisir ce qui te convient',
+        html: `<p>Les espaces réservés aux femmes peuvent paraître plus détendus, surtout quand tu viens d’arriver, quand tu le préfères pour des raisons personnelles ou culturelles, ou pour des activités comme la natation ou le sport en salle. Les activités mixtes sont aussi un bon moyen de rencontrer des femmes, tout simplement parce que beaucoup y viennent seules elles aussi.</p>
+<p>Essaie l’une et l’autre pendant tes premières semaines et garde celle où tu t’es sentie le plus à l’aise. Ce qui compte surtout, c’est le format : petit, régulier, avec quelque chose à faire.</p>`,
+      },
+      {
+        h2: 'D’une première rencontre à une amitié',
+        html: `<ol>
+<li><strong>Reviens au moins trois fois.</strong> La première séance sert à prendre ses repères ; à la troisième, on connaît ton prénom.</li>
+<li><strong>Propose quelque chose de petit.</strong> Un café après le cours ou marcher ensemble la prochaine fois, c’est plus facile à accepter qu’un grand projet.</li>
+<li><strong>Échange tes contacts naturellement.</strong> « On fait un groupe pour ce cours ? » marche bien et inclut tout le monde.</li>
+<li><strong>Fais le premier pas.</strong> Beaucoup de femmes autour de toi sont nouvelles aussi et attendent que quelqu’un propose.</li>
+</ol>`,
+      },
+      {
+        h2: 'Des réflexes simples pour être à l’aise et en sécurité',
+        html: `<ul>
+<li><strong>Retrouvez-vous d’abord dans des lieux publics.</strong> Un studio, un café ou un parc fréquenté conviennent aux premières rencontres.</li>
+<li><strong>Dis à quelqu’un de confiance où tu vas,</strong> et rentre en taxi officiel ou avec une application de VTC.</li>
+<li><strong>Vérifie qui organise.</strong> Un groupe qui s’est déjà réuni, avec des avis ou une page claire, est bon signe.</li>
+<li><strong>Respecte les règles locales.</strong> Les attentes de tenue et de comportement varient selon les lieux ; dans le doute, regarde les consignes de l’endroit.</li>
+</ul>
+<p>En cas d’urgence aux Émirats, appelle le <strong>999</strong> (police) ou le <strong>998</strong> (ambulance).</p>`,
+      },
+      {
+        h2: 'La place d’IRLY',
+        html: `<p>IRLY Girl est un espace de l’app réservé aux femmes : des activités, des communautés et un fil que seules les femmes voient, pour organiser ensemble une balade, un cours ou un brunch. Le reste d’IRLY propose des activités et des communautés mixtes autour de ce que tu aimes. C’est une option parmi d’autres ; ce qui compte, c’est de trouver un groupe où tu as envie de revenir.</p>`,
+      },
+    ],
+    cta: { title: 'Tu cherches d’autres femmes avec qui sortir ?', body: 'Découvre IRLY Girl : des activités et des communautés réservées aux femmes.', label: 'Découvrir IRLY Girl' },
+    related: [{ label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+  },
 ];
 
 export const APP_URL = app;
