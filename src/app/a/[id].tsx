@@ -27,6 +27,7 @@ import { hideItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
 import { addToPhoneCalendar } from '@/lib/phoneCalendar';
+import { useNow } from '@/lib/useNow';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -49,6 +50,7 @@ export default function ActivityPage() {
   const eng = useEngagement('activity', a ? [a.id] : []);
   const [busy, setBusy] = useState(false);
   const [managing, setManaging] = useState(false);
+  const now = useNow();
   const auth = useAuthStatus();
 
   useEffect(() => {
@@ -110,6 +112,8 @@ export default function ActivityPage() {
   const going = a.myStatus === 'going';
   const hosting = a.creatorId === account?.userId;
   const full = a.capacity != null && a.going >= a.capacity && !going;
+  // Same cutoff as the server's join: two hours after the start when no end is set.
+  const over = (a.endsAt ?? a.startsAt + 2 * 3600_000) < now;
   const isEvent = a.format === 'event';
   const target = { type: 'activity' as const, id: a.id, title: a.title };
 
@@ -230,6 +234,8 @@ export default function ActivityPage() {
           </>
         ) : a.cancelled ? (
           <Button label="Cancelled" disabled full onPress={() => undefined} />
+        ) : over ? (
+          <Button label="Ended" disabled full onPress={() => undefined} />
         ) : (
           <Button label={full ? 'Full' : isEvent ? 'Join event' : 'Join'} icon="plus" full disabled={full} loading={busy} onPress={join} />
         )}
@@ -246,6 +252,7 @@ export default function ActivityPage() {
           visible={managing}
           onClose={() => setManaging(false)}
           a={a}
+          over={over}
           onCancelled={() => {
             toast('Cancelled. Participants were notified', 'check', 'brand');
             refresh();
@@ -266,7 +273,7 @@ export default function ActivityPage() {
  * One write to the server; every screen showing the activity (lists, map,
  * calendar, chat title, search) follows through the sync channel.
  */
-function HostSheet({ visible, onClose, a, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; title: string; placeName: string | null; description: string | null; cancelled: boolean }; onCancelled: () => void; onDeleted: () => void }) {
+function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; title: string; placeName: string | null; description: string | null; cancelled: boolean }; over: boolean; onCancelled: () => void; onDeleted: () => void }) {
   const [title, setTitle] = useState(a.title);
   const [place, setPlace] = useState(a.placeName ?? '');
   const [about, setAbout] = useState(a.description ?? '');
@@ -292,7 +299,7 @@ function HostSheet({ visible, onClose, a, onCancelled, onDeleted }: { visible: b
         <Field value={place} onChangeText={setPlace} placeholder="Place (e.g. Kite Beach, court 3)" accessibilityLabel="Place" icon="pin" maxLength={120} />
         <Field value={about} onChangeText={setAbout} placeholder="Description" accessibilityLabel="Description" multiline maxLength={1000} />
         <Button label="Save changes" icon="check" full loading={saving} disabled={saving || title.trim().length < 3} onPress={save} />
-        {!a.cancelled ? (
+        {!a.cancelled && !over ? (
           <Button
             label="Cancel activity"
             icon="x"
@@ -305,7 +312,7 @@ function HostSheet({ visible, onClose, a, onCancelled, onDeleted }: { visible: b
                     onClose();
                     onCancelled();
                   })
-                  .catch(() => toast('Could not cancel', 'x', 'live')),
+                  .catch((e: unknown) => toast(e instanceof Error ? e.message : 'Could not cancel', 'x', 'live')),
               'Cancel activity')
             }
           />

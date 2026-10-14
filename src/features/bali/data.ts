@@ -3,6 +3,7 @@ import { useAccount } from '@/features/auth/account';
 import { supabase, topic } from '@/lib/supabase';
 import { cityScope } from '@/data/destinations';
 import { useCityFilter } from '@/features/server/scope';
+import { useRefreshOn } from '@/features/server/sync';
 import type { CityId } from '@/data/types';
 import type { AreaProfile, OpeningHours } from './fit';
 
@@ -468,22 +469,29 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
     `comm-${cityId}-${like}-${girlOnly}-${account?.userId ?? 'anon'}`,
     async () => {
       if (!account) return [];
+      // Top-level communities only (sub-groups live inside them), counted by
+      // the stored members_count: only our own membership row comes back,
+      // not every member of every community.
       let q = sb()
         .from('communities')
-        .select('id, name, tagline, city_id, community_members(user_id)')
+        .select('id, name, tagline, city_id, members_count, community_members(user_id)')
         .in('city_id', cityScope(cityId as CityId))
         .ilike('name', `%${like}%`)
-        .is('deleted_at', null);
+        .is('deleted_at', null)
+        .is('parent_id', null)
+        .eq('community_members.user_id', account.userId);
       if (girlOnly) q = q.eq('girl_only', true);
-      const { data, error } = await q.order('name');
+      const { data, error } = await q.order('name').limit(60);
       if (error) throw new Error(error.message);
       return (data ?? []).map((c) => {
         const m = (c.community_members ?? []) as { user_id: string }[];
-        return { id: c.id, name: c.name, tagline: c.tagline, member: m.some((x) => x.user_id === account.userId), members: m.length, cityId: c.city_id as string };
+        return { id: c.id, name: c.name, tagline: c.tagline, member: m.length > 0, members: (c.members_count as number) ?? 0, cityId: c.city_id as string };
       });
     },
     [],
   );
+  // Joined, left, created or deleted anywhere in the app: the list follows.
+  useRefreshOn(['communities'], q.reload);
   const data = useMemo(() => q.data.filter((c) => keep(c.cityId)), [q.data, keep]);
   return { ...q, data };
 }

@@ -136,7 +136,7 @@ export async function verifyCode(email: string, code: string): Promise<void> {
  * Writes the profile filled in at signup to `profiles`, once. Gender is
  * locked server-side after this first write (IRLY Girl access).
  */
-const syncing = new Map<string, Promise<void>>();
+const syncing = new Map<string, Promise<boolean>>();
 
 /**
  * Runs a server action; when the server answers that this account has no
@@ -150,7 +150,7 @@ export async function withProfile<T>(action: () => Promise<T>): Promise<T> {
     if (!uid || !(e instanceof Error) || !(await profileMissing(uid, e.message))) throw e;
     // Published now if this phone has the profile; otherwise the member finishes it.
     const published = await syncProfile(uid).then(
-      () => true,
+      (onServer) => onServer,
       (err: unknown) => {
         track('SERVER_ERROR', { code: errorCode(err instanceof Error ? err.message : String(err)), where: 'profile_publish' });
         return false;
@@ -170,8 +170,10 @@ export async function withProfile<T>(action: () => Promise<T>): Promise<T> {
 
 /** The server refused because this account has no profile row (not for another reason, such as a community it is not in). */
 async function profileMissing(uid: string, message: string): Promise<boolean> {
-  if (/Finish your profile first|profiles_?\w*fkey|creator_id_fkey|user_id_fkey|author_id_fkey|foreign key constraint/i.test(message)) return true;
-  if (!/row-level security/i.test(message) || !supabase) return false;
+  if (/Finish your profile first/i.test(message)) return true;
+  // Only a refusal that can come from a missing profile row; another foreign key (a place, a community)
+  // is a different problem, and the profiles table always has the last word.
+  if (!/row-level security|profiles_?\w*fkey|creator_id_fkey|user_id_fkey|author_id_fkey|sender_id_fkey|follower_id_fkey/i.test(message) || !supabase) return false;
   const { data, error } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
   return !error && !data;
 }
@@ -200,7 +202,8 @@ export function errorCode(message: string): string {
   return first.slice(0, 60) || 'unknown';
 }
 
-export function syncProfile(uid: string): Promise<void> {
+/** Publishes this phone's signup profile when the server has none; resolves true once the server has this account's profile. */
+export function syncProfile(uid: string): Promise<boolean> {
   // Every mounted useAccount() and verifyCode() call this on sign-in: share one run.
   const running = syncing.get(uid);
   if (running) return running;
@@ -241,8 +244,8 @@ export function restoreProfile(uid: string): Promise<boolean> {
   return run;
 }
 
-async function readBack(uid: string): Promise<boolean> {
-  if (!supabase || useStore.getState().onboarded) return false;
+async function readBack(uid: string, force = false): Promise<boolean> {
+  if (!supabase || (!force && useStore.getState().onboarded)) return false;
   const { data, error } = await supabase.rpc('my_profile');
   const r = ((data as ServerProfile[] | null) ?? [])[0];
   if (error || !r || !r.first_name) return false;
@@ -258,7 +261,7 @@ async function readBack(uid: string): Promise<boolean> {
   }
   const born = r.birthdate ? new Date(r.birthdate).getFullYear() : null;
   const st = useStore.getState();
-  if (st.onboarded) return false;
+  if (!force && st.onboarded) return false;
   st.updateProfile({
     ownerId: uid,
     name: r.first_name,
@@ -282,17 +285,24 @@ async function readBack(uid: string): Promise<boolean> {
   return true;
 }
 
-async function writeProfile(uid: string): Promise<void> {
-  if (!supabase) return;
+async function writeProfile(uid: string): Promise<boolean> {
+  if (!supabase) return false;
   const { profile, cityId, onboarded } = useStore.getState();
+  const { data: existing, error: lookup } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
+  if (lookup) throw new Error(lookup.message);
+  if (existing) {
+    // Signed in to an existing account after filling a profile on this phone as a guest:
+    // the account's own profile (from the server) replaces the guest one on this phone.
+    if (onboarded && !profile.ownerId) await readBack(uid, true).catch(() => undefined);
+    return true;
+  }
   // A profile filled in for another account is never published to this one.
   if (profile.ownerId && profile.ownerId !== uid) return skipped(onboarded, 'other_owner');
   // Signed in (Google, email) before finishing signup: wait for the real
   // profile. Publishing a placeholder would lock the wrong gender for good.
-  if (!onboarded) return;
-  if (!profile.name.trim() || !profile.gender) return skipped(onboarded, 'incomplete');
-  const { data: existing } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
-  if (existing) return;
+  // A missing first name is not a reason to wait (Google and Apple often give none): it becomes "IRLY member".
+  if (!onboarded) return false;
+  if (!profile.gender) return skipped(onboarded, 'incomplete');
   const row = toRow(uid, profile, cityId ?? 'dubai');
   const { error } = await supabase.from('profiles').upsert(row, { onConflict: 'id', ignoreDuplicates: true });
   if (error) throw new Error(error.message);
@@ -300,7 +310,7 @@ async function writeProfile(uid: string): Promise<void> {
   // An IRLY avatar is stored as is (no file to upload).
   if (isAvatar(profile.photoUri)) {
     await supabase.from('profiles').update({ photo_paths: [profile.photoUri] }).eq('id', uid);
-    return;
+    return true;
   }
   // The signup photo follows to the member's own folder (best effort).
   if (profile.photoUri && !/^https?:/.test(profile.photoUri)) {
@@ -316,11 +326,13 @@ async function writeProfile(uid: string): Promise<void> {
       // The profile works without it; the photo can be added later.
     }
   }
+  return true;
 }
 
 // Signup finished on this phone but its profile was not sent: why, so the cause can be fixed (nothing personal).
-function skipped(onboarded: boolean, why: string) {
+function skipped(onboarded: boolean, why: string): false {
   if (onboarded) track('PROFILE_SKIPPED', { why });
+  return false;
 }
 
 function toRow(uid: string, p: Profile, cityId: string) {
@@ -329,7 +341,7 @@ function toRow(uid: string, p: Profile, cityId: string) {
   const birthdate = `${new Date().getFullYear() - age}-01-01`;
   return {
     id: uid,
-    first_name: (p.name || 'IRLY member').slice(0, 40),
+    first_name: (p.name?.trim() || 'IRLY member').slice(0, 40),
     birthdate,
     gender: p.gender ?? 'other',
     city_id: cityId,
@@ -472,7 +484,11 @@ export async function signOut(): Promise<void> {
   // Bounded: asking the phone for its token has no timeout of its own, and the sign-out must not hang.
   const unregister = import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
   await Promise.race([unregister, new Promise((done) => setTimeout(done, 5000))]);
-  await supabase?.auth.signOut();
+  if (!supabase) return;
+  // Offline, the server sign-out fails and the session would stay on this phone (and the next
+  // person would act as this account): end it locally anyway.
+  const { error } = await supabase.auth.signOut().catch((e: unknown) => ({ error: e }));
+  if (error) await supabase.auth.signOut({ scope: 'local' });
 }
 
 /** Your files in each storage bucket (they live in a folder named after you). */
@@ -590,6 +606,9 @@ export async function updatePassword(password: string): Promise<void> {
  * browser and comes back on irly://account#access_token=… (completeFromUrl).
  * The provider must be switched on in Supabase (Authentication → Providers).
  */
+/** Sign-in return links already used: the same link can also reach the Account screen (Android), never twice. */
+export const handledAuthUrls = new Set<string>();
+
 export async function signInWithProvider(provider: 'google' | 'apple'): Promise<void> {
   // iPhone: Apple's own sheet (Face ID), no browser.
   if (provider === 'apple' && Platform.OS === 'ios' && (await signInWithAppleNative())) return;
@@ -602,6 +621,7 @@ export async function signInWithProvider(provider: 'google' | 'apple'): Promise<
     if (res.type !== 'success' || !res.url) return;
     const failed = res.url.match(/[#?&]error_description=([^&]+)/);
     if (failed) throw new Error(decodeURIComponent(failed[1].replace(/\+/g, ' ')));
+    handledAuthUrls.add(res.url);
     if (!(await completeFromUrl(res.url))) throw new Error('Sign-in did not complete. Try again.');
   }
 }
@@ -630,10 +650,11 @@ async function signInWithAppleNative(): Promise<boolean> {
     throw new Error('Apple sign-in did not complete. Try again.');
   }
   if (!cred.identityToken) throw new Error('Apple sign-in did not complete. Try again.');
+  // Before the session starts: signing in publishes the profile at once, with this name.
+  const given = cred.fullName?.givenName?.trim();
+  if (given && !useStore.getState().profile.name.trim()) useStore.getState().updateProfile({ name: given });
   const { error } = await client().auth.signInWithIdToken({ provider: 'apple', token: cred.identityToken, nonce: raw });
   if (error) throw new Error(authMessage(error));
-  const given = cred.fullName?.givenName?.trim();
-  if (given && !useStore.getState().profile.name) useStore.getState().updateProfile({ name: given });
   return true;
 }
 

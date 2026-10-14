@@ -8,6 +8,7 @@ import { supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from '@/features/server/sync';
 import { askPushInContext } from '@/features/push/push';
 import { toast } from '@/components/ui/Toast';
+import { realtimeIdsFilter } from '@/features/server/engage';
 
 /** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
 export const communitiesChanged = () => changed('communities', 'inbox');
@@ -279,9 +280,6 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, reload)
       // Pins are rare: any pin or unpin reloads (an unpin carries no community to filter on).
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins' }, later)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes' }, later)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.community_post' }, later)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: 'target_type=eq.community_post' }, later)
       .subscribe();
     return () => {
       alive = false;
@@ -289,6 +287,41 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       supabase?.removeChannel(channel);
     };
   }, [communityId, uid, load, land]);
+
+  // Likes, comments and votes: only those on the posts on screen (every
+  // community's used to reload this feed), re-subscribed when that set changes.
+  const postKey = useMemo(
+    () =>
+      posts
+        .filter((x) => !x.pending)
+        .map((x) => x.id)
+        .join(','),
+    [posts],
+  );
+  useEffect(() => {
+    if (!uid || !supabase || !postKey) return;
+    const ids = postKey.split(',');
+    let soon: ReturnType<typeof setTimeout> | null = null;
+    const later = () => {
+      if (soon) return;
+      soon = setTimeout(() => {
+        soon = null;
+        refresh();
+      }, 800);
+    };
+    const channel = supabase
+      .channel(topic(`community-eng-${communityId}`))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, later)
+      // A removed vote only carries its key: deletes are listened to unfiltered (rare).
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'community_poll_votes' }, later)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
+      .subscribe();
+    return () => {
+      if (soon) clearTimeout(soon);
+      supabase?.removeChannel(channel);
+    };
+  }, [communityId, uid, postKey, refresh]);
 
   const sendVote = useCallback(
     async (postId: string, option: number) => {
@@ -365,10 +398,12 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
   const remove = useCallback(
     async (p: CommunityPost) => {
       setPosts((list) => list.filter((x) => x.id !== p.id));
-      const { error: e } = await sb().from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', p.id);
-      if (e) {
+      // .select: row level security can match no row without any error, and
+      // that must not read as removed (same check as posts.ts removePost).
+      const { data: gone, error: e } = await sb().from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', p.id).select('id');
+      if (e || !gone?.length) {
         refresh();
-        throw new Error(e.message);
+        throw new Error(e ? e.message : 'This post can no longer be removed');
       }
     },
     [refresh],

@@ -6,8 +6,11 @@ import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { friendlyError, supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
+import { signedLinks } from './media';
 import { cleanImage } from '@/lib/media';
 import { uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
+import { LIVE_TTL_MIN } from '@/features/live/liveStore';
+import { useNow } from '@/lib/useNow';
 
 /**
  * IRL posts, friends and notifications on the server (signed in), live
@@ -55,15 +58,11 @@ type FeedRow = {
   media_seconds?: number | null;
 };
 
-/** Every photo of a feed signed in ONE request (was one request per photo). */
-async function signedAll(paths: (string | null)[]): Promise<Record<string, string>> {
-  const wanted = [...new Set(paths.filter((p): p is string => Boolean(p)))];
-  if (!wanted.length || !supabase) return {};
-  const { data } = await supabase.storage.from('irl-media').createSignedUrls(wanted, 4 * 3600);
-  const out: Record<string, string> = {};
-  for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
-  return out;
-}
+/**
+ * Every photo of a feed signed in ONE request, through the shared link cache:
+ * a reload keeps the same links, so photos and videos are not downloaded again.
+ */
+const signedAll = (paths: (string | null)[]): Promise<Record<string, string>> => signedLinks('irl-media', paths);
 
 /** Bumped after your own post or removal: every IRL feed reloads at once, without waiting for Realtime. */
 const useIrlVersion = create<{ n: number }>(() => ({ n: 0 }));
@@ -161,11 +160,16 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
 
   const { keep } = useCityFilter(cityId as CityId);
   const mine = useIrlMine((s) => s.posts);
+  // The server ends a Live at expires_at (created_at + 4h by default) but
+  // irl_feed does not return it and sends no event when it passes: drop
+  // expired posts here too, so nobody likes or comments a gone Live.
+  const now = useNow();
   const shown = useMemo(() => {
+    const live = (p: ServerIrlPost) => now - p.createdAt < LIVE_TTL_MIN * 60_000;
     const ids = new Set(posts.map((p) => p.id));
-    const fresh = mine.filter((p) => !ids.has(p.id) && (p.cityId === cityId || keep(p.cityId)));
-    return [...fresh, ...posts.filter((p) => keep(p.cityId))];
-  }, [posts, mine, keep, cityId]);
+    const fresh = mine.filter((p) => !ids.has(p.id) && (p.cityId === cityId || keep(p.cityId)) && live(p));
+    return [...fresh, ...posts.filter((p) => keep(p.cityId) && live(p))];
+  }, [posts, mine, keep, cityId, now]);
   return { posts: uid ? shown : NONE, refresh };
 }
 
@@ -353,7 +357,14 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   const [retry, setRetry] = useState(0);
   const load = useCallback(async (): Promise<ServerNotification[]> => {
     if (!supabase || !uid) return [];
-    const { data, error } = await supabase.from('notifications').select('id, kind, payload, read_at, created_at').order('created_at', { ascending: false }).limit(50);
+    // One MESSAGE_CREATED row per chat message pushed friend requests out of
+    // the latest 50 (and the bell to 0): messages have their own badge.
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('id, kind, payload, read_at, created_at')
+      .neq('kind', 'MESSAGE_CREATED')
+      .order('created_at', { ascending: false })
+      .limit(50);
     if (error) throw new Error(error.message);
     return (data ?? []).map((n) => ({
       id: n.id,

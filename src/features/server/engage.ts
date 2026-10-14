@@ -28,6 +28,35 @@ const EMPTY: Engagement = { likes: 0, comments: 0, saves: 0, liked: false, saved
 
 type Row = { target_id: string } & Engagement;
 
+/**
+ * Realtime filter on just these ids (`target_id=in.(…)`), or null when it
+ * cannot be expressed: Realtime takes at most 100 values, and an id with a
+ * comma or parenthesis would break the list. Callers then filter by type.
+ */
+export function realtimeIdsFilter(ids: string[], column = 'target_id'): string | null {
+  if (!ids.length || ids.length > 100 || !ids.every((id) => /^[\w.:-]+$/.test(id))) return null;
+  return `${column}=in.(${ids.join(',')})`;
+}
+
+/** Calls `fn` once, `ms` after the last of a burst of calls. */
+function debounced(fn: () => void, ms: number): { call: () => void; cancel: () => void } {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const cancel = () => {
+    if (timer) clearTimeout(timer);
+    timer = null;
+  };
+  return {
+    call: () => {
+      cancel();
+      timer = setTimeout(() => {
+        timer = null;
+        fn();
+      }, ms);
+    },
+    cancel,
+  };
+}
+
 /** Canonical deep link for anything shareable. */
 export function deepLink(t: Target): string {
   const path =
@@ -65,24 +94,38 @@ export function useEngagement(type: TargetType, ids: string[]) {
     return out;
   }, [type, key, uid]);
 
+  // Ids whose engagement has come back from the server: until then a like
+  // cannot know whether it likes or unlikes.
+  const loaded = useRef<{ key: string; ids: Set<string> }>({ key: '', ids: new Set() });
+  const fetchMap = useCallback(async () => {
+    const m = await load();
+    loaded.current = { key, ids: new Set(key.split(',')) };
+    return m;
+  }, [load, key]);
+
   useEffect(() => {
     if (!supabase || !uid || !key) return;
     let alive = true;
     const reload = () =>
-      load()
+      fetchMap()
         .then((m) => alive && setMap(m))
         .catch(() => undefined);
     reload();
+    // Only the items shown, when Realtime can filter on them (else every
+    // like of this type app-wide); a burst of events is one reload.
+    const later = debounced(reload, 600);
+    const filter = realtimeIdsFilter(key.split(',')) ?? `target_type=eq.${type}`;
     const channel = supabase
       .channel(topic(`eng-${type}-${key.length}-${uid}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: `target_type=eq.${type}` }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_type=eq.${type}` }, reload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter }, later.call)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter }, later.call)
       .subscribe();
     return () => {
       alive = false;
+      later.cancel();
       supabase?.removeChannel(channel);
     };
-  }, [type, key, uid, load]);
+  }, [type, key, uid, fetchMap]);
 
   const patch = useCallback((id: string, next: Partial<Engagement>) => setMap((m) => ({ ...m, [id]: { ...(m[id] ?? EMPTY), ...next } })), []);
 
@@ -94,12 +137,29 @@ export function useEngagement(type: TargetType, ids: string[]) {
   }, [map]);
   const busy = useRef(new Set<string>());
 
+  /** Toggles the like; `likeOnly` (a double tap) never unlikes. */
   const like = useCallback(
-    async (id: string) => {
+    async (id: string, likeOnly = false) => {
       const k = `like:${id}`;
       if (busy.current.has(k)) return;
       busy.current.add(k);
-      const cur = mapRef.current[id] ?? EMPTY;
+      let cur = mapRef.current[id] ?? EMPTY;
+      // Not loaded yet: "not liked" is only the placeholder, toggling it
+      // blindly could unlike. Ask the server first.
+      if (loaded.current.key !== key || !loaded.current.ids.has(id)) {
+        try {
+          const m = await fetchMap();
+          setMap(m);
+          cur = m[id] ?? EMPTY;
+        } catch (e) {
+          busy.current.delete(k);
+          throw e;
+        }
+      }
+      if (likeOnly && cur.liked) {
+        busy.current.delete(k);
+        return;
+      }
       patch(id, { liked: !cur.liked, likes: Math.max(0, cur.likes + (cur.liked ? -1 : 1)) });
       try {
         const liked = await toggleLike({ type, id });
@@ -112,7 +172,7 @@ export function useEngagement(type: TargetType, ids: string[]) {
         busy.current.delete(k);
       }
     },
-    [type, patch],
+    [type, key, patch, fetchMap],
   );
 
   const save = useCallback(
@@ -311,16 +371,51 @@ export function useComments(t: Target) {
           setLoading(false);
         });
     reload();
+    // A burst of events (a busy thread) is one reload.
+    const later = debounced(reload, 600);
     const channel = supabase
       .channel(topic(`comments-${t.type}-${t.id}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_id=eq.${t.id}` }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: 'target_type=eq.comment' }, reload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_id=eq.${t.id}` }, later.call)
       .subscribe();
     return () => {
       alive = false;
+      later.cancel();
       supabase?.removeChannel(channel);
     };
   }, [t.type, t.id, uid, load]);
+
+  // Likes on this thread's comments only (it listened to every comment like
+  // in the app), re-subscribed when the comments change.
+  const likeKey = useMemo(
+    () =>
+      list
+        .filter((c) => !c.id.startsWith('tmp-'))
+        .map((c) => c.id)
+        .join(','),
+    [list],
+  );
+  useEffect(() => {
+    if (!supabase || !uid || !likeKey) return;
+    let alive = true;
+    const later = debounced(() => {
+      load()
+        .then((c) => {
+          if (!alive) return;
+          setList(c);
+          setFailed(false);
+        })
+        .catch(() => undefined);
+    }, 600);
+    const channel = supabase
+      .channel(topic(`comment-likes-${t.type}-${t.id}`))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: realtimeIdsFilter(likeKey.split(',')) ?? 'target_type=eq.comment' }, later.call)
+      .subscribe();
+    return () => {
+      alive = false;
+      later.cancel();
+      supabase?.removeChannel(channel);
+    };
+  }, [t.type, t.id, uid, likeKey, load]);
 
   const refresh = useCallback(() => {
     load()

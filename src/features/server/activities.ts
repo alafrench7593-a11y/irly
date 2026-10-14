@@ -40,7 +40,8 @@ export const coverLinks = (paths: (string | null | undefined)[]): Promise<Record
 const inFlight = new Map<string, { at: number; ref: string; promise: Promise<string | null> }>();
 
 export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, extras: ActivityExtras = {}): Promise<string | null> {
-  const key = JSON.stringify([plan.title, plan.cityId, plan.areaId, plan.day, plan.time, plan.place, plan.categoryId, plan.activityId, at?.getTime() ?? null, extras.communityId ?? null]);
+  // Everything the member chose: changing anything (photo, spots, privacy…) is a new plan, not a replay.
+  const key = JSON.stringify([plan, at?.getTime() ?? null, extras]);
   const now = Date.now();
   for (const [k, v] of inFlight) if (now - v.at > 120_000) inFlight.delete(k);
   const prev = inFlight.get(key);
@@ -57,10 +58,17 @@ export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?
   });
   inFlight.set(key, { at: now, ref, promise });
   // A failed try is not replayed to the next tap: it reaches the server again (same ref, so never twice).
-  promise.catch(() => {
-    const cur = inFlight.get(key);
-    if (cur?.promise === promise) inFlight.set(key, { ...cur, at: 0 });
-  });
+  // A created one is forgotten after the double-tap window: the same plan made again later is a new activity.
+  promise.then(
+    () =>
+      setTimeout(() => {
+        if (inFlight.get(key)?.promise === promise) inFlight.delete(key);
+      }, 10_000),
+    () => {
+      const cur = inFlight.get(key);
+      if (cur?.promise === promise) inFlight.set(key, { ...cur, at: 0 });
+    },
+  );
   return promise;
 }
 
@@ -116,7 +124,7 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   if (error && coverPath) await supabase.storage.from('activity-photos').remove([coverPath]).catch(() => undefined);
   if (error?.code === '23505') {
     // Already created by the first tap: hand back that one.
-    const { data: same } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).maybeSingle();
+    const { data: same } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).is('cancelled_at', null).maybeSingle();
     if (same) {
       bumpActivities();
       return same.id as string;
@@ -246,7 +254,7 @@ export async function joinServerActivity(activityId: string): Promise<string | '
   const data = await withProfile(async () => {
     const { data: res, error } = await sb.rpc('join_activity', { p_activity: activityId, p_status: 'going' });
     // Cancelled, deleted or not visible to you: said in words, not as the server's code text.
-    if (error) throw new Error(/activity not found/i.test(error.message) ? 'This activity is no longer available' : error.message);
+    if (error) throw new Error(activityError(error.message));
     return res;
   });
   changed('activities', 'inbox');
@@ -421,6 +429,13 @@ export async function leaveServerActivity(activityId: string): Promise<void> {
   changed('activities', 'inbox');
 }
 
+/** The server's refusals about an activity, in the app's words. */
+function activityError(m: string): string {
+  if (/activity not found/i.test(m)) return 'This activity is no longer available';
+  if (/reserved for IRLY Girl/i.test(m)) return 'IRLY Girl plans are for women members';
+  return m;
+}
+
 export async function cancelServerActivity(activityId: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { error } = await supabase.from('activities').update({ cancelled_at: new Date().toISOString() }).eq('id', activityId);
@@ -448,7 +463,7 @@ export async function updateServerActivity(activityId: string, patch: { title?: 
 export async function deleteServerActivity(activityId: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { error } = await supabase.rpc('delete_activity', { p_activity: activityId });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(activityError(error.message));
   changed('activities', 'inbox', 'notifs');
 }
 

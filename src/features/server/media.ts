@@ -106,7 +106,18 @@ export async function uploadChatPhoto(uri: string, name: string): Promise<string
   if (!uid) throw new Error('Sign in first');
   const img = imageType(uri);
   const path = `${uid}/${name}.${img.ext}`;
-  const { error } = await supabase.storage.from('chat-media').upload(path, await imageBytes(uri), { contentType: img.contentType, upsert: true });
-  if (error) throw new Error(/fetch|network/i.test(error.message) ? 'No connection: photo not sent' : error.message);
-  return path;
+  // No upsert: the bucket has no UPDATE policy, so a retry would be refused.
+  // The path is the message's own id, so "already there" is our earlier try that
+  // was stored before its answer got lost.
+  const { error } = await supabase.storage.from('chat-media').upload(path, await imageBytes(uri), { contentType: img.contentType, upsert: false });
+  if (!error) return path;
+  const status = (error as { statusCode?: string }).statusCode;
+  const code = (error as { code?: string }).code;
+  if (status === '409' || code === 'ResourceAlreadyExists' || /already exists|duplicate/i.test(error.message)) return path;
+  // A refusal can also stand for "already there": only a file actually stored counts.
+  if (/row-level|policy/i.test(error.message)) {
+    const { data: stored } = await supabase.storage.from('chat-media').exists(path);
+    if (stored) return path;
+  }
+  throw new Error(/fetch|network/i.test(error.message) ? 'No connection: photo not sent' : error.message);
 }
