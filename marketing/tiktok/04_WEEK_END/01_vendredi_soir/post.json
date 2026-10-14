@@ -1,0 +1,26 @@
+{
+  "langs": ["fr", "en"],
+  "slides": [
+    { "img": "night-drive-city-lights/02-pixabay-7139259.jpg", "at": "top", "bright": 0.6,
+      "fr": { "text": "Le vendredi soir à Dubaï, quand tu n'as *personne* à appeler." },
+      "en": { "text": "Friday night in Dubai, when you have *no one* to call." } },
+    { "img": "dubai-marina-night/01-pixabay-4748808.jpg", "at": "top",
+      "fr": { "text": "19 h. La ville s'allume." },
+      "en": { "text": "7 pm. The city lights up." } },
+    { "img": "rooftop-friends-sunset/03-pixabay-7853389.jpg", "at": "top", "warm": true,
+      "fr": { "text": "Les stories défilent.", "sub": "Rooftops. Brunchs. Beach clubs." },
+      "en": { "text": "The stories keep coming.", "sub": "Rooftops. Brunches. Beach clubs." } },
+    { "img": "apartment-night-lights/02-pixabay-49711.jpg", "at": "top",
+      "fr": { "text": "Toi, tu restes chez toi.\nEncore." },
+      "en": { "text": "You stay in.\nAgain." } },
+    { "img": "man-alone-city-night/05-pixabay-1125155.jpg", "at": "top",
+      "fr": { "text": "Ce n'est pas que tu n'aimes pas sortir.", "sub": "Sortir seul, ça demande du courage." },
+      "en": { "text": "It's not that you don't like going out.", "sub": "Going out alone takes courage." } },
+    { "img": "running-group-sunrise/02-pixabay-4961494.jpg", "at": "top",
+      "fr": { "text": "Ce week-end, essaie *une seule* chose.", "sub": "Un run club. Un cours. Un événement." },
+      "en": { "text": "This weekend, try *one* thing.", "sub": "A run club. A class. An event." } },
+    { "at": "mid", "mark": true,
+      "fr": { "text": "Et toi, c'est quoi ton plan ce vendredi ?", "sub": "Écris-le en commentaire. Quelqu'un a peut-être le même." },
+      "en": { "text": "What's your plan this Friday?", "sub": "Drop it in the comments. Someone might have the same one." } }
+  ]
+}

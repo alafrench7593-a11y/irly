@@ -44,7 +44,11 @@ export async function setCommunityCover(communityId: string, uri: string | null)
   if (!supabase) throw new Error('The IRLY server is not configured');
   const path = uri ? await uploadCover(uri) : null;
   const { error } = await supabase.rpc('set_community_cover', { p_community: communityId, p_path: path });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Refused (no longer allowed, removed meanwhile): the photo just sent is not left behind.
+    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    throw new Error(error.message);
+  }
   changed('communities', 'inbox');
 }
 
@@ -53,7 +57,11 @@ export async function setChatPhoto(conversationId: string, uri: string | null): 
   if (!supabase) throw new Error('The IRLY server is not configured');
   const path = uri ? await uploadCover(uri) : null;
   const { error } = await supabase.rpc('set_conversation_photo', { p_conversation: conversationId, p_path: path });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Refused (no longer allowed, removed meanwhile): the photo just sent is not left behind.
+    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    throw new Error(error.message);
+  }
   changed('inbox', 'communities');
 }
 

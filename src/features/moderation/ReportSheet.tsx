@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Controls';
@@ -39,12 +39,14 @@ export function ReportSheet({
   const [details, setDetails] = useState('');
   const [alsoBlock, setAlsoBlock] = useState(false);
   const [busy, setBusy] = useState(false);
+  const filed = useRef<string | null>(null);
   const userId = target?.kind === 'profile' ? target.userId : (target?.userId ?? null);
 
   const close = () => {
     setCategory(null);
     setDetails('');
     setAlsoBlock(false);
+    filed.current = null;
     onClose();
   };
 
@@ -52,7 +54,12 @@ export function ReportSheet({
     if (!target || !category || busy) return;
     setBusy(true);
     try {
-      await report(target, category, details);
+      // Sent once: a retry after a failed block only blocks (the report is already filed).
+      const key = target.kind === 'profile' ? `profile:${target.userId}` : `${target.kind}:${target.id}`;
+      if (filed.current !== key) {
+        await report(target, category, details);
+        filed.current = key;
+      }
       if (alsoBlock && userId) {
         await blockUser(userId);
         onBlocked?.();

@@ -42,6 +42,7 @@ export function SettingsSections() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [destSheet, setDestSheet] = useState(false);
   const downloadData = async () => {
     if (!account) {
@@ -75,8 +76,12 @@ export function SettingsSections() {
             <SettingLink
               icon="arrowLeft"
               label="Log out"
-              onPress={() => {
-                signOut().catch(() => undefined);
+              value={signingOut ? 'Signing out…' : undefined}
+              onPress={async () => {
+                if (signingOut) return;
+                setSigningOut(true);
+                // Finished before anything else: a sign-out still running could end the next account's session.
+                await signOut().catch(() => undefined);
                 wipeLocal();
                 router.replace('/welcome');
               }}

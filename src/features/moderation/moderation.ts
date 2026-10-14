@@ -52,12 +52,15 @@ export async function blockUser(userId: string): Promise<void> {
   const { error } = await need().rpc('block_user', { p_target: userId });
   if (error) throw new Error(plain(error.message));
   changed('inbox', 'people', 'activities', 'communities');
+  // Their live moments leave the feed now, not at the next live event.
+  void import('@/features/server/social').then((m) => m.bumpIrl());
 }
 
 export async function unblockUser(userId: string): Promise<void> {
   const { error } = await need().rpc('unblock_user', { p_target: userId });
   if (error) throw new Error(error.message);
   changed('inbox', 'people', 'activities', 'communities');
+  void import('@/features/server/social').then((m) => m.bumpIrl());
 }
 
 export type Blocked = { userId: string; firstName: string; at: number };

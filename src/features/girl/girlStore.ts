@@ -72,6 +72,6 @@ export const useGirlStore = create<GirlState & GirlActions>()(
       report: (userId, category, details) => set({ reports: [...get().reports, { userId, category, details, at: Date.now() }] }),
       reset: () => set(initial),
     }),
-    { name: storageName('irly-girl'), version: 1, storage: createJSONStorage(() => AsyncStorage) },
+    { name: storageName('irly-girl'), version: 1, migrate: (saved) => saved as never, storage: createJSONStorage(() => AsyncStorage) },
   ),
 );

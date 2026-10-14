@@ -257,10 +257,12 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     try {
       const chosen = myCommunities.find((x) => x.id === communityId);
       const serverId = await createServerActivity(plan, undefined, { coverUri: cover, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
+      // No id: nothing was created (session ended). Never "live" then; the form stays.
+      if (!serverId) throw new Error(tx('your session has ended, sign in again'));
       haptic('success');
       toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
       hide();
-      if (serverId) router.push(`/a/${serverId}`);
+      router.push(`/a/${serverId}`);
     } catch (e) {
       toast(tx('Not published: {why}. Try again', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live');
     } finally {

@@ -4,7 +4,7 @@ import { CharCount } from '@/components/ui/CharCount';
 import { t as tx, a11y } from '@/i18n';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,24 +64,34 @@ export default function GirlProfile() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
 
-  // Editing an existing profile: start from what is saved.
+  // Editing an existing profile: start from what is saved. Until that read succeeds nothing is saved:
+  // a blank draft saved after a failed read would replace the real profile.
+  const [loaded, setLoaded] = useState<'loading' | 'ok' | 'failed'>('loading');
+  const [loadTry, setLoadTry] = useState(0);
+  const touched = useRef(false);
   useEffect(() => {
     let alive = true;
     matchApi()
       .then((api) => api.getProfile())
       .then((p) => {
-        if (alive && p) {
+        if (!alive) return;
+        // Already typing: what the member typed stays.
+        if (p && !touched.current) {
           setDraft(p);
           setEditing(true);
         }
+        setLoaded('ok');
       })
-      .catch(() => undefined);
+      .catch(() => alive && setLoaded('failed'));
     return () => {
       alive = false;
     };
-  }, []);
+  }, [loadTry]);
 
-  const set = <K extends keyof MatchProfileDraft>(k: K, v: MatchProfileDraft[K]) => setDraft((d) => ({ ...d, [k]: v }));
+  const set = <K extends keyof MatchProfileDraft>(k: K, v: MatchProfileDraft[K]) => {
+    touched.current = true;
+    setDraft((d) => ({ ...d, [k]: v }));
+  };
 
   const valid = useMemo(() => {
     switch (step) {
@@ -109,6 +119,14 @@ export default function GirlProfile() {
   };
 
   const save = async () => {
+    if (loaded !== 'ok') {
+      toast(loaded === 'failed' ? 'Could not load your profile. Check your connection and try again.' : 'Loading your profile…', 'x', 'live');
+      if (loaded === 'failed') {
+        setLoaded('loading');
+        setLoadTry((n) => n + 1);
+      }
+      return;
+    }
     setSaving(true);
     try {
       const api = await matchApi();

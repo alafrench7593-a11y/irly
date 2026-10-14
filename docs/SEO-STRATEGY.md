@@ -92,7 +92,7 @@ Rythme réaliste : **1 guide de fond par semaine** (EN + FR), relu par un humain
 | 5 | ✅ Networking à Dubaï : où rencontrer des entrepreneurs / Networking in Dubai: where to meet entrepreneurs | `/fr/dubai/networking/` | networking Dubaï | D | Créer son profil pro | Considération |
 | 6 | ✅ Bali pour les digital nomads : communauté et coworking | `/fr/bali/digital-nomads/` | communauté digital nomads Bali | B/E | Rejoindre une communauté | Entrée |
 | 7 | ✅ Sortir seul à Dubaï sans être mal à l'aise / Going out alone in Dubai | `/fr/dubai/sortir-seul/` | sortir seul à Dubaï | A/C | Trouver une activité | Entrée |
-| 8 | Activités entre femmes à Dubaï | `/fr/dubai/activites-entre-femmes/` | activités entre femmes Dubaï | H | Découvrir IRLY Girl | Considération |
+| 8 | ✅ Activités entre femmes à Dubaï / Activities for women in Dubai | `/fr/dubai/activites-entre-femmes/` | activités entre femmes Dubaï | H | Découvrir IRLY Girl | Considération |
 | 9 | S'installer à Dubaï : la checklist des premiers mois | `/fr/dubai/s-installer/` | s'installer à Dubaï | E | Préviens-moi (IRLY VISA) | Entrée |
 | 10 | Visa Dubaï : les catégories expliquées (sources officielles) | `/fr/dubai/visa/` | visa Dubaï | F | Préviens-moi (IRLY VISA) | Entrée |
 | 11 | Visa Bali : les catégories expliquées (sources officielles) | `/fr/bali/visa/` | visa Bali | F | Préviens-moi (IRLY VISA) | Entrée |

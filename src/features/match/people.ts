@@ -88,10 +88,12 @@ export function usePeopleMatch(cityId: string) {
   const loadMore = useCallback(() => {
     if (!supabase || !uid || loadingMore || !state.more) return;
     setLoadingMore(true);
+    // A reload meanwhile starts a new list: this page belongs to the old one.
+    const n = seq.current;
     supabase
       .rpc('people_match', { p_city: cityId, p_limit: PAGE, p_offset: state.list.length })
       .then(({ data, error }) => {
-        if (error) return;
+        if (error || n !== seq.current) return;
         const rows = ((data as Row[] | null) ?? []).map(toMatch);
         setState((s) => {
           const seen = new Set(s.list.map((x) => x.id));

@@ -54,8 +54,10 @@ if (supabase) {
       // Still signed in but this device never finished signup (or was reset).
       if (data.session?.user) {
         const uid = data.session.user.id;
+        // A profile whose first publish failed (offline at signup) is published now:
+        // without it every join is refused by the server.
         restoreProfile(uid)
-          .then((restored) => (restored ? undefined : refreshOwnPhoto(uid)))
+          .then((restored) => (restored ? undefined : syncProfile(uid).catch(() => undefined).then(() => refreshOwnPhoto(uid))))
           .catch(() => undefined);
       }
     })
@@ -124,7 +126,8 @@ export async function verifyCode(email: string, code: string): Promise<void> {
   const { data, error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'email' });
   if (error) throw new Error(error.message);
   const uid = data.user?.id;
-  if (uid) await syncProfile(uid);
+  // Signed in already: a profile that fails to publish now is published at the next launch.
+  if (uid) await syncProfile(uid).catch(() => undefined);
 }
 
 /**
@@ -132,6 +135,21 @@ export async function verifyCode(email: string, code: string): Promise<void> {
  * locked server-side after this first write (IRLY Girl access).
  */
 const syncing = new Map<string, Promise<void>>();
+
+/**
+ * Runs a server action; when the server answers that this account has no
+ * profile yet (its publish failed earlier), publishes it and tries once more.
+ */
+export async function withProfile<T>(action: () => Promise<T>): Promise<T> {
+  try {
+    return await action();
+  } catch (e) {
+    const uid = useAuthStore.getState().account?.userId;
+    if (!uid || !(e instanceof Error) || !/Finish your profile first|profiles_?\w*fkey|foreign key constraint/i.test(e.message)) throw e;
+    await syncProfile(uid);
+    return action();
+  }
+}
 
 export function syncProfile(uid: string): Promise<void> {
   // Every mounted useAccount() and verifyCode() call this on sign-in: share one run.
@@ -306,13 +324,11 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
     if (patch.username !== undefined) row.username = patch.username.trim().toLowerCase() || null;
     if (isAvatar(patch.photoUri)) {
       // An IRLY avatar replaces the photo without an upload; the old photo file goes.
-      const { data: old } = await supabase.rpc('my_profile');
-      const before = ((old as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];
+      const before = await myPhotoPaths();
       // Only the main picture changes: the other photos of the profile stay.
       row.photo_paths = [patch.photoUri, ...before.slice(1)];
       photoUri = patch.photoUri;
-      const { error } = await supabase.from('profiles').update(row).eq('id', uid);
-      if (error) throw new Error(profileError(error.message));
+      await saveProfileRow(uid, row);
       const stale = before.slice(0, 1).filter((p) => !isAvatar(p) && p.startsWith(`${uid}/`));
       if (stale.length) await supabase.storage.from('profile-photos').remove([...stale, ...stale.map(thumbOf)]);
     } else if (patch.photoUri && !/^https?:/.test(patch.photoUri)) {
@@ -321,25 +337,24 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
       const up = await supabase.storage.from('profile-photos').upload(path, img.body, { contentType: img.contentType });
       if (up.error) throw new Error('Could not upload the photo. Try again.');
       await uploadThumb(path, patch.photoUri);
-      const { data: old } = await supabase.rpc('my_profile');
-      const before = ((old as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];
+      const before = await myPhotoPaths();
       // Only the main picture changes: the other photos of the profile stay.
       row.photo_paths = [path, ...before.slice(1).filter((p) => p !== path)];
       const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 7 * 24 * 3600);
       photoUri = signed?.signedUrl ?? patch.photoUri;
       // The previous photo file goes once the new one is saved (below).
       if (Object.keys(row).length) {
-        const { error } = await supabase.from('profiles').update(row).eq('id', uid);
-        if (error) {
+        try {
+          await saveProfileRow(uid, row);
+        } catch (e) {
           await supabase.storage.from('profile-photos').remove([path, thumbOf(path)]);
-          throw new Error(profileError(error.message));
+          throw e;
         }
       }
       const stale = before.slice(0, 1).filter((p) => p !== path && !isAvatar(p) && p.startsWith(`${uid}/`));
       if (stale.length) await supabase.storage.from('profile-photos').remove([...stale, ...stale.map(thumbOf)]);
     } else if (Object.keys(row).length) {
-      const { error } = await supabase.from('profiles').update(row).eq('id', uid);
-      if (error) throw new Error(profileError(error.message));
+      await saveProfileRow(uid, row);
     }
   }
   // Every screen that shows this profile (yours, lists, chats) reloads.
@@ -348,6 +363,25 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
   void _handle;
   st.updateProfile({ ...rest, ...(picked ? { photoUri: photoUri ?? picked } : {}) });
   if (cityId && cityId in CITIES) st.setDestination(CITIES[cityId as keyof typeof CITIES].destinationId, cityId as keyof typeof CITIES);
+}
+
+/** The photos already on the profile. A failed read stops the save: writing without them would drop the other photos. */
+async function myPhotoPaths(): Promise<string[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc('my_profile');
+  if (error) throw new Error(profileError(error.message));
+  return ((data as ServerProfile[] | null) ?? [])[0]?.photo_paths ?? [];
+}
+
+/** Saves on the server; an update that reached no row (profile never published) is not a success. */
+async function saveProfileRow(uid: string, row: Record<string, unknown>): Promise<void> {
+  if (!supabase) return;
+  const sb = supabase;
+  await withProfile(async () => {
+    const { data, error } = await sb.from('profiles').update(row).eq('id', uid).select('id');
+    if (error) throw new Error(profileError(error.message));
+    if (!data?.length) throw new Error('Finish your profile first');
+  });
 }
 
 function profileError(m: string): string {
@@ -380,7 +414,9 @@ export async function refreshOwnPhoto(uid: string): Promise<void> {
 
 export async function signOut(): Promise<void> {
   // This phone stops receiving the account's notifications (needs the session, so first).
-  await import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
+  // Bounded: asking the phone for its token has no timeout of its own, and the sign-out must not hang.
+  const unregister = import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
+  await Promise.race([unregister, new Promise((done) => setTimeout(done, 5000))]);
   await supabase?.auth.signOut();
 }
 
@@ -403,16 +439,23 @@ async function removeMyFiles(uid: string): Promise<void> {
 /**
  * Deletes the server account: your photos and files first (the database
  * cannot remove files), then every row that belongs to you, then the
- * session. If any step fails nothing is wiped on the phone, so you can retry.
+ * session. Files go first on purpose: if the account step then fails, a retry
+ * finishes it; the other way round, a failure would leave your photos on the
+ * server with no account left to remove them. Nothing is wiped on the phone
+ * until the server has finished, so you can retry.
  */
 export async function deleteServerAccount(): Promise<void> {
   if (!supabase) return;
   const { data } = await supabase.auth.getSession();
-  if (!data.session) return;
+  if (!data.session) {
+    // Signed in but the session could not be renewed (offline): nothing was deleted, so say so.
+    if (useAuthStore.getState().account) throw new Error('No connection: your account was not deleted. Try again.');
+    return;
+  }
   await removeMyFiles(data.session.user.id);
   await import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
   const { error } = await supabase.rpc('delete_my_account');
-  if (error) throw new Error(error.message);
+  if (error) throw new Error('Your files are deleted but your account is not yet. Try again to finish.');
   // The account no longer exists on the server: forget the session on this phone.
   await supabase.auth.signOut({ scope: 'local' });
 }

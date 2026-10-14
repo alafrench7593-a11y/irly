@@ -118,3 +118,10 @@ console.log(auth.ok ? '✓ sign-in email configured (6-digit code)' : `• defau
 
 const [check] = await query("select count(*)::int as n from information_schema.tables where table_schema = 'public'");
 console.log(`✓ database ready: ${check.n} tables in public`);
+
+// Health (read only): signed-in accounts whose profile never reached the
+// server cannot join anything. The app now publishes it on next launch.
+const [orphans] = await query(
+  "select count(*)::int as n, count(*) filter (where u.created_at > now() - interval '30 days')::int as recent from auth.users u left join public.profiles p on p.id = u.id where p.id is null and u.email not like 'e2e-%@irly.test'",
+);
+console.log(`• accounts without a server profile: ${orphans.n} (${orphans.recent} created in the last 30 days)`);

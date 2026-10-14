@@ -137,7 +137,11 @@ function NewsCard({ n }: { n: NewsItem }) {
           onPress={() => {
             setSaved(!saved);
             toggleSave({ type: 'news', id: n.id })
-              .then(() => haptic('success'))
+              .then((now) => {
+                // The server toggles: its answer is the truth (saved elsewhere meanwhile, a quick double tap).
+                setSaved(now);
+                haptic('success');
+              })
               .catch(() => {
                 setSaved(saved);
                 toast('Could not save', 'x', 'live');

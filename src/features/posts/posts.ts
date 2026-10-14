@@ -115,10 +115,11 @@ export async function updatePost(id: string, input: { body: string; media: Draft
   const body = input.body.trim();
   if (!body && !input.media?.files.length) throw new Error('Write something or add a photo');
   const { row, fresh } = await store(uid, input.media, input.onProgress);
-  const { error } = await supabase.from('community_posts').update({ body, ...row }).eq('id', id).eq('author_id', uid);
-  if (error) {
+  const { data: saved, error } = await supabase.from('community_posts').update({ body, ...row }).eq('id', id).eq('author_id', uid).select('id');
+  // No row changed (not yours any more, removed meanwhile): not saved, and the old files are still in use.
+  if (error || !saved?.length) {
     if (fresh.length) await supabase.storage.from('post-media').remove(fresh);
-    throw new Error(friendly(error.message));
+    throw new Error(error ? friendly(error.message) : 'This post can no longer be edited');
   }
   const kept = new Set([...row.media_paths, row.thumb_path ?? '']);
   const gone = input.before.filter((p) => !kept.has(p));
@@ -129,8 +130,9 @@ export async function updatePost(id: string, input: { body: string; media: Draft
 /** Removes a post (the author, or a moderator of its community). */
 export async function removePost(id: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const { error } = await supabase.from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+  const { data: gone, error } = await supabase.from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', id).select('id');
   if (error) throw new Error(error.message);
+  if (!gone?.length) throw new Error('This post can no longer be removed');
   changed('communities');
 }
 

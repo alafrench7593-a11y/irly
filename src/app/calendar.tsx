@@ -33,12 +33,18 @@ export default function CalendarScreen() {
   const { items, loading, error } = useCalendar();
   const auth = useAuthStatus();
 
+  // One header per calendar day, even when plans in different cities interleave by time.
   const days: { key: string; label: string; items: CalendarItem[] }[] = [];
+  const byKey = new Map<string, (typeof days)[number]>();
   for (const it of items) {
     const k = dayKey(it.startsAt, it.cityId);
-    const last = days[days.length - 1];
-    if (last?.key === k) last.items.push(it);
-    else days.push({ key: k, label: dayLabel(it.startsAt, it.cityId), items: [it] });
+    const day = byKey.get(k);
+    if (day) day.items.push(it);
+    else {
+      const fresh = { key: k, label: dayLabel(it.startsAt, it.cityId), items: [it] };
+      byKey.set(k, fresh);
+      days.push(fresh);
+    }
   }
 
   return (

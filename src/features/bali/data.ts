@@ -28,6 +28,7 @@ function useQuery<T>(key: string, run: () => Promise<T>, initial: T): { data: T;
   }
   useEffect(() => {
     let alive = true;
+    // No retry of our own here: the Supabase client already retries a dropped request.
     run()
       .then((d) => {
         if (!alive) return;
@@ -58,11 +59,12 @@ export function useDestAreas(cityId: string) {
   return useQuery<DestArea[]>(
     `areas-${cityId}`,
     async () => {
-      const [{ data: areas, error }, { data: admins }] = await Promise.all([
+      const [{ data: areas, error }, { data: admins, error: adminError }] = await Promise.all([
         sb().from('areas').select('id, name, parent_area_id, admin_area_id, kind, lat, lng, sort').eq('city_id', cityId).order('sort'),
         sb().from('admin_areas').select('id, name'),
       ]);
-      if (error) throw new Error(error.message);
+      // The regency names are part of the page (« Badung regency »): a failed read is a failed load.
+      if (error || adminError) throw new Error((error ?? adminError)!.message);
       const adminName = new Map((admins ?? []).map((a) => [a.id as string, a.name as string]));
       return (areas ?? []).map((a) => ({
         id: a.id,
@@ -333,11 +335,20 @@ export function usePlaceActivities(slug: string) {
   const { reload } = q;
   useEffect(() => {
     if (!supabase) return;
+    // Any join anywhere arrives here (no place to filter on): a burst is one reload.
+    let soon: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel(topic(`place-acts-${slug}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, () => reload())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, () => {
+        if (soon) return;
+        soon = setTimeout(() => {
+          soon = null;
+          reload();
+        }, 800);
+      })
       .subscribe();
     return () => {
+      if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);
     };
   }, [slug, reload]);
@@ -409,11 +420,13 @@ export function useGirlExtras() {
     `extras-${uid ?? 'anon'}`,
     async () => {
       if (!uid) return null;
-      const { data } = await sb()
+      const { data, error } = await sb()
         .from('irly_match_profiles')
         .select('destination, destination_status, move_month, mom_mode, kids_age_groups, looking_for')
         .eq('user_id', uid)
         .maybeSingle();
+      // A failed read is not "no profile": a member must not be told to create one she has.
+      if (error) throw new Error(error.message);
       if (!data) return { hasProfile: false };
       return {
         hasProfile: true,

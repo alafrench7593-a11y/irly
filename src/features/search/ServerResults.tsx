@@ -18,7 +18,9 @@ export type SearchHit = { kind: 'activity' | 'community' | 'person' | 'place' | 
 /** The one server search (typed, voice and assistant all use it). */
 export async function searchServer(q: string, cityId: string | null, limit = 30): Promise<SearchHit[]> {
   if (!supabase || q.trim().length < 1) return [];
-  const { data } = await supabase.rpc('search_all', { p_q: q.trim(), p_city: cityId, p_limit: limit });
+  const { data, error } = await supabase.rpc('search_all', { p_q: q.trim(), p_city: cityId, p_limit: limit });
+  // Unreachable is not "nothing found".
+  if (error) throw new Error(error.message);
   return ((data as Record<string, string | null>[]) ?? []).map((r) => ({
     kind: r.kind as SearchHit['kind'],
     id: r.id as string,
@@ -42,7 +44,7 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
   const account = useAccount();
   const setCity = useStore((s) => s.setCity);
   // Results belong to the query that produced them (no stale list while typing).
-  const [res, setRes] = useState<{ key: string; hits: SearchHit[] }>({ key: '', hits: [] });
+  const [res, setRes] = useState<{ key: string; hits: SearchHit[]; failed?: boolean }>({ key: '', hits: [] });
   const uid = account?.userId;
   // A new, renamed or deleted activity or community is found (or not) at once.
   const fresh = useSyncVersion('activities') + useSyncVersion('communities');
@@ -51,11 +53,14 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
     if (!uid || q.trim().length < 2) return;
     let alive = true;
     const timer = setTimeout(() => {
-      searchServer(q, cityId).then((h) => {
-        if (!alive) return;
-        setRes({ key: `${q}|${cityId}|${uid}`, hits: h });
-        track('SEARCH', { results: h.length });
-      });
+      searchServer(q, cityId).then(
+        (h) => {
+          if (!alive) return;
+          setRes({ key: `${q}|${cityId}|${uid}`, hits: h });
+          track('SEARCH', { results: h.length });
+        },
+        () => alive && setRes({ key: `${q}|${cityId}|${uid}`, hits: [], failed: true }),
+      );
     }, 250);
     return () => {
       alive = false;
@@ -63,7 +68,14 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
     };
   }, [q, cityId, uid, fresh]);
 
-  const shown = uid && q.trim().length >= 2 && res.key === `${q}|${cityId}|${uid}` ? res.hits : [];
+  const current = uid && q.trim().length >= 2 && res.key === `${q}|${cityId}|${uid}`;
+  const shown = current ? res.hits : [];
+  if (current && res.failed)
+    return (
+      <Text variant="bodyS" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
+        Can’t reach IRLY right now
+      </Text>
+    );
   if (!shown.length) return null;
 
   const open = (h: SearchHit) => {
@@ -74,6 +86,8 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
     // A result opens what it names; saving or adding happens there, on purpose.
     else if (h.kind === 'place') router.push(`/place/${h.id}`);
     else if (h.kind === 'person') router.push(`/person/${h.id}`);
+    // A Bali area has its own page; other areas show on the map.
+    else if (h.kind === 'area' && h.cityId === 'bali') router.push(`/bali/area/${h.id}`);
     else router.push('/map');
   };
 

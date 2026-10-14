@@ -8,7 +8,7 @@ import { toast } from '@/components/ui/Toast';
 import { proConnect } from '@/features/network/api';
 import { addFriend, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
 import { timeAgo } from '@/lib/time';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
@@ -119,7 +119,7 @@ function useNames(ids: string[]) {
 function ServerNotifications() {
   const t = useTheme();
   const router = useRouter();
-  const { items, markAllRead } = useServerNotifications();
+  const { items, markAllRead, status, reload } = useServerNotifications();
   const { friends, refresh } = useFriends();
   const names = useNames(items.map((n) => (typeof n.payload?.from === 'string' ? n.payload.from : '')).filter((x) => /^[0-9a-f-]{36}$/.test(x)));
   const unread = items.some((n) => !n.readAt);
@@ -129,6 +129,23 @@ function ServerNotifications() {
       return () => clearTimeout(h);
     }
   }, [unread, markAllRead]);
+  if (!items.length && status === 'loading') {
+    return (
+      <View style={[styles.list, { alignItems: 'center', paddingTop: space[6] }]}>
+        <ActivityIndicator color={t.c.textSecondary} />
+      </View>
+    );
+  }
+  if (!items.length && status === 'failed') {
+    return (
+      <View style={[styles.list, { alignItems: 'center', gap: 10, paddingTop: space[6] }]}>
+        <Text variant="body" tone="secondary" align="center">
+          Can’t reach IRLY right now
+        </Text>
+        <Button label="Try again" size="sm" variant="secondary" onPress={reload} />
+      </View>
+    );
+  }
   if (!items.length) {
     return (
       <View style={[styles.list, { alignItems: 'center', gap: 10, paddingTop: space[6] }]}>
@@ -152,6 +169,8 @@ function ServerNotifications() {
       case 'ACTIVITY_JOINED':
         return { icon: 'users', title: 'Someone joined your activity', body: 'Their name is in the activity chat', go: () => router.push(p.activity_id ? `/a/${p.activity_id}` : '/messages') };
       case 'ACTIVITY_UPDATED':
+        // Deleted by its organiser: nothing left to open.
+        if (p.change === 'deleted') return { icon: 'x', title: tx('{title} was deleted', { title: p.title ?? '' }), body: 'It\'s been removed from your calendar' };
         return {
           icon: p.cancelled ? 'x' : 'clock',
           title: p.cancelled ? tx('{title} was cancelled', { title: p.title ?? '' }) : tx('{title} changed', { title: p.title ?? '' }),
@@ -264,8 +283,10 @@ function ServerNotifications() {
                   size="sm"
                   onPress={() =>
                     (d.pro ? proConnect(d.accept!) : addFriend(d.accept!))
-                      .then(() => {
-                        toast(d.pro ? 'You are now connected' : 'You are now friends', 'check', 'positive');
+                      .then((status) => {
+                        // The request may have been withdrawn meanwhile: then this only sent yours.
+                        if (status === 'accepted') toast(d.pro ? 'You are now connected' : 'You are now friends', 'check', 'positive');
+                        else toast('Request sent', 'check', 'brand');
                         refresh();
                       })
                       .catch((e) => toast(e instanceof Error ? e.message : 'Could not accept', 'x', 'live'))

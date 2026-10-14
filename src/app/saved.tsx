@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from '@/components/ui/Toast';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -57,6 +58,7 @@ export default function SavedScreen() {
   const auth = useAuthStatus();
   const [tab, setTab] = useState<Tab>('all');
   const [titles, setTitles] = useState<Record<string, string>>({});
+  const removing = useRef(new Set<string>());
 
   useEffect(() => {
     let alive = true;
@@ -116,7 +118,15 @@ export default function SavedScreen() {
                     {titles[`${i.type}:${i.id}`] ?? i.id.replace(/-/g, ' ')}
                   </Text>
                   <PressableScale
-                    onPress={() => toggleSave({ type: i.type, id: i.id }).then(refresh)}
+                    onPress={() => {
+                      // The server toggles: a second tap before the answer would save it again.
+                      const k = `${i.type}:${i.id}`;
+                      if (removing.current.has(k)) return;
+                      removing.current.add(k);
+                      toggleSave({ type: i.type, id: i.id })
+                        .then(refresh, (e) => toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live'))
+                        .finally(() => removing.current.delete(k));
+                    }}
                     haptic="select"
                     hitSlop={8}
                     accessibilityLabel="Remove from saved"

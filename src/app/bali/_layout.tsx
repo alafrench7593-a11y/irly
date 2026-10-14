@@ -33,7 +33,9 @@ export default function BaliLayout() {
     if (supabase) {
       const { error } = await supabase.rpc('set_service_interest', { p_service: 'dest_bali', p_on: true });
       if (error) {
-        toast('Sign in to be told when it opens', 'user', 'brand');
+        // Only a missing sign-in asks to sign in; anything else is said as it is.
+        if (/sign in required|jwt/i.test(error.message)) toast('Sign in to be told when it opens', 'user', 'brand');
+        else toast(error.message, 'x', 'live');
         return;
       }
     }

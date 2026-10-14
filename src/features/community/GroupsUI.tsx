@@ -371,15 +371,18 @@ function ChannelsSheet({ visible, communityId, channels, onClose, onRemoved }: {
   const [name, setName] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [edit, setEdit] = useState<{ id: string; name: string } | null>(null);
-  const run = async (key: string, action: () => Promise<void>, done: string) => {
-    if (busy) return;
+  /** True once saved: the sheet only moves on (closes the row, clears the name, leaves the category) on success. */
+  const run = async (key: string, action: () => Promise<void>, done: string): Promise<boolean> => {
+    if (busy) return false;
     setBusy(key);
     try {
       await action();
       haptic('success');
       toast(tx(done), 'check', 'brand');
+      return true;
     } catch (e) {
       toast(e instanceof Error ? tx(e.message) : tx('Could not save'), 'x', 'live');
+      return false;
     } finally {
       setBusy(null);
     }
@@ -392,7 +395,7 @@ function ChannelsSheet({ visible, communityId, channels, onClose, onRemoved }: {
           edit?.id === c.id ? (
             <View key={c.id} style={styles.row}>
               <TextInput value={edit.name} onChangeText={(v) => setEdit({ id: c.id, name: v.slice(0, 40) })} style={[input, { flex: 1 }]} accessibilityLabel={a11y('Category name')} />
-              <Button label="Save" size="sm" loading={busy === `r${c.id}`} onPress={() => run(`r${c.id}`, () => renameChannel(c.id, edit.name), 'Category renamed').then(() => setEdit(null))} />
+              <Button label="Save" size="sm" loading={busy === `r${c.id}`} onPress={() => run(`r${c.id}`, () => renameChannel(c.id, edit.name), 'Category renamed').then((ok) => ok && setEdit(null))} />
             </View>
           ) : (
             <View key={c.id} style={styles.row}>
@@ -406,7 +409,7 @@ function ChannelsSheet({ visible, communityId, channels, onClose, onRemoved }: {
                 label={tx('Delete')}
                 onPress={() =>
                   confirm(tx('Delete this category? Its posts move to General.'), () =>
-                    run(`d${c.id}`, () => deleteChannel(c.id), 'Category deleted').then(() => onRemoved(c.slug)),
+                    run(`d${c.id}`, () => deleteChannel(c.id), 'Category deleted').then((ok) => ok && onRemoved(c.slug)),
                   )
                 }
               />
@@ -420,7 +423,7 @@ function ChannelsSheet({ visible, communityId, channels, onClose, onRemoved }: {
           full
           loading={busy === 'add'}
           disabled={name.trim().length < 2}
-          onPress={() => run('add', () => addChannel(communityId, name), 'Category added').then(() => setName(''))}
+          onPress={() => run('add', () => addChannel(communityId, name), 'Category added').then((ok) => ok && setName(''))}
         />
       </View>
     </Sheet>

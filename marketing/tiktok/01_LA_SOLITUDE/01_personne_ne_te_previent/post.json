@@ -1,0 +1,26 @@
+{
+  "langs": ["fr", "en"],
+  "slides": [
+    { "img": "dubai-skyline-night/01-pixabay-8585214.jpg", "at": "top", "bright": 0.62,
+      "fr": { "text": "Personne ne te prévient de *cette* partie de Dubaï." },
+      "en": { "text": "Nobody warns you about *this* part of Dubai." } },
+    { "img": "dubai-metro/02-pixabay-5829624.jpg", "at": "top",
+      "fr": { "text": "Tu viens ici pour construire quelque chose." },
+      "en": { "text": "You come here to build something." } },
+    { "img": "dubai-street-night/01-pixabay-5065560.jpg", "at": "top",
+      "fr": { "text": "Le travail avance.\nL'appart est beau.\nLa vue aussi." },
+      "en": { "text": "Work is going well.\nThe flat is nice.\nSo is the view." } },
+    { "img": "woman-window-night-city/03-pixabay-10203324.jpg", "at": "top", "bright": 0.6,
+      "fr": { "text": "Et puis un soir, tu ouvres tes contacts…", "sub": "et tu ne sais pas qui appeler." },
+      "en": { "text": "Then one evening you scroll through your contacts…", "sub": "and you don't know who to call." } },
+    { "img": "woman-alone-city/01-pixabay-5630886.jpg", "at": "top",
+      "fr": { "text": "Connaître du monde,\nce n'est pas être *entouré*." },
+      "en": { "text": "Knowing people\nisn't the same as *having* people." } },
+    { "img": "man-alone-city-night/04-pixabay-2590751.jpg", "at": "top",
+      "fr": { "text": "Si tu le vis aussi :\ntu n'es pas la seule personne.", "sub": "Beaucoup le vivent sans le dire." },
+      "en": { "text": "If this is you:\nyou're not the only one.", "sub": "Lots of people feel it and never say it." } },
+    { "at": "mid", "mark": true,
+      "fr": { "text": "C'est aussi pour ça qu'on construit IRLY.", "sub": "Dis-nous : tu es à Dubaï depuis combien de temps ?" },
+      "en": { "text": "It's part of why we're building IRLY.", "sub": "Tell us: how long have you been in Dubai?" } }
+  ]
+}

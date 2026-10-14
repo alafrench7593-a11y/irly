@@ -1743,4 +1743,45 @@ values ('00000000-0000-0000-0000-000000000011', 'Audit girls walk', 'sport', 'du
 select pg_temp.check((select girl_only from public.activities where title = 'Audit girls walk'), 'audit: an activity of a girls-only community is girls-only');
 select pg_temp.check(exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'community_pins') or not exists (select 1 from pg_publication where pubname = 'supabase_realtime'), 'audit: pinned posts are live');
 
+-- Join without a profile on the server: a clear refusal, nothing written.
+select pg_temp.as_admin();
+insert into auth.users (id) values ('00000000-0000-0000-0000-0000000000f1');
+select id as pub_act from public.activities where privacy = 'public' and cancelled_at is null and starts_at > now() and not girl_only and creator_id <> '00000000-0000-0000-0000-0000000000f1' limit 1 \gset
+select id as any_comm from public.communities where not girl_only and deleted_at is null limit 1 \gset
+create or replace function pg_temp.error_of(stmt text) returns text language plpgsql as $$
+begin
+  execute stmt;
+  return null;
+exception when others then
+  return sqlerrm;
+end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.check(pg_temp.error_of($$select public.join_activity('$$ || :'pub_act' || $$')$$) = 'Finish your profile first', 'join: no profile on the server gives a clear message, not a foreign key error');
+select pg_temp.check(pg_temp.error_of($$select public.join_community('$$ || :'any_comm' || $$')$$) = 'Finish your profile first', 'join community: no profile gives a clear message');
+select pg_temp.check(pg_temp.error_of($$select public.join_communities(array['$$ || :'any_comm' || $$']::uuid[])$$) = 'Finish your profile first', 'join all: no profile is refused, not counted as zero joins');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.activity_participants where user_id = '00000000-0000-0000-0000-0000000000f1'), 'join without profile wrote nothing');
+-- Once the profile exists, the same join works and is counted once.
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('00000000-0000-0000-0000-0000000000f1', 'Late', '1994-03-03', 'man', 'dubai');
+select pg_temp.check(public.join_activity(:'pub_act') in ('going', 'full'), 'join works once the profile is published');
+select public.join_activity(:'pub_act');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) from public.activity_participants where user_id = '00000000-0000-0000-0000-0000000000f1' and activity_id = :'pub_act') <= 1, 'joining twice keeps one participation');
+
+-- An activity that is over cannot be joined (an old link), and nothing is written.
+insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at)
+values ('00000000-0000-0000-0000-000000000011', 'Audit past run', 'sport', 'dubai', 'marina', now() - interval '1 day');
+select id as past_act from public.activities where title = 'Audit past run' \gset
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.check(pg_temp.error_of($$select public.join_activity('$$ || :'past_act' || $$')$$) = 'This activity is over', 'join: an activity that is over is refused');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.activity_participants where activity_id = :'past_act' and user_id = '00000000-0000-0000-0000-0000000000f1'), 'join of an activity that is over wrote nothing');
+
+-- "Notify me" for Bali (an upcoming destination) is stored, like the others.
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000f1');
+select pg_temp.check(public.set_service_interest('dest_bali', true), 'notify me: Bali is accepted');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.service_interest where user_id = '00000000-0000-0000-0000-0000000000f1' and service = 'dest_bali'), 'notify me: Bali interest stored');
+
 \echo 'ALL TESTS PASSED'

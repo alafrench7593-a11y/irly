@@ -27,7 +27,11 @@ export async function pickLiveMedia(kind: 'photo' | 'video'): Promise<LiveMedia 
   const seconds = a.duration ? Math.round(a.duration / 1000) : undefined;
   if (seconds && seconds > VIDEO_MAX_SECONDS) throw new Error(`Videos can last ${VIDEO_MAX_SECONDS} seconds at most. Trim it and try again.`);
   if (a.fileSize && a.fileSize > VIDEO_MAX_BYTES) throw new Error('This video is over 25 MB. Pick a shorter one or trim it.');
-  return { kind, uri: a.uri, seconds, poster: await posterOf(a.uri), type: a.mimeType ?? (a.uri.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4') };
+  // The server keeps MP4 and MOV only: any other format is refused here with a clear reason, not after the upload.
+  const picked = (a.mimeType ?? (a.uri.toLowerCase().endsWith('.mov') ? 'video/quicktime' : 'video/mp4')).toLowerCase();
+  const type = picked === 'video/x-m4v' ? 'video/mp4' : picked;
+  if (type !== 'video/mp4' && type !== 'video/quicktime') throw new Error('This video format is not supported. Pick an MP4 or MOV video.');
+  return { kind, uri: a.uri, seconds, poster: await posterOf(a.uri), type };
 }
 
 /** A still from the first second of the video (phones only; the web shows a plain tile). */

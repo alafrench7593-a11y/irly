@@ -88,7 +88,8 @@ export function useHelpFeed(cityId: string, category: string | null, query: stri
     ])
       .then(([f, g]) => {
         if (n !== seq.current) return;
-        if (f.error) throw new Error(f.error.message);
+        // Groups unreadable is not "Help is not open in this city".
+        if (f.error || g.error) throw new Error((f.error ?? g.error)!.message);
         setState({
           for: key,
           error: null,
