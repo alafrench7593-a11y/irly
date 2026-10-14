@@ -209,6 +209,7 @@ function prime(r: InsertedRow, localCover: string | null) {
     // Known once the background load returns.
     conversationId: null,
     cancelled: r.cancelled_at != null,
+    primed: true,
   });
 }
 
@@ -358,6 +359,8 @@ export async function createServerCommunity(input: { name: string; cityId: strin
 }
 
 export type ActivityDetail = {
+  /** Shown from the row just inserted on this phone, before the full detail arrived. */
+  primed?: boolean;
   id: string;
   creatorId: string;
   creatorName: string | null;

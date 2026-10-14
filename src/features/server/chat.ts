@@ -297,6 +297,8 @@ export function useServerThread(conversationId: string): ServerThread {
   const lastTyping = useRef(0);
   // What is on screen, for the catch-up to see a gap without a stale closure.
   const rowsRef = useRef(rows);
+  // Messages heard live or sent from here while the first page loads: the page never drops them.
+  const arrivedRef = useRef(new Set<string>());
   useEffect(() => {
     rowsRef.current = rows;
   }, [rows]);
@@ -357,8 +359,9 @@ export function useServerThread(conversationId: string): ServerThread {
       else if (otherName) setTitle(otherName);
       else if (membersIn) setTitle((t) => t || 'IRLY');
     };
-    // Messages heard live before the first page is in (the channel may join first).
-    const arrived = new Set<string>();
+    // Messages heard live (or sent) before the first page is in (the channel may join first).
+    const arrived = arrivedRef.current;
+    arrived.clear();
     membersQ.then(
       ({ data: members }) => {
         if (!alive) return;
@@ -528,7 +531,10 @@ export function useServerThread(conversationId: string): ServerThread {
               : e.message,
         );
       }
-      if (data) setRows((list) => merge(list, [data as MessageRow]));
+      if (data) {
+        arrivedRef.current.add((data as MessageRow).id);
+        setRows((list) => merge(list, [data as MessageRow]));
+      }
       // First message written: replies are worth a notification.
       void askPushInContext();
       setPending((p) => {

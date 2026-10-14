@@ -308,13 +308,15 @@ export async function postServerIrl(input: {
   let row = insert.data;
   if (insert.error) {
     // Already there: our earlier try was saved before its answer got lost.
-    if (insert.error.code === '23505') {
+    // Same for a rate-limit refusal of a retry: the first try may be the one that counted.
+    if (insert.error.code === '23505' || /slow down/i.test(insert.error.message)) {
       const { data: again } = await sb.from('irl_posts').select('id, created_at, visibility').eq('id', id).eq('author_id', uid).maybeSingle();
       row = again;
     }
     if (!row) {
-      // The post was refused: its files must not stay behind.
-      await cleanup().catch(() => undefined);
+      // Refused by the server (a code): its files must not stay behind. Lost on the way (no
+      // code: network, timeout), the row may still land a moment later: its files are kept.
+      if (insert.error.code) await cleanup().catch(() => undefined);
       throw new Error(friendlyError(insert.error.message));
     }
   }
@@ -354,6 +356,9 @@ export async function postServerIrl(input: {
       ...st.posts.filter((p) => p.id !== confirmed.id && p.createdAt > Date.now() - LIVE_TTL_MIN * 60_000),
     ].slice(0, 20),
   }));
+  // The feeds pick up the server's copy (same signed links, so nothing is downloaded again):
+  // the local copy never outlives a removal done elsewhere.
+  bumpIrl();
   return true;
 }
 

@@ -295,8 +295,10 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     try {
       const chosen = myCommunities.find((x) => x.id === communityId);
       // Usually uploaded already; still on its way, it is awaited; a failed upload is tried again here.
-      const coverPath = cover ? await stage(cover) : null;
+      // Claimed before waiting: closing the form or removing the photo meanwhile must not delete it.
+      const pending = cover ? stage(cover) : null;
       if (cover && staged.current?.uri === cover) staged.current.sent = true;
+      const coverPath = pending ? await pending : null;
       const serverId = await createServerActivity(plan, undefined, { coverUri: cover, coverPath, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
       // No id: nothing was created (session ended). Never "live" then; the form stays.
       if (!serverId) throw new Error(tx('your session has ended, sign in again'));
@@ -608,7 +610,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     </Text>
                   </View>
                   {cover ? (
-                    <PressableScale haptic="select" onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Use the IRLY photo" hitSlop={8}>
+                    <PressableScale haptic="select" disabled={publishing} onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Use the IRLY photo" hitSlop={8}>
                       <Icon name="x" size={16} color="#FFFFFF" strokeWidth={2.6} />
                     </PressableScale>
                   ) : null}
@@ -660,7 +662,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       </Animated.View>
 
       <View style={[styles.closeWrap, { left: origin.x - BUTTON / 2, top: origin.y - BUTTON / 2 }]}>
-        <PressableScale haptic="tap" scaleTo={0.9} onPress={hide} accessibilityLabel="Close composer" style={[styles.close, { backgroundColor: t.c.brand }]}>
+        <PressableScale haptic="tap" scaleTo={0.9} disabled={publishing} onPress={hide} accessibilityLabel="Close composer" style={[styles.close, { backgroundColor: t.c.brand }]}>
           <Animated.View style={closeBtn}>
             <Icon name="plus" size={24} color={t.c.onBrand} strokeWidth={2.4} />
           </Animated.View>

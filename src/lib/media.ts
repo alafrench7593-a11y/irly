@@ -34,14 +34,33 @@ export const SHARE_MAX_EDGE = 1600;
  * out as JPEG. Its size is the size of the picture as it is shown.
  */
 export async function prepareImage(uri: string): Promise<{ uri: string; width: number; height: number; ext: 'jpg'; contentType: 'image/jpeg' }> {
-  let ref = await ImageManipulator.manipulate(uri).renderAsync();
-  const long = Math.max(ref.width, ref.height);
-  if (long > SHARE_MAX_EDGE) {
-    const resize = ref.width >= ref.height ? { width: SHARE_MAX_EDGE } : { height: SHARE_MAX_EDGE };
-    ref = await ImageManipulator.manipulate(ref).resize(resize).renderAsync();
+  // Native images hold full-size bitmaps: released as soon as the file is written (a loop of
+  // photos would otherwise keep them all until the garbage collector runs).
+  const held: { release?: () => void }[] = [];
+  try {
+    const first = ImageManipulator.manipulate(uri);
+    held.push(first);
+    let ref = await first.renderAsync();
+    held.push(ref);
+    const long = Math.max(ref.width, ref.height);
+    if (long > SHARE_MAX_EDGE) {
+      const resize = ref.width >= ref.height ? { width: SHARE_MAX_EDGE } : { height: SHARE_MAX_EDGE };
+      const second = ImageManipulator.manipulate(ref).resize(resize);
+      held.push(second);
+      ref = await second.renderAsync();
+      held.push(ref);
+    }
+    const out = await ref.saveAsync({ compress: 0.85, format: SaveFormat.JPEG });
+    return { uri: out.uri, width: out.width, height: out.height, ext: 'jpg', contentType: 'image/jpeg' };
+  } finally {
+    for (const h of held) {
+      try {
+        h.release?.();
+      } catch {
+        // Already released: nothing to free.
+      }
+    }
   }
-  const out = await ref.saveAsync({ compress: 0.85, format: SaveFormat.JPEG });
-  return { uri: out.uri, width: out.width, height: out.height, ext: 'jpg', contentType: 'image/jpeg' };
 }
 
 /**
