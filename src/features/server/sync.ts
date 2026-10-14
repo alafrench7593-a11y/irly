@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 import { create } from 'zustand';
 import { useAccount } from '@/features/auth/account';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase, topic } from '@/lib/supabase';
 
 /**
@@ -60,6 +61,19 @@ function changedRemotely(kinds: SyncKind[]) {
 }
 export const changedAll = () => changed(...KINDS);
 
+/** What each server signal (public.sync_signals.kind) reloads. */
+const SIGNAL_KINDS: Record<string, SyncKind[]> = {
+  activities: ['activities'],
+  communities: ['communities'],
+  // Leaving a chat often means its activity or community went away too (a deleted community is
+  // hidden from you, so its own change never reaches you): reload those as well, as before.
+  inbox: ['inbox', 'activities', 'communities'],
+  follows: ['follows'],
+  friends: ['friends'],
+  saved: ['saved'],
+};
+const SIGNAL_CATCH_UP: SyncKind[] = ['activities', 'communities', 'inbox', 'follows', 'friends', 'saved'];
+
 /**
  * The app's single realtime channel. Row-level security decides what each
  * member hears; filters keep personal tables personal.
@@ -68,44 +82,66 @@ export function SyncBridge() {
   const uid = useAccount()?.userId;
   useEffect(() => {
     if (!supabase || !uid) return;
-    // One channel per table: a table the server does not publish (yet) can
-    // only silence itself, never the others.
-    const TABLES: { table: string; filter?: string; event?: '*' | 'INSERT' | 'UPDATE' | 'DELETE'; kinds: SyncKind[] }[] = [
+    // The membership / relationship tables (activity_participants,
+    // community_members, conversation_members, saves, follows, friendships)
+    // are never heard for DELETE: Realtime cannot check deletes against
+    // row-level security, so the server strips their keys (migration
+    // irly_sync_signals) and tells the people concerned through sync_signals.
+    const TABLES: { table: string; filter?: string; event?: '*' | 'INSERT' | 'UPDATE'; kinds: SyncKind[] }[] = [
       { table: 'activities', kinds: ['activities'] },
-      { table: 'activity_participants', kinds: ['activities'] },
+      // Joins and status changes you may see (the read rule limits them); leaves arrive as signals.
+      { table: 'activity_participants', event: 'INSERT', kinds: ['activities'] },
+      { table: 'activity_participants', event: 'UPDATE', kinds: ['activities'] },
       { table: 'communities', kinds: ['communities', 'inbox'] },
-      { table: 'community_members', kinds: ['communities'] },
+      // Your own memberships (other people's joins move communities.members_count).
+      { table: 'community_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['communities'] },
+      { table: 'community_members', filter: `user_id=eq.${uid}`, event: 'UPDATE', kinds: ['communities'] },
       { table: 'community_activity_pins', kinds: ['activities'] },
       { table: 'community_channels', kinds: ['communities'] },
       { table: 'community_pins', kinds: ['communities'] },
-      // Joining or leaving a chat follows a join or leave elsewhere; reading,
-      // archiving or hiding a chat (an UPDATE, on every message read) is the inbox only.
-      { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['inbox', 'activities', 'communities'] },
-      { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'DELETE', kinds: ['inbox', 'activities', 'communities'] },
+      // A new chat is the inbox only: the join that made it (activity, community) already
+      // signals its own table, so opening a chat no longer reloads every list.
+      // Reading, archiving or hiding a chat (an UPDATE, on every message read) is the inbox only.
+      { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['inbox'] },
       { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'UPDATE', kinds: ['inbox'] },
       { table: 'conversations', event: 'UPDATE', kinds: ['inbox'] },
       { table: 'profiles', event: 'UPDATE', kinds: ['people'] },
-      { table: 'saves', filter: `user_id=eq.${uid}`, kinds: ['saved'] },
+      { table: 'saves', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['saved'] },
       { table: 'notifications', filter: `user_id=eq.${uid}`, kinds: ['notifs'] },
       // Follows you are part of (the read rule limits them): counts and buttons everywhere.
-      { table: 'follows', kinds: ['follows'] },
+      { table: 'follows', event: 'INSERT', kinds: ['follows'] },
       // Friend requests and friendships you are part of (the read rule limits them):
       // Add / Requested / Accept / Friends, the bell and who may message whom.
-      { table: 'friendships', kinds: ['friends'] },
+      { table: 'friendships', event: 'INSERT', kinds: ['friends'] },
+      { table: 'friendships', event: 'UPDATE', kinds: ['friends'] },
     ];
-    const channels = TABLES.map(({ table, filter, event = '*', kinds }) => {
+    const watch = (name: string, kinds: SyncKind[], bind: (c: RealtimeChannel) => RealtimeChannel) => {
       let first = true;
-      return supabase!
-        .channel(topic(`sync:${table}:${event}:${uid}`))
-        .on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, () => changedRemotely(kinds))
-        .subscribe((status) => {
-          // A (re)connection may have missed events: catch up once.
-          if (status === 'SUBSCRIBED') {
-            if (!first) changed(...kinds);
-            first = false;
-          }
-        });
-    });
+      return bind(supabase!.channel(topic(`sync:${name}:${uid}`))).subscribe((status) => {
+        // A (re)connection may have missed events: catch up once.
+        if (status === 'SUBSCRIBED') {
+          if (!first) changed(...kinds);
+          first = false;
+        }
+      });
+    };
+    // One channel per table: a table the server does not publish (yet) can
+    // only silence itself, never the others.
+    const channels = TABLES.map(({ table, filter, event = '*', kinds }) =>
+      watch(`${table}:${event}`, kinds, (c) =>
+        c.on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, () => changedRemotely(kinds)),
+      ),
+    );
+    // Leaves, removals, unfriends, unfollows and unsaves that concern you,
+    // told by the server to you alone (owner-only rows, RLS-checked inserts).
+    channels.push(
+      watch('signals', SIGNAL_CATCH_UP, (c) =>
+        c.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sync_signals', filter: `user_id=eq.${uid}` }, (payload) => {
+          const kinds = SIGNAL_KINDS[String((payload.new as { kind?: unknown }).kind)];
+          if (kinds) changedRemotely(kinds);
+        }),
+      ),
+    );
     // Back to the app: whatever happened meanwhile.
     // A quick switch to another app (a link, a photo) reloads nothing.
     let away = 0;

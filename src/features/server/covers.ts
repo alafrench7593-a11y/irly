@@ -4,7 +4,7 @@ import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
 import type { PhotoKey } from '@/data/photos';
 import { useAccount } from '@/features/auth/account';
-import { imageBytes, imageType } from '@/lib/media';
+import { cleanImage, imageBytes, imageType } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 import { changed, useSyncVersion } from './sync';
 import { coverLinks } from './activities';
@@ -37,6 +37,29 @@ export async function uploadCover(uri: string): Promise<string> {
   const { error } = await supabase.storage.from('activity-photos').upload(path, await imageBytes(uri), { contentType: img.contentType });
   if (error) throw new Error(error.message);
   return path;
+}
+
+/**
+ * A session's own photo, sent while the member is still filling the form:
+ * cleaned (cleanImage: re-encoded, no EXIF/GPS, ≤1600 px) and uploaded to
+ * "<your id>/…" right after it is picked, so publishing only has to save the
+ * row. Not readable by anyone else until an activity uses it (storage rule).
+ */
+export async function stageCover(uri: string): Promise<string> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const [{ data: session }, img] = await Promise.all([supabase.auth.getSession(), cleanImage(uri)]);
+  const uid = session.session?.user.id;
+  if (!uid) throw new Error('Sign in first');
+  const path = `${uid}/${Date.now()}.${img.ext}`;
+  const { error } = await supabase.storage.from('activity-photos').upload(path, img.body, { contentType: img.contentType });
+  if (error) throw new Error('Could not upload the photo');
+  return path;
+}
+
+/** A staged photo that ended up unused (replaced, removed, form closed): not left behind. */
+export function dropStagedCover(path: string | null | undefined): void {
+  if (!path || !supabase) return;
+  supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
 }
 
 /** A community's photo: a picked image, or null to go back to the app's photo. */

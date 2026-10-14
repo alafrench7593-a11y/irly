@@ -311,10 +311,12 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
     };
     const channel = supabase
       .channel(topic(`community-eng-${communityId}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, later)
-      // A removed vote only carries its key: deletes are listened to unfiltered (rare).
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'community_poll_votes' }, later)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
+      // Votes and likes: new and changed ones only. Their deletes carry no key
+      // (Realtime cannot check them against RLS, so the server strips it):
+      // a withdrawn vote or like shows on the next load.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, later)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, later)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
       .subscribe();
     return () => {

@@ -264,6 +264,7 @@ function seedProfile(id: string): MatchProfile | null {
 }
 
 let weights: Weights = DEFAULT_WEIGHTS;
+let weightsAsked = false;
 
 const deviceApi: MatchApi = {
   mode: 'device',
@@ -403,10 +404,18 @@ const deviceApi: MatchApi = {
 
 /** The API to use right now: the server when signed in, the device otherwise. */
 export async function matchApi(): Promise<MatchApi> {
-  if (supabase && (await hasSession())) {
-    const { data } = await supabase.from('irly_match_config').select('weights').maybeSingle();
-    if (data?.weights) weights = { ...DEFAULT_WEIGHTS, ...(data.weights as Partial<Weights>) };
-    return serverApi;
+  // The server scores matches itself: its weights only matter on the device.
+  // (Fetching them first made every IRLY Girl open wait one more round trip.)
+  if (supabase && (await hasSession())) return serverApi;
+  if (supabase && !weightsAsked) {
+    weightsAsked = true;
+    supabase
+      .from('irly_match_config')
+      .select('weights')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.weights) weights = { ...DEFAULT_WEIGHTS, ...(data.weights as Partial<Weights>) };
+      }, () => undefined);
   }
   return deviceApi;
 }

@@ -3,25 +3,80 @@ import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { forgetLink } from '@/features/server/media';
 import { a11y } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
+import { feedRatio, knownRatio, mediaKey, mediaRatio, rememberRatio } from './liveRatio';
 
 /**
  * A Live video: its poster and length until tapped, so opening the feed
  * never downloads a video; tapped, it loads and plays here, with sound and
- * the system controls. A video that cannot be read says so.
+ * the system controls. A video that cannot be read says so, with a retry.
+ *
+ * `fit` (opt-in, the Live feed and composer): the frame follows the video's
+ * own shape (`ratio`, else its poster's), between 4:5 and 1.91:1, instead of
+ * the size given by `style`. Left out, the frame is exactly `style`, as before.
  */
-export function LiveVideo({ url, poster, seconds, style }: { url: string; poster?: string | null; seconds?: number | null; style?: StyleProp<ViewStyle> }) {
+export function LiveVideo({
+  url,
+  poster,
+  seconds,
+  style,
+  fit = false,
+  ratio,
+  onRetry,
+}: {
+  url: string;
+  poster?: string | null;
+  seconds?: number | null;
+  style?: StyleProp<ViewStyle>;
+  fit?: boolean;
+  /** Width / height of the video as played, when known. */
+  ratio?: number | null;
+  /** Asks for fresh links (the feed reloads) after a failure. */
+  onRetry?: () => void;
+}) {
   const [on, setOn] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [posterRatio, setPosterRatio] = useState<{ poster: string; ratio: number } | null>(null);
+  const own = fit ? (ratio ?? knownRatio(poster) ?? knownRatio(url) ?? (posterRatio && poster && posterRatio.poster === poster ? posterRatio.ratio : null)) : null;
   return (
-    <View style={[styles.box, style]}>
+    <View style={[styles.box, style, fit ? { width: '100%', aspectRatio: feedRatio(own) } : null]}>
       {on ? (
-        <Player url={url} />
+        <Player
+          key={attempt}
+          url={url}
+          onRetry={() => {
+            setAttempt((n) => n + 1);
+            // The cached link may be the broken one (expired, revoked): the reload signs a new one.
+            forgetLink(url);
+            onRetry?.();
+          }}
+        />
       ) : (
         <PressableScale haptic="select" scaleTo={0.98} onPress={() => setOn(true)} style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={a11y('Play the video')}>
-          {poster ? <Image source={{ uri: poster }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} /> : null}
+          {poster ? (
+            <Image
+              source={fit ? { uri: poster, cacheKey: mediaKey(poster) } : { uri: poster }}
+              style={StyleSheet.absoluteFill}
+              contentFit="cover"
+              transition={200}
+              onLoad={
+                fit
+                  ? (e) => {
+                      const r = mediaRatio(e.source.width, e.source.height);
+                      if (!r) return;
+                      rememberRatio(poster, r);
+                      rememberRatio(url, r);
+                      if (!ratio) setPosterRatio({ poster, ratio: r });
+                    }
+                  : undefined
+              }
+            />
+          ) : null}
           <View style={styles.center}>
             <View style={styles.play}>
               <Icon name="play" size={26} color="#fff" />
@@ -40,7 +95,7 @@ export function LiveVideo({ url, poster, seconds, style }: { url: string; poster
   );
 }
 
-function Player({ url }: { url: string }) {
+function Player({ url, onRetry }: { url: string; onRetry: () => void }) {
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const player = useVideoPlayer(url, (p) => {
     p.loop = false;
@@ -49,6 +104,7 @@ function Player({ url }: { url: string }) {
   useEventListener(player, 'statusChange', ({ status }) => setState(status === 'error' ? 'error' : status === 'readyToPlay' ? 'ready' : 'loading'));
   return (
     <>
+      {/* The whole video, never cropped: bars where its shape differs from the frame. */}
       <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="contain" nativeControls />
       {state === 'loading' ? (
         <View style={styles.center} pointerEvents="none">
@@ -56,10 +112,11 @@ function Player({ url }: { url: string }) {
         </View>
       ) : null}
       {state === 'error' ? (
-        <View style={styles.center}>
+        <View style={[styles.center, { gap: 10, backgroundColor: 'rgba(0,0,0,0.6)' }]}>
           <Text variant="label" color="#fff">
             This video could not be played
           </Text>
+          <Button label="Try again" size="sm" variant="secondary" onPress={onRetry} />
         </View>
       ) : null}
     </>

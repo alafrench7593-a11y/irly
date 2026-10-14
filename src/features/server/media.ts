@@ -43,6 +43,31 @@ export async function signedLinks(bucket: Bucket, paths: (string | null | undefi
   return out;
 }
 
+/** Drops cached links so the next signedLinks() asks for fresh ones (an expired or broken link). */
+export function forgetLinks(bucket: Bucket, paths: (string | null | undefined)[]): void {
+  for (const p of paths) if (p) cache.delete(key(bucket, p));
+}
+
+/**
+ * Drops the cached link a signed URL came from (".../object/sign/<bucket>/<path>?token=…"),
+ * so "Try again" on a media that failed to load gets a new link instead of the same one.
+ */
+export function forgetLink(url: string | null | undefined): void {
+  if (!url) return;
+  const bare = url.split(/[?#]/)[0];
+  const m = bare.match(/\/object\/(?:sign|public|authenticated)\/([^/]+)\/(.+)$/);
+  if (m) {
+    let path = m[2];
+    try {
+      path = decodeURIComponent(path);
+    } catch {
+      // Kept as is: the link match below still finds it.
+    }
+    cache.delete(key(m[1] as Bucket, path));
+  }
+  for (const [k, v] of cache) if (v.url === url) cache.delete(k);
+}
+
 /** Where the small copy (256 px) of a profile photo lives, next to it. */
 export const thumbOf = (path: string) => path.replace(/(\.[a-z0-9]+)?$/i, '-s.jpg');
 

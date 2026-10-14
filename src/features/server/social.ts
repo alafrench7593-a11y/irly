@@ -7,8 +7,9 @@ import { useAccount } from '@/features/auth/account';
 import { friendlyError, supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { signedLinks } from './media';
-import { cleanImage } from '@/lib/media';
-import { uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
+import { uuid } from '@/lib/uuid';
+import { prepareLiveMedia, uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
+import { rememberRatio } from '@/features/live/liveRatio';
 import { LIVE_TTL_MIN } from '@/features/live/liveStore';
 import { useNow } from '@/lib/useNow';
 
@@ -36,6 +37,8 @@ export type ServerIrlPost = {
   mediaKind?: 'photo' | 'video';
   posterUrl?: string | null;
   seconds?: number | null;
+  /** Width / height of the photo or video when already known on this phone (else read when it loads). */
+  mediaRatio?: number | null;
   /** Its emirate: the feed covers the whole destination. */
   cityId: string | null;
 };
@@ -56,6 +59,7 @@ type FeedRow = {
   media_kind?: 'photo' | 'video' | null;
   thumb_path?: string | null;
   media_seconds?: number | null;
+  media_ratio?: number | null;
 };
 
 /**
@@ -118,6 +122,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         mediaKind: r.media_path ? (r.media_kind === 'video' ? 'video' : 'photo') : undefined,
         posterUrl: r.thumb_path ? (links[r.thumb_path] ?? null) : null,
         seconds: r.media_seconds ?? null,
+        // Stored with the post: the card has its size before the image arrives.
+        mediaRatio: r.media_ratio ?? null,
         cityId: (r as { city_id?: string }).city_id ?? null,
       }));
   }, [cityId, uid]);
@@ -173,7 +179,38 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   return { posts: uid ? shown : NONE, refresh };
 }
 
-/** Post what you're doing right now. Photo goes to the member's own folder. */
+/** True when the file is already stored (a retry of an upload whose answer got lost). */
+async function stored(path: string): Promise<boolean> {
+  if (!supabase) return false;
+  const { data } = await supabase.storage.from('irl-media').exists(path);
+  return Boolean(data);
+}
+
+/** Uploads one file of a Live; "already there" (our own earlier try, same path) counts as done. */
+async function uploadIrlFile(path: string, uri: string, type: string, onProgress?: (p: number) => void): Promise<void> {
+  try {
+    await uploadLiveFile(path, uri, type, onProgress);
+  } catch (e) {
+    if (await stored(path).catch(() => false)) {
+      onProgress?.(1);
+      return;
+    }
+    throw new Error(friendlyError(e instanceof Error ? e.message : 'Upload failed'));
+  }
+}
+
+/**
+ * Post what you're doing right now. Files go to the member's own folder.
+ *
+ * Fast path: the photo (or the video's poster) was prepared when it was
+ * picked (prepareLiveMedia); here the files are only uploaded, all at once
+ * (video and poster in parallel, the activity created meanwhile), then the
+ * row is inserted ONCE. The post shows in the feed from the server's answer
+ * (the confirmed row), never before; no feed reload is needed.
+ *
+ * `id` makes a retry safe: the same id gives the same files and the same row,
+ * so a post whose answer got lost is never published twice.
+ */
 export async function postServerIrl(input: {
   cityId: string;
   areaId: string;
@@ -182,88 +219,145 @@ export async function postServerIrl(input: {
   photoUri?: string;
   /** A photo or a video (with its poster); wins over photoUri. */
   media?: LiveMedia;
-  /** Upload progress of a video, 0 → 1. */
+  /** Upload progress, 0 → 1 (the video, or the photo). */
   onProgress?: (p: number) => void;
   /** Left out: the member's IRL visibility setting applies (server default). */
   visibility?: 'everyone' | 'friends';
-  /** IRL → activity: the post points at the activity, never a copy of it. */
-  activityId?: string | null;
+  /** IRL → activity: the post points at the activity, never a copy of it. May still be being created. */
+  activityId?: string | null | Promise<string | null>;
+  /** The post's id, made on the phone (kept across retries of the same post). */
+  id?: string;
 }): Promise<boolean> {
   // Never a silent no-op: the composer would close as if the post were live.
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const { data: s } = await supabase.auth.getSession();
+  const sb = supabase;
+  const { data: s } = await sb.auth.getSession();
   const uid = s.session?.user.id;
   if (!uid) throw new Error('Sign in to post');
+  const id = input.id ?? uuid();
+  const media: LiveMedia | undefined = input.media ?? (input.photoUri ? { kind: 'photo', uri: input.photoUri } : undefined);
   let media_path: string | null = null;
   let thumb_path: string | null = null;
-  const media: LiveMedia | undefined = input.media ?? (input.photoUri ? { kind: 'photo', uri: input.photoUri } : undefined);
-  const stamp = Date.now();
+  let shownUri: string | null = null;
+  let posterUri: string | null = null;
+  let ratio: number | undefined = media?.ratio;
+  const uploads: Promise<unknown>[] = [];
   if (media?.kind === 'photo') {
-    const img = await cleanImage(media.uri);
-    media_path = `${uid}/${stamp}.${img.ext}`;
-    const { error } = await supabase.storage.from('irl-media').upload(media_path, img.body, { contentType: img.contentType });
-    if (error) throw new Error(friendlyError(error.message));
+    const prep = await prepareLiveMedia(media);
+    if (!prep.image) throw new Error('Could not read this photo');
+    ratio = prep.ratio ?? ratio;
+    media_path = `${uid}/${id}.jpg`;
+    shownUri = prep.image.uri;
+    uploads.push(uploadIrlFile(media_path, prep.image.uri, 'image/jpeg', input.onProgress));
   } else if (media?.kind === 'video') {
+    // The poster is best effort: without it the video still goes (the feed shows a plain tile).
+    const prep = await prepareLiveMedia(media).catch(() => ({ image: undefined, ratio: media.ratio }));
+    ratio = prep.ratio ?? ratio;
     const ext = media.type === 'video/quicktime' ? 'mov' : 'mp4';
-    if (media.poster) {
-      const img = await cleanImage(media.poster);
-      thumb_path = `${uid}/${stamp}-poster.${img.ext}`;
-      const { error } = await supabase.storage.from('irl-media').upload(thumb_path, img.body, { contentType: img.contentType });
-      if (error) thumb_path = null; // The video still goes; the feed shows a plain tile.
+    media_path = `${uid}/${id}.${ext}`;
+    shownUri = media.uri;
+    if (prep.image) {
+      const poster = `${uid}/${id}-poster.jpg`;
+      posterUri = prep.image.uri;
+      uploads.push(
+        uploadIrlFile(poster, prep.image.uri, 'image/jpeg').then(
+          () => (thumb_path = poster),
+          () => undefined,
+        ),
+      );
     }
-    media_path = `${uid}/${stamp}.${ext}`;
-    try {
-      await uploadLiveFile(media_path, media.uri, media.type ?? 'video/mp4', input.onProgress);
-    } catch (e) {
-      if (thumb_path) await supabase.storage.from('irl-media').remove([thumb_path]);
-      throw e;
+    uploads.push(uploadIrlFile(media_path, media.uri, media.type ?? 'video/mp4', input.onProgress));
+  }
+  const files = () => [media_path, thumb_path].filter((x): x is string => Boolean(x));
+  // Not published: its files go, unless an earlier try of this same post was saved (they are its files).
+  const cleanup = async () => {
+    if (!files().length) return;
+    const { data: saved, error: unknown } = await sb.from('irl_posts').select('id').eq('id', id).maybeSingle();
+    if (saved || unknown) return;
+    await sb.storage.from('irl-media').remove(files()).catch(() => undefined);
+  };
+  let activityId: string | null = null;
+  try {
+    const [activity] = await Promise.all([Promise.resolve(input.activityId ?? null), ...uploads]);
+    activityId = activity;
+  } catch (e) {
+    // Nothing is published: what was stored for it goes.
+    await Promise.allSettled(uploads);
+    await cleanup().catch(() => undefined);
+    throw e;
+  }
+  const insert = await sb
+    .from('irl_posts')
+    .insert({
+      id,
+      author_id: uid,
+      city_id: input.cityId,
+      area_id: input.areaId,
+      place_name: input.placeName ?? null,
+      body: input.body,
+      media_path,
+      ...(media ? { media_kind: media.kind } : {}),
+      ...(thumb_path ? { thumb_path } : {}),
+      ...(media?.seconds !== undefined ? { media_seconds: Math.min(120, media.seconds) } : {}),
+      ...(media && ratio ? { media_ratio: Math.round(Math.min(9.9, Math.max(0.11, ratio)) * 1000) / 1000 } : {}),
+      ...(input.visibility ? { visibility: input.visibility } : {}),
+      activity_id: activityId,
+    })
+    .select('id, created_at, visibility')
+    .single();
+  let row = insert.data;
+  if (insert.error) {
+    // Already there: our earlier try was saved before its answer got lost.
+    // Same for a rate-limit refusal of a retry: the first try may be the one that counted.
+    if (insert.error.code === '23505' || /slow down/i.test(insert.error.message)) {
+      const { data: again } = await sb.from('irl_posts').select('id, created_at, visibility').eq('id', id).eq('author_id', uid).maybeSingle();
+      row = again;
+    }
+    if (!row) {
+      // Refused by the server (a code): its files must not stay behind. Lost on the way (no
+      // code: network, timeout), the row may still land a moment later: its files are kept.
+      if (insert.error.code) await cleanup().catch(() => undefined);
+      throw new Error(friendlyError(insert.error.message));
     }
   }
-  const { data: row, error } = await supabase.from('irl_posts').insert({
-    author_id: uid,
-    city_id: input.cityId,
-    area_id: input.areaId,
-    place_name: input.placeName ?? null,
+  if (!row) throw new Error('Could not post');
+  // The media's shape, known before the feed loads it: the card never jumps.
+  if (media_path) rememberRatio(`irl-media/${media_path}`, ratio);
+  if (thumb_path) rememberRatio(`irl-media/${thumb_path}`, ratio);
+  rememberRatio(shownUri, ratio);
+  rememberRatio(posterUri, ratio);
+  // The confirmed row goes straight into the feed (with the files already on
+  // the phone, never shown to anyone else); the next load of the feed
+  // (Realtime) replaces it with the server's own copy.
+  const confirmed: ServerIrlPost = {
+    id: row.id,
+    authorId: uid,
+    firstName: '',
+    areaId: input.areaId,
+    placeName: input.placeName ?? null,
     body: input.body,
-    media_path,
-    ...(media ? { media_kind: media.kind } : {}),
-    ...(thumb_path ? { thumb_path } : {}),
-    ...(media?.seconds !== undefined ? { media_seconds: Math.min(120, media.seconds) } : {}),
-    ...(input.visibility ? { visibility: input.visibility } : {}),
-    activity_id: input.activityId ?? null,
-  }).select('id, created_at, visibility').single();
-  if (error) {
-    // The post was refused: its files must not stay behind.
-    const files = [media_path, thumb_path].filter((x): x is string => Boolean(x));
-    if (files.length) await supabase.storage.from('irl-media').remove(files);
-    throw new Error(friendlyError(error.message));
-  }
-  // On screen at once, with the photo already on the phone; the reload confirms it.
-  useIrlMine.setState((s) => ({
+    mediaUrl: shownUri,
+    mediaKind: media?.kind,
+    posterUrl: posterUri,
+    seconds: media?.seconds ?? null,
+    mediaRatio: ratio ?? null,
+    visibility: row.visibility,
+    createdAt: Date.parse(row.created_at),
+    friend: false,
+    mine: true,
+    activityId,
+    activityTitle: null,
+    cityId: input.cityId,
+  };
+  useIrlMine.setState((st) => ({
     posts: [
-      {
-        id: row.id,
-        authorId: uid,
-        firstName: '',
-        areaId: input.areaId,
-        placeName: input.placeName ?? null,
-        body: input.body,
-        mediaUrl: media?.uri ?? null,
-        mediaKind: media?.kind,
-        posterUrl: media?.poster ?? null,
-        seconds: media?.seconds ?? null,
-        visibility: row.visibility,
-        createdAt: Date.parse(row.created_at),
-        friend: false,
-        mine: true,
-        activityId: input.activityId ?? null,
-        activityTitle: null,
-        cityId: input.cityId,
-      },
+      confirmed,
       // Live posts last 4 hours: older ones are dropped here.
-      ...s.posts.filter((p) => p.createdAt > Date.now() - 4 * 3600 * 1000),
+      ...st.posts.filter((p) => p.id !== confirmed.id && p.createdAt > Date.now() - LIVE_TTL_MIN * 60_000),
     ].slice(0, 20),
   }));
+  // The feeds pick up the server's copy (same signed links, so nothing is downloaded again):
+  // the local copy never outlives a removal done elsewhere.
   bumpIrl();
   return true;
 }

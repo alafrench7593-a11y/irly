@@ -117,7 +117,8 @@ export function useEngagement(type: TargetType, ids: string[]) {
     const filter = realtimeIdsFilter(key.split(',')) ?? `target_type=eq.${type}`;
     const channel = supabase
       .channel(topic(`eng-${type}-${key.length}-${uid}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter }, later.call)
+      // New likes only: an unlike's DELETE carries no key (stripped server-side for privacy).
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter }, later.call)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter }, later.call)
       .subscribe();
     return () => {
@@ -408,7 +409,7 @@ export function useComments(t: Target) {
     }, 600);
     const channel = supabase
       .channel(topic(`comment-likes-${t.type}-${t.id}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'likes', filter: realtimeIdsFilter(likeKey.split(',')) ?? 'target_type=eq.comment' }, later.call)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter: realtimeIdsFilter(likeKey.split(',')) ?? 'target_type=eq.comment' }, later.call)
       .subscribe();
     return () => {
       alive = false;

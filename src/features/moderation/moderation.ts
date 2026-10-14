@@ -51,6 +51,7 @@ export async function report(t: ReportTarget, category: ReportCategory, details?
 export async function blockUser(userId: string): Promise<void> {
   const { error } = await need().rpc('block_user', { p_target: userId });
   if (error) throw new Error(plain(error.message));
+  forgetBlocked();
   changed('inbox', 'people', 'activities', 'communities');
   // Their live moments leave the feed now, not at the next live event.
   void import('@/features/server/social').then((m) => m.bumpIrl());
@@ -59,36 +60,65 @@ export async function blockUser(userId: string): Promise<void> {
 export async function unblockUser(userId: string): Promise<void> {
   const { error } = await need().rpc('unblock_user', { p_target: userId });
   if (error) throw new Error(error.message);
+  forgetBlocked();
   changed('inbox', 'people', 'activities', 'communities');
   void import('@/features/server/social').then((m) => m.bumpIrl());
 }
 
 export type Blocked = { userId: string; firstName: string; at: number };
 
+/**
+ * The list read last (this launch): every chat screen filters with it, so
+ * opening chats one after another reuses it for a minute instead of asking
+ * the server each time. Blocking or unblocking drops it; a refresh always asks.
+ */
+let blockedCache: { uid: string; list: Blocked[]; at: number } | null = null;
+const BLOCKED_FRESH_MS = 60_000;
+/**
+ * Bumped each time the cache is dropped: a my_blocks read started before a
+ * block/unblock must not write its older list back into the cache.
+ */
+let blockedGen = 0;
+function forgetBlocked() {
+  blockedCache = null;
+  blockedGen += 1;
+}
+
 /** The people you blocked (Settings → Blocked members). */
 export function useBlocked() {
   const uid = useAccount()?.userId;
-  const [res, setRes] = useState<{ for: string; list: Blocked[]; error: string | null }>({ for: '', list: [], error: null });
+  const [res, setRes] = useState<{ for: string; list: Blocked[]; error: string | null }>(() =>
+    uid && blockedCache?.uid === uid ? { for: `${uid}|0`, list: blockedCache.list, error: null } : { for: '', list: [], error: null },
+  );
   const [v, setV] = useState(0);
   const current = `${uid}|${v}`;
   useEffect(() => {
     if (!uid || !supabase) return;
+    if (v === 0 && blockedCache?.uid === uid && Date.now() - blockedCache.at < BLOCKED_FRESH_MS && res.for === current) return;
     let alive = true;
+    const gen = blockedGen;
     supabase
       .rpc('my_blocks')
       .then(({ data, error }) => {
         if (!alive) return;
+        // Someone was blocked or unblocked while this read was in flight: its list is
+        // older than that change, so it is neither cached nor shown; ask again.
+        if (gen !== blockedGen) {
+          setV((x) => x + 1);
+          return;
+        }
         if (error) setRes((r) => ({ ...r, for: current, error: error.message }));
-        else
-          setRes({
-            for: current,
-            error: null,
-            list: ((data as { user_id: string; first_name: string; blocked_at: string }[]) ?? []).map((r) => ({ userId: r.user_id, firstName: r.first_name, at: Date.parse(r.blocked_at) })),
-          });
+        else {
+          const list = ((data as { user_id: string; first_name: string; blocked_at: string }[]) ?? []).map((r) => ({ userId: r.user_id, firstName: r.first_name, at: Date.parse(r.blocked_at) }));
+          blockedCache = { uid, list, at: Date.now() };
+          setRes({ for: current, error: null, list });
+        }
       });
     return () => {
       alive = false;
     };
+    // res.for is only read to know the list came from the cache; it must not re-run the read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, current]);
   const refresh = useCallback(() => setV((x) => x + 1), []);
   const on = Boolean(uid && supabase);

@@ -22,7 +22,8 @@ const OPTIONS: { id: Answer; label: string; icon: IconName }[] = [
 /**
  * Going / Not going / Maybe on a glass track. A white pill slides to the
  * answer on `spring.medium` and the chosen icon takes its colour; "Going"
- * joins the session (participant list, group chat), with a success haptic.
+ * adds it to your plans (kept on this phone), with a success haptic.
+ * Used for catalogue events and sessions: they have no group chat, so none is promised.
  */
 export function RsvpControl({ id, onDark }: { id: string; onDark?: boolean }) {
   const t = useTheme();
@@ -44,7 +45,7 @@ export function RsvpControl({ id, onDark }: { id: string; onDark?: boolean }) {
     setRsvp(id, a);
     if (a === 'going') {
       haptic('success');
-      toast("You're going. Group chat unlocked", 'check');
+      toast("You're going. Saved to your plans", 'check');
     } else {
       haptic('select');
     }

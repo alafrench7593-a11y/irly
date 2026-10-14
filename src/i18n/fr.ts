@@ -503,6 +503,8 @@ export const fr: Record<string, string> = {
   'You left this activity': 'Tu as quitté cette activité',
   "You're in. Activity chat unlocked": 'C’est bon. Le chat de l’activité est ouvert',
   "You're going. Group chat unlocked": 'Tu y vas. Le chat de groupe est ouvert',
+  "You're going. Saved to your plans": 'Tu y vas. Ajouté à ton programme',
+  'In your plans': 'Dans ton programme',
   "You're in. The group chat is open": 'C’est bon. Le chat de groupe est ouvert',
   'Just filled up. Try another one': 'Complet à l’instant. Essaie-en une autre',
   'Creating communities arrives with accounts (server)': 'La création de communautés arrive avec les comptes',
@@ -4187,4 +4189,10 @@ export const fr: Record<string, string> = {
   'Could not open your calendar': 'Impossible d’ouvrir ton calendrier',
   'Sign in to see this conversation': 'Connecte-toi pour voir cette conversation',
   'Leave this community?': 'Quitter cette communauté ?',
+  // Live media
+  'Sending the photo… {n}%': 'Envoi de la photo… {n} %',
+  'This photo could not be loaded': 'Impossible de charger cette photo',
+  'This video could not be loaded': 'Impossible de charger cette vidéo',
+  'Could not read this photo': 'Impossible de lire cette photo',
+  'Upload failed': 'Échec de l’envoi',
 };

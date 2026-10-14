@@ -232,6 +232,12 @@ export default function ActivityPage() {
             </View>
             {hosting ? null : <Button label="Leave" variant="secondary" loading={busy} onPress={leave} />}
           </>
+        ) : a.primed && error ? (
+          // Just created, but the full detail did not load: offer to try again (never a dead spinner).
+          <Button label="Try again" full onPress={refresh} />
+        ) : a.primed ? (
+          // Just created: the page opened before its chat id arrived (a moment later).
+          <Button label="Open chat" icon="message" full loading disabled onPress={() => undefined} />
         ) : a.cancelled ? (
           <Button label="Cancelled" disabled full onPress={() => undefined} />
         ) : over ? (

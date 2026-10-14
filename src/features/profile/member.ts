@@ -205,7 +205,8 @@ export function useFollowList(userId: string, which: 'followers' | 'following' |
 export async function openDirect(userId: string): Promise<string> {
   const { data, error } = await sb().rpc('open_direct', { p_user: userId });
   if (error) throw new Error(/not accept/i.test(error.message) ? 'This member does not accept new messages from you' : error.message);
-  changed('inbox');
+  // No inbox reload here: an existing chat has not changed, and a new one arrives
+  // through the membership signal (it reloaded every inbox on screen while the chat opened).
   return data as string;
 }
 

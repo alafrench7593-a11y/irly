@@ -75,13 +75,10 @@ export default function CommunityScreen() {
   const city = c ? (CITIES[c.cityId as CityId] ?? CITIES.dubai) : CITIES.dubai;
   const geo: GeoIndex = useMemo(() => ({ cities: [{ id: city.id, name: city.name }], areas: city.areas.map((a) => ({ id: a.id, name: a.name, cityId: city.id })) }), [city]);
 
-  if (auth === 'unknown') {
-    return (
-      <Centered>
-        <ActivityIndicator />
-      </Centered>
-    );
-  }
+  // The page frame (title, back) and a line of text right away: the stored
+  // session read and then the community query can take seconds on a slow
+  // start, and a bare spinner reads as a blank page.
+  if (auth === 'unknown') return <Loading />;
   if (!signedIn) {
     return (
       <Centered>
@@ -93,13 +90,7 @@ export default function CommunityScreen() {
       </Centered>
     );
   }
-  if (loading) {
-    return (
-      <Centered>
-        <ActivityIndicator color={t.c.text} />
-      </Centered>
-    );
-  }
+  if (loading) return <Loading />;
   if (!c) {
     return (
       <Centered>
@@ -734,6 +725,21 @@ function PostCard({
 function Centered({ children }: { children: React.ReactNode }) {
   const t = useTheme();
   return <View style={[styles.centered, { backgroundColor: t.c.bg }]}>{children}</View>;
+}
+
+function Loading() {
+  const t = useTheme();
+  return (
+    <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <View style={styles.centered} accessibilityLabel={tx('Loading')}>
+        <ActivityIndicator color={t.c.text} />
+        <Text variant="body" tone="secondary" align="center">
+          Loading the community…
+        </Text>
+      </View>
+      <PageHeader title="Community" />
+    </View>
+  );
 }
 
 /**

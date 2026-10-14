@@ -27,7 +27,7 @@ import { createServerActivity, useGeocoderOn, useMyCommunityOptions } from '@/fe
 import { useAccount } from '@/features/auth/account';
 import { useNow } from '@/lib/useNow';
 import { useRouter } from 'expo-router';
-import { pickPhoto } from '@/features/server/covers';
+import { dropStagedCover, pickPhoto, stageCover } from '@/features/server/covers';
 import { useCreateStore, type CreateFormat } from './createStore';
 
 const DAYS = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
@@ -77,6 +77,17 @@ const QUICK: { label: string; icon: IconName; entry?: string; category?: Categor
   { label: 'Travel', icon: 'plane', category: 'travel' },
   { label: 'Other', icon: 'plus' },
 ];
+
+/**
+ * The server clearly said no (a rule, a check, an ended session): nothing was created.
+ * No answer (offline, timeout, aborted, gateway) or a duplicate (an earlier try saved it)
+ * is not a refusal: the activity may exist.
+ */
+function refusedForSure(e: unknown): boolean {
+  const m = e instanceof Error ? e.message : '';
+  if (!m) return false;
+  return !/fetch|network|connection|offline|timed? ?out|timeout|abort|gateway|50[234]|duplicate|23505|server error/i.test(m);
+}
 
 function findEntry(label: string) {
   const l = label.toLowerCase();
@@ -144,8 +155,38 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [address, setAddress] = useState('');
   const [spots, setSpots] = useState(6);
   const [description, setDescription] = useState('');
+  const signedIn = Boolean(useAccount());
   // Optional: the creator's own photo instead of the catalogue one.
-  const [cover, setCover] = useState<string | null>(null);
+  const [cover, setCoverUri] = useState<string | null>(null);
+  // Signed in, the photo is cleaned and uploaded as soon as it is picked, while the
+  // form is still being filled: publishing then only saves the row (one round trip).
+  // sent: a publish went out with it. unsure: one of those tries ended without a clear answer
+  // (network, timeout…), so the activity may exist with this photo: it is kept for good then.
+  const staged = useRef<{ uri: string; path: Promise<string>; failed: boolean; sent: boolean; unsure?: boolean } | null>(null);
+  const stage = (uri: string) => {
+    const cur = staged.current;
+    if (cur?.uri === uri && !cur.failed) return cur.path;
+    const job = { uri, path: stageCover(uri), failed: false, sent: false };
+    job.path.catch(() => {
+      job.failed = true;
+    });
+    staged.current = job;
+    return job.path;
+  };
+  // A staged photo that is not used (replaced, removed, form closed) is removed from the server.
+  // Once a publish was sent with it, it is kept: an unanswered try may have saved the activity with it.
+  const unstage = () => {
+    const cur = staged.current;
+    staged.current = null;
+    if (cur && !cur.sent) cur.path.then(dropStagedCover, () => undefined);
+  };
+  // Closing the form (unmount) drops a photo that was not published.
+  useEffect(() => unstage, []);
+  const setCover = (uri: string | null) => {
+    if (staged.current && staged.current.uri !== uri) unstage();
+    setCoverUri(uri);
+    if (uri && signedIn) void stage(uri).catch(() => undefined);
+  };
   const pickCover = async () => {
     const uri = await pickPhoto();
     if (uri) setCover(uri);
@@ -227,7 +268,6 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   };
 
   const [publishing, setPublishing] = useState(false);
-  const signedIn = Boolean(useAccount());
   const router = useRouter();
   const post = async () => {
     if (!pick || !title || publishing) return;
@@ -267,14 +307,28 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     setPublishing(true);
     try {
       const chosen = myCommunities.find((x) => x.id === communityId);
-      const serverId = await createServerActivity(plan, undefined, { coverUri: cover, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
+      // Usually uploaded already; still on its way, it is awaited; a failed upload is tried again here.
+      // Claimed before waiting: closing the form or removing the photo meanwhile must not delete it.
+      const pending = cover ? stage(cover) : null;
+      if (cover && staged.current?.uri === cover) staged.current.sent = true;
+      const coverPath = pending ? await pending : null;
+      const serverId = await createServerActivity(plan, undefined, { coverUri: cover, coverPath, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
       // No id: nothing was created (session ended). Never "live" then; the form stays.
       if (!serverId) throw new Error(tx('your session has ended, sign in again'));
+      // The photo now belongs to the activity: closing the form must not remove it.
+      if (staged.current?.uri === cover) staged.current = null;
       haptic('success');
       toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
       hide();
       router.push(`/a/${serverId}`);
     } catch (e) {
+      // Refused for sure (a rule, a check, the session): nothing was created, so the staged photo
+      // is unused again and goes when the form closes or the photo changes. An unanswered try
+      // (network, timeout, unknown) may have saved the activity with it: it stays then.
+      if (cover && staged.current?.uri === cover) {
+        if (refusedForSure(e) && !staged.current.unsure) staged.current.sent = false;
+        else staged.current.unsure = true;
+      }
       toast(tx('Not published: {why}. Try again', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live');
     } finally {
       setPublishing(false);
@@ -576,7 +630,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     </Text>
                   </View>
                   {cover ? (
-                    <PressableScale haptic="select" onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Use the IRLY photo" hitSlop={8}>
+                    <PressableScale haptic="select" disabled={publishing} onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Use the IRLY photo" hitSlop={8}>
                       <Icon name="x" size={16} color="#FFFFFF" strokeWidth={2.6} />
                     </PressableScale>
                   ) : null}
@@ -628,7 +682,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       </Animated.View>
 
       <View style={[styles.closeWrap, { left: origin.x - BUTTON / 2, top: origin.y - BUTTON / 2 }]}>
-        <PressableScale haptic="tap" scaleTo={0.9} onPress={hide} accessibilityLabel="Close composer" style={[styles.close, { backgroundColor: t.c.brand }]}>
+        <PressableScale haptic="tap" scaleTo={0.9} disabled={publishing} onPress={hide} accessibilityLabel="Close composer" style={[styles.close, { backgroundColor: t.c.brand }]}>
           <Animated.View style={closeBtn}>
             <Icon name="plus" size={24} color={t.c.onBrand} strokeWidth={2.4} />
           </Animated.View>
