@@ -94,17 +94,23 @@ export default function CommentsScreen() {
               {params.title}
             </Text>
           ) : null}
-          {auth === 'unknown' ? (
-          <ActivityIndicator style={{ marginTop: 24 }} />
-        ) : auth === 'out' ? (
+          {auth === 'unknown' || (auth === 'in' && loading) ? (
+            // The frame and a line of text right away: on a slow start (the
+            // stored session read, then the first thread query) the screen
+            // never sits on a bare spinner.
+            <View style={styles.loading} accessibilityLabel={tx('Loading')}>
+              <ActivityIndicator color={t.c.text} />
+              <Text variant="body" tone="secondary">
+                Loading comments…
+              </Text>
+            </View>
+          ) : auth === 'out' ? (
             <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
               <Text variant="body" tone="secondary" align="center">
                 Sign in to read and write comments.
               </Text>
               <Button label="Sign in" size="sm" onPress={() => router.push('/account')} />
             </View>
-          ) : loading ? (
-            <ActivityIndicator color={t.c.text} />
           ) : failed && !roots.length ? (
             <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
               <Text variant="body" tone="secondary" align="center">
@@ -221,6 +227,7 @@ const styles = StyleSheet.create({
   meta: { flexDirection: 'row', gap: 16, marginTop: 4 },
   like: { alignItems: 'center', gap: 2, paddingTop: 4, minWidth: 28 },
   empty: { alignItems: 'center', gap: 12, padding: 24, borderRadius: radius.xl },
+  loading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 24 },
   composer: { paddingHorizontal: space.gutter, paddingTop: 10, gap: 8 },
   composerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   replying: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },

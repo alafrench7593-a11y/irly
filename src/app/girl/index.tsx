@@ -35,6 +35,18 @@ import { useCityId } from '@/state/store';
 import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 
+const BOOT_LIMIT = 25_000;
+/** The promise, or a rejection once `ms` have passed without an answer. */
+function withLimit<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('IRLY did not answer in time')), ms);
+    p.then(
+      (v) => (clearTimeout(timer), resolve(v)),
+      (e) => (clearTimeout(timer), reject(e)),
+    );
+  });
+}
+
 const SECTIONS: { id: Section; label: (city: string) => string; icon: IconName }[] = [
   { id: 'for_you', label: () => 'For you', icon: 'sparkles' },
   { id: 'new', label: (c) => `New in ${c}`, icon: 'plane' },
@@ -174,9 +186,16 @@ export default function GirlHome() {
   const boot = useCallback(async () => {
     if (!booted.current) setState('loading');
     try {
-      const api = await matchApi();
-      apiRef.current = api;
-      const s = await api.state();
+      // Never an endless spinner: past BOOT_LIMIT the screen offers Try again
+      // (each request has its own 20 s limit, and there are two in a row).
+      const s = await withLimit(
+        (async () => {
+          const api = await matchApi();
+          apiRef.current = api;
+          return api.state();
+        })(),
+        BOOT_LIMIT,
+      );
       setState(s);
       if (s === 'onboarding') router.replace('/girl/onboarding');
       else if (s === 'profile') router.replace('/girl/profile');
@@ -186,7 +205,8 @@ export default function GirlHome() {
         loadMatches();
       }
     } catch {
-      setState('error');
+      // A failed re-check on focus keeps the screen that already works.
+      if (!booted.current) setState('error');
     }
   }, [router, loadDeck, loadMatches]);
 
@@ -243,9 +263,17 @@ export default function GirlHome() {
   const top = deck[0];
 
   if (state === 'loading' || state === 'onboarding' || state === 'profile') {
+    // Words with the spinner: the session read and the access check can take
+    // seconds on a slow start, and a bare spinner reads as a blank page.
     return (
-      <View style={[styles.root, styles.center]}>
+      <View style={[styles.root, styles.center, { gap: 14, padding: space.gutter }]} accessibilityLabel={tx('Loading')}>
         <ActivityIndicator color={girl.rose} />
+        <Text variant="titleM" color={girl.ink} align="center">
+          IRLY Girl
+        </Text>
+        <Text variant="body" color={girl.inkSoft} align="center">
+          Opening your space…
+        </Text>
       </View>
     );
   }
