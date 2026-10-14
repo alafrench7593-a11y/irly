@@ -31,6 +31,9 @@ export function MemberActivities({ cityId }: { cityId: CityId }) {
   const { activities, refresh } = useServerActivities(cityId);
   const recs = useRecommendations(cityId);
   const { narrow } = useCityFilter(cityId);
+  const signedIn = Boolean(useAccount());
+  // Signed out, the server lists nothing: never say "nothing planned" when plans exist.
+  if (!signedIn) return null;
   // Narrowed to one emirate and empty: keep the switch so « All Emirates » stays one tap away.
   if (!activities.length && !narrow) return null;
   // Recommended first (interests, friends going), then the rest by date.

@@ -25,6 +25,7 @@ import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { createServerActivity, useGeocoderOn, useMyCommunityOptions } from '@/features/server/activities';
 import { useAccount } from '@/features/auth/account';
+import { useNow } from '@/lib/useNow';
 import { useRouter } from 'expo-router';
 import { pickPhoto } from '@/features/server/covers';
 import { useCreateStore, type CreateFormat } from './createStore';
@@ -121,8 +122,18 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [unlimited, setUnlimited] = useState(false);
   const [query, setQuery] = useState('');
   const [custom, setCustom] = useState('');
-  const [day, setDay] = useState(DAYS[0]);
-  const [time, setTime] = useState(TIMES[5]);
+  const [pickedDay, setDay] = useState(DAYS[0]);
+  const [pickedTime, setTime] = useState(TIMES[5]);
+  // Today only offers times still ahead in the city (a past time used to become tomorrow
+  // while the summary said Today); once today is over, Today is not offered.
+  const now = useNow();
+  const local = new Date(now + (city.utcOffset ?? 4) * 3600_000);
+  const minutesNow = local.getUTCHours() * 60 + local.getUTCMinutes();
+  const laterToday = TIMES.filter((x) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3)) > minutesNow + 15);
+  const days = laterToday.length ? DAYS : DAYS.slice(1);
+  const day = days.includes(pickedDay) ? pickedDay : days[0];
+  const times = day === 'Today' ? laterToday : TIMES;
+  const time = times.includes(pickedTime) ? pickedTime : times[0];
   const [area, setArea] = useState(city.areas[0].id);
   const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>(preset?.communityId ? 'community' : 'public');
   // Optional: the community (or group) it belongs to. Not needed to create an activity.
@@ -457,12 +468,12 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   When
                 </Text>
                 <View style={styles.wrap}>
-                  {DAYS.map((d) => (
+                  {days.map((d) => (
                     <Chip key={d} size="sm" label={d} selected={day === d} onPress={() => setDay(d)} />
                   ))}
                 </View>
                 <View style={styles.wrap}>
-                  {TIMES.map((x) => (
+                  {times.map((x) => (
                     <Chip key={x} size="sm" label={x} selected={time === x} onPress={() => setTime(x)} />
                   ))}
                 </View>

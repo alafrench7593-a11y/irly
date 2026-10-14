@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
@@ -10,6 +11,7 @@ import { uuid } from '@/lib/uuid';
 import { uploadChatPhoto } from './media';
 import { primeFaces } from './faces';
 import { askPushInContext } from '@/features/push/push';
+import { useBlocked } from '@/features/moderation/moderation';
 
 /**
  * Server chats (signed in): the inbox from `my_conversations()` and live
@@ -53,7 +55,8 @@ export const useServerUnread = create<{ n: number }>(() => ({ n: 0 }));
 /** Mounted once at the root: keeps the unread count live for every header. */
 export function UnreadSync() {
   const { conversations } = useServerInbox();
-  const n = conversations.reduce((sum, c) => sum + (c.unread ?? 0), 0);
+  // Archived chats keep their own unread count but stay out of the badge.
+  const n = conversations.reduce((sum, c) => sum + (c.archived ? 0 : (c.unread ?? 0)), 0);
   useEffect(() => {
     useServerUnread.setState({ n });
   }, [n]);
@@ -177,6 +180,45 @@ function merge(list: MessageRow[], more: MessageRow[]): MessageRow[] {
   return [...seen.values()].sort(byTime);
 }
 
+type Channel = ReturnType<NonNullable<typeof supabase>['channel']>;
+/**
+ * "Typing…" channels, one per conversation and shared by every open copy of
+ * that chat: the client hands back the same channel for the same topic, so
+ * it is removed only when the last screen using it goes.
+ */
+const typingChannels = new Map<string, { channel: Channel; listeners: Set<(who: string) => void> }>();
+function joinTyping(typingTopic: string, onTyping: (who: string) => void): { channel: Channel; leave: () => void } {
+  const sb = supabase!;
+  let entry = typingChannels.get(typingTopic);
+  if (!entry) {
+    // A channel left behind (a reload during development) is replaced, not reused half set up.
+    sb.getChannels()
+      .filter((c) => c.topic === `realtime:${typingTopic}`)
+      .forEach((c) => sb.removeChannel(c));
+    const listeners = new Set<(who: string) => void>();
+    const channel = sb
+      .channel(typingTopic, { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        const who = (payload as { uid?: string })?.uid;
+        if (who) listeners.forEach((l) => l(who));
+      })
+      .subscribe();
+    entry = { channel, listeners };
+    typingChannels.set(typingTopic, entry);
+  }
+  const mine = entry;
+  mine.listeners.add(onTyping);
+  return {
+    channel: mine.channel,
+    leave: () => {
+      mine.listeners.delete(onTyping);
+      if (mine.listeners.size || typingChannels.get(typingTopic) !== mine) return;
+      typingChannels.delete(typingTopic);
+      void sb.removeChannel(mine.channel);
+    },
+  };
+}
+
 export type ServerMessage = Message & {
   at: number;
   name?: string;
@@ -245,8 +287,36 @@ export function useServerThread(conversationId: string): ServerThread {
   // Your messages not confirmed by the server yet: shown at once, marked "sending" or "failed".
   const [pending, setPending] = useState<Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null }>>({});
   const [typing, setTypingNames] = useState<Record<string, number>>({});
-  const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
+  const channelRef = useRef<Channel | null>(null);
   const lastTyping = useRef(0);
+  // What is on screen, for the catch-up to see a gap without a stale closure.
+  const rowsRef = useRef(rows);
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
+
+  // Read only while this chat is actually seen: focused (no screen pushed on
+  // top) and the app in front. A read skipped meanwhile is owed for the return.
+  const focused = useRef(false);
+  const owedRead = useRef(false);
+  const markRead = useCallback(() => {
+    if (!supabase) return;
+    if (!focused.current || AppState.currentState !== 'active') {
+      owedRead.current = true;
+      return;
+    }
+    owedRead.current = false;
+    supabase.rpc('mark_conversation_read', { p_conversation: conversationId }).then(() => undefined);
+  }, [conversationId]);
+  useFocusEffect(
+    useCallback(() => {
+      focused.current = true;
+      if (owedRead.current) markRead();
+      return () => {
+        focused.current = false;
+      };
+    }, [markRead]),
+  );
 
   useEffect(() => {
     if (!supabase || !uid) return;
@@ -295,7 +365,7 @@ export function useServerThread(conversationId: string): ServerThread {
         setRows(msgs.slice().sort(byTime));
         setHasEarlier(msgs.length === PAGE);
         setLoading(false);
-        supabase!.rpc('mark_conversation_read', { p_conversation: conversationId }).then(() => undefined);
+        markRead();
       } catch (e) {
         if (!alive) return;
         setError(e instanceof Error ? e.message : 'Can’t reach IRLY right now');
@@ -308,37 +378,36 @@ export function useServerThread(conversationId: string): ServerThread {
       latest()
         .then((msgs) => {
           if (!alive) return;
-          // The newest page replaces its own time span: messages deleted meanwhile go too.
-          const from = msgs.length === PAGE ? msgs[msgs.length - 1].created_at : '';
-          setRows((list) => merge(list.filter((x) => x.created_at < from), msgs));
-          supabase?.rpc('mark_conversation_read', { p_conversation: conversationId }).then(() => undefined);
+          const newest = rowsRef.current[rowsRef.current.length - 1]?.created_at ?? '';
+          if (msgs.length === PAGE && msgs[msgs.length - 1].created_at > newest) {
+            // More than a page missed: merging would leave a hole between the two.
+            // The newest page is the chat now; older ones load on demand.
+            setRows((list) => merge(list.filter((x) => x.created_at > msgs[0].created_at), msgs));
+            setHasEarlier(true);
+          } else {
+            // The newest page replaces its own time span: messages deleted meanwhile go too.
+            const from = msgs.length === PAGE ? msgs[msgs.length - 1].created_at : '';
+            setRows((list) => merge(list.filter((x) => x.created_at < from), msgs));
+          }
+          markRead();
         })
         .catch(() => undefined);
 
     let joinedOnce = false;
     // "Typing…" needs every member on the same topic (data changes do not):
-    // one shared topic per conversation, replaced if a previous screen left it behind.
-    const typingTopic = `typing:${conversationId}`;
-    supabase
-      .getChannels()
-      .filter((c) => c.topic === `realtime:${typingTopic}`)
-      .forEach((c) => supabase?.removeChannel(c));
-    const typingChannel = supabase
-      .channel(typingTopic, { config: { broadcast: { self: false } } })
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        const who = (payload as { uid?: string })?.uid;
-        if (!who || who === uid) return;
-        setTypingNames((t) => ({ ...t, [who]: Date.now() }));
-      })
-      .subscribe();
-    channelRef.current = typingChannel;
+    // one shared topic per conversation.
+    const typingChannel = joinTyping(`typing:${conversationId}`, (who) => {
+      if (who === uid) return;
+      setTypingNames((t) => ({ ...t, [who]: Date.now() }));
+    });
+    channelRef.current = typingChannel.channel;
     const channel = supabase
       .channel(topic(`thread-${conversationId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow;
         setRows((list) => merge(list, [m]));
         if (m.sender_id) setTypingNames((t) => (m.sender_id! in t ? Object.fromEntries(Object.entries(t).filter(([k]) => k !== m.sender_id)) : t));
-        supabase?.rpc('mark_conversation_read', { p_conversation: conversationId }).then(() => undefined);
+        markRead();
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow & { deleted_at?: string | null };
@@ -359,9 +428,9 @@ export function useServerThread(conversationId: string): ServerThread {
       app.remove();
       channelRef.current = null;
       supabase?.removeChannel(channel);
-      supabase?.removeChannel(typingChannel);
+      typingChannel.leave();
     };
-  }, [conversationId, uid]);
+  }, [conversationId, uid, markRead]);
 
   // "Typing…" fades 4 seconds after the last signal.
   const typingCount = Object.keys(typing).length;
@@ -507,10 +576,14 @@ export function useServerThread(conversationId: string): ServerThread {
     channelRef.current?.send({ type: 'broadcast', event: 'typing', payload: { uid } }).catch(() => undefined);
   }, [uid]);
 
+  // People you blocked stay out of shared chats too (the inbox already hides them in private ones).
+  const blocked = useBlocked();
+  useRefreshOn(['people'], blocked.refresh);
+  const blockedIds = useMemo(() => new Set(blocked.list.map((b) => b.userId)), [blocked.list]);
   const messages = useMemo(
     () =>
       [
-        ...rows,
+        ...rows.filter((r) => !r.sender_id || !blockedIds.has(r.sender_id)),
         // Pending ones, until the server confirms them (then they are in rows with the same id).
         ...Object.entries(pending)
           .filter(([id]) => !rows.some((r) => r.id === id))
@@ -529,7 +602,7 @@ export function useServerThread(conversationId: string): ServerThread {
           status: pending[r.id] ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
         }),
       ),
-    [rows, names, uid, pending],
+    [rows, names, uid, pending, blockedIds],
   );
   const otherId = kind === 'direct' || kind === 'match' ? (Object.keys(names).find((id) => id !== uid) ?? null) : null;
   const typingNames = useMemo(() => Object.keys(typing).map((id) => names[id] ?? 'Someone'), [typing, names]);
