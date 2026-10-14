@@ -59,6 +59,7 @@ type FeedRow = {
   media_kind?: 'photo' | 'video' | null;
   thumb_path?: string | null;
   media_seconds?: number | null;
+  media_ratio?: number | null;
 };
 
 /**
@@ -121,6 +122,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         mediaKind: r.media_path ? (r.media_kind === 'video' ? 'video' : 'photo') : undefined,
         posterUrl: r.thumb_path ? (links[r.thumb_path] ?? null) : null,
         seconds: r.media_seconds ?? null,
+        // Stored with the post: the card has its size before the image arrives.
+        mediaRatio: r.media_ratio ?? null,
         cityId: (r as { city_id?: string }).city_id ?? null,
       }));
   }, [cityId, uid]);
@@ -296,6 +299,7 @@ export async function postServerIrl(input: {
       ...(media ? { media_kind: media.kind } : {}),
       ...(thumb_path ? { thumb_path } : {}),
       ...(media?.seconds !== undefined ? { media_seconds: Math.min(120, media.seconds) } : {}),
+      ...(media && ratio ? { media_ratio: Math.round(Math.min(9.9, Math.max(0.11, ratio)) * 1000) / 1000 } : {}),
       ...(input.visibility ? { visibility: input.visibility } : {}),
       activity_id: activityId,
     })
