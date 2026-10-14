@@ -6,6 +6,7 @@ import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { friendlyError, supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
+import { signedLinks } from './media';
 import { cleanImage } from '@/lib/media';
 import { uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
 import { LIVE_TTL_MIN } from '@/features/live/liveStore';
@@ -57,15 +58,11 @@ type FeedRow = {
   media_seconds?: number | null;
 };
 
-/** Every photo of a feed signed in ONE request (was one request per photo). */
-async function signedAll(paths: (string | null)[]): Promise<Record<string, string>> {
-  const wanted = [...new Set(paths.filter((p): p is string => Boolean(p)))];
-  if (!wanted.length || !supabase) return {};
-  const { data } = await supabase.storage.from('irl-media').createSignedUrls(wanted, 4 * 3600);
-  const out: Record<string, string> = {};
-  for (const d of data ?? []) if (d.path && d.signedUrl) out[d.path] = d.signedUrl;
-  return out;
-}
+/**
+ * Every photo of a feed signed in ONE request, through the shared link cache:
+ * a reload keeps the same links, so photos and videos are not downloaded again.
+ */
+const signedAll = (paths: (string | null)[]): Promise<Record<string, string>> => signedLinks('irl-media', paths);
 
 /** Bumped after your own post or removal: every IRL feed reloads at once, without waiting for Realtime. */
 const useIrlVersion = create<{ n: number }>(() => ({ n: 0 }));
