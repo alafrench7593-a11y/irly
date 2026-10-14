@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { friendlyError, supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { proConnect } from '@/features/network/api';
@@ -181,10 +181,23 @@ function ServerNotifications() {
       case 'COMMENT':
       case 'COMMENT_REPLY':
       case 'MENTION': {
-        const open = () =>
-          p.target_type === 'activity'
-            ? router.push(`/a/${p.target_id}`)
-            : router.push(`/comments?type=${p.target_type}&id=${encodeURIComponent(p.target_id ?? '')}`);
+        const openThread = (type: string | undefined, id: string | undefined) =>
+          type === 'activity' ? router.push(`/a/${id}`) : router.push(`/comments?type=${type}&id=${encodeURIComponent(id ?? '')}`);
+        const open = () => {
+          if (p.target_type !== 'comment') return openThread(p.target_type, p.target_id);
+          // A liked comment has no thread of its own: open the one it was written in.
+          if (!supabase || !p.target_id) return;
+          supabase
+            .from('comments')
+            .select('target_type, target_id')
+            .eq('id', p.target_id)
+            .maybeSingle()
+            .then(({ data, error }) => {
+              if (error) toast(friendlyError(error.message), 'x', 'live');
+              else if (!data) toast('This is no longer available', 'x', 'live');
+              else openThread(data.target_type, data.target_id);
+            });
+        };
         const who = name(p.from);
         const title =
           n.kind === 'LIKE'

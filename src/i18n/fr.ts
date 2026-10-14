@@ -3063,6 +3063,7 @@ export const fr: Record<string, string> = {
   "You've sent a lot of reports in a short time. Try again later.": 'Tu as envoyé beaucoup de signalements. Réessaie plus tard.',
   'You cannot report yourself': 'Tu ne peux pas te signaler toi-même',
   'This is no longer available': 'Ce contenu n’est plus disponible',
+  'This post can no longer be removed': 'Cette publication ne peut plus être supprimée',
   'Decline': 'Refuser',
   'Request from {name} declined': 'Demande de {name} refusée',
   'Report or block this member': 'Signaler ou bloquer ce membre',

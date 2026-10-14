@@ -338,7 +338,8 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                     toast('Sign in to interact', 'user', 'brand');
                     return;
                   }
-                  eng.like(p.id).catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
+                  // A double tap only ever likes, even before the like state has loaded.
+                  eng.like(p.id, true).catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
                 }}
               >
                 <Image source={{ uri: p.mediaUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />

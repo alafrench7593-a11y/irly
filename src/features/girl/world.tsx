@@ -354,11 +354,22 @@ export function useGirlFeed(cityId: string, moms: boolean) {
     load();
     if (!supabase || !uid) return;
     // New, edited or removed posts: the read rules decide what reaches us.
+    // That is every community the member can read (no filter fits "the
+    // women-only ones"): a burst of events is one reload, not one each.
+    let soon: ReturnType<typeof setTimeout> | null = null;
+    const later = () => {
+      if (soon) clearTimeout(soon);
+      soon = setTimeout(() => {
+        soon = null;
+        load();
+      }, 700);
+    };
     const channel = supabase
       .channel(topic(`girl-feed-${cityId}-${moms ? 'moms' : 'all'}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, later)
       .subscribe();
     return () => {
+      if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);
     };
   }, [load, cityId, moms, uid]);

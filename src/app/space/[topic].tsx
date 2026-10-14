@@ -76,12 +76,18 @@ export default function SpaceScreen() {
   const { topic } = useLocalSearchParams<{ topic: string }>();
   const id = (['moms', 'families', 'girls'].includes(topic ?? '') ? topic : 'families') as SpaceId;
   const s = SPACES[id];
-  const [state, setState] = useState<{ for: string; row: Row | null }>({ for: '', row: null });
+  const [state, setState] = useState<{ for: string; row: Row | null; failed?: boolean }>({ for: '', row: null });
   const [busy, setBusy] = useState(false);
   const key = `${account?.userId}|${id}|${cityId}`;
   const load = useCallback(() => {
     if (!supabase || !account) return;
-    supabase.rpc('space_community', { p_topic: id, p_city: cityId }).then(({ data }) => {
+    supabase.rpc('space_community', { p_topic: id, p_city: cityId }).then(({ data, error }) => {
+      // Offline is not "reserved" or "not open": a failed refresh keeps what
+      // is shown, a failed first load says so with a way to retry.
+      if (error) {
+        setState((prev) => (prev.for === key && prev.row ? prev : { for: key, row: null, failed: true }));
+        return;
+      }
       const r = ((data as Record<string, unknown>[] | null) ?? [])[0];
       setState({ for: key, row: r ? { id: r.id as string, name: r.name as string, tagline: (r.tagline as string | null) ?? null, members: Number(r.members ?? 0), isMember: Boolean(r.is_member) } : null });
     });
@@ -119,6 +125,13 @@ export default function SpaceScreen() {
           </View>
         ) : state.for !== key ? (
           <ActivityIndicator color={t.c.text} />
+        ) : state.failed ? (
+          <View style={[styles.pad, { alignItems: 'center', gap: 10 }]}>
+            <Text variant="body" tone="secondary" align="center">
+              Can’t reach IRLY right now
+            </Text>
+            <Button label="Try again" size="sm" variant="secondary" onPress={() => (setState({ for: '', row: null }), load())} />
+          </View>
         ) : !row ? (
           <View style={[styles.card, { backgroundColor: t.c.surface }]}>
             <Icon name={s.womenOnly ? 'lock' : 'compass'} size={20} color={t.c.text} />
