@@ -78,6 +78,17 @@ const QUICK: { label: string; icon: IconName; entry?: string; category?: Categor
   { label: 'Other', icon: 'plus' },
 ];
 
+/**
+ * The server clearly said no (a rule, a check, an ended session): nothing was created.
+ * No answer (offline, timeout, aborted, gateway) or a duplicate (an earlier try saved it)
+ * is not a refusal: the activity may exist.
+ */
+function refusedForSure(e: unknown): boolean {
+  const m = e instanceof Error ? e.message : '';
+  if (!m) return false;
+  return !/fetch|network|connection|offline|timed? ?out|timeout|abort|gateway|50[234]|duplicate|23505|server error/i.test(m);
+}
+
 function findEntry(label: string) {
   const l = label.toLowerCase();
   return CATALOG_ENTRIES.find((e) => e.label.toLowerCase() === l) ?? searchCatalog(label, 1)[0];
@@ -149,7 +160,9 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [cover, setCoverUri] = useState<string | null>(null);
   // Signed in, the photo is cleaned and uploaded as soon as it is picked, while the
   // form is still being filled: publishing then only saves the row (one round trip).
-  const staged = useRef<{ uri: string; path: Promise<string>; failed: boolean; sent: boolean } | null>(null);
+  // sent: a publish went out with it. unsure: one of those tries ended without a clear answer
+  // (network, timeout…), so the activity may exist with this photo: it is kept for good then.
+  const staged = useRef<{ uri: string; path: Promise<string>; failed: boolean; sent: boolean; unsure?: boolean } | null>(null);
   const stage = (uri: string) => {
     const cur = staged.current;
     if (cur?.uri === uri && !cur.failed) return cur.path;
@@ -309,6 +322,13 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       hide();
       router.push(`/a/${serverId}`);
     } catch (e) {
+      // Refused for sure (a rule, a check, the session): nothing was created, so the staged photo
+      // is unused again and goes when the form closes or the photo changes. An unanswered try
+      // (network, timeout, unknown) may have saved the activity with it: it stays then.
+      if (cover && staged.current?.uri === cover) {
+        if (refusedForSure(e) && !staged.current.unsure) staged.current.sent = false;
+        else staged.current.unsure = true;
+      }
       toast(tx('Not published: {why}. Try again', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live');
     } finally {
       setPublishing(false);

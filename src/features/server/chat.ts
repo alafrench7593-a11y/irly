@@ -115,6 +115,15 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
           refresh();
         }, 800);
       })
+      // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
+      // UPDATE never reaches you; the removal row does (members only), and the preview updates.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals' }, () => {
+        if (burst) return;
+        burst = setTimeout(() => {
+          burst = null;
+          refresh();
+        }, 800);
+      })
       .subscribe();
     return () => {
       if (burst) clearTimeout(burst);
@@ -456,6 +465,16 @@ export function useServerThread(conversationId: string): ServerThread {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow & { deleted_at?: string | null };
         setRows((list) => (m.deleted_at ? list.filter((x) => x.id !== m.id) : merge(list, [m])));
+      })
+      // Deleted for everyone by its sender: RLS hides the deleted row from the other members,
+      // so they never get the UPDATE above. The removal row (members only) carries it instead.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
+        const gone = (payload.new as { message_id?: string }).message_id;
+        if (!gone) return;
+        // A message heard live while the first page loads must not come back with it.
+        arrived.delete(gone);
+        setRows((list) => (list.some((x) => x.id === gone) ? list.filter((x) => x.id !== gone) : list));
+        changed('inbox');
       })
       .subscribe((status) => {
         // A rejoin after a dropped connection: the gap is filled from the server.

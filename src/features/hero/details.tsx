@@ -592,6 +592,7 @@ export function DetailBody({ item, go }: { item: HeroItem; go: Go }) {
 /* ───────────────────────── Call to action ───────────────────────── */
 
 export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
+  const t = useTheme();
   const joined = useStore((s) => Boolean(s.joined[item.id]));
   const saved = useStore((s) => Boolean(s.saved[item.id]));
   const toggleSave = useStore((s) => s.toggleSave);
@@ -646,9 +647,13 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
               {model.note}
             </Text>
           </View>
+          {/* Catalogue items have no group chat: "Going" only adds them to your plans. */}
           {joined ? (
-            <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)}>
-              <Button label="Group chat" variant="secondary" icon="message" size="md" onPress={() => go('/messages')} />
+            <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)} style={styles.inPlans}>
+              <Icon name="check" size={14} color={t.c.positive} strokeWidth={3} />
+              <Text variant="label" color={t.c.positive}>
+                In your plans
+              </Text>
             </Animated.View>
           ) : null}
         </View>
@@ -790,4 +795,5 @@ const styles = StyleSheet.create({
   trustItem: { flex: 1, alignItems: 'center', gap: 6 },
   vr: { width: StyleSheet.hairlineWidth * 2, height: 40 },
   ctaRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  inPlans: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 });

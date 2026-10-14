@@ -6,6 +6,7 @@ import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } f
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { forgetLink } from '@/features/server/media';
 import { a11y } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { feedRatio, knownRatio, mediaKey, mediaRatio, rememberRatio } from './liveRatio';
@@ -50,6 +51,8 @@ export function LiveVideo({
           url={url}
           onRetry={() => {
             setAttempt((n) => n + 1);
+            // The cached link may be the broken one (expired, revoked): the reload signs a new one.
+            forgetLink(url);
             onRetry?.();
           }}
         />

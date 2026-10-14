@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { TapPhoto } from '@/features/photo/TapPhoto';
+import { forgetLink } from '@/features/server/media';
 import { feedRatio, knownRatio, mediaKey, mediaRatio, rememberRatio } from './liveRatio';
 
 /**
@@ -59,6 +60,8 @@ export function LivePhoto({
             onPress={() => {
               setFailed(null);
               setAttempt((n) => n + 1);
+              // The cached link may be the broken one (expired, revoked): the reload signs a new one.
+              forgetLink(url);
               onRetry?.();
             }}
           />
