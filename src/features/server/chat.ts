@@ -274,16 +274,22 @@ export function useServerThread(conversationId: string): ServerThread {
   const uid = account?.userId;
   // A chat opened before (this launch) shows at once, then catches up with the server.
   const seen = uid ? threadCache.get(`${uid}|${conversationId}`) : undefined;
+  // Opened from the inbox (or a chat listed there): its header (name, photo, kind) is known already.
+  const [listed] = useState(() => (seen || !uid || inboxCache.uid !== uid ? undefined : inboxCache.rows.find((r) => r.conversation_id === conversationId)));
   const [rows, setRows] = useState<MessageRow[]>(seen?.rows ?? []);
-  const [names, setNames] = useState<Record<string, string>>(seen?.names ?? {});
-  const [people, setPeople] = useState<Record<string, { name: string; photo: string | null; admin: boolean }>>(seen?.people ?? {});
-  const [refs, setRefs] = useState<{ community: string | null; activity: string | null }>(seen?.refs ?? { community: null, activity: null });
-  const [title, setTitle] = useState(seen?.title ?? '');
-  const [kind, setKind] = useState<InboxRow['kind'] | null>(seen?.kind ?? null);
+  const [names, setNames] = useState<Record<string, string>>(() => seen?.names ?? (listed?.other_user_id && listed.other_name ? { [listed.other_user_id]: listed.other_name } : {}));
+  const [people, setPeople] = useState<Record<string, { name: string; photo: string | null; admin: boolean }>>(
+    () => seen?.people ?? (listed?.other_user_id && listed.other_name ? { [listed.other_user_id]: { name: listed.other_name, photo: listed.other_photo, admin: false } } : {}),
+  );
+  const [refs, setRefs] = useState<{ community: string | null; activity: string | null }>(
+    () => seen?.refs ?? { community: listed?.kind === 'community' ? listed.ref_id : null, activity: listed?.kind === 'activity' ? listed.ref_id : null },
+  );
+  const [title, setTitle] = useState(seen?.title ?? listed?.title ?? '');
+  const [kind, setKind] = useState<InboxRow['kind'] | null>(seen?.kind ?? listed?.kind ?? null);
   const [loading, setLoading] = useState(!seen);
   const [error, setError] = useState<string | null>(null);
   const [hasEarlier, setHasEarlier] = useState(seen?.hasEarlier ?? false);
-  const [archived, setArchived] = useState(seen?.archived ?? false);
+  const [archived, setArchived] = useState(seen?.archived ?? Boolean(listed?.archived));
   // Your messages not confirmed by the server yet: shown at once, marked "sending" or "failed".
   const [pending, setPending] = useState<Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null }>>({});
   const [typing, setTypingNames] = useState<Record<string, number>>({});
@@ -333,36 +339,70 @@ export function useServerThread(conversationId: string): ServerThread {
       if (e) throw new Error(e.message);
       return (data as MessageRow[]) ?? [];
     };
-    (async () => {
-      try {
-        // One round trip: the chat, its newest messages, its members (names, photos, roles) and my own state.
-        const [{ data: conv, error: e1 }, msgs, { data: members }, { data: mine }] = await Promise.all([
-          supabase!.from('conversations').select('id, kind, title, community_id, activity_id').eq('id', conversationId).maybeSingle(),
-          latest(),
-          supabase!.rpc('chat_members', { p_conversation: conversationId }),
-          supabase!.from('conversation_members').select('archived_at').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
-        ]);
-        setArchived(Boolean((mine as { archived_at: string | null } | null)?.archived_at));
+    // All at once: the chat, its newest messages, my own state and its members.
+    // The messages show as soon as the chat and its newest page are in; the
+    // member list (hundreds in a community) fills names and photos when it comes.
+    const conversation = supabase.from('conversations').select('id, kind, title, community_id, activity_id').eq('id', conversationId).maybeSingle();
+    const page = latest();
+    const mineQ = supabase.from('conversation_members').select('archived_at').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle();
+    const membersQ = supabase.rpc('chat_members', { p_conversation: conversationId });
+    // The title: the chat's own, else (a private chat) the other member's name, once both answers are in.
+    let otherName: string | undefined;
+    let membersIn = false;
+    let titled = false;
+    let convTitle: string | null = null;
+    const applyTitle = () => {
+      if (!alive || !titled) return;
+      if (convTitle) setTitle(convTitle);
+      else if (otherName) setTitle(otherName);
+      else if (membersIn) setTitle((t) => t || 'IRLY');
+    };
+    // Messages heard live before the first page is in (the channel may join first).
+    const arrived = new Set<string>();
+    membersQ.then(
+      ({ data: members }) => {
         if (!alive) return;
-        if (e1 || !conv) {
-          setError(e1?.message ?? 'This conversation is not available');
-          setLoading(false);
-          return;
-        }
+        membersIn = true;
+        if (!members) return applyTitle();
         const map: Record<string, string> = {};
         const full: Record<string, { name: string; photo: string | null; admin: boolean }> = {};
-        ((members as MemberRow[] | null) ?? []).forEach((m) => {
+        (members as MemberRow[]).forEach((m) => {
           map[m.user_id] = m.first_name;
           full[m.user_id] = { name: m.first_name, photo: m.photo_path, admin: m.role === 'admin' };
         });
         primeFaces(Object.entries(full).map(([id, m]) => ({ id, path: m.photo })));
         setNames((old) => ({ ...old, ...map }));
         setPeople(full);
-        const other = Object.entries(map).find(([id]) => id !== uid)?.[1];
-        setTitle(conv.title ?? other ?? 'IRLY');
+        otherName = Object.entries(map).find(([id]) => id !== uid)?.[1];
+        applyTitle();
+      },
+      () => {
+        membersIn = true;
+        applyTitle();
+      },
+    );
+    mineQ.then(
+      ({ data: mine }) => {
+        if (alive && mine) setArchived(Boolean((mine as { archived_at: string | null }).archived_at));
+      },
+      () => undefined,
+    );
+    (async () => {
+      try {
+        const [{ data: conv, error: e1 }, msgs] = await Promise.all([conversation, page]);
+        if (!alive) return;
+        if (e1 || !conv) {
+          setError(e1?.message ?? 'This conversation is not available');
+          setLoading(false);
+          return;
+        }
+        titled = true;
+        convTitle = (conv.title as string | null) ?? null;
+        applyTitle();
         setKind(conv.kind);
         setRefs({ community: (conv.community_id as string | null) ?? null, activity: (conv.activity_id as string | null) ?? null });
-        setRows(msgs.slice().sort(byTime));
+        // The newest page replaces what was shown (deleted ones go), except messages that arrived live meanwhile.
+        setRows((list) => merge(list.filter((x) => arrived.has(x.id)), msgs));
         setHasEarlier(msgs.length === PAGE);
         setLoading(false);
         markRead();
@@ -405,6 +445,7 @@ export function useServerThread(conversationId: string): ServerThread {
       .channel(topic(`thread-${conversationId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow;
+        arrived.add(m.id);
         setRows((list) => merge(list, [m]));
         if (m.sender_id) setTypingNames((t) => (m.sender_id! in t ? Object.fromEntries(Object.entries(t).filter(([k]) => k !== m.sender_id)) : t));
         markRead();

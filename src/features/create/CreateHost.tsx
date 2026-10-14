@@ -27,7 +27,7 @@ import { createServerActivity, useGeocoderOn, useMyCommunityOptions } from '@/fe
 import { useAccount } from '@/features/auth/account';
 import { useNow } from '@/lib/useNow';
 import { useRouter } from 'expo-router';
-import { pickPhoto } from '@/features/server/covers';
+import { dropStagedCover, pickPhoto, stageCover } from '@/features/server/covers';
 import { useCreateStore, type CreateFormat } from './createStore';
 
 const DAYS = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
@@ -144,8 +144,36 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [address, setAddress] = useState('');
   const [spots, setSpots] = useState(6);
   const [description, setDescription] = useState('');
+  const signedIn = Boolean(useAccount());
   // Optional: the creator's own photo instead of the catalogue one.
-  const [cover, setCover] = useState<string | null>(null);
+  const [cover, setCoverUri] = useState<string | null>(null);
+  // Signed in, the photo is cleaned and uploaded as soon as it is picked, while the
+  // form is still being filled: publishing then only saves the row (one round trip).
+  const staged = useRef<{ uri: string; path: Promise<string>; failed: boolean; sent: boolean } | null>(null);
+  const stage = (uri: string) => {
+    const cur = staged.current;
+    if (cur?.uri === uri && !cur.failed) return cur.path;
+    const job = { uri, path: stageCover(uri), failed: false, sent: false };
+    job.path.catch(() => {
+      job.failed = true;
+    });
+    staged.current = job;
+    return job.path;
+  };
+  // A staged photo that is not used (replaced, removed, form closed) is removed from the server.
+  // Once a publish was sent with it, it is kept: an unanswered try may have saved the activity with it.
+  const unstage = () => {
+    const cur = staged.current;
+    staged.current = null;
+    if (cur && !cur.sent) cur.path.then(dropStagedCover, () => undefined);
+  };
+  // Closing the form (unmount) drops a photo that was not published.
+  useEffect(() => unstage, []);
+  const setCover = (uri: string | null) => {
+    if (staged.current && staged.current.uri !== uri) unstage();
+    setCoverUri(uri);
+    if (uri && signedIn) void stage(uri).catch(() => undefined);
+  };
   const pickCover = async () => {
     const uri = await pickPhoto();
     if (uri) setCover(uri);
@@ -227,7 +255,6 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   };
 
   const [publishing, setPublishing] = useState(false);
-  const signedIn = Boolean(useAccount());
   const router = useRouter();
   const post = async () => {
     if (!pick || !title || publishing) return;
@@ -267,9 +294,14 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     setPublishing(true);
     try {
       const chosen = myCommunities.find((x) => x.id === communityId);
-      const serverId = await createServerActivity(plan, undefined, { coverUri: cover, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
+      // Usually uploaded already; still on its way, it is awaited; a failed upload is tried again here.
+      const coverPath = cover ? await stage(cover) : null;
+      if (cover && staged.current?.uri === cover) staged.current.sent = true;
+      const serverId = await createServerActivity(plan, undefined, { coverUri: cover, coverPath, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
       // No id: nothing was created (session ended). Never "live" then; the form stays.
       if (!serverId) throw new Error(tx('your session has ended, sign in again'));
+      // The photo now belongs to the activity: closing the form must not remove it.
+      if (staged.current?.uri === cover) staged.current = null;
       haptic('success');
       toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
       hide();

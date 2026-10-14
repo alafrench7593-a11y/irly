@@ -28,7 +28,18 @@ export function startsAt(day: string, time: string, now = new Date(), utcOffset?
 }
 
 /** Extras that tie an activity to a place, a type (PLAYDATE, DINNER…) and an audience. */
-export type ActivityExtras = { placeId?: string | null; activityType?: string | null; audience?: 'all' | 'girls' | 'moms' | 'families'; communityId?: string | null; girlOnly?: boolean; coverUri?: string | null; address?: string | null };
+export type ActivityExtras = {
+  placeId?: string | null;
+  activityType?: string | null;
+  audience?: 'all' | 'girls' | 'moms' | 'families';
+  communityId?: string | null;
+  girlOnly?: boolean;
+  /** A local photo, cleaned and uploaded during the publish. */
+  coverUri?: string | null;
+  /** A photo already uploaded while the form was filled (covers.stageCover): the caller owns and cleans it up. */
+  coverPath?: string | null;
+  address?: string | null;
+};
 
 /** Signed links for uploaded activity photos (private bucket); other values pass through. */
 // Through the shared link cache: a refresh keeps the same link, so the image cache keeps the photo.
@@ -77,9 +88,10 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   const { data: session } = await supabase.auth.getSession();
   const uid = session.session?.user.id;
   if (!uid) return null;
-  // The member's own photo goes up first, into their folder.
-  let coverPath: string | null = null;
-  if (extras.coverUri) {
+  // The member's own photo: usually already uploaded while the form was filled; otherwise it goes up first, into their folder.
+  let coverPath: string | null = extras.coverPath ?? null;
+  const staged = Boolean(coverPath);
+  if (!coverPath && extras.coverUri) {
     const img = await cleanImage(extras.coverUri);
     coverPath = `${uid}/${Date.now()}.${img.ext}`;
     const up = await supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType });
@@ -118,10 +130,12 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
       ...(extras.address?.trim() ? { address: extras.address.trim().slice(0, 200) } : {}),
       client_ref: clientRef,
     })
-    .select('id')
+    // The row as the server stored it (its triggers may set girl_only…): the activity page opens with it at once.
+    .select(DETAIL_COLUMNS)
     .single();
   // Not saved (refused, or the first tap already saved it with its own photo): this photo is not left behind.
-  if (error && coverPath) await supabase.storage.from('activity-photos').remove([coverPath]).catch(() => undefined);
+  // A staged photo stays with the form, which sends it again on retry (and removes it if abandoned).
+  if (error && coverPath && !staged) await supabase.storage.from('activity-photos').remove([coverPath]).catch(() => undefined);
   if (error?.code === '23505') {
     // Already created by the first tap: hand back that one.
     const { data: same } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).is('cancelled_at', null).maybeSingle();
@@ -132,9 +146,70 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   }
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Could not create');
+  const row = data as unknown as InsertedRow;
+  prime(row, extras.coverUri ?? null);
   // Its chat is new too.
   changed('activities', 'inbox');
-  return data.id as string;
+  return row.id;
+}
+
+const DETAIL_COLUMNS = 'id, creator_id, format, title, description, category_id, city_id, area_id, place_name, sub_id, starts_at, ends_at, price_minor, currency, capacity, girl_only, community_id, cancelled_at';
+type InsertedRow = {
+  id: string;
+  creator_id: string;
+  format: string;
+  title: string;
+  description: string | null;
+  category_id: string;
+  city_id: string;
+  area_id: string;
+  place_name: string | null;
+  sub_id: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  price_minor: number;
+  currency: string;
+  capacity: number | null;
+  girl_only: boolean;
+  community_id: string | null;
+  cancelled_at: string | null;
+};
+
+/**
+ * Activities this phone just created, as the server returned them: their page
+ * shows at once (no spinner while it asks again), then loads the full detail
+ * (chat, host name, signed photo link) in the background.
+ */
+const primed = new Map<string, ActivityDetail>();
+function prime(r: InsertedRow, localCover: string | null) {
+  if (primed.size > 20) primed.clear();
+  primed.set(r.id, {
+    id: r.id,
+    creatorId: r.creator_id,
+    creatorName: null,
+    format: r.format,
+    title: r.title,
+    description: r.description,
+    categoryId: r.category_id,
+    cityId: r.city_id,
+    areaId: r.area_id,
+    placeName: r.place_name,
+    subId: r.sub_id,
+    startsAt: Date.parse(r.starts_at),
+    endsAt: r.ends_at ? Date.parse(r.ends_at) : null,
+    priceMinor: r.price_minor,
+    currency: r.currency,
+    capacity: r.capacity,
+    // The creator is its first participant (server trigger).
+    going: 1,
+    girlOnly: r.girl_only,
+    communityId: r.community_id,
+    coverUrl: localCover,
+    myStatus: 'going',
+    // Known once the background load returns.
+    conversationId: null,
+    cancelled: r.cancelled_at != null,
+  });
 }
 
 function fitTitle(title: string | undefined): string {
@@ -339,15 +414,16 @@ type DetailRow = {
 export function useServerActivity(id: string): { detail: ActivityDetail | null; loading: boolean; error: string | null; refresh: () => void } {
   const account = useAccount();
   const uid = account?.userId;
-  const [detail, setDetail] = useState<ActivityDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Just created on this phone: shown at once from what the server returned, refreshed below.
+  const [detail, setDetail] = useState<ActivityDetail | null>(() => primed.get(id) ?? null);
+  const [loading, setLoading] = useState(() => !primed.has(id));
   const [error, setError] = useState<string | null>(null);
   // Same screen, another activity: never show (or join) the previous one while the new one loads.
   const [shownId, setShownId] = useState(id);
   if (shownId !== id) {
     setShownId(id);
-    setDetail(null);
-    setLoading(true);
+    setDetail(primed.get(id) ?? null);
+    setLoading(!primed.has(id));
     setError(null);
   }
 
@@ -357,6 +433,7 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
     // Network or server failure: say so, never "this activity no longer exists".
     if (e) throw new Error(e.message);
     const r = ((data as DetailRow[]) ?? [])[0];
+    primed.delete(id);
     if (!r) return null;
     return {
       id: r.id,

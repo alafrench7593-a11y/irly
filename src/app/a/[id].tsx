@@ -232,6 +232,9 @@ export default function ActivityPage() {
             </View>
             {hosting ? null : <Button label="Leave" variant="secondary" loading={busy} onPress={leave} />}
           </>
+        ) : going && hosting && !a.conversationId ? (
+          // Just created: the page opened before its chat id arrived (a moment later).
+          <Button label="Open chat" icon="message" full loading disabled onPress={() => undefined} />
         ) : a.cancelled ? (
           <Button label="Cancelled" disabled full onPress={() => undefined} />
         ) : over ? (
