@@ -115,8 +115,13 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
           refresh();
         }, 800);
       })
-      // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
-      // UPDATE never reaches you; the removal row does (members only), and the preview updates.
+      .subscribe();
+    // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
+    // UPDATE never reaches you; the removal row does (members only), and the preview updates.
+    // Its own channel: Realtime refuses a whole channel when one of its tables is missing,
+    // and new messages must keep arriving whatever happens to this one.
+    const removals = supabase
+      .channel(topic(`inbox-removals-${uid}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals' }, () => {
         if (burst) return;
         burst = setTimeout(() => {
@@ -128,6 +133,7 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
     return () => {
       if (burst) clearTimeout(burst);
       supabase?.removeChannel(channel);
+      supabase?.removeChannel(removals);
     };
   }, [uid, refresh]);
   useRefreshOn(['inbox', 'people'], refresh);
@@ -466,8 +472,18 @@ export function useServerThread(conversationId: string): ServerThread {
         const m = payload.new as MessageRow & { deleted_at?: string | null };
         setRows((list) => (m.deleted_at ? list.filter((x) => x.id !== m.id) : merge(list, [m])));
       })
-      // Deleted for everyone by its sender: RLS hides the deleted row from the other members,
-      // so they never get the UPDATE above. The removal row (members only) carries it instead.
+      .subscribe((status) => {
+        // A rejoin after a dropped connection: the gap is filled from the server.
+        if (status === 'SUBSCRIBED') {
+          if (joinedOnce) catchUp();
+          joinedOnce = true;
+        }
+      });
+    // Deleted for everyone by its sender: RLS hides the deleted row from the other members,
+    // so they never get the UPDATE above. The removal row (members only) carries it instead.
+    // Its own channel, so a problem with it can never stop new messages from arriving.
+    const removals = supabase
+      .channel(topic(`thread-removals-${conversationId}`))
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const gone = (payload.new as { message_id?: string }).message_id;
         if (!gone) return;
@@ -476,13 +492,7 @@ export function useServerThread(conversationId: string): ServerThread {
         setRows((list) => (list.some((x) => x.id === gone) ? list.filter((x) => x.id !== gone) : list));
         changed('inbox');
       })
-      .subscribe((status) => {
-        // A rejoin after a dropped connection: the gap is filled from the server.
-        if (status === 'SUBSCRIBED') {
-          if (joinedOnce) catchUp();
-          joinedOnce = true;
-        }
-      });
+      .subscribe();
     const app = AppState.addEventListener('change', (st) => {
       if (st === 'active') catchUp();
     });
@@ -491,6 +501,7 @@ export function useServerThread(conversationId: string): ServerThread {
       app.remove();
       channelRef.current = null;
       supabase?.removeChannel(channel);
+      supabase?.removeChannel(removals);
       typingChannel.leave();
     };
   }, [conversationId, uid, markRead]);
