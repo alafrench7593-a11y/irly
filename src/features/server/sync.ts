@@ -80,7 +80,9 @@ export function SyncBridge() {
       { table: 'community_pins', kinds: ['communities'] },
       // Joining or leaving a chat follows a join or leave elsewhere; reading,
       // archiving or hiding a chat (an UPDATE, on every message read) is the inbox only.
-      { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['inbox', 'activities', 'communities'] },
+      // A new chat is the inbox only: the join that made it (activity, community) already
+      // signals its own table, so opening a chat no longer reloads every list.
+      { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['inbox'] },
       { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'DELETE', kinds: ['inbox', 'activities', 'communities'] },
       { table: 'conversation_members', filter: `user_id=eq.${uid}`, event: 'UPDATE', kinds: ['inbox'] },
       { table: 'conversations', event: 'UPDATE', kinds: ['inbox'] },
