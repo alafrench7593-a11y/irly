@@ -10,7 +10,7 @@ import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
 import { easing } from '@/motion/tokens';
-import { useAccount } from '@/features/auth/account';
+import { syncProfile, useAccount } from '@/features/auth/account';
 import { hasBackend } from '@/lib/supabase';
 import { useCityId, useStore } from '@/state/store';
 import { palettes, space } from '@/theme/tokens';
@@ -76,6 +76,12 @@ export default function Ready() {
             mark === 'transition'
               ? () => {
                   completeOnboarding();
+                  // Already signed in (finishing a profile the server did not have yet): publish it now,
+                  // as this account's own profile.
+                  if (account) {
+                    useStore.getState().updateProfile({ ownerId: account.userId });
+                    syncProfile(account.userId).catch(() => undefined);
+                  }
                   // New here: offer an account (Apple, Google, email) before Home; skippable.
                   router.replace(!hasBackend ? '/(tabs)' : account ? '/onboarding/communities' : '/account?from=onboarding');
                 }

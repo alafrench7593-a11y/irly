@@ -46,7 +46,15 @@ export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?
   const prev = inFlight.get(key);
   if (prev && now - prev.at < 10_000) return prev.promise;
   const ref = prev?.ref ?? uuid();
-  const promise = withProfile(() => insertActivity(plan, at, extras, ref));
+  const promise = withProfile(() => insertActivity(plan, at, extras, ref)).catch((e: unknown) => {
+    // Refused by a rule while the profile exists: say which rule, not "something went wrong".
+    const m = e instanceof Error ? e.message : '';
+    if (/row-level security/i.test(m)) {
+      if (extras.communityId) throw new Error('Join this community to plan in it');
+      if (extras.girlOnly || extras.audience === 'girls' || extras.audience === 'moms') throw new Error('IRLY Girl plans are for women members');
+    }
+    throw e;
+  });
   inFlight.set(key, { at: now, ref, promise });
   // A failed try is not replayed to the next tap: it reaches the server again (same ref, so never twice).
   promise.catch(() => {
