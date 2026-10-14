@@ -185,13 +185,13 @@ function askToFinishProfile() {
   setTimeout(() => router.push('/onboarding/profile'), 600);
 }
 
-/** A short, non-personal label for a server error (a constraint, a rule): enough to find the cause, never the user's data. */
 // A profile that could not reach the server at sign-in: its cause is recorded
 // (no personal data), the member is asked again on their first action.
 function publishFailed(err: unknown) {
   track('SERVER_ERROR', { code: errorCode(err instanceof Error ? err.message : String(err)), where: 'profile_signin' });
 }
 
+/** A short, non-personal label for a server error (a constraint, a rule): enough to find the cause, never the user's data. */
 export function errorCode(message: string): string {
   const named = /(?:constraint|policy) "([a-z0-9_]{3,60})"/i.exec(message)?.[1];
   if (named) return named;
@@ -286,10 +286,11 @@ async function writeProfile(uid: string): Promise<void> {
   if (!supabase) return;
   const { profile, cityId, onboarded } = useStore.getState();
   // A profile filled in for another account is never published to this one.
-  if (profile.ownerId && profile.ownerId !== uid) return;
+  if (profile.ownerId && profile.ownerId !== uid) return skipped(onboarded, 'other_owner');
   // Signed in (Google, email) before finishing signup: wait for the real
   // profile. Publishing a placeholder would lock the wrong gender for good.
-  if (!onboarded || !profile.name.trim() || !profile.gender) return;
+  if (!onboarded) return;
+  if (!profile.name.trim() || !profile.gender) return skipped(onboarded, 'incomplete');
   const { data: existing } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
   if (existing) return;
   const row = toRow(uid, profile, cityId ?? 'dubai');
@@ -315,6 +316,11 @@ async function writeProfile(uid: string): Promise<void> {
       // The profile works without it; the photo can be added later.
     }
   }
+}
+
+// Signup finished on this phone but its profile was not sent: why, so the cause can be fixed (nothing personal).
+function skipped(onboarded: boolean, why: string) {
+  if (onboarded) track('PROFILE_SKIPPED', { why });
 }
 
 function toRow(uid: string, p: Profile, cityId: string) {

@@ -133,7 +133,7 @@ const how = await query(
 );
 for (const r of how) console.log(`  · no profile: signed in with ${r.provider}, email confirmed ${r.confirmed}, created ${r.day}`);
 const errors = await query(
-  "select name, coalesce(props->>'code', '') as code, coalesce(props->>'where', '') as place, count(*)::int as n from public.analytics_events where name in ('SERVER_ERROR', 'PROFILE_MISSING') and created_at > now() - interval '7 days' group by 1, 2, 3 order by n desc limit 20",
+  "select name, coalesce(props->>'code', props->>'why', '') as code, coalesce(props->>'where', '') as place, count(*)::int as n from public.analytics_events where name in ('SERVER_ERROR', 'PROFILE_MISSING', 'PROFILE_SKIPPED') and created_at > now() - interval '7 days' group by 1, 2, 3 order by n desc limit 20",
 );
 console.log(errors.length ? '• errors members saw (7 days):' : '• errors members saw (7 days): none recorded');
 for (const r of errors) console.log(`  · ${r.name} ${r.code}${r.place ? ` (${r.place})` : ''}: ${r.n}`);
