@@ -59,7 +59,7 @@ if (supabase) {
         // A profile whose first publish failed (offline at signup) is published now:
         // without it every join is refused by the server.
         restoreProfile(uid)
-          .then((restored) => (restored ? undefined : syncProfile(uid).catch(() => undefined).then(() => refreshOwnPhoto(uid))))
+          .then((restored) => (restored ? undefined : syncProfile(uid).catch(publishFailed).then(() => refreshOwnPhoto(uid))))
           .catch(() => undefined);
       }
     })
@@ -74,7 +74,7 @@ if (supabase) {
       const uid = session.user.id;
       restoreProfile(uid)
         .then((restored) => (restored ? undefined : syncProfile(uid)))
-        .catch(() => undefined);
+        .catch(publishFailed);
     }
   });
 }
@@ -186,6 +186,12 @@ function askToFinishProfile() {
 }
 
 /** A short, non-personal label for a server error (a constraint, a rule): enough to find the cause, never the user's data. */
+// A profile that could not reach the server at sign-in: its cause is recorded
+// (no personal data), the member is asked again on their first action.
+function publishFailed(err: unknown) {
+  track('SERVER_ERROR', { code: errorCode(err instanceof Error ? err.message : String(err)), where: 'profile_signin' });
+}
+
 export function errorCode(message: string): string {
   const named = /(?:constraint|policy) "([a-z0-9_]{3,60})"/i.exec(message)?.[1];
   if (named) return named;
