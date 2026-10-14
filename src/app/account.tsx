@@ -18,6 +18,7 @@ import {
   sendPasswordReset,
   sendPhoneCode,
   signInWithPassword,
+  handledAuthUrls,
   signInWithProvider,
   signOut,
   signUpWithPassword,
@@ -45,7 +46,7 @@ type Mode = 'choose' | 'email' | 'link' | 'code' | 'forgot' | 'phone' | 'phoneCo
  * signup profile so matches, chats and plans are real and shared.
  */
 
-const handledUrls = new Set<string>();
+const handledUrls = handledAuthUrls;
 export default function AccountScreen() {
   const t = useTheme();
   const router = useRouter();

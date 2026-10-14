@@ -41,7 +41,7 @@ export default function WhoAreYou() {
       title={tx('Who are you in {city}?', { city: city.name })}
       subtitle="Pick up to three. IRLY uses this to introduce you to the right people, never to box you in."
       cta="Continue"
-      canContinue={profile.types.length > 0}
+      canContinue={profile.types.length > 0 && profile.name.trim().length > 0}
       onContinue={() => router.push('/onboarding/interests')}
     >
       <Animated.View entering={enter.rise(1, 80)} style={{ paddingHorizontal: space.gutter, marginBottom: space[6] }}>
