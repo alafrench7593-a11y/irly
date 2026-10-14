@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { useAccount } from '@/features/auth/account';
 import { isAvatar } from '@/features/avatar/avatar';
+import { thumbOf } from '@/features/server/media';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
 import { supabase, topic } from '@/lib/supabase';
@@ -82,16 +83,41 @@ function need() {
 // Signed photo links, reused until shortly before they expire (a day).
 const DAY = 24 * 3600;
 const signed = new Map<string, { url: string; until: number }>();
-export async function photoUrls(paths: string[]): Promise<Record<string, string>> {
+// Photos stored before small copies existed (signing their small copy failed).
+const noSmall = new Set<string>();
+/**
+ * Links for profile photos, keyed by the photo's path. Cards ask for the small
+ * copy (256 px, next to the photo) when there is one, and get the photo itself
+ * when there is not; a profile page asks for the full photo.
+ */
+export async function photoUrls(paths: string[], size: 'small' | 'full' = 'full'): Promise<Record<string, string>> {
   const now = Date.now();
   // IRLY avatars are stored as is: they stand for themselves, nothing to sign.
   for (const p of paths) if (isAvatar(p)) signed.set(p, { url: p, until: Infinity });
-  const missing = [...new Set(paths.filter((p) => p && !((signed.get(p)?.until ?? 0) > now)))];
-  if (missing.length && supabase) {
-    const { data } = await supabase.storage.from('profile-photos').createSignedUrls(missing, DAY);
-    for (const d of data ?? []) if (d.path && d.signedUrl) signed.set(d.path, { url: d.signedUrl, until: now + (DAY - 600) * 1000 });
+  const valid = (p: string) => (signed.get(p)?.until ?? 0) > now;
+  const files = [...new Set(paths.filter(Boolean))];
+  const smallOf = (p: string) => (size === 'small' && !isAvatar(p) && !noSmall.has(p) ? thumbOf(p) : null);
+  const ask = new Set<string>();
+  for (const p of files) {
+    const small = smallOf(p);
+    if (small && valid(small)) continue;
+    if (small) ask.add(small);
+    // The photo itself too, in the same request, in case it has no small copy.
+    if (!valid(p)) ask.add(p);
   }
-  return Object.fromEntries(paths.filter((p) => signed.has(p)).map((p) => [p, signed.get(p)!.url]));
+  if (ask.size && supabase) {
+    const { data } = await supabase.storage.from('profile-photos').createSignedUrls([...ask], DAY);
+    for (const d of data ?? []) if (d.path && d.signedUrl) signed.set(d.path, { url: d.signedUrl, until: now + (DAY - 600) * 1000 });
+    // Asked for and not there: this photo has no small copy (the answer came, so it is not a network error).
+    if (data) for (const p of files) if (smallOf(p) && ask.has(thumbOf(p)) && !signed.has(thumbOf(p))) noSmall.add(p);
+  }
+  const out: Record<string, string> = {};
+  for (const p of files) {
+    const small = smallOf(p);
+    const hit = (small && signed.get(small)) || signed.get(p);
+    if (hit) out[p] = hit.url;
+  }
+  return out;
 }
 
 // Bumped when you save or delete your professional profile, so every screen
@@ -210,7 +236,7 @@ export function usePros(cityId: string, filters: ProFilters) {
         .then(async (l) => {
           if (!alive || mine !== n) return;
           setRes({ for: current, list: l, error: null });
-          const urls = await photoUrls(l.map((p) => p.photoPath).filter(Boolean) as string[]);
+          const urls = await photoUrls(l.map((p) => p.photoPath).filter(Boolean) as string[], 'small');
           if (alive && mine === n) setPhotos(urls);
         })
         .catch((e) => alive && mine === n && setRes((r) => ({ for: current, list: r.list, error: e instanceof Error ? e.message : 'offline' })));

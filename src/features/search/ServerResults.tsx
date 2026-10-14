@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
 import { cityWhen } from '@/lib/time';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -32,6 +32,9 @@ export async function searchServer(q: string, cityId: string | null, limit = 30)
   }));
 }
 
+/** How long changes elsewhere settle before the open search runs again. */
+const REFRESH_MS = 2000;
+
 const ICON: Record<SearchHit['kind'], IconName> = { activity: 'calendar', community: 'users', person: 'user', place: 'pin', area: 'map', city: 'globe', category: 'layers' };
 
 /**
@@ -46,8 +49,17 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
   // Results belong to the query that produced them (no stale list while typing).
   const [res, setRes] = useState<{ key: string; hits: SearchHit[]; failed?: boolean }>({ key: '', hits: [] });
   const uid = account?.userId;
-  // A new, renamed or deleted activity or community is found (or not) at once.
+  // A new, renamed or deleted activity or community is found (or not), but a
+  // burst of changes elsewhere is one search, and only while this screen is
+  // in front (a hidden one catches up when it comes back).
+  const focused = useIsFocused();
   const fresh = useSyncVersion('activities') + useSyncVersion('communities');
+  const [seen, setSeen] = useState(fresh);
+  useEffect(() => {
+    if (!focused || fresh === seen) return;
+    const timer = setTimeout(() => setSeen(fresh), REFRESH_MS);
+    return () => clearTimeout(timer);
+  }, [focused, fresh, seen]);
 
   useEffect(() => {
     if (!uid || q.trim().length < 2) return;
@@ -66,7 +78,7 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
       alive = false;
       clearTimeout(timer);
     };
-  }, [q, cityId, uid, fresh]);
+  }, [q, cityId, uid, seen]);
 
   const current = uid && q.trim().length >= 2 && res.key === `${q}|${cityId}|${uid}`;
   const shown = current ? res.hits : [];
