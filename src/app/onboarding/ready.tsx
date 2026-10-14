@@ -75,13 +75,11 @@ export default function Ready() {
           onDone={
             mark === 'transition'
               ? () => {
+                  // Already signed in (finishing a profile the server did not have yet): it is this
+                  // account's own profile. Set before completing, which starts the publish right away.
+                  if (account) useStore.getState().updateProfile({ ownerId: account.userId });
                   completeOnboarding();
-                  // Already signed in (finishing a profile the server did not have yet): publish it now,
-                  // as this account's own profile.
-                  if (account) {
-                    useStore.getState().updateProfile({ ownerId: account.userId });
-                    syncProfile(account.userId).catch(() => undefined);
-                  }
+                  if (account) syncProfile(account.userId).catch(() => undefined);
                   // New here: offer an account (Apple, Google, email) before Home; skippable.
                   router.replace(!hasBackend ? '/(tabs)' : account ? '/onboarding/communities' : '/account?from=onboarding');
                 }

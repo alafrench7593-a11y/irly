@@ -570,15 +570,22 @@ try {
     const got = { a: 0, c: 0 };
     const sub = (who, key) =>
       new Promise((resolve) => {
-        const ch = who.sb.channel(`sec-${key}-${run}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${matchConv}` }, () => got[key]++);
-        ch.subscribe((status) => status === 'SUBSCRIBED' && resolve(ch));
-        setTimeout(() => resolve(ch), 8000);
+        // SUBSCRIBED comes before the database listener is ready: wait for the server's own
+        // "postgres_changes ok" (or 10 s), otherwise an insert right after can be missed.
+        const ch = who.sb
+          .channel(`sec-${key}-${run}`)
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${matchConv}` }, () => got[key]++)
+          .on('system', {}, (m) => m?.extension === 'postgres_changes' && m?.status === 'ok' && resolve(ch));
+        ch.subscribe();
+        setTimeout(() => resolve(ch), 10000);
       });
     for (const p of [A, C]) await p.sb.realtime.setAuth((await p.sb.auth.getSession()).data.session.access_token);
     const chans = [await sub(A, 'a'), await sub(C, 'c')];
     await new Promise((r) => setTimeout(r, 1500));
     must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body: 'Realtime check' }));
-    await new Promise((r) => setTimeout(r, 5000));
+    for (let i = 0; i < 20 && got.a === 0; i++) await new Promise((r) => setTimeout(r, 500));
+    // Time for a wrongly delivered event to reach the stranger too.
+    await new Promise((r) => setTimeout(r, 2000));
     for (const ch of chans) await ch.unsubscribe();
     if (got.c > 0) throw new Error(`the stranger received ${got.c} event(s)`);
     if (got.a === 0) throw new Error('the member received nothing (Realtime not working)');

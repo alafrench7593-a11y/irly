@@ -1417,6 +1417,7 @@ export const fr: Record<string, string> = {
   'Not open in this city yet': 'Pas encore ouvert dans cette ville',
   'This activity is over': 'Cette activité est terminée',
   'IRLY Girl plans are for women members': 'Les plans IRLY Girl sont réservés aux femmes membres',
+  'Some details are not valid. Check them and try again': 'Certaines informations ne sont pas valides. Vérifie-les et réessaie',
   'Join this community to plan in it': 'Rejoins cette communauté pour y proposer un plan',
   'Your files are deleted but your account is not yet. Try again to finish.': 'Tes fichiers sont supprimés mais pas encore ton compte. Réessaie pour terminer.',
   'This video format is not supported. Pick an MP4 or MOV video.': 'Ce format vidéo n’est pas accepté. Choisis une vidéo MP4 ou MOV.',

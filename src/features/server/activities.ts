@@ -84,8 +84,9 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
       creator_id: uid,
       cover_path: coverPath,
       format: plan.format ?? 'session',
-      title: (plan.title ?? 'IRLY session').slice(0, 80),
-      description: plan.description ?? null,
+      // Within the server's limits (3–80 characters, 1,000 for the description): never refused for its length.
+      title: fitTitle(plan.title),
+      description: plan.description?.trim().slice(0, 1000) || null,
       // No category chosen (IRL « anyone want to join? », the assistant…): read it from the title.
       category_id: plan.categoryId ?? guess.category ?? 'entertainment',
       sub_id: plan.subId ?? null,
@@ -95,9 +96,9 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
       place_name: plan.place ?? null,
       starts_at: (at ?? startsAt(plan.day, plan.time, new Date(), CITIES[plan.cityId as CityId]?.utcOffset)).toISOString(),
       timezone: CITIES[plan.cityId as CityId]?.utcOffset === 8 ? 'Asia/Makassar' : 'Asia/Dubai',
-      price_minor: Math.round((plan.price ?? 0) * 100),
+      price_minor: Math.max(0, Math.round((plan.price ?? 0) * 100)),
       currency: plan.currency ?? 'AED',
-      capacity: plan.spots ? Math.max(2, plan.spots) : null,
+      capacity: plan.spots ? Math.min(1000, Math.max(2, Math.round(plan.spots))) : null,
       privacy: PRIVACY[plan.privacy ?? 'public'],
       place_id: extras.placeId ?? null,
       activity_type: extras.activityType ?? null,
@@ -126,6 +127,11 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   // Its chat is new too.
   changed('activities', 'inbox');
   return data.id as string;
+}
+
+function fitTitle(title: string | undefined): string {
+  const t = (title ?? '').trim().slice(0, 80);
+  return t.length >= 3 ? t : 'IRLY session';
 }
 
 /** Activities changed (created, joined, left, edited, cancelled, deleted): every screen showing them reloads. */
