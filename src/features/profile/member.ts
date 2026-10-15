@@ -121,7 +121,12 @@ export function useMemberProfile(userId: string) {
       .catch((e) => n === seq.current && setState((s) => ({ ...s, for: key, error: /fetch|network/i.test(String(e)) ? 'Can’t reach IRLY right now' : e instanceof Error ? e.message : 'Could not load' })));
   }, [uid, userId, key]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    load();
+    return () => {
+      seq.current += 1;
+    };
+  }, [load]);
   // A follow anywhere (yours, theirs, on another device), a new photo or name.
   useRefreshOn(['follows', 'people', 'friends', 'communities'], load);
 
@@ -180,12 +185,17 @@ export function useFollowList(userId: string, which: 'followers' | 'following' |
   const uid = useAccount()?.userId;
   const [state, setState] = useState<{ for: string; people: FollowPerson[]; error: string | null }>({ for: '', people: [], error: null });
   const key = `${uid}|${userId}|${which}`;
+  // Loads can overlap (a follow, then its sync bump): only the newest one started lands.
+  const seq = useRef(0);
   const load = useCallback(() => {
     if (!supabase || !uid) return;
+    const n = ++seq.current;
     (which === 'friends' ? sb().rpc('friend_list', { p_user: userId }) : sb().rpc('follow_list', { p_user: userId, p_which: which }))
       .then(({ data, error }) => {
+        if (n !== seq.current) return;
         if (error) {
-          setState({ for: key, people: [], error: error.message });
+          // A failed refresh keeps the list on screen; a first load says it failed (never a spinner forever).
+          setState((s) => (s.for === key ? { ...s, error: error.message } : { for: key, people: [], error: error.message }));
           return;
         }
         setState({
@@ -193,9 +203,15 @@ export function useFollowList(userId: string, which: 'followers' | 'following' |
           error: null,
           people: ((data as { id: string; first_name: string; photo_path: string | null; i_follow: boolean }[] | null) ?? []).map((r) => ({ id: r.id, firstName: r.first_name, photo: r.photo_path, iFollow: r.i_follow })),
         });
-      });
+      })
+      .then(undefined, (e: unknown) => n === seq.current && setState((s) => ({ ...s, for: key, error: netError(e) })));
   }, [uid, userId, which, key]);
-  useEffect(load, [load]);
+  useEffect(() => {
+    load();
+    return () => {
+      seq.current += 1;
+    };
+  }, [load]);
   useRefreshOn(['follows', 'people', 'friends'], load);
   const ready = state.for === key;
   return { people: ready ? state.people : [], loading: Boolean(uid) && !ready, error: ready ? state.error : null, reload: load, me: uid };
@@ -298,7 +314,12 @@ export function useMemberPosts(userId: string, enabled = true) {
       .then((items) => n === seq.current && setState({ for: key, items, done: items.length < PAGE, error: null, loadingMore: false }))
       .catch((e) => n === seq.current && setState((s) => ({ ...s, for: key, error: netError(e), loadingMore: false })));
   }, [uid, key, enabled, fetchPage]);
-  useEffect(load, [load]);
+  useEffect(() => {
+    load();
+    return () => {
+      seq.current += 1;
+    };
+  }, [load]);
   useRefreshOn(['communities', 'people'], load);
   const more = useCallback(() => {
     if (state.for !== key || state.done || state.loadingMore || !state.items.length) return;
@@ -332,9 +353,16 @@ function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds
         if (n !== seq.current) return;
         if (error) setState((s) => ({ ...s, for: key, error: netError(error.message) }));
         else setState({ for: key, items: ((data as R[] | null) ?? []).map((r) => mapRef.current(r)), error: null });
-      });
+      })
+      // Lost on the way: said, never a spinner forever.
+      .then(undefined, (e: unknown) => n === seq.current && setState((s) => ({ ...s, for: key, error: netError(e) })));
   }, [uid, key, userId, fn, enabled]);
-  useEffect(load, [load]);
+  useEffect(() => {
+    load();
+    return () => {
+      seq.current += 1;
+    };
+  }, [load]);
   useRefreshOn(kinds, load);
   const ready = state.for === key;
   return { items: ready ? state.items : [], loading: Boolean(uid) && enabled && !ready, error: ready ? state.error : null, reload: load };

@@ -7,7 +7,7 @@ import { Platform, Share } from 'react-native';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { supabase, topic } from '@/lib/supabase';
-import { changed, useRefreshOn } from './sync';
+import { changed, echoGate, syncNow, useRefreshOn, willReload } from './sync';
 
 /**
  * One interaction system for the whole app. Anything that can be liked,
@@ -118,7 +118,10 @@ export function useEngagement(type: TargetType, ids: string[]) {
     const channel = supabase
       .channel(topic(`eng-${type}-${key.length}-${uid}`))
       // New likes only: an unlike's DELETE carries no key (stripped server-side for privacy).
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter }, later.call)
+      // My own like is on screen already (toggled here, confirmed by its answer): not a reload.
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter }, (payload) => {
+        if ((payload.new as { user_id?: string } | null)?.user_id !== uid) later.call();
+      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter }, later.call)
       .subscribe();
     return () => {
@@ -354,36 +357,48 @@ export function useComments(t: Target) {
     }));
   }, [t.type, t.id, uid]);
 
-  useEffect(() => {
-    if (!supabase || !uid) return;
-    let alive = true;
-    // A failed refresh keeps what is on screen; only a first load failure shows an error.
-    const reload = () =>
+  // Reads can overlap (a realtime burst, your own comment's refresh): only the newest
+  // one started lands, and none after the screen is gone.
+  const seq = useRef(0);
+  // When the last read was sent: realtime events committed before it are in it.
+  const sentAt = useRef(-Infinity);
+  const read = useCallback(
+    (first: boolean) => {
+      const n = ++seq.current;
+      sentAt.current = syncNow();
       load()
         .then((c) => {
-          if (!alive) return;
+          if (n !== seq.current) return;
           setList(c);
           setFailed(false);
           setLoading(false);
         })
         .catch(() => {
-          if (!alive) return;
-          setFailed(true);
+          if (n !== seq.current) return;
+          // A failed refresh keeps what is on screen; only a first load failure shows an error.
+          if (first) setFailed(true);
           setLoading(false);
         });
-    reload();
-    // A burst of events (a busy thread) is one reload.
-    const later = debounced(reload, 600);
+    },
+    [load],
+  );
+
+  useEffect(() => {
+    if (!supabase || !uid) return;
+    read(true);
+    // A burst of events (a busy thread) is one reload; none for your own comment,
+    // whose refresh (sent after it was saved) has it already.
+    const gate = echoGate(() => read(false), 600, () => sentAt.current);
     const channel = supabase
       .channel(topic(`comments-${t.type}-${t.id}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_id=eq.${t.id}` }, later.call)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_id=eq.${t.id}` }, gate.heard)
       .subscribe();
     return () => {
-      alive = false;
-      later.cancel();
+      seq.current += 1;
+      gate.cancel();
       supabase?.removeChannel(channel);
     };
-  }, [t.type, t.id, uid, load]);
+  }, [t.type, t.id, uid, read]);
 
   // Likes on this thread's comments only (it listened to every comment like
   // in the app), re-subscribed when the comments change.
@@ -397,35 +412,19 @@ export function useComments(t: Target) {
   );
   useEffect(() => {
     if (!supabase || !uid || !likeKey) return;
-    let alive = true;
-    const later = debounced(() => {
-      load()
-        .then((c) => {
-          if (!alive) return;
-          setList(c);
-          setFailed(false);
-        })
-        .catch(() => undefined);
-    }, 600);
+    // Your own like refreshes the thread itself (comments screen): its echo is then read already.
+    const gate = echoGate(() => read(false), 600, () => sentAt.current);
     const channel = supabase
       .channel(topic(`comment-likes-${t.type}-${t.id}`))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter: realtimeIdsFilter(likeKey.split(',')) ?? 'target_type=eq.comment' }, later.call)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter: realtimeIdsFilter(likeKey.split(',')) ?? 'target_type=eq.comment' }, gate.heard)
       .subscribe();
     return () => {
-      alive = false;
-      later.cancel();
+      gate.cancel();
       supabase?.removeChannel(channel);
     };
-  }, [t.type, t.id, uid, likeKey, load]);
+  }, [t.type, t.id, uid, likeKey, read]);
 
-  const refresh = useCallback(() => {
-    load()
-      .then((c) => {
-        setList(c);
-        setFailed(false);
-      })
-      .catch(() => undefined);
-  }, [load]);
+  const refresh = useCallback(() => read(false), [read]);
 
   /** Optimistic: shows at once, marked pending, replaced by the server row. */
   const add = useCallback(
@@ -483,27 +482,30 @@ export function useSaved() {
     if (error) throw new Error(error.message);
     return (data ?? []).map((r) => ({ type: r.target_type as TargetType, id: r.target_id as string, createdAt: Date.parse(r.created_at as string) }));
   }, [uid]);
+  // Reads can overlap (a save, its sync bump, a bump of activities): only the newest one
+  // started lands, never an older answer over a newer one, and none after the screen is gone.
+  const seq = useRef(0);
+  const read = useCallback(() => {
+    const n = ++seq.current;
+    load()
+      .then((s) => {
+        if (n !== seq.current) return;
+        setItems(s);
+        setFailed(false);
+      })
+      .catch(() => n === seq.current && setFailed(true));
+  }, [load]);
+  // A save or unsave already asks every screen to reload (changed('saved')): the
+  // screen's own refresh after it would be a second read of the same list.
   const refresh = useCallback(() => {
-    load()
-      .then((s) => {
-        setItems(s);
-        setFailed(false);
-      })
-      .catch(() => setFailed(true));
-  }, [load]);
+    if (!willReload('saved')) read();
+  }, [read]);
   useEffect(() => {
-    let alive = true;
-    load()
-      .then((s) => {
-        if (!alive) return;
-        setItems(s);
-        setFailed(false);
-      })
-      .catch(() => alive && setFailed(true));
+    read();
     return () => {
-      alive = false;
+      seq.current += 1;
     };
-  }, [load]);
-  useRefreshOn(['saved', 'activities', 'communities'], refresh);
+  }, [read]);
+  useRefreshOn(['saved', 'activities', 'communities'], read);
   return { items: uid ? items : NONE, failed: uid ? failed : false, refresh, signedIn: Boolean(uid) };
 }

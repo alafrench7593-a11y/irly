@@ -69,7 +69,9 @@
     "test:bali": "node --experimental-strip-types --no-warnings scripts/check-bali.mts",
     "sync:places": "node scripts/sync-places.mjs",
     "test:routes": "node scripts/check-routes.mjs",
-    "test:community": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-community.mts"
+    "test:community": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-community.mts",
+    "test:sync": "node --experimental-strip-types --no-warnings scripts/check-sync.mts",
+    "test:live": "node --experimental-strip-types --no-warnings scripts/check-live.mts"
   },
   "private": true,
   "engines": {

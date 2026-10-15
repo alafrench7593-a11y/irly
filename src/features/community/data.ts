@@ -5,7 +5,7 @@ import { NONE } from '@/lib/none';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { supabase, topic } from '@/lib/supabase';
-import { changed, useRefreshOn, useSyncVersion } from '@/features/server/sync';
+import { changed, echoGate, syncNow, useRefreshOn, useSyncVersion } from '@/features/server/sync';
 import { askPushInContext } from '@/features/push/push';
 import { toast } from '@/components/ui/Toast';
 import { realtimeIdsFilter } from '@/features/server/engage';
@@ -156,27 +156,28 @@ export function useCommunity(id: string) {
     };
   }, [id, uid]);
 
+  // Loads can overlap (a sync bump while the first one is on its way): only the
+  // newest one started lands, and none after the screen is gone.
+  const seq = useRef(0);
   const refresh = useCallback(() => {
+    const n = ++seq.current;
     load()
       .then((d) => {
+        if (n !== seq.current) return;
         setDetail(d);
         setError(null);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : 'offline'))
-      .finally(() => setLoading(false));
+      .catch((e) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'))
+      .finally(() => n === seq.current && setLoading(false));
   }, [load]);
 
   useEffect(() => {
     if (!uid) return;
-    let alive = true;
-    load()
-      .then((d) => alive && (setDetail(d), setError(null)))
-      .catch((e) => alive && setError(e instanceof Error ? e.message : 'offline'))
-      .finally(() => alive && setLoading(false));
+    refresh();
     return () => {
-      alive = false;
+      seq.current += 1;
     };
-  }, [uid, load]);
+  }, [uid, refresh]);
   // Members, name, photo and status change from anywhere: same detail everywhere.
   useRefreshOn(['communities'], refresh);
 
@@ -230,8 +231,11 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
   // Temporary id → real id, for a tap that lands just as the post arrives.
   const sent = useRef(new Map<string, string>());
 
+  // When the last feed read was sent: realtime events committed before it are in it.
+  const sentAt = useRef(-Infinity);
   const load = useCallback(async (): Promise<CommunityPost[]> => {
     if (!uid) return [];
+    sentAt.current = syncNow();
     const { data, error: e } =
       space === undefined
         ? await sb().rpc('community_feed', { p_community: communityId, p_limit: 50 })
@@ -265,25 +269,20 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
         .finally(() => alive && setLoading(false));
     };
     reload();
-    // Likes, comments and votes arrive from every community: gather a burst
-    // into one reload instead of one full feed per event.
-    let soon: ReturnType<typeof setTimeout> | null = null;
-    const later = () => {
-      if (soon) return;
-      soon = setTimeout(() => {
-        soon = null;
-        reload();
-      }, 800);
-    };
+    // New and edited posts: a burst is one reload, and none for your own post (its
+    // refresh, sent after it was saved, has it already).
+    const posts = echoGate(reload, 250, () => sentAt.current);
+    // Pins are rare: any pin or unpin reloads (an unpin carries no community to filter on).
+    const pins = echoGate(reload, 800, () => sentAt.current);
     const channel = supabase
       .channel(topic(`community-${communityId}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, reload)
-      // Pins are rare: any pin or unpin reloads (an unpin carries no community to filter on).
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins' }, later)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, posts.heard)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins' }, pins.heard)
       .subscribe();
     return () => {
       alive = false;
-      if (soon) clearTimeout(soon);
+      posts.cancel();
+      pins.cancel();
       supabase?.removeChannel(channel);
     };
   }, [communityId, uid, load, land]);
@@ -301,14 +300,9 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
   useEffect(() => {
     if (!uid || !supabase || !postKey) return;
     const ids = postKey.split(',');
-    let soon: ReturnType<typeof setTimeout> | null = null;
-    const later = () => {
-      if (soon) return;
-      soon = setTimeout(() => {
-        soon = null;
-        refresh();
-      }, 800);
-    };
+    // Likes, comments and votes on the posts shown: a burst is one reload (none when a newer read has them).
+    const gate = echoGate(refresh, 800, () => sentAt.current);
+    const later = gate.heard;
     const channel = supabase
       .channel(topic(`community-eng-${communityId}`))
       // Votes and likes: new and changed ones only. Their deletes carry no key
@@ -320,7 +314,7 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
       .subscribe();
     return () => {
-      if (soon) clearTimeout(soon);
+      gate.cancel();
       supabase?.removeChannel(channel);
     };
   }, [communityId, uid, postKey, refresh]);
@@ -535,28 +529,34 @@ export function useCommunityActivities(communityId: string, past = false) {
       onMap: false,
     }));
   }, [communityId, uid, past]);
+  // Only the newest load started lands (a sync bump during the first one), never after unmount.
+  const seq = useRef(0);
   useEffect(() => {
-    let alive = true;
+    const n = ++seq.current;
     load()
       .then((l) => {
-        if (!alive) return;
+        if (n !== seq.current) return;
         setList(l);
         setError(null);
       })
-      .catch((e: unknown) => alive && setError(e instanceof Error ? e.message : 'offline'))
-      .finally(() => alive && setLoadedKey(key));
+      .catch((e: unknown) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'))
+      .finally(() => n === seq.current && setLoadedKey(key));
     return () => {
-      alive = false;
+      seq.current += 1;
     };
   }, [load, key]);
   const refresh = useCallback(() => {
+    const n = ++seq.current;
     load()
       .then((l) => {
+        if (n !== seq.current) return;
         setList(l);
         setError(null);
       })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'offline'));
-  }, [load]);
+      .catch((e: unknown) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'))
+      // It may have replaced the first load: never a spinner left behind.
+      .finally(() => n === seq.current && setLoadedKey(key));
+  }, [load, key]);
   useRefreshOn(['activities'], refresh);
   return { activities: uid ? list : NONE, loading: Boolean(uid) && loading && !list.length, error, refresh };
 }
