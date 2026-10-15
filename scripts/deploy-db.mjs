@@ -154,3 +154,13 @@ const fkey = await query(`
        and a.created_at between ev.created_at - interval '15 minutes' and ev.created_at + interval '1 minute') as e2e_deletions_near
   from ev order by ev.created_at`).catch((e) => (console.log(`• profiles_id_fkey timeline unavailable: ${e.message.slice(0, 120)}`), []));
 for (const r of fkey) console.log(`  · profiles_id_fkey at ${r.at} UTC on ${r.platform}: ${r.deletions_near} account deletion(s) in the 15 min before (${r.e2e_deletions_near} E2E)`);
+
+// Push tokens (read only, counts): how many are bound to an install secret (apps from build 15)
+// and how many are still legacy (no binding: another signed-in account that knows the token could
+// claim it). Decides when legacy tokens can stop changing hands. Never prints a token.
+const [push] = await query(`
+  select count(*)::int as total,
+    count(*) filter (where i.token is null)::int as unbound,
+    count(*) filter (where i.token is null and t.updated_at < now() - interval '30 days')::int as unbound_stale
+  from public.push_tokens t left join private.push_installs i on i.token = t.token`).catch((e) => (console.log(`• push tokens: unavailable (${e.message.slice(0, 120)})`), [null]));
+if (push) console.log(`• push tokens: ${push.total} in all, ${push.unbound} not bound to an install yet (${push.unbound_stale} not refreshed for 30 days)`);
