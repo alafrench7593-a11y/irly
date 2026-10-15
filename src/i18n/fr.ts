@@ -4245,4 +4245,8 @@ export const fr: Record<string, string> = {
   'Download my data is not available yet. Contact support for a copy.': 'Le téléchargement de tes données n’est pas encore disponible. Contacte le support pour en obtenir une copie.',
   'Your data could not be prepared. Try again.': 'Tes données n’ont pas pu être préparées. Réessaie.',
   'Sign in again to download your data.': 'Reconnecte-toi pour télécharger tes données.',
+  'Your Live was posted': 'Ton live a été publié',
+  'Your Live was not posted. It is kept as a draft.': 'Ton live n’a pas été publié. Il est gardé en brouillon.',
+  'Your earlier version is already live': 'Ta version précédente est déjà en ligne',
+  'Your account is deleted. Remaining files are removed from our servers automatically, usually within the hour.': 'Ton compte est supprimé. Les fichiers restants sont effacés automatiquement de nos serveurs, en général dans l’heure.',
 };
