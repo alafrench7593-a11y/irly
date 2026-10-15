@@ -23,6 +23,7 @@ import { useVoice } from '@/features/ai/voice';
 import { ServerResults } from '@/features/search/ServerResults';
 import { createServerActivity, useRecommendations } from '@/features/server/activities';
 import { track } from '@/lib/analytics';
+import { FEATURES } from '@/lib/features';
 import { supabase } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -376,7 +377,12 @@ function Act({ cmd, cityId, busy, onCreate, onSwitch }: { cmd: Command; cityId: 
   if (cmd.intent === 'FIND_PEOPLE') {
     return (
       <View style={styles.pad}>
-        <Button label="Find people" icon="users" full onPress={() => router.push(`/match?intent=friends`)} />
+        {/* Match IRLY is coming soon (src/lib/features.ts): meanwhile, real-life plans. */}
+        {FEATURES.matchIrly ? (
+          <Button label="Find people" icon="users" full onPress={() => router.push(`/match?intent=friends`)} />
+        ) : (
+          <Button label="Find a plan" icon="users" full onPress={() => router.push('/social')} />
+        )}
       </View>
     );
   }

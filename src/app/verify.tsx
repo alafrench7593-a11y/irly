@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { FEATURES } from '@/lib/features';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -97,14 +98,16 @@ export default function VerifyScreen() {
                 <Text variant="titleS">{status === 'verified' ? tx('Your profile is verified ✓') : status === 'pending' ? tx('Your selfie is being reviewed') : tx('Verification declined')}</Text>
                 <Text variant="bodyS" tone="secondary">
                   {status === 'verified'
-                    ? tx('The badge shows on your profile and Match is open. Adding a new photo asks for a new check.')
+                    ? FEATURES.matchIrly
+                      ? tx('The badge shows on your profile and Match is open. Adding a new photo asks for a new check.')
+                      : tx('The badge shows on your profile. Adding a new photo asks for a new check.')
                     : status === 'pending'
                       ? tx('Usually within a day. You will get a notification.')
                       : v?.reason
                         ? tx('Reason: {reason}. You can try again.', { reason: v.reason })
                         : tx('You can try again.')}
                 </Text>
-                {v?.ready ? <Button label="Open Match" icon="sparkles" onPress={() => router.replace('/match')} /> : null}
+                {v?.ready && FEATURES.matchIrly ? <Button label="Open Match" icon="sparkles" onPress={() => router.replace('/match')} /> : null}
               </View>
             ) : null}
 

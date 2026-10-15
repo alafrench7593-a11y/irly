@@ -24,7 +24,9 @@ import type { LightId } from '@/theme/lights';
 import { GirlPortals } from '@/features/home/Portals';
 import { rankMatches } from '@/features/matching/match';
 import { isWeekend } from '@/lib/time';
+import { SoonPill } from '@/features/soon/SoonPill';
 import { SoonRail } from '@/features/soon/SoonRail';
+import { FEATURES } from '@/lib/features';
 import { PressableScale } from '@/motion/PressableScale';
 import { ScrollReveal } from '@/motion/ScrollReveal';
 import { useStore } from '@/state/store';
@@ -105,17 +107,20 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
             scaleTo={0.98}
             onPress={() => router.push('/match?intent=friends')}
             style={[styles.cta, { backgroundColor: t.c.brand, boxShadow: t.shadow.glow }]}
-            accessibilityLabel="Find someone"
+            accessibilityLabel={FEATURES.matchIrly ? 'Find someone' : `${tx('Find someone')}. ${tx('Match IRLY is coming soon')}`}
           >
             <View style={[styles.ctaIcon, { backgroundColor: t.mode === 'night' ? 'rgba(5,5,6,0.07)' : 'rgba(255,255,255,0.14)' }]}>
               <Icon name="users" size={20} color={t.c.onBrand} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
+              {FEATURES.matchIrly ? null : <SoonPill onLight={t.mode === 'night'} />}
               <Text variant="titleM" color={t.c.onBrand}>
                 Find someone
               </Text>
               <Text variant="bodyS" color={t.c.onBrand} style={{ opacity: 0.7 }} numberOfLines={2}>
-                {tx('{n} people in {city} matched on interests, languages, plans', { n: content.people.length, city: city.name })}
+                {FEATURES.matchIrly
+                  ? tx('{n} people in {city} matched on interests, languages, plans', { n: content.people.length, city: city.name })
+                  : tx('Match IRLY is coming soon')}
               </Text>
             </View>
             <Icon name="arrowUpRight" size={20} color={t.c.onBrand} />
@@ -124,7 +129,7 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
       </ScrollReveal>
 
       <ScrollReveal scrollY={scrollY} style={styles.section}>
-        <SectionHeader overline="Who do you want to meet?" title="Find your people" />
+        <SectionHeader overline={FEATURES.matchIrly ? 'Who do you want to meet?' : 'Match IRLY · Coming soon'} title="Find your people" />
         <View style={styles.grid}>
           {INTENT_ORDER.map((id) => {
             const it = INTENTS[id];
@@ -151,7 +156,13 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
       </ScrollReveal>
 
       <ScrollReveal scrollY={scrollY} style={styles.section}>
-        <SectionHeader overline="Best matches" title="People for you" action="See all" onAction={() => router.push('/match?intent=friends')} />
+        {/* "See all" is Match IRLY: only once it is open (src/lib/features.ts). */}
+        <SectionHeader
+          overline="Best matches"
+          title="People for you"
+          action={FEATURES.matchIrly ? 'See all' : undefined}
+          onAction={FEATURES.matchIrly ? () => router.push('/match?intent=friends') : undefined}
+        />
         <Rail itemWidth={290}>
           {matches.map((m) => (
             <PersonCard key={m.person.id} match={m} width={290} />

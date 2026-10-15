@@ -26,6 +26,7 @@ import { useAccount } from '@/features/auth/account';
 import { useCommunityList } from '@/features/community/data';
 import { NetworkDoor } from '@/features/network/ui';
 import { cityWhen } from '@/lib/time';
+import { FEATURES } from '@/lib/features';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -117,7 +118,7 @@ export default function CategoryScreen() {
         <Text variant="body" align="center" color="#8A7470">
           A space where women meet other women: brunches, padel, travel, wellness.
         </Text>
-        <Button label="Back" variant="secondary" onPress={() => router.back()} />
+        <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </View>
     );
   }
@@ -250,7 +251,9 @@ export default function CategoryScreen() {
 
         {people.length ? (
           <Animated.View entering={enter.rise(3, 60)} style={styles.section}>
-            <SectionHeader title={tx('{n} people into {what}', { n: people.length, what: tx(sub ? sub.label : category.label).toLowerCase() })} action="See all" onAction={() => router.push('/match?intent=activities')} />
+            <SectionHeader title={tx('{n} people into {what}', { n: people.length, what: tx(sub ? sub.label : category.label).toLowerCase() })} action={FEATURES.matchIrly ? 'See all' : undefined}
+              onAction={FEATURES.matchIrly ? () => router.push('/match?intent=activities') : undefined}
+            />
             <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
           </Animated.View>
         ) : null}
@@ -304,7 +307,7 @@ export default function CategoryScreen() {
       </ScrollView>
 
       <View style={[styles.topBar, { top: insets.top + 8 }]} pointerEvents="box-none">
-        <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => router.back()} />
+        <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </View>
       <View style={[styles.cta, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
         <Button label={sub ? tx('Create a {what} session', { what: tx(sub.label) }) : tx('Create session')} icon="plus" haptic="press" onPress={() => create(sub?.id)} />

@@ -31,6 +31,7 @@ import { openCreate } from '@/features/create/createStore';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring, transition } from '@/motion/tokens';
+import { FEATURES } from '@/lib/features';
 import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 
@@ -40,9 +41,15 @@ const BURST = Array.from({ length: 16 }, (_, i) => ({ angle: (i / 16) * Math.PI 
 
 /**
  * Watches connection requests: when someone accepts while you are in the
- * app, IT'S AN IRLY MATCH plays over whatever you were doing.
+ * app, IT'S AN IRLY MATCH plays over whatever you were doing. Silent while
+ * Match IRLY is switched off (src/lib/features.ts): no celebration of a
+ * feature members cannot open.
  */
 export function MatchHost() {
+  return FEATURES.matchIrly ? <MatchWatcher /> : null;
+}
+
+function MatchWatcher() {
   const [person, setPerson] = useState<Person | null>(null);
   const prev = useRef(useStore.getState().connections);
   useEffect(

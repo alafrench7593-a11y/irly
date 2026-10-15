@@ -66,7 +66,8 @@ export default function NewPost() {
       .then((p) => {
         if (!p) {
           toast('This post is not available', 'x', 'live');
-          router.back();
+          if (router.canGoBack()) router.back();
+          else router.replace('/profile');
           return;
         }
         setBody(p.body);

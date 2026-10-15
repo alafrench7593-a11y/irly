@@ -35,6 +35,7 @@ import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
 import { LiveStrip } from '@/features/live/LiveStrip';
 import { useLives } from '@/features/live/liveStore';
 import { isHappeningNow } from '@/lib/time';
+import { FEATURES } from '@/lib/features';
 import { useNow } from '@/lib/useNow';
 import { useIntro } from '@/features/intro/introStore';
 import { ScrollReveal } from '@/motion/ScrollReveal';
@@ -220,7 +221,12 @@ export default function Home() {
         ) : null}
 
         <ScrollReveal scrollY={scrollY} style={styles.section}>
-          <SectionHeader title="People near you" action="See all" onAction={() => router.push('/match?intent=friends')} />
+          {/* "See all" is Match IRLY: only once it is open (src/lib/features.ts). */}
+          <SectionHeader
+            title="People near you"
+            action={FEATURES.matchIrly ? 'See all' : undefined}
+            onAction={FEATURES.matchIrly ? () => router.push('/match?intent=friends') : undefined}
+          />
           <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
         </ScrollReveal>
 

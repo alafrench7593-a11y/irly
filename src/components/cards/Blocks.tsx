@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Children, isValidElement, memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { FEATURES } from '@/lib/features';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -151,7 +152,7 @@ export const MeetCard = memo(function MeetCard({ city, people }: { city: City; p
       </View>
       <Text variant="displayM">Who would you like to meet?</Text>
       <Text variant="bodyS" tone="secondary" style={{ marginTop: 4 }}>
-        {city.stats.communities * 9} members in {city.name} are open to meeting this week.
+        {FEATURES.matchIrly ? <>{city.stats.communities * 9} members in {city.name} are open to meeting this week.</> : 'Match IRLY is coming soon'}
       </Text>
       <View style={styles.intents}>
         {INTENT_ORDER.map((intent) => (

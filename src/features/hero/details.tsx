@@ -28,6 +28,7 @@ import type { City, Visual } from '@/data/types';
 import { MapArt } from '@/features/map/MapArt';
 import { formatCount, formatPrice, priceLevel } from '@/lib/format';
 import { cityNow, durationLabel, whenLabel } from '@/lib/time';
+import { FEATURES } from '@/lib/features';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -680,7 +681,8 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
         <>
           <Button label={saved ? 'Saved' : 'Save'} variant={saved ? 'done' : 'secondary'} icon="bookmark" size="md" onPress={onSave} />
           {item.kind === 'place' ? (
-            <Button label="Plan a meetup" icon="users" size="md" onPress={() => go('/match')} />
+            // Match IRLY is coming soon (src/lib/features.ts): plan it with real-life plans meanwhile.
+            <Button label="Plan a meetup" icon="users" size="md" onPress={() => go(FEATURES.matchIrly ? '/match' : '/social')} />
           ) : null}
         </>
       ) : null}
