@@ -55,7 +55,10 @@ async function createWoman(name) {
   return { id, email, name };
 }
 
-const cleanup = () => sql(`delete from auth.users where email like 'e2e-sync-%@irly.test'`).catch(() => undefined);
+// Own run, or accounts left behind more than 2 hours ago: never another run's live accounts.
+const cleanup = () =>
+  sql(`delete from auth.users where email like 'e2e-sync-${run}-%@irly.test'
+    or (email like 'e2e-sync-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ttf': 'font/ttf', '.ico': 'image/x-icon' };
 const server = http

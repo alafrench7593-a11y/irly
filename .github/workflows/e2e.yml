@@ -91,6 +91,11 @@ jobs:
     needs: [wait-db, api]
     if: always() && needs.wait-db.result == 'success' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
+    # Same group as api: no two E2E jobs run at once, across runs (their test
+    # accounts and cleanups must never overlap another run's).
+    concurrency:
+      group: irly-e2e-live
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
         with:

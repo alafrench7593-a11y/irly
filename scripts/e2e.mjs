@@ -87,7 +87,12 @@ async function createUser(p) {
 }
 
 async function cleanup() {
-  await sql(`delete from auth.users where email like 'e2e-%@irly.test'`).catch((e) => console.log('cleanup:', e.message));
+  // Own run, or accounts this script left behind more than 2 hours ago. Never the
+  // browser tests' accounts (e2e-sync-*, e2e-ui-*): they may be in use by a run
+  // happening at the same time.
+  await sql(`delete from auth.users where email like 'e2e-${run}-%@irly.test'
+    or (email like 'e2e-%@irly.test' and email not like 'e2e-sync-%' and email not like 'e2e-ui-%' and created_at < now() - interval '2 hours')`)
+    .catch((e) => console.log('cleanup:', e.message));
 }
 
 const { alice: A, bea: B, carl: C } = people;

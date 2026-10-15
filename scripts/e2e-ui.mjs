@@ -45,7 +45,7 @@ const failures = [];
 const errors = [];
 
 async function main() {
-  await sql(`delete from auth.users where email like 'e2e-ui-%@irly.test'`);
+  await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`);
   const [{ user_id: uid }] = await sql(`
     with u as (
       insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
@@ -174,7 +174,7 @@ try {
   failures.push(`setup: ${e instanceof Error ? e.message : e}`);
   console.log('✗ setup', e);
 } finally {
-  await sql(`delete from auth.users where email like 'e2e-ui-%@irly.test'`).catch(() => undefined);
+  await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
   server.close();
 }
 
