@@ -470,8 +470,16 @@ try {
   // Avatars show a small copy ("-s.jpg") of the profile photo when it exists, else the photo itself.
   const face = `${A.id}/avatar-${run}.jpg`;
   const faceThumb = `${A.id}/avatar-${run}-s.jpg`;
-  await step('profile photo without a small copy: the app gets a link for the photo only', async () => {
+  // Other members may only read the photos a profile shows (security audit): the app saves the
+  // path in photo_paths when the photo is chosen, so the test does the same, and puts hers back after.
+  const facesBefore = must(await A.sb.from('profiles').select('photo_paths').eq('id', A.id).single()).photo_paths ?? [];
+  await step('a file in a member\'s folder that her profile does not show is not readable by others', async () => {
     must(await A.sb.storage.from('profile-photos').upload(face, jpeg, { contentType: 'image/jpeg' }));
+    const links = (await B.sb.storage.from('profile-photos').createSignedUrls([face], 3600)).data ?? [];
+    return !links.some((l) => l.path === face && l.signedUrl);
+  });
+  must(await A.sb.from('profiles').update({ photo_paths: [face] }).eq('id', A.id));
+  await step('profile photo without a small copy: the app gets a link for the photo only', async () => {
     const links = must(await timed('sign 2 faces', () => B.sb.storage.from('profile-photos').createSignedUrls([faceThumb, face], 3600)));
     const byPath = Object.fromEntries(links.map((l) => [l.path, l.signedUrl]));
     if (byPath[faceThumb]) throw new Error('a missing small copy got a link');
@@ -486,6 +494,7 @@ try {
     const res = await timed('download a face (small copy)', () => fetch(small));
     return res.ok;
   });
+  await A.sb.from('profiles').update({ photo_paths: facesBefore }).eq('id', A.id);
   await A.sb.storage.from('profile-photos').remove([face, faceThumb]);
   // Publications v2: a profile post with photos, readable by members, files follow the post.
   // Skipped (and said so) until its migration is on the live database.
