@@ -20,6 +20,7 @@ import {
   signInWithPassword,
   handledAuthUrls,
   signInWithProvider,
+  goPublic,
   signOut,
   signUpWithPassword,
   updatePassword,
@@ -30,7 +31,6 @@ import {
 import { APP } from '@/config/app';
 import { track } from '@/lib/analytics';
 import { enabledProviders, hasBackend } from '@/lib/supabase';
-import { wipeLocal } from '@/state/wipe';
 import { haptic } from '@/motion/haptics';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -172,13 +172,15 @@ export default function AccountScreen() {
             label="Sign out"
             variant="secondary"
             icon="arrowLeft"
-            onPress={async () => {
-              await signOut();
-              // Same as Log out on the profile: the next account must not inherit this profile.
-              wipeLocal();
-              toast('Signed out', 'check', 'brand');
-              router.replace('/welcome');
-            }}
+            loading={busy}
+            onPress={() =>
+              act(async () => {
+                // Same as Log out in Settings: session ended, this phone wiped, history reset.
+                const { serverEnded } = await signOut();
+                toast(serverEnded ? 'Signed out' : 'Signed out on this phone', 'check', 'brand');
+                goPublic();
+              })
+            }
           />
         </View>
       </Page>

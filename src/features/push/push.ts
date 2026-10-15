@@ -40,18 +40,41 @@ function projectId(): string | null {
   return extra?.eas?.projectId ?? (Constants as unknown as { easConfig?: { projectId?: string } }).easConfig?.projectId ?? null;
 }
 
+/**
+ * The phone's notification calls (permission, Expo token) have no timeout of their own and can
+ * stay unanswered (no network, Expo push service down): a sign-out or a delete waiting on them
+ * never finished. Bounded here.
+ */
+const PHONE_LIMIT = 8000;
+function bounded<T>(work: Promise<T>, what: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${what}: no answer from the phone`)), PHONE_LIMIT);
+    work.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e: unknown) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 /** Asks permission (once), then registers this phone for your notifications. */
 export async function registerPush(lang: Lang, ask = true): Promise<PushState> {
   if (!native || !Device.isDevice || !supabase) return 'unsupported';
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', { name: 'IRLY', importance: Notifications.AndroidImportance.HIGH }).catch(() => undefined);
   }
-  let { status } = await Notifications.getPermissionsAsync();
+  let { status } = await bounded(Notifications.getPermissionsAsync(), 'Notification permission');
+  // Not bounded: the system prompt waits for the person's answer.
   if (status !== 'granted' && ask) status = (await Notifications.requestPermissionsAsync()).status;
   if (status !== 'granted') return 'denied';
   const id = projectId();
   if (!id) return 'not-configured';
-  const token = (await Notifications.getExpoPushTokenAsync({ projectId: id })).data;
+  const token = (await bounded(Notifications.getExpoPushTokenAsync({ projectId: id }), 'Push token')).data;
   const { error } = await supabase.rpc('register_push_token', { p_token: token, p_platform: Platform.OS, p_lang: lang });
   if (error) throw new Error(error.message);
   registered = token;
@@ -65,8 +88,8 @@ export async function unregisterPush(): Promise<void> {
   let token = registered;
   if (!token && Device.isDevice) {
     const id = projectId();
-    const granted = (await Notifications.getPermissionsAsync().catch(() => null))?.status === 'granted';
-    if (id && granted) token = (await Notifications.getExpoPushTokenAsync({ projectId: id }).catch(() => null))?.data ?? null;
+    const granted = (await bounded(Notifications.getPermissionsAsync(), 'Notification permission').catch(() => null))?.status === 'granted';
+    if (id && granted) token = (await bounded(Notifications.getExpoPushTokenAsync({ projectId: id }), 'Push token').catch(() => null))?.data ?? null;
   }
   registered = null;
   if (token) await supabase.rpc('unregister_push_token', { p_token: token });
@@ -75,7 +98,7 @@ export async function unregisterPush(): Promise<void> {
 /** What iOS / Android allow for IRLY right now, without asking. */
 export async function phonePermission(): Promise<'granted' | 'denied' | 'undetermined' | 'unsupported'> {
   if (!native || !Device.isDevice) return 'unsupported';
-  const p = await Notifications.getPermissionsAsync().catch(() => null);
+  const p = await bounded(Notifications.getPermissionsAsync(), 'Notification permission').catch(() => null);
   if (!p) return 'unsupported';
   return p.status === 'granted' ? 'granted' : p.canAskAgain ? 'undetermined' : 'denied';
 }

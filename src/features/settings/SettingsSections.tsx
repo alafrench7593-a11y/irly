@@ -11,13 +11,12 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { APP, DEMO } from '@/config/app';
 import { CITIES, DESTINATIONS } from '@/data/destinations';
-import { deleteServerAccount, exportMyData, signOut, useAccount } from '@/features/auth/account';
+import { deleteServerAccount, exportMyData, goPublic, signOut, useAccount } from '@/features/auth/account';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { a11y, LANGS, t as tx, useLangStore } from '@/i18n';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
-import { wipeLocal } from '@/state/wipe';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -52,12 +51,47 @@ export function SettingsSections() {
     if (exporting) return;
     setExporting(true);
     try {
-      await exportMyData();
+      const how = await exportMyData();
+      toast(how === 'opened' ? 'Your data file is downloading' : 'Your data file is downloaded', 'check', 'positive');
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not prepare your data. Try again.', 'x', 'live');
     } finally {
       setExporting(false);
     }
+  };
+
+  // Every step of the sign-out has its own time limit (account.ts): this always finishes.
+  const logOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      const { serverEnded } = await signOut();
+      toast(serverEnded ? 'Signed out' : 'Signed out on this phone', 'check', 'brand');
+      goPublic();
+    } catch (e) {
+      // Still signed in (nothing was wiped): say so and let the member try again.
+      toast(e instanceof Error ? e.message : 'Could not sign you out. Try again.', 'x', 'live');
+      setSigningOut(false);
+    }
+  };
+
+  // Server first, verified, then this phone: on any failure nothing is wiped and the member can retry.
+  const deleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteServerAccount();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not delete your account. Try again.', 'x', 'live');
+      setDeleting(false);
+      return;
+    }
+    setDeleting(false);
+    setConfirmDelete(false);
+    toast('Your account has been deleted', 'check', 'live');
+    // The sheet is a native modal: it finishes closing before the screens change, or iOS can
+    // leave it over the next screen.
+    setTimeout(goPublic, 350);
   };
 
   const [langSheet, setLangSheet] = useState(false);
@@ -73,19 +107,7 @@ export function SettingsSections() {
             <Divider inset={16} />
             <SettingLink icon="file" label="Download my data" value={exporting ? 'Preparing…' : 'A copy of what IRLY stores'} onPress={downloadData} />
             <Divider inset={16} />
-            <SettingLink
-              icon="arrowLeft"
-              label="Log out"
-              value={signingOut ? 'Signing out…' : undefined}
-              onPress={async () => {
-                if (signingOut) return;
-                setSigningOut(true);
-                // Finished before anything else: a sign-out still running could end the next account's session.
-                await signOut().catch(() => undefined);
-                wipeLocal();
-                router.replace('/welcome');
-              }}
-            />
+            <SettingLink icon="arrowLeft" label="Log out" value={signingOut ? 'Signing out…' : undefined} onPress={logOut} />
             <Divider inset={16} />
             <SettingLink icon="x" label="Delete account" danger onPress={() => setConfirmDelete(true)} />
           </>
@@ -244,25 +266,10 @@ export function SettingsSections() {
             haptic="warning"
             variant="danger"
             loading={deleting}
-            onPress={async () => {
-              if (deleting) return;
-              setDeleting(true);
-              try {
-                // Server first: if it fails, nothing is wiped and the member can retry.
-                await deleteServerAccount();
-              } catch (e) {
-                toast(e instanceof Error ? e.message : 'Could not delete your account. Try again.', 'x', 'live');
-                setDeleting(false);
-                return;
-              }
-              setDeleting(false);
-              wipeLocal();
-              setConfirmDelete(false);
-              toast('Your account has been deleted', 'check', 'live');
-              router.replace('/welcome');
-            }}
+            onPress={deleteAccount}
           />
-          <Button label="Cancel" variant="ghost" full onPress={() => setConfirmDelete(false)} />
+          {/* A deletion under way cannot be called back: Cancel waits for its answer. */}
+          <Button label="Cancel" variant="ghost" full disabled={deleting} onPress={() => setConfirmDelete(false)} />
         </View>
       </Sheet>
     </>
