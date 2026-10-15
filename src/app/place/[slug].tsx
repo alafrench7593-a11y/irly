@@ -8,6 +8,7 @@ import { ActionBar } from '@/components/social/ActionBar';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { PageHeader } from '@/components/navigation/Headers';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
@@ -41,9 +42,17 @@ export default function PlaceScreen() {
   const now = useNow();
 
   if (loading) {
+    // Never a bare spinner: on a slow answer the page still says what it is and
+    // can be left (a spinner alone reads as a blank, stuck screen).
     return (
-      <View style={[styles.center, { backgroundColor: t.c.bg }]}>
-        <ActivityIndicator color={t.c.text} />
+      <View style={{ flex: 1, backgroundColor: t.c.bg }}>
+        <View style={[styles.center, { gap: 12 }]} accessibilityLabel={tx('Loading')}>
+          <ActivityIndicator color={t.c.text} />
+          <Text variant="body" tone="secondary" align="center">
+            Loading this place…
+          </Text>
+        </View>
+        <PageHeader title="Place" />
       </View>
     );
   }

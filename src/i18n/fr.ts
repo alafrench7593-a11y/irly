@@ -4249,4 +4249,5 @@ export const fr: Record<string, string> = {
   'Your Live was not posted. It is kept as a draft.': 'Ton live n’a pas été publié. Il est gardé en brouillon.',
   'Your earlier version is already live': 'Ta version précédente est déjà en ligne',
   'Your account is deleted. Remaining files are removed from our servers automatically, usually within the hour.': 'Ton compte est supprimé. Les fichiers restants sont effacés automatiquement de nos serveurs, en général dans l’heure.',
+  'Loading this place…': 'Chargement du lieu…',
 };
