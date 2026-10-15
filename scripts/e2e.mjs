@@ -7,6 +7,7 @@
 // accounts through the Management API), SUPABASE_PROJECT_REF.
 // Run by .github/workflows/e2e.yml (the cloud dev box cannot reach Supabase).
 import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'node:crypto';
 
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 const URL = `https://${ref}.supabase.co`;
@@ -616,6 +617,72 @@ try {
   });
 
   // ───── Account deletion ─────
+  // ───── Push tokens (20261020001300): bound to the phone's install secret ─────
+  // Made-up Expo tokens stand for phones. Each phone has its own install secret;
+  // only its hash is on the server. Checked on the live project (local tests use
+  // a shim): takeover, account switch, offline sign-out release, two devices.
+  const pushTok = (n) => `ExponentPushToken[irly-e2e-sec${n}-${run}]`;
+  const secret = () => randomBytes(32).toString('base64url');
+  const tok1 = pushTok(1), tok2 = pushTok(2), tok3 = pushTok(3);
+  const phone1 = secret(), intruder = secret();
+  const owners = async (t) => (await sql(`select user_id from public.push_tokens where token = '${t}'`)).map((r) => r.user_id);
+  const pushedTo = async (t) => (await sql(`select user_id from public.push_outbox where token = '${t}'`)).map((r) => r.user_id);
+  const notifyFriendRequest = (to, from) => sql(`select private.notify('${to}', 'FRIEND_REQUEST', jsonb_build_object('from', '${from}'))`);
+  try {
+    await step('push: a phone registers its token, bound to its install', async () => {
+      must(await A.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en', p_install: phone1 }));
+      const o = await owners(tok1);
+      return o.length === 1 && o[0] === A.id;
+    });
+    await step('push: another account cannot take that token (its own install secret, or none)', async () => {
+      await denied(B.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en', p_install: intruder }));
+      await denied(B.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en' }));
+      const o = await owners(tok1);
+      return o.length === 1 && o[0] === A.id;
+    });
+    await step('push: without the install secret, nobody can release a phone\'s token', async () => {
+      must(await anon.rpc('release_push_token', { p_token: tok1, p_install: intruder }));
+      must(await C.sb.rpc('release_push_token', { p_token: tok1, p_install: intruder }));
+      const o = await owners(tok1);
+      return o.length === 1 && o[0] === A.id;
+    });
+    await step('push: account switch on the same phone moves the token to the new account', async () => {
+      must(await B.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en', p_install: phone1 }));
+      const o = await owners(tok1);
+      return o.length === 1 && o[0] === B.id;
+    });
+    await step('push: after the switch, the old account\'s notifications no longer reach that phone; the new account\'s do', async () => {
+      await notifyFriendRequest(A.id, B.id);
+      await notifyFriendRequest(B.id, C.id);
+      const to = await pushedTo(tok1);
+      return to.length >= 1 && to.every((u) => u === B.id);
+    });
+    await step('push: signed out offline, the phone releases its token with its install secret (no session)', async () => {
+      must(await anon.rpc('release_push_token', { p_token: tok1, p_install: phone1 }));
+      return (await owners(tok1)).length === 0;
+    });
+    await step('push: once released, that phone gets nothing more for the old account', async () => {
+      const before = (await pushedTo(tok1)).length;
+      await notifyFriendRequest(B.id, C.id);
+      return (await pushedTo(tok1)).length === before;
+    });
+    await step('push: a released token still cannot be claimed by another install', async () => {
+      await denied(C.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en', p_install: intruder }));
+      return (await owners(tok1)).length === 0;
+    });
+    await step('push: two phones on one account both receive its notifications', async () => {
+      must(await A.sb.rpc('register_push_token', { p_token: tok2, p_platform: 'ios', p_lang: 'en', p_install: secret() }));
+      must(await A.sb.rpc('register_push_token', { p_token: tok3, p_platform: 'android', p_lang: 'fr', p_install: secret() }));
+      await notifyFriendRequest(A.id, B.id);
+      const [t2, t3] = [await pushedTo(tok2), await pushedTo(tok3)];
+      return t2.length >= 1 && t3.length >= 1 && [...t2, ...t3].every((u) => u === A.id);
+    });
+  } finally {
+    const list = [tok1, tok2, tok3].map((t) => `'${t}'`).join(',');
+    await sql(`delete from public.push_tokens where token in (${list})`).catch(() => null);
+    await sql(`delete from private.push_installs where token in (${list})`).catch(() => null);
+  }
+
   await step('Carl deletes his account (everything goes with it)', async () => {
     must(await C.sb.rpc('delete_my_account'));
     const left = await sql(`select count(*)::int as n from public.profiles where id = '${C.id}'`);
