@@ -24,6 +24,8 @@ export type LiveMedia = {
 /** The irl-media bucket accepts 25 MB per file; a Live clip is short. */
 export const VIDEO_MAX_SECONDS = 60;
 export const VIDEO_MAX_BYTES = 25 * 1024 * 1024;
+/** An upload with no progress for this long is given up (the member is told and can try again). */
+const UPLOAD_IDLE_MS = 60_000;
 
 export async function pickLiveMedia(kind: 'photo' | 'video'): Promise<LiveMedia | null> {
   const res = await ImagePicker.launchImageLibraryAsync(
@@ -108,20 +110,53 @@ export async function uploadLiveFile(path: string, uri: string, type: string, on
   }
   const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(path);
   if (error || !data) throw new Error(error?.message ?? 'Could not start the upload');
+  // Progress events come for every chunk sent (hundreds for a video), each one re-rendering
+  // the composer: only a new whole percent is passed on (at most 100 renders).
+  let shown = -1;
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    // Given up when nothing moves for a minute, not after a fixed total: a 25 MB video on a
+    // slow uplink (1 Mbit/s: 200 s) is still sending, and used to be cut at 180 s every time.
+    let idle: ReturnType<typeof setTimeout> | null = null;
+    let done = false;
+    const finish = (err?: Error) => {
+      if (done) return;
+      done = true;
+      if (idle) clearTimeout(idle);
+      if (err) reject(err);
+      else resolve();
+    };
+    const watch = () => {
+      if (idle) clearTimeout(idle);
+      idle = setTimeout(() => {
+        xhr.abort();
+        finish(new Error('IRLY did not answer in time. Check your connection and try again.'));
+      }, UPLOAD_IDLE_MS);
+    };
     xhr.open('PUT', data.signedUrl);
     xhr.setRequestHeader('x-upsert', 'false');
-    xhr.timeout = 180_000;
-    xhr.upload.onprogress = (e) => e.lengthComputable && onProgress?.(e.loaded / e.total);
-    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(xhr.status === 413 ? 'This file is too large.' : `Upload failed (${xhr.status}). Try again.`)));
-    xhr.onerror = () => reject(new Error('No connection: try again'));
-    xhr.ontimeout = () => reject(new Error('IRLY did not answer in time. Check your connection and try again.'));
+    xhr.upload.onprogress = (e) => {
+      watch();
+      if (!e.lengthComputable || !e.total || !onProgress) return;
+      const pct = Math.floor((e.loaded / e.total) * 100);
+      if (pct === shown) return;
+      shown = pct;
+      onProgress(pct / 100);
+    };
+    xhr.onload = () => finish(xhr.status >= 200 && xhr.status < 300 ? undefined : new Error(xhr.status === 413 ? 'This file is too large.' : `Upload failed (${xhr.status}). Try again.`));
+    xhr.onerror = () => finish(new Error('No connection: try again'));
+    xhr.onabort = () => finish(new Error('IRLY did not answer in time. Check your connection and try again.'));
     const form = new FormData();
     form.append('cacheControl', '3600');
     // React Native reads the file from disk itself.
     form.append('file', { uri, name: path.split('/').pop() ?? 'file', type } as unknown as Blob);
+    watch();
     xhr.send(form);
   });
   onProgress?.(1);
+}
+
+/** Signed out or account deleted: photos prepared for a Live are forgotten. */
+export function clearLiveCache(): void {
+  prepared.clear();
 }

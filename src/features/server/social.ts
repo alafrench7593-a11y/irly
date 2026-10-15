@@ -6,7 +6,7 @@ import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { friendlyError, supabase, topic } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
-import { signedLinks } from './media';
+import { seedLink, signedLinks } from './media';
 import { uuid } from '@/lib/uuid';
 import { prepareLiveMedia, uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
 import { rememberRatio } from '@/features/live/liveRatio';
@@ -147,19 +147,44 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     if (version) refresh();
   }, [version, refresh]);
 
+  // The ids on screen, for the DELETE events below (heard app-wide).
+  const shownIds = useRef(new Set<string>());
+  useEffect(() => {
+    shownIds.current = new Set(posts.map((p) => p.id));
+  }, [posts]);
+
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
     const isAlive = () => alive;
     reload(isAlive);
+    // A burst of events (several posts, edits, a wave of expiries) is one reload of the feed, not one each.
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const later = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        reload(isAlive);
+      }, 400);
+    };
     const channel = supabase
       .channel(topic(`irl-${cityId}-${uid}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, () => reload(isAlive))
-      // Realtime cannot filter DELETE events (the old row only has its id): listen unfiltered.
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, () => reload(isAlive))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, (payload) => {
+        // My own post, already confirmed and shown, and its feed reload already asked: not twice.
+        const id = (payload.new as { id?: string } | null)?.id;
+        if (payload.eventType === 'INSERT' && id && confirmedHere.has(id)) return;
+        later();
+      })
+      // Realtime cannot filter DELETE events (the old row only has its id): heard for every
+      // Live app-wide, so only a removal of a post on this screen reloads the feed.
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, (payload) => {
+        const id = (payload.old as { id?: string } | null)?.id;
+        if (!id || shownIds.current.has(id)) later();
+      })
       .subscribe();
     return () => {
       alive = false;
+      if (timer) clearTimeout(timer);
       supabase?.removeChannel(channel);
     };
   }, [cityId, uid, reload]);
@@ -178,6 +203,9 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   }, [posts, mine, keep, cityId, now]);
   return { posts: uid ? shown : NONE, refresh };
 }
+
+/** Posts confirmed on this phone (their own feed reload is already asked by bumpIrl): their realtime echo is skipped. */
+const confirmedHere = new Set<string>();
 
 /** True when the file is already stored (a retry of an upload whose answer got lost). */
 async function stored(path: string): Promise<boolean> {
@@ -323,6 +351,13 @@ export async function postServerIrl(input: {
   if (!row) throw new Error('Could not post');
   // The media's shape, known before the feed loads it: the card never jumps.
   if (media_path) rememberRatio(`irl-media/${media_path}`, ratio);
+  // The feed's next load shows the files already on this phone: nothing is downloaded
+  // again and the picture does not blank while it would be (a local file that fails
+  // to show is dropped by its retry, which then signs the stored one).
+  seedLink('irl-media', media_path, shownUri, LIVE_TTL_MIN * 60_000);
+  seedLink('irl-media', thumb_path, posterUri, LIVE_TTL_MIN * 60_000);
+  if (confirmedHere.size > 50) confirmedHere.clear();
+  confirmedHere.add(row.id);
   if (thumb_path) rememberRatio(`irl-media/${thumb_path}`, ratio);
   rememberRatio(shownUri, ratio);
   rememberRatio(posterUri, ratio);
@@ -537,4 +572,11 @@ export function BellSync() {
     useServerBell.setState({ n: unread });
   }, [unread]);
   return null;
+}
+
+/** Signed out or account deleted: the previous member's feeds and own Lives are forgotten on this phone. */
+export function clearSocialCache(): void {
+  irlCache.clear();
+  confirmedHere.clear();
+  useIrlMine.setState({ posts: [] });
 }
