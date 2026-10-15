@@ -97,7 +97,9 @@ export function LiveVideo({
 
 function Player({ url, onRetry }: { url: string; onRetry: () => void }) {
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const player = useVideoPlayer(url, (p) => {
+  // A stored video played again (same signed link, kept by the link cache) comes from the
+  // phone's cache, not downloaded again. A local file (the composer, my own post) is read as is.
+  const player = useVideoPlayer(/^https?:/i.test(url) ? { uri: url, useCaching: true } : url, (p) => {
     p.loop = false;
     p.play();
   });

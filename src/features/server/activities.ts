@@ -39,6 +39,8 @@ export type ActivityExtras = {
   /** A photo already uploaded while the form was filled (covers.stageCover): the caller owns and cleans it up. */
   coverPath?: string | null;
   address?: string | null;
+  /** The request's id, chosen by the caller (a Live passes its own id): the server keeps one activity per id. */
+  clientRef?: string;
 };
 
 /** Signed links for uploaded activity photos (private bucket); other values pass through. */
@@ -57,7 +59,7 @@ export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?
   for (const [k, v] of inFlight) if (now - v.at > 120_000) inFlight.delete(k);
   const prev = inFlight.get(key);
   if (prev && now - prev.at < 10_000) return prev.promise;
-  const ref = prev?.ref ?? uuid();
+  const ref = extras.clientRef ?? prev?.ref ?? uuid();
   const promise = withProfile(() => insertActivity(plan, at, extras, ref)).catch((e: unknown) => {
     // Refused by a rule while the profile exists: say which rule, not "something went wrong".
     const m = e instanceof Error ? e.message : '';
@@ -97,29 +99,12 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
     const up = await supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType });
     if (up.error) throw new Error('Could not upload the photo');
   }
-  const guess = guessCategory(`${plan.title ?? ''} ${plan.description ?? ''} ${plan.place ?? ''}`);
   const { data, error } = await supabase
     .from('activities')
     .insert({
       creator_id: uid,
       cover_path: coverPath,
-      format: plan.format ?? 'session',
-      // Within the server's limits (3–80 characters, 1,000 for the description): never refused for its length.
-      title: fitTitle(plan.title),
-      description: plan.description?.trim().slice(0, 1000) || null,
-      // No category chosen (IRL « anyone want to join? », the assistant…): read it from the title.
-      category_id: plan.categoryId ?? guess.category ?? 'entertainment',
-      sub_id: plan.subId ?? null,
-      catalog_activity_id: plan.activityId ?? (plan.categoryId ? null : (guess.activity ?? null)),
-      city_id: plan.cityId,
-      area_id: plan.areaId,
-      place_name: plan.place ?? null,
-      starts_at: (at ?? startsAt(plan.day, plan.time, new Date(), CITIES[plan.cityId as CityId]?.utcOffset)).toISOString(),
-      timezone: CITIES[plan.cityId as CityId]?.utcOffset === 8 ? 'Asia/Makassar' : 'Asia/Dubai',
-      price_minor: Math.max(0, Math.round((plan.price ?? 0) * 100)),
-      currency: plan.currency ?? 'AED',
-      capacity: plan.spots ? Math.min(1000, Math.max(2, Math.round(plan.spots))) : null,
-      privacy: PRIVACY[plan.privacy ?? 'public'],
+      ...activityColumns(plan, at),
       place_id: extras.placeId ?? null,
       activity_type: extras.activityType ?? null,
       audience: extras.audience ?? 'all',
@@ -151,6 +136,34 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   // Its chat is new too.
   changed('activities', 'inbox');
   return row.id;
+}
+
+/**
+ * The columns of a plan as the server stores them (title and description within
+ * its limits, a category read from the title when none was chosen, the start
+ * in the city's time). Shared by a plain activity and the one a Live makes.
+ */
+export function activityColumns(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date) {
+  const guess = guessCategory(`${plan.title ?? ''} ${plan.description ?? ''} ${plan.place ?? ''}`);
+  return {
+    format: plan.format ?? 'session',
+    // Within the server's limits (3–80 characters, 1,000 for the description): never refused for its length.
+    title: fitTitle(plan.title),
+    description: plan.description?.trim().slice(0, 1000) || null,
+    // No category chosen (IRL « anyone want to join? », the assistant…): read it from the title.
+    category_id: plan.categoryId ?? guess.category ?? 'entertainment',
+    sub_id: plan.subId ?? null,
+    catalog_activity_id: plan.activityId ?? (plan.categoryId ? null : (guess.activity ?? null)),
+    city_id: plan.cityId,
+    area_id: plan.areaId,
+    place_name: plan.place ?? null,
+    starts_at: (at ?? startsAt(plan.day, plan.time, new Date(), CITIES[plan.cityId as CityId]?.utcOffset)).toISOString(),
+    timezone: CITIES[plan.cityId as CityId]?.utcOffset === 8 ? 'Asia/Makassar' : 'Asia/Dubai',
+    price_minor: Math.max(0, Math.round((plan.price ?? 0) * 100)),
+    currency: plan.currency ?? 'AED',
+    capacity: plan.spots ? Math.min(1000, Math.max(2, Math.round(plan.spots))) : null,
+    privacy: PRIVACY[plan.privacy ?? 'public'],
+  };
 }
 
 const DETAIL_COLUMNS = 'id, creator_id, format, title, description, category_id, city_id, area_id, place_name, sub_id, starts_at, ends_at, price_minor, currency, capacity, girl_only, community_id, cancelled_at';
