@@ -35,7 +35,7 @@ Rédigé le 15 octobre 2026. Sans publicité payante, sans achat d'abonnés, san
 - **Point faible n°2** [Certain] : le Reel a été regardé **3,6 secondes en moyenne sur 17,2** (rétention de 27 %), avec 1 like, 0 commentaire, 0 partage et 1 enregistrement. L'accroche ne retient pas.
 - **Point faible n°3** [Certain] : on ne peut pas savoir combien d'inscrits viennent des réseaux. La liste d'attente enregistre toujours `source = 'site'` (code dans `site/index.html`).
 - **TikTok** : aucune donnée. Impossible d'auditer sans les captures ou Metricool.
-- **Stratégie recommandée** : garder la solitude à Dubaï comme **porte d'entrée émotionnelle**, mais faire porter la conversion sur **le concret** : « des gens pour faire ce que tu veux déjà faire à Dubaï, cette semaine ». Format principal, **sans face caméra** : vidéos POV tournées au téléphone dans Dubaï (rue, métro, padel, balcon, mains, écran du téléphone), avec texte à l'écran et voix off facultative. Les diaporamas en photos de banque d'images passent au second plan.
+- **Stratégie recommandée** : garder la solitude à Dubaï comme **porte d'entrée émotionnelle**, mais faire porter la conversion sur **le concret** : « des gens pour faire ce que tu veux déjà faire à Dubaï, cette semaine ». Format principal, **sans face caméra** : **l'écran de l'app enregistré directement** (enregistrement d'écran iPhone du build TestFlight), avec l'accroche en texte par-dessus. Chaque vidéo montre une situation réelle de Dubaï résolue dans l'app. Les diaporamas en photos de banque d'images passent au second plan.
 - **Objectif réaliste à 30 jours** : établir une base de référence fiable et trouver 1 ou 2 formats qui retiennent (rétention de 40 % ou plus sur des vidéos de 15 s, au moins 1 partage pour 100 vues). Je ne promets aucun chiffre d'abonnés.
 
 ---
@@ -92,12 +92,12 @@ Rédigé le 15 octobre 2026. Sans publicité payante, sans achat d'abonnés, san
 3. La révélation arrive à la slide 4, sur 7. Elle est trop tardive.
 4. La distribution part d'une audience hors de Dubaï : peu de gens se reconnaissent.
 
-**Réécriture** (Reel de 12 s, sans visage : plan POV au téléphone dans le métro rouge ou sur la promenade de la Marina, le soir) :
+**Réécriture** (Reel de 12 s, écran de l'app enregistré directement, sans visage) :
 - **Hook (0-2 s, texte + voix)** : *"I've lived in Dubai for [X] months and I still don't have anyone to call on a Friday night."*
 - 2-8 s : *"Work's good. Flat's good. But knowing people here isn't the same as having people."*
 - 8-12 s : *"So I'm building something about it. If you're new here, tell me how long you've been in Dubai."*
 - **CTA** : commenter son ancienneté à Dubaï, puis épingler la meilleure réponse.
-- **Format** : 2 ou 3 plans POV (main sur la barre du métro, défilement des contacts à l'écran, ville par la fenêtre), texte à l'écran en gros, voix off chuchotée ou aucune voix, son d'ambiance réel.
+- **Format** : enregistrement d'écran de l'app (accueil → session de padel à Dubaï → « Join »), accroche en texte par-dessus dès la 1re seconde, voix off facultative. Rien d'autre à filmer.
 
 ⚠️ Le « [X] months » doit être **ta** vraie durée. Si l'histoire n'est pas la tienne, la reformuler : *"Everyone I've met in Dubai says the same thing…"*.
 
@@ -108,7 +108,7 @@ Rédigé le 15 octobre 2026. Sans publicité payante, sans achat d'abonnés, san
 | # | Problème | Preuve | Conséquence | Correction |
 |---|---|---|---|---|
 | 1 | Audience Instagram hors cible (moins de 0,4 % aux Émirats) | Démographie Metricool | Signaux faibles, chiffres pollués, preuve sociale trompeuse | Décision du jour 7 : garder (si la portée vient surtout de non-abonnés) ou repartir sur un compte neuf. Ne **jamais** acheter pour compenser |
-| 2 | Aucun lieu réel, aucun mouvement | Contenu 100 % Pixabay | Rétention de 27 %, zéro partage | Vidéos POV tournées au téléphone dans Dubaï, sans visage, dès le jour 1 |
+| 2 | Aucun lieu réel, aucun mouvement | Contenu 100 % Pixabay | Rétention de 27 %, zéro partage | Enregistrements d'écran de l'app, accroche en texte, dès le jour 1 |
 | 3 | Conversion non mesurée | `p_source: 'site'` codé en dur | On ne saura pas ce qui marche | Lire `?src=` dans l'URL et le passer à `join_waitlist` (petit correctif du site, PR séparée) |
 | 4 | Positionnement 100 % « solitude » | 9 concepts sur 15 en identification | Marque triste, peu de raisons d'agir | Solitude = accroche, activité concrète = promesse |
 | 5 | TikTok invisible pour moi et hashtags hors sujet | Pas d'accès ; `#motivation`, `#solotrip` | Distribution mondiale non ciblée | Connecter Metricool ; hashtags Dubaï uniquement |
@@ -144,24 +144,33 @@ Rédigé le 15 octobre 2026. Sans publicité payante, sans achat d'abonnés, san
 
 | Pilier | Objectif | Audience | Formats | Émotion | Sujets | Risques | CTA |
 |---|---|---|---|---|---|---|---|
-| A. Réalité de Dubaï et solitude | Portée, partages | Arrivés depuis moins de 2 ans | POV au téléphone, texte à l'écran | Reconnaissance | Vendredi seul, amis qui partent, appels avec la maison | Marque triste, ton thérapeutique | « Send this to someone who just moved here » |
-| B. Situations du quotidien | Partages, commentaires | Expatriés 22-35 ans | POV, sketch en 1 plan | « C'est moi » | Padel sans partenaire, brunch à 1, groupe WhatsApp mort | Clichés | « Tag your padel partner (if you have one) » |
+| A. Réalité de Dubaï et solitude | Portée, partages | Arrivés depuis moins de 2 ans | Écran de l'app + accroche « situation » | Reconnaissance | Vendredi seul, amis qui partent, appels avec la maison | Marque triste, ton thérapeutique | « Send this to someone who just moved here » |
+| B. Situations du quotidien | Partages, commentaires | Expatriés 22-35 ans | Écran de l'app (la situation résolue en direct) | « C'est moi » | Padel sans partenaire, brunch à 1, groupe WhatsApp mort | Clichés | « Tag your padel partner (if you have one) » |
 | C. Communauté | Confiance, liste d'attente | Curieux | Micro-trottoir, réponses en vidéo | Appartenance | Questions posées aux gens dans la rue, réponses aux commentaires | Consentement des personnes filmées | « Comment your area, we'll do one there » |
 | D. Construire IRLY | Abonnements, liste d'attente | Early adopters | Coulisses, écran de l'app | Curiosité, sympathie | Build 15, un bug, un choix de design | Promettre une date | « Follow to see if we make it » |
 | E. Activités | Enregistrements, intention | Personnes actives | Listes, carrousels, vidéos sur place | Envie | 5 choses à faire à 2-4 personnes ce week-end | Inventer des lieux ou des prix | « Save for the weekend » |
 | F. Humour | Portée large | Tous | Sketch, texte POV | Rire | « Dubai friendship speedrun », le collègue qui dit « let's hang out » | Viser une nationalité | « Which one are you? » |
 
-### Format sans visage (choix du fondateur)
+### Format principal : l'écran de l'app, directement (choix du fondateur)
 
-Aucune vidéo ne montre ton visage. Ce qui remplace le face caméra :
-- **POV au téléphone** : mains, pieds, raquette, tasse, téléphone, vue depuis le métro ou le balcon. Toujours un lieu reconnaissable de Dubaï (métro rouge, Marina, JLT, un terrain de padel, un café de quartier).
-- **Texte à l'écran** comme narrateur : le hook en gros dans les 2 premières secondes, 1 idée par plan.
-- **Voix off facultative** : ta voix sans te montrer, ou aucune voix (texte + son). Pas de voix de synthèse présentée comme une vraie personne.
-- **Écran de l'app filmé ou enregistré** pour le pilier D : c'est la preuve que le produit existe.
-- **Faux chats** créés pour les sketches (noms visiblement fictifs).
-- **Personnes filmées** (micro-trottoir, J19) : toi derrière la caméra, eux à l'écran, uniquement avec leur accord.
+Aucune vidéo ne montre ton visage. La vidéo **est** l'écran de l'app :
+- **Enregistrement d'écran iPhone** (Centre de contrôle → Enregistrement de l'écran) du build TestFlight, en 1080 × 1920, de 8 à 15 s.
+- **Structure fixe** :
+  - 0-2 s : accroche en gros texte par-dessus l'écran (*"Need 3 people for padel tonight in Dubai?"*) ;
+  - 2-12 s : le geste réel dans l'app (chercher, ouvrir une session, rejoindre, discuter) ;
+  - fin : le CTA.
+- **Zoom et curseur** : agrandir la zone touchée, couper les temps de chargement au montage (CapCut).
+- **Mention permanente** à l'écran : `Beta · not on the App Store yet`.
+- **Voix off facultative**. Pas de voix de synthèse présentée comme une vraie personne.
+- **Variante** : 1-2 s de rue de Dubaï filmée au téléphone avant l'écran, pour ancrer le lieu (à tester, voir §11).
 
-Ce qu'on perd [Probable] : l'attachement à un fondateur. Ce qu'on compense : régularité, lieux réels, chiffres réels, réponses rapides aux commentaires.
+**Règles non négociables** :
+1. **Jamais le mode DEMO** de l'app (`DEMO`) présenté comme réel : ses portraits et ses sessions sont fictifs. Si on l'utilise, écrire `Demo data` à l'écran.
+2. **Vrais membres** : flouter les visages, prénoms et messages, sauf accord écrit.
+3. **Uniquement des fonctions présentes dans le build en test** : pas de maquette présentée comme livrée.
+4. **Sessions réelles** : si l'écran montre « 3 going », c'est vrai, ou c'est marqué comme démo.
+
+**Le risque** [Probable] : un écran d'app ressemble à une publicité, et les gens zappent les pubs. Le correctif, c'est l'accroche : elle parle d'une situation (« padel sans partenaires ») avant de montrer le produit.
 
 **Répartition** : A 25 %, B 25 %, E 20 %, D 15 %, C 10 %, F 5 % au départ. On l'ajuste après les tests.
 
@@ -194,7 +203,7 @@ KPI par défaut d'une vidéo : rétention (IG) ou taux de visionnage complet (TT
 
 **J1 · Vidéo · A**
 - **Hook** : *"Nobody warns you about this part of moving to Dubai."*
-- **Déroulé** : POV au téléphone dans la rue, le soir (pieds sur le trottoir, néons, téléphone en main), texte à l'écran. 0-2 s hook → *"The job's fine. The flat's fine. Friday night, nobody to call."* → *"How long have you been here?"*
+- **Déroulé** : texte d'accroche sur l'écran d'accueil de l'app → défilement des sessions de ce week-end à Dubaï → *"How long have you been here?"*
 - **Texte à l'écran** : `Nobody warns you about this part of Dubai`
 - **Caption** : "Knowing people here isn't the same as having people. How long have you been in Dubai? 👇"
 - **CTA** : commenter son ancienneté.
@@ -257,11 +266,11 @@ KPI par défaut d'une vidéo : rétention (IG) ou taux de visionnage complet (TT
 - **KPI** : commentaires.
 - **Revue de la semaine 1** le même jour.
 
-### Semaine 2 — vidéo POV contre carrousel ; hooks solitude contre activités
+### Semaine 2 — écran de l'app contre carrousel ; hooks solitude contre activités
 
-**J8 · Vidéo POV · A (hook solitude)**
+**J8 · Écran de l'app · A (hook solitude)**
 - **Hook** : *"300 contacts in my phone. 0 people to tell about my day."*
-- **Déroulé** : écran du téléphone filmé : on fait défiler les contacts, on s'arrête, on ferme. 10 s, texte à l'écran.
+- **Déroulé** : accroche en texte → l'écran des communautés de l'app → une communauté de Dubaï ouverte. 10 s.
 - **CTA** : *"Send this to the one you'd tell."*
 - **KPI** : partages.
 
@@ -271,7 +280,7 @@ KPI par défaut d'une vidéo : rétention (IG) ou taux de visionnage complet (TT
 - **CTA** : envoyer à quelqu'un.
 - **KPI** : partages (comparés à J8).
 
-**J10 · Vidéo POV · E (hook activités)**
+**J10 · Écran de l'app · E (hook activités)**
 - **Hook** : *"3 things I wanted to try in Dubai but didn't because I had no one to go with."*
 - **Déroulé** : liste (désert au lever du soleil, club de course, cours de salsa).
 - **CTA** : *"Which one would you do with strangers?"*
@@ -511,7 +520,7 @@ KPI par défaut d'une vidéo : rétention (IG) ou taux de visionnage complet (TT
 | Sem. | Hypothèse | Changement | Posts | Métrique principale | Métrique secondaire | Critère de succès | Décision |
 |---|---|---|---|---|---|---|---|
 | 1 | L'humour retient mieux que l'émotion | J2, J4 (humour) contre J1, J5 (émotion) | 2 contre 2 | Rétention moyenne | Partages pour 100 vues | Écart d'au moins 20 % en relatif | Le format gagnant passe à 40 % du mix |
-| 2 | La vidéo POV bat le carrousel sur le même sujet | J8 contre J9, J10 contre J11 | 2 paires | Partages pour 100 comptes touchés | Enregistrements | Le gagnant l'emporte sur les 2 paires | Garder le gagnant comme format principal |
+| 2 | L'écran de l'app bat le carrousel sur le même sujet | J8 contre J9, J10 contre J11 | 2 paires | Partages pour 100 comptes touchés | Enregistrements | Le gagnant l'emporte sur les 2 paires | Garder le gagnant comme format principal |
 | 2 | Les hooks « activités » convertissent mieux que les hooks « solitude » | J8 et J9 contre J10 et J11 | 2 contre 2 | Abonnés pour 1 000 vues | Clics sur le lien | Écart d'au moins 30 % | Ajuster le positionnement (§6) |
 | 3 | Le contenu Dubaï attire plus que le contenu produit | J15, J17, J19 contre J16, J20 | 3 contre 2 | Vues | Inscriptions `src=` | Le produit génère au moins 2 fois plus d'inscriptions pour 1 000 vues | Fixer la part de produit (15 % ou plus) |
 | 4 | Le CTA « follow » rapporte plus d'abonnés que le CTA « comment » | J22, J24 contre J23, J25 | 2 contre 2 | Abonnés pour 1 000 vues | Commentaires | Écart d'au moins 30 % | CTA par défaut du mois 2 |
@@ -547,7 +556,7 @@ KPI par défaut d'une vidéo : rétention (IG) ou taux de visionnage complet (TT
 | Connecter TikTok à Metricool | Statistiques TikTok lisibles par moi | 5 min | 0 | Faible | Données visibles |
 | Mettre la nouvelle bio et le nouveau nom sur IG et TT | Clarté de la promesse | 10 min | 0 | Faible | Clics sur le lien |
 | Me dire « go » pour le correctif `?src=` sur le site | Attribution des inscriptions | 30 min (moi) + PR | 0 | Faible | `waitlist.source` renseigné |
-| Tourner et publier J1 en POV (sans visage) | Premier point de comparaison avec le format diaporama | 30 min | 0 | Faible | Rétention par rapport à 27 % |
+| Enregistrer l'écran de l'app et publier J1 | Premier point de comparaison avec le format diaporama | 30 min | 0 | Faible | Rétention par rapport à 27 % |
 
 ## 14. Plan 7 jours
 
@@ -573,6 +582,6 @@ KPI par défaut d'une vidéo : rétention (IG) ou taux de visionnage complet (TT
 
 ## Recommandation
 
-**Ce que je ferais à ta place** : arrêter les diaporamas en photos de banque d'images comme format principal et passer **dès demain** aux vidéos POV tournées au téléphone dans Dubaï, sans montrer ton visage, avec la solitude comme accroche et l'activité concrète comme promesse. En parallèle, régler la question des 32 000 abonnés hors cible avant le jour 7.
+**Ce que je ferais à ta place** : passer **dès demain** à l'écran de l'app enregistré directement. Chaque vidéo part d'une situation de Dubaï (« padel ce soir, 0 partenaire ») et la résout dans l'app en moins de 15 s, avec la mention bêta. Les diaporamas en photos de banque d'images passent au second plan. En parallèle, régler la question des 32 000 abonnés hors cible avant le jour 7.
 
-**Compromis principal** : sans visage, la confiance ne vient plus d'une personne mais de la preuve que tout est vrai : lieux réels de Dubaï, écran réel de l'app, chiffres réels, réponses réelles aux commentaires. C'est plus lent à construire qu'avec un fondateur à l'écran [Probable], mais ça reste bien plus crédible que des photos de banque d'images.
+**Compromis principal** : l'écran d'app est la preuve la plus forte que le produit existe et la plus simple à produire seul. Mais c'est aussi le format qui ressemble le plus à une pub, et on a peu de vraies sessions à montrer tant que l'app est en bêta. Si la rétention reste sous 30 % après 5 vidéos, il faut ajouter 1-2 s de vraie rue de Dubaï avant l'écran.
