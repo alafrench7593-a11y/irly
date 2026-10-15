@@ -692,27 +692,37 @@ async function accountGone(): Promise<boolean | null> {
   );
 }
 
+const SESSION_ENDED = 'Your session has ended. Sign in again to delete your account.';
+
+/** The server refused the request because the session is no longer valid (expired, revoked, signed out elsewhere). */
+function sessionRefused(message: string): boolean {
+  return /jwt|session[_ ](not[_ ]found|expired|missing)|refresh[_ ]token|invalid claim|not authenticated|sign in required/i.test(message);
+}
+
 /**
  * Deletes the server account: your files first (the database cannot remove
  * files), then every row that belongs to you and the sign-in account itself
  * (one transaction: all or nothing), checked with the server before saying
  * so. Then the session and everything on this phone are forgotten. On any
  * failure nothing is wiped and the member can retry: every step is safe to
- * run again.
+ * run again. `filesQueued`: files this phone could not remove; the server
+ * queued them and the purge job removes them later (not instantly).
  */
-export async function deleteServerAccount(): Promise<void> {
-  if (!supabase) return;
+export async function deleteServerAccount(): Promise<{ filesQueued: number }> {
+  if (!supabase) return { filesQueued: 0 };
   const sb = supabase;
   const { data, error: sessionError } = await within(sb.auth.getSession(), SERVER_MS).catch((e: unknown) => ({
     data: { session: null },
     error: e instanceof Error ? e : new Error(String(e)),
   }));
   if (!data.session) {
-    // Signed in but the session could not be read or renewed (offline): nothing was deleted, so say so.
-    const offline = !sessionError || /retryable|fetch|network|did not answer/i.test(`${sessionError.name} ${sessionError.message}`);
-    if (sessionError && !offline) throw new Error('Your session has ended. Sign in again to delete your account.');
-    if (sessionError || useAuthStore.getState().account) throw new Error('No connection: your account was not deleted. Try again.');
-    return;
+    // Nothing was deleted: say why. A session that could not be renewed because the phone is
+    // offline (or the server did not answer) is a connection problem; one the server refused, or
+    // one that is simply gone from this phone while it still shows the account, has ended.
+    const offline = Boolean(sessionError) && /retryable|fetch|network|did not answer|timed? ?out/i.test(`${sessionError?.name} ${sessionError?.message}`);
+    if (offline) throw new Error('No connection: your account was not deleted. Try again.');
+    if (sessionError || useAuthStore.getState().account) throw new Error(SESSION_ENDED);
+    return { filesQueued: 0 };
   }
   ending = true;
   try {
@@ -726,6 +736,8 @@ export async function deleteServerAccount(): Promise<void> {
     const confirmed = await accountGone();
     const gone = confirmed ?? !error;
     if (!gone) {
+      // The session ended while deleting (revoked, signed out on another phone): nothing confirmed it.
+      if (confirmed === null && error && sessionRefused(error.message)) throw new Error(SESSION_ENDED);
       throw new Error(
         confirmed === false
           ? 'Your account is not deleted yet. Try again to finish.'
@@ -738,6 +750,7 @@ export async function deleteServerAccount(): Promise<void> {
       await closeRealtime();
       wipeLocal();
     });
+    return { filesQueued: left };
   } finally {
     ending = false;
   }

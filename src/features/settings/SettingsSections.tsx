@@ -79,8 +79,9 @@ export function SettingsSections() {
   const deleteAccount = async () => {
     if (deleting) return;
     setDeleting(true);
+    let filesQueued = 0;
     try {
-      await deleteServerAccount();
+      ({ filesQueued } = await deleteServerAccount());
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not delete your account. Try again.', 'x', 'live');
       setDeleting(false);
@@ -88,7 +89,12 @@ export function SettingsSections() {
     }
     setDeleting(false);
     setConfirmDelete(false);
-    toast('Your account has been deleted', 'check', 'live');
+    // Files this phone could not remove are only queued on the server: never claim they are gone.
+    toast(
+      filesQueued > 0 ? 'Your account is deleted. Remaining files are removed from our servers automatically, usually within the hour.' : 'Your account has been deleted',
+      'check',
+      'live',
+    );
     // The sheet is a native modal: it finishes closing before the screens change, or iOS can
     // leave it over the next screen.
     setTimeout(goPublic, 350);
