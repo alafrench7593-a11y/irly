@@ -18,6 +18,10 @@ on:
         description: Withdraw the pending team invitation of this address
         type: string
         default: ''
+      remove_routing_coverage:
+        description: Remove the routing app coverage file from App Store versions (fixes ITMS-90118)
+        type: boolean
+        default: false
 
 jobs:
   status:
@@ -36,3 +40,4 @@ jobs:
           ADD_TEAM_TESTERS: ${{ inputs.add_team_testers && '1' || '0' }}
           INVITE_EMAIL: ${{ inputs.invite_email }}
           CANCEL_INVITE_EMAIL: ${{ inputs.cancel_invite_email }}
+          REMOVE_ROUTING_COVERAGE: ${{ inputs.remove_routing_coverage && '1' || '0' }}
