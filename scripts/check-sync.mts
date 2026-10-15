@@ -249,8 +249,10 @@ const SERVER_SKEW = 2_345; // the server's clock is 2.3 s ahead of the phone's
 let requests: string[] = [];
 type Change = { table: string; event: 'INSERT' | 'UPDATE'; row: Record<string, unknown> };
 type Handler = { event: string; table: string; filter?: string; cb: (p: unknown) => void };
-type Chan = { topic: string; handlers: Handler[]; dead: boolean; on: (...a: unknown[]) => Chan; subscribe: (cb?: (s: string) => void) => Chan; send: () => Promise<string> };
+type Chan = { topic: string; handlers: Handler[]; dead: boolean; listening: boolean; on: (...a: unknown[]) => Chan; subscribe: (cb?: (s: string) => void) => Chan; send: () => Promise<string> };
 let channels: Chan[] = [];
+// How long a channel takes to really listen (the server's postgres_changes subscription).
+let joinDelay = 5;
 let coarse = false; // whole-second commit times, as some Realtime versions send
 const stamp = (t: number) => {
   const d = new RealDate(EPOCH + t + SERVER_SKEW);
@@ -268,7 +270,7 @@ const matches = (filter: string | undefined, row: Record<string, unknown>) => {
 function commit(changes: Change[]) {
   const commitTs = stamp(now);
   for (const ch of changes)
-    for (const c of channels)
+    for (const c of channels.filter((x) => x.listening))
       for (const h of c.handlers) {
         if (h.table !== ch.table || (h.event !== '*' && h.event !== ch.event) || !matches(h.filter, ch.row)) continue;
         const payload = { schema: 'public', table: ch.table, commit_timestamp: commitTs, eventType: ch.event, new: ch.row, old: {}, errors: null };
@@ -343,6 +345,7 @@ const supabase = {
       topic: `realtime:${topicName}`,
       handlers: [],
       dead: false,
+      listening: false,
       on: (type: unknown, f: unknown, cb: unknown) => {
         if (type === 'postgres_changes') {
           const o = f as { event: string; table: string; filter?: string };
@@ -351,7 +354,11 @@ const supabase = {
         return c;
       },
       subscribe: (cb?: (s: string) => void) => {
-        setTimeout(() => cb?.('SUBSCRIBED'), 5);
+        // A change committed before this moment is never sent to this channel.
+        setTimeout(() => {
+          c.listening = true;
+          cb?.('SUBSCRIBED');
+        }, joinDelay);
         return c;
       },
       send: () => Promise.resolve('ok'),
@@ -469,6 +476,23 @@ async function scenario(label: string, setup: (() => Promise<void>) | null, act:
   await advance(60_000);
 }
 const threadNow = () => ((g.__h as Record<string, { current: ReturnType<typeof chat.useServerThread> | null }>).thread.current)!;
+
+// The app opens while Bob renames a community: the list's first read is sent before the rename,
+// and the channels only listen 2 s later, so no event will ever say so. They catch up once listening.
+let missedBeforeListening = 0;
+{
+  joinDelay = 2_000;
+  sync.resetSyncEchoes?.();
+  const app = [mount(() => sync.SyncBridge()), mount(screen('community_list', ['communities']))];
+  await advance(300);
+  requests = [];
+  commit([{ table: 'communities', event: 'UPDATE', row: { id: 'c-1', name: 'Padel crew (renamed)' } }]);
+  await advance(10_000);
+  missedBeforeListening = requests.filter((r) => r === 'community_list').length;
+  app.forEach((m) => m.unmount());
+  await advance(60_000);
+  joinDelay = 5;
+}
 
 await scenario('create activity', null, async () => {
   await supabase.rpc('create_activity');
@@ -639,6 +663,7 @@ expect(n('join activity, answer 1.6 s late', 'activities_list') === 1 && n('join
 expect(n('whole-second commit times: join, then Bob adds me to a group 0.3 s later', 'my_conversations') === 2, 'whole-second commit times never hide a change');
 expect(sync.stampMs('2026-10-15 09:00:01.5+04') === Date.UTC(2026, 9, 15, 5, 0, 1, 500) && Number.isNaN(sync.stampMs('soon')), 'commit times are read in any Postgres / ISO form');
 expect(n('join activity, then Bob adds me to a group 0.3 s later', 'my_conversations') === 2, 'being added to a group right after my own join still reloads the inbox');
+expect(missedBeforeListening === 1, `a change committed before the channels listen is caught up once they do (community list reloads: ${missedBeforeListening})`);
 if (failed) {
   console.error(`\n${failed} sync check(s) failed`);
   process.exit(1);

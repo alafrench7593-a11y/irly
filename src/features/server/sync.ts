@@ -339,16 +339,25 @@ export function startSync(uid: string): () => void {
   // are never heard for DELETE: Realtime cannot check deletes against
   // row-level security, so the server strips their keys (migration
   // irly_sync_signals) and tells the people concerned through sync_signals.
-  const watch = (name: string, kinds: SyncKind[], bind: (c: RealtimeChannel) => RealtimeChannel) => {
-    let first = true;
-    return bind(sb.channel(topic(`sync:${name}:${uid}`))).subscribe((status) => {
-      // A (re)connection may have missed events: catch up once.
-      if (status === 'SUBSCRIBED') {
-        if (!first) changed(...kinds);
-        first = false;
-      }
+  // A change committed before a channel listens is never sent to it: the screens' first
+  // load, or the last one before a reconnection, may have missed it. So each channel
+  // catches up once it really listens (`wait`: SUBSCRIBED only once the server's
+  // postgres_changes subscription is active, not merely the channel joined), the first
+  // time too. Channels become ready within moments of each other: one reload per kind.
+  const behind = new Set<SyncKind>();
+  let catchUp: ReturnType<typeof setTimeout> | null = null;
+  const watch = (name: string, kinds: SyncKind[], bind: (c: RealtimeChannel) => RealtimeChannel) =>
+    bind(sb.channel(topic(`sync:${name}:${uid}`), { config: { postgres_changes_options: { wait: true } } })).subscribe((status) => {
+      if (status !== 'SUBSCRIBED') return;
+      kinds.forEach((k) => behind.add(k));
+      if (catchUp) clearTimeout(catchUp);
+      catchUp = setTimeout(() => {
+        catchUp = null;
+        const kinds = [...behind];
+        behind.clear();
+        changed(...kinds);
+      }, 300);
     });
-  };
   // One channel per table: a table the server does not publish (yet) can
   // only silence itself, never the others.
   const channels = watched(uid).map(({ table, filter, event = '*', kinds }) =>
@@ -391,6 +400,7 @@ export function startSync(uid: string): () => void {
   }
   return () => {
     channels.forEach((c) => void sb.removeChannel(c));
+    if (catchUp) clearTimeout(catchUp);
     app.remove();
     if (web) {
       window.removeEventListener('online', online);
