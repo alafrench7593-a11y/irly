@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { AreaPicker } from '@/components/ui/AreaPicker';
@@ -56,8 +56,14 @@ const draftOf = (p: ProProfile, visible: boolean): ProDraft => ({
 export default function ProProfileEditor() {
   const cityId = useCityId();
   const me = useMyPro();
+  const t = useTheme();
   // The form opens once the saved profile (if any) has loaded, already filled in.
-  if (me.signedIn && me.loading) return <Page overline="Networking" title="Professional profile">{null}</Page>;
+  if (me.signedIn && me.loading)
+    return (
+      <Page overline="Networking" title="Professional profile">
+        <ActivityIndicator color={t.c.text} style={{ marginTop: 24 }} accessibilityLabel="Loading" />
+      </Page>
+    );
   // Unread is not "no profile": an empty form saved here would replace the real one.
   if (me.signedIn && me.error && !me.pro)
     return (

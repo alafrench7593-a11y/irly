@@ -15,7 +15,7 @@ import type { ServerActivity } from '@/features/server/activities';
 import { useRefreshOn } from '@/features/server/sync';
 import { t as tx } from '@/i18n';
 import { hueOf } from '@/lib/format';
-import { supabase, topic } from '@/lib/supabase';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { cityWhen, offsetOf, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { enter } from '@/motion/enter';
@@ -364,10 +364,10 @@ export function useGirlFeed(cityId: string, moms: boolean) {
         load();
       }, 700);
     };
-    const channel = supabase
-      .channel(topic(`girl-feed-${cityId}-${moms ? 'moms' : 'all'}`))
+    const channel = liveChannel(`girl-feed-${cityId}-${moms ? 'moms' : 'all'}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, later)
-      .subscribe();
+      // Listening: a post made before then is in no event.
+      .subscribe(whenListening(later));
     return () => {
       if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);

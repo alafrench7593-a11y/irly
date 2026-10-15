@@ -81,7 +81,7 @@ export default function ChooseEmirate() {
       </ScrollView>
 
       <View style={[styles.back, { top: insets.top + 8 }]}>
-        <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => router.back()} />
+        <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))} />
       </View>
       {overlay}
     </View>

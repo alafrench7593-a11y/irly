@@ -47,7 +47,7 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <View style={[styles.top, { paddingTop: insets.top + 8 }]}>
-          <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => router.back()} />
+          <IconButton icon="chevronLeft" label="Back" variant="glass" onPress={() => (router.canGoBack() ? router.back() : router.replace('/welcome'))} />
           <View style={styles.dots}>
             {Array.from({ length: total }, (_, i) => (
               <Dot key={i} active={i === step} done={i < step} />

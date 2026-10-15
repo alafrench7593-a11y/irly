@@ -5,7 +5,7 @@ import { isAvatar } from '@/features/avatar/avatar';
 import { thumbOf } from '@/features/server/media';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
-import { supabase, topic } from '@/lib/supabase';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import type { ProProfile } from './match';
 import type { IndustryId, IntentId, RoleId } from './taxonomy';
 
@@ -243,10 +243,10 @@ export function usePros(cityId: string, filters: ProFilters) {
     };
     reload();
     // Requests sent or accepted (here or on another phone) update the buttons.
-    const channel = supabase
-      .channel(topic(`pros-${uid}`))
+    const channel = liveChannel(`pros-${uid}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, reload)
-      .subscribe();
+      // Listening: a request sent or accepted before then is in no event.
+      .subscribe(whenListening(reload));
     return () => {
       alive = false;
       supabase?.removeChannel(channel);
@@ -279,22 +279,27 @@ export function usePro(userId: string) {
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
+    // Answers can cross (the first read and a catch-up): only the latest one sent is shown.
+    let sent = 0;
     const reload = () =>
-      load()
-        .then(async (p) => {
-          if (!alive) return;
-          setRes({ id: userId, pro: p, failed: false });
-          if (p?.photoPath) {
-            const urls = await photoUrls([p.photoPath]);
-            if (alive) setPhoto(urls[p.photoPath] ?? null);
-          } else setPhoto(null); // Removed meanwhile: the old one does not stay.
-        })
-        .catch(() => alive && setRes((r) => ({ id: userId, pro: r.id === userId ? r.pro : null, failed: true })));
+      (() => {
+        const n = ++sent;
+        const current = () => alive && n === sent;
+        load()
+          .then(async (p) => {
+            if (!current()) return;
+            setRes({ id: userId, pro: p, failed: false });
+            if (p?.photoPath) {
+              const urls = await photoUrls([p.photoPath]);
+              if (current()) setPhoto(urls[p.photoPath] ?? null);
+            } else setPhoto(null); // Removed meanwhile: the old one does not stay.
+          })
+          .catch(() => current() && setRes((r) => ({ id: userId, pro: r.id === userId ? r.pro : null, failed: true })));
+      })();
     reload();
-    const channel = supabase
-      .channel(topic(`pro-${userId}`))
+    const channel = liveChannel(`pro-${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, reload)
-      .subscribe();
+      .subscribe(whenListening(reload));
     return () => {
       alive = false;
       supabase?.removeChannel(channel);

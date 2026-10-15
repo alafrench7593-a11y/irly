@@ -4,11 +4,18 @@ import { useCityFilter } from './scope';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
-import { friendlyError, supabase, topic } from '@/lib/supabase';
+import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
-import { signedLinks } from './media';
+import { seedLink, signedLinks } from './media';
 import { uuid } from '@/lib/uuid';
 import { prepareLiveMedia, uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
+import { isAnswer, isMissingFunction, LivePublishError, runPublish, settlePending, type AbandonAnswer, type Settled } from '@/features/live/livePublish';
+import { pendingJournal, usePendingLives } from '@/features/live/pendingLive';
+import { activityColumns, cancelServerActivity, createServerActivity, deleteServerActivity } from './activities';
+import { useDrafts } from '@/features/posts/posts';
+import { toast } from '@/components/ui/Toast';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { MyPlan } from '@/state/store';
 import { rememberRatio } from '@/features/live/liveRatio';
 import { LIVE_TTL_MIN } from '@/features/live/liveStore';
 import { useNow } from '@/lib/useNow';
@@ -147,19 +154,44 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     if (version) refresh();
   }, [version, refresh]);
 
+  // The ids on screen, for the DELETE events below (heard app-wide).
+  const shownIds = useRef(new Set<string>());
+  useEffect(() => {
+    shownIds.current = new Set(posts.map((p) => p.id));
+  }, [posts]);
+
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
     const isAlive = () => alive;
     reload(isAlive);
-    const channel = supabase
-      .channel(topic(`irl-${cityId}-${uid}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, () => reload(isAlive))
-      // Realtime cannot filter DELETE events (the old row only has its id): listen unfiltered.
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, () => reload(isAlive))
-      .subscribe();
+    // A burst of events (several posts, edits, a wave of expiries) is one reload of the feed, not one each.
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const later = () => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = null;
+        reload(isAlive);
+      }, 400);
+    };
+    const channel = liveChannel(`irl-${cityId}-${uid}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, (payload) => {
+        // My own post, already confirmed and shown, and its feed reload already asked: not twice.
+        const id = (payload.new as { id?: string } | null)?.id;
+        if (payload.eventType === 'INSERT' && id && confirmedHere.has(id)) return;
+        later();
+      })
+      // Realtime cannot filter DELETE events (the old row only has its id): heard for every
+      // Live app-wide, so only a removal of a post on this screen reloads the feed.
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, (payload) => {
+        const id = (payload.old as { id?: string } | null)?.id;
+        if (!id || shownIds.current.has(id)) later();
+      })
+      // Listening: a Live posted before then is in no event.
+      .subscribe(whenListening(later));
     return () => {
       alive = false;
+      if (timer) clearTimeout(timer);
       supabase?.removeChannel(channel);
     };
   }, [cityId, uid, reload]);
@@ -178,6 +210,9 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   }, [posts, mine, keep, cityId, now]);
   return { posts: uid ? shown : NONE, refresh };
 }
+
+/** Posts confirmed on this phone (their own feed reload is already asked by bumpIrl): their realtime echo is skipped. */
+const confirmedHere = new Set<string>();
 
 /** True when the file is already stored (a retry of an upload whose answer got lost). */
 async function stored(path: string): Promise<boolean> {
@@ -199,17 +234,27 @@ async function uploadIrlFile(path: string, uri: string, type: string, onProgress
   }
 }
 
+/** "Anyone can join": the activity the Live makes, saved with it (never before, never without it). */
+export type LiveActivityPlan = { plan: Omit<MyPlan, 'id' | 'createdAt'>; at: Date };
+
+type SavedLive = { id: string; created_at: string; visibility: ServerIrlPost['visibility']; activity_id: string | null; replayed: boolean };
+
 /**
  * Post what you're doing right now. Files go to the member's own folder.
  *
- * Fast path: the photo (or the video's poster) was prepared when it was
- * picked (prepareLiveMedia); here the files are only uploaded, all at once
- * (video and poster in parallel, the activity created meanwhile), then the
- * row is inserted ONCE. The post shows in the feed from the server's answer
- * (the confirmed row), never before; no feed reload is needed.
+ * States (see livePublish.ts): draft → publishing → published | failed.
+ * The photo (or the video's poster) was prepared when it was picked
+ * (prepareLiveMedia); here the files are uploaded (video and poster in
+ * parallel), then the Live AND its "anyone can join" activity are saved by
+ * the server in one transaction (post_live): both or neither. The activity is
+ * no longer created while the files upload, so a failed or abandoned Live can
+ * never leave it published. The post shows in the feed from the server's
+ * answer, never before.
  *
- * `id` makes a retry safe: the same id gives the same files and the same row,
- * so a post whose answer got lost is never published twice.
+ * `id` makes a retry safe: the same id gives the same files, the same row and
+ * the same activity, so a post whose answer got lost is never published twice.
+ * A failure is a LivePublishError: 'refused' (nothing of it exists) or
+ * 'unknown' (no answer: kept in the phone's journal until settleLive).
  */
 export async function postServerIrl(input: {
   cityId: string;
@@ -223,17 +268,19 @@ export async function postServerIrl(input: {
   onProgress?: (p: number) => void;
   /** Left out: the member's IRL visibility setting applies (server default). */
   visibility?: 'everyone' | 'friends';
-  /** IRL → activity: the post points at the activity, never a copy of it. May still be being created. */
-  activityId?: string | null | Promise<string | null>;
+  /** IRL → activity: created with the post, in the same transaction. */
+  activity?: LiveActivityPlan | null;
   /** The post's id, made on the phone (kept across retries of the same post). */
   id?: string;
-}): Promise<boolean> {
+  /** An earlier try of this id got no answer (it may be saved already). */
+  prior?: boolean;
+}): Promise<{ id: string; activityId: string | null; activityCreated: boolean }> {
   // Never a silent no-op: the composer would close as if the post were live.
-  if (!supabase) throw new Error('The IRLY server is not configured');
+  if (!supabase) throw new LivePublishError('The IRLY server is not configured', 'refused');
   const sb = supabase;
   const { data: s } = await sb.auth.getSession();
   const uid = s.session?.user.id;
-  if (!uid) throw new Error('Sign in to post');
+  if (!uid) throw new LivePublishError('Sign in to post', 'refused');
   const id = input.id ?? uuid();
   const media: LiveMedia | undefined = input.media ?? (input.photoUri ? { kind: 'photo', uri: input.photoUri } : undefined);
   let media_path: string | null = null;
@@ -241,88 +288,85 @@ export async function postServerIrl(input: {
   let shownUri: string | null = null;
   let posterUri: string | null = null;
   let ratio: number | undefined = media?.ratio;
-  const uploads: Promise<unknown>[] = [];
+  const uploads: (() => Promise<unknown>)[] = [];
+  const files: string[] = [];
   if (media?.kind === 'photo') {
-    const prep = await prepareLiveMedia(media);
-    if (!prep.image) throw new Error('Could not read this photo');
+    const prep = await prepareLiveMedia(media).catch(() => ({ image: undefined, ratio: undefined }));
+    if (!prep.image) throw new LivePublishError('Could not read this photo', 'refused');
+    const image = prep.image;
     ratio = prep.ratio ?? ratio;
-    media_path = `${uid}/${id}.jpg`;
-    shownUri = prep.image.uri;
-    uploads.push(uploadIrlFile(media_path, prep.image.uri, 'image/jpeg', input.onProgress));
+    const path = `${uid}/${id}.jpg`;
+    media_path = path;
+    shownUri = image.uri;
+    files.push(path);
+    uploads.push(() => uploadIrlFile(path, image.uri, 'image/jpeg', input.onProgress));
   } else if (media?.kind === 'video') {
     // The poster is best effort: without it the video still goes (the feed shows a plain tile).
     const prep = await prepareLiveMedia(media).catch(() => ({ image: undefined, ratio: media.ratio }));
     ratio = prep.ratio ?? ratio;
     const ext = media.type === 'video/quicktime' ? 'mov' : 'mp4';
-    media_path = `${uid}/${id}.${ext}`;
+    const path = `${uid}/${id}.${ext}`;
+    media_path = path;
     shownUri = media.uri;
+    files.push(path);
     if (prep.image) {
       const poster = `${uid}/${id}-poster.jpg`;
-      posterUri = prep.image.uri;
-      uploads.push(
-        uploadIrlFile(poster, prep.image.uri, 'image/jpeg').then(
+      const image = prep.image;
+      posterUri = image.uri;
+      files.push(poster);
+      uploads.push(() =>
+        uploadIrlFile(poster, image.uri, 'image/jpeg').then(
           () => (thumb_path = poster),
           () => undefined,
         ),
       );
     }
-    uploads.push(uploadIrlFile(media_path, media.uri, media.type ?? 'video/mp4', input.onProgress));
+    uploads.push(() => uploadIrlFile(path, media.uri, media.type ?? 'video/mp4', input.onProgress));
   }
-  const files = () => [media_path, thumb_path].filter((x): x is string => Boolean(x));
-  // Not published: its files go, unless an earlier try of this same post was saved (they are its files).
-  const cleanup = async () => {
-    if (!files().length) return;
-    const { data: saved, error: unknown } = await sb.from('irl_posts').select('id').eq('id', id).maybeSingle();
-    if (saved || unknown) return;
-    await sb.storage.from('irl-media').remove(files()).catch(() => undefined);
+
+  const post = {
+    id,
+    city_id: input.cityId,
+    area_id: input.areaId,
+    place_name: input.placeName ?? null,
+    body: input.body,
+    media_path,
+    ...(media ? { media_kind: media.kind } : {}),
+    ...(media?.seconds !== undefined ? { media_seconds: Math.min(120, media.seconds) } : {}),
+    ...(media && ratio ? { media_ratio: Math.round(Math.min(9.9, Math.max(0.11, ratio)) * 1000) / 1000 } : {}),
+    ...(input.visibility ? { visibility: input.visibility } : {}),
   };
-  let activityId: string | null = null;
-  try {
-    const [activity] = await Promise.all([Promise.resolve(input.activityId ?? null), ...uploads]);
-    activityId = activity;
-  } catch (e) {
-    // Nothing is published: what was stored for it goes.
-    await Promise.allSettled(uploads);
-    await cleanup().catch(() => undefined);
-    throw e;
-  }
-  const insert = await sb
-    .from('irl_posts')
-    .insert({
-      id,
-      author_id: uid,
-      city_id: input.cityId,
-      area_id: input.areaId,
-      place_name: input.placeName ?? null,
-      body: input.body,
-      media_path,
-      ...(media ? { media_kind: media.kind } : {}),
-      ...(thumb_path ? { thumb_path } : {}),
-      ...(media?.seconds !== undefined ? { media_seconds: Math.min(120, media.seconds) } : {}),
-      ...(media && ratio ? { media_ratio: Math.round(Math.min(9.9, Math.max(0.11, ratio)) * 1000) / 1000 } : {}),
-      ...(input.visibility ? { visibility: input.visibility } : {}),
-      activity_id: activityId,
-    })
-    .select('id, created_at, visibility')
-    .single();
-  let row = insert.data;
-  if (insert.error) {
-    // Already there: our earlier try was saved before its answer got lost.
-    // Same for a rate-limit refusal of a retry: the first try may be the one that counted.
-    if (insert.error.code === '23505' || /slow down/i.test(insert.error.message)) {
-      const { data: again } = await sb.from('irl_posts').select('id, created_at, visibility').eq('id', id).eq('author_id', uid).maybeSingle();
-      row = again;
-    }
-    if (!row) {
-      // Refused by the server (a code): its files must not stay behind. Lost on the way (no
-      // code: network, timeout), the row may still land a moment later: its files are kept.
-      if (insert.error.code) await cleanup().catch(() => undefined);
-      throw new Error(friendlyError(insert.error.message));
-    }
-  }
-  if (!row) throw new Error('Could not post');
+  const save = async (): Promise<SavedLive> => {
+    const full = { ...post, ...(thumb_path ? { thumb_path } : {}) };
+    const activity = input.activity ? activityColumns(input.activity.plan, input.activity.at) : null;
+    const { data, error } = await sb.rpc('post_live', { p_post: full, p_activity: activity });
+    if (!error && data) return data as SavedLive;
+    if (error && isMissingFunction(error)) return saveLegacy(sb, uid, full, input.activity ?? null);
+    throw new LivePublishError(friendlyError(error?.message ?? 'Could not post'), error && isAnswer(error) ? 'refused' : 'unknown');
+  };
+  const row = await runPublish<SavedLive>(
+    { postId: id, uid, files, body: input.body, activity: Boolean(input.activity), at: Date.now(), prior: input.prior },
+    {
+      upload: async () => {
+        await Promise.all(uploads.map((u) => u()));
+      },
+      save,
+      removeFiles: () => removeUnsaved(sb, id, files),
+      journal: pendingJournal,
+    },
+  );
+  const activityId = row.activity_id ?? null;
+  const activityCreated = Boolean(activityId && input.activity && !row.replayed);
+  if (activityId) changed('activities', 'inbox');
   // The media's shape, known before the feed loads it: the card never jumps.
   if (media_path) rememberRatio(`irl-media/${media_path}`, ratio);
+  // The feed's next load shows the files already on this phone: nothing is downloaded
+  // again and the picture does not blank while it would be (a local file that fails
+  // to show is dropped by its retry, which then signs the stored one).
+  seedLink('irl-media', media_path, shownUri, LIVE_TTL_MIN * 60_000);
+  seedLink('irl-media', thumb_path, posterUri, LIVE_TTL_MIN * 60_000);
+  if (confirmedHere.size > 50) confirmedHere.clear();
+  confirmedHere.add(row.id);
   if (thumb_path) rememberRatio(`irl-media/${thumb_path}`, ratio);
   rememberRatio(shownUri, ratio);
   rememberRatio(posterUri, ratio);
@@ -338,7 +382,7 @@ export async function postServerIrl(input: {
     body: input.body,
     mediaUrl: shownUri,
     mediaKind: media?.kind,
-    posterUrl: posterUri,
+    posterUrl: thumb_path ? posterUri : null,
     seconds: media?.seconds ?? null,
     mediaRatio: ratio ?? null,
     visibility: row.visibility,
@@ -346,7 +390,7 @@ export async function postServerIrl(input: {
     friend: false,
     mine: true,
     activityId,
-    activityTitle: null,
+    activityTitle: input.activity ? input.activity.plan.title ?? null : null,
     cityId: input.cityId,
   };
   useIrlMine.setState((st) => ({
@@ -359,7 +403,166 @@ export async function postServerIrl(input: {
   // The feeds pick up the server's copy (same signed links, so nothing is downloaded again):
   // the local copy never outlives a removal done elsewhere.
   bumpIrl();
-  return true;
+  return { id: row.id, activityId, activityCreated };
+}
+
+/** Files of a Live that was not saved: removed, unless the Live turns out to be saved (they are its files) or that cannot be checked. */
+async function removeUnsaved(sb: SupabaseClient, id: string, files: string[]): Promise<void> {
+  if (!files.length) return;
+  const { data: saved, error } = await sb.from('irl_posts').select('id').eq('id', id).maybeSingle();
+  if (saved || error) return;
+  await sb.storage.from('irl-media').remove(files).catch(() => undefined);
+}
+
+/**
+ * The server without post_live (database not migrated yet): the older steps,
+ * in an order that never leaves the activity alone on purpose: the files are
+ * already stored, then the activity (its client_ref is the Live's id, so a
+ * retry finds it), then the Live; a refused Live rolls its activity back.
+ */
+async function saveLegacy(sb: SupabaseClient, uid: string, post: Record<string, unknown>, activity: LiveActivityPlan | null): Promise<SavedLive> {
+  const id = post.id as string;
+  let activityId: string | null = null;
+  if (activity) {
+    try {
+      activityId = await createServerActivity(activity.plan, activity.at, { clientRef: id });
+    } catch (e) {
+      // Its answer may have been lost (it may exist): settled like any Live without answer.
+      throw new LivePublishError(friendlyError(e instanceof Error ? e.message : 'Could not post'), 'unknown');
+    }
+  }
+  const insert = await sb
+    .from('irl_posts')
+    .insert({ ...post, author_id: uid, activity_id: activityId })
+    .select('id, created_at, visibility, activity_id')
+    .single();
+  let row = insert.data as Omit<SavedLive, 'replayed'> | null;
+  if (insert.error) {
+    // Already there: our earlier try was saved before its answer got lost.
+    // Same for a rate-limit refusal of a retry: the first try may be the one that counted.
+    if (insert.error.code === '23505' || /slow down/i.test(insert.error.message)) {
+      const { data: again } = await sb.from('irl_posts').select('id, created_at, visibility, activity_id').eq('id', id).eq('author_id', uid).maybeSingle();
+      if (again) return { ...(again as Omit<SavedLive, 'replayed'>), replayed: true };
+    }
+    if (!isAnswer(insert.error)) throw new LivePublishError(friendlyError(insert.error.message), 'unknown');
+    // Refused: the activity made for it goes too (or the Live is settled later, never left half done).
+    if (activityId) {
+      try {
+        await legacyAbandon(sb, uid, id);
+      } catch {
+        throw new LivePublishError(friendlyError(insert.error.message), 'unknown');
+      }
+    }
+    throw new LivePublishError(friendlyError(insert.error.message), 'refused');
+  }
+  if (!row) throw new LivePublishError('Could not post', 'unknown');
+  row = row as Omit<SavedLive, 'replayed'>;
+  return { ...row, replayed: false };
+}
+
+/** abandon_live with the older steps (database not migrated): the same answers, without the server-side lock. */
+async function legacyAbandon(sb: SupabaseClient, uid: string, postId: string): Promise<AbandonAnswer> {
+  const { data: post, error } = await sb.from('irl_posts').select('author_id').eq('id', postId).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (post) return (post as { author_id: string }).author_id === uid ? 'published' : 'not_mine';
+  const { data: act, error: e2 } = await sb.from('activities').select('id, cancelled_at').eq('creator_id', uid).eq('client_ref', postId).maybeSingle();
+  if (e2) throw new Error(e2.message);
+  if (!act) return 'abandoned';
+  const a = act as { id: string; cancelled_at: string | null };
+  if (a.cancelled_at) return 'cancelled';
+  const { count, error: e3 } = await sb
+    .from('activity_participants')
+    .select('user_id', { count: 'exact', head: true })
+    .eq('activity_id', a.id)
+    .neq('user_id', uid)
+    .in('status', ['going', 'maybe']);
+  if (e3) throw new Error(e3.message);
+  // Someone else joined: called off (they hear it), never deleted.
+  if (count) {
+    await cancelServerActivity(a.id);
+    return 'cancelled';
+  }
+  await deleteServerActivity(a.id);
+  return 'deleted';
+}
+
+/** Asks the server to give up on a Live that got no answer (see abandon_live). */
+async function abandonLive(postId: string): Promise<AbandonAnswer> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const sb = supabase;
+  const { data, error } = await sb.rpc('abandon_live', { p_post: postId });
+  if (error && isMissingFunction(error)) {
+    const { data: s } = await sb.auth.getSession();
+    const uid = s.session?.user.id;
+    if (!uid) throw new Error('Sign in again');
+    return legacyAbandon(sb, uid, postId);
+  }
+  if (error) throw new Error(error.message);
+  return data as AbandonAnswer;
+}
+
+/**
+ * Settles a Live whose publish got no answer (the member closed the composer,
+ * discarded it, changed it, or the app starts again after being killed):
+ * 'published' when it landed (shown), 'dropped' when it never will (its files
+ * removed, an activity made for it rolled back), 'later' when the server
+ * could not be asked (kept, asked again). 'none': nothing was pending.
+ */
+export async function settleLive(postId: string): Promise<Settled | 'none'> {
+  const p = pendingJournal.get(postId);
+  if (!p) return 'none';
+  const sb = supabase;
+  const r = await settlePending(p, {
+    abandon: abandonLive,
+    removeFiles: async (paths) => {
+      if (sb) await sb.storage.from('irl-media').remove(paths);
+    },
+  });
+  if (r === 'later') return r;
+  pendingJournal.drop(postId);
+  if (r === 'published') bumpIrl();
+  if (p.activity) changed('activities', 'inbox');
+  return r;
+}
+
+/**
+ * At start (signed in): Lives left mid-publish by an earlier run of the app
+ * (killed, closed, offline) are settled. One that landed is announced; one
+ * that did not gives its words back as the Live draft. Unreachable server:
+ * asked again a minute later, never assumed.
+ */
+function useLeftOverLives(uid: string | undefined): void {
+  const saveDraft = useDrafts((st) => st.save);
+  useEffect(() => {
+    if (!uid || !supabase) return;
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const sweep = async () => {
+      timer = null;
+      let again = false;
+      for (const p of pendingJournal.leftOver(uid)) {
+        if (!alive) return;
+        const r = await settleLive(p.postId).catch(() => 'later' as const);
+        if (!alive) return;
+        if (r === 'later') again = true;
+        else if (r === 'published') toast('Your Live was posted', 'zap', 'live');
+        else if (r === 'dropped' && p.body.trim()) {
+          // The words come back (unless a newer draft is already there).
+          if (!useDrafts.getState().byKey.live) saveDraft('live', { body: p.body, media: null, at: Date.now() });
+          toast('Your Live was not posted. It is kept as a draft.', 'edit', 'live');
+        }
+      }
+      if (again && alive) timer = setTimeout(() => void sweep(), 60_000);
+    };
+    // The journal is read from the phone's storage: wait for it.
+    const start = () => void sweep();
+    const unsub = usePendingLives.persist.hasHydrated() ? (start(), () => undefined) : usePendingLives.persist.onFinishHydration(start);
+    return () => {
+      alive = false;
+      unsub();
+      if (timer) clearTimeout(timer);
+    };
+  }, [uid, saveDraft]);
 }
 
 export async function deleteServerIrl(id: string): Promise<void> {
@@ -533,8 +736,17 @@ export const useServerBell = create<{ n: number }>(() => ({ n: 0 }));
  */
 export function BellSync() {
   const { unread } = useServerNotifications();
+  // Mounted once at the root, signed in: the right place to settle Lives left mid-publish.
+  useLeftOverLives(useAccount()?.userId);
   useEffect(() => {
     useServerBell.setState({ n: unread });
   }, [unread]);
   return null;
+}
+
+/** Signed out or account deleted: the previous member's feeds and own Lives are forgotten on this phone. */
+export function clearSocialCache(): void {
+  irlCache.clear();
+  confirmedHere.clear();
+  useIrlMine.setState({ posts: [] });
 }

@@ -1083,6 +1083,138 @@ export const ARTICLES = [
     cta: { title: 'Tu cherches d’autres femmes avec qui sortir ?', body: 'Découvre IRLY Girl : des activités et des communautés réservées aux femmes.', label: 'Découvrir IRLY Girl' },
     related: [{ label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
   },
+  {
+    lang: 'en',
+    pair: 'dubai-settle',
+    path: 'dubai/moving-to-dubai/',
+    cover: 'dubaiMarina',
+    figure: { photo: 'running', after: 4 },
+    city: 'Dubai',
+    updated: '2026-10-15',
+    title: 'Moving to Dubai: A Checklist for Your First Months | IRLY',
+    description: 'Moving to Dubai? A practical checklist for your first months: what to sort first, finding a home, getting around, health insurance and a social life from week one.',
+    h1: 'Moving to Dubai: a checklist for your first months',
+    lead: 'Your first months in Dubai go more smoothly in a clear order: your residence status and Emirates ID first, because several other steps ask for them, then your home, getting around and health insurance. Make room for people from the first week too: the routines you start early are often the ones that last. Below is a practical checklist, with links to the official pages to check before each step.',
+    sections: [
+      {
+        h2: 'First, check the official rules for your situation',
+        html: `<p>Rules and procedures change, and what applies to you depends on your nationality, your employer and your type of residence. This guide gives you an order and practical advice, not legal advice. Before each step, check the official page linked below or the UAE government portal, <a href="https://u.ae/en" rel="noopener">u.ae</a>, and ask your employer or a qualified adviser if your case is not clear.</p>
+<p><em>Official sources checked on 15 October 2026.</em></p>`,
+      },
+      {
+        h2: 'Weeks 1 to 4: residence and Emirates ID first',
+        html: `<p>Sort out your residence and your Emirates ID before anything else. Several other procedures list the Emirates ID among the documents they ask for, for example registering a tenancy contract or exchanging a driving licence (both below).</p>
+<ul>
+<li><strong>Keep digital copies</strong> of your passport, visa, Emirates ID and contracts in one place, so you can send them quickly.</li>
+<li><strong>Write down every step and its date:</strong> it helps when someone asks for a document you sent weeks ago.</li>
+<li><strong>Ask your employer early</strong> what they handle for you and what you need to do yourself.</li>
+</ul>`,
+      },
+      {
+        h2: 'Finding a home',
+        html: `<ul>
+<li><strong>Test the commute before you sign.</strong> Do the trip to work at the time you would really do it. Distances in Dubai look short on a map and feel long at rush hour.</li>
+<li><strong>Visit at different times of day</strong> to hear the noise, see the parking and feel the neighbourhood.</li>
+<li><strong>Look at what is within walking distance:</strong> a gym, a park, a café. Being close to a place you go every week makes a regular routine much easier.</li>
+</ul>
+<h3>Registering your tenancy contract</h3>
+<p>In Dubai, tenancy contracts are registered in <strong>Ejari</strong>, the Dubai Land Department’s system for recording leases. A tenant can start the registration, but the landlord’s approval is needed to complete it, and the Emirates ID is among the documents listed. Check the current steps on the <a href="https://dubailand.gov.ae/en/eservices/register-renew-ejari-contract/" rel="noopener">Dubai Land Department’s Ejari page</a>.</p>`,
+      },
+      {
+        h2: 'Getting around',
+        html: `<p>Before you choose a home, check how you would get to work and to the places you go often, by public transport, taxi or car.</p>
+<p>If you plan to drive, find out whether your licence can be exchanged. The Roads and Transport Authority (RTA) lets holders of licences from listed countries exchange them for a Dubai licence; the list depends on the country that issued yours, and the requirements include a valid Emirates ID and an eye test. Check the list and the current requirements on the <a href="https://www.rta.ae/wps/portal/rta/ae/home/rta-services/service-details?serviceId=121" rel="noopener">RTA licence exchange page</a>.</p>`,
+      },
+      {
+        h2: 'Health insurance',
+        html: `<p>According to the UAE government portal, since 1 January 2025 employers must buy health insurance for private-sector employees and domestic workers before applying for or renewing their residence permits, and this applies in Dubai. If your situation is different (investor, dependant, retiree or another case), check what applies to you on <a href="https://u.ae/en/information-and-services/health-and-fitness/getting-a-health-insurance" rel="noopener">u.ae</a> before assuming you are covered.</p>
+<p>Save the emergency numbers in your phone: <strong>999</strong> for the police and <strong>998</strong> for an ambulance.</p>`,
+      },
+      {
+        h2: 'Build a social life from the first week',
+        html: `<p>Paperwork fills the first weeks, and it is easy to postpone everything else. Don’t: the first weeks are when people are most open to new faces, and you are too.</p>
+<ol>
+<li><strong>Pick one regular activity</strong> in your first week: a run club, a class, a sport. Go back every week.</li>
+<li><strong>Say yes to invitations,</strong> even small ones, especially at the start.</li>
+<li><strong>Join a community</strong> around your language, your work or something you love.</li>
+<li><strong>Plan one social thing every weekend.</strong> Since 2022, the official weekend is Saturday and Sunday.</li>
+</ol>
+<p>For more ideas, read <a href="../make-friends/">how to make friends in Dubai</a> and <a href="../group-activities/">15 group activities to meet people</a>.</p>`,
+      },
+      {
+        h2: 'Where IRLY fits in',
+        html: `<p>IRLY helps with the social side of moving: join communities around what you like, find activities near you and meet people in real life. IRLY VISA, a service to help with paperwork, is coming soon; you can ask to be told when it opens. IRLY is one option among others; for any procedure, the official sources above are the ones to follow.</p>`,
+      },
+    ],
+    cta: { title: 'Just moved to Dubai?', body: 'Meet people from your first week, and ask to be told when IRLY VISA opens.', label: 'Get notified' },
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }],
+  },
+  {
+    lang: 'fr',
+    pair: 'dubai-settle',
+    path: 'fr/dubai/s-installer/',
+    cover: 'dubaiMarina',
+    figure: { photo: 'running', after: 4 },
+    city: 'Dubaï',
+    updated: '2026-10-15',
+    title: 'S’installer à Dubaï : la checklist des premiers mois | IRLY',
+    description: 'Tu t’installes à Dubaï ? Une checklist concrète pour les premiers mois : ce qu’il faut régler d’abord, le logement, les déplacements, l’assurance santé et la vie sociale dès la première semaine.',
+    h1: 'S’installer à Dubaï : la checklist des premiers mois',
+    lead: 'Les premiers mois à Dubaï se passent mieux dans un ordre clair : ton statut de résident et ton Emirates ID d’abord, parce que plusieurs autres démarches les demandent, puis le logement, les déplacements et l’assurance santé. Garde aussi de la place pour les gens dès la première semaine : les habitudes prises au début sont souvent celles qui restent. Voici une checklist concrète, avec les liens vers les pages officielles à vérifier avant chaque étape.',
+    sections: [
+      {
+        h2: 'D’abord, vérifie les règles officielles pour ta situation',
+        html: `<p>Les règles et les démarches changent, et ce qui s’applique à toi dépend de ta nationalité, de ton employeur et de ton type de résidence. Ce guide te donne un ordre et des conseils pratiques, pas un avis juridique. Avant chaque étape, vérifie la page officielle indiquée plus bas ou le portail du gouvernement des Émirats, <a href="https://u.ae/en" rel="noopener">u.ae</a>, et demande à ton employeur ou à un conseiller qualifié si ton cas n’est pas clair.</p>
+<p><em>Sources officielles vérifiées le 15 octobre 2026.</em></p>`,
+      },
+      {
+        h2: 'Semaines 1 à 4 : la résidence et l’Emirates ID d’abord',
+        html: `<p>Règle ta résidence et ton Emirates ID avant tout le reste. Plusieurs autres démarches citent l’Emirates ID parmi les documents demandés, par exemple l’enregistrement d’un bail ou l’échange d’un permis de conduire (voir plus bas).</p>
+<ul>
+<li><strong>Garde des copies numériques</strong> de ton passeport, de ton visa, de ton Emirates ID et de tes contrats au même endroit, pour les envoyer vite.</li>
+<li><strong>Note chaque étape et sa date :</strong> c’est utile quand on te redemande un document envoyé il y a des semaines.</li>
+<li><strong>Demande tôt à ton employeur</strong> ce qu’il prend en charge et ce que tu dois faire toi-même.</li>
+</ul>`,
+      },
+      {
+        h2: 'Trouver un logement',
+        html: `<ul>
+<li><strong>Teste le trajet avant de signer.</strong> Fais le trajet jusqu’au travail à l’heure où tu le ferais vraiment. Les distances à Dubaï paraissent courtes sur une carte et longues à l’heure de pointe.</li>
+<li><strong>Visite à différents moments de la journée</strong> pour entendre le bruit, voir le stationnement et sentir le quartier.</li>
+<li><strong>Regarde ce qui est à distance de marche :</strong> une salle de sport, un parc, un café. Être près d’un endroit où tu vas chaque semaine rend une routine beaucoup plus facile.</li>
+</ul>
+<h3>Enregistrer ton bail</h3>
+<p>À Dubaï, les baux sont enregistrés dans <strong>Ejari</strong>, le système du Dubai Land Department pour les contrats de location. Le locataire peut lancer l’enregistrement, mais l’accord du propriétaire est nécessaire pour le terminer, et l’Emirates ID fait partie des documents demandés. Vérifie les étapes actuelles sur la <a href="https://dubailand.gov.ae/en/eservices/register-renew-ejari-contract/" rel="noopener">page Ejari du Dubai Land Department</a> (en anglais).</p>`,
+      },
+      {
+        h2: 'Se déplacer',
+        html: `<p>Avant de choisir un logement, vérifie comment tu irais au travail et dans les endroits où tu vas souvent, en transports en commun, en taxi ou en voiture.</p>
+<p>Si tu comptes conduire, regarde si ton permis peut être échangé. La Roads and Transport Authority (RTA) permet aux titulaires d’un permis délivré par l’un des pays de sa liste de l’échanger contre un permis de Dubaï ; tout dépend du pays qui a délivré le tien, et il faut notamment un Emirates ID valide et un test de vue. Consulte la liste et les conditions actuelles sur la <a href="https://www.rta.ae/wps/portal/rta/ae/home/rta-services/service-details?serviceId=121" rel="noopener">page d’échange de permis de la RTA</a> (en anglais).</p>`,
+      },
+      {
+        h2: 'L’assurance santé',
+        html: `<p>Selon le portail du gouvernement des Émirats, depuis le 1er janvier 2025, les employeurs doivent souscrire une assurance santé pour les salariés du secteur privé et les employés de maison avant de demander ou de renouveler leur permis de résidence, et cette règle s’applique à Dubaï. Si ta situation est différente (investisseur, personne à charge, retraité ou autre), vérifie ce qui s’applique à toi sur <a href="https://u.ae/en/information-and-services/health-and-fitness/getting-a-health-insurance" rel="noopener">u.ae</a> avant de te croire couvert.</p>
+<p>Enregistre les numéros d’urgence dans ton téléphone : <strong>999</strong> pour la police et <strong>998</strong> pour une ambulance.</p>`,
+      },
+      {
+        h2: 'Construire sa vie sociale dès la première semaine',
+        html: `<p>Les démarches remplissent les premières semaines, et il est tentant de remettre tout le reste à plus tard. Ne le fais pas : c’est au début que les gens sont le plus ouverts aux nouveaux visages, et toi aussi.</p>
+<ol>
+<li><strong>Choisis une activité régulière</strong> dès la première semaine : un club de course, un cours, un sport. Reviens chaque semaine.</li>
+<li><strong>Dis oui aux invitations,</strong> même les petites, surtout au début.</li>
+<li><strong>Rejoins une communauté</strong> autour de ta langue, de ton métier ou d’une passion.</li>
+<li><strong>Prévois une sortie sociale chaque week-end.</strong> Depuis 2022, le week-end officiel est le samedi et le dimanche.</li>
+</ol>
+<p>Pour d’autres idées, lis <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a> et <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde</a>.</p>`,
+      },
+      {
+        h2: 'Où IRLY trouve sa place',
+        html: `<p>IRLY t’aide pour le côté social de l’installation : rejoindre des communautés autour de ce que tu aimes, trouver des activités près de chez toi et rencontrer des gens en vrai. IRLY VISA, un service pour t’aider dans les démarches, arrive bientôt ; tu peux demander à être prévenu à son ouverture. IRLY est une option parmi d’autres ; pour toute démarche, ce sont les sources officielles ci-dessus qui font foi.</p>`,
+      },
+    ],
+    cta: { title: 'Tu viens d’arriver à Dubaï ?', body: 'Rencontre du monde dès la première semaine, et demande à être prévenu à l’ouverture d’IRLY VISA.', label: 'Préviens-moi' },
+    related: [{ label: 'Comment se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï : ce qui aide vraiment', path: 'fr/dubai/solitude/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }],
+  },
 ];
 
 export const APP_URL = app;

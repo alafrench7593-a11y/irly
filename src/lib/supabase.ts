@@ -93,6 +93,27 @@ export function topic(name: string) {
 }
 
 /**
+ * A database-changes channel (unique topic, see topic()) whose SUBSCRIBED
+ * means the server really listens: by default Realtime reports it as soon as
+ * the channel has joined, before its postgres_changes subscription is active
+ * (realtime-js `postgres_changes_options.wait`), and a change committed in
+ * between is never sent.
+ */
+export function liveChannel(name: string) {
+  return supabase!.channel(topic(name), { config: { postgres_changes_options: { wait: true } } });
+}
+
+/**
+ * A subscribe() callback for a liveChannel: `catchUp` runs each time the
+ * channel starts listening, the first time too. A change committed after the
+ * screen's own first read was sent and before that moment is never sent to
+ * it (and a reconnection leaves the same gap).
+ */
+export const whenListening = (catchUp: () => void) => (status: string) => {
+  if (status === 'SUBSCRIBED') catchUp();
+};
+
+/**
  * Which sign-in providers are switched on in Supabase (Authentication →
  * Providers). Read from the public auth settings, so the app only offers
  * Apple / Google when they actually work.

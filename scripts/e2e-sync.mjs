@@ -55,7 +55,10 @@ async function createWoman(name) {
   return { id, email, name };
 }
 
-const cleanup = () => sql(`delete from auth.users where email like 'e2e-sync-%@irly.test'`).catch(() => undefined);
+// Own run, or accounts left behind more than 2 hours ago: never another run's live accounts.
+const cleanup = () =>
+  sql(`delete from auth.users where email like 'e2e-sync-${run}-%@irly.test'
+    or (email like 'e2e-sync-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ttf': 'font/ttf', '.ico': 'image/x-icon' };
 const server = http
@@ -1130,6 +1133,22 @@ async function main() {
   await browser.close();
 }
 
+// Regression guard: an account deleted while the app is still signed in to it makes the sign-in profile
+// write fail on profiles_id_fkey (another run's cleanup did that when E2E runs overlapped). None may be
+// recorded while this run's app was open.
+async function noProfileFkey(since) {
+  const [{ n }] = await sql(`select count(*)::int as n from public.analytics_events where name = 'SERVER_ERROR' and props->>'code' = 'profiles_id_fkey' and platform = 'web' and created_at >= '${since}'`);
+  if (n === 0) {
+    passed++;
+    console.log('✓ no sign-in profile write refused by profiles_id_fkey during this run');
+  } else {
+    failed++;
+    failures.push(`${n} sign-in profile write(s) refused by profiles_id_fkey during this run`);
+    console.log(`✗ ${n} sign-in profile write(s) refused by profiles_id_fkey during this run`);
+  }
+}
+
+const [{ started }] = await sql(`select now()::text as started`);
 try {
   await main();
 } catch (e) {
@@ -1137,6 +1156,13 @@ try {
   failures.push(`setup: ${e instanceof Error ? e.message : e}`);
   console.log('✗ setup', e);
 } finally {
+  // Checked even when the run failed (a run whose accounts were deleted under it fails in setup).
+  // The app flushes analytics every 4 s: let the last batch land.
+  await new Promise((r) => setTimeout(r, 6000));
+  await noProfileFkey(started).catch((e) => {
+    failed++;
+    failures.push(`profiles_id_fkey check: ${e instanceof Error ? e.message : e}`);
+  });
   await cleanup();
   server.close();
 }

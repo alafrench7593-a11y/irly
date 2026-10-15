@@ -5,7 +5,7 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { create } from 'zustand';
 import { Platform } from 'react-native';
-import { supabase } from '@/lib/supabase';
+import { friendlyError, supabase } from '@/lib/supabase';
 import * as Crypto from 'expo-crypto';
 import { useStore, type Profile } from '@/state/store';
 import { cleanImage } from '@/lib/media';
@@ -22,6 +22,9 @@ export type Account = { userId: string; email?: string } | null;
 
 type AuthState = { status: 'unknown' | 'in' | 'out'; account: Account };
 const useAuthStore = create<AuthState>(() => ({ status: supabase ? 'unknown' : 'out', account: null }));
+
+/** True while this phone is ending the session on purpose (Log out, Delete account). */
+let ending = false;
 
 function setSession(u: { id: string; email?: string } | null | undefined) {
   const cur = useAuthStore.getState();
@@ -66,8 +69,16 @@ if (supabase) {
     .catch(() => setSession(null));
   supabase.auth.onAuthStateChange((event, session) => {
     setSession(session?.user);
-    // Signed out in another tab: forget this person here too.
-    if (event === 'SIGNED_OUT') wipeLocal();
+    // Signed out in another tab, or the session ended elsewhere (signed out on the server, account
+    // deleted on another phone, refresh token revoked): forget this person here too, and leave
+    // the private screens (Log out and Delete account do that themselves).
+    if (event === 'SIGNED_OUT') {
+      wipeLocal();
+      if (!ending) {
+        void closeRealtime();
+        setTimeout(goPublic, 0);
+      }
+    }
     // Signed in: a returning member gets their profile back on this device;
     // a new one publishes the signup profile once.
     if (event === 'SIGNED_IN' && session?.user) {
@@ -244,6 +255,23 @@ export function restoreProfile(uid: string): Promise<boolean> {
   return run;
 }
 
+/** Still the signed-in account (an account switch can happen while a request is on its way). */
+const stillSignedIn = (uid: string) => useAuthStore.getState().account?.userId === uid;
+
+/**
+ * The server refused a profile because its account no longer exists (deleted
+ * on another phone, or by an admin) while this phone still holds a valid
+ * session token: asked to the auth server, never guessed. Signing out here
+ * wipes this phone (SIGNED_OUT) instead of asking that person to finish a
+ * profile that can never be saved. A network failure is not an answer.
+ */
+async function signOutIfAccountGone(uid: string): Promise<void> {
+  if (!supabase || !stillSignedIn(uid)) return;
+  const { data, error } = await supabase.auth.getUser();
+  const gone = error ? error.status === 401 || error.status === 403 || error.code === 'user_not_found' : !data.user;
+  if (gone && stillSignedIn(uid)) await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+}
+
 async function readBack(uid: string, force = false): Promise<boolean> {
   if (!supabase || (!force && useStore.getState().onboarded)) return false;
   const { data, error } = await supabase.rpc('my_profile');
@@ -262,6 +290,8 @@ async function readBack(uid: string, force = false): Promise<boolean> {
   const born = r.birthdate ? new Date(r.birthdate).getFullYear() : null;
   const st = useStore.getState();
   if (!force && st.onboarded) return false;
+  // Another account signed in meanwhile: this answer is not its profile.
+  if (!stillSignedIn(uid)) return false;
   st.updateProfile({
     ownerId: uid,
     name: r.first_name,
@@ -305,7 +335,13 @@ async function writeProfile(uid: string): Promise<boolean> {
   if (!profile.gender) return skipped(onboarded, 'incomplete');
   const row = toRow(uid, profile, cityId ?? 'dubai');
   const { error } = await supabase.from('profiles').upsert(row, { onConflict: 'id', ignoreDuplicates: true });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Still recorded by the caller (profiles_id_fkey): a deleted account's leftover session.
+    if (/profiles_id_fkey/.test(error.message)) await signOutIfAccountGone(uid);
+    throw new Error(error.message);
+  }
+  // Another account signed in meanwhile: the profile on this phone is now theirs, never stamped with this one.
+  if (!stillSignedIn(uid)) return true;
   useStore.getState().updateProfile({ ownerId: uid });
   // An IRLY avatar is stored as is (no file to upload).
   if (isAvatar(profile.photoUri)) {
@@ -479,65 +515,281 @@ export async function refreshOwnPhoto(uid: string): Promise<void> {
   if (signed?.signedUrl) st.updateProfile({ photoUri: signed.signedUrl });
 }
 
-export async function signOut(): Promise<void> {
-  // This phone stops receiving the account's notifications (needs the session, so first).
-  // Bounded: asking the phone for its token has no timeout of its own, and the sign-out must not hang.
-  const unregister = import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
-  await Promise.race([unregister, new Promise((done) => setTimeout(done, 5000))]);
-  if (!supabase) return;
-  // Offline, the server sign-out fails and the session would stay on this phone (and the next
-  // person would act as this account): end it locally anyway.
-  const { error } = await supabase.auth.signOut().catch((e: unknown) => ({ error: e }));
-  if (error) await supabase.auth.signOut({ scope: 'local' });
+/* ───────── Log out, delete account, download my data ───────── */
+
+/**
+ * Every step below has its own bound: a request that never answers (bad
+ * network), a Keychain call or a native push call that never returns must not
+ * leave a spinner turning. Requests already give up after 20 s (lib/supabase);
+ * these bounds sit just above, so a step never keeps running after we moved on.
+ */
+const SERVER_MS = 25_000;
+const PUSH_MS = 5_000;
+const LOCAL_MS = 5_000;
+const CHANNELS_MS = 3_000;
+const NO_CONNECTION = 'IRLY did not answer in time. Check your connection and try again.';
+
+/** Rejects with `message` when `work` has not settled after `ms`. */
+export function within<T>(work: PromiseLike<T>, ms: number, message = NO_CONNECTION): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<never>((_, fail) => {
+    timer = setTimeout(() => fail(new Error(message)), ms);
+  });
+  return Promise.race([Promise.resolve(work), late]).finally(() => clearTimeout(timer));
 }
 
-/** Your files in each storage bucket (they live in a folder named after you). */
-const BUCKETS = ['profile-photos', 'match-photos', 'irl-media', 'activity-photos', 'chat-media', 'post-media', 'verifications'];
-async function removeMyFiles(uid: string): Promise<void> {
-  if (!supabase) return;
-  for (const bucket of BUCKETS) {
-    for (;;) {
-      const { data, error } = await supabase.storage.from(bucket).list(uid, { limit: 100 });
-      if (error) throw new Error(`Could not delete your files (${bucket}). Try again.`);
-      if (!data?.length) break;
-      const { error: e } = await supabase.storage.from(bucket).remove(data.map((f) => `${uid}/${f.name}`));
-      if (e) throw new Error(`Could not delete your files (${bucket}). Try again.`);
-      if (data.length < 100) break;
-    }
+/** Waits for `work` at most `ms`; true when it finished without error. */
+const settled = (work: PromiseLike<unknown>, ms: number) => within(work, ms).then(
+  () => true,
+  () => false,
+);
+
+/**
+ * Leaves the private screens for good: the history is reset, so Back (or the
+ * iOS swipe) cannot return to a screen of the account that just left.
+ */
+export function goPublic(): void {
+  try {
+    if (router.canDismiss()) router.dismissAll();
+    router.replace('/welcome');
+  } catch {
+    // Navigation not mounted yet (cold start): the entry gate sends the person to Welcome.
   }
+}
+
+type SessionStorage = { getItem(key: string): Promise<string | null> | string | null; removeItem(key: string): Promise<void> | void };
+
+/**
+ * Removes the stored session from this phone, whatever happened on the
+ * server. supabase-js keeps the session when it cannot read it (an expired
+ * token it cannot refresh while offline): its own sign-out then fails and the
+ * next launch would sign the person back in. Returns true once it is gone.
+ */
+async function forgetSessionHere(): Promise<boolean> {
+  if (!supabase) return true;
+  const auth = supabase.auth as unknown as { storage?: SessionStorage; storageKey?: string };
+  const { storage, storageKey } = auth;
+  if (!storage || !storageKey) return false;
+  const gone = await settled(
+    (async () => {
+      await storage.removeItem(storageKey);
+      await storage.removeItem(`${storageKey}-user`);
+      await storage.removeItem(`${storageKey}-code-verifier`);
+      if ((await storage.getItem(storageKey)) !== null) throw new Error('still stored');
+    })(),
+    LOCAL_MS,
+  );
+  return gone;
+}
+
+/** Live connections opened for the account that is leaving (chats, inbox, sync). */
+async function closeRealtime(): Promise<void> {
+  if (!supabase) return;
+  await settled(supabase.removeAllChannels(), CHANNELS_MS);
+}
+
+/** Ends the session on this phone (and on the server when it answers), then forgets the person. */
+async function endSession(): Promise<{ serverEnded: boolean }> {
+  if (!supabase) {
+    wipeLocal();
+    return { serverEnded: true };
+  }
+  // The server forgets this phone's session ("local": the member's other phones stay signed in).
+  // Offline, the request fails fast and supabase-js removes the session here anyway.
+  const serverEnded = await within(supabase.auth.signOut({ scope: 'local' }), SERVER_MS).then(
+    (r) => !r.error,
+    () => false,
+  );
+  // Whatever the answer, nothing of the session may stay on this phone.
+  if (!(await forgetSessionHere())) throw new Error('Could not sign you out on this phone. Try again.');
+  setSession(null);
+  await closeRealtime();
+  wipeLocal();
+  return { serverEnded };
 }
 
 /**
- * Deletes the server account: your photos and files first (the database
- * cannot remove files), then every row that belongs to you, then the
- * session. Files go first on purpose: if the account step then fails, a retry
- * finishes it; the other way round, a failure would leave your photos on the
- * server with no account left to remove them. Nothing is wiped on the phone
- * until the server has finished, so you can retry.
+ * Log out: this phone stops receiving the account's notifications, the
+ * session ends (on the server when reachable, always on this phone), live
+ * connections close and everything this phone knows about the person is
+ * wiped. Resolves once it is done; rejects (nothing wiped, still signed in)
+ * only when the session could not be removed from this phone.
  */
-export async function deleteServerAccount(): Promise<void> {
-  if (!supabase) return;
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) {
-    // Signed in but the session could not be renewed (offline): nothing was deleted, so say so.
-    if (useAuthStore.getState().account) throw new Error('No connection: your account was not deleted. Try again.');
-    return;
+export async function signOut(): Promise<{ serverEnded: boolean }> {
+  ending = true;
+  try {
+    // Needs the session, so first. Bounded: asking the phone for its token has no timeout of its own.
+    await settled(
+      import('@/features/push/push').then((m) => m.unregisterPush()),
+      PUSH_MS,
+    );
+    return await endSession();
+  } finally {
+    ending = false;
   }
-  await removeMyFiles(data.session.user.id);
-  await import('@/features/push/push').then((m) => m.unregisterPush()).catch(() => undefined);
-  const { error } = await supabase.rpc('delete_my_account');
-  if (error) throw new Error('Your files are deleted but your account is not yet. Try again to finish.');
-  // The account no longer exists on the server: forget the session on this phone.
-  await supabase.auth.signOut({ scope: 'local' });
 }
 
-/** Download my data: everything IRLY stores about you, as a JSON file (or the share sheet on a phone). */
-export async function exportMyData(): Promise<void> {
-  if (!supabase) throw new Error('The IRLY server is not configured');
-  const { data, error } = await supabase.rpc('export_my_data');
-  if (error) throw new Error(error.message);
+/** Your files in each storage bucket (they live in a folder named after you). */
+const BUCKETS = ['profile-photos', 'match-photos', 'irl-media', 'activity-photos', 'chat-media', 'post-media', 'verifications', 'data-exports'];
+const PAGE = 100;
+/** At most this many pages of a listing per bucket (2,000 files): a listing can never run forever. */
+const MAX_PAGES = 20;
+/** Sub-folders followed at most this deep (uploads are flat today: `<you>/<file>`). */
+const MAX_DEPTH = 3;
+
+/** Every file path in your folder of one bucket (sub-folders included), bounded; `complete` is false when the bound was reached. */
+async function myFiles(bucket: string, uid: string): Promise<{ files: string[]; complete: boolean }> {
+  if (!supabase) return { files: [], complete: true };
+  const files: string[] = [];
+  const folders: { path: string; depth: number }[] = [{ path: uid, depth: 0 }];
+  let pages = 0;
+  while (folders.length && pages < MAX_PAGES) {
+    const folder = folders.shift()!;
+    for (let offset = 0; pages < MAX_PAGES; offset += PAGE) {
+      pages += 1;
+      const { data, error } = await within(supabase.storage.from(bucket).list(folder.path, { limit: PAGE, offset }), SERVER_MS);
+      if (error) {
+        // A bucket this server does not have (yet): nothing of yours in it.
+        if (/bucket not found/i.test(error.message)) return { files, complete: true };
+        throw new Error('Could not delete your files. Check your connection and try again.');
+      }
+      for (const f of data ?? []) {
+        const path = `${folder.path}/${f.name}`;
+        // A folder comes back as an entry without an id: its files are listed on their own.
+        if (f.id === null) {
+          if (folder.depth < MAX_DEPTH) folders.push({ path, depth: folder.depth + 1 });
+        } else {
+          files.push(path);
+        }
+      }
+      if (!data || data.length < PAGE) break;
+    }
+  }
+  return { files, complete: folders.length === 0 && pages < MAX_PAGES };
+}
+
+/**
+ * Deletes your files, one listing then one delete per 100 files: no loop that
+ * waits for a folder to become empty. A file the storage rules do not let you
+ * delete is not an error from Supabase (it simply is not deleted): it no
+ * longer blocks the account deletion, the server queues it for cleanup.
+ * Returns how many files (at least) could not be deleted.
+ */
+async function removeMyFiles(uid: string): Promise<number> {
+  if (!supabase) return 0;
+  const sb = supabase;
+  const left = await Promise.all(
+    BUCKETS.map(async (bucket) => {
+      const { files, complete } = await myFiles(bucket, uid);
+      let kept = complete ? 0 : 1;
+      for (let i = 0; i < files.length; i += PAGE) {
+        const chunk = files.slice(i, i + PAGE);
+        const { data, error } = await within(sb.storage.from(bucket).remove(chunk), SERVER_MS);
+        if (error) throw new Error('Could not delete your files. Check your connection and try again.');
+        kept += chunk.length - (data?.length ?? 0);
+      }
+      return kept;
+    }),
+  );
+  return left.reduce((a, b) => a + b, 0);
+}
+
+/**
+ * Whether the server confirms this signed-in account no longer exists:
+ * true (gone), false (still there) or null (could not be asked).
+ */
+async function accountGone(): Promise<boolean | null> {
+  if (!supabase) return null;
+  const sb = supabase;
+  const asked = await within(sb.rpc('my_account_exists'), SERVER_MS).then(
+    (r) => (r.error ? null : r.data === false),
+    () => null,
+  );
+  if (asked !== null) return asked;
+  // The auth server itself: a deleted user's token is refused as "user not found".
+  return within(sb.auth.getUser(), SERVER_MS).then(
+    ({ data, error }) => {
+      if (data.user) return false;
+      const code = (error as { code?: string } | null)?.code;
+      return code === 'user_not_found' || /user .*(not found|does not exist)/i.test(error?.message ?? '') ? true : null;
+    },
+    () => null,
+  );
+}
+
+const SESSION_ENDED = 'Your session has ended. Sign in again to delete your account.';
+
+/** The server refused the request because the session is no longer valid (expired, revoked, signed out elsewhere). */
+function sessionRefused(message: string): boolean {
+  return /jwt|session[_ ](not[_ ]found|expired|missing)|refresh[_ ]token|invalid claim|not authenticated|sign in required/i.test(message);
+}
+
+/**
+ * Deletes the server account: your files first (the database cannot remove
+ * files), then every row that belongs to you and the sign-in account itself
+ * (one transaction: all or nothing), checked with the server before saying
+ * so. Then the session and everything on this phone are forgotten. On any
+ * failure nothing is wiped and the member can retry: every step is safe to
+ * run again. `filesQueued`: files this phone could not remove; the server
+ * queued them and the purge job removes them later (not instantly).
+ */
+export async function deleteServerAccount(): Promise<{ filesQueued: number }> {
+  if (!supabase) return { filesQueued: 0 };
+  const sb = supabase;
+  const { data, error: sessionError } = await within(sb.auth.getSession(), SERVER_MS).catch((e: unknown) => ({
+    data: { session: null },
+    error: e instanceof Error ? e : new Error(String(e)),
+  }));
+  if (!data.session) {
+    // Nothing was deleted: say why. A session that could not be renewed because the phone is
+    // offline (or the server did not answer) is a connection problem; one the server refused, or
+    // one that is simply gone from this phone while it still shows the account, has ended.
+    const offline = Boolean(sessionError) && /retryable|fetch|network|did not answer|timed? ?out/i.test(`${sessionError?.name} ${sessionError?.message}`);
+    if (offline) throw new Error('No connection: your account was not deleted. Try again.');
+    if (sessionError || useAuthStore.getState().account) throw new Error(SESSION_ENDED);
+    return { filesQueued: 0 };
+  }
+  ending = true;
+  try {
+    const left = await removeMyFiles(data.session.user.id);
+    if (left) track('SERVER_ERROR', { code: 'storage_leftover', where: 'delete_account' });
+    const { error } = await within(sb.rpc('delete_my_account'), SERVER_MS).catch((e: unknown) => ({
+      error: { message: e instanceof Error ? e.message : String(e) },
+    }));
+    // Verified with the server before saying "deleted": the server checks it before answering
+    // (a success means gone), and it is asked once more, which also settles an answer lost on the way.
+    const confirmed = await accountGone();
+    const gone = confirmed ?? !error;
+    if (!gone) {
+      // The session ended while deleting (revoked, signed out on another phone): nothing confirmed it.
+      if (confirmed === null && error && sessionRefused(error.message)) throw new Error(SESSION_ENDED);
+      throw new Error(
+        confirmed === false
+          ? 'Your account is not deleted yet. Try again to finish.'
+          : 'IRLY could not confirm the deletion. Check your connection and try again.',
+      );
+    }
+    await endSession().catch(async () => {
+      // The account no longer exists: whatever the phone says, forget the person here.
+      setSession(null);
+      await closeRealtime();
+      wipeLocal();
+    });
+    return { filesQueued: left };
+  } finally {
+    ending = false;
+  }
+}
+
+/** Download my data, as a real file: 'downloaded' (web), 'opened' (the phone's browser saves it). */
+export async function exportMyData(): Promise<'downloaded' | 'opened'> {
+  const sb = client();
+  const { data, error } = await within(sb.rpc('export_my_data'), SERVER_MS);
+  if (error) throw new Error(friendlyError(error.message));
+  if (!data || typeof data !== 'object') throw new Error('Your data could not be prepared. Try again.');
   const json = JSON.stringify(data, null, 2);
-  const name = `irly-data-${new Date().toISOString().slice(0, 10)}.json`;
+  const stamp = new Date().toISOString();
+  const name = `irly-data-${stamp.slice(0, 10)}.json`;
   if (Platform.OS === 'web' && typeof document !== 'undefined') {
     const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
     const a = document.createElement('a');
@@ -545,10 +797,26 @@ export async function exportMyData(): Promise<void> {
     a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    return;
+    return 'downloaded';
   }
-  const { Share } = await import('react-native');
-  await Share.share({ title: name, message: json });
+  // Phones: the file goes to your private folder on the IRLY server and opens
+  // in the phone's browser as a download (Files on iPhone, Downloads on
+  // Android). A share sheet with the text pasted in is not a usable file.
+  const uid = (data as { account?: { id?: string } }).account?.id ?? useAuthStore.getState().account?.userId;
+  if (!uid) throw new Error('Sign in again to download your data.');
+  const bucket = sb.storage.from('data-exports');
+  // Earlier exports go first: only the newest copy is kept.
+  const { data: old } = await within(bucket.list(uid, { limit: PAGE }), SERVER_MS).catch(() => ({ data: null }));
+  const stale = (old ?? []).filter((f) => f.id !== null).map((f) => `${uid}/${f.name}`);
+  if (stale.length) await settled(bucket.remove(stale), SERVER_MS);
+  const path = `${uid}/irly-data-${stamp.replace(/[:.]/g, '-')}.json`;
+  const up = await within(bucket.upload(path, json, { contentType: 'application/json', upsert: false }), SERVER_MS * 2);
+  if (up.error) throw new Error(/bucket not found/i.test(up.error.message) ? 'Download my data is not available yet. Contact support for a copy.' : friendlyError(up.error.message));
+  // A short-lived link (10 minutes), served as a download with its file name.
+  const { data: link, error: linkError } = await within(bucket.createSignedUrl(path, 600, { download: name }), SERVER_MS);
+  if (linkError || !link?.signedUrl) throw new Error('Your data could not be prepared. Try again.');
+  await Linking.openURL(link.signedUrl);
+  return 'opened';
 }
 
 /* ───────── Password, providers, phone ───────── */

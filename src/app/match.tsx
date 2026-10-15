@@ -12,10 +12,12 @@ import { ACTIVITIES, INTERESTS } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { usePeopleMatch, type PeopleMatch } from '@/features/match/people';
+import { SoonPage } from '@/features/soon/SoonPage';
 import { setFriend, type FriendStatus } from '@/features/profile/member';
 import { useSignedLinks } from '@/features/server/media';
 import { useMyVerification } from '@/features/verify/verify';
 import { t as tx } from '@/i18n';
+import { FEATURES } from '@/lib/features';
 import { hueOf } from '@/lib/format';
 import { PressableScale } from '@/motion/PressableScale';
 import { LOOKING_LABEL } from '@/data/lookingFor';
@@ -44,12 +46,22 @@ function sharedLabels(m: PeopleMatch): string[] {
 }
 
 /**
+ * /match. While Match IRLY is switched off (src/lib/features.ts) this is
+ * its coming-soon page, rendered here so every link, deep link and the
+ * tab-bar disc land on it without a redirect. The real screen below is
+ * not mounted then: no Match hook runs and nothing is fetched.
+ */
+export default function MatchRoute() {
+  return FEATURES.matchIrly ? <Match /> : <SoonPage id="match" />;
+}
+
+/**
  * Match IRLY: real members to meet, ranked on the server by what you share.
  * Each card says why. Add friend sends a request the other person accepts;
  * Not now hides them for 30 days. Nothing here follows anyone or opens a
  * chat on its own.
  */
-export default function Match() {
+function Match() {
   const t = useTheme();
   const router = useRouter();
   const cityId = useCityId();

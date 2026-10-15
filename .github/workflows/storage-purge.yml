@@ -1,0 +1,38 @@
+name: Storage purge
+
+# Removes the stored files of deleted accounts (and other leftovers queued in
+# private.storage_cleanup) through the Supabase Storage API. The server key
+# is read from the Management API at run time and masked; logs show counts
+# per bucket only. Safe to run as often as wanted: files are claimed with a
+# lease, a crashed run's files come back later, and a file is done only once
+# it is really gone. Needs SUPABASE_ACCESS_TOKEN (the same secret as the
+# Database workflow). Scheduled runs happen on the default branch only.
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storage-purge
+  cancel-in-progress: false
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/storage-purge.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Purge files of deleted accounts
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/storage-purge.mjs

@@ -22,6 +22,7 @@ import { getCityContent } from '@/data/repo';
 import type { ActivityKind, Intent } from '@/data/types';
 import { rankMatches } from '@/features/matching/match';
 import { useAccount } from '@/features/auth/account';
+import { FEATURES } from '@/lib/features';
 import { createServerActivity } from '@/features/server/activities';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -92,8 +93,9 @@ export default function Social() {
           <SectionHeader
             overline={INTENTS[intent].blurb}
             title="Suggested for you"
-            action="See all"
-            onAction={() => router.push(`/match?intent=${intent}`)}
+            // "See all" is Match IRLY: only once it is open (src/lib/features.ts).
+            action={FEATURES.matchIrly ? 'See all' : undefined}
+            onAction={FEATURES.matchIrly ? () => router.push(`/match?intent=${intent}`) : undefined}
           />
           <Rail itemWidth={Math.min(300, frame.width * 0.78)}>
             {matches.map((m) => (

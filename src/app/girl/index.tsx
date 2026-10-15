@@ -7,8 +7,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
+import { GirlClosed, GirlLoading, isGirlRefusal, readGirlAccess, safeBack, withLimit } from '@/features/girl/access';
 import { Photo } from '@/components/visual/Photo';
 import { openCreate } from '@/features/create/createStore';
 import { matchApi, PAGE_SIZE, type MatchApi } from '@/features/girl/api';
@@ -32,20 +34,13 @@ import { CITIES } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
-import { supabase } from '@/lib/supabase';
+import { useRefreshOn } from '@/features/server/sync';
+import { friendlyError, supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 
 const BOOT_LIMIT = 25_000;
-/** The promise, or a rejection once `ms` have passed without an answer. */
-function withLimit<T>(p: Promise<T>, ms: number): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('IRLY did not answer in time')), ms);
-    p.then(
-      (v) => (clearTimeout(timer), resolve(v)),
-      (e) => (clearTimeout(timer), reject(e)),
-    );
-  });
-}
+/** What the screen shows: the Match flow, or why IRLY Girl is closed for this account. */
+type Screen = MatchState | 'loading' | 'error' | 'suspended' | 'signed_out';
 
 const SECTIONS: { id: Section; label: (city: string) => string; icon: IconName }[] = [
   { id: 'for_you', label: () => 'For you', icon: 'sparkles' },
@@ -72,11 +67,13 @@ export default function GirlHome() {
   const cityId = useCityId();
   const city = CITIES[cityId];
   const apiRef = useRef<MatchApi | null>(null);
-  const [state, setState] = useState<MatchState | 'loading' | 'error'>('loading');
+  const [state, setState] = useState<Screen>('loading');
   const [filters, setFilters] = useState<Filters>({ section: 'for_you' });
   const [deck, setDeck] = useState<Candidate[]>([]);
   const [deckLoading, setDeckLoading] = useState(false);
   const [deckError, setDeckError] = useState<string | null>(null);
+  // A refusal from the server while browsing: access is checked again (and the screen closes if it must).
+  const [refused, setRefused] = useState(0);
   const [offset, setOffset] = useState(0);
   const [exhausted, setExhausted] = useState(false);
   const [matches, setMatches] = useState<MatchSummary[]>([]);
@@ -91,16 +88,6 @@ export default function GirlHome() {
   // Plans created in IRLY Girl (girls and moms): they show up right here.
   const { activities: girlPlans } = useServerActivities(cityId, { girlOnly: true });
   const [kind, setKind] = useState<string | null>(null);
-  // Why IRLY Girl is closed for this account (asked only when it is).
-  const [closed, setClosed] = useState<string | null>(null);
-  useEffect(() => {
-    if (state !== 'ineligible' || !supabase) return;
-    let alive = true;
-    supabase.rpc('my_girl_status').then(({ data }) => alive && setClosed((data as string) ?? null));
-    return () => {
-      alive = false;
-    };
-  }, [state]);
   const kindCounts = useMemo(() => {
     const out: Record<string, number> = {};
     for (const k of GIRL_KINDS) out[k.id] = girlPlans.filter((a) => k.match.test(a.title) || Boolean(k.cats?.includes(a.categoryId))).length;
@@ -160,7 +147,9 @@ export default function GirlHome() {
       setOffset(from + page.length);
       setExhausted(page.length < PAGE_SIZE);
     } catch (e) {
-      if (n === deckSeq.current) setDeckError(e instanceof Error ? e.message : 'Could not load profiles');
+      // IRLY Girl closed meanwhile (access withdrawn): the whole screen says so.
+      if (isGirlRefusal(e)) setRefused((r) => r + 1);
+      else if (n === deckSeq.current) setDeckError(friendlyError(e instanceof Error ? e.message : 'Could not load profiles'));
     } finally {
       if (n === deckSeq.current) setDeckLoading(false);
     }
@@ -189,10 +178,15 @@ export default function GirlHome() {
       // Never an endless spinner: past BOOT_LIMIT the screen offers Try again
       // (each request has its own 20 s limit, and there are two in a row).
       const s = await withLimit(
-        (async () => {
+        (async (): Promise<Screen> => {
           const api = await matchApi();
           apiRef.current = api;
-          return api.state();
+          // With the IRLY server, signed out: no on-device stand-in for a real account.
+          if (supabase && api.mode === 'device') return 'signed_out';
+          const st = await api.state();
+          // Closed: say why (paused after reports, or not a woman's account) before showing anything.
+          if (st === 'ineligible' && api.mode === 'server') return (await readGirlAccess().catch(() => 'not_eligible')) === 'suspended' ? 'suspended' : 'ineligible';
+          return st;
         })(),
         BOOT_LIMIT,
       );
@@ -209,6 +203,9 @@ export default function GirlHome() {
       if (!booted.current) setState('error');
     }
   }, [router, loadDeck, loadMatches]);
+  useEffect(() => {
+    if (refused) boot();
+  }, [refused, boot]);
 
   // Re-check on focus: coming back from onboarding or profile edits.
   useFocusEffect(
@@ -216,6 +213,16 @@ export default function GirlHome() {
       boot();
     }, [boot]),
   );
+  // Back to the app after a while (or a profile changed): access may have changed too
+  // (paused after reports). Only access is asked; the deck stays as it is.
+  useRefreshOn(['people'], () => {
+    if (!booted.current) return;
+    readGirlAccess()
+      .then((a) => {
+        if (a !== 'open') boot();
+      })
+      .catch(() => undefined);
+  });
 
   // Keep the deck full: fetch the next page before it runs out.
   useEffect(() => {
@@ -243,7 +250,8 @@ export default function GirlHome() {
     } catch (e) {
       // Put her back so nothing is lost.
       setDeck((list) => [c, ...list]);
-      toast(e instanceof Error ? e.message : 'Something went wrong. Try again.', 'x', 'live');
+      if (isGirlRefusal(e)) boot();
+      else toast(friendlyError(e instanceof Error ? e.message : 'Something went wrong. Try again.'), 'x', 'live');
     }
   };
 
@@ -256,77 +264,23 @@ export default function GirlHome() {
       setOpen((o) => (o ? update(o) : o));
       toast(c.saved ? 'Removed from saved' : tx('{name} saved', { name: c.firstName }), 'bookmark', 'brand');
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
+      if (isGirlRefusal(e)) boot();
+      else toast(friendlyError(e instanceof Error ? e.message : 'Could not save'), 'x', 'live');
     }
   };
 
   const top = deck[0];
 
-  if (state === 'loading' || state === 'onboarding' || state === 'profile') {
-    // Words with the spinner: the session read and the access check can take
-    // seconds on a slow start, and a bare spinner reads as a blank page.
-    return (
-      <View style={[styles.root, styles.center, { gap: 14, padding: space.gutter }]} accessibilityLabel={tx('Loading')}>
-        <ActivityIndicator color={girl.rose} />
-        <Text variant="titleM" color={girl.ink} align="center">
-          IRLY Girl
-        </Text>
-        <Text variant="body" color={girl.inkSoft} align="center">
-          Opening your space…
-        </Text>
-      </View>
-    );
-  }
-
-  if (state === 'error') {
-    return (
-      <View style={[styles.root, styles.center, { padding: space.gutter, gap: 16 }]}>
-        <Icon name="globe" size={28} color={girl.ink} />
-        <Text variant="titleM" color={girl.ink} align="center">
-          IRLY Girl could not load
-        </Text>
-        <Text variant="body" color={girl.inkSoft} align="center">
-          Check your connection and try again.
-        </Text>
-        <GButton label="Try again" onPress={boot} />
-        <GButton label="Back" variant="ghost" onPress={() => router.back()} />
-      </View>
-    );
-  }
-
-  if (state === 'ineligible') {
-    if (closed === 'suspended')
-      return (
-        <View style={[styles.root, styles.center, { padding: space.gutter + 8, gap: 16, paddingTop: insets.top + 40 }]}>
-          <Icon name="shield" size={28} color={girl.ink} />
-          <Text variant="displayM" align="center" color={girl.ink}>
-            IRLY Girl is paused for your account
-          </Text>
-          <Text variant="body" align="center" color={girl.inkSoft}>
-            After reports, our team paused your access to IRLY Girl. The rest of IRLY works as usual. If you think this is a mistake, write to us.
-          </Text>
-          <GButton label="Contact support" onPress={() => router.push('/support')} />
-          <GButton label="Back" variant="ghost" onPress={() => router.back()} />
-        </View>
-      );
-    return (
-      <View style={[styles.root, styles.center, { padding: space.gutter + 8, gap: 16, paddingTop: insets.top + 40 }]}>
-        <Icon name="lock" size={28} color={girl.ink} />
-        <Text variant="displayM" align="center" color={girl.ink}>
-          IRLY Girl is reserved for women
-        </Text>
-        <Text variant="body" align="center" color={girl.inkSoft}>
-          A space where women meet other women: brunches, padel, travel, wellness. Access is checked by our servers.
-        </Text>
-        <GButton label="Back" variant="secondary" onPress={() => router.back()} />
-      </View>
-    );
-  }
+  if (state === 'loading' || state === 'onboarding' || state === 'profile') return <GirlLoading />;
+  if (state === 'error') return <GirlClosed reason="error" onRetry={boot} />;
+  if (state === 'signed_out') return <GirlClosed reason="signed_out" />;
+  if (state === 'suspended') return <GirlClosed reason="suspended" />;
+  if (state === 'ineligible') return <GirlClosed reason="not_eligible" moms={mode === 'moms'} />;
 
   return (
     <View style={styles.root}>
       <Animated.ScrollView ref={scrollRef} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => router.back()} onProfile={() => router.push('/girl/profile')} />
+        <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => safeBack(router, '/')} onProfile={() => router.push('/girl/profile')} />
 
 
         {matches.length ? (
@@ -538,6 +492,18 @@ export default function GirlHome() {
             </Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+            {!serverCommunities.data.length && serverCommunities.loading
+              ? [0, 1].map((i) => <Skeleton key={i} width={168} height={200} radius={radius.xl} />)
+              : null}
+            {!serverCommunities.data.length && serverCommunities.error && !serverCommunities.loading ? (
+              <View style={[styles.community, styles.newCommunity, { borderStyle: 'solid' }]}>
+                <Icon name="globe" size={20} color={girl.ink} />
+                <Text variant="bodyS" color={girl.inkSoft}>
+                  Communities could not load.
+                </Text>
+                <GButton label="Try again" variant="secondary" onPress={serverCommunities.reload} />
+              </View>
+            ) : null}
             {serverCommunities.data.map((c) => (
               <PressableScale
                 key={c.id}
@@ -570,7 +536,7 @@ export default function GirlHome() {
                 <Icon name="plus" size={16} color={girl.rose} />
               </View>
               <Text variant="titleS" color={girl.ink}>
-                {serverCommunities.data.length ? 'Create a community' : 'Start the first community'}
+                {serverCommunities.data.length || serverCommunities.loading || serverCommunities.error ? 'Create a community' : 'Start the first community'}
               </Text>
               <Text variant="caption" color={girl.inkSoft}>
                 Public, private or by invitation.
@@ -624,7 +590,7 @@ export default function GirlHome() {
             toast(tx('{name} is blocked', { name: c.firstName }), 'shield', 'brand');
             loadMatches();
           } catch (e) {
-            toast(e instanceof Error ? e.message : 'Could not block', 'x', 'live');
+            toast(friendlyError(e instanceof Error ? e.message : 'Could not block'), 'x', 'live');
           }
         }}
         onReport={async (category, details) => {
@@ -634,7 +600,7 @@ export default function GirlHome() {
             await apiRef.current!.report(c.userId, category, details);
             toast('Report sent. Thank you for keeping IRLY safe.', 'flag', 'brand');
           } catch (e) {
-            toast(e instanceof Error ? e.message : 'Could not send the report', 'x', 'live');
+            toast(friendlyError(e instanceof Error ? e.message : 'Could not send the report'), 'x', 'live');
           }
         }}
       />
@@ -656,7 +622,7 @@ export default function GirlHome() {
         }}
         onFindExisting={(s: Suggestion) => {
           setMoment(null);
-          if (s.preset.categoryId) router.push(`/category/${s.preset.categoryId}`);
+          router.push(s.preset.categoryId ? `/category/${s.preset.categoryId}` : '/discover');
         }}
       />
 

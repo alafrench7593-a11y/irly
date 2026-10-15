@@ -2,7 +2,7 @@ import type { IconName } from '@/components/ui/Icon';
 import { destinationOpen } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 
-export type SoonId = 'pro' | 'bonplan' | 'visa' | 'location';
+export type SoonId = 'pro' | 'bonplan' | 'visa' | 'location' | 'match';
 
 export type SoonService = {
   id: SoonId;
@@ -18,12 +18,20 @@ export type SoonService = {
   liveNow?: { label: string; caption: string; icon: IconName; href: string };
   /** Said plainly on the page, so nobody mistakes a teaser for a service. */
   notice: string;
+  /**
+   * Whether "Tell me when it opens" can be stored for this id. The server
+   * keeps an allow-list of ids (public.service_interest check and
+   * set_service_interest); an id it does not know yet shows a plain line
+   * instead of a button that would fail. Defaults to true.
+   */
+  notify?: boolean;
 };
 
 /**
- * The four services IRLY is preparing. They are shown so people know what
- * is coming and can ask to be told when each opens; none of them takes a
- * booking, an application, a payment or a document today.
+ * The services IRLY is preparing. They are shown so people know what is
+ * coming and can ask to be told when each opens; none of them takes a
+ * booking, an application, a payment or a document today. The Discover
+ * rail lists SOON_ORDER; Match IRLY is reached from the tab bar instead.
  */
 export const SOON: Record<SoonId, SoonService> = {
   pro: {
@@ -86,6 +94,24 @@ export const SOON: Record<SoonId, SoonService> = {
       { icon: 'pin', title: 'Dubai first', body: 'Then more cities across the Emirates.' },
     ],
     notice: 'No cars can be booked yet. Rentals are not available.',
+  },
+  // Match IRLY: the disc in the middle of the tab bar. Its screen exists
+  // (src/app/match.tsx) but stays closed while FEATURES.matchIrly is off.
+  match: {
+    id: 'match',
+    name: 'MATCH IRLY',
+    icon: 'heartHandshake',
+    photo: 'dinnerGroup',
+    tagline: 'People to meet, for real.',
+    pitch: 'Real members who share your interests and plans, suggested with the reason why. No swiping, no score on people.',
+    preparing: [
+      { icon: 'sparkles', title: 'Suggestions with the reason why', body: 'What you both chose: interests, activities, goals, languages and city.' },
+      { icon: 'shield', title: 'Verified members only', body: 'Photos and a selfie checked by a person at IRLY, for everyone you meet.' },
+      { icon: 'userPlus', title: 'Add friend, or not now', body: 'A request the other person accepts. Nothing opens a chat on its own.' },
+      { icon: 'calendar', title: 'Then meet in real life', body: 'Plans and activities to do together, near you.' },
+    ],
+    liveNow: { label: 'Real-life plans', caption: 'Activities near you, open to join today', icon: 'users', href: '/social' },
+    notice: 'Match IRLY is not open yet. No suggestions are made and nobody is matched with you.',
   },
 };
 

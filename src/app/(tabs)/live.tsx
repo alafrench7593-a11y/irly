@@ -14,10 +14,10 @@ import { uuid } from '@/lib/uuid';
 import { LiveVideo } from '@/features/live/LiveVideo';
 import { LivePhoto } from '@/features/live/LivePhoto';
 import { useAccount } from '@/features/auth/account';
-import { addFriend, deleteServerIrl, editServerIrl, postServerIrl, useFriends, useServerIrl } from '@/features/server/social';
+import { addFriend, deleteServerIrl, editServerIrl, postServerIrl, settleLive, useFriends, useServerIrl } from '@/features/server/social';
+import { outcomeOf, type LivePhase } from '@/features/live/livePublish';
 import { useDrafts } from '@/features/posts/posts';
 import { ActionBar } from '@/components/social/ActionBar';
-import { createServerActivity } from '@/features/server/activities';
 import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
@@ -535,8 +535,23 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const [setting, setSetting] = useState<'friends' | 'everyone' | 'private'>('friends');
   const visibility = chosen ?? (setting === 'private' ? null : setting);
   const [openUp, setOpenUp] = useState(false);
-  const [busy, setBusy] = useState(false);
+  // draft → publishing → published | failed (livePublish.ts). Closing the
+  // composer while publishing hides it: the publish goes on and says how it ended.
+  const [phase, setPhase] = useState<LivePhase>('draft');
+  const busy = phase === 'publishing';
   const account = useAccount();
+  // Answers can arrive after the screen is gone (sign-out, navigation): no state is set then.
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const shown = useRef(visible);
+  useEffect(() => {
+    shown.current = visible;
+  }, [visible]);
   useEffect(() => {
     if (!supabase || !account) return;
     let alive = true;
@@ -562,17 +577,61 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     setText((v) => v || liveDraft.body);
   }, [liveDraft]);
 
+  // A double tap must never post twice: the ref flips before React re-renders.
+  const sending = useRef(false);
+  // The same post tried again keeps its id (and its activity's start): if the first
+  // try was saved but its answer got lost, the retry gets it back instead of
+  // publishing it twice. `unknown`: that try got no answer (it may have landed).
+  const attempt = useRef<{ key: string; id: string; at: Date; unknown: boolean } | null>(null);
+
+  /** Back to an empty composer after a Live is published. */
+  const published = () => {
+    saveDraft('live', null);
+    attempt.current = null;
+    if (!mounted.current) return;
+    setText('');
+    setMedia(undefined);
+    setChosen(null);
+    setOpenUp(false);
+    setProgress(null);
+    setPhase('draft');
+  };
+
+  /**
+   * The member gives up on a try that got no answer (closed the composer,
+   * discarded it): the server either has it (it stays: said so) or makes
+   * sure it never lands (its files and activity go). Unreachable: settled at
+   * the next start of the app, never guessed.
+   */
+  const giveUp = () => {
+    const a = attempt.current;
+    if (!a?.unknown) return;
+    attempt.current = null;
+    if (mounted.current) setPhase('draft');
+    settleLive(a.id)
+      .then((r) => {
+        if (r !== 'published') return;
+        toast("You're live for 4 hours", 'zap', 'live');
+        published();
+      })
+      .catch(() => undefined);
+  };
+
   // Closing by a swipe or a tap outside keeps what was written as a draft;
-  // the back arrow asks: keep the draft or discard it.
+  // the back arrow asks: keep the draft or discard it. While publishing, the
+  // composer only hides: the Live goes on and says how it ended.
   const close = () => {
-    if (!busy) saveDraft('live', text.trim() ? { body: text, media: null, at: Date.now() } : null);
+    if (!busy) {
+      saveDraft('live', text.trim() ? { body: text, media: null, at: Date.now() } : null);
+      giveUp();
+    }
     onClose();
   };
   const askClose = () => {
-    if (busy) return;
-    if (!text.trim() && !media) return close();
+    if (busy || (!text.trim() && !media)) return close();
     const discard = () => {
       saveDraft('live', null);
+      giveUp();
       setText('');
       setMedia(undefined);
       onClose();
@@ -590,12 +649,13 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   };
 
   const pick = async (kind: 'photo' | 'video' = 'photo') => {
+    if (sending.current) return;
     try {
       const m = await pickLiveMedia(kind);
-      if (!m) return;
+      if (!m || !mounted.current) return;
       setMedia(m);
       prepareLiveMedia(m)
-        .then((data) => setPrep({ uri: m.uri, data }))
+        .then((data) => mounted.current && setPrep({ uri: m.uri, data }))
         // A failure shows when posting (which tries again), not now.
         .catch(() => undefined);
     } catch (e) {
@@ -603,75 +663,104 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     }
   };
 
-  const createdActivity = useRef<string | null>(null);
-  // A double tap must never post twice: the ref flips before React re-renders.
-  const sending = useRef(false);
-  // The same post tried again keeps its id: if the first try was saved but its
-  // answer got lost, the retry finds it instead of publishing it twice.
-  const attempt = useRef<{ key: string; id: string } | null>(null);
   const submit = async () => {
-    if ((!text.trim() && !media) || busy || sending.current) return;
-    if (account) {
-      // Signed in: the post goes to the server, friends see it live.
-      sending.current = true;
-      setBusy(true);
-      const key = JSON.stringify([text.trim(), media?.uri ?? null, area, chosen, openUp, cityId]);
-      if (attempt.current?.key !== key) attempt.current = { key, id: uuid() };
-      if (media) setProgress(0);
-      try {
-        // "Anyone want to join?" becomes a real activity the post points at,
-        // created while the photo or video uploads. A retry after a failed
-        // post reuses the activity already created.
-        const activity: Promise<string | null> | null = !openUp
-          ? null
-          : createdActivity.current
-            ? Promise.resolve(createdActivity.current)
-            : (() => {
-                const start = new Date(Date.now() + 30 * 60 * 1000);
-                return createServerActivity(
-                  {
-                    cityId,
-                    title: text.trim().slice(0, 80).padEnd(3, '.'),
-                    place: areaName(city, area),
-                    areaId: area,
-                    day: 'Today',
-                    time: `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`,
-                    spots: 0,
-                    privacy: visibility === 'everyone' ? 'public' : 'connections',
-                    format: 'meetup',
-                    currency: city.currency,
-                  },
-                  start,
-                ).then((id) => {
-                  createdActivity.current = id;
-                  track('ACTIVITY_CREATE', { via: 'irl' });
-                  return id;
-                });
-              })();
-        await postServerIrl({ id: attempt.current.id, cityId, areaId: area, placeName: areaName(city, area), body: text.trim(), media, onProgress: media ? setProgress : undefined, visibility: chosen ?? undefined, activityId: activity });
-        track('IRL_CREATE', { photo: media?.kind === 'photo', video: media?.kind === 'video', activity: Boolean(activity) });
-        createdActivity.current = null;
-        attempt.current = null;
-        setChosen(null);
-      } catch (e) {
-        // The text and the photo or video stay: the member taps Post live again.
-        toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
+    if ((!text.trim() && !media) || sending.current) return;
+    if (!account) {
+      post({ cityId, kind: media?.kind === 'photo' ? 'photo' : 'text', text: text.trim(), photoUri: media?.kind === 'photo' ? uri : undefined, place: areaName(city, area), areaId: area });
+      haptic('success');
+      toast("You're live for 4 hours", 'zap', 'live');
+      published();
+      onClose();
+      return;
+    }
+    // Signed in: the post goes to the server, friends see it live.
+    sending.current = true;
+    setPhase('publishing');
+    const key = JSON.stringify([text.trim(), media?.uri ?? null, area, chosen, openUp, cityId]);
+    const prev = attempt.current;
+    if (prev && prev.key !== key && prev.unknown) {
+      // Changed after a try without answer: that try is settled first, or it could land next to this one.
+      const r = await settleLive(prev.id).catch(() => 'later' as const);
+      if (r === 'later') {
         sending.current = false;
-        setBusy(false);
-        setProgress(null);
+        if (mounted.current) setPhase('failed');
+        toast('No connection: try again', 'x', 'live');
         return;
       }
-      sending.current = false;
-      setBusy(false);
-      setProgress(null);
-    } else {
-      post({ cityId, kind: media?.kind === 'photo' ? 'photo' : 'text', text: text.trim(), photoUri: media?.kind === 'photo' ? uri : undefined, place: areaName(city, area), areaId: area });
+      if (r === 'published') {
+        sending.current = false;
+        toast('Your earlier version is already live', 'zap', 'live');
+        published();
+        onClose();
+        return;
+      }
     }
+    if (!attempt.current || attempt.current.key !== key) attempt.current = { key, id: uuid(), at: new Date(Date.now() + 30 * 60 * 1000), unknown: false };
+    const a = attempt.current;
+    if (media) setProgress(0);
+    try {
+      const time = `${String(a.at.getHours()).padStart(2, '0')}:${String(a.at.getMinutes()).padStart(2, '0')}`;
+      // "Anyone can join" becomes a real activity the post points at, saved with the post
+      // (one transaction): it never exists without its Live.
+      const activity = openUp
+        ? {
+            plan: {
+              cityId,
+              title: text.trim().slice(0, 80).padEnd(3, '.'),
+              place: areaName(city, area),
+              areaId: area,
+              day: 'Today',
+              time,
+              spots: 0,
+              privacy: visibility === 'everyone' ? ('public' as const) : ('connections' as const),
+              format: 'meetup' as const,
+              currency: city.currency,
+            },
+            at: a.at,
+          }
+        : null;
+      const res = await postServerIrl({
+        id: a.id,
+        prior: a.unknown,
+        cityId,
+        areaId: area,
+        placeName: areaName(city, area),
+        body: text.trim(),
+        media,
+        onProgress: media ? (p) => mounted.current && setProgress(p) : undefined,
+        visibility: chosen ?? undefined,
+        activity,
+      });
+      track('IRL_CREATE', { photo: media?.kind === 'photo', video: media?.kind === 'video', activity: Boolean(res.activityId) });
+      if (res.activityCreated) track('ACTIVITY_CREATE', { via: 'irl' });
+    } catch (e) {
+      sending.current = false;
+      const unknown = outcomeOf(e) === 'unknown';
+      // Refused: nothing of it exists, the next try is a new post. No answer: the same post is tried again.
+      if (attempt.current === a) {
+        if (unknown) a.unknown = true;
+        else attempt.current = null;
+      }
+      const message = e instanceof Error ? e.message : 'Could not post';
+      if (mounted.current) {
+        setPhase('failed');
+        setProgress(null);
+      }
+      if (!shown.current) {
+        // Closed while it was sending: the member is not here to try again. The words stay as a draft.
+        if (text.trim()) saveDraft('live', { body: text, media: null, at: Date.now() });
+        giveUp();
+        toast('Your Live was not posted. It is kept as a draft.', 'x', 'live');
+        return;
+      }
+      // The text and the photo or video stay: the member taps Post live again.
+      toast(message, 'x', 'live');
+      return;
+    }
+    sending.current = false;
     haptic('success');
     toast("You're live for 4 hours", 'zap', 'live');
-    saveDraft('live', null);
-    setText('');
-    setMedia(undefined);
+    published();
     onClose();
   };
 
@@ -712,6 +801,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           placeholderTextColor={t.c.textTertiary}
           multiline
           maxLength={160}
+          editable={!busy}
           style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]}
           accessibilityLabel={a11y('What are you doing right now?')}
         />
@@ -765,7 +855,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
               <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => setChosen('friends')} />
               <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => setChosen('everyone')} />
             </View>
-            <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => setOpenUp(!openUp)} />
+            <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => !busy && setOpenUp(!openUp)} />
           </View>
         ) : null}
         <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim() && !media} onPress={submit} />

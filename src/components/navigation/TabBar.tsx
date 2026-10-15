@@ -12,6 +12,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { IRL_DISC, IRL_LIFT } from '@/features/irl/IrlDisc';
 import { useLiveCount } from '@/features/live/liveStore';
+import { FEATURES } from '@/lib/features';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { scale, spring } from '@/motion/tokens';
@@ -216,11 +217,14 @@ const TabItem = memo(function TabItem({
 /**
  * Match IRLY: the disc above the bar, the one dominant control. « Match »
  * over « IRLY » in IRLY ink, sized to stay readable on the smallest phones;
- * it sinks under the finger and opens the people to meet.
+ * it sinks under the finger and opens the people to meet. While Match is
+ * switched off (src/lib/features.ts) a « Soon » tag sits on its top edge and
+ * /match is the coming-soon page.
  */
 function MatchButton({ width, onPress }: { width: number; onPress: () => void }) {
   const t = useTheme();
   const night = t.mode === 'night';
+  const open = FEATURES.matchIrly;
   return (
     <View style={[styles.item, { width }]}>
       <View style={{ transform: [{ translateY: -IRL_LIFT }] }}>
@@ -229,8 +233,8 @@ function MatchButton({ width, onPress }: { width: number; onPress: () => void })
           haptic={false}
           scaleTo={0.9}
           accessibilityRole="button"
-          accessibilityLabel="Match IRLY"
-          accessibilityHint={tx('Opens people to meet, matched on what you share')}
+          accessibilityLabel={open ? 'Match IRLY' : `Match IRLY, ${tx('Coming soon')}`}
+          accessibilityHint={open ? tx('Opens people to meet, matched on what you share') : tx('Shows what Match IRLY will be')}
           style={[styles.irl, styles.match, { backgroundColor: t.c.brand, boxShadow: night ? '0px 10px 30px rgba(255,255,255,0.22), 0px 4px 12px rgba(0,0,0,0.5)' : t.shadow.float }]}
         >
           <Icon name="heartHandshake" size={18} color={t.c.onBrand} strokeWidth={2.2} />
@@ -241,6 +245,13 @@ function MatchButton({ width, onPress }: { width: number; onPress: () => void })
             IRLY
           </Text>
         </PressableScale>
+        {open ? null : (
+          <View pointerEvents="none" style={[styles.soonTag, { backgroundColor: t.c.surface, borderColor: t.c.lineStrong }]}>
+            <Text variant="caption" color={t.c.text} style={styles.soonWord} numberOfLines={1}>
+              Soon
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -284,6 +295,8 @@ const styles = StyleSheet.create({
   match: { alignItems: 'center', justifyContent: 'center' },
   matchWord: { fontSize: 10, lineHeight: 12, letterSpacing: 0.6, fontFamily: font.heavy, marginTop: 1 },
   matchIrly: { fontSize: 8, lineHeight: 10, letterSpacing: 1.2, fontFamily: font.heavy, opacity: 0.75 },
+  soonTag: { position: 'absolute', top: -8, alignSelf: 'center', height: 16, paddingHorizontal: 7, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center' },
+  soonWord: { fontSize: 8.5, lineHeight: 11, letterSpacing: 0.8, fontFamily: font.heavy, textTransform: 'uppercase' },
   liveDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 3 },
   liveText: { fontSize: 10, lineHeight: 12, letterSpacing: 0.8, fontFamily: font.heavy },
 });

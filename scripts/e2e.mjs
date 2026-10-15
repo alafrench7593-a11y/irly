@@ -7,6 +7,7 @@
 // accounts through the Management API), SUPABASE_PROJECT_REF.
 // Run by .github/workflows/e2e.yml (the cloud dev box cannot reach Supabase).
 import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'node:crypto';
 
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 const URL = `https://${ref}.supabase.co`;
@@ -86,7 +87,12 @@ async function createUser(p) {
 }
 
 async function cleanup() {
-  await sql(`delete from auth.users where email like 'e2e-%@irly.test'`).catch((e) => console.log('cleanup:', e.message));
+  // Own run, or accounts this script left behind more than 2 hours ago. Never the
+  // browser tests' accounts (e2e-sync-*, e2e-ui-*): they may be in use by a run
+  // happening at the same time.
+  await sql(`delete from auth.users where email like 'e2e-${run}-%@irly.test'
+    or (email like 'e2e-%@irly.test' and email not like 'e2e-sync-%' and email not like 'e2e-ui-%' and created_at < now() - interval '2 hours')`)
+    .catch((e) => console.log('cleanup:', e.message));
 }
 
 const { alice: A, bea: B, carl: C } = people;
@@ -453,6 +459,20 @@ try {
   await step('a stranger cannot add himself to a private chat', () => denied(C.sb.from('conversation_members').insert({ conversation_id: matchConv, user_id: C.id })));
   await step('a member cannot edit someone else\'s message', async () => (must(await A.sb.from('messages').update({ body: 'forged' }).eq('conversation_id', matchConv).neq('sender_id', A.id).select('id'))).length === 0);
   await step('a member cannot make herself an admin', () => denied(B.sb.from('profiles').update({ is_admin: true }).eq('id', B.id).select().single()));
+  // Security audit (20261020001000): the profiles_public view was writable through Supabase's
+  // default grants, so anyone could rename or delete another member. Local DB tests re-grant
+  // tables after the migrations and cannot prove the revoke: checked here, on the live project.
+  await step('nobody can rename another member through profiles_public', async () => {
+    await C.sb.from('profiles_public').update({ first_name: 'Pwned' }).eq('id', A.id);
+    const row = must(await A.sb.from('profiles').select('first_name').eq('id', A.id).single());
+    return row.first_name !== 'Pwned';
+  });
+  await step('nobody can delete another member through profiles_public', async () => {
+    await C.sb.from('profiles_public').delete().eq('id', A.id);
+    return Boolean(must(await A.sb.from('profiles').select('id').eq('id', A.id).maybeSingle()));
+  });
+  await step('a visitor cannot read profiles_public', async () => ((await anon.from('profiles_public').select('id').limit(1)).data ?? []).length === 0);
+  await step('a visitor cannot call signed-in-only functions (search_all)', async () => Boolean((await anon.rpc('search_all', { p_q: 'pa' })).error));
   await step('a member cannot send a message in someone else\'s name', () => denied(B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: A.id, body: 'forged sender' })));
   const jpeg = Uint8Array.from(atob('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA='), (c) => c.charCodeAt(0));
   const own = `${A.id}/sec-${run}.jpg`;
@@ -470,8 +490,16 @@ try {
   // Avatars show a small copy ("-s.jpg") of the profile photo when it exists, else the photo itself.
   const face = `${A.id}/avatar-${run}.jpg`;
   const faceThumb = `${A.id}/avatar-${run}-s.jpg`;
-  await step('profile photo without a small copy: the app gets a link for the photo only', async () => {
+  // Other members may only read the photos a profile shows (security audit): the app saves the
+  // path in photo_paths when the photo is chosen, so the test does the same, and puts hers back after.
+  const facesBefore = must(await A.sb.from('profiles').select('photo_paths').eq('id', A.id).single()).photo_paths ?? [];
+  await step('a file in a member\'s folder that her profile does not show is not readable by others', async () => {
     must(await A.sb.storage.from('profile-photos').upload(face, jpeg, { contentType: 'image/jpeg' }));
+    const links = (await B.sb.storage.from('profile-photos').createSignedUrls([face], 3600)).data ?? [];
+    return !links.some((l) => l.path === face && l.signedUrl);
+  });
+  must(await A.sb.from('profiles').update({ photo_paths: [face] }).eq('id', A.id));
+  await step('profile photo without a small copy: the app gets a link for the photo only', async () => {
     const links = must(await timed('sign 2 faces', () => B.sb.storage.from('profile-photos').createSignedUrls([faceThumb, face], 3600)));
     const byPath = Object.fromEntries(links.map((l) => [l.path, l.signedUrl]));
     if (byPath[faceThumb]) throw new Error('a missing small copy got a link');
@@ -486,6 +514,7 @@ try {
     const res = await timed('download a face (small copy)', () => fetch(small));
     return res.ok;
   });
+  await A.sb.from('profiles').update({ photo_paths: facesBefore }).eq('id', A.id);
   await A.sb.storage.from('profile-photos').remove([face, faceThumb]);
   // Publications v2: a profile post with photos, readable by members, files follow the post.
   // Skipped (and said so) until its migration is on the live database.
@@ -591,8 +620,111 @@ try {
     if (got.a === 0) throw new Error('the member received nothing (Realtime not working)');
     return true;
   });
+  // What the app relies on (src/lib/supabase.ts liveChannel): with postgres_changes_options.wait,
+  // SUBSCRIBED only comes once the server listens, so an insert made right after it is delivered.
+  // Measured without wait too (times on this runner's clock, nothing personal printed).
+  await step('Realtime: with wait, SUBSCRIBED means listening (an insert right after it is delivered)', async () => {
+    await B.sb.realtime.setAuth((await B.sb.auth.getSession()).data.session.access_token);
+    const probe = async (wait) => {
+      const t0 = performance.now();
+      const body = `probe-${wait ? 'wait' : 'nowait'}-${run}`;
+      const got = [];
+      let subscribed = null;
+      let postgresOk = null;
+      const ch = A.sb
+        .channel(`probe-${wait ? 'w' : 'n'}-${run}`, wait ? { config: { postgres_changes_options: { wait: true } } } : undefined)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${matchConv}` }, (p) => got.push({ at: performance.now(), body: p.new?.body }))
+        .on('system', {}, (m) => {
+          if (postgresOk === null && m?.extension === 'postgres_changes' && m?.status === 'ok') postgresOk = Math.round(performance.now() - t0);
+        });
+      await new Promise((resolve) => {
+        ch.subscribe((s) => {
+          if (s === 'SUBSCRIBED') {
+            subscribed = Math.round(performance.now() - t0);
+            resolve();
+          }
+        });
+        setTimeout(resolve, 25000);
+      });
+      must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body }));
+      const insertedAt = performance.now();
+      for (let i = 0; i < 30 && !got.some((g) => g.body === body); i++) await new Promise((r) => setTimeout(r, 500));
+      const hit = got.find((g) => g.body === body);
+      await ch.unsubscribe();
+      return { wait, subscribedMs: subscribed, postgresOkMs: postgresOk, delivered: Boolean(hit), deliveryMs: hit ? Math.round(hit.at - insertedAt) : null };
+    };
+    const results = [await probe(false), await probe(true)];
+    console.log(`   realtime probe: ${JSON.stringify(results)}`);
+    return results[1].delivered && results[1].subscribedMs !== null;
+  });
 
   // ───── Account deletion ─────
+  // ───── Push tokens (20261020001300): bound to the phone's install secret ─────
+  // Made-up Expo tokens stand for phones. Each phone has its own install secret;
+  // only its hash is on the server. Checked on the live project (local tests use
+  // a shim): takeover, account switch, offline sign-out release, two devices.
+  const pushTok = (n) => `ExponentPushToken[irly-e2e-sec${n}-${run}]`;
+  const secret = () => randomBytes(32).toString('base64url');
+  const tok1 = pushTok(1), tok2 = pushTok(2), tok3 = pushTok(3);
+  const phone1 = secret(), intruder = secret();
+  const owners = async (t) => (await sql(`select user_id from public.push_tokens where token = '${t}'`)).map((r) => r.user_id);
+  const pushedTo = async (t) => (await sql(`select user_id from public.push_outbox where token = '${t}'`)).map((r) => r.user_id);
+  const notifyFriendRequest = (to, from) => sql(`select private.notify('${to}', 'FRIEND_REQUEST', jsonb_build_object('from', '${from}'))`);
+  try {
+    await step('push: a phone registers its token, bound to its install', async () => {
+      must(await A.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en', p_install: phone1 }));
+      const o = await owners(tok1);
+      return o.length === 1 && o[0] === A.id;
+    });
+    await step('push: another account cannot take that token (its own install secret, or none)', async () => {
+      await denied(B.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en', p_install: intruder }));
+      await denied(B.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en' }));
+      const o = await owners(tok1);
+      return o.length === 1 && o[0] === A.id;
+    });
+    await step('push: without the install secret, nobody can release a phone\'s token', async () => {
+      must(await anon.rpc('release_push_token', { p_token: tok1, p_install: intruder }));
+      must(await C.sb.rpc('release_push_token', { p_token: tok1, p_install: intruder }));
+      const o = await owners(tok1);
+      return o.length === 1 && o[0] === A.id;
+    });
+    await step('push: account switch on the same phone moves the token to the new account', async () => {
+      must(await B.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en', p_install: phone1 }));
+      const o = await owners(tok1);
+      return o.length === 1 && o[0] === B.id;
+    });
+    await step('push: after the switch, the old account\'s notifications no longer reach that phone; the new account\'s do', async () => {
+      await notifyFriendRequest(A.id, B.id);
+      await notifyFriendRequest(B.id, C.id);
+      const to = await pushedTo(tok1);
+      return to.length >= 1 && to.every((u) => u === B.id);
+    });
+    await step('push: signed out offline, the phone releases its token with its install secret (no session)', async () => {
+      must(await anon.rpc('release_push_token', { p_token: tok1, p_install: phone1 }));
+      return (await owners(tok1)).length === 0;
+    });
+    await step('push: once released, that phone gets nothing more for the old account', async () => {
+      const before = (await pushedTo(tok1)).length;
+      await notifyFriendRequest(B.id, C.id);
+      return (await pushedTo(tok1)).length === before;
+    });
+    await step('push: a released token still cannot be claimed by another install', async () => {
+      await denied(C.sb.rpc('register_push_token', { p_token: tok1, p_platform: 'ios', p_lang: 'en', p_install: intruder }));
+      return (await owners(tok1)).length === 0;
+    });
+    await step('push: two phones on one account both receive its notifications', async () => {
+      must(await A.sb.rpc('register_push_token', { p_token: tok2, p_platform: 'ios', p_lang: 'en', p_install: secret() }));
+      must(await A.sb.rpc('register_push_token', { p_token: tok3, p_platform: 'android', p_lang: 'fr', p_install: secret() }));
+      await notifyFriendRequest(A.id, B.id);
+      const [t2, t3] = [await pushedTo(tok2), await pushedTo(tok3)];
+      return t2.length >= 1 && t3.length >= 1 && [...t2, ...t3].every((u) => u === A.id);
+    });
+  } finally {
+    const list = [tok1, tok2, tok3].map((t) => `'${t}'`).join(',');
+    await sql(`delete from public.push_tokens where token in (${list})`).catch(() => null);
+    await sql(`delete from private.push_installs where token in (${list})`).catch(() => null);
+  }
+
   await step('Carl deletes his account (everything goes with it)', async () => {
     must(await C.sb.rpc('delete_my_account'));
     const left = await sql(`select count(*)::int as n from public.profiles where id = '${C.id}'`);

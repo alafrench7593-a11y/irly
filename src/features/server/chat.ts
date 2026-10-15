@@ -5,8 +5,8 @@ import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
-import { supabase, topic } from '@/lib/supabase';
-import { changed, useRefreshOn, useSyncVersion } from './sync';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { changed, echoGate, expectEcho, heardMessage, resetSyncEchoes, syncNow, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import { uploadChatPhoto } from './media';
 import { primeFaces } from './faces';
@@ -63,85 +63,168 @@ export function UnreadSync() {
   return null;
 }
 
-let inboxCache: { uid: string; rows: InboxRow[] } = { uid: '', rows: [] };
+/**
+ * The inbox, ONE copy for the whole app. The badge (<UnreadSync />, always
+ * mounted), the Messages tab and the share sheet used to each read
+ * my_conversations and each listen to every new message: every message or
+ * read receipt cost one read per screen. Now one read serves them all, calls
+ * made together are one read, and a change during a read is one more read
+ * after it (never lost, never one per caller).
+ */
+type InboxState = { uid: string; rows: InboxRow[]; for: string; error: string | null };
+const useInboxStore = create<InboxState>(() => ({ uid: '', rows: [], for: '', error: null }));
+/** The last inbox seen this launch (also how a chat opened from it knows its header). */
+const inboxRows = (uid: string) => {
+  const st = useInboxStore.getState();
+  return st.uid === uid ? st.rows : null;
+};
+
+let inboxRead: { uid: string; again: boolean } | null = null;
+let inboxSoon: { uid: string; timer: ReturnType<typeof setTimeout> } | null = null;
+/** When the last inbox read was sent (syncNow clock): realtime events committed before it are in it. */
+let inboxReadAt = -Infinity;
+/**
+ * Chats read on this phone (mark_conversation_read answered), by when. The
+ * inbox shows them read at once, without asking the server again; an inbox
+ * read sent before that answer cannot know it yet, so it does not bring the
+ * unread count back.
+ */
+const readHere = new Map<string, number>();
+function readInbox(uid: string) {
+  if (!supabase) return;
+  // A read on its way started before this change: one more read once it is in.
+  if (inboxRead?.uid === uid) {
+    inboxRead.again = true;
+    return;
+  }
+  const read = { uid, again: false };
+  inboxRead = read;
+  const sentAt = syncNow();
+  inboxReadAt = sentAt;
+  Promise.resolve(supabase.rpc('my_conversations'))
+    .then(({ data, error }) => {
+      // A late answer for a previous account is dropped; a failed refresh keeps the inbox.
+      if (useInboxStore.getState().uid !== uid) return;
+      if (error) useInboxStore.setState({ for: uid, error: /fetch|network/i.test(error.message) ? 'Can’t reach IRLY right now' : error.message });
+      else {
+        const now = syncNow();
+        readHere.forEach((at, id) => at < now - 30_000 && readHere.delete(id));
+        const rows = ((data as InboxRow[]) ?? []).map((r) => ((readHere.get(r.conversation_id) ?? -Infinity) > sentAt && r.unread ? { ...r, unread: 0 } : r));
+        useInboxStore.setState({ rows, for: uid, error: null });
+      }
+    })
+    .then(
+      () => undefined,
+      () => {
+        if (useInboxStore.getState().uid === uid) useInboxStore.setState({ for: uid, error: 'Can’t reach IRLY right now' });
+      },
+    )
+    .finally(() => {
+      if (inboxRead === read) inboxRead = null;
+      if (read.again && useInboxStore.getState().uid === uid) readInbox(uid);
+    });
+}
+/** Shows a chat as read in the inbox (and the badge) as soon as the server has recorded it. */
+function markedReadHere(uid: string, conversationId: string) {
+  readHere.set(conversationId, syncNow());
+  const st = useInboxStore.getState();
+  if (st.uid !== uid || !st.rows.some((r) => r.conversation_id === conversationId && r.unread)) return;
+  useInboxStore.setState({ rows: st.rows.map((r) => (r.conversation_id === conversationId ? { ...r, unread: 0 } : r)) });
+}
+/** True while a chat may have messages I have not read (unknown counts as maybe). */
+function mayBeUnread(uid: string, conversationId: string): boolean {
+  const row = inboxRows(uid)?.find((r) => r.conversation_id === conversationId);
+  return !row || row.unread > 0;
+}
+
+/** Every screen asking in the same moment (a sync bump reaches them all at once) is one read. */
+function refreshInbox(uid: string) {
+  if (inboxSoon?.uid === uid) return;
+  if (inboxSoon) clearTimeout(inboxSoon.timer);
+  inboxSoon = {
+    uid,
+    timer: setTimeout(() => {
+      inboxSoon = null;
+      readInbox(uid);
+    }, 0),
+  };
+}
+
+/** New messages and removals anywhere I am a member: one pair of channels, however many screens show the inbox. */
+let inboxLive: { uid: string; users: number; stop: () => void } | null = null;
+function listenInbox(uid: string): () => void {
+  if (!supabase) return () => undefined;
+  if (inboxLive && inboxLive.uid !== uid) {
+    inboxLive.stop();
+    inboxLive = null;
+  }
+  if (!inboxLive) {
+    const sb = supabase;
+    // A burst of messages (busy group chat) is one inbox read, not one per message,
+    // and none when a read sent after them (your own action's) already has them.
+    const gate = echoGate(() => refreshInbox(uid), 800, () => inboxReadAt);
+    // Joins, leaves, renames and deletions arrive through the app's sync channel.
+    const channel = liveChannel(`inbox-${uid}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        // Its conversation's last_message_at bump (same transaction) is not a second inbox reload.
+        heardMessage(payload);
+        gate.heard(payload);
+      })
+      // Listening: a message sent before then is in no event (one coalesced inbox read).
+      .subscribe(whenListening(() => gate.heard()));
+    // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
+    // UPDATE never reaches you; the removal row does (members only), and the preview updates.
+    // Its own channel: Realtime refuses a whole channel when one of its tables is missing,
+    // and new messages must keep arriving whatever happens to this one.
+    const removals = liveChannel(`inbox-removals-${uid}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals' }, gate.heard)
+      .subscribe(whenListening(() => gate.heard()));
+    inboxLive = {
+      uid,
+      users: 0,
+      stop: () => {
+        gate.cancel();
+        void sb.removeChannel(channel);
+        void sb.removeChannel(removals);
+      },
+    };
+  }
+  const live = inboxLive;
+  live.users += 1;
+  return () => {
+    live.users -= 1;
+    if (live.users > 0 || inboxLive !== live) return;
+    live.stop();
+    inboxLive = null;
+  };
+}
 
 /** The signed-in member's conversations, in the app's Conversation shape. */
 export function useServerInbox(): { conversations: Conversation[]; refresh: () => void; loading: boolean; error: string | null } {
   const account = useAccount();
   const uid = account?.userId;
-  // The last inbox seen (this launch) shows at once while it refreshes.
-  const [rows, setRowsState] = useState<InboxRow[]>(() => (uid && inboxCache.uid === uid ? inboxCache.rows : []));
-  const [state, setState] = useState<{ for: string; error: string | null }>(() => ({ for: uid && inboxCache.uid === uid ? uid : '', error: null }));
-  const setRows = useCallback(
-    (next: InboxRow[]) => {
-      if (uid) inboxCache = { uid, rows: next };
-      setRowsState(next);
-    },
-    [uid],
-  );
-  const currentUid = useRef(uid);
-  useEffect(() => {
-    currentUid.current = uid;
-  }, [uid]);
+  const store = useInboxStore();
+  // Another account on this phone: the previous one's inbox is never shown.
+  const mine = Boolean(uid) && store.uid === uid;
+  const rows: InboxRow[] = mine ? store.rows : NONE;
 
   const refresh = useCallback(() => {
-    if (!supabase || !uid) return;
-    const asked = uid;
-    supabase.rpc('my_conversations').then(({ data, error }) => {
-      // Keep the inbox on a failed refresh; drop a late answer for a previous account.
-      if (currentUid.current !== asked) return;
-      if (error) {
-        setState({ for: asked, error: /fetch|network/i.test(error.message) ? 'Can’t reach IRLY right now' : error.message });
-        return;
-      }
-      setRows((data as InboxRow[]) ?? []);
-      setState({ for: asked, error: null });
-    });
-  }, [uid, setRows]);
+    if (uid) refreshInbox(uid);
+  }, [uid]);
 
   useEffect(() => {
     if (!supabase || !uid) return;
-    refresh();
-    let burst: ReturnType<typeof setTimeout> | null = null;
-    // New messages anywhere you are a member refresh the inbox; joins, leaves,
-    // renames and deletions arrive through the app's sync channel.
-    const channel = supabase
-      .channel(topic(`inbox-${uid}`))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-        // A burst of messages (busy group chat) is one inbox read, not one per message.
-        if (burst) return;
-        burst = setTimeout(() => {
-          burst = null;
-          refresh();
-        }, 800);
-      })
-      .subscribe();
-    // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
-    // UPDATE never reaches you; the removal row does (members only), and the preview updates.
-    // Its own channel: Realtime refuses a whole channel when one of its tables is missing,
-    // and new messages must keep arriving whatever happens to this one.
-    const removals = supabase
-      .channel(topic(`inbox-removals-${uid}`))
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals' }, () => {
-        if (burst) return;
-        burst = setTimeout(() => {
-          burst = null;
-          refresh();
-        }, 800);
-      })
-      .subscribe();
-    return () => {
-      if (burst) clearTimeout(burst);
-      supabase?.removeChannel(channel);
-      supabase?.removeChannel(removals);
-    };
-  }, [uid, refresh]);
+    // The last inbox seen (this launch, same account) shows at once while it refreshes.
+    if (useInboxStore.getState().uid !== uid) useInboxStore.setState({ uid, rows: [], for: '', error: null });
+    refreshInbox(uid);
+    return listenInbox(uid);
+  }, [uid]);
   useRefreshOn(['inbox', 'people'], refresh);
 
   // Memoised: a list rebuilt every render breaks any effect that depends on it.
   const conversations = useMemo(
     () =>
-      (uid ? rows : NONE).map(
+      rows.map(
         (r): Conversation => ({
       id: r.conversation_id,
       cityId: 'dubai',
@@ -164,7 +247,48 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
       ),
     [rows, uid],
   );
-  return { conversations, refresh, loading: Boolean(uid) && state.for !== uid, error: state.for === uid ? state.error : null };
+  return { conversations, refresh, loading: Boolean(uid) && !(mine && store.for === uid), error: mine && store.for === uid ? store.error : null };
+}
+
+/**
+ * A chat's own row and my membership, as the thread and its photo (useChatPhoto)
+ * both need them when a chat opens: asked once for both (they used to ask the
+ * same two rows each, four requests for two). Shared only while on its way, so a
+ * refresh always reads the server again.
+ */
+export type ConversationHead = {
+  conv: {
+    id: string;
+    kind: InboxRow['kind'];
+    title: string | null;
+    community_id: string | null;
+    activity_id: string | null;
+    photo_path: string | null;
+    activities: unknown;
+    communities: unknown;
+  } | null;
+  error: string | null;
+  me: { archived_at: string | null; role: string | null } | null;
+};
+const heads = new Map<string, Promise<ConversationHead>>();
+export function conversationHead(conversationId: string, uid: string): Promise<ConversationHead> {
+  if (!supabase) return Promise.resolve({ conv: null, error: 'The IRLY server is not configured', me: null });
+  const k = `${uid}|${conversationId}`;
+  const hit = heads.get(k);
+  if (hit) return hit;
+  const sb = supabase;
+  const promise = Promise.all([
+    sb
+      .from('conversations')
+      .select('id, kind, title, community_id, activity_id, photo_path, activities(category_id, title, sub_id, place_name, cover_path), communities(category_id, topic, cover_path)')
+      .eq('id', conversationId)
+      .maybeSingle(),
+    sb.from('conversation_members').select('archived_at, role').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
+  ])
+    .then(([c, m]): ConversationHead => ({ conv: (c.data as ConversationHead['conv']) ?? null, error: c.error?.message ?? null, me: (m.data as ConversationHead['me']) ?? null }))
+    .finally(() => heads.delete(k));
+  heads.set(k, promise);
+  return promise;
 }
 
 type MemberRow = { user_id: string; first_name: string; photo_path: string | null; role: string };
@@ -290,7 +414,7 @@ export function useServerThread(conversationId: string): ServerThread {
   // A chat opened before (this launch) shows at once, then catches up with the server.
   const seen = uid ? threadCache.get(`${uid}|${conversationId}`) : undefined;
   // Opened from the inbox (or a chat listed there): its header (name, photo, kind) is known already.
-  const [listed] = useState(() => (seen || !uid || inboxCache.uid !== uid ? undefined : inboxCache.rows.find((r) => r.conversation_id === conversationId)));
+  const [listed] = useState(() => (seen || !uid ? undefined : inboxRows(uid)?.find((r) => r.conversation_id === conversationId)));
   const [rows, setRows] = useState<MessageRow[]>(seen?.rows ?? []);
   const [names, setNames] = useState<Record<string, string>>(() => seen?.names ?? (listed?.other_user_id && listed.other_name ? { [listed.other_user_id]: listed.other_name } : {}));
   const [people, setPeople] = useState<Record<string, { name: string; photo: string | null; admin: boolean }>>(
@@ -322,15 +446,28 @@ export function useServerThread(conversationId: string): ServerThread {
   // top) and the app in front. A read skipped meanwhile is owed for the return.
   const focused = useRef(false);
   const owedRead = useRef(false);
+  // A message from someone else since the last read (the inbox may not know it yet).
+  const unseen = useRef(false);
   const markRead = useCallback(() => {
-    if (!supabase) return;
+    if (!supabase || !uid) return;
     if (!focused.current || AppState.currentState !== 'active') {
       owedRead.current = true;
       return;
     }
     owedRead.current = false;
-    supabase.rpc('mark_conversation_read', { p_conversation: conversationId }).then(() => undefined);
-  }, [conversationId]);
+    const fresh = unseen.current || mayBeUnread(uid, conversationId);
+    unseen.current = false;
+    supabase.rpc('mark_conversation_read', { p_conversation: conversationId }).then(
+      ({ error: e }) => {
+        if (e) return;
+        // Read here: the inbox shows it at once, and the echo of my own membership row
+        // (which reloaded the inbox, this chat's photo, title and members) changes nothing more.
+        markedReadHere(uid, conversationId);
+        if (fresh) expectEcho('conversation_members', (row) => row.conversation_id === conversationId && row.user_id === uid);
+      },
+      () => undefined,
+    );
+  }, [conversationId, uid]);
   useFocusEffect(
     useCallback(() => {
       focused.current = true;
@@ -359,9 +496,9 @@ export function useServerThread(conversationId: string): ServerThread {
     // All at once: the chat, its newest messages, my own state and its members.
     // The messages show as soon as the chat and its newest page are in; the
     // member list (hundreds in a community) fills names and photos when it comes.
-    const conversation = supabase.from('conversations').select('id, kind, title, community_id, activity_id').eq('id', conversationId).maybeSingle();
+    // The chat's row and my membership: one read shared with the chat's photo (useChatPhoto).
+    const head = conversationHead(conversationId, uid);
     const page = latest();
-    const mineQ = supabase.from('conversation_members').select('archived_at').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle();
     const membersQ = supabase.rpc('chat_members', { p_conversation: conversationId });
     // The title: the chat's own, else (a private chat) the other member's name, once both answers are in.
     let otherName: string | undefined;
@@ -399,18 +536,18 @@ export function useServerThread(conversationId: string): ServerThread {
         applyTitle();
       },
     );
-    mineQ.then(
-      ({ data: mine }) => {
-        if (alive && mine) setArchived(Boolean((mine as { archived_at: string | null }).archived_at));
+    head.then(
+      ({ me }) => {
+        if (alive && me) setArchived(Boolean(me.archived_at));
       },
       () => undefined,
     );
-    (async () => {
+    const initial = (async () => {
       try {
-        const [{ data: conv, error: e1 }, msgs] = await Promise.all([conversation, page]);
+        const [{ conv, error: e1 }, msgs] = await Promise.all([head, page]);
         if (!alive) return;
         if (e1 || !conv) {
-          setError(e1?.message ?? 'This conversation is not available');
+          setError(e1 ?? 'This conversation is not available');
           setLoading(false);
           return;
         }
@@ -431,11 +568,15 @@ export function useServerThread(conversationId: string): ServerThread {
       }
     })();
 
-    // Back from the background or a reconnection: fetch what was missed.
+    // Back from the background, a reconnection, or the channel starting to listen: fetch what was
+    // missed. After the first page only, which would otherwise replace what this brought.
     const catchUp = () =>
-      latest()
+      initial
+        .then(() => (alive ? latest() : []))
         .then((msgs) => {
           if (!alive) return;
+          const shown = new Set(rowsRef.current.map((x) => x.id));
+          const fromOthers = msgs.some((x) => x.sender_id !== uid && !shown.has(x.id));
           const newest = rowsRef.current[rowsRef.current.length - 1]?.created_at ?? '';
           if (msgs.length === PAGE && msgs[msgs.length - 1].created_at > newest) {
             // More than a page missed: merging would leave a hole between the two.
@@ -447,11 +588,23 @@ export function useServerThread(conversationId: string): ServerThread {
             const from = msgs.length === PAGE ? msgs[msgs.length - 1].created_at : '';
             setRows((list) => merge(list.filter((x) => x.created_at < from), msgs));
           }
-          markRead();
+          // Nothing new from the others: nothing to mark read (and no request).
+          if (fromOthers || owedRead.current) {
+            unseen.current = unseen.current || fromOthers;
+            markRead();
+          }
         })
         .catch(() => undefined);
 
-    let joinedOnce = false;
+    // Both channels start listening within moments of each other: one catch-up for the two.
+    let soon: ReturnType<typeof setTimeout> | null = null;
+    const catchUpSoon = () => {
+      if (soon) return;
+      soon = setTimeout(() => {
+        soon = null;
+        catchUp();
+      }, 150);
+    };
     // "Typing…" needs every member on the same topic (data changes do not):
     // one shared topic per conversation.
     const typingChannel = joinTyping(`typing:${conversationId}`, (who) => {
@@ -459,45 +612,44 @@ export function useServerThread(conversationId: string): ServerThread {
       setTypingNames((t) => ({ ...t, [who]: Date.now() }));
     });
     channelRef.current = typingChannel.channel;
-    const channel = supabase
-      .channel(topic(`thread-${conversationId}`))
+    const channel = liveChannel(`thread-${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow;
         arrived.add(m.id);
         setRows((list) => merge(list, [m]));
         if (m.sender_id) setTypingNames((t) => (m.sender_id! in t ? Object.fromEntries(Object.entries(t).filter(([k]) => k !== m.sender_id)) : t));
+        // My own message (sent from here or another phone) leaves nothing unread.
+        if (m.sender_id === uid && !owedRead.current) return;
+        unseen.current = true;
         markRead();
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow & { deleted_at?: string | null };
         setRows((list) => (m.deleted_at ? list.filter((x) => x.id !== m.id) : merge(list, [m])));
       })
-      .subscribe((status) => {
-        // A rejoin after a dropped connection: the gap is filled from the server.
-        if (status === 'SUBSCRIBED') {
-          if (joinedOnce) catchUp();
-          joinedOnce = true;
-        }
-      });
+      // Listening (first time or after a dropped connection): the gap is filled from the server.
+      .subscribe(whenListening(catchUpSoon));
     // Deleted for everyone by its sender: RLS hides the deleted row from the other members,
     // so they never get the UPDATE above. The removal row (members only) carries it instead.
     // Its own channel, so a problem with it can never stop new messages from arriving.
-    const removals = supabase
-      .channel(topic(`thread-removals-${conversationId}`))
+    const removals = liveChannel(`thread-removals-${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const gone = (payload.new as { message_id?: string }).message_id;
         if (!gone) return;
         // A message heard live while the first page loads must not come back with it.
         arrived.delete(gone);
         setRows((list) => (list.some((x) => x.id === gone) ? list.filter((x) => x.id !== gone) : list));
-        changed('inbox');
+        // The preview: the inbox hears this removal itself (listenInbox); only its list, not every inbox screen.
+        if (inboxLive?.uid !== uid) refreshInbox(uid);
       })
-      .subscribe();
+      // A removal missed before listening: the newest page replaces its span (deleted ones go).
+      .subscribe(whenListening(catchUpSoon));
     const app = AppState.addEventListener('change', (st) => {
       if (st === 'active') catchUp();
     });
     return () => {
       alive = false;
+      if (soon) clearTimeout(soon);
       app.remove();
       channelRef.current = null;
       supabase?.removeChannel(channel);
@@ -636,15 +788,16 @@ export function useServerThread(conversationId: string): ServerThread {
     const { error: e } = await supabase.rpc('delete_my_message', { p_message: messageId });
     if (e) throw new Error(e.message);
     setRows((list) => list.filter((x) => x.id !== messageId));
-    changed('inbox');
-  }, [discardUnsent]);
+    // Only the inbox's preview changed (its echo, the removal row, is then already read).
+    if (uid) refreshInbox(uid);
+  }, [discardUnsent, uid]);
   const hideForMe = useCallback(async (messageId: string) => {
     if (!supabase || discardUnsent(messageId)) return;
     const { error: e } = await supabase.rpc('hide_message_for_me', { p_message: messageId });
     if (e) throw new Error(/fetch|network/i.test(e.message) ? 'No connection: try again' : e.message);
     setRows((list) => list.filter((x) => x.id !== messageId));
-    changed('inbox');
-  }, [discardUnsent]);
+    if (uid) refreshInbox(uid);
+  }, [discardUnsent, uid]);
 
   const setTyping = useCallback(() => {
     const now = Date.now();
@@ -776,4 +929,18 @@ export async function removeConversationForMe(conversationId: string): Promise<v
   const { error } = await supabase.rpc('remove_conversation_for_me', { p_conversation: conversationId });
   if (error) throw new Error(/fetch|network/i.test(error.message) ? 'No connection: try again' : error.message);
   changed('inbox');
+}
+
+/** Signed out or account deleted: the previous member's inbox and opened chats are forgotten on this phone. */
+export function clearChatCache(): void {
+  threadCache.clear();
+  heads.clear();
+  readHere.clear();
+  inboxRead = null;
+  inboxReadAt = -Infinity;
+  resetSyncEchoes();
+  if (inboxSoon) clearTimeout(inboxSoon.timer);
+  inboxSoon = null;
+  useInboxStore.setState({ uid: '', rows: [], for: '', error: null });
+  useServerUnread.setState({ n: 0 });
 }

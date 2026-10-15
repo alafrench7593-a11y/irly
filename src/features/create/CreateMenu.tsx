@@ -25,7 +25,7 @@ const OPTIONS: Option[] = [
   { id: 'trip', label: 'Trip', hint: 'Abu Dhabi, Hatta, Oman…', icon: 'plane', color: '#007AFF', preset: { categoryId: 'travel', format: 'trip' } },
   { id: 'meetup', label: 'Meetup', hint: 'Coffee, networking', icon: 'handshake', color: '#A2845E', preset: { format: 'meetup' } },
   { id: 'live', label: 'Live', hint: 'What you\'re doing right now', icon: 'zap', color: '#FF3B30', route: '/live?compose=1' },
-  { id: 'post', label: 'Post', hint: 'Photo or text, IRL', icon: 'camera', route: '/live?compose=1' },
+  { id: 'post', label: 'Post', hint: 'Photo or text, IRL', icon: 'camera', route: '/live?compose=photo' },
   { id: 'community', label: 'Community', hint: 'A permanent group', icon: 'users', color: '#30B0C7', route: '/community/new' },
 ];
 

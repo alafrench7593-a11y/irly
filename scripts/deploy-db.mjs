@@ -137,3 +137,30 @@ const errors = await query(
 );
 console.log(errors.length ? '• errors members saw (7 days):' : '• errors members saw (7 days): none recorded');
 for (const r of errors) console.log(`  · ${r.name} ${r.code}${r.place ? ` (${r.place})` : ''}: ${r.n}`);
+
+// Profile writes refused by profiles_id_fkey: the signed-in account no longer existed in auth.users.
+// When, on which platform, and whether an account deletion (E2E test account or not) happened just
+// before: enough to tell a test artifact from a real member's stale session. Nothing personal printed.
+const fkey = await query(`
+  with ev as (
+    select created_at, coalesce(platform, '?') as platform from public.analytics_events
+    where name = 'SERVER_ERROR' and props->>'code' = 'profiles_id_fkey' and created_at > now() - interval '7 days'
+  )
+  select to_char(ev.created_at, 'YYYY-MM-DD HH24:MI') as at, ev.platform,
+    (select count(*)::int from auth.audit_log_entries a where a.payload->>'action' = 'user_deleted'
+       and a.created_at between ev.created_at - interval '15 minutes' and ev.created_at + interval '1 minute') as deletions_near,
+    (select count(*)::int from auth.audit_log_entries a where a.payload->>'action' = 'user_deleted'
+       and coalesce(a.payload->'traits'->>'user_email', '') like 'e2e-%@irly.test'
+       and a.created_at between ev.created_at - interval '15 minutes' and ev.created_at + interval '1 minute') as e2e_deletions_near
+  from ev order by ev.created_at`).catch((e) => (console.log(`• profiles_id_fkey timeline unavailable: ${e.message.slice(0, 120)}`), []));
+for (const r of fkey) console.log(`  · profiles_id_fkey at ${r.at} UTC on ${r.platform}: ${r.deletions_near} account deletion(s) in the 15 min before (${r.e2e_deletions_near} E2E)`);
+
+// Push tokens (read only, counts): how many are bound to an install secret (apps from build 15)
+// and how many are still legacy (no binding: another signed-in account that knows the token could
+// claim it). Decides when legacy tokens can stop changing hands. Never prints a token.
+const [push] = await query(`
+  select count(*)::int as total,
+    count(*) filter (where i.token is null)::int as unbound,
+    count(*) filter (where i.token is null and t.updated_at < now() - interval '30 days')::int as unbound_stale
+  from public.push_tokens t left join private.push_installs i on i.token = t.token`).catch((e) => (console.log(`• push tokens: unavailable (${e.message.slice(0, 120)})`), [null]));
+if (push) console.log(`• push tokens: ${push.total} in all, ${push.unbound} not bound to an install yet (${push.unbound_stale} not refreshed for 30 days)`);

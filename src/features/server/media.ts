@@ -21,6 +21,7 @@ const key = (b: Bucket, p: string) => `${b}|${p}`;
 
 export async function signedLinks(bucket: Bucket, paths: (string | null | undefined)[]): Promise<Record<string, string>> {
   const now = Date.now();
+  if (cache.size > 2000) for (const [k, v] of cache) if (v.until <= now) cache.delete(k);
   const out: Record<string, string> = {};
   const missing: string[] = [];
   for (const p of new Set(paths.filter((x): x is string => Boolean(x)))) {
@@ -41,6 +42,18 @@ export async function signedLinks(bucket: Bucket, paths: (string | null | undefi
     }
   }
   return out;
+}
+
+/**
+ * A file this phone just uploaded, shown from the copy already on the phone:
+ * the next signedLinks() for that path answers with the local file, so the
+ * feed's reload neither downloads it again nor blanks the picture while it
+ * does. A local file that fails to show is dropped with forgetLink(), and the
+ * next load signs the stored one.
+ */
+export function seedLink(bucket: Bucket, path: string | null | undefined, local: string | null | undefined, forMs: number): void {
+  if (!path || !local) return;
+  cache.set(key(bucket, path), { url: local, until: Date.now() + forMs });
 }
 
 /** Drops cached links so the next signedLinks() asks for fresh ones (an expired or broken link). */
@@ -145,4 +158,9 @@ export async function uploadChatPhoto(uri: string, name: string): Promise<string
     if (stored) return path;
   }
   throw new Error(/fetch|network/i.test(error.message) ? 'No connection: photo not sent' : error.message);
+}
+
+/** Signed out or account deleted: every cached link (and local copy standing for an upload) is forgotten. */
+export function clearLinkCache(): void {
+  cache.clear();
 }

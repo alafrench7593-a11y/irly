@@ -1,5 +1,5 @@
 import { webLink } from '@/config/app';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NONE } from '@/lib/none';
 import type { CityId } from '@/data/types';
 import { CITIES, cityScope } from '@/data/destinations';
@@ -7,7 +7,7 @@ import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { signedLinks } from '@/features/server/media';
-import { supabase, topic } from '@/lib/supabase';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import type { MyPlan } from '@/state/store';
@@ -39,6 +39,8 @@ export type ActivityExtras = {
   /** A photo already uploaded while the form was filled (covers.stageCover): the caller owns and cleans it up. */
   coverPath?: string | null;
   address?: string | null;
+  /** The request's id, chosen by the caller (a Live passes its own id): the server keeps one activity per id. */
+  clientRef?: string;
 };
 
 /** Signed links for uploaded activity photos (private bucket); other values pass through. */
@@ -57,7 +59,7 @@ export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?
   for (const [k, v] of inFlight) if (now - v.at > 120_000) inFlight.delete(k);
   const prev = inFlight.get(key);
   if (prev && now - prev.at < 10_000) return prev.promise;
-  const ref = prev?.ref ?? uuid();
+  const ref = extras.clientRef ?? prev?.ref ?? uuid();
   const promise = withProfile(() => insertActivity(plan, at, extras, ref)).catch((e: unknown) => {
     // Refused by a rule while the profile exists: say which rule, not "something went wrong".
     const m = e instanceof Error ? e.message : '';
@@ -97,29 +99,12 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
     const up = await supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType });
     if (up.error) throw new Error('Could not upload the photo');
   }
-  const guess = guessCategory(`${plan.title ?? ''} ${plan.description ?? ''} ${plan.place ?? ''}`);
   const { data, error } = await supabase
     .from('activities')
     .insert({
       creator_id: uid,
       cover_path: coverPath,
-      format: plan.format ?? 'session',
-      // Within the server's limits (3–80 characters, 1,000 for the description): never refused for its length.
-      title: fitTitle(plan.title),
-      description: plan.description?.trim().slice(0, 1000) || null,
-      // No category chosen (IRL « anyone want to join? », the assistant…): read it from the title.
-      category_id: plan.categoryId ?? guess.category ?? 'entertainment',
-      sub_id: plan.subId ?? null,
-      catalog_activity_id: plan.activityId ?? (plan.categoryId ? null : (guess.activity ?? null)),
-      city_id: plan.cityId,
-      area_id: plan.areaId,
-      place_name: plan.place ?? null,
-      starts_at: (at ?? startsAt(plan.day, plan.time, new Date(), CITIES[plan.cityId as CityId]?.utcOffset)).toISOString(),
-      timezone: CITIES[plan.cityId as CityId]?.utcOffset === 8 ? 'Asia/Makassar' : 'Asia/Dubai',
-      price_minor: Math.max(0, Math.round((plan.price ?? 0) * 100)),
-      currency: plan.currency ?? 'AED',
-      capacity: plan.spots ? Math.min(1000, Math.max(2, Math.round(plan.spots))) : null,
-      privacy: PRIVACY[plan.privacy ?? 'public'],
+      ...activityColumns(plan, at),
       place_id: extras.placeId ?? null,
       activity_type: extras.activityType ?? null,
       audience: extras.audience ?? 'all',
@@ -151,6 +136,34 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   // Its chat is new too.
   changed('activities', 'inbox');
   return row.id;
+}
+
+/**
+ * The columns of a plan as the server stores them (title and description within
+ * its limits, a category read from the title when none was chosen, the start
+ * in the city's time). Shared by a plain activity and the one a Live makes.
+ */
+export function activityColumns(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date) {
+  const guess = guessCategory(`${plan.title ?? ''} ${plan.description ?? ''} ${plan.place ?? ''}`);
+  return {
+    format: plan.format ?? 'session',
+    // Within the server's limits (3–80 characters, 1,000 for the description): never refused for its length.
+    title: fitTitle(plan.title),
+    description: plan.description?.trim().slice(0, 1000) || null,
+    // No category chosen (IRL « anyone want to join? », the assistant…): read it from the title.
+    category_id: plan.categoryId ?? guess.category ?? 'entertainment',
+    sub_id: plan.subId ?? null,
+    catalog_activity_id: plan.activityId ?? (plan.categoryId ? null : (guess.activity ?? null)),
+    city_id: plan.cityId,
+    area_id: plan.areaId,
+    place_name: plan.place ?? null,
+    starts_at: (at ?? startsAt(plan.day, plan.time, new Date(), CITIES[plan.cityId as CityId]?.utcOffset)).toISOString(),
+    timezone: CITIES[plan.cityId as CityId]?.utcOffset === 8 ? 'Asia/Makassar' : 'Asia/Dubai',
+    price_minor: Math.max(0, Math.round((plan.price ?? 0) * 100)),
+    currency: plan.currency ?? 'AED',
+    capacity: plan.spots ? Math.min(1000, Math.max(2, Math.round(plan.spots))) : null,
+    privacy: PRIVACY[plan.privacy ?? 'public'],
+  };
 }
 
 const DETAIL_COLUMNS = 'id, creator_id, format, title, description, category_id, city_id, area_id, place_name, sub_id, starts_at, ends_at, price_minor, currency, capacity, girl_only, community_id, cancelled_at';
@@ -246,11 +259,18 @@ export type ServerActivity = {
 };
 
 /** Upcoming activities members created in this destination (all seven emirates, or Bali), your city first. */
-export function useServerActivities(cityId: CityId, only: { categoryId?: string; girlOnly?: boolean } = {}): { activities: ServerActivity[]; refresh: () => void } {
+export function useServerActivities(
+  cityId: CityId,
+  only: { categoryId?: string; girlOnly?: boolean } = {},
+): { activities: ServerActivity[]; refresh: () => void; loading: boolean; error: string | null } {
   const { categoryId, girlOnly } = only;
   const account = useAccount();
   const uid = account?.userId;
   const [activities, setActivities] = useState<ServerActivity[]>([]);
+  // Which question the list on screen answers: until the first answer for this one, it is loading
+  // (an empty list then means "none", not "not loaded yet"). A failure keeps what is shown and says so.
+  const ask = `${uid ?? ''}|${cityId}|${categoryId ?? ''}|${girlOnly ? 1 : 0}`;
+  const [status, setStatus] = useState<{ for: string; error: string | null }>({ for: '', error: null });
 
   const load = useCallback(async (): Promise<ServerActivity[]> => {
     if (!supabase || !uid) return [];
@@ -300,8 +320,13 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
   }, [cityId, uid, categoryId, girlOnly]);
 
   const refresh = useCallback(() => {
-    load().then(setActivities).catch(() => undefined);
-  }, [load]);
+    load()
+      .then((list) => {
+        setActivities(list);
+        setStatus({ for: ask, error: null });
+      })
+      .catch((e: unknown) => setStatus({ for: ask, error: e instanceof Error ? e.message : 'offline' }));
+  }, [load, ask]);
 
   useRefreshOn(['activities'], refresh);
 
@@ -310,17 +335,20 @@ export function useServerActivities(cityId: CityId, only: { categoryId?: string;
     // A failed load keeps what is on screen.
     load()
       .then((list) => {
-        if (alive) setActivities(list);
+        if (!alive) return;
+        setActivities(list);
+        setStatus({ for: ask, error: null });
       })
-      .catch(() => undefined);
+      .catch((e: unknown) => alive && setStatus({ for: ask, error: e instanceof Error ? e.message : 'offline' }));
     return () => {
       alive = false;
     };
-  }, [load]);
+  }, [load, ask]);
 
   const { keep } = useCityFilter(cityId);
   const shown = useMemo(() => activities.filter((a) => keep(a.cityId)), [activities, keep]);
-  return { activities: uid ? shown : NONE, refresh };
+  const answered = status.for === ask;
+  return { activities: uid ? shown : NONE, refresh, loading: Boolean(uid && supabase) && !answered, error: uid && answered ? status.error : null };
 }
 
 /** Join (capacity-checked server-side). Returns the activity chat id, or 'full'. */
@@ -465,40 +493,55 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
     };
   }, [id, uid]);
 
-  const refresh = useCallback(() => {
+  // One read at a time: a join reaches this page three ways at once (the button's own refresh,
+  // the app's sync bump, this page's realtime event); asks made during a read become ONE
+  // more read after it, never one each, and an older answer never overwrites a newer one.
+  const reading = useRef<{ load: typeof load; again: boolean } | null>(null);
+  const alive = useRef(true);
+  const readAgain = useRef<() => void>(() => undefined);
+  const read = useCallback(() => {
+    if (reading.current?.load === load) {
+      reading.current.again = true;
+      return;
+    }
+    const mine = { load, again: false };
+    reading.current = mine;
     load()
       .then((d) => {
+        if (!alive.current || reading.current !== mine) return;
         setDetail(d);
         setError(null);
       })
-      .catch((e) => setError(e instanceof Error ? e.message : 'offline'));
+      .catch((e) => alive.current && reading.current === mine && setError(e instanceof Error ? e.message : 'offline'))
+      .finally(() => {
+        if (reading.current !== mine) return;
+        reading.current = null;
+        if (alive.current) setLoading(false);
+        if (mine.again && alive.current) readAgain.current();
+      });
   }, [load]);
+  useEffect(() => {
+    readAgain.current = read;
+  }, [read]);
 
   useEffect(() => {
+    alive.current = true;
     if (!supabase || !uid) return;
-    let alive = true;
-    const reload = () =>
-      load()
-        .then((d) => {
-          if (!alive) return;
-          setDetail(d);
-          setError(null);
-        })
-        .catch((e) => alive && setError(e instanceof Error ? e.message : 'offline'))
-        .finally(() => alive && setLoading(false));
-    reload();
-    const channel = supabase
-      .channel(topic(`activity-${id}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `activity_id=eq.${id}` }, reload)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activities', filter: `id=eq.${id}` }, reload)
-      .subscribe();
+    read();
+    const channel = liveChannel(`activity-${id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `activity_id=eq.${id}` }, read)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activities', filter: `id=eq.${id}` }, read)
+      // Listening: a join or edit made before then is in no event (read() folds into one in flight).
+      .subscribe(whenListening(read));
     return () => {
-      alive = false;
+      alive.current = false;
+      reading.current = null;
       supabase?.removeChannel(channel);
     };
-  }, [id, uid, load]);
+  }, [id, uid, read]);
 
-  useRefreshOn(['activities'], refresh);
+  useRefreshOn(['activities'], read);
+  const refresh = read;
   return { detail: uid ? detail : null, loading: uid ? loading : false, error: uid ? error : null, refresh };
 }
 
@@ -667,31 +710,49 @@ export function useRecommendations(cityId: string): Recommendation[] {
   return uid ? shown : NONE;
 }
 
+/**
+ * Asked each time the Create form opens, but rarely different: kept for the
+ * session (per account), so opening the form costs no request after the
+ * first. Community choices are asked again when communities change.
+ */
+let geocoderKnown: { uid: string; on: boolean } | null = null;
+
 /** Is the address search for the map switched on (an IRLY admin set up the geocoder)? */
 export function useGeocoderOn(): boolean {
   const uid = useAccount()?.userId;
-  const [on, setOn] = useState(false);
+  const [on, setOn] = useState(() => (geocoderKnown && geocoderKnown.uid === uid ? geocoderKnown.on : false));
   useEffect(() => {
     if (!uid || !supabase) return;
+    // Known this session: the value below comes from it.
+    if (geocoderKnown?.uid === uid) return;
     let alive = true;
     supabase.rpc('geocoder_on').then(
-      ({ data }) => alive && setOn(data === true),
+      ({ data, error }) => {
+        if (!error) geocoderKnown = { uid, on: data === true };
+        if (alive) setOn(data === true);
+      },
       () => undefined,
     );
     return () => {
       alive = false;
     };
   }, [uid]);
-  return on;
+  return geocoderKnown && geocoderKnown.uid === uid ? geocoderKnown.on : on;
 }
 
 export type MyCommunityOption = { id: string; name: string; groupOf: string | null; girlOnly: boolean };
+let optionsKnown: { key: string; list: MyCommunityOption[] } | null = null;
+
 /** Communities and groups I belong to, for attaching an activity to one (optional). */
 export function useMyCommunityOptions(): MyCommunityOption[] {
   const uid = useAccount()?.userId;
-  const [list, setList] = useState<MyCommunityOption[]>([]);
+  const version = useSyncVersion('communities');
+  const key = `${uid ?? ''}|${version}`;
+  const [list, setList] = useState<MyCommunityOption[]>(() => (optionsKnown && optionsKnown.key.startsWith(`${uid ?? ''}|`) ? optionsKnown.list : []));
   useEffect(() => {
     if (!uid || !supabase) return;
+    // Known for this account and this version of its communities: the value below comes from it.
+    if (optionsKnown?.key === key) return;
     let alive = true;
     supabase
       .from('community_members')
@@ -700,21 +761,29 @@ export function useMyCommunityOptions(): MyCommunityOption[] {
       .is('communities.deleted_at', null)
       .limit(100)
       .then(
-        ({ data }) => {
-          if (!alive) return;
+        ({ data, error }) => {
+          if (error) return;
           type R = { communities: { id: string; name: string; girl_only: boolean; parent: { name: string } | { name: string }[] | null } | { id: string; name: string; girl_only: boolean; parent: { name: string } | { name: string }[] | null }[] };
           const rows = ((data as R[] | null) ?? []).map((r) => (Array.isArray(r.communities) ? r.communities[0] : r.communities)).filter(Boolean);
-          setList(
-            rows
-              .map((c) => ({ id: c.id, name: c.name, girlOnly: Boolean(c.girl_only), groupOf: (Array.isArray(c.parent) ? c.parent[0]?.name : c.parent?.name) ?? null }))
-              .sort((a, b) => (a.groupOf ?? a.name).localeCompare(b.groupOf ?? b.name) || (a.groupOf ? 1 : 0) - (b.groupOf ? 1 : 0)),
-          );
+          const next = rows
+            .map((c) => ({ id: c.id, name: c.name, girlOnly: Boolean(c.girl_only), groupOf: (Array.isArray(c.parent) ? c.parent[0]?.name : c.parent?.name) ?? null }))
+            .sort((a, b) => (a.groupOf ?? a.name).localeCompare(b.groupOf ?? b.name) || (a.groupOf ? 1 : 0) - (b.groupOf ? 1 : 0));
+          optionsKnown = { key, list: next };
+          if (alive) setList(next);
         },
         () => undefined,
       );
     return () => {
       alive = false;
     };
-  }, [uid]);
-  return list;
+  }, [uid, key]);
+  return optionsKnown && optionsKnown.key === key ? optionsKnown.list : list;
+}
+
+/** Signed out or account deleted: the previous member's just-created activities and form choices are forgotten. */
+export function clearActivityCache(): void {
+  primed.clear();
+  inFlight.clear();
+  geocoderKnown = null;
+  optionsKnown = null;
 }

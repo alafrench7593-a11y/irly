@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { changed, useSyncVersion } from './sync';
 import { coverLinks } from './activities';
 import { communityPhoto } from '@/features/community/official';
+import { conversationHead } from './chat';
 
 /**
  * Own photos for sessions, communities and chats. Without one, the app shows
@@ -134,14 +135,8 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
     const sb = supabase;
     let alive = true;
     (async () => {
-      const [{ data: conv }, { data: me }] = await Promise.all([
-        sb
-          .from('conversations')
-          .select('kind, photo_path, community_id, activity_id, activities(category_id, title, sub_id, place_name, cover_path), communities(category_id, topic, cover_path)')
-          .eq('id', conversationId)
-          .maybeSingle(),
-        sb.from('conversation_members').select('role').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),
-      ]);
+      // Read together with the thread opening at the same time (one request for both).
+      const { conv, me } = await conversationHead(conversationId, uid);
       if (!alive || !conv) return;
       const act = one(conv.activities as One<{ category_id: string; title: string; sub_id: string | null; place_name: string | null; cover_path: string | null }>);
       const com = one(conv.communities as One<{ category_id: string | null; topic: string | null; cover_path: string | null }>);

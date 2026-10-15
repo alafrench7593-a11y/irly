@@ -45,7 +45,7 @@ const failures = [];
 const errors = [];
 
 async function main() {
-  await sql(`delete from auth.users where email like 'e2e-ui-%@irly.test'`);
+  await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`);
   const [{ user_id: uid }] = await sql(`
     with u as (
       insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
@@ -125,7 +125,9 @@ async function main() {
   await check('Communities: All lists the IRLY catalogue; search finds IRLY Expats (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expats'], async () => {
     await page.getByPlaceholder('Search by name or theme').fill('expats');
   });
-  await check('Match IRLY in the bar opens people to meet', '/', ['People to meet'], async () => {
+  // Match IRLY is not open yet (src/lib/features.ts): the bar button must lead to its
+  // coming-soon page, which says so, not to a list of people.
+  await check('Match IRLY in the bar opens its coming-soon page', '/', ['Match IRLY is not open yet', 'Tell me when it opens'], async () => {
     await page.getByRole('button', { name: 'Match IRLY' }).first().click();
   });
   await check('Home shows Live Bali', '/', ['Live Bali']);
@@ -165,6 +167,22 @@ async function main() {
   await browser.close();
 }
 
+// Regression guard: an account deleted while the app is still signed in to it makes the sign-in profile
+// write fail on profiles_id_fkey (another run's cleanup did that when E2E runs overlapped). None may be
+// recorded while this run's app was open.
+async function noProfileFkey(since) {
+  const [{ n }] = await sql(`select count(*)::int as n from public.analytics_events where name = 'SERVER_ERROR' and props->>'code' = 'profiles_id_fkey' and platform = 'web' and created_at >= '${since}'`);
+  if (n === 0) {
+    passed++;
+    console.log('✓ no sign-in profile write refused by profiles_id_fkey during this run');
+  } else {
+    failed++;
+    failures.push(`${n} sign-in profile write(s) refused by profiles_id_fkey during this run`);
+    console.log(`✗ ${n} sign-in profile write(s) refused by profiles_id_fkey during this run`);
+  }
+}
+
+const [{ started }] = await sql(`select now()::text as started`);
 try {
   await main();
 } catch (e) {
@@ -172,7 +190,14 @@ try {
   failures.push(`setup: ${e instanceof Error ? e.message : e}`);
   console.log('✗ setup', e);
 } finally {
-  await sql(`delete from auth.users where email like 'e2e-ui-%@irly.test'`).catch(() => undefined);
+  // Checked even when the run failed (a run whose accounts were deleted under it fails in setup).
+  // The app flushes analytics every 4 s: let the last batch land.
+  await new Promise((r) => setTimeout(r, 6000));
+  await noProfileFkey(started).catch((e) => {
+    failed++;
+    failures.push(`profiles_id_fkey check: ${e instanceof Error ? e.message : e}`);
+  });
+  await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
   server.close();
 }
 

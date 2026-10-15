@@ -8,6 +8,7 @@ import { toast } from '@/components/ui/Toast';
 import { proConnect } from '@/features/network/api';
 import { addFriend, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
 import { timeAgo } from '@/lib/time';
+import { FEATURES } from '@/lib/features';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
@@ -252,7 +253,10 @@ function ServerNotifications() {
           return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: 'Friends see each other’s IRL posts', accept: pending ? p.from : undefined };
         }
         if (p.type === 'friend_accepted') return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends' };
-        if (p.type === 'verified') return { icon: 'shield', title: 'Your profile is verified ✓', body: 'Match is open', go: () => router.push('/match') };
+        if (p.type === 'verified')
+          return FEATURES.matchIrly
+            ? { icon: 'shield', title: 'Your profile is verified ✓', body: 'Match is open', go: () => router.push('/match') }
+            : { icon: 'shield', title: 'Your profile is verified ✓', body: 'The badge shows on your profile', go: () => router.push('/verify') };
         if (p.type === 'verification_rejected') return { icon: 'x', title: 'Verification declined', body: p.reason ? tx('Reason: {reason}. You can try again.', { reason: p.reason }) : 'You can try again', go: () => router.push('/verify') };
         return { icon: 'user', title: 'Profile update', body: '' };
       default:

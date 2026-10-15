@@ -12,6 +12,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
+import { ACCESS_LIMIT, GirlClosed, GirlGate, GirlLoading, isGirlRefusal, safeBack, withLimit } from '@/features/girl/access';
 import { matchApi } from '@/features/girl/api';
 import { ACTIVITIES, AVAILABILITY, GOALS, HIDEABLE, INTERESTS, LANGUAGES, LIFESTYLE, SPORTS, TRAVEL } from '@/features/girl/taxonomy';
 import { girl } from '@/features/girl/theme';
@@ -20,6 +21,7 @@ import { GButton, GChip, GSection, Wrap } from '@/features/girl/ui';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
+import { friendlyError } from '@/lib/supabase';
 import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 
@@ -47,7 +49,15 @@ const toggle = (list: string[], id: string, max = 99) =>
  */
 const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.ink, line: girl.line };
 
-export default function GirlProfile() {
+export default function GirlProfileScreen() {
+  return (
+    <GirlGate>
+      <GirlProfile />
+    </GirlGate>
+  );
+}
+
+function GirlProfile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const cityId = useCityId();
@@ -71,8 +81,11 @@ export default function GirlProfile() {
   const touched = useRef(false);
   useEffect(() => {
     let alive = true;
-    matchApi()
-      .then((api) => api.getProfile())
+    // Bounded: past the limit the screen offers Try again instead of waiting.
+    withLimit(
+      matchApi().then((api) => api.getProfile()),
+      ACCESS_LIMIT,
+    )
       .then((p) => {
         if (!alive) return;
         // Already typing: what the member typed stays.
@@ -135,7 +148,8 @@ export default function GirlProfile() {
       toast(editing ? 'Profile updated' : 'Your IRLY Match profile is live', 'sparkles', 'brand');
       router.replace('/girl');
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not save. Check your connection and try again.', 'x', 'live');
+      if (isGirlRefusal(e)) router.replace('/girl');
+      else toast(friendlyError(e instanceof Error ? e.message : 'Could not save. Check your connection and try again.'), 'x', 'live');
     } finally {
       setSaving(false);
     }
@@ -148,13 +162,26 @@ export default function GirlProfile() {
     else save();
   };
 
+  // Nothing to fill in before the saved profile is known: a blank form would hide it, and saving it would replace it.
+  if (loaded === 'loading') return <GirlLoading label="Loading your profile…" />;
+  if (loaded === 'failed')
+    return (
+      <GirlClosed
+        reason="error"
+        onRetry={() => {
+          setLoaded('loading');
+          setLoadTry((n) => n + 1);
+        }}
+      />
+    );
+
   return (
     <View style={[styles.root, { backgroundColor: girl.bg, paddingTop: insets.top + 8 }]}>
       <View style={styles.head}>
         <PressableScale
           haptic="tap"
           scaleTo={0.9}
-          onPress={() => (step > 0 ? setStep(step - 1) : router.back())}
+          onPress={() => (step > 0 ? setStep(step - 1) : safeBack(router, '/'))}
           accessibilityLabel={step > 0 ? 'Previous step' : 'Close'}
           style={styles.round}
         >

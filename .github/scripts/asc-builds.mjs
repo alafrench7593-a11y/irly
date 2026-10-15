@@ -101,3 +101,23 @@ if (cancel) {
     console.log(`cancel ${mask(cancel)}: ${r.ok ? 'invitation withdrawn' : r.status}`);
   }
 }
+
+// ITMS-90118 ("Invalid routing app setting"): a routing app coverage file
+// attached to an App Store version while the binary does not declare itself a
+// routing app. List each version's coverage file (read only). REMOVE_ROUTING_COVERAGE=1
+// deletes it, only when asked: IRLY shows maps but gives no directions to other apps.
+const versions = await get(`/v1/apps/${APP}/appStoreVersions?limit=10&include=routingAppCoverage`);
+if (versions.error) console.log('\nApp Store versions: could not read:', versions.error);
+else {
+  const cov = Object.fromEntries((versions.included || []).filter((x) => x.type === 'routingAppCoverages').map((x) => [x.id, x]));
+  console.log('\nApp Store versions and routing app coverage:');
+  for (const v of versions.data) {
+    const id = v.relationships?.routingAppCoverage?.data?.id;
+    const c = id ? cov[id] : null;
+    console.log(`  ${v.attributes.versionString} · ${v.attributes.appStoreState ?? v.attributes.appVersionState ?? '?'} · routing coverage: ${c ? `${c.attributes.fileName ?? 'file'} (${c.attributes.assetDeliveryState?.state ?? 'state ?'})` : 'none'}`);
+    if (c && process.env.REMOVE_ROUTING_COVERAGE === '1') {
+      const r = await fetch(`https://api.appstoreconnect.apple.com/v1/routingAppCoverages/${c.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${jwt}` } });
+      console.log(`    removed: ${r.ok ? 'yes' : `no (${r.status})`}`);
+    }
+  }
+}
