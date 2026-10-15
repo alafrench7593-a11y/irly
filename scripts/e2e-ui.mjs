@@ -167,8 +167,27 @@ async function main() {
   await browser.close();
 }
 
+// Regression guard: an account deleted while the app is still signed in to it makes the sign-in profile
+// write fail on profiles_id_fkey (another run's cleanup did that when E2E runs overlapped). None may be
+// recorded while this run's app was open.
+async function noProfileFkey(since) {
+  const [{ n }] = await sql(`select count(*)::int as n from public.analytics_events where name = 'SERVER_ERROR' and props->>'code' = 'profiles_id_fkey' and created_at >= '${since}'`);
+  if (n === 0) {
+    passed++;
+    console.log('✓ no sign-in profile write refused by profiles_id_fkey during this run');
+  } else {
+    failed++;
+    failures.push(`${n} sign-in profile write(s) refused by profiles_id_fkey during this run`);
+    console.log(`✗ ${n} sign-in profile write(s) refused by profiles_id_fkey during this run`);
+  }
+}
+
+const [{ started }] = await sql(`select now()::text as started`);
 try {
   await main();
+  // The app flushes analytics every 4 s: let the last batch land.
+  await new Promise((r) => setTimeout(r, 6000));
+  await noProfileFkey(started);
 } catch (e) {
   failed++;
   failures.push(`setup: ${e instanceof Error ? e.message : e}`);
