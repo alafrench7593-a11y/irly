@@ -20,16 +20,63 @@ on:
     types: [completed]
     branches: [claude/confident-ride-1o2o3x]
 
-concurrency:
-  group: irly-backend
-  cancel-in-progress: false
+permissions:
+  contents: read
+  actions: read
 
 jobs:
-  api:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+  # A push that changes the database must not be tested before its migrations
+  # are deployed (it once tested the old schema and passed). Holds no
+  # concurrency slot, so it can wait for the Database run without deadlock.
+  wait-db:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Wait for this commit's database deploy
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          # Same paths as the push filter of supabase.yml (keep in sync).
+          DB_PATHS='^(supabase/|scripts/deploy-db\.mjs$|scripts/test-db\.sh$|scripts/check-(intent|network|bali|community|areas)\.mts$|src/features/(network|ai|community)/|src/features/bali/fit\.ts$|scripts/place-tags\.mjs$|src/data/destinations\.ts$|\.github/workflows/supabase\.yml$)'
+          if git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            changed=$(git diff --name-only "$BEFORE" "$SHA")
+          else
+            changed=$(git show --name-only --format= "$SHA")
+          fi
+          if ! grep -qE "$DB_PATHS" <<<"$changed"; then echo "No database change in this push."; exit 0; fi
+          echo "Database change in this push: waiting for the Database run of $SHA."
+          for i in $(seq 1 85); do
+            run=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/supabase.yml/runs?head_sha=$SHA&per_page=1" \
+                  --jq '.workflow_runs[0] | "\(.status) \(.conclusion)"')
+            echo "  $run"
+            case "$run" in
+              "completed success") exit 0 ;;
+              completed*) echo "::error::Database run for $SHA did not succeed ($run): E2E would test the old schema."; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "::error::Timed out waiting for the Database run"; exit 1
+
+  api:
+    needs: wait-db
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    # E2E runs never overlap each other (they share throwaway accounts).
+    concurrency:
+      group: irly-e2e-live
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # After a deploy: test exactly the commit Database deployed, not the branch tip.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -41,11 +88,13 @@ jobs:
         run: node scripts/e2e.mjs
 
   ui:
-    needs: api
-    if: always() && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    needs: [wait-db, api]
+    if: always() && needs.wait-db.result == 'success' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22

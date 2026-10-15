@@ -125,7 +125,9 @@ async function main() {
   await check('Communities: All lists the IRLY catalogue; search finds IRLY Expats (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expats'], async () => {
     await page.getByPlaceholder('Search by name or theme').fill('expats');
   });
-  await check('Match IRLY in the bar opens people to meet', '/', ['People to meet'], async () => {
+  // Match IRLY is not open yet (src/lib/features.ts): the bar button must lead to its
+  // coming-soon page, which says so, not to a list of people.
+  await check('Match IRLY in the bar opens its coming-soon page', '/', ['Match IRLY is not open yet', 'Tell me when it opens'], async () => {
     await page.getByRole('button', { name: 'Match IRLY' }).first().click();
   });
   await check('Home shows Live Bali', '/', ['Live Bali']);

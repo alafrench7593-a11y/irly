@@ -453,6 +453,20 @@ try {
   await step('a stranger cannot add himself to a private chat', () => denied(C.sb.from('conversation_members').insert({ conversation_id: matchConv, user_id: C.id })));
   await step('a member cannot edit someone else\'s message', async () => (must(await A.sb.from('messages').update({ body: 'forged' }).eq('conversation_id', matchConv).neq('sender_id', A.id).select('id'))).length === 0);
   await step('a member cannot make herself an admin', () => denied(B.sb.from('profiles').update({ is_admin: true }).eq('id', B.id).select().single()));
+  // Security audit (20261020001000): the profiles_public view was writable through Supabase's
+  // default grants, so anyone could rename or delete another member. Local DB tests re-grant
+  // tables after the migrations and cannot prove the revoke: checked here, on the live project.
+  await step('nobody can rename another member through profiles_public', async () => {
+    await C.sb.from('profiles_public').update({ first_name: 'Pwned' }).eq('id', A.id);
+    const row = must(await A.sb.from('profiles').select('first_name').eq('id', A.id).single());
+    return row.first_name !== 'Pwned';
+  });
+  await step('nobody can delete another member through profiles_public', async () => {
+    await C.sb.from('profiles_public').delete().eq('id', A.id);
+    return Boolean(must(await A.sb.from('profiles').select('id').eq('id', A.id).maybeSingle()));
+  });
+  await step('a visitor cannot read profiles_public', async () => ((await anon.from('profiles_public').select('id').limit(1)).data ?? []).length === 0);
+  await step('a visitor cannot call signed-in-only functions (search_all)', async () => Boolean((await anon.rpc('search_all', { p_q: 'pa' })).error));
   await step('a member cannot send a message in someone else\'s name', () => denied(B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: A.id, body: 'forged sender' })));
   const jpeg = Uint8Array.from(atob('/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA='), (c) => c.charCodeAt(0));
   const own = `${A.id}/sec-${run}.jpg`;
