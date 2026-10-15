@@ -171,7 +171,7 @@ async function main() {
 // write fail on profiles_id_fkey (another run's cleanup did that when E2E runs overlapped). None may be
 // recorded while this run's app was open.
 async function noProfileFkey(since) {
-  const [{ n }] = await sql(`select count(*)::int as n from public.analytics_events where name = 'SERVER_ERROR' and props->>'code' = 'profiles_id_fkey' and created_at >= '${since}'`);
+  const [{ n }] = await sql(`select count(*)::int as n from public.analytics_events where name = 'SERVER_ERROR' and props->>'code' = 'profiles_id_fkey' and platform = 'web' and created_at >= '${since}'`);
   if (n === 0) {
     passed++;
     console.log('✓ no sign-in profile write refused by profiles_id_fkey during this run');
@@ -185,14 +185,18 @@ async function noProfileFkey(since) {
 const [{ started }] = await sql(`select now()::text as started`);
 try {
   await main();
-  // The app flushes analytics every 4 s: let the last batch land.
-  await new Promise((r) => setTimeout(r, 6000));
-  await noProfileFkey(started);
 } catch (e) {
   failed++;
   failures.push(`setup: ${e instanceof Error ? e.message : e}`);
   console.log('✗ setup', e);
 } finally {
+  // Checked even when the run failed (a run whose accounts were deleted under it fails in setup).
+  // The app flushes analytics every 4 s: let the last batch land.
+  await new Promise((r) => setTimeout(r, 6000));
+  await noProfileFkey(started).catch((e) => {
+    failed++;
+    failures.push(`profiles_id_fkey check: ${e instanceof Error ? e.message : e}`);
+  });
   await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
   server.close();
 }

@@ -1,6 +1,7 @@
 import { useBaliStore } from '@/features/bali/baliStore';
 import { useGirlStore } from '@/features/girl/girlStore';
 import { useLiveStore } from '@/features/live/liveStore';
+import { pendingJournal } from '@/features/live/pendingLive';
 import { clearFaces } from '@/features/server/faces';
 import { useDrafts } from '@/features/posts/posts';
 import { useStore } from './store';
@@ -23,6 +24,8 @@ export function wipeLocal(): void {
     () => useLiveStore.setState({ mine: [] }),
     // Unsent posts and Lives: never offered to the next person on this phone.
     () => useDrafts.setState({ byKey: {} }),
+    // Lives whose publish had no answer yet (their text and file paths): the account that left settles them no more.
+    () => pendingJournal.clear(),
   ];
   for (const wipe of parts) {
     try {

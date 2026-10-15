@@ -15,7 +15,11 @@ import type { AreaProfile, OpeningHours } from './fit';
  */
 
 function useQuery<T>(key: string, run: () => Promise<T>, initial: T): { data: T; loading: boolean; error: string | null; reload: () => void } {
-  const [data, setData] = useState<T>(initial);
+  // The account whose read this is: another account (signed in meanwhile, another tab) never sees it,
+  // even while its own read is on its way or after it failed.
+  const uid = useAccount()?.userId ?? '';
+  const [result, setResult] = useState<{ data: T; uid: string }>({ data: initial, uid });
+  const data = result.uid === uid ? result.data : initial;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -29,11 +33,12 @@ function useQuery<T>(key: string, run: () => Promise<T>, initial: T): { data: T;
   }
   useEffect(() => {
     let alive = true;
+    const reader = uid;
     // No retry of our own here: the Supabase client already retries a dropped request.
     run()
       .then((d) => {
         if (!alive) return;
-        setData(d);
+        setResult({ data: d, uid: reader });
         setError(null);
       })
       .catch((e) => alive && setError(e instanceof Error ? e.message : 'Could not load'))
@@ -41,8 +46,8 @@ function useQuery<T>(key: string, run: () => Promise<T>, initial: T): { data: T;
     return () => {
       alive = false;
     };
-    // `key` captures every input of `run`.
-  }, [key, tick]); // eslint-disable-line react-hooks/exhaustive-deps
+    // `key` captures every input of `run`; another account reads again (its data is never the previous one's).
+  }, [key, tick, uid]); // eslint-disable-line react-hooks/exhaustive-deps
   const reload = useCallback(() => setTick((n) => n + 1), []);
   return { data, loading, error, reload };
 }

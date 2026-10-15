@@ -255,6 +255,23 @@ export function restoreProfile(uid: string): Promise<boolean> {
   return run;
 }
 
+/** Still the signed-in account (an account switch can happen while a request is on its way). */
+const stillSignedIn = (uid: string) => useAuthStore.getState().account?.userId === uid;
+
+/**
+ * The server refused a profile because its account no longer exists (deleted
+ * on another phone, or by an admin) while this phone still holds a valid
+ * session token: asked to the auth server, never guessed. Signing out here
+ * wipes this phone (SIGNED_OUT) instead of asking that person to finish a
+ * profile that can never be saved. A network failure is not an answer.
+ */
+async function signOutIfAccountGone(uid: string): Promise<void> {
+  if (!supabase || !stillSignedIn(uid)) return;
+  const { data, error } = await supabase.auth.getUser();
+  const gone = error ? error.status === 401 || error.status === 403 || error.code === 'user_not_found' : !data.user;
+  if (gone && stillSignedIn(uid)) await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+}
+
 async function readBack(uid: string, force = false): Promise<boolean> {
   if (!supabase || (!force && useStore.getState().onboarded)) return false;
   const { data, error } = await supabase.rpc('my_profile');
@@ -273,6 +290,8 @@ async function readBack(uid: string, force = false): Promise<boolean> {
   const born = r.birthdate ? new Date(r.birthdate).getFullYear() : null;
   const st = useStore.getState();
   if (!force && st.onboarded) return false;
+  // Another account signed in meanwhile: this answer is not its profile.
+  if (!stillSignedIn(uid)) return false;
   st.updateProfile({
     ownerId: uid,
     name: r.first_name,
@@ -316,7 +335,13 @@ async function writeProfile(uid: string): Promise<boolean> {
   if (!profile.gender) return skipped(onboarded, 'incomplete');
   const row = toRow(uid, profile, cityId ?? 'dubai');
   const { error } = await supabase.from('profiles').upsert(row, { onConflict: 'id', ignoreDuplicates: true });
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Still recorded by the caller (profiles_id_fkey): a deleted account's leftover session.
+    if (/profiles_id_fkey/.test(error.message)) await signOutIfAccountGone(uid);
+    throw new Error(error.message);
+  }
+  // Another account signed in meanwhile: the profile on this phone is now theirs, never stamped with this one.
+  if (!stillSignedIn(uid)) return true;
   useStore.getState().updateProfile({ ownerId: uid });
   // An IRLY avatar is stored as is (no file to upload).
   if (isAvatar(profile.photoUri)) {

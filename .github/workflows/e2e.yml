@@ -68,6 +68,8 @@ jobs:
     needs: wait-db
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    # Bounded well under the 2-hour sweep of abandoned test accounts: a run still going is never swept.
+    timeout-minutes: 60
     # E2E runs never overlap each other (they share throwaway accounts).
     concurrency:
       group: irly-e2e-live
@@ -91,6 +93,7 @@ jobs:
     needs: [wait-db, api]
     if: always() && needs.wait-db.result == 'success' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     # Same group as api: no two E2E jobs run at once, across runs (their test
     # accounts and cleanups must never overlap another run's).
     concurrency:
