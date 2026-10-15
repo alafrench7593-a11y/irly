@@ -5,7 +5,7 @@ import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
-import { supabase, topic } from '@/lib/supabase';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, echoGate, expectEcho, heardMessage, resetSyncEchoes, syncNow, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import { uploadChatPhoto } from './media';
@@ -164,19 +164,21 @@ function listenInbox(uid: string): () => void {
     // and none when a read sent after them (your own action's) already has them.
     const gate = echoGate(() => refreshInbox(uid), 800, () => inboxReadAt);
     // Joins, leaves, renames and deletions arrive through the app's sync channel.
-    const channel = sb
-      .channel(topic(`inbox-${uid}`))
+    const channel = liveChannel(`inbox-${uid}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         // Its conversation's last_message_at bump (same transaction) is not a second inbox reload.
         heardMessage(payload);
         gate.heard(payload);
       })
-      .subscribe();
+      // Listening: a message sent before then is in no event (one coalesced inbox read).
+      .subscribe(whenListening(() => gate.heard()));
     // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
     // UPDATE never reaches you; the removal row does (members only), and the preview updates.
     // Its own channel: Realtime refuses a whole channel when one of its tables is missing,
     // and new messages must keep arriving whatever happens to this one.
-    const removals = sb.channel(topic(`inbox-removals-${uid}`)).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals' }, gate.heard).subscribe();
+    const removals = liveChannel(`inbox-removals-${uid}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals' }, gate.heard)
+      .subscribe(whenListening(() => gate.heard()));
     inboxLive = {
       uid,
       users: 0,
@@ -540,7 +542,7 @@ export function useServerThread(conversationId: string): ServerThread {
       },
       () => undefined,
     );
-    (async () => {
+    const initial = (async () => {
       try {
         const [{ conv, error: e1 }, msgs] = await Promise.all([head, page]);
         if (!alive) return;
@@ -566,9 +568,11 @@ export function useServerThread(conversationId: string): ServerThread {
       }
     })();
 
-    // Back from the background or a reconnection: fetch what was missed.
+    // Back from the background, a reconnection, or the channel starting to listen: fetch what was
+    // missed. After the first page only, which would otherwise replace what this brought.
     const catchUp = () =>
-      latest()
+      initial
+        .then(() => (alive ? latest() : []))
         .then((msgs) => {
           if (!alive) return;
           const shown = new Set(rowsRef.current.map((x) => x.id));
@@ -592,7 +596,15 @@ export function useServerThread(conversationId: string): ServerThread {
         })
         .catch(() => undefined);
 
-    let joinedOnce = false;
+    // Both channels start listening within moments of each other: one catch-up for the two.
+    let soon: ReturnType<typeof setTimeout> | null = null;
+    const catchUpSoon = () => {
+      if (soon) return;
+      soon = setTimeout(() => {
+        soon = null;
+        catchUp();
+      }, 150);
+    };
     // "Typing…" needs every member on the same topic (data changes do not):
     // one shared topic per conversation.
     const typingChannel = joinTyping(`typing:${conversationId}`, (who) => {
@@ -600,8 +612,7 @@ export function useServerThread(conversationId: string): ServerThread {
       setTypingNames((t) => ({ ...t, [who]: Date.now() }));
     });
     channelRef.current = typingChannel.channel;
-    const channel = supabase
-      .channel(topic(`thread-${conversationId}`))
+    const channel = liveChannel(`thread-${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow;
         arrived.add(m.id);
@@ -616,18 +627,12 @@ export function useServerThread(conversationId: string): ServerThread {
         const m = payload.new as MessageRow & { deleted_at?: string | null };
         setRows((list) => (m.deleted_at ? list.filter((x) => x.id !== m.id) : merge(list, [m])));
       })
-      .subscribe((status) => {
-        // A rejoin after a dropped connection: the gap is filled from the server.
-        if (status === 'SUBSCRIBED') {
-          if (joinedOnce) catchUp();
-          joinedOnce = true;
-        }
-      });
+      // Listening (first time or after a dropped connection): the gap is filled from the server.
+      .subscribe(whenListening(catchUpSoon));
     // Deleted for everyone by its sender: RLS hides the deleted row from the other members,
     // so they never get the UPDATE above. The removal row (members only) carries it instead.
     // Its own channel, so a problem with it can never stop new messages from arriving.
-    const removals = supabase
-      .channel(topic(`thread-removals-${conversationId}`))
+    const removals = liveChannel(`thread-removals-${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const gone = (payload.new as { message_id?: string }).message_id;
         if (!gone) return;
@@ -637,12 +642,14 @@ export function useServerThread(conversationId: string): ServerThread {
         // The preview: the inbox hears this removal itself (listenInbox); only its list, not every inbox screen.
         if (inboxLive?.uid !== uid) refreshInbox(uid);
       })
-      .subscribe();
+      // A removal missed before listening: the newest page replaces its span (deleted ones go).
+      .subscribe(whenListening(catchUpSoon));
     const app = AppState.addEventListener('change', (st) => {
       if (st === 'active') catchUp();
     });
     return () => {
       alive = false;
+      if (soon) clearTimeout(soon);
       app.remove();
       channelRef.current = null;
       supabase?.removeChannel(channel);

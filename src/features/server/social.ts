@@ -4,7 +4,7 @@ import { useCityFilter } from './scope';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
-import { friendlyError, supabase, topic } from '@/lib/supabase';
+import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { seedLink, signedLinks } from './media';
 import { uuid } from '@/lib/uuid';
@@ -174,8 +174,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         reload(isAlive);
       }, 400);
     };
-    const channel = supabase
-      .channel(topic(`irl-${cityId}-${uid}`))
+    const channel = liveChannel(`irl-${cityId}-${uid}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, (payload) => {
         // My own post, already confirmed and shown, and its feed reload already asked: not twice.
         const id = (payload.new as { id?: string } | null)?.id;
@@ -188,7 +187,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         const id = (payload.old as { id?: string } | null)?.id;
         if (!id || shownIds.current.has(id)) later();
       })
-      .subscribe();
+      // Listening: a Live posted before then is in no event.
+      .subscribe(whenListening(later));
     return () => {
       alive = false;
       if (timer) clearTimeout(timer);

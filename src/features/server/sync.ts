@@ -294,7 +294,7 @@ const SIGNAL_KINDS: Record<string, SyncKind[]> = {
 };
 const SIGNAL_CATCH_UP: SyncKind[] = ['activities', 'communities', 'inbox', 'follows', 'friends', 'saved'];
 
-type Watched = { table: string; filter?: string; event?: '*' | 'INSERT' | 'UPDATE'; kinds: SyncKind[] };
+type Watched = { table: string; filter?: string; event?: '*' | 'INSERT' | 'UPDATE'; kinds: SyncKind[]; ignore?: (row: Record<string, unknown>) => boolean };
 const watched = (uid: string): Watched[] => [
   { table: 'activities', kinds: ['activities'] },
   // Joins and status changes you may see (the read rule limits them); leaves arrive as signals.
@@ -315,7 +315,9 @@ const watched = (uid: string): Watched[] => [
   { table: 'conversations', event: 'UPDATE', kinds: ['inbox'] },
   { table: 'profiles', event: 'UPDATE', kinds: ['people'] },
   { table: 'saves', filter: `user_id=eq.${uid}`, event: 'INSERT', kinds: ['saved'] },
-  { table: 'notifications', filter: `user_id=eq.${uid}`, kinds: ['notifs'] },
+  // One MESSAGE_CREATED row per chat message received (and its read receipt): the bell never
+  // lists them (the inbox shows messages), so they are not a reason to re-read it.
+  { table: 'notifications', filter: `user_id=eq.${uid}`, kinds: ['notifs'], ignore: (row) => row.kind === 'MESSAGE_CREATED' },
   // Follows you are part of (the read rule limits them): counts and buttons everywhere.
   { table: 'follows', event: 'INSERT', kinds: ['follows'] },
   // Friend requests and friendships you are part of (the read rule limits them):
@@ -360,9 +362,12 @@ export function startSync(uid: string): () => void {
     });
   // One channel per table: a table the server does not publish (yet) can
   // only silence itself, never the others.
-  const channels = watched(uid).map(({ table, filter, event = '*', kinds }) =>
+  const channels = watched(uid).map(({ table, filter, event = '*', kinds, ignore }) =>
     watch(`${table}:${event}`, kinds, (c) =>
-      c.on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, (payload) => hear(table, payload, kinds)),
+      c.on('postgres_changes', { event, schema: 'public', table, ...(filter ? { filter } : {}) }, (payload) => {
+        if (ignore?.((payload.new ?? {}) as Record<string, unknown>)) return;
+        hear(table, payload, kinds);
+      }),
     ),
   );
   // Leaves, removals, unfriends, unfollows and unsaves that concern you,

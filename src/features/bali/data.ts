@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
-import { supabase, topic } from '@/lib/supabase';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { cityScope } from '@/data/destinations';
 import { useCityFilter } from '@/features/server/scope';
 import { useRefreshOn } from '@/features/server/sync';
@@ -338,16 +338,17 @@ export function usePlaceActivities(slug: string) {
     if (!supabase) return;
     // Any join anywhere arrives here (no place to filter on): a burst is one reload.
     let soon: ReturnType<typeof setTimeout> | null = null;
-    const channel = supabase
-      .channel(topic(`place-acts-${slug}`))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, () => {
-        if (soon) return;
-        soon = setTimeout(() => {
-          soon = null;
-          reload();
-        }, 800);
-      })
-      .subscribe();
+    const later = () => {
+      if (soon) return;
+      soon = setTimeout(() => {
+        soon = null;
+        reload();
+      }, 800);
+    };
+    const channel = liveChannel(`place-acts-${slug}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants' }, later)
+      // Listening: a join made before then is in no event.
+      .subscribe(whenListening(later));
     return () => {
       if (soon) clearTimeout(soon);
       supabase?.removeChannel(channel);

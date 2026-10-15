@@ -7,7 +7,7 @@ import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { signedLinks } from '@/features/server/media';
-import { supabase, topic } from '@/lib/supabase';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import type { MyPlan } from '@/state/store';
@@ -528,11 +528,11 @@ export function useServerActivity(id: string): { detail: ActivityDetail | null; 
     alive.current = true;
     if (!supabase || !uid) return;
     read();
-    const channel = supabase
-      .channel(topic(`activity-${id}`))
+    const channel = liveChannel(`activity-${id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activity_participants', filter: `activity_id=eq.${id}` }, read)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'activities', filter: `id=eq.${id}` }, read)
-      .subscribe();
+      // Listening: a join or edit made before then is in no event (read() folds into one in flight).
+      .subscribe(whenListening(read));
     return () => {
       alive.current = false;
       reading.current = null;

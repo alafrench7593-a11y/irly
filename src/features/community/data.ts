@@ -4,7 +4,7 @@ import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
-import { supabase, topic } from '@/lib/supabase';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, echoGate, syncNow, useRefreshOn, useSyncVersion } from '@/features/server/sync';
 import { askPushInContext } from '@/features/push/push';
 import { toast } from '@/components/ui/Toast';
@@ -274,11 +274,11 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
     const posts = echoGate(reload, 250, () => sentAt.current);
     // Pins are rare: any pin or unpin reloads (an unpin carries no community to filter on).
     const pins = echoGate(reload, 800, () => sentAt.current);
-    const channel = supabase
-      .channel(topic(`community-${communityId}`))
+    const channel = liveChannel(`community-${communityId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, posts.heard)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins' }, pins.heard)
-      .subscribe();
+      // Listening: a post made before then is in no event (one coalesced reload).
+      .subscribe(whenListening(() => posts.heard()));
     return () => {
       alive = false;
       posts.cancel();
@@ -303,8 +303,7 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
     // Likes, comments and votes on the posts shown: a burst is one reload (none when a newer read has them).
     const gate = echoGate(refresh, 800, () => sentAt.current);
     const later = gate.heard;
-    const channel = supabase
-      .channel(topic(`community-eng-${communityId}`))
+    const channel = liveChannel(`community-eng-${communityId}`)
       // Votes and likes: new and changed ones only. Their deletes carry no key
       // (Realtime cannot check them against RLS, so the server strips it):
       // a withdrawn vote or like shows on the next load.
@@ -312,7 +311,7 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, later)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
-      .subscribe();
+      .subscribe(whenListening(() => later()));
     return () => {
       gate.cancel();
       supabase?.removeChannel(channel);

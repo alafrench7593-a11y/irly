@@ -31,7 +31,7 @@ const STUBS: Record<string, string> = {
   'expo-router': stub(`export const useFocusEffect = (cb) => ${H}.react.useEffect(() => cb(), [cb]);`),
   '@/features/auth/account': stub(`export const useAccount = () => ({ userId: ${H}.uid }); export const withProfile = (fn) => fn();`),
   '@/lib/supabase': stub(
-    `export const supabase = ${H}.supabase; let n = 0; export const topic = (s) => s + '#' + (++n); export const friendlyError = (m) => m;`,
+    `export const supabase = ${H}.supabase; let n = 0; export const topic = (s) => s + '#' + (++n); export const friendlyError = (m) => m; export const liveChannel = (name) => ${H}.supabase.channel(topic(name), { config: { postgres_changes_options: { wait: true } } }); export const whenListening = (catchUp) => (status) => { if (status === 'SUBSCRIBED') catchUp(); };`,
   ),
   '@/features/push/push': stub(`export const askPushInContext = async () => undefined;`),
   '@/features/moderation/moderation': stub(`const list = []; export const useBlocked = () => ({ list, refresh() {} });`),
@@ -648,7 +648,9 @@ for (const l of ['create activity', 'join activity', 'post Live (with its activi
 }
 expect(n('open chat (2 unread)', 'my_conversations') === 0, 'open chat: no inbox reload for my own read');
 expect(get('open chat (2 unread)').notes.includes('badge after: 0'), 'open chat: the badge drops to 0 at once');
-expect(n('open chat (2 unread)', 'notifications') === 1, 'open chat: the bell reloads once (its notifications were marked read)');
+expect(n('open chat (2 unread)', 'notifications') === 0, 'open chat: the bell is not re-read for its message notifications (it never lists them)');
+expect(n('open chat (2 unread)', 'messages.select') <= 2, 'open chat: the first page and at most one catch-up once its channels listen');
+expect(n("someone else's message in open chat", 'notifications') === 0, "someone else's message: the bell is not re-read (message notifications are not listed there)");
 expect(n('send message in open chat', 'my_conversations') === 1, 'send: one inbox reload (the new preview)');
 expect(n('send message in open chat', 'mark_conversation_read') === 0, 'send: no read receipt for my own message');
 expect(n('send message in open chat', 'conversations.select') === 0 && n('send message in open chat', 'chat_members') === 0, 'send: the chat photo, title and members are not re-read');

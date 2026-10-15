@@ -6,7 +6,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
-import { supabase, topic } from '@/lib/supabase';
+import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, echoGate, syncNow, useRefreshOn, willReload } from './sync';
 
 /**
@@ -106,24 +106,28 @@ export function useEngagement(type: TargetType, ids: string[]) {
   useEffect(() => {
     if (!supabase || !uid || !key) return;
     let alive = true;
-    const reload = () =>
+    // Answers can cross (the first read and a catch-up): only the latest one sent is shown.
+    let sent = 0;
+    const reload = () => {
+      const n = ++sent;
       fetchMap()
-        .then((m) => alive && setMap(m))
+        .then((m) => alive && n === sent && setMap(m))
         .catch(() => undefined);
+    };
     reload();
     // Only the items shown, when Realtime can filter on them (else every
     // like of this type app-wide); a burst of events is one reload.
     const later = debounced(reload, 600);
     const filter = realtimeIdsFilter(key.split(',')) ?? `target_type=eq.${type}`;
-    const channel = supabase
-      .channel(topic(`eng-${type}-${key.length}-${uid}`))
+    const channel = liveChannel(`eng-${type}-${key.length}-${uid}`)
       // New likes only: an unlike's DELETE carries no key (stripped server-side for privacy).
       // My own like is on screen already (toggled here, confirmed by its answer): not a reload.
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter }, (payload) => {
         if ((payload.new as { user_id?: string } | null)?.user_id !== uid) later.call();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter }, later.call)
-      .subscribe();
+      // Listening: a like made before then is in no event.
+      .subscribe(whenListening(later.call));
     return () => {
       alive = false;
       later.cancel();
@@ -389,10 +393,10 @@ export function useComments(t: Target) {
     // A burst of events (a busy thread) is one reload; none for your own comment,
     // whose refresh (sent after it was saved) has it already.
     const gate = echoGate(() => read(false), 600, () => sentAt.current);
-    const channel = supabase
-      .channel(topic(`comments-${t.type}-${t.id}`))
+    const channel = liveChannel(`comments-${t.type}-${t.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: `target_id=eq.${t.id}` }, gate.heard)
-      .subscribe();
+      // Listening: a comment made before then is in no event.
+      .subscribe(whenListening(() => gate.heard()));
     return () => {
       seq.current += 1;
       gate.cancel();
@@ -414,10 +418,9 @@ export function useComments(t: Target) {
     if (!supabase || !uid || !likeKey) return;
     // Your own like refreshes the thread itself (comments screen): its echo is then read already.
     const gate = echoGate(() => read(false), 600, () => sentAt.current);
-    const channel = supabase
-      .channel(topic(`comment-likes-${t.type}-${t.id}`))
+    const channel = liveChannel(`comment-likes-${t.type}-${t.id}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter: realtimeIdsFilter(likeKey.split(',')) ?? 'target_type=eq.comment' }, gate.heard)
-      .subscribe();
+      .subscribe(whenListening(() => gate.heard()));
     return () => {
       gate.cancel();
       supabase?.removeChannel(channel);

@@ -620,6 +620,43 @@ try {
     if (got.a === 0) throw new Error('the member received nothing (Realtime not working)');
     return true;
   });
+  // What the app relies on (src/lib/supabase.ts liveChannel): with postgres_changes_options.wait,
+  // SUBSCRIBED only comes once the server listens, so an insert made right after it is delivered.
+  // Measured without wait too (times on this runner's clock, nothing personal printed).
+  await step('Realtime: with wait, SUBSCRIBED means listening (an insert right after it is delivered)', async () => {
+    await B.sb.realtime.setAuth((await B.sb.auth.getSession()).data.session.access_token);
+    const probe = async (wait) => {
+      const t0 = performance.now();
+      const body = `probe-${wait ? 'wait' : 'nowait'}-${run}`;
+      const got = [];
+      let subscribed = null;
+      let postgresOk = null;
+      const ch = A.sb
+        .channel(`probe-${wait ? 'w' : 'n'}-${run}`, wait ? { config: { postgres_changes_options: { wait: true } } } : undefined)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${matchConv}` }, (p) => got.push({ at: performance.now(), body: p.new?.body }))
+        .on('system', {}, (m) => {
+          if (postgresOk === null && m?.extension === 'postgres_changes' && m?.status === 'ok') postgresOk = Math.round(performance.now() - t0);
+        });
+      await new Promise((resolve) => {
+        ch.subscribe((s) => {
+          if (s === 'SUBSCRIBED') {
+            subscribed = Math.round(performance.now() - t0);
+            resolve();
+          }
+        });
+        setTimeout(resolve, 25000);
+      });
+      must(await B.sb.from('messages').insert({ conversation_id: matchConv, sender_id: B.id, body }));
+      const insertedAt = performance.now();
+      for (let i = 0; i < 30 && !got.some((g) => g.body === body); i++) await new Promise((r) => setTimeout(r, 500));
+      const hit = got.find((g) => g.body === body);
+      await ch.unsubscribe();
+      return { wait, subscribedMs: subscribed, postgresOkMs: postgresOk, delivered: Boolean(hit), deliveryMs: hit ? Math.round(hit.at - insertedAt) : null };
+    };
+    const results = [await probe(false), await probe(true)];
+    console.log(`   realtime probe: ${JSON.stringify(results)}`);
+    return results[1].delivered && results[1].subscribedMs !== null;
+  });
 
   // ───── Account deletion ─────
   // ───── Push tokens (20261020001300): bound to the phone's install secret ─────
