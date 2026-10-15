@@ -6,13 +6,16 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { joinCommunity, useCommunitiesLike, useGirlCircle, useGirlExtras, type CircleMember } from '@/features/bali/data';
+import { GirlGate, safeBack } from '@/features/girl/access';
 import { girl } from '@/features/girl/theme';
 import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { GButton, GChip, Wrap } from '@/features/girl/ui';
 import { hueOf } from '@/lib/format';
+import { friendlyError } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
@@ -32,8 +35,17 @@ const LOOKING = ['friends', 'activities', 'travel companions', 'coworking', 'wel
  * there. Same IRLY Girl rules (women only, privacy, blocking), plus the
  * Bali girl communities and the move guides.
  */
-export default function GirlsMoving() {
+export default function GirlsMovingScreen() {
+  return (
+    <GirlGate>
+      <GirlsMoving />
+    </GirlGate>
+  );
+}
+
+function GirlsMoving() {
   const router = useRouter();
+  const [joining, setJoining] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<Status | null>(null);
   const [looking, setLooking] = useState<string | null>(null);
@@ -46,13 +58,25 @@ export default function GirlsMoving() {
     extras
       .save({ destination: 'bali', ...patch })
       .then(() => haptic('success'))
-      .catch((e) => toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live'));
+      .catch((e) => toast(friendlyError(e instanceof Error ? e.message : 'Could not save'), 'x', 'live'));
+
+  const join = (id: string) => {
+    setJoining(id);
+    joinCommunity(id)
+      .then((conv) => {
+        haptic('success');
+        communities.reload();
+        if (conv) router.push(`/messages/${conv}`);
+      })
+      .catch((e) => toast(friendlyError(e instanceof Error ? e.message : 'Could not join'), 'x', 'live'))
+      .finally(() => setJoining(null));
+  };
 
   return (
     <View style={[styles.root]}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40, gap: space[6] }} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <PressableScale haptic="tap" scaleTo={0.9} onPress={() => router.back()} accessibilityLabel="Back" style={styles.round}>
+          <PressableScale haptic="tap" scaleTo={0.9} onPress={() => safeBack(router, '/girl')} accessibilityLabel="Back" style={styles.round}>
             <Icon name="chevronLeft" size={20} color={girl.ink} />
           </PressableScale>
           <Text variant="titleM" color={girl.ink} style={{ letterSpacing: 2 }}>
@@ -95,13 +119,22 @@ export default function GirlsMoving() {
         ) : extras.error ? (
           // Could not read the profile: never tell a member to create one she may have.
           <View style={styles.pad}>
-            <GButton label="Try again" icon="user" onPress={extras.reload} />
+            <View style={[styles.card, { gap: 10 }]}>
+              <Text variant="bodyS" color={girl.inkSoft}>
+                Your Bali status could not load.
+              </Text>
+              <GButton label="Try again" variant="secondary" onPress={extras.reload} />
+            </View>
           </View>
-        ) : !extras.loading ? (
+        ) : extras.loading ? (
           <View style={styles.pad}>
-            <GButton label="Create my IRLY Girl profile first" icon="user" onPress={() => router.push('/girl')} />
+            <Skeleton height={150} radius={radius.xl} />
           </View>
-        ) : null}
+        ) : (
+          <View style={styles.pad}>
+            <GButton label="Create my IRLY Girl profile first" icon="user" onPress={() => router.push('/girl/profile')} />
+          </View>
+        )}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
           <GChip small label="Everyone" selected={!status} onPress={() => setStatus(null)} />
@@ -118,17 +151,29 @@ export default function GirlsMoving() {
         </ScrollView>
 
         <View style={[styles.pad, { gap: 10 }]}>
-          {circle.error ? (
-            <Text variant="bodyS" color={girl.inkSoft}>
-              {/girl|women|reserved|profile/i.test(circle.error) ? tx(circle.error) : 'Could not load. Check your connection.'}
-            </Text>
+          {circle.loading && !circle.data.length ? (
+            [0, 1, 2].map((i) => <Skeleton key={i} height={80} radius={radius.xl} />)
+          ) : circle.error ? (
+            <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+              <Text variant="bodyS" color={girl.inkSoft} align="center">
+                {/profile/i.test(circle.error) ? tx(circle.error) : 'Could not load. Check your connection.'}
+              </Text>
+              <GButton label="Try again" variant="secondary" onPress={circle.reload} />
+            </View>
           ) : !circle.data.length ? (
             <Text variant="bodyS" color={girl.inkSoft}>
-              Nobody here yet. Set your status above: the next woman moving to Bali will find you.
+              {me?.hasProfile ? 'Nobody here yet. Set your status above: the next woman moving to Bali will find you.' : 'Nobody here yet. Create your IRLY Girl profile: the next woman moving to Bali will find you.'}
             </Text>
           ) : (
             circle.data.map((m) => (
-              <View key={m.userId} style={[styles.card, styles.row]}>
+              <PressableScale
+                key={m.userId}
+                haptic="select"
+                scaleTo={0.98}
+                onPress={() => router.push(`/person/${m.userId}`)}
+                accessibilityLabel={tx("View {name}'s profile", { name: m.firstName })}
+                style={[styles.card, styles.row]}
+              >
                 <Avatar name={m.firstName} hue={hueOf(m.userId)} size={48} userId={m.userId} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="titleS" color={girl.ink} raw>
@@ -151,7 +196,7 @@ export default function GirlsMoving() {
                     {m.score}%
                   </Text>
                 ) : null}
-              </View>
+              </PressableScale>
             ))
           )}
           {circle.data.length ? <GButton label="Connect in IRLY Girl" icon="heartHandshake" onPress={() => router.push('/girl')} /> : null}
@@ -170,35 +215,38 @@ export default function GirlsMoving() {
           <Text variant="titleM" color={girl.ink}>
             Bali girl communities
           </Text>
+          {communities.loading && !communities.data.length ? <Skeleton height={64} radius={radius.xl} /> : null}
+          {communities.error && !communities.data.length && !communities.loading ? (
+            <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+              <Text variant="bodyS" color={girl.inkSoft} align="center">
+                Communities could not load.
+              </Text>
+              <GButton label="Try again" variant="secondary" onPress={communities.reload} />
+            </View>
+          ) : null}
+          {!communities.data.length && !communities.loading && !communities.error ? (
+            <View style={[styles.card, { gap: 10 }]}>
+              <Text variant="bodyS" color={girl.inkSoft}>
+                No Bali girl community yet. Start one: the next woman moving here will find it.
+              </Text>
+              <GButton label="Create a community" icon="plus" variant="secondary" onPress={() => router.push('/community/new')} />
+            </View>
+          ) : null}
           {communities.data.map((c) => (
-            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row]} accessibilityLabel={c.name}>
-              <View style={{ flex: 1 }}>
-                <Text variant="titleS" color={girl.ink}>
+            // The row opens the community; Join sits beside it (never a button inside a button).
+            <View key={c.id} style={[styles.card, styles.row]}>
+              <PressableScale onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={{ flex: 1 }} accessibilityLabel={tx('Open {title}', { title: c.name })}>
+                <Text variant="titleS" color={girl.ink} raw>
                   {c.name}
                 </Text>
                 {c.tagline ? (
-                  <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
+                  <Text variant="caption" color={girl.inkSoft} numberOfLines={1} raw>
                     {c.tagline}
                   </Text>
                 ) : null}
-              </View>
-              {c.member ? (
-                <GChip small label={tx('Joined')} selected />
-              ) : (
-                <GButton
-                  label="Join"
-                  onPress={() =>
-                    joinCommunity(c.id)
-                      .then((conv) => {
-                        haptic('success');
-                        communities.reload();
-                        if (conv) router.push(`/messages/${conv}`);
-                      })
-                      .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'))
-                  }
-                />
-              )}
-            </PressableScale>
+              </PressableScale>
+              {c.member ? <GChip small label={tx('Joined')} selected /> : <GButton label="Join" loading={joining === c.id} disabled={Boolean(joining)} onPress={() => join(c.id)} />}
+            </View>
           ))}
         </View>
 

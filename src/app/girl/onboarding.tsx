@@ -10,12 +10,16 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
+import { CITIES } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
+import { GirlGate, isGirlRefusal, safeBack } from '@/features/girl/access';
 import { matchApi } from '@/features/girl/api';
 import { girl } from '@/features/girl/theme';
 import { GButton } from '@/features/girl/ui';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
+import { friendlyError } from '@/lib/supabase';
+import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 
 type Slide = { photo: PhotoKey; title: string; body: string; points?: { icon: IconName; text: string }[]; flow?: string[] };
@@ -24,7 +28,8 @@ const SLIDES: Slide[] = [
   {
     photo: 'girlFriends',
     title: 'Meet people who get you.',
-    body: 'Discover girls in Dubai who share your interests, your personality and your lifestyle.',
+    // {city}: the member's destination (filled in when shown).
+    body: 'Discover girls in {city} who share your interests, your personality and your lifestyle.',
   },
   {
     photo: 'girlFitness',
@@ -66,8 +71,17 @@ const SLIDES: Slide[] = [
  * photo drifting slower than the text (parallax), progress dots that
  * stretch for the current slide. Completion is stored server-side.
  */
-export default function GirlOnboarding() {
+export default function GirlOnboardingScreen() {
+  return (
+    <GirlGate>
+      <GirlOnboarding />
+    </GirlGate>
+  );
+}
+
+function GirlOnboarding() {
   const router = useRouter();
+  const cityName = CITIES[useCityId()]?.name ?? 'Dubai';
   const insets = useSafeAreaInsets();
   const frame = useFrame();
   const window = useWindowDimensions();
@@ -97,7 +111,9 @@ export default function GirlOnboarding() {
       haptic('success');
       router.replace('/girl/profile');
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not continue. Try again.', 'x', 'live');
+      // Closed meanwhile: IRLY Girl says why (the gate re-checks on the way).
+      if (isGirlRefusal(e)) router.replace('/girl');
+      else toast(friendlyError(e instanceof Error ? e.message : 'Could not continue. Try again.'), 'x', 'live');
     } finally {
       setSaving(false);
     }
@@ -116,12 +132,12 @@ export default function GirlOnboarding() {
         onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
       >
         {SLIDES.map((s, i) => (
-          <SlideView key={s.title} slide={s} i={i} x={x} width={width} top={insets.top} />
+          <SlideView key={s.title} slide={s} i={i} x={x} width={width} top={insets.top} city={cityName} />
         ))}
       </Animated.ScrollView>
 
       <View style={[styles.close, { top: insets.top + 10 }]}>
-        <PressableScale haptic="tap" scaleTo={0.9} onPress={() => router.back()} accessibilityLabel="Close" style={styles.closeBtn}>
+        <PressableScale haptic="tap" scaleTo={0.9} onPress={() => safeBack(router, '/')} accessibilityLabel="Close" style={styles.closeBtn}>
           <Glass dark style={[StyleSheet.absoluteFill, { borderRadius: 20 }]} />
           <Icon name="x" size={18} color="#FFFFFF" />
         </PressableScale>
@@ -139,7 +155,7 @@ export default function GirlOnboarding() {
   );
 }
 
-function SlideView({ slide, i, x, width, top }: { slide: Slide; i: number; x: SharedValue<number>; width: number; top: number }) {
+function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number; x: SharedValue<number>; width: number; top: number; city: string }) {
   const photo = useAnimatedStyle(() => ({
     transform: [{ translateX: interpolate(x.value, [(i - 1) * width, i * width, (i + 1) * width], [-width * 0.35, 0, width * 0.35], Extrapolation.CLAMP) }],
   }));
@@ -164,7 +180,7 @@ function SlideView({ slide, i, x, width, top }: { slide: Slide; i: number; x: Sh
           {slide.title}
         </Text>
         <Text variant="body" color={girl.inkSoft}>
-          {slide.body}
+          {tx(slide.body, { city })}
         </Text>
         {slide.points ? (
           <View style={{ gap: 8, marginTop: 4 }}>

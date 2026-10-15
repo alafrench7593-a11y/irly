@@ -8,6 +8,7 @@ import { Photo } from '@/components/visual/Photo';
 import { enter } from '@/motion/enter';
 import { girlPhotoFor } from './photos';
 import { Avatar } from '@/components/ui/Avatar';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
@@ -16,6 +17,7 @@ import { joinCommunity, useCommunitiesLike, useGirlCircle, useGirlExtras, usePla
 import { MOM_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { useServerActivities } from '@/features/server/activities';
 import { hueOf } from '@/lib/format';
+import { friendlyError } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
@@ -29,6 +31,8 @@ const AGES = [
   { id: 'kid', label: 'Kid' },
   { id: 'teen', label: 'Teen' },
 ];
+/** An age group as its label (never a raw id); unknown ids are left out. */
+const ageLabel = (id: string) => AGES.find((a) => a.id === id)?.label ?? null;
 
 /**
  * IRLY Moms, inside IRLY Girl (same account, same women-only rule). Mom
@@ -44,13 +48,15 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
   const me = extras.data;
   // Ages picked here, ahead of the server's answer: two quick taps both count.
   const [kids, setKids] = useState<string[] | null>(null);
+  const [momBusy, setMomBusy] = useState(false);
+  const [joining, setJoining] = useState<string | null>(null);
   const toggleAge = (id: string) => {
     const current = kids ?? me?.kidsAgeGroups ?? [];
     const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
     setKids(next);
     extras.save({ kidsAgeGroups: next }).catch((e) => {
       setKids(null);
-      toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
+      toast(friendlyError(e instanceof Error ? e.message : 'Could not save'), 'x', 'live');
     });
   };
   const moms = useGirlCircle(cityId, { moms: true });
@@ -69,16 +75,22 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
   }, [plans]);
   const mark = (name: string) => (e: LayoutChangeEvent) => onSection?.(name, e.nativeEvent.layout.y);
 
-  const toggleMom = (on: boolean) =>
+  const toggleMom = (on: boolean) => {
+    if (momBusy) return;
+    setMomBusy(true);
     extras
       .save({ momMode: on })
       .then(() => {
         haptic('success');
         toast(on ? 'Mom mode on: other moms can find you' : 'Mom mode off', 'heart', 'brand');
+        moms.reload();
       })
-      .catch((e) => toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live'));
+      .catch((e) => toast(friendlyError(e instanceof Error ? e.message : 'Could not save'), 'x', 'live'))
+      .finally(() => setMomBusy(false));
+  };
 
-  const join = (id: string, name: string) =>
+  const join = (id: string, name: string) => {
+    setJoining(id);
     joinCommunity(id)
       .then((conv) => {
         haptic('success');
@@ -86,7 +98,9 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
         if (conv) router.push(`/messages/${conv}`);
         communities.reload();
       })
-      .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'));
+      .catch((e) => toast(friendlyError(e instanceof Error ? e.message : 'Could not join'), 'x', 'live'))
+      .finally(() => setJoining(null));
+  };
 
   return (
     <View style={{ gap: space[7], paddingTop: space[5] }}>
@@ -112,7 +126,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
                   Optional. Other moms see you as a mom, nothing more.
                 </Text>
               </View>
-              <GChip label={me.momMode ? 'On' : 'Off'} selected={me.momMode} onPress={() => toggleMom(!me.momMode)} />
+              <GChip label={me.momMode ? 'On' : 'Off'} selected={me.momMode} onPress={momBusy ? undefined : () => toggleMom(!me.momMode)} />
             </View>
             {me.momMode ? (
               <View style={{ gap: 6 }}>
@@ -137,6 +151,20 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
             ) : null}
           </View>
         </View>
+      ) : extras.loading ? (
+        <View style={styles.pad}>
+          <Skeleton height={84} radius={radius.xl} />
+        </View>
+      ) : extras.error ? (
+        // A failed read is not « no profile »: say so, with a way to try again.
+        <View style={styles.pad}>
+          <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+            <Text variant="bodyS" color={girl.inkSoft} align="center">
+              Your mom settings could not load.
+            </Text>
+            <GButton label="Try again" variant="secondary" onPress={extras.reload} />
+          </View>
+        </View>
       ) : null}
 
       <View onLayout={mark('moms')} />
@@ -153,7 +181,16 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
                   {m.firstName}
                 </Text>
                 <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
-                  {[m.kidsAgeGroups.map((k) => tx(k)).join(', '), m.areas[0]].filter(Boolean).join(' · ') || tx('Mom')}
+                  {[
+                    m.kidsAgeGroups
+                      .map(ageLabel)
+                      .filter((k): k is string => Boolean(k))
+                      .map((k) => tx(k))
+                      .join(', '),
+                    m.areas[0],
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || tx('Mom')}
                 </Text>
                 {m.score != null ? (
                   <Text variant="caption" color={girl.rose}>
@@ -164,6 +201,21 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
             ))}
           </ScrollView>
         </View>
+      ) : moms.loading ? (
+        <View style={[styles.pad, { flexDirection: 'row', gap: 12 }]}>
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} width={120} height={140} radius={radius.xl} />
+          ))}
+        </View>
+      ) : moms.error ? (
+        <View style={[styles.pad]}>
+          <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+            <Text variant="bodyS" color={girl.inkSoft} align="center">
+              Moms near you could not load.
+            </Text>
+            <GButton label="Try again" variant="secondary" onPress={moms.reload} />
+          </View>
+        </View>
       ) : me?.momMode ? (
         <Text variant="bodyS" color={girl.inkSoft} style={styles.pad}>
           No other moms visible yet in this destination. Start a playdate: they will find you.
@@ -171,6 +223,11 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
       ) : me?.hasProfile ? (
         <Text variant="bodyS" color={girl.inkSoft} style={styles.pad}>
           Turn on mom mode to see the moms near you. Photos of your children are never needed.
+        </Text>
+      ) : !me && !extras.loading && !extras.error ? (
+        // No IRLY account on this device (demo, development): nothing to show, said plainly.
+        <Text variant="bodyS" color={girl.inkSoft} style={styles.pad}>
+          Moms near you appear here with an IRLY account.
         </Text>
       ) : null}
 
@@ -200,25 +257,40 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
         </Text>
         {communities.data.length ? (
           communities.data.map((c) => (
-            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { padding: 10 }]} accessibilityLabel={c.name}>
+            // The row opens the community; Join sits beside it (never a button inside a button).
+            <View key={c.id} style={[styles.card, styles.row, { padding: 10 }]}>
+              <PressableScale onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { flex: 1 }]} accessibilityLabel={tx('Open {title}', { title: c.name })}>
               <View style={styles.thumb}>
                 <Photo visual={{ photo: girlPhotoFor(c.name, 'momPlaydate') }} light="dubai" width={200} style={StyleSheet.absoluteFill} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text variant="titleS" color={girl.ink}>
+                <Text variant="titleS" color={girl.ink} raw>
                   {c.name}
                 </Text>
                 <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
                   {[c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, c.tagline ? tx(c.tagline) : null, c.members ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')}
                 </Text>
               </View>
-              {c.member ? <GChip small label={tx('Joined')} selected /> : <GButton label="Join" onPress={() => join(c.id, c.name)} />}
-            </PressableScale>
+              </PressableScale>
+              {c.member ? <GChip small label={tx('Joined')} selected /> : <GButton label="Join" loading={joining === c.id} disabled={Boolean(joining)} onPress={() => join(c.id, c.name)} />}
+            </View>
           ))
+        ) : communities.loading ? (
+          <Skeleton height={76} radius={radius.xl} />
+        ) : communities.error ? (
+          <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+            <Text variant="bodyS" color={girl.inkSoft} align="center">
+              Could not load. Check your connection.
+            </Text>
+            <GButton label="Try again" variant="secondary" onPress={communities.reload} />
+          </View>
         ) : (
-          <Text variant="bodyS" color={girl.inkSoft}>
-            {communities.loading ? '' : communities.error ? tx('Could not load. Check your connection.') : me ? tx('No mom communities here yet.') : tx('Sign in to see and join mom communities.')}
-          </Text>
+          <View style={[styles.card, { gap: 10 }]}>
+            <Text variant="bodyS" color={girl.inkSoft}>
+              No mom communities here yet. Start one: other moms will find it.
+            </Text>
+            <GButton label="Create a community" icon="plus" variant="secondary" onPress={() => router.push('/community/new')} />
+          </View>
         )}
       </View>
 
