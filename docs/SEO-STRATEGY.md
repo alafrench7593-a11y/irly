@@ -96,7 +96,7 @@ Rythme réaliste : **1 guide de fond par semaine** (EN + FR), relu par un humain
 | 9 | ✅ S'installer à Dubaï : la checklist des premiers mois / Moving to Dubai: a checklist for your first months | `/fr/dubai/s-installer/` | s'installer à Dubaï | E | Préviens-moi (IRLY VISA) | Entrée |
 | 10 | Visa Dubaï : les catégories expliquées (sources officielles) | `/fr/dubai/visa/` | visa Dubaï | F | Préviens-moi (IRLY VISA) | Entrée |
 | 11 | Visa Bali : les catégories expliquées (sources officielles) | `/fr/bali/visa/` | visa Bali | F | Préviens-moi (IRLY VISA) | Entrée |
-| 12 | Reconstruire sa vie sociale après une expatriation | `/fr/guides/vie-sociale-expatriation/` | vie sociale expatriation | A | Trouver mes gens | Entrée |
+| 12 | ✅ Reconstruire sa vie sociale après une expatriation / Rebuilding your social life after moving abroad | `/fr/guides/vie-sociale-expatriation/` | vie sociale expatriation | A | Trouver mes gens | Entrée |
 | 13 | Revue : mise à jour des guides, ajout des données Search Console | — | — | — | — | Maintenance |
 
 Plans H2/H3 détaillés : à rédiger semaine par semaine sur le modèle des guides existants (`site/guides/articles.mjs`).
