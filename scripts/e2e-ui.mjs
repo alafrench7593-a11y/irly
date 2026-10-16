@@ -191,13 +191,13 @@ async function main() {
     await page.getByText('Padel', { exact: true }).first().click();
     await page.getByRole('button', { name: 'Create a Padel session' }).click();
     await page.getByText('Tomorrow', { exact: true }).first().click();
-    const next = page.getByRole('button', { name: 'Next' });
+    const next = page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last();
     if (await next.isEnabled()) throw new Error('Next is enabled before a time is picked');
   });
   await check('pick 20:30 under Other time, publish, land on the activity', null, ['Open chat'], async () => {
     await page.getByText('Other time', { exact: true }).first().click();
     await page.getByText('20:30', { exact: true }).last().click();
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
     await page.getByRole('button', { name: /^Create (session|activity|sport session|event|meetup|trip)$/ }).last().click();
     await page.waitForURL(/\/a\//, { timeout: 30000 });
   });
