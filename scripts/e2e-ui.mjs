@@ -186,6 +186,27 @@ async function main() {
     await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
   };
 
+  // ── Activity: no start time is chosen for the member; the one they pick is saved in the city's time.
+  await check('Create an activity: no start time imposed, Next waits for one', '/category/sport', ['Pick a start time'], async () => {
+    await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+    await page.getByText('Tomorrow', { exact: true }).first().click();
+    const next = page.getByRole('button', { name: 'Next' });
+    if (await next.isEnabled()) throw new Error('Next is enabled before a time is picked');
+  });
+  await check('pick 20:30 under Other time, publish, land on the activity', null, ['Open chat'], async () => {
+    await page.getByText('Other time', { exact: true }).first().click();
+    await page.getByText('20:30', { exact: true }).last().click();
+    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: /^Create (session|activity|sport session|event|meetup|trip)$/ }).last().click();
+    await page.waitForURL(/\/a\//, { timeout: 30000 });
+  });
+  await verify('the activity starts tomorrow at 20:30, Bali time', async () => {
+    const [a] = await sql(`select to_char(starts_at at time zone 'Asia/Makassar', 'HH24:MI') as hm, (starts_at at time zone 'Asia/Makassar')::date - (now() at time zone 'Asia/Makassar')::date as days, timezone from public.activities where creator_id = '${uid}' order by created_at desc limit 1`);
+    if (!a) throw new Error('no activity saved');
+    if (a.hm !== '20:30' || a.days !== 1) throw new Error(`saved ${a.hm}, ${a.days} day(s) ahead, ${a.timezone}`);
+    return `${a.hm} ${a.timezone}`;
+  });
+
   // ── Communities: the form, a double click, one community, its owner, listed under Mine.
   const COMM = `E2E Padel ${run}`;
   await check('Create a community: a double click lands in its chat', '/community/new', [COMM], async () => {
@@ -201,7 +222,7 @@ async function main() {
 
   // ── Log out: timed, the session ends on the server, nothing private stays on this browser.
   let outMs = 0;
-  await check('Log out goes to Welcome', '/settings', [], async () => {
+  await check('Log out goes to Welcome', '/preferences', [], async () => {
     await page.getByText('Log out', { exact: true }).first().waitFor({ timeout: 15000 });
     const t0 = Date.now();
     await page.getByText('Log out', { exact: true }).first().click();
@@ -231,7 +252,7 @@ async function main() {
 
   // ── Delete the account through Settings: timed, gone on the server, signed out, cannot sign in again.
   let delMs = 0;
-  await check('Delete account goes to Welcome', '/settings', [], async () => {
+  await check('Delete account goes to Welcome', '/preferences', [], async () => {
     await page.getByText('Delete account', { exact: true }).first().click();
     await page.getByText('Delete your IRLY account?').first().waitFor({ timeout: 10000 });
     const t0 = Date.now();

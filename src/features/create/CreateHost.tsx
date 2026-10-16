@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Button } from '@/components/ui/Button';
+import { Sheet } from '@/components/ui/Sheet';
 import { Chip, Field } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -32,6 +33,9 @@ import { useCreateStore, type CreateFormat } from './createStore';
 
 const DAYS = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
 const TIMES = ['07:00', '10:00', '12:30', '16:00', '18:00', '19:30', '21:00'];
+/** Every half hour, for a start time the quick choices do not offer. */
+const ALL_TIMES = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+const minutesOf = (x: string) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3));
 const PRIVACY: { id: NonNullable<MyPlan['privacy']>; label: string }[] = [
   { id: 'public', label: 'Public' },
   { id: 'connections', label: 'Friends' },
@@ -134,17 +138,24 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [query, setQuery] = useState('');
   const [custom, setCustom] = useState('');
   const [pickedDay, setDay] = useState(DAYS[0]);
-  const [pickedTime, setTime] = useState(TIMES[5]);
+  // No start time is chosen for the member: they pick one before publishing.
+  const [pickedTime, setTime] = useState<string | null>(null);
+  const [moreTimes, setMoreTimes] = useState(false);
   // Today only offers times still ahead in the city (a past time used to become tomorrow
   // while the summary said Today); once today is over, Today is not offered.
   const now = useNow();
   const local = new Date(now + (city.utcOffset ?? 4) * 3600_000);
   const minutesNow = local.getUTCHours() * 60 + local.getUTCMinutes();
-  const laterToday = TIMES.filter((x) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3)) > minutesNow + 15);
+  const ahead = (x: string) => minutesOf(x) > minutesNow + 15;
+  const laterToday = ALL_TIMES.filter(ahead);
   const days = laterToday.length ? DAYS : DAYS.slice(1);
   const day = days.includes(pickedDay) ? pickedDay : days[0];
-  const times = day === 'Today' ? laterToday : TIMES;
-  const time = times.includes(pickedTime) ? pickedTime : times[0];
+  const allTimes = day === 'Today' ? laterToday : ALL_TIMES;
+  const times = day === 'Today' ? TIMES.filter(ahead) : TIMES;
+  // A time that has passed (Today chosen after it, or the clock moved on) is never swapped
+  // for another one: the member is asked to pick again.
+  const time = pickedTime && allTimes.includes(pickedTime) ? pickedTime : null;
+  const timePassed = Boolean(pickedTime && !time);
   const [area, setArea] = useState(city.areas[0].id);
   const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>(preset?.communityId ? 'community' : 'public');
   // Optional: the community (or group) it belongs to. Not needed to create an activity.
@@ -271,6 +282,11 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const router = useRouter();
   const post = async () => {
     if (!pick || !title || publishing) return;
+    if (!time) {
+      toast(tx('Pick a start time'), 'calendar', 'brand');
+      setStep(2);
+      return;
+    }
     // "Community" visibility needs a community, otherwise nobody else could see it.
     if (privacy === 'community' && !communityId) {
       toast(tx('Choose the community it is for, or another visibility'), 'users', 'brand');
@@ -335,7 +351,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     }
   };
 
-  const canNext = step === 0 ? false : step === 1 ? Boolean(pick?.sub || pick?.custom) : true;
+  const canNext = step === 0 ? false : step === 1 ? Boolean(pick?.sub || pick?.custom) : step === 2 ? Boolean(time) : true;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={open ? 'auto' : 'none'}>
@@ -530,7 +546,34 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   {times.map((x) => (
                     <Chip key={x} size="sm" label={x} selected={time === x} onPress={() => setTime(x)} />
                   ))}
+                  {time && !times.includes(time) ? <Chip size="sm" label={time} selected onPress={() => setMoreTimes(true)} /> : null}
+                  <Chip size="sm" label={tx('Other time')} onPress={() => setMoreTimes(true)} />
                 </View>
+                {timePassed ? (
+                  <Text variant="caption" tone="critical">
+                    {tx('{time} has passed today: pick another time', { time: pickedTime ?? '' })}
+                  </Text>
+                ) : !time ? (
+                  <Text variant="caption" tone="secondary">
+                    {tx('Pick a start time ({city} time)', { city: city.name })}
+                  </Text>
+                ) : null}
+                <Sheet visible={moreTimes} onClose={() => setMoreTimes(false)} title="Start time" subtitle={tx('{city} time', { city: city.name })}>
+                  <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={[styles.wrap, { paddingHorizontal: space.gutter, paddingBottom: space[6] }]}>
+                    {allTimes.map((x) => (
+                      <Chip
+                        key={x}
+                        size="sm"
+                        label={x}
+                        selected={time === x}
+                        onPress={() => {
+                          setTime(x);
+                          setMoreTimes(false);
+                        }}
+                      />
+                    ))}
+                  </ScrollView>
+                </Sheet>
               </Animated.View>
               <Animated.View entering={enter.rise(3)} style={styles.block}>
                 <Text variant="overline" tone="secondary">
@@ -654,7 +697,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     {title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
-                    {day} · {time} · {place ?? areaName(city, area)} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
+                    {day} · {time ?? tx('Time to pick')} · {place ?? areaName(city, area)} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
                   </Text>
                 </View>
               </Animated.View>
