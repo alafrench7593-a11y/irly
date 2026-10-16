@@ -188,7 +188,8 @@ async function main() {
 
   // ── Activity: no start time is chosen for the member; the one they pick is saved in the city's time.
   await check('Create an activity: no start time imposed, Next waits for one', '/category/sport', ['Pick a start time'], async () => {
-    await page.getByRole('button', { name: 'Create', exact: true }).first().click();
+    await page.getByText('Padel', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Create a Padel session' }).click();
     await page.getByText('Tomorrow', { exact: true }).first().click();
     const next = page.getByRole('button', { name: 'Next' });
     if (await next.isEnabled()) throw new Error('Next is enabled before a time is picked');
@@ -201,7 +202,7 @@ async function main() {
     await page.waitForURL(/\/a\//, { timeout: 30000 });
   });
   await verify('the activity starts tomorrow at 20:30, Bali time', async () => {
-    const [a] = await sql(`select to_char(starts_at at time zone 'Asia/Makassar', 'HH24:MI') as hm, (starts_at at time zone 'Asia/Makassar')::date - (now() at time zone 'Asia/Makassar')::date as days, timezone from public.activities where creator_id = '${uid}' order by created_at desc limit 1`);
+    const [a] = await sql(`select to_char(starts_at at time zone 'Asia/Makassar', 'HH24:MI') as hm, (starts_at at time zone 'Asia/Makassar')::date - (now() at time zone 'Asia/Makassar')::date as days, timezone from public.activities where creator_id = '${uid}' and title ilike '%padel%' order by created_at desc limit 1`);
     if (!a) throw new Error('no activity saved');
     if (a.hm !== '20:30' || a.days !== 1) throw new Error(`saved ${a.hm}, ${a.days} day(s) ahead, ${a.timezone}`);
     return `${a.hm} ${a.timezone}`;
