@@ -13,6 +13,8 @@ const run = Date.now().toString(36);
 const EMAIL = `e2e-ui-${run}@irly.test`;
 const PASSWORD = `E2e-${run}-pw!`;
 const DIST = path.resolve('dist');
+// The app's public (publishable) key, as in src/lib/supabase.ts: only used to try signing in.
+const PUBLISHABLE = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v';
 const SHOTS = path.resolve('e2e-shots');
 fs.mkdirSync(SHOTS, { recursive: true });
 
@@ -163,6 +165,101 @@ async function main() {
   await check('Privacy & notifications settings', '/settings', ['Who can find my profile']);
   await check('Saved', '/saved', ['Saved']);
   await check('Messages inbox lists the playdate chat', '/messages', ['Playdate']);
+
+  // ── A server fact, checked like a screen.
+  const verify = async (label, fn) => {
+    try {
+      const note = await fn();
+      passed++;
+      console.log(`✓ ${label}${note ? ` (${note})` : ''}`);
+    } catch (e) {
+      failed++;
+      failures.push(label);
+      console.log(`✗ ${label}: ${(e instanceof Error ? e.message : String(e)).split('\n')[0]}`);
+    }
+  };
+  const sessions = async () => (await sql(`select count(*)::int as n from auth.sessions where user_id = '${uid}'`))[0].n;
+  const signIn = async () => {
+    await page.goto(BASE + '/account', { waitUntil: 'domcontentloaded' });
+    await page.getByPlaceholder('you@email.com').fill(EMAIL);
+    await page.getByPlaceholder('Password').fill(PASSWORD);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
+  };
+
+  // ── Communities: the form, a double click, one community, its owner, listed under Mine.
+  const COMM = `E2E Padel ${run}`;
+  await check('Create a community: a double click lands in its chat', '/community/new', [COMM], async () => {
+    await page.getByLabel('Community name').fill(COMM);
+    await page.getByRole('button', { name: 'Create community' }).dblclick();
+  });
+  await verify('the double click made one community, its creator is the owner', async () => {
+    const rows = await sql(`select c.id, m.role from public.communities c left join public.community_members m on m.community_id = c.id and m.user_id = c.created_by where c.name = '${COMM}'`);
+    if (rows.length !== 1) throw new Error(`${rows.length} communities named ${COMM}`);
+    if (rows[0].role !== 'owner') throw new Error(`creator role ${rows[0].role}`);
+  });
+  await check('the new community is under Communities → Mine', '/communities?tab=mine', [COMM]);
+
+  // ── Log out: timed, the session ends on the server, nothing private stays on this browser.
+  let outMs = 0;
+  await check('Log out goes to Welcome', '/settings', [], async () => {
+    await page.getByText('Log out', { exact: true }).first().waitFor({ timeout: 15000 });
+    const t0 = Date.now();
+    await page.getByText('Log out', { exact: true }).first().click();
+    await page.waitForURL(/\/welcome/, { timeout: 60000 });
+    outMs = Date.now() - t0;
+  });
+  console.log(`   log out took ${outMs} ms`);
+  fs.appendFileSync(path.join(SHOTS, 'timings.txt'), `logout_ms=${outMs}\n`);
+  await verify('log out ended the session on the server and on this browser', async () => {
+    const left = await sessions();
+    if (left !== 0) throw new Error(`${left} session(s) still on the server`);
+    const keys = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('sb-') || k === 'irly-v2'));
+    const leftLocal = await page.evaluate(() => Object.entries(localStorage).filter(([k, v]) => k.startsWith('sb-') && v && v !== 'null').map(([k]) => k));
+    if (leftLocal.length) throw new Error(`session still stored: ${leftLocal.join(', ')}`);
+    return `local keys now: ${keys.join(', ') || 'none'}`;
+  });
+  await verify('after log out, private screens show nothing of the account', async () => {
+    for (const route of ['/messages', '/communities?tab=mine', '/calendar']) {
+      await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(2500);
+      const text = await page.evaluate(() => document.body.innerText);
+      if (text.includes(COMM) || text.includes('Playdate')) throw new Error(`${route} still shows the account's data`);
+    }
+  });
+  await check('sign in again', null, [], signIn, 'Signed in');
+  await check('signed in again: the account data comes back', '/communities?tab=mine', [COMM]);
+
+  // ── Delete the account through Settings: timed, gone on the server, signed out, cannot sign in again.
+  let delMs = 0;
+  await check('Delete account goes to Welcome', '/settings', [], async () => {
+    await page.getByText('Delete account', { exact: true }).first().click();
+    await page.getByText('Delete your IRLY account?').first().waitFor({ timeout: 10000 });
+    const t0 = Date.now();
+    await page.getByRole('button', { name: 'Delete my account' }).click();
+    await page.waitForURL(/\/welcome/, { timeout: 90000 });
+    delMs = Date.now() - t0;
+  });
+  console.log(`   delete account took ${delMs} ms`);
+  fs.appendFileSync(path.join(SHOTS, 'timings.txt'), `delete_ms=${delMs}\n`);
+  await verify('the account is gone on the server; its community left the lists', async () => {
+    const [{ users, profiles }] = await sql(`select (select count(*)::int from auth.users where id = '${uid}') as users, (select count(*)::int from public.profiles where id = '${uid}') as profiles`);
+    if (users || profiles) throw new Error(`users=${users} profiles=${profiles}`);
+    const [c] = await sql(`select deleted_at is not null as gone from public.communities where name = '${COMM}'`);
+    if (!c?.gone) throw new Error('the community nobody else is in is still listed');
+  });
+  await verify('the deleted account cannot sign in again', async () => {
+    const res = await fetch(`https://${ref}.supabase.co/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { apikey: PUBLISHABLE, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+    });
+    if (res.ok) throw new Error('sign-in accepted');
+    return `HTTP ${res.status}`;
+  });
+  await verify('nothing of the deleted account stays in this browser', async () => {
+    const leftLocal = await page.evaluate(() => Object.entries(localStorage).filter(([k, v]) => k.startsWith('sb-') && v && v !== 'null').map(([k]) => k));
+    if (leftLocal.length) throw new Error(`session still stored: ${leftLocal.join(', ')}`);
+  });
 
   await browser.close();
 }
