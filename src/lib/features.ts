@@ -13,9 +13,15 @@
  * affected by this switch.
  *
  * A build can open it for testing with EXPO_PUBLIC_MATCH_IRLY=on.
+ *
+ * `girlMatch`: IRLY Match inside IRLY Girl (the deck of women to meet, the
+ * sections, your matches). While it is off, IRLY Girl shows « IRLY Match,
+ * coming soon » in its place; plans, communities and posts stay open.
+ * A build can open it with EXPO_PUBLIC_GIRL_MATCH=on.
  */
 export const FEATURES = {
   matchIrly: process.env.EXPO_PUBLIC_MATCH_IRLY === 'on',
+  girlMatch: process.env.EXPO_PUBLIC_GIRL_MATCH === 'on',
 } as const;
 
 export type FeatureId = keyof typeof FEATURES;

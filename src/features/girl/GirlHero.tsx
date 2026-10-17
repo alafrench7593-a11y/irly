@@ -16,8 +16,8 @@ import { girl, GIRL_TINT } from './theme';
 const HEIGHT = 340;
 
 /**
- * The top of IRLY Girl: Dubai behind the words, a silent film of the Marina
- * (the beach on the Moms side) over its photo. It drifts slower than the page, stretches when pulled, and pushes
+ * The top of IRLY Girl: Dubai behind the words (a pink DUBAI over Downtown;
+ * on the Moms side, a silent film of the beach over its photo). It drifts slower than the page, stretches when pulled, and pushes
  * sideways when the side changes. The headline rises word by word.
  */
 export function GirlHero({
@@ -61,8 +61,7 @@ export function GirlHero({
       <View style={[StyleSheet.absoluteFill, styles.clip]}>
         <Animated.View style={[StyleSheet.absoluteFill, drift]}>
           <Animated.View style={[StyleSheet.absoluteFill, girls]}>
-            <Photo tint={GIRL_TINT} visual={{ photo: 'dubaiMarina' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} pinned />
-            {!reduced && mode === 'all' ? <Film uri={filmFor('dubaiMarina')!} /> : null}
+            <Photo tint={GIRL_TINT} visual={{ photo: 'dubaiPink' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, moms]}>
             <Photo tint={GIRL_TINT} visual={{ photo: 'beachClub' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} pinned />

@@ -12,6 +12,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { GirlClosed, GirlLoading, isGirlRefusal, readGirlAccess, safeBack, withLimit } from '@/features/girl/access';
 import { Photo } from '@/components/visual/Photo';
+import { FEATURES } from '@/lib/features';
 import { openCreate } from '@/features/create/createStore';
 import { matchApi, PAGE_SIZE, type MatchApi } from '@/features/girl/api';
 import { CandidateCard } from '@/features/girl/CandidateCard';
@@ -283,7 +284,7 @@ export default function GirlHome() {
         <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => safeBack(router, '/')} onProfile={() => router.push('/girl/profile')} />
 
 
-        {matches.length ? (
+        {FEATURES.girlMatch && matches.length ? (
           <View style={{ marginTop: space[5], gap: 10 }}>
             <Text variant="overline" color={girl.inkSoft} style={{ paddingHorizontal: space.gutter }}>
               Your matches · {matches.length}
@@ -364,6 +365,8 @@ export default function GirlHome() {
         ) : null}
 
         <View onLayout={(e) => record('women', e)} />
+        {FEATURES.girlMatch ? (
+          <>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sections}>
           {SECTIONS.map((s) => {
             const on = filters.section === s.id;
@@ -451,6 +454,25 @@ export default function GirlHome() {
             <ActionButton icon="shield" label="Block or report" onPress={() => setSafetyFor(top)} />
           </View>
         ) : null}
+          </>
+        ) : (
+          // IRLY Match is coming soon: meanwhile, plans and communities.
+          <View style={styles.soon}>
+            <View style={styles.soonBadge}>
+              <Icon name="sparkles" size={14} color="#FFFFFF" />
+              <Text variant="label" color="#FFFFFF">
+                Coming soon
+              </Text>
+            </View>
+            <Text variant="titleM" color={girl.ink} align="center">
+              IRLY Match
+            </Text>
+            <Text variant="bodyS" color={girl.inkSoft} align="center">
+              Meet women who share your interests in {city.name}, matched on what you love. Until then, plan something with girls below.
+            </Text>
+            <GButton label="Plan something" icon="plus" onPress={() => goTo('plan')} />
+          </View>
+        )}
 
         <View onLayout={(e) => record('plan', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], marginHorizontal: space.gutter, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft }}>
@@ -659,6 +681,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.gutter },
   round: { width: 40, height: 40, borderRadius: 20, backgroundColor: girl.surface, alignItems: 'center', justifyContent: 'center' },
   matchItem: { alignItems: 'center', gap: 6, width: 64 },
+  soon: { marginTop: space[5], marginHorizontal: space.gutter, padding: 20, gap: 10, alignItems: 'center', borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
+  soonBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 28, borderRadius: 14, backgroundColor: girl.rose },
   matchRing: { padding: 2, borderRadius: 32, borderWidth: 2, borderColor: girl.rose },
   sections: { paddingHorizontal: space.gutter, gap: 8, marginTop: space[5], marginBottom: space[4] },
   section: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 13, borderRadius: radius.pill, boxShadow: girl.shadowSoft },
