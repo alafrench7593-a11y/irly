@@ -13,15 +13,22 @@
 //
 // Logs counts per bucket only: never a file name, a member id or a key.
 //
-// Env: SUPABASE_ACCESS_TOKEN (personal access token, sbp_…),
+// Access, least first:
+//   SUPABASE_PURGE_KEY: this project's secret key (sb_secret_…), used through the
+//     REST API (public.storage_purge_* wrappers, migration 20261021000000, callable
+//     by the server key only) and the Storage API. No Management API call at all.
+//   SUPABASE_ACCESS_TOKEN (personal access token, sbp_…): the previous way, kept as
+//     a fallback until the wrappers are deployed and SUPABASE_PURGE_KEY is set.
+// Env: SUPABASE_PURGE_KEY and/or SUPABASE_ACCESS_TOKEN,
 //      SUPABASE_PROJECT_REF (default: the IRLY project),
 //      PURGE_LEASE_SECONDS (default 900), PURGE_BATCH (default 200),
 //      SUPABASE_API_URL / SUPABASE_URL (only to point at a local stand-in).
 // Run by .github/workflows/storage-purge.yml; locally:
-//   SUPABASE_ACCESS_TOKEN=sbp_... node scripts/storage-purge.mjs
+//   SUPABASE_PURGE_KEY=sb_secret_... node scripts/storage-purge.mjs
 
 const raw = (process.env.SUPABASE_ACCESS_TOKEN || '').trim();
 const token = raw.match(/sbp_[^\s"'`]+/)?.[0];
+const purgeKey = (process.env.SUPABASE_PURGE_KEY || '').trim().match(/sb_secret_[\w-]+/)?.[0];
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 const API = (process.env.SUPABASE_API_URL || 'https://api.supabase.com').replace(/\/+$/, '');
 const PROJECT_URL = (process.env.SUPABASE_URL || `https://${ref}.supabase.co`).replace(/\/+$/, '');
@@ -39,11 +46,12 @@ function intEnv(name, fallback, min, max) {
   return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
 }
 
-if (!token) {
-  console.error('SUPABASE_ACCESS_TOKEN (a personal access token starting with "sbp_") is not set: nothing purged.');
+if (!token && !purgeKey) {
+  console.error('Neither SUPABASE_PURGE_KEY (sb_secret_…) nor SUPABASE_ACCESS_TOKEN (sbp_…) is set: nothing purged.');
   process.exit(1);
 }
 mask(token);
+mask(purgeKey);
 
 /** GitHub Actions hides this value in every later log line. Only there: locally it would print it. */
 function mask(value) {
@@ -64,6 +72,47 @@ async function sql(query) {
   if (!res.ok) throw new Error(`SQL failed (${res.status}): ${scrub(text).slice(0, 300)}`);
   return text ? JSON.parse(text) : [];
 }
+
+/** Headers for this project's APIs (as before: the key as apikey and as the bearer). */
+const keyHeaders = (key) => ({ apikey: key, Authorization: `Bearer ${key}` });
+
+/** One purge function through the REST API, with the project's secret key. */
+async function rpc(fn, args = {}) {
+  const res = await fetch(`${PROJECT_URL}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: { ...keyHeaders(purgeKey), 'Content-Type': 'application/json' },
+    body: JSON.stringify(args),
+    signal: AbortSignal.timeout(HTTP_MS),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    const err = new Error(`${fn} failed (${res.status}): ${scrub(text).slice(0, 300)}`);
+    err.status = res.status;
+    err.missing = res.status === 404 || /PGRST202|could not find the function/i.test(text);
+    throw err;
+  }
+  return text ? JSON.parse(text) : null;
+}
+
+/** The queue, through whichever access this run has (same five calls either way). */
+const viaKey = {
+  name: 'project secret key (REST API)',
+  sweep: async (n) => Number(await rpc('storage_purge_sweep', { p_limit: n })),
+  claim: (n, lease) => rpc('storage_purge_claim', { p_limit: n, p_lease_seconds: lease }),
+  done: async (bucket, names) => obj(await rpc('storage_purge_done', { p_bucket: bucket, p_names: names })),
+  failed: (bucket, names, error) => rpc('storage_purge_failed', { p_bucket: bucket, p_names: names, p_error: error }),
+  status: async () => obj(await rpc('storage_purge_status')),
+  key: async () => purgeKey,
+};
+const viaToken = {
+  name: 'personal access token (Management API)',
+  sweep: async (n) => (await sql(`select private.storage_purge_sweep(${Number(n)}) as n`))[0].n,
+  claim: (n, lease) => sql(`select bucket_id, name from private.storage_purge_claim(${Number(n)}, ${Number(lease)})`),
+  done: async (bucket, names) => obj((await sql(`select private.storage_purge_done(${lit(bucket)}, ${textArray(names)}) as r`))[0].r),
+  failed: (bucket, names, error) => sql(`select private.storage_purge_failed(${lit(bucket)}, ${textArray(names)}, ${lit(error)}) as n`),
+  status: async () => obj((await sql('select private.storage_purge_status() as s'))[0].s),
+  key: () => serverKey(),
+};
 
 /** Ids and keys out of anything that might be printed. */
 function scrub(s) {
@@ -104,7 +153,7 @@ async function removeFiles(key, bucket, names) {
   try {
     res = await fetch(`${PROJECT_URL}/storage/v1/object/${encodeURIComponent(bucket)}`, {
       method: 'DELETE',
-      headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      headers: { ...keyHeaders(key), 'Content-Type': 'application/json' },
       body: JSON.stringify({ prefixes: names }),
       signal: AbortSignal.timeout(HTTP_MS),
     });
@@ -127,20 +176,36 @@ const bump = (bucket, k, n) => {
   perBucket.set(bucket, b);
 };
 
-try {
+/** The least access that works: the project key once its wrappers exist, else the personal token. */
+async function pickAccess() {
+  if (purgeKey) {
+    try {
+      await rpc('storage_purge_status');
+      return viaKey;
+    } catch (e) {
+      if (!e.missing || !token) throw e;
+      console.log('The REST purge functions are not deployed yet (migration 20261021000000): using the personal access token this time.');
+    }
+  }
   const [ready] = await sql("select to_regprocedure('private.storage_purge_claim(integer,integer)') is not null as ok");
   if (!ready?.ok) {
     console.log('The purge queue is not installed yet (migration 20261020001400): nothing to do.');
     process.exit(0);
   }
-  const [{ n: swept }] = await sql('select private.storage_purge_sweep(1000) as n');
+  return viaToken;
+}
+
+try {
+  const q = await pickAccess();
+  console.log(`access: ${q.name}`);
+  const swept = await q.sweep(1000);
   console.log(`sweep: ${swept} leftover file(s) queued`);
 
   let key = null;
   for (let round = 0; round < MAX_ROUNDS && Date.now() - started < BUDGET_MS; round++) {
-    const rows = await sql(`select bucket_id, name from private.storage_purge_claim(${BATCH}, ${LEASE})`);
+    const rows = (await q.claim(BATCH, LEASE)) ?? [];
     if (!rows.length) break;
-    key ??= await serverKey();
+    key ??= await q.key();
     t.claimed += rows.length;
     const byBucket = new Map();
     for (const r of rows) byBucket.set(r.bucket_id, [...(byBucket.get(r.bucket_id) ?? []), r.name]);
@@ -150,14 +215,13 @@ try {
         const chunk = names.slice(i, i + CHUNK);
         const r = await removeFiles(key, bucket, chunk);
         if (r.ok) {
-          const [row] = await sql(`select private.storage_purge_done(${lit(bucket)}, ${textArray(chunk)}) as r`);
-          const res = obj(row.r);
+          const res = await q.done(bucket, chunk);
           t.done += res.done;
           t.stillStored += res.still_stored;
           bump(bucket, 'done', res.done);
           bump(bucket, 'failed', res.still_stored);
         } else {
-          await sql(`select private.storage_purge_failed(${lit(bucket)}, ${textArray(chunk)}, ${lit(r.error)}) as n`);
+          await q.failed(bucket, chunk, r.error);
           t.failed += chunk.length;
           bump(bucket, 'failed', chunk.length);
           console.log(`${bucket}: ${chunk.length} file(s) not deleted (${r.error}), tried again at a later run`);
@@ -167,7 +231,7 @@ try {
   }
 
   for (const [bucket, b] of [...perBucket].sort()) console.log(`${bucket}: ${b.claimed} claimed, ${b.done} removed, ${b.failed} to retry`);
-  const status = obj((await sql('select private.storage_purge_status() as s'))[0].s);
+  const status = await q.status();
   console.log(
     `run: ${t.claimed} claimed, ${t.done} removed, ${t.failed + t.stillStored} to retry · queue: ${status.waiting} waiting, ${status.in_progress} in progress, ${status.flagged} flagged, ${status.done} done (last 30 days)`,
   );
