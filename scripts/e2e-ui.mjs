@@ -13,6 +13,8 @@ const run = Date.now().toString(36);
 const EMAIL = `e2e-ui-${run}@irly.test`;
 const PASSWORD = `E2e-${run}-pw!`;
 const DIST = path.resolve('dist');
+// The app's public (publishable) key, as in src/lib/supabase.ts: only used to try signing in.
+const PUBLISHABLE = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v';
 const SHOTS = path.resolve('e2e-shots');
 fs.mkdirSync(SHOTS, { recursive: true });
 
@@ -164,6 +166,199 @@ async function main() {
   await check('Saved', '/saved', ['Saved']);
   await check('Messages inbox lists the playdate chat', '/messages', ['Playdate']);
 
+  // ── A server fact, checked like a screen.
+  const verify = async (label, fn) => {
+    try {
+      const note = await fn();
+      passed++;
+      console.log(`✓ ${label}${note ? ` (${note})` : ''}`);
+    } catch (e) {
+      failed++;
+      failures.push(label);
+      console.log(`✗ ${label}: ${(e instanceof Error ? e.message : String(e)).split('\n')[0]}`);
+    }
+  };
+  const sessions = async () => (await sql(`select count(*)::int as n from auth.sessions where user_id = '${uid}'`))[0].n;
+  const signIn = async () => {
+    await page.goto(BASE + '/account', { waitUntil: 'domcontentloaded' });
+    await page.getByPlaceholder('you@email.com').fill(EMAIL);
+    await page.getByPlaceholder('Password').fill(PASSWORD);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
+  };
+
+  // ── Notifications: a second test member (Zoe) sends Uma a real friend request through the server.
+  const EMAIL2 = `e2e-ui2-${run}@irly.test`;
+  const [{ user_id: zoe }] = await sql(`
+    with u as (
+      insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+        created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+      values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', '${EMAIL2}',
+        extensions.crypt('${PASSWORD}', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '')
+      returning id
+    )
+    insert into auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
+    select gen_random_uuid(), u.id, u.id::text, 'email', jsonb_build_object('sub', u.id::text, 'email', '${EMAIL2}', 'email_verified', true), now(), now(), now()
+    from u returning user_id`);
+  await sql(`insert into public.profiles (id, first_name, birthdate, gender, city_id, languages) values ('${zoe}', 'Zoe', '1995-03-03', 'woman', 'bali', '{en}')`);
+  const zoeToken = await (async () => {
+    const r = await fetch(`https://${ref}.supabase.co/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: PUBLISHABLE, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: EMAIL2, password: PASSWORD }) });
+    return (await r.json()).access_token;
+  })();
+  await verify('Zoe sends Uma a friend request (as Zoe, through the API)', async () => {
+    const r = await fetch(`https://${ref}.supabase.co/rest/v1/rpc/add_friend`, { method: 'POST', headers: { apikey: PUBLISHABLE, Authorization: `Bearer ${zoeToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_user: uid }) });
+    if (!r.ok) throw new Error(`add_friend ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  });
+  const notifRow = async () => (await sql(`select id, read_at from public.notifications where user_id = '${uid}' and kind = 'FRIEND_REQUEST' and payload->>'from' = '${zoe}' order by created_at desc limit 1`))[0];
+  await check('the bell counts it, without a reload', null, [], async () => {
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: /^Notifications, \d+ new$/ }).first().waitFor({ timeout: 20000 });
+  });
+  await check('Notifications lists it as unread', '/notifications', ['Zoe wants to be friends'], async () => {
+    await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).first().waitFor({ timeout: 15000 });
+  });
+  await verify('opening the list does not mark it read by itself', async () => {
+    await page.waitForTimeout(4000);
+    const n = await notifRow();
+    if (!n) throw new Error('no notification on the server');
+    if (n.read_at) throw new Error('it was marked read without being opened');
+  });
+  await check('tapping it opens Zoe’s profile', null, ['Zoe'], async () => {
+    await page.getByText('Zoe wants to be friends', { exact: true }).first().click();
+    await page.waitForURL(new RegExp(`/person/${zoe}`), { timeout: 15000 });
+  });
+  await verify('that notification is read on the server, and only that one', async () => {
+    let n;
+    for (let i = 0; i < 10 && !(n = await notifRow())?.read_at; i++) await page.waitForTimeout(500);
+    if (!n?.read_at) throw new Error('still unread on the server');
+  });
+  await check('the bell no longer counts it', '/', [], async () => {
+    await page.getByRole('button', { name: 'Notifications', exact: true }).first().waitFor({ timeout: 15000 });
+  });
+  await check('after a reload it is still read', '/notifications', ['Zoe wants to be friends'], async () => {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByText('Zoe wants to be friends', { exact: true }).first().waitFor({ timeout: 15000 });
+    if (await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).count()) throw new Error('shown unread again');
+  });
+
+  // ── Activity: no start time is chosen for the member; the one they pick is saved in the city's time.
+  await check('Create an activity: no start time imposed, Next waits for one', '/category/sport', ['Pick a start time'], async () => {
+    await page.getByText('Padel', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Create a Padel session' }).click();
+    await page.getByText('Tomorrow', { exact: true }).first().click();
+    const next = page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last();
+    if (await next.isEnabled()) throw new Error('Next is enabled before a time is picked');
+  });
+  await check('pick 20:30 under Other time, publish, land on the activity', null, ['Open chat'], async () => {
+    await page.getByText('Other time', { exact: true }).first().click();
+    await page.getByText('20:30', { exact: true }).last().click();
+    await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
+    await page.getByRole('button', { name: /^Create (session|activity|sport session|event|meetup|trip)$/ }).last().click();
+    await page.waitForURL(/\/a\//, { timeout: 30000 });
+  });
+  await verify('the activity starts tomorrow at 20:30, Bali time', async () => {
+    const [a] = await sql(`select to_char(starts_at at time zone 'Asia/Makassar', 'HH24:MI') as hm, (starts_at at time zone 'Asia/Makassar')::date - (now() at time zone 'Asia/Makassar')::date as days, timezone from public.activities where creator_id = '${uid}' and title ilike '%padel%' order by created_at desc limit 1`);
+    if (!a) throw new Error('no activity saved');
+    if (a.hm !== '20:30' || a.days !== 1) throw new Error(`saved ${a.hm}, ${a.days} day(s) ahead, ${a.timezone}`);
+    return `${a.hm} ${a.timezone}`;
+  });
+
+  // ── Communities: the form, a double click, one community, its owner, listed under Mine.
+  const COMM = `E2E Padel ${run}`;
+  await check('Create a community: a double click lands in its chat', '/community/new', [COMM], async () => {
+    await page.getByLabel('Community name').fill(COMM);
+    await page.getByRole('button', { name: 'Create community' }).dblclick();
+  });
+  await verify('the double click made one community, its creator is the owner', async () => {
+    const rows = await sql(`select c.id, m.role from public.communities c left join public.community_members m on m.community_id = c.id and m.user_id = c.created_by where c.name = '${COMM}'`);
+    if (rows.length !== 1) throw new Error(`${rows.length} communities named ${COMM}`);
+    if (rows[0].role !== 'owner') throw new Error(`creator role ${rows[0].role}`);
+  });
+  await check('the new community is under Communities → Mine', '/communities?tab=mine', [COMM]);
+
+  // ── Log out: timed, the session ends on the server, nothing private stays on this browser.
+  let outMs = 0;
+  await check('Log out goes to Welcome', '/preferences', [], async () => {
+    await page.getByText('Log out', { exact: true }).first().waitFor({ timeout: 15000 });
+    const t0 = Date.now();
+    await page.getByText('Log out', { exact: true }).first().click();
+    await page.waitForURL(/\/welcome/, { timeout: 60000 });
+    outMs = Date.now() - t0;
+  });
+  console.log(`   log out took ${outMs} ms`);
+  fs.appendFileSync(path.join(SHOTS, 'timings.txt'), `logout_ms=${outMs}\n`);
+  await verify('log out ended the session on the server and on this browser', async () => {
+    const left = await sessions();
+    if (left !== 0) throw new Error(`${left} session(s) still on the server`);
+    const keys = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('sb-') || k === 'irly-v2'));
+    const leftLocal = await page.evaluate(() => Object.entries(localStorage).filter(([k, v]) => k.startsWith('sb-') && v && v !== 'null').map(([k]) => k));
+    if (leftLocal.length) throw new Error(`session still stored: ${leftLocal.join(', ')}`);
+    return `local keys now: ${keys.join(', ') || 'none'}`;
+  });
+  await verify('after log out, private screens show nothing of the account', async () => {
+    for (const route of ['/messages', '/communities?tab=mine', '/calendar']) {
+      await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(2500);
+      const text = await page.evaluate(() => document.body.innerText);
+      if (text.includes(COMM) || text.includes('Playdate')) throw new Error(`${route} still shows the account's data`);
+    }
+  });
+  // Same browser, another account: nothing of Uma's (her notifications, her badge) shows for Zoe.
+  await check('Zoe signs in on the same browser', '/account', [], async () => {
+    await page.getByPlaceholder('you@email.com').fill(EMAIL2);
+    await page.getByPlaceholder('Password').fill(PASSWORD);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
+  }, 'Signed in');
+  await verify('Zoe sees none of Uma’s notifications or communities', async () => {
+    for (const route of ['/notifications', '/communities?tab=mine', '/messages']) {
+      await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(3000);
+      const text = await page.evaluate(() => document.body.innerText);
+      if (text.includes('Zoe wants to be friends') || text.includes(COMM) || text.includes('Playdate')) throw new Error(`${route} shows Uma's data to Zoe`);
+    }
+  });
+  await check('Zoe logs out', '/preferences', [], async () => {
+    await page.getByText('Log out', { exact: true }).first().click();
+    await page.waitForURL(/\/welcome/, { timeout: 60000 });
+  });
+  await check('sign in again', null, [], signIn, 'Signed in');
+  await check('signed in again: the account data comes back', '/communities?tab=mine', [COMM]);
+  await check('… and her read notification is still read', '/notifications', ['Zoe wants to be friends'], async () => {
+    await page.getByText('Zoe wants to be friends', { exact: true }).first().waitFor({ timeout: 15000 });
+    if (await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).count()) throw new Error('unread again after signing in');
+  });
+
+  // ── Delete the account through Settings: timed, gone on the server, signed out, cannot sign in again.
+  let delMs = 0;
+  await check('Delete account goes to Welcome', '/preferences', [], async () => {
+    await page.getByText('Delete account', { exact: true }).first().click();
+    await page.getByText('Delete your IRLY account?').first().waitFor({ timeout: 10000 });
+    const t0 = Date.now();
+    await page.getByRole('button', { name: 'Delete my account' }).click();
+    await page.waitForURL(/\/welcome/, { timeout: 90000 });
+    delMs = Date.now() - t0;
+  });
+  console.log(`   delete account took ${delMs} ms`);
+  fs.appendFileSync(path.join(SHOTS, 'timings.txt'), `delete_ms=${delMs}\n`);
+  await verify('the account is gone on the server; its community left the lists', async () => {
+    const [{ users, profiles }] = await sql(`select (select count(*)::int from auth.users where id = '${uid}') as users, (select count(*)::int from public.profiles where id = '${uid}') as profiles`);
+    if (users || profiles) throw new Error(`users=${users} profiles=${profiles}`);
+    const [c] = await sql(`select deleted_at is not null as gone from public.communities where name = '${COMM}'`);
+    if (!c?.gone) throw new Error('the community nobody else is in is still listed');
+  });
+  await verify('the deleted account cannot sign in again', async () => {
+    const res = await fetch(`https://${ref}.supabase.co/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { apikey: PUBLISHABLE, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+    });
+    if (res.ok) throw new Error('sign-in accepted');
+    return `HTTP ${res.status}`;
+  });
+  await verify('nothing of the deleted account stays in this browser', async () => {
+    const leftLocal = await page.evaluate(() => Object.entries(localStorage).filter(([k, v]) => k.startsWith('sb-') && v && v !== 'null').map(([k]) => k));
+    if (leftLocal.length) throw new Error(`session still stored: ${leftLocal.join(', ')}`);
+  });
+
   await browser.close();
 }
 
@@ -197,7 +392,7 @@ try {
     failed++;
     failures.push(`profiles_id_fkey check: ${e instanceof Error ? e.message : e}`);
   });
-  await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
+  await sql(`delete from auth.users where email in ('${EMAIL}', 'e2e-ui2-${run}@irly.test') or ((email like 'e2e-ui-%@irly.test' or email like 'e2e-ui2-%@irly.test') and created_at < now() - interval '2 hours')`).catch(() => undefined);
   server.close();
 }
 

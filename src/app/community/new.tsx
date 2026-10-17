@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { t as tx, a11y } from '@/i18n';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, Switch, TextInput, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -35,15 +35,18 @@ export default function NewCommunity() {
   const [category, setCategory] = useState<string | undefined>();
   const [girlOnly, setGirlOnly] = useState(false);
   const [busy, setBusy] = useState(false);
+  // A second tap before the first one re-rendered must not send a second request.
+  const sending = useRef(false);
   const valid = name.trim().length >= 3;
 
   const create = async () => {
-    if (!valid) return;
+    if (!valid || sending.current) return;
     if (!account) {
       toast('Sign in first: communities live on the IRLY server', 'user', 'brand');
       router.push('/account');
       return;
     }
+    sending.current = true;
     setBusy(true);
     try {
       const conv = await createServerCommunity({ name: name.trim(), cityId, tagline, description, categoryId: category, girlOnly });
@@ -53,6 +56,7 @@ export default function NewCommunity() {
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create the community', 'x', 'live');
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   };

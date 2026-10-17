@@ -830,7 +830,7 @@ function CommunityCover({ id, topic, categoryId, coverPath, light, canEdit, onCh
   };
   return (
     <View style={styles.pad}>
-      <Photo visual={{ photo: fallback, uri: uri ?? undefined }} light={light} scrim="soft" style={styles.coverPhoto} width={1000} recyclingKey={`community-${id}-${coverPath ?? 'app'}`}>
+      <Photo pinned visual={{ photo: fallback, uri: uri ?? undefined }} light={light} scrim="soft" style={styles.coverPhoto} width={1000} recyclingKey={`community-${id}-${coverPath ?? 'app'}`}>
         {canEdit ? (
           <View style={styles.coverActions}>
             <PressableScale haptic="select" onPress={() => change('pick')} style={styles.coverPill} accessibilityLabel="Change the photo">

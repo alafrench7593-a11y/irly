@@ -51,7 +51,7 @@ export function GirlIntro() {
   if (done) return null;
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.root, layer]} pointerEvents="none">
-      <Glass style={StyleSheet.absoluteFill} border={false} intensity={80} />
+      <Glass light style={StyleSheet.absoluteFill} border={false} intensity={80} />
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: girl.bg }, cream]} />
       <View style={styles.center}>
         <Animated.View style={[styles.row, letters]}>

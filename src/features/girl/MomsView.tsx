@@ -3,10 +3,12 @@ import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
+import { Film } from '@/components/visual/Film';
 import { Photo } from '@/components/visual/Photo';
+import { filmFor } from '@/data/photos';
 import { enter } from '@/motion/enter';
-import { girlPhotoFor } from './photos';
+import { girlCommunityPhoto } from './photos';
 import { Avatar } from '@/components/ui/Avatar';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
@@ -21,7 +23,7 @@ import { friendlyError } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
-import { girl } from './theme';
+import { girl, GIRL_TINT } from './theme';
 import { GButton, GChip, GSection, Wrap } from './ui';
 import { GirlFeed, KindRail, MOM_KINDS, Upcoming } from './world';
 
@@ -42,6 +44,7 @@ const ageLabel = (id: string) => AGES.find((a) => a.id === id)?.label ?? null;
  * with each destination's own communities and places.
  */
 export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (name: string, y: number) => void }) {
+  const reduced = useReducedMotion();
   const router = useRouter();
   const city = CITIES[cityId];
   const extras = useGirlExtras();
@@ -234,7 +237,8 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
       <View style={[styles.pad]} onLayout={mark('momsPlan')}>
         <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
           <View style={{ height: 110 }}>
-            <Photo visual={{ photo: 'familyBeach' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
+            <Photo tint={GIRL_TINT} visual={{ photo: 'jbr' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
+            {!reduced ? <Film uri={filmFor('jbr')!} dim={0.25} /> : null}
           </View>
           <View style={{ padding: 16 }}>
           <GSection title="Plan something with the kids" hint="Playdates, beach, park, kids' sports, workshops.">
@@ -261,7 +265,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
             <View key={c.id} style={[styles.card, styles.row, { padding: 10 }]}>
               <PressableScale onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { flex: 1 }]} accessibilityLabel={tx('Open {title}', { title: c.name })}>
               <View style={styles.thumb}>
-                <Photo visual={{ photo: girlPhotoFor(c.name, 'momPlaydate') }} light="dubai" width={200} style={StyleSheet.absoluteFill} />
+                <Photo pinned tint={GIRL_TINT} visual={{ photo: girlCommunityPhoto(c.name, 'kids') }} light="dubai" width={200} style={StyleSheet.absoluteFill} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={girl.ink} raw>
@@ -318,7 +322,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
                   <Image source={{ uri: p.photo }} style={styles.placePhoto} contentFit="cover" />
                 ) : (
                   <View style={styles.placePhoto}>
-                    <Photo visual={{ photo: p.kind === 'beach' ? 'momBeach' : p.kind === 'park' ? 'momPlaydate' : 'familyBeach' }} light="dubai" width={400} style={StyleSheet.absoluteFill} />
+                    <Photo tint={GIRL_TINT} visual={{ photo: p.kind === 'beach' ? 'momBeach' : p.kind === 'park' ? 'momPlaydate' : 'familyBeach' }} light="dubai" width={400} style={StyleSheet.absoluteFill} />
                   </View>
                 )}
                 <View style={{ padding: 10 }}>

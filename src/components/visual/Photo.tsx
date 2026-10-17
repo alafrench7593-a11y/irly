@@ -30,6 +30,10 @@ type Props = {
   recyclingKey?: string;
   /** Large headers only: the photo drifts slowly (a quiet Ken Burns), never with reduced motion. */
   drift?: boolean;
+  /** The frame's colours while loading (or when the photo cannot load): a universe's own, e.g. IRLY Girl's pinks. */
+  tint?: { base: string; pulse: string };
+  /** Always the key's first picture (the Dubai photo of a Dubai key), never another photo of the subject. */
+  pinned?: boolean;
 };
 
 const SCRIMS = {
@@ -57,13 +61,15 @@ export const Photo = memo(function Photo({
   children,
   recyclingKey,
   drift,
+  tint,
+  pinned,
 }: Props) {
   // loading: breathing placeholder · done: photo shown, or the plain
   // destination colours if the network refused it (no endless pulse).
   const [status, setStatus] = useState<"loading" | "done">("loading");
   // Chosen once per place on screen (never on every render): this place keeps
   // its photo, the next place showing the same subject gets another one.
-  const stockUrl = useMemo(() => photoUrl(visual.photo, width, recyclingKey), [visual.photo, width, recyclingKey]);
+  const stockUrl = useMemo(() => photoUrl(visual.photo, width, recyclingKey, pinned), [visual.photo, width, recyclingKey, pinned]);
   const t = useTheme();
   const night = t.mode === "night";
   void light;
@@ -116,13 +122,13 @@ export const Photo = memo(function Photo({
       <View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: night ? "#15171B" : "#E4E4E1" },
+          { backgroundColor: tint?.base ?? (night ? "#15171B" : "#E4E4E1") },
         ]}
       />
       <Animated.View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: night ? "#20232A" : "#F4F4F2" },
+          { backgroundColor: tint?.pulse ?? (night ? "#20232A" : "#F4F4F2") },
           pulseStyle,
         ]}
         pointerEvents="none"

@@ -22,7 +22,7 @@ import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { girlPhotoFor } from './photos';
-import { girl } from './theme';
+import { girl, GIRL_TINT } from './theme';
 import { GButton } from './ui';
 
 /* ───────── Kinds of plans ───────── */
@@ -35,33 +35,47 @@ export type Kind = { id: string; label: string; icon: IconName; photo: PhotoKey;
  * their category, so a kind filters the real upcoming plans.
  */
 export const GIRL_KINDS: Kind[] = [
-  { id: 'brunch', label: 'Brunch', icon: 'coffee', photo: 'brunch', match: /brunch/i },
-  { id: 'coffee', label: 'Girls’ coffee', icon: 'coffee', photo: 'girlCoffee', match: /coffee|café|cafe|matcha/i },
+  { id: 'brunch', label: 'Brunch', icon: 'coffee', photo: 'brunchGirl', match: /brunch/i },
+  { id: 'coffee', label: 'Girls’ coffee', icon: 'coffee', photo: 'drinksGirl', match: /coffee|café|cafe|matcha|drinks?|juice/i },
   { id: 'shopping', label: 'Shopping', icon: 'shoppingBag', photo: 'girlShopping', match: /shopping|fashion|mall|market/i },
-  { id: 'fitness', label: 'Fitness', icon: 'dumbbell', photo: 'girlFitness', match: /fitness|gym|run|padel|tennis|workout|surf|boxing/i, cats: ['sport'] },
-  { id: 'pilates', label: 'Pilates', icon: 'activity', photo: 'girlClass', match: /pilates|barre/i },
+  { id: 'run', label: 'Running', icon: 'footprints', photo: 'runGirl', match: /\brun|jog|marathon|\b5k\b|\b10k\b/i },
+  { id: 'bike', label: 'Bike rides', icon: 'bike', photo: 'bikeGirl', match: /bike|cycl|vélo/i },
+  { id: 'padel', label: 'Padel', icon: 'activity', photo: 'padelGirl', match: /padel/i },
+  { id: 'tennis', label: 'Tennis', icon: 'activity', photo: 'tennisGirl', match: /tennis/i },
+  { id: 'golf', label: 'Golf', icon: 'flag', photo: 'golfGirl', match: /golf|driving range/i },
+  { id: 'fitness', label: 'Fitness', icon: 'dumbbell', photo: 'gymGirl', match: /fitness|gym|padel|tennis|workout|surf|boxing/i, cats: ['sport'] },
+  { id: 'pilates', label: 'Pilates', icon: 'activity', photo: 'pilatesGirl', match: /pilates|barre/i },
   { id: 'yoga', label: 'Yoga', icon: 'leaf', photo: 'yoga', match: /yoga|breath|meditat/i },
-  { id: 'beach', label: 'Beach', icon: 'sun', photo: 'girlSunset', match: /beach|plage|sunset|swim/i, cats: ['beach'] },
-  { id: 'dinner', label: 'Restaurants', icon: 'utensils', photo: 'girlDinner', match: /dinner|dîner|restaurant|lunch|food/i, cats: ['food'] },
-  { id: 'travel', label: 'Travel', icon: 'plane', photo: 'girlTravel', match: /travel|trip|voyage|getaway|weekend away/i, cats: ['travel'] },
-  { id: 'hike', label: 'Hiking', icon: 'mountain', photo: 'girlHike', match: /hik|trek|randonn|waterfall|nature/i, cats: ['outdoor'] },
-  { id: 'wellness', label: 'Wellness', icon: 'sparkles', photo: 'girlSpa', match: /wellness|spa|self.?care|massage|beauty/i, cats: ['wellness'] },
+  // IRLY's own Dubai photos: listed before the broader kinds (a safari park is not a park, quads are not a hike).
+  { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
+  { id: 'quad', label: 'Quad biking', icon: 'mountain', photo: 'quadGirl', match: /quad|atv|buggy|buggies|dune bashing/i },
+  { id: 'desert', label: 'Desert', icon: 'sun', photo: 'desertGirl', match: /desert|camel|dunes?|safari(?! park)/i },
+  { id: 'nightout', label: 'Girls’ night out', icon: 'sparkles', photo: 'nightDinner', match: /night out|girls.? night|rooftop|soirée|sortie|party|dinner with a view/i },
+  { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
+  { id: 'yacht', label: 'Yacht & boat', icon: 'sailboat', photo: 'yachtGirl', match: /yacht|boat|cruise|sailing|catamaran/i },
+  { id: 'beach', label: 'Beach', icon: 'sun', photo: 'beachClubGirl', match: /beach|plage|sunset|swim/i, cats: ['beach'] },
+  { id: 'dinner', label: 'Restaurants', icon: 'utensils', photo: 'restaurantGirl', match: /dinner|dîner|restaurant|lunch|food/i, cats: ['food'] },
+  { id: 'travel', label: 'Girl trip', icon: 'plane', photo: 'girlTrip', match: /girl trip|travel|trip|voyage|getaway|weekend away/i, cats: ['travel'] },
+  { id: 'wellness', label: 'Wellness', icon: 'sparkles', photo: 'spaGirl', match: /wellness|spa|self.?care|massage|beauty/i, cats: ['wellness'] },
+  { id: 'mosque', label: 'Mosques', icon: 'landmark', photo: 'mosqueGirl', match: /mosque/i },
   { id: 'culture', label: 'Culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|exhibit|theat|concert|culture|cinema/i, cats: ['culture'] },
-  { id: 'network', label: 'Networking', icon: 'briefcase', photo: 'girlWork', match: /network|entrepreneur|founder|business|cowork|career/i, cats: ['networking'] },
-  { id: 'create', label: 'Book club & workshops', icon: 'palette', photo: 'girlBookClub', match: /book|workshop|atelier|art|paint|pottery|craft/i },
+  { id: 'network', label: 'Networking', icon: 'briefcase', photo: 'networkingGirl', match: /network|entrepreneur|founder|business|cowork|career/i, cats: ['networking'] },
+  { id: 'create', label: 'Book club & workshops', icon: 'palette', photo: 'readingGirl', match: /book|workshop|atelier|art|paint|pottery|craft/i },
 ];
 
 /** IRLY Moms: plans with (or around) the children. */
 export const MOM_KINDS: Kind[] = [
+  { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
+  { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
   { id: 'park', label: 'Park & playdates', icon: 'baby', photo: 'momPlaydate', match: /park|playdate|playground|picnic/i },
-  { id: 'stroller', label: 'Stroller walks', icon: 'footprints', photo: 'momBaby', match: /stroller|poussette|baby walk|walk/i },
+  { id: 'stroller', label: 'Stroller walks', icon: 'footprints', photo: 'strollerMom', match: /stroller|poussette|baby walk|walk/i },
   { id: 'brunch', label: 'Moms’ brunch', icon: 'utensils', photo: 'brunch', match: /brunch/i },
   { id: 'coffee', label: 'Coffee', icon: 'coffee', photo: 'girlCoffee', match: /coffee|café|cafe/i },
   { id: 'beach', label: 'Beach', icon: 'sun', photo: 'momBeach', match: /beach|plage/i },
   { id: 'pool', label: 'Pool & swimming', icon: 'waves', photo: 'swimming', match: /swim|pool|piscine/i },
   { id: 'sport', label: 'Moms’ sport', icon: 'activity', photo: 'momYoga', match: /yoga|pilates|fitness|football|padel|tennis|sport/i },
   { id: 'create', label: 'Creative workshops', icon: 'palette', photo: 'girlBookClub', match: /workshop|art|craft|atelier|paint/i },
-  { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|culture|aquarium|zoo/i },
+  { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|culture|aquarium/i },
   { id: 'restaurant', label: 'Family restaurants', icon: 'utensils', photo: 'dinnerGroup', match: /restaurant|lunch|dinner|family meal/i },
   { id: 'weekend', label: 'Weekend outings', icon: 'calendar', photo: 'familyBeach', match: /weekend|outing|sortie|family day/i },
   { id: 'trip', label: 'Trips', icon: 'plane', photo: 'girlTravel', match: /trip|travel|excursion|getaway/i },
@@ -92,7 +106,7 @@ export const KindRail = memo(function KindRail({ kinds, value, onChange, counts 
               accessibilityLabel={n ? tx('{kind}: {n} upcoming', { kind: tx(k.label), n }) : tx(k.label)}
               style={[styles.kind, on ? styles.kindOn : null]}
             >
-              <Photo visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
+              <Photo tint={GIRL_TINT} visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
               <View style={styles.kindTop}>
                 <View style={[styles.kindIcon, on ? { backgroundColor: girl.rose } : null]}>
                   <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#FFFFFF' : girl.ink} />
@@ -233,7 +247,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} accessibilityLabel={`${a.title}, ${cityWhen(a.startsAt, a.cityId)}`} style={styles.plan}>
       <View style={styles.planPhoto}>
-        <Photo visual={{ photo, uri: a.coverUrl }} light="dubai" width={300} style={StyleSheet.absoluteFill} />
+        <Photo tint={GIRL_TINT} visual={{ photo, uri: a.coverUrl }} light="dubai" width={300} style={StyleSheet.absoluteFill} />
       </View>
       <View style={{ flex: 1, gap: 3, paddingVertical: 2 }}>
         <Text variant="caption" color={girl.rose}>
@@ -257,7 +271,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
         </View>
       </View>
       {a.joined ? (
-        <View style={[styles.badge, { backgroundColor: girl.ink }]}>
+        <View style={[styles.badge, { backgroundColor: girl.rose }]}>
           <Icon name="check" size={12} color="#FFFFFF" />
           <Text variant="caption" color="#FFFFFF">
             Going
@@ -278,7 +292,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
 
 function Chip({ label, on, onPress, icon }: { label: string; on: boolean; onPress: () => void; icon?: IconName }) {
   return (
-    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={tx(label)} style={[styles.chip, on ? { backgroundColor: girl.ink, borderColor: girl.ink } : null]}>
+    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={tx(label)} style={[styles.chip, on ? { backgroundColor: girl.rose, borderColor: girl.rose } : null]}>
       {icon ? <Icon name={icon} size={13} color={on ? '#FFFFFF' : girl.ink} /> : null}
       <Text variant="label" color={on ? '#FFFFFF' : girl.ink}>
         {label}

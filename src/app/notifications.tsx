@@ -1,12 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { friendlyError, supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { proConnect } from '@/features/network/api';
-import { addFriend, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
+import { addFriend, markNotificationRead, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
 import { timeAgo } from '@/lib/time';
 import { FEATURES } from '@/lib/features';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -124,12 +124,23 @@ function ServerNotifications() {
   const { friends, refresh } = useFriends();
   const names = useNames(items.map((n) => (typeof n.payload?.from === 'string' ? n.payload.from : '')).filter((x) => /^[0-9a-f-]{36}$/.test(x)));
   const unread = items.some((n) => !n.readAt);
-  useEffect(() => {
-    if (unread) {
-      const h = setTimeout(markAllRead, 1500);
-      return () => clearTimeout(h);
+  // A notification is read when it is opened, not because the list was shown: tapping one marks
+  // that one read (at once on screen, then on the server) and opens what it is about. One tap at
+  // a time: a second tap while the first screen opens is ignored.
+  const opening = useRef(false);
+  const open = (n: ServerNotification, go?: () => void) => {
+    if (opening.current) return;
+    opening.current = true;
+    setTimeout(() => {
+      opening.current = false;
+    }, 700);
+    if (!n.readAt) {
+      void markNotificationRead(n.id).then((ok) => {
+        if (!ok) toast('Could not mark it as read. Check your connection.', 'x', 'live');
+      });
     }
-  }, [unread, markAllRead]);
+    go?.();
+  };
   if (!items.length && status === 'loading') {
     return (
       <View style={[styles.list, { alignItems: 'center', paddingTop: space[6] }]}>
@@ -162,11 +173,11 @@ function ServerNotifications() {
     const p = n.payload;
     switch (n.kind) {
       case 'MATCH_CREATED':
-        return { icon: 'sparkles', title: "It's an IRLY match", body: 'Say hello and find something to do', go: () => router.push(`/messages/${p.conversation_id}`) };
+        return { icon: 'sparkles', title: "It's an IRLY match", body: 'Say hello and find something to do', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'MATCH_REMOVED':
         return { icon: 'x', title: 'A match ended', body: 'The private chat is closed' };
       case 'MESSAGE_CREATED':
-        return { icon: 'message', title: 'New message', body: 'Tap to open the conversation', go: () => router.push(`/messages/${p.conversation_id}`) };
+        return { icon: 'message', title: 'New message', body: 'Tap to open the conversation', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'ACTIVITY_JOINED':
         return { icon: 'users', title: 'Someone joined your activity', body: 'Their name is in the activity chat', go: () => router.push(p.activity_id ? `/a/${p.activity_id}` : '/messages') };
       case 'ACTIVITY_UPDATED':
@@ -265,13 +276,19 @@ function ServerNotifications() {
   };
   return (
     <View style={[styles.list, { marginBottom: space[6] }]}>
+      {unread ? (
+        <View style={{ alignItems: 'flex-end' }}>
+          <Button label="Mark all as read" size="sm" variant="ghost" icon="check" onPress={markAllRead} />
+        </View>
+      ) : null}
       {items.map((n, i) => {
         const d = describe(n);
         return (
           <Animated.View key={n.id} entering={enter.rise(i)}>
-            <PressableScale onPress={d.go} scaleTo={0.98} style={[styles.row, { backgroundColor: n.readAt ? 'transparent' : t.c.surface, boxShadow: n.readAt ? undefined : t.shadow.card }]}>
+            <PressableScale onPress={() => open(n, d.go)} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`${d.title}${n.readAt ? '' : ', unread'}`} style={[styles.row, { backgroundColor: n.readAt ? 'transparent' : t.c.surface, boxShadow: n.readAt ? undefined : t.shadow.card }]}>
               <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
                 <Icon name={d.icon} size={18} color={t.c.text} />
+                {n.readAt ? null : <View testID="unread-dot" style={[styles.dot, { backgroundColor: t.c.brand, borderColor: t.c.bg }]} />}
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="label" numberOfLines={2}>
@@ -328,4 +345,5 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: space.gutter, gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg },
   icon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  dot: { position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
 });

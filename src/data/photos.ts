@@ -204,6 +204,11 @@ export const LIBRARY = [
   'writing',
 ] as const;
 // Keys that now have a Dubai photo (Pixabay / Pexels) are served from the library too.
+/** IRLY's own photos, taken in Dubai and used with permission; served with the website (site/img/own). */
+export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl', 'dubaiPink', 'restaurantGirl', 'gymGirl', 'runGirl', 'girlTrip'] as const;
+const OWN_SET = new Set<string>(OWN);
+const OWN_BASE = 'https://getirly.com/img/own';
+
 const LIBRARY_SET = new Set<string>([...LIBRARY, ...DUBAI_KEYS]);
 const LIBRARY_BASE = 'https://alafrench7593-a11y.github.io/irly/photos';
 
@@ -256,7 +261,7 @@ export const cityFilm = (cityId: string, heroKey: string): string | undefined =>
 const FACES_VERSION = 2;
 export const portrait = (id: string) => `${LIBRARY_BASE}/faces/${id}.jpg?v=${FACES_VERSION}`;
 
-export type PhotoKey = keyof typeof ids | (typeof LIBRARY)[number];
+export type PhotoKey = keyof typeof ids | (typeof LIBRARY)[number] | (typeof OWN)[number];
 
 export const PHOTO_IDS = ids;
 
@@ -265,6 +270,7 @@ const pixels = (width: number) => Math.min(2400, Math.ceil((width * Math.min(3, 
 
 /** The key's first picture (the one chosen by hand). */
 function primary(key: PhotoKey, px: number): string {
+  if (OWN_SET.has(key)) return `${OWN_BASE}/${key}-${px <= 600 ? 480 : 1200}.jpg`;
   if (LIBRARY_SET.has(key)) return `${LIBRARY_BASE}/${key}-${px <= 600 ? 480 : 1200}.jpg`;
   return `https://images.unsplash.com/photo-${ids[key as keyof typeof ids]}?auto=format&fit=crop&w=${px}&q=80`;
 }
@@ -295,9 +301,11 @@ function pick(key: string, count: number, seed?: string): number {
 /** Keys whose first picture is the same file as another key's (jbr = surf, roadtrip = hikeDesert, meeting = founders): only their own variants are shown. */
 const SHARED_PRIMARY = new Set<string>(['jbr', 'roadtrip', 'meeting']);
 
-export function photo(key: PhotoKey, width = 900, seed?: string): string {
+/** With `pinned`, always the key's first picture: for Dubai keys, the photo taken in Dubai (variants may be from anywhere). */
+export function photo(key: PhotoKey, width = 900, seed?: string, pinned = false): string {
   const px = pixels(width);
   const variants = VARIANTS[key] ?? [];
+  if (pinned && !SHARED_PRIMARY.has(key)) return primary(key, px);
   if (SHARED_PRIMARY.has(key) && variants.length) return sized(variants[pick(key, variants.length, seed)], px);
   const i = pick(key, variants.length + 1, seed);
   return i === 0 ? primary(key, px) : sized(variants[i - 1], px);

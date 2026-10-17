@@ -12,6 +12,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { GirlClosed, GirlLoading, isGirlRefusal, readGirlAccess, safeBack, withLimit } from '@/features/girl/access';
 import { Photo } from '@/components/visual/Photo';
+import { FEATURES } from '@/lib/features';
 import { openCreate } from '@/features/create/createStore';
 import { matchApi, PAGE_SIZE, type MatchApi } from '@/features/girl/api';
 import { CandidateCard } from '@/features/girl/CandidateCard';
@@ -19,11 +20,11 @@ import { GirlIntro } from '@/features/girl/GirlIntro';
 import { MatchMoment } from '@/features/girl/MatchMoment';
 import { FiltersSheet, ProfileSheet, SafetySheet } from '@/features/girl/Sheets';
 import type { Suggestion } from '@/features/girl/suggest';
-import { girl } from '@/features/girl/theme';
+import { girl, GIRL_TINT } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton } from '@/features/girl/ui';
 import { GirlHero } from '@/features/girl/GirlHero';
-import { girlPhotoFor } from '@/features/girl/photos';
+import { girlCommunityPhoto } from '@/features/girl/photos';
 import { ScrollReveal } from '@/motion/ScrollReveal';
 import { MomsView } from '@/features/girl/MomsView';
 import { GIRL_KINDS, GirlFeed, KindRail, Shortcuts, Upcoming } from '@/features/girl/world';
@@ -283,7 +284,7 @@ export default function GirlHome() {
         <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => safeBack(router, '/')} onProfile={() => router.push('/girl/profile')} />
 
 
-        {matches.length ? (
+        {FEATURES.girlMatch && matches.length ? (
           <View style={{ marginTop: space[5], gap: 10 }}>
             <Text variant="overline" color={girl.inkSoft} style={{ paddingHorizontal: space.gutter }}>
               Your matches · {matches.length}
@@ -364,6 +365,8 @@ export default function GirlHome() {
         ) : null}
 
         <View onLayout={(e) => record('women', e)} />
+        {FEATURES.girlMatch ? (
+          <>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sections}>
           {SECTIONS.map((s) => {
             const on = filters.section === s.id;
@@ -375,7 +378,7 @@ export default function GirlHome() {
                 onPress={() => applyFilters({ ...filters, section: s.id })}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
-                style={[styles.section, { backgroundColor: on ? girl.ink : girl.surface }]}
+                style={[styles.section, { backgroundColor: on ? girl.rose : girl.surface }]}
               >
                 <Icon name={s.icon} size={14} color={on ? '#FFFFFF' : girl.ink} />
                 <Text variant="label" color={on ? '#FFFFFF' : girl.ink}>
@@ -451,11 +454,30 @@ export default function GirlHome() {
             <ActionButton icon="shield" label="Block or report" onPress={() => setSafetyFor(top)} />
           </View>
         ) : null}
+          </>
+        ) : (
+          // IRLY Match is coming soon: meanwhile, plans and communities.
+          <View style={styles.soon}>
+            <View style={styles.soonBadge}>
+              <Icon name="sparkles" size={14} color="#FFFFFF" />
+              <Text variant="label" color="#FFFFFF">
+                Coming soon
+              </Text>
+            </View>
+            <Text variant="titleM" color={girl.ink} align="center">
+              IRLY Match
+            </Text>
+            <Text variant="bodyS" color={girl.inkSoft} align="center">
+              Meet women who share your interests in {city.name}, matched on what you love. Until then, plan something with girls below.
+            </Text>
+            <GButton label="Plan something" icon="plus" onPress={() => goTo('plan')} />
+          </View>
+        )}
 
         <View onLayout={(e) => record('plan', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], marginHorizontal: space.gutter, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft }}>
           <View style={{ height: 120 }}>
-            <Photo visual={{ photo: 'girlSunset' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
+            <Photo tint={GIRL_TINT} visual={{ photo: 'brunchGirl' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
             <Text variant="titleL" color="#FFFFFF" style={{ position: 'absolute', left: 16, bottom: 14 }}>
               Plan something with girls
             </Text>
@@ -513,7 +535,7 @@ export default function GirlHome() {
                 style={styles.community}
                 accessibilityLabel={c.name}
               >
-                <Photo visual={{ photo: girlPhotoFor(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
+                <Photo pinned tint={GIRL_TINT} visual={{ photo: girlCommunityPhoto(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
                 <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
                   <View style={styles.communityBadge}>
                     <Icon name={c.member ? 'check' : 'users'} size={14} color={girl.rose} />
@@ -641,17 +663,17 @@ function ActionButton({ icon, label, onPress, big, small, active }: { icon: Icon
       accessibilityLabel={label}
       style={[
         styles.action,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: big ? girl.ink : active ? girl.blush : girl.surface },
+        { width: size, height: size, borderRadius: size / 2, backgroundColor: big ? girl.rose : active ? girl.blush : girl.surface, boxShadow: big ? girl.shadow : girl.shadowSoft },
       ]}
     >
-      <Icon name={icon} size={big ? 28 : 20} color={big ? '#FFFFFF' : girl.ink} fill={active ? girl.ink : 'none'} />
+      <Icon name={icon} size={big ? 28 : 20} color={big ? '#FFFFFF' : girl.ink} fill={active ? girl.rose : 'none'} />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, backgroundColor: girl.surface, boxShadow: girl.shadow },
-  modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, backgroundColor: girl.ink },
+  modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, backgroundColor: girl.rose },
   mode: { flex: 1, flexDirection: 'row', gap: 6, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   moving: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: space.gutter, marginTop: space[5], padding: 14, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
   root: { flex: 1, backgroundColor: girl.bg },
@@ -659,6 +681,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.gutter },
   round: { width: 40, height: 40, borderRadius: 20, backgroundColor: girl.surface, alignItems: 'center', justifyContent: 'center' },
   matchItem: { alignItems: 'center', gap: 6, width: 64 },
+  soon: { marginTop: space[5], marginHorizontal: space.gutter, padding: 20, gap: 10, alignItems: 'center', borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
+  soonBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 28, borderRadius: 14, backgroundColor: girl.rose },
   matchRing: { padding: 2, borderRadius: 32, borderWidth: 2, borderColor: girl.rose },
   sections: { paddingHorizontal: space.gutter, gap: 8, marginTop: space[5], marginBottom: space[4] },
   section: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 13, borderRadius: radius.pill, boxShadow: girl.shadowSoft },

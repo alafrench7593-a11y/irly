@@ -14,7 +14,7 @@ import { CITIES } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 import { GirlGate, isGirlRefusal, safeBack } from '@/features/girl/access';
 import { matchApi } from '@/features/girl/api';
-import { girl } from '@/features/girl/theme';
+import { girl, GIRL_TINT } from '@/features/girl/theme';
 import { GButton } from '@/features/girl/ui';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -26,18 +26,18 @@ type Slide = { photo: PhotoKey; title: string; body: string; points?: { icon: Ic
 
 const SLIDES: Slide[] = [
   {
-    photo: 'girlFriends',
+    photo: 'girlsOut',
     title: 'Meet people who get you.',
     // {city}: the member's destination (filled in when shown).
     body: 'Discover girls in {city} who share your interests, your personality and your lifestyle.',
   },
   {
-    photo: 'girlFitness',
+    photo: 'padelGirl',
     title: 'Not just another swipe.',
     body: 'IRLY Match is built for real friendships. Every match is a reason to do something together, in real life.',
   },
   {
-    photo: 'girlCoffee',
+    photo: 'drinksGirl',
     title: 'Find your kind of people.',
     body: 'We match you on what actually makes a friendship work:',
     points: [
@@ -49,13 +49,13 @@ const SLIDES: Slide[] = [
     ],
   },
   {
-    photo: 'girlSunset',
+    photo: 'yachtGirl',
     title: 'From match to real life.',
     body: 'A match can turn into coffee, brunch, padel, the gym, the beach, shopping, dinner, a trip, an event.',
     flow: ['Match', 'Chat', 'Activity', 'Meet IRL'],
   },
   {
-    photo: 'girlTravel',
+    photo: 'spaGirl',
     title: 'Your privacy matters.',
     body: 'IRLY Girl is for women only, checked by our servers, not just the app.',
     points: [
@@ -167,7 +167,7 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
     <View style={{ width, flex: 1 }}>
       <View style={styles.photoWrap}>
         <Animated.View style={[StyleSheet.absoluteFill, photo]}>
-          <Photo visual={{ photo: slide.photo }} light="dubai" scrim="soft" style={StyleSheet.absoluteFill} width={1000} />
+          <Photo tint={GIRL_TINT} visual={{ photo: slide.photo }} light="dubai" scrim="soft" style={StyleSheet.absoluteFill} width={1000} />
         </Animated.View>
         <View style={[styles.brand, { top: top + 18 }]}>
           <Text variant="overline" color="#FFFFFF" style={{ letterSpacing: 3 }}>
@@ -200,7 +200,7 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
           <View style={styles.flow}>
             {slide.flow.map((f, k) => (
               <View key={f} style={styles.flowItem}>
-                <View style={[styles.flowPill, k === slide.flow!.length - 1 ? { backgroundColor: girl.ink } : null]}>
+                <View style={[styles.flowPill, k === slide.flow!.length - 1 ? { backgroundColor: girl.rose } : null]}>
                   <Text variant="caption" color={k === slide.flow!.length - 1 ? '#FFFFFF' : girl.ink}>
                     {f}
                   </Text>
@@ -237,5 +237,5 @@ const styles = StyleSheet.create({
   closeBtn: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   footer: { paddingHorizontal: space.gutter, paddingTop: 12, gap: 16 },
   dots: { flexDirection: 'row', gap: 6, alignSelf: 'center' },
-  dot: { height: 8, borderRadius: 4, backgroundColor: girl.ink },
+  dot: { height: 8, borderRadius: 4, backgroundColor: girl.rose },
 });
