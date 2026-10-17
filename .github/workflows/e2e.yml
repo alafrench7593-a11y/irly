@@ -12,6 +12,7 @@ on:
       - 'scripts/e2e.mjs'
       - 'scripts/e2e-ui.mjs'
       - 'scripts/e2e-sync.mjs'
+      - 'scripts/e2e-girl.mjs'
       - 'scripts/check-routes.mjs'
       - 'src/**'
       - '.github/workflows/e2e.yml'
@@ -123,7 +124,9 @@ jobs:
           node scripts/e2e-ui.mjs; a=$?
           echo; echo '── Paths, errors, synchronisation ──'
           node scripts/e2e-sync.mjs; b=$?
-          exit $(( a || b ))
+          echo; echo '── IRLY Girl, as a new member ──'
+          node scripts/e2e-girl.mjs; c=$?
+          exit $(( a || b || c ))
       - uses: actions/upload-artifact@v4
         if: always()
         with:
