@@ -2,7 +2,7 @@
 <meta name="description" content="Making friends in a new city shouldn’t be so hard. IRLY helps you meet new people, find your community and do things together in real life, in Dubai and Bali. Free to join.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@1&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
 <style>
 /* ───────────────────────── Design system ─────────────────────────
    Colour: black, white, greys; one accent (live red) reserved for "now".
@@ -133,6 +133,13 @@ html.no-intro .intro { display: none; }
 .links { display: flex; gap: 2px; margin-inline-start: auto; }
 .links a { text-decoration: none; font-size: 14px; font-weight: 600; color: var(--muted); padding: 8px 12px; border-radius: var(--r-pill); transition: color var(--fast), background var(--fast); }
 .links a:hover { color: var(--fg); background: rgba(255,255,255,.07); }
+/* IRLY Girl: the women-only space, its own page. A pink stop and the serif italic of its logo. */
+.girl-link em { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-weight: 400; font-size: 1.18em; color: #F6A5C6; letter-spacing: 0; }
+.links a.girl-link { display: inline-flex; align-items: center; gap: 7px; }
+.links a.girl-link::before { content: ""; width: 6px; height: 6px; border-radius: 6px; background: #E83E87; box-shadow: 0 0 0 0 rgba(232,62,135,.5); transition: box-shadow var(--fast); }
+.links a.girl-link:hover { background: rgba(232,62,135,.14); }
+.links a.girl-link:hover::before { box-shadow: 0 0 0 5px rgba(232,62,135,.18); }
+.sheet a.girl-link em { font-size: 1.06em; }
 .langs { display: flex; gap: 2px; padding: 3px; border-radius: var(--r-pill); border: 1px solid var(--line); }
 .langs button { border: 0; background: none; cursor: pointer; font-size: 12px; font-weight: 800; min-width: 34px; padding: 6px 8px; border-radius: var(--r-pill); color: var(--muted); }
 .langs button[aria-pressed="true"] { background: var(--white); color: var(--ink); }
@@ -145,7 +152,7 @@ html.no-intro .intro { display: none; }
 .sheet a.btn { justify-self: start; margin-top: 18px; font-size: 17px; letter-spacing: 0; }
 .nav.open + .sheet { opacity: 1; visibility: visible; }
 .nav.open + .sheet a { transform: none; opacity: 1; }
-.nav.open + .sheet a:nth-child(2) { transition-delay: .04s; } .nav.open + .sheet a:nth-child(3) { transition-delay: .08s; } .nav.open + .sheet a:nth-child(4) { transition-delay: .12s; } .nav.open + .sheet a:nth-child(5) { transition-delay: .16s; } .nav.open + .sheet a:nth-child(6) { transition-delay: .2s; }
+.nav.open + .sheet a:nth-child(2) { transition-delay: .04s; } .nav.open + .sheet a:nth-child(3) { transition-delay: .08s; } .nav.open + .sheet a:nth-child(4) { transition-delay: .12s; } .nav.open + .sheet a:nth-child(5) { transition-delay: .16s; } .nav.open + .sheet a:nth-child(6) { transition-delay: .2s; } .nav.open + .sheet a:nth-child(7) { transition-delay: .24s; } .nav.open + .sheet a:nth-child(8) { transition-delay: .28s; }
 @media (max-width: 960px) { .links, .nav .cta { display: none; } .menu-btn { display: grid; } .langs { margin-inline-start: auto; } }
 
 /* on phones, the main button follows once the hero has gone */
@@ -665,6 +672,7 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
         <a href="#app" data-i="navApp">The app</a>
         <a href="#dubai" data-i="navDubai">Dubai</a>
         <a href="https://getirly.com/demo/" data-i="navDemo">Demo</a>
+        <a class="girl-link" href="/girl" data-href-fr="/fr/girl" data-href-en="/girl"><span class="notranslate" translate="no">IRLY <em>Girl</em></span></a>
         <a href="#waitlist" data-i="navWait">Waitlist</a>
       </div>
       <div class="langs" role="group" aria-label="Language" data-i-aria="langGroup">
@@ -683,6 +691,7 @@ html.still .show-still .scr img { opacity: 1; filter: none; transform: none; }
   <a href="#app" data-i="navApp">The app</a>
   <a href="#dubai" data-i="navDubai">Dubai</a>
   <a href="https://getirly.com/demo/" data-i="navDemo">Demo</a>
+  <a class="girl-link" href="/girl" data-href-fr="/fr/girl" data-href-en="/girl"><span class="notranslate" translate="no">IRLY <em>Girl</em></span></a>
   <a href="#waitlist" data-i="navWait">Waitlist</a>
   <a class="btn" href="https://getirly.com/app/" data-cta="sheet" data-i="ctaFind">Find my people</a>
 </div>
