@@ -100,7 +100,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={[StyleSheet.absoluteFill, { backgroundColor: girl.bg }]}>
-        <Glass style={StyleSheet.absoluteFill} border={false} intensity={80} />
+        <Glass light style={StyleSheet.absoluteFill} border={false} intensity={80} />
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32, gap: space[6] }} showsVerticalScrollIndicator={false}>
           <View style={styles.stage}>
             <Animated.View style={[styles.halo, halo]} />

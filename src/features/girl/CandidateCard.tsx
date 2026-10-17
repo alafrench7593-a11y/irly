@@ -157,7 +157,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         </Animated.View>
 
         <View style={styles.bottom} pointerEvents="none">
-          <Glass style={styles.panel} intensity={60}>
+          <Glass light style={styles.panel} intensity={60}>
             <View style={styles.nameRow}>
               <Avatar name={c.firstName} hue={c.hue} size={36} photo={c.photoUrls[0]} />
               <View style={{ flex: 1 }}>
