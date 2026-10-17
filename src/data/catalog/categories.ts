@@ -192,7 +192,7 @@ export const CATEGORIES: CatalogCategory[] = [
     photo: 'dunes',
     subs: [
       s('beach', 'Beach', [a('jbr-sunset', 'Sunset at JBR', 'JBR Beach', 'dubai'), a('kite-beach', 'Kite Beach morning', 'Kite Beach', 'dubai'), a('beach-picnic', 'Beach picnic')]),
-      s('desert', 'Desert', [a('desert-sunset', 'Desert sunset'), a('desert-camp', 'Desert camp night')]),
+      s('desert', 'Desert', [a('desert-sunset', 'Desert sunset'), a('desert-camp', 'Desert camp night'), a('quad-biking', 'Quad biking in the dunes')]),
       ...list('Sunset', 'Sunrise', 'Picnic', 'BBQ', 'Hiking', 'Camping', 'Boat', 'Yacht', 'Kayak', 'Paddleboard'),
     ],
   },
@@ -279,6 +279,7 @@ export const CATEGORIES: CatalogCategory[] = [
     subs: [
       s('dog-walk', 'Dog walk', [a('marina-dog-walk', 'Dog walk on the Marina', 'Dubai Marina', 'dubai'), a('dog-beach', 'Dog beach morning')]),
       s('dog-park', 'Dog park', [a('dog-playdate', 'Dog playdate')]),
+      s('zoo', 'Zoo & safari', [a('safari-park', 'Dubai Safari Park', 'Dubai Safari Park', 'dubai')]),
       s('horse-riding', 'Horse riding', [a('desert-ride', 'Desert horse ride')]),
       ...list('Pet friends', 'Pet activities', 'Pet cafes', 'Pet services', 'Pet training', 'Animal shelters'),
     ],
@@ -398,6 +399,11 @@ export const GIRL_CATEGORY: Omit<CatalogCategory, 'id'> & { id: 'girl' } = {
  * activity itself (padel, yacht, desert, mosque...), else its category's.
  */
 const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
+  // IRLY's own Dubai photos first.
+  [/\bglobal village\b/i, 'globalVillage'],
+  [/\b(zoo|safari park|wildlife park)\b/i, 'safariPark'],
+  [/\b(quad\w*|atv|buggy|buggies|dune bashing)\b/i, 'quadGirl'],
+  [/\b(dog walks?|dog beach)\b/i, 'dogWalk'],
   // Whole words only: "brunch" is not "run", "Dubai" is not "AI".
   // Most specific first: "beach volley" before "beach", "dog beach" before "beach".
   [/\bpadel\b|\bpickleball\b/i, 'padel'],

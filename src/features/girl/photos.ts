@@ -41,7 +41,7 @@ const COMMUNITY_RULES: [RegExp, PhotoKey][] = [
   [/\b(hik\w*|trek\w*|nature|waterfalls?)\b/i, 'hikeDesert'],
   [/\b(travel\w*|trips?|voyage\w*|explor\w*)\b/i, 'girlTravel'],
   [/\b(brunch\w*|dinner\w*|dîner|food\w*|eat\w*|coffee|café|cafes?|matcha)\b/i, 'brunch'],
-  [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'founders'],
+  [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'networkingGirl'],
   [/\b(books?|book club|reading|lecture|art|culture)\b/i, 'souk'],
   [/\b(shopping|fashion|mode)\b/i, 'mall'],
   [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'emirates'],

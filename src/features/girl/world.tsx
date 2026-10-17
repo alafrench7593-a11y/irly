@@ -41,18 +41,24 @@ export const GIRL_KINDS: Kind[] = [
   { id: 'fitness', label: 'Fitness', icon: 'dumbbell', photo: 'girlFitness', match: /fitness|gym|run|padel|tennis|workout|surf|boxing/i, cats: ['sport'] },
   { id: 'pilates', label: 'Pilates', icon: 'activity', photo: 'girlClass', match: /pilates|barre/i },
   { id: 'yoga', label: 'Yoga', icon: 'leaf', photo: 'yoga', match: /yoga|breath|meditat/i },
+  // IRLY's own Dubai photos: listed before the broader kinds (a safari park is not a park, quads are not a hike).
+  { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
+  { id: 'quad', label: 'Quad & desert', icon: 'mountain', photo: 'quadGirl', match: /quad|atv|buggy|buggies|dune bashing|desert safari/i },
+  { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
   { id: 'beach', label: 'Beach', icon: 'sun', photo: 'girlSunset', match: /beach|plage|sunset|swim/i, cats: ['beach'] },
   { id: 'dinner', label: 'Restaurants', icon: 'utensils', photo: 'girlDinner', match: /dinner|dîner|restaurant|lunch|food/i, cats: ['food'] },
   { id: 'travel', label: 'Travel', icon: 'plane', photo: 'girlTravel', match: /travel|trip|voyage|getaway|weekend away/i, cats: ['travel'] },
   { id: 'hike', label: 'Hiking', icon: 'mountain', photo: 'girlHike', match: /hik|trek|randonn|waterfall|nature/i, cats: ['outdoor'] },
   { id: 'wellness', label: 'Wellness', icon: 'sparkles', photo: 'girlSpa', match: /wellness|spa|self.?care|massage|beauty/i, cats: ['wellness'] },
   { id: 'culture', label: 'Culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|exhibit|theat|concert|culture|cinema/i, cats: ['culture'] },
-  { id: 'network', label: 'Networking', icon: 'briefcase', photo: 'girlWork', match: /network|entrepreneur|founder|business|cowork|career/i, cats: ['networking'] },
+  { id: 'network', label: 'Networking', icon: 'briefcase', photo: 'networkingGirl', match: /network|entrepreneur|founder|business|cowork|career/i, cats: ['networking'] },
   { id: 'create', label: 'Book club & workshops', icon: 'palette', photo: 'girlBookClub', match: /book|workshop|atelier|art|paint|pottery|craft/i },
 ];
 
 /** IRLY Moms: plans with (or around) the children. */
 export const MOM_KINDS: Kind[] = [
+  { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
+  { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
   { id: 'park', label: 'Park & playdates', icon: 'baby', photo: 'momPlaydate', match: /park|playdate|playground|picnic/i },
   { id: 'stroller', label: 'Stroller walks', icon: 'footprints', photo: 'momBaby', match: /stroller|poussette|baby walk|walk/i },
   { id: 'brunch', label: 'Moms’ brunch', icon: 'utensils', photo: 'brunch', match: /brunch/i },
@@ -61,7 +67,7 @@ export const MOM_KINDS: Kind[] = [
   { id: 'pool', label: 'Pool & swimming', icon: 'waves', photo: 'swimming', match: /swim|pool|piscine/i },
   { id: 'sport', label: 'Moms’ sport', icon: 'activity', photo: 'momYoga', match: /yoga|pilates|fitness|football|padel|tennis|sport/i },
   { id: 'create', label: 'Creative workshops', icon: 'palette', photo: 'girlBookClub', match: /workshop|art|craft|atelier|paint/i },
-  { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|culture|aquarium|zoo/i },
+  { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|culture|aquarium/i },
   { id: 'restaurant', label: 'Family restaurants', icon: 'utensils', photo: 'dinnerGroup', match: /restaurant|lunch|dinner|family meal/i },
   { id: 'weekend', label: 'Weekend outings', icon: 'calendar', photo: 'familyBeach', match: /weekend|outing|sortie|family day/i },
   { id: 'trip', label: 'Trips', icon: 'plane', photo: 'girlTravel', match: /trip|travel|excursion|getaway/i },

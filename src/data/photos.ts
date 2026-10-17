@@ -204,6 +204,11 @@ export const LIBRARY = [
   'writing',
 ] as const;
 // Keys that now have a Dubai photo (Pixabay / Pexels) are served from the library too.
+/** IRLY's own photos, taken in Dubai and used with permission; served with the website (site/img/own). */
+export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk'] as const;
+const OWN_SET = new Set<string>(OWN);
+const OWN_BASE = 'https://getirly.com/img/own';
+
 const LIBRARY_SET = new Set<string>([...LIBRARY, ...DUBAI_KEYS]);
 const LIBRARY_BASE = 'https://alafrench7593-a11y.github.io/irly/photos';
 
@@ -256,7 +261,7 @@ export const cityFilm = (cityId: string, heroKey: string): string | undefined =>
 const FACES_VERSION = 2;
 export const portrait = (id: string) => `${LIBRARY_BASE}/faces/${id}.jpg?v=${FACES_VERSION}`;
 
-export type PhotoKey = keyof typeof ids | (typeof LIBRARY)[number];
+export type PhotoKey = keyof typeof ids | (typeof LIBRARY)[number] | (typeof OWN)[number];
 
 export const PHOTO_IDS = ids;
 
@@ -265,6 +270,7 @@ const pixels = (width: number) => Math.min(2400, Math.ceil((width * Math.min(3, 
 
 /** The key's first picture (the one chosen by hand). */
 function primary(key: PhotoKey, px: number): string {
+  if (OWN_SET.has(key)) return `${OWN_BASE}/${key}-${px <= 600 ? 480 : 1200}.jpg`;
   if (LIBRARY_SET.has(key)) return `${LIBRARY_BASE}/${key}-${px <= 600 ? 480 : 1200}.jpg`;
   return `https://images.unsplash.com/photo-${ids[key as keyof typeof ids]}?auto=format&fit=crop&w=${px}&q=80`;
 }
