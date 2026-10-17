@@ -406,6 +406,8 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\b(dog walks?|dog beach)\b/i, 'dogWalk'],
   [/\b(pilates|reformer)\b/i, 'pilatesGirl'],
   [/\b(golf|topgolf|driving range)\b/i, 'golfGirl'],
+  [/\bsheikh zayed grand mosque\b/i, 'mosqueGirl'],
+  [/\bbeach clubs?\b/i, 'beachClubGirl'],
   // Whole words only: "brunch" is not "run", "Dubai" is not "AI".
   // Most specific first: "beach volley" before "beach", "dog beach" before "beach".
   [/\bpadel\b|\bpickleball\b/i, 'padel'],

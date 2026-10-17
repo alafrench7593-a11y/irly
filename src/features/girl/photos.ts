@@ -7,7 +7,7 @@ import type { PhotoKey } from '@/data/photos';
  */
 const RULES: [RegExp, PhotoKey][] = [
   [/\b(moms?|mums?|mamans?|mother|playdates?|kids?|children|enfants?)\b/i, 'momPlaydate'],
-  [/\b(baby|babies|bébé|stroller|poussette)\b/i, 'momBaby'],
+  [/\b(baby|babies|bébé|stroller|poussette)\b/i, 'strollerMom'],
   [/\b(family|families|famille)\b/i, 'familyBeach'],
   [/\b(pilates|reformer)\b/i, 'pilatesGirl'],
   [/\b(yoga|wellness|breathwork|meditat\w*)\b/i, 'girlClass'],
@@ -27,9 +27,10 @@ const RULES: [RegExp, PhotoKey][] = [
   [/\b(desert|camels?|dunes?)\b/i, 'desertGirl'],
   [/\b(night out|rooftop|soirée|sorties?|party)\b/i, 'nightDinner'],
   [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'girlWork'],
-  [/\b(books?|book club|reading|lecture)\b/i, 'girlBookClub'],
+  [/\b(books?|book club|reading|lecture)\b/i, 'readingGirl'],
+  [/\b(mosques?)\b/i, 'mosqueGirl'],
   [/\b(shopping|fashion|mode)\b/i, 'girlShopping'],
-  [/\b(beach\w*|plage|sunset|coucher)\b/i, 'girlSunset'],
+  [/\b(beach\w*|plage|sunset|coucher)\b/i, 'beachClubGirl'],
   [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'girlTravel'],
 ];
 
@@ -41,7 +42,8 @@ export function girlPhotoFor(text: string, fallback: PhotoKey = 'girlsOut'): Pho
 
 /** IRLY Girl and IRLY Moms communities: always a photo taken in Dubai, matched on the words in the name. */
 const COMMUNITY_RULES: [RegExp, PhotoKey][] = [
-  [/\b(moms?|mums?|mamans?|mother|playdates?|kids?|children|enfants?|baby|babies|bébé|stroller|poussette)\b/i, 'kids'],
+  [/\b(baby|babies|bébé|stroller|poussette)\b/i, 'strollerMom'],
+  [/\b(moms?|mums?|mamans?|mother|playdates?|kids?|children|enfants?)\b/i, 'kids'],
   [/\b(family|families|famille)\b/i, 'waterPark'],
   [/\b(pilates|reformer)\b/i, 'pilatesGirl'],
   [/\b(yoga|breathwork|meditat\w*)\b/i, 'yoga'],
@@ -52,7 +54,7 @@ const COMMUNITY_RULES: [RegExp, PhotoKey][] = [
   [/\b(yachts?|boats?|cruise|sailing)\b/i, 'yachtGirl'],
   [/\b(global village)\b/i, 'globalVillage'],
   [/\b(fitness|gym|run\w*|padel|tennis|sports?|workout)\b/i, 'girlFitness'],
-  [/\b(surf\w*|beach\w*|plage|sunset|coucher)\b/i, 'beachClub'],
+  [/\b(surf\w*|beach\w*|plage|sunset|coucher)\b/i, 'beachClubGirl'],
   [/\b(hik\w*|trek\w*|nature|waterfalls?)\b/i, 'hikeDesert'],
   [/\b(travel\w*|trips?|voyage\w*|explor\w*)\b/i, 'girlTravel'],
   [/\b(coffee|café|cafes?|matcha|drinks?)\b/i, 'drinksGirl'],
@@ -61,7 +63,9 @@ const COMMUNITY_RULES: [RegExp, PhotoKey][] = [
   [/\b(brunch\w*)\b/i, 'brunchGirl'],
   [/\b(dinner\w*|dîner|food\w*|eat\w*)\b/i, 'nightDinner'],
   [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'networkingGirl'],
-  [/\b(books?|book club|reading|lecture|art|culture)\b/i, 'souk'],
+  [/\b(books?|book club|reading|lecture)\b/i, 'readingGirl'],
+  [/\b(mosques?)\b/i, 'mosqueGirl'],
+  [/\b(art|culture)\b/i, 'souk'],
   [/\b(shopping|fashion|mode)\b/i, 'mall'],
   [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'emirates'],
 ];

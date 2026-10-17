@@ -51,14 +51,15 @@ export const GIRL_KINDS: Kind[] = [
   { id: 'nightout', label: 'Girls’ night out', icon: 'sparkles', photo: 'nightDinner', match: /night out|girls.? night|rooftop|soirée|sortie|party|dinner with a view/i },
   { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
   { id: 'yacht', label: 'Yacht & boat', icon: 'sailboat', photo: 'yachtGirl', match: /yacht|boat|cruise|sailing|catamaran/i },
-  { id: 'beach', label: 'Beach', icon: 'sun', photo: 'girlSunset', match: /beach|plage|sunset|swim/i, cats: ['beach'] },
+  { id: 'beach', label: 'Beach', icon: 'sun', photo: 'beachClubGirl', match: /beach|plage|sunset|swim/i, cats: ['beach'] },
   { id: 'dinner', label: 'Restaurants', icon: 'utensils', photo: 'girlDinner', match: /dinner|dîner|restaurant|lunch|food/i, cats: ['food'] },
   { id: 'travel', label: 'Travel', icon: 'plane', photo: 'girlTravel', match: /travel|trip|voyage|getaway|weekend away/i, cats: ['travel'] },
   { id: 'hike', label: 'Hiking', icon: 'mountain', photo: 'girlHike', match: /hik|trek|randonn|waterfall|nature/i, cats: ['outdoor'] },
   { id: 'wellness', label: 'Wellness', icon: 'sparkles', photo: 'spaGirl', match: /wellness|spa|self.?care|massage|beauty/i, cats: ['wellness'] },
+  { id: 'mosque', label: 'Mosques', icon: 'landmark', photo: 'mosqueGirl', match: /mosque/i },
   { id: 'culture', label: 'Culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|exhibit|theat|concert|culture|cinema/i, cats: ['culture'] },
   { id: 'network', label: 'Networking', icon: 'briefcase', photo: 'networkingGirl', match: /network|entrepreneur|founder|business|cowork|career/i, cats: ['networking'] },
-  { id: 'create', label: 'Book club & workshops', icon: 'palette', photo: 'girlBookClub', match: /book|workshop|atelier|art|paint|pottery|craft/i },
+  { id: 'create', label: 'Book club & workshops', icon: 'palette', photo: 'readingGirl', match: /book|workshop|atelier|art|paint|pottery|craft/i },
 ];
 
 /** IRLY Moms: plans with (or around) the children. */
@@ -66,7 +67,7 @@ export const MOM_KINDS: Kind[] = [
   { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
   { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
   { id: 'park', label: 'Park & playdates', icon: 'baby', photo: 'momPlaydate', match: /park|playdate|playground|picnic/i },
-  { id: 'stroller', label: 'Stroller walks', icon: 'footprints', photo: 'momBaby', match: /stroller|poussette|baby walk|walk/i },
+  { id: 'stroller', label: 'Stroller walks', icon: 'footprints', photo: 'strollerMom', match: /stroller|poussette|baby walk|walk/i },
   { id: 'brunch', label: 'Moms’ brunch', icon: 'utensils', photo: 'brunch', match: /brunch/i },
   { id: 'coffee', label: 'Coffee', icon: 'coffee', photo: 'girlCoffee', match: /coffee|café|cafe/i },
   { id: 'beach', label: 'Beach', icon: 'sun', photo: 'momBeach', match: /beach|plage/i },
