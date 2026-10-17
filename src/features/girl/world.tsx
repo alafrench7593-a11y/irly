@@ -38,6 +38,7 @@ export const GIRL_KINDS: Kind[] = [
   { id: 'brunch', label: 'Brunch', icon: 'coffee', photo: 'brunchGirl', match: /brunch/i },
   { id: 'coffee', label: 'Girls’ coffee', icon: 'coffee', photo: 'drinksGirl', match: /coffee|café|cafe|matcha|drinks?|juice/i },
   { id: 'shopping', label: 'Shopping', icon: 'shoppingBag', photo: 'girlShopping', match: /shopping|fashion|mall|market/i },
+  { id: 'bike', label: 'Bike rides', icon: 'bike', photo: 'bikeGirl', match: /bike|cycl|vélo/i },
   { id: 'padel', label: 'Padel', icon: 'activity', photo: 'padelGirl', match: /padel/i },
   { id: 'tennis', label: 'Tennis', icon: 'activity', photo: 'tennisGirl', match: /tennis/i },
   { id: 'golf', label: 'Golf', icon: 'flag', photo: 'golfGirl', match: /golf|driving range/i },

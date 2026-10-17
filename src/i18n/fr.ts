@@ -1101,6 +1101,7 @@ export const fr: Record<string, string> = {
   'Glamping': 'Glamping',
   'Global Village night': 'Soirée au Global Village',
   'Quad biking': 'Quad',
+  'Bike rides': 'Sorties vélo',
   'Yacht & boat': 'Yacht & bateau',
   'Girls’ night out': 'Sortie entre filles',
   'Zoo & safari': 'Zoo & safari',

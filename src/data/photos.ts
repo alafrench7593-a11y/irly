@@ -205,7 +205,7 @@ export const LIBRARY = [
 ] as const;
 // Keys that now have a Dubai photo (Pixabay / Pexels) are served from the library too.
 /** IRLY's own photos, taken in Dubai and used with permission; served with the website (site/img/own). */
-export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl'] as const;
+export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl'] as const;
 const OWN_SET = new Set<string>(OWN);
 const OWN_BASE = 'https://getirly.com/img/own';
 
