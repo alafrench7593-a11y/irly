@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { FEATURES } from '@/lib/features';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
 import { useMemo, useState, useRef } from 'react';
@@ -124,7 +125,8 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
         <KindRail kinds={MOM_KINDS} value={kind} onChange={setKind} counts={counts} />
       </View>
 
-      {me && me.hasProfile ? (
+      {/* While IRLY Match is coming soon, turning Mom mode on creates her IRLY Girl profile. */}
+      {(me && me.hasProfile) || (!FEATURES.girlMatch && extras.signedIn && !extras.loading && !extras.error) ? (
         <View style={[styles.pad]}>
           <View style={[styles.card, { gap: 12 }]}>
             <View style={styles.rowBetween}>
@@ -136,16 +138,16 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
                   Optional. Other moms see you as a mom, nothing more.
                 </Text>
               </View>
-              <GChip label={me.momMode ? 'On' : 'Off'} selected={me.momMode} onPress={momBusy ? undefined : () => toggleMom(!me.momMode)} />
+              <GChip label={me?.momMode ? 'On' : 'Off'} selected={Boolean(me?.momMode)} onPress={momBusy ? undefined : () => toggleMom(!me?.momMode)} />
             </View>
-            {me.momMode ? (
+            {me?.momMode ? (
               <View style={{ gap: 6 }}>
                 <Text variant="caption" color={girl.inkSoft}>
                   Children’s ages (no names, ever)
                 </Text>
                 <Wrap>
                   {AGES.map((a) => {
-                    const on = (kids ?? me.kidsAgeGroups ?? []).includes(a.id);
+                    const on = (kids ?? me?.kidsAgeGroups ?? []).includes(a.id);
                     return (
                       <GChip
                         key={a.id}

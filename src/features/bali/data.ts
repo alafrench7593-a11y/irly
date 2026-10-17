@@ -460,11 +460,13 @@ export function useGirlExtras() {
       const { data, error } = await sb().from('irly_match_profiles').update(row).eq('user_id', uid).select('user_id');
       if (error) throw new Error(error.message);
       if (!data?.length) {
-        // No IRLY Girl profile yet (IRLY Match is not open): a private one holds these
-        // choices. Hidden from everyone (visible: false) until she chooses otherwise.
+        // No IRLY Girl profile yet (IRLY Match is not open): one is created to hold these
+        // choices. Hidden from everyone, unless this very choice is to be found: « Mom mode
+        // on: other moms can find you », or a Bali status shown to the women already there.
         const ob = await sb().rpc('complete_irly_match_onboarding');
         if (ob.error) throw new Error(ob.error.message);
-        const ins = await sb().from('irly_match_profiles').insert({ user_id: uid, visible: false, goals: ['new_friends'], ...row });
+        const findMe = patch.momMode === true || Boolean(patch.destinationStatus);
+        const ins = await sb().from('irly_match_profiles').insert({ user_id: uid, visible: findMe, goals: ['new_friends'], ...row });
         if (ins.error?.code === '23505') {
           // Created meanwhile (another tap, another device): write the choice on it.
           const again = await sb().from('irly_match_profiles').update(row).eq('user_id', uid);
