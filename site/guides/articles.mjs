@@ -90,7 +90,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'New to Dubai?', body: 'Meet people who share your interests, join communities and do things together, in real life.', label: 'Find my people' },
-    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
   },
   {
     lang: 'fr',
@@ -155,7 +155,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu viens d’arriver à Dubaï ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt, rejoins des communautés et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
-    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
   },
   {
     lang: 'en',
@@ -369,7 +369,7 @@ export const ARTICLES = [
     cta: { title: 'Working remotely from Bali?', body: 'Meet people who share your interests and do things together, in real life.', label: 'Find my people' },
     related: [
       { label: 'How to make friends in Bali', path: 'bali/make-friends/' },
-      { label: 'Bali pour les digital nomads', path: 'fr/bali/digital-nomads/' },
+      { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' },
     ],
   },
   {
@@ -438,7 +438,7 @@ export const ARTICLES = [
     cta: { title: 'Tu travailles à distance depuis Bali ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
     related: [
       { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' },
-      { label: 'Bali for digital nomads', path: 'bali/digital-nomads/' },
+      { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' },
     ],
   },
   {
@@ -448,7 +448,7 @@ export const ARTICLES = [
     cover: 'dubaiCreek',
     figure: { photo: 'running', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-13',
+    updated: '2026-10-17',
     title: 'Lonely in Dubai? What Actually Helps | IRLY',
     description: 'Feeling lonely in Dubai is common, especially in the first months. Why it happens here, small steps that help this week, and when to talk to a professional.',
     h1: 'Lonely in Dubai: what actually helps',
@@ -473,7 +473,8 @@ export const ARTICLES = [
 <li><strong>Suggest one simple plan.</strong> A coffee after the activity, a walk, a game. Most people are waiting for someone else to propose.</li>
 <li><strong>Keep in touch with home, on a rhythm.</strong> A fixed call each week keeps those ties without filling every evening.</li>
 <li><strong>Get out of the flat every day.</strong> A café, a library, a park in the cooler hours: being around people helps, even before you talk to them.</li>
-</ol>`,
+</ol>
+<p>If you have only just arrived, the practical side (paperwork, housing, getting around) can take all your energy at first: <a href="../moving-to-dubai/">our checklist for your first months in Dubai</a> puts the social side alongside it. If this is not your first move abroad, <a href="../../guides/social-life-after-moving-abroad/">rebuilding your social life after moving abroad</a> covers what tends to happen in the months after any move.</p>`,
       },
       {
         h2: 'Places where conversations start easily',
@@ -484,7 +485,8 @@ export const ARTICLES = [
 <li><strong>Volunteering:</strong> people who care about the same cause, and a task to share.</li>
 <li><strong>Communities of your country or language:</strong> a familiar starting point, then mixed groups to widen your circle.</li>
 <li><strong>Coworking spaces and professional meetups:</strong> if you work alone, they give your week colleagues.</li>
-</ul>`,
+</ul>
+<p>If you would rather start with women-only settings, see <a href="../activities-for-women/">activities for women in Dubai</a>.</p>`,
       },
       {
         h2: 'When to talk to someone',
@@ -497,7 +499,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Feeling alone in Dubai?', body: 'Join a community around what you like and find a plan this week, in real life.', label: 'Join a community' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' }],
   },
   {
     lang: 'fr',
@@ -506,7 +508,7 @@ export const ARTICLES = [
     cover: 'dubaiCreek',
     figure: { photo: 'running', after: 1 },
     city: 'Dubaï',
-    updated: '2026-10-13',
+    updated: '2026-10-17',
     title: 'Se sentir seul à Dubaï : ce qui aide vraiment | IRLY',
     description: 'Se sentir seul à Dubaï est fréquent, surtout les premiers mois. Pourquoi ça arrive ici, les petits pas qui aident cette semaine, et quand en parler à un professionnel.',
     h1: 'Se sentir seul à Dubaï : ce qui aide vraiment',
@@ -531,7 +533,8 @@ export const ARTICLES = [
 <li><strong>Propose un plan simple.</strong> Un café après l’activité, une balade, un jeu. La plupart des gens attendent que quelqu’un d’autre propose.</li>
 <li><strong>Garde le lien avec chez toi, à un rythme fixe.</strong> Un appel fixe chaque semaine entretient ces liens sans remplir toutes tes soirées.</li>
 <li><strong>Sors de chez toi chaque jour.</strong> Un café, une bibliothèque, un parc aux heures fraîches : être entouré aide, même avant de parler.</li>
-</ol>`,
+</ol>
+<p>Si tu viens d’arriver, le côté pratique (démarches, logement, transports) peut prendre toute ton énergie au début : <a href="../s-installer/">notre checklist des premiers mois à Dubaï</a> place la vie sociale à côté. Si ce n’est pas ta première expatriation, <a href="../../guides/vie-sociale-expatriation/">reconstruire sa vie sociale après une expatriation</a> décrit ce qui se passe souvent dans les mois qui suivent un départ.</p>`,
       },
       {
         h2: 'Les lieux où la conversation vient facilement',
@@ -542,7 +545,8 @@ export const ARTICLES = [
 <li><strong>Le bénévolat :</strong> des gens qui tiennent à la même cause, et une tâche à partager.</li>
 <li><strong>Les communautés de ton pays ou de ta langue :</strong> un point de départ familier, puis des groupes mixtes pour élargir ton cercle.</li>
 <li><strong>Les espaces de coworking et rencontres professionnelles :</strong> si tu travailles seul, ils donnent des collègues à ta semaine.</li>
-</ul>`,
+</ul>
+<p>Si tu préfères commencer par des cadres réservés aux femmes, vois <a href="../activites-entre-femmes/">les activités entre femmes à Dubaï</a>.</p>`,
       },
       {
         h2: 'Quand en parler à quelqu’un',
@@ -555,7 +559,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Seul à Dubaï ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve un plan cette semaine, en vrai.', label: 'Rejoindre une communauté' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' }],
   },
   {
     lang: 'en',
@@ -614,7 +618,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Going out on your own?', body: 'Find an activity this week where joining alone is the norm.', label: 'Find an activity' },
-    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Activities for women in Dubai', path: 'dubai/activities-for-women/' }],
   },
   {
     lang: 'fr',
@@ -673,7 +677,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu sors seul ?', body: 'Trouve une activité cette semaine où venir seul est la norme.', label: 'Trouver une activité' },
-    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }],
   },
   {
     lang: 'en',
@@ -1214,6 +1218,156 @@ export const ARTICLES = [
     ],
     cta: { title: 'Tu viens d’arriver à Dubaï ?', body: 'Rencontre du monde dès la première semaine, et demande à être prévenu à l’ouverture d’IRLY VISA.', label: 'Préviens-moi' },
     related: [{ label: 'Comment se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï : ce qui aide vraiment', path: 'fr/dubai/solitude/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }],
+  },
+  {
+    lang: 'en',
+    pair: 'social-life-abroad',
+    path: 'guides/social-life-after-moving-abroad/',
+    cover: 'volleyball',
+    figure: { photo: 'brunch', after: 2 },
+    city: 'Life abroad',
+    updated: '2026-10-16',
+    title: 'Rebuilding Your Social Life After Moving Abroad | IRLY',
+    description: 'Moved abroad and starting from zero socially? Why it feels harder than expected, a simple plan for the first three months, and how to turn new faces into real friends.',
+    h1: 'Rebuilding your social life after moving abroad',
+    lead: 'Rebuilding a social life after a move abroad takes time, and that is normal: at home your circle grew over years, often without effort. Abroad, it grows faster when you give it structure: one regular activity, people you see again, and plans you suggest yourself. Below: why it feels hard, a plan for your first three months, and how to keep going when friends leave.',
+    sections: [
+      {
+        h2: 'Why it feels harder than at home',
+        html: `<p>At home, friends came from school, studies, work or the neighbourhood: places you went back to every week without deciding to. Abroad, those places do not exist yet, so you have to create them.</p>
+<ul>
+<li><strong>No shared history.</strong> The people you meet do not know your story, and you do not know theirs. It takes repeated meetings to get there.</li>
+<li><strong>Everyone is busy.</strong> Colleagues and neighbours already have their routines, and adding someone new is rarely their priority.</li>
+<li><strong>Language and codes.</strong> Even with a shared language, humour and habits differ, which makes small talk more tiring at first.</li>
+<li><strong>Calls home take the evenings.</strong> They keep your old ties alive, but they can also replace going out.</li>
+</ul>
+<p>None of this means you are doing it wrong. It means friendship needs a frame here that it did not need before.</p>`,
+      },
+      {
+        h2: 'A plan for your first three months',
+        html: `<h3>Month 1: be where people are, every week</h3>
+<ol>
+<li><strong>Pick one regular activity</strong> with the same group each week: a sport, a class, a club, a volunteering shift.</li>
+<li><strong>Say yes to every reasonable invitation,</strong> even short ones. You can leave early.</li>
+<li><strong>Join one community</strong> around your language, your country or your work: a familiar starting point.</li>
+</ol>
+<h3>Month 2: see the same people again</h3>
+<ol>
+<li><strong>Remember names and one detail</strong> about each person, and ask about it next time.</li>
+<li><strong>Suggest one small plan a week:</strong> a coffee after the activity, a walk, a meal. Most people are waiting for someone else to propose.</li>
+<li><strong>Add a second, different circle</strong> so your social life does not depend on one group.</li>
+</ol>
+<h3>Month 3: turn acquaintances into friends</h3>
+<ol>
+<li><strong>Invite people together.</strong> A small group dinner or outing mixes your circles and takes pressure off one-to-one plans.</li>
+<li><strong>Create a ritual:</strong> the same brunch, run or game night every week or two. Rituals do the inviting for you.</li>
+<li><strong>Share a little more:</strong> friendship grows when conversations go beyond work and weather.</li>
+</ol>`,
+      },
+      {
+        h2: 'Mistakes that slow things down',
+        html: `<ul>
+<li><strong>Waiting to feel settled first.</strong> Paperwork and the flat can fill months. Start meeting people in parallel, from the first week.</li>
+<li><strong>Only meeting people once.</strong> One great evening rarely makes a friend; seeing someone again is what counts.</li>
+<li><strong>Staying only in your home community.</strong> It is comforting, but mixed groups open more doors.</li>
+<li><strong>Judging too fast.</strong> Many friendships start slowly. Give people a few meetings before you decide.</li>
+</ul>`,
+      },
+      {
+        h2: 'When friends leave',
+        html: `<p>In cities with many newcomers, people also leave often, for a new job or back home. It hurts, and it is part of life abroad.</p>
+<ul>
+<li><strong>Keep more than one circle,</strong> so one departure does not empty your week.</li>
+<li><strong>Keep welcoming new people:</strong> the newcomers of this month are tomorrow’s friends, and you know how they feel.</li>
+<li><strong>Stay in touch with those who left.</strong> Friendships can continue at a distance, with a call or a visit.</li>
+</ul>`,
+      },
+      {
+        h2: 'When to ask for more help',
+        html: `<p>Feeling alone for a while after a move is common. If it lasts, if you feel low most days, or if daily life becomes hard, talk to a doctor or a mental health professional where you live: it is a normal step. In an emergency, call the local emergency number.</p>`,
+      },
+      {
+        h2: 'Where IRLY fits in',
+        html: `<p>IRLY is built for this exact moment: join communities around what you like, find activities near you or create your own, and talk with the group before you meet. It starts in Dubai and Bali. It is one option among others; what changes things is the regular activity and the plans you suggest. For city guides, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../bali/make-friends/">how to make friends in Bali</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Starting over somewhere new?', body: 'Join a community around what you like and find people to do things with, in real life.', label: 'Find my people' },
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }],
+  },
+  {
+    lang: 'fr',
+    pair: 'social-life-abroad',
+    path: 'fr/guides/vie-sociale-expatriation/',
+    cover: 'volleyball',
+    figure: { photo: 'brunch', after: 2 },
+    city: 'Vie à l’étranger',
+    updated: '2026-10-16',
+    title: 'Reconstruire sa vie sociale après une expatriation | IRLY',
+    description: 'Tu t’es expatrié et tu repars de zéro côté amis ? Pourquoi c’est plus dur que prévu, un plan simple pour les trois premiers mois, et comment transformer des connaissances en vrais amis.',
+    h1: 'Reconstruire sa vie sociale après une expatriation',
+    lead: 'Reconstruire sa vie sociale après une expatriation prend du temps, et c’est normal : chez toi, ton cercle s’est construit sur des années, souvent sans effort. À l’étranger, il se construit plus vite quand tu lui donnes un cadre : une activité régulière, des gens que tu revois, et des plans que tu proposes toi-même. Voici pourquoi c’est difficile, un plan pour tes trois premiers mois, et comment tenir quand des amis partent.',
+    sections: [
+      {
+        h2: 'Pourquoi c’est plus dur que chez soi',
+        html: `<p>Chez toi, les amis venaient de l’école, des études, du travail ou du quartier : des lieux où tu retournais chaque semaine sans avoir à le décider. À l’étranger, ces lieux n’existent pas encore : il faut les créer.</p>
+<ul>
+<li><strong>Pas d’histoire commune.</strong> Les gens que tu rencontres ne connaissent pas ton parcours, et toi non plus le leur. Il faut se revoir plusieurs fois pour y arriver.</li>
+<li><strong>Tout le monde est occupé.</strong> Collègues et voisins ont déjà leurs habitudes, et faire de la place à quelqu’un de nouveau est rarement leur priorité.</li>
+<li><strong>La langue et les codes.</strong> Même avec une langue commune, l’humour et les habitudes changent, ce qui rend les petites conversations plus fatigantes au début.</li>
+<li><strong>Les appels avec la maison prennent les soirées.</strong> Ils entretiennent tes liens, mais peuvent aussi remplacer les sorties.</li>
+</ul>
+<p>Rien de tout ça ne veut dire que tu t’y prends mal. Ça veut dire qu’ici, l’amitié a besoin d’un cadre dont elle n’avait pas besoin avant.</p>`,
+      },
+      {
+        h2: 'Un plan pour tes trois premiers mois',
+        html: `<h3>Mois 1 : être là où sont les gens, chaque semaine</h3>
+<ol>
+<li><strong>Choisis une activité régulière</strong> avec le même groupe chaque semaine : un sport, un cours, un club, du bénévolat.</li>
+<li><strong>Dis oui à chaque invitation raisonnable,</strong> même courte. Tu peux partir tôt.</li>
+<li><strong>Rejoins une communauté</strong> autour de ta langue, de ton pays ou de ton métier : un point de départ familier.</li>
+</ol>
+<h3>Mois 2 : revoir les mêmes personnes</h3>
+<ol>
+<li><strong>Retiens les prénoms et un détail</strong> sur chaque personne, et reparles-en la fois suivante.</li>
+<li><strong>Propose un petit plan par semaine :</strong> un café après l’activité, une balade, un repas. La plupart des gens attendent que quelqu’un d’autre propose.</li>
+<li><strong>Ajoute un deuxième cercle, différent,</strong> pour que ta vie sociale ne dépende pas d’un seul groupe.</li>
+</ol>
+<h3>Mois 3 : transformer des connaissances en amis</h3>
+<ol>
+<li><strong>Invite des gens ensemble.</strong> Un petit dîner ou une sortie à plusieurs mélange tes cercles et enlève la pression du tête-à-tête.</li>
+<li><strong>Crée un rituel :</strong> le même brunch, la même course ou la même soirée jeux toutes les une ou deux semaines. Le rituel invite à ta place.</li>
+<li><strong>Partage un peu plus :</strong> l’amitié grandit quand on parle d’autre chose que du travail et de la météo.</li>
+</ol>`,
+      },
+      {
+        h2: 'Les erreurs qui ralentissent',
+        html: `<ul>
+<li><strong>Attendre d’être installé.</strong> Les papiers et l’appartement peuvent prendre des mois. Commence à rencontrer du monde en parallèle, dès la première semaine.</li>
+<li><strong>Ne voir les gens qu’une fois.</strong> Une super soirée fait rarement un ami ; c’est de se revoir qui compte.</li>
+<li><strong>Rester seulement avec ta communauté d’origine.</strong> C’est rassurant, mais les groupes mélangés ouvrent plus de portes.</li>
+<li><strong>Juger trop vite.</strong> Beaucoup d’amitiés démarrent lentement. Laisse quelques rencontres avant de décider.</li>
+</ul>`,
+      },
+      {
+        h2: 'Quand des amis partent',
+        html: `<p>Dans les villes où arrivent beaucoup de nouveaux, les gens repartent souvent aussi, pour un nouveau poste ou pour rentrer. Ça fait mal, et ça fait partie de la vie à l’étranger.</p>
+<ul>
+<li><strong>Garde plus d’un cercle,</strong> pour qu’un départ ne vide pas ta semaine.</li>
+<li><strong>Continue d’accueillir les nouveaux :</strong> les arrivants de ce mois sont les amis de demain, et tu sais ce qu’ils ressentent.</li>
+<li><strong>Reste en contact avec ceux qui partent.</strong> Une amitié peut continuer à distance, avec un appel ou une visite.</li>
+</ul>`,
+      },
+      {
+        h2: 'Quand demander plus d’aide',
+        html: `<p>Se sentir seul quelque temps après une expatriation est courant. Si ça dure, si tu te sens mal la plupart des jours ou si le quotidien devient difficile, parles-en à un médecin ou à un professionnel de santé mentale là où tu vis : c’est une démarche normale. En cas d’urgence, appelle le numéro d’urgence local.</p>`,
+      },
+      {
+        h2: 'Et IRLY dans tout ça',
+        html: `<p>IRLY est pensé pour ce moment-là : rejoindre des communautés autour de ce que tu aimes, trouver des activités près de toi ou créer la tienne, et discuter avec le groupe avant de se voir. L’app commence à Dubaï et à Bali. C’est une option parmi d’autres ; ce qui change les choses, c’est l’activité régulière et les plans que tu proposes. Pour les guides par ville, lis <a href="../../dubai/se-faire-des-amis/">comment se faire des amis à Dubaï</a> et <a href="../../bali/se-faire-des-amis/">comment se faire des amis à Bali</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Tu repars de zéro ailleurs ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve des gens avec qui faire des choses, en vrai.', label: 'Trouver mes gens' },
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }],
   },
 ];
 
