@@ -11,9 +11,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { GirlClosed, GirlLoading, isGirlRefusal, readGirlAccess, safeBack, withLimit } from '@/features/girl/access';
-import { Film } from '@/components/visual/Film';
 import { Photo } from '@/components/visual/Photo';
-import { filmFor } from '@/data/photos';
 import { openCreate } from '@/features/create/createStore';
 import { matchApi, PAGE_SIZE, type MatchApi } from '@/features/girl/api';
 import { CandidateCard } from '@/features/girl/CandidateCard';
@@ -457,8 +455,7 @@ export default function GirlHome() {
         <View onLayout={(e) => record('plan', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], marginHorizontal: space.gutter, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft }}>
           <View style={{ height: 120 }}>
-            <Photo tint={GIRL_TINT} visual={{ photo: 'beachSunset' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} pinned />
-            {!reduced ? <Film uri={filmFor('beachSunset')!} dim={0.25} /> : null}
+            <Photo tint={GIRL_TINT} visual={{ photo: 'brunchGirl' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
             <Text variant="titleL" color="#FFFFFF" style={{ position: 'absolute', left: 16, bottom: 14 }}>
               Plan something with girls
             </Text>
