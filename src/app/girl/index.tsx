@@ -23,7 +23,7 @@ import { girl, GIRL_TINT } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton } from '@/features/girl/ui';
 import { GirlHero } from '@/features/girl/GirlHero';
-import { girlPhotoFor } from '@/features/girl/photos';
+import { girlCommunityPhoto } from '@/features/girl/photos';
 import { ScrollReveal } from '@/motion/ScrollReveal';
 import { MomsView } from '@/features/girl/MomsView';
 import { GIRL_KINDS, GirlFeed, KindRail, Shortcuts, Upcoming } from '@/features/girl/world';
@@ -455,7 +455,7 @@ export default function GirlHome() {
         <View onLayout={(e) => record('plan', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], marginHorizontal: space.gutter, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft }}>
           <View style={{ height: 120 }}>
-            <Photo tint={GIRL_TINT} visual={{ photo: 'girlSunset' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
+            <Photo tint={GIRL_TINT} visual={{ photo: 'brunchGirl' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
             <Text variant="titleL" color="#FFFFFF" style={{ position: 'absolute', left: 16, bottom: 14 }}>
               Plan something with girls
             </Text>
@@ -513,7 +513,7 @@ export default function GirlHome() {
                 style={styles.community}
                 accessibilityLabel={c.name}
               >
-                <Photo tint={GIRL_TINT} visual={{ photo: girlPhotoFor(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
+                <Photo pinned tint={GIRL_TINT} visual={{ photo: girlCommunityPhoto(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
                 <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
                   <View style={styles.communityBadge}>
                     <Icon name={c.member ? 'check' : 'users'} size={14} color={girl.rose} />

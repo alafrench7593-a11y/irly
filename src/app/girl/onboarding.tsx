@@ -26,18 +26,18 @@ type Slide = { photo: PhotoKey; title: string; body: string; points?: { icon: Ic
 
 const SLIDES: Slide[] = [
   {
-    photo: 'girlFriends',
+    photo: 'girlsOut',
     title: 'Meet people who get you.',
     // {city}: the member's destination (filled in when shown).
     body: 'Discover girls in {city} who share your interests, your personality and your lifestyle.',
   },
   {
-    photo: 'girlFitness',
+    photo: 'padelGirl',
     title: 'Not just another swipe.',
     body: 'IRLY Match is built for real friendships. Every match is a reason to do something together, in real life.',
   },
   {
-    photo: 'girlCoffee',
+    photo: 'drinksGirl',
     title: 'Find your kind of people.',
     body: 'We match you on what actually makes a friendship work:',
     points: [
@@ -49,13 +49,13 @@ const SLIDES: Slide[] = [
     ],
   },
   {
-    photo: 'girlSunset',
+    photo: 'yachtGirl',
     title: 'From match to real life.',
     body: 'A match can turn into coffee, brunch, padel, the gym, the beach, shopping, dinner, a trip, an event.',
     flow: ['Match', 'Chat', 'Activity', 'Meet IRL'],
   },
   {
-    photo: 'girlTravel',
+    photo: 'spaGirl',
     title: 'Your privacy matters.',
     body: 'IRLY Girl is for women only, checked by our servers, not just the app.',
     points: [

@@ -160,7 +160,7 @@ export const CommunityCard = memo(function CommunityCard({ community, width = 25
       onPress={onPress}
       style={[styles.community, { width, backgroundColor: t.c.surface, borderColor: t.c.line, opacity: hidden ? 0 : 1 }]}
     >
-      <Photo visual={community.visual} light={city.light} scrim="soft" style={styles.communityPhoto} recyclingKey={community.id} width={500}>
+      <Photo pinned visual={community.visual} light={city.light} scrim="soft" style={styles.communityPhoto} recyclingKey={community.id} width={500}>
         <View style={{ padding: 10, flexDirection: 'row', gap: 6 }}>
           {community.verified ? <Badge kind="verified" onDark /> : null}
           {member ? <Badge kind="positive" label="Member" /> : null}
