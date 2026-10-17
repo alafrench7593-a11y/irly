@@ -22,7 +22,7 @@ import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { girlPhotoFor } from './photos';
-import { girl } from './theme';
+import { girl, GIRL_TINT } from './theme';
 import { GButton } from './ui';
 
 /* ───────── Kinds of plans ───────── */
@@ -92,7 +92,7 @@ export const KindRail = memo(function KindRail({ kinds, value, onChange, counts 
               accessibilityLabel={n ? tx('{kind}: {n} upcoming', { kind: tx(k.label), n }) : tx(k.label)}
               style={[styles.kind, on ? styles.kindOn : null]}
             >
-              <Photo visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
+              <Photo tint={GIRL_TINT} visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
               <View style={styles.kindTop}>
                 <View style={[styles.kindIcon, on ? { backgroundColor: girl.rose } : null]}>
                   <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#FFFFFF' : girl.ink} />
@@ -233,7 +233,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} accessibilityLabel={`${a.title}, ${cityWhen(a.startsAt, a.cityId)}`} style={styles.plan}>
       <View style={styles.planPhoto}>
-        <Photo visual={{ photo, uri: a.coverUrl }} light="dubai" width={300} style={StyleSheet.absoluteFill} />
+        <Photo tint={GIRL_TINT} visual={{ photo, uri: a.coverUrl }} light="dubai" width={300} style={StyleSheet.absoluteFill} />
       </View>
       <View style={{ flex: 1, gap: 3, paddingVertical: 2 }}>
         <Text variant="caption" color={girl.rose}>
@@ -257,7 +257,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
         </View>
       </View>
       {a.joined ? (
-        <View style={[styles.badge, { backgroundColor: girl.ink }]}>
+        <View style={[styles.badge, { backgroundColor: girl.rose }]}>
           <Icon name="check" size={12} color="#FFFFFF" />
           <Text variant="caption" color="#FFFFFF">
             Going
@@ -278,7 +278,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
 
 function Chip({ label, on, onPress, icon }: { label: string; on: boolean; onPress: () => void; icon?: IconName }) {
   return (
-    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={tx(label)} style={[styles.chip, on ? { backgroundColor: girl.ink, borderColor: girl.ink } : null]}>
+    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={tx(label)} style={[styles.chip, on ? { backgroundColor: girl.rose, borderColor: girl.rose } : null]}>
       {icon ? <Icon name={icon} size={13} color={on ? '#FFFFFF' : girl.ink} /> : null}
       <Text variant="label" color={on ? '#FFFFFF' : girl.ink}>
         {label}

@@ -7,7 +7,7 @@ import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { signedLinks } from '@/features/server/media';
-import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import type { MyPlan } from '@/state/store';
@@ -368,21 +368,37 @@ export async function joinServerActivity(activityId: string): Promise<string | '
   return (conv?.id as string) ?? '';
 }
 
+/** What the member reads when the server refuses a community (never its code text). */
+function communityError(m: string): string {
+  if (/up to 3 communities a day/i.test(m)) return 'You can create up to 3 communities a day. Try again tomorrow.';
+  if (/girls-only/i.test(m)) return 'Only IRLY Girl members can create a girls-only community';
+  if (/communities_name_check/i.test(m)) return 'The name needs 3 to 60 characters';
+  if (/sign in required|jwt/i.test(m)) return 'Your session has ended. Sign in again';
+  return friendlyError(m);
+}
+
 export async function createServerCommunity(input: { name: string; cityId: string; tagline?: string; description?: string; categoryId?: string; girlOnly?: boolean }): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const { data: session } = await supabase.auth.getSession();
+  const sb = supabase;
+  const { data: session } = await sb.auth.getSession();
   if (!session.session) throw new Error('Sign in to create a community');
-  const { data, error } = await supabase.rpc('create_community', {
-    p_name: input.name,
-    p_city: input.cityId,
-    p_tagline: input.tagline ?? null,
-    p_description: input.description ?? null,
-    p_category: input.categoryId ?? null,
-    p_girl_only: Boolean(input.girlOnly),
+  // A member whose profile never reached the server (offline at signup) has it published, then the
+  // community is created; the server gives back the same community for the same name within 2 minutes,
+  // so a retry after a lost answer never makes a second one.
+  const id = await withProfile(async () => {
+    const { data, error } = await sb.rpc('create_community', {
+      p_name: input.name,
+      p_city: input.cityId,
+      p_tagline: input.tagline ?? null,
+      p_description: input.description ?? null,
+      p_category: input.categoryId ?? null,
+      p_girl_only: Boolean(input.girlOnly),
+    });
+    if (error) throw new Error(/created_by_fkey/i.test(error.message) ? error.message : communityError(error.message));
+    return data as string;
   });
-  if (error) throw new Error(error.message);
   changed('communities', 'inbox');
-  const { data: conv } = await supabase.from('conversations').select('id').eq('community_id', data).maybeSingle();
+  const { data: conv } = await sb.from('conversations').select('id').eq('community_id', id).maybeSingle();
   return (conv?.id as string) ?? '';
 }
 

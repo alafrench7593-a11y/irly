@@ -1,5 +1,6 @@
 import { memo, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -8,7 +9,7 @@ import { SelectionLayers, useSelection } from '@/motion/Selection';
 import { radius } from '@/theme/tokens';
 import { girl } from './theme';
 
-/** Chip in the IRLY Girl palette: rose ink when selected, cream otherwise. */
+/** Chip in the IRLY Girl palette: rose when selected, white with a pink hairline otherwise. */
 export const GChip = memo(function GChip({
   label,
   selected,
@@ -46,10 +47,10 @@ export const GChip = memo(function GChip({
         <SelectionLayers
           p={p}
           sweep={sweep}
-          fill={girl.ink}
+          fill={girl.rose}
           radius={small ? 15 : 19}
           base={<View style={[box, { backgroundColor: girl.surface, borderColor: girl.line }]}>{content(girl.ink)}</View>}
-          chosen={<View style={[box, { borderColor: girl.ink }]}>{content('#FFFFFF')}</View>}
+          chosen={<View style={[box, { borderColor: girl.rose }]}>{content('#FFFFFF')}</View>}
         />
       </PressableScale>
     </Animated.View>
@@ -73,8 +74,9 @@ export function GButton({
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
-  const bg = variant === 'primary' ? girl.ink : variant === 'secondary' ? girl.surface : 'transparent';
-  const fg = variant === 'primary' ? '#FFFFFF' : girl.ink;
+  const primary = variant === 'primary';
+  const bg = primary ? 'transparent' : variant === 'secondary' ? girl.surface : 'transparent';
+  const fg = primary ? '#FFFFFF' : variant === 'secondary' ? girl.rose : girl.ink;
   return (
     <PressableScale
       haptic="press"
@@ -86,10 +88,12 @@ export function GButton({
       accessibilityState={{ disabled: disabled || loading }}
       style={[
         styles.button,
-        { backgroundColor: bg, borderColor: variant === 'secondary' ? girl.line : 'transparent', opacity: disabled ? 0.4 : 1 },
+        { backgroundColor: bg, borderColor: variant === 'secondary' ? girl.blushStrong : 'transparent', opacity: disabled ? 0.45 : 1, boxShadow: primary && !disabled ? girl.shadow : undefined },
         style,
       ]}
     >
+      {/* The candy-pink gradient of the primary button, under its label. */}
+      {primary ? <LinearGradient colors={girl.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" /> : null}
       {loading ? <ActivityIndicator color={fg} /> : icon ? <Icon name={icon} size={18} color={fg} /> : null}
       {!loading ? (
         <Text variant="label" color={fg} style={styles.buttonLabel}>
@@ -127,7 +131,7 @@ export function ScorePill({ score, onDark }: { score: number; onDark?: boolean }
   return (
     <View style={[styles.score, { backgroundColor: onDark ? 'rgba(255,255,255,0.92)' : girl.blush }]}>
       <Icon name="sparkles" size={13} color={girl.rose} />
-      <Text variant="label" color={girl.ink}>
+      <Text variant="label" color={girl.rose}>
         {score}% match
       </Text>
     </View>
@@ -137,8 +141,8 @@ export function ScorePill({ score, onDark }: { score: number; onDark?: boolean }
 const styles = StyleSheet.create({
   chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1 },
   chipSmall: { height: 30, paddingHorizontal: 11 },
-  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 54, paddingHorizontal: 22, borderRadius: radius.pill, borderWidth: 1 },
-  buttonLabel: { fontSize: 14, letterSpacing: 0.6, textTransform: 'uppercase' },
+  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 56, paddingHorizontal: 24, borderRadius: radius.pill, borderWidth: 1.5, overflow: 'hidden' },
+  buttonLabel: { fontSize: 16, letterSpacing: 0.2 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   score: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 28, paddingHorizontal: 10, borderRadius: radius.pill, alignSelf: 'flex-start' },
 });

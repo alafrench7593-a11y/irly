@@ -1,3 +1,4 @@
+import { CountryPicker } from '@/components/ui/CountryPicker';
 import { CharCount } from '@/components/ui/CharCount';
 import { t as tx, a11y } from '@/i18n';
 import { useRouter } from 'expo-router';
@@ -61,7 +62,7 @@ export default function ProfileStep() {
       <Animated.View entering={enter.rise(2, 80)} style={styles.block}>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <Field
-            containerStyle={{ width: 110 }}
+            containerStyle={{ width: 140 }}
             icon="calendar"
             placeholder={tx('Age')}
             keyboardType="number-pad"
@@ -70,16 +71,8 @@ export default function ProfileStep() {
             onChangeText={(v) => update({ age: Number(v.replace(/[^0-9]/g, '')) || undefined })}
             accessibilityLabel="Age"
           />
-          <Field
-            containerStyle={{ flex: 1 }}
-            icon="globe"
-            placeholder={tx('Country (e.g. France)')}
-            value={profile.country ?? ''}
-            onChangeText={(country) => update({ country })}
-            autoCapitalize="words"
-            accessibilityLabel="Country"
-          />
         </View>
+        <CountryPicker value={profile.country} onChange={(country) => update({ country })} />
         {profile.age !== undefined && profile.age < 18 ? (
           <Text variant="caption" tone="critical">
             IRLY is for people 18 and over.

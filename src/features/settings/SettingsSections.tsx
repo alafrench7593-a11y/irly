@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Linking, StyleSheet, Switch, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
@@ -39,6 +39,8 @@ export function SettingsSections() {
   const setHaptics = useStore((s) => s.setHaptics);
   const setAppearance = useStore((s) => s.setAppearance);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // One log out or deletion at a time, whatever is tapped and how fast.
+  const leaving = useRef(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -62,7 +64,9 @@ export function SettingsSections() {
 
   // Every step of the sign-out has its own time limit (account.ts): this always finishes.
   const logOut = async () => {
-    if (signingOut) return;
+    // A ref, not the state: two taps in the same frame both see signingOut === false.
+    if (leaving.current) return;
+    leaving.current = true;
     setSigningOut(true);
     try {
       const { serverEnded } = await signOut();
@@ -71,19 +75,22 @@ export function SettingsSections() {
     } catch (e) {
       // Still signed in (nothing was wiped): say so and let the member try again.
       toast(e instanceof Error ? e.message : 'Could not sign you out. Try again.', 'x', 'live');
+      leaving.current = false;
       setSigningOut(false);
     }
   };
 
   // Server first, verified, then this phone: on any failure nothing is wiped and the member can retry.
   const deleteAccount = async () => {
-    if (deleting) return;
+    if (leaving.current) return;
+    leaving.current = true;
     setDeleting(true);
     let filesQueued = 0;
     try {
       ({ filesQueued } = await deleteServerAccount());
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not delete your account. Try again.', 'x', 'live');
+      leaving.current = false;
       setDeleting(false);
       return;
     }

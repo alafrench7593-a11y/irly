@@ -1,3 +1,4 @@
+import { CountryPicker } from '@/components/ui/CountryPicker';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -186,7 +187,7 @@ export default function EditProfile() {
         </Section>
 
         <Section title="Country of origin">
-          <Field value={country} onChangeText={setCountry} maxLength={56} accessibilityLabel={tr('Country of origin')} />
+          <CountryPicker value={country} onChange={setCountry} label="Country of origin" />
         </Section>
 
         <Section title="City">

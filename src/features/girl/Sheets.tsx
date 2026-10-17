@@ -12,7 +12,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
 import { reasonLines } from './suggest';
 import { AVAILABILITY, GOALS, INTERESTS, LANGUAGES, SPORTS, labelOf } from './taxonomy';
-import { girl } from './theme';
+import { girl, GIRL_TINT } from './theme';
 import { REPORT_CATEGORIES, type Candidate, type Filters, type ReportCategory } from './types';
 import { GButton, GChip, GSection, ScorePill, Wrap } from './ui';
 
@@ -84,7 +84,7 @@ export function FiltersSheet({
           </Wrap>
         </GSection>
         <GSection title="Area">
-          <AreaPicker cityId={city.id} value={f.area ?? null} placeholder="Any neighbourhood" onChange={(id) => one('area', id)} palette={{ ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.ink, line: girl.line }} />
+          <AreaPicker cityId={city.id} value={f.area ?? null} placeholder="Any neighbourhood" onChange={(id) => one('area', id)} palette={{ ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.rose, line: girl.line }} />
         </GSection>
         <GSection title="Available">
           <Wrap>
@@ -132,7 +132,7 @@ export function ProfileSheet({
       {c ? (
         <ScrollView contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: 24, gap: space[5] }}>
           <View style={styles.hero}>
-            {c.cover ? <Photo visual={{ photo: c.cover }} light="dubai" style={StyleSheet.absoluteFill} width={900} /> : null}
+            {c.cover ? <Photo tint={GIRL_TINT} visual={{ photo: c.cover }} light="dubai" style={StyleSheet.absoluteFill} width={900} /> : null}
           </View>
           <View style={styles.nameRow}>
             <View style={{ flex: 1 }}>

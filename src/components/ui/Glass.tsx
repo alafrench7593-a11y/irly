@@ -11,6 +11,8 @@ type Props = {
   intensity?: number;
   /** Glass laid on a photo: a whisper of white over a dark blur, whatever the theme. */
   dark?: boolean;
+  /** Always the light glass, even when the app is in its night theme (a universe that stays light, like IRLY Girl). */
+  light?: boolean;
   border?: boolean;
   /** thin: controls on photos · regular: panels · thick: bars, sheets, menus. */
   level?: GlassLevel;
@@ -27,9 +29,9 @@ type Props = {
  * photo. On Android a dense tint keeps text legible without the cost of a
  * live blur. The blur never animates: a glass layer fades in as a whole.
  */
-export const Glass = memo(function Glass({ style, intensity, dark, border = true, level = 'regular', highlight = true, children }: Props) {
+export const Glass = memo(function Glass({ style, intensity, dark, light, border = true, level = 'regular', highlight = true, children }: Props) {
   const t = useTheme();
-  const night = t.mode === 'night';
+  const night = t.mode === 'night' && !light;
   const isDark = dark || night;
   const spec = glassLevels[level];
   const tint = dark ? 'rgba(255,255,255,0.12)' : night ? spec.night : spec.day;

@@ -1,3 +1,4 @@
+import { useStore } from '@/state/store';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, FadeInDown, interpolate, useAnimatedStyle, useDerivedValue, useReducedMotion, withSpring, type SharedValue } from 'react-native-reanimated';
@@ -8,7 +9,7 @@ import { Photo } from '@/components/visual/Photo';
 import { useT } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { space } from '@/theme/tokens';
-import { girl } from './theme';
+import { girl, GIRL_TINT } from './theme';
 
 const HEIGHT = 340;
 
@@ -49,6 +50,7 @@ export function GirlHero({
     transform: [{ translateY: interpolate(scrollY.value, [0, h * 0.5], [0, -24], Extrapolation.CLAMP) }],
   }));
 
+  const firstName = useStore((st) => st.profile.name?.trim().split(/\s+/)[0] ?? '');
   const headline = mode === 'moms' ? tr('Friends for you, memories for them.') : tr('Sincere friendships. Moments that matter.');
   const parts = headline.split(' ');
 
@@ -57,14 +59,14 @@ export function GirlHero({
       <View style={[StyleSheet.absoluteFill, styles.clip]}>
         <Animated.View style={[StyleSheet.absoluteFill, drift]}>
           <Animated.View style={[StyleSheet.absoluteFill, girls]}>
-            <Photo visual={{ photo: 'girlFriends' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
+            <Photo tint={GIRL_TINT} visual={{ photo: 'girlFriends' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, moms]}>
-            <Photo visual={{ photo: 'momPlaydate' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
+            <Photo tint={GIRL_TINT} visual={{ photo: 'momPlaydate' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
           </Animated.View>
         </Animated.View>
         <LinearGradient
-          colors={['rgba(40,26,26,0.55)', 'rgba(40,26,26,0)', 'rgba(40,26,26,0.18)', 'rgba(40,26,26,0.78)']}
+          colors={['rgba(59,34,48,0.5)', 'rgba(255,126,176,0)', 'rgba(209,55,111,0.16)', 'rgba(59,34,48,0.74)']}
           locations={[0, 0.3, 0.6, 1]}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
@@ -89,6 +91,14 @@ export function GirlHero({
         </PressableScale>
       </View>
       <Animated.View style={[styles.words, words]} key={mode}>
+        {/* A personal hello, like a friend would say it. */}
+        {firstName ? (
+          <Animated.View entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(60)}>
+            <Text variant="titleS" color="#FFFFFF" raw style={[styles.shadow, { marginBottom: 6 }]}>
+              {tr('Hi, {name} 💕', { name: firstName })}
+            </Text>
+          </Animated.View>
+        ) : null}
         <View style={styles.line}>
           {parts.map((w, i) => (
             <Animated.View key={`${w}-${i}`} entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(120 + i * 70)}>

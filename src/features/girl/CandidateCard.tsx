@@ -26,7 +26,7 @@ import { spring } from '@/motion/tokens';
 import { radius } from '@/theme/tokens';
 import { reasonLines } from './suggest';
 import { labelOf } from './taxonomy';
-import { girl } from './theme';
+import { girl, GIRL_TINT } from './theme';
 import type { Candidate } from './types';
 import { ScorePill } from './ui';
 
@@ -119,7 +119,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         {c.photoUrls[0] ? (
           <Image source={{ uri: c.photoUrls[0] }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
         ) : c.cover ? (
-          <Photo visual={{ photo: c.cover }} light="dubai" style={StyleSheet.absoluteFill} width={900} recyclingKey={`girl-${c.userId}`} />
+          <Photo tint={GIRL_TINT} visual={{ photo: c.cover }} light="dubai" style={StyleSheet.absoluteFill} width={900} recyclingKey={`girl-${c.userId}`} />
         ) : (
           <View style={[StyleSheet.absoluteFill, { backgroundColor: girl.cream }]} />
         )}
@@ -157,7 +157,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         </Animated.View>
 
         <View style={styles.bottom} pointerEvents="none">
-          <Glass style={styles.panel} intensity={60}>
+          <Glass light style={styles.panel} intensity={60}>
             <View style={styles.nameRow}>
               <Avatar name={c.firstName} hue={c.hue} size={36} photo={c.photoUrls[0]} />
               <View style={{ flex: 1 }}>

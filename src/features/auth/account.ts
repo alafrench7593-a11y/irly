@@ -184,7 +184,7 @@ async function profileMissing(uid: string, message: string): Promise<boolean> {
   if (/Finish your profile first/i.test(message)) return true;
   // Only a refusal that can come from a missing profile row; another foreign key (a place, a community)
   // is a different problem, and the profiles table always has the last word.
-  if (!/row-level security|profiles_?\w*fkey|creator_id_fkey|user_id_fkey|author_id_fkey|sender_id_fkey|follower_id_fkey/i.test(message) || !supabase) return false;
+  if (!/row-level security|profiles_?\w*fkey|creator_id_fkey|created_by_fkey|user_id_fkey|author_id_fkey|sender_id_fkey|follower_id_fkey/i.test(message) || !supabase) return false;
   const { data, error } = await supabase.from('profiles').select('id').eq('id', uid).maybeSingle();
   return !error && !data;
 }
@@ -527,6 +527,10 @@ const SERVER_MS = 25_000;
 const PUSH_MS = 5_000;
 const LOCAL_MS = 5_000;
 const CHANNELS_MS = 3_000;
+/** Ending the session on the server at Log out. */
+const SIGNOUT_MS = 8_000;
+/** One storage listing or delete while deleting the account (the server purges whatever is left). */
+const FILES_MS = 10_000;
 const NO_CONNECTION = 'IRLY did not answer in time. Check your connection and try again.';
 
 /** Rejects with `message` when `work` has not settled after `ms`. */
@@ -596,14 +600,19 @@ async function endSession(): Promise<{ serverEnded: boolean }> {
   }
   // The server forgets this phone's session ("local": the member's other phones stay signed in).
   // Offline, the request fails fast and supabase-js removes the session here anyway.
-  const serverEnded = await within(supabase.auth.signOut({ scope: 'local' }), SERVER_MS).then(
-    (r) => !r.error,
-    () => false,
-  );
+  // Bounded tighter than other requests: the person waits on this screen, and the phone forgets the
+  // session below whatever the server said (the result says when the server did not confirm).
+  // The live connections close at the same time instead of after it: they need no answer.
+  const [serverEnded] = await Promise.all([
+    within(supabase.auth.signOut({ scope: 'local' }), SIGNOUT_MS).then(
+      (r) => !r.error,
+      () => false,
+    ),
+    closeRealtime(),
+  ]);
   // Whatever the answer, nothing of the session may stay on this phone.
   if (!(await forgetSessionHere())) throw new Error('Could not sign you out on this phone. Try again.');
   setSession(null);
-  await closeRealtime();
   wipeLocal();
   return { serverEnded };
 }
@@ -647,7 +656,7 @@ async function myFiles(bucket: string, uid: string): Promise<{ files: string[]; 
     const folder = folders.shift()!;
     for (let offset = 0; pages < MAX_PAGES; offset += PAGE) {
       pages += 1;
-      const { data, error } = await within(supabase.storage.from(bucket).list(folder.path, { limit: PAGE, offset }), SERVER_MS);
+      const { data, error } = await within(supabase.storage.from(bucket).list(folder.path, { limit: PAGE, offset }), FILES_MS);
       if (error) {
         // A bucket this server does not have (yet): nothing of yours in it.
         if (/bucket not found/i.test(error.message)) return { files, complete: true };
@@ -678,17 +687,23 @@ async function myFiles(bucket: string, uid: string): Promise<{ files: string[]; 
 async function removeMyFiles(uid: string): Promise<number> {
   if (!supabase) return 0;
   const sb = supabase;
+  // Best effort: the server puts every file of the account on its purge list before deleting it
+  // (delete_my_account), so a bucket this phone cannot list or empty (a refused listing, a network
+  // blip, a timeout) never blocks the deletion; its files are counted as left for the purge job.
   const left = await Promise.all(
     BUCKETS.map(async (bucket) => {
-      const { files, complete } = await myFiles(bucket, uid);
-      let kept = complete ? 0 : 1;
-      for (let i = 0; i < files.length; i += PAGE) {
-        const chunk = files.slice(i, i + PAGE);
-        const { data, error } = await within(sb.storage.from(bucket).remove(chunk), SERVER_MS);
-        if (error) throw new Error('Could not delete your files. Check your connection and try again.');
-        kept += chunk.length - (data?.length ?? 0);
+      try {
+        const { files, complete } = await myFiles(bucket, uid);
+        let kept = complete ? 0 : 1;
+        for (let i = 0; i < files.length; i += PAGE) {
+          const chunk = files.slice(i, i + PAGE);
+          const { data, error } = await within(sb.storage.from(bucket).remove(chunk), FILES_MS);
+          kept += error ? chunk.length : chunk.length - (data?.length ?? 0);
+        }
+        return kept;
+      } catch {
+        return 1;
       }
-      return kept;
     }),
   );
   return left.reduce((a, b) => a + b, 0);
