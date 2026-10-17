@@ -106,8 +106,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "IRLY uses the photos you choose for your profile and IRLY Girl profile, activity, community and group covers, the moments you post live, and the photos you send in chats.",
-          "cameraPermission": "IRLY uses the camera when you take your profile photo or a photo to share.",
+          "photosPermission": "IRLY uses the photos you choose for your profile and IRLY Girl profile, activity, community and group covers, the moments you post live, the photos you send in chats, and the photos that verify your profile.",
+          "cameraPermission": "IRLY uses the camera when you take your profile photo, a photo to share, or the selfie that verifies your profile.",
           "microphonePermission": false
         }
       ],

@@ -122,21 +122,22 @@ Mise en forme conseillée : fond noir IRLY, titre en blanc (Manrope, gras), capt
 
 **Notes for App Review** (à coller tel quel) :
 
-> IRLY helps people meet in real life through communities, group activities and friend connections, in Dubai, Abu Dhabi and Bali.
+> IRLY helps people meet in real life through communities, group activities and friend connections, in Dubai and across the UAE.
 >
-> Sign in: open the app, choose your destination (Emirates or Bali), go through the short welcome, then Profile tab → "Sign in or create an account" → email and password with the demo account provided. The demo account is set in Dubai and is hidden from other members.
+> Sign in: open the app, choose the Emirates as destination (Bali is shown as coming soon), go through the short welcome, then Profile tab → "Sign in or create an account" → email and password with the demo account provided. The demo account is set in Dubai and is hidden from other members.
 >
 > What to test:
 > - Home and Discover: categories, recommended plans and places.
 > - Communities (from Home, top left): "For you" recommendations, "All" with search and themes, "Mine". Joining is always the user's choice.
 > - Activities: open any activity, see who is going, join; create your own plan with the Create button on Home.
-> - Match IRLY (centre button of the tab bar): members who share the user's interests, with the reason; "Add friend" sends a request the other member must accept.
+> - Friends: "Add friend" on any member profile sends a request the other member must accept.
+> - Features marked "Coming soon" (Match IRLY on the centre button, IRLY Match inside IRLY Girl, Bali, and the IRLY PRO, Bon plan, Visa and Location services) are announced only: they show what is planned and are not part of this version.
 > - Messages (top right): private, group and community chats.
 > - Profile and Settings (gear): privacy controls, notification settings, blocked members, delete account (Settings → My account → Delete account).
 >
 > Safety: every profile, post, comment and message can be reported or its author blocked from the "…" menu or a long press; reports are reviewed by the IRLY team. Users must be 18 or older. Exact location is never shared.
 >
-> Permissions: location (centre the map, optional), camera and photos (profile photo, posts), notifications (asked after a first friend request, join or message, never at launch).
+> Permissions: location (centre the map, optional), camera and photos (profile photo, posts, profile verification selfie), notifications (asked after a first friend request, join or message, never at launch).
 >
 > Known limitations: content depends on real members in each city, so some lists may be short. IRLY Girl spaces are only available to members who registered as women.
 
@@ -154,7 +155,7 @@ Mise en forme conseillée : fond noir IRLY, titre en blanc (Manrope, gras), capt
 | Manifeste de confidentialité (PrivacyInfo) | ✅ Déclaré dans `app.json` |
 | Chiffrement (export compliance) | ✅ `ITSAppUsesNonExemptEncryption: false` |
 | Étiquettes de confidentialité App Store Connect | ⏳ À remplir (voir ci-dessous) |
-| Classification d'âge | ⏳ À remplir (17+ conseillé) |
+| Classification d'âge | ⏳ À remplir : 18+ (l'inscription exige 18 ans, chat entre membres et rencontres en personne) |
 
 **Étiquettes de confidentialité (App Privacy)** — données liées à l'utilisateur, utilisées pour le fonctionnement de l'app, non utilisées pour le suivi (tracking) :
 Contact (e-mail uniquement : pas de connexion par téléphone) · Contenu utilisateur (photos, messages, publications) · Identifiants (ID utilisateur) · Localisation approximative (quartier choisi ; la position exacte n'est pas envoyée) · Données d'utilisation (interactions dans l'app) · Diagnostic si un outil de crash est ajouté plus tard.
