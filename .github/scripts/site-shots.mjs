@@ -53,6 +53,9 @@ const SHOTS = [
   ['map', '/map', 9000],
   ['create', '/category/sport', 5000, (p) => p.getByText(/create session/i).first().click()],
   ['communities', '/communities', 5000],
+  // IRLY Girl as a woman sees it (IRLY Match coming soon, plans, communities).
+  ['girl', '/girl', 7000],
+  ['girl-plans', '/girl', 7000, async (page) => { await page.getByText('Plan something with girls').first().scrollIntoViewIfNeeded(); }],
   ['profile', '/person/p-layla', 5000],
   ['chat', '/messages/cv-d1', 4000],
   ['onboarding', '/onboarding/profile', 4000],
