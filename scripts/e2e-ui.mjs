@@ -186,6 +186,60 @@ async function main() {
     await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
   };
 
+  // ── Notifications: a second test member (Zoe) sends Uma a real friend request through the server.
+  const EMAIL2 = `e2e-ui2-${run}@irly.test`;
+  const [{ user_id: zoe }] = await sql(`
+    with u as (
+      insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+        created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+      values ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', '${EMAIL2}',
+        extensions.crypt('${PASSWORD}', extensions.gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', '{}', now(), now(), '', '', '', '')
+      returning id
+    )
+    insert into auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
+    select gen_random_uuid(), u.id, u.id::text, 'email', jsonb_build_object('sub', u.id::text, 'email', '${EMAIL2}', 'email_verified', true), now(), now(), now()
+    from u returning user_id`);
+  await sql(`insert into public.profiles (id, first_name, birthdate, gender, city_id, languages) values ('${zoe}', 'Zoe', '1995-03-03', 'woman', 'bali', '{en}')`);
+  const zoeToken = await (async () => {
+    const r = await fetch(`https://${ref}.supabase.co/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: PUBLISHABLE, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: EMAIL2, password: PASSWORD }) });
+    return (await r.json()).access_token;
+  })();
+  await verify('Zoe sends Uma a friend request (as Zoe, through the API)', async () => {
+    const r = await fetch(`https://${ref}.supabase.co/rest/v1/rpc/add_friend`, { method: 'POST', headers: { apikey: PUBLISHABLE, Authorization: `Bearer ${zoeToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_user: uid }) });
+    if (!r.ok) throw new Error(`add_friend ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  });
+  const notifRow = async () => (await sql(`select id, read_at from public.notifications where user_id = '${uid}' and kind = 'FRIEND_REQUEST' and payload->>'from' = '${zoe}' order by created_at desc limit 1`))[0];
+  await check('the bell counts it, without a reload', null, [], async () => {
+    await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: /^Notifications, \d+ new$/ }).first().waitFor({ timeout: 20000 });
+  });
+  await check('Notifications lists it as unread', '/notifications', ['Zoe wants to be friends'], async () => {
+    await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).first().waitFor({ timeout: 15000 });
+  });
+  await verify('opening the list does not mark it read by itself', async () => {
+    await page.waitForTimeout(4000);
+    const n = await notifRow();
+    if (!n) throw new Error('no notification on the server');
+    if (n.read_at) throw new Error('it was marked read without being opened');
+  });
+  await check('tapping it opens Zoe’s profile', null, ['Zoe'], async () => {
+    await page.getByText('Zoe wants to be friends', { exact: true }).first().click();
+    await page.waitForURL(new RegExp(`/person/${zoe}`), { timeout: 15000 });
+  });
+  await verify('that notification is read on the server, and only that one', async () => {
+    let n;
+    for (let i = 0; i < 10 && !(n = await notifRow())?.read_at; i++) await page.waitForTimeout(500);
+    if (!n?.read_at) throw new Error('still unread on the server');
+  });
+  await check('the bell no longer counts it', '/', [], async () => {
+    await page.getByRole('button', { name: 'Notifications', exact: true }).first().waitFor({ timeout: 15000 });
+  });
+  await check('after a reload it is still read', '/notifications', ['Zoe wants to be friends'], async () => {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByText('Zoe wants to be friends', { exact: true }).first().waitFor({ timeout: 15000 });
+    if (await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).count()) throw new Error('shown unread again');
+  });
+
   // ── Activity: no start time is chosen for the member; the one they pick is saved in the city's time.
   await check('Create an activity: no start time imposed, Next waits for one', '/category/sport', ['Pick a start time'], async () => {
     await page.getByText('Padel', { exact: true }).first().click();
@@ -248,8 +302,30 @@ async function main() {
       if (text.includes(COMM) || text.includes('Playdate')) throw new Error(`${route} still shows the account's data`);
     }
   });
+  // Same browser, another account: nothing of Uma's (her notifications, her badge) shows for Zoe.
+  await check('Zoe signs in on the same browser', '/account', [], async () => {
+    await page.getByPlaceholder('you@email.com').fill(EMAIL2);
+    await page.getByPlaceholder('Password').fill(PASSWORD);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
+  }, 'Signed in');
+  await verify('Zoe sees none of Uma’s notifications or communities', async () => {
+    for (const route of ['/notifications', '/communities?tab=mine', '/messages']) {
+      await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
+      await page.waitForTimeout(3000);
+      const text = await page.evaluate(() => document.body.innerText);
+      if (text.includes('Zoe wants to be friends') || text.includes(COMM) || text.includes('Playdate')) throw new Error(`${route} shows Uma's data to Zoe`);
+    }
+  });
+  await check('Zoe logs out', '/preferences', [], async () => {
+    await page.getByText('Log out', { exact: true }).first().click();
+    await page.waitForURL(/\/welcome/, { timeout: 60000 });
+  });
   await check('sign in again', null, [], signIn, 'Signed in');
   await check('signed in again: the account data comes back', '/communities?tab=mine', [COMM]);
+  await check('… and her read notification is still read', '/notifications', ['Zoe wants to be friends'], async () => {
+    await page.getByText('Zoe wants to be friends', { exact: true }).first().waitFor({ timeout: 15000 });
+    if (await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).count()) throw new Error('unread again after signing in');
+  });
 
   // ── Delete the account through Settings: timed, gone on the server, signed out, cannot sign in again.
   let delMs = 0;
@@ -316,7 +392,7 @@ try {
     failed++;
     failures.push(`profiles_id_fkey check: ${e instanceof Error ? e.message : e}`);
   });
-  await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
+  await sql(`delete from auth.users where email in ('${EMAIL}', 'e2e-ui2-${run}@irly.test') or ((email like 'e2e-ui-%@irly.test' or email like 'e2e-ui2-%@irly.test') and created_at < now() - interval '2 hours')`).catch(() => undefined);
   server.close();
 }
 

@@ -19,7 +19,7 @@ import { GirlIntro } from '@/features/girl/GirlIntro';
 import { MatchMoment } from '@/features/girl/MatchMoment';
 import { FiltersSheet, ProfileSheet, SafetySheet } from '@/features/girl/Sheets';
 import type { Suggestion } from '@/features/girl/suggest';
-import { girl } from '@/features/girl/theme';
+import { girl, GIRL_TINT } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton } from '@/features/girl/ui';
 import { GirlHero } from '@/features/girl/GirlHero';
@@ -375,7 +375,7 @@ export default function GirlHome() {
                 onPress={() => applyFilters({ ...filters, section: s.id })}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
-                style={[styles.section, { backgroundColor: on ? girl.ink : girl.surface }]}
+                style={[styles.section, { backgroundColor: on ? girl.rose : girl.surface }]}
               >
                 <Icon name={s.icon} size={14} color={on ? '#FFFFFF' : girl.ink} />
                 <Text variant="label" color={on ? '#FFFFFF' : girl.ink}>
@@ -455,7 +455,7 @@ export default function GirlHome() {
         <View onLayout={(e) => record('plan', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], marginHorizontal: space.gutter, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft }}>
           <View style={{ height: 120 }}>
-            <Photo visual={{ photo: 'girlSunset' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
+            <Photo tint={GIRL_TINT} visual={{ photo: 'girlSunset' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
             <Text variant="titleL" color="#FFFFFF" style={{ position: 'absolute', left: 16, bottom: 14 }}>
               Plan something with girls
             </Text>
@@ -513,7 +513,7 @@ export default function GirlHome() {
                 style={styles.community}
                 accessibilityLabel={c.name}
               >
-                <Photo visual={{ photo: girlPhotoFor(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
+                <Photo tint={GIRL_TINT} visual={{ photo: girlPhotoFor(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
                 <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
                   <View style={styles.communityBadge}>
                     <Icon name={c.member ? 'check' : 'users'} size={14} color={girl.rose} />
@@ -641,17 +641,17 @@ function ActionButton({ icon, label, onPress, big, small, active }: { icon: Icon
       accessibilityLabel={label}
       style={[
         styles.action,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: big ? girl.ink : active ? girl.blush : girl.surface },
+        { width: size, height: size, borderRadius: size / 2, backgroundColor: big ? girl.rose : active ? girl.blush : girl.surface, boxShadow: big ? girl.shadow : girl.shadowSoft },
       ]}
     >
-      <Icon name={icon} size={big ? 28 : 20} color={big ? '#FFFFFF' : girl.ink} fill={active ? girl.ink : 'none'} />
+      <Icon name={icon} size={big ? 28 : 20} color={big ? '#FFFFFF' : girl.ink} fill={active ? girl.rose : 'none'} />
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, backgroundColor: girl.surface, boxShadow: girl.shadow },
-  modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, backgroundColor: girl.ink },
+  modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, backgroundColor: girl.rose },
   mode: { flex: 1, flexDirection: 'row', gap: 6, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   moving: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: space.gutter, marginTop: space[5], padding: 14, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
   root: { flex: 1, backgroundColor: girl.bg },

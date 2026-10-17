@@ -645,6 +645,36 @@ export type ServerNotification = { id: string; kind: string; payload: Record<str
 /** Bumped when notifications are marked read: the header badge and the list stay in step. */
 const useNotifVersion = create<{ n: number }>(() => ({ n: 0 }));
 
+/**
+ * Notifications this phone marked read and the server has not confirmed yet
+ * (id → when): the list and the bell show them read at once, before the
+ * round trip. Removed again if the server refuses.
+ */
+const useReadHere = create<{ ids: Record<string, number> }>(() => ({ ids: {} }));
+
+/**
+ * Marks one notification read: on screen at once, then on the server (its own
+ * row only: RLS). An already-read one, or one already being marked, sends
+ * nothing. Resolves false when the server refused (it shows unread again).
+ */
+export async function markNotificationRead(id: string): Promise<boolean> {
+  if (!supabase) return true;
+  if (useReadHere.getState().ids[id]) return true;
+  const at = Date.now();
+  useReadHere.setState((s) => ({ ids: { ...s.ids, [id]: at } }));
+  const { error } = await supabase.from('notifications').update({ read_at: new Date(at).toISOString() }).eq('id', id).is('read_at', null);
+  if (error) {
+    useReadHere.setState((s) => {
+      const ids = { ...s.ids };
+      delete ids[id];
+      return { ids };
+    });
+    return false;
+  }
+  useNotifVersion.setState((s) => ({ n: s.n + 1 }));
+  return true;
+}
+
 export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => void; status: 'loading' | 'ok' | 'failed'; reload: () => void } {
   const account = useAccount();
   const uid = account?.userId;
@@ -717,7 +747,8 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
         useNotifVersion.setState((s) => ({ n: s.n + 1 }));
       });
   }, [uid]);
-  const list = uid ? items : NONE;
+  const readHere = useReadHere((s) => s.ids);
+  const list = useMemo(() => (uid ? items.map((n) => (n.readAt || !readHere[n.id] ? n : { ...n, readAt: readHere[n.id] })) : NONE), [uid, items, readHere]);
   // Messages have their own badge (the chat icon): the bell never counts them twice.
   const reload = useCallback(() => {
     setStatus('loading');
@@ -748,5 +779,6 @@ export function BellSync() {
 export function clearSocialCache(): void {
   irlCache.clear();
   confirmedHere.clear();
+  useReadHere.setState({ ids: {} });
   useIrlMine.setState({ posts: [] });
 }

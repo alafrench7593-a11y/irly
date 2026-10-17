@@ -30,7 +30,7 @@ import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { reasonLines, suggestFor, type Suggestion } from './suggest';
 import { labelOf } from './taxonomy';
-import { girl } from './theme';
+import { girl, GIRL_TINT } from './theme';
 import type { Candidate, MatchResult } from './types';
 import { GButton } from './ui';
 
@@ -121,7 +121,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
               {person.photoUrls[0] ? (
                 <Image source={{ uri: person.photoUrls[0] }} style={StyleSheet.absoluteFill} contentFit="cover" />
               ) : person.cover ? (
-                <Photo visual={{ photo: person.cover }} light="dubai" style={StyleSheet.absoluteFill} width={400} />
+                <Photo tint={GIRL_TINT} visual={{ photo: person.cover }} light="dubai" style={StyleSheet.absoluteFill} width={400} />
               ) : (
                 <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: girl.blush }]}>
                   <Avatar name={person.firstName} hue={person.hue} size={72} />
@@ -181,7 +181,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
               {suggestions.map((s) => (
                 <View key={s.id} style={styles.suggestion}>
                   <PressableScale haptic="select" scaleTo={0.96} onPress={() => onSuggestion(s)} accessibilityLabel={tx('Create: {what}', { what: tx(s.label) })} style={styles.suggestionPhoto}>
-                    <Photo visual={{ photo: s.photo }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
+                    <Photo tint={GIRL_TINT} visual={{ photo: s.photo }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
                     <View style={styles.suggestionText}>
                       <Icon name={s.icon} size={16} color="#FFFFFF" />
                       <Text variant="titleS" color="#FFFFFF" numberOfLines={2}>

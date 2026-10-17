@@ -165,7 +165,7 @@ export function QuickPlan({
   );
 }
 
-const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.ink, line: girl.line };
+const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.rose, line: girl.line };
 
 function C({ label, on, onPress, girl: g }: { label: string; on: boolean; onPress: () => void; girl: boolean }) {
   return g ? <GChip small label={label} selected={on} onPress={onPress} /> : <Chip size="sm" label={label} selected={on} onPress={onPress} />;

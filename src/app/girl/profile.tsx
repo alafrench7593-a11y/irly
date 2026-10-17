@@ -47,7 +47,7 @@ const toggle = (list: string[], id: string, max = 99) =>
  * Pre-filled from signup (photo, bio, languages). Every step says why it
  * is asked; the last one decides what stays private.
  */
-const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.ink, line: girl.line };
+const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.rose, line: girl.line };
 
 export default function GirlProfileScreen() {
   return (
@@ -189,7 +189,7 @@ function GirlProfile() {
         </PressableScale>
         <View style={styles.progress} accessibilityLabel={tx('Step {n} of {total}', { n: step + 1, total: STEPS.length })}>
           {STEPS.map((s, i) => (
-            <View key={s} style={[styles.bar, { backgroundColor: i <= step ? girl.ink : girl.blush }]} />
+            <View key={s} style={[styles.bar, { backgroundColor: i <= step ? girl.rose : girl.blush }]} />
           ))}
         </View>
       </View>
@@ -242,7 +242,7 @@ function GirlProfile() {
                   ))}
                   {draft.photoUris.length < 6 ? (
                     <PressableScale haptic="select" scaleTo={0.96} onPress={pickPhoto} accessibilityLabel="Add a photo" style={[styles.photo, styles.addPhoto]}>
-                      <Icon name="plus" size={22} color={girl.ink} />
+                      <Icon name="plus" size={22} color={girl.rose} />
                       <Text variant="caption" color={girl.inkSoft}>
                         Add
                       </Text>
@@ -323,7 +323,7 @@ function GirlProfile() {
                           onPress={() => set('lifestyle', { ...draft.lifestyle, [dim.id]: on ? undefined : v })}
                           accessibilityRole="button"
                           accessibilityState={{ selected: on }}
-                          style={[styles.segItem, on ? { backgroundColor: girl.ink } : null]}
+                          style={[styles.segItem, on ? { backgroundColor: girl.rose } : null]}
                         >
                           <Text variant="caption" color={on ? '#FFFFFF' : girl.ink} align="center" numberOfLines={2}>
                             {v === -1 ? dim.left : v === 0 ? dim.middle : dim.right}
@@ -449,7 +449,7 @@ function ToggleRow({ label, hint, value, onChange }: { label: string; hint: stri
           {hint}
         </Text>
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: girl.ink, false: girl.blush }} thumbColor="#FFFFFF" accessibilityLabel={a11y(label)} />
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: girl.rose, false: girl.blush }} thumbColor="#FFFFFF" accessibilityLabel={a11y(label)} />
     </View>
   );
 }

@@ -14,7 +14,7 @@ import { CITIES } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 import { GirlGate, isGirlRefusal, safeBack } from '@/features/girl/access';
 import { matchApi } from '@/features/girl/api';
-import { girl } from '@/features/girl/theme';
+import { girl, GIRL_TINT } from '@/features/girl/theme';
 import { GButton } from '@/features/girl/ui';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -167,7 +167,7 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
     <View style={{ width, flex: 1 }}>
       <View style={styles.photoWrap}>
         <Animated.View style={[StyleSheet.absoluteFill, photo]}>
-          <Photo visual={{ photo: slide.photo }} light="dubai" scrim="soft" style={StyleSheet.absoluteFill} width={1000} />
+          <Photo tint={GIRL_TINT} visual={{ photo: slide.photo }} light="dubai" scrim="soft" style={StyleSheet.absoluteFill} width={1000} />
         </Animated.View>
         <View style={[styles.brand, { top: top + 18 }]}>
           <Text variant="overline" color="#FFFFFF" style={{ letterSpacing: 3 }}>
@@ -200,7 +200,7 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
           <View style={styles.flow}>
             {slide.flow.map((f, k) => (
               <View key={f} style={styles.flowItem}>
-                <View style={[styles.flowPill, k === slide.flow!.length - 1 ? { backgroundColor: girl.ink } : null]}>
+                <View style={[styles.flowPill, k === slide.flow!.length - 1 ? { backgroundColor: girl.rose } : null]}>
                   <Text variant="caption" color={k === slide.flow!.length - 1 ? '#FFFFFF' : girl.ink}>
                     {f}
                   </Text>
@@ -237,5 +237,5 @@ const styles = StyleSheet.create({
   closeBtn: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   footer: { paddingHorizontal: space.gutter, paddingTop: 12, gap: 16 },
   dots: { flexDirection: 'row', gap: 6, alignSelf: 'center' },
-  dot: { height: 8, borderRadius: 4, backgroundColor: girl.ink },
+  dot: { height: 8, borderRadius: 4, backgroundColor: girl.rose },
 });

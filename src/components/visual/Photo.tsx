@@ -30,6 +30,8 @@ type Props = {
   recyclingKey?: string;
   /** Large headers only: the photo drifts slowly (a quiet Ken Burns), never with reduced motion. */
   drift?: boolean;
+  /** The frame's colours while loading (or when the photo cannot load): a universe's own, e.g. IRLY Girl's pinks. */
+  tint?: { base: string; pulse: string };
 };
 
 const SCRIMS = {
@@ -57,6 +59,7 @@ export const Photo = memo(function Photo({
   children,
   recyclingKey,
   drift,
+  tint,
 }: Props) {
   // loading: breathing placeholder · done: photo shown, or the plain
   // destination colours if the network refused it (no endless pulse).
@@ -116,13 +119,13 @@ export const Photo = memo(function Photo({
       <View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: night ? "#15171B" : "#E4E4E1" },
+          { backgroundColor: tint?.base ?? (night ? "#15171B" : "#E4E4E1") },
         ]}
       />
       <Animated.View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: night ? "#20232A" : "#F4F4F2" },
+          { backgroundColor: tint?.pulse ?? (night ? "#20232A" : "#F4F4F2") },
           pulseStyle,
         ]}
         pointerEvents="none"
