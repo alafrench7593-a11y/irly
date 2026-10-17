@@ -26,7 +26,7 @@ import { spring } from '@/motion/tokens';
 import { radius } from '@/theme/tokens';
 import { reasonLines } from './suggest';
 import { labelOf } from './taxonomy';
-import { girl, GIRL_TINT } from './theme';
+import { girl, GIRL_TINT, girlType } from './theme';
 import type { Candidate } from './types';
 import { ScorePill } from './ui';
 
@@ -161,7 +161,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
             <View style={styles.nameRow}>
               <Avatar name={c.firstName} hue={c.hue} size={36} photo={c.photoUrls[0]} />
               <View style={{ flex: 1 }}>
-                <Text variant="titleL" color={girl.ink} numberOfLines={1}>
+                <Text variant="titleL" color={girl.ink} numberOfLines={1} style={girlType.section}>
                   {c.firstName}
                   {c.age ? <Text variant="titleM" color={girl.inkSoft}>{`  ${c.age}`}</Text> : null}
                 </Text>

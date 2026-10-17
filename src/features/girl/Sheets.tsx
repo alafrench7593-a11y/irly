@@ -12,7 +12,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
 import { reasonLines } from './suggest';
 import { AVAILABILITY, GOALS, INTERESTS, LANGUAGES, SPORTS, labelOf } from './taxonomy';
-import { girl, GIRL_TINT } from './theme';
+import { girl, GIRL_TINT, girlType } from './theme';
 import { REPORT_CATEGORIES, type Candidate, type Filters, type ReportCategory } from './types';
 import { GButton, GChip, GSection, ScorePill, Wrap } from './ui';
 
@@ -136,7 +136,7 @@ export function ProfileSheet({
           </View>
           <View style={styles.nameRow}>
             <View style={{ flex: 1 }}>
-              <Text variant="displayM" color={girl.ink}>
+              <Text variant="displayM" color={girl.ink} style={girlType.display}>
                 {c.firstName}
                 {c.age ? `, ${c.age}` : ''}
               </Text>

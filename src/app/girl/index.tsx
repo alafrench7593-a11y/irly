@@ -13,6 +13,7 @@ import { toast } from '@/components/ui/Toast';
 import { GirlClosed, GirlLoading, isGirlRefusal, readGirlAccess, safeBack, withLimit } from '@/features/girl/access';
 import { Photo } from '@/components/visual/Photo';
 import { FEATURES } from '@/lib/features';
+import { useAccount } from '@/features/auth/account';
 import { openCreate } from '@/features/create/createStore';
 import { matchApi, PAGE_SIZE, type MatchApi } from '@/features/girl/api';
 import { CandidateCard } from '@/features/girl/CandidateCard';
@@ -20,7 +21,7 @@ import { GirlIntro } from '@/features/girl/GirlIntro';
 import { MatchMoment } from '@/features/girl/MatchMoment';
 import { FiltersSheet, ProfileSheet, SafetySheet } from '@/features/girl/Sheets';
 import type { Suggestion } from '@/features/girl/suggest';
-import { girl, GIRL_TINT } from '@/features/girl/theme';
+import { girl, GIRL_TINT, girlType } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton } from '@/features/girl/ui';
 import { GirlHero } from '@/features/girl/GirlHero';
@@ -87,7 +88,7 @@ export default function GirlHome() {
   const [mode, setMode] = useState<'all' | 'moms'>(params.mode === 'moms' ? 'moms' : 'all');
   const serverCommunities = useCommunitiesLike(cityId, '', true);
   // Plans created in IRLY Girl (girls and moms): they show up right here.
-  const { activities: girlPlans } = useServerActivities(cityId, { girlOnly: true });
+  const { activities: girlPlans, loading: plansLoading, error: plansError, refresh: refreshPlans } = useServerActivities(cityId, { girlOnly: true });
   const [kind, setKind] = useState<string | null>(null);
   const kindCounts = useMemo(() => {
     const out: Record<string, number> = {};
@@ -173,13 +174,22 @@ export default function GirlHome() {
   }, [filters]);
   const booted = useRef(false);
 
+  // Only the latest check may set the screen (a slow answer for a previous account never lands).
+  const bootSeq = useRef(0);
   const boot = useCallback(async () => {
+    const n = ++bootSeq.current;
     if (!booted.current) setState('loading');
     try {
       // Never an endless spinner: past BOOT_LIMIT the screen offers Try again
       // (each request has its own 20 s limit, and there are two in a row).
       const s = await withLimit(
         (async (): Promise<Screen> => {
+          // IRLY Match is coming soon: IRLY Girl only asks who may enter (checked by the
+          // server), never for a Match onboarding or profile, and loads no Match data.
+          if (!FEATURES.girlMatch) {
+            const a = await readGirlAccess();
+            return a === 'open' ? 'ready' : a === 'suspended' ? 'suspended' : a === 'signed_out' ? 'signed_out' : 'ineligible';
+          }
           const api = await matchApi();
           apiRef.current = api;
           // With the IRLY server, signed out: no on-device stand-in for a real account.
@@ -191,7 +201,12 @@ export default function GirlHome() {
         })(),
         BOOT_LIMIT,
       );
+      if (n !== bootSeq.current) return;
       setState(s);
+      if (!FEATURES.girlMatch) {
+        if (s === 'ready') booted.current = true;
+        return;
+      }
       if (s === 'onboarding') router.replace('/girl/onboarding');
       else if (s === 'profile') router.replace('/girl/profile');
       else if (s === 'ready') {
@@ -201,9 +216,24 @@ export default function GirlHome() {
       }
     } catch {
       // A failed re-check on focus keeps the screen that already works.
-      if (!booted.current) setState('error');
+      if (!booted.current && n === bootSeq.current) setState('error');
     }
   }, [router, loadDeck, loadMatches]);
+  // Another account on this device (signed in elsewhere, in another tab): nothing of the
+  // previous one stays on screen, and access is checked again for the new one.
+  const uid = useAccount()?.userId ?? null;
+  const seenUid = useRef(uid);
+  useEffect(() => {
+    if (seenUid.current === uid) return;
+    seenUid.current = uid;
+    booted.current = false;
+    deckSeq.current += 1;
+    setDeck([]);
+    setMatches([]);
+    setOpen(null);
+    setMoment(null);
+    boot();
+  }, [uid, boot]);
   useEffect(() => {
     if (refused) boot();
   }, [refused, boot]);
@@ -281,7 +311,7 @@ export default function GirlHome() {
   return (
     <View style={styles.root}>
       <Animated.ScrollView ref={scrollRef} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => safeBack(router, '/')} onProfile={() => router.push('/girl/profile')} />
+        <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} />
 
 
         {FEATURES.girlMatch && matches.length ? (
@@ -434,7 +464,7 @@ export default function GirlHome() {
           ) : (
             <Animated.View entering={FadeIn} style={[styles.empty, { width, height }]}>
               <Icon name="sparkles" size={26} color={girl.rose} />
-              <Text variant="titleM" color={girl.ink} align="center">
+              <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
                 {filters.section === 'saved' ? 'Nobody saved yet' : "You've seen everyone here for now"}
               </Text>
               <Text variant="bodyS" color={girl.inkSoft} align="center">
@@ -464,7 +494,7 @@ export default function GirlHome() {
                 Coming soon
               </Text>
             </View>
-            <Text variant="titleM" color={girl.ink} align="center">
+            <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
               IRLY Match
             </Text>
             <Text variant="bodyS" color={girl.inkSoft} align="center">
@@ -478,7 +508,7 @@ export default function GirlHome() {
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], marginHorizontal: space.gutter, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft }}>
           <View style={{ height: 120 }}>
             <Photo tint={GIRL_TINT} visual={{ photo: 'brunchGirl' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
-            <Text variant="titleL" color="#FFFFFF" style={{ position: 'absolute', left: 16, bottom: 14 }}>
+            <Text variant="titleL" color="#FFFFFF" style={[girlType.section, { position: 'absolute', left: 16, bottom: 14 }]}>
               Plan something with girls
             </Text>
           </View>
@@ -489,7 +519,7 @@ export default function GirlHome() {
 
         <View onLayout={(e) => record('plans', e)} style={{ marginTop: space[7], gap: 12 }}>
           <View style={{ paddingHorizontal: space.gutter }}>
-            <Text variant="titleM" color={girl.ink}>
+            <Text variant="titleM" color={girl.ink} style={girlType.section}>
               What women plan together
             </Text>
             <Text variant="bodyS" color={girl.inkSoft}>
@@ -497,16 +527,16 @@ export default function GirlHome() {
             </Text>
           </View>
           <KindRail kinds={GIRL_KINDS} value={kind} onChange={setKind} counts={kindCounts} />
-          <Text variant="titleM" color={girl.ink} style={{ paddingHorizontal: space.gutter, marginTop: space[3] }}>
+          <Text variant="titleM" color={girl.ink} style={[girlType.section, { paddingHorizontal: space.gutter, marginTop: space[3] }]}>
             {"Girls' plans coming up"}
           </Text>
-          <Upcoming activities={girlPlans} kinds={GIRL_KINDS} kind={kind} onKind={setKind} onPlan={() => goTo('plan')} emptyTitle="What if you organised the first meetup?" />
+          <Upcoming activities={girlPlans} kinds={GIRL_KINDS} kind={kind} onKind={setKind} onPlan={() => goTo('plan')} emptyTitle="What if you organised the first meetup?" loading={plansLoading} error={plansError} onRetry={refreshPlans} />
         </View>
 
         <View onLayout={(e) => record('communities', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], gap: 10 }}>
           <View style={{ paddingHorizontal: space.gutter }}>
-            <Text variant="titleM" color={girl.ink}>
+            <Text variant="titleM" color={girl.ink} style={girlType.section}>
               IRLY Girl communities
             </Text>
             <Text variant="bodyS" color={girl.inkSoft}>
@@ -569,7 +599,7 @@ export default function GirlHome() {
 
         <View onLayout={(e) => record('posts', e)} style={{ marginTop: space[7], gap: 12 }}>
           <View style={{ paddingHorizontal: space.gutter }}>
-            <Text variant="titleM" color={girl.ink}>
+            <Text variant="titleM" color={girl.ink} style={girlType.section}>
               Recent posts
             </Text>
             <Text variant="bodyS" color={girl.inkSoft}>

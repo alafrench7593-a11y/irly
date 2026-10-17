@@ -11,7 +11,8 @@ import { filmFor } from '@/data/photos';
 import { useT } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { space } from '@/theme/tokens';
-import { girl, GIRL_TINT } from './theme';
+import { GirlLogo } from './GirlLogo';
+import { GIRL_TINT, girlType } from './theme';
 
 const HEIGHT = 340;
 
@@ -69,7 +70,7 @@ export function GirlHero({
           </Animated.View>
         </Animated.View>
         <LinearGradient
-          colors={['rgba(59,34,48,0.5)', 'rgba(255,126,176,0)', 'rgba(209,55,111,0.16)', 'rgba(59,34,48,0.74)']}
+          colors={['rgba(56,40,50,0.45)', 'rgba(56,40,50,0)', 'rgba(201,47,114,0.10)', 'rgba(56,40,50,0.78)']}
           locations={[0, 0.3, 0.6, 1]}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
@@ -80,16 +81,9 @@ export function GirlHero({
           <Icon name="chevronLeft" size={20} color="#FFFFFF" />
         </PressableScale>
         <View style={styles.brand}>
-          <Text variant="label" color="#FFFFFF" style={{ letterSpacing: 3 }} raw>
-            IRLY
-          </Text>
-          <View style={styles.brandTag}>
-            <Text variant="label" color="#FFFFFF" style={{ letterSpacing: 3 }} raw>
-              {mode === 'moms' ? 'MOMS' : 'GIRL'}
-            </Text>
-          </View>
+          <GirlLogo size={18} onDark word={mode === 'moms' ? 'Moms' : 'Girl'} />
         </View>
-        <PressableScale haptic="select" scaleTo={0.9} onPress={onProfile} accessibilityLabel="Edit my IRLY Match profile" style={styles.round}>
+        <PressableScale haptic="select" scaleTo={0.9} onPress={onProfile} accessibilityLabel="My profile" style={styles.round}>
           <Icon name="user" size={18} color="#FFFFFF" />
         </PressableScale>
       </View>
@@ -97,15 +91,15 @@ export function GirlHero({
         {/* A personal hello, like a friend would say it. */}
         {firstName ? (
           <Animated.View entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(60)}>
-            <Text variant="titleS" color="#FFFFFF" raw style={[styles.shadow, { marginBottom: 6 }]}>
-              {tr('Hi, {name} 💕', { name: firstName })}
+            <Text variant="label" color="#FFFFFF" raw style={[styles.shadow, { marginBottom: 8, letterSpacing: 1.5, textTransform: 'uppercase' }]}>
+              {tr('Hi, {name}', { name: firstName })}
             </Text>
           </Animated.View>
         ) : null}
         <View style={styles.line}>
           {parts.map((w, i) => (
             <Animated.View key={`${w}-${i}`} entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(120 + i * 70)}>
-              <Text variant="displayM" color="#FFFFFF" raw style={styles.shadow}>
+              <Text variant="displayM" color="#FFFFFF" raw style={[girlType.display, styles.shadow]}>
                 {w}
               </Text>
             </Animated.View>
@@ -121,8 +115,7 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.gutter },
   round: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,250,246,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)', alignItems: 'center', justifyContent: 'center' },
   words: { position: 'absolute', left: space.gutter, right: space.gutter, bottom: 44 },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 12, paddingRight: 4, height: 32, borderRadius: 16, backgroundColor: 'rgba(40,26,26,0.35)' },
-  brandTag: { paddingHorizontal: 10, height: 24, borderRadius: 12, justifyContent: 'center', backgroundColor: girl.rose },
+  brand: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 36, borderRadius: 18, backgroundColor: 'rgba(56,40,50,0.32)' },
   shadow: { textShadowColor: 'rgba(0,0,0,0.25)', textShadowRadius: 12, textShadowOffset: { width: 0, height: 2 } },
-  line: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 10 },
+  line: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 9 },
 });

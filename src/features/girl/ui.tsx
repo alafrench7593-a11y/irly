@@ -7,7 +7,7 @@ import { Text } from '@/components/ui/Text';
 import { PressableScale } from '@/motion/PressableScale';
 import { SelectionLayers, useSelection } from '@/motion/Selection';
 import { radius } from '@/theme/tokens';
-import { girl } from './theme';
+import { girl, girlType } from './theme';
 
 /** Chip in the IRLY Girl palette: rose when selected, white with a pink hairline otherwise. */
 export const GChip = memo(function GChip({
@@ -108,7 +108,7 @@ export function GSection({ title, hint, children }: { title: string; hint?: stri
   return (
     <View style={{ gap: 10 }}>
       <View style={{ gap: 2 }}>
-        <Text variant="titleS" color={girl.ink}>
+        <Text variant="titleS" color={girl.ink} style={girlType.card}>
           {title}
         </Text>
         {hint ? (

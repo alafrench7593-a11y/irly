@@ -6,7 +6,7 @@ import { Glass } from '@/components/ui/Glass';
 import { Text } from '@/components/ui/Text';
 import { haptic } from '@/motion/haptics';
 import { ease, transition } from '@/motion/tokens';
-import { girl } from './theme';
+import { girl, girlType } from './theme';
 
 let shownThisSession = false;
 
@@ -55,12 +55,12 @@ export function GirlIntro() {
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: girl.bg }, cream]} />
       <View style={styles.center}>
         <Animated.View style={[styles.row, letters]}>
-          <Text variant="displayL" color={girl.ink}>
+          <Text raw style={{ fontFamily: 'Manrope_800ExtraBold', fontSize: 26, letterSpacing: 6, color: girl.ink }}>
             IRLY
           </Text>
           <Animated.View style={girlWord}>
-            <Text variant="displayL" color={girl.rose}>
-              {' '}GIRL
+            <Text raw style={{ ...girlType.accent, fontSize: 58, lineHeight: 64, color: girl.brand }}>
+              {' '}Girl
             </Text>
           </Animated.View>
         </Animated.View>
