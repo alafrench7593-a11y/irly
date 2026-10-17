@@ -3,8 +3,10 @@ import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx } from '@/i18n';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { Icon } from '@/components/ui/Icon';
+import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Controls';
+import { Chip, Field } from '@/components/ui/Controls';
 import type { IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -17,6 +19,7 @@ import { GButton, GChip } from '@/features/girl/ui';
 import { createServerActivity } from '@/features/server/activities';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
+import { PressableScale } from '@/motion/PressableScale';
 
 export type PlanType = { id: string; label: string; icon: IconName; audience: 'all' | 'girls' | 'moms' | 'families'; category: string; title: (where: string) => string };
 
@@ -32,16 +35,40 @@ export const FOOD_PLANS: PlanType[] = [
   { id: 'BRUNCH_WITH_KIDS', label: 'Kids + brunch', icon: 'baby', audience: 'moms', category: 'family', title: (w) => tx('Brunch with kids at {w}', { w }) },
 ];
 
-/** IRLY Girl plans (girls only, checked server-side). */
+/** IRLY Girl plans (girls only, checked server-side): what women organise together. */
+const g = (id: string, label: string, icon: IconName, category: string): PlanType => ({ id, label, icon, audience: 'girls', category, title: (w) => `${tx(label)} · ${w}` });
 export const GIRL_PLANS: PlanType[] = [
-  { id: 'SURF', label: 'Girls surf morning', icon: 'waves', audience: 'girls', category: 'sport', title: (w) => `${tx('Girls surf morning')} · ${w}` },
-  { id: 'BRUNCH', label: 'Girls brunch', icon: 'coffee', audience: 'girls', category: 'food', title: (w) => `${tx('Girls brunch')} · ${w}` },
-  { id: 'WELLNESS', label: 'Girls wellness', icon: 'leaf', audience: 'girls', category: 'wellness', title: (w) => `${tx('Girls wellness')} · ${w}` },
-  { id: 'SUNSET', label: 'Girls sunset', icon: 'sunset', audience: 'girls', category: 'outdoor', title: (w) => `${tx('Girls sunset')} · ${w}` },
-  { id: 'COWORKING', label: 'Coworking day', icon: 'laptop', audience: 'girls', category: 'networking', title: (w) => `${tx('Girls coworking day')} · ${w}` },
-  { id: 'COFFEE', label: 'Women entrepreneurs coffee', icon: 'briefcase', audience: 'girls', category: 'networking', title: (w) => `${tx('Women entrepreneurs coffee')} · ${w}` },
-  { id: 'GIRLS_DINNER', label: 'Girls dinner', icon: 'utensils', audience: 'girls', category: 'food', title: (w) => `${tx('Girls dinner')} · ${w}` },
+  g('BRUNCH', 'Girls brunch', 'coffee', 'food'),
+  g('COFFEE', 'Coffee & matcha', 'coffee', 'food'),
+  g('GIRLS_DINNER', 'Girls dinner', 'utensils', 'food'),
+  g('NIGHT_OUT', 'Night out', 'sparkles', 'nightlife'),
+  g('PILATES', 'Pilates', 'activity', 'wellness'),
+  g('YOGA', 'Yoga', 'leaf', 'wellness'),
+  g('GYM', 'Gym session', 'dumbbell', 'sport'),
+  g('RUN', 'Run together', 'footprints', 'sport'),
+  g('PADEL', 'Padel', 'trophy', 'sport'),
+  g('TENNIS', 'Tennis', 'trophy', 'sport'),
+  g('GOLF', 'Golf', 'flag', 'sport'),
+  g('SURF', 'Surf morning', 'waves', 'sport'),
+  g('BIKE', 'Bike ride', 'bike', 'sport'),
+  g('BEACH_CLUB', 'Beach club', 'sun', 'outdoor'),
+  g('SUNSET', 'Sunset', 'sunset', 'outdoor'),
+  g('YACHT', 'Yacht day', 'sailboat', 'outdoor'),
+  g('DESERT', 'Desert evening', 'tent', 'outdoor'),
+  g('QUAD', 'Quad biking', 'mountain', 'outdoor'),
+  g('WELLNESS', 'Spa & wellness', 'sparkles', 'wellness'),
+  g('SHOPPING', 'Shopping', 'shoppingBag', 'shopping'),
+  g('GLOBAL_VILLAGE', 'Global Village', 'globe', 'culture'),
+  g('MUSEUM', 'Museum & culture', 'landmark', 'culture'),
+  g('BOOK_CLUB', 'Book club', 'book', 'creative'),
+  g('WORKSHOP', 'Creative workshop', 'palette', 'creative'),
+  g('COWORKING', 'Coworking day', 'laptop', 'networking'),
+  g('NETWORKING', 'Women entrepreneurs', 'briefcase', 'networking'),
+  g('GIRL_TRIP', 'Girl trip', 'plane', 'travel'),
 ];
+
+/** Girl trips: travel together to get to know each other. */
+export const TRIP_PLACES = ['Oman', 'Abu Dhabi', 'Bali', 'Qatar', 'Desert', 'Safari', 'Malaysia', 'Thailand', 'Saudi Arabia'];
 
 /** IRLY Moms: activities with children (always IRLY Girl plans). */
 export const MOM_PLANS: PlanType[] = [
@@ -61,7 +88,11 @@ export const MOM_PLANS: PlanType[] = [
 ];
 
 const DAYS: Day[] = ['today', 'tomorrow', 'weekend', 'next_week'];
-const TIMES = ['08:00', '09:30', '11:00', '13:00', '16:00', '18:00', '19:30', '21:00'];
+// Every hour from 7 am to 11 pm; « Other time » opens every half hour of the day.
+const TIMES = Array.from({ length: 17 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
+const ALL_TIMES = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+/** Plan types the server knows (activities.activity_type); the others are saved without one. */
+const SERVER_TYPES = new Set(['PLAYDATE', 'BEACH_WITH_KIDS', 'PARK_MEETUP', 'KIDS_FOOTBALL', 'KIDS_PADEL', 'KIDS_TENNIS', 'SWIMMING', 'MOM_BABY_WALK', 'MOM_COFFEE', 'BRUNCH_WITH_KIDS', 'FAMILY_PICNIC', 'CREATIVE_WORKSHOP', 'KIDS_ART', 'DINNER', 'BRUNCH', 'COFFEE', 'GIRLS_DINNER', 'FAMILY_DINNER', 'MOM_BRUNCH', 'RESTAURANT_MEETUP', 'SURF', 'WELLNESS', 'SUNSET', 'COWORKING']);
 
 /**
  * Plan something in three taps: what, when, where. Uses the one Activity
@@ -89,12 +120,20 @@ export function QuickPlan({
   const [time, setTime] = useState(type.id.includes('BRUNCH') || type.id.includes('COFFEE') ? '11:00' : '19:30');
   const [area, setArea] = useState(place?.areaId ?? city.areas[0].id);
   const [busy, setBusy] = useState(false);
+  const [moreTimes, setMoreTimes] = useState(false);
+  const [trip, setTrip] = useState(TRIP_PLACES[0]);
+  const [ownTrip, setOwnTrip] = useState('');
   const G = palette === 'girl';
   const ink = G ? girl.ink : undefined;
+  const isTrip = type.id === 'GIRL_TRIP';
 
-  const where = place?.name ?? city.areas.find((a) => a.id === area)?.name ?? city.name;
+  const where = isTrip ? (trip === 'other' ? ownTrip.trim() : tx(trip)) : (place?.name ?? city.areas.find((a) => a.id === area)?.name ?? city.name);
 
   const create = async () => {
+    if (isTrip && !where) {
+      toast('Where are you going?', 'plane', 'brand');
+      return;
+    }
     if (!account) {
       toast('Sign in to plan with people', 'user', 'brand');
       router.push('/account');
@@ -117,7 +156,7 @@ export function QuickPlan({
         price: 0,
         currency: city.currency,
       };
-      const id = await createServerActivity(plan, dateFor(day, time, new Date(), city.utcOffset), { placeId: place?.id ?? null, activityType: type.id, audience: type.audience });
+      const id = await createServerActivity(plan, dateFor(day, time, new Date(), city.utcOffset), { placeId: place?.id ?? null, activityType: SERVER_TYPES.has(type.id) ? type.id : null, audience: type.audience });
       // No id: the session ended or the server is unreachable. Never announce a plan nobody can see.
       if (!id) throw new Error('Your session has ended. Sign in again to post this plan');
       haptic('success');
@@ -135,11 +174,52 @@ export function QuickPlan({
 
   return (
     <View style={{ gap: 12 }}>
-      <Row>
-        {types.map((t) => (
-          <C girl={G} key={t.id} label={t.label} on={type.id === t.id} onPress={() => setType(t)} />
-        ))}
-      </Row>
+      {G ? (
+        // IRLY Girl: every plan at a glance, three per row.
+        <View style={styles.grid}>
+          {types.map((t) => {
+            const on = type.id === t.id;
+            return (
+              <PressableScale
+                key={t.id}
+                haptic="select"
+                scaleTo={0.95}
+                onPress={() => setType(t)}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on }}
+                accessibilityLabel={tx(t.label)}
+                style={[styles.tile, { backgroundColor: on ? girl.rose : girl.surface, borderColor: on ? girl.rose : girl.line }]}
+              >
+                <Icon name={t.icon} size={18} color={on ? '#FFFFFF' : girl.rose} />
+                <Text variant="caption" color={on ? '#FFFFFF' : girl.ink} align="center" numberOfLines={2}>
+                  {t.label}
+                </Text>
+              </PressableScale>
+            );
+          })}
+        </View>
+      ) : (
+        <Row>
+          {types.map((t) => (
+            <C girl={G} key={t.id} label={t.label} on={type.id === t.id} onPress={() => setType(t)} />
+          ))}
+        </Row>
+      )}
+      {isTrip ? (
+        <View style={{ gap: 8 }}>
+          <Text variant="label" color={ink}>
+            Where to?
+          </Text>
+          <View style={styles.grid}>
+            {[...TRIP_PLACES, 'other'].map((p) => (
+              <View key={p} style={styles.third}>
+                <C girl={G} label={p === 'other' ? 'Somewhere else' : p} on={trip === p} onPress={() => setTrip(p)} />
+              </View>
+            ))}
+          </View>
+          {trip === 'other' ? <Field icon="pin" placeholder="Your destination" value={ownTrip} onChangeText={setOwnTrip} maxLength={40} accessibilityLabel="Your destination" /> : null}
+        </View>
+      ) : null}
       <Row>
         {DAYS.map((d) => (
           <C girl={G} key={d} label={planDay(d)} on={day === d} onPress={() => setDay(d)} />
@@ -149,8 +229,27 @@ export function QuickPlan({
         {TIMES.map((h) => (
           <C girl={G} key={h} label={h} on={time === h} onPress={() => setTime(h)} />
         ))}
+        {!TIMES.includes(time) ? <C girl={G} label={time} on onPress={() => setMoreTimes(true)} /> : null}
+        <C girl={G} label={tx('Other time')} on={false} onPress={() => setMoreTimes(true)} />
       </Row>
-      {!place ? (
+      <Sheet visible={moreTimes} onClose={() => setMoreTimes(false)} title="Pick a start time">
+        <ScrollView contentContainerStyle={[styles.grid, { paddingHorizontal: 20, paddingBottom: 24 }]}>
+          {ALL_TIMES.map((h) => (
+            <View key={h} style={styles.quarter}>
+              <C
+                girl={G}
+                label={h}
+                on={time === h}
+                onPress={() => {
+                  setTime(h);
+                  setMoreTimes(false);
+                }}
+              />
+            </View>
+          ))}
+        </ScrollView>
+      </Sheet>
+      {!place && !isTrip ? (
         <AreaPicker cityId={city.id} value={area} onChange={setArea} palette={G ? GIRL_PICKER : undefined} />
       ) : null}
       <Text variant="caption" color={ink} tone={G ? undefined : 'tertiary'}>
@@ -181,4 +280,8 @@ function Row({ children }: { children: React.ReactNode }) {
 
 const styles = StyleSheet.create({
   row: { gap: 8, paddingRight: 8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tile: { width: '31.5%', minHeight: 74, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, paddingVertical: 10 },
+  third: { width: '31.5%' },
+  quarter: { width: '23%' },
 });
