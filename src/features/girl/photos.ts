@@ -29,3 +29,25 @@ export function girlPhotoFor(text: string, fallback: PhotoKey = 'girlFriends'): 
   for (const [re, key] of RULES) if (re.test(text)) return key;
   return fallback;
 }
+
+/** IRLY Girl and IRLY Moms communities: always a photo taken in Dubai, matched on the words in the name. */
+const COMMUNITY_RULES: [RegExp, PhotoKey][] = [
+  [/\b(moms?|mums?|mamans?|mother|playdates?|kids?|children|enfants?|baby|babies|bébé|stroller|poussette)\b/i, 'kids'],
+  [/\b(family|families|famille)\b/i, 'waterPark'],
+  [/\b(yoga|pilates|breathwork|meditat\w*)\b/i, 'yoga'],
+  [/\b(spa|beauty|massage|self.?care|nails?|wellness)\b/i, 'luxury'],
+  [/\b(fitness|gym|run\w*|padel|tennis|sports?|workout)\b/i, 'girlFitness'],
+  [/\b(surf\w*|beach\w*|plage|sunset|coucher)\b/i, 'beachClub'],
+  [/\b(hik\w*|trek\w*|nature|waterfalls?)\b/i, 'hikeDesert'],
+  [/\b(travel\w*|trips?|voyage\w*|explor\w*)\b/i, 'girlTravel'],
+  [/\b(brunch\w*|dinner\w*|dîner|food\w*|eat\w*|coffee|café|cafes?|matcha)\b/i, 'brunch'],
+  [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'founders'],
+  [/\b(books?|book club|reading|lecture|art|culture)\b/i, 'souk'],
+  [/\b(shopping|fashion|mode)\b/i, 'mall'],
+  [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'emirates'],
+];
+
+export function girlCommunityPhoto(text: string, fallback: PhotoKey = 'girlChill'): PhotoKey {
+  for (const [re, key] of COMMUNITY_RULES) if (re.test(text)) return key;
+  return fallback;
+}

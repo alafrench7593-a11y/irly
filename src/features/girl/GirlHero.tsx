@@ -5,7 +5,9 @@ import Animated, { Extrapolation, FadeInDown, interpolate, useAnimatedStyle, use
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { Film } from '@/components/visual/Film';
 import { Photo } from '@/components/visual/Photo';
+import { filmFor } from '@/data/photos';
 import { useT } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { space } from '@/theme/tokens';
@@ -14,8 +16,8 @@ import { girl, GIRL_TINT } from './theme';
 const HEIGHT = 340;
 
 /**
- * The top of IRLY Girl: a photo of friends (or of moms and kids on the Moms
- * side) that drifts slower than the page, stretches when pulled, and pushes
+ * The top of IRLY Girl: Dubai behind the words, a silent film of the Marina
+ * (the beach on the Moms side) over its photo. It drifts slower than the page, stretches when pulled, and pushes
  * sideways when the side changes. The headline rises word by word.
  */
 export function GirlHero({
@@ -59,10 +61,12 @@ export function GirlHero({
       <View style={[StyleSheet.absoluteFill, styles.clip]}>
         <Animated.View style={[StyleSheet.absoluteFill, drift]}>
           <Animated.View style={[StyleSheet.absoluteFill, girls]}>
-            <Photo tint={GIRL_TINT} visual={{ photo: 'girlFriends' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
+            <Photo tint={GIRL_TINT} visual={{ photo: 'dubaiMarina' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} pinned />
+            {!reduced && mode === 'all' ? <Film uri={filmFor('dubaiMarina')!} /> : null}
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, moms]}>
-            <Photo tint={GIRL_TINT} visual={{ photo: 'momPlaydate' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
+            <Photo tint={GIRL_TINT} visual={{ photo: 'beachClub' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} pinned />
+            {!reduced && mode === 'moms' ? <Film uri={filmFor('beachClub')!} /> : null}
           </Animated.View>
         </Animated.View>
         <LinearGradient

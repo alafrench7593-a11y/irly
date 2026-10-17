@@ -120,7 +120,7 @@ export const TOPIC_GROUPS: Record<string, string[]> = {
   lifestyle: ['newcomers', 'expats', 'girls', 'moms', 'families', 'food', 'beach', 'shopping', 'nights'],
 };
 
-/** The photo of each IRLY community (IRLY's own photos where there are some). */
+/** The photo of each IRLY community: always a photo taken in Dubai (the library's Dubai photos, DUBAI_KEYS). */
 // Some keys are IRLY photos added to the library (DUBAI_KEYS), outside the static PhotoKey list.
 export const TOPIC_PHOTO = {
   newcomers: 'emirates',
@@ -134,21 +134,26 @@ export const TOPIC_PHOTO = {
   network: 'founders',
   entrepreneurs: 'meeting',
   ecom: 'startup',
-  tech: 'developer',
+  tech: 'office',
   ai: 'startup',
   girls: 'girlFitness',
-  moms: 'momPlaydate',
-  expats: 'coffee',
+  moms: 'kids',
+  expats: 'dubaiMarina',
   wellness: 'yoga',
-  culture: 'gallery',
+  culture: 'souk',
   nights: 'rooftopNeon',
   shopping: 'mall',
-  families: 'family',
+  families: 'waterPark',
 } as Record<string, PhotoKey>;
 
-/** A community's photo: its IRLY topic, else its category, else none. */
+/** Category photos that were not taken in Dubai, and the Dubai photo a community shows instead. */
+const DUBAI_INSTEAD = { gallery: 'souk', concert: 'festival', dogPark: 'nature', family: 'waterPark', education: 'office' } as Record<string, PhotoKey>;
+
+/** A community's photo: its IRLY topic, else its category (a Dubai photo either way), else none. */
 export function communityPhoto(topic: string | null | undefined, categoryId: string | null | undefined): PhotoKey | null {
-  return (topic && TOPIC_PHOTO[topic]) || (categoryId && CATEGORY_BY_ID[categoryId as CategoryKey]?.photo) || null;
+  if (topic && TOPIC_PHOTO[topic]) return TOPIC_PHOTO[topic];
+  const key = categoryId ? CATEGORY_BY_ID[categoryId as CategoryKey]?.photo : undefined;
+  return key ? (DUBAI_INSTEAD[key] ?? key) : null;
 }
 
 /** The house rules of every IRLY community. */

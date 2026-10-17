@@ -24,7 +24,7 @@ export function CommunityThumb({ id, topic, categoryId, emoji, light, size = 44,
   }
   return (
     <View style={{ width: size, height: size }}>
-      <Photo visual={{ photo: key }} light={light} style={{ width: size, height: size, borderRadius: radius, overflow: 'hidden' }} width={240} recyclingKey={id ? `community-${id}-app` : undefined} />
+      <Photo pinned visual={{ photo: key }} light={light} style={{ width: size, height: size, borderRadius: radius, overflow: 'hidden' }} width={240} recyclingKey={id ? `community-${id}-app` : undefined} />
       {emoji ? (
         <View style={[styles.badge, { backgroundColor: t.c.surface, borderColor: t.c.bg }]}>
           <Text style={{ fontSize: 11 }}>{emoji}</Text>

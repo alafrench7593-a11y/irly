@@ -295,9 +295,11 @@ function pick(key: string, count: number, seed?: string): number {
 /** Keys whose first picture is the same file as another key's (jbr = surf, roadtrip = hikeDesert, meeting = founders): only their own variants are shown. */
 const SHARED_PRIMARY = new Set<string>(['jbr', 'roadtrip', 'meeting']);
 
-export function photo(key: PhotoKey, width = 900, seed?: string): string {
+/** With `pinned`, always the key's first picture: for Dubai keys, the photo taken in Dubai (variants may be from anywhere). */
+export function photo(key: PhotoKey, width = 900, seed?: string, pinned = false): string {
   const px = pixels(width);
   const variants = VARIANTS[key] ?? [];
+  if (pinned && !SHARED_PRIMARY.has(key)) return primary(key, px);
   if (SHARED_PRIMARY.has(key) && variants.length) return sized(variants[pick(key, variants.length, seed)], px);
   const i = pick(key, variants.length + 1, seed);
   return i === 0 ? primary(key, px) : sized(variants[i - 1], px);
