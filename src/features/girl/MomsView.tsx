@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { Image } from 'expo-image';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { Film } from '@/components/visual/Film';
@@ -23,7 +23,7 @@ import { friendlyError } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
-import { girl, GIRL_TINT } from './theme';
+import { girl, GIRL_TINT, girlType } from './theme';
 import { GButton, GChip, GSection, Wrap } from './ui';
 import { GirlFeed, KindRail, MOM_KINDS, Upcoming } from './world';
 
@@ -53,6 +53,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
   const [kids, setKids] = useState<string[] | null>(null);
   const [momBusy, setMomBusy] = useState(false);
   const [joining, setJoining] = useState<string | null>(null);
+  const joinRef = useRef(false);
   const toggleAge = (id: string) => {
     const current = kids ?? me?.kidsAgeGroups ?? [];
     const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
@@ -64,7 +65,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
   };
   const moms = useGirlCircle(cityId, { moms: true });
   const communities = useCommunitiesLike(cityId, 'Moms', true);
-  const { activities } = useServerActivities(cityId);
+  const { activities, loading: plansLoading, error: plansError, refresh: refreshPlans } = useServerActivities(cityId);
   const family = usePlaces(cityId, { kids: true });
   const plans = useMemo(
     () => activities.filter((a) => a.audience === 'moms' || a.audience === 'families' || a.categoryId === 'family' || /kid|mom|family|playdate|picnic/i.test(a.title)),
@@ -93,6 +94,9 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
   };
 
   const join = (id: string, name: string) => {
+    // One join at a time: a fast second tap never opens the chat twice.
+    if (joinRef.current) return;
+    joinRef.current = true;
     setJoining(id);
     joinCommunity(id)
       .then((conv) => {
@@ -102,7 +106,10 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
         communities.reload();
       })
       .catch((e) => toast(friendlyError(e instanceof Error ? e.message : 'Could not join'), 'x', 'live'))
-      .finally(() => setJoining(null));
+      .finally(() => {
+        joinRef.current = false;
+        setJoining(null);
+      });
   };
 
   return (
@@ -173,7 +180,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
       <View onLayout={mark('moms')} />
       {moms.data.length ? (
         <View style={{ gap: 10 }}>
-          <Text variant="titleM" color={girl.ink} style={styles.pad}>
+          <Text variant="titleM" color={girl.ink} style={[girlType.section, styles.pad]}>
             {tx('Moms in {city}', { city: city.name })}
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 12 }}>
@@ -249,14 +256,14 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
       </View>
 
       <View style={{ gap: 12 }} onLayout={mark('momsPlans')}>
-        <Text variant="titleM" color={girl.ink} style={styles.pad}>
+        <Text variant="titleM" color={girl.ink} style={[girlType.section, styles.pad]}>
           Coming up with kids
         </Text>
-        <Upcoming activities={plans} kinds={MOM_KINDS} kind={kind} onKind={setKind} onPlan={() => onSection?.('goPlan', 0)} emptyTitle="What if you organised the first playdate?" />
+        <Upcoming activities={plans} kinds={MOM_KINDS} kind={kind} onKind={setKind} onPlan={() => onSection?.('goPlan', 0)} emptyTitle="What if you organised the first playdate?" loading={plansLoading} error={plansError} onRetry={refreshPlans} />
       </View>
 
       <View style={[styles.pad, { gap: 10 }]} onLayout={mark('momsCommunities')}>
-        <Text variant="titleM" color={girl.ink}>
+        <Text variant="titleM" color={girl.ink} style={girlType.section}>
           Mom communities
         </Text>
         {communities.data.length ? (
@@ -300,7 +307,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
 
       <View style={{ gap: 12 }}>
         <View style={styles.pad}>
-          <Text variant="titleM" color={girl.ink}>
+          <Text variant="titleM" color={girl.ink} style={girlType.section}>
             From the moms
           </Text>
           <Text variant="bodyS" color={girl.inkSoft}>
@@ -312,7 +319,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
 
       {family.data.length ? (
         <View style={{ gap: 10 }}>
-          <Text variant="titleM" color={girl.ink} style={styles.pad}>
+          <Text variant="titleM" color={girl.ink} style={[girlType.section, styles.pad]}>
             Family-friendly places
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>

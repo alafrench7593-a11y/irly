@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
+import { FEATURES } from '@/lib/features';
 import { destinationOpen } from '@/data/destinations';
 import { dateLocale, t as tx } from '@/i18n';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
@@ -11,7 +12,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { joinCommunity, useCommunitiesLike, useGirlCircle, useGirlExtras, type CircleMember } from '@/features/bali/data';
 import { GirlGate, safeBack } from '@/features/girl/access';
-import { girl } from '@/features/girl/theme';
+import { girl, girlType } from '@/features/girl/theme';
 import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { GButton, GChip, Wrap } from '@/features/girl/ui';
 import { hueOf } from '@/lib/format';
@@ -46,6 +47,7 @@ export default function GirlsMovingScreen() {
 function GirlsMoving() {
   const router = useRouter();
   const [joining, setJoining] = useState<string | null>(null);
+  const joinRef = useRef(false);
   const insets = useSafeAreaInsets();
   const [status, setStatus] = useState<Status | null>(null);
   const [looking, setLooking] = useState<string | null>(null);
@@ -54,13 +56,26 @@ function GirlsMoving() {
   const me = extras.data;
   const communities = useCommunitiesLike('bali', '', true);
 
-  const setMine = (patch: Parameters<typeof extras.save>[0]) =>
-    extras
+  // Her latest choices, ahead of the server: two quick taps on « Looking for » both count.
+  const [mine, setMineLocal] = useState<{ lookingFor?: string[]; destinationStatus?: string | null }>({});
+  const lookingFor = mine.lookingFor ?? me?.lookingFor ?? [];
+  const destStatus = mine.destinationStatus !== undefined ? mine.destinationStatus : me?.destination === 'bali' ? me.destinationStatus : null;
+  const setMine = (patch: Parameters<typeof extras.save>[0]) => {
+    setMineLocal((m) => ({ ...m, ...('lookingFor' in patch ? { lookingFor: patch.lookingFor } : {}), ...('destinationStatus' in patch ? { destinationStatus: patch.destinationStatus } : {}) }));
+    return extras
       .save({ destination: 'bali', ...patch })
       .then(() => haptic('success'))
-      .catch((e) => toast(friendlyError(e instanceof Error ? e.message : 'Could not save'), 'x', 'live'));
+      .catch((e) => {
+        // Refused: back to what the server has.
+        setMineLocal({});
+        toast(friendlyError(e instanceof Error ? e.message : 'Could not save'), 'x', 'live');
+      });
+  };
 
   const join = (id: string) => {
+    // One join at a time: a fast second tap never opens the chat twice.
+    if (joinRef.current) return;
+    joinRef.current = true;
     setJoining(id);
     joinCommunity(id)
       .then((conv) => {
@@ -69,7 +84,10 @@ function GirlsMoving() {
         if (conv) router.push(`/messages/${conv}`);
       })
       .catch((e) => toast(friendlyError(e instanceof Error ? e.message : 'Could not join'), 'x', 'live'))
-      .finally(() => setJoining(null));
+      .finally(() => {
+        joinRef.current = false;
+        setJoining(null);
+      });
   };
 
   return (
@@ -86,7 +104,7 @@ function GirlsMoving() {
         </View>
 
         <View style={[styles.pad, { gap: 8 }]}>
-          <Text variant="displayM" color={girl.ink}>
+          <Text variant="displayM" color={girl.ink} style={girlType.display}>
             Moving to Bali and don’t know anyone?
           </Text>
           <Text variant="body" color={girl.inkSoft}>
@@ -94,7 +112,8 @@ function GirlsMoving() {
           </Text>
         </View>
 
-        {me?.hasProfile ? (
+        {/* While IRLY Match is coming soon, a first choice creates her private IRLY Girl profile. */}
+        {me?.hasProfile || (!FEATURES.girlMatch && !extras.loading && !extras.error) ? (
           <View style={styles.pad}>
             <View style={[styles.card, { gap: 10 }]}>
               <Text variant="titleS" color={girl.ink}>
@@ -102,7 +121,7 @@ function GirlsMoving() {
               </Text>
               <Wrap>
                 {STATUSES.map((s) => (
-                  <GChip key={s.id} small label={s.label} selected={me.destination === 'bali' && me.destinationStatus === s.id} onPress={() => setMine({ destinationStatus: s.id })} />
+                  <GChip key={s.id} small label={s.label} selected={destStatus === s.id} onPress={() => setMine({ destinationStatus: s.id })} />
                 ))}
               </Wrap>
               <Text variant="caption" color={girl.inkSoft}>
@@ -110,8 +129,8 @@ function GirlsMoving() {
               </Text>
               <Wrap>
                 {LOOKING.map((l) => {
-                  const on = (me.lookingFor ?? []).includes(l);
-                  return <GChip key={l} small label={tx(l)} selected={on} onPress={() => setMine({ lookingFor: on ? (me.lookingFor ?? []).filter((x) => x !== l) : [...(me.lookingFor ?? []), l] })} />;
+                  const on = lookingFor.includes(l);
+                  return <GChip key={l} small label={tx(l)} selected={on} onPress={() => setMine({ lookingFor: on ? lookingFor.filter((x) => x !== l) : [...lookingFor, l] })} />;
                 })}
               </Wrap>
             </View>
@@ -204,7 +223,7 @@ function GirlsMoving() {
 
         <View style={styles.pad}>
           <View style={[styles.card, { gap: 10 }]}>
-            <Text variant="titleM" color={girl.ink}>
+            <Text variant="titleM" color={girl.ink} style={girlType.section}>
               Plan something with girls
             </Text>
             <QuickPlan cityId="bali" types={GIRL_PLANS} palette="girl" />
@@ -212,7 +231,7 @@ function GirlsMoving() {
         </View>
 
         <View style={[styles.pad, { gap: 10 }]}>
-          <Text variant="titleM" color={girl.ink}>
+          <Text variant="titleM" color={girl.ink} style={girlType.section}>
             Bali girl communities
           </Text>
           {communities.loading && !communities.data.length ? <Skeleton height={64} radius={radius.xl} /> : null}
@@ -253,7 +272,7 @@ function GirlsMoving() {
         {/* Bali's guides, while Bali is open (it is coming soon for now). */}
         {destinationOpen('bali') ? (
         <View style={[styles.pad, { gap: 10 }]}>
-          <Text variant="titleM" color={girl.ink}>
+          <Text variant="titleM" color={girl.ink} style={girlType.section}>
             Before you land
           </Text>
           <GButton label="Where should I live?" icon="compass" variant="secondary" onPress={() => router.push('/bali/quiz')} />

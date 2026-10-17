@@ -27,4 +27,6 @@ if (fs.existsSync('public-photos/faces')) {
 execFileSync('node', ['.github/scripts/site-pages.mjs', OUT], { stdio: 'inherit' });
 // Privacy, terms, guidelines, support and account deletion (EN and FR), added to the sitemap.
 execFileSync('node', ['.github/scripts/site-legal.mjs', OUT], { stdio: 'inherit' });
+// The IRLY Girl page (EN and FR), part of this site, added to the sitemap.
+execFileSync('node', ['.github/scripts/site-girl.mjs', OUT], { stdio: 'inherit' });
 console.log('website built:', fs.readdirSync(OUT).join(', '));

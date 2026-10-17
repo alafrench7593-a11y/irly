@@ -1,5 +1,6 @@
 import { a11y, t as tx } from '@/i18n';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
+import { FEATURES } from '@/lib/features';
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
@@ -14,7 +15,7 @@ import { CITIES } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 import { GirlGate, isGirlRefusal, safeBack } from '@/features/girl/access';
 import { matchApi } from '@/features/girl/api';
-import { girl, GIRL_TINT } from '@/features/girl/theme';
+import { girl, GIRL_TINT, girlType } from '@/features/girl/theme';
 import { GButton } from '@/features/girl/ui';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -71,7 +72,12 @@ const SLIDES: Slide[] = [
  * photo drifting slower than the text (parallax), progress dots that
  * stretch for the current slide. Completion is stored server-side.
  */
-export default function GirlOnboardingScreen() {
+/** IRLY Match is coming soon: its onboarding and profile wait, IRLY Girl opens instead. */
+export default function GirlOnboardingScreenGate() {
+  return FEATURES.girlMatch ? <GirlOnboardingScreen /> : <Redirect href="/girl" />;
+}
+
+function GirlOnboardingScreen() {
   return (
     <GirlGate>
       <GirlOnboarding />
@@ -176,7 +182,7 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
         </View>
       </View>
       <Animated.View style={[styles.card, text]}>
-        <Text variant="displayM" color={girl.ink}>
+        <Text variant="displayM" color={girl.ink} style={girlType.display}>
           {slide.title}
         </Text>
         <Text variant="body" color={girl.inkSoft}>

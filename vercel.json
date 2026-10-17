@@ -5,11 +5,11 @@
   "framework": null,
   "rewrites": [
     {
-      "source": "/:page(privacy|terms|guidelines|support|delete-account|legal-notice)",
+      "source": "/:page(privacy|terms|guidelines|support|delete-account|legal-notice|girl)",
       "destination": "/:page/index.html"
     },
     {
-      "source": "/fr/:page(privacy|terms|guidelines|support|delete-account|legal-notice)",
+      "source": "/fr/:page(privacy|terms|guidelines|support|delete-account|legal-notice|girl)",
       "destination": "/fr/:page/index.html"
     },
     {

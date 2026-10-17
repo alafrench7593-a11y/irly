@@ -10,7 +10,7 @@ import { t as tx } from '@/i18n';
 import { hasSession, supabase } from '@/lib/supabase';
 import { useStore } from '@/state/store';
 import { space } from '@/theme/tokens';
-import { girl } from './theme';
+import { girl, girlType } from './theme';
 import { GButton } from './ui';
 
 /**
@@ -114,7 +114,7 @@ export function GirlLoading({ label = 'Opening your space…' }: { label?: strin
   return (
     <View style={[styles.root, styles.center, { gap: 14, padding: space.gutter }]} accessibilityLabel={tx('Loading')}>
       <ActivityIndicator color={girl.rose} />
-      <Text variant="titleM" color={girl.ink} align="center">
+      <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
         IRLY Girl
       </Text>
       <Text variant="body" color={girl.inkSoft} align="center">
@@ -161,7 +161,7 @@ export function GirlClosed({ reason, onRetry, moms }: { reason: GirlClosedReason
       <View style={styles.badge}>
         <Icon name={c.icon} size={26} color={girl.rose} />
       </View>
-      <Text variant="displayM" align="center" color={girl.ink} accessibilityRole="header">
+      <Text variant="displayM" align="center" color={girl.ink} accessibilityRole="header" style={girlType.display}>
         {c.title}
       </Text>
       <Text variant="body" align="center" color={girl.inkSoft} style={{ maxWidth: 420 }}>
