@@ -36,15 +36,20 @@ export type Kind = { id: string; label: string; icon: IconName; photo: PhotoKey;
  */
 export const GIRL_KINDS: Kind[] = [
   { id: 'brunch', label: 'Brunch', icon: 'coffee', photo: 'brunch', match: /brunch/i },
-  { id: 'coffee', label: 'Girls’ coffee', icon: 'coffee', photo: 'girlCoffee', match: /coffee|café|cafe|matcha/i },
+  { id: 'coffee', label: 'Girls’ coffee', icon: 'coffee', photo: 'drinksGirl', match: /coffee|café|cafe|matcha|drinks?|juice/i },
   { id: 'shopping', label: 'Shopping', icon: 'shoppingBag', photo: 'girlShopping', match: /shopping|fashion|mall|market/i },
+  { id: 'padel', label: 'Padel', icon: 'activity', photo: 'padelGirl', match: /padel/i },
+  { id: 'golf', label: 'Golf', icon: 'flag', photo: 'golfGirl', match: /golf|driving range/i },
   { id: 'fitness', label: 'Fitness', icon: 'dumbbell', photo: 'girlFitness', match: /fitness|gym|run|padel|tennis|workout|surf|boxing/i, cats: ['sport'] },
-  { id: 'pilates', label: 'Pilates', icon: 'activity', photo: 'girlClass', match: /pilates|barre/i },
+  { id: 'pilates', label: 'Pilates', icon: 'activity', photo: 'pilatesGirl', match: /pilates|barre/i },
   { id: 'yoga', label: 'Yoga', icon: 'leaf', photo: 'yoga', match: /yoga|breath|meditat/i },
   // IRLY's own Dubai photos: listed before the broader kinds (a safari park is not a park, quads are not a hike).
   { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
-  { id: 'quad', label: 'Quad & desert', icon: 'mountain', photo: 'quadGirl', match: /quad|atv|buggy|buggies|dune bashing|desert safari/i },
+  { id: 'quad', label: 'Quad biking', icon: 'mountain', photo: 'quadGirl', match: /quad|atv|buggy|buggies|dune bashing/i },
+  { id: 'desert', label: 'Desert', icon: 'sun', photo: 'desertGirl', match: /desert|camel|dunes?|safari(?! park)/i },
+  { id: 'nightout', label: 'Girls’ night out', icon: 'sparkles', photo: 'girlsOut', match: /night out|girls.? night|rooftop|soirée|sortie|party|dinner with a view/i },
   { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
+  { id: 'yacht', label: 'Yacht & boat', icon: 'sailboat', photo: 'yachtGirl', match: /yacht|boat|cruise|sailing|catamaran/i },
   { id: 'beach', label: 'Beach', icon: 'sun', photo: 'girlSunset', match: /beach|plage|sunset|swim/i, cats: ['beach'] },
   { id: 'dinner', label: 'Restaurants', icon: 'utensils', photo: 'girlDinner', match: /dinner|dîner|restaurant|lunch|food/i, cats: ['food'] },
   { id: 'travel', label: 'Travel', icon: 'plane', photo: 'girlTravel', match: /travel|trip|voyage|getaway|weekend away/i, cats: ['travel'] },

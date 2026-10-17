@@ -404,6 +404,8 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\b(zoo|safari park|wildlife park)\b/i, 'safariPark'],
   [/\b(quad\w*|atv|buggy|buggies|dune bashing)\b/i, 'quadGirl'],
   [/\b(dog walks?|dog beach)\b/i, 'dogWalk'],
+  [/\b(pilates|reformer)\b/i, 'pilatesGirl'],
+  [/\b(golf|topgolf|driving range)\b/i, 'golfGirl'],
   // Whole words only: "brunch" is not "run", "Dubai" is not "AI".
   // Most specific first: "beach volley" before "beach", "dog beach" before "beach".
   [/\bpadel\b|\bpickleball\b/i, 'padel'],

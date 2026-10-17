@@ -9,14 +9,21 @@ const RULES: [RegExp, PhotoKey][] = [
   [/\b(moms?|mums?|mamans?|mother|playdates?|kids?|children|enfants?)\b/i, 'momPlaydate'],
   [/\b(baby|babies|bébé|stroller|poussette)\b/i, 'momBaby'],
   [/\b(family|families|famille)\b/i, 'familyBeach'],
-  [/\b(yoga|pilates|wellness|breathwork|meditat\w*)\b/i, 'girlClass'],
+  [/\b(pilates|reformer)\b/i, 'pilatesGirl'],
+  [/\b(yoga|wellness|breathwork|meditat\w*)\b/i, 'girlClass'],
   [/\b(spa|beauty|massage|self.?care|nails?)\b/i, 'girlSpa'],
+  [/\b(padel)\b/i, 'padelGirl'],
+  [/\b(golf|topgolf)\b/i, 'golfGirl'],
+  [/\b(yachts?|boats?|cruise|sailing)\b/i, 'yachtGirl'],
+  [/\b(global village)\b/i, 'globalVillage'],
   [/\b(fitness|gym|run\w*|padel|tennis|sports?|workout)\b/i, 'girlFitness'],
   [/\b(surf\w*)\b/i, 'girlSurf'],
   [/\b(hik\w*|trek\w*|nature|waterfalls?)\b/i, 'girlHike'],
   [/\b(travel\w*|trips?|voyage\w*|explor\w*)\b/i, 'girlTravel'],
   [/\b(brunch\w*|dinner\w*|dîner|food\w*|eat\w*)\b/i, 'girlCafe'],
-  [/\b(coffee|café|cafes?|matcha)\b/i, 'girlCoffee'],
+  [/\b(coffee|café|cafes?|matcha|drinks?)\b/i, 'drinksGirl'],
+  [/\b(desert|camels?|dunes?)\b/i, 'desertGirl'],
+  [/\b(night out|rooftop|soirée|sorties?|party)\b/i, 'girlsOut'],
   [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'girlWork'],
   [/\b(books?|book club|reading|lecture)\b/i, 'girlBookClub'],
   [/\b(shopping|fashion|mode)\b/i, 'girlShopping'],
@@ -25,7 +32,7 @@ const RULES: [RegExp, PhotoKey][] = [
 ];
 
 /** A photo for a girls' plan or community, from its name; friends by default. */
-export function girlPhotoFor(text: string, fallback: PhotoKey = 'girlFriends'): PhotoKey {
+export function girlPhotoFor(text: string, fallback: PhotoKey = 'girlsOut'): PhotoKey {
   for (const [re, key] of RULES) if (re.test(text)) return key;
   return fallback;
 }
@@ -34,20 +41,28 @@ export function girlPhotoFor(text: string, fallback: PhotoKey = 'girlFriends'): 
 const COMMUNITY_RULES: [RegExp, PhotoKey][] = [
   [/\b(moms?|mums?|mamans?|mother|playdates?|kids?|children|enfants?|baby|babies|bébé|stroller|poussette)\b/i, 'kids'],
   [/\b(family|families|famille)\b/i, 'waterPark'],
-  [/\b(yoga|pilates|breathwork|meditat\w*)\b/i, 'yoga'],
+  [/\b(pilates|reformer)\b/i, 'pilatesGirl'],
+  [/\b(yoga|breathwork|meditat\w*)\b/i, 'yoga'],
   [/\b(spa|beauty|massage|self.?care|nails?|wellness)\b/i, 'luxury'],
+  [/\b(padel)\b/i, 'padelGirl'],
+  [/\b(golf|topgolf)\b/i, 'golfGirl'],
+  [/\b(yachts?|boats?|cruise|sailing)\b/i, 'yachtGirl'],
+  [/\b(global village)\b/i, 'globalVillage'],
   [/\b(fitness|gym|run\w*|padel|tennis|sports?|workout)\b/i, 'girlFitness'],
   [/\b(surf\w*|beach\w*|plage|sunset|coucher)\b/i, 'beachClub'],
   [/\b(hik\w*|trek\w*|nature|waterfalls?)\b/i, 'hikeDesert'],
   [/\b(travel\w*|trips?|voyage\w*|explor\w*)\b/i, 'girlTravel'],
-  [/\b(brunch\w*|dinner\w*|dîner|food\w*|eat\w*|coffee|café|cafes?|matcha)\b/i, 'brunch'],
+  [/\b(coffee|café|cafes?|matcha|drinks?)\b/i, 'drinksGirl'],
+  [/\b(desert|camels?|dunes?)\b/i, 'desertGirl'],
+  [/\b(night out|rooftop|soirée|sorties?|party|nights?)\b/i, 'girlsOut'],
+  [/\b(brunch\w*|dinner\w*|dîner|food\w*|eat\w*)\b/i, 'brunch'],
   [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'networkingGirl'],
   [/\b(books?|book club|reading|lecture|art|culture)\b/i, 'souk'],
   [/\b(shopping|fashion|mode)\b/i, 'mall'],
   [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'emirates'],
 ];
 
-export function girlCommunityPhoto(text: string, fallback: PhotoKey = 'girlChill'): PhotoKey {
+export function girlCommunityPhoto(text: string, fallback: PhotoKey = 'girlsOut'): PhotoKey {
   for (const [re, key] of COMMUNITY_RULES) if (re.test(text)) return key;
   return fallback;
 }

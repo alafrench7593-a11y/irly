@@ -26,7 +26,7 @@ type Slide = { photo: PhotoKey; title: string; body: string; points?: { icon: Ic
 
 const SLIDES: Slide[] = [
   {
-    photo: 'girlFriends',
+    photo: 'girlsOut',
     title: 'Meet people who get you.',
     // {city}: the member's destination (filled in when shown).
     body: 'Discover girls in {city} who share your interests, your personality and your lifestyle.',
