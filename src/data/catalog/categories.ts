@@ -1,6 +1,7 @@
 import type { IconName } from '@/components/ui/Icon';
 import type { PhotoKey } from '@/data/photos';
 import type { CityId } from '@/data/types';
+import { girlPhotoFor } from '@/features/girl/photos';
 
 /**
  * IRLY activity catalog.
@@ -402,13 +403,50 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   // IRLY's own Dubai photos first.
   [/\bglobal village\b/i, 'globalVillage'],
   [/\b(zoo|safari park|wildlife park)\b/i, 'safariPark'],
-  [/\b(quad\w*|atv|buggy|buggies|dune bashing)\b/i, 'quadGirl'],
+  [/\b(quad\w*|atv|buggy|buggies|dune bashing)\b/i, 'buggyMix'],
   [/\b(dog walks?|dog beach)\b/i, 'dogWalk'],
   [/\b(pilates|reformer)\b/i, 'pilatesGirl'],
   [/\b(golf|topgolf|driving range)\b/i, 'golfGirl'],
   [/\bsheikh zayed grand mosque\b/i, 'mosqueGirl'],
   [/\bbeach clubs?\b/i, 'beachClubGirl'],
   [/\bkite beach\b/i, 'kiteBeach'],
+  // IRLY's own photos of mixed groups, for everyone's activities.
+  [/\b(football|soccer|futsal)\b/i, 'footballMix'],
+  [/\b(water parks?|aquaventure|wild wadi)\b/i, 'waterParkMix'],
+  [/\b(quad\w*|atv|buggy|buggies|dune bashing)\b/i, 'buggyMix'],
+  [/\b(vr|virtual reality|arcade|gaming|esports?)\b/i, 'vrMix'],
+  [/\b(wadi|hik\w*|trek\w*|canyon)\b/i, 'wadiMix'],
+  [/\b(dance|dancing|salsa|bachata|hip ?hop|zumba)\b/i, 'danceMix'],
+  [/\b(swim\w*|open water)\b/i, 'swimMix'],
+  [/\btennis\b/i, 'tennisMix'],
+  [/\b(run|running|runners?|jog|jogging)\b/i, 'runMix'],
+  [/\b(gym|fitness|workout|hiit|bootcamp|boxing|sports?)\b/i, 'gymMix'],
+  [/\b(networking|meetings?|business|founders?|entrepreneurs?|startups?|cowork\w*)\b/i, 'meetingMix'],
+  [/\b(dinner|dîner|restaurants?|dining)\b/i, 'dinnerMix'],
+  [/\b(food|tasting|sushi|street food)\b/i, 'foodMix'],
+  [/\bbeach\b(?! ?volley)/i, 'beachMix'],
+  [/\b(palm jumeirah|the palm)\b/i, 'palmAerial'],
+  // The rest of IRLY's own photos, for the subjects they show, before any library photo.
+  [/\b(girl trips?)\b/i, 'girlTrip'],
+  [/\b(stroller|baby|babies|bébés?|poussette|moms?|mums?|mamans?)\b/i, 'strollerMom'],
+  [/\bpadel\b/i, 'padelGirl'],
+  [/\btennis\b/i, 'tennisGirl'],
+  [/\b(run|running|runners?|jog|jogging)\b/i, 'runGirl'],
+  [/\b(gym|fitness|workout|hiit|bootcamp|sports?)\b/i, 'gymGirl'],
+  [/\b(yachts?|boats?|cruise)\b/i, 'yachtGirl'],
+  [/\b(desert|dunes?|desert safari|camels?)\b/i, 'desertGirl'],
+  [/\b(brunch|breakfast)\b/i, 'brunchGirl'],
+  [/\b(books?|book club|reading|lecture)\b/i, 'readingGirl'],
+  [/\b(coffee|cafes?|cafés?|matcha|tea|drinks?)\b/i, 'drinksGirl'],
+  [/\b(spa|massage|beauty|wellness|self.?care)\b/i, 'spaGirl'],
+  [/\b(networking|founders?|entrepreneurs?|business|startups?)\b/i, 'networkingGirl'],
+  [/\b(cycl\w*|bikes?|biking|vélo)\b/i, 'bikeGirl'],
+  [/\b(dinner|dîner|restaurants?|dining|food)\b/i, 'restaurantGirl'],
+  [/\b(night out|nightlife|rooftops?|soirée|party)\b/i, 'nightDinner'],
+  [/\b(travel\w*|voyages?)\b/i, 'girlTrip'],
+  [/\bmosques?\b/i, 'mosqueGirl'],
+  [/\bbeach\b(?! ?volley)/i, 'beachClubGirl'],
+  [/\b(girls?|ladies|women|femmes?)\b/i, 'girlsOut'],
   // Whole words only: "brunch" is not "run", "Dubai" is not "AI".
   // Most specific first: "beach volley" before "beach", "dog beach" before "beach".
   [/\bpadel\b|\bpickleball\b/i, 'padel'],
@@ -564,6 +602,16 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\bdubai\b/i, 'dubai'],
 ];
 
+/** The photo whose subject matches these words (a title, a community name), or null when nothing matches. */
+export function photoForText(text: string): PhotoKey | null {
+  // Made by or for women ("Girls padel", "Moms brunch"): IRLY's photos of women first.
+  if (WOMEN.test(text)) return girlPhotoFor(text);
+  for (const [re, key] of IDEA_PHOTOS) if (re.test(text)) return key;
+  return null;
+}
+
+const WOMEN = /\b(girls?|ladies|women|femmes?|filles?|moms?|mums?|mamans?)\b/i;
+
 const SUB_LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.flatMap((c) => c.subs.map((s) => [s.id, s.label])));
 
 /**
@@ -573,6 +621,7 @@ const SUB_LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.flatMap(
  */
 export function ideaPhoto(categoryId: CategoryKey, label: string, place?: string, subId?: string | null): PhotoKey {
   const text = `${label} ${(subId && SUB_LABEL[subId]) || ''} ${place ?? ''}`;
+  if (WOMEN.test(label)) return girlPhotoFor(label);
   for (const [re, key] of IDEA_PHOTOS) if (re.test(text)) return key;
   // An unknown sport is not padel: a general fitness photo instead.
   if (categoryId === 'sport') return 'gym';

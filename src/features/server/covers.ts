@@ -103,6 +103,55 @@ export function usePhotoLink(path: string | null | undefined): string | null {
   return path && link?.path === path ? link.url : null;
 }
 
+/**
+ * A community's own photo path, for lists that only know its id. All the
+ * thumbnails shown at the same moment are asked for in one request; the
+ * answer is kept for the session and dropped when a community changes.
+ */
+const coverCache = new Map<string, string | null>();
+let coverWanted = new Set<string>();
+let coverWaiters: (() => void)[] = [];
+let coverTimer: ReturnType<typeof setTimeout> | null = null;
+
+function askCovers(id: string, done: () => void) {
+  coverWanted.add(id);
+  coverWaiters.push(done);
+  if (coverTimer) return;
+  coverTimer = setTimeout(() => {
+    const ids = [...coverWanted];
+    const waiters = coverWaiters;
+    coverWanted = new Set();
+    coverWaiters = [];
+    coverTimer = null;
+    if (!supabase) return;
+    supabase
+      .from('communities')
+      .select('id, cover_path')
+      .in('id', ids)
+      .then(({ data }) => {
+        for (const i of ids) coverCache.set(i, null);
+        for (const c of (data ?? []) as { id: string; cover_path: string | null }[]) coverCache.set(c.id, c.cover_path);
+        waiters.forEach((w) => w());
+      }, () => undefined);
+  }, 30);
+}
+
+export function useCommunityCover(id: string | undefined, known?: string | null): string | null {
+  const v = useSyncVersion('communities');
+  const [, render] = useState(0);
+  useEffect(() => {
+    if (!id || known !== undefined) return;
+    coverCache.delete(id);
+    let alive = true;
+    askCovers(id, () => alive && render((n) => n + 1));
+    return () => {
+      alive = false;
+    };
+  }, [id, known, v]);
+  if (known !== undefined) return known;
+  return id ? (coverCache.get(id) ?? null) : null;
+}
+
 export type ChatPhoto = {
   /** Its own photo (a storage path); null: the app's photo. */
   path: string | null;
@@ -175,12 +224,12 @@ export function useCommunityPhotoKeys(ids: string[]): Record<string, PhotoKey> {
     let alive = true;
     supabase
       .from('communities')
-      .select('id, topic, category_id')
+      .select('id, name, topic, category_id')
       .in('id', list.split(','))
       .then(({ data }) => {
         if (!alive || !data) return;
         const out: Record<string, PhotoKey> = {};
-        for (const c of data as { id: string; topic: string | null; category_id: string | null }[]) out[c.id] = (communityPhoto(c.topic, c.category_id) as PhotoKey | null) ?? 'meeting';
+        for (const c of data as { id: string; name: string; topic: string | null; category_id: string | null }[]) out[c.id] = communityPhoto(c.topic, c.category_id, c.name);
         setKeys(out);
       }, () => undefined);
     return () => {
