@@ -1,5 +1,6 @@
 import { bali } from './content/bali';
 import { GIRL_PEOPLE } from './content/girls';
+import { girlConversations } from './content/girlDemo';
 import { dubai } from './content/dubai';
 import { regionalContent } from './content/regional';
 import { DEMO } from '@/config/app';
@@ -24,7 +25,12 @@ import type {
  * (with React Query or similar) and no screen has to change.
  */
 
+// The demo's IRLY Girl chats live in Dubai's inbox, with the other example chats.
+let dubaiDemo: CityContent | null = null;
+const demoDubai = () => (dubaiDemo ??= { ...dubai, conversations: [...girlConversations(), ...dubai.conversations] });
+
 export function getCityContent(cityId: CityId): CityContent {
+  if (DEMO && cityId === 'dubai') return demoDubai();
   const all = cityId === 'dubai' ? dubai : cityId === 'bali' ? bali : regionalContent(cityId);
   return DEMO ? all : realOnly(all);
 }

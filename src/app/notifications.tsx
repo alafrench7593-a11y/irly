@@ -15,7 +15,9 @@ import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { getCityContent } from '@/data/repo';
+import { findPerson, getCityContent } from '@/data/repo';
+import { DEMO } from '@/config/app';
+import { demoNotifications, demoPhoto } from '@/features/girl/demo';
 import { openHero } from '@/features/hero/heroStore';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
@@ -45,6 +47,22 @@ export default function Notifications() {
     c ? { id: 'n4', icon: 'handshake', title: tx('{name} accepted your connection', { name: c.name }), body: tx('Say hi in Messages'), ago: '3 h', personId: c.id, onPress: () => router.push('/messages') } : null,
     e ? { id: 'n5', icon: 'calendar', title: tx('Tomorrow'), body: tx(e.title), ago: '5 h', onPress: () => openHero({ kind: 'event', id: e.id }) } : null,
   ].filter(Boolean) as Item[];
+  // The demonstration build adds its IRLY Girl examples (likes, replies, invitations), first.
+  const KIND_ICON: Record<string, IconName> = { like: 'heart', comment: 'message', reply: 'message', invite: 'calendar', joined: 'users', follow: 'user', message: 'message' };
+  const girlItems: Item[] =
+    DEMO && auth === 'out'
+      ? demoNotifications().map((g) => ({
+          id: g.id,
+          icon: KIND_ICON[g.kind] ?? 'bell',
+          title: `${g.name} ${tx(g.text)}`,
+          body: 'IRLY Girl',
+          ago: timeAgo(g.ago),
+          personId: g.by,
+          unread: g.unread,
+          onPress: () => router.push((g.target.startsWith('/') ? g.target : `/comments?type=community_post&id=${g.target}`) as never),
+        }))
+      : [];
+  items.unshift(...girlItems);
 
   return (
     <Page title="Notifications" subtitle="Only what helps you meet people.">
@@ -60,12 +78,12 @@ export default function Notifications() {
       ) : null}
       <View style={styles.list}>
         {items.map((n, i) => {
-          const p = n.personId ? content.people.find((x) => x.id === n.personId) : undefined;
+          const p = n.personId ? (content.people.find((x) => x.id === n.personId) ?? findPerson(n.personId)) : undefined;
           return (
             <Animated.View key={n.id} entering={enter.rise(i)}>
               <PressableScale onPress={n.onPress} scaleTo={0.98} style={[styles.row, { backgroundColor: n.unread ? t.c.surface : 'transparent', boxShadow: n.unread ? t.shadow.card : undefined }]}>
                 {p ? (
-                  <Avatar name={p.name} hue={p.hue} size={44} />
+                  <Avatar name={p.name} hue={p.hue} size={44} photo={p.photo ?? demoPhoto(p.id)} />
                 ) : (
                   <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
                     <Icon name={n.icon} size={18} color={t.c.text} />

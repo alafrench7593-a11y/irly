@@ -15,6 +15,8 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { openReport } from '@/features/moderation/reportStore';
 import { toggleLike, useComments, type Comment, type TargetType } from '@/features/server/engage';
+import { DEMO } from '@/config/app';
+import { demoPhoto, demoToggleLike, useDemoComments } from '@/features/girl/demo';
 import { hueOf } from '@/lib/format';
 import { timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
@@ -22,6 +24,11 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+
+// The demonstration build: example threads and your comments in this tab only, never the server.
+const useThread = DEMO ? useDemoComments : useComments;
+const likeComment = DEMO ? demoToggleLike : toggleLike;
+const useAuth = DEMO ? () => 'in' as const : useAuthStatus;
 
 /**
  * Comments on anything (IRL post, event, activity, community post, place).
@@ -34,8 +41,8 @@ export default function CommentsScreen() {
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ type: TargetType; id: string; title?: string }>();
   const target = { type: params.type, id: params.id, title: params.title };
-  const { comments, loading, failed, add, remove, refresh, signedIn } = useComments(target);
-  const auth = useAuthStatus();
+  const { comments, loading, failed, add, remove, refresh, signedIn } = useThread(target);
+  const auth = useAuth();
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [sending, setSending] = useState(false);
@@ -75,7 +82,7 @@ export default function CommentsScreen() {
   const onLike = (c: Comment) => {
     if (liking.current.has(c.id)) return;
     liking.current.add(c.id);
-    toggleLike({ type: 'comment', id: c.id })
+    likeComment({ type: 'comment', id: c.id })
       .then(refresh)
       .catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'))
       .finally(() => liking.current.delete(c.id));
@@ -181,7 +188,7 @@ function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () =>
   const now = useNow();
   return (
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={styles.row}>
-      <Avatar name={c.firstName} hue={hueOf(c.authorId)} size={32} userId={c.authorId} />
+      <Avatar name={c.firstName} hue={hueOf(c.authorId)} size={32} userId={c.authorId} photo={demoPhoto(c.authorId)} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="label">
           {c.firstName}{' '}

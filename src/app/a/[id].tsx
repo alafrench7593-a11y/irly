@@ -1,5 +1,7 @@
 import { webLink } from '@/config/app';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { isDemoId } from '@/features/girl/demo';
+import { DemoPlanScreen } from '@/features/girl/DemoScreens';
 import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
@@ -39,7 +41,13 @@ const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'lo
  * Home, Discover, the map, chats, the calendar, notifications, shares and
  * the assistant). Join is capacity-safe and opens the activity chat.
  */
-export default function ActivityPage() {
+// The demonstration build's IRLY Girl plans (example content, nothing saved).
+export default function ActivityRoute() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return isDemoId(id) ? <DemoPlanScreen id={id} /> : <ActivityPage />;
+}
+
+function ActivityPage() {
   const reducedMotion = useReducedMotion();
   const t = useTheme();
   const router = useRouter();

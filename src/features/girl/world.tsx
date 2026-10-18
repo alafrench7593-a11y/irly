@@ -13,6 +13,9 @@ import type { PhotoKey } from '@/data/photos';
 import { useAccount } from '@/features/auth/account';
 import { openReport } from '@/features/moderation/reportStore';
 import { useEngagement } from '@/features/server/engage';
+import { PostMedia } from '@/features/posts/PostMedia';
+import { DEMO } from '@/config/app';
+import { demoPhoto, useDemoEngagement, useDemoGirlFeed } from './demo';
 import type { ServerActivity } from '@/features/server/activities';
 import { useRefreshOn } from '@/features/server/sync';
 import { t as tx } from '@/i18n';
@@ -338,6 +341,13 @@ export type GirlPost = {
   createdAt: number;
   mine: boolean;
   isMember: boolean;
+  /** Its photos (up to 10) or video, as on the community page. */
+  mediaPaths?: string[];
+  mediaKind?: 'photo' | 'video' | null;
+  thumbPath?: string | null;
+  mediaSeconds?: number | null;
+  /** Demo build only: an example photo. */
+  photo?: PhotoKey;
 };
 
 /**
@@ -369,6 +379,10 @@ export function useGirlFeed(cityId: string, moms: boolean) {
       createdAt: Date.parse(r.created_at as string),
       mine: Boolean(r.mine),
       isMember: Boolean(r.is_member),
+      mediaPaths: (r.media_paths as string[] | null) ?? [],
+      mediaKind: (r.media_kind as 'photo' | 'video' | null) ?? null,
+      thumbPath: (r.thumb_path as string | null) ?? null,
+      mediaSeconds: (r.media_seconds as number | null) ?? null,
     }));
   }, [cityId, moms, uid]);
 
@@ -413,9 +427,13 @@ export function useGirlFeed(cityId: string, moms: boolean) {
   return { posts, state, reload: load };
 }
 
+// The demonstration build reads the example posts (never the server); real builds, the server.
+const useFeed = DEMO ? useDemoGirlFeed : useGirlFeed;
+const useEng = DEMO ? useDemoEngagement : useEngagement;
+
 export function GirlFeed({ cityId, moms, onCommunities }: { cityId: string; moms: boolean; onCommunities: () => void }) {
-  const { posts, state, reload } = useGirlFeed(cityId, moms);
-  const eng = useEngagement(
+  const { posts, state, reload } = useFeed(cityId, moms);
+  const eng = useEng(
     'community_post',
     posts.map((p) => p.id),
   );
@@ -453,21 +471,21 @@ export function GirlFeed({ cityId, moms, onCommunities }: { cityId: string; moms
     <View style={{ gap: 12, paddingHorizontal: space.gutter }}>
       {posts.map((p, i) => (
         <Animated.View key={p.id} entering={enter.rise(Math.min(i, 4))}>
-          <PostCard p={p} eng={eng} cityId={cityId} />
+          <GirlPostCard p={p} eng={eng} cityId={cityId} />
         </Animated.View>
       ))}
     </View>
   );
 }
 
-const PostCard = memo(function PostCard({ p, eng, cityId }: { p: GirlPost; eng: ReturnType<typeof useEngagement>; cityId: string }) {
+export const GirlPostCard = memo(function PostCard({ p, eng, cityId }: { p: GirlPost; eng: ReturnType<typeof useEng>; cityId: string }) {
   const router = useRouter();
   const now = useNow();
   return (
     <View style={styles.post}>
       <View style={styles.postHead}>
         <PressableScale haptic="select" scaleTo={0.94} onPress={() => (p.mine ? router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile') : router.push(`/person/${p.authorId}`))} accessibilityLabel={p.mine ? 'My profile' : tx("View {name}'s profile", { name: p.firstName })}>
-          <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={38} userId={p.authorId} />
+          <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={38} userId={p.authorId} photo={demoPhoto(p.authorId)} />
         </PressableScale>
         <View style={{ flex: 1 }}>
           <Text variant="titleS" color={girl.ink} raw>
@@ -488,6 +506,12 @@ const PostCard = memo(function PostCard({ p, eng, cityId }: { p: GirlPost; eng: 
       <Text variant="body" color={girl.ink} raw>
         {p.body}
       </Text>
+      {p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} /> : null}
+      {p.photo ? (
+        <View style={styles.postPhoto}>
+          <Photo tint={GIRL_TINT} visual={{ photo: p.photo }} light="dubai" width={700} style={StyleSheet.absoluteFill} />
+        </View>
+      ) : null}
       {p.activityId ? (
         <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={styles.linked} accessibilityLabel={p.activityTitle ? tx('Open {title}', { title: p.activityTitle }) : tx('Open the activity')}>
           <Icon name="calendar" size={18} color={girl.ink} />
@@ -531,6 +555,7 @@ export function Shortcuts({ items }: { items: { icon: IconName; label: string; o
 }
 
 const styles = StyleSheet.create({
+  postPhoto: { height: 220, borderRadius: radius.lg, overflow: 'hidden' },
   rail: { paddingHorizontal: space.gutter, gap: 10 },
   kind: { width: 132, height: 168, borderRadius: radius.lg, overflow: 'hidden', padding: 10, justifyContent: 'space-between', boxShadow: girl.shadowSoft },
   kindOn: { borderWidth: 2, borderColor: girl.rose },
