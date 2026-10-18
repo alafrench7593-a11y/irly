@@ -35,6 +35,9 @@ import { GIRL_KINDS, GirlFeed, KindRail, Shortcuts, Upcoming } from '@/features/
 import { GIRL_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { useCommunitiesLike } from '@/features/bali/data';
 import { useServerActivities } from '@/features/server/activities';
+import { DEMO } from '@/config/app';
+import { useDemoActivities, useDemoCommunitiesLike } from '@/features/girl/demo';
+import type { PhotoKey } from '@/data/photos';
 import { CITIES } from '@/data/destinations';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -42,6 +45,10 @@ import { useCityId } from '@/state/store';
 import { useRefreshOn } from '@/features/server/sync';
 import { friendlyError, supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
+
+// The demonstration build reads the example communities and plans, never the server.
+const useGirlCommunities = DEMO ? useDemoCommunitiesLike : useCommunitiesLike;
+const useGirlPlans = DEMO ? useDemoActivities : useServerActivities;
 
 const BOOT_LIMIT = 25_000;
 /** What the screen shows: the Match flow, or why IRLY Girl is closed for this account. */
@@ -89,10 +96,10 @@ export default function GirlHome() {
   // « IRLY Moms » on the Home opens this world on the Moms side.
   const params = useLocalSearchParams<{ mode?: string }>();
   const [mode, setMode] = useState<'all' | 'moms'>(params.mode === 'moms' ? 'moms' : 'all');
-  const serverCommunities = useCommunitiesLike(cityId, '', true);
+  const serverCommunities = useGirlCommunities(cityId, '', true);
   const unread = useUnread();
   // Plans created in IRLY Girl (girls and moms): they show up right here.
-  const { activities: girlPlans, loading: plansLoading, error: plansError, refresh: refreshPlans } = useServerActivities(cityId, { girlOnly: true });
+  const { activities: girlPlans, loading: plansLoading, error: plansError, refresh: refreshPlans } = useGirlPlans(cityId, { girlOnly: true });
   const [kind, setKind] = useState<string | null>(null);
   const kindCounts = useMemo(() => {
     const out: Record<string, number> = {};
@@ -684,11 +691,11 @@ function ActionButton({ icon, label, onPress, big, small, active }: { icon: Icon
 }
 
 /** A community in IRLY Girl: its own photo when it has one, its name, its members, and whether you are in. */
-function CommunityTile({ c, away, onPress }: { c: { id: string; name: string; member: boolean; members: number; cityId: string; coverPath: string | null }; away: boolean; onPress: () => void }) {
+function CommunityTile({ c, away, onPress }: { c: { id: string; name: string; member: boolean; members: number; cityId: string; coverPath: string | null; photo?: PhotoKey }; away: boolean; onPress: () => void }) {
   const uri = usePhotoLink(c.coverPath);
   return (
     <PressableScale haptic="select" scaleTo={0.96} onPress={onPress} style={styles.community} accessibilityLabel={tx('{name}, {n} members', { name: c.name, n: c.members })}>
-      <Photo pinned tint={GIRL_TINT} visual={{ photo: girlCommunityPhoto(c.name), uri: uri ?? undefined }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} recyclingKey={`gc-${c.id}-${c.coverPath ?? 'app'}`} />
+      <Photo pinned tint={GIRL_TINT} visual={{ photo: c.photo ?? girlCommunityPhoto(c.name), uri: uri ?? undefined }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} recyclingKey={`gc-${c.id}-${c.coverPath ?? 'app'}`} />
       <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
         <View style={styles.communityBadge}>
           <Icon name={c.member ? 'check' : 'users'} size={14} color={girl.rose} />

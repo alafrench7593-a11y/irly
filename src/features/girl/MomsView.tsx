@@ -19,6 +19,8 @@ import type { CityId } from '@/data/types';
 import { joinCommunity, useCommunitiesLike, useGirlCircle, useGirlExtras, usePlaces } from '@/features/bali/data';
 import { MOM_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { useServerActivities } from '@/features/server/activities';
+import { DEMO } from '@/config/app';
+import { useDemoActivities, useDemoCommunitiesLike } from './demo';
 import { hueOf } from '@/lib/format';
 import { friendlyError } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
@@ -27,6 +29,10 @@ import { radius, space } from '@/theme/tokens';
 import { girl, GIRL_TINT, girlType } from './theme';
 import { GButton, GChip, GSection, Wrap } from './ui';
 import { GirlFeed, KindRail, MOM_KINDS, Upcoming } from './world';
+
+// The demonstration build reads the example communities and plans, never the server.
+const useMomCommunities = DEMO ? useDemoCommunitiesLike : useCommunitiesLike;
+const useMomPlans = DEMO ? useDemoActivities : useServerActivities;
 
 const AGES = [
   { id: 'baby', label: 'Baby' },
@@ -65,8 +71,8 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
     });
   };
   const moms = useGirlCircle(cityId, { moms: true });
-  const communities = useCommunitiesLike(cityId, 'Moms', true);
-  const { activities, loading: plansLoading, error: plansError, refresh: refreshPlans } = useServerActivities(cityId);
+  const communities = useMomCommunities(cityId, 'Moms', true);
+  const { activities, loading: plansLoading, error: plansError, refresh: refreshPlans } = useMomPlans(cityId);
   const family = usePlaces(cityId, { kids: true });
   const plans = useMemo(
     () => activities.filter((a) => a.audience === 'moms' || a.audience === 'families' || a.categoryId === 'family' || /kid|mom|family|playdate|picnic/i.test(a.title)),

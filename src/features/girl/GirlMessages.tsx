@@ -8,12 +8,17 @@ import { Text } from "@/components/ui/Text";
 import type { Conversation } from "@/data/types";
 import { useAccount } from "@/features/auth/account";
 import { useServerInbox } from "@/features/server/chat";
+import { DEMO } from "@/config/app";
+import { demoPhoto, useDemoGirlInbox } from "./demo";
 import { t as tx } from "@/i18n";
 import { hueOf } from "@/lib/format";
 import { PressableScale } from "@/motion/PressableScale";
 import { radius, space } from "@/theme/tokens";
 import { girl, girlType } from "./theme";
 import { GButton } from "./ui";
+
+// The demonstration build shows its example IRLY Girl chats (the local inbox), never the server's.
+const useInbox = DEMO ? useDemoGirlInbox : useServerInbox;
 
 /**
  * "Your messages" on the IRLY Girl home: the three latest conversations,
@@ -24,8 +29,8 @@ import { GButton } from "./ui";
 export function GirlMessages({ onCommunities }: { onCommunities: () => void }) {
   const router = useRouter();
   const account = useAccount();
-  const { conversations, loading, error, refresh } = useServerInbox();
-  if (!account) return null;
+  const { conversations, loading, error, refresh } = useInbox();
+  if (!account && !DEMO) return null;
   const recent = conversations.filter((c) => !c.archived).slice(0, 3);
 
   return (
@@ -142,6 +147,7 @@ const Row = memo(function Row({
         hue={hueOf(c.otherId ?? c.id)}
         size={44}
         userId={c.kind === "direct" ? c.otherId : undefined}
+        photo={demoPhoto(c.personIds[0])}
       />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>

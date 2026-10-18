@@ -1,5 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
+import { isDemoId } from '@/features/girl/demo';
+import { DemoCommunityScreen } from '@/features/girl/DemoScreens';
 import { t as tx, a11y } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -52,7 +54,13 @@ const STATUS_LABEL: Partial<Record<ActivityStatus, string>> = { ongoing: 'Happen
  * group, drafts a poll, summarises the week or suggests what to post.
  * Join = you are in the chat too.
  */
-export default function CommunityScreen() {
+// The demonstration build's IRLY Girl communities (example content, nothing saved).
+export default function CommunityRoute() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return isDemoId(id) ? <DemoCommunityScreen id={id} /> : <CommunityScreen />;
+}
+
+function CommunityScreen() {
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
