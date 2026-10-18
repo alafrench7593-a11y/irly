@@ -7,6 +7,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 // PW: path to a playwright install when it is not in node_modules.
 const { chromium } = await import(process.env.PW || 'playwright');
 
@@ -52,14 +53,18 @@ const post = JSON.parse(fs.readFileSync(path.join(dir, 'post.json'), 'utf8'));
 // Instagram carousels are 4:5 (1080×1350); TikTok slides are 9:16.
 const H = post.format === 'ig' ? 1350 : 1920;
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
-const page = await browser.newPage({ viewport: { width: 1080, height: H }, deviceScaleFactor: 1 });
+// TT_HQ=1: rendered at twice the size, then reduced with a sharp filter (crisper text and photos).
+const HQ = process.env.TT_HQ === '1';
+// TT_PHOTOS: another photo folder with the same layout (e.g. upscaled copies).
+const PHOTOS = process.env.TT_PHOTOS ? path.resolve(process.env.TT_PHOTOS) : path.resolve(root, '_photos');
+const page = await browser.newPage({ viewport: { width: 1080, height: H }, deviceScaleFactor: HQ ? 2 : 1 });
 for (const lang of post.langs ?? ['fr']) {
 const out = path.join(dir, lang.toUpperCase());
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
 for (const [i, slide] of post.slides.entries()) {
   const s = { ...slide, ...(slide[lang] ?? {}) };
-  const img = s.img ? `file://${path.isAbsolute(s.img) ? s.img : path.resolve(root, '_photos', s.img)}` : '';
+  const img = s.img ? `file://${path.isAbsolute(s.img) ? s.img : path.resolve(PHOTOS, s.img)}` : '';
   const ext = post.ext === 'png' ? 'png' : 'jpg';
   const vars = [s.pos && `--pos:${s.pos}`, s.size && `--size:${s.size}px`, s.bright && `--bright:${s.bright}`, s.gray != null && `--gray:${s.gray}`].filter(Boolean).join(';');
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>${css.replaceAll('1920px', H + 'px')}${post.box ? `.tt .t .box{background:${post.box};color:${post.boxText ?? '#111'}}` : ''}${post.markColor ? `.tt .mark{color:${post.markColor}}` : ''}${post.format === 'ig' ? '.tt .top{top:150px}.mark{bottom:90px}' : ''}</style></head><body>
@@ -73,7 +78,13 @@ ${s.mark ? `<div class="mark">${typeof s.mark === 'string' ? esc(s.mark) : 'IRLY
   await page.goto(`file://${tmp}`);
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(150);
-  await page.screenshot({ path: path.join(out, `${String(i + 1).padStart(2, '0')}.${ext}`), ...(ext === 'png' ? { type: 'png' } : { type: 'jpeg', quality: 95 }) });
+  const file = path.join(out, `${String(i + 1).padStart(2, '0')}.${ext}`);
+  if (HQ) {
+    const big = path.join(dir, '.slide.png');
+    await page.screenshot({ path: big, type: 'png' });
+    execFileSync('convert', [big, '-filter', 'Lanczos', '-resize', `1080x${H}!`, ...(ext === 'png' ? [] : ['-sampling-factor', '4:4:4', '-quality', '96']), file]);
+    fs.rmSync(big);
+  } else await page.screenshot({ path: file, ...(ext === 'png' ? { type: 'png' } : { type: 'jpeg', quality: 95 }) });
   fs.rmSync(tmp);
 }
 }
