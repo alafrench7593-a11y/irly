@@ -13,10 +13,11 @@ import { Chip, Field } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, ideaPhoto, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
+import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, ideaPhoto, photoForText, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
-import { photo } from '@/data/photos';
+import { photo, type PhotoKey } from '@/data/photos';
+import { Photo } from '@/components/visual/Photo';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -81,6 +82,11 @@ const QUICK: { label: string; icon: IconName; entry?: string; category?: Categor
   { label: 'Travel', icon: 'plane', category: 'travel' },
   { label: 'Other', icon: 'plus' },
 ];
+
+/** A quick pick shows a photo of the activity itself, never an icon. */
+function quickPhoto(q: (typeof QUICK)[number]): PhotoKey {
+  return photoForText(q.entry ?? q.label) ?? (q.category ? CATEGORY_BY_ID[q.category].photo : 'girlsOut');
+}
 
 /**
  * The server clearly said no (a rule, a check, an ended session): nothing was created.
@@ -416,10 +422,10 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                           scaleTo={0.92}
                           onPress={() => chooseQuick(q)}
                           accessibilityLabel={q.label}
-                          style={[styles.quickTile, { backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.06)' : t.c.surface, borderColor: t.c.line }]}
+                          style={styles.quickTile}
                         >
-                          <Icon name={q.icon} size={22} color={t.c.text} strokeWidth={1.9} />
-                          <Text variant="label" numberOfLines={1}>
+                          <Photo pinned visual={{ photo: quickPhoto(q) }} light={city.light} scrim="strong" style={StyleSheet.absoluteFill} width={240} />
+                          <Text variant="label" color="#FFFFFF" numberOfLines={1} style={styles.tileLabel}>
                             {q.label}
                           </Text>
                         </PressableScale>
@@ -437,12 +443,12 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                           scaleTo={scaleTokens.press}
                           onPress={() => chooseCategory(c.id)}
                           accessibilityLabel={c.label}
-                          style={[styles.tile, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}
+                          style={[styles.tile, { boxShadow: t.shadow.card }]}
                         >
-                          <View style={[styles.tileIcon, { backgroundColor: `${c.color}1F` }]}>
-                            <Icon name={c.icon} size={20} color={c.color} />
-                          </View>
-                          <Text variant="titleS">{c.label}</Text>
+                          <Photo pinned visual={{ photo: photoForText(c.label) ?? c.photo }} light={city.light} scrim="strong" style={StyleSheet.absoluteFill} width={480} />
+                          <Text variant="titleS" color="#FFFFFF" style={styles.tileLabel}>
+                            {c.label}
+                          </Text>
                         </PressableScale>
                       </Animated.View>
                     ))}
@@ -755,7 +761,8 @@ const styles = StyleSheet.create({
   coverPill: { position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
   quick: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.gutter - 4, marginTop: space[5] },
   quickCell: { width: '25%', padding: 4 },
-  quickTile: { height: 84, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  quickTile: { height: 84, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end', padding: 8 },
+  tileLabel: { textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
   or: { paddingHorizontal: space.gutter, marginTop: space[6] },
   circle: { position: 'absolute' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.gutter, height: 44 },
@@ -763,7 +770,7 @@ const styles = StyleSheet.create({
   title: { paddingHorizontal: space.gutter, marginTop: space[3], marginBottom: space[5] },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.gutter - 5, marginBottom: space[6] },
   cell: { width: '50%', padding: 5 },
-  tile: { height: 96, borderRadius: radius.xl, padding: 16, justifyContent: 'space-between' },
+  tile: { height: 96, borderRadius: radius.xl, padding: 14, justifyContent: 'flex-end', overflow: 'hidden' },
   tileIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   block: { paddingHorizontal: space.gutter, gap: 10, marginBottom: space[5] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

@@ -409,6 +409,27 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\bsheikh zayed grand mosque\b/i, 'mosqueGirl'],
   [/\bbeach clubs?\b/i, 'beachClubGirl'],
   [/\bkite beach\b/i, 'kiteBeach'],
+  // The rest of IRLY's own photos, for the subjects they show, before any library photo.
+  [/\b(girl trips?)\b/i, 'girlTrip'],
+  [/\b(stroller|baby|babies|bébés?|poussette|moms?|mums?|mamans?)\b/i, 'strollerMom'],
+  [/\bpadel\b/i, 'padelGirl'],
+  [/\btennis\b/i, 'tennisGirl'],
+  [/\b(run|running|runners?|jog|jogging)\b/i, 'runGirl'],
+  [/\b(gym|fitness|workout|hiit|bootcamp|sports?)\b/i, 'gymGirl'],
+  [/\b(yachts?|boats?|cruise)\b/i, 'yachtGirl'],
+  [/\b(desert|dunes?|desert safari|camels?)\b/i, 'desertGirl'],
+  [/\b(brunch|breakfast)\b/i, 'brunchGirl'],
+  [/\b(books?|book club|reading|lecture)\b/i, 'readingGirl'],
+  [/\b(coffee|cafes?|cafés?|matcha|tea|drinks?)\b/i, 'drinksGirl'],
+  [/\b(spa|massage|beauty|wellness|self.?care)\b/i, 'spaGirl'],
+  [/\b(networking|founders?|entrepreneurs?|business|startups?)\b/i, 'networkingGirl'],
+  [/\b(cycl\w*|bikes?|biking|vélo)\b/i, 'bikeGirl'],
+  [/\b(dinner|dîner|restaurants?|dining|food)\b/i, 'restaurantGirl'],
+  [/\b(night out|nightlife|rooftops?|soirée|party)\b/i, 'nightDinner'],
+  [/\b(travel\w*|voyages?)\b/i, 'girlTrip'],
+  [/\bmosques?\b/i, 'mosqueGirl'],
+  [/\bbeach\b(?! ?volley)/i, 'beachClubGirl'],
+  [/\b(girls?|ladies|women|femmes?)\b/i, 'girlsOut'],
   // Whole words only: "brunch" is not "run", "Dubai" is not "AI".
   // Most specific first: "beach volley" before "beach", "dog beach" before "beach".
   [/\bpadel\b|\bpickleball\b/i, 'padel'],
@@ -563,6 +584,12 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\bumm al quwain\b/i, 'uaq'],
   [/\bdubai\b/i, 'dubai'],
 ];
+
+/** The photo whose subject matches these words (a title, a community name), or null when nothing matches. */
+export function photoForText(text: string): PhotoKey | null {
+  for (const [re, key] of IDEA_PHOTOS) if (re.test(text)) return key;
+  return null;
+}
 
 const SUB_LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.flatMap((c) => c.subs.map((s) => [s.id, s.label])));
 

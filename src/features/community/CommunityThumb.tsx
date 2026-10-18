@@ -1,40 +1,51 @@
-import { StyleSheet, View } from 'react-native';
-import { Icon } from '@/components/ui/Icon';
-import { Text } from '@/components/ui/Text';
-import { Photo } from '@/components/visual/Photo';
-import type { LightId } from '@/theme/lights';
-import { useTheme } from '@/theme/useTheme';
-import { communityPhoto } from './official';
+import { Photo } from "@/components/visual/Photo";
+import { useCommunityCover, usePhotoLink } from "@/features/server/covers";
+import type { LightId } from "@/theme/lights";
+import { communityPhoto } from "./official";
 
 /**
- * A community at a glance: its photo with its emoji on a small badge, or
- * just the emoji when it has no photo. With its id, the same photo as on its
- * page (each community its own picture of the subject).
+ * A community at a glance: always a photo, never an icon or a logo. Its own
+ * photo when it has one; otherwise a photo of what its name says it is about
+ * (IRLY's own photos first), then its topic or category. The same choice as
+ * on its page, so a community looks the same everywhere.
  */
-export function CommunityThumb({ id, topic, categoryId, emoji, light, size = 44, member }: { id?: string; topic?: string | null; categoryId?: string | null; emoji?: string | null; light: LightId; size?: number; member?: boolean }) {
-  const t = useTheme();
-  const key = communityPhoto(topic, categoryId);
-  const radius = Math.round(size * 0.3);
-  if (!key) {
-    return (
-      <View style={[styles.plain, { width: size, height: size, borderRadius: size / 2, backgroundColor: t.c.overlay }]}>
-        {emoji ? <Text style={{ fontSize: size * 0.48 }}>{emoji}</Text> : <Icon name={member ? 'check' : 'users'} size={size * 0.42} color={t.c.text} />}
-      </View>
-    );
-  }
+export function CommunityThumb({
+  id,
+  name,
+  coverPath,
+  topic,
+  categoryId,
+  light,
+  size = 44,
+}: {
+  id?: string;
+  name?: string | null;
+  coverPath?: string | null;
+  topic?: string | null;
+  categoryId?: string | null;
+  /** Kept for callers that still pass it: a community is shown by its photo, not its emoji. */
+  emoji?: string | null;
+  light: LightId;
+  size?: number;
+  member?: boolean;
+}) {
+  // Lists that do not load the photo path pass none: it is looked up by id, all thumbnails at once.
+  const path = useCommunityCover(id, coverPath);
+  const uri = usePhotoLink(path);
+  const key = communityPhoto(topic, categoryId, name);
   return (
-    <View style={{ width: size, height: size }}>
-      <Photo pinned visual={{ photo: key }} light={light} style={{ width: size, height: size, borderRadius: radius, overflow: 'hidden' }} width={240} recyclingKey={id ? `community-${id}-app` : undefined} />
-      {emoji ? (
-        <View style={[styles.badge, { backgroundColor: t.c.surface, borderColor: t.c.bg }]}>
-          <Text style={{ fontSize: 11 }}>{emoji}</Text>
-        </View>
-      ) : null}
-    </View>
+    <Photo
+      pinned
+      visual={{ photo: key, uri: uri ?? undefined }}
+      light={light}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: Math.round(size * 0.3),
+        overflow: "hidden",
+      }}
+      width={240}
+      recyclingKey={id ? `community-${id}-${path ?? key}` : undefined}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  plain: { alignItems: 'center', justifyContent: 'center' },
-  badge: { position: 'absolute', right: -4, bottom: -4, width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-});

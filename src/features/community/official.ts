@@ -4,7 +4,7 @@ import { useAccount, withProfile } from '@/features/auth/account';
 import { communitiesChanged, useCommunitiesVersion } from './data';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
-import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
+import { CATEGORY_BY_ID, photoForText, type CategoryKey } from '@/data/catalog/categories';
 import type { PhotoKey } from '@/data/photos';
 import type { Profile } from '@/state/store';
 
@@ -150,10 +150,14 @@ export const TOPIC_PHOTO = {
 const DUBAI_INSTEAD = { gallery: 'souk', concert: 'festival', dogPark: 'nature', family: 'waterPark', education: 'office' } as Record<string, PhotoKey>;
 
 /** A community's photo: its IRLY topic, else its category (a Dubai photo either way), else none. */
-export function communityPhoto(topic: string | null | undefined, categoryId: string | null | undefined): PhotoKey | null {
+export function communityPhoto(topic: string | null | undefined, categoryId: string | null | undefined, name?: string | null): PhotoKey {
+  // What the community is about, from its own name, first: "Padel girls" shows padel.
+  const named = name ? photoForText(name) : null;
+  if (named) return named;
   if (topic && TOPIC_PHOTO[topic]) return TOPIC_PHOTO[topic];
   const key = categoryId ? CATEGORY_BY_ID[categoryId as CategoryKey]?.photo : undefined;
-  return key ? (DUBAI_INSTEAD[key] ?? key) : null;
+  // Never an icon or a logo: people together in Dubai when nothing says more.
+  return key ? (DUBAI_INSTEAD[key] ?? key) : 'girlsOut';
 }
 
 /** The house rules of every IRLY community. */

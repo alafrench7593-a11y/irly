@@ -147,7 +147,7 @@ export default function CommunityScreen() {
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
-          <CommunityCover id={c.id} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
+          <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
           <View style={[styles.pad, { gap: 6 }]}>
             <ParentLink parent={extras.parent} />
             <Text variant="overline" tone="accent">
@@ -808,10 +808,10 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
 }
 
 /** The community's photo: its own, or the app's photo for its category. The owner and moderators can change it. */
-function CommunityCover({ id, topic, categoryId, coverPath, light, canEdit, onChanged }: { id: string; topic: string | null; categoryId: string | null; coverPath: string | null; light: LightId; canEdit: boolean; onChanged: () => void }) {
+function CommunityCover({ id, name, topic, categoryId, coverPath, light, canEdit, onChanged }: { id: string; name: string; topic: string | null; categoryId: string | null; coverPath: string | null; light: LightId; canEdit: boolean; onChanged: () => void }) {
   const uri = usePhotoLink(coverPath);
   const [saving, setSaving] = useState(false);
-  const fallback = communityPhoto(topic, categoryId) ?? 'meeting';
+  const fallback = communityPhoto(topic, categoryId, name);
   const change = async (next: 'pick' | 'reset') => {
     if (saving) return;
     try {
