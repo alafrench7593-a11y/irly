@@ -3,7 +3,8 @@ import { AreaPicker } from '@/components/ui/AreaPicker';
 import { CharCount } from '@/components/ui/CharCount';
 import { t as tx, a11y } from '@/i18n';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
+import { FEATURES } from '@/lib/features';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -15,7 +16,7 @@ import { CITIES } from '@/data/destinations';
 import { ACCESS_LIMIT, GirlClosed, GirlGate, GirlLoading, isGirlRefusal, safeBack, withLimit } from '@/features/girl/access';
 import { matchApi } from '@/features/girl/api';
 import { ACTIVITIES, AVAILABILITY, GOALS, HIDEABLE, INTERESTS, LANGUAGES, LIFESTYLE, SPORTS, TRAVEL } from '@/features/girl/taxonomy';
-import { girl } from '@/features/girl/theme';
+import { girl, girlType } from '@/features/girl/theme';
 import { EMPTY_DRAFT, type MatchProfileDraft } from '@/features/girl/types';
 import { GButton, GChip, GSection, Wrap } from '@/features/girl/ui';
 import { enter } from '@/motion/enter';
@@ -49,7 +50,12 @@ const toggle = (list: string[], id: string, max = 99) =>
  */
 const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.rose, line: girl.line };
 
-export default function GirlProfileScreen() {
+/** IRLY Match is coming soon: its onboarding and profile wait, IRLY Girl opens instead. */
+export default function GirlProfileScreenGate() {
+  return FEATURES.girlMatch ? <GirlProfileScreen /> : <Redirect href="/girl" />;
+}
+
+function GirlProfileScreen() {
   return (
     <GirlGate>
       <GirlProfile />
@@ -200,7 +206,7 @@ function GirlProfile() {
             <Text variant="overline" color={girl.rose}>
               {editing ? 'Edit your profile' : 'Your IRLY Match profile'} · {STEPS[step]}
             </Text>
-            <Text variant="displayM" color={girl.ink}>
+            <Text variant="displayM" color={girl.ink} style={girlType.display}>
               {
                 [
                   'Show yourself',

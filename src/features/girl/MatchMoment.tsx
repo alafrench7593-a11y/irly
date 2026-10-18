@@ -30,7 +30,7 @@ import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { reasonLines, suggestFor, type Suggestion } from './suggest';
 import { labelOf } from './taxonomy';
-import { girl, GIRL_TINT } from './theme';
+import { girl, GIRL_TINT, girlType } from './theme';
 import type { Candidate, MatchResult } from './types';
 import { GButton } from './ui';
 
@@ -137,7 +137,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
             <Text variant="overline" color={girl.rose} align="center" style={{ letterSpacing: 2 }}>
               IRLY Girl
             </Text>
-            <Text variant="displayL" color={girl.ink} align="center">
+            <Text variant="displayL" color={girl.ink} align="center" style={girlType.display}>
               It&apos;s an IRLY match
             </Text>
             <Text variant="body" color={girl.inkSoft} align="center">
@@ -170,7 +170,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
 
           <Animated.View entering={FadeIn.delay(textDelay + 320).duration(transition.match.actions)} style={{ gap: 12 }}>
             <View style={{ paddingHorizontal: space.gutter, gap: 2 }}>
-              <Text variant="titleM" color={girl.ink}>
+              <Text variant="titleM" color={girl.ink} style={girlType.section}>
                 Find something to do
               </Text>
               <Text variant="bodyS" color={girl.inkSoft}>

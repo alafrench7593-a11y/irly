@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
+import { FEATURES } from '@/lib/features';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { ActionBar } from '@/components/social/ActionBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import type { PhotoKey } from '@/data/photos';
@@ -22,7 +24,7 @@ import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { girlPhotoFor } from './photos';
-import { girl, GIRL_TINT } from './theme';
+import { girl, GIRL_TINT, girlType } from './theme';
 import { GButton } from './ui';
 
 /* ───────── Kinds of plans ───────── */
@@ -172,8 +174,16 @@ export function Upcoming({
   onKind,
   onPlan,
   emptyTitle,
+  loading = false,
+  error = null,
+  onRetry,
 }: {
   activities: ServerActivity[];
+  /** First load still running: a skeleton, never « nothing planned ». */
+  loading?: boolean;
+  /** The plans could not be loaded: say so and offer to try again. */
+  error?: string | null;
+  onRetry?: () => void;
   kinds: Kind[];
   kind: string | null;
   onKind: (id: string | null) => void;
@@ -212,12 +222,24 @@ export function Upcoming({
           </Animated.View>
         ))}
         {list.length > 5 && !more ? <GButton label={tx('Show all {n}', { n: list.length })} variant="ghost" onPress={() => setMore(true)} /> : null}
-        {!list.length ? (
+        {!list.length && loading ? (
+          <View style={{ gap: 10 }} accessibilityLabel="Loading plans">
+            <Skeleton height={84} radius={radius.lg} />
+            <Skeleton height={84} radius={radius.lg} />
+          </View>
+        ) : !list.length && error ? (
+          <View style={styles.empty}>
+            <Text variant="bodyS" color={girl.inkSoft} align="center">
+              {"Plans couldn't load. Check your connection."}
+            </Text>
+            {onRetry ? <GButton label="Try again" variant="secondary" onPress={onRetry} /> : null}
+          </View>
+        ) : !list.length ? (
           <Animated.View entering={FadeIn} style={styles.empty}>
             <View style={styles.emptyIcon}>
               <Icon name="sparkles" size={20} color={girl.rose} />
             </View>
-            <Text variant="titleM" color={girl.ink} align="center">
+            <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
               {filtered ? 'Nothing planned here yet' : emptyTitle}
             </Text>
             <Text variant="bodyS" color={girl.inkSoft} align="center">
@@ -418,7 +440,7 @@ export function GirlFeed({ cityId, moms, onCommunities }: { cityId: string; moms
         <View style={styles.emptyIcon}>
           <Icon name="message" size={20} color={girl.rose} />
         </View>
-        <Text variant="titleM" color={girl.ink} align="center">
+        <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
           {moms ? 'No posts from moms yet' : 'No posts yet'}
         </Text>
         <Text variant="bodyS" color={girl.inkSoft} align="center">
@@ -444,7 +466,7 @@ const PostCard = memo(function PostCard({ p, eng, cityId }: { p: GirlPost; eng: 
   return (
     <View style={styles.post}>
       <View style={styles.postHead}>
-        <PressableScale haptic="select" scaleTo={0.94} onPress={() => (p.mine ? router.push('/girl/profile') : router.push(`/person/${p.authorId}`))} accessibilityLabel={p.mine ? 'My profile' : tx("View {name}'s profile", { name: p.firstName })}>
+        <PressableScale haptic="select" scaleTo={0.94} onPress={() => (p.mine ? router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile') : router.push(`/person/${p.authorId}`))} accessibilityLabel={p.mine ? 'My profile' : tx("View {name}'s profile", { name: p.firstName })}>
           <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={38} userId={p.authorId} />
         </PressableScale>
         <View style={{ flex: 1 }}>

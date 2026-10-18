@@ -5,6 +5,7 @@ import {
   Manrope_700Bold,
   Manrope_800ExtraBold,
 } from '@expo-google-fonts/manrope';
+import { InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -56,6 +57,9 @@ export default function RootLayout() {
     Manrope_600SemiBold,
     Manrope_700Bold,
     Manrope_800ExtraBold,
+    // IRLY Girl's editorial titles (bundled, SIL OFL).
+    InstrumentSerif_400Regular,
+    InstrumentSerif_400Regular_Italic,
   });
   const hydrated = useStore((s) => s.hydrated);
   const ready = (fontsLoaded || Boolean(fontError)) && hydrated;

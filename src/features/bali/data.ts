@@ -459,7 +459,20 @@ export function useGirlExtras() {
       if ('lookingFor' in patch) row.looking_for = patch.lookingFor;
       const { data, error } = await sb().from('irly_match_profiles').update(row).eq('user_id', uid).select('user_id');
       if (error) throw new Error(error.message);
-      if (!data?.length) throw new Error('Create your IRLY Girl profile first');
+      if (!data?.length) {
+        // No IRLY Girl profile yet (IRLY Match is not open): one is created to hold these
+        // choices. Hidden from everyone, unless this very choice is to be found: « Mom mode
+        // on: other moms can find you », or a Bali status shown to the women already there.
+        const ob = await sb().rpc('complete_irly_match_onboarding');
+        if (ob.error) throw new Error(ob.error.message);
+        const findMe = patch.momMode === true || Boolean(patch.destinationStatus);
+        const ins = await sb().from('irly_match_profiles').insert({ user_id: uid, visible: findMe, goals: ['new_friends'], ...row });
+        if (ins.error?.code === '23505') {
+          // Created meanwhile (another tap, another device): write the choice on it.
+          const again = await sb().from('irly_match_profiles').update(row).eq('user_id', uid);
+          if (again.error) throw new Error(again.error.message);
+        } else if (ins.error) throw new Error(ins.error.message);
+      }
       q.reload();
     },
     [uid, q],

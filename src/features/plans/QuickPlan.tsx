@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx } from '@/i18n';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
@@ -129,7 +129,10 @@ export function QuickPlan({
 
   const where = isTrip ? (trip === 'other' ? ownTrip.trim() : tx(trip)) : (place?.name ?? city.areas.find((a) => a.id === area)?.name ?? city.name);
 
+  // One plan per tap: a fast second tap (before the button re-renders as busy) is ignored.
+  const creating = useRef(false);
   const create = async () => {
+    if (creating.current) return;
     if (isTrip && !where) {
       toast('Where are you going?', 'plane', 'brand');
       return;
@@ -139,6 +142,7 @@ export function QuickPlan({
       router.push('/account');
       return;
     }
+    creating.current = true;
     setBusy(true);
     try {
       const title = type.title(where).slice(0, 80);
@@ -168,6 +172,7 @@ export function QuickPlan({
       const m = e instanceof Error ? e.message : 'Could not create';
       toast(/girl|row-level|policy/i.test(m) ? 'This plan is for IRLY Girl members' : m, 'x', 'live');
     } finally {
+      creating.current = false;
       setBusy(false);
     }
   };
