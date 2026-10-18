@@ -1,0 +1,61 @@
+{
+  "langs": [
+    "fr"
+  ],
+  "style": "tiktok",
+  "soft": true,
+  "box": "#FFF5F8",
+  "boxText": "#382832",
+  "markColor": "#F6C5D8",
+  "slides": [
+    {
+      "text": "Se faire des copines à 28 ans, personne ne t'a appris.",
+      "img": "user/u036.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Au travail, on se dit bonjour.\nPas plus.",
+      "img": "user/u049.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Le week-end, tout le monde a déjà ses habitudes.",
+      "img": "user/u037.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Le secret : faire un truc *ensemble.* Un brunch, un padel, une balade.",
+      "img": "user/u063.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Sur IRLY Girl, tu rejoins une sortie en un geste, et le groupe a déjà sa conversation.",
+      "img": "user/u058.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Les amitiés d'adulte commencent souvent par « je viens avec toi ? »",
+      "img": "user/u075.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60,
+      "mark": "IRLY Girl"
+    }
+  ]
+}

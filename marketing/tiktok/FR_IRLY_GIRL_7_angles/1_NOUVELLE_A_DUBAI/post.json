@@ -1,0 +1,61 @@
+{
+  "langs": [
+    "fr"
+  ],
+  "style": "tiktok",
+  "soft": true,
+  "box": "#FFF5F8",
+  "boxText": "#382832",
+  "markColor": "#F6C5D8",
+  "slides": [
+    {
+      "text": "POV : t'as tout quitté pour Dubaï… et tu connais *personne.*",
+      "img": "user/u042.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Les journées sont belles.\nLes soirées, un peu moins.",
+      "img": "user/u034.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Tu scrolles des filles qui ont l'air d'avoir déjà leur bande.",
+      "img": "user/u066.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Et si elles aussi venaient d'arriver ?",
+      "img": "user/u060.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Sur IRLY Girl, des communautés rien qu'entre filles, pour celles qui arrivent comme pour les autres.",
+      "img": "user/u051.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Ta première copine ici est peut-être à *un message.*",
+      "img": "user/u070.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60,
+      "mark": "IRLY Girl"
+    }
+  ]
+}

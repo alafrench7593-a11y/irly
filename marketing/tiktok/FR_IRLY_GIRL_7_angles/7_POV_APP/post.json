@@ -1,0 +1,61 @@
+{
+  "langs": [
+    "fr"
+  ],
+  "style": "tiktok",
+  "soft": true,
+  "box": "#FFF5F8",
+  "boxText": "#382832",
+  "markColor": "#F6C5D8",
+  "slides": [
+    {
+      "text": "POV : je te montre l'app où les filles de Dubaï se font des copines.",
+      "img": "app/girl-home.jpg",
+      "at": "top",
+      "gray": 0,
+      "bright": 1,
+      "size": 56
+    },
+    {
+      "text": "Les sorties entre filles de la semaine.",
+      "img": "app/girl-plans.jpg",
+      "at": "top",
+      "gray": 0,
+      "bright": 1,
+      "size": 56
+    },
+    {
+      "text": "Les communautés, chacune avec sa conversation.",
+      "img": "app/girl-communities.jpg",
+      "at": "top",
+      "gray": 0,
+      "bright": 1,
+      "size": 56
+    },
+    {
+      "text": "Une fille poste. Les autres répondent.",
+      "img": "app/girl-post.jpg",
+      "at": "top",
+      "gray": 0,
+      "bright": 1,
+      "size": 56
+    },
+    {
+      "text": "Tu rejoins une sortie en un geste.",
+      "img": "app/girl-invite.jpg",
+      "at": "top",
+      "gray": 0,
+      "bright": 1,
+      "size": 56
+    },
+    {
+      "text": "Ça marche déjà dans ton navigateur : getirly.com/girl",
+      "img": "user/u070.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60,
+      "mark": "IRLY Girl"
+    }
+  ]
+}

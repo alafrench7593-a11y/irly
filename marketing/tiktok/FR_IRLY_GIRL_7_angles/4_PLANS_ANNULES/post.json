@@ -1,0 +1,61 @@
+{
+  "langs": [
+    "fr"
+  ],
+  "style": "tiktok",
+  "soft": true,
+  "box": "#FFF5F8",
+  "boxText": "#382832",
+  "markColor": "#F6C5D8",
+  "slides": [
+    {
+      "text": "« Ce soir finalement je peux pas 🥲 »",
+      "img": "user/u041.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Troisième plan annulé cette semaine.",
+      "img": "user/u033.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "T'es prête, motivée… et toute seule.",
+      "img": "user/u032.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Pendant ce temps, d'autres filles cherchent quelqu'un pour le *même* brunch que toi.",
+      "img": "user/u054.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Sur IRLY Girl, tu vois les sorties à venir, qui vient, et tu rejoins en un geste.",
+      "img": "user/u061.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Ne laisse plus « une prochaine fois » décider de ta soirée.",
+      "img": "user/u074.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60,
+      "mark": "IRLY Girl"
+    }
+  ]
+}
