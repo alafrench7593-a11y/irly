@@ -264,7 +264,7 @@ ${body}
   <aside class="cta">
     <h2>${a.cta.title}</h2>
     <p>${a.cta.body}</p>
-    <a class="btn" href="${APP_URL}" data-cta="guide">${a.cta.label} <span aria-hidden="true">→</span></a>
+    <a class="btn" href="${a.cta.href ?? APP_URL}" data-cta="guide">${a.cta.label} <span aria-hidden="true">→</span></a>
   </aside>
   <p class="related">${t.read}${a.lang === 'fr' ? ' : ' : ': '}${a.related.map((r) => `<a href="${up + r.path}">${r.label}</a>`).join(' · ')}</p>
 </main>
