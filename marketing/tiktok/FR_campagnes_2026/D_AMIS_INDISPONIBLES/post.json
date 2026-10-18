@@ -6,7 +6,7 @@
   "soft": true,
   "slides": [
     {
-      "text": "Quand tu proposes une sortie et que tout le monde répond « une prochaine fois ».",
+      "text": "Quand tu proposes une sortie et que toutes tes copines répondent « une prochaine fois ».",
       "img": "user/u034.jpg",
       "at": "top",
       "gray": 0.08,
@@ -14,7 +14,7 @@
       "size": 60
     },
     {
-      "text": "Ton pote travaille. Ton autre pote est fatigué. Le troisième ne répond plus.",
+      "text": "Ta pote travaille. Ton autre copine est fatiguée. La troisième ne répond plus.",
       "img": "user/u049.jpg",
       "at": "top",
       "gray": 0.08,
@@ -30,7 +30,7 @@
       "size": 60
     },
     {
-      "text": "Pourtant, quelque part, quelqu'un a exactement envie de faire le même truc que toi.",
+      "text": "Pourtant, quelque part, une fille a exactement envie de faire le même truc que toi.",
       "img": "user/u072.jpg",
       "at": "top",
       "gray": 0.08,
@@ -46,8 +46,8 @@
       "size": 60
     },
     {
-      "text": "Et si tu pouvais rencontrer des gens avec les mêmes envies ?",
-      "img": "user/u019.jpg",
+      "text": "Et si tu pouvais rencontrer des filles avec les mêmes envies ?",
+      "img": "user/u007.jpg",
       "at": "top",
       "gray": 0.08,
       "bright": 0.86,
