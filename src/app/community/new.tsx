@@ -49,7 +49,7 @@ export default function NewCommunity() {
     sending.current = true;
     setBusy(true);
     try {
-      const conv = await createServerCommunity({ name: name.trim(), cityId, tagline, description, categoryId: category, girlOnly });
+      const { conversationId: conv } = await createServerCommunity({ name: name.trim(), cityId, tagline, description, categoryId: category, girlOnly });
       haptic('success');
       toast(tx("{name} is live. You're its owner", { name: name.trim() }), 'users', 'brand');
       router.replace(conv ? `/messages/${conv}` : '/messages');

@@ -484,7 +484,7 @@ export function useGirlExtras() {
 export function useCommunitiesLike(cityId: string, like: string, girlOnly = false) {
   const account = useAccount();
   const { keep } = useCityFilter(cityId as CityId);
-  const q = useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string }[]>(
+  const q = useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string; coverPath: string | null }[]>(
     `comm-${cityId}-${like}-${girlOnly}-${account?.userId ?? 'anon'}`,
     async () => {
       if (!account) return [];
@@ -493,7 +493,7 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
       // not every member of every community.
       let q = sb()
         .from('communities')
-        .select('id, name, tagline, city_id, members_count, community_members(user_id)')
+        .select('id, name, tagline, city_id, members_count, cover_path, community_members(user_id)')
         .in('city_id', cityScope(cityId as CityId))
         .ilike('name', `%${like}%`)
         .is('deleted_at', null)
@@ -504,7 +504,7 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
       if (error) throw new Error(error.message);
       return (data ?? []).map((c) => {
         const m = (c.community_members ?? []) as { user_id: string }[];
-        return { id: c.id, name: c.name, tagline: c.tagline, member: m.length > 0, members: (c.members_count as number) ?? 0, cityId: c.city_id as string };
+        return { id: c.id, name: c.name, tagline: c.tagline, member: m.length > 0, members: (c.members_count as number) ?? 0, cityId: c.city_id as string, coverPath: (c.cover_path as string | null) ?? null };
       });
     },
     [],

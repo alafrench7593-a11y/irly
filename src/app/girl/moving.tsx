@@ -248,7 +248,7 @@ function GirlsMoving() {
               <Text variant="bodyS" color={girl.inkSoft}>
                 No Bali girl community yet. Start one: the next woman moving here will find it.
               </Text>
-              <GButton label="Create a community" icon="plus" variant="secondary" onPress={() => router.push('/community/new')} />
+              <GButton label="Create a community" icon="plus" variant="secondary" onPress={() => router.push('/girl/new-community?city=bali')} />
             </View>
           ) : null}
           {communities.data.map((c) => (

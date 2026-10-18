@@ -12,7 +12,7 @@ import { useT } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { space } from '@/theme/tokens';
 import { GirlLogo } from './GirlLogo';
-import { GIRL_TINT, girlType } from './theme';
+import { girl, GIRL_TINT, girlType } from './theme';
 
 const HEIGHT = 340;
 
@@ -27,12 +27,17 @@ export function GirlHero({
   width,
   onBack,
   onProfile,
+  onMessages,
+  unread = 0,
 }: {
   mode: 'all' | 'moms';
   scrollY: SharedValue<number>;
   width: number;
   onBack: () => void;
   onProfile: () => void;
+  /** Messages are one tap away from the top of IRLY Girl, with the unread count. */
+  onMessages: () => void;
+  unread?: number;
 }) {
   const insets = useSafeAreaInsets();
   const tr = useT();
@@ -83,9 +88,27 @@ export function GirlHero({
         <View style={styles.brand}>
           <GirlLogo size={18} onDark word={mode === 'moms' ? 'Moms' : 'Girl'} />
         </View>
-        <PressableScale haptic="select" scaleTo={0.9} onPress={onProfile} accessibilityLabel="My profile" style={styles.round}>
-          <Icon name="user" size={18} color="#FFFFFF" />
-        </PressableScale>
+        <View style={styles.actions}>
+          <PressableScale
+            haptic="select"
+            scaleTo={0.9}
+            onPress={onMessages}
+            accessibilityLabel={unread ? tr('Messages, {n} unread', { n: unread }) : tr('Messages')}
+            style={styles.round}
+          >
+            <Icon name="message" size={18} color="#FFFFFF" />
+            {unread ? (
+              <View style={styles.badge}>
+                <Text variant="caption" color="#FFFFFF" raw style={styles.badgeText}>
+                  {unread > 99 ? '99+' : String(unread)}
+                </Text>
+              </View>
+            ) : null}
+          </PressableScale>
+          <PressableScale haptic="select" scaleTo={0.9} onPress={onProfile} accessibilityLabel="My profile" style={styles.round}>
+            <Icon name="user" size={18} color="#FFFFFF" />
+          </PressableScale>
+        </View>
       </View>
       <Animated.View style={[styles.words, words]} key={mode}>
         {/* A personal hello, like a friend would say it. */}
@@ -113,6 +136,9 @@ export function GirlHero({
 const styles = StyleSheet.create({
   clip: { overflow: 'hidden', borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.gutter },
+  actions: { flexDirection: 'row', gap: 8 },
+  badge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: girl.rose, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' },
+  badgeText: { fontSize: 10, lineHeight: 12, fontWeight: '700' },
   round: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,250,246,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)', alignItems: 'center', justifyContent: 'center' },
   words: { position: 'absolute', left: space.gutter, right: space.gutter, bottom: 44 },
   brand: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 36, borderRadius: 18, backgroundColor: 'rgba(56,40,50,0.32)' },
