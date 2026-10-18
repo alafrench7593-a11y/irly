@@ -293,7 +293,8 @@ async function main() {
     await page.goto(`${BASE}/girl`);
     await page.locator('[aria-label^="Messages"]').first().click({ timeout: 25000 });
     await page.waitForURL(/\/messages$/, { timeout: 20000 });
-    await page.getByText(circleName).first().waitFor({ timeout: 20000 });
+    // The IRLY Girl screen stays mounted under the inbox (its own tile has the same name): look at what is on screen.
+    await page.getByText(circleName).filter({ visible: true }).first().waitFor({ timeout: 20000 });
     return true;
   });
   await step('… and the IRLY Girl home shows "Your messages" with that conversation', async () => {
