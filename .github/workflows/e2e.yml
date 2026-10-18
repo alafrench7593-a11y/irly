@@ -121,11 +121,16 @@ jobs:
         run: |
           npm i --no-save playwright@1.56.1
           set +e
-          node scripts/e2e-ui.mjs; a=$?
+          node scripts/e2e-ui.mjs 2>&1 | tee ui.log; a=${PIPESTATUS[0]}
           echo; echo '── Paths, errors, synchronisation ──'
-          node scripts/e2e-sync.mjs; b=$?
+          node scripts/e2e-sync.mjs 2>&1 | tee sync.log; b=${PIPESTATUS[0]}
           echo; echo '── IRLY Girl, as a new member ──'
-          node scripts/e2e-girl.mjs; c=$?
+          node scripts/e2e-girl.mjs 2>&1 | tee girl.log; c=${PIPESTATUS[0]}
+          # Each failed step and each suite's total as an annotation on the run, readable without the full log.
+          for f in ui sync girl; do
+            grep -E '^(✗|   url:|   screen:)' $f.log | head -30 | while IFS= read -r l; do echo "::warning title=$f::${l:0:900}"; done
+            echo "::notice title=$f::$(grep -E '^[0-9]+ passed' $f.log | tail -1)"
+          done
           exit $(( a || b || c ))
       - uses: actions/upload-artifact@v4
         if: always()
