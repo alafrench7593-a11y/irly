@@ -230,6 +230,88 @@ async function main() {
     return false;
   });
 
+  // ───────── Creating a community from IRLY Girl, end to end ─────────
+  let circleId = null;
+  const circleName = `Book & Matcha ${run}`;
+  await step('Lea creates a community from IRLY Girl (name, line, about, city, women only) → it opens', async () => {
+    await page.goto(`${BASE}/girl`);
+    await page.locator('[aria-label="Create a community"]').first().click({ timeout: 25000 });
+    await page.waitForURL(/\/girl\/new-community/, { timeout: 20000 });
+    await page.locator('[aria-label="Community name"]').fill(circleName);
+    await page.locator('[aria-label="Tagline"]').fill('One book a month');
+    await page.locator('[aria-label="Description"]').fill('A café, a book, good conversations.');
+    await page.getByRole('button', { name: 'Create the community' }).click();
+    await page.waitForURL(/\/c\//, { timeout: 30000 });
+    circleId = pathOf().split('/').pop();
+    return Boolean(circleId);
+  });
+  await step('… on the server: women only, Lea owner, one member, its chat exists', async () => {
+    const [c] = await sql(`select girl_only, created_by, members_count, (select role from public.community_members where community_id = c.id and user_id = '${lea.id}') as role,
+      (select count(*)::int from public.conversations where community_id = c.id) as chats from public.communities c where id = '${circleId}'`);
+    console.log(`   girl_only=${c?.girl_only} role=${c?.role} members=${c?.members_count} chats=${c?.chats}`);
+    return c?.girl_only === true && c.created_by === lea.id && c.role === 'owner' && c.members_count === 1 && c.chats === 1;
+  });
+  await step('… back in IRLY Girl it is in the communities list, and still there after a reload', async () => {
+    await page.goto(`${BASE}/girl`);
+    await page.getByText(circleName).first().waitFor({ timeout: 25000 });
+    await page.reload();
+    await page.getByText(circleName).first().waitFor({ timeout: 25000 });
+    return true;
+  });
+  await step('Mia sees it in her IRLY Girl list, joins → 2 members for both', async () => {
+    const list = must(await mia.sb.from('communities').select('id').eq('girl_only', true).eq('id', circleId));
+    must(await mia.sb.rpc('join_community', { p_community: circleId }));
+    const [c] = await sql(`select members_count from public.communities where id = '${circleId}'`);
+    const forLea = must(await lea.sb.from('communities').select('members_count').eq('id', circleId));
+    return list.length === 1 && c.members_count === 2 && forLea[0]?.members_count === 2;
+  });
+  await step('Chat both ways: Mia writes → Lea sees it live in the community chat; Lea replies → Mia receives it', async () => {
+    const [{ conv }] = await sql(`select id as conv from public.conversations where community_id = '${circleId}'`);
+    await page.goto(`${BASE}/messages/${conv}`);
+    await page.getByPlaceholder(/Message/).first().waitFor({ timeout: 25000 });
+    const hello = `Hello from Mia ${run}`;
+    must(await mia.sb.from('messages').insert({ conversation_id: conv, sender_id: mia.id, body: hello }));
+    await page.getByText(hello).first().waitFor({ timeout: 20000 });
+    const reply = `Welcome Mia ${run}`;
+    const box = page.getByPlaceholder(/Message/).first();
+    await box.fill(reply);
+    await box.press('Enter');
+    for (let i = 0; i < 20; i++) {
+      const got = must(await mia.sb.from('messages').select('id').eq('conversation_id', conv).eq('body', reply));
+      if (got.length === 1) return true;
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
+  await step('Max cannot see the new community, its members or its chat', async () => {
+    const seen = must(await max.sb.from('communities').select('id').eq('id', circleId));
+    const [{ conv }] = await sql(`select id as conv from public.conversations where community_id = '${circleId}'`);
+    const msgs = must(await max.sb.from('messages').select('id').eq('conversation_id', conv));
+    return seen.length === 0 && msgs.length === 0;
+  });
+  await step('Messages are one tap away in IRLY Girl: the header button opens the same inbox as IRLY', async () => {
+    await page.goto(`${BASE}/girl`);
+    await page.locator('[aria-label^="Messages"]').first().click({ timeout: 25000 });
+    await page.waitForURL(/\/messages$/, { timeout: 20000 });
+    await page.getByText(circleName).first().waitFor({ timeout: 20000 });
+    return true;
+  });
+  await step('… and the IRLY Girl home shows "Your messages" with that conversation', async () => {
+    await page.goto(`${BASE}/girl`);
+    await page.getByText('Your messages', { exact: true }).first().waitFor({ timeout: 25000 });
+    await page.getByText(circleName).nth(1).waitFor({ timeout: 20000 }).catch(() => page.getByText(circleName).first().waitFor({ timeout: 5000 }));
+    return true;
+  });
+  await step('Lea logs out and back in: her community and its conversation are still there', async () => {
+    await page.context().close();
+    page = await signIn(browser, lea);
+    await page.goto(`${BASE}/girl`);
+    await page.getByText(circleName).first().waitFor({ timeout: 25000 });
+    await page.goto(`${BASE}/messages`);
+    await page.getByText(circleName).first().waitFor({ timeout: 25000 });
+    return true;
+  });
+
   // ───────── Moms ─────────
   await step('Moms: a new member can turn Mom mode on (her IRLY Girl profile is created for it, and she can be found)', async () => {
     await page.goto(`${BASE}/girl?mode=moms`);
