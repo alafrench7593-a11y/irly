@@ -1,0 +1,66 @@
+{
+ "langs": [
+  "fr"
+ ],
+ "style": "tiktok",
+ "soft": true,
+ "slides": [
+  {
+   "text": "Pourquoi c'est devenu aussi compliqué de se faire des potes en grandissant ?",
+   "img": "man-alone-city-night/04-pixabay-2590751.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "À l'école, tu rencontrais des gens tous les jours sans même y penser.",
+   "img": "friends-laughing-dinner/04-pixabay-894787.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Adulte, tout le monde est occupé, fatigué ou déjà dans son groupe.",
+   "img": "metro-train-night/06-pixabay-4957740.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Et toi, t'as toujours envie de découvrir des trucs et de rencontrer du monde.",
+   "img": "woman-alone-city/04-pixabay-3983404.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Le problème, c'est pas forcément toi.\nC'est aussi les occasions de se rencontrer.",
+   "img": "eating-alone-restaurant/01-pixabay-2585648.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Imagine trouver des gens qui ont envie de faire les mêmes choses que toi.",
+   "img": "../../../site/img/own/tennisMix-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Et si le prochain plan était le début d'une amitié ?",
+   "img": "../../../site/img/own/dinnerMix-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60,
+   "mark": "IRLY"
+  }
+ ]
+}

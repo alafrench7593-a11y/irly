@@ -1,0 +1,69 @@
+{
+ "langs": [
+  "fr"
+ ],
+ "style": "tiktok",
+ "soft": true,
+ "slides": [
+  {
+   "text": "POV : tu viens d'arriver dans une nouvelle ville et tu veux te faire des copines.",
+   "img": "../../../public-photos/girlTravel-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Tu veux sortir, découvrir des endroits et rencontrer des filles qui te ressemblent.",
+   "img": "../../../site/img/own/girlsOut-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Mais tu sais pas vraiment par où commencer.",
+   "img": "../../../public-photos/girlChill-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Imagine trouver des filles qui ont envie de faire les mêmes activités que toi.",
+   "img": "../../../site/img/own/pilatesGirl-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Un café, une séance de sport, une balade ou une nouvelle aventure.",
+   "img": "../../../site/img/own/drinksGirl-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "Parfois, une simple rencontre peut ouvrir plein de nouvelles possibilités.",
+   "img": "../../../site/img/own/desertGirl-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60
+  },
+  {
+   "text": "De nouvelles rencontres, de vrais moments à partager.",
+   "img": "../../../site/img/own/yachtGirl-1200.jpg",
+   "at": "top",
+   "gray": 0.08,
+   "bright": 0.86,
+   "size": 60,
+   "mark": "IRLY Girl"
+  }
+ ],
+ "box": "#FFF5F8",
+ "boxText": "#382832",
+ "markColor": "#F6C5D8"
+}
