@@ -968,7 +968,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'running', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-14',
+    updated: '2026-10-18',
     title: 'Activities for Women in Dubai: Where to Meet Other Women | IRLY',
     description: 'Activities for women in Dubai to meet other women: classes, sport, culture and communities, women-only options, and simple habits to feel at ease.',
     h1: 'Activities for women in Dubai: where to meet other women',
@@ -1018,10 +1018,10 @@ export const ARTICLES = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY Girl is a space in the app reserved for women: activities, communities and a feed only women can see, to plan a walk, a class or a brunch together. The rest of IRLY lists mixed activities and communities around what you like. It is one option among others; what matters is finding a group you want to go back to.</p>`,
+        html: `<p>IRLY Girl is a space in the app reserved for women: activities, communities and a feed only women can see, to plan a walk, a class or a brunch together. Access follows the gender chosen when the IRLY account is created, and IRLY’s servers check it for every women-only plan, community and chat; <a href="../../girl/">the IRLY Girl page</a> explains how it works. The rest of IRLY lists mixed activities and communities around what you like. It is one option among others; what matters is finding a group you want to go back to.</p>`,
       },
     ],
-    cta: { title: 'Looking for other women to go out with?', body: 'Discover IRLY Girl: activities and communities reserved for women.', label: 'Discover IRLY Girl' },
+    cta: { title: 'Looking for other women to go out with?', body: 'Discover IRLY Girl: activities and communities reserved for women.', label: 'Discover IRLY Girl', href: '/girl' },
     related: [{ label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
   },
   {
@@ -1031,7 +1031,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'running', after: 1 },
     city: 'Dubaï',
-    updated: '2026-10-14',
+    updated: '2026-10-18',
     title: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes | IRLY',
     description: 'Des activités entre femmes à Dubaï pour rencontrer d’autres femmes : cours, sport, culture et communautés, options réservées aux femmes, et réflexes simples pour être à l’aise.',
     h1: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes',
@@ -1081,10 +1081,10 @@ export const ARTICLES = [
       },
       {
         h2: 'La place d’IRLY',
-        html: `<p>IRLY Girl est un espace de l’app réservé aux femmes : des activités, des communautés et un fil que seules les femmes voient, pour organiser ensemble une balade, un cours ou un brunch. Le reste d’IRLY propose des activités et des communautés mixtes autour de ce que tu aimes. C’est une option parmi d’autres ; ce qui compte, c’est de trouver un groupe où tu as envie de revenir.</p>`,
+        html: `<p>IRLY Girl est un espace de l’app réservé aux femmes : des activités, des communautés et un fil que seules les femmes voient, pour organiser ensemble une balade, un cours ou un brunch. L’accès dépend du genre choisi à la création du compte IRLY, et les serveurs d’IRLY le vérifient pour chaque sortie, communauté et conversation réservées aux femmes ; <a href="../../girl/">la page IRLY Girl</a> explique comment ça marche. Le reste d’IRLY propose des activités et des communautés mixtes autour de ce que tu aimes. C’est une option parmi d’autres ; ce qui compte, c’est de trouver un groupe où tu as envie de revenir.</p>`,
       },
     ],
-    cta: { title: 'Tu cherches d’autres femmes avec qui sortir ?', body: 'Découvre IRLY Girl : des activités et des communautés réservées aux femmes.', label: 'Découvrir IRLY Girl' },
+    cta: { title: 'Tu cherches d’autres femmes avec qui sortir ?', body: 'Découvre IRLY Girl : des activités et des communautés réservées aux femmes.', label: 'Découvrir IRLY Girl', href: '/fr/girl' },
     related: [{ label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
   },
   {
