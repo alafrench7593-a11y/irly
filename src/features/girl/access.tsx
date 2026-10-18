@@ -8,6 +8,7 @@ import { useAccount } from '@/features/auth/account';
 import { useRefreshOn } from '@/features/server/sync';
 import { t as tx } from '@/i18n';
 import { hasSession, supabase } from '@/lib/supabase';
+import { DEMO } from '@/config/app';
 import { useStore } from '@/state/store';
 import { space } from '@/theme/tokens';
 import { girl, girlType } from './theme';
@@ -57,6 +58,8 @@ export function safeBack(router: ReturnType<typeof useRouter>, fallback: string 
 
 /** One read of the member's IRLY Girl access. */
 export async function readGirlAccess(): Promise<Exclude<GirlAccess, 'checking' | 'error'>> {
+  // The demonstration build shows IRLY Girl as a woman sees it (example content only).
+  if (DEMO) return 'open';
   if (!supabase) return useStore.getState().profile.gender === 'woman' ? 'open' : 'not_eligible';
   if (!(await hasSession())) return 'signed_out';
   const { data, error } = await supabase.rpc('my_girl_status');

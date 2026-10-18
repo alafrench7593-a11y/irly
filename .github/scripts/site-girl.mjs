@@ -226,16 +226,50 @@ const T = {
         "networkingGirl",
       ],
     ],
+    tour: {
+      k: "A tour of IRLY Girl",
+      label: "IRLY Girl, scene by scene",
+      note: "Real screens of the IRLY demo, with example women and conversations. They are not IRLY members.",
+      prev: "Previous scene",
+      next: "Next scene",
+      pause: "Pause",
+      play: "Play",
+      cta: "Discover IRLY Girl",
+      scenes: [
+        { shot: "girl-home", k: "Welcome", t: "A little space that feels like yours.", p: "IRLY Girl lives inside IRLY, just for women: your plans, your circles and your chats, in one soft corner of the app." },
+        { shot: "girl-feed", k: "The community", t: "Meet the girls around you.", p: "New friends in Dubai, brunch spots, padel partners, travel plans, small wins. Posts come from the women-only communities near you." },
+        { shot: "girl-post", k: "Conversations", t: "Real conversations, not polished ones.", p: "Comments, replies and likes, in English, French or Arabic. A hello can turn into a plan in a few messages." },
+        { shot: "girl-invite", k: "Connections", t: "From a post to a plan to a friend.", p: "Join a plan in one tap, see who’s going, and talk it through in its group chat before you meet." },
+        { shot: "girl-profile", k: "International", t: "Women from everywhere, living here.", p: "Every profile says who she is, where she’s from and what she loves. Your exact location is never shown." },
+        { shot: "girl-group", k: "Groups & plans", t: "Circles for every part of your life.", p: "New in Dubai, Girls Brunch Club, Fitness Girls, Solo Girls… each with its posts, its plans and its chat." },
+        { shot: "girl-communities", k: "Your turn", t: "Your people might be closer than you think.", p: "Open IRLY Girl in your browser today. iPhone and Android apps are coming soon." },
+      ],
+      bubbles: {
+        welcome: ["Girls brunch · Sat 11:00", "Sunrise yoga · Kite Beach"],
+        feed: ["Girls, I just landed in Dubai and I’m looking for girls to discover the city with 🩷"],
+        comments: [["g-nour", "Welcome girl!! 🥹"], ["g-sofia", "We should organise a girls brunch!"], ["w-ana", "I’m new here too, let’s go together!"], ["g-ines", "Girls, on devrait vraiment créer un petit groupe."], ["g-hana", "Count me in 🤍"]],
+        connect: ["Sofía invited you to Girls brunch in Jumeirah", "You’re going · 6/8", "Yuna: Want to meet at the entrance at 6:15?"],
+        world: "Example profiles of the demo",
+        groups: ["Girls in Dubai", "New in Dubai", "Girls Brunch Club", "Coffee & Besties", "Fitness Girls", "Girls Who Travel", "Fashion & Beauty", "Solo Girls", "IRLY Girl Community"],
+      },
+    },
     members: "members shown here are illustrative",
     appK: "The app",
     appT: "Real screens, as they are today.",
     appP: "Captured from IRLY’s demo build. IRLY Match is shown as coming soon, as it is in the app.",
     shots: [
-      ["girl", "IRLY Girl home"],
-      ["girl-plans", "Plan something with girls"],
-      ["communities", "Communities"],
-      ["chat", "Group chat"],
-      ["profile", "A profile"],
+      ["girl-home", "IRLY Girl home"],
+      ["girl-feed", "Recent posts"],
+      ["girl-post", "A post and its comments"],
+      ["girl-profile", "A profile"],
+      ["girl-communities", "Communities"],
+      ["girl-group", "A community"],
+      ["girl-chat", "Group chat"],
+      ["girl-plans", "Plans coming up"],
+      ["girl-invite", "Joining a plan"],
+      ["girl-notifications", "Notifications"],
+      ["girl-create", "Writing a post"],
+      ["girl-me", "Your profile"],
     ],
     safeK: "Your safety",
     safeT: "A space that stays women only.",
@@ -372,16 +406,50 @@ const T = {
         "networkingGirl",
       ],
     ],
+    tour: {
+      k: "IRLY Girl en visite",
+      label: "IRLY Girl, scène par scène",
+      note: "De vrais écrans de la démo d’IRLY, avec des femmes et des conversations d’exemple. Ce ne sont pas des membres d’IRLY.",
+      prev: "Scène précédente",
+      next: "Scène suivante",
+      pause: "Pause",
+      play: "Lecture",
+      cta: "Découvrir IRLY Girl",
+      scenes: [
+        { shot: "girl-home", k: "Bienvenue", t: "Un petit espace qui te ressemble.", p: "IRLY Girl vit dans IRLY, rien qu’entre femmes : tes sorties, tes cercles et tes conversations, dans un coin doux de l’app." },
+        { shot: "girl-feed", k: "La communauté", t: "Rencontre les filles autour de toi.", p: "Nouvelles amitiés à Dubaï, bonnes adresses, partenaires de padel, voyages, petites victoires. Les publications viennent des communautés féminines près de toi." },
+        { shot: "girl-post", k: "Conversations", t: "De vraies conversations, pas des vitrines.", p: "Commentaires, réponses et j’aime, en français, en anglais ou en arabe. Un bonjour devient une sortie en quelques messages." },
+        { shot: "girl-invite", k: "Des liens", t: "D’une publication à une sortie, puis à une amie.", p: "Rejoins une sortie en un geste, vois qui vient, et parlez-en dans sa conversation de groupe avant de vous retrouver." },
+        { shot: "girl-profile", k: "International", t: "Des femmes de partout, qui vivent ici.", p: "Chaque profil dit qui elle est, d’où elle vient et ce qu’elle aime. Ta position exacte n’est jamais affichée." },
+        { shot: "girl-group", k: "Groupes et sorties", t: "Des cercles pour chaque partie de ta vie.", p: "New in Dubai, Girls Brunch Club, Fitness Girls, Solo Girls… chacun avec ses publications, ses sorties et sa conversation." },
+        { shot: "girl-communities", k: "À toi", t: "Tes personnes sont peut-être plus proches que tu ne le crois.", p: "Ouvre IRLY Girl dans ton navigateur dès aujourd’hui. Les apps iPhone et Android arrivent bientôt." },
+      ],
+      bubbles: {
+        welcome: ["Girls brunch · sam. 11:00", "Sunrise yoga · Kite Beach"],
+        feed: ["Girls, I just landed in Dubai and I’m looking for girls to discover the city with 🩷"],
+        comments: [["g-nour", "Welcome girl!! 🥹"], ["g-sofia", "We should organise a girls brunch!"], ["w-ana", "I’m new here too, let’s go together!"], ["g-ines", "Girls, on devrait vraiment créer un petit groupe."], ["g-hana", "Count me in 🤍"]],
+        connect: ["Sofía t’invite à Girls brunch in Jumeirah", "Tu y vas · 6/8", "Yuna : On se retrouve à l’entrée à 6h15 ?"],
+        world: "Profils d’exemple de la démo",
+        groups: ["Girls in Dubai", "New in Dubai", "Girls Brunch Club", "Coffee & Besties", "Fitness Girls", "Girls Who Travel", "Fashion & Beauty", "Solo Girls", "IRLY Girl Community"],
+      },
+    },
     members: "les membres montrés ici sont illustratifs",
     appK: "L’app",
     appT: "De vrais écrans, tels qu’ils sont aujourd’hui.",
     appP: "Captures de la version de démonstration d’IRLY. IRLY Match y apparaît « bientôt disponible », comme dans l’app.",
     shots: [
-      ["girl", "Accueil IRLY Girl"],
-      ["girl-plans", "Organiser une sortie"],
-      ["communities", "Communautés"],
-      ["chat", "Conversation de groupe"],
-      ["profile", "Un profil"],
+      ["girl-home", "Accueil IRLY Girl"],
+      ["girl-feed", "Publications récentes"],
+      ["girl-post", "Une publication et ses commentaires"],
+      ["girl-profile", "Un profil"],
+      ["girl-communities", "Communautés"],
+      ["girl-group", "Une communauté"],
+      ["girl-chat", "Conversation de groupe"],
+      ["girl-plans", "Sorties à venir"],
+      ["girl-invite", "Rejoindre une sortie"],
+      ["girl-notifications", "Notifications"],
+      ["girl-create", "Écrire une publication"],
+      ["girl-me", "Ton profil"],
     ],
     safeK: "Ta sécurité",
     safeT: "Un espace qui reste entre femmes.",
@@ -461,6 +529,55 @@ header.top{position:sticky;top:0;z-index:20;padding:10px 16px 0}
 .sheet a.btn{font:700 16px/1 "Manrope",sans-serif;justify-self:start;margin-top:22px}
 .open+.sheet{opacity:1;visibility:visible}.open+.sheet a{transform:none;opacity:1}
 ${Array.from({ length: 8 }, (_, i) => `.open+.sheet a:nth-child(${i + 1}){transition-delay:${(i * 0.04).toFixed(2)}s}`).join("")}
+/* Tour: the IRLY Girl slideshow. Real screens in a phone, scene cards around it. */
+.tour{padding:30px 0 70px;position:relative}
+.tour::before{content:"";position:absolute;inset:40px 0 0;background:radial-gradient(50% 45% at 30% 40%,rgba(246,197,216,.55),transparent 70%),radial-gradient(40% 40% at 80% 70%,rgba(243,226,220,.8),transparent 70%);z-index:-1;pointer-events:none}
+.tgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:center}
+.tstage{position:relative;height:640px;display:grid;place-items:center;touch-action:pan-y}
+.tphone{position:relative;width:296px;aspect-ratio:390/844;border-radius:46px;padding:10px;background:#fff;box-shadow:0 40px 90px rgba(56,40,50,.18),0 0 0 1px rgba(201,47,114,.08);transform:translateZ(0)}
+.tphone .scr{position:absolute;inset:10px;border-radius:37px;overflow:hidden;background:var(--blush)}
+.tphone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.035);transition:opacity .7s var(--ease),transform 1.1s var(--ease)}
+.tphone img.on{opacity:1;transform:none}
+.tlayer{position:absolute;inset:0;pointer-events:none}
+.tlayer>div{position:absolute;inset:0;visibility:hidden}
+.tlayer>div.on{visibility:visible}
+.tb{position:absolute;display:flex;align-items:center;gap:10px;max-width:270px;padding:10px 14px;border-radius:20px;font-size:14px;line-height:1.35;font-weight:600;color:var(--ink);opacity:0;transform:translateY(16px) scale(.96);transition:opacity .55s var(--ease),transform .7s var(--ease);transition-delay:calc(var(--i,0) * .32s + .25s)}
+.on .tb{opacity:1;transform:none}
+.tb img{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none}
+.tb small{display:block;font-size:12px;font-weight:700;color:var(--rose)}
+.tb .heart{color:var(--brand);font-weight:800;white-space:nowrap}
+.tb.pill{border-radius:999px;padding:9px 16px}
+.tb.pink{background:linear-gradient(135deg,#D63579,#C2296B);color:#fff;border:0}
+.tlogo{position:absolute;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:999px;opacity:0;transition:opacity .6s var(--ease)}
+.on>.tlogo{opacity:1}
+.tlogo b{font-weight:800;font-size:12px;letter-spacing:.32em}.tlogo i{width:6px;height:6px;border-radius:9px;background:var(--brand)}
+.tlogo span{font:italic 400 30px/1 "Instrument Serif",Georgia,serif;color:var(--brand);clip-path:inset(0 100% 0 0);transition:clip-path 1s var(--ease) .35s}
+.on>.tlogo span{clip-path:inset(0)}
+.tring{position:absolute;inset:0;--rx:190px;--ry:250px}
+.tring .tb{flex-direction:column;gap:4px;padding:8px;border-radius:18px;font-size:12px;text-align:center;max-width:none}
+.tring .tb img{width:52px;height:52px}
+.tchips{position:absolute;right:-6px;top:90px;display:grid;gap:8px;justify-items:end}
+.tchips .tb{position:static}
+.tcopy{min-width:0}
+.tslides{display:grid}
+.tslide{grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .5s var(--ease),transform .6s var(--ease),visibility 0s .6s}
+.tslide.on{opacity:1;visibility:visible;transform:none;transition:opacity .6s var(--ease) .1s,transform .7s var(--ease) .1s,visibility 0s}
+.tslide h2{margin:6px 0 14px}
+.tslide .btn{margin-top:22px}
+.tctrl{display:flex;align-items:center;gap:10px;margin-top:30px}
+.tctrl>button{flex:none;width:44px;height:44px;border-radius:22px;border:0;background:var(--surface);color:var(--ink);box-shadow:0 4px 14px rgba(56,40,50,.08);cursor:pointer;display:grid;place-items:center;font:700 18px/1 "Manrope",sans-serif;transition:transform .2s var(--ease),background .2s}
+.tctrl>button:hover{background:#fff;transform:translateY(-1px)}.tctrl>button:active{transform:scale(.94)}
+.tctrl>button:focus-visible,.tdots button:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+.tdots{display:flex;gap:6px;flex:1;min-width:0}
+.tdots button{flex:1;height:30px;min-width:0;border:0;background:none;padding:0;cursor:pointer;display:grid;align-items:center}
+.tdots button span{display:block;height:4px;border-radius:4px;background:rgba(201,47,114,.16);overflow:hidden}
+.tdots button span i{display:block;height:100%;width:0;background:var(--rose);border-radius:4px}
+.tdots button.done span i{width:100%}
+.tdots button.on span i{width:var(--p,0%)}
+.tour .fine{margin-top:18px}
+@media (max-width:920px){.tring{--rx:150px;--ry:210px}.tgrid{grid-template-columns:1fr;gap:20px}.tstage{height:560px}.tphone{width:250px}.tchips{right:0;top:70px}.tb{max-width:220px;font-size:13px}.tcopy{order:2}}
+@media (max-width:420px){.tstage{height:520px}.tphone{width:232px}.tb{max-width:200px}.tlayer>div>.tb:nth-child(n+5){display:none}.tring .tb img{width:42px;height:42px}}
+@media (prefers-reduced-motion:reduce){.tphone img,.tb,.tslide,.tlogo,.tlogo span{transition:none!important}.tb{transform:none}}
 /* Hero */
 .hero{padding:56px 0 30px;position:relative}
 .hero::before{content:"";position:absolute;inset:-120px 0 auto;height:620px;background:radial-gradient(60% 60% at 70% 30%,rgba(246,197,216,.65),transparent 70%),radial-gradient(40% 50% at 15% 20%,rgba(243,226,220,.9),transparent 70%);z-index:-1;pointer-events:none}
@@ -662,6 +779,57 @@ function page(lang) {
     },
   };
   const shots = t.shots.filter(([n]) => fs.existsSync(`site/shots/${n}.jpg`));
+  // The tour: seven scenes, each a real screen of the demo with the cards it shows coming alive.
+  const tt = t.tour;
+  const tourScenes = tt.scenes.filter((x) => fs.existsSync(`site/shots/${x.shot}.jpg`));
+  const byId = (id) => CAST.find((c) => c.id === id);
+  const bub = (html, style, i, cls = "glass") => `<div class="tb ${cls}" style="${style};--i:${i}">${html}</div>`;
+  const faceTag = (id) => (byId(id) ? im(face(byId(id).id), "", "", true) : "");
+  const B = tt.bubbles;
+  const layers = [
+    `<div class="tlogo glass" translate="no"><b>IRLY</b><i aria-hidden="true"></i><span>Girl</span></div>` +
+      bub(esc(B.welcome[0]), "left:-6px;bottom:150px", 1, "glass pill") +
+      bub(esc(B.welcome[1]), "right:-6px;bottom:90px", 2, "glass pill"),
+    bub(`${faceTag("w-noor")}<div><small>Yuna · New in Dubai</small>${esc(B.feed[0])}</div>`, "left:-16px;top:120px", 0) +
+      bub(`<span class="heart" data-count="22">♥ 22</span>`, "right:6px;top:300px", 2, "glass pill") +
+      bub(`${faceTag("g-sofia")}<div><small>${esc(byId("g-sofia")?.name ?? "")}</small>Saturday 11:00 ✨</div>`, "right:-10px;bottom:110px", 3),
+    B.comments.map(([id, text], i) => bub(`${faceTag(id)}<div><small>${esc(byId(id)?.name ?? "")}</small>${esc(text)}</div>`, `${i % 2 ? "right:-14px" : "left:-14px"};top:${80 + i * 92}px`, i)).join(""),
+    bub(`${faceTag("g-sofia")}<div><small>IRLY Girl</small>${esc(B.connect[0])}</div>`, "left:-18px;top:70px", 0) +
+      bub(`✓ ${esc(B.connect[1])}`, "right:4px;top:330px", 2, "pink pill") +
+      bub(`${faceTag("w-noor")}<div>${esc(B.connect[2])}</div>`, "left:-10px;bottom:90px", 3),
+    `<div class="tring">${pick(0, 8)
+      .map((c, i) => {
+        const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
+        return bub(`${im(face(c.id), c.name)}<span>${esc(c.name)}</span>`, `left:calc(50% + ${Math.cos(a).toFixed(3)} * var(--rx) - 38px);top:calc(50% + ${Math.sin(a).toFixed(3)} * var(--ry) - 46px)`, i % 4);
+      })
+      .join("")}</div>` + bub(esc(B.world), "left:50%;bottom:6px;transform:translateX(-50%)", 4, "glass pill"),
+    `<div class="tchips">${B.groups.map((g, i) => bub(esc(g), "", Math.min(i, 8) * 0.5, i === 1 ? "pink pill" : "glass pill")).join("")}</div>`,
+    `<div class="tchips" style="top:auto;bottom:120px;left:-10px;right:auto;justify-items:start">${bub(`<span class="stack">${pick(4, 4).map((c) => im(face(c.id), "")).join("")}</span>`, "", 0, "glass pill")}</div>`,
+  ];
+  const tourHtml = tourScenes.length
+    ? `<section id="tour" class="tour" aria-roledescription="carousel" aria-label="${esc(tt.label)}"><div class="wrap tgrid">
+  <div class="tstage" aria-hidden="true">
+    <div class="tphone"><div class="scr">${tourScenes.map((x, i) => `<img src="${shot(x.shot)}" alt=""${i ? ' loading="lazy"' : ""} decoding="async" data-i="${i}"${i ? "" : ' class="on"'}>`).join("")}</div></div>
+    <div class="tlayer">${tourScenes.map((_, i) => `<div data-i="${i}"${i ? "" : ' class="on"'}>${layers[i] ?? ""}</div>`).join("")}</div>
+  </div>
+  <div class="tcopy">
+    <p class="k">${esc(tt.k)}</p>
+    <div class="tslides" aria-live="polite">${tourScenes
+      .map(
+        (x, i) =>
+          `<article class="tslide${i ? "" : " on"}" role="group" aria-roledescription="slide" aria-label="${i + 1} / ${tourScenes.length}" data-i="${i}"${i ? ' aria-hidden="true"' : ""}><p class="kicker">${esc(x.k)}</p><h2>${esc(x.t)}</h2><p class="p">${esc(x.p)}</p>${i === tourScenes.length - 1 ? `<a class="btn" href="${APP_GIRL}"${i ? ' tabindex="-1"' : ""}>${esc(tt.cta)}</a>` : ""}</article>`,
+      )
+      .join("")}</div>
+    <div class="tctrl">
+      <button type="button" class="tprev" aria-label="${esc(tt.prev)}">←</button>
+      <div class="tdots">${tourScenes.map((x, i) => `<button type="button" aria-label="${i + 1}. ${esc(x.k)}"${i ? "" : ' class="on" aria-current="true"'}><span><i></i></span></button>`).join("")}</div>
+      <button type="button" class="tnext" aria-label="${esc(tt.next)}">→</button>
+      <button type="button" class="tplay" aria-label="${esc(tt.pause)}" data-pause="${esc(tt.pause)}" data-play="${esc(tt.play)}">❚❚</button>
+    </div>
+    <p class="fine">${esc(tt.note)}</p>
+  </div>
+</div></section>`
+    : "";
   const words = (s, d0) =>
     s
       .split(" ")
@@ -727,6 +895,8 @@ function page(lang) {
     ${floating.map((p, i) => `<div class="card-p ${"abc"[i]} glass">${im(face(p.id), "", "", false)}<div>${esc(p.name)}<small>${esc(like(p.likes[0]))} · ${esc(p.area)}</small></div></div>`).join("\n    ")}
   </div>
 </div></section>
+
+${tourHtml}
 
 <section id="people"><div class="wrap">
   <div class="head"><div><p class="k">${t.peopleK}</p><h2>${t.peopleT}</h2><p class="p">${t.peopleP}</p></div><span class="label">${esc(t.illustrative)}</span></div>
@@ -803,6 +973,61 @@ ${
   sheet.addEventListener('click', (e) => { if (e.target.closest('a')) set(false); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape') set(false); });
   matchMedia('(min-width: 921px)').addEventListener('change', (m) => { if (m.matches) set(false); });
+  // Tour: autoplay while on screen (paused on hover, focus, hidden tab or reduced motion), swipe, arrows.
+  const tour = document.getElementById('tour');
+  if (tour) {
+    const slides = [...tour.querySelectorAll('.tslide')];
+    const imgs = [...tour.querySelectorAll('.tphone img')];
+    const layers = [...tour.querySelectorAll('.tlayer>div')];
+    const dots = [...tour.querySelectorAll('.tdots button')];
+    const playBtn = tour.querySelector('.tplay');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const N = slides.length, DUR = 6500;
+    let cur = 0, start = 0, raf = 0, visible = false, hold = false, paused = reduce;
+    const count = (el) => {
+      const to = +el.dataset.count + 1;
+      if (reduce) { el.textContent = '♥ ' + to; return; }
+      el.textContent = '♥ ' + (to - 1);
+      setTimeout(() => { el.textContent = '♥ ' + to; el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' }); }, 1400);
+    };
+    const go = (n) => {
+      cur = (n + N) % N;
+      slides.forEach((s, i) => { const on = i === cur; s.classList.toggle('on', on); s.setAttribute('aria-hidden', String(!on)); s.querySelectorAll('a').forEach((a) => (a.tabIndex = on ? 0 : -1)); });
+      imgs.forEach((m, i) => m.classList.toggle('on', i === cur));
+      layers.forEach((l, i) => l.classList.toggle('on', i === cur));
+      dots.forEach((d, i) => { d.classList.toggle('on', i === cur); d.classList.toggle('done', i < cur); d.toggleAttribute('aria-current', i === cur); d.style.setProperty('--p', '0%'); });
+      // The next screen loads ahead, so a scene never opens on a blank phone.
+      const next = imgs[(cur + 1) % N]; if (next) next.loading = 'eager';
+      layers[cur]?.querySelectorAll('[data-count]').forEach(count);
+      start = performance.now();
+    };
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (paused || hold || !visible || document.hidden) { start = now - (parseFloat(dots[cur].style.getPropertyValue('--p')) || 0) / 100 * DUR; return; }
+      const p = Math.min(1, (now - start) / DUR);
+      dots[cur].style.setProperty('--p', (p * 100).toFixed(1) + '%');
+      if (p >= 1) { if (cur === N - 1) { paused = true; setPlay(); } else go(cur + 1); }
+    };
+    const setPlay = () => { playBtn.textContent = paused ? '▶' : '❚❚'; playBtn.setAttribute('aria-label', paused ? playBtn.dataset.play : playBtn.dataset.pause); };
+    tour.querySelector('.tprev').addEventListener('click', () => go(cur - 1));
+    tour.querySelector('.tnext').addEventListener('click', () => go(cur + 1));
+    dots.forEach((d, i) => d.addEventListener('click', () => go(i)));
+    playBtn.addEventListener('click', () => { paused = !paused; if (!paused && cur === N - 1 && dots[cur].style.getPropertyValue('--p') === '100.0%') go(0); setPlay(); });
+    tour.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') hold = true; });
+    tour.addEventListener('pointerleave', () => (hold = false));
+    tour.addEventListener('focusin', () => (hold = true));
+    tour.addEventListener('focusout', () => (hold = false));
+    tour.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') go(cur + 1); if (e.key === 'ArrowLeft') go(cur - 1); });
+    let x0 = null;
+    const stage = tour.querySelector('.tstage');
+    stage.addEventListener('pointerdown', (e) => (x0 = e.clientX));
+    stage.addEventListener('pointerup', (e) => { if (x0 !== null && Math.abs(e.clientX - x0) > 40) go(cur + (e.clientX < x0 ? 1 : -1)); x0 = null; });
+    if ('IntersectionObserver' in window) new IntersectionObserver(([x]) => (visible = x.isIntersecting), { threshold: 0.35 }).observe(tour);
+    else visible = true;
+    setPlay();
+    go(0);
+    raf = requestAnimationFrame(tick);
+  }
   const els = document.querySelectorAll('.reveal');
   if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) { els.forEach((e) => e.classList.add('in')); return; }
   // Cards in a sideways rail reveal with their rail: off-screen to the side, they would never intersect.
