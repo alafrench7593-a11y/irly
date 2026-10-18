@@ -302,7 +302,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
             <Text variant="bodyS" color={girl.inkSoft}>
               No mom communities here yet. Start one: other moms will find it.
             </Text>
-            <GButton label="Create a community" icon="plus" variant="secondary" onPress={() => router.push('/community/new')} />
+            <GButton label="Create a community" icon="plus" variant="secondary" onPress={() => router.push('/girl/new-community?moms=1')} />
           </View>
         )}
       </View>

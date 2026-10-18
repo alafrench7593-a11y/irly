@@ -25,6 +25,9 @@ import { girl, GIRL_TINT, girlType } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton } from '@/features/girl/ui';
 import { GirlHero } from '@/features/girl/GirlHero';
+import { GirlMessages } from '@/features/girl/GirlMessages';
+import { useUnread } from '@/components/navigation/Headers';
+import { usePhotoLink } from '@/features/server/covers';
 import { girlCommunityPhoto } from '@/features/girl/photos';
 import { ScrollReveal } from '@/motion/ScrollReveal';
 import { MomsView } from '@/features/girl/MomsView';
@@ -87,6 +90,7 @@ export default function GirlHome() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const [mode, setMode] = useState<'all' | 'moms'>(params.mode === 'moms' ? 'moms' : 'all');
   const serverCommunities = useCommunitiesLike(cityId, '', true);
+  const unread = useUnread();
   // Plans created in IRLY Girl (girls and moms): they show up right here.
   const { activities: girlPlans, loading: plansLoading, error: plansError, refresh: refreshPlans } = useServerActivities(cityId, { girlOnly: true });
   const [kind, setKind] = useState<string | null>(null);
@@ -311,7 +315,7 @@ export default function GirlHome() {
   return (
     <View style={styles.root}>
       <Animated.ScrollView ref={scrollRef} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} />
+        <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} onMessages={() => router.push('/messages')} unread={unread} />
 
 
         {FEATURES.girlMatch && matches.length ? (
@@ -368,7 +372,7 @@ export default function GirlHome() {
                   { icon: 'heartHandshake', label: 'Women', onPress: () => goTo('women') },
                   { icon: 'calendar', label: 'Activities', onPress: () => goTo('plans') },
                   { icon: 'users', label: 'Communities', onPress: () => goTo('communities') },
-                  { icon: 'message', label: 'Posts', onPress: () => goTo('posts') },
+                  { icon: 'message', label: 'Messages', onPress: () => router.push('/messages') },
                 ]
           }
         />
@@ -533,6 +537,8 @@ export default function GirlHome() {
           <Upcoming activities={girlPlans} kinds={GIRL_KINDS} kind={kind} onKind={setKind} onPlan={() => goTo('plan')} emptyTitle="What if you organised the first meetup?" loading={plansLoading} error={plansError} onRetry={refreshPlans} />
         </View>
 
+        <GirlMessages onCommunities={() => goTo('communities')} />
+
         <View onLayout={(e) => record('communities', e)} />
         <ScrollReveal scrollY={scrollY} style={{ marginTop: space[7], gap: 10 }}>
           <View style={{ paddingHorizontal: space.gutter }}>
@@ -557,33 +563,9 @@ export default function GirlHome() {
               </View>
             ) : null}
             {serverCommunities.data.map((c) => (
-              <PressableScale
-                key={c.id}
-                haptic="select"
-                scaleTo={0.96}
-                onPress={() => router.push(`/c/${c.id}`)}
-                style={styles.community}
-                accessibilityLabel={c.name}
-              >
-                <Photo pinned tint={GIRL_TINT} visual={{ photo: girlCommunityPhoto(c.name) }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} />
-                <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
-                  <View style={styles.communityBadge}>
-                    <Icon name={c.member ? 'check' : 'users'} size={14} color={girl.rose} />
-                  </View>
-                  <View>
-                    {c.cityId !== cityId ? (
-                      <Text variant="caption" color="rgba(255,255,255,0.85)" numberOfLines={1}>
-                        {CITIES[c.cityId as keyof typeof CITIES]?.name}
-                      </Text>
-                    ) : null}
-                    <Text variant="titleS" color="#FFFFFF" numberOfLines={2} raw>
-                      {c.name}
-                    </Text>
-                  </View>
-                </View>
-              </PressableScale>
+              <CommunityTile key={c.id} c={c} away={c.cityId !== cityId} onPress={() => router.push(`/c/${c.id}`)} />
             ))}
-            <PressableScale haptic="select" scaleTo={0.96} onPress={() => router.push('/community/new')} style={[styles.community, styles.newCommunity]} accessibilityLabel="Create a community">
+            <PressableScale haptic="select" scaleTo={0.96} onPress={() => router.push('/girl/new-community')} style={[styles.community, styles.newCommunity]} accessibilityLabel="Create a community">
               <View style={styles.communityBadge}>
                 <Icon name="plus" size={16} color={girl.rose} />
               </View>
@@ -591,7 +573,7 @@ export default function GirlHome() {
                 {serverCommunities.data.length || serverCommunities.loading || serverCommunities.error ? 'Create a community' : 'Start the first community'}
               </Text>
               <Text variant="caption" color={girl.inkSoft}>
-                Public, private or by invitation.
+                Women only, with its own chat.
               </Text>
             </PressableScale>
           </ScrollView>
@@ -697,6 +679,34 @@ function ActionButton({ icon, label, onPress, big, small, active }: { icon: Icon
       ]}
     >
       <Icon name={icon} size={big ? 28 : 20} color={big ? '#FFFFFF' : girl.ink} fill={active ? girl.rose : 'none'} />
+    </PressableScale>
+  );
+}
+
+/** A community in IRLY Girl: its own photo when it has one, its name, its members, and whether you are in. */
+function CommunityTile({ c, away, onPress }: { c: { id: string; name: string; member: boolean; members: number; cityId: string; coverPath: string | null }; away: boolean; onPress: () => void }) {
+  const uri = usePhotoLink(c.coverPath);
+  return (
+    <PressableScale haptic="select" scaleTo={0.96} onPress={onPress} style={styles.community} accessibilityLabel={tx('{name}, {n} members', { name: c.name, n: c.members })}>
+      <Photo pinned tint={GIRL_TINT} visual={{ photo: girlCommunityPhoto(c.name), uri: uri ?? undefined }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={400} recyclingKey={`gc-${c.id}-${c.coverPath ?? 'app'}`} />
+      <View style={{ flex: 1, padding: 12, justifyContent: 'space-between' }}>
+        <View style={styles.communityBadge}>
+          <Icon name={c.member ? 'check' : 'users'} size={14} color={girl.rose} />
+        </View>
+        <View style={{ gap: 2 }}>
+          {away ? (
+            <Text variant="caption" color="rgba(255,255,255,0.85)" numberOfLines={1}>
+              {CITIES[c.cityId as keyof typeof CITIES]?.name}
+            </Text>
+          ) : null}
+          <Text variant="titleS" color="#FFFFFF" numberOfLines={2} raw style={girlType.card}>
+            {c.name}
+          </Text>
+          <Text variant="caption" color="rgba(255,255,255,0.88)">
+            {c.member ? tx('Joined · {n} members', { n: c.members }) : tx('{n} members', { n: c.members })}
+          </Text>
+        </View>
+      </View>
     </PressableScale>
   );
 }

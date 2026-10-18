@@ -377,7 +377,8 @@ function communityError(m: string): string {
   return friendlyError(m);
 }
 
-export async function createServerCommunity(input: { name: string; cityId: string; tagline?: string; description?: string; categoryId?: string; girlOnly?: boolean }): Promise<string> {
+/** Creates the community (or gets back the one this same request already made) and returns its id and the id of its chat. */
+export async function createServerCommunity(input: { name: string; cityId: string; tagline?: string; description?: string; categoryId?: string; girlOnly?: boolean }): Promise<{ id: string; conversationId: string }> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const sb = supabase;
   const { data: session } = await sb.auth.getSession();
@@ -399,7 +400,7 @@ export async function createServerCommunity(input: { name: string; cityId: strin
   });
   changed('communities', 'inbox');
   const { data: conv } = await sb.from('conversations').select('id').eq('community_id', id).maybeSingle();
-  return (conv?.id as string) ?? '';
+  return { id, conversationId: (conv?.id as string) ?? '' };
 }
 
 export type ActivityDetail = {
