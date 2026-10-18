@@ -1,66 +1,66 @@
 {
- "langs": [
-  "fr"
- ],
- "style": "tiktok",
- "soft": true,
- "slides": [
-  {
-   "text": "Quand tu proposes une sortie et que tout le monde répond « une prochaine fois ».",
-   "img": "woman-window-night-city/01-pixabay-7577808.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Ton pote travaille. Ton autre pote est fatigué. Le troisième ne répond plus.",
-   "img": "../../../public-photos/girlLaptop-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Résultat : tu finis encore chez toi alors que t'avais envie de sortir.",
-   "img": "apartment-night-lights/02-pixabay-49711.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Pourtant, quelque part, quelqu'un a exactement envie de faire le même truc que toi.",
-   "img": "friends-walking-night-city/06-pixabay-7370437.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Une séance de sport, un resto, une balade, un week‑end…",
-   "img": "../../../site/img/own/wadiMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Et si tu pouvais rencontrer des gens avec les mêmes envies ?",
-   "img": "../../../site/img/own/runMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Arrête de repousser les plans que t'as envie de faire.",
-   "img": "../../../site/img/own/vrMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60,
-   "mark": "IRLY"
-  }
- ]
+  "langs": [
+    "fr"
+  ],
+  "style": "tiktok",
+  "soft": true,
+  "slides": [
+    {
+      "text": "Quand tu proposes une sortie et que tout le monde répond « une prochaine fois ».",
+      "img": "user/u034.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Ton pote travaille. Ton autre pote est fatigué. Le troisième ne répond plus.",
+      "img": "user/u049.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Résultat : tu finis encore chez toi alors que t'avais envie de sortir.",
+      "img": "user/u041.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Pourtant, quelque part, quelqu'un a exactement envie de faire le même truc que toi.",
+      "img": "user/u072.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Une séance de sport, un resto, une balade, un week‑end…",
+      "img": "user/u048.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Et si tu pouvais rencontrer des gens avec les mêmes envies ?",
+      "img": "user/u019.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Arrête de repousser les plans que t'as envie de faire.",
+      "img": "user/u008.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60,
+      "mark": "IRLY"
+    }
+  ]
 }

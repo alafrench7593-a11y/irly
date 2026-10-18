@@ -1,66 +1,66 @@
 {
- "langs": [
-  "fr"
- ],
- "style": "tiktok",
- "soft": true,
- "slides": [
-  {
-   "text": "Le plus dur quand tu te sens seul, c'est de faire comme si *tout allait bien.*",
-   "img": "cafe-alone/04-pixabay-2584128.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "T'as des abonnés, des contacts…\nmais personne avec qui sortir ce soir.",
-   "img": "woman-window-night-city/03-pixabay-10203324.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Et parfois, t'as juste envie de rencontrer de nouvelles têtes.",
-   "img": "rooftop-friends-sunset/03-pixabay-7853389.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Pas besoin de devenir le mec le plus sociable du monde.",
-   "img": "rooftop-friends-sunset/04-pixabay-7166375.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Parfois, tout commence juste par un plan en commun.",
-   "img": "../../../site/img/own/footballMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Et si tu rencontrais des gens autrement ?",
-   "img": "../../../site/img/own/beachMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Moins d'écran.\nPlus de vraies rencontres.",
-   "img": "../../../site/img/own/waterParkMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60,
-   "mark": "IRLY"
-  }
- ]
+  "langs": [
+    "fr"
+  ],
+  "style": "tiktok",
+  "soft": true,
+  "slides": [
+    {
+      "text": "Le plus dur quand tu te sens seul, c'est de faire comme si *tout allait bien.*",
+      "img": "user/u066.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "T'as des abonnés, des contacts…\nmais personne avec qui sortir ce soir.",
+      "img": "user/u033.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Et parfois, t'as juste envie de rencontrer de nouvelles têtes.",
+      "img": "user/u039.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Pas besoin de devenir le mec le plus sociable du monde.",
+      "img": "user/u037.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Parfois, tout commence juste par un plan en commun.",
+      "img": "user/u061.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Et si tu rencontrais des gens autrement ?",
+      "img": "user/u074.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Moins d'écran.\nPlus de vraies rencontres.",
+      "img": "user/u062.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60,
+      "mark": "IRLY"
+    }
+  ]
 }

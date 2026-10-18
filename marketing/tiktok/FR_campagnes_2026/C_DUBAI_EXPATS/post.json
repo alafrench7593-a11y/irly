@@ -1,66 +1,66 @@
 {
- "langs": [
-  "fr"
- ],
- "style": "tiktok",
- "soft": true,
- "slides": [
-  {
-   "text": "T'as déménagé à Dubaï…\nmais tu connais toujours personne ?",
-   "img": "airport-suitcase-alone/02-pixabay-10171039.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Tu découvres une ville incroyable, mais tu fais encore tout tout seul.",
-   "img": "dubai-metro/05-pixabay-4957736.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Tu veux tester des restos, faire du sport, sortir…",
-   "img": "../../../site/img/own/foodMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Mais attendre que quelqu'un soit dispo, c'est fatigant.",
-   "img": "dubai-night-window/06-pixabay-1845497.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Et si tu rencontrais des gens qui ont les mêmes envies que toi ?",
-   "img": "../../../site/img/own/gymMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Parce que Dubaï, c'est quand même mieux quand t'as du monde avec qui en profiter.",
-   "img": "../../../site/img/own/buggyMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60
-  },
-  {
-   "text": "Rencontre des gens.\nPartage des expériences.",
-   "img": "../../../site/img/own/danceMix-1200.jpg",
-   "at": "top",
-   "gray": 0.08,
-   "bright": 0.86,
-   "size": 60,
-   "mark": "IRLY"
-  }
- ]
+  "langs": [
+    "fr"
+  ],
+  "style": "tiktok",
+  "soft": true,
+  "slides": [
+    {
+      "text": "T'as déménagé à Dubaï…\nmais tu connais toujours personne ?",
+      "img": "user/u042.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Tu découvres une ville incroyable, mais tu fais encore tout tout seul.",
+      "img": "user/u032.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Tu veux tester des restos, faire du sport, sortir…",
+      "img": "user/u063.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Mais attendre que quelqu'un soit dispo, c'est fatigant.",
+      "img": "user/u038.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Et si tu rencontrais des gens qui ont les mêmes envies que toi ?",
+      "img": "user/u058.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Parce que Dubaï, c'est quand même mieux quand t'as du monde avec qui en profiter.",
+      "img": "user/u040.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60
+    },
+    {
+      "text": "Rencontre des gens.\nPartage des expériences.",
+      "img": "user/u070.jpg",
+      "at": "top",
+      "gray": 0.08,
+      "bright": 0.86,
+      "size": 60,
+      "mark": "IRLY"
+    }
+  ]
 }
