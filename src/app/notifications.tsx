@@ -66,7 +66,8 @@ export default function Notifications() {
 
   return (
     <Page title="Notifications" subtitle="Only what helps you meet people.">
-      <ServerNotifications />
+      {/* The demo has no server: only its examples, no loading line. */}
+      {DEMO ? null : <ServerNotifications />}
       {auth === 'out' && !items.length ? (
         <View style={[styles.list, { alignItems: 'center', gap: 12, paddingTop: space[6] }]}>
           <Icon name="bell" size={26} color={t.c.textSecondary} />

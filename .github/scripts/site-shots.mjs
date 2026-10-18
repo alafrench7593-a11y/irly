@@ -25,11 +25,16 @@ const srv = http
 const browser = await chromium.launch();
 const errors = [];
 
-async function open() {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'en-US', colorScheme: 'dark' });
+async function open(colorScheme = 'dark') {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'en-US', colorScheme });
   // Photos not deployed yet (new portraits) come from this checkout.
   await ctx.route(/alafrench7593-a11y\.github\.io\/irly\/photos\/(.+)$/, (route) => {
     const f = `public-photos/${route.request().url().split('/photos/')[1].split('?')[0]}`;
+    return fs.existsSync(f) ? route.fulfill({ path: f, contentType: 'image/jpeg' }) : route.continue();
+  });
+  // IRLY's own photos not deployed yet come from this checkout too.
+  await ctx.route(/getirly\.com\/img\/own\/(.+)$/, (route) => {
+    const f = `site/img/own/${route.request().url().split('/img/own/')[1].split('?')[0]}`;
     return fs.existsSync(f) ? route.fulfill({ path: f, contentType: 'image/jpeg' }) : route.continue();
   });
   // The demo build needs no server.
@@ -37,10 +42,11 @@ async function open() {
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('http://localhost:8095/');
-  await page.evaluate(() => {
-    localStorage.setItem('irly-v2-demo', JSON.stringify({ state: { onboarded: true, destinationId: 'emirates', cityId: 'dubai', profile: { name: 'Sara', gender: 'woman', age: 29, types: [], interests: ['startups', 'food'], activities: ['padel'], languages: ['English'], lookingFor: [] } }, version: 1 }));
+  // IRLY Girl screens are shown in the app's light appearance, the others in IRLY Noir.
+  await page.evaluate((appearance) => {
+    localStorage.setItem('irly-v2-demo', JSON.stringify({ state: { onboarded: true, destinationId: 'emirates', cityId: 'dubai', appearance, profile: { name: 'Sara', gender: 'woman', age: 29, types: [], interests: ['startups', 'food'], activities: ['padel'], languages: ['English'], lookingFor: [] } }, version: 1 }));
     localStorage.setItem('irly-lang-demo', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
-  });
+  }, colorScheme === 'light' ? 'day' : 'auto');
   return { ctx, page };
 }
 
@@ -55,7 +61,6 @@ const SHOTS = [
   ['communities', '/communities', 5000],
   // IRLY Girl as a woman sees it (IRLY Match coming soon, plans, communities).
   ['girl', '/girl', 7000],
-  ['girl-plans', '/girl', 7000, async (page) => { await page.getByText('Plan something with girls').first().scrollIntoViewIfNeeded(); }],
   ['profile', '/person/p-layla', 5000],
   ['chat', '/messages/cv-d1', 4000],
   ['onboarding', '/onboarding/profile', 4000],
@@ -66,10 +71,35 @@ const SHOTS = [
   ['intro-chat', '/onboarding/communities?scene=5&hold=1', 3500],
   ['intro-real', '/onboarding/communities?scene=6&hold=1', 3500],
 ];
+// IRLY Girl, as a woman sees it in the demo (example women, posts, plans and
+// chats of src/data/content/girlDemo.ts), in the light theme of IRLY Girl.
+// The website's slideshow and screens use these: real screens of the app.
+const to = (text) => async (page) => {
+  await page.getByText(text, { exact: false }).first().scrollIntoViewIfNeeded();
+  await page.mouse.wheel(0, -60);
+};
+const GIRL_SHOTS = [
+  ['girl-home', '/girl', 7000],
+  ['girl-feed', '/girl', 7000, to('Recent posts')],
+  ['girl-post', '/comments?type=community_post&id=gp-arrived&title=Just%20landed%20in%20Dubai', 5000],
+  ['girl-profile', '/person/w-noor', 5000],
+  ['girl-communities', '/girl', 7000, to('IRLY Girl communities')],
+  ['girl-group', '/c/gc-new-dubai', 5000],
+  ['girl-chat', '/messages/gcv-brunch', 4500],
+  ['girl-plans', '/girl', 7000, to("Girls' plans coming up")],
+  ['girl-invite', '/a/ga-brunch', 5000],
+  ['girl-notifications', '/notifications', 5000],
+  ['girl-create', '/post/new', 4500],
+  ['girl-me', '/profile', 5000],
+];
+for (const [name, url, wait, act] of GIRL_SHOTS) {
+  SHOTS.push([name, url, wait, act, 'light']);
+}
+
 const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
-for (const [name, url, wait, act] of SHOTS) {
+for (const [name, url, wait, act, scheme] of SHOTS) {
   if (only && !only.includes(name)) continue;
-  const { ctx, page } = await open();
+  const { ctx, page } = await open(scheme);
   try {
     await page.goto(`http://localhost:8095${url}`);
     await page.waitForTimeout(wait);

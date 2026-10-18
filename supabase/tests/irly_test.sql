@@ -972,6 +972,7 @@ insert into public.community_posts (community_id, author_id, body) values
 select pg_temp.check((select count(*) from public.girl_feed('dubai')) = 2, 'the Girl feed holds the women-only communities, not the open ones');
 select pg_temp.check((select count(*) from public.girl_feed('dubai', true)) = 1 and (select body from public.girl_feed('dubai', true)) = 'Park meetup with the kids', 'the Moms feed holds the family communities');
 select pg_temp.check((select is_member from public.girl_feed('dubai', true)), 'the feed says when you are a member');
+select pg_temp.check((select media_paths = '{}' and media_kind is null from public.girl_feed('dubai', true)), 'the feed carries each post''s media (none on a text post)');
 select pg_temp.check(public.my_girl_status() = 'open', 'a woman sees IRLY Girl open');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.expect_denied($$select * from public.girl_feed('dubai')$$, 'a man cannot read the Girl feed');
