@@ -188,15 +188,16 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
       const { conv, me } = await conversationHead(conversationId, uid);
       if (!alive || !conv) return;
       const act = one(conv.activities as One<{ category_id: string; title: string; sub_id: string | null; place_name: string | null; cover_path: string | null }>);
-      const com = one(conv.communities as One<{ category_id: string | null; topic: string | null; cover_path: string | null }>);
+      const com = one(conv.communities as One<{ name: string | null; category_id: string | null; topic: string | null; cover_path: string | null }>);
       let canEdit = me?.role === 'admin';
       if (!canEdit && conv.community_id) {
         const { data: cm } = await sb.from('community_members').select('role').eq('community_id', conv.community_id).eq('user_id', uid).maybeSingle();
         canEdit = cm?.role === 'owner' || cm?.role === 'moderator';
       }
+      // A community by its name first, as on its page ("Running" shows running).
       const fallback: PhotoKey = act
         ? ideaPhoto((CATEGORY_BY_ID[act.category_id as CategoryKey] ? act.category_id : 'sport') as CategoryKey, act.title, act.place_name ?? undefined, act.sub_id)
-        : ((communityPhoto(com?.topic, com?.category_id) as PhotoKey | null) ?? 'meeting');
+        : ((communityPhoto(com?.topic, com?.category_id, com?.name) as PhotoKey | null) ?? 'meeting');
       const hasPhoto = conv.kind === 'group' || conv.kind === 'activity' || conv.kind === 'community';
       // One source per picture: a community chat shows the community's own photo
       // (changing it changes the community's), others their chat photo, then the activity's cover.

@@ -212,7 +212,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
       </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "web" ? undefined : "padding"}
       >
         <ScrollView
           keyboardShouldPersistTaps="handled"

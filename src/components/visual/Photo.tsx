@@ -70,6 +70,10 @@ export const Photo = memo(function Photo({
   // Chosen once per place on screen (never on every render): this place keeps
   // its photo, the next place showing the same subject gets another one.
   const stockUrl = useMemo(() => photoUrl(visual.photo, width, recyclingKey, pinned), [visual.photo, width, recyclingKey, pinned]);
+  // A cover link that fails (expired, file gone) falls back to the stock
+  // photo once, instead of leaving a grey box.
+  const [failedUri, setFailedUri] = useState<string | null>(null);
+  const uri = visual.uri && visual.uri !== failedUri ? visual.uri : stockUrl;
   const t = useTheme();
   const night = t.mode === "night";
   void light;
@@ -137,7 +141,7 @@ export const Photo = memo(function Photo({
         style={[StyleSheet.absoluteFill, drift && !reduced ? driftStyle : null]}
       >
         <Image
-          source={{ uri: visual.uri || stockUrl }}
+          source={{ uri }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={{ duration: 520, effect: "cross-dissolve" }}
@@ -145,7 +149,10 @@ export const Photo = memo(function Photo({
           recyclingKey={recyclingKey}
           blurRadius={blur}
           onLoad={() => setStatus("done")}
-          onError={() => setStatus("done")}
+          onError={() => {
+            if (visual.uri && uri === visual.uri) setFailedUri(visual.uri);
+            else setStatus("done");
+          }}
           accessibilityIgnoresInvertColors
         />
       </Animated.View>

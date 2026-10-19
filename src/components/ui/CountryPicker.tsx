@@ -56,9 +56,15 @@ export function CountryPicker({ value, onChange, label = 'Where are you from?', 
         accessibilityLabel={`${tr(label)}: ${summary}`}
         style={[styles.row, { backgroundColor: t.c.surface, borderColor: t.c.line }]}
       >
-        <Text variant="titleS" raw style={styles.flag}>
-          {chosen ? flagOf(chosen.code) : '🌍'}
-        </Text>
+        {chosen ? (
+          <Text variant="titleS" raw style={styles.flag}>
+            {flagOf(chosen.code)}
+          </Text>
+        ) : (
+          <View style={styles.globe}>
+            <Icon name="globe" size={20} color={t.c.textSecondary} />
+          </View>
+        )}
         <View style={{ flex: 1 }}>
           <Text variant="caption" tone="secondary">
             {label}
@@ -119,6 +125,7 @@ export function CountryPicker({ value, onChange, label = 'Where are you from?', 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.lg, borderWidth: 1 },
   flag: { fontSize: 22, width: 30, textAlign: 'center' },
+  globe: { width: 30, alignItems: 'center' },
   list: { paddingHorizontal: space.gutter, paddingBottom: space[6] },
   item: { height: ROW, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderRadius: radius.md },
 });

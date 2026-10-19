@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
@@ -76,7 +76,8 @@ export function ReportSheet({
 
   return (
     <Sheet visible={Boolean(target)} onClose={close} title="Report" subtitle={tr('What is wrong? Only IRLY’s moderators see reports.')} maxHeight={0.9}>
-      <View style={styles.body}>
+      {/* Scrolls when the keyboard shrinks the sheet, so Send stays reachable. */}
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={{ gap: 6 }} accessibilityRole="radiogroup">
           {REPORT_CATEGORIES.map((c) => {
             const on = category === c.id;
@@ -118,7 +119,7 @@ export function ReportSheet({
         <Text variant="caption" tone="tertiary" align="center">
           In danger? Contact local emergency services first.
         </Text>
-      </View>
+      </ScrollView>
     </Sheet>
   );
 }

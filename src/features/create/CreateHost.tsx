@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { Image } from 'expo-image';
 import { a11y, t as tx } from '@/i18n';
-import { BackHandler, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { BackHandler, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -20,6 +20,7 @@ import { photo, type PhotoKey } from '@/data/photos';
 import { Photo } from '@/components/visual/Photo';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { PressableScale } from '@/motion/PressableScale';
 import { ease, motion, scale as scaleTokens, spring } from '@/motion/tokens';
 import { useCityId, useStore, type MyPlan } from '@/state/store';
@@ -258,6 +259,9 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     setStep(2);
   };
   const scroller = useRef<ScrollView>(null);
+  // The address and description fields sit low on the last step: the list
+  // makes room for the keyboard (iOS insets itself) and the button rides above it.
+  const keyboard = useKeyboardHeight();
   const chooseQuick = (q: (typeof QUICK)[number]) => {
     haptic('select');
     if (q.entry) {
@@ -380,7 +384,13 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
           </Text>
         </View>
 
-        <ScrollView ref={scroller} contentContainerStyle={{ paddingBottom: 220 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          ref={scroller}
+          contentContainerStyle={{ paddingBottom: 220 + (Platform.OS === 'android' ? keyboard : 0) }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+        >
           {step === 0 ? (
             <View key="s0">
               <Animated.View entering={enter.rise(0, 120)}>
@@ -720,7 +730,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
         </ScrollView>
 
         {step > 0 ? (
-          <View style={[styles.footer, { bottom: layout.tabBarHeight + Math.max(insets.bottom, layout.tabBarBottomGap) + 24 }]}>
+          <View style={[styles.footer, { bottom: keyboard ? keyboard + space[3] : layout.tabBarHeight + Math.max(insets.bottom, layout.tabBarBottomGap) + 24 }]}>
             {step < 3 ? (
               <Button label="Next" iconRight="arrowRight" full disabled={!canNext} haptic="select" onPress={() => setStep(step + 1)} />
             ) : (
