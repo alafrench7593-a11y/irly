@@ -33,7 +33,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-10',
+    updated: '2026-10-19',
     title: 'How to Make Friends in Dubai: A Practical Guide for Newcomers | IRLY',
     description: 'New to Dubai and don’t know anyone yet? Why it can feel hard to make friends here, and practical ways to meet people who share your interests.',
     h1: 'How to make friends in Dubai',
@@ -81,6 +81,17 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'Your first month: a simple plan',
+        html: `<p>If you don’t know where to begin, this is enough for the first four weeks. It costs little and needs no network.</p>
+<ol>
+<li><strong>Week 1: choose.</strong> Write down two or three things you enjoy and find one regular group for each, one that meets at least weekly, ideally near home or work. Our list of <a href="../group-activities/">group activities in Dubai</a> can help.</li>
+<li><strong>Week 2: show up.</strong> Go to each one once. Arrive a few minutes early, when it is easier to talk, and ask one person how long they have been coming.</li>
+<li><strong>Week 3: go back.</strong> Return to the one or two you liked most. Learn a few first names and use them.</li>
+<li><strong>Week 4: suggest something small.</strong> A coffee after the session, the same run next week, a brunch with two or three people from the group.</li>
+</ol>
+<p>Going alone the first time is normal: most people in these groups did the same. If that part is what stops you, read <a href="../going-out-alone/">going out alone in Dubai</a>. Women looking for women-only spaces will find options in <a href="../activities-for-women/">activities for women in Dubai</a>. And if the first weeks feel heavier than expected, <a href="../lonely/">lonely in Dubai: what actually helps</a> is written for that moment.</p>`,
+      },
+      {
         h2: 'Meeting people who speak your language',
         html: `<p>It helps to have people who share your language and culture, especially at the start. Look for national and language communities, cultural associations and their events. Then make sure you also join mixed groups: Dubai is international, and that mix is one of the best things about living here.</p>`,
       },
@@ -90,7 +101,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'New to Dubai?', body: 'Meet people who share your interests, join communities and do things together, in real life.', label: 'Find my people' },
-    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }],
   },
   {
     lang: 'fr',
@@ -99,6 +110,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubaï',
+    updated: '2026-10-19',
     title: 'Se faire des amis à Dubaï : le guide pour les nouveaux arrivants | IRLY',
     description: 'Tu viens d’arriver à Dubaï et tu ne connais personne ? Pourquoi c’est parfois difficile de se faire des amis ici, et des façons concrètes de rencontrer du monde.',
     h1: 'Comment se faire des amis à Dubaï',
@@ -146,6 +158,17 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'Ton premier mois : un plan simple',
+        html: `<p>Si tu ne sais pas par où commencer, ceci suffit pour les quatre premières semaines. Ça coûte peu et ne demande aucun réseau.</p>
+<ol>
+<li><strong>Semaine 1 : choisis.</strong> Note deux ou trois choses que tu aimes et trouve pour chacune un groupe régulier, qui se retrouve au moins une fois par semaine, idéalement près de chez toi ou de ton travail. Notre liste d’<a href="../activites-de-groupe/">activités de groupe à Dubaï</a> peut t’aider.</li>
+<li><strong>Semaine 2 : vas-y.</strong> Va une fois à chacune. Arrive quelques minutes en avance, c’est le moment où l’on parle le plus facilement, et demande à quelqu’un depuis combien de temps il vient.</li>
+<li><strong>Semaine 3 : reviens.</strong> Retourne aux une ou deux qui t’ont le plus plu. Retiens quelques prénoms et utilise-les.</li>
+<li><strong>Semaine 4 : propose quelque chose de petit.</strong> Un café après la séance, le même footing la semaine suivante, un brunch à deux ou trois avec des gens du groupe.</li>
+</ol>
+<p>Y aller seul la première fois, c’est normal : la plupart des gens de ces groupes ont fait pareil. Si c’est justement ce qui te bloque, lis <a href="../sortir-seul/">sortir seul à Dubaï</a>. Les femmes qui cherchent des espaces entre femmes trouveront des idées dans <a href="../activites-entre-femmes/">activités entre femmes à Dubaï</a>. Et si les premières semaines sont plus lourdes que prévu, <a href="../solitude/">se sentir seul à Dubaï</a> est écrit pour ce moment-là.</p>`,
+      },
+      {
         h2: 'Rencontrer des francophones',
         html: `<p>Au début, ça aide d’avoir des personnes qui partagent ta langue et ta culture. Cherche les associations et communautés francophones et leurs événements. Puis rejoins aussi des groupes mixtes : Dubaï est internationale, et ce mélange fait partie de ce qu’il y a de mieux ici.</p>`,
       },
@@ -155,7 +178,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu viens d’arriver à Dubaï ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt, rejoins des communautés et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
-    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }],
   },
   {
     lang: 'en',
