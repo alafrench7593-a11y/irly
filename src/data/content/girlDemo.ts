@@ -111,8 +111,8 @@ export const DEMO_POSTS: DemoPost[] = [
         { by: 'g-sofia', text: 'Saturday 11 works, I’ll post it in Girls Brunch Club', ago: 64, likes: 2 },
       ] },
       { id: 'c3', by: 'w-ana', text: 'I’m new here too, let’s go together!', ago: 60, likes: 3 },
-      { id: 'c4', by: 'g-ines', text: 'Girls, on devrait vraiment créer un petit groupe pour celles qui viennent d’arriver', ago: 52, likes: 6 },
-      { id: 'c5', by: 'w-salma', text: 'أهلا وسهلا! Welcome to Dubai 💕', ago: 40 },
+      { id: 'c4', by: 'g-ines', text: 'Girls, we should really start a little group for everyone who just arrived', ago: 52, likes: 6 },
+      { id: 'c5', by: 'w-salma', text: 'Welcome to Dubai! You’re going to love it here 💕', ago: 40 },
       { id: 'c6', by: 'g-hana', text: 'Count me in 🤍', ago: 31 },
     ],
   },
@@ -128,7 +128,7 @@ export const DEMO_POSTS: DemoPost[] = [
     comments: [
       { id: 'c1', by: 'g-zara', text: 'Wait girl, where is this place? 😭', ago: 200, likes: 5, replies: [{ by: 'w-salma', text: 'Alserkal Avenue, next to the bookshop. I’ll send you the pin', ago: 195 }] },
       { id: 'c2', by: 'w-noor', text: 'Okay but this café looks SO cute.', ago: 180, likes: 2 },
-      { id: 'c3', by: 'g-ines', text: 'Ça me tente trop, on y va ensemble jeudi ?', ago: 150, likes: 3, replies: [{ by: 'w-salma', text: 'Avec plaisir ! 9h30 ?', ago: 140 }, { by: 'g-ines', text: 'Parfait 🤍', ago: 133 }] },
+      { id: 'c3', by: 'g-ines', text: 'I’m so in, shall we go together on Thursday?', ago: 150, likes: 3, replies: [{ by: 'w-salma', text: 'With pleasure! 9:30?', ago: 140 }, { by: 'g-ines', text: 'Perfect 🤍', ago: 133 }] },
     ],
   },
   {
@@ -157,7 +157,7 @@ export const DEMO_POSTS: DemoPost[] = [
     activity: 'ga-brunch',
     comments: [
       { id: 'c1', by: 'g-chloe', text: 'Joined ✨', ago: 50 },
-      { id: 'c2', by: 'w-noor', text: 'Je suis partante si vous organisez ça ce week-end 🤍 oh wait you did', ago: 44, likes: 7 },
+      { id: 'c2', by: 'w-noor', text: 'I’m in if someone organises it this weekend 🤍 oh wait, you did', ago: 44, likes: 7 },
       { id: 'c3', by: 'w-ana', text: 'Can I bring my flatmate? She’s new too', ago: 30, replies: [{ by: 'g-sofia', text: 'Of course! Tell her to join the plan so we count her', ago: 26 }] },
     ],
   },
@@ -171,7 +171,7 @@ export const DEMO_POSTS: DemoPost[] = [
     likes: 27,
     saves: 15,
     comments: [
-      { id: 'c1', by: 'g-ines', text: 'Moi !! J’en rêve depuis que je suis arrivée', ago: 580, likes: 2 },
+      { id: 'c1', by: 'g-ines', text: 'Me!! I’ve been dreaming of it since I arrived', ago: 580, likes: 2 },
       { id: 'c2', by: 'w-ana', text: 'Do we need a visa for that part of Oman?', ago: 540, replies: [{ by: 'g-olga', text: 'Depends on your passport, most get it at the border. Check before though', ago: 530, likes: 3 }] },
       { id: 'c3', by: 'g-maya', text: 'I did it last year, bring motion sickness tablets lol', ago: 500, likes: 8 },
     ],
@@ -346,9 +346,9 @@ export const DEMO_CHATS: DemoChat[] = [
     title: 'Inès',
     unread: 0,
     messages: [
-      { by: 'g-ines', text: 'Coucou ! Tu viens au café jeudi avec Salma ?', ago: 180 },
-      { by: ME, text: 'Oui ! 9h30 c’est bon pour moi', ago: 170 },
-      { by: 'g-ines', text: 'Top, on se retrouve devant la librairie 🤍', ago: 165 },
+      { by: 'g-ines', text: 'Hey! Are you coming to the café on Thursday with Salma?', ago: 180 },
+      { by: ME, text: 'Yes! 9:30 works for me', ago: 170 },
+      { by: 'g-ines', text: 'Great, let’s meet in front of the bookshop 🤍', ago: 165 },
     ],
   },
 ];

@@ -509,7 +509,7 @@ export const fr: Record<string, string> = {
   'Could not create the community': 'Impossible de créer la communauté',
   'IRLY Girl community': 'Communauté IRLY Girl',
   'Only women can see and join it.': 'Seules les femmes peuvent la voir et la rejoindre.',
-  'Apéros, padel and weekend trips': 'Apéros, padel et escapades le week-end',
+  'Drinks, padel and weekend trips': 'Apéros, padel et escapades le week-end',
   "Who it's for, how often you meet, the vibe.": 'Pour qui, à quelle fréquence, l’ambiance.',
   'Community name': 'Nom de la communauté',
   'You joined. Chat added to Messages': 'Bienvenue. Le chat est dans Messages',

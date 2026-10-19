@@ -81,7 +81,7 @@ export default function NewCommunity() {
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">One line</Text>
-          <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder={tx('Apéros, padel and weekend trips')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Tagline')} />
+          <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder={tx('Drinks, padel and weekend trips')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Tagline')} />
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">About</Text>
