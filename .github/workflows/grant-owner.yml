@@ -1,0 +1,29 @@
+name: Grant owner
+
+# Makes an existing IRLY account the owner of the back office (see
+# scripts/grant-owner.mjs). Only people with write access to this repository
+# can run it. Needs the SUPABASE_ACCESS_TOKEN secret (already there).
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: Email of the IRLY account to make owner (it must already exist)
+        required: true
+
+jobs:
+  owner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hide the email in the logs
+        run: echo "::add-mask::$OWNER_EMAIL"
+        env:
+          OWNER_EMAIL: ${{ inputs.email }}
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/grant-owner.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          OWNER_EMAIL: ${{ inputs.email }}

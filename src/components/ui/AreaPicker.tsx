@@ -61,11 +61,29 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
 
   const term = plain(q.trim());
   const inZone = zones.find((x) => x.id === activeZone);
-  // Names that match come first, then the rest of a matching zone.
+  // Best name matches first (exact, then starts with, then a word starts
+  // with, then contains), then the rest of a zone named that way.
+  const score = (name: string) => {
+    const n = plain(name);
+    if (n === term) return 0;
+    if (n.startsWith(term)) return 1;
+    if (n.split(/[^a-z0-9]+/).some((w) => w.startsWith(term))) return 2;
+    return n.includes(term) ? 3 : -1;
+  };
+  // Only a zone whose name starts with it: "dubai" must not pull in Deira
+  // through "Creek & old Dubai".
+  const zoneHit = (name: string) => plain(name).startsWith(term);
+  const byName = city.areas
+    .map((a) => ({ a, s: score(a.name) }))
+    .filter((x) => x.s >= 0)
+    .sort((x, y) => x.s - y.s || x.a.name.localeCompare(y.a.name))
+    .map((x) => x.a);
   const list = term
     ? [
-        ...city.areas.filter((a) => plain(a.name).includes(term)),
-        ...city.areas.filter((a) => !plain(a.name).includes(term) && plain(zoneOf(cityId, a.id)?.name ?? '').includes(term)),
+        ...byName,
+        ...city.areas
+          .filter((a) => !byName.includes(a) && zoneHit(zoneOf(cityId, a.id)?.name ?? ''))
+          .sort((x, y) => x.name.localeCompare(y.name)),
       ]
     : inZone
       ? inZone.areas.map((id) => city.areas.find((a) => a.id === id)!).filter(Boolean)

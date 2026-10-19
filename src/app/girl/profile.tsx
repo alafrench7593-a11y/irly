@@ -6,7 +6,7 @@ import { Image } from 'expo-image';
 import { Redirect, useRouter } from 'expo-router';
 import { FEATURES } from '@/lib/features';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
@@ -200,6 +200,8 @@ function GirlProfile() {
         </View>
       </View>
 
+      {/* The bio field and the Continue button stay above the keyboard. */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
       <ScrollView contentContainerStyle={{ padding: space.gutter, paddingBottom: 140, gap: space[6] }} keyboardShouldPersistTaps="handled">
         <Animated.View key={step} entering={FadeIn.duration(260)} exiting={FadeOut.duration(120)} style={{ gap: space[6] }}>
           <View style={{ gap: 6 }}>
@@ -440,6 +442,7 @@ function GirlProfile() {
           onPress={next}
         />
       </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }

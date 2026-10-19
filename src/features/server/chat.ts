@@ -280,7 +280,7 @@ export function conversationHead(conversationId: string, uid: string): Promise<C
   const promise = Promise.all([
     sb
       .from('conversations')
-      .select('id, kind, title, community_id, activity_id, photo_path, activities(category_id, title, sub_id, place_name, cover_path), communities(category_id, topic, cover_path)')
+      .select('id, kind, title, community_id, activity_id, photo_path, activities(category_id, title, sub_id, place_name, cover_path), communities(name, category_id, topic, cover_path)')
       .eq('id', conversationId)
       .maybeSingle(),
     sb.from('conversation_members').select('archived_at, role').eq('conversation_id', conversationId).eq('user_id', uid).maybeSingle(),

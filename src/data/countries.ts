@@ -243,15 +243,15 @@ const ROWS: [string, string, string][] = [
   ["US", "United States", "États-Unis"],
   ["UY", "Uruguay", "Uruguay"],
   ["UZ", "Uzbekistan", "Ouzbékistan"],
-  ["NH", "Vanuatu", "Vanuatu"],
+  ["VU", "Vanuatu", "Vanuatu"],
   ["VA", "Vatican City", "État de la Cité du Vatican"],
   ["VE", "Venezuela", "Venezuela"],
-  ["VD", "Vietnam", "Viêt Nam"],
+  ["VN", "Vietnam", "Viêt Nam"],
   ["WF", "Wallis & Futuna", "Wallis-et-Futuna"],
   ["EH", "Western Sahara", "Sahara occidental"],
   ["YE", "Yemen", "Yémen"],
   ["ZM", "Zambia", "Zambie"],
-  ["RH", "Zimbabwe", "Zimbabwe"],
+  ["ZW", "Zimbabwe", "Zimbabwe"],
 ];
 
 export const COUNTRIES: Country[] = ROWS.map(([code, en, fr]) => ({ code, en, fr }));

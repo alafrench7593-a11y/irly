@@ -15,6 +15,7 @@ import { Photo } from '@/components/visual/Photo';
 import { LiveVideo } from '@/features/live/LiveVideo';
 import { webLink } from '@/config/app';
 import { INTERESTS } from '@/data/catalog';
+import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
 import { blockUser } from '@/features/moderation/moderation';
 import { openReport } from '@/features/moderation/reportStore';
@@ -606,7 +607,8 @@ function ActivityRow({ a, cover, onPress, border }: { a: ProfileActivity; cover?
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} style={[styles.row, { borderColor: border }]} accessibilityLabel={`${a.title}, ${tx(badge[a.state].label)}`}>
       <View style={[styles.thumb, { backgroundColor: t.c.overlay }]}>
-        {cover ? <Photo visual={{ photo: 'meeting', uri: cover }} light="dubai" width={160} style={StyleSheet.absoluteFill} /> : <Icon name="calendar" size={18} color={t.c.textSecondary} />}
+        {/* No uploaded cover: the activity's own photo (padel, brunch…), never a blank tile. */}
+        <Photo visual={{ photo: ideaPhoto(a.categoryId in CATEGORY_BY_ID ? (a.categoryId as CategoryKey) : 'sport', a.title, a.placeName ?? undefined), uri: cover }} light="dubai" width={160} style={StyleSheet.absoluteFill} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="titleS" numberOfLines={1} raw>
