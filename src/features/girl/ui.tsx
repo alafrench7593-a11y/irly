@@ -2,12 +2,32 @@ import { memo, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated from 'react-native-reanimated';
+import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { PressableScale } from '@/motion/PressableScale';
 import { SelectionLayers, useSelection } from '@/motion/Selection';
-import { radius } from '@/theme/tokens';
+import { radius, type GlassLevel } from '@/theme/tokens';
 import { girl, girlType } from './theme';
+
+/**
+ * IRLY Girl's frosted glass, laid under a control's content: the app's Glass
+ * (blur, hairline edge, top highlight; a dense tint on Android) kept light in
+ * every theme, with a rose veil on top. `dark` is for controls placed on a
+ * photo, where white text needs a smoked pane. The parent sets the shape
+ * (borderRadius) and keeps its own shadow, so the glass never clips it;
+ * the parent also sets `zIndex: 0`, so the glass (at -1) stays under its
+ * content, icons included, without falling behind the parent itself on web.
+ */
+export const GlassFill = memo(function GlassFill({ dark, level = 'regular', radius: r }: { dark?: boolean; level?: GlassLevel; radius: number }) {
+  return (
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: -1, borderRadius: r, overflow: 'hidden' }]}>
+      <Glass light={!dark} dark={dark} level={level} style={[StyleSheet.absoluteFill, { borderRadius: r }]}>
+        {dark ? null : <View style={[StyleSheet.absoluteFill, { backgroundColor: girl.glassRose }]} />}
+      </Glass>
+    </View>
+  );
+});
 
 /** Chip in the IRLY Girl palette: rose when selected, white with a pink hairline otherwise. */
 export const GChip = memo(function GChip({

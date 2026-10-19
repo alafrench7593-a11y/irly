@@ -13,6 +13,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { space } from '@/theme/tokens';
 import { GirlLogo } from './GirlLogo';
 import { girl, GIRL_TINT, girlType } from './theme';
+import { GlassFill } from './ui';
 
 const HEIGHT = 340;
 
@@ -83,9 +84,11 @@ export function GirlHero({
       </View>
       <View style={[styles.bar, { paddingTop: insets.top + 8 }]}>
         <PressableScale haptic="tap" scaleTo={0.9} onPress={onBack} accessibilityLabel="Back to IRLY" style={styles.round}>
+          <GlassFill dark level="thin" radius={20} />
           <Icon name="chevronLeft" size={20} color="#FFFFFF" />
         </PressableScale>
         <View style={styles.brand}>
+          <GlassFill dark level="thin" radius={18} />
           <GirlLogo size={18} onDark word={mode === 'moms' ? 'Moms' : 'Girl'} />
         </View>
         <View style={styles.actions}>
@@ -96,6 +99,7 @@ export function GirlHero({
             accessibilityLabel={unread ? tr('Messages, {n} unread', { n: unread }) : tr('Messages')}
             style={styles.round}
           >
+            <GlassFill dark level="thin" radius={20} />
             <Icon name="message" size={18} color="#FFFFFF" />
             {unread ? (
               <View style={styles.badge}>
@@ -106,6 +110,7 @@ export function GirlHero({
             ) : null}
           </PressableScale>
           <PressableScale haptic="select" scaleTo={0.9} onPress={onProfile} accessibilityLabel="My profile" style={styles.round}>
+            <GlassFill dark level="thin" radius={20} />
             <Icon name="user" size={18} color="#FFFFFF" />
           </PressableScale>
         </View>
@@ -139,9 +144,9 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8 },
   badge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: girl.rose, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' },
   badgeText: { fontSize: 10, lineHeight: 12, fontWeight: '700' },
-  round: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,250,246,0.22)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)', alignItems: 'center', justifyContent: 'center' },
+  round: { width: 40, height: 40, borderRadius: 20, zIndex: 0, alignItems: 'center', justifyContent: 'center' },
   words: { position: 'absolute', left: space.gutter, right: space.gutter, bottom: 44 },
-  brand: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 36, borderRadius: 18, backgroundColor: 'rgba(56,40,50,0.32)' },
+  brand: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 36, borderRadius: 18, zIndex: 0 },
   shadow: { textShadowColor: 'rgba(0,0,0,0.25)', textShadowRadius: 12, textShadowOffset: { width: 0, height: 2 } },
   line: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 9 },
 });
