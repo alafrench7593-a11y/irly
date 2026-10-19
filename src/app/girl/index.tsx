@@ -23,7 +23,7 @@ import { FiltersSheet, ProfileSheet, SafetySheet } from '@/features/girl/Sheets'
 import type { Suggestion } from '@/features/girl/suggest';
 import { girl, GIRL_TINT, girlType } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
-import { GButton } from '@/features/girl/ui';
+import { GButton, GlassFill } from '@/features/girl/ui';
 import { GirlHero } from '@/features/girl/GirlHero';
 import { GirlMessages } from '@/features/girl/GirlMessages';
 import { useUnread } from '@/components/navigation/Headers';
@@ -278,7 +278,8 @@ export default function GirlHome() {
     loadDeck(f, 0);
   };
 
-  const decide = async (c: Candidate, d: 'like' | 'pass') => {
+  /** Resolves true once the server has recorded the decision. */
+  const decide = async (c: Candidate, d: 'like' | 'pass'): Promise<boolean> => {
     setDeck((list) => list.filter((x) => x.userId !== c.userId));
     setOpen(null);
     try {
@@ -289,11 +290,13 @@ export default function GirlHome() {
       } else if (d === 'like') {
         toast(tx('{name} will see you want to connect', { name: c.firstName }), 'heartHandshake', 'brand');
       }
+      return true;
     } catch (e) {
       // Put her back so nothing is lost.
       setDeck((list) => [c, ...list]);
       if (isGirlRefusal(e)) boot();
       else toast(friendlyError(e instanceof Error ? e.message : 'Something went wrong. Try again.'), 'x', 'live');
+      return false;
     }
   };
 
@@ -346,6 +349,7 @@ export default function GirlHome() {
         ) : null}
 
         <View style={styles.modes} onLayout={(e) => setModesW(e.nativeEvent.layout.width)}>
+          <GlassFill level="thick" radius={26} />
           <Animated.View style={[styles.modeThumb, { width: (modesW - 8) / 2 }, thumb]} />
           {(['all', 'moms'] as const).map((m) => (
             <PressableScale
@@ -617,10 +621,11 @@ export default function GirlHome() {
         name={safetyFor?.firstName ?? ''}
         visible={Boolean(safetyFor)}
         onClose={() => setSafetyFor(null)}
-        onHide={() => {
-          if (safetyFor) decide(safetyFor, 'pass');
+        onHide={async () => {
+          const c = safetyFor;
           setSafetyFor(null);
-          toast('Hidden from your discovery', 'eye', 'brand');
+          // Confirmed by the server first: on failure decide() puts her back and says why.
+          if (c && (await decide(c, 'pass'))) toast('Hidden from your discovery', 'eye', 'brand');
         }}
         onBlock={async () => {
           const c = safetyFor;
@@ -719,7 +724,7 @@ function CommunityTile({ c, away, onPress }: { c: { id: string; name: string; me
 }
 
 const styles = StyleSheet.create({
-  modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, backgroundColor: girl.surface, boxShadow: girl.shadow },
+  modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, zIndex: 0, boxShadow: girl.shadow },
   modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, backgroundColor: girl.rose },
   mode: { flex: 1, flexDirection: 'row', gap: 6, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   moving: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: space.gutter, marginTop: space[5], padding: 14, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },

@@ -20,7 +20,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { demoPhoto, demoPostsOf, findDemoCommunity, findDemoPlan, planGoing, planStartsAt, useDemoEngagement, useDemoGirl } from './demo';
 import { girl, GIRL_TINT, girlType } from './theme';
-import { GButton } from './ui';
+import { GButton, GlassFill } from './ui';
 import { GirlPostCard } from './world';
 
 /**
@@ -102,6 +102,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
         </View>
 
         <Animated.View entering={reduced ? undefined : enter.rise(3)} style={styles.card}>
+          <GlassFill level="thick" radius={radius.xl} />
           <View style={styles.row}>
             <AvatarStack people={people(c.faces)} size={30} max={5} />
             <Text variant="label" color={girl.ink} style={{ flex: 1 }}>
@@ -229,6 +230,7 @@ export function DemoPlanScreen({ id }: { id: string }) {
         </View>
 
         <Animated.View entering={reduced ? undefined : enter.rise(2)} style={styles.card}>
+          <GlassFill level="thick" radius={radius.xl} />
           <Fact icon="pin" text={p.place} />
           <Fact icon="users" text={tx('{n}/{max} going', { n, max: p.capacity })} />
           <Fact icon="ticket" text={tx('Free')} />
@@ -244,6 +246,7 @@ export function DemoPlanScreen({ id }: { id: string }) {
         </Animated.View>
 
         <Animated.View entering={reduced ? undefined : enter.rise(3)} style={[styles.card, { marginTop: 12 }]}>
+          <GlassFill level="thick" radius={radius.xl} />
           <Text variant="titleM" color={girl.ink} style={girlType.card}>
             {tx('Who’s going')}
           </Text>
@@ -330,7 +333,7 @@ const styles = StyleSheet.create({
   hero: { height: HERO, overflow: 'hidden', borderBottomLeftRadius: 32, borderBottomRightRadius: 32, backgroundColor: girl.blush },
   heroText: { flex: 1, justifyContent: 'flex-end', gap: 6, padding: space.gutter, paddingBottom: 28 },
   kicker: { letterSpacing: 1.6, fontWeight: '700' },
-  card: { marginHorizontal: space.gutter, marginTop: -22, padding: 16, gap: 12, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadow },
+  card: { marginHorizontal: space.gutter, marginTop: -22, padding: 16, gap: 12, borderRadius: radius.xl, zIndex: 0, boxShadow: girl.shadow },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, marginTop: space[6], marginBottom: space[4] },
   tab: { height: 38, paddingHorizontal: 16, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
