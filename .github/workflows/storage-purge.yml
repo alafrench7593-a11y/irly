@@ -1,12 +1,14 @@
 name: Storage purge
 
 # Removes the stored files of deleted accounts (and other leftovers queued in
-# private.storage_cleanup) through the Supabase Storage API. The server key
-# is read from the Management API at run time and masked; logs show counts
+# private.storage_cleanup) through the Supabase Storage API. Logs show counts
 # per bucket only. Safe to run as often as wanted: files are claimed with a
 # lease, a crashed run's files come back later, and a file is done only once
-# it is really gone. Needs SUPABASE_ACCESS_TOKEN (the same secret as the
-# Database workflow). Scheduled runs happen on the default branch only.
+# it is really gone. Scheduled runs happen on the default branch only.
+# Access, least first: SUPABASE_PURGE_KEY (this project's secret key, sb_secret_…,
+# through the REST API: no Management API call). SUPABASE_ACCESS_TOKEN (the
+# account-wide personal token) is only a fallback until the REST purge functions
+# (migration 20261021000000) are deployed; remove it from this file afterwards.
 
 on:
   schedule:
@@ -34,5 +36,9 @@ jobs:
           node-version: 22
       - name: Purge files of deleted accounts
         env:
+          SUPABASE_PURGE_KEY: ${{ secrets.SUPABASE_PURGE_KEY }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: node scripts/storage-purge.mjs
+        run: |
+          # Which secrets this run has (never their values).
+          echo "SUPABASE_PURGE_KEY: $([ -n "$SUPABASE_PURGE_KEY" ] && echo set || echo missing)"
+          node scripts/storage-purge.mjs

@@ -19,5 +19,7 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npx eslint src
+      - name: Storage purge script (local stand-ins, no network)
+        run: npm run -s test:purge
       - name: Web build
         run: npx expo export --platform web
