@@ -15,10 +15,10 @@ IRLY helps adults make friends in real life. Members join communities around sha
 
 - Email: `appreview@getirly.com`
 - Password: provided in the App Review Information fields.
-- Sign in: open the app, choose the Emirates as destination, go through the short welcome, then Profile tab → "Sign in or create an account" → email and password.
+- Sign in: open the app, choose the Emirates as destination, go through the short welcome, then Profile tab → "Sign in" → email and password.
 - The demo account is set in Dubai and is hidden from other members. It contains no personal data.
-- To try reporting and blocking: open any member profile, post, comment or message → "…" menu (or a long press) → Report / Block.
-- To try account deletion: Settings (gear) → My account → Delete account. This deletes the demo account for real; we can recreate it on request.
+- To try reporting and blocking: the "…" menu on a member profile or a post (Report, Block), "Report" under any comment, or a long press on a message in a chat.
+- To try account deletion: Settings (gear) → My account section → Delete account. This deletes the demo account for real; we can recreate it on request.
 
 **3. External services**
 
@@ -35,7 +35,7 @@ The app is available for the United Arab Emirates (Dubai and the other emirates)
 
 **5. Regulated content and third-party rights**
 
-IRLY does not offer gambling, medical, financial or other regulated services, and has no in-app purchases. All member content is user-generated and moderated: every profile, post, comment and message can be reported or its author blocked; reports are reviewed by the IRLY team and the community guidelines, accepted at sign-up, allow no tolerance for abusive content. Stock photos come from free libraries whose licence allows this use. **[À CONFIRMER]** A "Dubai News & Life" section can show headlines with a link to the original publisher; a source is only switched on after its terms of use have been checked, and none is active by default.
+IRLY does not offer gambling, medical, financial or other regulated services, and has no in-app purchases. All member content is user-generated and moderated: every profile, post, comment and message can be reported, and any member can be blocked; reports are reviewed by the IRLY team and the community guidelines, accepted at sign-up, allow no tolerance for abusive content. Stock photos come from free libraries whose licence allows this use. **[À CONFIRMER]** A "Dubai News & Life" section can show headlines with a link to the original publisher; a source is only switched on after its terms of use have been checked, and none is active by default.
 
 **6. Screen recording**
 
