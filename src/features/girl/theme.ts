@@ -24,9 +24,14 @@ export const girl = {
   ink: '#382832',
   inkSoft: '#7E6873',
   inkFaint: '#947F8A',
+  /** Warm off-white and a whisper of lavender, for washes behind glass. */
+  beige: '#F8F1EB',
+  lavender: '#F1ECF8',
   line: 'rgba(201,47,114,0.12)',
   glass: 'rgba(255,245,248,0.78)',
   glassDark: 'rgba(56,40,50,0.35)',
+  /** The rose veil laid over IRLY Girl's frosted glass (see GlassFill). */
+  glassRose: 'rgba(255,236,244,0.38)',
   positive: '#2F8F5E',
   critical: '#B3261E',
   /** The primary gradient (buttons): white text stays above 4.5:1 end to end. */

@@ -28,7 +28,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { girlPhotoFor } from './photos';
 import { girl, GIRL_TINT, girlType } from './theme';
-import { GButton } from './ui';
+import { GButton, GlassFill } from './ui';
 
 /* ───────── Kinds of plans ───────── */
 
@@ -541,6 +541,7 @@ export function Shortcuts({ items }: { items: { icon: IconName; label: string; o
       {items.map((s, i) => (
         <Animated.View key={s.label} entering={enter.pop(i, 180)} style={{ flex: 1 }}>
           <PressableScale haptic="select" scaleTo={0.94} onPress={s.onPress} accessibilityRole="button" accessibilityLabel={tx(s.label)} style={styles.shortcut}>
+            <GlassFill radius={radius.lg} />
             <View style={styles.shortcutIcon}>
               <Icon name={s.icon} size={18} color={girl.rose} />
             </View>
@@ -575,6 +576,6 @@ const styles = StyleSheet.create({
   postHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: girl.bg },
   shortcuts: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, marginTop: space[4] },
-  shortcut: { alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 2, borderRadius: radius.lg, backgroundColor: girl.surface, boxShadow: girl.shadow },
+  shortcut: { alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 2, borderRadius: radius.lg, zIndex: 0, boxShadow: girl.shadow },
   shortcutIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: girl.blush, alignItems: 'center', justifyContent: 'center' },
 });
