@@ -247,7 +247,7 @@ const T = {
       bubbles: {
         welcome: ["Girls brunch · Sat 11:00", "Sunrise yoga · Kite Beach"],
         feed: ["Girls, I just landed in Dubai and I’m looking for girls to discover the city with 🩷"],
-        comments: [["g-nour", "Welcome girl!! 🥹"], ["g-sofia", "We should organise a girls brunch!"], ["w-ana", "I’m new here too, let’s go together!"], ["g-ines", "Girls, on devrait vraiment créer un petit groupe."], ["g-hana", "Count me in 🤍"]],
+        comments: [["g-nour", "Welcome girl!! 🥹"], ["g-sofia", "We should organise a girls brunch!"], ["w-ana", "I’m new here too, let’s go together!"], ["g-ines", "Girls, we should really start a little group."], ["g-hana", "Count me in 🤍"]],
         connect: ["Sofía invited you to Girls brunch in Jumeirah", "You’re going · 6/8", "Yuna: Want to meet at the entrance at 6:15?"],
         world: "Example profiles of the demo",
         groups: ["Girls in Dubai", "New in Dubai", "Girls Brunch Club", "Coffee & Besties", "Fitness Girls", "Girls Who Travel", "Fashion & Beauty", "Solo Girls", "IRLY Girl Community"],
@@ -425,10 +425,10 @@ const T = {
         { shot: "girl-communities", k: "À toi", t: "Tes personnes sont peut-être plus proches que tu ne le crois.", p: "Ouvre IRLY Girl dans ton navigateur dès aujourd’hui. Les apps iPhone et Android arrivent bientôt." },
       ],
       bubbles: {
-        welcome: ["Girls brunch · sam. 11:00", "Sunrise yoga · Kite Beach"],
-        feed: ["Girls, I just landed in Dubai and I’m looking for girls to discover the city with 🩷"],
-        comments: [["g-nour", "Welcome girl!! 🥹"], ["g-sofia", "We should organise a girls brunch!"], ["w-ana", "I’m new here too, let’s go together!"], ["g-ines", "Girls, on devrait vraiment créer un petit groupe."], ["g-hana", "Count me in 🤍"]],
-        connect: ["Sofía t’invite à Girls brunch in Jumeirah", "Tu y vas · 6/8", "Yuna : On se retrouve à l’entrée à 6h15 ?"],
+        welcome: ["Brunch entre filles · sam. 11:00", "Yoga au lever du soleil · Kite Beach"],
+        feed: ["Les filles, je viens d’arriver à Dubaï et je cherche des copines pour découvrir la ville 🩷"],
+        comments: [["g-nour", "Bienvenue !! 🥹"], ["g-sofia", "On devrait organiser un brunch entre filles !"], ["w-ana", "Je suis nouvelle aussi, on y va ensemble !"], ["g-ines", "Les filles, on devrait vraiment créer un petit groupe."], ["g-hana", "Je viens 🤍"]],
+        connect: ["Sofía t’invite au brunch entre filles à Jumeirah", "Tu y vas · 6/8", "Yuna : On se retrouve à l’entrée à 6h15 ?"],
         world: "Profils d’exemple de la démo",
         groups: ["Girls in Dubai", "New in Dubai", "Girls Brunch Club", "Coffee & Besties", "Fitness Girls", "Girls Who Travel", "Fashion & Beauty", "Solo Girls", "IRLY Girl Community"],
       },

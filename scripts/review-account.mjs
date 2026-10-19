@@ -58,3 +58,19 @@ await sql(`
   insert into public.safety_settings (user_id, profile_visibility, who_can_message) values ('${id}', 'nobody', 'friends')
   on conflict (user_id) do update set profile_visibility = 'nobody';`);
 console.log('review account ready (hidden from members)');
+
+// Proof, not assumption: sign in the way the app does (public key, email +
+// password) and read the account's own profile through row level security.
+const URL = `https://${ref}.supabase.co`;
+const KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v';
+const signIn = await fetch(`${URL}/auth/v1/token?grant_type=password`, {
+  method: 'POST',
+  headers: { apikey: KEY, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: EMAIL, password }),
+});
+const session = await signIn.json().catch(() => ({}));
+if (!signIn.ok || !session.access_token) throw new Error(`sign-in check failed (${signIn.status})`);
+const me = await fetch(`${URL}/rest/v1/profiles?select=id,first_name&id=eq.${id}`, { headers: { apikey: KEY, Authorization: `Bearer ${session.access_token}` } });
+const rows = await me.json().catch(() => []);
+if (!me.ok || rows.length !== 1) throw new Error(`profile check failed (${me.status})`);
+console.log('✓ sign-in check: the app can sign in with this account and read its profile');
