@@ -76,6 +76,19 @@ export async function setCommunityCover(communityId: string, uri: string | null)
   changed('communities', 'inbox');
 }
 
+/** An activity's photo (its host, or the IRLY team): a picked image, or null to go back to the app's photo. */
+export async function setActivityCover(activityId: string, uri: string | null): Promise<void> {
+  if (!supabase) throw new Error('The IRLY server is not configured');
+  const path = uri ? await uploadCover(uri) : null;
+  const { error } = await supabase.rpc('set_activity_cover', { p_activity: activityId, p_path: path });
+  if (error) {
+    // Refused (no longer allowed, removed meanwhile): the photo just sent is not left behind.
+    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    throw new Error(error.message);
+  }
+  changed('activities', 'inbox');
+}
+
 /** A chat's photo: a picked image, or null to go back to the app's photo. */
 export async function setChatPhoto(conversationId: string, uri: string | null): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');

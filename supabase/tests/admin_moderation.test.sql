@@ -236,3 +236,39 @@ select pg_temp.as_user('a0d00000-0000-0000-0000-0000000000a1');
 select public.staff_set_role('a0d00000-0000-0000-0000-0000000000a2', null);
 select pg_temp.as_admin();
 select pg_temp.check(private.staff_role('a0d00000-0000-0000-0000-0000000000a2') is null, 'removing a role removes admin rights for good');
+
+-- ───────── Photos changed by the team ─────────
+select pg_temp.as_admin();
+insert into public.communities (id, city_id, name, created_by) values
+  ('a0d00000-0000-0000-0000-0000000000f1', 'dubai', 'Cover test club', 'a0d00000-0000-0000-0000-0000000000a4');
+insert into public.activities (id, title, category_id, city_id, area_id, starts_at, capacity, creator_id) values
+  ('a0d00000-0000-0000-0000-0000000000f2', 'Cover test run', 'sport', 'dubai', 'marina', now() + interval '2 days', 8, 'a0d00000-0000-0000-0000-0000000000a4');
+insert into public.staff_roles (user_id, role) values ('a0d00000-0000-0000-0000-0000000000a6', 'content');
+
+do $$
+begin
+  -- A member who is neither owner nor host cannot change either photo.
+  perform pg_temp.as_user('a0d00000-0000-0000-0000-0000000000a7');
+  perform pg_temp.check(pg_temp.fails($q$select public.set_community_cover('a0d00000-0000-0000-0000-0000000000f1', 'a0d00000-0000-0000-0000-0000000000a7/x.jpg')$q$) = '42501', 'a member cannot change a community photo');
+  perform pg_temp.check(pg_temp.fails($q$select public.set_activity_cover('a0d00000-0000-0000-0000-0000000000f2', 'a0d00000-0000-0000-0000-0000000000a7/x.jpg')$q$) = '42501', 'a member cannot change an activity photo');
+  -- A moderator is not content staff.
+  perform pg_temp.as_user('a0d00000-0000-0000-0000-0000000000a3');
+  perform pg_temp.check(pg_temp.fails($q$select public.set_activity_cover('a0d00000-0000-0000-0000-0000000000f2', 'a0d00000-0000-0000-0000-0000000000a3/x.jpg')$q$) = '42501', 'a moderator cannot change an activity photo');
+
+  -- Content staff can, with their own upload only.
+  perform pg_temp.as_user('a0d00000-0000-0000-0000-0000000000a6');
+  perform pg_temp.check(pg_temp.fails($q$select public.set_activity_cover('a0d00000-0000-0000-0000-0000000000f2', 'a0d00000-0000-0000-0000-0000000000a4/x.jpg')$q$) = '42501', 'staff cannot point a photo at someone else''s upload');
+  perform public.set_community_cover('a0d00000-0000-0000-0000-0000000000f1', 'a0d00000-0000-0000-0000-0000000000a6/club.jpg');
+  perform public.set_activity_cover('a0d00000-0000-0000-0000-0000000000f2', 'a0d00000-0000-0000-0000-0000000000a6/run.jpg');
+
+  -- The owner too; and the host keeps their own right.
+  perform pg_temp.as_user('a0d00000-0000-0000-0000-0000000000a1');
+  perform public.set_activity_cover('a0d00000-0000-0000-0000-0000000000f2', null);
+  perform pg_temp.as_user('a0d00000-0000-0000-0000-0000000000a4');
+  perform public.set_activity_cover('a0d00000-0000-0000-0000-0000000000f2', 'a0d00000-0000-0000-0000-0000000000a4/mine.jpg');
+end $$;
+
+select pg_temp.as_admin();
+select pg_temp.check((select cover_path from public.communities where id = 'a0d00000-0000-0000-0000-0000000000f1') = 'a0d00000-0000-0000-0000-0000000000a6/club.jpg', 'content staff set the community photo');
+select pg_temp.check((select cover_path from public.activities where id = 'a0d00000-0000-0000-0000-0000000000f2') = 'a0d00000-0000-0000-0000-0000000000a4/mine.jpg', 'the host still sets the activity photo');
+select pg_temp.check((select count(*) from private.admin_audit where action in ('cover.community', 'cover.activity')) = 3, 'every staff photo change is logged');

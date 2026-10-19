@@ -21,6 +21,9 @@ import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/cate
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
+import { CoverEditor } from '@/components/visual/CoverEditor';
+import { isContentStaff, useStaffRole } from '@/features/admin/api';
+import { setActivityCover } from '@/features/server/covers';
 import { cancelServerActivity, deleteServerActivity, icsFor, joinServerActivity, leaveServerActivity, updateServerActivity, useServerActivity } from '@/features/server/activities';
 import { Sheet } from '@/components/ui/Sheet';
 import { confirm } from '@/lib/confirm';
@@ -55,6 +58,7 @@ function ActivityPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const account = useAccount();
   const { detail: a, loading, error, refresh } = useServerActivity(id);
+  const contentStaff = isContentStaff(useStaffRole());
   const eng = useEngagement('activity', a ? [a.id] : []);
   const [busy, setBusy] = useState(false);
   const [managing, setManaging] = useState(false);
@@ -186,6 +190,9 @@ function ActivityPage() {
           <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, a.subId), uri: a.coverUrl }} light={city?.light} scrim="strong" style={StyleSheet.absoluteFill} width={1000} recyclingKey={`a-${a.id}`} drift />
           {!a.coverUrl && !reducedMotion && filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, a.subId)) ? (
             <Film uri={filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, a.subId))!} dim={0.4} />
+          ) : null}
+          {hosting || contentStaff ? (
+            <CoverEditor style={[styles.coverEdit, { top: insets.top + 56 }]} hasOwn={Boolean(a.coverUrl)} staff={contentStaff && !hosting} save={(picked) => setActivityCover(a.id, picked)} onChanged={refresh} />
           ) : null}
           <View style={[styles.coverText, { paddingBottom: space[5] }]}>
             <Text variant="overline" color="#FFFFFF">
@@ -372,6 +379,7 @@ function Centered({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   cover: { height: 360, justifyContent: 'flex-end' },
+  coverEdit: { position: 'absolute', right: space.gutter },
   coverText: { paddingHorizontal: space.gutter, gap: 6 },
   body: { padding: space.gutter, gap: 14 },
   fact: { flexDirection: 'row', alignItems: 'center', gap: 12 },
