@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
-import { useIsAdmin } from '@/features/verify/verify';
+import { isModerator, useStaffRole } from '@/features/admin/api';
 import { Button } from '@/components/ui/Button';
 import { Chip, Divider } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
@@ -47,7 +47,7 @@ const AUDIENCE = [
  * muted notification is never created).
  */
 export default function SettingsScreen() {
-  const admin = useIsAdmin();
+  const staff = isModerator(useStaffRole());
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
@@ -194,8 +194,7 @@ export default function SettingsScreen() {
         ) : null}
         <View style={{ gap: 8 }}>
           <Button label="Verify my profile (for Match)" icon="shield" variant="secondary" full onPress={() => router.push('/verify')} />
-          {admin ? <Button label="IRLY admin: verifications" icon="scanFace" variant="ghost" full onPress={() => router.push('/admin/verifications')} /> : null}
-          {admin ? <Button label="IRLY admin: news sources" icon="news" variant="ghost" full onPress={() => router.push('/admin/news')} /> : null}
+          {staff ? <Button label="IRLY back office" icon="shield" variant="ghost" full onPress={() => router.push('/admin')} /> : null}
         </View>
         <Audience label="Who can find my profile" value={safety.profile_visibility} onChange={(v) => saveSafety({ profile_visibility: v })} />
         <Audience label="Who sees my IRL moments by default" value={safety.irl_visibility} onChange={(v) => saveSafety({ irl_visibility: v })} />
