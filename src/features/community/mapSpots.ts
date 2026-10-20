@@ -33,6 +33,8 @@ export type Spot = {
   kind: 'meetup' | 'city';
   coords: LatLng;
   label: string;
+  /** Set on a marker that merges several places (zoomed out): how many. */
+  places?: number;
   communities: { c: MapCommunity; next: Meetup | null }[];
 };
 
@@ -101,4 +103,43 @@ export function spotBounds(spots: Spot[], cityId: CityId): { sw: LatLng; ne: Lat
     sw: { latitude: Math.min(...lats) - pad, longitude: Math.min(...lngs) - pad },
     ne: { latitude: Math.max(...lats) + pad, longitude: Math.max(...lngs) + pad },
   };
+}
+
+/** What the map shows right now: its span in degrees and its size in points. */
+export type MapView = { latSpan: number; lngSpan: number; width: number; height: number };
+
+/**
+ * Markers closer on screen than a pin's width merge into one, with the sum
+ * of their communities, so no count hides another. Positions stay real:
+ * a merged marker sits at the middle of the places it holds.
+ */
+export function clusterSpots(spots: Spot[], view: MapView | null, px = 48): Spot[] {
+  if (!view || !view.width || !view.height || spots.length < 2) return spots;
+  const cellLat = (view.latSpan * px) / view.height;
+  const cellLng = (view.lngSpan * px) / view.width;
+  const groups: Spot[][] = [];
+  const centre = (g: Spot[]) => ({
+    latitude: g.reduce((s, x) => s + x.coords.latitude, 0) / g.length,
+    longitude: g.reduce((s, x) => s + x.coords.longitude, 0) / g.length,
+  });
+  for (const s of [...spots].sort((a, b) => b.communities.length - a.communities.length)) {
+    const near = groups.find((g) => {
+      const c = centre(g);
+      return Math.abs(c.latitude - s.coords.latitude) < cellLat && Math.abs(c.longitude - s.coords.longitude) < cellLng;
+    });
+    if (near) near.push(s);
+    else groups.push([s]);
+  }
+  return groups.map((g) =>
+    g.length === 1
+      ? g[0]
+      : {
+          id: `cl:${g.map((s) => s.id).sort().join('+')}`,
+          kind: g.some((s) => s.kind === 'meetup') ? 'meetup' : 'city',
+          coords: centre(g),
+          label: '',
+          places: g.length,
+          communities: g.flatMap((s) => s.communities),
+        },
+  );
 }
