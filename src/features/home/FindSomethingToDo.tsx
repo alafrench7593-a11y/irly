@@ -20,7 +20,7 @@ import { openCreate } from '@/features/create/createStore';
 import { demoName, useDemoActivities } from '@/features/girl/demo';
 import { openHero } from '@/features/hero/heroStore';
 import { useServerActivities, type ServerActivity } from '@/features/server/activities';
-import { t as tx } from '@/i18n';
+import { t as tx, useLang } from '@/i18n';
 import { formatPrice } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { enter } from '@/motion/enter';
@@ -139,15 +139,16 @@ function fromDemo(h: Happening, joined: Record<string, boolean>, now: number): H
   const capacity = session ? session.spots : (h.item as IrlEvent).capacity;
   return {
     id: h.id,
-    title: h.title,
+    // The demo's own example plans have French in the dictionary (the cards show their text as is).
+    title: tx(h.title),
     categoryId: h.group,
     find: findKeyOf(h.group, session?.kind ?? null),
     visual,
     light: city.light,
     cityId: city.id,
     startsAt: midnight + h.item.when.dayOffset * 24 * HOUR + hh * HOUR + (mm || 0) * 60_000,
-    place: `${h.item.venue}`,
-    price: formatPrice(h.item.price, city.currency),
+    place: tx(h.item.venue),
+    price: tx(formatPrice(h.item.price, city.currency)),
     going: goingCount(h.item, Boolean(joined[h.id])),
     capacity: capacity || null,
     joined: Boolean(joined[h.id]),
@@ -171,15 +172,18 @@ export function useHomeActivities(cityId: CityId): { items: HomeActivity[]; load
   const joined = useStore((s) => s.joined);
   const signedIn = Boolean(useAccount());
   const now = useNow();
+  // Prices ("Free") and the demo's texts are translated when the list is built.
+  const lang = useLang();
   const content = DEMO ? getCityContent(cityId) : null;
   const items = useMemo(() => {
+    void lang; // rebuilt when the language changes
     let list: HomeActivity[];
     if (DEMO && inGirl) list = demoGirl.activities.map((a) => fromServer(a, cityId, true));
     else if (DEMO && content) list = [...content.sessions.map(fromSession), ...content.events.map(fromEvent)].map((h) => fromDemo(h, joined, now));
     else list = server.activities.map((a) => fromServer(a, cityId, false));
     // Over (two hours after the start, as the server's join): never listed.
     return list.filter((a) => a.startsAt + 2 * HOUR >= now).sort((a, b) => a.startsAt - b.startsAt);
-  }, [inGirl, demoGirl.activities, content, joined, now, server.activities, cityId]);
+  }, [inGirl, demoGirl.activities, content, joined, now, server.activities, cityId, lang]);
   if (DEMO) return { items, loading: false, error: null, refresh: () => undefined, signedIn: true };
   return { items, loading: server.loading, error: server.error, refresh: server.refresh, signedIn };
 }
