@@ -85,6 +85,12 @@ const DAY = 24 * 3600;
 const signed = new Map<string, { url: string; until: number }>();
 // Photos stored before small copies existed (signing their small copy failed).
 const noSmall = new Set<string>();
+
+/** Log out: signed photo links of the account that left are forgotten. */
+export function clearNetworkLinks(): void {
+  signed.clear();
+  noSmall.clear();
+}
 /**
  * Links for profile photos, keyed by the photo's path. Cards ask for the small
  * copy (256 px, next to the photo) when there is one, and get the photo itself

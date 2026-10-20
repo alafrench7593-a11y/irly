@@ -78,7 +78,8 @@ const stored = {
     }
   },
   async removeItem(key: string): Promise<void> {
-    await clearSecure(key).catch(() => undefined);
+    // One retry, then the failure is reported: a session left in the Keychain would sign the person back in at next launch.
+    await clearSecure(key).catch(() => clearSecure(key));
     await AsyncStorage.removeItem(key);
   },
 };
@@ -96,6 +97,12 @@ export const secureSessionStorage = {
   },
   async removeItem(key: string): Promise<void> {
     memory.set(key, null);
-    await queue(() => stored.removeItem(key));
+    try {
+      await queue(() => stored.removeItem(key));
+    } catch (e) {
+      // Not removed: forget the memory copy so the next read asks the Keychain again (and log out can tell).
+      memory.delete(key);
+      throw e;
+    }
   },
 };

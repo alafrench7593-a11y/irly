@@ -59,6 +59,11 @@ async function rpc<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 /** Signed link shown in the editor → the stored path it stands for. */
 const linkToPath = new Map<string, string>();
 
+/** Log out: the signed photo links of the account that left are forgotten. */
+export function clearMatchLinks(): void {
+  linkToPath.clear();
+}
+
 async function signedPhotos(paths: string[]): Promise<string[]> {
   if (!paths.length) return [];
   // IRLY avatars are stored as is and need no signing; order is kept.
