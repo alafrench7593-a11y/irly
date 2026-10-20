@@ -1,4 +1,5 @@
 import { t as tx, a11y } from '@/i18n';
+import { LinearGradient } from 'expo-linear-gradient';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -19,7 +20,9 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
+import { ProfilePhoto } from '@/features/match/ProfilePhoto';
 import { haptic } from '@/motion/haptics';
+import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
 import { radius } from '@/theme/tokens';
 import { reasonLines } from './suggest';
@@ -209,4 +212,118 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   goals: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   goal: { paddingHorizontal: 10, height: 26, borderRadius: 13, justifyContent: 'center', backgroundColor: girl.nude },
+});
+
+type TileProps = {
+  candidate: Candidate;
+  /** The card's width; the photo is 4:5 of it. */
+  width: number;
+  onOpen: () => void;
+  /** The same decisions as the deck and the profile sheet (`decide` on the Match screen). */
+  onPass: () => void;
+  onConnect: () => void;
+};
+
+/**
+ * A profile in the Match grid (two side by side on a phone): her photo in
+ * 4:5 (her full photo, never an enlarged avatar copy), first name and age
+ * when she shows it, where she is, two lines of her bio and what you share,
+ * then Not now / Connect. Tap the card for the full profile (save, block,
+ * report live there). Reusable wherever a Candidate is listed.
+ */
+export const CandidateTile = memo(function CandidateTile({ candidate: c, width, onOpen, onPass, onConnect }: TileProps) {
+  const city = CITIES[c.cityId as CityId];
+  const area = c.areas[0] && city ? areaName(city, c.areas[0]) : undefined;
+  const shared = reasonLines(c.reasons, labelOf, 2);
+  const compact = width < 200;
+  const photoH = Math.round(width * 1.25);
+  const badge = c.activeNow ? tx('Active now') : c.isNew ? (city ? tx('New in {city}', { city: city.name }) : tx('New in town')) : null;
+  return (
+    <View style={[tileStyles.card, { width }]}>
+      <PressableScale
+        haptic="select"
+        scaleTo={0.98}
+        onPress={onOpen}
+        accessibilityRole="button"
+        accessibilityLabel={a11y(
+          [`${c.firstName}${c.age ? `, ${c.age}` : ''}`, area, tx('{n}% match', { n: c.score }), c.bio, shared.join(', '), tx('Open profile')].filter(Boolean).join('. '),
+        )}
+      >
+        <View style={{ width, height: photoH }}>
+          <ProfilePhoto name={c.firstName} hue={c.hue} userId={c.userId} photos={c.photoUrls} ground={girl.blush} placeholderSize={compact ? 56 : 72} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={['rgba(36,18,30,0)', 'rgba(36,18,30,0.62)']} start={{ x: 0, y: 0.5 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+          <View style={tileStyles.top} pointerEvents="none">
+            {badge ? (
+              <View style={tileStyles.badge}>
+                {c.activeNow ? <View style={[styles.dot, { backgroundColor: '#5FD38D' }]} /> : <Icon name="sparkles" size={11} color={girl.rose} />}
+                <Text variant="caption" color={girl.plum} numberOfLines={1} raw style={{ flexShrink: 1 }}>
+                  {badge}
+                </Text>
+              </View>
+            ) : (
+              <View />
+            )}
+            <View style={tileStyles.score}>
+              <Icon name="sparkles" size={11} color="#F4B3CF" />
+              <Text variant="caption" color={girl.pearl} raw>
+                {`${c.score}%`}
+              </Text>
+            </View>
+          </View>
+          <View style={tileStyles.name} pointerEvents="none">
+            <Text variant="titleM" color={girl.pearl} numberOfLines={1} raw style={[girlType.card, compact ? { fontSize: 21, lineHeight: 25 } : null]}>
+              {c.firstName}
+              {c.age ? <Text variant="titleS" color="rgba(255,246,250,0.86)" raw>{`  ${c.age}`}</Text> : null}
+            </Text>
+            {area ? (
+              <Text variant="caption" color="rgba(255,246,250,0.86)" numberOfLines={1} raw>
+                {area}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+        <View style={tileStyles.body}>
+          {/* Always two lines tall, so the cards of a row line up whatever their bio. */}
+          <Text variant="bodyS" color={c.bio ? girl.ink : girl.inkSoft} numberOfLines={2} raw style={tileStyles.bio}>
+            {c.bio || c.goals.slice(0, 2).map((g) => tx(labelOf(g))).join(' · ')}
+          </Text>
+          <View style={tileStyles.shared}>
+            {shared.map((l) => (
+              <View key={l} style={styles.goal}>
+                <Text variant="caption" color={girl.plum} numberOfLines={1} raw>
+                  {l}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </PressableScale>
+      <View style={tileStyles.actions}>
+        <PressableScale haptic="tap" scaleTo={0.9} onPress={onPass} accessibilityRole="button" accessibilityLabel={tx('Not now, {name}', { name: c.firstName })} style={tileStyles.pass}>
+          <Icon name="x" size={18} color={girl.ink} />
+        </PressableScale>
+        <PressableScale haptic="press" scaleTo={0.95} onPress={onConnect} accessibilityRole="button" accessibilityLabel={tx('Connect with {name}', { name: c.firstName })} style={tileStyles.connect}>
+          <LinearGradient colors={girl.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: 20 }]} />
+          {compact ? null : <Icon name="heartHandshake" size={16} color="#FFFFFF" />}
+          <Text variant="label" color="#FFFFFF" numberOfLines={1} style={{ flexShrink: 1 }}>
+            Connect
+          </Text>
+        </PressableScale>
+      </View>
+    </View>
+  );
+});
+
+const tileStyles = StyleSheet.create({
+  card: { borderRadius: 24, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft, flex: 1 },
+  top: { position: 'absolute', top: 8, left: 8, right: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 6 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 24, paddingHorizontal: 8, borderRadius: radius.pill, backgroundColor: 'rgba(255,248,251,0.92)', flexShrink: 1 },
+  score: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 8, borderRadius: radius.pill, backgroundColor: 'rgba(74,36,64,0.82)' },
+  name: { position: 'absolute', left: 12, right: 12, bottom: 10, gap: 1 },
+  body: { paddingHorizontal: 12, paddingTop: 10, gap: 8 },
+  bio: { minHeight: 36 },
+  shared: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, minHeight: 26, overflow: 'hidden' },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, marginTop: 'auto' },
+  pass: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: girl.cream, borderWidth: 1, borderColor: girl.line },
+  connect: { flex: 1, height: 40, borderRadius: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, overflow: 'hidden', paddingHorizontal: 8 },
 });
