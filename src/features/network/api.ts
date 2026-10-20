@@ -248,6 +248,8 @@ export function usePros(cityId: string, filters: ProFilters) {
   // What the last answer was for: loading is "the answer is for other filters".
   const [res, setRes] = useState<{ for: string; list: ProProfile[]; error: string | null }>({ for: '', list: [], error: null });
   const [photos, setPhotos] = useState<Record<string, string>>({});
+  // "Try again" after a failure asks the server once more.
+  const [attempt, setAttempt] = useState(0);
 
   const load = useCallback(async () => {
     if (!uid || !supabase) return [];
@@ -286,7 +288,7 @@ export function usePros(cityId: string, filters: ProFilters) {
       alive = false;
       supabase?.removeChannel(channel);
     };
-  }, [uid, load, current]);
+  }, [uid, load, current, attempt]);
 
   /** Optimistic connection state for one card, while the server answers. */
   const setConnection = useCallback((userId: string, connection: ProProfile['connection']) => {
@@ -294,7 +296,8 @@ export function usePros(cityId: string, filters: ProFilters) {
   }, []);
 
   const on = Boolean(uid && supabase);
-  return { list: on ? res.list : NONE, photos, loading: on && res.for !== current, error: res.error, setConnection, signedIn: Boolean(uid) };
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  return { list: on ? res.list : NONE, photos, loading: on && res.for !== current, error: res.error, setConnection, retry, signedIn: Boolean(uid) };
 }
 
 /** One professional's profile. */

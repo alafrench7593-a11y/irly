@@ -37,12 +37,13 @@ export type CommunityMapProps = {
 export function useCommunityMapModel({ cityId, communities, status }: CommunityMapProps) {
   const meetups = useCommunityMeetups(cityId);
   const { spots } = useMemo(() => buildSpots(status === 'ready' ? communities : [], meetups), [communities, meetups, status]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  // A spot that left with a filter change closes its list.
-  const selected = spots.find((s) => s.id === selectedId) ?? null;
   // Refit when the set of places changes, not on every list reload.
   const fitKey = spots.map((s) => s.id).sort().join('|');
-  return { spots, selected, select: setSelectedId, fitKey };
+  // A selection belongs to the markers it was made on: another tab, search or theme closes it.
+  const [pick, setPick] = useState<{ id: string; key: string } | null>(null);
+  const selected = pick && pick.key === fitKey ? (spots.find((s) => s.id === pick.id) ?? null) : null;
+  const select = (id: string | null) => setPick(id ? { id, key: fitKey } : null);
+  return { spots, selected, select, fitKey };
 }
 
 /** The card the map sits in: rounded, thin border, like the app's glass cards. */
@@ -129,12 +130,18 @@ export function SpotPin({ spot, selected }: { spot: Spot; selected: boolean }) {
   );
 }
 
-export const pinLabel = (s: Spot) =>
-  a11y(
+export const pinLabel = (s: Spot) => {
+  const n = s.communities.length;
+  const label =
     s.kind === 'meetup'
-      ? tx('{place}: {n} communities meet here', { place: s.label, n: s.communities.length })
-      : tx('{city}: {n} communities', { city: s.label, n: s.communities.length }),
-  ) ?? s.label;
+      ? n === 1
+        ? tx('{place}: 1 community meets here', { place: s.label })
+        : tx('{place}: {n} communities meet here', { place: s.label, n })
+      : n === 1
+        ? tx('{city}: 1 community', { city: s.label })
+        : tx('{city}: {n} communities', { city: s.label, n });
+  return a11y(label) ?? label;
+};
 
 /** The communities of the tapped marker, over the bottom of the map. Each opens its page. */
 export function SpotSheet({ spot, cityId, onClose }: { spot: Spot; cityId: CityId; onClose: () => void }) {

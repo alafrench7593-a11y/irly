@@ -92,7 +92,7 @@ export function useDemoCommunitiesLike(_cityId: string, like: string, _girlOnly 
 
 export const findDemoPlan = (id: string) => DEMO_PLANS.find((p) => p.id === id);
 
-const CATEGORY: Record<string, string> = { padel: 'sport', yoga: 'wellness', brunch: 'food', coffee: 'food', shopping: 'shopping', walk: 'culture', beach: 'beach', playdate: 'family' };
+const CATEGORY: Record<string, string> = { padel: 'sport', yoga: 'wellness', brunch: 'food', coffee: 'food', shopping: 'shopping', walk: 'culture', beach: 'outdoor', playdate: 'family' };
 
 /** When a demo plan starts (from the demo's one clock). */
 export function planStartsAt(p: DemoPlan): number {
