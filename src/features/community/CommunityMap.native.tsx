@@ -7,7 +7,7 @@ import { t as tx } from '@/i18n';
 import { haptic } from '@/motion/haptics';
 import { useTheme } from '@/theme/useTheme';
 import { MapError, MapFrame, MapNotice, MapSkeleton, noticeFor, pinLabel, SpotPin, SpotSheet, useCommunityMapModel, type CommunityMapProps } from './CommunityMapParts';
-import { spotBounds, type MapView } from './mapSpots';
+import { spotBounds, type MapSpan } from './mapSpots';
 
 /**
  * Phones: the communities of the list on the same real map as the Map tab
@@ -28,7 +28,7 @@ function Engine(props: CommunityMapProps) {
   const [ready, setReady] = useState(false);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [region, setRegion] = useState<{ latitudeDelta: number; longitudeDelta: number } | null>(null);
-  const view = useMemo<MapView | null>(() => (region && size.width ? { latSpan: region.latitudeDelta, lngSpan: region.longitudeDelta, ...size } : null), [region, size]);
+  const view = useMemo<MapSpan | null>(() => (region && size.width ? { latSpan: region.latitudeDelta, lngSpan: region.longitudeDelta, ...size } : null), [region, size]);
   const { spots, shown, selected, select, fitKey } = useCommunityMapModel(props, view);
   const centre = cityCoords(cityId) ?? { latitude: 25.2, longitude: 55.27 };
 

@@ -106,14 +106,14 @@ export function spotBounds(spots: Spot[], cityId: CityId): { sw: LatLng; ne: Lat
 }
 
 /** What the map shows right now: its span in degrees and its size in points. */
-export type MapView = { latSpan: number; lngSpan: number; width: number; height: number };
+export type MapSpan = { latSpan: number; lngSpan: number; width: number; height: number };
 
 /**
  * Markers closer on screen than a pin's width merge into one, with the sum
  * of their communities, so no count hides another. Positions stay real:
  * a merged marker sits at the middle of the places it holds.
  */
-export function clusterSpots(spots: Spot[], view: MapView | null, px = 48): Spot[] {
+export function clusterSpots(spots: Spot[], view: MapSpan | null, px = 48): Spot[] {
   if (!view || !view.width || !view.height || spots.length < 2) return spots;
   const cellLat = (view.latSpan * px) / view.height;
   const cellLng = (view.lngSpan * px) / view.width;

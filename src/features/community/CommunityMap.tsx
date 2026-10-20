@@ -7,7 +7,7 @@ import { t as tx } from '@/i18n';
 import { haptic } from '@/motion/haptics';
 import { useTheme } from '@/theme/useTheme';
 import { MapError, MapFrame, MapNotice, MapSkeleton, noticeFor, pinLabel, SpotPin, SpotSheet, useCommunityMapModel, type CommunityMapProps } from './CommunityMapParts';
-import { spotBounds, type MapView } from './mapSpots';
+import { spotBounds, type MapSpan } from './mapSpots';
 
 /** OpenFreeMap: OpenStreetMap vector tiles, free for any use, no key (same as the Map tab). */
 const STYLE = {
@@ -45,7 +45,7 @@ function Engine(props: CommunityMapProps & { onFail: () => void }) {
   const host = useRef<View>(null);
   const [map, setMap] = useState<MapLibre | null>(null);
   const [, setTick] = useState(0);
-  const [view, setView] = useState<MapView | null>(null);
+  const [view, setView] = useState<MapSpan | null>(null);
   const { spots, shown, selected, select, fitKey } = useCommunityMapModel(props, view);
 
   useEffect(() => {

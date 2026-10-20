@@ -16,7 +16,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { CommunityThumb } from './CommunityThumb';
-import { buildSpots, clusterSpots, useCommunityMeetups, type MapCommunity, type MapView, type Spot } from './mapSpots';
+import { buildSpots, clusterSpots, useCommunityMeetups, type MapCommunity, type MapSpan, type Spot } from './mapSpots';
 import { displayCommunityName } from './name';
 
 /** Compact: the list under it stays on screen. */
@@ -34,7 +34,7 @@ export type CommunityMapProps = {
 };
 
 /** Markers and selection, shared by the web and phone maps. */
-export function useCommunityMapModel({ cityId, communities, status }: CommunityMapProps, view: MapView | null) {
+export function useCommunityMapModel({ cityId, communities, status }: CommunityMapProps, view: MapSpan | null) {
   const meetups = useCommunityMeetups(cityId);
   const { spots } = useMemo(() => buildSpots(status === 'ready' ? communities : [], meetups), [communities, meetups, status]);
   // Refit when the set of places changes, not on every list reload.
@@ -78,7 +78,7 @@ export function MapError({ onRetry }: { onRetry: () => void }) {
         Can’t load the map right now
       </Text>
       <Text variant="bodyS" tone="secondary" align="center">
-        The communities are still listed below.
+        Check your connection, then try again.
       </Text>
       <Button label="Try again" size="sm" icon="repeat" onPress={onRetry} style={{ marginTop: 6 }} />
     </View>
