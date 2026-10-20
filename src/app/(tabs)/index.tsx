@@ -9,7 +9,6 @@ import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
-import { EventCard } from '@/components/cards/EventCards';
 import { ActivityTile, Carousel, fromEvent, fromSession, HighlightCard, IdeaCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
 import { CommunityCard, PlaceCard } from '@/components/cards/ThingCards';
 import { useFrame } from '@/components/layout/AppFrame';
@@ -35,8 +34,7 @@ import { GirlPortals } from '@/features/home/Portals';
 import { ExploreDoors } from '@/features/home/Explore';
 import { DiscoverCategories } from '@/features/home/HomeActivities';
 import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
-import { LiveStrip } from '@/features/live/LiveStrip';
-import { useLives } from '@/features/live/liveStore';
+import { LiveStrip, useLiveFaces } from '@/features/live/LiveStrip';
 import { isHappeningNow } from '@/lib/time';
 import { FEATURES } from '@/lib/features';
 import { useNow } from '@/lib/useNow';
@@ -57,7 +55,7 @@ import { HOME_SECTIONS, type HomeSection } from '@/features/home/sections';
 /**
  * Home answers one question: "I just arrived. What can I do, and who can I
  * do it with?" It opens on the city itself (an immersive photo and the
- * question), then who is live, the one thing happening now, people, and a
+ * question), then who is live, today's real plans, the one thing happening now, people, and a
  * rhythm of compositions (a big card, faces, rails, a grid of doors) so the
  * page never reads as a list of identical rows. What fits this moment of
  * the day leads; every category stays one tap away at the end.
@@ -94,7 +92,8 @@ export default function Home() {
   // Plans the server has are listed from the server (one copy, live); these are the phone-only ones.
   const myPlans = useStore((s) => s.myPlans).filter((p) => p.cityId === cityId && !p.serverId);
   const upcoming = upcomingPlans(myPlans);
-  const lives = useLives();
+  // Who is live, as « Live now » shows them (the server's Lives included).
+  const lives = useLiveFaces();
   const [sheet, setSheet] = useState(false);
   const now = useNow();
   const scrollY = useSharedValue(0);
@@ -335,17 +334,6 @@ export default function Home() {
             </Rail>
           </ScrollReveal>
         ) : null;
-      case 'events':
-        return (
-          <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader title="Events this week" action="See all" onAction={() => router.push('/events')} />
-            <Rail itemWidth={236}>
-              {content.events.slice(0, 8).map((e) => (
-                <EventCard key={`ev-${e.id}`} event={e} width={236} height={320} />
-              ))}
-            </Rail>
-          </ScrollReveal>
-        );
       case 'yourCommunities':
         return (
           <ScrollReveal scrollY={scrollY} style={styles.section}>

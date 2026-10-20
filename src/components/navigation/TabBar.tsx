@@ -6,7 +6,6 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
-import { Avatar } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -16,7 +15,6 @@ import { FEATURES } from '@/lib/features';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { scale, spring } from '@/motion/tokens';
-import { useStore } from '@/state/store';
 import { font, layout, radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -24,16 +22,32 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
   index: { label: 'Home', icon: 'home' },
   discover: { label: 'Discover', icon: 'compass' },
   map: { label: 'Map', icon: 'map' },
-  profile: { label: 'Profile', icon: 'user' },
 };
 
 /**
- * Slot order in the bar. `match` is the Match IRLY disc, exactly in the middle
- * (people to meet); `live` just left of it is the live feed, spelled out so
- * nobody has to guess where it is; `settings` opens the settings screen.
+ * Slot order in the bar. `network` (IRLY Network, the professional side)
+ * opens the bar on the left; `match` is the Match IRLY disc, exactly in the
+ * middle (people to meet); `live` just left of it is the live feed, spelled
+ * out so nobody has to guess where it is. Your profile is at the top left of
+ * every tab root, Settings at its top right.
  * Creating (activity, event, post, live, community) starts from Create on Home.
  */
-const SLOTS = ['index', 'discover', 'live', 'match', 'map', 'profile', 'settings'] as const;
+const SLOTS = ['network', 'index', 'live', 'match', 'discover', 'map'] as const;
+const MATCH_AT = SLOTS.indexOf('match');
+
+/**
+ * Where each slot sits: Match IRLY gets an even share and stays in the
+ * middle of the bar; the slots on each side share their half.
+ */
+function slotFrames(barW: number): { x: number; w: number }[] {
+  const matchW = barW / SLOTS.length;
+  const half = (barW - matchW) / 2;
+  const left = half / MATCH_AT;
+  const right = half / (SLOTS.length - MATCH_AT - 1);
+  return SLOTS.map((_, i) =>
+    i < MATCH_AT ? { x: i * left, w: left } : i === MATCH_AT ? { x: half, w: matchW } : { x: half + matchW + (i - MATCH_AT - 1) * right, w: right },
+  );
+}
 
 const SIDE = 12;
 
@@ -56,15 +70,17 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const frame = useFrame();
   const insets = useSafeAreaInsets();
   const barW = frame.width - SIDE * 2;
-  const itemW = barW / SLOTS.length;
+  const frames = slotFrames(barW);
+  const pillW = Math.min(56, Math.min(...frames.map((f) => f.w)) - 4);
   const activeName = state.routes[state.index]?.name;
   const activeSlot = Math.max(0, SLOTS.indexOf(activeName as (typeof SLOTS)[number]));
-  const x = useSharedValue(activeSlot * itemW);
+  const pillX = frames[activeSlot].x + (frames[activeSlot].w - pillW) / 2;
+  const x = useSharedValue(pillX);
   const reduced = useReducedMotion();
 
   useEffect(() => {
-    x.set(reduced ? activeSlot * itemW : withSpring(activeSlot * itemW, spring.medium));
-  }, [activeSlot, itemW, x, reduced]);
+    x.set(reduced ? pillX : withSpring(pillX, spring.medium));
+  }, [pillX, x, reduced]);
 
   // Stack screens like Messages light no tab.
   const offBar = !SLOTS.includes(activeName as (typeof SLOTS)[number]);
@@ -86,8 +102,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             style={[
               styles.indicator,
               {
-                left: (itemW - Math.min(56, itemW - 4)) / 2,
-                width: Math.min(56, itemW - 4),
+                left: 0,
+                width: pillW,
                 opacity: offBar ? 0 : 1,
                 backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.09)' : 'rgba(10,10,10,0.07)',
                 // Mixte: a hairline edge on the lit pill, like the glass around it (IRLY Girl keeps her soft veil).
@@ -97,7 +113,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               indicator,
             ]}
           />
-          {SLOTS.map((slot) => {
+          {SLOTS.map((slot, i) => {
+            const itemW = frames[i].w;
             // Match IRLY is drawn above the bar (below), so it can rise out of it.
             if (slot === 'match') return <View key={slot} style={{ width: itemW }} />;
             if (slot === 'live')
@@ -112,19 +129,18 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   }}
                 />
               );
-            if (slot === 'settings')
+            if (slot === 'network')
               return (
                 <TabItem
                   key={slot}
-                  label={tx('Settings')}
-                  icon="settings"
-                  isProfile={false}
+                  label={tx('Network')}
+                  icon="network"
                   badge={0}
                   focused={false}
                   width={itemW}
                   onPress={() => {
                     haptic('select');
-                    router.push('/preferences' as never);
+                    router.push('/network');
                   }}
                 />
               );
@@ -144,7 +160,6 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 key={route.key}
                 label={tx(meta.label)}
                 icon={meta.icon}
-                isProfile={slot === 'profile'}
                 badge={0}
                 focused={focused}
                 width={itemW}
@@ -153,9 +168,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             );
           })}
         </Glass>
-        <View style={[styles.irlSlot, { left: SLOTS.indexOf('match') * itemW, width: itemW }]} pointerEvents="box-none">
+        <View style={[styles.irlSlot, { left: frames[MATCH_AT].x, width: frames[MATCH_AT].w }]} pointerEvents="box-none">
           <MatchButton
-            width={itemW}
+            width={frames[MATCH_AT].w}
             onPress={() => {
               haptic('press');
               router.push('/match' as never);
@@ -173,7 +188,6 @@ const TabItem = memo(function TabItem({
   focused,
   width,
   onPress,
-  isProfile,
   badge,
 }: {
   label: string;
@@ -181,12 +195,9 @@ const TabItem = memo(function TabItem({
   focused: boolean;
   width: number;
   onPress: () => void;
-  isProfile: boolean;
   badge: number;
 }) {
   const t = useTheme();
-  const name = useStore((s) => s.profile.name);
-  const photo = useStore((s) => s.profile.photoUri);
   const reduced = useReducedMotion();
   const pop = useSharedValue(focused ? scale.selected : 1);
   useEffect(() => {
@@ -206,13 +217,7 @@ const TabItem = memo(function TabItem({
       accessibilityLabel={label}
     >
       <Animated.View style={iconStyle}>
-        {isProfile ? (
-          <View style={{ borderRadius: 14, borderWidth: 1.5, borderColor: focused ? t.c.text : 'transparent', padding: 1 }}>
-            <Avatar name={name || 'You'} hue={0} size={22} photo={photo} />
-          </View>
-        ) : (
-          <Icon name={icon} size={22} color={color} strokeWidth={focused ? 2.1 : 1.75} />
-        )}
+        <Icon name={icon} size={22} color={color} strokeWidth={focused ? 2.1 : 1.75} />
         {badge ? (
           <View style={[styles.badge, { backgroundColor: t.c.live, borderColor: t.c.surface }]}>
             <Text variant="caption" color="#FFFFFF" style={{ fontSize: 10, lineHeight: 12 }}>

@@ -13,7 +13,7 @@ import { APP, DEMO } from '@/config/app';
 import { CITIES, DESTINATIONS } from '@/data/destinations';
 import { deleteServerAccount, exportMyData, goPublic, signOut, useAccount } from '@/features/auth/account';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
-import { a11y, LANGS, t as tx, useLangStore } from '@/i18n';
+import { a11y, LANGS, resolveLang, t as tx, useLangStore } from '@/i18n';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { setAppSpace, useAppSpace } from '@/state/appSpace';
@@ -23,7 +23,7 @@ import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
- * Settings, in one place (the gear on your profile and in the tab bar):
+ * Settings, in one place (the gear on your profile and at the top right of every tab root):
  * my account, privacy, notifications, security, language & preferences,
  * IRLY features, help, legal. Every row opens a screen or does something
  * real; nothing here only looks like a setting.
@@ -33,7 +33,8 @@ export function SettingsSections() {
   const router = useRouter();
   const inGirl = useAppSpace() === 'girl';
   const account = useAccount();
-  const langSetting = useLangStore((s) => s.setting);
+  // The language the app is in: English or French (not chosen yet, the phone's).
+  const lang = resolveLang(useLangStore((s) => s.setting));
   const setLang = useLangStore((s) => s.set);
   const cityId = useCityId();
   const city = CITIES[cityId];
@@ -155,7 +156,7 @@ export function SettingsSections() {
       </Section>
 
       <Section index={4} title="Language & preferences">
-        <SettingLink icon="languages" label="Language" value={LANGS.find((l) => l.id === langSetting)?.label} onPress={() => setLangSheet(true)} />
+        <SettingLink icon="languages" label="Language" value={LANGS.find((l) => l.id === lang)?.label} onPress={() => setLangSheet(true)} />
         <Divider inset={16} />
         <SettingLink
           icon={t.mode === 'night' ? 'moon' : 'sun'}
@@ -263,12 +264,12 @@ export function SettingsSections() {
                 }}
                 style={styles.settingRow}
                 accessibilityRole="radio"
-                accessibilityState={{ selected: langSetting === l.id }}
+                accessibilityState={{ selected: lang === l.id }}
               >
                 <Text variant="titleS" style={{ flex: 1 }} raw>
-                  {l.id === 'auto' ? tx('Same as my phone') : l.label}
+                  {l.label}
                 </Text>
-                {langSetting === l.id ? <Icon name="check" size={18} color={t.c.text} /> : null}
+                {lang === l.id ? <Icon name="check" size={18} color={t.c.text} /> : null}
               </PressableScale>
             </View>
           ))}

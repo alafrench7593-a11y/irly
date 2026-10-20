@@ -22,7 +22,7 @@ import { useFrame } from '@/components/layout/AppFrame';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Field } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
-import { InboxButtons } from '@/components/navigation/Headers';
+import { InboxButtons, ProfileButton } from '@/components/navigation/Headers';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { ACTIVITIES, SERVICE_CATEGORIES } from '@/data/catalog';
@@ -297,6 +297,7 @@ export default function Discover() {
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
         <View style={{ paddingTop: insets.top + space[3] }}>
           <Animated.View style={[styles.head, styles.headRow, titleStyle]}>
+            <ProfileButton />
             <View style={{ flex: 1 }}>
               <Text variant="overline" tone="secondary">
                 {city.name}
