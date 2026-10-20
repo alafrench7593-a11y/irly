@@ -22,6 +22,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Tab = 'foryou' | 'all' | 'mine';
 
@@ -289,7 +290,8 @@ function Row({
   };
   return (
     <Animated.View entering={FadeIn.duration(180)}>
-      <PressableScale onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={name}>
+      <PressableScale onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name}>
+        <GlassLayer radius={radius.lg} />
         <CommunityThumb id={id} name={name} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size={44} member={isMember} />
         <View style={{ flex: 1 }}>
           <Text variant="titleS" numberOfLines={1} raw>

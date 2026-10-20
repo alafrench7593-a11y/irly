@@ -11,6 +11,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useFrame } from '@/components/layout/AppFrame';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Door = { label: string; caption: string; icon: IconName; photo: PhotoKey; href: string };
 
@@ -78,7 +79,8 @@ export default function BaliHub() {
         <View style={[styles.pad, { gap: 10 }]}>
           <Text variant="titleM">Areas, explained</Text>
           {profiles.data.map((p) => (
-            <PressableScale key={p.areaId} onPress={() => router.push(`/bali/area/${p.areaId}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={p.name}>
+            <PressableScale key={p.areaId} onPress={() => router.push(`/bali/area/${p.areaId}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={p.name}>
+              <GlassLayer radius={radius.lg} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" raw>{p.name}</Text>
                 <Text variant="caption" tone="secondary" numberOfLines={1}>

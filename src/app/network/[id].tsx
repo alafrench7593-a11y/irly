@@ -24,6 +24,7 @@ import { useT } from '@/i18n';
 import { enter } from '@/motion/enter';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /** A professional's profile: who they are, what they build, why you fit. */
 export default function ProProfileScreen() {
@@ -122,7 +123,8 @@ export default function ProProfileScreen() {
           </Text>
           <View style={styles.wrap}>
             {pro.industries.map((i) => (
-              <View key={i} style={[styles.tag, { borderColor: t.c.line, backgroundColor: t.c.surface }]}>
+              <View key={i} style={[styles.tag, { borderColor: t.c.line, backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                <GlassLayer radius={radius.pill} />
                 <Text variant="label" raw>{`${INDUSTRY[i].emoji} ${tr(INDUSTRY[i].label)}`}</Text>
               </View>
             ))}
@@ -158,7 +160,8 @@ export default function ProProfileScreen() {
               {pro.intents.map((i) => {
                 const shared = me.pro?.intents.includes(i);
                 return (
-                  <View key={i} style={[styles.tag, { borderColor: shared ? t.c.text : t.c.line, backgroundColor: t.c.surface }]}>
+                  <View key={i} style={[styles.tag, { borderColor: shared ? t.c.text : t.c.line, backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                    <GlassLayer radius={radius.pill} />
                     <Text variant="label" raw>{`${INTENT[i].emoji} ${tr(INTENT[i].label)}`}</Text>
                   </View>
                 );

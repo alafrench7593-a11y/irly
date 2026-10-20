@@ -24,6 +24,7 @@ import { LOOKING_LABEL } from '@/data/lookingFor';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const GOALS = LOOKING_LABEL;
 
@@ -115,7 +116,8 @@ function Match() {
         )}
       </View>
 
-      <View style={[styles.how, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+      <View style={[styles.how, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]}>
+        <GlassLayer radius={radius.xl} />
         <Text variant="overline" tone="tertiary">
           How Match IRLY works
         </Text>
@@ -161,7 +163,8 @@ function MatchCard({ person, photo, cityId, onSkip }: { person: PeopleMatch; pho
   };
 
   return (
-    <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+    <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+      <GlassLayer radius={radius.xl} />
       <PressableScale onPress={() => router.push(`/person/${person.id}`)} haptic="select" scaleTo={0.98} style={styles.head} accessibilityLabel={tx('Open {name}’s profile', { name: person.firstName })}>
         <Avatar name={person.firstName} hue={hueOf(person.id)} size={56} photo={photo} userId={person.id} verified />
         <View style={{ flex: 1, gap: 2 }}>

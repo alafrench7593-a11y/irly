@@ -12,6 +12,7 @@ import { timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Recent = { id: string; title: string; status: 'published' | 'hidden'; category: NewsCategory; sponsored: boolean; published_at: string; source_id: string | null };
 
@@ -55,7 +56,8 @@ export default function NewsAdmin() {
           <ActivityIndicator color={t.c.text} />
         ) : (
           sources.map((s) => (
-            <View key={s.id} style={[styles.card, { backgroundColor: t.c.surface }]}>
+            <View key={s.id} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="titleS" raw>
                 {s.name}
               </Text>
@@ -82,7 +84,8 @@ export default function NewsAdmin() {
         <NewArticle onDone={load} />
         <Text variant="titleM">Latest articles</Text>
         {recent.map((a) => (
-          <View key={a.id} style={[styles.card, { backgroundColor: t.c.surface, opacity: a.status === 'hidden' ? 0.5 : 1 }]}>
+          <View key={a.id} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', opacity: a.status === 'hidden' ? 0.5 : 1 }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="label" raw>
               {a.title}
             </Text>
@@ -131,7 +134,8 @@ function NewSource({ onDone }: { onDone: () => void }) {
       })
       .catch((e) => toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live'));
   return (
-    <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+    <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+      <GlassLayer radius={radius.xl} />
       <Text variant="titleS">Add a source (off until checked)</Text>
       <TextInput value={name} onChangeText={setName} placeholder={tx('Name')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Name')} />
       <TextInput value={site} onChangeText={setSite} placeholder="https://…" autoCapitalize="none" placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Website')} />
@@ -167,7 +171,8 @@ function NewArticle({ onDone }: { onDone: () => void }) {
       })
       .catch((e) => toast(e instanceof Error ? e.message : 'Could not publish', 'x', 'live'));
   return (
-    <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+    <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+      <GlassLayer radius={radius.xl} />
       <Text variant="titleS">Add an article by hand</Text>
       <TextInput value={title} onChangeText={setTitle} placeholder={tx('Title')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Title')} />
       <TextInput value={summary} onChangeText={(v) => setSummary(v.slice(0, 600))} placeholder={tx('Short summary')} placeholderTextColor={t.c.textTertiary} style={[input, { height: 80 }]} multiline accessibilityLabel={a11y('Summary')} />

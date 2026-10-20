@@ -31,6 +31,7 @@ import { Glass } from '../ui/Glass';
 import { Icon, type IconName } from '../ui/Icon';
 import { Text } from '../ui/Text';
 import { Photo } from '../visual/Photo';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /* ───────── One shape for "something happening" ───────── */
 
@@ -127,9 +128,9 @@ export const HappeningRow = memo(function HappeningRow({ h }: { h: Happening }) 
       ref={ref}
       onPress={onPress}
       scaleTo={0.98}
-      style={[styles.row, { backgroundColor: t.c.surface, borderColor: t.c.line, opacity: hidden ? 0 : 1 }]}
+      style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}
       accessibilityLabel={`${h.title}, ${whenLabel(h.item.when, city)}`}
-    >
+    ><GlassLayer radius={radius.xl} />
       <Photo visual={photoOf(h)} light={city.light} style={styles.thumb} width={200} recyclingKey={`${h.id}-thumb`} />
       <View style={{ flex: 1, gap: 3 }}>
         <View style={styles.inline}>

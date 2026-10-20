@@ -12,6 +12,7 @@ import { timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * IRLY admins: selfies waiting for review. Compare the selfie (and its
@@ -77,7 +78,8 @@ function Review({ v, onDone }: { v: PendingVerification; onDone: () => void }) {
   };
   const g = GESTURES[v.gesture];
   return (
-    <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+    <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+      <GlassLayer radius={radius.xl} />
       <Text variant="titleS" raw>
         {v.firstName} · {timeAgo(Math.max(0, Math.round((now - v.submittedAt) / 60000)))}
       </Text>

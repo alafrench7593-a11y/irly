@@ -21,6 +21,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const EMPTY = (cityId: string): ProDraft => ({
   role: 'founder',
@@ -138,7 +139,8 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
   if (!me.signedIn) {
     return (
       <Page overline="Networking" title="Professional profile">
-        <View style={[styles.box, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
+        <View style={[styles.box, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
+          <GlassLayer radius={radius.xl} />
           <Text variant="body" tone="secondary">
             Sign in to create your professional profile.
           </Text>
@@ -246,7 +248,8 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
           </Text>
         </Section>
 
-        <PressableScale haptic="select" scaleTo={0.98} onPress={() => set('visible', !d.visible)} style={[styles.toggle, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityRole="switch" accessibilityState={{ checked: d.visible }}>
+        <PressableScale haptic="select" scaleTo={0.98} onPress={() => set('visible', !d.visible)} style={[styles.toggle, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]} accessibilityRole="switch" accessibilityState={{ checked: d.visible }}>
+          <GlassLayer radius={radius.lg} />
           <View style={{ flex: 1, gap: 2 }}>
             <Text variant="titleS">Show me in Networking</Text>
             <Text variant="caption" tone="tertiary">

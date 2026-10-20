@@ -20,6 +20,7 @@ import { friendlyError } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
+import { Flavor } from '@/theme/flavor';
 
 type Status = NonNullable<CircleMember['status']>;
 const STATUSES: { id: Status; label: string }[] = [
@@ -36,7 +37,7 @@ const LOOKING = ['friends', 'activities', 'travel companions', 'coworking', 'wel
  * there. Same IRLY Girl rules (women only, privacy, blocking), plus the
  * Bali girl communities and the move guides.
  */
-export default function GirlsMovingScreen() {
+function GirlsMovingScreenInner() {
   return (
     <GirlGate>
       <GirlsMoving />
@@ -294,3 +295,12 @@ const styles = StyleSheet.create({
   card: { backgroundColor: girl.surface, borderRadius: radius.xl, padding: 16, boxShadow: girl.shadowSoft },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });
+
+/** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */
+export default function GirlsMovingScreen() {
+  return (
+    <Flavor value="girl">
+      <GirlsMovingScreenInner />
+    </Flavor>
+  );
+}

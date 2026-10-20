@@ -31,6 +31,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * Your profile. Signed in: the same profile other members see (identity,
@@ -138,7 +139,7 @@ function LocalProfile() {
             ))}
 
           </Animated.View>
-          <Animated.View entering={enter.rise(3)} style={[styles.stats, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+          <Animated.View entering={enter.rise(3)} style={[styles.stats, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.lg} />
             {/* Same counters as a signed-in profile; without an account nobody can follow you yet. */}
             <Stat value={0} label="Followers" onPress={() => router.push('/account')} />
             <View style={[styles.vr, { backgroundColor: t.c.line }]} />
@@ -157,7 +158,7 @@ function LocalProfile() {
               </Text>
             ) : null}
             {profile.interests.map((i) => (
-              <View key={i} style={[styles.tag, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+              <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.pill} level="thin" />
                 <Icon name={INTERESTS[i].icon} size={14} color={t.c.textSecondary} />
                 <Text variant="label">{INTERESTS[i].label}</Text>
               </View>
@@ -222,7 +223,7 @@ function LocalProfile() {
           </Animated.View>
         ) : null}
 
-        <Animated.View entering={enter.rise(7)} style={[styles.signin, { backgroundColor: t.c.surface }]}>
+        <Animated.View entering={enter.rise(7)} style={[styles.signin, { backgroundColor: 'transparent', overflow: 'hidden' }]}><GlassLayer radius={radius.lg} />
           <Text variant="titleS">Your profile is on this phone only</Text>
           <Text variant="bodyS" tone="secondary">
             Sign in to share it with other members: followers, friends, posts, lives, activities and communities.
@@ -258,7 +259,7 @@ function Stat({ value, label, onPress }: { value: number; label: string; onPress
 function Row({ icon, title, meta, onPress }: { icon: IconName; title: string; meta: string; onPress: () => void }) {
   const t = useTheme();
   return (
-    <PressableScale onPress={onPress} style={[styles.row, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <PressableScale onPress={onPress} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.lg} />
       <View style={[styles.rowIcon, { backgroundColor: t.light.accentSoft }]}>
         <Icon name={icon} size={18} color={t.accent} />
       </View>

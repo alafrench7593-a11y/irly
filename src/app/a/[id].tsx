@@ -35,6 +35,7 @@ import { addToPhoneCalendar } from '@/lib/phoneCalendar';
 import { useNow } from '@/lib/useNow';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 // The activity's own city time, wherever the phone is.
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
@@ -206,7 +207,8 @@ function ActivityPage() {
 
         <Animated.View entering={FadeIn.duration(260)} style={styles.body}>
           {a.cancelled ? (
-            <View style={[styles.banner, { backgroundColor: t.c.surface }]}>
+            <View style={[styles.banner, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              <GlassLayer radius={radius.lg} />
               <Icon name="x" size={18} color={t.c.live} />
               <Text variant="body">This activity was cancelled.</Text>
             </View>

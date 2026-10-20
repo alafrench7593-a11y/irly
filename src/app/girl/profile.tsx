@@ -25,6 +25,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { friendlyError } from '@/lib/supabase';
 import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
+import { Flavor } from '@/theme/flavor';
 
 /** Signup languages (native names) → IRLY Match language ids. */
 const SIGNUP_LANG: Record<string, string> = { English: 'en', Français: 'fr', العربية: 'ar', हिन्दी: 'hi', Русский: 'ru', Español: 'es', Italiano: 'it', Deutsch: 'de', Bahasa: 'id' };
@@ -51,7 +52,7 @@ const toggle = (list: string[], id: string, max = 99) =>
 const GIRL_PICKER = { ink: girl.ink, soft: girl.inkSoft, surface: girl.surface, accent: girl.rose, line: girl.line };
 
 /** IRLY Match is coming soon: its onboarding and profile wait, IRLY Girl opens instead. */
-export default function GirlProfileScreenGate() {
+function GirlProfileScreenGateInner() {
   return FEATURES.girlMatch ? <GirlProfileScreen /> : <Redirect href="/girl" />;
 }
 
@@ -481,3 +482,12 @@ const styles = StyleSheet.create({
   note: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: radius.lg, backgroundColor: girl.blush },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.gutter, paddingTop: 12, gap: 8, backgroundColor: girl.bg },
 });
+
+/** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */
+export default function GirlProfileScreenGate() {
+  return (
+    <Flavor value="girl">
+      <GirlProfileScreenGateInner />
+    </Flavor>
+  );
+}

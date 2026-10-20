@@ -44,6 +44,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * Home answers one question: "I just arrived. What can I do, and who can I
@@ -201,7 +202,7 @@ export default function Home() {
               {upcoming.slice(0, 3).map((p) => {
                 const d = planDisplay(p);
                 return (
-                  <View key={p.id} style={[styles.mine, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+                  <View key={p.id} style={[styles.mine, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.xl} />
                     <View style={[styles.mineIcon, { backgroundColor: `${d.color}1F` }]}>
                       <Icon name={d.icon} size={18} color={d.color} />
                     </View>

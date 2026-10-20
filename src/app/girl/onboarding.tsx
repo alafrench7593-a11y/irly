@@ -22,6 +22,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { friendlyError } from '@/lib/supabase';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
+import { Flavor } from '@/theme/flavor';
 
 type Slide = { photo: PhotoKey; title: string; body: string; points?: { icon: IconName; text: string }[]; flow?: string[] };
 
@@ -73,7 +74,7 @@ const SLIDES: Slide[] = [
  * stretch for the current slide. Completion is stored server-side.
  */
 /** IRLY Match is coming soon: its onboarding and profile wait, IRLY Girl opens instead. */
-export default function GirlOnboardingScreenGate() {
+function GirlOnboardingScreenGateInner() {
   return FEATURES.girlMatch ? <GirlOnboardingScreen /> : <Redirect href="/girl" />;
 }
 
@@ -245,3 +246,12 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', gap: 6, alignSelf: 'center' },
   dot: { height: 8, borderRadius: 4, backgroundColor: girl.rose },
 });
+
+/** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */
+export default function GirlOnboardingScreenGate() {
+  return (
+    <Flavor value="girl">
+      <GirlOnboardingScreenGateInner />
+    </Flavor>
+  );
+}

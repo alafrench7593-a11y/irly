@@ -1,23 +1,24 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Page } from '@/components/layout/Page';
-import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
-import { Text } from '@/components/ui/Text';
-import { toast } from '@/components/ui/Toast';
-import { useAccount } from '@/features/auth/account';
-import { unblockUser, useBlocked } from '@/features/moderation/moderation';
-import { useT } from '@/i18n';
-import { confirm } from '@/lib/confirm';
-import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { Page } from "@/components/layout/Page";
+import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
+import { Text } from "@/components/ui/Text";
+import { toast } from "@/components/ui/Toast";
+import { useAccount } from "@/features/auth/account";
+import { unblockUser, useBlocked } from "@/features/moderation/moderation";
+import { useT } from "@/i18n";
+import { confirm } from "@/lib/confirm";
+import { radius, space } from "@/theme/tokens";
+import { useTheme } from "@/theme/useTheme";
+import { GlassLayer } from "@/components/ui/GlassLayer";
 
-const hueOf = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
+const hueOf = (id: string) =>
+  [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
 
 /** The members you blocked, to unblock them (Settings → Blocked members). */
 export default function BlockedMembers() {
-  const t = useTheme();
   const tr = useT();
   const router = useRouter();
   const account = useAccount();
@@ -25,10 +26,18 @@ export default function BlockedMembers() {
   const [busy, setBusy] = useState<string | null>(null);
 
   return (
-    <Page overline="Settings" title="Blocked members" subtitle="People you blocked cannot see you, contact you or appear in your suggestions.">
+    <Page
+      overline="Settings"
+      title="Blocked members"
+      subtitle="People you blocked cannot see you, contact you or appear in your suggestions."
+    >
       <View style={styles.body}>
         {!account ? (
-          <Button label="Sign in" icon="user" onPress={() => router.push('/account')} />
+          <Button
+            label="Sign in"
+            icon="user"
+            onPress={() => router.push("/account")}
+          />
         ) : error ? (
           <View style={{ gap: 10 }}>
             <Text variant="body" tone="secondary">
@@ -42,8 +51,20 @@ export default function BlockedMembers() {
           </Text>
         ) : (
           list.map((b) => (
-            <View key={b.userId} style={[styles.row, { backgroundColor: t.c.surface }]}>
-              <Avatar name={b.firstName} hue={hueOf(b.userId)} size={44} userId={b.userId} />
+            <View
+              key={b.userId}
+              style={[
+                styles.row,
+                { backgroundColor: "transparent", overflow: "hidden" },
+              ]}
+            >
+              <GlassLayer radius={radius.lg} />
+              <Avatar
+                name={b.firstName}
+                hue={hueOf(b.userId)}
+                size={44}
+                userId={b.userId}
+              />
               <Text variant="titleS" style={{ flex: 1 }} raw>
                 {b.firstName}
               </Text>
@@ -54,18 +75,30 @@ export default function BlockedMembers() {
                 loading={busy === b.userId}
                 onPress={() =>
                   confirm(
-                    tr('Unblock {name}? You may see each other again.', { name: b.firstName }),
+                    tr("Unblock {name}? You may see each other again.", {
+                      name: b.firstName,
+                    }),
                     () => {
                       setBusy(b.userId);
                       unblockUser(b.userId)
                         .then(() => {
-                          toast(tr('{name} is unblocked', { name: b.firstName }), 'check', 'brand');
+                          toast(
+                            tr("{name} is unblocked", { name: b.firstName }),
+                            "check",
+                            "brand",
+                          );
                           refresh();
                         })
-                        .catch(() => toast(tr('Could not unblock. Try again.'), 'x', 'live'))
+                        .catch(() =>
+                          toast(
+                            tr("Could not unblock. Try again."),
+                            "x",
+                            "live",
+                          ),
+                        )
                         .finally(() => setBusy(null));
                     },
-                    'Unblock',
+                    "Unblock",
                   )
                 }
               />
@@ -79,5 +112,11 @@ export default function BlockedMembers() {
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: space.gutter, gap: 10 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 12,
+    borderRadius: radius.lg,
+  },
 });

@@ -44,6 +44,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Tab = 'posts' | 'activities' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
@@ -260,7 +261,8 @@ function CommunityScreen() {
                   Can’t reach IRLY right now. Check your connection.
                 </Text>
               ) : !feed.loading && !feed.posts.length ? (
-                <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+                <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                  <GlassLayer radius={radius.xl} />
                   <Icon name="message" size={22} color={t.c.textSecondary} />
                   <Text variant="body" tone="secondary" align="center">
                     {c.isMember ? 'No posts yet. Say hi or ask the assistant for ideas.' : 'No posts yet. Join to start the conversation.'}
@@ -299,7 +301,8 @@ function CommunityScreen() {
               </View>
               {acts.activities.length ? (
                 acts.activities.map((a) => (
-                  <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
+                  <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
+                    <GlassLayer radius={radius.xl} />
                     <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
                     <View style={{ flex: 1 }}>
                       <Text variant="titleS" numberOfLines={1} raw>
@@ -405,7 +408,8 @@ function Assistant({
   const chips = ['Organise padel Saturday 9am', 'Poll: Saturday or Sunday?', "What's new this week?", 'Post ideas'];
 
   return (
-    <View style={[styles.assist, { backgroundColor: t.c.surface }]}>
+    <View style={[styles.assist, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <Icon name="sparkles" size={18} color={t.c.text} />
         <Text variant="titleS" style={{ flex: 1 }}>
@@ -631,7 +635,8 @@ function PostCard({
   const now = useNow();
   const total = p.pollCounts.reduce((n, x) => n + x, 0);
   return (
-    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
+    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
         <View style={{ flex: 1 }}>
@@ -780,7 +785,8 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
           <Button label="Introduce myself" icon="message" variant={c.introFirst ? 'inverse' : 'secondary'} onPress={introduce} />
         </Animated.View>
       ) : null}
-      <PressableScale haptic="select" onPress={() => setRules((x) => !x)} style={[styles.card, { backgroundColor: t.c.surface }]} accessibilityRole="button" accessibilityState={{ expanded: rules }} accessibilityLabel="Community guidelines">
+      <PressableScale haptic="select" onPress={() => setRules((x) => !x)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityRole="button" accessibilityState={{ expanded: rules }} accessibilityLabel="Community guidelines">
+        <GlassLayer radius={radius.xl} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Icon name="shield" size={16} color={t.c.text} />
           <Text variant="label" style={{ flex: 1 }}>

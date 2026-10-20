@@ -18,6 +18,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { addChannel, announce, communityPeople, createSubgroup, deleteChannel, renameChannel, setCommunityPrefs, setRole, type Channel, type CommunityPrefs, type Parent, type Person, type Rights, type Subgroup } from './groups';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /** "← IRLY Sport" on a group's page. */
 export function ParentLink({ parent }: { parent: Parent }) {
@@ -52,7 +53,8 @@ export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChan
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
         {groups.map((g) => (
-          <PressableScale key={g.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${g.id}`)} style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel={g.name}>
+          <PressableScale key={g.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${g.id}`)} style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]} accessibilityLabel={g.name}>
+            <GlassLayer radius={radius.xl} />
             <Text style={{ fontSize: 24 }} raw>
               {g.emoji ?? '💬'}
             </Text>
@@ -130,7 +132,8 @@ export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: st
               ['announcements', 'Announcements', 'Important news from its hosts (at most 3 a day).'],
             ] as const
           ).map(([key, title, body]) => (
-            <View key={key} style={[styles.toggle, { backgroundColor: t.c.surface }]}>
+            <View key={key} style={[styles.toggle, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              <GlassLayer radius={radius.xl} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleS">{title}</Text>
                 <Text variant="bodyS" tone="secondary">
@@ -166,7 +169,8 @@ export function HostTools({ communityId, name, rights, isTop, official, parentId
         .catch((e) => toast(e instanceof Error ? e.message : tx('Could not delete'), 'x', 'live')),
     );
   return (
-    <View style={[styles.pad, styles.tools, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <View style={[styles.pad, styles.tools, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <Icon name="shield" size={16} color={t.c.text} />
         <Text variant="titleS" style={{ flex: 1 }}>

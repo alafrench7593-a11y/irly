@@ -36,6 +36,7 @@ import { haptic } from "@/motion/haptics";
 import { PressableScale } from "@/motion/PressableScale";
 import { useCityId } from "@/state/store";
 import { font, radius, space } from "@/theme/tokens";
+import { Flavor } from "@/theme/flavor";
 
 const NAME_MIN = 3;
 const NAME_MAX = 60;
@@ -50,7 +51,7 @@ const NAME_MAX = 60;
  * checks the creator's access and hides it from everyone without IRLY Girl.
  * Once created, the community opens: its page, its members, its chat.
  */
-export default function GirlNewCommunity() {
+function GirlNewCommunityInner() {
   const { moms, city } = useLocalSearchParams<{
     moms?: string;
     city?: string;
@@ -649,3 +650,12 @@ const styles = StyleSheet.create({
     boxShadow: girl.shadow,
   },
 });
+
+/** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */
+export default function GirlNewCommunity() {
+  return (
+    <Flavor value="girl">
+      <GirlNewCommunityInner />
+    </Flavor>
+  );
+}

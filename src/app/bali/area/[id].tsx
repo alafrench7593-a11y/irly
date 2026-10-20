@@ -18,6 +18,7 @@ import { useServerActivities } from '@/features/server/activities';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const TRAITS: { id: Trait; label: string; invert?: boolean }[] = [
   { id: 'beach', label: 'Beach' },
@@ -102,7 +103,8 @@ export default function BaliArea() {
                 <Chip key={b} size="sm" icon="x" label={tx(b)} />
               ))}
             </View>
-            <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+            <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              <GlassLayer radius={radius.xl} />
               {TRAITS.map((tr) => {
                 const v = profile.traits[tr.id];
                 if (v == null) return null;
@@ -169,7 +171,8 @@ export default function BaliArea() {
           <Text variant="titleM">{tx('Happening in {area}', { area: name })}</Text>
           {here.length ? (
             here.slice(0, 6).map((a) => (
-              <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
+              <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
+                <GlassLayer radius={radius.lg} />
                 <Icon name="calendar" size={18} color={t.c.text} />
                 <View style={{ flex: 1 }}>
                   <Text variant="titleS" numberOfLines={1}>
@@ -213,7 +216,8 @@ export default function BaliArea() {
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
               {places.data.slice(0, 10).map((p) => (
-                <PressableScale key={p.id} onPress={() => router.push(`/place/${p.slug}`)} haptic="select" scaleTo={0.97} style={[styles.place, { backgroundColor: t.c.surface }]} accessibilityLabel={p.name}>
+                <PressableScale key={p.id} onPress={() => router.push(`/place/${p.slug}`)} haptic="select" scaleTo={0.97} style={[styles.place, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={p.name}>
+                  <GlassLayer radius={radius.lg} />
                   {p.photo ? <Image source={{ uri: p.photo }} style={styles.placePhoto} contentFit="cover" /> : <Photo visual={{ photo: 'dinner' }} light="bali" style={styles.placePhoto} width={400} />}
                   <View style={{ padding: 10, gap: 2 }}>
                     <Text variant="titleS" numberOfLines={1} raw>

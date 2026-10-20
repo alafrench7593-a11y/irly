@@ -8,6 +8,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Door = { title: string; line: string; icon: IconName; route: string; women?: boolean };
 
@@ -31,7 +32,7 @@ export const ExploreDoors = memo(function ExploreDoors() {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {DOORS.filter((d) => !d.women || woman).map((d) => (
-        <PressableScale key={d.route} haptic="select" scaleTo={0.97} onPress={() => router.push(d.route as never)} style={[styles.door, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel={`${tx(d.title)}. ${tx(d.line)}`}>
+        <PressableScale key={d.route} haptic="select" scaleTo={0.97} onPress={() => router.push(d.route as never)} style={[styles.door, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={`${tx(d.title)}. ${tx(d.line)}`}><GlassLayer radius={radius.xl} />
           <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
             <Icon name={d.icon} size={18} color={t.c.text} />
           </View>
