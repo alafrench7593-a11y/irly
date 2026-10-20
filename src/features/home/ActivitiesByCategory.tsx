@@ -6,7 +6,7 @@ import { ActivityCard, fromEvent, fromSession, gridTile, GRID_GAP, type Activity
 import { useFrame } from '@/components/layout/AppFrame';
 import { Button } from '@/components/ui/Button';
 import { Chip, SectionHeader } from '@/components/ui/Controls';
-import { type IconName } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { DEMO } from '@/config/app';
@@ -27,6 +27,7 @@ import { enter } from '@/motion/enter';
 import { useAppSpace } from '@/state/appSpace';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
 
 /* ───────── The filters: what members look for, on the catalog's categories ───────── */
 
@@ -190,50 +191,58 @@ export function useHomeActivities(cityId: CityId): { items: HomeActivity[]; load
 
 /* ───────── The section ───────── */
 
+/** Cards a category shows before « See all ». */
+const PER_GROUP = 4;
 const PAGE = 8;
 
+type Group = { key: FindKey; label: string; icon: IconName; items: HomeActivity[] };
+
 /**
- * « Find something to do »: the activities of the destination as a grid of
- * photo cards (two per row on phones, three or four on wider screens),
- * filtered by what you feel like. The same section, at the same size, in
- * IRLY and IRLY Girl.
+ * « Activities by category »: every upcoming activity of the destination,
+ * grouped under its category (the catalog's, never guessed from a title),
+ * each category a grid of photo cards (two per row on phones, three or four
+ * on wider screens). The chips jump to one category. The same section, at
+ * the same size, in IRLY and IRLY Girl.
  */
-export function FindSomethingToDo({ cityId: given }: { cityId?: CityId } = {}) {
+export function ActivitiesByCategory({ cityId: given }: { cityId?: CityId } = {}) {
   const current = useCityId();
   const cityId = given ?? current;
   const router = useRouter();
+  const t = useTheme();
   const frame = useFrame();
   const reduced = useReducedMotion();
   const { items, loading, error, refresh, signedIn } = useHomeActivities(cityId);
   const [filter, setFilter] = useState<FindKey | null>(null);
-  const [shown, setShown] = useState(PAGE);
+  // Cards shown per category (a category starts with PER_GROUP, « See all » opens it).
+  const [shown, setShown] = useState<Partial<Record<FindKey, number>>>({});
   // The section's own width (the framed phone on tablets is narrower than its frame by its borders).
   const [surface, setSurface] = useState(frame.width);
   const { width } = gridTile(surface);
 
-  const counts = useMemo(() => {
-    const m = new Map<FindKey, number>();
-    for (const a of items) m.set(a.find, (m.get(a.find) ?? 0) + 1);
-    return m;
+  const groups = useMemo<Group[]>(() => {
+    const by = new Map<FindKey, HomeActivity[]>();
+    for (const a of items) by.set(a.find, [...(by.get(a.find) ?? []), a]);
+    return FIND_FILTERS.filter((f) => by.has(f.key)).map((f) => ({ ...f, items: by.get(f.key) ?? [] }));
   }, [items]);
-  const chips = FIND_FILTERS.filter((f) => (counts.get(f.key) ?? 0) > 0);
-  // A chip whose activities are all gone (joined full, cancelled) falls back to everything.
-  const active = filter && counts.get(filter) ? filter : null;
-  const list = useMemo(() => (active ? items.filter((a) => a.find === active) : items), [items, active]);
-  const visible = list.slice(0, shown);
+  // Categories with nothing planned yet, named once at the end (never an empty grid).
+  const empty = FIND_FILTERS.filter((f) => f.key !== 'other' && !groups.some((g) => g.key === f.key));
+  // A chip whose activities are all gone (joined full, cancelled) falls back to every category.
+  const active = filter && groups.some((g) => g.key === filter) ? filter : null;
+  const listed = active ? groups.filter((g) => g.key === active) : groups;
+  const limitOf = (k: FindKey) => shown[k] ?? (active ? PAGE : PER_GROUP);
   const pick = (k: FindKey | null) => {
     setFilter(k);
-    setShown(PAGE);
+    setShown({});
   };
 
   return (
     <View onLayout={(e) => setSurface(Math.floor(e.nativeEvent.layout.width) || frame.width)}>
-      <SectionHeader overline="Everything to do" title="Find something to do" />
-      {chips.length > 1 ? (
+      <SectionHeader overline="Everything to do" title="Activities by category" />
+      {groups.length > 1 ? (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           <Chip size="sm" label="All" selected={!active} onPress={() => pick(null)} />
-          {chips.map((f) => (
-            <Chip key={f.key} size="sm" label={f.label} icon={f.icon} selected={active === f.key} onPress={() => pick(active === f.key ? null : f.key)} />
+          {groups.map((g) => (
+            <Chip key={g.key} size="sm" label={`${tx(g.label)} · ${g.items.length}`} icon={g.icon} selected={active === g.key} onPress={() => pick(active === g.key ? null : g.key)} />
           ))}
         </ScrollView>
       ) : null}
@@ -267,16 +276,48 @@ export function FindSomethingToDo({ cityId: given }: { cityId?: CityId } = {}) {
         </View>
       ) : (
         <>
-          <View style={styles.grid}>
-            {visible.map((a, i) => (
-              <Animated.View key={`${active ?? 'all'}-${a.id}`} entering={reduced ? undefined : enter.rise(Math.min(i % PAGE, 6))}>
-                <ActivityCard item={a} width={width} onPress={() => a.open(router)} />
-              </Animated.View>
-            ))}
-          </View>
-          {list.length > shown ? (
-            <View style={styles.more}>
-              <Button label={tx('Show more ({n})', { n: list.length - shown })} size="sm" variant="secondary" icon="chevronDown" onPress={() => setShown((n) => n + PAGE)} />
+          {listed.map((g) => {
+            const limit = limitOf(g.key);
+            return (
+              <View key={g.key} style={styles.group}>
+                <View style={styles.groupHead} accessibilityRole="header">
+                  <View style={[styles.groupIcon, { backgroundColor: t.c.surface }]}>
+                    <Icon name={g.icon} size={15} color={t.c.text} />
+                  </View>
+                  <Text variant="titleS" style={{ flex: 1 }} numberOfLines={1}>
+                    {g.label}
+                  </Text>
+                  <Text variant="caption" tone="tertiary">
+                    {tx(g.items.length === 1 ? '{n} activity' : '{n} activities', { n: g.items.length })}
+                  </Text>
+                </View>
+                <View style={styles.grid}>
+                  {g.items.slice(0, limit).map((a, i) => (
+                    <Animated.View key={`${active ?? 'all'}-${a.id}`} entering={reduced ? undefined : enter.rise(Math.min(i % PAGE, 6))}>
+                      <ActivityCard item={a} width={width} onPress={() => a.open(router)} />
+                    </Animated.View>
+                  ))}
+                </View>
+                {g.items.length > limit ? (
+                  <View style={styles.more}>
+                    <Button
+                      label={tx('See all ({n})', { n: g.items.length })}
+                      size="sm"
+                      variant="secondary"
+                      icon="chevronDown"
+                      onPress={() => setShown((m) => ({ ...m, [g.key]: active ? limit + PAGE : g.items.length }))}
+                    />
+                  </View>
+                ) : null}
+              </View>
+            );
+          })}
+          {!active && empty.length ? (
+            <View style={styles.emptyRow}>
+              <Text variant="caption" tone="tertiary" style={{ flex: 1 }}>
+                {tx('Nothing planned yet in {list}.', { list: empty.map((f) => tx(f.label)).join(', ') })}
+              </Text>
+              <Button label="Plan one" size="sm" variant="ghost" icon="plus" onPress={() => openCreate(null)} />
             </View>
           ) : null}
         </>
@@ -287,7 +328,11 @@ export function FindSomethingToDo({ cityId: given }: { cityId?: CityId } = {}) {
 
 const styles = StyleSheet.create({
   chips: { paddingHorizontal: space.gutter, gap: 8, paddingBottom: 12 },
+  group: { marginTop: space[4], gap: 12 },
+  groupHead: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: space.gutter },
+  groupIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, paddingHorizontal: space.gutter },
   state: { paddingHorizontal: space.gutter, paddingVertical: space[5], alignItems: 'center', gap: space[4] },
-  more: { alignItems: 'center', marginTop: space[5] },
+  more: { alignItems: 'center', marginTop: space[2] },
+  emptyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.gutter, marginTop: space[5] },
 });

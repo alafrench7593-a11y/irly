@@ -25,7 +25,7 @@ export const HOME_SECTIONS = [
   'yourCommunities',
   'communities',
   'forYou',
-  'find',
+  'byCategory',
   'footer',
 ] as const;
 

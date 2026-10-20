@@ -22,7 +22,7 @@ import { useTheme } from '@/theme/useTheme';
 import { PressableScale } from '@/motion/PressableScale';
 import { useAccount } from '@/features/auth/account';
 import { supabase } from '@/lib/supabase';
-import { useHomeActivities, type HomeActivity } from '@/features/home/FindSomethingToDo';
+import { useHomeActivities, type HomeActivity } from '@/features/home/ActivitiesByCategory';
 import { useRecommendations } from './activities';
 
 /** Category groups rendered at first; « Show more » adds as many again. */
