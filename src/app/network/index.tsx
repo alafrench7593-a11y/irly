@@ -238,7 +238,7 @@ export default function NetworkDiscover() {
             </Text>
             {ranked.map(({ p, m }, i) => (
               <Animated.View key={p.userId} entering={FadeInDown.springify().dampingRatio(0.9).delay(Math.min(i, 6) * 50)} layout={LinearTransition.springify().dampingRatio(0.9)}>
-                <ProCard pro={p} photo={p.photoPath ? photos[p.photoPath] : undefined} match={m} onConnection={(c) => setConnection(p.userId, c)} />
+                <ProCard pro={p} photo={p.photoPath ? photos[p.photoPath] : undefined} match={m} mine={me.pro} onConnection={(c) => setConnection(p.userId, c)} />
               </Animated.View>
             ))}
           </>

@@ -48,6 +48,22 @@ export const ROLES: { id: RoleId; label: string }[] = [
 
 export const ROLE_LABEL: Record<RoleId, string> = Object.fromEntries(ROLES.map((r) => [r.id, r.label])) as Record<RoleId, string>;
 
+/**
+ * The four choices of the profile editor. 'founder' is an older id, still
+ * stored on some profiles: it reads as Entrepreneur there until saved again.
+ */
+export const ROLE_CHOICES: { id: Exclude<RoleId, 'founder'>; label: string; hint: string; icon: 'rocket' | 'laptop' | 'briefcase' | 'banknote' }[] = [
+  { id: 'entrepreneur', label: 'Entrepreneur', hint: 'I run my own company', icon: 'rocket' },
+  { id: 'freelancer', label: 'Freelancer', hint: 'I work for my own clients', icon: 'laptop' },
+  { id: 'employee', label: 'Employee', hint: 'I work in a team', icon: 'briefcase' },
+  { id: 'investor', label: 'Investor', hint: 'I back companies', icon: 'banknote' },
+];
+
+export const roleChoice = (r: RoleId): Exclude<RoleId, 'founder'> => (r === 'founder' ? 'entrepreneur' : r);
+
+/** One-tap job titles in the profile editor (the field stays free text). */
+export const JOB_SUGGESTIONS = ['Founder', 'CEO', 'Product Manager', 'Software Engineer', 'Marketing Manager', 'Designer', 'Investor', 'Business Developer'];
+
 export type IntentId = 'meet' | 'cofounder' | 'clients' | 'investors' | 'partners' | 'freelancers' | 'suppliers' | 'grow' | 'ideas' | 'opportunities' | 'job';
 
 export type Intent = { id: IntentId; emoji: string; label: string; /** "you're both looking for …" */ both: string };
@@ -65,6 +81,9 @@ export const INTENTS: Intent[] = [
   { id: 'opportunities', emoji: '🎯', label: 'Find opportunities', both: 'opportunities' },
   { id: 'job', emoji: '🔎', label: 'Find a job', both: 'a job' },
 ];
+
+/** The goals offered in the editor: 'meet' is an older one, kept on profiles that have it but no longer offered. */
+export const GOALS: Intent[] = INTENTS.filter((i) => i.id !== 'meet');
 
 export const INTENT: Record<IntentId, Intent> = Object.fromEntries(INTENTS.map((i) => [i.id, i])) as Record<IntentId, Intent>;
 

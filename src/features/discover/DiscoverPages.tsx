@@ -249,7 +249,7 @@ export function ActivitiesPage({ cityId, scrollY, top, bottom }: PageProps) {
       ) : null}
 
       <ScrollReveal scrollY={scrollY} style={hasSoon ? styles.section : styles.first}>
-        <SectionHeader overline="Every kind of plan" title="Find something to do" />
+        <SectionHeader overline="Every kind of plan" title="Browse by category" />
         <View style={styles.doors}>
           {doors.map((d) => (
             <DoorTile key={d.label} door={d} width={doorW} light={city.light} />

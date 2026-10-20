@@ -33,7 +33,7 @@ import { HomeHero } from '@/features/home/HomeHero';
 import { HomeBackdrop } from '@/features/home/HomeBackdrop';
 import { GirlPortals } from '@/features/home/Portals';
 import { ExploreDoors } from '@/features/home/Explore';
-import { FindSomethingToDo } from '@/features/home/FindSomethingToDo';
+import { ActivitiesByCategory } from '@/features/home/ActivitiesByCategory';
 import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
 import { LiveStrip } from '@/features/live/LiveStrip';
 import { useLives } from '@/features/live/liveStore';
@@ -150,7 +150,7 @@ export default function Home() {
       return { category, items, ideas };
     });
   }, [happenings, moment]);
-  // Three rails for this moment (every category stays one tap away in « Find something to do »).
+  // Three rails for this moment (every category stays one tap away in « Activities by category »).
   const forYou = sections.slice(0, 3);
   const doorW = (frame.width - space.gutter * 2 - 12) / 2;
 
@@ -391,11 +391,11 @@ export default function Home() {
             </Rail>
           </ScrollReveal>
         ));
-      case 'find':
-        // The activities of the destination, filtered by what you feel like (girls' plans only in IRLY Girl).
+      case 'byCategory':
+        // The activities of the destination, grouped by category (girls' plans only in IRLY Girl).
         return (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <FindSomethingToDo cityId={cityId} />
+            <ActivitiesByCategory cityId={cityId} />
           </ScrollReveal>
         );
       case 'footer':

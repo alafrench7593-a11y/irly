@@ -105,7 +105,7 @@ type HomeHeaderProps = {
 };
 
 /**
- * Home header: Communities on the left; Network, Messages and notifications on the right.
+ * Home header: Communities on the left; Network, Messages, notifications and Settings on the right.
  * IRL lives in the centre of the tab bar. It sits
  * on the page and turns into glass as content scrolls under it.
  */
@@ -147,8 +147,8 @@ export function SpaceLogo() {
 function CommunitiesButton() {
   const t = useTheme();
   const router = useRouter();
-  // On the narrowest phones (375 pt and less) the word keeps its room: the icon steps aside, never « Communi… ».
-  const narrow = useFrame().width < 380;
+  // On phones up to 420 pt (four round doors on the right) the word keeps its room: the icon steps aside, never « Communi… ».
+  const narrow = useFrame().width < 420;
   return (
     <PressableScale
       haptic="select"
@@ -156,7 +156,7 @@ function CommunitiesButton() {
       onPress={() => router.push('/communities')}
       accessibilityRole="button"
       accessibilityLabel={tx('Communities')}
-      style={[styles.communities, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
+      style={[styles.communities, narrow ? styles.communitiesNarrow : null, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
     >
       <GlassLayer radius={radius.pill} level="thin" />
       {narrow ? null : <Icon name="users" size={16} color={t.c.text} />}
@@ -180,6 +180,11 @@ function onNetwork(pathname: string): boolean {
   return pathname === '/network' || pathname.startsWith('/network/');
 }
 
+/** On Settings (/preferences, the page the tab bar's gear opens too, or its privacy page /settings). */
+function onSettings(pathname: string): boolean {
+  return pathname === '/settings' || pathname === '/preferences';
+}
+
 type HeaderActionProps = { icon: IconName; label: string; onPress: () => void; badge?: number; active?: boolean };
 
 /**
@@ -192,6 +197,8 @@ type HeaderActionProps = { icon: IconName; label: string; onPress: () => void; b
 const HeaderAction = memo(function HeaderAction({ icon, label, onPress, badge, active }: HeaderActionProps) {
   const t = useTheme();
   const reduced = useReducedMotion();
+  // Four doors on phones up to 420 pt: a little smaller, so the Communities pill keeps its word.
+  const narrow = useFrame().width < 420;
   const girl = t.flavor === 'girl';
   const fill = girl ? t.c.brand : t.c.text;
   const onFill = girl ? t.c.onBrand : t.c.bg;
@@ -205,9 +212,9 @@ const HeaderAction = memo(function HeaderAction({ icon, label, onPress, badge, a
       accessibilityLabel={label}
       accessibilityState={active ? { selected: true } : undefined}
     >
-      <View style={[styles.action, active ? { backgroundColor: fill, borderColor: fill } : null]}>
-        {active ? null : <GlassLayer radius={20} level="thin" />}
-        <Icon name={icon} size={18} color={active ? onFill : t.c.text} strokeWidth={active ? 2.2 : 1.9} />
+      <View style={[styles.action, narrow ? styles.actionNarrow : null, active ? { backgroundColor: fill, borderColor: fill } : null]}>
+        {active ? null : <GlassLayer radius={narrow ? 18 : 20} level="thin" />}
+        <Icon name={icon} size={narrow ? 17 : 18} color={active ? onFill : t.c.text} strokeWidth={active ? 2.2 : 1.9} />
       </View>
       {badge ? (
         <View style={[styles.centered, styles.badge, { backgroundColor: t.c.live, borderColor: t.c.bg }]}>
@@ -223,8 +230,9 @@ const HeaderAction = memo(function HeaderAction({ icon, label, onPress, badge, a
 /**
  * The doors every tab root keeps at the top right, in both spaces:
  * Network (the professional side of IRLY, lit while you are in it),
- * Messages (private chats, group chats, the community area) and the bell.
- * The assistant is reached from Settings.
+ * Messages (private chats, group chats, the community area), the bell and
+ * Settings (the one Settings page, lit while you are in it). The assistant
+ * is reached from Settings.
  */
 export function InboxButtons({ gap = 8 }: { gap?: number }) {
   const router = useRouter();
@@ -232,6 +240,7 @@ export function InboxButtons({ gap = 8 }: { gap?: number }) {
   const unread = useUnread();
   const bell = useBell();
   const network = onNetwork(pathname);
+  const settings = onSettings(pathname);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap }}>
       <HeaderAction
@@ -244,6 +253,14 @@ export function InboxButtons({ gap = 8 }: { gap?: number }) {
       />
       <HeaderAction icon="message" label={unread ? tx('Messages, {n} unread', { n: unread }) : tx('Messages')} badge={unread} onPress={() => router.push('/messages')} />
       <HeaderAction icon="bell" label={bell ? tx('Notifications, {n} new', { n: bell }) : tx('Notifications')} badge={bell} onPress={() => router.push('/notifications')} />
+      <HeaderAction
+        icon="settings"
+        label={settings ? tx('Settings, current section') : tx('Settings')}
+        active={settings}
+        onPress={() => {
+          if (pathname !== '/preferences') router.push('/preferences' as never);
+        }}
+      />
     </View>
   );
 }
@@ -303,6 +320,7 @@ const styles = StyleSheet.create({
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 11, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  communitiesNarrow: { paddingHorizontal: 9 },
   lead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, minWidth: 0, marginRight: 4 },
   // The logo never shrinks: the Communities pill gives way first.
   logo: { height: 38, justifyContent: 'center', flexShrink: 0 },
@@ -324,6 +342,7 @@ const styles = StyleSheet.create({
   pillShell: { borderRadius: radius.pill },
   round: { borderRadius: radius.pill },
   action: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'transparent' },
+  actionNarrow: { width: 36, height: 36, borderRadius: 18 },
   centered: { alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',
