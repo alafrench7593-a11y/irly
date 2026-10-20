@@ -9,6 +9,7 @@ import { changed, echoGate, syncNow, useRefreshOn, useSyncVersion } from '@/feat
 import { askPushInContext } from '@/features/push/push';
 import { toast } from '@/components/ui/Toast';
 import { realtimeIdsFilter } from '@/features/server/engage';
+import { useAppSpace } from '@/state/appSpace';
 
 /** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
 export const communitiesChanged = () => changed('communities', 'inbox');
@@ -410,6 +411,8 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
 export function useCommunityList(cityId: string) {
   const account = useAccount();
   const uid = account?.userId;
+  // In IRLY Girl the lists show IRLY Girl communities (the server returns them to eligible women only).
+  const girlSpace = useAppSpace() === 'girl';
   const [list, setList] = useState<CommunitySummary[]>([]);
   const version = useCommunitiesVersion();
   useEffect(() => {
@@ -441,7 +444,7 @@ export function useCommunityList(cityId: string) {
     };
   }, [cityId, uid, version]);
   const { keep } = useCityFilter(cityId as CityId);
-  const shown = useMemo(() => list.filter((c) => keep(c.cityId)), [list, keep]);
+  const shown = useMemo(() => list.filter((c) => keep(c.cityId) && (!girlSpace || c.girlOnly)), [list, keep, girlSpace]);
   return uid ? shown : NONE;
 }
 

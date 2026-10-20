@@ -19,6 +19,7 @@ import {
   sendPhoneCode,
   signInWithPassword,
   handledAuthUrls,
+  resumeProfile,
   signInWithProvider,
   goPublic,
   signOut,
@@ -28,6 +29,7 @@ import {
   verifyCode,
   verifyPhoneCode,
 } from '@/features/auth/account';
+import { isValidEmail, MESSAGES, PASSWORD_MIN } from '@/features/auth/signup';
 import { APP } from '@/config/app';
 import { track } from '@/lib/analytics';
 import { enabledProviders, hasBackend } from '@/lib/supabase';
@@ -38,7 +40,6 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { enter } from '@/motion/enter';
 import { SpaceFlavor } from '@/theme/space';
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE = /^\+?\d[\d\s-]{7,16}$/;
 
 type Mode = 'choose' | 'email' | 'link' | 'code' | 'forgot' | 'phone' | 'phoneCode' | 'reset';
@@ -105,6 +106,8 @@ function AccountScreen() {
   }, [url]);
 
   const act = async (fn: () => Promise<void>) => {
+    // One request at a time: a second tap never sends a second sign-up or code.
+    if (busy) return;
     setBusy(true);
     try {
       await fn();
@@ -124,7 +127,10 @@ function AccountScreen() {
   };
 
   const input = [styles.input, { color: t.c.text, backgroundColor: t.c.glass, borderColor: t.c.line }];
-  const validEmail = EMAIL.test(email.trim());
+  const validEmail = isValidEmail(email);
+  // Said under the field once something is typed, instead of a button that stays grey without a reason.
+  const emailHint = email.trim().length > 3 && !validEmail ? MESSAGES.invalidEmail : null;
+  const passwordHint = creating && password.length > 0 && password.length < PASSWORD_MIN ? MESSAGES.passwordTooShort : null;
 
   if (!hasBackend) {
     return (
@@ -180,7 +186,20 @@ function AccountScreen() {
                 <Text variant="body" tone="secondary">
                   One more step: finish your profile so people can find you.
                 </Text>
-                <Button label="Finish my profile" icon="arrowRight" full onPress={() => router.replace('/welcome')} />
+                <Button
+                  label="Finish my profile"
+                  icon="arrowRight"
+                  full
+                  loading={busy}
+                  onPress={() =>
+                    act(async () => {
+                      // A profile already on the server comes back (signed in on a new phone):
+                      // straight to the app, never through sign-up again.
+                      if (await resumeProfile(account.userId)) router.replace('/(tabs)');
+                      else router.replace('/welcome');
+                    })
+                  }
+                />
               </>
             )}
           </Animated.View>
@@ -243,6 +262,11 @@ function AccountScreen() {
         {mode === 'choose' || mode === 'email' ? (
           <>
             <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel={a11y('Email')} />
+            {emailHint ? (
+              <Text variant="caption" tone="critical" accessibilityLiveRegion="polite">
+                {emailHint}
+              </Text>
+            ) : null}
             <TextInput
               value={password}
               onChangeText={setPassword}
@@ -255,6 +279,11 @@ function AccountScreen() {
               style={input}
               accessibilityLabel={a11y('Password')}
             />
+            {passwordHint ? (
+              <Text variant="caption" tone="critical" accessibilityLiveRegion="polite">
+                {passwordHint}
+              </Text>
+            ) : null}
             <Button
               label={creating ? 'Create account' : 'Sign in'}
               icon="check"
@@ -288,6 +317,11 @@ function AccountScreen() {
         {mode === 'link' || mode === 'forgot' ? (
           <>
             <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel={a11y('Email')} />
+            {emailHint ? (
+              <Text variant="caption" tone="critical" accessibilityLiveRegion="polite">
+                {emailHint}
+              </Text>
+            ) : null}
             <Button
               label={mode === 'link' ? 'Email me a sign-in link' : 'Send reset link'}
               icon="send"

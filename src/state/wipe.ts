@@ -1,11 +1,20 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { storageName } from '@/config/app';
 import { useBaliStore } from '@/features/bali/baliStore';
+import { useCreateStore } from '@/features/create/createStore';
 import { useGirlStore } from '@/features/girl/girlStore';
+import { useHeroStore } from '@/features/hero/heroStore';
 import { useLiveStore } from '@/features/live/liveStore';
 import { pendingJournal } from '@/features/live/pendingLive';
+import { useReportStore } from '@/features/moderation/reportStore';
+import { usePhotoViewer } from '@/features/photo/photoViewer';
 import { clearFaces } from '@/features/server/faces';
 import { useDrafts } from '@/features/posts/posts';
 import { resetAppSpace } from './appSpace';
 import { useStore } from './store';
+
+/** When this phone last opened the recap (features/engage): the next person starts without it. */
+const RECAP_SEEN = storageName('irly-recap-seen');
 
 /**
  * Everything this device remembers about the person: plans, bookings,
@@ -14,6 +23,9 @@ import { useStore } from './store';
  * account and a session ended elsewhere: the next person to use the phone
  * must start from nothing. Synchronous and never throws: each part is wiped
  * even if another one fails.
+ *
+ * Every persisted store with personal data must be listed here:
+ * scripts/test-auth.mts checks it (and fails when a new one is not).
  */
 export function wipeLocal(): void {
   const parts: (() => void)[] = [
@@ -29,6 +41,13 @@ export function wipeLocal(): void {
     () => useDrafts.setState({ byKey: {} }),
     // Lives whose publish had no answer yet (their text and file paths): the account that left settles them no more.
     () => pendingJournal.clear(),
+    // Overlays opened by the account that left (a photo, a card, a report sheet, the composer with its
+    // community) never stay over the next screen.
+    () => usePhotoViewer.setState({ photo: null, shown: null, origin: null }),
+    () => useHeroStore.setState({ item: null, active: null, origin: null }),
+    () => useReportStore.getState().close(),
+    () => useCreateStore.setState({ open: false, origin: null, preset: null }),
+    () => void AsyncStorage.removeItem(RECAP_SEEN).catch(() => undefined),
   ];
   for (const wipe of parts) {
     try {

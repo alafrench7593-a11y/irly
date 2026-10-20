@@ -38,6 +38,8 @@ import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Ambient } from '@/components/visual/Ambient';
+import { useAppSpace } from '@/state/appSpace';
+import { GirlActivitiesPage, GirlPeoplePage } from '@/features/girl/GirlSections';
 
 const TABS = [
   { id: 'people', label: 'People' },
@@ -156,7 +158,9 @@ export default function Discover() {
     resultsY.set(e.contentOffset.y);
   });
 
-  const pages = [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
+  // IRLY Girl: the same four pages; People and Activities show women, girls' plans and IRLY Girl communities.
+  const inGirl = useAppSpace() === 'girl';
+  const pages = inGirl ? [GirlPeoplePage, GirlActivitiesPage, PlacesPage, EventsPage] : [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>

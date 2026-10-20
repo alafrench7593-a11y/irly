@@ -11,7 +11,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
@@ -20,6 +20,7 @@ import { AppFrame } from '@/components/layout/AppFrame';
 import { ToastHost } from '@/components/ui/Toast';
 import { CreateHost } from '@/features/create/CreateHost';
 import { girl } from '@/features/girl/theme';
+import { GirlSpaceGuard } from '@/features/girl/access';
 import { DestinationTransition } from '@/features/destination/DestinationTransition';
 import { HeroHost } from '@/features/hero/HeroHost';
 import { AppIntro } from '@/features/intro/AppIntro';
@@ -34,7 +35,9 @@ import { BellSync } from '@/features/server/social';
 import { FaceSync } from '@/features/server/faces';
 import { SyncBridge } from '@/features/server/sync';
 import { OfflineBar } from '@/features/server/OfflineBar';
+import { useAppSpace, useSpaceStore } from '@/state/appSpace';
 import { useStore } from '@/state/store';
+import { Flavor } from '@/theme/flavor';
 import { useTheme } from '@/theme/useTheme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -64,7 +67,8 @@ export default function RootLayout() {
     InstrumentSerif_400Regular_Italic,
   });
   const hydrated = useStore((s) => s.hydrated);
-  const ready = (fontsLoaded || Boolean(fontError)) && hydrated;
+  const spaceHydrated = useSpaceHydrated();
+  const ready = (fontsLoaded || Boolean(fontError)) && hydrated && spaceHydrated;
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => undefined);
@@ -74,9 +78,29 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <ReducedMotionConfig mode={ReduceMotion.System} />
-        {ready ? <App /> : <View style={[styles.root, { backgroundColor: '#000000' }]} />}
+        {ready ? <SpaceApp /> : <View style={[styles.root, { backgroundColor: '#000000' }]} />}
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+/** The stored app space has been read (IRLY or IRLY Girl): the first frame already wears the right look. */
+function useSpaceHydrated(): boolean {
+  return useSyncExternalStore(subscribeSpaceHydration, spaceHydrated, spaceHydrated);
+}
+const subscribeSpaceHydration = (done: () => void) => useSpaceStore.persist.onFinishHydration(done);
+const spaceHydrated = () => useSpaceStore.persist.hasHydrated();
+
+/**
+ * One app, two looks: in IRLY Girl (state/appSpace) every tab, page, sheet
+ * and flow renders in the Girl flavor; the content follows the space too.
+ */
+function SpaceApp() {
+  const space = useAppSpace();
+  return (
+    <Flavor value={space}>
+      <App />
+    </Flavor>
   );
 }
 
@@ -106,8 +130,9 @@ function App() {
         <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
         <Stack.Screen name="(tabs)" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="match" options={{ animation: 'slide_from_bottom' }} />
-        {/* IRLY Girl: its own universe; the screen fades and GirlIntro morphs. */}
+        {/* IRLY Girl: the door (server check, then the same tabs in the Girl look). */}
         <Stack.Screen name="girl/index" options={{ animation: 'fade', contentStyle: { backgroundColor: girl.bg } }} />
+        <Stack.Screen name="girl/match" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="girl/onboarding" options={{ animation: 'slide_from_bottom', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="girl/moving" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
         <Stack.Screen name="comments" options={{ animation: 'slide_from_bottom' }} />
@@ -134,6 +159,7 @@ function App() {
       <BellSync />
       <FaceSync />
       <CreateHost />
+      <GirlSpaceGuard />
       <DestinationTransition />
       <AppIntro />
       <ToastHost />

@@ -5,8 +5,10 @@ import { createContext, useContext, type ReactNode } from 'react';
  * the same glass, the same motion. A flavor only changes the identity:
  * - mixte: IRLY Noir (or Clair), white for the main action, steel light
  * - girl: IRLY Girl, rose-white ground, rose for the main action, plum ink
- * Screens of IRLY Girl are wrapped in <Flavor value="girl">; every shared
- * component reads the flavor through useTheme(), so nothing is built twice.
+ * The root layout wraps the whole app in <Flavor value={app space}>
+ * (state/appSpace): in IRLY Girl every tab and page is the same screen in
+ * the Girl flavor. Every shared component reads the flavor through
+ * useTheme(), so nothing is built twice.
  */
 export type FlavorId = 'mixte' | 'girl';
 

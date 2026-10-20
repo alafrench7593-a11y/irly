@@ -14,6 +14,9 @@ import { wipeLocal } from '@/state/wipe';
 import { CITIES } from '@/data/destinations';
 import { ACTIVITIES, INTERESTS } from '@/data/catalog';
 import { isAvatar } from '@/features/avatar/avatar';
+import { authMessage, errorCode, MESSAGES, passwordProblem, signUpHitExisting } from './signup';
+
+export { authMessage, errorCode };
 
 /** Signup language names → ISO codes stored server-side. */
 const LANG: Record<string, string> = { English: 'en', Français: 'fr', العربية: 'ar', हिन्दी: 'hi', Русский: 'ru', Español: 'es', Italiano: 'it', Deutsch: 'de', Bahasa: 'id', Filipino: 'tl', اردو: 'ur', Português: 'pt' };
@@ -117,7 +120,7 @@ export async function sendCode(email: string): Promise<void> {
     email: email.trim().toLowerCase(),
     options: { shouldCreateUser: true, emailRedirectTo: redirectTo() },
   });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(authMessage(error));
 }
 
 /** Native: the email link opens irly://account#access_token=… ; finish sign-in. */
@@ -137,7 +140,7 @@ export async function completeFromUrl(url: string): Promise<boolean> {
 export async function verifyCode(email: string, code: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data, error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'email' });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(authMessage(error));
   const uid = data.user?.id;
   // Signed in already: a profile that fails to publish now is published at the next launch.
   if (uid) await syncProfile(uid).catch(() => undefined);
@@ -204,15 +207,6 @@ function publishFailed(err: unknown) {
   track('SERVER_ERROR', { code: errorCode(err instanceof Error ? err.message : String(err)), where: 'profile_signin' });
 }
 
-/** A short, non-personal label for a server error (a constraint, a rule): enough to find the cause, never the user's data. */
-export function errorCode(message: string): string {
-  const named = /(?:constraint|policy) "([a-z0-9_]{3,60})"/i.exec(message)?.[1];
-  if (named) return named;
-  if (/row-level security/i.test(message)) return `rls:${/table "([a-z_]{3,40})"/i.exec(message)?.[1] ?? 'unknown'}`;
-  const first = message.toLowerCase().replace(/[^a-z_ ]/g, ' ').trim().split(/\s+/).slice(0, 5).join('_');
-  return first.slice(0, 60) || 'unknown';
-}
-
 /** Publishes this phone's signup profile when the server has none; resolves true once the server has this account's profile. */
 export function syncProfile(uid: string): Promise<boolean> {
   // Every mounted useAccount() and verifyCode() call this on sign-in: share one run.
@@ -255,6 +249,18 @@ export function restoreProfile(uid: string): Promise<boolean> {
   return run;
 }
 
+/**
+ * A signed-in member whose profile is not on this phone: their server profile
+ * comes back (true) and they go to the app, never through sign-up again; false
+ * only when the server answered that this account has no profile yet. Throws
+ * when the server could not be asked (offline), so nobody is sent to sign up
+ * again by a network error.
+ */
+export async function resumeProfile(uid: string): Promise<boolean> {
+  if (useStore.getState().onboarded && useStore.getState().profile.ownerId === uid) return true;
+  return readBack(uid, true, true);
+}
+
 /** Still the signed-in account (an account switch can happen while a request is on its way). */
 const stillSignedIn = (uid: string) => useAuthStore.getState().account?.userId === uid;
 
@@ -272,9 +278,11 @@ async function signOutIfAccountGone(uid: string): Promise<void> {
   if (gone && stillSignedIn(uid)) await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
 }
 
-async function readBack(uid: string, force = false): Promise<boolean> {
+async function readBack(uid: string, force = false, strict = false): Promise<boolean> {
   if (!supabase || (!force && useStore.getState().onboarded)) return false;
   const { data, error } = await supabase.rpc('my_profile');
+  // Asked by the person (Finish my profile): a failed read is said, never taken for "no profile".
+  if (error && strict) throw new Error(authMessage(error));
   const r = ((data as ServerProfile[] | null) ?? [])[0];
   if (error || !r || !r.first_name) return false;
   const back = Object.fromEntries(Object.entries(LANG).map(([name, code]) => [code, name]));
@@ -841,20 +849,8 @@ function client() {
   return supabase;
 }
 
-/** Plain-language errors for the messages people actually hit. */
-export function authMessage(e: unknown): string {
-  const m = e instanceof Error ? e.message : String(e);
-  if (/invalid login credentials/i.test(m)) return 'Wrong email or password';
-  if (/email not confirmed/i.test(m)) return 'Confirm your email first: open the link we sent you';
-  if (/user already registered/i.test(m)) return 'You already have an account: sign in instead';
-  if (/provider is not enabled|unsupported provider/i.test(m)) return 'This sign-in option is not switched on yet. Use email for now';
-  if (/rate limit|too many/i.test(m)) return 'Too many attempts. Wait a minute and try again';
-  if (/password should be at least/i.test(m)) return 'Use at least 8 characters for your password';
-  if (/phone.*(provider|sms)|sms provider/i.test(m)) return 'Phone sign-in is not switched on yet. Use email for now';
-  return m;
-}
-
 export async function signInWithPassword(email: string, password: string): Promise<void> {
+  if (!password) throw new Error(MESSAGES.wrongCredentials);
   const { data, error } = await client().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
   if (error) throw new Error(authMessage(error));
   if (data.user) await syncProfile(data.user.id).catch(() => undefined);
@@ -862,9 +858,13 @@ export async function signInWithPassword(email: string, password: string): Promi
 
 /** Creates the account; returns true when it still needs the email confirmed. */
 export async function signUpWithPassword(email: string, password: string): Promise<boolean> {
-  if (password.length < 8) throw new Error('Use at least 8 characters for your password');
+  const weak = passwordProblem(password);
+  if (weak) throw new Error(weak);
   const { data, error } = await client().auth.signUp({ email: email.trim().toLowerCase(), password, options: { emailRedirectTo: redirectTo() } });
   if (error) throw new Error(authMessage(error));
+  // An email that already has an account: Supabase answers "success" without sending anything.
+  if (signUpHitExisting(data.user)) throw new Error(MESSAGES.existingAccount);
+  if (!data.user) throw new Error(MESSAGES.serverDown);
   if (data.session && data.user) {
     await syncProfile(data.user.id).catch(() => undefined);
     return false;
@@ -879,7 +879,8 @@ export async function sendPasswordReset(email: string): Promise<void> {
 }
 
 export async function updatePassword(password: string): Promise<void> {
-  if (password.length < 8) throw new Error('Use at least 8 characters for your password');
+  const weak = passwordProblem(password);
+  if (weak) throw new Error(weak);
   const { error } = await client().auth.updateUser({ password });
   if (error) throw new Error(authMessage(error));
 }

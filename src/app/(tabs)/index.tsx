@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { YourCommunities } from '@/features/community/YourCommunities';
 import { useAccount } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
@@ -48,6 +48,12 @@ import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { useAppSpace } from '@/state/appSpace';
+import { GirlCommunities, GirlModes, GirlMovingCard, GirlPlans, MatchCard, SpaceSwitchCard, useGirlPeople } from '@/features/girl/GirlSections';
+import { GirlIntro } from '@/features/girl/GirlIntro';
+import { GirlMessages } from '@/features/girl/GirlMessages';
+import { MomsView } from '@/features/girl/MomsView';
+import { GirlFeed } from '@/features/girl/world';
 
 /**
  * Home answers one question: "I just arrived. What can I do, and who can I
@@ -58,6 +64,14 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
  * the day leads; every category stays one tap away at the end.
  */
 type Idea = { key: string; title: string; place?: string; subId: string; activityId?: string };
+
+/**
+ * In IRLY Girl (state/appSpace) this is the same Home, section for section,
+ * in the Girl look: where IRLY shows its own content (people, plans,
+ * communities, the IRLY Girl door), IRLY Girl shows women, girls' plans,
+ * IRLY Girl communities and its own corners (Moms, IRLY Match, girls
+ * moving to Bali, posts). Everything else is shared as it is.
+ */
 
 /** Food places for « Find someone to eat with ». */
 const EAT_KINDS = new Set(['restaurant', 'cafe', 'rooftop', 'beachclub']);
@@ -147,6 +161,18 @@ export default function Home() {
   );
   const eat = useMemo(() => content.places.filter((pl) => EAT_KINDS.has(pl.kind)), [content.places]);
   const girl = profile.gender === 'woman';
+  const inGirl = useAppSpace() === 'girl';
+  const women = useGirlPeople(cityId);
+  // « IRLY Moms » (an entry of IRLY, or a link) opens the Home of IRLY Girl on the Moms side.
+  const { girl: girlParam } = useLocalSearchParams<{ girl?: string }>();
+  const [mode, setMode] = useState<'all' | 'moms'>(girlParam === 'moms' ? 'moms' : 'all');
+  // The tab stays mounted: a new « IRLY Moms » entry turns the Moms side on.
+  const [seenParam, setSeenParam] = useState(girlParam);
+  if (girlParam !== seenParam) {
+    setSeenParam(girlParam);
+    if (girlParam === 'moms') setMode('moms');
+  }
+  const girlsSide = inGirl && mode === 'all';
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
@@ -181,7 +207,7 @@ export default function Home() {
           <LiveStrip />
         </Animated.View>
 
-        {featured ? (
+        {featured && !inGirl ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             <SectionHeader overline={featuredLive ? 'Live' : undefined} live={featuredLive} title={featuredLive ? 'Happening now' : 'Next up'} />
             <View style={styles.rows}>
@@ -194,7 +220,11 @@ export default function Home() {
           <CreateMenu />
         </ScrollReveal>
 
-        {cityId === 'bali' ? (
+        {cityId === 'bali' && inGirl ? (
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            <GirlMovingCard />
+          </ScrollReveal>
+        ) : cityId === 'bali' ? (
           <ScrollReveal scrollY={scrollY} style={[styles.section, { paddingHorizontal: space.gutter }]}>
             <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/bali')} accessibilityLabel="Live Bali">
               <Photo visual={{ photo: 'bali' }} light="bali" scrim="strong" style={{ height: 150, borderRadius: radius.xl, overflow: 'hidden' }} width={900}>
@@ -241,15 +271,24 @@ export default function Home() {
           </ScrollReveal>
         ) : null}
 
-        <ScrollReveal scrollY={scrollY} style={styles.section}>
-          {/* "See all" is Match IRLY: only once it is open (src/lib/features.ts). */}
-          <SectionHeader
-            title="People near you"
-            action={FEATURES.matchIrly ? 'See all' : undefined}
-            onAction={FEATURES.matchIrly ? () => router.push('/match?intent=friends') : undefined}
-          />
-          <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
-        </ScrollReveal>
+        {inGirl ? (
+          women.length ? (
+            <ScrollReveal scrollY={scrollY} style={styles.section}>
+              <SectionHeader overline="Women only · Not dating" title="Women near you" />
+              <Carousel data={women} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
+            </ScrollReveal>
+          ) : null
+        ) : (
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            {/* "See all" is Match IRLY: only once it is open (src/lib/features.ts). */}
+            <SectionHeader
+              title="People near you"
+              action={FEATURES.matchIrly ? 'See all' : undefined}
+              onAction={FEATURES.matchIrly ? () => router.push('/match?intent=friends') : undefined}
+            />
+            <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
+          </ScrollReveal>
+        )}
 
         {account ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
@@ -264,7 +303,23 @@ export default function Home() {
           <ExploreDoors />
         </ScrollReveal>
 
-        {girl ? (
+        {inGirl ? (
+          // The place of the IRLY Girl door in IRLY: here, her space (girls or moms, IRLY Match) and the way back to IRLY.
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            <SectionHeader overline="Women only · Not dating" title="Your IRLY Girl" />
+            <View style={{ gap: space[5] }}>
+              <GirlModes mode={mode} onMode={setMode} />
+              {mode === 'moms' ? (
+                <MomsView cityId={cityId} />
+              ) : (
+                <View style={{ paddingHorizontal: space.gutter }}>
+                  <MatchCard />
+                </View>
+              )}
+              <SpaceSwitchCard />
+            </View>
+          </ScrollReveal>
+        ) : girl ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             <SectionHeader overline="Women only · Not dating" title="Find your people" />
             <GirlPortals light={city.light} />
@@ -275,7 +330,16 @@ export default function Home() {
           <MemberActivities cityId={cityId} />
         </ScrollReveal>
 
-        {nearby.length ? (
+        {girlsSide ? (
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            <SectionHeader overline="What women plan together" title="Girls' plans coming up" action="All" onAction={() => router.push('/social')} />
+            <GirlPlans cityId={cityId} grid onPlan={() => openCreate(null)} />
+          </ScrollReveal>
+        ) : null}
+
+        {girlsSide ? <GirlMessages onCommunities={() => router.push('/communities')} /> : null}
+
+        {nearby.length && !inGirl ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             <SectionHeader title="Activities near you" action="All" onAction={() => router.push('/social')} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
@@ -318,7 +382,18 @@ export default function Home() {
           <YourCommunities cityId={cityId} />
         </ScrollReveal>
 
-        {content.communities.length ? (
+        {girlsSide ? (
+          <>
+            <ScrollReveal scrollY={scrollY} style={styles.section}>
+              <SectionHeader overline="Join one and you are in its chat" title="IRLY Girl communities" action="All" onAction={() => router.push('/communities')} />
+              <GirlCommunities cityId={cityId} />
+            </ScrollReveal>
+            <ScrollReveal scrollY={scrollY} style={styles.section}>
+              <SectionHeader overline="From the IRLY Girl communities near you" title="Recent posts" />
+              <GirlFeed cityId={cityId} moms={false} onCommunities={() => router.push('/communities')} />
+            </ScrollReveal>
+          </>
+        ) : content.communities.length && !inGirl ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />
             <Rail itemWidth={250}>
@@ -392,6 +467,8 @@ export default function Home() {
 
       <HomeHeader scrollY={scrollY} solidAt={heroH - layout.headerHeight} />
       <DestinationSheet visible={sheet} onClose={() => setSheet(false)} />
+      {/* Crossing into IRLY Girl: the Girl mark opens over the page, once per session. */}
+      {inGirl ? <GirlIntro /> : null}
     </View>
   );
 }

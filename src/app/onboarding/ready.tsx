@@ -76,9 +76,11 @@ export default function Ready() {
           onDone={
             mark === 'transition'
               ? () => {
-                  // Already signed in (finishing a profile the server did not have yet): it is this
-                  // account's own profile. Set before completing, which starts the publish right away.
-                  if (account) useStore.getState().updateProfile({ ownerId: account.userId });
+                  // Already signed in: the profile just filled in on this phone belongs to no account yet.
+                  // Publishing it stamps this account (the server had none); if the server already has
+                  // this account's profile (a restore that failed offline), that one comes back instead,
+                  // with the gender declared at sign-up (locked server-side), never the new answers.
+                  if (account) useStore.getState().updateProfile({ ownerId: undefined });
                   completeOnboarding();
                   if (account) syncProfile(account.userId).catch(() => undefined);
                   // New here: offer an account (Apple, Google, email) before Home; skippable.

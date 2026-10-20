@@ -65,7 +65,7 @@ const EMPTY: Record<Tab, string> = {
  * or the activity's. Search covers names and last messages.
  */
 export default function MessagesRoute() {
-  // Opened from IRLY Girl, the list wears the Girl look (cosmetic only, see theme/space).
+  // In IRLY Girl the list wears the Girl look like every page (cosmetic only, see theme/space).
   return (
     <SpaceFlavor>
       <Messages />

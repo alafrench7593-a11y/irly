@@ -33,6 +33,8 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
+import { SpaceSwitchCard } from '@/features/girl/GirlSections';
+import { useAppSpace } from '@/state/appSpace';
 
 /**
  * Your profile. Signed in: the same profile other members see (identity,
@@ -55,6 +57,7 @@ function LocalProfile() {
   const city = CITIES[cityId];
   const dest = DESTINATIONS[city.destinationId];
   const profile = useStore((s) => s.profile);
+  const inGirl = useAppSpace() === 'girl';
   const joined = useStore((s) => s.joined);
   const memberOf = useStore((s) => s.memberOf);
   const bookings = useStore((s) => s.bookings);
@@ -96,7 +99,7 @@ function LocalProfile() {
         {/* The city you live in, full bleed, melting into the page. */}
         <Cover visual={{ photo: city.photo }} light={city.light} height={coverH} scrollY={scrollY} scrim="top" radius={0}>
           <LinearGradient
-            colors={[`rgba(${t.mode === 'night' ? '5,5,6' : '246,246,244'},0)`, t.c.bg]}
+            colors={[`${t.c.bg}00`, t.c.bg]}
             style={styles.coverFade}
             pointerEvents="none"
           />
@@ -224,6 +227,13 @@ function LocalProfile() {
                 <CommunityCard key={c.id} community={c} />
               ))}
             </Rail>
+          </Animated.View>
+        ) : null}
+
+        {/* IRLY or IRLY Girl: the same switch as on the Home (IRLY Girl is offered to women, as there). */}
+        {inGirl || profile.gender === 'woman' ? (
+          <Animated.View entering={enter.rise(7)} style={styles.section}>
+            <SpaceSwitchCard />
           </Animated.View>
         ) : null}
 

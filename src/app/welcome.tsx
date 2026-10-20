@@ -22,6 +22,7 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { DESTINATIONS, UPCOMING_DESTINATIONS, destinationOpen } from '@/data/destinations';
 import type { Destination } from '@/data/types';
+import { SIGNUP_ROUTES, signupStep } from '@/features/auth/signup';
 import { IrlyStory, STORY_VERSION } from '@/features/onboarding/IrlyStory';
 import { useExpand } from '@/features/onboarding/useExpand';
 import { SoonPill } from '@/features/soon/SoonPill';
@@ -117,7 +118,8 @@ export default function Welcome() {
     haptic('press');
     setDestination(dest.id);
     expand(ref, { photo: dest.photo }, dest.light, () => {
-      router.push(dest.id === 'emirates' ? '/onboarding/emirates' : '/onboarding/you');
+      // A sign-up left halfway continues at its first unanswered step (the answers are kept on the phone).
+      router.push((dest.id === 'emirates' ? '/onboarding/emirates' : SIGNUP_ROUTES[signupStep(useStore.getState().profile)]) as never);
     });
   };
 

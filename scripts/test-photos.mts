@@ -3,6 +3,7 @@
 // a gym, table tennis is not tennis), and every photo key exists.
 // Run: node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/test-photos.mts
 import fs from 'node:fs';
+import { register } from 'node:module';
 import { CATEGORIES, ideaPhoto, photoForText, type CategoryKey } from '../src/data/catalog/categories.ts';
 import { girlCommunityPhoto, girlPhotoFor } from '../src/features/girl/photos.ts';
 
@@ -130,6 +131,129 @@ expect(girlPhotoFor('Table tennis') !== 'tennisGirl', 'Girl: table tennis is not
 for (const [name, want] of [['Running girls', 'runGirl'], ['Padel girls', 'padelGirl'], ['Yoga girls', 'yoga'], ['Moms', 'kids'], ['Brunch club', 'brunchGirl']] as const) {
   const key = girlCommunityPhoto(name);
   expect(key === want && KNOWN.has(key), `Girl community ${name} → ${key}`, { want });
+}
+
+// 5. The IRLY photo library of the activity form (features/create/photoLibrary.ts).
+// The app module imports react-native (PixelRatio) for its sizes: a stand-in here.
+register(
+  'data:text/javascript,' +
+    encodeURIComponent(
+      `export async function resolve(s, c, next) { return s === 'react-native' ? { url: 'data:text/javascript,export const PixelRatio = { get: () => 2 };', shortCircuit: true } : next(s, c); }`,
+    ),
+);
+const lib = await import('../src/features/create/photoLibrary.ts');
+const { PHOTO_IDS } = await import('../src/data/photos.ts');
+const UNSPLASH = new Set(Object.values(PHOTO_IDS) as string[]);
+// A library link → the file the website serves it from (checked in this repository), or the Unsplash id the app ships.
+const localFile = (url: string): string | null => {
+  const gh = url.match(/^https:\/\/alafrench7593-a11y\.github\.io\/irly\/photos\/(.+)$/);
+  if (gh) return `public-photos/${gh[1]}`;
+  const own = url.match(/^https:\/\/getirly\.com\/img\/own\/(.+)$/);
+  if (own) return `site/img/own/${own[1]}`;
+  return null;
+};
+const reachable = (url: string): boolean => {
+  const file = localFile(url);
+  if (file) return fs.existsSync(file) && fs.statSync(file).size > 1000;
+  const id = url.match(/^https:\/\/images\.unsplash\.com\/photo-([0-9a-f-]+)\?/)?.[1];
+  return Boolean(id && UNSPLASH.has(id));
+};
+const { createHash } = await import('node:crypto');
+const sha = (file: string) => createHash('sha1').update(fs.readFileSync(file)).digest('hex');
+
+const unknownKeys = Object.entries(lib.KIND_KEYS).flatMap(([kind, keys]) => (keys as string[]).filter((k) => !KNOWN.has(k)).map((k) => `${kind}/${k}`));
+expect(unknownKeys.length === 0, 'every library key is a known photo key', unknownKeys);
+const kinds = [...Object.keys(lib.KIND_KEYS), ...CATEGORIES.map((c) => c.id)];
+let total = new Set<string>();
+const counts: string[] = [];
+for (const kind of kinds) {
+  for (const girlSpace of [false, true]) {
+    const urls: string[] = lib.libraryFor(kind as never, { girl: girlSpace });
+    if (!girlSpace) {
+      counts.push(`${kind}:${urls.length}`);
+      urls.forEach((u) => total.add(u));
+    }
+    const label = `${girlSpace ? 'Girl' : 'Mixte'} library "${kind}"`;
+    expect(urls.length >= 4, `${label}: ${urls.length} photos (at least 4)`, urls.length);
+    expect(new Set(urls).size === urls.length, `${label}: each link once`);
+    const broken = urls.filter((u) => !reachable(u) || !lib.isLibraryUrl(u));
+    expect(broken.length === 0, `${label}: every photo is in the project's photo sets and accepted by the server rule`, broken);
+    const thumbs = urls.map(lib.libraryThumb).filter((u) => localFile(u) && !reachable(u));
+    expect(thumbs.length === 0, `${label}: every grid thumbnail exists`, thumbs);
+    // Same picture under two names (jbr = surf…): never twice in one grid.
+    const seen = new Map<string, string>();
+    const twins: string[] = [];
+    for (const u of urls) {
+      const file = localFile(u);
+      if (!file) continue;
+      const h = sha(file);
+      if (seen.has(h)) twins.push(`${seen.get(h)} = ${u}`);
+      else seen.set(h, u);
+    }
+    expect(twins.length === 0, `${label}: no picture twice`, twins);
+    if (girlSpace) expect(urls.every((u) => !/Mix-\d+\.jpg$/.test(u)) || urls.length < 4, `${label}: no photo of mixed groups`, urls.filter((u) => /Mix-/.test(u)));
+  }
+}
+console.log(`  library sizes: ${counts.join(' ')}`);
+console.log(`  ${total.size} distinct library photos`);
+
+// The type of an activity, from its words.
+const kindCases: [string, string, string][] = [
+  ['sport', 'Football', 'football'],
+  ['sport', 'Padel', 'padel'],
+  ['sport', 'Morning run', 'running'],
+  ['sport', 'Gym session', 'gym'],
+  ['wellness', 'Beach yoga', 'yoga'],
+  ['food', 'Brunch', 'brunch'],
+  ['food', 'Coffee', 'cafe'],
+  ['food', 'Girls dinner', 'restaurant'],
+  ['shopping', 'Dubai Mall', 'shopping'],
+  ['outdoor', 'Beach day', 'beach'],
+  ['travel', 'Desert safari', 'desert'],
+  ['networking', 'Founders breakfast', 'networking'],
+  ['outdoor', 'Walk together', 'walk'],
+  ['wellness', 'Spa afternoon', 'spa'],
+  ['entertainment', 'Comedy night', 'outings'],
+  ['travel', 'Trip to Oman', 'travel'],
+];
+for (const [cat, label, want] of kindCases) {
+  const got = lib.libraryKindOf(cat as CategoryKey, label);
+  expect(got === want, `"${label}" uses the ${want} library`, got);
+}
+expect(lib.libraryKindOf('learning', 'Something unusual') === 'learning', 'an unknown activity uses its whole category', lib.libraryKindOf('learning', 'Something unusual'));
+
+// SURPRISE ME: uniform among the type's photos, never the previous one while others exist.
+for (const kind of ['padel', 'brunch', 'restaurant', 'sport']) {
+  const urls: string[] = lib.libraryFor(kind as never);
+  const draws: string[] = [];
+  let prev: string | null = null;
+  let repeats = 0;
+  for (let i = 0; i < 50; i++) {
+    const u = lib.surprise(urls, [prev]) as string;
+    if (u === prev) repeats++;
+    draws.push(u);
+    prev = u;
+  }
+  const distinct = new Set(draws).size;
+  console.log(`  surprise ${kind}: 50 draws over ${urls.length} photos → ${distinct} distinct, ${repeats} back-to-back repeats`);
+  expect(repeats === 0, `surprise ${kind}: never the previous photo twice in a row`);
+  expect(distinct >= Math.min(urls.length, 50) * 0.5, `surprise ${kind}: varied (${distinct} distinct in 50 draws)`, distinct);
+  expect(draws.every((u) => urls.includes(u)), `surprise ${kind}: always a photo of the type`);
+}
+expect(lib.surprise(['only'], ['only']) === 'only', 'surprise with a single photo still answers it');
+expect(lib.surprise([], []) === null, 'surprise with no photo answers nothing');
+// Uniform: 20,000 draws over the padel photos, each within 25% of its fair share.
+{
+  const urls: string[] = lib.libraryFor('padel');
+  const n = 20000;
+  const hits = new Map<string, number>();
+  for (let i = 0; i < n; i++) {
+    const u = lib.surprise(urls) as string;
+    hits.set(u, (hits.get(u) ?? 0) + 1);
+  }
+  const fair = n / urls.length;
+  const off = [...hits.values()].filter((h) => Math.abs(h - fair) > fair * 0.25);
+  expect(hits.size === urls.length && off.length === 0, `surprise padel: uniform over ${urls.length} photos`, [...hits.values()]);
 }
 
 if (failed) {

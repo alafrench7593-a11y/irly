@@ -16,6 +16,8 @@ import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { addDays, cityParts, clockLabel, instants, problemOf, type When } from '@/features/create/when';
+import { openCreate } from '@/features/create/createStore';
+import { CATEGORY_BY_ID, searchCatalog, type CategoryKey } from '@/data/catalog/categories';
 import { useAccount } from '@/features/auth/account';
 import { girl } from '@/features/girl/theme';
 import { GButton, GChip } from '@/features/girl/ui';
@@ -181,6 +183,8 @@ export function QuickPlan({
         currency: city.currency,
       };
       const { startsAt, endsAt } = instants(when, city.utcOffset);
+      // No photo here: the server call gives it one of the IRLY library for its type, at random
+      // (never the one used last time), saved on the plan so it shows the same everywhere.
       const id = await createServerActivity(plan, startsAt, { endsAt, placeId: place?.id ?? null, activityType: SERVER_TYPES.has(type.id) ? type.id : null, audience: type.audience });
       // No id: the session ended or the server is unreachable. Never announce a plan nobody can see.
       if (!id) throw new Error('Your session has ended. Sign in again to post this plan');
@@ -242,8 +246,17 @@ export function QuickPlan({
       ) : (
         <Button label={tx('Create: {title}', { title: type.title(where) })} icon="plus" full loading={busy} onPress={create} />
       )}
+      {/* The full form (name, description, photo, price, spots), the same as in IRLY Mixte; in IRLY Girl its plans are for women only. */}
+      <Button label={tx('More options: description, photo, price')} icon="sliders" variant="ghost" size="sm" haptic="select" disabled={busy} onPress={() => openFull(type)} />
     </View>
   );
+}
+
+/** Opens the full activity form, starting from this plan's category (and its catalog entry when there is one). */
+function openFull(type: PlanType) {
+  const categoryId = (type.category in CATEGORY_BY_ID ? type.category : 'food') as CategoryKey;
+  const entry = searchCatalog(type.label.replace(/^(girls?|mom)\s+/i, ''), 3).find((e) => e.categoryId === categoryId);
+  openCreate(null, { categoryId, subId: entry?.sub.id, activityId: entry?.activity?.id, format: 'activity' });
 }
 
 /** An IRLY Girl plan: a glass tile plum glass fills with a spring when it is chosen (the selection language of Girl), its icon popping. */

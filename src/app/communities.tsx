@@ -26,6 +26,7 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { enter } from '@/motion/enter';
 import { SpaceFlavor } from '@/theme/space';
+import { useAppSpace } from '@/state/appSpace';
 
 type Tab = 'foryou' | 'all' | 'mine';
 
@@ -59,7 +60,7 @@ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
  * and reloads on any join or leave, here or on another phone.
  */
 export default function CommunitiesRoute() {
-  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  // In IRLY Girl the page wears the Girl look (cosmetic only, see theme/space) and lists IRLY Girl communities.
   return (
     <SpaceFlavor>
       <Communities />
@@ -77,7 +78,10 @@ function Communities() {
   const all = useCommunityList(cityId);
   const profile = useStore((s) => s.profile);
   const tags = useMemo(() => profileTags(profile), [profile]);
-  const rec = useRecommendedCommunities(cityId, tags, 12);
+  const recAll = useRecommendedCommunities(cityId, tags, 12);
+  // In IRLY Girl, the recommendations are IRLY Girl communities too (the « All » list already is).
+  const inGirl = useAppSpace() === 'girl';
+  const rec = useMemo(() => (inGirl && recAll.list ? { ...recAll, list: recAll.list.filter((c) => c.girlOnly) } : recAll), [recAll, inGirl]);
   const mine = useMemberProfile(uid ?? '');
   const mineCount = uid ? mine.communities.length : 0;
 

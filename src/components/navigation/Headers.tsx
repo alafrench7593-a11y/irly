@@ -24,6 +24,8 @@ import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { IrlyLogo } from '@/brand/IrlyLogo';
+import { GirlHeaderMark } from '@/features/girl/GirlMark';
 
 export function useUnread(): number {
   const cityId = useCityId();
@@ -116,7 +118,10 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
       </Animated.View>
       <View style={styles.row}>
-        <CommunitiesButton />
+        <View style={styles.lead}>
+          <SpaceLogo />
+          <CommunitiesButton />
+        </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <InboxButtons />
         </View>
@@ -125,7 +130,20 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
   );
 }
 
-/** Top left of Home: the way into communities (the heart of IRLY), in place of the logo. */
+/**
+ * Top left of Home: the logo of the space the app is in (IRLY, or IRLY
+ * Girl), at the same place in both, right before the way into communities.
+ */
+export function SpaceLogo() {
+  const t = useTheme();
+  return (
+    <View accessible accessibilityRole="header" accessibilityLabel={t.flavor === 'girl' ? 'IRLY Girl' : 'IRLY'} style={styles.logo}>
+      {t.flavor === 'girl' ? <GirlHeaderMark size={15} /> : <IrlyLogo size={13} color={t.c.text} />}
+    </View>
+  );
+}
+
+/** Top left of Home, next to the logo: the way into communities (the heart of IRLY). */
 function CommunitiesButton() {
   const t = useTheme();
   const router = useRouter();
@@ -227,7 +245,9 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
 const styles = StyleSheet.create({
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
-  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 12, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  lead: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1, minWidth: 0, marginRight: 8 },
+  logo: { height: 38, justifyContent: 'center' },
   row: {
     flex: 1,
     flexDirection: 'row',

@@ -29,6 +29,8 @@ import { cityWhen } from '@/lib/time';
 import { FEATURES } from '@/lib/features';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { useAppSpace } from '@/state/appSpace';
+import { useGirlPeople } from '@/features/girl/GirlSections';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const HERO = 320;
@@ -60,14 +62,18 @@ export default function CategoryScreen() {
     setSub(null);
   }
 
+  // In IRLY Girl the same page lists girls' plans, women and IRLY Girl communities only
+  // (the server lists below are already scoped; the example content is not).
+  const inGirl = useAppSpace() === 'girl';
+  const women = useGirlPeople(cityId);
   const sessions = useMemo(() => {
-    if (!category || isGirl) return [];
+    if (!category || isGirl || inGirl) return [];
     const list = [
       ...content.sessions.filter((s) => SESSION_CATEGORY[s.kind] === category.id && (!sub || sub.id === s.kind)).map(fromSession),
       ...content.events.map(fromEvent).filter((h) => h.group === category.id && !sub),
     ];
     return list.sort((a, b) => a.item.when.dayOffset - b.item.when.dayOffset);
-  }, [category, content, sub, isGirl]);
+  }, [category, content, sub, isGirl, inGirl]);
 
   // Activities members created on the server (yours included), in this category.
   // The IRLY Girl page lists the girls' and moms' sessions (any category).
@@ -85,18 +91,18 @@ export default function CategoryScreen() {
 
   const people = useMemo(() => {
     if (!category) return [];
-    return content.people.filter((p) =>
+    return (inGirl ? women : content.people).filter((p) =>
       isGirl
         ? true
         : sub
           ? p.activities.some((k) => k === sub.id)
           : p.activities.some((k) => SESSION_CATEGORY[k] === category.id) || p.interests.some((i) => INTEREST_CATEGORY[i] === category.id),
     );
-  }, [category, content, sub, isGirl]);
+  }, [category, content, sub, isGirl, inGirl, women]);
 
   const communities = useMemo(
-    () => (category ? content.communities.filter((c) => c.interests.some((i) => INTEREST_CATEGORY[i] === category.id)) : []),
-    [category, content],
+    () => (category && !inGirl ? content.communities.filter((c) => c.interests.some((i) => INTEREST_CATEGORY[i] === category.id)) : []),
+    [category, content, inGirl],
   );
 
   // Unknown id (old link): say so, with a way back, instead of a blank screen.
