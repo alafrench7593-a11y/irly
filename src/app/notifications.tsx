@@ -14,6 +14,7 @@ import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Text } from '@/components/ui/Text';
 import { findPerson, getCityContent } from '@/data/repo';
 import { DEMO } from '@/config/app';
@@ -82,7 +83,8 @@ export default function Notifications() {
           const p = n.personId ? (content.people.find((x) => x.id === n.personId) ?? findPerson(n.personId)) : undefined;
           return (
             <Animated.View key={n.id} entering={enter.rise(i)}>
-              <PressableScale onPress={n.onPress} scaleTo={0.98} style={[styles.row, { backgroundColor: n.unread ? t.c.surface : 'transparent', boxShadow: n.unread ? t.shadow.card : undefined }]}>
+              <PressableScale onPress={n.onPress} scaleTo={0.98} style={[styles.row, { overflow: 'hidden', boxShadow: n.unread ? t.shadow.card : undefined }]}>
+                {n.unread ? <GlassLayer radius={radius.lg} /> : null}
                 {p ? (
                   <Avatar name={p.name} hue={p.hue} size={44} photo={p.photo ?? demoPhoto(p.id)} />
                 ) : (
@@ -304,7 +306,8 @@ function ServerNotifications() {
         const d = describe(n);
         return (
           <Animated.View key={n.id} entering={enter.rise(i)}>
-            <PressableScale onPress={() => open(n, d.go)} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`${d.title}${n.readAt ? '' : ', unread'}`} style={[styles.row, { backgroundColor: n.readAt ? 'transparent' : t.c.surface, boxShadow: n.readAt ? undefined : t.shadow.card }]}>
+            <PressableScale onPress={() => open(n, d.go)} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`${d.title}${n.readAt ? '' : ', unread'}`} style={[styles.row, { overflow: 'hidden', boxShadow: n.readAt ? undefined : t.shadow.card }]}>
+              {n.readAt ? null : <GlassLayer radius={radius.lg} />}
               <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
                 <Icon name={d.icon} size={18} color={t.c.text} />
                 {n.readAt ? null : <View testID="unread-dot" style={[styles.dot, { backgroundColor: t.c.brand, borderColor: t.c.bg }]} />}
