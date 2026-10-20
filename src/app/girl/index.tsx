@@ -24,7 +24,7 @@ import type { Suggestion } from '@/features/girl/suggest';
 import { girl, GIRL_TINT, girlType } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
 import { GButton, GlassFill } from '@/features/girl/ui';
-import { GirlHero } from '@/features/girl/GirlHero';
+import { GirlBackdrop, GirlHero } from '@/features/girl/GirlHero';
 import { GirlMessages } from '@/features/girl/GirlMessages';
 import { useUnread } from '@/components/navigation/Headers';
 import { usePhotoLink } from '@/features/server/covers';
@@ -47,7 +47,7 @@ import { friendlyError, supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 import { Flavor } from '@/theme/flavor';
 import { GlassLayer } from '@/components/ui/GlassLayer';
-import { Ambient } from '@/components/visual/Ambient';
+
 import { enter } from '@/motion/enter';
 
 // The demonstration build reads the example communities and plans, never the server.
@@ -328,9 +328,9 @@ function GirlHomeInner() {
 
   return (
     <View style={styles.root}>
-      <Ambient variant="hero" />
+      <GirlBackdrop mode={mode} scrollY={scrollY} width={frame.width || window.width} />
       <Animated.ScrollView ref={scrollRef} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <GirlHero mode={mode} scrollY={scrollY} width={frame.width || window.width} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} onMessages={() => router.push('/messages')} unread={unread} />
+        <GirlHero mode={mode} scrollY={scrollY} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} onMessages={() => router.push('/messages')} unread={unread} />
 
 
         {FEATURES.girlMatch && matches.length ? (

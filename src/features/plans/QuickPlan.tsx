@@ -4,7 +4,7 @@ import { t as tx } from '@/i18n';
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
-import { Sheet } from '@/components/ui/Sheet';
+import { DateTimePicker, WhenField } from '@/components/ui/DateTimePicker';
 import { Button } from '@/components/ui/Button';
 import { Chip, Field } from '@/components/ui/Controls';
 import type { IconName } from '@/components/ui/Icon';
@@ -13,7 +13,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
-import { dateFor, planDay, type Day } from '@/features/ai/intent';
+import { addDays, cityParts, clockLabel, instants, problemOf, type When } from '@/features/create/when';
 import { useAccount } from '@/features/auth/account';
 import { girl } from '@/features/girl/theme';
 import { GButton, GChip } from '@/features/girl/ui';
@@ -88,10 +88,6 @@ export const MOM_PLANS: PlanType[] = [
   { id: 'KIDS_ART', label: 'Kids art', icon: 'brush', audience: 'moms', category: 'family', title: (w) => `${tx('Kids art')} · ${w}` },
 ];
 
-const DAYS: Day[] = ['today', 'tomorrow', 'weekend', 'next_week'];
-// Every hour from 7 am to 11 pm; « Other time » opens every half hour of the day.
-const TIMES = Array.from({ length: 17 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
-const ALL_TIMES = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
 /** Plan types the server knows (activities.activity_type); the others are saved without one. */
 const SERVER_TYPES = new Set(['PLAYDATE', 'BEACH_WITH_KIDS', 'PARK_MEETUP', 'KIDS_FOOTBALL', 'KIDS_PADEL', 'KIDS_TENNIS', 'SWIMMING', 'MOM_BABY_WALK', 'MOM_COFFEE', 'BRUNCH_WITH_KIDS', 'FAMILY_PICNIC', 'CREATIVE_WORKSHOP', 'KIDS_ART', 'DINNER', 'BRUNCH', 'COFFEE', 'GIRLS_DINNER', 'FAMILY_DINNER', 'MOM_BRUNCH', 'RESTAURANT_MEETUP', 'SURF', 'WELLNESS', 'SUNSET', 'COWORKING']);
 
@@ -117,11 +113,16 @@ export function QuickPlan({
   const account = useAccount();
   const city = CITIES[cityId];
   const [type, setType] = useState<PlanType>(types[0]);
-  const [day, setDay] = useState<Day>('tomorrow');
-  const [time, setTime] = useState(type.id.includes('BRUNCH') || type.id.includes('COFFEE') ? '11:00' : '19:30');
-  const [area, setArea] = useState(place?.areaId ?? city.areas[0].id);
+  // Shown in the field from the start (tomorrow, 11:00 for a brunch or a coffee, else 19:30), changed in the picker.
+  const [when, setWhen] = useState<When>(() => ({
+    day: addDays(cityParts(Date.now(), city.utcOffset).day, 1),
+    start: type.id.includes('BRUNCH') || type.id.includes('COFFEE') ? { h: 11, m: 0 } : { h: 19, m: 30 },
+    end: null,
+  }));
+  const [picking, setPicking] = useState(false);
+  // The place's neighbourhood when it has one; otherwise the member picks it (never a silent first one).
+  const [area, setArea] = useState<string | null>(place?.areaId ?? null);
   const [busy, setBusy] = useState(false);
-  const [moreTimes, setMoreTimes] = useState(false);
   const [trip, setTrip] = useState(TRIP_PLACES[0]);
   const [ownTrip, setOwnTrip] = useState('');
   const G = palette === 'girl';
@@ -136,6 +137,16 @@ export function QuickPlan({
     if (creating.current) return;
     if (isTrip && !where) {
       toast('Where are you going?', 'plane', 'brand');
+      return;
+    }
+    const problem = problemOf(when, city.utcOffset, Date.now());
+    if (problem) {
+      toast(problem === 'past' ? 'This time has passed: pick a later one' : 'The end must be after the start', 'calendar', 'brand');
+      setPicking(true);
+      return;
+    }
+    if (!area) {
+      toast('Choose a neighbourhood', 'pin', 'brand');
       return;
     }
     if (!account) {
@@ -153,15 +164,16 @@ export function QuickPlan({
         title,
         place: where,
         privacy: 'public' as const,
-        day: planDay(day),
-        time,
+        day: 'Today',
+        time: clockLabel(when.start),
         spots: 0,
-        areaId: place?.areaId ?? area,
+        areaId: area,
         format: 'meetup' as const,
         price: 0,
         currency: city.currency,
       };
-      const id = await createServerActivity(plan, dateFor(day, time, new Date(), city.utcOffset), { placeId: place?.id ?? null, activityType: SERVER_TYPES.has(type.id) ? type.id : null, audience: type.audience });
+      const { startsAt, endsAt } = instants(when, city.utcOffset);
+      const id = await createServerActivity(plan, startsAt, { endsAt, placeId: place?.id ?? null, activityType: SERVER_TYPES.has(type.id) ? type.id : null, audience: type.audience });
       // No id: the session ended or the server is unreachable. Never announce a plan nobody can see.
       if (!id) throw new Error('Your session has ended. Sign in again to post this plan');
       haptic('success');
@@ -227,37 +239,10 @@ export function QuickPlan({
           {trip === 'other' ? <Field icon="pin" placeholder="Your destination" value={ownTrip} onChangeText={setOwnTrip} maxLength={40} accessibilityLabel="Your destination" /> : null}
         </View>
       ) : null}
-      <Row>
-        {DAYS.map((d) => (
-          <C girl={G} key={d} label={planDay(d)} on={day === d} onPress={() => setDay(d)} />
-        ))}
-      </Row>
-      <Row>
-        {TIMES.map((h) => (
-          <C girl={G} key={h} label={h} on={time === h} onPress={() => setTime(h)} />
-        ))}
-        {!TIMES.includes(time) ? <C girl={G} label={time} on onPress={() => setMoreTimes(true)} /> : null}
-        <C girl={G} label={tx('Other time')} on={false} onPress={() => setMoreTimes(true)} />
-      </Row>
-      <Sheet visible={moreTimes} onClose={() => setMoreTimes(false)} title="Pick a start time">
-        <ScrollView contentContainerStyle={[styles.grid, { paddingHorizontal: 20, paddingBottom: 24 }]}>
-          {ALL_TIMES.map((h) => (
-            <View key={h} style={styles.quarter}>
-              <C
-                girl={G}
-                label={h}
-                on={time === h}
-                onPress={() => {
-                  setTime(h);
-                  setMoreTimes(false);
-                }}
-              />
-            </View>
-          ))}
-        </ScrollView>
-      </Sheet>
-      {!place && !isTrip ? (
-        <AreaPicker cityId={city.id} value={area} onChange={setArea} palette={G ? GIRL_PICKER : undefined} />
+      <WhenField value={when} utcOffset={city.utcOffset} onPress={() => setPicking(true)} invalid={Boolean(problemOf(when, city.utcOffset, Date.now()))} />
+      <DateTimePicker visible={picking} onClose={() => setPicking(false)} value={when} onConfirm={setWhen} utcOffset={city.utcOffset} cityName={city.name} />
+      {!place?.areaId ? (
+        <AreaPicker cityId={city.id} value={area} onChange={setArea} label={isTrip ? 'Meeting point' : undefined} palette={G ? GIRL_PICKER : undefined} />
       ) : null}
       <Text variant="caption" color={ink} tone={G ? undefined : 'tertiary'}>
         {type.audience === 'moms' ? 'Visible to IRLY Moms and IRLY Girl members.' : type.audience === 'girls' ? 'Visible to IRLY Girl members only.' : 'Anyone on IRLY can join.'} {tx('It gets its own chat and lands in your calendar.')}
