@@ -256,6 +256,31 @@ expect(lib.surprise([], []) === null, 'surprise with no photo answers nothing');
   expect(hits.size === urls.length && off.length === 0, `surprise padel: uniform over ${urls.length} photos`, [...hits.values()]);
 }
 
+// 6. Stock photo of an activity without a photo of its own (cover_path null): a hash of its id, not the order screens appear in.
+{
+  const { photo, variantsOf } = await import('../src/data/photos.ts');
+  const { VARIANTS } = await import('../src/data/photoVariants.ts');
+  const twice = Object.entries(VARIANTS).filter(([, urls]) => new Set(urls).size !== urls.length).map(([k]) => k);
+  expect(twice.length === 0, `no link twice within a key (${Object.keys(VARIANTS).length} keys)`, twice);
+  const id = '8f14e45f-ceea-467f-a0e6-5f7b7a1c2d3e';
+  const first = photo('footballMix', 500, `srv-${id}`);
+  // Other keys and seeds asked in between: the activity keeps its photo.
+  for (let i = 0; i < 7; i++) photo('footballMix', 500, `srv-other-${i}`);
+  photo('footballMix', 500);
+  expect(photo('footballMix', 500, `a-${id}`) === first && photo('footballMix', 500, `${id}-thumb`) === first, 'same seed → same photo (card, page, thumb)', [first, photo('footballMix', 500, `a-${id}`)]);
+  for (const [cat, label] of [['sport', 'Football'], ['sport', 'Padel'], ['sport', 'Running'], ['sport', 'Tennis'], ['food', 'Brunch'], ['food', 'Dinner'], ['sport', 'Gym session']] as const) {
+    const key = ideaPhoto(cat, label);
+    const urls = Array.from({ length: 50 }, (_, i) => photo(key, 500, `srv-${i.toString(16).padStart(8, '0')}-4a1b-9c2d-${i}`));
+    const distinct = new Set(urls).size;
+    const pool = variantsOf(key).length + 1;
+    expect(distinct >= Math.min(4, pool) && pool >= 3, `50 "${label}" activities (${key}) → ${distinct} distinct photos of ${pool}`, { distinct, pool });
+  }
+  // IRLY Girl: a key of women keeps IRLY's photo of women.
+  const girlUrls = new Set(Array.from({ length: 30 }, (_, i) => photo('padelGirl', 500, `srv-g${i}`, false, true)));
+  expect(girlUrls.size === 1 && [...girlUrls][0].includes('/own/padelGirl-'), 'Girl: padelGirl always shows IRLY\'s photo of women', [...girlUrls]);
+  expect(variantsOf('footballMix', true).length > 0, 'Girl: a mixed key still varies (not a key of women)');
+}
+
 if (failed) {
   console.error(`\n${failed} failed`);
   process.exit(1);

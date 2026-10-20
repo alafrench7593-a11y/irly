@@ -37,6 +37,11 @@ const dir = '.github/scripts';
 const read = (f, d) => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : d);
 const picksFile = `${dir}/media-variants-picks.json`;
 const picks = read(picksFile, { photos: {}, films: {} });
+// One link once per key. A file name is <key>-<n>, and n used to be the list's length + 1: after a pick was removed by
+// hand, the next one reused a taken n, overwrote that file and the link was listed twice. Keep the last pick of a link
+// (the picture now in the file, with its credit).
+const dedupe = (list) => list.filter((p, i) => list.findLastIndex((q) => q.url === p.url) === i);
+for (const key of Object.keys(picks.photos)) picks.photos[key] = dedupe(picks.photos[key]);
 const exclude = new Set([...Object.values(read(`${dir}/dubai-exclude.json`, {})).flat().filter((x) => typeof x === 'string'), ...read(`${dir}/media-variants-exclude.json`, [])]);
 const dubaiQueries = read(`${dir}/dubai-queries.json`, {});
 const extraQueries = read(`${dir}/photo-queries.json`, {});
@@ -178,7 +183,10 @@ for (const key of allKeys) {
         const hash = dhash(thumb);
         usedIds.add(c.id);
         if (usedHashes.some((h) => near(h, hash))) continue;
-        const n = list.length + 1;
+        // The first file number this key does not use yet (never one taken, even after a pick was removed).
+        const taken = new Set(list.map((p) => p.url.match(/-(\d+)-\{w\}\.jpg$/)?.[1]).filter(Boolean).map(Number));
+        let n = 1;
+        while (taken.has(n)) n++;
         let url = c.cdn;
         if (!url) {
           const full = `${TMP}/${c.id}-full`;
@@ -249,7 +257,7 @@ for (const key of filmKeys) {
 // ── Write ──
 for (const list of Object.values(picks.photos)) for (const p of list) delete p.thumb;
 fs.writeFileSync(picksFile, `${JSON.stringify(picks, null, 1)}\n`);
-const variants = Object.fromEntries(Object.entries(picks.photos).filter(([, l]) => l.length).map(([k, l]) => [k, l.map((p) => p.url)]));
+const variants = Object.fromEntries(Object.entries(picks.photos).filter(([, l]) => l.length).map(([k, l]) => [k, [...new Set(dedupe(l).map((p) => p.url))]]));
 const films = Object.keys(picks.films);
 fs.writeFileSync(
   'src/data/photoVariants.ts',

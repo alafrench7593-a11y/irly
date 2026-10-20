@@ -30,12 +30,14 @@ type Props = {
 };
 
 // Web: an icon (an <svg>, not positioned) drawn after a glass layer would be
-// painted under it, blurred. Inside IRLY Girl the glass marks itself, and
-// the icons that follow it are lifted into the same layer as the text.
+// painted under it, blurred (blank on the night theme's smoked glass). The
+// glass marks itself (IRLY Girl's and Mixte's), and the icons that follow it
+// are lifted into the same layer as the text. Nothing else moves: the icon
+// keeps its place, only its paint order changes.
 if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('irly-girl-glass')) {
   const css = document.createElement('style');
   css.id = 'irly-girl-glass';
-  css.textContent = '[data-girl-glass] ~ svg { position: relative; }';
+  css.textContent = '[data-girl-glass] ~ svg, [data-irly-glass] ~ svg { position: relative; }';
   document.head.appendChild(css);
 }
 
@@ -69,7 +71,7 @@ export const Glass = memo(function Glass({ style, intensity, dark, light, border
   const shine = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.65)';
   const solid = isDark ? (dark ? 'rgba(40,42,46,0.86)' : 'rgba(24,26,31,0.95)') : girl ? 'rgba(255,246,250,0.96)' : 'rgba(255,255,255,0.95)';
   return (
-    <View style={[styles.root, lifted ? { boxShadow: t.shadow.card } : null, style]}>
+    <View {...MIXTE_MARK} style={[styles.root, lifted ? { boxShadow: t.shadow.card } : null, style]}>
       {Platform.OS === 'android' ? (
         <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: solid }]} />
       ) : (
@@ -91,6 +93,7 @@ export const Glass = memo(function Glass({ style, intensity, dark, light, border
 });
 
 const WEB_MARK = Platform.OS === 'web' ? ({ dataSet: { girlGlass: '1' } } as object) : null;
+const MIXTE_MARK = Platform.OS === 'web' ? ({ dataSet: { irlyGlass: '1' } } as object) : null;
 
 /**
  * IRLY Girl's glass: live blur, a pearl (or plum) tint, a thin nacre rim all

@@ -21,7 +21,8 @@ import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/cate
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
-import { CoverEditor } from '@/components/visual/CoverEditor';
+import { CoverEditor, type CoverLibrary } from '@/components/visual/CoverEditor';
+import { isLibraryUrl, libraryFor, libraryKindOf } from '@/features/create/photoLibrary';
 import { isContentStaff, useStaffRole } from '@/features/admin/api';
 import { setActivityCover } from '@/features/server/covers';
 import { cancelServerActivity, deleteServerActivity, icsFor, joinServerActivity, leaveServerActivity, updateServerActivity, useServerActivity } from '@/features/server/activities';
@@ -141,6 +142,15 @@ function ActivityPage() {
   const target = { type: 'activity' as const, id: a.id, title: a.title };
 
   const confirmingNow = confirming && (held || !going);
+  // The host can also pick from the IRLY library (the type's photos, as when the activity was created); staff keep the upload.
+  const coverLibrary: CoverLibrary | undefined = hosting
+    ? {
+        urls: libraryFor(libraryKindOf((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, category?.subs.find((s) => s.id === a.subId)?.label), { girl: t.flavor === 'girl' || a.girlOnly }),
+        title: a.title,
+        current: isLibraryUrl(a.coverUrl) ? a.coverUrl : null,
+        choose: (url) => updateServerActivity(a.id, { libraryCover: url }),
+      }
+    : undefined;
 
   const join = async () => {
     // One join at a time (a second tap while the first is on its way does nothing).
@@ -214,7 +224,7 @@ function ActivityPage() {
             <Film uri={filmFor(ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, a.subId))!} dim={0.4} />
           ) : null}
           {hosting || contentStaff ? (
-            <CoverEditor style={[styles.coverEdit, { top: insets.top + 56 }]} hasOwn={Boolean(a.coverUrl)} staff={contentStaff && !hosting} save={(picked) => setActivityCover(a.id, picked)} onChanged={refresh} />
+            <CoverEditor style={[styles.coverEdit, { top: insets.top + 56 }]} hasOwn={Boolean(a.coverUrl)} staff={contentStaff && !hosting} save={(picked) => setActivityCover(a.id, picked)} library={coverLibrary} onChanged={refresh} />
           ) : null}
           <View style={[styles.coverText, { paddingBottom: space[5] }]}>
             <Text variant="overline" color="#FFFFFF">

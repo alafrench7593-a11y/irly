@@ -19,6 +19,9 @@ import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Photo } from '@/components/visual/Photo';
+import { CITIES } from '@/data/destinations';
+import { useActivityThumbs } from '@/features/server/covers';
 
 export type SearchHit = { kind: 'activity' | 'community' | 'person' | 'place' | 'area' | 'city' | 'category'; id: string; title: string; subtitle: string | null; cityId: string | null; areaId: string | null; startsAt: number | null };
 
@@ -110,6 +113,8 @@ function ResultsList({ q, cityId, keep }: { q: string; cityId: string; keep?: (h
 
   const current = uid && q.trim().length >= 2 && res.key === `${q}|${cityId}|${uid}`;
   const shown = current ? (keep ? res.hits.filter(keep) : res.hits) : [];
+  // An activity found shows its photo: the one saved on it, else the app's photo of its subject (the same as on its page).
+  const thumbs = useActivityThumbs(shown.filter((h) => h.kind === 'activity').map((h) => h.id));
   if (current && res.failed)
     return (
       <Text variant="bodyS" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
@@ -141,9 +146,13 @@ function ResultsList({ q, cityId, keep }: { q: string; cityId: string; keep?: (h
         <Animated.View key={`${h.kind}-${h.id}`} entering={enter.rise(Math.min(idx, 8))}>
           <PressableScale onPress={() => open(h)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={h.title}>
             <GlassLayer radius={radius.lg} />
-            <View style={[styles.icon, { backgroundColor: t.c.brandSoft }]}>
-              <Icon name={ICON[h.kind]} size={18} color={t.c.text} />
-            </View>
+            {h.kind === 'activity' && thumbs[h.id] ? (
+              <Photo visual={{ photo: thumbs[h.id].photo, uri: thumbs[h.id].uri ?? undefined }} light={(CITIES[h.cityId as keyof typeof CITIES] ?? CITIES[cityId as keyof typeof CITIES] ?? CITIES.dubai).light} width={120} style={styles.thumb} recyclingKey={`srv-${h.id}`} />
+            ) : (
+              <View style={[styles.icon, { backgroundColor: t.c.brandSoft }]}>
+                <Icon name={ICON[h.kind]} size={18} color={t.c.text} />
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Text variant="titleS" numberOfLines={1}>
                 {h.title}
@@ -164,4 +173,5 @@ function ResultsList({ q, cityId, keep }: { q: string; cityId: string; keep?: (h
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg },
   icon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  thumb: { width: 44, height: 44, borderRadius: radius.md, overflow: 'hidden' },
 });

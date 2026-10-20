@@ -24,7 +24,7 @@ import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type Pla
 import { confirm } from '@/lib/confirm';
 import { deleteCommunity, fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost, pinActivity, type ActivityStatus } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
-import { setCommunityCover, usePhotoLink } from '@/features/server/covers';
+import { setCommunityCover, useActivityThumbs, usePhotoLink } from '@/features/server/covers';
 import { CoverEditor, coverEditorSlot } from '@/components/visual/CoverEditor';
 import { isContentStaff, useStaffRole } from '@/features/admin/api';
 import { communityPhoto, GUIDELINES, introDraft } from '@/features/community/official';
@@ -81,6 +81,8 @@ function CommunityScreen() {
   const feed = useCommunityFeed(id, channels.length ? postSpace : undefined);
   const [past, setPast] = useState(false);
   const acts = useCommunityActivities(id, past);
+  // Each activity's photo: its own, else the app's photo of its subject (the same as on its page).
+  const actThumbs = useActivityThumbs(acts.activities.map((a) => a.id));
   const extras = useCommunityExtras(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
   const [tab, setTab] = useState<Tab>('posts');
@@ -320,11 +322,18 @@ function CommunityScreen() {
                     <Animated.View key={`${past ? 'past' : 'next'}-${a.id}`} entering={reduced ? undefined : enter.rise(Math.min(i, 8))}>
                       <PressableScale onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
                         <GlassLayer radius={radius.xl} />
-                        <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
+                        {actThumbs[a.id] ? (
+                          <Photo visual={{ photo: actThumbs[a.id].photo, uri: actThumbs[a.id].uri ?? undefined }} light={city.light} width={120} style={styles.actThumb} recyclingKey={`srv-${a.id}`} />
+                        ) : (
+                          <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
+                        )}
                         <View style={{ flex: 1 }}>
-                          <Text variant="titleS" numberOfLines={1} raw>
-                            {a.title}
-                          </Text>
+                          <View style={styles.titleRow}>
+                            {actThumbs[a.id] && a.pinnedAt ? <Icon name="pinPost" size={14} color={t.c.text} /> : null}
+                            <Text variant="titleS" numberOfLines={1} raw style={{ flexShrink: 1 }}>
+                              {a.title}
+                            </Text>
+                          </View>
                           <Text variant="caption" tone="tertiary" raw>
                             {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`, a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : null]
                               .filter(Boolean)
@@ -865,6 +874,8 @@ function CommunityCover({ id, name, topic, categoryId, coverPath, light, canEdit
 
 const styles = StyleSheet.create({
   coverPhoto: { height: 190, borderRadius: radius.xl, overflow: 'hidden' },
+  actThumb: { width: 52, height: 52, borderRadius: radius.md, overflow: 'hidden' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   root: { flex: 1 },
   pad: { paddingHorizontal: space.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },

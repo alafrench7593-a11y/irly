@@ -133,8 +133,7 @@ export const IrlyLogoCompact = memo(function IrlyLogoCompact({ size = 15, color 
       accessibilityRole="image"
       accessibilityLabel={a11y('IRLY')}
       allowFontScaling={false}
-      numberOfLines={1}
-      style={{ fontFamily: 'Manrope_800ExtraBold', fontSize: size, lineHeight: size * 1.2, letterSpacing: size * 0.24, marginRight: -size * 0.24, color: ink }}
+      style={{ fontFamily: 'Manrope_800ExtraBold', fontSize: size, lineHeight: size * 1.2, letterSpacing: size * 0.24, color: ink }}
     >
       IRLY
     </Text>

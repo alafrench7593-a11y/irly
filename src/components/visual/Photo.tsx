@@ -67,17 +67,17 @@ export const Photo = memo(function Photo({
   // loading: breathing placeholder · done: photo shown, or the plain
   // destination colours if the network refused it (no endless pulse).
   const [status, setStatus] = useState<"loading" | "done">("loading");
-  // Chosen once per place on screen (never on every render): this place keeps
-  // its photo, the next place showing the same subject gets another one.
-  const stockUrl = useMemo(() => photoUrl(visual.photo, width, recyclingKey, pinned), [visual.photo, width, recyclingKey, pinned]);
+  const t = useTheme();
+  // IRLY Girl waits on a warm rose-cream, never a grey box, and keeps IRLY's photos of women.
+  const girl = t.flavor === "girl";
+  // With a recyclingKey (the thing's id), the same photo on every screen;
+  // without one, chosen once per place on screen (never on every render).
+  const stockUrl = useMemo(() => photoUrl(visual.photo, width, recyclingKey, pinned, girl), [visual.photo, width, recyclingKey, pinned, girl]);
   // A cover link that fails (expired, file gone) falls back to the stock
   // photo once, instead of leaving a grey box.
   const [failedUri, setFailedUri] = useState<string | null>(null);
   const uri = visual.uri && visual.uri !== failedUri ? visual.uri : stockUrl;
-  const t = useTheme();
   const night = t.mode === "night";
-  // IRLY Girl waits on a warm rose-cream, never a grey box.
-  const girl = t.flavor === "girl";
   void light;
   const pulse = useSharedValue(0);
   const loading = status === "loading";

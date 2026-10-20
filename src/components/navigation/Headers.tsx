@@ -6,6 +6,7 @@ import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { useServerBell } from '@/features/server/social';
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useFrame } from '@/components/layout/AppFrame';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -145,6 +146,8 @@ export function SpaceLogo() {
 function CommunitiesButton() {
   const t = useTheme();
   const router = useRouter();
+  // On the narrowest phones (375 pt and less) the word keeps its room: the icon steps aside, never « Communi… ».
+  const narrow = useFrame().width < 380;
   return (
     <PressableScale
       haptic="select"
@@ -155,7 +158,7 @@ function CommunitiesButton() {
       style={[styles.communities, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
     >
       <GlassLayer radius={radius.pill} level="thin" />
-      <Icon name="users" size={16} color={t.c.text} />
+      {narrow ? null : <Icon name="users" size={16} color={t.c.text} />}
       <Text variant="label" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flexShrink: 1 }}>
         Communities
       </Text>
@@ -245,7 +248,8 @@ const styles = StyleSheet.create({
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 11, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
   lead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, minWidth: 0, marginRight: 4 },
-  logo: { height: 38, justifyContent: 'center' },
+  // The logo never shrinks: the Communities pill gives way first.
+  logo: { height: 38, justifyContent: 'center', flexShrink: 0 },
   row: {
     flex: 1,
     flexDirection: 'row',
