@@ -51,12 +51,16 @@ export async function pickLiveMedia(kind: 'photo' | 'video'): Promise<LiveMedia 
   return { kind, uri: a.uri, seconds, poster: poster?.uri, type, ratio };
 }
 
-/** A still from the first second of the video (phones only; the web shows a plain tile). */
+/**
+ * A still from the first second of the video (phones only; the web shows a
+ * plain tile). Taken at 0.9: it is encoded again once by prepareImage (0.85)
+ * before upload, and two strong compressions in a row band the gradients.
+ */
 async function posterOf(uri: string): Promise<{ uri: string; width: number; height: number } | undefined> {
   if (Platform.OS === 'web') return undefined;
   try {
     const { getThumbnailAsync } = await import('expo-video-thumbnails');
-    return await getThumbnailAsync(uri, { time: 500, quality: 0.7 });
+    return await getThumbnailAsync(uri, { time: 500, quality: 0.9 });
   } catch {
     return undefined;
   }

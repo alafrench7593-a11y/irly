@@ -1,11 +1,13 @@
 import { useEventListener } from 'expo';
 import { Image } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, AppState, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { claimPlayback, playbackId, releasePlayback } from '@/components/visual/playback';
 import { forgetLink } from '@/features/server/media';
 import { a11y } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
@@ -15,6 +17,9 @@ import { feedRatio, knownRatio, mediaKey, mediaRatio, rememberRatio } from './li
  * A Live video: its poster and length until tapped, so opening the feed
  * never downloads a video; tapped, it loads and plays here, with sound and
  * the system controls. A video that cannot be read says so, with a retry.
+ * One video plays at a time (playback.ts): starting this one pauses any
+ * other; it pauses itself when its screen is left or the app goes to the
+ * background (the member starts it again from the controls).
  *
  * `fit` (opt-in, the Live feed and composer): the frame follows the video's
  * own shape (`ratio`, else its poster's), between 4:5 and 1.91:1, instead of
@@ -104,6 +109,45 @@ function Player({ url, onRetry }: { url: string; onRetry: () => void }) {
     p.play();
   });
   useEventListener(player, 'statusChange', ({ status }) => setState(status === 'error' ? 'error' : status === 'readyToPlay' ? 'ready' : 'loading'));
+  const [id] = useState(playbackId);
+  // Playing takes the floor (any other video pauses); paused or ended, the floor is free again.
+  useEventListener(player, 'playingChange', ({ isPlaying }) => {
+    if (isPlaying)
+      claimPlayback(
+        id,
+        'user',
+        () => player.pause(),
+        () => player.play(),
+      );
+    else releasePlayback(id);
+  });
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') return;
+      try {
+        player.pause();
+      } catch {
+        // Released while unmounting.
+      }
+    });
+    return () => {
+      sub.remove();
+      releasePlayback(id);
+    };
+  }, [player, id]);
+  // Leaving the screen (another page pushed on top, a tab switch) pauses it: no sound from a page you cannot see.
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        try {
+          player.pause();
+        } catch {
+          // Released while unmounting.
+        }
+      },
+      [player],
+    ),
+  );
   return (
     <>
       {/* The whole video, never cropped: bars where its shape differs from the frame. */}
