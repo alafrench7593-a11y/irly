@@ -1,57 +1,35 @@
-import Constants from "expo-constants";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import { Linking, Platform, StyleSheet, View } from "react-native";
-import { Page } from "@/components/layout/Page";
-import { Button } from "@/components/ui/Button";
-import { Chip, Field } from "@/components/ui/Controls";
-import { Text } from "@/components/ui/Text";
-import { toast } from "@/components/ui/Toast";
-import { APP, isMissing } from "@/config/app";
-import { useAccount } from "@/features/auth/account";
-import { useT } from "@/i18n";
-import { supabase } from "@/lib/supabase";
-import { radius, space } from "@/theme/tokens";
-import { useTheme } from "@/theme/useTheme";
-import { GlassLayer } from "@/components/ui/GlassLayer";
+import Constants from 'expo-constants';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
+import { Page } from '@/components/layout/Page';
+import { Button } from '@/components/ui/Button';
+import { Chip, Field } from '@/components/ui/Controls';
+import { Text } from '@/components/ui/Text';
+import { toast } from '@/components/ui/Toast';
+import { APP, isMissing } from '@/config/app';
+import { useAccount } from '@/features/auth/account';
+import { useT } from '@/i18n';
+import { supabase } from '@/lib/supabase';
+import { radius, space } from '@/theme/tokens';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
-type Kind = "problem" | "question" | "safety" | "privacy";
+type Kind = 'problem' | 'question' | 'safety' | 'privacy';
 const KINDS: { id: Kind; label: string }[] = [
-  { id: "problem", label: "Report a problem" },
-  { id: "question", label: "Ask a question" },
-  { id: "safety", label: "Safety concern" },
-  { id: "privacy", label: "Privacy request" },
+  { id: 'problem', label: 'Report a problem' },
+  { id: 'question', label: 'Ask a question' },
+  { id: 'safety', label: 'Safety concern' },
+  { id: 'privacy', label: 'Privacy request' },
 ];
 
 const FAQ: { q: string; a: string }[] = [
-  {
-    q: "How do I report or block someone?",
-    a: "Open their profile or your chat with them and tap the shield button. In a chat you can also long-press a message to report it.",
-  },
-  {
-    q: "How do I change my profile?",
-    a: "Profile → Edit profile. Your professional profile is in Settings → Professional profile.",
-  },
-  {
-    q: "Who can see me?",
-    a: "Settings → Privacy: choose who can find your profile, who sees your live posts and activities, and how precise your location is (neighbourhood, city or hidden).",
-  },
-  {
-    q: "How do I get a copy of my data or delete my account?",
-    a: "Settings → Download my data, and Settings → Delete account. Deleting removes your account and data from IRLY’s servers.",
-  },
-  {
-    q: "Someone else is using my account",
-    a: 'Change your password now in Settings → Sign-in & password, then write to us below with "Safety concern" so we can check the account.',
-  },
-  {
-    q: "How do I report a member?",
-    a: 'Open their profile, tap … then Report. In a chat, long-press a message. Or write to us below with "Safety concern".',
-  },
-  {
-    q: "Someone is in danger",
-    a: 'Contact local emergency services first. Then report the profile in the app or write to us below with "Safety concern".',
-  },
+  { q: 'How do I report or block someone?', a: 'Open their profile or your chat with them and tap the shield button. In a chat you can also long-press a message to report it.' },
+  { q: 'How do I change my profile?', a: 'Profile → Edit profile. Your professional profile is in Settings → Professional profile.' },
+  { q: 'Who can see me?', a: 'Settings → Privacy: choose who can find your profile, who sees your live posts and activities, and how precise your location is (neighbourhood, city or hidden).' },
+  { q: 'How do I get a copy of my data or delete my account?', a: 'Settings → Download my data, and Settings → Delete account. Deleting removes your account and data from IRLY’s servers.' },
+  { q: 'Someone else is using my account', a: 'Change your password now in Settings → Sign-in & password, then write to us below with "Safety concern" so we can check the account.' },
+  { q: 'How do I report a member?', a: 'Open their profile, tap … then Report. In a chat, long-press a message. Or write to us below with "Safety concern".' },
+  { q: 'Someone is in danger', a: 'Contact local emergency services first. Then report the profile in the app or write to us below with "Safety concern".' },
 ];
 
 /** Help, contact and "Report a problem" (Settings → Support). */
@@ -60,78 +38,48 @@ export default function Support() {
   const router = useRouter();
   const account = useAccount();
   const { kind: asked } = useLocalSearchParams<{ kind?: string }>();
-  const [kind, setKind] = useState<Kind>(
-    KINDS.some((k) => k.id === asked) ? (asked as Kind) : "problem",
-  );
-  const [body, setBody] = useState("");
+  const [kind, setKind] = useState<Kind>(KINDS.some((k) => k.id === asked) ? (asked as Kind) : 'problem');
+  const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
 
   const send = async () => {
     if (!supabase || !account) {
-      router.push("/account");
+      router.push('/account');
       return;
     }
     if (body.trim().length < 5) {
-      toast(tr("Tell us a little more (a few words at least)"), "x", "live");
+      toast(tr('Tell us a little more (a few words at least)'), 'x', 'live');
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from("support_requests").insert({
+    const { error } = await supabase.from('support_requests').insert({
       user_id: account.userId,
       kind,
       body: body.trim().slice(0, 2000),
       contact: account.email ?? null,
       app_version: Constants.expoConfig?.version ?? null,
-      platform:
-        Platform.OS === "ios" || Platform.OS === "android"
-          ? Platform.OS
-          : "web",
+      platform: Platform.OS === 'ios' || Platform.OS === 'android' ? Platform.OS : 'web',
     });
     setBusy(false);
     if (error) {
-      toast(
-        /slow down/i.test(error.message)
-          ? tr("You've already sent several messages. Try again in an hour.")
-          : tr("Could not send. Check your connection and try again."),
-        "x",
-        "live",
-      );
+      toast(/slow down/i.test(error.message) ? tr("You've already sent several messages. Try again in an hour.") : tr('Could not send. Check your connection and try again.'), 'x', 'live');
       return;
     }
-    setBody("");
-    toast(tr("Sent. Thank you, we will look at it"), "check", "positive");
+    setBody('');
+    toast(tr('Sent. Thank you, we will look at it'), 'check', 'positive');
   };
 
-  const email =
-    kind === "privacy"
-      ? APP.privacyEmail
-      : kind === "safety"
-        ? APP.safetyEmail
-        : APP.supportEmail;
+  const email = kind === 'privacy' ? APP.privacyEmail : kind === 'safety' ? APP.safetyEmail : APP.supportEmail;
 
   return (
-    <Page
-      overline="Settings"
-      title="Help & support"
-      subtitle="Answers to common questions, and a way to reach the IRLY team."
-    >
+    <Page overline="Settings" title="Help & support" subtitle="Answers to common questions, and a way to reach the IRLY team.">
       <View style={styles.body}>
         <View style={{ gap: 8 }}>
           {FAQ.map((f, i) => (
-            <View
-              key={f.q}
-              style={[
-                styles.faq,
-                { backgroundColor: "transparent", overflow: "hidden" },
-              ]}
-            >
+            <View key={f.q} style={[styles.faq, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
               <GlassLayer radius={radius.lg} />
-              <Text
-                variant="titleS"
-                onPress={() => setOpen(open === i ? null : i)}
-                accessibilityRole="button"
-              >
+              <Text variant="titleS" onPress={() => setOpen(open === i ? null : i)} accessibilityRole="button">
                 {f.q}
               </Text>
               {open === i ? (
@@ -149,42 +97,15 @@ export default function Support() {
           </Text>
           <View style={styles.wrap}>
             {KINDS.map((k) => (
-              <Chip
-                key={k.id}
-                size="sm"
-                label={k.label}
-                selected={kind === k.id}
-                onPress={() => setKind(k.id)}
-              />
+              <Chip key={k.id} size="sm" label={k.label} selected={kind === k.id} onPress={() => setKind(k.id)} />
             ))}
           </View>
-          <Field
-            value={body}
-            onChangeText={setBody}
-            multiline
-            maxLength={2000}
-            placeholder="What happened, on which screen"
-            accessibilityLabel={tr("Your message")}
-          />
-          <Button
-            label={account ? "Send" : "Sign in to send"}
-            icon="send"
-            full
-            loading={busy}
-            onPress={send}
-          />
+          <Field value={body} onChangeText={setBody} multiline maxLength={2000} placeholder="What happened, on which screen" accessibilityLabel={tr('Your message')} />
+          <Button label={account ? 'Send' : 'Sign in to send'} icon="send" full loading={busy} onPress={send} />
           <Text variant="caption" tone="tertiary">
-            {isMissing(email)
-              ? tr("Email contact: {email}", { email })
-              : tr("Or email {email}", { email })}
+            {isMissing(email) ? tr('Email contact: {email}', { email }) : tr('Or email {email}', { email })}
           </Text>
-          {!isMissing(email) ? (
-            <Button
-              label="Open email"
-              variant="ghost"
-              onPress={() => Linking.openURL(`mailto:${email}`)}
-            />
-          ) : null}
+          {!isMissing(email) ? <Button label="Open email" variant="ghost" onPress={() => Linking.openURL(`mailto:${email}`)} /> : null}
         </View>
       </View>
     </Page>
@@ -194,5 +115,5 @@ export default function Support() {
 const styles = StyleSheet.create({
   body: { paddingHorizontal: space.gutter, gap: space[7] },
   faq: { padding: 14, gap: 8, borderRadius: radius.lg },
-  wrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

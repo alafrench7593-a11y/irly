@@ -192,7 +192,8 @@ function PersonRow({ personId, caption, go }: { personId: string; caption: strin
   const p = findPerson(personId);
   if (!p) return null;
   return (
-    <PressableScale onPress={() => go(`/person/${p.id}`)} style={[styles.personRow, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.lg} />
+    <PressableScale onPress={() => go(`/person/${p.id}`)} style={[styles.personRow, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.lg} />
       <Avatar name={p.name} hue={p.hue} size={46} verified={p.verified} online={p.online} />
       <View style={{ flex: 1 }}>
         <Text variant="bodyS" tone="tertiary">
@@ -287,7 +288,8 @@ export function MiniMap({ city, areaId }: { city: City; areaId: string }) {
         <View style={[styles.pinHalo, { backgroundColor: t.light.accentSoft }]} />
         <View style={[styles.pin, { backgroundColor: t.c.brand, borderColor: t.c.bg }]} />
       </View>
-      <View style={[styles.mapLabel, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.pill} level="thin" />
+      <View style={[styles.mapLabel, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+        <GlassLayer radius={radius.pill} level="thin" />
         <Icon name="pin" size={13} color={t.c.text} />
         <Text variant="label">{area.name}</Text>
       </View>
@@ -334,7 +336,8 @@ const EventBody = memo(function EventBody({ id, go }: { id: string; go: Go }) {
 
 function HostCard({ name, verified }: { name: string; verified: boolean }) {
   return (
-    <View style={[styles.personRow, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.lg} />
+    <View style={[styles.personRow, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.lg} />
       <Avatar name={name} hue={name.length * 37} size={46} />
       <View style={{ flex: 1, gap: 4 }}>
         <Text variant="titleS">{name}</Text>
@@ -433,7 +436,8 @@ const PlaceBody = memo(function PlaceBody({ id, go }: { id: string; go: Go }) {
 function PlanRow({ icon, title, meta }: { icon: IconName; title: string; meta: string }) {
   const t = useTheme();
   return (
-    <View style={[styles.personRow, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.lg} />
+    <View style={[styles.personRow, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.lg} />
       <View style={[styles.infoIcon, { backgroundColor: t.light.accentSoft }]}>
         <Icon name={icon} size={18} color={t.accent} />
       </View>
@@ -509,7 +513,8 @@ const ServiceBody = memo(function ServiceBody({ id }: { id: string; go: Go }) {
         <Highlights items={s.perks} />
       </Section>
       <Section title="Trust" index={2}>
-        <View style={[styles.trustCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.lg} />
+        <View style={[styles.trustCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+          <GlassLayer radius={radius.lg} />
           <View style={styles.trustItem}>
             <Text variant="number">{s.rating.toFixed(1)}</Text>
             <Text variant="bodyS" tone="secondary">

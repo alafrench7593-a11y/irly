@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 import { Rail } from '@/components/cards/Blocks';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -23,6 +23,8 @@ import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { enter } from '@/motion/enter';
 
 type Tab = 'foryou' | 'all' | 'mine';
 
@@ -130,16 +132,16 @@ function ForYou({ rec, cityId, onSeeAll }: { rec: ReturnType<typeof useRecommend
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       {newcomers.length ? <Text variant="overline" tone="tertiary">{tx('New in {city}', { city: city.name })}</Text> : null}
-      {newcomers.map((c) => (
-        <Row key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId)} action="join" />
+      {newcomers.map((c, i) => (
+        <Row index={i} key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId)} action="join" />
       ))}
       {rest.length ? (
         <Text variant="overline" tone="tertiary" style={{ marginTop: newcomers.length ? space[3] : 0 }}>
           From your interests
         </Text>
       ) : null}
-      {rest.map((c) => (
-        <Row key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId)} action="join" />
+      {rest.map((c, i) => (
+        <Row index={i} key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId)} action="join" />
       ))}
     </View>
   );
@@ -172,8 +174,9 @@ function All({ list, cityId }: { list: CommunitySummary[]; cityId: CityId }) {
       </View>
       <ScopeToggle cityId={cityId} />
       <View style={[styles.pad, { gap: 10 }]}>
-        {shown.map((c) => (
+        {shown.map((c, i) => (
           <Row
+            index={i}
             key={c.id}
             id={c.id}
             name={c.name}
@@ -223,16 +226,16 @@ function Mine({ list, loading, error, onReload, onBrowse }: { list: MemberCommun
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       {created.length ? <Text variant="overline" tone="tertiary">Created</Text> : null}
-      {created.map((c) => (
-        <Row key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={[c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} action="none" />
+      {created.map((c, i) => (
+        <Row index={i} key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={[c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} action="none" />
       ))}
       {joined.length ? (
         <Text variant="overline" tone="tertiary" style={{ marginTop: created.length ? space[3] : 0 }}>
           Joined
         </Text>
       ) : null}
-      {joined.map((c) => (
-        <Row key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={[c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} action="leave" />
+      {joined.map((c, i) => (
+        <Row index={i} key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={[c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} action="leave" />
       ))}
     </View>
   );
@@ -252,7 +255,9 @@ function Row({
   isMember,
   meta: line,
   action,
+  index = 0,
 }: {
+  index?: number;
   id: string;
   name: string;
   topic: string | null;
@@ -289,7 +294,7 @@ function Row({
       });
   };
   return (
-    <Animated.View entering={FadeIn.duration(180)}>
+    <Animated.View entering={enter.rise(Math.min(index, 8))} layout={LinearTransition.springify().dampingRatio(0.9)}>
       <PressableScale onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name}>
         <GlassLayer radius={radius.lg} />
         <CommunityThumb id={id} name={name} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size={44} member={isMember} />
@@ -317,11 +322,10 @@ function Row({
 }
 
 function Loading() {
-  const t = useTheme();
   return (
     <View style={[styles.pad, { gap: 10 }]} accessibilityLabel={tx('Loading')}>
       {[0, 1, 2].map((i) => (
-        <View key={i} style={[styles.row, { backgroundColor: t.c.surface, height: 72, opacity: 0.6 }]} />
+        <Skeleton key={i} height={72} radius={radius.lg} />
       ))}
     </View>
   );
@@ -346,7 +350,8 @@ function Empty({
 }) {
   const t = useTheme();
   return (
-    <View style={[styles.empty, { borderColor: t.c.lineStrong }]}>
+    <Animated.View entering={enter.rise(0)} style={styles.empty}>
+      <GlassLayer radius={radius.xl} />
       <Icon name={icon} size={22} color={t.c.text} />
       <Text variant="titleS" align="center">
         {title}
@@ -356,12 +361,12 @@ function Empty({
       </Text>
       <Button label={action} size="sm" onPress={onAction} style={{ marginTop: 6 }} />
       {secondary && onSecondary ? <Button label={secondary} size="sm" variant="ghost" onPress={onSecondary} /> : null}
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg },
-  empty: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, borderWidth: 1.5, borderStyle: 'dashed' },
+  empty: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, overflow: 'hidden' },
 });

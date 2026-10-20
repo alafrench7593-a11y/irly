@@ -142,7 +142,8 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
                 onPress={() => router.push(`/match?intent=${id}` as never)}
                 style={[styles.intent, { width: tileW, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
                 accessibilityLabel={`${tx(it.label)}. ${tx(it.blurb)}`}
-              ><GlassLayer radius={radius.lg} />
+              >
+                <GlassLayer radius={radius.lg} />
                 <Icon name={it.icon} size={20} color={t.c.text} />
                 <Text variant="titleS" numberOfLines={1}>
                   {it.label}
@@ -296,7 +297,8 @@ export function PlacesPage({ cityId, scrollY, top, bottom }: PageProps) {
                 scaleTo={0.95}
                 onPress={() => router.push(`/map?area=${a.id}`)}
                 style={[styles.area, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
-              ><GlassLayer radius={radius.pill} />
+              >
+                <GlassLayer radius={radius.pill} />
                 <Icon name="pin" size={14} color={t.accent} />
                 <Text variant="label">{a.name}</Text>
                 <Text variant="caption" tone="tertiary">

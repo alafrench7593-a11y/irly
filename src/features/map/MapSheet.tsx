@@ -23,6 +23,7 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { MapMarkerData } from './markers';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { enter } from '@/motion/enter';
 
 export type Snap = 'collapsed' | 'half' | 'expanded';
 
@@ -299,11 +300,12 @@ function FullContent({ marker }: { marker: MapMarkerData }) {
           ))}
         </View>
       ) : null}
-      <View style={[styles.detail, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.xl} />
+      <Animated.View entering={enter.rise(0, 60)} style={[styles.detail, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+        <GlassLayer radius={radius.xl} />
         <Row icon="pin" text={marker.subtitle} />
         {marker.type === 'activity' || marker.type === 'event' ? <Row icon="message" text="Group chat opens when you join" /> : null}
         {marker.type === 'group' ? <Row icon="users" text={tx('{n} members', { n: marker.count ?? 0 })} /> : null}
-      </View>
+      </Animated.View>
       <Button label="Open full page" variant="secondary" iconRight="arrowUpRight" full onPress={() => openHero(hero)} />
     </View>
   );

@@ -51,13 +51,13 @@ export default function AdminHome() {
               <ActivityIndicator color={t.c.text} />
             ) : (
               <View style={adminStyles.row}>
-                <Stat icon="flag" label="New reports" value={d.new} alert={d.new > 0} onPress={() => router.push('/admin/reports?status=open')} />
-                <Stat icon="flame" label="High priority, open" value={d.high} alert={d.high > 0} onPress={() => router.push('/admin/reports?priority=high')} />
-                <Stat icon="eye" label="Under review" value={d.reviewing} onPress={() => router.push('/admin/reports?status=reviewing')} />
-                <Stat icon="question" label="Waiting for information" value={d.need_info} onPress={() => router.push('/admin/reports?status=need_info')} />
-                <Stat icon="calendar" label="Reports in 7 days" value={d.week} />
-                <Stat icon="lock" label="Active suspensions and bans" value={d.sanctions} />
-                <Stat icon="users" label="Members" value={d.members} />
+                <Stat index={0} icon="flag" label="New reports" value={d.new} alert={d.new > 0} onPress={() => router.push('/admin/reports?status=open')} />
+                <Stat index={1} icon="flame" label="High priority, open" value={d.high} alert={d.high > 0} onPress={() => router.push('/admin/reports?priority=high')} />
+                <Stat index={2} icon="eye" label="Under review" value={d.reviewing} onPress={() => router.push('/admin/reports?status=reviewing')} />
+                <Stat index={3} icon="question" label="Waiting for information" value={d.need_info} onPress={() => router.push('/admin/reports?status=need_info')} />
+                <Stat index={4} icon="calendar" label="Reports in 7 days" value={d.week} />
+                <Stat index={5} icon="lock" label="Active suspensions and bans" value={d.sanctions} />
+                <Stat index={6} icon="users" label="Members" value={d.members} />
               </View>
             )}
             <View style={{ gap: 8, marginTop: space[2] }}>

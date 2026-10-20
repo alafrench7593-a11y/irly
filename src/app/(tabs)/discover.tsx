@@ -37,6 +37,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { Ambient } from '@/components/visual/Ambient';
 
 const TABS = [
   { id: 'people', label: 'People' },
@@ -159,6 +160,7 @@ export default function Discover() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       {results ? (
         <Animated.ScrollView
           onScroll={onResults}

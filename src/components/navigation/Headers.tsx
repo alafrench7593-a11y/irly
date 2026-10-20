@@ -137,7 +137,8 @@ function CommunitiesButton() {
       accessibilityRole="button"
       accessibilityLabel={tx('Communities')}
       style={[styles.communities, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
-    ><GlassLayer radius={radius.pill} level="thin" />
+    >
+      <GlassLayer radius={radius.pill} level="thin" />
       <Icon name="users" size={16} color={t.c.text} />
       <Text variant="label" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flexShrink: 1 }}>
         Communities

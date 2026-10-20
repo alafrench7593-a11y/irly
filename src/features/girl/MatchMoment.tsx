@@ -33,6 +33,7 @@ import { labelOf } from './taxonomy';
 import { girl, GIRL_TINT, girlType } from './theme';
 import type { Candidate, MatchResult } from './types';
 import { GButton } from './ui';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Props = {
   match: MatchResult | null;
@@ -146,6 +147,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
           </Animated.View>
 
           <Animated.View entering={FadeIn.delay(textDelay + 120).duration(transition.match.text)} style={styles.why}>
+            <GlassLayer radius={radius.xxl} />
             <View style={styles.whyHead}>
               <Text variant="overline" color={girl.inkSoft}>
                 Why you match
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   mark: { position: 'absolute', width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },
   texts: { paddingHorizontal: space.gutter, gap: 6 },
-  why: { marginHorizontal: space.gutter, padding: 18, gap: 8, borderRadius: radius.xxl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
+  why: { marginHorizontal: space.gutter, padding: 18, gap: 8, borderRadius: radius.xxl, boxShadow: girl.shadowSoft },
   whyHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   line: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   suggestion: { width: 150, gap: 6 },

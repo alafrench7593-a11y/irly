@@ -112,7 +112,8 @@ function LiveCard({ live }: { live: Live }) {
   const minutes = Math.max(1, Math.round((now - live.postedAt) / 60_000));
   const hasPhoto = Boolean(live.photo || live.photoUri);
   return (
-    <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}><GlassLayer radius={radius.xl} />
+    <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.head}>
         <Avatar name={name} hue={person?.hue ?? 0} size={40} online={person?.online} />
         <View style={{ flex: 1 }}>
@@ -163,7 +164,8 @@ function GoLiveCard({ onText, onPhoto }: { onText: () => void; onPhoto: () => vo
   const name = useStore((s) => s.profile.name) || 'You';
   const photo = useStore((s) => s.profile.photoUri);
   return (
-    <View style={[styles.goLive, { marginHorizontal: space.gutter, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.xl} />
+    <View style={[styles.goLive, { marginHorizontal: space.gutter, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.xl} />
       <PressableScale haptic="select" scaleTo={0.98} onPress={onText} style={styles.goLiveMain} accessibilityLabel={tx('Go live: what are you doing right now?')}>
         <Avatar name={name} hue={262} size={44} photo={photo} />
         <View style={{ flex: 1, gap: 2 }}>
@@ -245,7 +247,8 @@ function FriendsLiveNow() {
                 onPress={() => router.push(`/person/${p.id}`)}
                 style={[styles.friend, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}
                 accessibilityLabel={tx('{name}, live: {text}, {area}', { name: p.name, text: l.text, area: areaName(city, l.areaId) })}
-              ><GlassLayer radius={radius.xl} />
+              >
+                <GlassLayer radius={radius.xl} />
                 <LiveRing size={48}>
                   <Avatar name={p.name} hue={p.hue} size={38} />
                 </LiveRing>
@@ -312,7 +315,8 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
         const f = friends.find((x) => x.userId === p.authorId);
         const status = p.mine ? 'mine' : p.friend ? 'friend' : f?.status === 'pending' ? (f.incoming ? 'incoming' : 'sent') : 'none';
         return (
-          <Animated.View key={p.id} entering={enter.rise(i)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}><GlassLayer radius={radius.xl} />
+          <Animated.View key={p.id} entering={enter.rise(i)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}>
+            <GlassLayer radius={radius.xl} />
             <View style={styles.head}>
               {/* The author's face and name open their profile. */}
               <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push(`/person/${p.authorId}`)} accessibilityLabel={p.mine ? 'My profile' : tx('Open {name}’s profile', { name: p.firstName })}>

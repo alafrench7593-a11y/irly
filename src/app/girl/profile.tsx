@@ -26,6 +26,8 @@ import { friendlyError } from '@/lib/supabase';
 import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { Flavor } from '@/theme/flavor';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 
 /** Signup languages (native names) → IRLY Match language ids. */
 const SIGNUP_LANG: Record<string, string> = { English: 'en', Français: 'fr', العربية: 'ar', हिन्दी: 'hi', Русский: 'ru', Español: 'es', Italiano: 'it', Deutsch: 'de', Bahasa: 'id' };
@@ -184,6 +186,7 @@ function GirlProfile() {
 
   return (
     <View style={[styles.root, { backgroundColor: girl.bg, paddingTop: insets.top + 8 }]}>
+      <Ambient variant="quiet" />
       <View style={styles.head}>
         <PressableScale
           haptic="tap"
@@ -192,6 +195,7 @@ function GirlProfile() {
           accessibilityLabel={step > 0 ? 'Previous step' : 'Close'}
           style={styles.round}
         >
+          <GlassLayer radius={20} level="thin" />
           <Icon name={step > 0 ? 'chevronLeft' : 'x'} size={20} color={girl.ink} />
         </PressableScale>
         <View style={styles.progress} accessibilityLabel={tx('Step {n} of {total}', { n: step + 1, total: STEPS.length })}>
@@ -260,6 +264,8 @@ function GirlProfile() {
                 </View>
               </GSection>
               <GSection title="A few words" hint="What would you tell a new friend over coffee?">
+                <View style={styles.inputPane}>
+                <GlassLayer radius={radius.lg} level="thin" />
                 <TextInput
                   value={draft.bio}
                   onChangeText={(v) => set('bio', v.slice(0, 300))}
@@ -270,6 +276,7 @@ function GirlProfile() {
                   style={styles.input}
                   accessibilityLabel={a11y('Bio')}
                 />
+                </View>
                 <CharCount length={draft.bio.trim().length} min={10} max={300} color={girl.inkFaint} warn={girl.rose} />
               </GSection>
             </>
@@ -322,6 +329,7 @@ function GirlProfile() {
                     {dim.left} · {dim.right}
                   </Text>
                   <View style={styles.segment}>
+                    <GlassLayer radius={radius.lg} level="thin" />
                     {([-1, 0, 1] as const).map((v) => {
                       const on = draft.lifestyle[dim.id] === v;
                       return (
@@ -430,6 +438,7 @@ function GirlProfile() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <GlassLayer radius={0} level="thick" />
         {!valid && hint ? (
           <Text variant="caption" color={girl.inkSoft} align="center">
             {hint}
@@ -451,6 +460,7 @@ function GirlProfile() {
 function ToggleRow({ label, hint, value, onChange }: { label: string; hint: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <View style={styles.toggle}>
+      <GlassLayer radius={radius.xl} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="titleS" color={girl.ink}>
           {label}
@@ -467,7 +477,7 @@ function ToggleRow({ label, hint, value, onChange }: { label: string; hint: stri
 const styles = StyleSheet.create({
   root: { flex: 1 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.gutter },
-  round: { width: 40, height: 40, borderRadius: 20, backgroundColor: girl.surface, alignItems: 'center', justifyContent: 'center' },
+  round: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   progress: { flex: 1, flexDirection: 'row', gap: 4 },
   bar: { flex: 1, height: 4, borderRadius: 2 },
   photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -475,12 +485,13 @@ const styles = StyleSheet.create({
   addPhoto: { alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1.5, borderStyle: 'dashed', borderColor: girl.blushStrong },
   remove: { position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(58,42,42,0.6)', alignItems: 'center', justifyContent: 'center' },
   mainTag: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, height: 22, borderRadius: 11, backgroundColor: 'rgba(58,42,42,0.6)', justifyContent: 'center' },
-  input: { minHeight: 110, borderRadius: radius.lg, padding: 14, backgroundColor: girl.surface, color: girl.ink, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top' },
-  segment: { flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.lg, backgroundColor: girl.cream },
+  input: { minHeight: 110, borderRadius: radius.lg, padding: 14, color: girl.ink, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top' },
+  segment: { flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.lg },
+  inputPane: { borderRadius: radius.lg },
   segItem: { flex: 1, minHeight: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  toggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.xl, backgroundColor: girl.surface },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   note: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: radius.lg, backgroundColor: girl.blush },
-  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.gutter, paddingTop: 12, gap: 8, backgroundColor: girl.bg },
+  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.gutter, paddingTop: 12, gap: 8, overflow: 'hidden' },
 });
 
 /** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */

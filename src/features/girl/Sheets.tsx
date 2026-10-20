@@ -15,6 +15,7 @@ import { AVAILABILITY, GOALS, INTERESTS, LANGUAGES, SPORTS, labelOf } from './ta
 import { girl, GIRL_TINT, girlType } from './theme';
 import { REPORT_CATEGORIES, type Candidate, type Filters, type ReportCategory } from './types';
 import { GButton, GChip, GSection, ScorePill, Wrap } from './ui';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const AGES: { label: string; min?: number; max?: number }[] = [
   { label: 'Any' },
@@ -302,6 +303,7 @@ export function SafetySheet({
 function Row({ icon, label, hint, onPress, danger }: { icon: 'eye' | 'shield' | 'flag' | 'x'; label: string; hint: string; onPress: () => void; danger?: boolean }) {
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} style={styles.safetyRow} accessibilityLabel={label}>
+      <GlassLayer radius={radius.lg} />
       <View style={[styles.safetyIcon, { backgroundColor: danger ? '#FDE7E4' : girl.cream }]}>
         <Icon name={icon} size={18} color={danger ? '#C8443A' : girl.ink} />
       </View>
@@ -323,7 +325,7 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   line: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   link: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 22, backgroundColor: girl.cream },
-  safetyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg, backgroundColor: girl.surface, borderWidth: 1, borderColor: girl.line },
+  safetyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg, borderWidth: 1, borderColor: girl.line },
   safetyIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   input: { minHeight: 90, borderRadius: radius.lg, padding: 12, backgroundColor: girl.cream, color: girl.ink, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top' },
 });

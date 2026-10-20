@@ -31,6 +31,7 @@ import { planDisplay } from '@/data/catalog/mapping';
 import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { Ambient } from '@/components/visual/Ambient';
 
 const INTENT_ORDER: Intent[] = ['similar', 'friends', 'sports', 'business', 'activities', 'explore'];
 
@@ -61,6 +62,7 @@ export default function Social() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: insets.top + space[6], paddingBottom: bottom + 70 }}

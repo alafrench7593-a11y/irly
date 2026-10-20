@@ -38,7 +38,7 @@ export default function AuditLog() {
         <Loadable data={rows} error={error} retry={load} empty="Nothing yet.">
           {(list) =>
             list.map((a, i) => (
-              <Card key={i} onPress={a.case_id ? () => router.push(`/admin/case/${a.case_id}`) : undefined}>
+              <Card index={i} key={i} onPress={a.case_id ? () => router.push(`/admin/case/${a.case_id}`) : undefined}>
                 <Text variant="caption" tone="tertiary" raw>
                   {day(a.at)} · {a.actor_name}
                 </Text>

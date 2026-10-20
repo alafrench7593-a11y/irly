@@ -25,6 +25,8 @@ import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { enter } from '@/motion/enter';
 
 const GOALS = LOOKING_LABEL;
 
@@ -91,7 +93,7 @@ function Match() {
         ) : m.loading ? (
           <View style={{ gap: 12 }} accessibilityLabel={tx('Loading')}>
             {[0, 1, 2].map((i) => (
-              <View key={i} style={[styles.card, { backgroundColor: t.c.surface, height: 132, opacity: 0.6 }]} />
+              <Skeleton key={i} height={132} radius={radius.xl} />
             ))}
           </View>
         ) : m.error && !m.list.length ? (
@@ -203,7 +205,8 @@ function MatchCard({ person, photo, cityId, onSkip }: { person: PeopleMatch; pho
 function Empty({ icon, title, body, action, onAction }: { icon: IconName; title: string; body: string; action: string; onAction: () => void }) {
   const t = useTheme();
   return (
-    <View style={[styles.empty, { borderColor: t.c.lineStrong }]}>
+    <Animated.View entering={enter.rise(0)} style={styles.empty}>
+      <GlassLayer radius={radius.xl} />
       <Icon name={icon} size={22} color={t.c.text} />
       <Text variant="titleS" align="center">
         {title}
@@ -212,7 +215,7 @@ function Empty({ icon, title, body, action, onAction }: { icon: IconName; title:
         {body}
       </Text>
       <Button label={action} size="sm" onPress={onAction} style={{ marginTop: 6 }} />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -223,7 +226,7 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   tag: { paddingHorizontal: 10, height: 26, borderRadius: radius.pill, justifyContent: 'center' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  empty: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, borderWidth: 1.5, borderStyle: 'dashed' },
+  empty: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, overflow: 'hidden' },
   how: { margin: space.gutter, marginTop: space[8], padding: 18, gap: 10, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },
   signals: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   signal: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 30, paddingHorizontal: 10, borderRadius: radius.pill },

@@ -6,6 +6,9 @@ import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import Animated from 'react-native-reanimated';
+import { enter } from '@/motion/enter';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CATEGORIES } from '@/data/catalog/categories';
@@ -61,30 +64,39 @@ export default function NewCommunity() {
     }
   };
 
-  const input = [styles.input, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }];
+  const input = [styles.input, { color: t.c.text }];
 
   return (
     <Page overline={city.name} title="New community" subtitle="A permanent group with its own chat. People who join are in the chat straight away.">
       <View style={styles.body}>
         {!account ? (
-          <View style={[styles.note, { backgroundColor: t.c.surface }]}>
+          <Animated.View entering={enter.rise(0, 40)} style={styles.note}>
+            <GlassLayer radius={radius.lg} />
             <Icon name="user" size={18} color={t.c.text} />
             <Text variant="bodyS" style={{ flex: 1 }}>
               You need an IRLY account to create a community.
             </Text>
             <Button label="Sign in" size="sm" onPress={() => router.push('/account')} />
-          </View>
+          </Animated.View>
         ) : null}
         <View style={{ gap: 6 }}>
           <Text variant="label">Name</Text>
-          <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 60))} placeholder={tx('French in {city}', { city: city.name })} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Community name')} />
+          <View style={styles.field}>
+            <GlassLayer radius={radius.lg} level="thin" />
+            <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 60))} placeholder={tx('French in {city}', { city: city.name })} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Community name')} />
+          </View>
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">One line</Text>
-          <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder={tx('Drinks, padel and weekend trips')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Tagline')} />
+          <View style={styles.field}>
+            <GlassLayer radius={radius.lg} level="thin" />
+            <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder={tx('Drinks, padel and weekend trips')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Tagline')} />
+          </View>
         </View>
         <View style={{ gap: 6 }}>
           <Text variant="label">About</Text>
+          <View style={styles.field}>
+          <GlassLayer radius={radius.lg} level="thin" />
           <TextInput
             value={description}
             onChangeText={(v) => setDescription(v.slice(0, 600))}
@@ -94,6 +106,7 @@ export default function NewCommunity() {
             style={[input, styles.multi]}
             accessibilityLabel={a11y('Description')}
           />
+          </View>
         </View>
         <View style={{ gap: 8 }}>
           <Text variant="label">Category</Text>
@@ -104,7 +117,8 @@ export default function NewCommunity() {
           </View>
         </View>
         {woman ? (
-          <View style={[styles.toggle, { backgroundColor: t.c.surface }]}>
+          <Animated.View entering={enter.rise(1, 40)} style={styles.toggle}>
+            <GlassLayer radius={radius.xl} />
             <View style={{ flex: 1 }}>
               <Text variant="titleS">IRLY Girl community</Text>
               <Text variant="bodyS" tone="secondary">
@@ -112,7 +126,7 @@ export default function NewCommunity() {
               </Text>
             </View>
             <Switch value={girlOnly} onValueChange={setGirlOnly} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel={a11y('IRLY Girl community')} />
-          </View>
+          </Animated.View>
         ) : null}
         <Button label="Create community" icon="users" full loading={busy} disabled={!valid} onPress={create} />
       </View>
@@ -122,9 +136,10 @@ export default function NewCommunity() {
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: space.gutter, gap: space[5] },
-  input: { height: 52, borderRadius: radius.lg, borderWidth: 1, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
+  field: { borderRadius: radius.lg, overflow: 'hidden' },
+  input: { height: 52, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
   multi: { height: 110, paddingTop: 12, textAlignVertical: 'top' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  toggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.xl },
-  note: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: radius.lg },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.xl, overflow: 'hidden' },
+  note: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: radius.lg, overflow: 'hidden' },
 });

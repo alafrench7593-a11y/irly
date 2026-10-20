@@ -72,7 +72,8 @@ export const SessionCard = memo(function SessionCard({ session, width }: { sessi
       ref={ref}
       onPress={onPress}
       style={[styles.session, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}
-    ><GlassLayer radius={radius.lg} />
+    >
+      <GlassLayer radius={radius.lg} />
       <View style={styles.sessionTop}>
         <View style={[styles.kindIcon, { backgroundColor: t.light.accentSoft }]}>
           <Icon name={a.icon} size={20} color={t.accent} />
@@ -159,7 +160,8 @@ export const CommunityCard = memo(function CommunityCard({ community, width = 25
       ref={ref}
       onPress={onPress}
       style={[styles.community, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}
-    ><GlassLayer radius={radius.lg} />
+    >
+      <GlassLayer radius={radius.lg} />
       <Photo pinned visual={community.visual} light={city.light} scrim="soft" style={styles.communityPhoto} recyclingKey={community.id} width={500}>
         <View style={{ padding: 10, flexDirection: 'row', gap: 6 }}>
           {community.verified ? <Badge kind="verified" onDark /> : null}
@@ -196,7 +198,8 @@ export const ServiceCard = memo(function ServiceCard({ service, compact }: { ser
       ref={ref}
       onPress={onPress}
       style={[styles.service, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}
-    ><GlassLayer radius={radius.lg} />
+    >
+      <GlassLayer radius={radius.lg} />
       <View style={[styles.kindIcon, { backgroundColor: t.c.brandSoft, width: 48, height: 48 }]}>
         <Icon name={cat.icon} size={22} color={t.c.brand} />
       </View>

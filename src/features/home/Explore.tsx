@@ -9,6 +9,8 @@ import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import Animated from 'react-native-reanimated';
+import { enter } from '@/motion/enter';
 
 type Door = { title: string; line: string; icon: IconName; route: string; women?: boolean };
 
@@ -31,8 +33,10 @@ export const ExploreDoors = memo(function ExploreDoors() {
   const woman = useStore((s) => s.profile.gender === 'woman');
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-      {DOORS.filter((d) => !d.women || woman).map((d) => (
-        <PressableScale key={d.route} haptic="select" scaleTo={0.97} onPress={() => router.push(d.route as never)} style={[styles.door, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={`${tx(d.title)}. ${tx(d.line)}`}><GlassLayer radius={radius.xl} />
+      {DOORS.filter((d) => !d.women || woman).map((d, i) => (
+        <Animated.View key={d.route} entering={enter.slide(Math.min(i, 6))}>
+        <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(d.route as never)} style={[styles.door, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={`${tx(d.title)}. ${tx(d.line)}`}>
+          <GlassLayer radius={radius.xl} />
           <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
             <Icon name={d.icon} size={18} color={t.c.text} />
           </View>
@@ -43,6 +47,7 @@ export const ExploreDoors = memo(function ExploreDoors() {
             {d.line}
           </Text>
         </PressableScale>
+        </Animated.View>
       ))}
     </ScrollView>
   );

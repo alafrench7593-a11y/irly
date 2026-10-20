@@ -8,7 +8,6 @@ import { Text } from '@/components/ui/Text';
 import { useAccount } from '@/features/auth/account';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { CITIES } from '@/data/destinations';
 import { CommunityThumb } from './CommunityThumb';
 import { useCommunityList } from './data';
@@ -20,7 +19,6 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
  * an always-visible way to discover IRLY Communities.
  */
 export function YourCommunities({ cityId }: { cityId: string }) {
-  const t = useTheme();
   const router = useRouter();
   const reduced = useReducedMotion();
   const signedIn = Boolean(useAccount());

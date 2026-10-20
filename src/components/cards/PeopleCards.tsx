@@ -72,7 +72,8 @@ export const PersonCard = memo(function PersonCard({ match, width }: { match: Ma
       onPress={() => flyFrom(face.current, p, () => router.push(`/person/${p.id}`))}
       style={[styles.person, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
       accessibilityLabel={`${p.name}, ${p.headline}`}
-    ><GlassLayer radius={radius.xl} />
+    >
+      <GlassLayer radius={radius.xl} />
       <View style={styles.personTop}>
         <View ref={face} collapsable={false}>
           <Avatar name={p.name} hue={p.hue} size={56} online={p.online} verified={p.verified} photo={p.photo} />
@@ -160,7 +161,8 @@ export const PlanCard = memo(function PlanCard({ plan }: { plan: FeedPlan }) {
     <PressableScale
       onPress={() => openHero({ kind: plan.ref.type, id: plan.ref.id })}
       style={[styles.plan, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
-    ><GlassLayer radius={radius.xl} />
+    >
+      <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <View style={[styles.planIcon, { backgroundColor: t.light.accentSoft }]}>
           <Icon name={plan.icon} size={18} color={t.accent} />

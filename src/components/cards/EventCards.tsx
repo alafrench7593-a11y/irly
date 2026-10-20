@@ -100,7 +100,8 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
   const people = peopleByIds(event.goingIds);
   const chip = dayChip(event.when, city);
   return (
-    <PressableScale ref={ref} onPress={onPress} style={[styles.rowCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}><GlassLayer radius={radius.lg} />
+    <PressableScale ref={ref} onPress={onPress} style={[styles.rowCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}>
+      <GlassLayer radius={radius.lg} />
       <Photo visual={event.visual} light={city.light} scrim="soft" style={styles.thumb} recyclingKey={event.id} width={300}>
         <View style={styles.thumbDate}>
           <Text variant="overline" tone="onDark" style={{ fontSize: 9 }}>

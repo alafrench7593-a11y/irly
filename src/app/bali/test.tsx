@@ -14,6 +14,7 @@ import { buildTestPlan, rankAreas, type PlanLength, type PlanTheme } from '@/fea
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const ICON: Record<PlanTheme, IconName> = {
   arrive: 'plane', explore: 'footprints', cowork: 'laptop', community: 'users', wellness: 'leaf', food: 'utensils',
@@ -54,9 +55,10 @@ export default function BaliTest() {
             onPress={() => (d.theme === 'housing' || d.theme === 'healthcare' ? router.push(`/bali/guide/${d.theme}`) : (switchToBali(), router.push(`/search?q=${encodeURIComponent(d.search)}`)))}
             haptic="select"
             scaleTo={0.98}
-            style={[styles.day, { backgroundColor: t.c.surface }]}
+            style={[styles.day, { backgroundColor: 'transparent', overflow: 'hidden' }]}
             accessibilityLabel={tx('Day {n}: {title}', { n: d.day, title: tx(d.title) })}
           >
+            <GlassLayer radius={radius.lg} />
             <View style={[styles.num, { backgroundColor: t.c.bg }]}>
               <Text variant="label">{d.day}</Text>
             </View>

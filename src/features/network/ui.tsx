@@ -18,6 +18,7 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { matchSentence, roundDistance, type ProMatch, type ProProfile } from './match';
 import { INDUSTRY, ROLE_LABEL } from './taxonomy';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 export const hueOf = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
 
@@ -168,8 +169,9 @@ export function ProCard({
       scaleTo={0.985}
       onPress={() => router.push(`/network/${pro.userId}`)}
       accessibilityLabel={`${pro.firstName}, ${pro.jobTitle}`}
-      style={[styles.card, { backgroundColor: t.c.surface, borderColor: t.c.line, boxShadow: t.shadow.card }]}
+      style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', boxShadow: t.shadow.card }]}
     >
+      <GlassLayer radius={radius.xl} />
       <View style={styles.head}>
         <Avatar name={pro.firstName} hue={hueOf(pro.userId)} size={56} photo={photo} />
         <View style={{ flex: 1, gap: 2 }}>

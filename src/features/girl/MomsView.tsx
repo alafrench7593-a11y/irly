@@ -29,6 +29,7 @@ import { radius, space } from '@/theme/tokens';
 import { girl, GIRL_TINT, girlType } from './theme';
 import { GButton, GChip, GSection, Wrap } from './ui';
 import { GirlFeed, KindRail, MOM_KINDS, Upcoming } from './world';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 // The demonstration build reads the example communities and plans, never the server.
 const useMomCommunities = DEMO ? useDemoCommunitiesLike : useCommunitiesLike;
@@ -135,6 +136,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
       {(me && me.hasProfile) || (!FEATURES.girlMatch && extras.signedIn && !extras.loading && !extras.error) ? (
         <View style={[styles.pad]}>
           <View style={[styles.card, { gap: 12 }]}>
+            <GlassLayer radius={radius.xl} />
             <View style={styles.rowBetween}>
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={girl.ink}>
@@ -177,6 +179,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
         // A failed read is not « no profile »: say so, with a way to try again.
         <View style={styles.pad}>
           <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="bodyS" color={girl.inkSoft} align="center">
               Your mom settings could not load.
             </Text>
@@ -194,6 +197,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 12 }}>
             {moms.data.map((m) => (
               <PressableScale key={m.userId} haptic="select" scaleTo={0.96} onPress={() => router.push(`/person/${m.userId}`)} accessibilityLabel={tx("View {name}'s profile", { name: m.firstName })} style={[styles.person]}>
+                <GlassLayer radius={radius.xl} />
                 <Avatar name={m.firstName} hue={hueOf(m.userId)} size={56} userId={m.userId} />
                 <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>
                   {m.firstName}
@@ -228,6 +232,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
       ) : moms.error ? (
         <View style={[styles.pad]}>
           <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="bodyS" color={girl.inkSoft} align="center">
               Moms near you could not load.
             </Text>
@@ -251,6 +256,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
 
       <View style={[styles.pad]} onLayout={mark('momsPlan')}>
         <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
+          <GlassLayer radius={radius.xl} />
           <View style={{ height: 110 }}>
             <Photo tint={GIRL_TINT} visual={{ photo: 'jbr' }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
             {!reduced ? <Film uri={filmFor('jbr')!} dim={0.25} /> : null}
@@ -278,6 +284,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
           communities.data.map((c) => (
             // The row opens the community; Join sits beside it (never a button inside a button).
             <View key={c.id} style={[styles.card, styles.row, { padding: 10 }]}>
+              <GlassLayer radius={radius.xl} />
               <PressableScale onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { flex: 1 }]} accessibilityLabel={tx('Open {title}', { title: c.name })}>
               <View style={styles.thumb}>
                 <Photo pinned tint={GIRL_TINT} visual={{ photo: girlCommunityPhoto(c.name, 'kids') }} light="dubai" width={200} style={StyleSheet.absoluteFill} />
@@ -298,6 +305,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
           <Skeleton height={76} radius={radius.xl} />
         ) : communities.error ? (
           <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="bodyS" color={girl.inkSoft} align="center">
               Could not load. Check your connection.
             </Text>
@@ -305,6 +313,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
           </View>
         ) : (
           <View style={[styles.card, { gap: 10 }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="bodyS" color={girl.inkSoft}>
               No mom communities here yet. Start one: other moms will find it.
             </Text>
@@ -333,6 +342,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
             {family.data.slice(0, 12).map((p) => (
               <PressableScale key={p.id} onPress={() => router.push(`/place/${p.slug}`)} haptic="select" scaleTo={0.97} style={[styles.place]} accessibilityLabel={p.name}>
+                <GlassLayer radius={radius.lg} />
                 {p.photo ? (
                   <Image source={{ uri: p.photo }} style={styles.placePhoto} contentFit="cover" />
                 ) : (
@@ -360,11 +370,11 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
 
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
-  card: { backgroundColor: girl.surface, borderRadius: radius.xl, padding: 16, boxShadow: girl.shadowSoft },
+  card: { borderRadius: radius.xl, padding: 16, boxShadow: girl.shadowSoft },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  person: { width: 120, alignItems: 'center', gap: 4, padding: 12, borderRadius: radius.xl, backgroundColor: girl.surface },
-  place: { width: 170, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: girl.surface },
+  person: { width: 120, alignItems: 'center', gap: 4, padding: 12, borderRadius: radius.xl, },
+  place: { width: 170, borderRadius: radius.lg, overflow: 'hidden', },
   placePhoto: { width: 170, height: 100, overflow: 'hidden' },
   thumb: { width: 56, height: 56, borderRadius: 16, overflow: 'hidden' },
 });

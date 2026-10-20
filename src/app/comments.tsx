@@ -10,6 +10,9 @@ import { PageHeader } from '@/components/navigation/Headers';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Glass } from '@/components/ui/Glass';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
+import { enter } from '@/motion/enter';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -90,6 +93,7 @@ export default function CommentsScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient variant="quiet" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
@@ -112,26 +116,29 @@ export default function CommentsScreen() {
               </Text>
             </View>
           ) : auth === 'out' ? (
-            <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+            <Animated.View entering={enter.rise(0, 60)} style={[styles.empty, { boxShadow: t.shadow.card }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="body" tone="secondary" align="center">
                 Sign in to read and write comments.
               </Text>
               <Button label="Sign in" size="sm" onPress={() => router.push('/account')} />
-            </View>
+            </Animated.View>
           ) : failed && !roots.length ? (
-            <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+            <Animated.View entering={enter.rise(0, 60)} style={[styles.empty, { boxShadow: t.shadow.card }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="body" tone="secondary" align="center">
                 Comments could not be loaded.
               </Text>
               <Button label="Try again" size="sm" onPress={refresh} />
-            </View>
+            </Animated.View>
           ) : !roots.length ? (
-            <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+            <Animated.View entering={enter.rise(0, 60)} style={[styles.empty, { boxShadow: t.shadow.card }]}>
+              <GlassLayer radius={radius.xl} />
               <Icon name="message" size={22} color={t.c.textSecondary} />
               <Text variant="body" tone="secondary" align="center">
                 No comments yet. Start the conversation.
               </Text>
-            </View>
+            </Animated.View>
           ) : (
             roots.map((c) => (
               <View key={c.id} style={{ gap: 12 }}>
@@ -146,7 +153,7 @@ export default function CommentsScreen() {
           )}
         </ScrollView>
         {signedIn ? (
-          <Glass style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+          <Glass lifted level="thick" style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
             {replyTo ? (
               <View style={styles.replying}>
                 <Text variant="caption" tone="secondary" style={{ flex: 1 }} numberOfLines={1}>
@@ -158,7 +165,8 @@ export default function CommentsScreen() {
               </View>
             ) : null}
             <View style={styles.composerRow}>
-              <View style={[styles.inputWrap, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+              <View style={styles.inputWrap}>
+                <GlassLayer radius={23} level="thin" />
                 <TextInput
                   value={text}
                   onChangeText={setText}
@@ -233,11 +241,11 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   meta: { flexDirection: 'row', gap: 16, marginTop: 4 },
   like: { alignItems: 'center', gap: 2, paddingTop: 4, minWidth: 28 },
-  empty: { alignItems: 'center', gap: 12, padding: 24, borderRadius: radius.xl },
+  empty: { alignItems: 'center', gap: 12, padding: 24, borderRadius: radius.xl, overflow: 'hidden' },
   loading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 24 },
   composer: { paddingHorizontal: space.gutter, paddingTop: 10, gap: 8 },
   composerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   replying: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },
-  inputWrap: { flex: 1, height: 46, borderRadius: 23, borderWidth: 1, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' },
+  inputWrap: { flex: 1, height: 46, borderRadius: 23, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },
   send: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
 });

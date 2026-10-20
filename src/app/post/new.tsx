@@ -6,6 +6,9 @@ import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
@@ -207,6 +210,8 @@ export default function NewPost() {
             <Chip size="sm" icon="star" label={tx('Recommendation')} selected={kind === 'recommendation'} onPress={() => setKind('recommendation')} />
           </View>
         ) : null}
+        <Animated.View entering={enter.rise(0, 40)} style={[styles.field, { boxShadow: t.shadow.card }]}>
+        <GlassLayer radius={radius.lg} />
         <TextInput
           value={body}
           onChangeText={(v) => setBody(v.slice(0, 2000))}
@@ -215,14 +220,15 @@ export default function NewPost() {
           multiline
           autoFocus={!editing}
           editable={!loading}
-          style={[styles.input, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }]}
+          style={[styles.input, { color: t.c.text }]}
           accessibilityLabel={a11y('Write your post')}
         />
+        </Animated.View>
         {files.length ? <Picked media={media!} onRemove={removeFile} disabled={busy} /> : null}
         {progress !== null ? (
           <View style={{ gap: 6 }}>
             <View style={[styles.bar, { backgroundColor: t.c.overlay }]}>
-              <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: t.c.text }]} />
+              <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: t.c.brand }]} />
             </View>
             <Text variant="caption" tone="secondary">
               {tx('Sending… {n}%', { n: Math.round(progress * 100) })}
@@ -230,11 +236,13 @@ export default function NewPost() {
           </View>
         ) : null}
         <View style={styles.row}>
-          <PressableScale haptic="select" onPress={addPhotos} disabled={busy || media?.kind === 'video'} style={[styles.add, { borderColor: t.c.lineStrong, opacity: media?.kind === 'video' ? 0.4 : 1 }]} accessibilityLabel={a11y('Add photos')}>
+          <PressableScale haptic="select" onPress={addPhotos} disabled={busy || media?.kind === 'video'} style={[styles.add, { opacity: media?.kind === 'video' ? 0.4 : 1 }]} accessibilityLabel={a11y('Add photos')}>
+            <GlassLayer radius={radius.lg} level="thin" />
             <Icon name="camera" size={18} color={t.c.text} />
             <Text variant="label">{media?.kind === 'photo' ? tx('More photos') : tx('Photos')}</Text>
           </PressableScale>
-          <PressableScale haptic="select" onPress={addVideo} disabled={busy || media?.kind === 'photo'} style={[styles.add, { borderColor: t.c.lineStrong, opacity: media?.kind === 'photo' ? 0.4 : 1 }]} accessibilityLabel={a11y('Add a video')}>
+          <PressableScale haptic="select" onPress={addVideo} disabled={busy || media?.kind === 'photo'} style={[styles.add, { opacity: media?.kind === 'photo' ? 0.4 : 1 }]} accessibilityLabel={a11y('Add a video')}>
+            <GlassLayer radius={radius.lg} level="thin" />
             <Icon name="video" size={18} color={t.c.text} />
             <Text variant="label">{media?.kind === 'video' ? tx('Change video') : tx('Video')}</Text>
           </PressableScale>
@@ -287,9 +295,10 @@ function Remove({ onPress, disabled, label }: { onPress: () => void; disabled: b
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: space.gutter, gap: space[4] },
-  input: { minHeight: 140, borderRadius: radius.lg, borderWidth: 1, padding: 14, fontFamily: font.medium, fontSize: 16, textAlignVertical: 'top' },
+  field: { borderRadius: radius.lg, overflow: 'hidden' },
+  input: { minHeight: 140, padding: 14, fontFamily: font.medium, fontSize: 16, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 10 },
-  add: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed' },
+  add: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, borderRadius: radius.lg, overflow: 'hidden' },
   thumb: { width: 104, height: 104, borderRadius: radius.md, overflow: 'hidden', backgroundColor: 'rgba(127,127,127,0.12)' },
   video: { height: 220, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: 'rgba(127,127,127,0.12)' },
   remove: { position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)' },

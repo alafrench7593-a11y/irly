@@ -10,6 +10,8 @@ import { findPerson } from '@/data/repo';
 import { PressableScale } from '@/motion/PressableScale';
 import { space, status } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { enter } from '@/motion/enter';
 import { useStore } from '@/state/store';
 import { useLives } from './liveStore';
 
@@ -35,18 +37,20 @@ export function LiveStrip() {
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push('/live')} style={styles.item} accessibilityLabel="Go live">
-          <View style={[styles.add, { backgroundColor: t.c.surface, borderColor: t.c.lineStrong }]}>
+          <View style={[styles.add, { backgroundColor: 'transparent', borderColor: t.c.lineStrong, overflow: 'hidden' }]}>
+            <GlassLayer radius={32} level="thin" />
             <Icon name="plus" size={22} color={t.c.text} />
           </View>
           <Text variant="caption" tone="secondary">
             You
           </Text>
         </PressableScale>
-        {lives.map((l) => {
+        {lives.map((l, i) => {
           const p = l.authorId === 'me' ? undefined : findPerson(l.authorId);
           const name = p?.name ?? me;
           return (
-            <PressableScale key={l.id} haptic="select" scaleTo={0.94} onPress={() => router.push('/live')} style={styles.item} accessibilityLabel={tx('{name} is live: {text}', { name, text: l.text })}>
+            <Animated.View key={l.id} entering={enter.pop(Math.min(i, 8))}>
+            <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push('/live')} style={styles.item} accessibilityLabel={tx('{name} is live: {text}', { name, text: l.text })}>
               <LiveRing>
                 <Avatar name={name} hue={p?.hue ?? 0} size={56} photo={p?.photo} />
               </LiveRing>
@@ -54,6 +58,7 @@ export function LiveStrip() {
                 {name.split(' ')[0]}
               </Text>
             </PressableScale>
+            </Animated.View>
           );
         })}
       </ScrollView>
