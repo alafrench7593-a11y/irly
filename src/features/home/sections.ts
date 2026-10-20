@@ -10,6 +10,7 @@ import type { AppSpace } from '@/state/appSpace';
  */
 export const HOME_SECTIONS = [
   'search',
+  'categories',
   'featured',
   'create',
   'bali',
