@@ -34,7 +34,7 @@ import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { SpaceFlavor } from '@/theme/space';
-import { GirlLogo } from '@/features/girl/GirlLogo';
+import { GirlHeaderMark } from '@/features/girl/GirlMark';
 
 type Tab = 'all' | 'private' | 'groups' | 'communities' | 'activities';
 
@@ -150,7 +150,7 @@ function Messages() {
   const loading = server.loading && !server.conversations.length;
 
   return (
-    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlLogo size={14} /> : undefined}>
+    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined}>
       <View style={styles.pad}>
         <View style={styles.search}>
           <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />

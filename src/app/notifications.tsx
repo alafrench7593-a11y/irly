@@ -26,7 +26,7 @@ import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { SpaceFlavor } from '@/theme/space';
-import { GirlLogo } from '@/features/girl/GirlLogo';
+import { GirlHeaderMark } from '@/features/girl/GirlMark';
 
 type Item = { id: string; icon: IconName; title: string; body: string; ago: string; personId?: string; onPress?: () => void; unread?: boolean };
 
@@ -77,7 +77,7 @@ function Notifications() {
   items.unshift(...girlItems);
 
   return (
-    <Page title="Notifications" subtitle="Only what helps you meet people." right={t.flavor === 'girl' ? <GirlLogo size={14} /> : undefined}>
+    <Page title="Notifications" subtitle="Only what helps you meet people." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined}>
       {/* The demo has no server: only its examples, no loading line. */}
       {DEMO ? null : <ServerNotifications />}
       {auth === 'out' && !items.length ? (

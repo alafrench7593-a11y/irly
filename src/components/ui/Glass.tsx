@@ -114,7 +114,12 @@ function GirlGlass({ style, intensity, border, highlight, lifted, variant, child
       )}
       {highlight ? (
         <>
-          {spec.dark ? null : <LinearGradient colors={girlNacre} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />}
+          {spec.dark ? (
+            // Plum glass glows from below with a bordeaux-rose light, so it reads deep, never grey.
+            <LinearGradient colors={['rgba(185,43,105,0)', 'rgba(185,43,105,0.24)']} locations={[0.35, 1]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
+          ) : (
+            <LinearGradient colors={girlNacre} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
+          )}
           <LinearGradient colors={[spec.sheen, 'rgba(255,255,255,0)']} locations={[0, 0.5]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
         </>
       ) : null}

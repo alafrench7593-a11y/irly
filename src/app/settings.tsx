@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
-import { GirlLogo } from '@/features/girl/GirlLogo';
+import { GirlHeaderMark } from '@/features/girl/GirlMark';
 import { enter } from '@/motion/enter';
 import { SpaceFlavor } from '@/theme/space';
 
@@ -63,7 +63,7 @@ export default function SettingsRoute() {
 function SettingsScreen() {
   const t = useTheme();
   // The IRLY Girl mark in the header when the page is opened from IRLY Girl.
-  const mark = t.flavor === 'girl' ? <GirlLogo size={14} /> : undefined;
+  const mark = t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined;
   const staff = isModerator(useStaffRole());
   const router = useRouter();
   const account = useAccount();

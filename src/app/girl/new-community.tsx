@@ -6,7 +6,6 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import Animated, {
@@ -27,7 +26,7 @@ import { useAccount } from "@/features/auth/account";
 import { GirlGate, safeBack } from "@/features/girl/access";
 import { girlCommunityPhoto } from "@/features/girl/photos";
 import { girl, girlType, GIRL_TINT } from "@/features/girl/theme";
-import { GButton, GChip, Wrap } from "@/features/girl/ui";
+import { GButton, GChip, GField, GIconWell, useGirlMotion, Wrap } from "@/features/girl/ui";
 import { setCommunityCover } from "@/features/server/covers";
 import { usePhotoSource } from "@/components/ui/PhotoSourceSheet";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
@@ -41,7 +40,7 @@ import { font, radius, space } from "@/theme/tokens";
 import { Flavor } from "@/theme/flavor";
 import { GlassLayer } from "@/components/ui/GlassLayer";
 import { Ambient } from "@/components/visual/Ambient";
-import type { TextInputProps } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const NAME_MIN = 3;
 const NAME_MAX = 60;
@@ -173,9 +172,8 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
     }
   };
 
-  const input = [styles.input, { color: girl.ink }];
-
   if (done) {
+    // Confirmation: the rose seal pops in (success haptic already played), then the name.
     return (
       <View style={[styles.root, styles.center]}>
         <Ambient variant="hero" />
@@ -183,7 +181,13 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
           entering={reduced ? undefined : ZoomIn.springify().damping(14)}
           style={styles.doneBadge}
         >
-          <Icon name="check" size={30} color="#FFFFFF" />
+          <LinearGradient
+            colors={girl.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 36, zIndex: -1 }]}
+          />
+          <Icon name="check" size={30} color="#FFFFFF" strokeWidth={2.6} />
         </Animated.View>
         <Animated.View
           entering={reduced ? undefined : FadeInDown.delay(150)}
@@ -325,19 +329,19 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
 
           <View style={styles.form}>
             <Field n="1" label={tx("Name")}>
-              <GlassInput
+              <GField
                 value={name}
                 onChangeText={(v) => {
                   setName(v.slice(0, NAME_MAX));
                   setError(null);
                 }}
+                invalid={Boolean(error)}
+                valid={valid && !missingMoms}
                 placeholder={
                   moms
                     ? tx("{city} Moms", { city: city.name })
                     : tx("Sunrise runners {city}", { city: city.name })
                 }
-                placeholderTextColor={girl.inkFaint}
-                style={input}
                 maxLength={NAME_MAX}
                 returnKeyType="next"
                 accessibilityLabel={a11y("Community name")}
@@ -349,7 +353,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
                 color={girl.inkSoft}
               />
               {missingMoms ? (
-                <Text variant="caption" color={girl.rose}>
+                <Text variant="caption" color={girl.bordeaux}>
                   {tx(
                     "Add “Moms” to the name so mothers find it in IRLY Moms.",
                   )}
@@ -358,25 +362,21 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
             </Field>
 
             <Field n="2" label={tx("In one line")}>
-              <GlassInput
+              <GField
                 value={tagline}
                 onChangeText={(v) => setTagline(v.slice(0, 80))}
                 placeholder={tx("Easy 5 km, then coffee")}
-                placeholderTextColor={girl.inkFaint}
-                style={input}
                 maxLength={80}
                 accessibilityLabel={a11y("Tagline")}
               />
             </Field>
 
             <Field n="3" label={tx("About")}>
-              <GlassInput
+              <GField
                 value={about}
                 onChangeText={(v) => setAbout(v.slice(0, 600))}
                 placeholder={tx("Who it's for, how often you meet, the vibe.")}
-                placeholderTextColor={girl.inkFaint}
                 multiline
-                style={[input, styles.multi]}
                 maxLength={600}
                 accessibilityLabel={a11y("Description")}
               />
@@ -442,8 +442,8 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
                 style={styles.error}
                 accessibilityLiveRegion="polite"
               >
-                <Icon name="x" size={16} color={girl.critical} />
-                <Text variant="bodyS" color={girl.ink} style={{ flex: 1 }}>
+                <GIconWell icon="x" tone="error" size={30} />
+                <Text variant="bodyS" color={girl.bordeaux} style={{ flex: 1 }}>
                   {error}
                 </Text>
               </Animated.View>
@@ -517,6 +517,8 @@ function Choice({
   body: string;
   onPress: () => void;
 }) {
+  const m = useGirlMotion();
+  // Chosen: a pane of plum glass with pearl type; the other stays pearl glass.
   return (
     <PressableScale
       haptic="select"
@@ -525,28 +527,22 @@ function Choice({
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
       accessibilityLabel={title}
-      style={[
-        styles.choice,
-        {
-          borderColor: on ? girl.rose : girl.line,
-          backgroundColor: on ? girl.cream : "transparent",
-        },
-      ]}
+      style={[styles.choice, { boxShadow: on ? girl.shadowPlum : girl.shadowSoft }]}
     >
-      {on ? null : <GlassLayer radius={radius.lg} level="thin" />}
-      <Icon name={icon} size={18} color={on ? girl.rose : girl.inkSoft} />
+      <GlassLayer radius={radius.lg} variant={on ? "plum" : "card"} />
+      <Icon name={icon} size={18} color={on ? "#F4B3CF" : girl.inkSoft} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="titleS" color={girl.ink}>
+        <Text variant="titleS" color={on ? girl.pearl : girl.ink}>
           {title}
         </Text>
-        <Text variant="caption" color={girl.inkSoft}>
+        <Text variant="caption" color={on ? "rgba(255,240,247,0.82)" : girl.inkSoft}>
           {body}
         </Text>
       </View>
       <View
-        style={[styles.radio, { borderColor: on ? girl.rose : girl.inkFaint }]}
+        style={[styles.radio, { borderColor: on ? "#F4B3CF" : girl.inkFaint }]}
       >
-        {on ? <View style={styles.radioDot} /> : null}
+        {on ? <Animated.View entering={m.pop(0)} style={styles.radioDot} /> : null}
       </View>
     </PressableScale>
   );
@@ -613,25 +609,12 @@ const styles = StyleSheet.create({
   },
   fieldHead: { flexDirection: "row", alignItems: "baseline", gap: 10 },
   num: { fontFamily: font.bold, letterSpacing: 1 },
-  input: {
-    minHeight: 52,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: "transparent",
-    backgroundColor: "transparent",
-    paddingHorizontal: 14,
-    fontFamily: font.medium,
-    fontSize: 16,
-  },
-  multi: { height: 116, paddingTop: 12, textAlignVertical: "top" },
-  inputPane: { borderRadius: radius.lg, boxShadow: girl.shadowSoft },
   choice: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     padding: 14,
     borderRadius: radius.lg,
-    borderWidth: 1.5,
   },
   radio: {
     width: 22,
@@ -645,24 +628,26 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: girl.rose,
+    backgroundColor: "#F4B3CF",
   },
   error: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    padding: 14,
+    padding: 12,
     borderRadius: radius.lg,
-    backgroundColor: "#FDECEC",
+    borderWidth: 1,
+    borderColor: "rgba(142,31,69,0.22)",
+    backgroundColor: "#FBE9EE",
   },
   doneBadge: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: girl.rose,
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: girl.shadow,
+    zIndex: 0,
+    boxShadow: girl.glow,
   },
 });
 
@@ -672,15 +657,5 @@ export default function GirlNewCommunity() {
     <Flavor value="girl">
       <GirlNewCommunityInner />
     </Flavor>
-  );
-}
-
-/** A text field of the form on a pane of the shared glass (edge, sheen, rose veil in IRLY Girl). */
-function GlassInput(props: TextInputProps) {
-  return (
-    <View style={styles.inputPane}>
-      <GlassLayer radius={radius.lg} level="thin" />
-      <TextInput {...props} />
-    </View>
   );
 }

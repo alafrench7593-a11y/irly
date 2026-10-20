@@ -169,7 +169,7 @@ export const girlGlass: Record<GirlGlassVariant, { blur: number; tint: string; f
   field: { blur: 28, tint: 'rgba(255,252,253,0.70)', fallback: 'rgba(255,250,252,0.97)', rim: 'rgba(255,255,255,0.85)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.45)' },
   bar: { blur: 50, tint: 'rgba(252,242,246,0.62)', fallback: 'rgba(252,244,247,0.96)', rim: 'rgba(255,255,255,0.70)', light: 'rgba(255,255,255,0.95)', sheen: 'rgba(255,255,255,0.40)' },
   sheet: { blur: 70, tint: 'rgba(255,248,250,0.86)', fallback: 'rgba(255,248,250,0.98)', rim: 'rgba(255,255,255,0.90)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.55)' },
-  plum: { blur: 40, tint: 'rgba(43,20,36,0.80)', fallback: 'rgba(43,20,36,0.95)', rim: 'rgba(255,205,226,0.22)', light: 'rgba(255,222,236,0.55)', sheen: 'rgba(255,255,255,0.10)', dark: true },
+  plum: { blur: 40, tint: 'rgba(46,18,38,0.86)', fallback: 'rgba(46,18,38,0.96)', rim: 'rgba(255,205,226,0.22)', light: 'rgba(255,222,236,0.55)', sheen: 'rgba(255,255,255,0.10)', dark: true },
 };
 
 /** Mother-of-pearl: rose, lavender and peach, barely there (glass, highlights). */
