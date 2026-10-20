@@ -2,23 +2,20 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
-import { ActivityCard, fromEvent, fromSession, gridTile, GRID_GAP, type ActivityCardItem, type Happening } from '@/components/cards/HomeCards';
+import { fromEvent, fromSession, gridTile, GRID_GAP, type ActivityCardItem, type Happening } from '@/components/cards/HomeCards';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Button } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/Controls';
-import { Icon, type IconName } from '@/components/ui/Icon';
-import { Skeleton } from '@/components/ui/Skeleton';
+import { type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { DEMO } from '@/config/app';
 import { ACTIVITIES } from '@/data/catalog';
 import { CATEGORY_BY_ID, DISCOVERY_ORDER, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
 import { CategoryTile, type CategoryCounts } from '@/features/home/CategoryTile';
-import { PressableScale } from '@/motion/PressableScale';
 import { CITIES, placeLabel } from '@/data/destinations';
 import { findPerson, getCityContent, goingCount } from '@/data/repo';
 import type { ActivitySession, CityId, IrlEvent } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
-import { openCreate } from '@/features/create/createStore';
 import { demoName, useDemoActivities } from '@/features/girl/demo';
 import { openHero } from '@/features/hero/heroStore';
 import { useServerActivities, type ServerActivity } from '@/features/server/activities';
@@ -28,8 +25,7 @@ import { useNow } from '@/lib/useNow';
 import { enter } from '@/motion/enter';
 import { useAppSpace } from '@/state/appSpace';
 import { useCityId, useStore } from '@/state/store';
-import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import { space } from '@/theme/tokens';
 
 /* ───────── The filters: what members look for, on the catalog's categories ───────── */
 
@@ -195,11 +191,6 @@ export function useHomeActivities(cityId: CityId): { items: HomeActivity[]; load
 
 /** Categories on the Home before « All categories ». */
 const HOME_TILES = 8;
-/** Cards a category shows before « See all ». */
-const PER_GROUP = 4;
-
-type Group = { key: CategoryKey | 'more'; label: string; icon: IconName; items: HomeActivity[] };
-
 /** The catalog category an activity was created in; anything else (no category, an older id) is « More ». */
 const groupOf = (a: HomeActivity): CategoryKey | 'more' => (CATEGORY_BY_ID[a.categoryId as CategoryKey] ? (a.categoryId as CategoryKey) : 'more');
 
@@ -252,117 +243,8 @@ export function DiscoverCategories({ cityId: given }: { cityId?: CityId } = {}) 
   );
 }
 
-/**
- * « Activities by category »: the upcoming activities of the destination
- * grouped under their category (the one they were created in, never guessed
- * from a title), two per row on phones; a category's title opens its page.
- * The same in IRLY and IRLY Girl (in IRLY Girl the activities are girls' plans).
- */
-export function ActivitiesByCategory({ cityId: given }: { cityId?: CityId } = {}) {
-  const current = useCityId();
-  const cityId = given ?? current;
-  const router = useRouter();
-  const t = useTheme();
-  const frame = useFrame();
-  const reduced = useReducedMotion();
-  const { items, loading, error, refresh, signedIn } = useHomeActivities(cityId);
-  // Cards shown per category (a category starts with PER_GROUP, « See all » opens it).
-  const [shown, setShown] = useState<Partial<Record<string, number>>>({});
-  // The section's own width (the framed phone on tablets is narrower than its frame by its borders).
-  const [surface, setSurface] = useState(frame.width);
-  const { width } = gridTile(surface);
-
-  const groups = useMemo<Group[]>(() => {
-    const by = new Map<CategoryKey | 'more', HomeActivity[]>();
-    for (const a of items) {
-      const k = groupOf(a);
-      by.set(k, [...(by.get(k) ?? []), a]);
-    }
-    const ordered: Group[] = DISCOVERY_ORDER.filter((k) => by.has(k)).map((k) => ({ key: k, label: CATEGORY_BY_ID[k].label, icon: CATEGORY_BY_ID[k].icon, items: by.get(k) ?? [] }));
-    const more = by.get('more');
-    return more?.length ? [...ordered, { key: 'more', label: 'More activities', icon: 'sparkles', items: more }] : ordered;
-  }, [items]);
-
-  return (
-    <View onLayout={(e) => setSurface(Math.floor(e.nativeEvent.layout.width) || frame.width)}>
-      <SectionHeader overline="Planned by members and venues" title="Activities by category" action={tx('All ({n})', { n: DISCOVERY_ORDER.length })} onAction={() => router.push('/categories' as never)} />
-      {!items.length && loading ? (
-        <View style={styles.grid} accessibilityLabel={tx('Loading activities')}>
-          {[0, 1].map((i) => (
-            <Skeleton key={i} width={width} height={Math.round((width - 12) * 0.75) + 160} radius={radius.xl} />
-          ))}
-        </View>
-      ) : !items.length && error ? (
-        <View style={styles.state}>
-          <Text variant="body" tone="secondary" align="center">
-            Can’t load activities right now.
-          </Text>
-          <Button label="Try again" size="sm" variant="secondary" icon="repeat" onPress={refresh} />
-        </View>
-      ) : !items.length && !signedIn ? (
-        <View style={styles.state}>
-          <Text variant="body" tone="secondary" align="center">
-            Sign in to see what members are planning near you.
-          </Text>
-          <Button label="Sign in" size="sm" onPress={() => router.push('/account')} />
-        </View>
-      ) : !items.length ? (
-        <View style={styles.state}>
-          <Text variant="body" tone="secondary" align="center">
-            {tx('Nothing planned in {city} yet. Plan the first one.', { city: CITIES[cityId].name })}
-          </Text>
-          <Button label="Plan something" size="sm" icon="plus" onPress={() => openCreate(null)} />
-        </View>
-      ) : (
-        groups.map((g) => {
-          const limit = shown[g.key] ?? PER_GROUP;
-          return (
-            <View key={g.key} style={styles.group}>
-              <PressableScale
-                haptic="select"
-                disabled={g.key === 'more'}
-                onPress={() => router.push(`/category/${g.key}` as never)}
-                style={styles.groupHead}
-                accessibilityRole={g.key === 'more' ? 'header' : 'link'}
-                accessibilityLabel={`${tx(g.label)}, ${tx(g.items.length === 1 ? '{n} activity' : '{n} activities', { n: g.items.length })}`}
-              >
-                <View style={[styles.groupIcon, { backgroundColor: t.c.surface }]}>
-                  <Icon name={g.icon} size={15} color={t.c.text} />
-                </View>
-                <Text variant="titleS" style={{ flex: 1 }} numberOfLines={1}>
-                  {g.label}
-                </Text>
-                <Text variant="caption" tone="tertiary">
-                  {tx(g.items.length === 1 ? '{n} activity' : '{n} activities', { n: g.items.length })}
-                </Text>
-                {g.key === 'more' ? null : <Icon name="chevronRight" size={16} color={t.c.textTertiary} />}
-              </PressableScale>
-              <View style={styles.grid}>
-                {g.items.slice(0, limit).map((a, i) => (
-                  <Animated.View key={a.id} entering={reduced ? undefined : enter.rise(Math.min(i, 6))}>
-                    <ActivityCard item={a} width={width} onPress={() => a.open(router)} />
-                  </Animated.View>
-                ))}
-              </View>
-              {g.items.length > limit ? (
-                <View style={styles.more}>
-                  <Button label={tx('See all ({n})', { n: g.items.length })} size="sm" variant="secondary" icon="chevronDown" onPress={() => setShown((m) => ({ ...m, [g.key]: g.items.length }))} />
-                </View>
-              ) : null}
-            </View>
-          );
-        })
-      )}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   lead: { paddingHorizontal: space.gutter, marginTop: -4, marginBottom: 14 },
-  group: { marginTop: space[6], gap: 12 },
-  groupHead: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: space.gutter },
-  groupIcon: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, paddingHorizontal: space.gutter },
-  state: { paddingHorizontal: space.gutter, paddingVertical: space[5], alignItems: 'center', gap: space[4] },
   more: { alignItems: 'center', marginTop: space[3] },
 });

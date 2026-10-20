@@ -568,7 +568,6 @@ export const fr: Record<string, string> = {
   'both want to meet new people.': 'voulez rencontrer du monde.',
   'You and': 'Toi et',
   'Find something to do': 'Trouver quoi faire',
-  'Activities by category': 'Activités par catégorie',
   'Browse by category': 'Parcourir par catégorie',
   'See all ({n})': 'Tout voir ({n})',
   'Plan one': 'En proposer une',
@@ -4732,5 +4731,4 @@ export const fr: Record<string, string> = {
   'No category matches “{q}”.': 'Aucune catégorie ne correspond à « {q} ».',
   'Clear the search': 'Effacer la recherche',
   'Back to Home': 'Retour à l’accueil',
-  'Planned by members and venues': 'Proposées par les membres et les lieux',
 };
