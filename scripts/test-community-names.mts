@@ -28,17 +28,19 @@ eq(displayCommunityName({ name: 'Girls Padel mvgq82y1', cityId: 'dubai' }), 'Gir
 eq(displayCommunityName({ name: 'Sync club mv00tl2o', cityId: 'bali' }), 'Sync club', 'the old leftover too');
 eq(displayCommunityName({ name: 'Photo club mvgq82y1 Bali', cityId: 'bali' }), 'Photo club Bali', 'run stamp in the middle');
 eq(displayCommunityName({ name: 'Padel abc12345' }), 'Padel', 'letters and five digits dropped');
+eq(displayCommunityName({ name: 'Book & Matcha mvdxpmvc', cityId: 'dubai' }), 'Book & Matcha', 'an all-letter run stamp is dropped');
+eq(displayCommunityName({ name: 'Girls Padel mvdx3mvc', cityId: 'dubai' }), 'Girls Padel', 'a run stamp with one digit is dropped');
 eq(displayCommunityName({ name: 'Padel · 3f2a91c0' }), 'Padel', 'uuid fragment and its separator dropped');
 
 // Valid names are shown exactly as written.
-for (const n of ['IRLY Gym', 'Bali Surf Girls', 'Bump & babies (0–1)', 'Teens (12+)', 'Padel 4x4', 'Run club 2026', 'Cafe2024 crew', 'bali2026', 'Web3 builders', 'Dubai 5K runners', 'Marathon 42km', 'Club 101', 'Les Mamans de Dubaï']) {
+for (const n of ['Book & Matcha', 'Moms Marathon club', 'Networks night', 'IRLY Gym', 'Bali Surf Girls', 'Bump & babies (0–1)', 'Teens (12+)', 'Padel 4x4', 'Run club 2026', 'Cafe2024 crew', 'bali2026', 'Web3 builders', 'Dubai 5K runners', 'Marathon 42km', 'Club 101', 'Les Mamans de Dubaï']) {
   eq(displayCommunityName({ name: n, ...gym }), n, `valid name kept: ${n}`);
 }
 eq(displayCommunityName({ name: '  Padel   Girls  ' }), 'Padel Girls', 'spaces tidied');
 
 // The word rule on its own.
-for (const w of ['mvgq82y1', 'mv00tl2o', 'abc12345', '#12345', '123456', '3f2a91c0']) eq(isTechnicalWord(w), true, `code: ${w}`);
-for (const w of ['Padel', '2026', '5K', '42km', 'bali2026', 'cafe2024', '4x4', 'Web3', '(0–1)', 'marathon']) eq(isTechnicalWord(w), false, `word: ${w}`);
+for (const w of ['mvgq82y1', 'mv00tl2o', 'mvdxpmvc', 'mvdx3mvc', 'abc12345', '#12345', '123456', '3f2a91c0']) eq(isTechnicalWord(w), true, `code: ${w}`);
+for (const w of ['Padel', '2026', '5K', '42km', 'bali2026', 'cafe2024', '4x4', 'Web3', '(0–1)', 'marathon', 'networks', 'midnight', 'lifestyle', 'mamans', 'Matcha', 'nightout']) eq(isTechnicalWord(w), false, `word: ${w}`);
 
 eq(fallbackCommunityName({ topic: 'ai', city_id: 'dubai' }), 'AI · Dubai', 'fallback from a server row');
 eq(fallbackCommunityName({ topic: 'some_new_topic' }), 'Some New Topic', 'unknown topic in words');

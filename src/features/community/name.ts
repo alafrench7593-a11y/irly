@@ -10,7 +10,8 @@ import type { CityId } from '@/data/types';
  * and its city ("Gym & Fitness · Dubai"), never by its id.
  *
  * The same rule as private.community_name_is_technical() on the server
- * (migration 20261024006000_irly_community_titles).
+ * (migrations 20261024007100_irly_community_titles and
+ * 20261024009000_irly_community_titles_letters).
  */
 
 type NameRow = {
@@ -41,6 +42,8 @@ export function isTechnicalWord(word: string): boolean {
   // A run stamp: Date.now() in base 36 ("mvgq82y1", "mv00tl2o"), letters and digits mixed.
   const switches = (w.match(/[a-z](?=\d)|\d(?=[a-z])/g) ?? []).length;
   if (/^[l-n][a-z0-9]{7}$/.test(w) && digits >= 2 && switches >= 2) return true;
+  // The same stamp with no digit, or one ("mvdxpmvc"): a real word of eight letters has two vowels or more ("marathon").
+  if (/^[l-n][a-z0-9]{7}$/.test(w) && (w.match(/[aeiou]/g) ?? []).length <= 1) return true;
   // A uuid fragment ("3f2a91c0"): eight hexadecimal characters or more, two digits and two letters at least.
   if (/^[0-9a-f]{8,}$/.test(w) && digits >= 2 && letters >= 2) return true;
   return false;
