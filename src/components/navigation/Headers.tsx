@@ -147,8 +147,8 @@ export function SpaceLogo() {
 function CommunitiesButton() {
   const t = useTheme();
   const router = useRouter();
-  // On the narrowest phones (375 pt and less) the word keeps its room: the icon steps aside, never « Communi… ».
-  const narrow = useFrame().width < 380;
+  // On phones up to 420 pt (four round doors on the right) the word keeps its room: the icon steps aside, never « Communi… ».
+  const narrow = useFrame().width < 420;
   return (
     <PressableScale
       haptic="select"
@@ -156,7 +156,7 @@ function CommunitiesButton() {
       onPress={() => router.push('/communities')}
       accessibilityRole="button"
       accessibilityLabel={tx('Communities')}
-      style={[styles.communities, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
+      style={[styles.communities, narrow ? styles.communitiesNarrow : null, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
     >
       <GlassLayer radius={radius.pill} level="thin" />
       {narrow ? null : <Icon name="users" size={16} color={t.c.text} />}
@@ -180,7 +180,7 @@ function onNetwork(pathname: string): boolean {
   return pathname === '/network' || pathname.startsWith('/network/');
 }
 
-/** On Settings (/settings or the preferences it opens). */
+/** On Settings (/preferences, the page the tab bar's gear opens too, or its privacy page /settings). */
 function onSettings(pathname: string): boolean {
   return pathname === '/settings' || pathname === '/preferences';
 }
@@ -197,8 +197,8 @@ type HeaderActionProps = { icon: IconName; label: string; onPress: () => void; b
 const HeaderAction = memo(function HeaderAction({ icon, label, onPress, badge, active }: HeaderActionProps) {
   const t = useTheme();
   const reduced = useReducedMotion();
-  // Four doors on the narrowest phones (375 pt and less): a little smaller, so the Communities pill keeps its word.
-  const narrow = useFrame().width < 380;
+  // Four doors on phones up to 420 pt: a little smaller, so the Communities pill keeps its word.
+  const narrow = useFrame().width < 420;
   const girl = t.flavor === 'girl';
   const fill = girl ? t.c.brand : t.c.text;
   const onFill = girl ? t.c.onBrand : t.c.bg;
@@ -258,7 +258,7 @@ export function InboxButtons({ gap = 8 }: { gap?: number }) {
         label={settings ? tx('Settings, current section') : tx('Settings')}
         active={settings}
         onPress={() => {
-          if (pathname !== '/settings') router.push('/settings');
+          if (pathname !== '/preferences') router.push('/preferences' as never);
         }}
       />
     </View>
@@ -320,6 +320,7 @@ const styles = StyleSheet.create({
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 11, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  communitiesNarrow: { paddingHorizontal: 9 },
   lead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, minWidth: 0, marginRight: 4 },
   // The logo never shrinks: the Communities pill gives way first.
   logo: { height: 38, justifyContent: 'center', flexShrink: 0 },
