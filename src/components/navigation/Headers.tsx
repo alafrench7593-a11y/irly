@@ -152,14 +152,18 @@ function CommunitiesButton() {
  * top right. Messages holds private chats, group chats and the dedicated
  * community area.
  */
-export function InboxButtons() {
-  const router = useRouter();
-  const unread = useUnread();
+/** New notifications for the bell. Signed in: real notifications (the demo build shows its examples). */
+export function useBell(): number {
   const account = useAccount();
   const auth = useAuthStatus();
   const serverBell = useServerBell((st) => st.n);
-  // Signed in: the bell counts real notifications (the demo build shows its examples).
-  const bell = account ? serverBell : DEMO && auth === 'out' ? 2 : 0;
+  return account ? serverBell : DEMO && auth === 'out' ? 2 : 0;
+}
+
+export function InboxButtons() {
+  const router = useRouter();
+  const unread = useUnread();
+  const bell = useBell();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx } from '@/i18n';
 import { useEffect, useRef, useState } from 'react';
@@ -245,7 +246,7 @@ export function QuickPlan({
   );
 }
 
-/** An IRLY Girl plan: a glass tile the rose fills with a spring when it is chosen, its icon popping. */
+/** An IRLY Girl plan: a glass tile plum glass fills with a spring when it is chosen (the selection language of Girl), its icon popping. */
 function PlanTile({ plan, on, onPress }: { plan: PlanType; on: boolean; onPress: () => void }) {
   const p = useSharedValue(on ? 1 : 0);
   useEffect(() => {
@@ -261,14 +262,16 @@ function PlanTile({ plan, on, onPress }: { plan: PlanType; on: boolean; onPress:
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
       accessibilityLabel={tx(plan.label)}
-      style={[styles.tile, { borderColor: on ? girl.rose : 'transparent', boxShadow: on ? girl.shadow : undefined }]}
+      style={[styles.tile, { borderColor: on ? 'rgba(255,205,226,0.28)' : 'transparent', boxShadow: on ? girl.shadowPlum : undefined }]}
     >
       <GlassLayer radius={16} level="thin" />
-      <Animated.View pointerEvents="none" style={[styles.tileFill, fill]} />
-      <Animated.View style={icon}>
-        <Icon name={plan.icon} size={18} color={on ? '#FFFFFF' : girl.rose} />
+      <Animated.View pointerEvents="none" style={[styles.tileFill, fill]}>
+        <LinearGradient colors={girl.plumGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       </Animated.View>
-      <Text variant="caption" color={on ? '#FFFFFF' : girl.ink} align="center" numberOfLines={2}>
+      <Animated.View style={icon}>
+        <Icon name={plan.icon} size={18} color={on ? '#F4B3CF' : girl.rose} />
+      </Animated.View>
+      <Text variant="caption" color={on ? girl.pearl : girl.ink} align="center" numberOfLines={2}>
         {plan.label}
       </Text>
     </PressableScale>
@@ -293,7 +296,7 @@ const styles = StyleSheet.create({
   row: { gap: 8, paddingRight: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tile: { width: '31.5%', minHeight: 74, borderRadius: 16, borderWidth: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, paddingVertical: 10 },
-  tileFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 16, backgroundColor: girl.rose },
+  tileFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 16, overflow: 'hidden' },
   third: { width: '31.5%' },
   quarter: { width: '23%' },
 });

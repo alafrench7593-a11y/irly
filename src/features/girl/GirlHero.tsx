@@ -87,7 +87,9 @@ export function GirlHero({
   onBack,
   onProfile,
   onMessages,
+  onNotifications,
   unread = 0,
+  bell = 0,
 }: {
   mode: 'all' | 'moms';
   scrollY: SharedValue<number>;
@@ -95,7 +97,10 @@ export function GirlHero({
   onProfile: () => void;
   /** Messages are one tap away from the top of IRLY Girl, with the unread count. */
   onMessages: () => void;
+  /** Notifications sit beside Messages, with the count of new ones. */
+  onNotifications: () => void;
   unread?: number;
+  bell?: number;
 }) {
   const insets = useSafeAreaInsets();
   const tr = useT();
@@ -133,6 +138,23 @@ export function GirlHero({
               <View style={styles.badge}>
                 <Text variant="caption" color="#FFFFFF" raw style={styles.badgeText}>
                   {unread > 99 ? '99+' : String(unread)}
+                </Text>
+              </View>
+            ) : null}
+          </PressableScale>
+          <PressableScale
+            haptic="select"
+            scaleTo={0.9}
+            onPress={onNotifications}
+            accessibilityLabel={bell ? tr('Notifications, {n} new', { n: bell }) : tr('Notifications')}
+            style={styles.round}
+          >
+            <GlassFill dark level="thin" radius={20} />
+            <Icon name="bell" size={18} color="#FFFFFF" />
+            {bell ? (
+              <View style={styles.badge}>
+                <Text variant="caption" color="#FFFFFF" raw style={styles.badgeText}>
+                  {bell > 99 ? '99+' : String(bell)}
                 </Text>
               </View>
             ) : null}

@@ -26,7 +26,7 @@ import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section
 import { GButton, GIconWell, GlassFill } from '@/features/girl/ui';
 import { GirlBackdrop, GirlHero } from '@/features/girl/GirlHero';
 import { GirlMessages } from '@/features/girl/GirlMessages';
-import { useUnread } from '@/components/navigation/Headers';
+import { useBell, useUnread } from '@/components/navigation/Headers';
 import { usePhotoLink } from '@/features/server/covers';
 import { girlCommunityPhoto } from '@/features/girl/photos';
 import { ScrollReveal } from '@/motion/ScrollReveal';
@@ -102,6 +102,7 @@ function GirlHomeInner() {
   const [mode, setMode] = useState<'all' | 'moms'>(params.mode === 'moms' ? 'moms' : 'all');
   const serverCommunities = useGirlCommunities(cityId, '', true);
   const unread = useUnread();
+  const bell = useBell();
   // Plans created in IRLY Girl (girls and moms): they show up right here.
   const { activities: girlPlans, loading: plansLoading, error: plansError, refresh: refreshPlans } = useGirlPlans(cityId, { girlOnly: true });
   const [kind, setKind] = useState<string | null>(null);
@@ -330,7 +331,7 @@ function GirlHomeInner() {
     <View style={styles.root}>
       <GirlBackdrop mode={mode} scrollY={scrollY} width={frame.width || window.width} />
       <Animated.ScrollView ref={scrollRef} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <GirlHero mode={mode} scrollY={scrollY} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} onMessages={() => router.push('/messages')} unread={unread} />
+        <GirlHero mode={mode} scrollY={scrollY} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} onMessages={() => router.push('/messages')} onNotifications={() => router.push('/notifications')} unread={unread} bell={bell} />
 
 
         {FEATURES.girlMatch && matches.length ? (
@@ -395,6 +396,15 @@ function GirlHomeInner() {
                   { icon: 'message', label: 'Messages', onPress: () => router.push('/messages') },
                 ]
           }
+        />
+        {/* Her own pages, one tap away: agenda, alerts and settings, in the same glass tiles. */}
+        <Shortcuts
+          items={[
+            { icon: 'calendar', label: 'Calendar', onPress: () => router.push('/calendar') },
+            { icon: 'bell', label: 'Notifications', onPress: () => router.push('/notifications') },
+            { icon: 'user', label: 'Profile', onPress: () => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile') },
+            { icon: 'settings', label: 'Settings', onPress: () => router.push('/preferences') },
+          ]}
         />
 
         {mode === 'moms' ? (
@@ -686,7 +696,9 @@ function GirlHomeInner() {
         }}
         onFindExisting={(s: Suggestion) => {
           setMoment(null);
-          router.push(s.preset.categoryId ? `/category/${s.preset.categoryId}` : '/discover');
+          // Without a category, the plans of IRLY Girl right here (Discover is the Mixte tab).
+          if (s.preset.categoryId) router.push(`/category/${s.preset.categoryId}`);
+          else goTo('plans');
         }}
       />
 
