@@ -1,8 +1,8 @@
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Linking, StyleSheet, Switch, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { ActivityIndicator, Linking, StyleSheet, Switch, View } from 'react-native';
+import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
 import { Divider, SectionHeader } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -112,7 +112,7 @@ export function SettingsSections() {
   const version = Constants.expoConfig?.version ?? '';
   return (
     <>
-      <Section index={8} title="My account">
+      <Section index={0} title="My account">
         {account ? (
           <>
             <SettingLink icon="send" label="Email" value={account.email ?? '—'} onPress={() => router.push('/account')} />
@@ -121,7 +121,7 @@ export function SettingsSections() {
             <Divider inset={16} />
             <SettingLink icon="file" label="Download my data" value={exporting ? 'Preparing…' : 'A copy of what IRLY stores'} onPress={downloadData} />
             <Divider inset={16} />
-            <SettingLink icon="arrowLeft" label="Log out" value={signingOut ? 'Signing out…' : undefined} onPress={logOut} />
+            <SettingLink icon="arrowLeft" label="Log out" value={signingOut ? 'Signing out…' : undefined} busy={signingOut} onPress={logOut} />
             <Divider inset={16} />
             <SettingLink icon="x" label="Delete account" danger onPress={() => setConfirmDelete(true)} />
           </>
@@ -134,7 +134,7 @@ export function SettingsSections() {
         )}
       </Section>
 
-      <Section index={9} title="Privacy">
+      <Section index={1} title="Privacy">
         <SettingLink icon="eye" label="Who sees what" value="Profile, messages, live" onPress={() => router.push('/settings')} />
         <Divider inset={16} />
         <SettingLink icon="pin" label="Location" value="Neighbourhood at most" onPress={() => router.push('/settings')} />
@@ -142,17 +142,17 @@ export function SettingsSections() {
         <SettingLink icon="x" label="Blocked members" onPress={() => router.push('/blocked')} />
       </Section>
 
-      <Section index={10} title="Notifications">
+      <Section index={2} title="Notifications">
         <SettingLink icon="bell" label="Notifications" value="In the app and on your phone" onPress={() => router.push('/settings')} />
       </Section>
 
-      <Section index={11} title="Security">
+      <Section index={3} title="Security">
         <SettingLink icon="lock" label="Sign-in & password" value={account ? 'Change your password' : 'Sign in first'} onPress={() => router.push('/account')} />
         <Divider inset={16} />
         <SettingLink icon="shield" label="Account compromised?" value="What to do" onPress={() => router.push('/support')} />
       </Section>
 
-      <Section index={12} title="Language & preferences">
+      <Section index={4} title="Language & preferences">
         <SettingLink icon="languages" label="Language" value={LANGS.find((l) => l.id === langSetting)?.label} onPress={() => setLangSheet(true)} />
         <Divider inset={16} />
         <SettingLink
@@ -179,7 +179,7 @@ export function SettingsSections() {
         <SettingLink icon="globe" label="Destination" value={`${tx(dest.shortName)} · ${tx(city.name)}`} onPress={() => setDestSheet(true)} />
       </Section>
 
-      <Section index={13} title="IRLY">
+      <Section index={5} title="IRLY">
         <SettingLink icon="calendar" label="Calendar" value="Everything you're going to" onPress={() => router.push('/calendar')} />
         <Divider inset={16} />
         <SettingLink icon="bookmark" label="Saved" value="Plans, places, people" onPress={() => router.push('/saved')} />
@@ -199,7 +199,7 @@ export function SettingsSections() {
         ) : null}
       </Section>
 
-      <Section index={14} title="Help & support">
+      <Section index={6} title="Help & support">
         <SettingLink icon="message" label="Help center & FAQ" onPress={() => router.push('/support')} />
         <Divider inset={16} />
         <SettingLink icon="send" label="Contact support" value={APP.supportEmail} onPress={() => Linking.openURL(`mailto:${APP.supportEmail}`)} />
@@ -211,7 +211,7 @@ export function SettingsSections() {
         <SettingLink icon="users" label="Community Guidelines" onPress={() => router.push('/legal/guidelines')} />
       </Section>
 
-      <Section index={15} title="Legal">
+      <Section index={7} title="Legal">
         <SettingLink icon="shield" label="Privacy Policy" onPress={() => router.push('/legal/privacy')} />
         <Divider inset={16} />
         <SettingLink icon="file" label="Terms of Use" onPress={() => router.push('/legal/terms')} />
@@ -229,7 +229,7 @@ export function SettingsSections() {
         </View>
       </Section>
 
-      <Section index={16} title="Follow IRLY">
+      <Section index={8} title="Follow IRLY">
         <SettingLink icon="camera" label="Instagram" value="@irlyofficial" onPress={() => Linking.openURL(APP.instagram)} />
         <Divider inset={16} />
         <SettingLink icon="music" label="TikTok" value="@irlyofficial" onPress={() => Linking.openURL(APP.tiktok)} />
@@ -267,6 +267,9 @@ export function SettingsSections() {
         subtitle="This cannot be undone."
       >
         <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+          <Animated.View entering={enter.pop(0, 80)} style={[styles.warning, { backgroundColor: t.c.overlay }]}>
+            <Icon name="x" size={22} color={t.c.critical} />
+          </Animated.View>
           <Text variant="body" tone="secondary">
             Your profile, photos, professional and IRLY Girl profiles, messages, posts, comments, connections, matches and notifications are deleted from IRLY’s
             servers, and you are signed out on this phone. Communities you own pass to another member. Content already reported to moderators is kept for review.
@@ -291,15 +294,16 @@ export function SettingsSections() {
 }
 
 function Section({ index, title, children }: { index: number; title: string; children: React.ReactNode }) {
+  const reduced = useReducedMotion();
   return (
-    <Animated.View entering={enter.rise(index)} style={styles.section}>
+    <Animated.View entering={reduced ? undefined : enter.rise(index, 60)} style={styles.section}>
       <SectionHeader title={title} />
       <View style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.lg} />{children}</View>
     </Animated.View>
   );
 }
 
-export function SettingLink({ icon, label, value, onPress, danger }: { icon: IconName; label: string; value?: string; onPress: () => void; danger?: boolean }) {
+export function SettingLink({ icon, label, value, onPress, danger, busy }: { icon: IconName; label: string; value?: string; onPress: () => void; danger?: boolean; busy?: boolean }) {
   const t = useTheme();
   return (
     <PressableScale
@@ -318,7 +322,14 @@ export function SettingLink({ icon, label, value, onPress, danger }: { icon: Ico
           {value}
         </Text>
       ) : null}
-      <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+      {/* Under way (log out): a spinner fades in where the chevron was. */}
+      {busy ? (
+        <Animated.View entering={FadeIn.duration(160)}>
+          <ActivityIndicator size="small" color={t.c.textSecondary} />
+        </Animated.View>
+      ) : (
+        <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+      )}
     </PressableScale>
   );
 }
@@ -327,5 +338,6 @@ const styles = StyleSheet.create({
   value: { maxWidth: '48%', textAlign: 'right' },
   section: { marginBottom: space[8] },
   group: { marginHorizontal: space.gutter, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
+  warning: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
   settingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, height: 56 },
 });
