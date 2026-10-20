@@ -92,7 +92,11 @@ function App() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: t.c.bg },
-          animation: 'default',
+          // One push transition on every platform (iOS feel on Android and web too),
+          // and the back swipe follows the finger.
+          animation: 'ios_from_right',
+          animationMatchesGesture: true,
+          gestureEnabled: true,
         }}
       >
         <Stack.Screen name="index" options={{ animation: 'none' }} />
@@ -112,6 +116,10 @@ function App() {
         {/* The face flies from the bubble into the profile while the page fades in. */}
         <Stack.Screen name="person/[id]" options={{ animation: 'fade' }} />
         <Stack.Screen name="story" options={{ animation: 'fade', contentStyle: { backgroundColor: '#050506' } }} />
+        <Stack.Screen name="girl/new-community" options={{ animation: 'slide_from_bottom', contentStyle: { backgroundColor: girl.bg } }} />
+        <Stack.Screen name="c/[id]" options={{ animation: 'fade_from_bottom' }} />
+        <Stack.Screen name="notifications" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="search" options={{ animation: 'fade' }} />
         <Stack.Screen name="girl/profile" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
       </Stack>
       <HeroHost />
