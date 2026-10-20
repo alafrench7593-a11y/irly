@@ -27,6 +27,7 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { SpaceFlavor } from '@/theme/space';
 import { GirlHeaderMark } from '@/features/girl/GirlMark';
+import { displayCommunityName } from '@/features/community/name';
 
 type Item = { id: string; icon: IconName; title: string; body: string; ago: string; personId?: string; onPress?: () => void; unread?: boolean };
 
@@ -285,9 +286,9 @@ function ServerNotifications() {
       case 'COMMUNITY_JOINED':
         return { icon: 'heartHandshake', title: 'You joined a community', body: 'Its chat is in Messages', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'COMMUNITY_ANNOUNCEMENT':
-        return { icon: 'megaphone', title: tx('Announcement · {name}', { name: String(p.community ?? 'IRLY') }), body: p.body ?? '', go: () => router.push(p.community_id ? `/c/${p.community_id}` : '/communities') };
+        return { icon: 'megaphone', title: tx('Announcement · {name}', { name: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: p.body ?? '', go: () => router.push(p.community_id ? `/c/${p.community_id}` : '/communities') };
       case 'COMMUNITY_POST':
-        return { icon: 'message', title: tx('{name} posted in {community}', { name: name(p.from), community: String(p.community ?? '') }), body: p.body ?? '', go: () => router.push(p.community_id ? `/c/${p.community_id}` : '/communities') };
+        return { icon: 'message', title: tx('{name} posted in {community}', { name: name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : '' }), body: p.body ?? '', go: () => router.push(p.community_id ? `/c/${p.community_id}` : '/communities') };
       case 'IRLY_POST_CREATED':
         return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? 'See what they are doing', go: () => router.push('/live') };
       case 'PROFILE_UPDATED':

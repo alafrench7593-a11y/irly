@@ -31,6 +31,7 @@ import { girlPhotoFor } from './photos';
 import { girl, GIRL_TINT } from './theme';
 import { GButton, GChip, GIconWell, GlassFill, GNotice, useGirlMotion } from './ui';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { displayCommunityName } from '@/features/community/name';
 
 /* ───────── Kinds of plans ───────── */
 
@@ -431,7 +432,7 @@ export function useGirlFeed(cityId: string, moms: boolean) {
     return ((data as Record<string, unknown>[]) ?? []).map((r) => ({
       id: r.id as string,
       communityId: r.community_id as string,
-      communityName: r.community_name as string,
+      communityName: displayCommunityName({ name: r.community_name as string | null }),
       authorId: r.author_id as string,
       firstName: (r.first_name as string) ?? '',
       body: r.body as string,

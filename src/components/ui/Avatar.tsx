@@ -1,14 +1,17 @@
 import { Image } from 'expo-image';
-import { memo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { isAvatar } from '@/features/avatar/avatar';
 import { cardPhoto, shownPhoto } from '@/features/server/faceRule';
 import { useAccountFace } from '@/features/server/faces';
+import { forgetLink, fullOfThumb, useSignedLinks } from '@/features/server/media';
+import { PressableScale } from '@/motion/PressableScale';
 import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
 import { initials } from '@/lib/format';
 import { font } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Icon } from './Icon';
+import { Text as UIText } from './Text';
 
 function hsl(h: number, s: number, l: number) {
   return `hsl(${Math.round(((h % 360) + 360) % 360)}, ${s}%, ${l}%)`;
@@ -169,33 +172,90 @@ type FacePhotoProps = {
   placeholderSize?: number;
   /** Background of the neutral placeholder. */
   placeholderColor?: string;
+  /**
+   * `full` (default, a photo filling a card): the 256 px copy shows at once
+   * and the full profile photo (≤1600 px) dissolves in over it, as
+   * features/match/ProfilePhoto. `avatar`: the small copy only.
+   */
+  size?: 'full' | 'avatar';
 };
+
+const NO_PATHS: string[] = [];
 
 /**
  * A member's photo filling a card (IRLY Girl deck, match moment): her
  * profile photo first, the same as on every other screen, then her own
  * other photos, else a quiet placeholder with her initials. Never someone
- * else's photo, never a stock picture.
+ * else's photo, never a stock picture. A photo that cannot load leaves the
+ * placeholder with a small « Try again ».
  */
-export const FacePhoto = memo(function FacePhoto({ name, hue, userId, photos, style, placeholderSize = 88, placeholderColor }: FacePhotoProps) {
+export const FacePhoto = memo(function FacePhoto({ name, hue, userId, photos, style, placeholderSize = 88, placeholderColor, size = 'full' }: FacePhotoProps) {
   const t = useTheme();
   const face = useAccountFace(userId);
   // A real photo wins over an IRLY avatar: on a big card the drawing is the last resort.
   const uri = cardPhoto(face, photos);
-  const cacheKey = face && face.uri === uri ? face.key : undefined;
+  const fromFace = Boolean(face && face.uri === uri);
+  const fullPath = size === 'full' && fromFace ? fullOfThumb(face?.key) : undefined;
+  const asked = useMemo(() => (fullPath ? [fullPath] : NO_PATHS), [fullPath]);
+  const links = useSignedLinks('profile-photos', asked);
+  const full = fullPath ? links[fullPath] : undefined;
+  const [failed, setFailed] = useState<Record<string, true>>({});
+  const [attempt, setAttempt] = useState(0);
+  const drawing = uri && isAvatar(uri) ? uri : undefined;
+  const lowOk = uri && !drawing && !failed[uri] ? uri : undefined;
+  const highOk = full && !failed[full] ? full : undefined;
+  // Broken: a photo was chosen, nothing of it could load (the full one is not still being signed).
+  const broken = Boolean(uri) && !drawing && !lowOk && !highOk && !(fullPath && !full);
+  const retry = () => {
+    for (const u of Object.keys(failed)) forgetLink(u);
+    setFailed({});
+    setAttempt((n) => n + 1);
+  };
   return (
     <View style={[styles.fill, { backgroundColor: placeholderColor ?? t.c.surface }, style]}>
-      {uri && isAvatar(uri) ? (
+      {drawing ? (
         <View style={[StyleSheet.absoluteFill, styles.center]}>
-          <IrlyAvatar config={uri} size={placeholderSize * 1.8} />
+          <IrlyAvatar config={drawing} size={placeholderSize * 1.8} />
         </View>
-      ) : uri ? (
-        <Image source={{ uri, cacheKey }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={200} recyclingKey={userId ?? undefined} />
-      ) : (
+      ) : !lowOk && !highOk ? (
         <View style={[StyleSheet.absoluteFill, styles.center]}>
           <Avatar name={name} hue={hue} size={placeholderSize} />
         </View>
-      )}
+      ) : null}
+      {lowOk ? (
+        <Image
+          key={`l${attempt}`}
+          source={{ uri: lowOk, cacheKey: fromFace ? face?.key : undefined }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={200}
+          recyclingKey={userId ?? undefined}
+          onError={() => setFailed((f) => ({ ...f, [lowOk]: true }))}
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
+      {highOk ? (
+        <Image
+          key={`h${attempt}`}
+          source={{ uri: highOk, cacheKey: `profile-photos/${fullPath}` }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          transition={{ duration: 260, effect: 'cross-dissolve' }}
+          recyclingKey={userId ? `${userId}-full` : undefined}
+          onError={() => setFailed((f) => ({ ...f, [highOk]: true }))}
+          accessibilityIgnoresInvertColors
+        />
+      ) : null}
+      {broken ? (
+        <PressableScale haptic="tap" scaleTo={0.94} onPress={retry} style={styles.retry} accessibilityRole="button" accessibilityLabel="Try again">
+          <Icon name="repeat" size={13} color="#FFFFFF" />
+          <UIText variant="caption" color="#FFFFFF">
+            Try again
+          </UIText>
+        </PressableScale>
+      ) : null}
     </View>
   );
 });
@@ -203,4 +263,16 @@ export const FacePhoto = memo(function FacePhoto({ name, hue, userId, photos, st
 const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   fill: { overflow: 'hidden' },
+  retry: {
+    position: 'absolute',
+    alignSelf: 'center',
+    bottom: '22%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 30,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    backgroundColor: 'rgba(20,12,18,0.55)',
+  },
 });

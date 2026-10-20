@@ -17,6 +17,7 @@ import { lastLibraryPhoto, rememberLibraryPhoto } from '@/features/create/lastPh
 import { libraryFor, libraryKindOf, surprise } from '@/features/create/photoLibrary';
 import { askPushInContext } from '@/features/push/push';
 import { useAppSpace } from '@/state/appSpace';
+import { displayCommunityName } from '@/features/community/name';
 
 /**
  * Activities on the server (signed in). Creating a session in the app also
@@ -822,7 +823,10 @@ export function useMyCommunityOptions(): MyCommunityOption[] {
           type R = { communities: { id: string; name: string; girl_only: boolean; parent: { name: string } | { name: string }[] | null } | { id: string; name: string; girl_only: boolean; parent: { name: string } | { name: string }[] | null }[] };
           const rows = ((data as R[] | null) ?? []).map((r) => (Array.isArray(r.communities) ? r.communities[0] : r.communities)).filter(Boolean);
           const next = rows
-            .map((c) => ({ id: c.id, name: c.name, girlOnly: Boolean(c.girl_only), groupOf: (Array.isArray(c.parent) ? c.parent[0]?.name : c.parent?.name) ?? null }))
+            .map((c) => {
+              const parent = Array.isArray(c.parent) ? c.parent[0] : c.parent;
+              return { id: c.id, name: displayCommunityName(c), girlOnly: Boolean(c.girl_only), groupOf: parent ? displayCommunityName(parent) : null };
+            })
             .sort((a, b) => (a.groupOf ?? a.name).localeCompare(b.groupOf ?? b.name) || (a.groupOf ? 1 : 0) - (b.groupOf ? 1 : 0));
           optionsKnown = { key, list: next };
           if (alive) setList(next);

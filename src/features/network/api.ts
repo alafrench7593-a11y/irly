@@ -6,6 +6,7 @@ import { thumbOf } from '@/features/server/media';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
 import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { LINK_KINDS, NO_LINKS, safeLink, type ProLinks } from './links';
 import type { ProProfile } from './match';
 import type { IndustryId, IntentId, RoleId } from './taxonomy';
 
@@ -31,7 +32,18 @@ export type ProDraft = {
   cityId: string;
   areaId: string | null;
   visible: boolean;
+  /** Your links (already normalised by links.ts); left out when the server has no link columns yet. */
+  links?: ProLinks;
 };
+
+type LinkRow = { linkedin_url?: string | null; website_url?: string | null; instagram_url?: string | null; tiktok_url?: string | null };
+
+/** Links as stored → links shown: each one re-checked, an invalid one is no link. */
+const toLinks = (r: LinkRow | null | undefined): ProLinks =>
+  r ? { linkedin: safeLink('linkedin', r.linkedin_url), website: safeLink('website', r.website_url), instagram: safeLink('instagram', r.instagram_url), tiktok: safeLink('tiktok', r.tiktok_url) } : NO_LINKS;
+
+/** The server has not got the link columns (migration 20261024008000) yet: links are left out, nothing else changes. */
+const noLinkColumns = (e: { code?: string; message?: string } | null) => Boolean(e && (e.code === '42703' || e.code === 'PGRST204' || e.code === 'PGRST202' || /linkedin_url|pro_links_of/i.test(e.message ?? '')));
 
 type Row = {
   user_id: string;
@@ -137,26 +149,37 @@ export function useMyPro() {
   const bump = useProVersion((s) => s.bump);
   const current = `${uid}|${version}`;
   // Loading is "the last answer is for another account or an older version".
-  const [res, setRes] = useState<{ for: string; pro: ProProfile | null; visible: boolean; error: string | null }>({ for: '', pro: null, visible: true, error: null });
+  const [res, setRes] = useState<{ for: string; pro: ProProfile | null; visible: boolean; links: ProLinks; linksOn: boolean; error: string | null }>({
+    for: '',
+    pro: null,
+    visible: true,
+    links: NO_LINKS,
+    linksOn: false,
+    error: null,
+  });
 
   const load = useCallback(async () => {
-    if (!uid || !supabase) return { pro: null, visible: true };
-    const [{ data, error: e }, own] = await Promise.all([
+    if (!uid || !supabase) return { pro: null, visible: true, links: NO_LINKS, linksOn: false };
+    const [{ data, error: e }, own, mine] = await Promise.all([
       supabase.rpc('pro_profile_of', { p_user: uid }),
       supabase.from('pro_profiles').select('visible').eq('user_id', uid).maybeSingle(),
+      supabase.from('pro_profiles').select('linkedin_url, website_url, instagram_url, tiktok_url').eq('user_id', uid).maybeSingle(),
     ]);
     if (e) throw new Error(e.message);
     // Unread, "visible" would default to on: saving would publish a hidden profile.
     if (own.error) throw new Error(own.error.message);
+    // Unread links would be saved as empty: the editor waits for them, unless the server has no such columns.
+    const linksOn = !noLinkColumns(mine.error);
+    if (mine.error && linksOn) throw new Error(mine.error.message);
     const r = ((data as Row[]) ?? [])[0];
-    return { pro: r ? toPro(r) : null, visible: (own.data as { visible?: boolean } | null)?.visible ?? true };
+    return { pro: r ? toPro(r) : null, visible: (own.data as { visible?: boolean } | null)?.visible ?? true, links: linksOn ? toLinks(mine.data as LinkRow | null) : NO_LINKS, linksOn };
   }, [uid]);
 
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
     load()
-      .then((x) => alive && setRes({ for: current, pro: x.pro, visible: x.visible, error: null }))
+      .then((x) => alive && setRes({ for: current, pro: x.pro, visible: x.visible, links: x.links, linksOn: x.linksOn, error: null }))
       .catch((e) => alive && setRes((r) => ({ ...r, for: current, error: e instanceof Error ? e.message : 'offline' })));
     return () => {
       alive = false;
@@ -180,13 +203,15 @@ export function useMyPro() {
         city_id: d.cityId,
         area_id: d.areaId,
         visible: d.visible,
+        // Only when the server has the columns (read when the profile loaded): never written blind.
+        ...(d.links && res.linksOn ? Object.fromEntries(LINK_KINDS.map((k) => [k.column, d.links?.[k.id] ?? null])) : {}),
       };
       const { error: e } = await need().from('pro_profiles').upsert(row, { onConflict: 'user_id' });
-      if (e) throw new Error(/check constraint/i.test(e.message) ? 'Some fields are not valid' : e.message);
+      if (e) throw new Error(/_url_check/i.test(e.message) ? 'One of your links is not valid' : /check constraint/i.test(e.message) ? 'Some fields are not valid' : e.message);
       track('PRO_PROFILE_SAVE', { industries: d.industries.length, intents: d.intents.length });
       bump();
     },
-    [uid, bump],
+    [uid, bump, res.linksOn],
   );
 
   const remove = useCallback(async () => {
@@ -202,6 +227,10 @@ export function useMyPro() {
     // The previous answer stays on screen while a newer version loads (no flash of "create your profile").
     pro: on && res.for.startsWith(`${uid}|`) ? res.pro : null,
     visible: res.visible,
+    /** Your links as saved (re-checked). */
+    links: res.links,
+    /** The server stores links (its link columns exist). */
+    linksOn: res.linksOn,
     loading: on && !fresh,
     error: on ? res.error : null,
     save,
@@ -273,12 +302,15 @@ export function usePro(userId: string) {
   const uid = useAccount()?.userId;
   const [res, setRes] = useState<{ id: string; pro: ProProfile | null; failed: boolean }>({ id: '', pro: null, failed: false });
   const [photo, setPhoto] = useState<string | null>(null);
+  const [links, setLinks] = useState<{ id: string; links: ProLinks }>({ id: '', links: NO_LINKS });
 
   const load = useCallback(async () => {
     if (!uid || !supabase) return null;
-    const { data, error: e } = await supabase.rpc('pro_profile_of', { p_user: userId });
+    const [{ data, error: e }, l] = await Promise.all([supabase.rpc('pro_profile_of', { p_user: userId }), supabase.rpc('pro_links_of', { p_user: userId })]);
     if (e) throw new Error(e.message);
     const r = ((data as Row[]) ?? [])[0];
+    // Links are an extra: unreadable (or not on the server yet), the profile shows without them.
+    setLinks({ id: userId, links: l.error ? NO_LINKS : toLinks(((l.data as LinkRow[] | null) ?? [])[0]) });
     return r ? toPro(r) : null;
   }, [uid, userId]);
 
@@ -317,7 +349,7 @@ export function usePro(userId: string) {
   const on = Boolean(uid && supabase);
   const pro = on && res.id === userId ? res.pro : null;
   const state: 'loading' | 'ready' | 'missing' | 'error' = !on ? 'missing' : res.id !== userId ? 'loading' : res.failed && !pro ? 'error' : pro ? 'ready' : 'missing';
-  return { pro, photo: res.id === userId ? photo : null, state, setConnection };
+  return { pro, photo: res.id === userId ? photo : null, links: pro && links.id === userId ? links.links : NO_LINKS, state, setConnection };
 }
 
 /** Connect from Networking: sends a request, or accepts theirs. Returns 'pending' or 'accepted'. */

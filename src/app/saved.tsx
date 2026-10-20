@@ -11,6 +11,7 @@ import { Segmented } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toggleSave, useSaved, type SavedItem, type TargetType } from '@/features/server/engage';
+import { displayCommunityName } from '@/features/community/name';
 import { supabase } from '@/lib/supabase';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
@@ -26,6 +27,19 @@ const TABS: { value: Tab; label: string }[] = [
   { value: 'irl_post', label: 'Posts' },
   { value: 'profile', label: 'People' },
 ];
+/** What a saved item is called while its title is unknown (not loaded, deleted, not visible): never its id. */
+const FALLBACK: Partial<Record<TargetType, string>> = {
+  activity: 'Saved activity',
+  place: 'Saved place',
+  community: 'Saved community',
+  irl_post: 'Saved post',
+  community_post: 'Saved post',
+  profile: 'Saved person',
+  catalog: 'Saved idea',
+  news: 'Saved article',
+  comment: 'Saved comment',
+};
+const titleOf = (titles: Record<string, string>, i: SavedItem) => titles[`${i.type}:${i.id}`]?.trim() || (FALLBACK[i.type] ?? 'Saved item');
 const ICON: Partial<Record<TargetType, IconName>> = { activity: 'calendar', place: 'pin', community: 'users', irl_post: 'camera', profile: 'user', catalog: 'sparkles', community_post: 'message' };
 
 /** Resolve titles in one query per type (saves only keep the canonical id). */
@@ -36,14 +50,14 @@ async function titlesFor(items: SavedItem[]): Promise<Record<string, string>> {
   const [acts, places, comms, posts, people, cposts] = await Promise.all([
     ids('activity').length ? supabase.from('activities').select('id, title').in('id', ids('activity')) : null,
     ids('place').length ? supabase.from('places').select('slug, name').in('slug', ids('place')) : null,
-    ids('community').length ? supabase.from('communities').select('id, name').in('id', ids('community')) : null,
+    ids('community').length ? supabase.from('communities').select('id, name, topic, category_id, city_id').in('id', ids('community')) : null,
     ids('irl_post').length ? supabase.from('irl_posts').select('id, body').in('id', ids('irl_post')) : null,
     ids('profile').length ? supabase.from('profiles_public').select('id, first_name').in('id', ids('profile')) : null,
     ids('community_post').length ? supabase.from('community_posts').select('id, body, community_id').in('id', ids('community_post')) : null,
   ]);
   acts?.data?.forEach((r) => (out[`activity:${r.id}`] = r.title));
   places?.data?.forEach((r) => (out[`place:${r.slug}`] = r.name));
-  comms?.data?.forEach((r) => (out[`community:${r.id}`] = r.name));
+  comms?.data?.forEach((r) => (out[`community:${r.id}`] = displayCommunityName(r)));
   posts?.data?.forEach((r) => (out[`irl_post:${r.id}`] = r.body));
   people?.data?.forEach((r) => (out[`profile:${r.id}`] = r.first_name));
   cposts?.data?.forEach((r) => {
@@ -119,11 +133,11 @@ export default function SavedScreen() {
             ) : (
               shown.map((i, idx) => (
                 <Animated.View key={`${i.type}-${i.id}`} entering={enter.rise(Math.min(idx, 8))}>
-                  <PressableScale onPress={() => open(i)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={titles[`${i.type}:${i.id}`] ?? 'Saved item'}>
+                  <PressableScale onPress={() => open(i)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={titleOf(titles, i)}>
                     <GlassLayer radius={radius.lg} />
                     <Icon name={ICON[i.type] ?? 'bookmark'} size={20} color={t.c.text} />
                     <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
-                      {titles[`${i.type}:${i.id}`] ?? i.id.replace(/-/g, ' ')}
+                      {titleOf(titles, i)}
                     </Text>
                     <PressableScale
                       onPress={() => {

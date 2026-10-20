@@ -86,6 +86,8 @@ export function findKeyOf(categoryId: string, subId?: string | null): FindKey {
     case 'creative':
       return 'culture';
     case 'learning':
+    case 'family':
+      // Classes, family days out, kids' activities: things to do locally.
       return 'local';
     default:
       return 'other';

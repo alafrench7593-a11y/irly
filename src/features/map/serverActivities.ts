@@ -3,6 +3,7 @@ import { useAccount } from '@/features/auth/account';
 import { useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
 import { offsetOf } from '@/lib/time';
+import { displayCommunityName } from '@/features/community/name';
 
 /**
  * Activities on the map: the server's, only those the member may see, only
@@ -23,6 +24,8 @@ export type MapActivity = {
   latitude: number;
   longitude: number;
   categoryId: string;
+  /** The community running it, when one does (the Communities map places it there). */
+  communityId: string | null;
   communityName: string | null;
   status: 'upcoming' | 'ongoing';
   going: number;
@@ -76,7 +79,8 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
               latitude: Number(r.lat),
               longitude: Number(r.lng),
               categoryId: r.category_id as string,
-              communityName: (r.community_name as string | null) ?? null,
+              communityId: (r.community_id as string | null) ?? null,
+              communityName: r.community_name ? displayCommunityName({ name: r.community_name as string }) : null,
               status: r.status === 'ongoing' ? 'ongoing' : 'upcoming',
               going: Number(r.going ?? 0),
               capacity: r.capacity == null ? null : Number(r.capacity),
