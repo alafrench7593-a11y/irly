@@ -247,16 +247,16 @@ export function QuickPlan({
         <Button label={tx('Create: {title}', { title: type.title(where) })} icon="plus" full loading={busy} onPress={create} />
       )}
       {/* The full form (name, description, photo, price, spots), the same as in IRLY Mixte; in IRLY Girl its plans are for women only. */}
-      <Button label={tx('More options: description, photo, price')} icon="sliders" variant="ghost" size="sm" haptic="select" disabled={busy} onPress={() => openFull(type)} />
+      <Button label={tx('More options: description, photo, price')} icon="sliders" variant="ghost" size="sm" haptic="select" disabled={busy} onPress={() => openFull(type, cityId)} />
     </View>
   );
 }
 
-/** Opens the full activity form, starting from this plan's category (and its catalog entry when there is one). */
-function openFull(type: PlanType) {
+/** Opens the full activity form in this plan's city, starting from its category (and its catalog entry when there is one). */
+function openFull(type: PlanType, cityId: CityId) {
   const categoryId = (type.category in CATEGORY_BY_ID ? type.category : 'food') as CategoryKey;
   const entry = searchCatalog(type.label.replace(/^(girls?|mom)\s+/i, ''), 3).find((e) => e.categoryId === categoryId);
-  openCreate(null, { categoryId, subId: entry?.sub.id, activityId: entry?.activity?.id, format: 'activity' });
+  openCreate(null, { categoryId, subId: entry?.sub.id, activityId: entry?.activity?.id, format: 'activity', cityId });
 }
 
 /** An IRLY Girl plan: a glass tile plum glass fills with a spring when it is chosen (the selection language of Girl), its icon popping. */

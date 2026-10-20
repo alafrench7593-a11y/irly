@@ -396,6 +396,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     if (!signedIn) {
       const shown = cover ?? libraryCover;
       postPlan({ ...plan, ...(shown ? { coverUri: shown } : {}) });
+      if (libraryCover && kind) rememberLibraryPhoto(kind, libraryCover);
       haptic('success');
       toast(tx('{title} saved on this phone. Sign in to share it', { title: finalTitle }), 'send', 'brand');
       hide();
@@ -771,7 +772,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   Photo
                 </Text>
                 {/* The final render: the photo as it will be published, with the activity's name on it. */}
-                <View style={styles.cover} accessibilityLabel={tx('Photo of the activity')}>
+                <View style={styles.cover} accessibilityLabel={tx('Photo of the activity')} testID="create-cover">
                   {previewUri ? <Image source={{ uri: previewUri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} /> : null}
                   <View style={styles.coverScrim} pointerEvents="none" />
                   <View style={styles.coverText} pointerEvents="none">
@@ -805,7 +806,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 <View style={styles.photoRow}>
                   <PhotoOption icon="image" label={tx('IRLY library')} hint={tx('{n} photos', { n: library.length })} disabled={publishing || !library.length} onPress={() => setLibraryOpen(true)} />
                   <PhotoOption icon="camera" label={tx('My photos')} hint={tx('From your phone')} disabled={publishing} onPress={pickOwn} />
-                  <PhotoOption icon="sparkles" label={tx('Surprise me')} hint={tx('Another one at random')} disabled={publishing || library.length < 2} onPress={surpriseMe} />
+                  <PhotoOption icon="sparkles" label={tx('Surprise me')} hint={tx('At random')} disabled={publishing || library.length < 2} onPress={surpriseMe} />
                 </View>
                 <PhotoLibrarySheet
                   visible={libraryOpen}
@@ -925,7 +926,7 @@ const styles = StyleSheet.create({
   address: { height: 48, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
   cover: { height: 200, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: 'rgba(127,127,127,0.18)' },
   coverScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.28)' },
-  coverText: { position: 'absolute', left: 14, right: 14, bottom: 46, gap: 2 },
+  coverText: { position: 'absolute', left: 14, right: 14, bottom: 52, gap: 2 },
   photoRow: { flexDirection: 'row', gap: 8 },
   photoOption: { flex: 1, minHeight: 84, borderRadius: radius.lg, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 6, paddingVertical: 10 },
   coverRemove: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },

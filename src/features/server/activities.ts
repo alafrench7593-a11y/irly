@@ -729,14 +729,18 @@ export function useRecommendations(cityId: string): Recommendation[] {
   const version = useSyncVersion('activities');
   const account = useAccount();
   const uid = account?.userId;
-  // The ranking does not say which sessions are IRLY Girl ones: in IRLY Girl, the lists above it are the picks.
+  // In the IRLY Girl space: women-only plans only (recommend_activities_girl, checked by the server).
   const girlSpace = useAppSpace() === 'girl';
   const [list, setList] = useState<Recommendation[]>([]);
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    supabase.rpc('recommend_activities', { p_city: cityId, p_limit: 12 }).then(({ data, error }) => {
-      if (error) return;
+    supabase.rpc(girlSpace ? 'recommend_activities_girl' : 'recommend_activities', { p_city: cityId, p_limit: 12 }).then(({ data, error }) => {
+      // Refused or not on this server yet: nothing rather than the other space's picks.
+      if (error) {
+        if (alive) setList([]);
+        return;
+      }
       if (!alive) return;
       setList(
         ((data as Record<string, string | number>[]) ?? []).map((r) => ({
@@ -756,10 +760,10 @@ export function useRecommendations(cityId: string): Recommendation[] {
     return () => {
       alive = false;
     };
-  }, [cityId, uid, version]);
+  }, [cityId, uid, version, girlSpace]);
   const { keep } = useCityFilter(cityId as CityId);
   const shown = useMemo(() => list.filter((r) => keep(r.cityId)), [list, keep]);
-  return uid && !girlSpace ? shown : NONE;
+  return uid ? shown : NONE;
 }
 
 /**
