@@ -14,6 +14,7 @@ import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
 import { CommunityThumb } from '@/features/community/CommunityThumb';
+import { displayCommunityName } from '@/features/community/name';
 import { joinCommunity, leaveCommunity, useCommunityList, type CommunitySummary } from '@/features/community/data';
 import { profileTags, TOPIC_GROUPS, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
 import { useMemberProfile, type MemberCommunity } from '@/features/profile/member';
@@ -262,7 +263,7 @@ function Mine({ list, loading, error, onReload, onBrowse }: { list: MemberCommun
  */
 function Row({
   id,
-  name,
+  name: stored,
   topic,
   categoryId,
   emoji,
@@ -284,6 +285,8 @@ function Row({
   const t = useTheme();
   const router = useRouter();
   const city = CITIES[useCityId()];
+  // Never an id or a test code as the title, whichever list the row comes from.
+  const name = displayCommunityName({ name: stored, topic, categoryId, cityId: city.id });
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const join = () => {

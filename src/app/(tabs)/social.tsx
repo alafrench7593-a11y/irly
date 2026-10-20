@@ -35,7 +35,7 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Ambient } from '@/components/visual/Ambient';
 import { useAppSpace } from '@/state/appSpace';
-import { GirlPlans, useGirlPeople } from '@/features/girl/GirlSections';
+import { GirlPlanRows, useGirlPeople, useGirlPlans } from '@/features/girl/GirlSections';
 
 const INTENT_ORDER: Intent[] = ['similar', 'friends', 'sports', 'business', 'activities', 'explore'];
 
@@ -62,6 +62,7 @@ export default function Social() {
   // IRLY Girl: the same page with women and girls' plans (IRLY Girl rows only reach eligible women).
   const inGirl = useAppSpace() === 'girl';
   const women = useGirlPeople(cityId);
+  const girlPlans = useGirlPlans(cityId, { girlOnly: true });
   const people = useMemo(() => (inGirl ? women : content.people), [inGirl, women, content.people]);
   const matches = useMemo(
     () => rankMatches(profile, people, intent, (id) => areaName(city, id)).slice(0, 6),
@@ -121,19 +122,17 @@ export default function Social() {
               <MyPlanCard plan={p} />
             </Animated.View>
           ))}
-          {inGirl
-            ? null
-            : content.feed.map((plan, i) => (
-                <Animated.View key={plan.id} entering={enter.rise(i + 2)} layout={LinearTransition.springify(420)}>
-                  <PlanCard plan={plan} />
-                </Animated.View>
-              ))}
+          {/* IRLY Girl: the girls' plans in the same list (IRLY's open plans are not hers to list here). */}
+          {inGirl ? (
+            <GirlPlanRows plans={girlPlans} />
+          ) : (
+            content.feed.map((plan, i) => (
+              <Animated.View key={plan.id} entering={enter.rise(i + 2)} layout={LinearTransition.springify(420)}>
+                <PlanCard plan={plan} />
+              </Animated.View>
+            ))
+          )}
         </View>
-        {inGirl ? (
-          <View style={{ marginTop: space[4] }}>
-            <GirlPlans cityId={cityId} onPlan={() => setComposer(true)} />
-          </View>
-        ) : null}
       </Animated.ScrollView>
 
       <View style={[styles.fab, { bottom: bottom - 12 }]}>

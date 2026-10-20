@@ -4,12 +4,13 @@ import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
-import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, echoGate, syncNow, useRefreshOn, useSyncVersion } from '@/features/server/sync';
 import { askPushInContext } from '@/features/push/push';
 import { toast } from '@/components/ui/Toast';
 import { realtimeIdsFilter } from '@/features/server/engage';
 import { useAppSpace } from '@/state/appSpace';
+import { displayCommunityName } from './name';
 
 /** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
 export const communitiesChanged = () => changed('communities', 'inbox');
@@ -138,7 +139,8 @@ export function useCommunity(id: string) {
     if (!r) return null;
     return {
       id: r.id as string,
-      name: r.name as string,
+      // Never an id or a test code as its title (name.ts).
+      name: displayCommunityName({ name: r.name as string | null, topic: (cover?.topic as string | null) ?? null, category_id: r.category_id as string | null, city_id: r.city_id as string | null }),
       tagline: (r.tagline as string) ?? null,
       description: (r.description as string) ?? null,
       categoryId: (r.category_id as string) ?? null,
@@ -325,7 +327,7 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       if (e) {
         // Back to the server's truth (a snapshot would drop posts that arrived meanwhile).
         refresh();
-        throw new Error(/row-level|policy/i.test(e.message) ? 'Join the community to vote' : e.message);
+        throw new Error(/row-level|policy/i.test(e.message) ? 'Join the community to vote' : friendlyError(e.message));
       }
     },
     [uid, refresh],
@@ -353,7 +355,7 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       if (e || !data) {
         setPosts((p) => p.filter((x) => x.id !== temp.id));
         const msg = e?.message ?? 'Could not post';
-        throw new Error(/row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down/i.test(msg) ? 'Slow down a little' : msg);
+        throw new Error(/row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down/i.test(msg) ? 'Slow down a little' : friendlyError(msg));
       }
       const id = (data as { id: string }).id;
       sent.current.set(temp.id, id);
@@ -399,7 +401,7 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       const { data: gone, error: e } = await sb().from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', p.id).select('id');
       if (e || !gone?.length) {
         refresh();
-        throw new Error(e ? e.message : 'This post can no longer be removed');
+        throw new Error(e ? friendlyError(e.message) : 'This post can no longer be removed');
       }
     },
     [refresh],
@@ -424,7 +426,7 @@ export function useCommunityList(cityId: string) {
       setList(
         ((data as Row[]) ?? []).map((r) => ({
           id: r.id as string,
-          name: r.name as string,
+          name: displayCommunityName(r as { name: string | null; topic: string | null; category_id: string | null; city_id: string | null }),
           tagline: (r.tagline as string) ?? null,
           categoryId: (r.category_id as string) ?? null,
           girlOnly: Boolean(r.girl_only),
@@ -503,7 +505,7 @@ export function useCommunityActivities(communityId: string, past = false) {
         areaId: a.area_id as string,
         going: Number(a.going ?? 0),
         status: a.status as ActivityStatus,
-        groupName: a.community_id !== communityId ? ((a.community_name as string | null) ?? null) : null,
+        groupName: a.community_id !== communityId && a.community_name ? displayCommunityName({ name: a.community_name as string }) : null,
         pinnedAt: a.pinned_at ? Date.parse(a.pinned_at as string) : null,
         onMap: Boolean(a.has_location),
       }));
@@ -573,7 +575,7 @@ export async function pinActivity(communityId: string, activityId: string, pin: 
 export async function joinCommunity(id: string): Promise<string> {
   const data = await withProfile(async () => {
     const { data: conv, error } = await sb().rpc('join_community', { p_community: id });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error(friendlyError(error.message));
     return conv;
   });
   track('COMMUNITY_JOIN', {});
@@ -584,7 +586,7 @@ export async function joinCommunity(id: string): Promise<string> {
 
 export async function leaveCommunity(id: string): Promise<void> {
   const { error } = await sb().rpc('leave_community', { p_community: id });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
   communitiesChanged();
 }
 
@@ -594,14 +596,16 @@ export async function updateCommunity(id: string, patch: { name?: string; taglin
   if (patch.name !== undefined) row.name = patch.name.trim();
   if (patch.tagline !== undefined) row.tagline = patch.tagline;
   if (patch.description !== undefined) row.description = patch.description;
-  const { error } = await sb().from('communities').update(row).eq('id', id);
-  if (error) throw new Error(error.message);
+  // .select: row level security can match no row without any error (not a host any more), and that is not saved.
+  const { data, error } = await sb().from('communities').update(row).eq('id', id).select('id');
+  if (error) throw new Error(friendlyError(error.message));
+  if (!data?.length) throw new Error('Only the community’s hosts can edit it');
   communitiesChanged();
 }
 
 /** The owner deletes the community: out of every list, search and inbox. */
 export async function deleteCommunity(id: string): Promise<void> {
   const { error } = await sb().rpc('delete_community', { p_community: id });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
   communitiesChanged();
 }

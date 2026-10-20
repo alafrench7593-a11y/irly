@@ -110,7 +110,7 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
   const inGirl = useAppSpace() === 'girl';
   const women = useGirlPeople(cityId);
   const people = inGirl ? women : content.people;
-  const matches = useMemo(() => rankMatches(profile, people, 'friends', (id) => areaName(city, id)).slice(0, 8), [profile, people, city]);
+  const matches = useMemo(() => rankMatches(profile, inGirl ? women : content.people, 'friends', (id) => areaName(city, id)).slice(0, 8), [profile, inGirl, women, content.people, city]);
   const tileW = (frame.width - space.gutter * 2 - 10) / 2;
   // Match IRLY, or IRLY Match in IRLY Girl (each says « coming soon » itself while closed).
   const matchOpen = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;

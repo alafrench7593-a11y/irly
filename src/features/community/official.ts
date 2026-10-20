@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { CATEGORY_BY_ID, photoForText, type CategoryKey } from '@/data/catalog/categories';
 import type { PhotoKey } from '@/data/photos';
 import type { Profile } from '@/state/store';
+import { displayCommunityName } from './name';
 
 /**
  * IRLY Community: the official communities IRLY runs in each city (IRLY Gym,
@@ -49,7 +50,7 @@ export function profileTags(p: Profile): string[] {
 const toCommunity = (r: Row): OfficialCommunity => ({
   id: r.id as string,
   topic: r.topic as string,
-  name: r.name as string,
+  name: displayCommunityName(r as { name: string | null; topic: string | null; city_id: string | null }),
   tagline: (r.tagline as string) ?? '',
   emoji: (r.emoji as string) ?? '',
   girlOnly: Boolean(r.girl_only),

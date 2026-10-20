@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
 import { EventCard } from '@/components/cards/EventCards';
-import { ActivityTile, Carousel, CategoryCard, fromEvent, fromSession, HighlightCard, IdeaCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
+import { ActivityTile, Carousel, fromEvent, fromSession, HighlightCard, IdeaCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
 import { CommunityCard, PlaceCard } from '@/components/cards/ThingCards';
 import { useFrame } from '@/components/layout/AppFrame';
 import { HomeHeader } from '@/components/navigation/Headers';
@@ -33,6 +33,7 @@ import { HomeHero } from '@/features/home/HomeHero';
 import { HomeBackdrop } from '@/features/home/HomeBackdrop';
 import { GirlPortals } from '@/features/home/Portals';
 import { ExploreDoors } from '@/features/home/Explore';
+import { FindSomethingToDo } from '@/features/home/FindSomethingToDo';
 import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
 import { LiveStrip } from '@/features/live/LiveStrip';
 import { useLives } from '@/features/live/liveStore';
@@ -149,9 +150,8 @@ export default function Home() {
       return { category, items, ideas };
     });
   }, [happenings, moment]);
-  // Three rails for this moment, then every other category as a door.
+  // Three rails for this moment (every category stays one tap away in « Find something to do »).
   const forYou = sections.slice(0, 3);
-  const doors = sections.slice(3);
   const doorW = (frame.width - space.gutter * 2 - 12) / 2;
 
   // The grid of plans near you, filtered by the category chips.
@@ -392,27 +392,12 @@ export default function Home() {
           </ScrollReveal>
         ));
       case 'find':
-        return doors.length ? (
+        // The activities of the destination, filtered by what you feel like (girls' plans only in IRLY Girl).
+        return (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader overline="Everything to do" title="Find something to do" />
-            <View style={styles.doors}>
-              {doors.map((sec) => (
-                <CategoryCard
-                  key={sec.category.id}
-                  label={sec.category.label}
-                  tagline={sec.category.tagline}
-                  icon={sec.category.icon}
-                  color={sec.category.color}
-                  photo={sec.category.photo}
-                  count={sec.items.length || undefined}
-                  width={doorW}
-                  height={196}
-                  onPress={() => router.push(`/category/${sec.category.id}` as never)}
-                />
-              ))}
-            </View>
+            <FindSomethingToDo cityId={cityId} />
           </ScrollReveal>
-        ) : null;
+        );
       case 'footer':
         return (
           <PressableScale haptic="select" scaleTo={0.98} onPress={() => setSheet(true)} style={styles.footer}>
@@ -469,7 +454,6 @@ const styles = StyleSheet.create({
   rows: { paddingHorizontal: space.gutter, gap: 10 },
   mine: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },
   mineIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  doors: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: space.gutter },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: space.gutter },
   chips: { paddingHorizontal: space.gutter, gap: 8, paddingBottom: 12 },
   searchWrap: { marginHorizontal: space.gutter, marginBottom: space[5] },
