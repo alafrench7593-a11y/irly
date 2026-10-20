@@ -639,7 +639,7 @@ export async function addFriend(userId: string): Promise<string> {
 export async function removeFriend(userId: string): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.rpc('remove_friend', { p_user: userId });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
   changed('friends', 'notifs');
 }
 
@@ -707,12 +707,15 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     }));
   }, [uid]);
   const version = useNotifVersion((s) => s.n) + useSyncVersion('notifs');
+  // Reads can cross (a sync bump while the first read is on its way): only the newest one started lands.
+  const seq = useRef(0);
   useEffect(() => {
     if (!version) return;
     let alive = true;
+    const n0 = ++seq.current;
     load().then(
       (n) => {
-        if (!alive) return;
+        if (!alive || n0 !== seq.current) return;
         setItems(n);
         setStatus('ok');
       },
@@ -725,13 +728,14 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
+    const n0 = ++seq.current;
     load().then(
       (n) => {
-        if (!alive) return;
+        if (!alive || n0 !== seq.current) return;
         setItems(n);
         setStatus('ok');
       },
-      () => alive && setStatus((s) => (s === 'ok' ? s : 'failed')),
+      () => alive && n0 === seq.current && setStatus((s) => (s === 'ok' ? s : 'failed')),
     );
     // New ones, and ones read elsewhere (another phone, a chat opened), arrive
     // through the app's sync channel ('notifs'): one reload per change, not two.

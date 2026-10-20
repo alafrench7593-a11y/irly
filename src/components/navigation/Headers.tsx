@@ -1,6 +1,6 @@
 import { DEMO } from '@/config/app';
 import { useServerUnread } from '@/features/server/chat';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { useServerBell } from '@/features/server/social';
@@ -11,11 +11,12 @@ import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedStyle,
+  useReducedMotion,
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/ui/Glass';
-import { Icon } from '@/components/ui/Icon';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { IconButton } from '@/components/ui/Controls';
 import { CITIES, DESTINATIONS } from '@/data/destinations';
@@ -104,7 +105,7 @@ type HomeHeaderProps = {
 };
 
 /**
- * Home header: Communities on the left, Messages and notifications on the right.
+ * Home header: Communities on the left; Network, Messages and notifications on the right.
  * IRL lives in the centre of the tab bar. It sits
  * on the page and turns into glass as content scrolls under it.
  */
@@ -166,11 +167,6 @@ function CommunitiesButton() {
   );
 }
 
-/**
- * Messages and notifications: the two doors every tab root keeps at the
- * top right. Messages holds private chats, group chats and the dedicated
- * community area.
- */
 /** New notifications for the bell. Signed in: real notifications (the demo build shows its examples). */
 export function useBell(): number {
   const account = useAccount();
@@ -179,15 +175,75 @@ export function useBell(): number {
   return account ? serverBell : DEMO && auth === 'out' ? 2 : 0;
 }
 
+/** On the Network section (/network or any page under it). */
+function onNetwork(pathname: string): boolean {
+  return pathname === '/network' || pathname.startsWith('/network/');
+}
+
+type HeaderActionProps = { icon: IconName; label: string; onPress: () => void; badge?: number; active?: boolean };
+
+/**
+ * One round door of the header group: a pane of thin glass with its light
+ * edge (the Communities pill's glass), the icon in ink. Active: the pane
+ * fills with ink (IRLY Girl: with her brand) and the icon turns to the page
+ * colour, so you see where you are at a glance. Sinks under the finger,
+ * stays still when the system asks to reduce motion.
+ */
+const HeaderAction = memo(function HeaderAction({ icon, label, onPress, badge, active }: HeaderActionProps) {
+  const t = useTheme();
+  const reduced = useReducedMotion();
+  const girl = t.flavor === 'girl';
+  const fill = girl ? t.c.brand : t.c.text;
+  const onFill = girl ? t.c.onBrand : t.c.bg;
+  return (
+    <PressableScale
+      onPress={onPress}
+      haptic="select"
+      scaleTo={reduced ? 1 : 0.9}
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={active ? { selected: true } : undefined}
+    >
+      <View style={[styles.action, active ? { backgroundColor: fill, borderColor: fill } : null]}>
+        {active ? null : <GlassLayer radius={20} level="thin" />}
+        <Icon name={icon} size={18} color={active ? onFill : t.c.text} strokeWidth={active ? 2.2 : 1.9} />
+      </View>
+      {badge ? (
+        <View style={[styles.centered, styles.badge, { backgroundColor: t.c.live, borderColor: t.c.bg }]}>
+          <Text variant="caption" color="#FFFFFF" style={{ fontSize: 10, lineHeight: 12 }}>
+            {badge > 9 ? '9+' : badge}
+          </Text>
+        </View>
+      ) : null}
+    </PressableScale>
+  );
+});
+
+/**
+ * The doors every tab root keeps at the top right, in both spaces:
+ * Network (the professional side of IRLY, lit while you are in it),
+ * Messages (private chats, group chats, the community area) and the bell.
+ * The assistant is reached from Settings.
+ */
 export function InboxButtons({ gap = 8 }: { gap?: number }) {
   const router = useRouter();
+  const pathname = usePathname();
   const unread = useUnread();
   const bell = useBell();
+  const network = onNetwork(pathname);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap }}>
-      <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />
-      <IconButton icon="message" label={unread ? tx('Messages, {n} unread', { n: unread }) : tx('Messages')} badge={unread} onPress={() => router.push('/messages')} />
-      <IconButton icon="bell" label={bell ? tx('Notifications, {n} new', { n: bell }) : tx('Notifications')} badge={bell} onPress={() => router.push('/notifications')} />
+      <HeaderAction
+        icon="network"
+        label={network ? tx('Network, current section') : tx('Network')}
+        active={network}
+        onPress={() => {
+          if (pathname !== '/network') router.push('/network');
+        }}
+      />
+      <HeaderAction icon="message" label={unread ? tx('Messages, {n} unread', { n: unread }) : tx('Messages')} badge={unread} onPress={() => router.push('/messages')} />
+      <HeaderAction icon="bell" label={bell ? tx('Notifications, {n} new', { n: bell }) : tx('Notifications')} badge={bell} onPress={() => router.push('/notifications')} />
     </View>
   );
 }
@@ -267,8 +323,7 @@ const styles = StyleSheet.create({
   },
   pillShell: { borderRadius: radius.pill },
   round: { borderRadius: radius.pill },
-  headerButton: { width: 40, height: 40, borderRadius: 20 },
-  headerButtonBg: { borderRadius: 20, borderWidth: StyleSheet.hairlineWidth * 2 },
+  action: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'transparent' },
   centered: { alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',

@@ -6,7 +6,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
-import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, echoGate, syncNow, useRefreshOn, willReload } from './sync';
 
 /**
@@ -59,16 +59,23 @@ function debounced(fn: () => void, ms: number): { call: () => void; cancel: () =
 
 /** Canonical deep link for anything shareable. */
 export function deepLink(t: Target): string {
+  // A link opens the thing itself: never a search for its id.
   const path =
     t.type === 'activity'
       ? `a/${t.id}`
       : t.type === 'community'
-        ? `communities`
+        ? `c/${t.id}`
         : t.type === 'profile'
           ? `person/${t.id}`
           : t.type === 'irl_post'
             ? `live?post=${t.id}`
-            : `search?q=${encodeURIComponent(t.title ?? t.id)}`;
+            : t.type === 'community_post'
+              ? `comments?type=community_post&id=${encodeURIComponent(t.id)}`
+              : t.type === 'place'
+                ? `place/${encodeURIComponent(t.id)}`
+                : t.title
+                  ? `search?q=${encodeURIComponent(t.title)}`
+                  : '';
   // On the web, the address people can actually open; in the app, the public link.
   if (Platform.OS === 'web' && typeof window !== 'undefined') return `${window.location.origin}${process.env.EXPO_BASE_URL ?? ''}/${path}`;
   return webLink(`/${path}`);
@@ -171,7 +178,10 @@ export function useEngagement(type: TargetType, ids: string[]) {
       patch(id, { liked: !cur.liked, likes: Math.max(0, cur.likes + (cur.liked ? -1 : 1)) });
       try {
         const liked = await toggleLike({ type, id });
-        patch(id, { liked });
+        // The count follows what the server did, not what was guessed: liked on
+        // another phone meanwhile, the toggle unliked; the true numbers are read again.
+        patch(id, { liked, likes: Math.max(0, cur.likes + (liked === cur.liked ? 0 : liked ? 1 : -1)) });
+        if (liked === cur.liked) fetchMap().then(setMap, () => undefined);
         if (liked) track(type === 'irl_post' ? 'IRL_LIKE' : type === 'activity' ? 'EVENT_LIKE' : 'LIKE', { type });
       } catch (e) {
         patch(id, { liked: cur.liked, likes: cur.likes });
@@ -213,13 +223,13 @@ function need() {
 
 export async function toggleLike(t: Target): Promise<boolean> {
   const { data, error } = await need().rpc('toggle_like', { p_type: t.type, p_id: t.id });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
   return Boolean(data);
 }
 
 export async function toggleSave(t: Target): Promise<boolean> {
   const { data, error } = await need().rpc('toggle_save', { p_type: t.type, p_id: t.id });
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
   changed('saved');
   return Boolean(data);
 }
@@ -444,7 +454,7 @@ export function useComments(t: Target) {
         .single();
       if (error || !data) {
         setList((l) => l.filter((c) => c.id !== temp.id));
-        throw new Error(error?.message.includes('slow down') ? 'Slow down a little' : (error?.message ?? 'Could not post'));
+        throw new Error(error?.message.includes('slow down') ? 'Slow down a little' : friendlyError(error?.message ?? 'Could not post'));
       }
       // The real row replaces the pending one, even if the refresh below fails.
       setList((l) => l.map((c) => (c.id === temp.id ? { ...c, id: data.id as string, createdAt: Date.parse(data.created_at as string) } : c)));
@@ -458,10 +468,11 @@ export function useComments(t: Target) {
     async (id: string) => {
       if (!supabase || id.startsWith('tmp-')) return;
       setList((l) => l.map((c) => (c.id === id ? { ...c, deleted: true, body: '' } : c)));
-      const { error } = await supabase.from('comments').update({ deleted_at: new Date().toISOString() }).eq('id', id);
-      if (error) {
+      const { data: gone, error } = await supabase.from('comments').update({ deleted_at: new Date().toISOString() }).eq('id', id).select('id');
+      // Nothing changed (not yours, or already gone): the thread shows what the server has.
+      if (error || !gone?.length) {
         refresh();
-        throw new Error(error.message);
+        throw new Error(error ? friendlyError(error.message) : 'This comment can no longer be removed');
       }
     },
     [refresh],

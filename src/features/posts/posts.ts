@@ -6,7 +6,7 @@ import { storageName } from '@/config/app';
 import { pickLiveMedia, uploadLiveFile } from '@/features/live/liveMedia';
 import { changed } from '@/features/server/sync';
 import { cleanImage } from '@/lib/media';
-import { supabase } from '@/lib/supabase';
+import { friendlyError, supabase } from '@/lib/supabase';
 
 /**
  * Publications: a text, photos (up to 10) or a video, posted on the
@@ -86,7 +86,7 @@ async function store(uid: string, media: DraftMedia | null, onProgress?: (p: num
 }
 
 const friendly = (msg: string) =>
-  /row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down|rate/i.test(msg) ? 'Slow down a little' : /author''s own files|own files/i.test(msg) ? 'This file cannot be used' : msg;
+  /row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down|rate/i.test(msg) ? 'Slow down a little' : /author''s own files|own files/i.test(msg) ? 'This file cannot be used' : friendlyError(msg);
 
 /** Publishes a post (profile when no community). Files already sent are removed if the post is refused. */
 export async function createPost(input: { communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; onProgress?: (p: number) => void }): Promise<string> {
@@ -131,7 +131,7 @@ export async function updatePost(id: string, input: { body: string; media: Draft
 export async function removePost(id: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data: gone, error } = await supabase.from('community_posts').update({ deleted_at: new Date().toISOString() }).eq('id', id).select('id');
-  if (error) throw new Error(error.message);
+  if (error) throw new Error(friendlyError(error.message));
   if (!gone?.length) throw new Error('This post can no longer be removed');
   changed('communities');
 }

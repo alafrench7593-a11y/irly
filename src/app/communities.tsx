@@ -10,12 +10,17 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { ScopeToggle } from '@/components/ui/ScopeToggle';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
+import { DEMO } from '@/config/app';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
+import { CommunityMap } from '@/features/community/CommunityMap';
 import { CommunityThumb } from '@/features/community/CommunityThumb';
+import type { MapCommunity } from '@/features/community/mapSpots';
+import { displayCommunityName } from '@/features/community/name';
 import { joinCommunity, leaveCommunity, useCommunityList, type CommunitySummary } from '@/features/community/data';
 import { profileTags, TOPIC_GROUPS, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
+import { isDemoId, useDemoCommunitiesLike, useDemoGirl } from '@/features/girl/demo';
 import { useMemberProfile, type MemberCommunity } from '@/features/profile/member';
 import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
@@ -74,20 +79,84 @@ function Communities() {
   const router = useRouter();
   const uid = useAccount()?.userId;
   const params = useLocalSearchParams<{ tab?: Tab }>();
-  const [tab, setTab] = useState<Tab>(params.tab === 'all' || params.tab === 'mine' ? params.tab : 'foryou');
-  const all = useCommunityList(cityId);
+  const inGirl = useAppSpace() === 'girl';
+  // The demo build has no server: in IRLY Girl it shows the demo's example communities (as its Girl home does).
+  const demoGirl = DEMO && inGirl;
+  const signedIn = Boolean(uid) || demoGirl;
+  const [tab, setTab] = useState<Tab>(params.tab === 'all' || params.tab === 'mine' ? params.tab : demoGirl ? 'all' : 'foryou');
+  const serverAll = useCommunityList(cityId);
+  const demo = useDemoCommunitiesLike(cityId, '');
+  const demoAll = useMemo<CommunitySummary[]>(
+    () =>
+      demoGirl
+        ? demo.data.map((c) => ({ id: c.id, name: c.name, tagline: c.tagline, categoryId: null, girlOnly: true, members: c.members, isMember: c.member, postsWeek: 0, cityId: c.cityId, official: false, topic: null, emoji: null, createdAt: null }))
+        : [],
+    [demo.data, demoGirl],
+  );
+  const all = demoGirl ? demoAll : serverAll;
   const profile = useStore((s) => s.profile);
   const tags = useMemo(() => profileTags(profile), [profile]);
   const recAll = useRecommendedCommunities(cityId, tags, 12);
   // In IRLY Girl, the recommendations are IRLY Girl communities too (the « All » list already is).
-  const inGirl = useAppSpace() === 'girl';
   const rec = useMemo(() => (inGirl && recAll.list ? { ...recAll, list: recAll.list.filter((c) => c.girlOnly) } : recAll), [recAll, inGirl]);
-  const mine = useMemberProfile(uid ?? '');
-  const mineCount = uid ? mine.communities.length : 0;
+  const memberProfile = useMemberProfile(uid ?? '');
+  const mine = useMemo(
+    () =>
+      demoGirl
+        ? {
+            communities: demoAll.filter((c) => c.isMember).map((c): MemberCommunity => ({ id: c.id, name: c.name, cityId: c.cityId ?? cityId, cover: null, members: c.members, tagline: c.tagline, role: 'joined' })),
+            loading: false,
+            error: null as string | null,
+            reload: (): void => undefined,
+          }
+        : memberProfile,
+    [demoGirl, demoAll, memberProfile, cityId],
+  );
+  const mineCount = signedIn ? mine.communities.length : 0;
+
+  // Search and theme live here so the map shows exactly what the list below shows.
+  const [query, setQuery] = useState('');
+  const [group, setGroup] = useState<Group>('all');
+  const shown = useMemo(() => {
+    const q = norm(query.trim());
+    return all.filter((c) => inGroup(c, group) && (!q || norm(`${c.name} ${c.tagline ?? ''} ${c.topic ?? ''} ${c.categoryId ?? ''}`).includes(q)));
+  }, [all, group, query]);
+
+  const mapList = useMemo<MapCommunity[]>(() => {
+    if (tab === 'all') return shown;
+    if (tab === 'mine') return mine.communities.map((c) => ({ id: c.id, name: c.name, topic: null, categoryId: null, cityId: c.cityId, emoji: null, members: c.members, isMember: true }));
+    return (rec.list ?? []).map((c) => ({ id: c.id, name: c.name, topic: c.topic, categoryId: null, cityId: c.cityId, emoji: c.emoji, members: c.members, isMember: c.isMember }));
+  }, [tab, shown, mine.communities, rec.list]);
+  const mapStatus = !signedIn
+    ? 'signedOut'
+    : tab === 'foryou'
+      ? rec.loading
+        ? 'loading'
+        : rec.error && !rec.list?.length
+          ? 'error'
+          : 'ready'
+      : tab === 'mine'
+        ? mine.loading
+          ? 'loading'
+          : mine.error && !mine.communities.length
+            ? 'error'
+            : 'ready'
+        : 'ready';
+  const mapEmpty =
+    tab === 'all'
+      ? all.length
+        ? tx('No community matches these filters')
+        : tx('No community here yet')
+      : tab === 'mine'
+        ? tx('You have not joined a community yet')
+        : tx('No recommendation yet');
 
   return (
     <Page overline={city.name} title="Communities" subtitle="IRLY's communities and the ones members start. Meet the same faces again: that's how trust grows.">
-      {!uid ? (
+      <View style={[styles.pad, { marginBottom: space[5] }]}>
+        <CommunityMap cityId={cityId} communities={mapList} status={mapStatus} onRetry={tab === 'mine' ? mine.reload : rec.refresh} emptyText={mapEmpty} />
+      </View>
+      {!signedIn ? (
         <View style={styles.pad}>
           <Empty icon="users" title="Sign in to see the communities" body="Communities, their chats and their members are on the IRLY server." action="Sign in" onAction={() => router.push('/account')} />
         </View>
@@ -105,7 +174,7 @@ function Communities() {
             />
           </View>
           {tab === 'foryou' ? <ForYou rec={rec} cityId={cityId} onSeeAll={() => setTab('all')} /> : null}
-          {tab === 'all' ? <All list={all} cityId={cityId} /> : null}
+          {tab === 'all' ? <All list={all} shown={shown} cityId={cityId} query={query} onQuery={setQuery} group={group} onGroup={setGroup} /> : null}
           {tab === 'mine' ? <Mine list={mine.communities} loading={mine.loading} error={mine.error} onReload={mine.reload} onBrowse={() => setTab('all')} /> : null}
         </>
       )}
@@ -166,23 +235,33 @@ const meta = (c: OfficialCommunity, cityId: string) =>
     .filter(Boolean)
     .join(' · ');
 
-function All({ list, cityId }: { list: CommunitySummary[]; cityId: CityId }) {
+function All({
+  list,
+  shown,
+  cityId,
+  query,
+  onQuery,
+  group,
+  onGroup,
+}: {
+  list: CommunitySummary[];
+  shown: CommunitySummary[];
+  cityId: CityId;
+  query: string;
+  onQuery: (q: string) => void;
+  group: Group;
+  onGroup: (g: Group) => void;
+}) {
   const t = useTheme();
-  const [query, setQuery] = useState('');
-  const [group, setGroup] = useState<Group>('all');
-  const shown = useMemo(() => {
-    const q = norm(query.trim());
-    return list.filter((c) => inGroup(c, group) && (!q || norm(`${c.name} ${c.tagline ?? ''} ${c.topic ?? ''} ${c.categoryId ?? ''}`).includes(q)));
-  }, [list, group, query]);
   return (
     <View>
       <View style={[styles.pad, { marginBottom: space[3] }]}>
-        <Field icon="search" value={query} onChangeText={setQuery} placeholder="Search by name or theme" accessibilityLabel={tx('Search communities')} autoCorrect={false} returnKeyType="search" />
+        <Field icon="search" value={query} onChangeText={onQuery} placeholder="Search by name or theme" accessibilityLabel={tx('Search communities')} autoCorrect={false} returnKeyType="search" />
       </View>
       <View style={{ marginBottom: space[3] }}>
         <Rail gap={8}>
           {GROUPS.map((g) => (
-            <Chip key={g.id} size="sm" label={g.label} selected={group === g.id} onPress={() => setGroup(g.id)} />
+            <Chip key={g.id} size="sm" label={g.label} selected={group === g.id} onPress={() => onGroup(g.id)} />
           ))}
         </Rail>
       </View>
@@ -262,7 +341,7 @@ function Mine({ list, loading, error, onReload, onBrowse }: { list: MemberCommun
  */
 function Row({
   id,
-  name,
+  name: stored,
   topic,
   categoryId,
   emoji,
@@ -284,9 +363,16 @@ function Row({
   const t = useTheme();
   const router = useRouter();
   const city = CITIES[useCityId()];
+  // Never an id or a test code as the title, whichever list the row comes from.
+  const name = displayCommunityName({ name: stored, topic, categoryId, cityId: city.id });
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const join = () => {
+    if (isDemoId(id)) {
+      useDemoGirl.getState().toggle('joined', id);
+      toast(tx('You joined {name}', { name }));
+      return;
+    }
     setBusy(true);
     joinCommunity(id)
       .then(() => toast(tx('You joined {name}', { name })))
@@ -296,6 +382,12 @@ function Row({
   const leave = () => {
     if (!confirm) {
       setConfirm(true);
+      return;
+    }
+    if (isDemoId(id)) {
+      useDemoGirl.getState().toggle('joined', id);
+      setConfirm(false);
+      toast(tx('You left {name}', { name }));
       return;
     }
     setBusy(true);

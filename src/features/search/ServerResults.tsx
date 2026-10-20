@@ -19,6 +19,7 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
 import { useActivityThumbs } from '@/features/server/covers';
+import { displayCommunityName } from '@/features/community/name';
 
 export type SearchHit = { kind: 'activity' | 'community' | 'person' | 'place' | 'area' | 'city' | 'category'; id: string; title: string; subtitle: string | null; cityId: string | null; areaId: string | null; startsAt: number | null };
 
@@ -39,7 +40,8 @@ export async function searchServer(q: string, cityId: string | null, limit = 30,
   return ((data as Record<string, string | null>[]) ?? []).map((r) => ({
     kind: r.kind as SearchHit['kind'],
     id: r.id as string,
-    title: r.title as string,
+    // A community is never titled by an id or a test code (name.ts).
+    title: r.kind === 'community' ? displayCommunityName({ name: r.title, city_id: r.city_id }) : (r.title as string),
     subtitle: r.subtitle,
     cityId: r.city_id,
     areaId: r.area_id,

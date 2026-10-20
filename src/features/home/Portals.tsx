@@ -8,28 +8,46 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import type { PhotoKey } from '@/data/photos';
 import type { LightId } from '@/theme/lights';
+import { toast } from '@/components/ui/Toast';
 import { PressableScale } from '@/motion/PressableScale';
+import { setAppSpace, useAppSpace } from '@/state/appSpace';
 import { radius, space } from '@/theme/tokens';
 
-type Portal = { title: string; line: string; photo: PhotoKey; icon: IconName; route: string };
+type Portal = { title: string; line: string; overline: string; photo: PhotoKey; icon: IconName; route: string };
 
 const PORTALS: Portal[] = [
-  { title: 'IRLY Girl', line: 'Meet girls who get you.', photo: 'brunch', icon: 'sparkles', route: '/girl' },
-  { title: 'IRLY Moms', line: 'With kids or without.', photo: 'beachSunset', icon: 'heart', route: '/girl?mode=moms' },
+  { title: 'IRLY Girl', line: 'Meet girls who get you.', overline: 'Women only', photo: 'brunch', icon: 'sparkles', route: '/girl' },
+  { title: 'IRLY Moms', line: 'With kids or without.', overline: 'Women only', photo: 'beachSunset', icon: 'heart', route: '/girl?mode=moms' },
+];
+
+/** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Moms (Discover › People). */
+const GIRL_SPACE_PORTALS: Portal[] = [
+  { title: 'IRLY Mixte', line: 'The same app, for everyone.', overline: 'Switch space', photo: 'dubaiMarina', icon: 'globe', route: 'mixte' },
+  { title: 'IRLY Moms', line: 'With kids or without.', overline: 'Women only', photo: 'beachSunset', icon: 'heart', route: '/discover?tab=people&moms=1' },
 ];
 
 /**
- * Two doors into the women-only worlds, side by side on their photos.
- * Not dating: friends, plans, and moms finding moms.
+ * Two doors side by side on their photos. In IRLY: into the women-only
+ * worlds (not dating: friends, plans, and moms finding moms). In IRLY Girl,
+ * at the same place: the way back to IRLY, and IRLY Moms (`onMoms` lets a
+ * page open it in place).
  */
-export const GirlPortals = memo(function GirlPortals({ light }: { light: LightId }) {
+export const GirlPortals = memo(function GirlPortals({ light, onMoms }: { light: LightId; onMoms?: () => void }) {
   const router = useRouter();
   const frame = useFrame();
+  const inGirl = useAppSpace() === 'girl';
   const w = (frame.width - space.gutter * 2 - 12) / 2;
+  const open = (p: Portal) => {
+    if (p.route === 'mixte') {
+      setAppSpace('mixte');
+      toast('Back to IRLY', 'globe', 'brand');
+    } else if (inGirl && onMoms && p.title === 'IRLY Moms') onMoms();
+    else router.push(p.route as never);
+  };
   return (
     <View style={styles.row}>
-      {PORTALS.map((p) => (
-        <PressableScale key={p.title} haptic="select" scaleTo={0.97} onPress={() => router.push(p.route as never)} accessibilityLabel={`${p.title}. ${p.line}`}>
+      {(inGirl ? GIRL_SPACE_PORTALS : PORTALS).map((p) => (
+        <PressableScale key={p.title} haptic="select" scaleTo={0.97} onPress={() => open(p)} accessibilityLabel={`${p.title}. ${p.line}`}>
           <Photo visual={{ photo: p.photo }} light={light} scrim="strong" style={[styles.card, { width: w }]} width={600} recyclingKey={`portal-${p.title}`}>
             <View style={styles.top}>
               <Glass dark level="thin" style={styles.icon}>
@@ -38,7 +56,7 @@ export const GirlPortals = memo(function GirlPortals({ light }: { light: LightId
             </View>
             <View style={styles.bottom}>
               <Text variant="overline" color="rgba(255,255,255,0.75)">
-                Women only
+                {p.overline}
               </Text>
               <Text variant="titleL" tone="onDark" numberOfLines={1}>
                 {p.title}

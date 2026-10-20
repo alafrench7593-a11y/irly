@@ -39,7 +39,7 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Ambient } from '@/components/visual/Ambient';
 import { useAppSpace } from '@/state/appSpace';
-import { GirlActivitiesPage, GirlPeoplePage, useGirlPeople } from '@/features/girl/GirlSections';
+import { useGirlPeople } from '@/features/girl/GirlSections';
 
 const TABS = [
   { id: 'people', label: 'People' },
@@ -163,8 +163,25 @@ export default function Discover() {
     resultsY.set(e.contentOffset.y);
   });
 
-  // IRLY Girl: the same four pages; People and Activities show women, girls' plans and IRLY Girl communities.
-  const pages = inGirl ? [GirlPeoplePage, GirlActivitiesPage, PlacesPage, EventsPage] : [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
+  // IRLY Girl: the same four pages, section for section; People and Activities show women, girls' plans and IRLY Girl communities.
+  const pages = [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
+
+  // The tab stays mounted: a new /discover?tab=… (IRLY Moms from the Home) turns to that page.
+  const [seenTab, setSeenTab] = useState(params.tab);
+  if (params.tab !== seenTab) {
+    setSeenTab(params.tab);
+    const i = TABS.findIndex((tab) => tab.id === params.tab);
+    if (i >= 0) {
+      setMounted((m) => (m.has(i) ? m : new Set([...m, i])));
+      setActive(i);
+    }
+  }
+  useEffect(() => {
+    const i = TABS.findIndex((tab) => tab.id === seenTab);
+    if (i >= 0) pager.current?.scrollTo({ x: i * W, animated: false });
+    // Only a new link turns the page, never a resize.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seenTab]);
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>

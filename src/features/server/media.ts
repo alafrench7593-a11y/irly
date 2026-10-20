@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { isAvatar } from '@/features/avatar/avatar';
-import { faceThumb, imageBytes, imageType } from '@/lib/media';
+import { faceThumb, imageBytes, imageType, prepareImage } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -81,8 +80,34 @@ export function forgetLink(url: string | null | undefined): void {
   for (const [k, v] of cache) if (v.url === url) cache.delete(k);
 }
 
+/**
+ * The stored file a link stands for ("bucket/path"), used as the image's
+ * cache key on the phone: a signed link changes every few hours, the file's
+ * path never does, so a photo seen once is not downloaded again. Every upload
+ * gets a new path (time-stamped), so a changed photo is a new key. Undefined
+ * for anything that is not a storage link.
+ */
+export function storedKey(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  const m = url.split(/[?#]/)[0].match(/\/storage\/v1\/object\/(?:sign|public|authenticated)\/(.+)$/);
+  if (!m) return undefined;
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return m[1];
+  }
+}
+
 /** Where the small copy (256 px) of a profile photo lives, next to it. */
 export const thumbOf = (path: string) => path.replace(/(\.[a-z0-9]+)?$/i, '-s.jpg');
+
+/**
+ * The full photo a small copy was made from, for a big card (Match tiles):
+ * the 256 px copy is for avatars only and would be blurry once enlarged.
+ * Profile photos are stored as JPEG (cleanImage), so "<name>-s.jpg" comes
+ * from "<name>.jpg". Anything else is not a small copy: undefined.
+ */
+export const fullOfThumb = (path: string | null | undefined): string | undefined => (path && /-s\.jpg$/i.test(path) ? path.replace(/-s\.jpg$/i, '.jpg') : undefined);
 
 /** Stores the small copy of a profile photo next to it (best effort: avatars fall back to the photo). */
 export async function uploadFaceThumb(path: string, source: string): Promise<void> {
@@ -130,10 +155,14 @@ export async function takeChatPhoto(): Promise<string | null> {
   return shrink(res.assets[0].uri);
 }
 
-/** Phone photos are 5–10 MB: 1600 px on the long side keeps them sharp in a chat. */
+/**
+ * Phone photos are 5–10 MB: the shared preparation (prepareImage) turns them
+ * upright, keeps 1600 px on the LONG side (a portrait used to be resized by
+ * its width, and a small photo was enlarged), encodes once at 0.85 and drops
+ * the file's metadata (GPS position) before it is sent to the chat.
+ */
 async function shrink(uri: string): Promise<string> {
-  const small = await manipulateAsync(uri, [{ resize: { width: 1600 } }], { compress: 0.78, format: SaveFormat.JPEG });
-  return small.uri;
+  return (await prepareImage(uri)).uri;
 }
 
 /** Uploads a chat photo under "<your id>/…" in "chat-media" and returns its stored path. */

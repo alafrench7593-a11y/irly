@@ -20,6 +20,7 @@ import { useMyPro, usePro } from '@/features/network/api';
 import { reasonText, roundDistance, scorePro } from '@/features/network/match';
 import { INDUSTRY, INTENT, ROLE_LABEL } from '@/features/network/taxonomy';
 import { ConnectAction, hueOf, MatchPill, placeOf } from '@/features/network/ui';
+import { ProLinkButtons } from '@/features/network/sections';
 import { useT } from '@/i18n';
 import { enter } from '@/motion/enter';
 import { radius, space } from '@/theme/tokens';
@@ -34,7 +35,7 @@ export default function ProProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { pro, photo, state, setConnection } = usePro(id);
+  const { pro, photo, links, state, setConnection } = usePro(id);
   const me = useMyPro();
   const [safety, setSafety] = useState(false);
   const [reporting, setReporting] = useState(false);
@@ -119,6 +120,7 @@ export default function ProProfileScreen() {
         <Block title="Current project" body={pro.project} delay={3} />
         <Block title="Looking for" body={pro.lookingFor} delay={4} />
         <Block title="Can offer" body={pro.canOffer} delay={5} />
+        <ProLinkButtons links={links} index={6} />
 
         <Animated.View entering={enter.rise(6)} style={styles.section}>
           <Text variant="overline" tone="tertiary">

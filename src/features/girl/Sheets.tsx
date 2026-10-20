@@ -15,7 +15,7 @@ import { girl, girlType } from './theme';
 import { REPORT_CATEGORIES, type Candidate, type Filters, type ReportCategory } from './types';
 import { GButton, GChip, GField, GIconWell, GSection, ScorePill, Wrap } from './ui';
 import { GlassLayer } from '@/components/ui/GlassLayer';
-import { FacePhoto } from '@/components/ui/Avatar';
+import { ProfilePhoto } from '@/features/match/ProfilePhoto';
 
 const AGES: { label: string; min?: number; max?: number }[] = [
   { label: 'Any' },
@@ -133,7 +133,8 @@ export function ProfileSheet({
       {c ? (
         <ScrollView contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: 24, gap: space[5] }}>
           <View style={styles.hero}>
-            <FacePhoto name={c.firstName} hue={c.hue} userId={c.userId} photos={c.photoUrls} placeholderColor={girl.cream} placeholderSize={110} style={StyleSheet.absoluteFill} />
+            {/* The big photo: her small copy at once, then the full photo (≤1600 px) over it; a photo that fails offers « Try again ». */}
+            <ProfilePhoto name={c.firstName} hue={c.hue} userId={c.userId} photos={c.photoUrls} ground={girl.cream} placeholderSize={110} style={StyleSheet.absoluteFill} />
           </View>
           <View style={styles.nameRow}>
             <View style={{ flex: 1 }}>

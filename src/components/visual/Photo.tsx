@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { photo as photoUrl } from "@/data/photos";
+import { storedKey } from "@/features/server/media";
 import type { Visual } from "@/data/types";
 import type { LightId } from "@/theme/lights";
 import { useTheme } from "@/theme/useTheme";
@@ -143,7 +144,8 @@ export const Photo = memo(function Photo({
         style={[StyleSheet.absoluteFill, drift && !reduced ? driftStyle : null]}
       >
         <Image
-          source={{ uri }}
+          // A stored cover is cached under its file path, not its signed link (which changes every few hours).
+          source={{ uri, cacheKey: storedKey(uri) }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
           transition={{ duration: 520, effect: "cross-dissolve" }}

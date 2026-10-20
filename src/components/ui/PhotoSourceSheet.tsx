@@ -24,6 +24,7 @@ export type PhotoSourceOptions = {
   aspect?: [number, number];
   /** Offer the system crop (on by default when an aspect is given). */
   allowsEditing?: boolean;
+  /** The picker's own JPEG quality, never below 0.9 (see pickerOptions). */
   quality?: number;
   /** The camera opens on the front lens (a profile photo, a selfie). */
   front?: boolean;
@@ -43,9 +44,14 @@ export function cameraSupported(): boolean {
   return picker?.[1]?.cameraPermission !== false;
 }
 
+/**
+ * Every picked photo is encoded once more before upload (prepareImage: 1600 px,
+ * 0.85), so the picker itself keeps nearly all of it: a 0.8 here, then 0.85,
+ * visibly bands skin tones and skies. Orientation is fixed by that step too.
+ */
 const pickerOptions = (o: PhotoSourceOptions): ImagePicker.ImagePickerOptions => ({
   mediaTypes: ['images'],
-  quality: o.quality ?? 1,
+  quality: Math.max(0.9, o.quality ?? 1),
   allowsEditing: o.allowsEditing ?? Boolean(o.aspect),
   ...(o.aspect ? { aspect: o.aspect } : {}),
 });

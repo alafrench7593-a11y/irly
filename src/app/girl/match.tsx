@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { t as tx, useT } from '@/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useReducedMotion, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeOut, LinearTransition, useAnimatedScrollHandler, useReducedMotion, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
@@ -14,7 +14,8 @@ import { FEATURES } from '@/lib/features';
 import { useAccount } from '@/features/auth/account';
 import { openCreate } from '@/features/create/createStore';
 import { matchApi, PAGE_SIZE, type MatchApi } from '@/features/girl/api';
-import { CandidateCard } from '@/features/girl/CandidateCard';
+import { CandidateTile } from '@/features/girl/CandidateCard';
+import { GRID_GAP, gridColumns, tileWidth } from '@/features/match/grid';
 import { MatchMoment } from '@/features/girl/MatchMoment';
 import { FiltersSheet, ProfileSheet, SafetySheet } from '@/features/girl/Sheets';
 import type { Suggestion } from '@/features/girl/suggest';
@@ -33,7 +34,6 @@ import { radius, space } from '@/theme/tokens';
 import { Flavor } from '@/theme/flavor';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { enter } from '@/motion/enter';
-import { LinearGradient } from 'expo-linear-gradient';
 
 const BOOT_LIMIT = 25_000;
 /** What the screen shows: the Match flow, or why IRLY Girl is closed for this account. */
@@ -53,8 +53,9 @@ const SECTIONS: { id: Section; label: (city: string) => string; icon: IconName }
 /**
  * IRLY Girl Match (/girl/match, from the IRLY Match card of the Home in
  * IRLY Girl). Women only (checked server-side), onboarding and a
- * Match profile first, then discovery: sections, filters, a deck you swipe
- * or tap, your matches on top. A match opens its private chat and the
+ * Match profile first, then discovery: sections, filters, a grid of
+ * profiles (two side by side on a phone of 360 pt or more, one below, more
+ * on a tablet) with Not now / Connect on each, your matches on top. A match opens its private chat and the
  * question that matters: what will you do together?
  */
 function GirlMatchInner() {
@@ -79,7 +80,6 @@ function GirlMatchInner() {
   const [safetyFor, setSafetyFor] = useState<Candidate | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [moment, setMoment] = useState<{ match: MatchResult; person: Candidate } | null>(null);
-  const fling = useSharedValue(0);
   const tr = useT();
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -87,8 +87,10 @@ function GirlMatchInner() {
   });
   const reduced = useReducedMotion();
 
-  const width = Math.min((frame.width || window.width) - space.gutter * 2, 420);
-  const height = Math.min(width * 1.32, (frame.height || window.height) * 0.56);
+  const screenW = frame.width || window.width;
+  const columns = gridColumns(screenW);
+  const inner = Math.min(screenW, 1120) - space.gutter * 2;
+  const tileW = tileWidth(inner, columns);
 
   // Only the latest request may write the deck (a slow "for you" page must
   // not land after the member switched to "new" or changed filters).
@@ -260,8 +262,6 @@ function GirlMatchInner() {
     }
   };
 
-  const top = deck[0];
-
   if (state === 'loading' || state === 'onboarding' || state === 'profile') return <GirlLoading />;
   if (state === 'error') return <GirlClosed reason="error" onRetry={boot} />;
   if (state === 'signed_out') return <GirlClosed reason="signed_out" />;
@@ -335,33 +335,27 @@ function GirlMatchInner() {
           </PressableScale>
         </ScrollView>
 
-        <View style={[styles.deck, { height: height + 8 }]}>
+        <View style={[styles.grid, { width: inner }]}>
           {deck.length ? (
-            deck
-              .slice(0, 3)
-              .reverse()
-              .map((c, i, arr) => {
-                const depth = arr.length - 1 - i;
-                return (
-                  <View
-                    key={c.userId}
-                    style={[StyleSheet.absoluteFill, styles.deckLayer, { transform: [{ translateY: depth * 10 }, { scale: 1 - depth * 0.04 }], opacity: depth > 1 ? 0.6 : 1 }]}
-                    pointerEvents={depth === 0 ? 'auto' : 'none'}
-                  >
-                    <CandidateCard candidate={c} width={width} height={height} active={depth === 0} fling={fling} onDecide={(d) => decide(c, d)} onOpen={() => setOpen(c)} />
-                  </View>
-                );
-              })
+            deck.map((c, i) => (
+              <Animated.View
+                key={c.userId}
+                entering={reduced ? undefined : enter.rise(Math.min(i % PAGE_SIZE, 6))}
+                exiting={reduced ? undefined : FadeOut.duration(160)}
+                layout={reduced ? undefined : LinearTransition.springify(420)}
+                style={{ width: tileW }}
+              >
+                <CandidateTile candidate={c} width={tileW} onOpen={() => setOpen(c)} onPass={() => decide(c, 'pass')} onConnect={() => decide(c, 'like')} />
+              </Animated.View>
+            ))
           ) : deckLoading ? (
-            <Animated.View entering={enter.fade(0)} style={[styles.empty, { width, height }]}>
-              <GlassLayer radius={32} />
-              <ActivityIndicator color={girl.rose} />
-              <Text variant="bodyS" color={girl.inkSoft}>
-                Finding your kind of people…
-              </Text>
-            </Animated.View>
+            <View style={[styles.grid, { width: inner }]} accessible accessibilityLabel={tx('Finding your kind of people…')}>
+              {Array.from({ length: columns * 2 }, (_, i) => (
+                <Animated.View key={i} entering={enter.fade(i)} style={[styles.skeleton, { width: tileW, height: Math.round(tileW * 1.25) + 128 }]} />
+              ))}
+            </View>
           ) : deckError ? (
-            <Animated.View entering={enter.rise(0)} style={[styles.empty, { width, height }]}>
+            <Animated.View entering={enter.rise(0)} style={[styles.empty, { width: inner }]}>
               <GlassLayer radius={32} />
               <GIconWell icon="globe" tone="error" />
               <Text variant="titleS" color={girl.ink} align="center">
@@ -374,7 +368,7 @@ function GirlMatchInner() {
               )}
             </Animated.View>
           ) : (
-            <Animated.View entering={enter.rise(0)} style={[styles.empty, { width, height }]}>
+            <Animated.View entering={enter.rise(0)} style={[styles.empty, { width: inner }]}>
               <GlassLayer radius={32} />
               <GIconWell icon="sparkles" />
               <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
@@ -388,13 +382,9 @@ function GirlMatchInner() {
           )}
         </View>
 
-        {top ? (
-          <View style={styles.actions}>
-            <ActionButton icon="x" label={tx('Not now, {name}', { name: top.firstName })} onPress={() => fling.set(-1)} />
-            <ActionButton icon="bookmark" label={top.saved ? 'Remove from saved' : 'Save for later'} small onPress={() => save(top)} active={top.saved} />
-            <ActionButton icon="heartHandshake" label={tx('Connect with {name}', { name: top.firstName })} big onPress={() => fling.set(1)} />
-            <ActionButton icon="user" label={tx("View {name}'s profile", { name: top.firstName })} small onPress={() => setOpen(top)} />
-            <ActionButton icon="shield" label="Block or report" onPress={() => setSafetyFor(top)} />
+        {deck.length && !exhausted ? (
+          <View style={styles.more}>
+            {deckLoading ? <ActivityIndicator color={girl.rose} /> : deckError ? <GButton label="Retry" variant="secondary" onPress={() => loadDeck(filters, offset)} /> : <GButton label="Show more" variant="secondary" onPress={() => loadDeck(filters, offset)} />}
           </View>
         ) : null}
           </>
@@ -493,31 +483,6 @@ function GirlMatchInner() {
   );
 }
 
-/** Deck actions: the rose lacquer for « Connect », plum when saved, pearl glass for the rest. */
-function ActionButton({ icon, label, onPress, big, small, active }: { icon: IconName; label: string; onPress: () => void; big?: boolean; small?: boolean; active?: boolean }) {
-  const size = big ? 68 : small ? 46 : 56;
-  return (
-    <PressableScale
-      haptic={big ? 'press' : 'select'}
-      scaleTo={0.88}
-      onPress={onPress}
-      accessibilityLabel={label}
-      accessibilityState={active ? { selected: true } : undefined}
-      style={[styles.action, { width: size, height: size, borderRadius: size / 2, boxShadow: big ? girl.glow : active ? girl.shadowPlum : girl.shadowSoft }]}
-    >
-      {big ? (
-        <>
-          <LinearGradient colors={girl.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: size / 2, zIndex: -1 }]} />
-          <LinearGradient colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)']} locations={[0, 0.55]} style={[StyleSheet.absoluteFill, { borderRadius: size / 2, zIndex: -1 }]} />
-        </>
-      ) : (
-        <GlassFill radius={size / 2} variant={active ? 'plum' : 'chip'} />
-      )}
-      <Icon name={icon} size={big ? 28 : 20} color={big ? '#FFFFFF' : active ? '#F4B3CF' : girl.ink} fill={active ? '#F4B3CF' : 'none'} />
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
   modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, zIndex: 0, boxShadow: girl.shadowSoft },
   modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, boxShadow: girl.shadowPlum },
@@ -534,11 +499,10 @@ const styles = StyleSheet.create({
   matchRing: { padding: 2, borderRadius: 32, borderWidth: 2, borderColor: girl.rose },
   sections: { paddingHorizontal: space.gutter, gap: 8, marginTop: space[5], marginBottom: space[4] },
   section: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 13, borderRadius: radius.pill, boxShadow: girl.shadowSoft },
-  deck: { alignItems: 'center' },
-  deckLayer: { alignItems: 'center' },
-  empty: { borderRadius: 32, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, boxShadow: girl.shadowSoft },
-  actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: space[4] },
-  action: { alignItems: 'center', justifyContent: 'center', zIndex: 0 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, alignSelf: 'center' },
+  skeleton: { borderRadius: 24, backgroundColor: girl.blush, opacity: 0.7 },
+  more: { alignItems: 'center', marginTop: space[5], minHeight: 48, justifyContent: 'center' },
+  empty: { minHeight: 320, borderRadius: 32, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, boxShadow: girl.shadowSoft },
   community: { width: 168, height: 200, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end', boxShadow: girl.shadowSoft },
   newCommunity: { padding: 14, gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(185,43,105,0.30)', justifyContent: 'flex-start' },
   plan: { width: 220, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft },

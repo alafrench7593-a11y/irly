@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
+import { displayCommunityName } from './name';
 
 /**
  * Communities v2 on the client: a community's groups (Padel inside IRLY
@@ -47,14 +48,14 @@ export function useCommunityExtras(id: string) {
       .then(([g, r, me, pr]) => {
         const row = me.data as { parent_id: string | null; parent: Parent | Parent[] | null } | null;
         const embedded = Array.isArray(row?.parent) ? (row?.parent[0] ?? null) : (row?.parent ?? null);
-        const parent = row?.parent_id && embedded ? embedded : null;
+        const parent = row?.parent_id && embedded ? { ...embedded, name: displayCommunityName(embedded) } : null;
         if (n !== seq.current) return;
         const rr = ((r.data as Record<string, unknown>[] | null) ?? [])[0];
         setState({
           for: `${uid}|${id}`,
           groups: ((g.data as Record<string, unknown>[] | null) ?? []).map((x) => ({
             id: x.id as string,
-            name: x.name as string,
+            name: displayCommunityName({ name: x.name as string | null }),
             tagline: (x.tagline as string | null) ?? null,
             emoji: (x.emoji as string | null) ?? null,
             members: Number(x.members ?? 0),

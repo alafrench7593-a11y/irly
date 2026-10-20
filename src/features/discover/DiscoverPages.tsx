@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
-import { memo, useMemo, type ReactNode } from 'react';
+import { memo, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, type SharedValue } from 'react-native-reanimated';
 import { Rail } from '@/components/cards/Blocks';
@@ -23,6 +23,9 @@ import { getCityContent } from '@/data/repo';
 import type { CityId, Intent } from '@/data/types';
 import type { LightId } from '@/theme/lights';
 import { GirlPortals } from '@/features/home/Portals';
+import { GirlCommunities, GirlPlanRows, useGirlPeople, useGirlPlans } from '@/features/girl/GirlSections';
+import { MomsView } from '@/features/girl/MomsView';
+import { useAppSpace } from '@/state/appSpace';
 import { rankMatches } from '@/features/matching/match';
 import { isWeekend } from '@/lib/time';
 import { SoonPill } from '@/features/soon/SoonPill';
@@ -91,6 +94,12 @@ export const DoorTile = memo(function DoorTile({ door, width, height = 150, ligh
 
 const INTENT_ORDER: Intent[] = ['friends', 'activities', 'sports', 'business', 'similar', 'explore'];
 
+/**
+ * In IRLY Girl the same page, section for section: « Find someone » and the
+ * intents open IRLY Match, the people are women, the IRLY Girl doors become
+ * the way back to IRLY and IRLY Moms (opened here, under the doors), and the
+ * communities are IRLY Girl's.
+ */
 export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
   const t = useTheme();
   const router = useRouter();
@@ -98,8 +107,22 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
-  const matches = useMemo(() => rankMatches(profile, content.people, 'friends', (id) => areaName(city, id)).slice(0, 8), [profile, content.people, city]);
+  const inGirl = useAppSpace() === 'girl';
+  const women = useGirlPeople(cityId);
+  const people = inGirl ? women : content.people;
+  const matches = useMemo(() => rankMatches(profile, inGirl ? women : content.people, 'friends', (id) => areaName(city, id)).slice(0, 8), [profile, inGirl, women, content.people, city]);
   const tileW = (frame.width - space.gutter * 2 - 10) / 2;
+  // Match IRLY, or IRLY Match in IRLY Girl (each says « coming soon » itself while closed).
+  const matchOpen = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
+  const matchHref = (intent: Intent) => (inGirl ? '/girl/match' : `/match?intent=${intent}`);
+  // IRLY Moms opens in place; « IRLY Moms » from the Home arrives with ?moms=1.
+  const { moms: momsParam } = useLocalSearchParams<{ moms?: string }>();
+  const [moms, setMoms] = useState(momsParam === '1');
+  const [seenMoms, setSeenMoms] = useState(momsParam);
+  if (momsParam !== seenMoms) {
+    setSeenMoms(momsParam);
+    if (momsParam === '1') setMoms(true);
+  }
   return (
     <PageScroll scrollY={scrollY} top={top} bottom={bottom}>
       <ScrollReveal scrollY={scrollY} style={styles.first}>
@@ -107,22 +130,22 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
           <PressableScale
             haptic="select"
             scaleTo={0.98}
-            onPress={() => router.push('/match?intent=friends')}
+            onPress={() => router.push(matchHref('friends') as never)}
             style={[styles.cta, { backgroundColor: t.c.brand, boxShadow: t.shadow.glow }]}
-            accessibilityLabel={FEATURES.matchIrly ? 'Find someone' : `${tx('Find someone')}. ${tx('Match IRLY is coming soon')}`}
+            accessibilityLabel={matchOpen ? 'Find someone' : `${tx('Find someone')}. ${tx(inGirl ? 'IRLY Match is coming soon' : 'Match IRLY is coming soon')}`}
           >
             <View style={[styles.ctaIcon, { backgroundColor: t.mode === 'night' ? 'rgba(5,5,6,0.07)' : 'rgba(255,255,255,0.14)' }]}>
               <Icon name="users" size={20} color={t.c.onBrand} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
-              {FEATURES.matchIrly ? null : <SoonPill onLight={t.mode === 'night'} />}
+              {matchOpen ? null : <SoonPill onLight={t.mode === 'night'} />}
               <Text variant="titleM" color={t.c.onBrand}>
                 Find someone
               </Text>
               <Text variant="bodyS" color={t.c.onBrand} style={{ opacity: 0.7 }} numberOfLines={2}>
-                {FEATURES.matchIrly
-                  ? tx('{n} people in {city} matched on interests, languages, plans', { n: content.people.length, city: city.name })
-                  : tx('Match IRLY is coming soon')}
+                {matchOpen
+                  ? tx(inGirl ? '{n} women in {city} matched on interests, languages, plans' : '{n} people in {city} matched on interests, languages, plans', { n: people.length, city: city.name })
+                  : tx(inGirl ? 'IRLY Match is coming soon' : 'Match IRLY is coming soon')}
               </Text>
             </View>
             <Icon name="arrowUpRight" size={20} color={t.c.onBrand} />
@@ -131,7 +154,7 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
       </ScrollReveal>
 
       <ScrollReveal scrollY={scrollY} style={styles.section}>
-        <SectionHeader overline={FEATURES.matchIrly ? 'Who do you want to meet?' : 'Match IRLY · Coming soon'} title="Find your people" />
+        <SectionHeader overline={matchOpen ? 'Who do you want to meet?' : inGirl ? 'IRLY Match · Coming soon' : 'Match IRLY · Coming soon'} title="Find your people" />
         <View style={styles.grid}>
           {INTENT_ORDER.map((id) => {
             const it = INTENTS[id];
@@ -140,7 +163,7 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
                 key={id}
                 haptic="select"
                 scaleTo={0.96}
-                onPress={() => router.push(`/match?intent=${id}` as never)}
+                onPress={() => router.push(matchHref(id) as never)}
                 style={[styles.intent, { width: tileW, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
                 accessibilityLabel={`${tx(it.label)}. ${tx(it.blurb)}`}
               >
@@ -159,12 +182,12 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
       </ScrollReveal>
 
       <ScrollReveal scrollY={scrollY} style={styles.section}>
-        {/* "See all" is Match IRLY: only once it is open (src/lib/features.ts). */}
+        {/* "See all" is Match IRLY (IRLY Match in IRLY Girl): only once it is open (src/lib/features.ts). */}
         <SectionHeader
           overline="Best matches"
-          title="People for you"
-          action={FEATURES.matchIrly ? 'See all' : undefined}
-          onAction={FEATURES.matchIrly ? () => router.push('/match?intent=friends') : undefined}
+          title={inGirl ? 'Women for you' : 'People for you'}
+          action={matchOpen ? 'See all' : undefined}
+          onAction={matchOpen ? () => router.push(matchHref('friends') as never) : undefined}
         />
         <Rail itemWidth={290}>
           {matches.map((m) => (
@@ -173,20 +196,25 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
         </Rail>
       </ScrollReveal>
 
-      {profile.gender === 'woman' ? (
+      {inGirl || profile.gender === 'woman' ? (
         <ScrollReveal scrollY={scrollY} style={styles.section}>
-          <SectionHeader overline="Women only · Not dating" title="IRLY Girl" />
-          <GirlPortals light={city.light} />
+          <SectionHeader overline="Women only · Not dating" title={inGirl ? 'Your spaces' : 'IRLY Girl'} />
+          <GirlPortals light={city.light} onMoms={() => setMoms((m) => !m)} />
+          {inGirl && moms ? <MomsView cityId={cityId} /> : null}
         </ScrollReveal>
       ) : null}
 
       <ScrollReveal scrollY={scrollY} style={styles.section}>
-        <SectionHeader overline="Groups that meet IRL" title="Communities" action="All" onAction={() => router.push('/communities')} />
-        <Rail itemWidth={250}>
-          {content.communities.map((c) => (
-            <CommunityCard key={c.id} community={c} />
-          ))}
-        </Rail>
+        <SectionHeader overline={inGirl ? 'Women only · with their own chat' : 'Groups that meet IRL'} title="Communities" action="All" onAction={() => router.push('/communities')} />
+        {inGirl ? (
+          <GirlCommunities cityId={cityId} />
+        ) : (
+          <Rail itemWidth={250}>
+            {content.communities.map((c) => (
+              <CommunityCard key={c.id} community={c} />
+            ))}
+          </Rail>
+        )}
       </ScrollReveal>
     </PageScroll>
   );
@@ -194,31 +222,33 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
 
 /* ───────── ACTIVITIES ───────── */
 
+/** In IRLY Girl the same page: « Happening soon » lists the girls' plans (women only, from the server). */
 export function ActivitiesPage({ cityId, scrollY, top, bottom }: PageProps) {
   const router = useRouter();
   const frame = useFrame();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const doorW = (frame.width - space.gutter * 2 - 12) / 2;
+  const inGirl = useAppSpace() === 'girl';
+  const girlPlans = useGirlPlans(cityId, { girlOnly: true });
   const soon = useMemo(
-    () => [...content.sessions].sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time)).slice(0, 4),
-    [content.sessions],
+    () => (inGirl ? [] : [...content.sessions].sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time)).slice(0, 4)),
+    [content.sessions, inGirl],
   );
+  const hasSoon = inGirl ? girlPlans.activities.length > 0 || girlPlans.loading : soon.length > 0;
   const doors: Door[] = CATEGORIES.map((c) => ({ label: c.label, caption: c.tagline, icon: c.icon, photo: c.photo, href: `/category/${c.id}` }));
   return (
     <PageScroll scrollY={scrollY} top={top} bottom={bottom}>
-      {soon.length ? (
+      {hasSoon ? (
         <ScrollReveal scrollY={scrollY} style={styles.first}>
           <SectionHeader overline="Join in" title="Happening soon" action="Plans" onAction={() => router.push('/social')} />
           <View style={styles.rows}>
-            {soon.map((s) => (
-              <SessionCard key={s.id} session={s} />
-            ))}
+            {inGirl ? <GirlPlanRows plans={girlPlans} limit={4} /> : soon.map((s) => <SessionCard key={s.id} session={s} />)}
           </View>
         </ScrollReveal>
       ) : null}
 
-      <ScrollReveal scrollY={scrollY} style={soon.length ? styles.section : styles.first}>
+      <ScrollReveal scrollY={scrollY} style={hasSoon ? styles.section : styles.first}>
         <SectionHeader overline="Every kind of plan" title="Find something to do" />
         <View style={styles.doors}>
           {doors.map((d) => (

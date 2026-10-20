@@ -13,6 +13,7 @@ import { confirm } from '@/lib/confirm';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useMyPro, type ProDraft } from '@/features/network/api';
+import { LINK_KINDS, MAX_LINK, normaliseLink, NO_LINKS, type LinkKind, type ProLinks } from '@/features/network/links';
 import type { ProProfile } from '@/features/network/match';
 import { INDUSTRIES, INTENTS, MAX_INDUSTRIES, MAX_SKILLS, ROLES, SKILL_SUGGESTIONS, type IndustryId, type IntentId } from '@/features/network/taxonomy';
 import { useT } from '@/i18n';
@@ -61,14 +62,14 @@ export default function ProProfileEditor() {
   // The form opens once the saved profile (if any) has loaded, already filled in.
   if (me.signedIn && me.loading)
     return (
-      <Page overline="Networking" title="Professional profile">
+      <Page overline="IRLY Network" title="Professional profile">
         <ActivityIndicator color={t.c.text} style={{ marginTop: 24 }} accessibilityLabel="Loading" />
       </Page>
     );
   // Unread is not "no profile": an empty form saved here would replace the real one.
   if (me.signedIn && me.error && !me.pro)
     return (
-      <Page overline="Networking" title="Professional profile">
+      <Page overline="IRLY Network" title="Professional profile">
         <View style={{ paddingHorizontal: 20, gap: 12 }}>
           <Text variant="body" tone="secondary">
             Can’t reach IRLY right now
@@ -77,7 +78,8 @@ export default function ProProfileEditor() {
         </View>
       </Page>
     );
-  return <Editor key={me.pro ? 'edit' : 'new'} me={me} initial={me.pro ? draftOf(me.pro, me.visible) : EMPTY(cityId)} cityId={cityId} />;
+  const initial = me.pro ? draftOf(me.pro, me.visible) : EMPTY(cityId);
+  return <Editor key={me.pro ? 'edit' : 'new'} me={me} initial={{ ...initial, links: me.pro ? me.links : NO_LINKS }} cityId={cityId} />;
 }
 
 function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; initial: ProDraft; cityId: CityId }) {
@@ -88,6 +90,14 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
   const [skill, setSkill] = useState('');
   const [busy, setBusy] = useState(false);
   const [tried, setTried] = useState(false);
+  // What is typed in each link field (normalised on save).
+  const [typedLinks, setTypedLinks] = useState<ProLinks>(initial.links ?? NO_LINKS);
+  const linkResults = Object.fromEntries(LINK_KINDS.map((k) => [k.id, normaliseLink(k.id, typedLinks[k.id] ?? '')])) as Record<LinkKind, ReturnType<typeof normaliseLink>>;
+  const linkError = (k: LinkKind) => {
+    const r = linkResults[k];
+    return r.ok ? null : tr(r.error);
+  };
+  const linksInvalid = LINK_KINDS.some((k) => !linkResults[k.id].ok);
 
   const set = <K extends keyof ProDraft>(k: K, v: ProDraft[K]) => setD((x) => ({ ...x, [k]: v }));
   const toggleIndustry = (id: IndustryId) => {
@@ -118,13 +128,14 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
 
   const save = async () => {
     setTried(true);
-    if (jobError || industryError) {
+    if (jobError || industryError || (me.linksOn && linksInvalid)) {
       haptic('warning');
       return;
     }
+    const links = Object.fromEntries(LINK_KINDS.map((k) => [k.id, (linkResults[k.id] as { ok: true; url: string | null }).url ?? null])) as ProLinks;
     setBusy(true);
     try {
-      await me.save({ ...d, cityId: d.cityId in CITIES ? d.cityId : cityId });
+      await me.save({ ...d, cityId: d.cityId in CITIES ? d.cityId : cityId, links: me.linksOn ? links : undefined });
       haptic('success');
       toast(tr('Professional profile saved'), 'check', 'brand');
       if (router.canGoBack()) router.back();
@@ -138,7 +149,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
 
   if (!me.signedIn) {
     return (
-      <Page overline="Networking" title="Professional profile">
+      <Page overline="IRLY Network" title="Professional profile">
         <View style={[styles.box, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
           <GlassLayer radius={radius.xl} />
           <Text variant="body" tone="secondary">
@@ -153,7 +164,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
   const city = CITIES[(d.cityId in CITIES ? d.cityId : cityId) as CityId];
 
   return (
-    <Page overline="Networking" title="Professional profile" subtitle="What you do, what you build, what you look for. Shown in Networking and used for your matches.">
+    <Page overline="IRLY Network" title="Professional profile" subtitle="What you do, what you build, what you look for. Shown in Networking and used for your matches.">
       <View style={styles.form}>
         <Section title="I am">
           <View style={styles.wrap}>
@@ -240,6 +251,41 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
             ))}
           </View>
         </Section>
+
+        {me.linksOn ? (
+          <Section title="Links">
+            <Text variant="caption" tone="tertiary">
+              Optional. Shown on your professional profile, only to members who can see it. https links only.
+            </Text>
+            {LINK_KINDS.map((k) => {
+              const err = tried || (typedLinks[k.id] ?? '').length > 6 ? linkError(k.id) : null;
+              return (
+                <View key={k.id} style={{ gap: 6 }}>
+                  <Field
+                    icon={k.icon}
+                    placeholder={`${k.label} · ${k.placeholder}`}
+                    value={typedLinks[k.id] ?? ''}
+                    onChangeText={(v) => setTypedLinks((x) => ({ ...x, [k.id]: v }))}
+                    onEndEditing={() => {
+                      const r = linkResults[k.id];
+                      if (r.ok) setTypedLinks((x) => ({ ...x, [k.id]: r.url ?? '' }));
+                    }}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="url"
+                    maxLength={MAX_LINK}
+                    accessibilityLabel={k.label}
+                  />
+                  {err ? (
+                    <Text variant="caption" color={t.c.live}>
+                      {err}
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            })}
+          </Section>
+        ) : null}
 
         <Section title="Where I work from">
           <AreaPicker cityId={city.id} value={d.areaId} onChange={(id) => set('areaId', d.areaId === id ? null : id)} label="Neighbourhood" placeholder="Choose a neighbourhood" />

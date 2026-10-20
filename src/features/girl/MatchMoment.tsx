@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
-import { FacePhoto } from '@/components/ui/Avatar';
+import { ProfilePhoto } from '@/features/match/ProfilePhoto';
 import { useAccount } from '@/features/auth/account';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
@@ -106,10 +106,10 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
             <Animated.View style={[styles.halo, halo]} />
             {/* Each card is tied to its account: my face on the left, hers on the right, never a stand-in. */}
             <Animated.View style={[styles.photoCard, left]}>
-              <FacePhoto name={me.name || tx('You')} hue={330} userId={myId} photos={me.photoUri ? [me.photoUri] : []} placeholderColor={girl.blush} placeholderSize={72} style={StyleSheet.absoluteFill} />
+              <ProfilePhoto name={me.name || tx('You')} hue={330} userId={myId} photos={me.photoUri ? [me.photoUri] : []} ground={girl.blush} placeholderSize={72} style={StyleSheet.absoluteFill} />
             </Animated.View>
             <Animated.View style={[styles.photoCard, right]}>
-              <FacePhoto name={person.firstName} hue={person.hue} userId={person.userId} photos={person.photoUrls} placeholderColor={girl.blush} placeholderSize={72} style={StyleSheet.absoluteFill} />
+              <ProfilePhoto name={person.firstName} hue={person.hue} userId={person.userId} photos={person.photoUrls} ground={girl.blush} placeholderSize={72} style={StyleSheet.absoluteFill} />
             </Animated.View>
             <Animated.View style={[styles.mark, markStyle]}>
               <IrlyMark size={44} state="static" ringColor={girl.rose} lensColor={girl.ink} glow={false} />

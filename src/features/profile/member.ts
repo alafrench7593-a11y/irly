@@ -3,6 +3,7 @@ import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { friendlyError, supabase } from '@/lib/supabase';
 import { askPushInContext } from '@/features/push/push';
+import { displayCommunityName } from '@/features/community/name';
 
 /**
  * A member's profile from the server, as the viewer may see it (their
@@ -299,7 +300,7 @@ export function useMemberPosts(userId: string, enabled = true) {
         edited: Boolean(x.edited_at),
         at: Date.parse(x.created_at),
         communityId: x.community_id,
-        communityName: (Array.isArray(x.communities) ? x.communities[0]?.name : x.communities?.name) ?? '',
+        communityName: x.community_id ? displayCommunityName(Array.isArray(x.communities) ? x.communities[0] : x.communities) : '',
         likes: by.get(x.id)?.likes ?? 0,
         comments: by.get(x.id)?.comments ?? 0,
         liked: by.get(x.id)?.liked ?? false,

@@ -4,6 +4,7 @@ import { storageName } from '@/config/app';
 import { useAccount } from '@/features/auth/account';
 import { useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
+import { displayCommunityName } from '@/features/community/name';
 
 /**
  * Reasons to come back that are real: today's activities, what happened in
@@ -69,7 +70,7 @@ export function useForYou() {
     (r): ForYouPost => ({
       id: r.id as string,
       communityId: (r.community_id as string | null) ?? null,
-      communityName: (r.community_name as string | null) ?? null,
+      communityName: r.community_id ? displayCommunityName({ name: r.community_name as string | null }) : null,
       authorId: r.author_id as string,
       firstName: (r.first_name as string) ?? 'Member',
       body: r.body as string,

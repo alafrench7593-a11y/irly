@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
@@ -60,10 +60,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const activeName = state.routes[state.index]?.name;
   const activeSlot = Math.max(0, SLOTS.indexOf(activeName as (typeof SLOTS)[number]));
   const x = useSharedValue(activeSlot * itemW);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
-    x.set(withSpring(activeSlot * itemW, spring.medium));
-  }, [activeSlot, itemW, x]);
+    x.set(reduced ? activeSlot * itemW : withSpring(activeSlot * itemW, spring.medium));
+  }, [activeSlot, itemW, x, reduced]);
 
   // Stack screens like Messages light no tab.
   const offBar = !SLOTS.includes(activeName as (typeof SLOTS)[number]);
@@ -84,7 +85,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           <Animated.View
             style={[
               styles.indicator,
-              { left: (itemW - Math.min(56, itemW - 4)) / 2, width: Math.min(56, itemW - 4), opacity: offBar ? 0 : 1, backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.09)' : 'rgba(10,10,10,0.07)' },
+              {
+                left: (itemW - Math.min(56, itemW - 4)) / 2,
+                width: Math.min(56, itemW - 4),
+                opacity: offBar ? 0 : 1,
+                backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.09)' : 'rgba(10,10,10,0.07)',
+                // Mixte: a hairline edge on the lit pill, like the glass around it (IRLY Girl keeps her soft veil).
+                borderWidth: t.flavor === 'girl' ? 0 : StyleSheet.hairlineWidth * 2,
+                borderColor: t.mode === 'night' ? 'rgba(255,255,255,0.16)' : 'rgba(10,10,10,0.08)',
+              },
               indicator,
             ]}
           />
@@ -178,17 +187,19 @@ const TabItem = memo(function TabItem({
   const t = useTheme();
   const name = useStore((s) => s.profile.name);
   const photo = useStore((s) => s.profile.photoUri);
+  const reduced = useReducedMotion();
   const pop = useSharedValue(focused ? scale.selected : 1);
   useEffect(() => {
-    pop.set(focused ? withSequence(withTiming(scale.selected + 0.06, { duration: 110 }), withSpring(scale.selected, spring.strong)) : withSpring(1, spring.medium));
-  }, [focused, pop]);
+    if (reduced) pop.set(focused ? scale.selected : 1);
+    else pop.set(focused ? withSequence(withTiming(scale.selected + 0.06, { duration: 110 }), withSpring(scale.selected, spring.strong)) : withSpring(1, spring.medium));
+  }, [focused, pop, reduced]);
   const iconStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
   const color = focused ? t.c.text : t.c.textTertiary;
   return (
     <PressableScale
       onPress={onPress}
       haptic={false}
-      scaleTo={0.9}
+      scaleTo={reduced ? 1 : 0.9}
       style={[styles.item, { width }]}
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
@@ -215,43 +226,45 @@ const TabItem = memo(function TabItem({
 });
 
 /**
- * Match IRLY: the disc above the bar, the one dominant control. « Match »
- * over « IRLY » in IRLY ink, sized to stay readable on the smallest phones;
- * it sinks under the finger and opens the people to meet. While Match is
- * switched off (src/lib/features.ts) a « Soon » tag sits on its top edge and
- * /match is the coming-soon page.
+ * The disc above the bar, the one dominant control. While Match IRLY is
+ * switched off (src/lib/features.ts) it reads « Soon » under its icon and
+ * opens /match, the coming-soon page of IRLY Match; switched on, it reads
+ * « Match » over « IRLY » and opens the people to meet. Same disc in IRLY
+ * and IRLY Girl (each in its own ink), sinks under the finger.
  */
 function MatchButton({ width, onPress }: { width: number; onPress: () => void }) {
   const t = useTheme();
   const night = t.mode === 'night';
   const open = FEATURES.matchIrly;
+  const reduced = useReducedMotion();
   return (
     <View style={[styles.item, { width }]}>
       <View style={{ transform: [{ translateY: -IRL_LIFT }] }}>
         <PressableScale
           onPress={onPress}
           haptic={false}
-          scaleTo={0.9}
+          scaleTo={reduced ? 1 : 0.9}
           accessibilityRole="button"
-          accessibilityLabel={open ? 'Match IRLY' : `Match IRLY, ${tx('Coming soon')}`}
+          accessibilityLabel={open ? 'Match IRLY' : tx('Soon: IRLY Match, coming soon')}
           accessibilityHint={open ? tx('Opens people to meet, matched on what you share') : tx('Shows what Match IRLY will be')}
           style={[styles.irl, styles.match, { backgroundColor: t.c.brand, boxShadow: night ? '0px 10px 30px rgba(255,255,255,0.22), 0px 4px 12px rgba(0,0,0,0.5)' : t.shadow.float }]}
         >
           <Icon name="heartHandshake" size={18} color={t.c.onBrand} strokeWidth={2.2} />
-          <Text variant="caption" color={t.c.onBrand} style={styles.matchWord} numberOfLines={1} raw>
-            MATCH
-          </Text>
-          <Text variant="caption" color={t.c.onBrand} style={styles.matchIrly} numberOfLines={1} raw>
-            IRLY
-          </Text>
-        </PressableScale>
-        {open ? null : (
-          <View pointerEvents="none" style={[styles.soonTag, { backgroundColor: t.c.surface, borderColor: t.c.lineStrong }]}>
-            <Text variant="caption" color={t.c.text} style={styles.soonWord} numberOfLines={1}>
+          {open ? (
+            <>
+              <Text variant="caption" color={t.c.onBrand} style={styles.matchWord} numberOfLines={1} raw>
+                MATCH
+              </Text>
+              <Text variant="caption" color={t.c.onBrand} style={styles.matchIrly} numberOfLines={1} raw>
+                IRLY
+              </Text>
+            </>
+          ) : (
+            <Text variant="caption" color={t.c.onBrand} style={styles.soonWord} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               Soon
             </Text>
-          </View>
-        )}
+          )}
+        </PressableScale>
       </View>
     </View>
   );
@@ -295,8 +308,7 @@ const styles = StyleSheet.create({
   match: { alignItems: 'center', justifyContent: 'center' },
   matchWord: { fontSize: 10, lineHeight: 12, letterSpacing: 0.6, fontFamily: font.heavy, marginTop: 1 },
   matchIrly: { fontSize: 8, lineHeight: 10, letterSpacing: 1.2, fontFamily: font.heavy, opacity: 0.75 },
-  soonTag: { position: 'absolute', top: -8, alignSelf: 'center', height: 16, paddingHorizontal: 7, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center' },
-  soonWord: { fontSize: 8.5, lineHeight: 11, letterSpacing: 0.8, fontFamily: font.heavy, textTransform: 'uppercase' },
+  soonWord: { fontSize: 11, lineHeight: 13, letterSpacing: 0.8, fontFamily: font.heavy, textTransform: 'uppercase', marginTop: 2, maxWidth: IRL_DISC - 12 },
   liveDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 3 },
   liveText: { fontSize: 10, lineHeight: 12, letterSpacing: 0.8, fontFamily: font.heavy },
 });

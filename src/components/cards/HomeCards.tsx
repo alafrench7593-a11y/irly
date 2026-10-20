@@ -11,15 +11,16 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { ACTIVITIES, EVENT_CATEGORIES } from '@/data/catalog';
-import type { CategoryKey } from '@/data/catalog/categories';
+import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { EVENT_CATEGORY, SESSION_CATEGORY } from '@/data/catalog/mapping';
 import { areaName, CITIES } from '@/data/destinations';
 import { goingCount, peopleByIds } from '@/data/repo';
 import type { PhotoKey } from '@/data/photos';
-import type { ActivitySession, City, IrlEvent, Person } from '@/data/types';
+import type { ActivitySession, City, IrlEvent, Person, Visual } from '@/data/types';
+import type { LightId } from '@/theme/lights';
 import { flyFrom } from '@/features/flight/avatarFlight';
 import { useHeroCard } from '@/features/hero/useHeroCard';
-import { isHappeningNow, whenLabel } from '@/lib/time';
+import { cityDayKey, cityWhen, isHappeningNow, offsetOf, whenLabel } from '@/lib/time';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
 import { activityColor, eventColor } from '@/theme/categories';
@@ -469,4 +470,218 @@ const ideaStyles = StyleSheet.create({
   bottom: { padding: 14, gap: 4 },
   bar: { width: 24, height: 3, borderRadius: 2, marginBottom: 4 },
   cta: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingHorizontal: 12, height: 30, borderRadius: 15, marginTop: 8, backgroundColor: '#FFFFFF' },
+});
+
+/* ───────── Activity grids: one card shape for both spaces ───────── */
+
+/** The gap between two cards of an activity grid (rows and columns). */
+export const GRID_GAP = 12;
+
+/**
+ * Columns and card width of an activity grid for the app surface width
+ * (`useFrame().width`): exactly two on phones, three or four on wider
+ * screens, always the same geometry in IRLY and IRLY Girl.
+ */
+export function gridTile(surfaceWidth: number): { columns: number; width: number } {
+  const columns = surfaceWidth >= 900 ? 4 : surfaceWidth >= 600 ? 3 : 2;
+  const inner = surfaceWidth - space.gutter * 2 - GRID_GAP * (columns - 1);
+  return { columns, width: Math.floor(inner / columns) };
+}
+
+/** One activity, as a grid card shows it (a server activity, or a demo plan in the demo build). */
+export type ActivityCardItem = {
+  id: string;
+  title: string;
+  /** Catalog category (label, icon and colour); an unknown id reads as « Activity ». */
+  categoryId: string;
+  /** Saved photo first (`uri`), the category's photo otherwise. */
+  visual: Visual;
+  light: LightId;
+  cityId: string;
+  startsAt: number;
+  /** Place or area, already written for the viewer's city. */
+  place: string;
+  /** « Free » or the price. */
+  price: string;
+  /** People going, when known. */
+  going: number | null;
+  /** Spots in all, only when the host set a limit. */
+  capacity: number | null;
+  joined?: boolean;
+  mine?: boolean;
+  /** The host's first name, when the viewer may see it. */
+  organiser?: string | null;
+};
+
+const DAY_MS = 24 * 3600_000;
+const pad2 = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+
+/** « Today », « Tonight », « Tomorrow » or « Sat 12 Oct », in the activity's city time. */
+export function cardDay(ms: number, cityId: string, now = Date.now()): string {
+  const key = cityDayKey(ms, cityId);
+  if (key === cityDayKey(now, cityId)) return tx(new Date(ms + offsetOf(cityId) * 3600_000).getUTCHours() >= 17 ? 'Tonight' : 'Today');
+  if (key === cityDayKey(now + DAY_MS, cityId)) return tx('Tomorrow');
+  return cityWhen(ms, cityId, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+/** « 19:30 » in the activity's city time. */
+export function cardTime(ms: number, cityId: string): string {
+  const d = new Date(ms + offsetOf(cityId) * 3600_000);
+  return `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+}
+
+/** « Full » or « 3 spots left », only when the host set a limit. */
+function availability(item: ActivityCardItem): { label: string; full: boolean } | null {
+  if (item.capacity == null || item.going == null) return null;
+  const left = item.capacity - item.going;
+  if (left <= 0) return { label: tx('Full'), full: true };
+  return { label: tx(left === 1 ? '{n} spot left' : '{n} spots left', { n: left }), full: false };
+}
+
+function categoryOf(id: string) {
+  return CATEGORY_BY_ID[id as CategoryKey] ?? null;
+}
+
+/**
+ * « Find something to do »: photo (fixed 4:3, cropped, never stretched),
+ * category, title on two lines at most, date and time, place, people going
+ * and the price. Every card of a row has the same height (the title keeps
+ * its two lines), so the grid stays straight.
+ */
+export const ActivityCard = memo(function ActivityCard({ item, width, onPress }: { item: ActivityCardItem; width: number; onPress: () => void }) {
+  const t = useTheme();
+  const category = categoryOf(item.categoryId);
+  const color = category?.color ?? t.c.textSecondary;
+  const spots = availability(item);
+  const photoW = width - 12;
+  const day = cardDay(item.startsAt, item.cityId);
+  const time = cardTime(item.startsAt, item.cityId);
+  return (
+    <PressableScale
+      onPress={onPress}
+      haptic="select"
+      scaleTo={0.97}
+      style={[styles.tile, { width, boxShadow: t.shadow.card }]}
+      accessibilityRole="button"
+      accessibilityLabel={[item.title, tx(category?.label ?? 'Activity'), `${day} ${time}`, item.place, item.price, spots?.label].filter(Boolean).join(', ')}
+    >
+      <GlassLayer radius={radius.xl} />
+      <View style={[styles.tilePhoto, { width: photoW, height: Math.round(photoW * 0.75) }]}>
+        <Photo visual={item.visual} light={item.light} style={StyleSheet.absoluteFill} width={500} recyclingKey={`srv-${item.id}`} />
+        {spots ? (
+          <Glass dark style={styles.tileLive}>
+            <Text variant="overline" tone="onDark" raw>
+              {spots.label}
+            </Text>
+          </Glass>
+        ) : null}
+        {item.joined ? (
+          <View style={[gridStyles.badge, { backgroundColor: t.c.positive }]}>
+            <Icon name="check" size={13} color="#FFFFFF" strokeWidth={2.8} />
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.tileBody}>
+        <View style={styles.inline}>
+          <Icon name={category?.icon ?? 'sparkles'} size={12} color={color} />
+          <Text variant="overline" color={color} numberOfLines={1} style={{ flexShrink: 1 }}>
+            {category?.label ?? 'Activity'}
+          </Text>
+        </View>
+        <Text variant="titleS" raw numberOfLines={2} style={gridStyles.title}>
+          {item.title}
+        </Text>
+        <View style={styles.inline}>
+          <Icon name="clock" size={12} color={t.c.textSecondary} />
+          <Text variant="caption" tone="secondary" raw numberOfLines={1} style={{ flexShrink: 1 }}>
+            {day} · {time}
+          </Text>
+        </View>
+        <View style={styles.inline}>
+          <Icon name="pin" size={12} color={t.c.textSecondary} />
+          <Text variant="caption" tone="secondary" raw numberOfLines={1} style={{ flexShrink: 1 }}>
+            {item.place}
+          </Text>
+        </View>
+        <View style={gridStyles.footer}>
+          <View style={[styles.inline, { flexShrink: 1 }]}>
+            {item.going != null ? (
+              <>
+                <Icon name="users" size={12} color={t.c.textSecondary} />
+                <Text variant="caption" tone="secondary" raw numberOfLines={1}>
+                  {tx('{n} going', { n: item.going })}
+                </Text>
+              </>
+            ) : null}
+          </View>
+          <Text variant="label" raw numberOfLines={1} color={spots?.full ? t.c.textTertiary : t.c.text}>
+            {item.price}
+          </Text>
+        </View>
+      </View>
+    </PressableScale>
+  );
+});
+
+/**
+ * « Planned by members »: the compact card (a shorter photo, smaller type)
+ * with who organises it. Same width as the big grid, about a fifth shorter.
+ */
+export const ActivityTileCompact = memo(function ActivityTileCompact({ item, width, onPress }: { item: ActivityCardItem; width: number; onPress: () => void }) {
+  const t = useTheme();
+  const spots = availability(item);
+  const day = cardDay(item.startsAt, item.cityId);
+  const time = cardTime(item.startsAt, item.cityId);
+  const meta = [item.price, item.going != null ? tx('{n} going', { n: item.going }) : null, spots?.full ? spots.label : null].filter(Boolean).join(' · ');
+  return (
+    <PressableScale
+      onPress={onPress}
+      haptic="select"
+      scaleTo={0.97}
+      style={[gridStyles.compact, { width, boxShadow: t.shadow.card }]}
+      accessibilityRole="button"
+      accessibilityLabel={[item.title, item.organiser ? tx('By {name}', { name: item.organiser }) : null, `${day} ${time}`, item.place, meta].filter(Boolean).join(', ')}
+    >
+      <GlassLayer radius={radius.lg} />
+      <View style={{ width, height: Math.round(width * 0.56) }}>
+        <Photo visual={item.visual} light={item.light} style={StyleSheet.absoluteFill} width={360} recyclingKey={`srv-${item.id}`} />
+        {item.mine || item.joined ? (
+          <Glass dark style={gridStyles.compactBadge}>
+            <Icon name={item.mine ? 'star' : 'check'} size={10} color="#FFFFFF" strokeWidth={2.6} />
+            <Text variant="overline" tone="onDark">
+              {item.mine ? 'Your plan' : 'Going'}
+            </Text>
+          </Glass>
+        ) : null}
+      </View>
+      <View style={gridStyles.compactBody}>
+        <Text variant="label" raw numberOfLines={2} style={gridStyles.compactTitle}>
+          {item.title}
+        </Text>
+        <Text variant="caption" tone="tertiary" raw numberOfLines={1}>
+          {item.organiser ? tx('By {name}', { name: item.organiser }) : tx('By a member')}
+        </Text>
+        <Text variant="caption" tone="secondary" raw numberOfLines={1}>
+          {day} · {time}
+        </Text>
+        <Text variant="caption" tone="secondary" raw numberOfLines={1}>
+          {item.place}
+        </Text>
+        <Text variant="caption" raw numberOfLines={1} color={t.c.text}>
+          {meta}
+        </Text>
+      </View>
+    </PressableScale>
+  );
+});
+
+const gridStyles = StyleSheet.create({
+  // Two lines kept even when the title needs one: cards of a row stay the same height.
+  title: { minHeight: 42 },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 2 },
+  badge: { position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  compact: { borderRadius: radius.lg, overflow: 'hidden' },
+  compactBody: { paddingHorizontal: 10, paddingTop: 8, paddingBottom: 10, gap: 2 },
+  compactTitle: { minHeight: 32, marginBottom: 2 },
+  compactBadge: { position: 'absolute', top: 6, left: 6, flexDirection: 'row', alignItems: 'center', gap: 4, height: 20, paddingHorizontal: 7, borderRadius: 10 },
 });
