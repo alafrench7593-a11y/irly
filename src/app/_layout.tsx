@@ -39,6 +39,7 @@ import { useAppSpace, useSpaceStore } from '@/state/appSpace';
 import { useStore } from '@/state/store';
 import { Flavor } from '@/theme/flavor';
 import { useTheme } from '@/theme/useTheme';
+import { watchWebUpdates } from '@/lib/webUpdate';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ duration: 250, fade: true });
@@ -50,6 +51,8 @@ SplashScreen.setOptions({ duration: 250, fade: true });
 // above the glass pane laid behind them (an absolutely positioned layer
 // would otherwise cover, and blur, the typed text).
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  // An open tab or a home-screen app picks up a new release by itself.
+  watchWebUpdates();
   const css = document.createElement('style');
   css.textContent = 'input,textarea{min-width:0;max-width:100%;font-size:16px;position:relative}';
   document.head.appendChild(css);

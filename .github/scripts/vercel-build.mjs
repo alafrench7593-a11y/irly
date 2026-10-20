@@ -6,6 +6,9 @@ import fs from 'node:fs';
 import { execSync } from 'node:child_process';
 
 const run = (cmd) => execSync(cmd, { stdio: 'inherit' });
+
+// One id per deployment, in the bundles and in version.json, so open tabs update themselves.
+process.env.EXPO_PUBLIC_BUILD_ID = process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || String(Date.now());
 const OUT = 'out';
 
 // The web app, built for /app.
