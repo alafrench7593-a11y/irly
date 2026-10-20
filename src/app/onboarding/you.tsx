@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Field } from '@/components/ui/Controls';
+import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
@@ -72,11 +73,12 @@ export default function WhoAreYou() {
                   styles.option,
                   {
                     width: colW,
-                    backgroundColor: selected ? t.c.brandSoft : 'rgba(255,255,255,0.05)',
+                    backgroundColor: selected ? t.c.brandSoft : 'transparent',
                     borderColor: selected ? t.c.brand : 'rgba(255,255,255,0.1)',
                   },
                 ]}
               >
+                {selected ? null : <Glass dark level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />}
                 <View style={styles.optionTop}>
                   <View style={[styles.optionIcon, { backgroundColor: selected ? t.c.brand : 'rgba(255,255,255,0.08)' }]}>
                     <Icon name={def.icon} size={18} color={selected ? t.c.onBrand : '#FFFFFF'} />
@@ -104,7 +106,7 @@ export default function WhoAreYou() {
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: space.gutter },
-  option: { padding: 14, gap: 6, borderRadius: radius.lg, borderWidth: 1.5, minHeight: 128 },
+  option: { padding: 14, gap: 6, borderRadius: radius.lg, borderWidth: 1.5, minHeight: 128, overflow: 'hidden' },
   optionTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   optionIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   tick: { width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },

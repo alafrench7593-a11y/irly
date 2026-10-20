@@ -34,6 +34,7 @@ import { enabledProviders, hasBackend } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE = /^\+?\d[\d\s-]{7,16}$/;
@@ -111,7 +112,7 @@ export default function AccountScreen() {
     else if (router.canGoBack()) router.back();
   };
 
-  const input = [styles.input, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }];
+  const input = [styles.input, { color: t.c.text, backgroundColor: t.c.glass, borderColor: t.c.line }];
   const validEmail = EMAIL.test(email.trim());
 
   if (!hasBackend) {
@@ -151,7 +152,8 @@ export default function AccountScreen() {
     return (
       <Page overline="Signed in" title="Your account" subtitle={account.email}>
         <View style={styles.body}>
-          <View style={[styles.note, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.lg} />
             <Icon name="check" size={18} color={t.c.positive} />
             <Text variant="body" style={{ flex: 1 }}>
               Your profile, matches, chats and sessions are saved on the IRLY server.

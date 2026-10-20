@@ -11,6 +11,9 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useFrame } from '@/components/layout/AppFrame';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import Animated from 'react-native-reanimated';
+import { enter } from '@/motion/enter';
 
 type Door = { label: string; caption: string; icon: IconName; photo: PhotoKey; href: string };
 
@@ -47,7 +50,16 @@ export default function BaliHub() {
             Where are you?
           </Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
-            {(main.length ? main : [{ id: 'canggu', name: 'Canggu' }, { id: 'ubud', name: 'Ubud' }, { id: 'seminyak', name: 'Seminyak' }, { id: 'uluwatu', name: 'Uluwatu' }, { id: 'sanur', name: 'Sanur' }]).map((a) => (
+            {(main.length
+              ? main
+              : [
+                  { id: 'canggu', name: 'Canggu' },
+                  { id: 'ubud', name: 'Ubud' },
+                  { id: 'seminyak', name: 'Seminyak' },
+                  { id: 'uluwatu', name: 'Uluwatu' },
+                  { id: 'sanur', name: 'Sanur' },
+                ]
+            ).map((a) => (
               <Chip key={a.id} size="sm" label={a.name} icon={profiled.has(a.id) ? 'sparkles' : 'pin'} onPress={() => router.push(`/bali/area/${a.id}`)} />
             ))}
           </ScrollView>
@@ -77,16 +89,27 @@ export default function BaliHub() {
 
         <View style={[styles.pad, { gap: 10 }]}>
           <Text variant="titleM">Areas, explained</Text>
-          {profiles.data.map((p) => (
-            <PressableScale key={p.areaId} onPress={() => router.push(`/bali/area/${p.areaId}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={p.name}>
-              <View style={{ flex: 1 }}>
-                <Text variant="titleS" raw>{p.name}</Text>
-                <Text variant="caption" tone="secondary" numberOfLines={1}>
-                  {p.tagline}
-                </Text>
-              </View>
-              <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
-            </PressableScale>
+          {profiles.data.map((p, i) => (
+            <Animated.View key={p.areaId} entering={enter.rise(Math.min(i, 8))}>
+              <PressableScale
+                onPress={() => router.push(`/bali/area/${p.areaId}`)}
+                haptic="select"
+                scaleTo={0.98}
+                style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]}
+                accessibilityLabel={p.name}
+              >
+                <GlassLayer radius={radius.lg} />
+                <View style={{ flex: 1 }}>
+                  <Text variant="titleS" raw>
+                    {p.name}
+                  </Text>
+                  <Text variant="caption" tone="secondary" numberOfLines={1}>
+                    {p.tagline}
+                  </Text>
+                </View>
+                <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+              </PressableScale>
+            </Animated.View>
           ))}
           {profiles.error ? (
             <Text variant="bodyS" tone="secondary">

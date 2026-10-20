@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -25,6 +27,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * Help & Questions: ask about life in the city, answer, recommend places and
@@ -82,7 +85,8 @@ export default function HelpScreen() {
           </View>
         </View>
         <View style={[styles.pad]}>
-          <View style={[styles.search, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+          <View style={[styles.search, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+            <GlassLayer radius={radius.lg} />
             <Icon name="search" size={18} color={t.c.textTertiary} />
             <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search: Emirates ID, nursery, Marina…')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} returnKeyType="search" accessibilityLabel={a11y('Search questions')} />
           </View>
@@ -100,7 +104,8 @@ export default function HelpScreen() {
         </View>
 
         {cat?.official?.length ? (
-          <View style={[styles.official, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+          <View style={[styles.official, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+            <GlassLayer radius={radius.xl} />
             <View style={styles.row}>
               <Icon name="shield" size={16} color={t.c.text} />
               <Text variant="titleS">Official sources</Text>
@@ -108,14 +113,16 @@ export default function HelpScreen() {
             <Text variant="bodyS" tone="secondary">
               Rules and fees change: members share what they lived, the official sites say what applies today.
             </Text>
-            {cat.official.map((o) => (
-              <PressableScale key={o.url} haptic="select" onPress={() => Linking.openURL(o.url)} style={styles.link} accessibilityRole="link" accessibilityLabel={o.label}>
-                <Icon name="link" size={14} color={t.c.text} />
-                <Text variant="label" style={{ flex: 1 }}>
-                  {tx(o.label)}
-                </Text>
-                <Icon name="chevronRight" size={14} color={t.c.textTertiary} />
-              </PressableScale>
+            {cat.official.map((o, idx) => (
+              <Animated.View key={o.url} entering={enter.rise(Math.min(idx, 8))}>
+                <PressableScale haptic="select" onPress={() => Linking.openURL(o.url)} style={styles.link} accessibilityRole="link" accessibilityLabel={o.label}>
+                  <Icon name="link" size={14} color={t.c.text} />
+                  <Text variant="label" style={{ flex: 1 }}>
+                    {tx(o.label)}
+                  </Text>
+                  <Icon name="chevronRight" size={14} color={t.c.textTertiary} />
+                </PressableScale>
+              </Animated.View>
             ))}
           </View>
         ) : null}
@@ -141,7 +148,8 @@ export default function HelpScreen() {
             {tx('Help & Questions is not open in {city} yet.', { city: city.name })}
           </Text>
         ) : !feed.items.length ? (
-          <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="question" size={22} color={t.c.textSecondary} />
             <Text variant="body" tone="secondary" align="center">
               {query ? 'Nothing found. Try other words, or ask the question.' : 'No questions here yet. Be the first to ask.'}
@@ -173,7 +181,8 @@ function HelpCard({ p, onSaved }: { p: HelpPost; onSaved: () => void }) {
   const [saved, setSaved] = useState(p.saved);
   const open = () => router.push({ pathname: '/comments', params: { type: 'community_post', id: p.id, title: p.body.slice(0, 60) } });
   return (
-    <PressableScale haptic="select" scaleTo={0.98} onPress={open} style={[styles.card, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel={p.body.slice(0, 80)}>
+    <PressableScale haptic="select" scaleTo={0.98} onPress={open} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={p.body.slice(0, 80)}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={30} userId={p.authorId} />
         <View style={{ flex: 1 }}>

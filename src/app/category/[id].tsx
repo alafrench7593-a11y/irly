@@ -29,6 +29,7 @@ import { cityWhen } from '@/lib/time';
 import { FEATURES } from '@/lib/features';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const HERO = 320;
 
@@ -166,7 +167,8 @@ export default function CategoryScreen() {
             <SectionHeader overline={sub.label} title="Things to do" />
             <View style={styles.rows}>
               {sub.activities.map((act) => (
-                <View key={act.id} style={[styles.activity, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
+                <View key={act.id} style={[styles.activity, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}>
+                  <GlassLayer radius={radius.xl} />
                   <Photo visual={{ photo: ideaPhoto(category.id as CategoryKey, act.label, act.place) }} light={city.light} style={styles.thumb} width={200} recyclingKey={`act-${act.id}`} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Text variant="titleS" color={ink}>
@@ -194,7 +196,8 @@ export default function CategoryScreen() {
           <SectionHeader title={sub ? tx('{what} sessions', { what: tx(sub.label) }) : tx('Sessions')} action={sessions.length + mine.length + server.length ? `${sessions.length + mine.length + server.length}` : undefined} />
           <View style={styles.rows}>
             {mine.map((p) => (
-              <View key={p.id} style={[styles.activity, { backgroundColor: t.c.surface }]}>
+              <View key={p.id} style={[styles.activity, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                <GlassLayer radius={radius.xl} />
                 <View style={{ flex: 1 }}>
                   <Text variant="overline" tone="secondary">
                     Your session
@@ -207,7 +210,8 @@ export default function CategoryScreen() {
               </View>
             ))}
             {server.map((a) => (
-              <PressableScale key={a.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/a/${a.id}`)} style={[styles.activity, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
+              <PressableScale key={a.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/a/${a.id}`)} style={[styles.activity, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
+                <GlassLayer radius={radius.xl} />
                 <View style={{ flex: 1 }}>
                   <Text variant="overline" tone="secondary">
                     {a.creatorId === uid ? 'Your session' : 'Planned by a member'}
@@ -232,9 +236,10 @@ export default function CategoryScreen() {
                 haptic="select"
                 scaleTo={0.98}
                 onPress={() => create(sub?.id)}
-                style={[styles.empty, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}
+                style={[styles.empty, { borderColor: 'transparent', backgroundColor: 'transparent', overflow: 'hidden' }]}
                 accessibilityLabel="Create the first session"
               >
+                <GlassLayer radius={radius.xl} />
                 <Icon name="plus" size={20} color={ink} />
                 <View style={{ flex: 1 }}>
                   <Text variant="titleS" color={ink}>
@@ -270,7 +275,8 @@ export default function CategoryScreen() {
           {myCommunities.length ? (
             <View style={[styles.rows, { marginTop: communities.length ? space[4] : 0 }]}>
               {myCommunities.map((c) => (
-                <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${c.id}`)} style={[styles.activity, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
+                <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${c.id}`)} style={[styles.activity, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
+                  <GlassLayer radius={radius.xl} />
                   <View style={{ flex: 1 }}>
                     <Text variant="titleS" raw>
                       {c.name}
@@ -289,9 +295,10 @@ export default function CategoryScreen() {
               haptic="select"
               scaleTo={0.98}
               onPress={() => router.push('/community/new')}
-              style={[styles.empty, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}
+              style={[styles.empty, { borderColor: 'transparent', backgroundColor: 'transparent', overflow: 'hidden' }]}
               accessibilityLabel="Create a community"
             >
+              <GlassLayer radius={radius.xl} />
               <Icon name="users" size={20} color={ink} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleS" color={ink}>

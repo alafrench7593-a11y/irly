@@ -23,6 +23,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 export function useUnread(): number {
   const cityId = useCityId();
@@ -135,8 +136,9 @@ function CommunitiesButton() {
       onPress={() => router.push('/communities')}
       accessibilityRole="button"
       accessibilityLabel={tx('Communities')}
-      style={[styles.communities, { backgroundColor: t.c.overlay, borderColor: t.c.line }]}
+      style={[styles.communities, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
     >
+      <GlassLayer radius={radius.pill} level="thin" />
       <Icon name="users" size={16} color={t.c.text} />
       <Text variant="label" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flexShrink: 1 }}>
         Communities

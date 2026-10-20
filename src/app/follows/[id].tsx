@@ -16,6 +16,7 @@ import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /** A member's followers or the people they follow: real relations from the server, each a link to their profile. */
 export default function FollowsScreen() {
@@ -42,7 +43,8 @@ export default function FollowsScreen() {
 
   return (
     <Page title={which === 'followers' ? 'Followers' : which === 'friends' ? 'Friends' : 'Following'}>
-      <View style={[styles.switch, { backgroundColor: t.c.surface }]}>
+      <View style={[styles.switch, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+        <GlassLayer radius={22} />
         {(['followers', 'following', 'friends'] as const).map((x) => (
           <PressableScale key={x} haptic="select" onPress={() => setWhich(x)} accessibilityRole="tab" accessibilityState={{ selected: which === x }} style={[styles.seg, which === x ? { backgroundColor: t.c.text } : null]}>
             <Text variant="label" color={which === x ? t.c.bg : t.c.text}>
@@ -59,7 +61,8 @@ export default function FollowsScreen() {
             {list.error}
           </Text>
         ) : !list.people.length ? (
-          <Animated.View entering={FadeIn} style={[styles.empty, { backgroundColor: t.c.surface }]}>
+          <Animated.View entering={FadeIn} style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="users" size={20} color={t.c.textSecondary} />
             <Text variant="bodyS" tone="secondary" align="center">
               {which === 'followers' ? 'No followers yet.' : which === 'friends' ? 'No friends yet.' : 'Not following anyone yet.'}

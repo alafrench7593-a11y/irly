@@ -19,6 +19,8 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Skeleton } from '@/components/ui/Skeleton';
 
 /**
  * Networking for professionals: founders, freelancers, investors and
@@ -112,7 +114,8 @@ export default function NetworkDiscover() {
         ) : null}
 
         {!signedIn ? (
-          <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="network" size={24} color={t.c.textSecondary} />
             <Text variant="titleS" align="center">
               Sign in to meet professionals
@@ -123,16 +126,18 @@ export default function NetworkDiscover() {
             <Button label="Sign in" icon="user" onPress={() => router.push('/account')} />
           </View>
         ) : error && !list.length ? (
-          <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="network" size={24} color={t.c.textSecondary} />
             <Text variant="bodyS" tone="secondary" align="center">
               Can’t reach IRLY right now. Check your connection.
             </Text>
           </View>
         ) : loading && !list.length ? (
-          [0, 1, 2].map((i) => <View key={i} style={[styles.skeleton, { backgroundColor: t.c.surface }]} />)
+          [0, 1, 2].map((i) => <Skeleton key={i} height={210} radius={radius.xl} />)
         ) : !ranked.length ? (
-          <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="search" size={24} color={t.c.textSecondary} />
             <Text variant="titleS" align="center">
               {industry || role || intent || onlyCity || q ? tr('No one matches these filters yet') : tr('No professionals here yet')}
@@ -214,7 +219,6 @@ const styles = StyleSheet.create({
   rail: { paddingHorizontal: space.gutter, paddingVertical: space[3], gap: 8 },
   cta: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 18, borderRadius: radius.xl },
   empty: { alignItems: 'center', gap: 10, padding: 24, borderRadius: radius.xl },
-  skeleton: { height: 210, borderRadius: radius.xl, opacity: 0.6 },
   sheet: { paddingHorizontal: space.gutter, paddingBottom: space[4], gap: space[5] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   sheetActions: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter, paddingTop: space[3] },

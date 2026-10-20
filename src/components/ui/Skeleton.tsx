@@ -23,7 +23,7 @@ export const Skeleton = memo(function Skeleton({ width = '100%', height, radius 
   const band = useAnimatedStyle(() => ({ transform: [{ translateX: `${-100 + x.value * 200}%` }] }));
   const sheen = night ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.7)';
   return (
-    <View style={[styles.root, { width, height, borderRadius: radius, backgroundColor: night ? '#15171B' : '#EDEDEA' }, style]}>
+    <View style={[styles.root, { width, height, borderRadius: radius, backgroundColor: t.flavor === 'girl' ? '#FBE4EE' : night ? '#15171B' : '#EDEDEA' }, style]}>
       <Animated.View style={[StyleSheet.absoluteFill, band]}>
         <LinearGradient
           colors={['rgba(255,255,255,0)', sheen, 'rgba(255,255,255,0)']}

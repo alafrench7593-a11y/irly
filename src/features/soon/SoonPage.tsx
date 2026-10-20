@@ -18,6 +18,7 @@ import { useTheme } from '@/theme/useTheme';
 import { useServiceInterest } from './interest';
 import { SOON, type SoonId } from './services';
 import { SoonPill } from './SoonPill';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /** A known coming-soon id, or null (never throws on a stray URL). */
 export function soonIdOf(id: unknown): SoonId | null {
@@ -80,7 +81,8 @@ export function SoonPage({ id }: { id: SoonId }) {
         </Photo>
 
         <View style={styles.body}>
-          <Animated.View entering={enter.rise(4)} style={[styles.notice, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+          <Animated.View entering={enter.rise(4)} style={[styles.notice, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+            <GlassLayer radius={radius.lg} />
             <Icon name="clock" size={18} color={t.c.textSecondary} />
             <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
               {s.notice}

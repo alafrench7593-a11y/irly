@@ -21,6 +21,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * Dubai News & Life: the city's news and practical information, from the
@@ -47,7 +48,8 @@ export default function NewsScreen() {
     >
       <View style={{ gap: space[4] }}>
         <View style={styles.pad}>
-          <View style={[styles.search, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+          <View style={[styles.search, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+            <GlassLayer radius={radius.lg} />
             <Icon name="search" size={18} color={t.c.textTertiary} />
             <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search the news')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} accessibilityLabel={a11y('Search the news')} />
           </View>
@@ -76,7 +78,8 @@ export default function NewsScreen() {
             <Button label="Try again" variant="secondary" onPress={news.reload} />
           </View>
         ) : !news.items.length ? (
-          <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="news" size={22} color={t.c.textSecondary} />
             <Text variant="body" tone="secondary" align="center">
               {saved ? 'Nothing saved yet.' : query ? 'Nothing found.' : 'No news yet. Sources are added by the IRLY team; check back soon.'}
@@ -104,7 +107,8 @@ function NewsCard({ n }: { n: NewsItem }) {
   const open = () => WebBrowser.openBrowserAsync(n.url).catch(() => toast('Could not open the article', 'x', 'live'));
   const minutes = Math.max(0, Math.round((now - n.publishedAt) / 60000));
   return (
-    <PressableScale haptic="select" scaleTo={0.98} onPress={open} style={[styles.card, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityRole="link" accessibilityLabel={`${n.title}. ${n.source}`}>
+    <PressableScale haptic="select" scaleTo={0.98} onPress={open} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityRole="link" accessibilityLabel={`${n.title}. ${n.source}`}>
+      <GlassLayer radius={radius.xl} />
       {n.image ? <Image source={{ uri: n.image }} style={styles.image} contentFit="cover" transition={150} /> : null}
       <View style={{ gap: 6 }}>
         <Text variant="caption" tone="tertiary" raw>

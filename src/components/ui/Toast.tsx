@@ -47,20 +47,27 @@ export const ToastHost = memo(function ToastHost() {
   const insets = useSafeAreaInsets();
   const t = useTheme();
   const y = useSharedValue(-120);
+  const pop = useSharedValue(0);
 
   useEffect(() => {
     if (!current) return;
     y.set(-120);
+    pop.set(0);
+    // Springs down from the top as a pane of glass, settles, then slips away.
     y.set(withSequence(withSpring(0, spring.medium), withDelay(1900, withTiming(-120, { duration: 260 }))));
-  }, [current, y]);
+    pop.set(withSequence(withSpring(1, spring.medium), withDelay(1900, withTiming(0, { duration: 220 }))));
+  }, [current, y, pop]);
 
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+  const style = useAnimatedStyle(() => ({
+    opacity: Math.min(1, pop.value * 1.4),
+    transform: [{ translateY: y.value }, { scale: 0.92 + pop.value * 0.08 }],
+  }));
   if (!current) return null;
   const color = current.tone === 'brand' ? t.c.brand : current.tone === 'live' ? t.c.live : t.c.positive;
 
   return (
     <Animated.View pointerEvents="none" style={[styles.wrap, { top: insets.top + 8 }, style]}>
-      <Glass style={styles.pill} intensity={60}>
+      <Glass style={styles.pill} intensity={60} level="thick" lifted>
         <View style={[styles.icon, { backgroundColor: color }]}>
           <Icon name={current.icon ?? 'check'} size={14} color={current.tone === 'brand' ? t.c.onBrand : '#FFFFFF'} strokeWidth={2.8} />
         </View>

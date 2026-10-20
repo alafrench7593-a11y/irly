@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
+import { enter } from '@/motion/enter';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { ACTIVITIES } from '@/data/catalog';
@@ -173,6 +176,7 @@ export default function Assistant() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient variant="hero" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           keyboardShouldPersistTaps="handled"
@@ -190,13 +194,16 @@ export default function Assistant() {
 
           {!cmd ? (
             <View style={[styles.pad, { gap: 10 }]}>
-              {EXAMPLES.map((ex) => (
-                <PressableScale key={ex} onPress={() => run(tx(ex), 'text')} haptic="select" scaleTo={0.98} style={[styles.example, { backgroundColor: t.c.surface }]} accessibilityLabel={ex}>
-                  <Icon name="sparkles" size={16} color={t.c.textSecondary} />
-                  <Text variant="body" style={{ flex: 1 }}>
-                    {ex}
-                  </Text>
-                </PressableScale>
+              {EXAMPLES.map((ex, i) => (
+                <Animated.View key={ex} entering={enter.rise(Math.min(i, 8), 60)}>
+                  <PressableScale onPress={() => run(tx(ex), 'text')} haptic="select" scaleTo={0.98} style={styles.example} accessibilityLabel={ex}>
+                    <GlassLayer radius={radius.lg} />
+                    <Icon name="sparkles" size={16} color={t.c.textSecondary} />
+                    <Text variant="body" style={{ flex: 1 }}>
+                      {ex}
+                    </Text>
+                  </PressableScale>
+                </Animated.View>
               ))}
             </View>
           ) : (
@@ -216,7 +223,7 @@ export default function Assistant() {
           )}
         </ScrollView>
 
-        <Glass style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
           {voice.listening ? (
             <Text variant="bodyS" tone="secondary" numberOfLines={2} style={{ paddingHorizontal: 4 }}>
               {voice.partial || tx('Listening…')}
@@ -227,7 +234,8 @@ export default function Assistant() {
             </Text>
           ) : null}
           <View style={styles.composerRow}>
-            <View style={[styles.inputWrap, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+            <View style={styles.inputWrap}>
+              <GlassLayer radius={25} level="thin" />
               <TextInput
                 ref={inputRef}
                 value={text}
@@ -264,7 +272,8 @@ function Understood({ cmd, cityName, areas, onEdit }: { cmd: Command; cityName: 
   const e = cmd.entities;
   const editable = cmd.intent === 'CREATE_ACTIVITY' || cmd.intent === 'CREATE_EVENT';
   return (
-    <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+    <View style={[styles.card, { boxShadow: t.shadow.card }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.cardHead}>
         <Icon name="wand" size={18} color={t.c.text} />
         <Text variant="titleS">{INTENT_LABEL[cmd.intent]}</Text>
@@ -436,12 +445,12 @@ function Act({ cmd, cityId, busy, onCreate, onSwitch }: { cmd: Command; cityId: 
 const styles = StyleSheet.create({
   root: { flex: 1 },
   pad: { paddingHorizontal: space.gutter },
-  example: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: radius.lg },
-  card: { marginHorizontal: space.gutter, padding: 16, borderRadius: radius.xl, gap: 14 },
+  example: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: radius.lg, overflow: 'hidden' },
+  card: { marginHorizontal: space.gutter, padding: 16, borderRadius: radius.xl, gap: 14, overflow: 'hidden' },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   composer: { paddingHorizontal: space.gutter, paddingTop: 10, gap: 8 },
   composerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  inputWrap: { flex: 1, height: 50, borderRadius: 25, borderWidth: 1, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center' },
+  inputWrap: { flex: 1, height: 50, borderRadius: 25, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },
   send: { width: 50, height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
 });

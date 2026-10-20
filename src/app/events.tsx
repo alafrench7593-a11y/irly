@@ -17,6 +17,7 @@ import { enter } from '@/motion/enter';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type When = 'today' | 'tomorrow' | 'week' | 'weekend';
 const CATEGORIES: EventCategory[] = ['sports', 'networking', 'party', 'wellness', 'business', 'culture', 'food'];
@@ -73,7 +74,8 @@ export default function Events() {
       </View>
 
       {list.length === 0 ? (
-        <Animated.View entering={enter.fade(0)} style={[styles.empty, { borderColor: t.c.lineStrong }]}>
+        <Animated.View entering={enter.rise(0)} style={styles.empty}>
+          <GlassLayer radius={radius.xl} />
           <Icon name="calendar" size={28} color={t.c.textTertiary} />
           <Text variant="titleS" align="center">
             Nothing matches yet
@@ -112,7 +114,6 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center',
     borderRadius: radius.xl,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
+    overflow: 'hidden',
   },
 });

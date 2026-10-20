@@ -20,6 +20,11 @@ import { friendlyError } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
+import { Flavor } from '@/theme/flavor';
+import Animated from 'react-native-reanimated';
+import { enter } from '@/motion/enter';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 
 type Status = NonNullable<CircleMember['status']>;
 const STATUSES: { id: Status; label: string }[] = [
@@ -36,7 +41,7 @@ const LOOKING = ['friends', 'activities', 'travel companions', 'coworking', 'wel
  * there. Same IRLY Girl rules (women only, privacy, blocking), plus the
  * Bali girl communities and the move guides.
  */
-export default function GirlsMovingScreen() {
+function GirlsMovingScreenInner() {
   return (
     <GirlGate>
       <GirlsMoving />
@@ -92,9 +97,11 @@ function GirlsMoving() {
 
   return (
     <View style={[styles.root]}>
+      <Ambient />
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40, gap: space[6] }} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <PressableScale haptic="tap" scaleTo={0.9} onPress={() => safeBack(router, '/girl')} accessibilityLabel="Back" style={styles.round}>
+            <GlassLayer radius={20} level="thin" />
             <Icon name="chevronLeft" size={20} color={girl.ink} />
           </PressableScale>
           <Text variant="titleM" color={girl.ink} style={{ letterSpacing: 2 }}>
@@ -116,6 +123,7 @@ function GirlsMoving() {
         {me?.hasProfile || (!FEATURES.girlMatch && !extras.loading && !extras.error) ? (
           <View style={styles.pad}>
             <View style={[styles.card, { gap: 10 }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="titleS" color={girl.ink}>
                 {"What's your Bali status?"}
               </Text>
@@ -139,6 +147,7 @@ function GirlsMoving() {
           // Could not read the profile: never tell a member to create one she may have.
           <View style={styles.pad}>
             <View style={[styles.card, { gap: 10 }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="bodyS" color={girl.inkSoft}>
                 Your Bali status could not load.
               </Text>
@@ -174,6 +183,7 @@ function GirlsMoving() {
             [0, 1, 2].map((i) => <Skeleton key={i} height={80} radius={radius.xl} />)
           ) : circle.error ? (
             <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="bodyS" color={girl.inkSoft} align="center">
                 {/profile/i.test(circle.error) ? tx(circle.error) : 'Could not load. Check your connection.'}
               </Text>
@@ -184,15 +194,16 @@ function GirlsMoving() {
               {me?.hasProfile ? 'Nobody here yet. Set your status above: the next woman moving to Bali will find you.' : 'Nobody here yet. Create your IRLY Girl profile: the next woman moving to Bali will find you.'}
             </Text>
           ) : (
-            circle.data.map((m) => (
+            circle.data.map((m, i) => (
+              <Animated.View key={m.userId} entering={enter.rise(Math.min(i, 8))}>
               <PressableScale
-                key={m.userId}
                 haptic="select"
                 scaleTo={0.98}
                 onPress={() => router.push(`/person/${m.userId}`)}
                 accessibilityLabel={tx("View {name}'s profile", { name: m.firstName })}
                 style={[styles.card, styles.row]}
               >
+                <GlassLayer radius={radius.xl} />
                 <Avatar name={m.firstName} hue={hueOf(m.userId)} size={48} userId={m.userId} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="titleS" color={girl.ink} raw>
@@ -216,6 +227,7 @@ function GirlsMoving() {
                   </Text>
                 ) : null}
               </PressableScale>
+              </Animated.View>
             ))
           )}
           {circle.data.length ? <GButton label="Connect in IRLY Girl" icon="heartHandshake" onPress={() => router.push('/girl')} /> : null}
@@ -223,6 +235,7 @@ function GirlsMoving() {
 
         <View style={styles.pad}>
           <View style={[styles.card, { gap: 10 }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="titleM" color={girl.ink} style={girlType.section}>
               Plan something with girls
             </Text>
@@ -237,6 +250,7 @@ function GirlsMoving() {
           {communities.loading && !communities.data.length ? <Skeleton height={64} radius={radius.xl} /> : null}
           {communities.error && !communities.data.length && !communities.loading ? (
             <View style={[styles.card, { gap: 10, alignItems: 'center' }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="bodyS" color={girl.inkSoft} align="center">
                 Communities could not load.
               </Text>
@@ -245,15 +259,17 @@ function GirlsMoving() {
           ) : null}
           {!communities.data.length && !communities.loading && !communities.error ? (
             <View style={[styles.card, { gap: 10 }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="bodyS" color={girl.inkSoft}>
                 No Bali girl community yet. Start one: the next woman moving here will find it.
               </Text>
               <GButton label="Create a community" icon="plus" variant="secondary" onPress={() => router.push('/girl/new-community?city=bali')} />
             </View>
           ) : null}
-          {communities.data.map((c) => (
+          {communities.data.map((c, i) => (
             // The row opens the community; Join sits beside it (never a button inside a button).
-            <View key={c.id} style={[styles.card, styles.row]}>
+            <Animated.View key={c.id} entering={enter.rise(Math.min(i, 8))} style={[styles.card, styles.row]}>
+              <GlassLayer radius={radius.xl} />
               <PressableScale onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={{ flex: 1 }} accessibilityLabel={tx('Open {title}', { title: c.name })}>
                 <Text variant="titleS" color={girl.ink} raw>
                   {c.name}
@@ -265,7 +281,7 @@ function GirlsMoving() {
                 ) : null}
               </PressableScale>
               {c.member ? <GChip small label={tx('Joined')} selected /> : <GButton label="Join" loading={joining === c.id} disabled={Boolean(joining)} onPress={() => join(c.id)} />}
-            </View>
+            </Animated.View>
           ))}
         </View>
 
@@ -290,7 +306,16 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: girl.bg },
   pad: { paddingHorizontal: space.gutter },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.gutter },
-  round: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: girl.surface },
-  card: { backgroundColor: girl.surface, borderRadius: radius.xl, padding: 16, boxShadow: girl.shadowSoft },
+  round: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },
+  card: { borderRadius: radius.xl, padding: 16, boxShadow: girl.shadowSoft },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });
+
+/** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */
+export default function GirlsMovingScreen() {
+  return (
+    <Flavor value="girl">
+      <GirlsMovingScreenInner />
+    </Flavor>
+  );
+}

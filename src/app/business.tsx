@@ -24,6 +24,7 @@ import { useCityId } from '@/state/store';
 import { NetworkDoor } from '@/features/network/ui';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 export default function Business() {
   const t = useTheme();
@@ -103,7 +104,8 @@ export default function Business() {
 function Steps({ guide }: { guide: BusinessGuide }) {
   const t = useTheme();
   return (
-    <Animated.View entering={enter.rise(0)} style={[styles.steps, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <Animated.View entering={enter.rise(0)} style={[styles.steps, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.lg} />
       {guide.steps.map((s, i) => (
         <View key={s} style={styles.stepRow}>
           <View style={styles.rail}>
@@ -129,7 +131,8 @@ function Steps({ guide }: { guide: BusinessGuide }) {
 function ProCard({ pro, onProfile }: { pro: Professional; onProfile?: () => void }) {
   const t = useTheme();
   return (
-    <View style={[styles.pro, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <View style={[styles.pro, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.lg} />
       <PressableScale onPress={onProfile} disabled={!onProfile} scaleTo={0.98} style={styles.proTop}>
         <Avatar name={pro.name} hue={pro.hue} size={50} verified />
         <View style={{ flex: 1, gap: 2 }}>

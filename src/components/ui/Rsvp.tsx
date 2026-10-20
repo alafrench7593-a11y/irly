@@ -7,6 +7,7 @@ import { scale, spring } from '@/motion/tokens';
 import { useStore } from '@/state/store';
 import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from './GlassLayer';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 import { toast } from './Toast';
@@ -56,9 +57,10 @@ export function RsvpControl({ id, onDark }: { id: string; onDark?: boolean }) {
   return (
     <View
       onLayout={(e: LayoutChangeEvent) => setW(e.nativeEvent.layout.width)}
-      style={[styles.track, { backgroundColor: track }]}
+      style={[styles.track, { backgroundColor: onDark ? track : 'transparent', overflow: 'hidden' }]}
       accessibilityRole="radiogroup"
     >
+      {onDark ? null : <GlassLayer radius={radius.pill} level="thin" />}
       {segW && index >= 0 ? <Animated.View style={[styles.pill, { width: segW, boxShadow: t.shadow.card }, pill]} /> : null}
       {OPTIONS.map((o) => {
         const on = o.id === answer;

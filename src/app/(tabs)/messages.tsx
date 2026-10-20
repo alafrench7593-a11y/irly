@@ -5,6 +5,8 @@ import Animated, { FadeIn, FadeOut, LinearTransition, useReducedMotion } from 'r
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
+import { Glass } from '@/components/ui/Glass';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -139,7 +141,8 @@ export default function Messages() {
   return (
     <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place.">
       <View style={styles.pad}>
-        <View style={[styles.search, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+        <View style={styles.search}>
+          <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
           <Icon name="search" size={18} color={t.c.textTertiary} />
           <TextInput
             value={q}
@@ -171,14 +174,19 @@ export default function Messages() {
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
               accessibilityLabel={`${tx(x.label)}, ${counts[x.id]}`}
-              style={[styles.tab, { backgroundColor: on ? t.c.text : t.c.surface, borderColor: on ? t.c.text : t.c.line }]}
+              style={styles.tab}
             >
-              <Icon name={x.icon} size={14} color={on ? t.c.bg : t.c.text} />
-              <Text variant="label" color={on ? t.c.bg : t.c.text}>
+              {on ? (
+                <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[StyleSheet.absoluteFill, styles.tabFill, { backgroundColor: t.c.brand, boxShadow: t.shadow.glow }]} />
+              ) : (
+                <Glass level="thin" style={[StyleSheet.absoluteFill, styles.tabFill]} />
+              )}
+              <Icon name={x.icon} size={14} color={on ? t.c.onBrand : t.c.text} />
+              <Text variant="label" color={on ? t.c.onBrand : t.c.text}>
                 {x.label}
               </Text>
               {counts[x.id] ? (
-                <Text variant="caption" color={on ? t.c.bg : t.c.textTertiary}>
+                <Text variant="caption" color={on ? t.c.onBrand : t.c.textTertiary}>
                   {counts[x.id]}
                 </Text>
               ) : null}
@@ -199,10 +207,11 @@ export default function Messages() {
             accessibilityRole="button"
             accessibilityState={{ selected: showArchived }}
             accessibilityLabel={showArchived ? tx('Back to messages') : tx('Archived, {n}', { n: archivedCount })}
-            style={[styles.banner, { backgroundColor: showArchived ? t.c.text : t.c.surface, borderColor: t.c.line }]}
+            style={[styles.banner, { backgroundColor: showArchived ? t.c.brand : 'transparent' }]}
           >
-            <Icon name={showArchived ? 'chevronLeft' : 'file'} size={16} color={showArchived ? t.c.bg : t.c.textSecondary} />
-            <Text variant="label" color={showArchived ? t.c.bg : t.c.text} style={{ flex: 1 }}>
+            {showArchived ? null : <Glass level="regular" style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />}
+            <Icon name={showArchived ? 'chevronLeft' : 'file'} size={16} color={showArchived ? t.c.onBrand : t.c.textSecondary} />
+            <Text variant="label" color={showArchived ? t.c.onBrand : t.c.text} style={{ flex: 1 }}>
               {showArchived ? 'Back to messages' : 'Archived'}
             </Text>
             {!showArchived ? (
@@ -216,7 +225,8 @@ export default function Messages() {
 
       {server.error ? (
         <View style={[styles.pad, { marginBottom: space[3] }]}>
-          <PressableScale onPress={server.refresh} style={[styles.banner, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityRole="button" accessibilityLabel={tx('{error}. Try again', { error: tx(server.error) })}>
+          <PressableScale onPress={server.refresh} style={styles.banner} accessibilityRole="button" accessibilityLabel={tx('{error}. Try again', { error: tx(server.error) })}>
+            <Glass level="regular" style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />
             <Icon name="globe" size={16} color={t.c.textSecondary} />
             <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
               {server.error}
@@ -230,6 +240,7 @@ export default function Messages() {
         {loading ? (
           [0, 1, 2, 3].map((i) => (
             <View key={i} style={styles.row}>
+              <Glass level="regular" style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />
               <Skeleton width={56} height={56} radius={28} />
               <View style={{ flex: 1, gap: 8 }}>
                 <Skeleton width="55%" height={14} />
@@ -244,14 +255,18 @@ export default function Messages() {
             </Animated.View>
           ))
         ) : (
-          <Animated.View entering={FadeIn} style={[styles.empty, { backgroundColor: t.c.surface }]}>
-            <Icon name={needle ? 'search' : TABS.find((x) => x.id === tab)!.icon} size={22} color={t.c.textSecondary} />
+          <Animated.View entering={reduced ? undefined : enter.rise(0, 40)}>
+            <GlassCard padding={24} style={[styles.empty, { boxShadow: t.shadow.card }]}>
+            <View style={[styles.emptyIcon, { backgroundColor: t.c.brandSoft }]}>
+              <Icon name={needle ? 'search' : TABS.find((x) => x.id === tab)!.icon} size={22} color={t.c.text} />
+            </View>
             <Text variant="titleS" align="center">
               {needle ? 'No conversation matches' : 'Nothing here yet'}
             </Text>
             <Text variant="bodyS" tone="secondary" align="center">
               {needle ? tx('Nothing called “{q}” in your conversations.', { q: q.trim() }) : EMPTY[tab]}
             </Text>
+            </GlassCard>
           </Animated.View>
         )}
       </Animated.View>
@@ -286,7 +301,8 @@ export default function Messages() {
 function Action({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const t = useTheme();
   return (
-    <PressableScale haptic="select" scaleTo={0.96} onPress={onPress} accessibilityRole="button" accessibilityLabel={tx(label)} style={[styles.action, { borderColor: t.c.lineStrong }]}>
+    <PressableScale haptic="select" scaleTo={0.96} onPress={onPress} accessibilityRole="button" accessibilityLabel={tx(label)} style={styles.action}>
+      <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: 18 }]} />
       <Icon name={icon} size={16} color={t.c.text} />
       <Text variant="label">{label}</Text>
     </PressableScale>
@@ -313,9 +329,10 @@ const Row = memo(function Row({ c, lit, unread, picture, appPhoto, onLong }: { c
       onLongPress={server ? () => onLong(c) : undefined}
       delayLongPress={350}
       scaleTo={0.98}
-      style={[styles.row, { backgroundColor: unread ? t.c.surface : 'transparent', borderColor: lit ? t.c.text : unread ? t.c.line : 'transparent' }]}
+      style={[styles.row, { borderColor: lit ? t.c.brand : 'transparent', boxShadow: unread ? t.shadow.card : undefined }]}
       accessibilityLabel={`${c.title}${unread ? `, ${tx('{n} unread', { n: unread })}` : ''}`}
     >
+      <Glass level={unread ? 'regular' : 'thin'} style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />
       {kind === 'private' ? (
         <Avatar name={c.title} hue={hueOf(c.otherId ?? c.id)} size={56} photo={person?.photo} online={person?.online} userId={server ? c.otherId : undefined} />
       ) : (
@@ -366,16 +383,18 @@ const Row = memo(function Row({ c, lit, unread, picture, appPhoto, onLong }: { c
 
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
-  search: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, paddingHorizontal: 14, borderRadius: radius.pill, overflow: 'hidden' },
   input: { flex: 1, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 },
   tabs: { paddingHorizontal: space.gutter, gap: 8, paddingVertical: space[4] },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: 19, borderWidth: StyleSheet.hairlineWidth * 2 },
+  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: 19 },
+  tabFill: { borderRadius: 19 },
   actions: { flexDirection: 'row', gap: 8, marginBottom: space[4] },
-  action: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderStyle: 'dashed' },
-  banner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 10, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'transparent' },
+  action: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 18, overflow: 'hidden' },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 10, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'transparent', overflow: 'hidden' },
   picture: { width: 56, height: 56, borderRadius: 18, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   top: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge: { minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, alignItems: 'center', justifyContent: 'center' },
-  empty: { alignItems: 'center', gap: 8, padding: 24, borderRadius: radius.xl },
+  empty: { alignItems: 'center', gap: 8 },
+  emptyIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
 });

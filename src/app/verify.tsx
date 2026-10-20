@@ -2,6 +2,8 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { FEATURES } from '@/lib/features';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +19,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * Verify my profile (needed for Match): 3 photos of me, then a selfie
@@ -93,7 +96,8 @@ export default function VerifyScreen() {
         ) : (
           <>
             {status ? (
-              <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+              <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                <GlassLayer radius={radius.xl} />
                 <Icon name={status === 'verified' ? 'shield' : status === 'pending' ? 'clock' : 'x'} size={20} color={t.c.text} />
                 <Text variant="titleS">{status === 'verified' ? tx('Your profile is verified ✓') : status === 'pending' ? tx('Your selfie is being reviewed') : tx('Verification declined')}</Text>
                 <Text variant="bodyS" tone="secondary">
@@ -117,30 +121,32 @@ export default function VerifyScreen() {
               </Text>
               <View style={styles.grid}>
                 {paths.map((p, i) => (
-                  <View key={p} style={[styles.photo, { backgroundColor: t.c.overlay }]}>
-                    {links[p] && !isAvatar(p) ? <Image source={{ uri: links[p], cacheKey: p }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Icon name="user" size={22} color={t.c.textTertiary} />}
-                    {i > 0 ? (
-                      <PressableScale
-                        haptic="select"
-                        hitSlop={8}
-                        style={styles.remove}
-                        onPress={() =>
-                          removeProfilePhoto(paths, p)
-                            .then(reload)
-                            .catch((e) => toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live'))
-                        }
-                        accessibilityLabel={a11y('Remove this photo')}
-                      >
-                        <Icon name="x" size={12} color="#fff" />
-                      </PressableScale>
-                    ) : (
-                      <View style={styles.main}>
-                        <Text variant="caption" style={{ color: '#fff' }}>
-                          {tx('Main')}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
+                  <Animated.View key={p} entering={enter.rise(Math.min(i, 8))}>
+                    <View style={[styles.photo, { backgroundColor: t.c.overlay }]}>
+                      {links[p] && !isAvatar(p) ? <Image source={{ uri: links[p], cacheKey: p }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Icon name="user" size={22} color={t.c.textTertiary} />}
+                      {i > 0 ? (
+                        <PressableScale
+                          haptic="select"
+                          hitSlop={8}
+                          style={styles.remove}
+                          onPress={() =>
+                            removeProfilePhoto(paths, p)
+                              .then(reload)
+                              .catch((e) => toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live'))
+                          }
+                          accessibilityLabel={a11y('Remove this photo')}
+                        >
+                          <Icon name="x" size={12} color="#fff" />
+                        </PressableScale>
+                      ) : (
+                        <View style={styles.main}>
+                          <Text variant="caption" style={{ color: '#fff' }}>
+                            {tx('Main')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </Animated.View>
                 ))}
                 {paths.length < MAX_PHOTOS ? (
                   <PressableScale haptic="select" onPress={add} disabled={busy !== null} style={[styles.photo, styles.add, { borderColor: t.c.lineStrong }]} accessibilityLabel={a11y('Add photos')}>
@@ -171,7 +177,8 @@ export default function VerifyScreen() {
                     ) : null}
                   </>
                 ) : (
-                  <View style={[styles.card, { backgroundColor: t.c.surface, alignItems: 'center' }]}>
+                  <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', alignItems: 'center' }]}>
+                    <GlassLayer radius={radius.xl} />
                     <Text style={{ fontSize: 56 }} raw>
                       {g.emoji}
                     </Text>
@@ -184,7 +191,8 @@ export default function VerifyScreen() {
               </View>
             ) : null}
 
-            <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+            <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="titleS">Your privacy</Text>
               <Text variant="bodyS" tone="secondary">
                 The selfie is stored privately, seen only by the IRLY team member who reviews it, and deleted after the decision. No face data is extracted or kept. You can delete your photos at any time.

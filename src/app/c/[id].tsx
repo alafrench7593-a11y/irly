@@ -24,7 +24,9 @@ import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type Pla
 import { confirm } from '@/lib/confirm';
 import { deleteCommunity, fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost, pinActivity, type ActivityStatus } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
-import { pickPhoto, setCommunityCover, usePhotoLink } from '@/features/server/covers';
+import { setCommunityCover, usePhotoLink } from '@/features/server/covers';
+import { CoverEditor, coverEditorSlot } from '@/components/visual/CoverEditor';
+import { isContentStaff, useStaffRole } from '@/features/admin/api';
 import { communityPhoto, GUIDELINES, introDraft } from '@/features/community/official';
 import { useStore } from '@/state/store';
 import { Photo } from '@/components/visual/Photo';
@@ -42,6 +44,8 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 
 type Tab = 'posts' | 'activities' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
@@ -66,6 +70,7 @@ function CommunityScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { detail: c, loading, error, refresh, signedIn } = useCommunity(id);
+  const contentStaff = isContentStaff(useStaffRole());
   const auth = useAuthStatus();
   // Posts by space: General, or one of the community's categories (when it has some).
   const { channels } = useChannels(id);
@@ -153,9 +158,10 @@ function CommunityScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
-          <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} onChanged={refresh} />
+          <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} staff={contentStaff} onChanged={refresh} />
           <View style={[styles.pad, { gap: 6 }]}>
             <ParentLink parent={extras.parent} />
             <Text variant="overline" tone="accent">
@@ -257,7 +263,8 @@ function CommunityScreen() {
                   Can’t reach IRLY right now. Check your connection.
                 </Text>
               ) : !feed.loading && !feed.posts.length ? (
-                <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+                <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                  <GlassLayer radius={radius.xl} />
                   <Icon name="message" size={22} color={t.c.textSecondary} />
                   <Text variant="body" tone="secondary" align="center">
                     {c.isMember ? 'No posts yet. Say hi or ask the assistant for ideas.' : 'No posts yet. Join to start the conversation.'}
@@ -296,7 +303,8 @@ function CommunityScreen() {
               </View>
               {acts.activities.length ? (
                 acts.activities.map((a) => (
-                  <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={a.title}>
+                  <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
+                    <GlassLayer radius={radius.xl} />
                     <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
                     <View style={{ flex: 1 }}>
                       <Text variant="titleS" numberOfLines={1} raw>
@@ -402,7 +410,8 @@ function Assistant({
   const chips = ['Organise padel Saturday 9am', 'Poll: Saturday or Sunday?', "What's new this week?", 'Post ideas'];
 
   return (
-    <View style={[styles.assist, { backgroundColor: t.c.surface }]}>
+    <View style={[styles.assist, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <Icon name="sparkles" size={18} color={t.c.text} />
         <Text variant="titleS" style={{ flex: 1 }}>
@@ -628,7 +637,8 @@ function PostCard({
   const now = useNow();
   const total = p.pollCounts.reduce((n, x) => n + x, 0);
   return (
-    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
+    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
         <View style={{ flex: 1 }}>
@@ -732,13 +742,19 @@ function PostCard({
 
 function Centered({ children }: { children: React.ReactNode }) {
   const t = useTheme();
-  return <View style={[styles.centered, { backgroundColor: t.c.bg }]}>{children}</View>;
+  return (
+    <View style={[styles.centered, { backgroundColor: t.c.bg }]}>
+      <Ambient />
+      {children}
+    </View>
+  );
 }
 
 function Loading() {
   const t = useTheme();
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <View style={styles.centered} accessibilityLabel={tx('Loading')}>
         <ActivityIndicator color={t.c.text} />
         <Text variant="body" tone="secondary" align="center">
@@ -767,7 +783,8 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       {c.isMember ? (
-        <Animated.View entering={FadeInDown.springify(480).dampingRatio(0.85)} style={[styles.card, { backgroundColor: c.introFirst ? t.c.text : t.c.surface }]}>
+        <Animated.View entering={FadeInDown.springify(480).dampingRatio(0.85)} style={[styles.card, { backgroundColor: c.introFirst ? t.c.text : 'transparent', overflow: 'hidden' }]}>
+          {c.introFirst ? null : <GlassLayer radius={radius.xl} />}
           <Text variant="titleS" color={c.introFirst ? t.c.bg : undefined}>
             Introduce yourself
           </Text>
@@ -777,7 +794,8 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
           <Button label="Introduce myself" icon="message" variant={c.introFirst ? 'inverse' : 'secondary'} onPress={introduce} />
         </Animated.View>
       ) : null}
-      <PressableScale haptic="select" onPress={() => setRules((x) => !x)} style={[styles.card, { backgroundColor: t.c.surface }]} accessibilityRole="button" accessibilityState={{ expanded: rules }} accessibilityLabel="Community guidelines">
+      <PressableScale haptic="select" onPress={() => setRules((x) => !x)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityRole="button" accessibilityState={{ expanded: rules }} accessibilityLabel="Community guidelines">
+        <GlassLayer radius={radius.xl} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Icon name="shield" size={16} color={t.c.text} />
           <Text variant="label" style={{ flex: 1 }}>
@@ -816,44 +834,13 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
 }
 
 /** The community's photo: its own, or the app's photo for its category. The owner and moderators can change it. */
-function CommunityCover({ id, name, topic, categoryId, coverPath, light, canEdit, onChanged }: { id: string; name: string; topic: string | null; categoryId: string | null; coverPath: string | null; light: LightId; canEdit: boolean; onChanged: () => void }) {
+function CommunityCover({ id, name, topic, categoryId, coverPath, light, canEdit, staff, onChanged }: { id: string; name: string; topic: string | null; categoryId: string | null; coverPath: string | null; light: LightId; canEdit: boolean; staff: boolean; onChanged: () => void }) {
   const uri = usePhotoLink(coverPath);
-  const [saving, setSaving] = useState(false);
   const fallback = communityPhoto(topic, categoryId, name);
-  const change = async (next: 'pick' | 'reset') => {
-    if (saving) return;
-    try {
-      const picked = next === 'pick' ? await pickPhoto() : null;
-      if (next === 'pick' && !picked) return;
-      setSaving(true);
-      await setCommunityCover(id, picked);
-      haptic('success');
-      toast(next === 'pick' ? 'Photo updated' : 'Back to the IRLY photo', 'check', 'brand');
-      onChanged();
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not change the photo', 'x', 'live');
-    } finally {
-      setSaving(false);
-    }
-  };
   return (
     <View style={styles.pad}>
       <Photo pinned visual={{ photo: fallback, uri: uri ?? undefined }} light={light} scrim="soft" style={styles.coverPhoto} width={1000} recyclingKey={`community-${id}-${coverPath ?? 'app'}`}>
-        {canEdit ? (
-          <View style={styles.coverActions}>
-            <PressableScale haptic="select" onPress={() => change('pick')} style={styles.coverPill} accessibilityLabel="Change the photo">
-              {saving ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Icon name="camera" size={16} color="#FFFFFF" />}
-              <Text variant="label" style={{ color: '#FFFFFF' }}>
-                Change the photo
-              </Text>
-            </PressableScale>
-            {coverPath ? (
-              <PressableScale haptic="select" onPress={() => change('reset')} style={styles.coverPill} accessibilityLabel="Use the IRLY photo">
-                <Icon name="x" size={16} color="#FFFFFF" />
-              </PressableScale>
-            ) : null}
-          </View>
-        ) : null}
+        {canEdit || staff ? <CoverEditor style={coverEditorSlot} hasOwn={Boolean(coverPath)} staff={staff && !canEdit} save={(picked) => setCommunityCover(id, picked)} onChanged={onChanged} /> : null}
       </Photo>
     </View>
   );
@@ -861,8 +848,6 @@ function CommunityCover({ id, name, topic, categoryId, coverPath, light, canEdit
 
 const styles = StyleSheet.create({
   coverPhoto: { height: 190, borderRadius: radius.xl, overflow: 'hidden' },
-  coverActions: { position: 'absolute', left: 12, bottom: 12, flexDirection: 'row', gap: 8 },
-  coverPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.55)' },
   root: { flex: 1 },
   pad: { paddingHorizontal: space.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },

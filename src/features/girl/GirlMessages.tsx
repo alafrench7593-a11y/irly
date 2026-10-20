@@ -16,6 +16,7 @@ import { PressableScale } from "@/motion/PressableScale";
 import { radius, space } from "@/theme/tokens";
 import { girl, girlType } from "./theme";
 import { GButton } from "./ui";
+import { GlassLayer } from "@/components/ui/GlassLayer";
 
 // The demonstration build shows its example IRLY Girl chats (the local inbox), never the server's.
 const useInbox = DEMO ? useDemoGirlInbox : useServerInbox;
@@ -54,6 +55,7 @@ export function GirlMessages({ onCommunities }: { onCommunities: () => void }) {
         </PressableScale>
       </View>
       <View style={styles.card}>
+        <GlassLayer radius={radius.xl} />
         {loading && !recent.length ? (
           [0, 1].map((i) => (
             <View key={i} style={styles.row}>
@@ -191,7 +193,6 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: radius.xl,
-    backgroundColor: girl.surface,
     borderWidth: 1,
     borderColor: girl.line,
     overflow: "hidden",

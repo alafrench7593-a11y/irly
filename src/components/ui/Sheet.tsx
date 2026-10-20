@@ -18,6 +18,7 @@ import { useKeyboardHeight } from '@/motion/keyboard';
 import { duration, easing, spring } from '@/motion/tokens';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { Glass } from './Glass';
 import { Text } from './Text';
 
 type Props = {
@@ -114,14 +115,15 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
                 bottom: keyboard,
                 maxHeight: Math.min(screenH * maxHeight, screenH - keyboard - insets.top - 8),
                 paddingBottom: keyboard ? space[3] : Math.max(insets.bottom, space[5]) + space[3],
-                backgroundColor: t.c.raised,
-                borderColor: t.c.line,
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
                 boxShadow: t.shadow.float,
               },
               sheetStyle,
             ]}
             accessibilityViewIsModal
           >
+            <Glass level="thick" style={[StyleSheet.absoluteFill, styles.pane]} />
             <View style={styles.grabberWrap}>
               <View style={[styles.grabber, { backgroundColor: t.c.lineStrong }]} />
             </View>
@@ -158,6 +160,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     ...Platform.select({ web: { cursor: 'auto' } as object, default: {} }),
   },
+  pane: { borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl, borderRadius: radius.xxl },
   grabberWrap: { alignItems: 'center', paddingVertical: 6 },
   grabber: { width: 38, height: 5, borderRadius: 3 },
   header: { paddingHorizontal: space.gutter + 4, paddingTop: space[3], paddingBottom: space[4], gap: 4 },

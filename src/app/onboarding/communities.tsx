@@ -18,6 +18,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const WHY = ['Meet people quickly', 'Ask for advice', 'Find sport partners and plans', 'Feel at home faster'];
 
@@ -87,7 +88,8 @@ export default function CommunitiesWelcome() {
         </Animated.View>
 
         {!signedIn ? (
-          <View style={[styles.note, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="body">Create your account to join communities and their chats.</Text>
             <Button label="Create my account" icon="arrowRight" full onPress={() => router.replace('/account?from=onboarding')} />
           </View>
@@ -98,7 +100,8 @@ export default function CommunitiesWelcome() {
             Can’t reach IRLY right now. You can find communities later in Discover.
           </Text>
         ) : !fresh.length ? (
-          <View style={[styles.note, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="body">No community matches your answers yet. Explore them all and join the ones you like.</Text>
             <Button label="Explore communities" icon="compass" variant="secondary" full onPress={() => router.replace('/communities')} />
           </View>
@@ -160,11 +163,12 @@ function CommunityRow({ c, index, reduced, choosing, picked, onToggle }: { c: Of
         haptic={false}
         scaleTo={choosing ? 0.98 : 1}
         onPress={choosing ? onToggle : undefined}
-        style={[styles.card, { backgroundColor: t.c.surface, borderColor: choosing && picked ? t.c.text : 'transparent' }]}
+        style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: choosing && picked ? t.c.text : 'transparent' }]}
         accessibilityRole={choosing ? 'checkbox' : undefined}
         accessibilityState={choosing ? { checked: picked } : undefined}
         accessibilityLabel={c.name}
       >
+        <GlassLayer radius={radius.xl} />
         <CommunityThumb id={c.id} name={c.name} topic={c.topic} emoji={c.emoji} light={CITIES[c.cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={52} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="titleS" numberOfLines={1}>

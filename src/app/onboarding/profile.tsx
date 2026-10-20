@@ -91,7 +91,7 @@ export default function ProfileStep() {
           placeholderTextColor={t.c.textTertiary}
           multiline
           maxLength={160}
-          style={[styles.bio, { color: t.c.text, backgroundColor: t.c.surface, borderColor: t.c.line }]}
+          style={[styles.bio, { color: t.c.text, backgroundColor: t.c.glass, borderColor: t.c.line }]}
           accessibilityLabel={a11y('Short bio')}
         />
         <CharCount length={bio.trim().length} min={10} max={160} />

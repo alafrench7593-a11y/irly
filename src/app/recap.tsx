@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -15,6 +17,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const SECTIONS: { id: RecapItem['section']; title: string; icon: IconName }[] = [
   { id: 'discussion', title: 'Discussions you missed', icon: 'message' },
@@ -63,7 +66,8 @@ export default function RecapScreen() {
     <Page overline={city.name} title="My recap" subtitle={recap.since ? tx('Since your last visit, {time}.', { time: timeAgo(Math.max(1, Math.round((now - Date.parse(recap.since)) / 60000))) }) : tx('The last 7 days.')}>
       <View style={{ gap: space[5] }}>
         {anyFailed && !recap.items.length ? (
-          <View style={[styles.card, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
+          <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="body" tone="secondary">
               Can’t reach IRLY right now
             </Text>
@@ -79,7 +83,8 @@ export default function RecapScreen() {
           </View>
         ) : null}
         {nothing ? (
-          <View style={[styles.card, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
+          <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="body" tone="secondary">
               Nothing new yet. Join communities and activities: your recap fills up with what really happens there.
             </Text>
@@ -96,19 +101,22 @@ export default function RecapScreen() {
                 <Icon name={s.icon} size={16} color={t.c.text} />
                 <Text variant="titleS">{s.title}</Text>
               </View>
-              {items.map((r) => (
-                <PressableScale key={s.id + r.id} haptic="select" scaleTo={0.98} onPress={() => open(r)} style={[styles.item, { backgroundColor: t.c.surface }]} accessibilityLabel={r.title}>
-                  <Text variant="label" numberOfLines={2} raw>
-                    {r.title}
-                  </Text>
-                  <Text variant="caption" tone="tertiary" raw>
-                    {s.id === 'discussion'
-                      ? [r.detail, r.n ? tx('{n} new replies', { n: r.n }) : null].filter(Boolean).join(' · ')
-                      : s.id === 'community'
-                        ? tx('{n} new members', { n: r.n })
-                        : [r.at ? cityWhen(r.at, cityId) : null, r.detail, tx('{n} going', { n: r.n })].filter(Boolean).join(' · ')}
-                  </Text>
-                </PressableScale>
+              {items.map((r, idx) => (
+                <Animated.View key={s.id + r.id} entering={enter.rise(Math.min(idx, 8))}>
+                  <PressableScale haptic="select" scaleTo={0.98} onPress={() => open(r)} style={[styles.item, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={r.title}>
+                    <GlassLayer radius={radius.lg} />
+                    <Text variant="label" numberOfLines={2} raw>
+                      {r.title}
+                    </Text>
+                    <Text variant="caption" tone="tertiary" raw>
+                      {s.id === 'discussion'
+                        ? [r.detail, r.n ? tx('{n} new replies', { n: r.n }) : null].filter(Boolean).join(' · ')
+                        : s.id === 'community'
+                          ? tx('{n} new members', { n: r.n })
+                          : [r.at ? cityWhen(r.at, cityId) : null, r.detail, tx('{n} going', { n: r.n })].filter(Boolean).join(' · ')}
+                    </Text>
+                  </PressableScale>
+                </Animated.View>
               ))}
             </View>
           );
@@ -120,18 +128,21 @@ export default function RecapScreen() {
               <Icon name="heart" size={16} color={t.c.text} />
               <Text variant="titleS">For you</Text>
             </View>
-            {forYou.items.slice(0, 6).map((p) => (
-              <PressableScale key={p.id} haptic="select" scaleTo={0.98} onPress={() => router.push({ pathname: '/comments', params: { type: 'community_post', id: p.id } })} style={[styles.item, { backgroundColor: t.c.surface }]} accessibilityLabel={p.body.slice(0, 80)}>
-                <Text variant="caption" tone="tertiary" raw>
-                  {[p.firstName, p.communityName ?? tx('Profile'), timeAgo(Math.max(0, Math.round((now - p.at) / 60000)))].join(' · ')}
-                </Text>
-                <Text variant="body" numberOfLines={3} raw>
-                  {p.body || (p.mediaPaths.length ? (p.mediaKind === 'video' ? tx('A video') : tx('{n} photos', { n: p.mediaPaths.length })) : '')}
-                </Text>
-                <Text variant="caption" tone="secondary">
-                  {tx('{c} comments · {l} likes', { c: p.comments, l: p.likes })}
-                </Text>
-              </PressableScale>
+            {forYou.items.slice(0, 6).map((p, idx) => (
+              <Animated.View key={p.id} entering={enter.rise(Math.min(idx, 8))}>
+                <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push({ pathname: '/comments', params: { type: 'community_post', id: p.id } })} style={[styles.item, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={p.body.slice(0, 80)}>
+                  <GlassLayer radius={radius.lg} />
+                  <Text variant="caption" tone="tertiary" raw>
+                    {[p.firstName, p.communityName ?? tx('Profile'), timeAgo(Math.max(0, Math.round((now - p.at) / 60000)))].join(' · ')}
+                  </Text>
+                  <Text variant="body" numberOfLines={3} raw>
+                    {p.body || (p.mediaPaths.length ? (p.mediaKind === 'video' ? tx('A video') : tx('{n} photos', { n: p.mediaPaths.length })) : '')}
+                  </Text>
+                  <Text variant="caption" tone="secondary">
+                    {tx('{c} comments · {l} likes', { c: p.comments, l: p.likes })}
+                  </Text>
+                </PressableScale>
+              </Animated.View>
             ))}
           </View>
         ) : null}
@@ -142,20 +153,23 @@ export default function RecapScreen() {
               <Icon name="layers" size={16} color={t.c.text} />
               <Text variant="titleS">Groups for you</Text>
             </View>
-            {groups.items.map((g) => (
-              <PressableScale key={g.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${g.id}`)} style={[styles.item, styles.row, { backgroundColor: t.c.surface }]} accessibilityLabel={g.name}>
-                <Text style={{ fontSize: 22 }} raw>
-                  {g.emoji ?? '💬'}
-                </Text>
-                <View style={{ flex: 1 }}>
-                  <Text variant="label">
-                    {g.name}
+            {groups.items.map((g, idx) => (
+              <Animated.View key={g.id} entering={enter.rise(Math.min(idx, 8))}>
+                <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${g.id}`)} style={[styles.item, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={g.name}>
+                  <GlassLayer radius={radius.lg} />
+                  <Text style={{ fontSize: 22 }} raw>
+                    {g.emoji ?? '💬'}
                   </Text>
-                  <Text variant="caption" tone="tertiary" raw>
-                    {[g.parentName, g.reason === 'in_your_community' ? tx('in a community you joined') : tx('matches your interests'), tx('{n} members', { n: g.members })].join(' · ')}
-                  </Text>
-                </View>
-              </PressableScale>
+                  <View style={{ flex: 1 }}>
+                    <Text variant="label">
+                      {g.name}
+                    </Text>
+                    <Text variant="caption" tone="tertiary" raw>
+                      {[g.parentName, g.reason === 'in_your_community' ? tx('in a community you joined') : tx('matches your interests'), tx('{n} members', { n: g.members })].join(' · ')}
+                    </Text>
+                  </View>
+                </PressableScale>
+              </Animated.View>
             ))}
           </View>
         ) : null}
@@ -175,7 +189,8 @@ export default function RecapScreen() {
                     : tx('{done} / {goal} answers in Help & Questions', { done: c.done, goal: c.goal });
               const pct = Math.min(100, Math.round((c.done / Math.max(1, c.goal)) * 100));
               return (
-                <View key={c.challenge} style={[styles.item, { backgroundColor: t.c.surface }]}>
+                <View key={c.challenge} style={[styles.item, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                  <GlassLayer radius={radius.lg} />
                   <Text variant="label">{label}</Text>
                   <View style={[styles.bar, { backgroundColor: t.c.overlay }]}>
                     <View style={[styles.fill, { width: `${pct}%`, backgroundColor: t.c.text }]} />

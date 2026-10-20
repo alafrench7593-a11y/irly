@@ -26,6 +26,7 @@ import { LiveDot } from '../ui/Controls';
 import { Icon } from '../ui/Icon';
 import { Text } from '../ui/Text';
 import { planHeadline } from './PeopleCards';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /* ───────── Horizontal rail with snapping and depth ───────── */
 
@@ -104,8 +105,9 @@ export const NearbyRow = memo(function NearbyRow({ plan, index }: { plan: FeedPl
     <Animated.View entering={enter.rise(index)}>
       <PressableScale
         onPress={() => openHero({ kind: plan.ref.type, id: plan.ref.id })}
-        style={[styles.nearby, { borderColor: t.c.line, backgroundColor: t.c.surface }]}
+        style={[styles.nearby, { borderColor: 'transparent', backgroundColor: 'transparent', overflow: 'hidden' }]}
       >
+        <GlassLayer radius={radius.lg} />
         <AvatarStack people={peopleByIds(ref.goingIds)} size={30} max={3} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="titleS" numberOfLines={2}>
@@ -134,7 +136,8 @@ export const MeetCard = memo(function MeetCard({ city, people }: { city: City; p
   const setIntent = useStore((s) => s.setIntent);
   const shown = people.slice(0, 5);
   return (
-    <View style={[styles.meet, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <View style={[styles.meet, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.meetCluster}>
         {shown.map((p, i) => (
           <View
@@ -164,8 +167,9 @@ export const MeetCard = memo(function MeetCard({ city, people }: { city: City; p
               setIntent(intent);
               router.push(`/match?intent=${intent}`);
             }}
-            style={[styles.intent, { backgroundColor: t.c.raised, borderColor: t.c.line }]}
+            style={[styles.intent, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
           >
+            <GlassLayer radius={radius.pill} />
             <Icon name={INTENTS[intent].icon} size={16} color={t.c.brand} />
             <Text variant="label">{INTENTS[intent].label}</Text>
           </PressableScale>
@@ -187,9 +191,10 @@ export const ServicesGrid = memo(function ServicesGrid({ city, columns = 3 }: { 
         <Animated.View key={id} entering={enter.pop(i)} style={{ width: `${100 / columns}%`, padding: 5 }}>
           <PressableScale
             onPress={() => router.push(`/services?category=${id}`)}
-            style={[styles.serviceTile, { backgroundColor: t.c.surface, borderColor: t.c.line }]}
+            style={[styles.serviceTile, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
             accessibilityLabel={SERVICE_CATEGORIES[id].label}
           >
+            <GlassLayer radius={radius.lg} />
             <View style={[styles.serviceIcon, { backgroundColor: t.c.brandSoft }]}>
               <Icon name={SERVICE_CATEGORIES[id].icon} size={20} color={t.c.brand} />
             </View>
@@ -209,7 +214,8 @@ export const GuideCard = memo(function GuideCard({ guide, onPress }: { guide: Bu
   const t = useTheme();
   const topic = BUSINESS_TOPICS[guide.topic];
   return (
-    <PressableScale onPress={onPress} style={[styles.guide, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <PressableScale onPress={onPress} style={[styles.guide, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.lg} />
       <View style={styles.row}>
         <View style={[styles.serviceIcon, { backgroundColor: t.light.accentSoft }]}>
           <Icon name={topic.icon} size={20} color={t.accent} />

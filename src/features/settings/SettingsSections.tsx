@@ -19,6 +19,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * Settings, in one place (the gear on your profile and in the tab bar):
@@ -290,11 +291,10 @@ export function SettingsSections() {
 }
 
 function Section({ index, title, children }: { index: number; title: string; children: React.ReactNode }) {
-  const t = useTheme();
   return (
     <Animated.View entering={enter.rise(index)} style={styles.section}>
       <SectionHeader title={title} />
-      <View style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>{children}</View>
+      <View style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}><GlassLayer radius={radius.lg} />{children}</View>
     </Animated.View>
   );
 }

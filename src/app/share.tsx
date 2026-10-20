@@ -14,6 +14,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * Share anything: to a friend (opens or reuses your private chat), to any
@@ -21,7 +22,6 @@ import { useTheme } from '@/theme/useTheme';
  * link. The message points at the one canonical item, never a copy.
  */
 export default function ShareScreen() {
-  const t = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ type: TargetType; id: string; title?: string }>();
   const target = { type: params.type, id: params.id, title: params.title };
@@ -103,7 +103,8 @@ export default function ShareScreen() {
             ))}
           </View>
         ) : (
-          <View style={[styles.note, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.lg} />
             <Text variant="bodyS" tone="secondary">
               Your chats appear here once you sign in, join an activity or add friends.
             </Text>
@@ -120,7 +121,8 @@ export default function ShareScreen() {
 function Quick({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const t = useTheme();
   return (
-    <PressableScale onPress={onPress} haptic="select" style={[styles.quickItem, { backgroundColor: t.c.surface }]} accessibilityLabel={label}>
+    <PressableScale onPress={onPress} haptic="select" style={[styles.quickItem, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={label}>
+      <GlassLayer radius={radius.lg} />
       <Icon name={icon} size={20} color={t.c.text} />
       <Text variant="label">{label}</Text>
     </PressableScale>

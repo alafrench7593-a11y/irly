@@ -22,6 +22,9 @@ import { blockUser, type ReportTarget } from '@/features/moderation/moderation';
 import { ReportSheet } from '@/features/moderation/ReportSheet';
 import { confirm } from '@/lib/confirm';
 import { Glass } from '@/components/ui/Glass';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
+import { enter } from '@/motion/enter';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { findPerson } from '@/data/repo';
@@ -203,6 +206,7 @@ function ServerThreadView({ id }: { id: string }) {
   const other = thread.otherId;
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient variant="quiet" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           ref={scrollRef}
@@ -238,9 +242,10 @@ function ServerThreadView({ id }: { id: string }) {
                   setEarlier(false);
                 }
               }}
-              style={[styles.earlier, { borderColor: t.c.line }]}
+              style={styles.earlier}
               accessibilityRole="button"
             >
+              <GlassLayer radius={radius.pill} level="thin" />
               {earlier ? <ActivityIndicator color={t.c.text} /> : <Text variant="label">Load earlier messages</Text>}
             </PressableScale>
           ) : null}
@@ -268,6 +273,7 @@ function ServerThreadView({ id }: { id: string }) {
                 <View key={m.id}>
                   {day}
                   <Animated.View entering={joined ? FadeInDown.springify(420).dampingRatio(0.8) : undefined} style={styles.note}>
+                    <GlassLayer radius={16} level="thin" />
                     <Text variant="bodyS" tone="secondary" align="center">
                       {m.text}
                     </Text>
@@ -275,9 +281,10 @@ function ServerThreadView({ id }: { id: string }) {
                       <PressableScale
                         haptic="select"
                         onPress={() => setText(tx('Welcome {name}! 👋', { name: joined }))}
-                        style={[styles.hello, { borderColor: t.c.line }]}
+                        style={styles.hello}
                         accessibilityLabel={tx('Say hello to {name}', { name: joined })}
                       >
+                        <GlassLayer radius={16} level="thin" />
                         <Text variant="label">Say hello</Text>
                       </PressableScale>
                     ) : null}
@@ -348,9 +355,10 @@ function ServerThreadView({ id }: { id: string }) {
                       styles.bubble,
                       mine
                         ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
-                        : { backgroundColor: t.c.surface, borderColor: t.c.line, borderWidth: StyleSheet.hairlineWidth * 2, borderBottomLeftRadius: 6 },
+                        : { borderBottomLeftRadius: 6, overflow: 'hidden' },
                     ]}
                   >
+                    {mine ? null : <GlassLayer radius={20} />}
                     {m.share ? (
                       <View style={styles.shared}>
                         <Icon name={m.share.type === 'activity' ? 'calendar' : m.share.type === 'place' ? 'pin' : 'link'} size={16} color={mine ? t.c.onBrand : t.c.text} />
@@ -395,11 +403,13 @@ function ServerThreadView({ id }: { id: string }) {
             </View>
           ) : null}
         </ScrollView>
-        <Glass style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
-          <PressableScale haptic="select" onPress={() => setAttach(true)} scaleTo={0.88} style={[styles.attach, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel="Send a photo">
+        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+          <PressableScale haptic="select" onPress={() => setAttach(true)} scaleTo={0.88} style={styles.attach} accessibilityLabel="Send a photo">
+            <GlassLayer radius={21} level="thin" />
             <Icon name="image" size={19} color={t.c.text} />
           </PressableScale>
-          <View style={[styles.inputWrap, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+          <View style={styles.inputWrap}>
+            <GlassLayer radius={radius.pill} level="thin" />
             <TextInput
               value={text}
               onChangeText={(v) => {
@@ -815,6 +825,7 @@ function Thread() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient variant="quiet" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           ref={scrollRef}
@@ -836,6 +847,7 @@ function Thread() {
             if (m.from === 'irly') {
               return (
                 <Animated.View key={m.id} entering={FadeInDown.springify(380).dampingRatio(0.8)} style={styles.note}>
+                    <GlassLayer radius={16} level="thin" />
                   <Text variant="bodyS" tone="secondary" align="center">
                     {m.text}
                   </Text>
@@ -856,9 +868,10 @@ function Thread() {
                     styles.bubble,
                     mine
                       ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
-                      : { backgroundColor: t.c.surface, borderColor: t.c.line, borderWidth: StyleSheet.hairlineWidth * 2, borderBottomLeftRadius: 6 },
+                      : { borderBottomLeftRadius: 6, overflow: 'hidden' },
                   ]}
                 >
+                  {mine ? null : <GlassLayer radius={20} />}
                   <Text variant="body" raw={mine} color={mine ? t.c.onBrand : t.c.text}>
                     {m.text}
                   </Text>
@@ -869,8 +882,9 @@ function Thread() {
           {typing ? <Typing /> : null}
         </ScrollView>
 
-        <Glass style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
-          <View style={[styles.inputWrap, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+          <View style={styles.inputWrap}>
+            <GlassLayer radius={radius.pill} level="thin" />
             <TextInput
               value={text}
               onChangeText={setText}
@@ -916,14 +930,14 @@ function Thread() {
 }
 
 function Typing() {
-  const t = useTheme();
   return (
     <View style={[styles.bubbleRow, styles.left]}>
-      <View style={[styles.bubble, styles.typing, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+      <Animated.View entering={enter.pop(0)} style={[styles.bubble, styles.typing]}>
+        <GlassLayer radius={20} />
         {[0, 1, 2].map((i) => (
           <Dot key={i} delay={i * 140} />
         ))}
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -939,27 +953,27 @@ function Dot({ delay }: { delay: number }) {
 }
 
 const styles = StyleSheet.create({
-  hello: { alignSelf: 'center', marginTop: 6, paddingHorizontal: 14, height: 32, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center' },
+  hello: { alignSelf: 'center', marginTop: 6, paddingHorizontal: 14, height: 32, borderRadius: 16, justifyContent: 'center', overflow: 'hidden' },
   chatPhoto: { width: 36, height: 36, borderRadius: 18, overflow: 'hidden' },
   shared: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  earlier: { alignSelf: 'center', height: 36, paddingHorizontal: 16, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center', marginBottom: 8 },
+  earlier: { alignSelf: 'center', height: 36, paddingHorizontal: 16, borderRadius: radius.pill, justifyContent: 'center', marginBottom: 8, overflow: 'hidden' },
   root: { flex: 1 },
   intro: { alignItems: 'center', gap: 6, marginBottom: space[6] },
-  attach: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth * 2 },
+  attach: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   previewPhoto: { width: 200, height: 240, borderRadius: radius.lg },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
   rename: { flex: 1, height: 44, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, paddingHorizontal: 12, fontFamily: font.medium, fontSize: 15 },
   photoBubble: { width: 220, height: 260, borderRadius: 18, overflow: 'hidden' },
   photoSending: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
   bubbleRow: { maxWidth: '80%' },
-  note: { alignSelf: 'center', maxWidth: '85%', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, backgroundColor: 'rgba(200,100,122,0.08)' },
+  note: { alignSelf: 'center', maxWidth: '85%', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, overflow: 'hidden' },
   left: { alignSelf: 'flex-start' },
   right: { alignSelf: 'flex-end' },
   bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 20 },
-  typing: { flexDirection: 'row', gap: 5, paddingVertical: 14, borderWidth: StyleSheet.hairlineWidth * 2 },
+  typing: { flexDirection: 'row', gap: 5, paddingVertical: 14, overflow: 'hidden' },
   dot: { width: 7, height: 7, borderRadius: 4 },
   composer: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: space.gutter, paddingTop: 10 },
-  inputWrap: { flex: 1, height: 46, borderRadius: radius.pill, paddingHorizontal: 18, justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth * 2 },
+  inputWrap: { flex: 1, height: 46, borderRadius: radius.pill, paddingHorizontal: 18, justifyContent: 'center', overflow: 'hidden' },
   send: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   header: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: 8 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: space.gutter, height: layout.headerHeight },

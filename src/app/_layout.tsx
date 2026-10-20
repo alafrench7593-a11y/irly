@@ -43,10 +43,12 @@ SplashScreen.setOptions({ duration: 250, fade: true });
 // Web (phone browsers): an input is ~200 px wide by default and does not
 // shrink in a flex row, so narrow fields overflowed under their neighbours
 // and could not be tapped on iPhone. Inputs also keep 16 px text so iOS
-// Safari does not zoom in on focus.
+// Safari does not zoom in on focus. Inputs are positioned so they paint
+// above the glass pane laid behind them (an absolutely positioned layer
+// would otherwise cover, and blur, the typed text).
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   const css = document.createElement('style');
-  css.textContent = 'input,textarea{min-width:0;max-width:100%;font-size:16px}';
+  css.textContent = 'input,textarea{min-width:0;max-width:100%;font-size:16px;position:relative}';
   document.head.appendChild(css);
 }
 
@@ -92,7 +94,11 @@ function App() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: t.c.bg },
-          animation: 'default',
+          // One push transition on every platform (iOS feel on Android and web too),
+          // and the back swipe follows the finger.
+          animation: 'ios_from_right',
+          animationMatchesGesture: true,
+          gestureEnabled: true,
         }}
       >
         <Stack.Screen name="index" options={{ animation: 'none' }} />
@@ -112,6 +118,10 @@ function App() {
         {/* The face flies from the bubble into the profile while the page fades in. */}
         <Stack.Screen name="person/[id]" options={{ animation: 'fade' }} />
         <Stack.Screen name="story" options={{ animation: 'fade', contentStyle: { backgroundColor: '#050506' } }} />
+        <Stack.Screen name="girl/new-community" options={{ animation: 'slide_from_bottom', contentStyle: { backgroundColor: girl.bg } }} />
+        <Stack.Screen name="c/[id]" options={{ animation: 'fade_from_bottom' }} />
+        <Stack.Screen name="notifications" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="search" options={{ animation: 'fade' }} />
         <Stack.Screen name="girl/profile" options={{ animation: 'slide_from_right', contentStyle: { backgroundColor: girl.bg } }} />
       </Stack>
       <HeroHost />

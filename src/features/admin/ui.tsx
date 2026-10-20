@@ -1,11 +1,14 @@
 import { type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { t as tx } from '@/i18n';
 import { timeAgo } from '@/lib/time';
-import { radius, space } from '@/theme/tokens';
+import { enter } from '@/motion/enter';
+import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { STATUS_LABEL, type CaseStatus } from './api';
 
@@ -36,14 +39,14 @@ export function Loadable<T>({ data, error, retry, empty, children }: { data: T[]
   return <>{children(data)}</>;
 }
 
-export function Card({ children, onPress, accessibilityLabel }: { children: ReactNode; onPress?: () => void; accessibilityLabel?: string }) {
-  const t = useTheme();
-  const body = <View style={[styles.card, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>{children}</View>;
-  if (!onPress) return body;
+/** A glass panel that rises into place (staggered by its index in a list) and sinks a little under the finger. */
+export function Card({ children, onPress, accessibilityLabel, index = 0 }: { children: ReactNode; onPress?: () => void; accessibilityLabel?: string; index?: number }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={accessibilityLabel} style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-      {body}
-    </Pressable>
+    <Animated.View entering={enter.rise(Math.min(index, 8))}>
+      <GlassCard level="regular" padding={14} onPress={onPress} accessibilityLabel={accessibilityLabel} style={styles.card}>
+        {children}
+      </GlassCard>
+    </Animated.View>
   );
 }
 
@@ -67,18 +70,24 @@ export function StatusPill({ status }: { status: CaseStatus }) {
   );
 }
 
-export function Stat({ label, value, icon, onPress, alert }: { label: string; value: number | string; icon: IconName; onPress?: () => void; alert?: boolean }) {
+export function Stat({ label, value, icon, onPress, alert, index = 0 }: { label: string; value: number | string; icon: IconName; onPress?: () => void; alert?: boolean; index?: number }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined} style={({ pressed }) => [styles.stat, { backgroundColor: t.c.surface, borderColor: alert ? t.c.live : t.c.line, opacity: pressed ? 0.7 : 1 }]}>
-      <Icon name={icon} size={18} color={alert ? t.c.live : t.c.textSecondary} />
-      <Text variant="number" raw>
-        {String(value)}
-      </Text>
-      <Text variant="caption" tone="secondary" numberOfLines={2}>
-        {label}
-      </Text>
-    </Pressable>
+    <Animated.View entering={enter.pop(index)} style={styles.statWrap}>
+      <GlassCard level="regular" padding={14} onPress={onPress} accessibilityLabel={label}>
+        <View style={{ gap: 4 }}>
+          <View style={[styles.statIcon, { backgroundColor: alert ? t.c.live : t.c.overlay }]}>
+            <Icon name={icon} size={16} color={alert ? '#FFFFFF' : t.c.textSecondary} />
+          </View>
+          <Text variant="number" raw>
+            {String(value)}
+          </Text>
+          <Text variant="caption" tone="secondary" numberOfLines={2}>
+            {label}
+          </Text>
+        </View>
+      </GlassCard>
+    </Animated.View>
   );
 }
 
@@ -97,7 +106,8 @@ export const adminStyles = StyleSheet.create({
 });
 
 const styles = StyleSheet.create({
-  card: { padding: 14, gap: 8, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth },
+  card: { gap: 8 },
   pill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, alignSelf: 'flex-start' },
-  stat: { flexBasis: '47%', flexGrow: 1, padding: 14, gap: 4, borderRadius: radius.xl, borderWidth: 1 },
+  statWrap: { flexBasis: '47%', flexGrow: 1 },
+  statIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
 });

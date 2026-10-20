@@ -59,8 +59,8 @@ export default function ReportsInbox() {
         <Loadable data={rows} error={error} retry={() => load(0)} empty="No report here.">
           {(list) => (
             <>
-              {list.map((r) => (
-                <Card key={r.case_id} onPress={() => router.push(`/admin/case/${r.case_id}`)} accessibilityLabel={tx('Open report')}>
+              {list.map((r, i) => (
+                <Card index={i} key={r.case_id} onPress={() => router.push(`/admin/case/${r.case_id}`)} accessibilityLabel={tx('Open report')}>
                   <View style={adminStyles.row}>
                     <StatusPill status={r.status} />
                     {r.priority === 'high' ? (

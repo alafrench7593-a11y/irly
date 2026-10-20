@@ -1,6 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { NotFound } from '@/components/layout/NotFound';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -21,6 +23,7 @@ import { haptic } from '@/motion/haptics';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type SpaceId = 'moms' | 'families' | 'girls';
 type Space = { title: string; line: string; womenOnly: boolean; rules: { icon: IconName; text: string }[]; help?: string };
@@ -146,7 +149,8 @@ function SpaceScreen({ id }: { id: SpaceId }) {
       <View style={{ gap: space[5] }}>
         {!supabase ? (
           // Demo build or no server configured: nothing to load, said plainly (it used to spin forever).
-          <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="globe" size={20} color={t.c.text} />
             <Text variant="body" tone="secondary">
               Spaces open with an IRLY account, on the IRLY server. They are not available in this version.
@@ -193,15 +197,18 @@ function SpaceScreen({ id }: { id: SpaceId }) {
             <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), load())} />
           </>
         )}
-        <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+        <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+          <GlassLayer radius={radius.xl} />
           <Text variant="titleS">Safety and respect</Text>
-          {s.rules.map((r) => (
-            <View key={r.text} style={styles.rule}>
-              <Icon name={r.icon} size={16} color={t.c.text} />
-              <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
-                {tx(r.text)}
-              </Text>
-            </View>
+          {s.rules.map((r, idx) => (
+            <Animated.View key={r.text} entering={enter.rise(Math.min(idx, 8))}>
+              <View style={styles.rule}>
+                <Icon name={r.icon} size={16} color={t.c.text} />
+                <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
+                  {tx(r.text)}
+                </Text>
+              </View>
+            </Animated.View>
           ))}
         </View>
       </View>
@@ -233,7 +240,8 @@ function ClosedSpace({ id, access, cityName }: { id: SpaceId; access: GirlAccess
   const notOpen = !s.womenOnly || access === 'open';
   const paused = s.womenOnly && access === 'suspended';
   return (
-    <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+    <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+      <GlassLayer radius={radius.xl} />
       <Icon name={notOpen ? 'compass' : paused ? 'shield' : 'lock'} size={20} color={t.c.text} />
       <Text variant="body" tone="secondary">
         {notOpen

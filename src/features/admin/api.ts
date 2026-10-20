@@ -45,6 +45,7 @@ export const CATEGORY_LABEL: Record<string, string> = {
 };
 
 export const isModerator = (r: StaffRole | null | undefined) => r === 'owner' || r === 'admin' || r === 'moderator';
+export const isContentStaff = (r: StaffRole | null | undefined) => r === 'owner' || r === 'admin' || r === 'content';
 export const isAdmin = (r: StaffRole | null | undefined) => r === 'owner' || r === 'admin';
 
 export type Dashboard = { new: number; high: number; reviewing: number; need_info: number; week: number; sanctions: number; members: number };

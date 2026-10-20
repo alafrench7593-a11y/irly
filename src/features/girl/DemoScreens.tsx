@@ -22,6 +22,7 @@ import { demoPhoto, demoPostsOf, findDemoCommunity, findDemoPlan, planGoing, pla
 import { girl, GIRL_TINT, girlType } from './theme';
 import { GButton, GlassFill } from './ui';
 import { GirlPostCard } from './world';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * The IRLY Girl community and plan pages of the demonstration build. They
@@ -140,6 +141,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
           {tab === 'plans' && !plans.length ? <Empty icon="calendar" text="No plans yet. Propose the first one." /> : null}
           {tab === 'about' ? (
             <Animated.View entering={reduced ? undefined : FadeIn} style={[styles.post, { gap: 10 }]}>
+              <GlassLayer radius={radius.xl} />
               <Text variant="body" color={girl.ink} raw>
                 {c.about}
               </Text>
@@ -165,6 +167,7 @@ function PlanCard({ id, i }: { id: string; i: number }) {
   return (
     <Animated.View entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
       <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(`/a/${p.id}`)} style={styles.plan} accessibilityLabel={p.title}>
+        <GlassLayer radius={radius.xl} />
         <View style={styles.planPhoto}>
           <Photo tint={GIRL_TINT} visual={{ photo: p.cover }} light="dubai" width={400} style={StyleSheet.absoluteFill} />
         </View>
@@ -277,6 +280,7 @@ export function DemoPlanScreen({ id }: { id: string }) {
       </Animated.ScrollView>
 
       <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+        <GlassLayer radius={0} level="thick" />
         <GButton label={going ? 'Going' : full ? 'Full' : 'Join the plan'} icon={going ? 'check' : 'plus'} variant={going ? 'secondary' : 'primary'} disabled={full} onPress={rsvp} style={{ flex: 1 }} />
       </View>
       <PageHeader title={p.title} scrollY={y} />
@@ -287,6 +291,7 @@ export function DemoPlanScreen({ id }: { id: string }) {
 function Tab({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return (
     <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} style={[styles.tab, on && { backgroundColor: girl.rose }]} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label}>
+      {on ? null : <GlassLayer radius={19} level="thin" />}
       <Text variant="label" color={on ? '#FFFFFF' : girl.ink}>
         {label}
       </Text>
@@ -308,6 +313,7 @@ function Fact({ icon, text }: { icon: IconName; text: string }) {
 function Empty({ icon, text }: { icon: IconName; text: string }) {
   return (
     <View style={[styles.post, { alignItems: 'center', gap: 10 }]}>
+      <GlassLayer radius={radius.xl} />
       <Icon name={icon} size={20} color={girl.rose} />
       <Text variant="bodyS" color={girl.inkSoft} align="center">
         {text}
@@ -336,9 +342,9 @@ const styles = StyleSheet.create({
   card: { marginHorizontal: space.gutter, marginTop: -22, padding: 16, gap: 12, borderRadius: radius.xl, zIndex: 0, boxShadow: girl.shadow },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, marginTop: space[6], marginBottom: space[4] },
-  tab: { height: 38, paddingHorizontal: 16, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
-  post: { padding: 16, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
-  plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
+  tab: { height: 38, paddingHorizontal: 16, borderRadius: 19, alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },
+  post: { padding: 16, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
+  plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   planPhoto: { width: 76, height: 76, borderRadius: radius.lg, overflow: 'hidden' },
-  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingHorizontal: space.gutter, paddingTop: 12, backgroundColor: girl.glass },
+  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingHorizontal: space.gutter, paddingTop: 12, overflow: 'hidden' },
 });

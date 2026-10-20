@@ -117,6 +117,56 @@ const night: Palette = {
 export const palettes: Record<Mode, Palette> = { night, day: light };
 
 /**
+ * IRLY Girl, as a palette of the same design system: the shared components
+ * (buttons, chips, fields, glass, sheets, pages) render in it inside IRLY
+ * Girl. Values come from features/girl/theme (rose-white ground, plum ink,
+ * rose for text and filled controls, 4.5:1 or better for small text).
+ */
+export const girlPalette: Palette = {
+  bg: '#FFF5F8',
+  surface: '#FFFFFF',
+  raised: '#FFFFFF',
+  overlay: '#FBE4EE',
+  glass: 'rgba(255,245,248,0.72)',
+  line: 'rgba(201,47,114,0.12)',
+  lineStrong: 'rgba(201,47,114,0.22)',
+  text: '#382832',
+  textSecondary: '#7E6873',
+  textTertiary: '#947F8A',
+  onDark: '#FFFFFF',
+  brand: '#C92F72',
+  brandPressed: '#AE2762',
+  brandSoft: 'rgba(201,47,114,0.10)',
+  onBrand: '#FFFFFF',
+  live: '#E5352B',
+  liveSoft: 'rgba(229,53,43,0.12)',
+  positive: '#2F8F5E',
+  positiveSoft: 'rgba(47,143,94,0.14)',
+  caution: '#C26A00',
+  critical: '#B3261E',
+  scrim: 'rgba(56,40,50,0.34)',
+  shadow: 'rgba(201,47,114,0.14)',
+  steel: '#B07C9A',
+  card: '#FFFFFF',
+};
+
+/**
+ * Ambient light: the soft glows painted once behind every screen so glass
+ * has something to refract (a frosted pane over a flat colour reads as a
+ * flat colour). Three glows per flavor and mode, never animated in a loop.
+ */
+export const ambient = {
+  mixte: {
+    night: { base: '#050506', glows: ['rgba(110,142,180,0.62)', 'rgba(88,86,214,0.42)', 'rgba(196,140,92,0.30)'] },
+    day: { base: '#F4F4F1', glows: ['rgba(142,165,191,0.42)', 'rgba(190,200,230,0.40)', 'rgba(240,214,190,0.40)'] },
+  },
+  girl: {
+    night: { base: '#FFF5F8', glows: ['rgba(241,91,154,0.30)', 'rgba(241,236,248,0.95)', 'rgba(248,220,231,0.90)'] },
+    day: { base: '#FFF5F8', glows: ['rgba(241,91,154,0.30)', 'rgba(241,236,248,0.95)', 'rgba(248,220,231,0.90)'] },
+  },
+} as const;
+
+/**
  * Category and status colours. Used on an icon, a dot or a halo, never as
  * a background fill.
  */
@@ -261,9 +311,9 @@ export const elevation = { night: nightShadows, day: dayShadows } as const;
  * - thick: bars, sheets and menus that hold their own content
  */
 export const glassLevels = {
-  thin: { blur: 30, night: 'rgba(255,255,255,0.08)', day: 'rgba(255,255,255,0.55)' },
-  regular: { blur: 55, night: 'rgba(22,24,28,0.42)', day: 'rgba(255,255,255,0.72)' },
-  thick: { blur: 80, night: 'rgba(14,15,18,0.66)', day: 'rgba(255,255,255,0.86)' },
+  thin: { blur: 30, night: 'rgba(255,255,255,0.07)', day: 'rgba(255,255,255,0.45)', girl: 'rgba(255,240,246,0.46)' },
+  regular: { blur: 55, night: 'rgba(24,27,33,0.38)', day: 'rgba(255,255,255,0.58)', girl: 'rgba(255,243,248,0.60)' },
+  thick: { blur: 80, night: 'rgba(14,15,18,0.62)', day: 'rgba(255,255,255,0.80)', girl: 'rgba(255,245,249,0.82)' },
 } as const;
 export type GlassLevel = keyof typeof glassLevels;
 

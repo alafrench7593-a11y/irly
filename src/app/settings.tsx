@@ -13,6 +13,7 @@ import { t as tx, useLang, a11y } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Safety = {
   profile_visibility: 'everyone' | 'friends' | 'communities' | 'nobody';
@@ -48,7 +49,6 @@ const AUDIENCE = [
  */
 export default function SettingsScreen() {
   const staff = isModerator(useStaffRole());
-  const t = useTheme();
   const router = useRouter();
   const account = useAccount();
   const uid = account?.userId;
@@ -207,14 +207,16 @@ export default function SettingsScreen() {
             ))}
           </View>
         </View>
-        <View style={[styles.group, { backgroundColor: t.c.surface }]}>
+        <View style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+          <GlassLayer radius={radius.xl} />
           <Row label="Show when I'm active" value={safety.show_active} onChange={(v) => saveSafety({ show_active: v })} />
         </View>
 
         <Text variant="titleM" style={{ marginTop: space[4] }}>
           Notifications
         </Text>
-        <View style={[styles.group, { backgroundColor: t.c.surface }]}>
+        <View style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+          <GlassLayer radius={radius.xl} />
           <Row label="Notifications on my phone" value={push} onChange={togglePush} />
           <Divider inset={16} />
           <Row label="Show message previews" value={previews} onChange={togglePreviews} />
@@ -228,7 +230,8 @@ export default function SettingsScreen() {
                 ? tx("This version of IRLY can't receive notifications yet.")
                 : tx('Messages, requests and your activities, even when IRLY is closed. Choose which below.')}
         </Text>
-        <View style={[styles.group, { backgroundColor: t.c.surface }]}>
+        <View style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+          <GlassLayer radius={radius.xl} />
           {GROUPS.map((g, i) => (
             <View key={g.label}>
               {i ? <Divider inset={16} /> : null}

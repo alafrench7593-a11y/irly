@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useT } from '@/i18n';
@@ -89,12 +92,17 @@ export function ReportSheet({
                 onPress={() => setCategory(c.id)}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
-                style={[styles.option, { borderColor: on ? t.c.text : t.c.line, backgroundColor: on ? t.c.surface : 'transparent' }]}
+                style={[styles.option, { borderColor: on ? t.c.brand : 'transparent' }]}
               >
+                <GlassLayer radius={radius.md} level={on ? 'regular' : 'thin'} />
                 <Text variant="body" style={{ flex: 1 }}>
                   {c.label}
                 </Text>
-                {on ? <Icon name="check" size={18} color={t.c.text} /> : null}
+                {on ? (
+                  <Animated.View entering={enter.pop(0)}>
+                    <Icon name="check" size={18} color={t.c.brand} />
+                  </Animated.View>
+                ) : null}
               </PressableScale>
             );
           })}
@@ -107,8 +115,9 @@ export function ReportSheet({
             onPress={() => setAlsoBlock((b) => !b)}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: alsoBlock }}
-            style={[styles.option, { borderColor: t.c.line }]}
+            style={[styles.option, { borderColor: alsoBlock ? t.c.brand : 'transparent' }]}
           >
+            <GlassLayer radius={radius.md} level="thin" />
             <Icon name={alsoBlock ? 'check' : 'shield'} size={18} color={t.c.text} />
             <Text variant="body" style={{ flex: 1 }}>
               {name ? tr('Also block {name}', { name }) : tr('Also block this member')}
@@ -126,7 +135,7 @@ export function ReportSheet({
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[2] },
-  option: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingHorizontal: 14, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2 },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingHorizontal: 14, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
 });
 
 /** Mounted once at the root: the sheet opened by openReport() from any screen. */

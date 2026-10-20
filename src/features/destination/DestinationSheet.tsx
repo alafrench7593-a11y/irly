@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { t as tx } from '@/i18n';
 import { Badge, Divider } from '@/components/ui/Controls';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
@@ -52,11 +53,12 @@ export function DestinationSheet({ visible, onClose }: Props) {
                   const last = lastCity[destId];
                   pick(last && dest.cities.includes(last) ? last : (dest.defaultCity as CityId));
                 }}
-                style={[styles.quickTile, { backgroundColor: here ? t.c.text : t.c.surface, borderColor: here ? t.c.text : t.c.lineStrong }]}
+                style={[styles.quickTile, { backgroundColor: here ? t.c.text : 'transparent', borderColor: here ? t.c.text : 'transparent' }]}
                 accessibilityRole="button"
                 accessibilityState={{ selected: here }}
                 accessibilityLabel={tx(dest.shortName)}
               >
+                {here ? null : <GlassLayer radius={radius.lg} />}
                 <Text style={{ fontSize: 26 }}>{destId === 'bali' ? '🌴' : dest.flag}</Text>
                 <Text variant="titleS" color={here ? t.c.bg : t.c.text}>
                   {tx(dest.shortName)}
@@ -154,9 +156,10 @@ export function DestinationSheet({ visible, onClose }: Props) {
                 }}
                 style={[
                   styles.waitlist,
-                  { backgroundColor: joined ? t.c.positiveSoft : t.c.overlay },
+                  { backgroundColor: joined ? t.c.positiveSoft : 'transparent' },
                 ]}
               >
+                {joined ? null : <GlassLayer radius={16} level="thin" />}
                 <Text variant="label" tone={joined ? 'positive' : 'primary'}>
                   {joined ? 'On the list' : 'Notify me'}
                 </Text>
@@ -180,7 +183,7 @@ function useLastCity(cityId: CityId | null) {
 
 const styles = StyleSheet.create({
   quick: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter, marginBottom: space[5] },
-  quickTile: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 16, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
+  quickTile: { flex: 1, alignItems: 'center', gap: 4, paddingVertical: 16, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -199,5 +202,5 @@ const styles = StyleSheet.create({
   },
   thumb: { width: 52, height: 52, borderRadius: 16 },
   check: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  waitlist: { height: 32, paddingHorizontal: 12, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  waitlist: { height: 32, paddingHorizontal: 12, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 });

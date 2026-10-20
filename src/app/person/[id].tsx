@@ -27,6 +27,8 @@ import { enter } from '@/motion/enter';
 import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 
 /** Example people (demo) have their page here; a real member (UUID) gets their server profile. */
 export default function PersonProfile() {
@@ -60,6 +62,7 @@ function SeedProfile() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
         {/* Their cover is the thing they do most, in a real photo */}
         <Cover
@@ -145,7 +148,8 @@ function SeedProfile() {
           </Text>
           <View style={styles.wrap}>
             {person.interests.map((i) => (
-              <View key={i} style={[styles.tag, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+              <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]}>
+                <GlassLayer radius={radius.pill} />
                 <Icon name={INTERESTS[i].icon} size={14} color={t.c.textSecondary} />
                 <Text variant="label">{INTERESTS[i].label}</Text>
               </View>
@@ -209,7 +213,8 @@ function SeedProfile() {
 function Fact({ icon, label, value }: { icon: 'clock' | 'languages'; label: string; value: string }) {
   const t = useTheme();
   return (
-    <View style={[styles.fact, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <View style={[styles.fact, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]}>
+      <GlassLayer radius={radius.lg} />
       <Icon name={icon} size={18} color={t.c.textSecondary} />
       <Text variant="caption" tone="tertiary">
         {label}

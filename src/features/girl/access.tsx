@@ -13,6 +13,9 @@ import { useStore } from '@/state/store';
 import { space } from '@/theme/tokens';
 import { girl, girlType } from './theme';
 import { GButton } from './ui';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
+import { Ambient } from '@/components/visual/Ambient';
 
 /**
  * Who may enter IRLY Girl (and IRLY Moms, which lives inside it), as seen
@@ -116,6 +119,7 @@ export function useGirlAccess(): { access: GirlAccess; retry: () => void } {
 export function GirlLoading({ label = 'Opening your space…' }: { label?: string }) {
   return (
     <View style={[styles.root, styles.center, { gap: 14, padding: space.gutter }]} accessibilityLabel={tx('Loading')}>
+      <Ambient variant="hero" />
       <ActivityIndicator color={girl.rose} />
       <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
         IRLY Girl
@@ -161,9 +165,10 @@ export function GirlClosed({ reason, onRetry, moms }: { reason: GirlClosedReason
   const c = CLOSED[reason];
   return (
     <View style={[styles.root, styles.center, { padding: space.gutter + 8, gap: 16, paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 }]}>
-      <View style={styles.badge}>
+      <Ambient variant="hero" />
+      <Animated.View entering={enter.pop(0)} style={styles.badge}>
         <Icon name={c.icon} size={26} color={girl.rose} />
-      </View>
+      </Animated.View>
       <Text variant="displayM" align="center" color={girl.ink} accessibilityRole="header" style={girlType.display}>
         {c.title}
       </Text>

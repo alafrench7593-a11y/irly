@@ -5,6 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
+import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Photo } from '@/components/visual/Photo';
 import { t as tx } from '@/i18n';
@@ -156,6 +157,7 @@ export function PhotoViewerHost() {
           </GestureDetector>
           <Animated.View style={[styles.close, { top: insets.top + 12 }, chrome]}>
             <PressableScale onPress={close} haptic={false} scaleTo={0.9} hitSlop={10} accessibilityLabel="Close photo" style={styles.closeBtn}>
+              <Glass dark level="thin" style={[StyleSheet.absoluteFill, { borderRadius: 22 }]} />
               <Icon name="x" size={20} color="#FFFFFF" />
             </PressableScale>
           </Animated.View>
@@ -169,5 +171,5 @@ const styles = StyleSheet.create({
   dim: { backgroundColor: '#000000' },
   frame: { overflow: 'hidden', backgroundColor: '#111111' },
   close: { position: 'absolute', right: 16 },
-  closeBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.16)' },
+  closeBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
 });

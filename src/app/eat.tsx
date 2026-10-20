@@ -17,6 +17,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const CUISINES = ['indonesian', 'balinese', 'french', 'italian', 'japanese', 'korean', 'thai', 'vietnamese', 'chinese', 'indian', 'middle_eastern', 'mexican', 'american', 'mediterranean', 'healthy', 'vegan', 'vegetarian', 'seafood', 'steakhouse', 'pizza', 'burger', 'bakery', 'dessert', 'sushi', 'fine_dining', 'brunch', 'coffee', 'cafe'];
 const MEALS = ['breakfast', 'brunch', 'lunch', 'dinner'];
@@ -101,7 +102,8 @@ export default function Eat() {
             Could not load restaurants. Check your connection.
           </Text>
         ) : !list.length ? (
-          <View style={[styles.empty, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="utensils" size={22} color={t.c.textSecondary} />
             <Text variant="body" tone="secondary" align="center">
               {data.length ? 'Nothing matches these filters. Loosen one.' : 'Restaurants for this destination are being added. Try another filter or come back soon.'}
@@ -127,7 +129,8 @@ function Card({ p, rank, open, onPress, cityId }: { p: PlaceHit; rank: number; o
   const t = useTheme();
   const city = CITIES[cityId];
   return (
-    <PressableScale onPress={onPress} haptic="select" scaleTo={0.98} style={[styles.card, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]} accessibilityLabel={p.name}>
+    <PressableScale onPress={onPress} haptic="select" scaleTo={0.98} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]} accessibilityLabel={p.name}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.photo}>
         {p.photo ? (
           <Image source={{ uri: p.photo }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} recyclingKey={p.id} />

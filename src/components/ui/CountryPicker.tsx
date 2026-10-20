@@ -10,6 +10,7 @@ import { Field } from './Controls';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 import { Text } from './Text';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Props = {
   /** The stored value: a country's English name (or older free text, shown as typed). */
@@ -54,8 +55,9 @@ export function CountryPicker({ value, onChange, label = 'Where are you from?', 
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`${tr(label)}: ${summary}`}
-        style={[styles.row, { backgroundColor: t.c.surface, borderColor: t.c.line }]}
+        style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
       >
+        <GlassLayer radius={radius.lg} />
         {chosen ? (
           <Text variant="titleS" raw style={styles.flag}>
             {flagOf(chosen.code)}

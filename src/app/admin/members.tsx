@@ -38,8 +38,8 @@ export default function Members() {
         <Field icon="search" value={search} onChangeText={setSearch} placeholder="First name, username or email" accessibilityLabel="Search members" autoCapitalize="none" />
         <Loadable data={rows} error={error} retry={load} empty="Nobody found.">
           {(list) =>
-            list.map((m) => (
-              <Card key={m.user_id} onPress={() => setOpen(open === m.user_id ? null : m.user_id)} accessibilityLabel={m.first_name ?? undefined}>
+            list.map((m, i) => (
+              <Card index={i} key={m.user_id} onPress={() => setOpen(open === m.user_id ? null : m.user_id)} accessibilityLabel={m.first_name ?? undefined}>
                 <Text variant="titleS" raw>
                   {m.first_name ?? '—'}
                   {m.username ? ` · @${m.username}` : ''}

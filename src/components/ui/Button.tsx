@@ -1,4 +1,5 @@
 import { memo, useEffect, type ReactNode } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import type { HapticKind } from '@/motion/haptics';
@@ -6,6 +7,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
 import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 
@@ -77,6 +79,10 @@ export const Button = memo(function Button({
     danger: { bg: t.c.critical, fg: '#FFFFFF' },
   };
   const p = palette[variant];
+  // Secondary and glass actions are panes of the shared glass; the primary
+  // of IRLY Girl is its rose gradient, the primary of Mixte stays solid.
+  const glassy = variant === 'secondary' || variant === 'glass';
+  const girlPrimary = variant === 'primary' && t.flavor === 'girl';
   const h = HEIGHT[size];
 
   return (
@@ -94,13 +100,16 @@ export const Button = memo(function Button({
             height: h,
             paddingHorizontal: PAD[size],
             borderRadius: radius.pill,
-            backgroundColor: p.bg,
-            borderWidth: p.border ? StyleSheet.hairlineWidth * 2 : 0,
+            backgroundColor: glassy || girlPrimary ? 'transparent' : p.bg,
+            overflow: glassy || girlPrimary ? 'hidden' : undefined,
+            borderWidth: p.border && !glassy ? StyleSheet.hairlineWidth * 2 : 0,
             borderColor: p.border,
             boxShadow: p.shadow,
           },
         ]}
       >
+        {glassy ? <Glass level="thin" dark={variant === 'glass'} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} /> : null}
+        {girlPrimary ? <LinearGradient colors={GIRL_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} /> : null}
         {loading ? (
           <ActivityIndicator color={p.fg} />
         ) : (
@@ -117,6 +126,8 @@ export const Button = memo(function Button({
     </Animated.View>
   );
 });
+
+const GIRL_GRADIENT = ['#E04A8B', '#C92F72'] as const;
 
 const styles = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center' },

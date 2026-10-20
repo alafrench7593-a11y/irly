@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { Chip, Field } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, ideaPhoto, photoForText, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
@@ -373,6 +375,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
         ]}
       />
       <Animated.View style={[StyleSheet.absoluteFill, { paddingTop: insets.top + space[6] }, content]}>
+        <Ambient variant="hero" />
         <View style={styles.head}>
           {step > 0 ? (
             <PressableScale haptic="select" scaleTo={0.9} onPress={() => setStep(step - 1)} accessibilityLabel="Previous step" style={styles.back} hitSlop={8}>
@@ -406,7 +409,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   {results.map((r) => {
                     const c = CATEGORY_BY_ID[r.categoryId];
                     return (
-                      <PressableScale key={`${r.categoryId}-${r.sub.id}-${r.activity?.id ?? ''}`} haptic={false} scaleTo={0.98} onPress={() => chooseEntry(r.categoryId, r.sub, r.activity)} style={[styles.result, { backgroundColor: t.c.surface }]}>
+                      <PressableScale key={`${r.categoryId}-${r.sub.id}-${r.activity?.id ?? ''}`} haptic={false} scaleTo={0.98} onPress={() => chooseEntry(r.categoryId, r.sub, r.activity)} style={styles.result}>
+                        <GlassLayer radius={radius.lg} level="thin" />
                         <View style={[styles.dot, { backgroundColor: c.color }]} />
                         <View style={{ flex: 1 }}>
                           <Text variant="label">{r.label}</Text>
@@ -499,7 +503,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   <Text variant="overline" tone="secondary">
                     {pick.sub.label}
                   </Text>
-                  <PressableScale haptic={false} scaleTo={0.98} onPress={() => chooseEntry(category.id, pick.sub!)} style={[styles.result, { backgroundColor: t.c.surface }]}>
+                  <PressableScale haptic={false} scaleTo={0.98} onPress={() => chooseEntry(category.id, pick.sub!)} style={styles.result}>
+                        <GlassLayer radius={radius.lg} level="thin" />
                     <View style={[styles.dot, { backgroundColor: category.color }]} />
                     <Text variant="label" style={{ flex: 1 }}>
                       {tx('{what} session', { what: tx(pick.sub.label) })}
@@ -507,7 +512,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
                   </PressableScale>
                   {pick.sub.activities.map((act) => (
-                    <PressableScale key={act.id} haptic={false} scaleTo={0.98} onPress={() => chooseEntry(category.id, pick.sub!, act)} style={[styles.result, { backgroundColor: t.c.surface }]}>
+                    <PressableScale key={act.id} haptic={false} scaleTo={0.98} onPress={() => chooseEntry(category.id, pick.sub!, act)} style={styles.result}>
+                        <GlassLayer radius={radius.lg} level="thin" />
                       <View style={[styles.dot, { backgroundColor: category.color }]} />
                       <View style={{ flex: 1 }}>
                         <Text variant="label">{act.label}</Text>
@@ -625,14 +631,17 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   <Text variant="overline" tone="secondary">
                     Exact address (optional)
                   </Text>
+                  <View style={styles.fieldHost}>
+                  <GlassLayer radius={radius.lg} level="thin" />
                   <TextInput
                     value={address}
                     onChangeText={(v) => setAddress(v.slice(0, 200))}
                     placeholder={tx('Building, street, place: to appear on the map')}
                     placeholderTextColor={t.c.textTertiary}
-                    style={[styles.address, { color: t.c.text, backgroundColor: t.c.surface }]}
+                    style={[styles.address, { color: t.c.text }]}
                     accessibilityLabel={a11y('Exact address')}
                   />
+                  </View>
                 </Animated.View>
               ) : null}
             </View>
@@ -652,13 +661,15 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 <Chip size="sm" label="Unlimited" selected={unlimited} onPress={() => setUnlimited(true)} />
               </Animated.View>
               <Animated.View entering={enter.rise(1)} style={[styles.block, styles.stepperRow, unlimited ? { opacity: 0.35 } : null]} pointerEvents={unlimited ? 'none' : 'auto'}>
-                <PressableScale haptic="select" scaleTo={0.85} onPress={() => setSpots((n) => Math.max(2, n - 1))} style={[styles.stepBtn, { backgroundColor: t.c.overlay }]} accessibilityLabel="Fewer spots">
+                <PressableScale haptic="select" scaleTo={0.85} onPress={() => setSpots((n) => Math.max(2, n - 1))} style={styles.stepBtn} accessibilityLabel="Fewer spots">
+                  <GlassLayer radius={28} level="thin" />
                   <Icon name="minus" size={22} color={t.c.text} />
                 </PressableScale>
                 <Text variant="displayXL" style={{ minWidth: 90 }} align="center">
                   {spots}
                 </Text>
-                <PressableScale haptic="select" scaleTo={0.85} onPress={() => setSpots((n) => Math.min(60, n + 1))} style={[styles.stepBtn, { backgroundColor: t.c.overlay }]} accessibilityLabel="More spots">
+                <PressableScale haptic="select" scaleTo={0.85} onPress={() => setSpots((n) => Math.min(60, n + 1))} style={styles.stepBtn} accessibilityLabel="More spots">
+                  <GlassLayer radius={28} level="thin" />
                   <Icon name="plus" size={22} color={t.c.text} />
                 </PressableScale>
               </Animated.View>
@@ -696,6 +707,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 </PressableScale>
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.block}>
+                <View style={styles.fieldHost}>
+                <GlassLayer radius={radius.lg} level="thin" />
                 <TextInput
                   value={description}
                   onChangeText={setDescription}
@@ -703,10 +716,12 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   placeholderTextColor={t.c.textTertiary}
                   multiline
                   maxLength={240}
-                  style={[styles.desc, { color: t.c.text, backgroundColor: t.c.surface }]}
+                  style={[styles.desc, { color: t.c.text }]}
                 />
+                </View>
               </Animated.View>
-              <Animated.View entering={enter.rise(3)} style={[styles.summary, { backgroundColor: t.c.surface, boxShadow: t.shadow.card }]}>
+              <Animated.View entering={enter.rise(3)} style={[styles.summary, { boxShadow: t.shadow.card }]}>
+                <GlassLayer radius={radius.xl} />
                 <View style={[styles.dot, { backgroundColor: category.color, width: 12, height: 12, borderRadius: 6 }]} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="cardTitle" style={{ fontSize: 20, lineHeight: 24 }}>
@@ -718,7 +733,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 </View>
               </Animated.View>
               {pick?.activity?.note ? (
-                <Animated.View entering={enter.rise(4)} style={[styles.note, { backgroundColor: t.c.overlay }]}>
+                <Animated.View entering={enter.rise(4)} style={styles.note}>
+                  <GlassLayer radius={radius.lg} level="thin" />
                   <Icon name="sparkles" size={16} color={t.c.text} />
                   <Text variant="bodyS" style={{ flex: 1 }}>
                     {pick.activity.note}
@@ -765,7 +781,8 @@ function CustomButton({ text, onPress }: { text: string; onPress: () => void }) 
 }
 
 const styles = StyleSheet.create({
-  address: { height: 48, borderRadius: radius.lg, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
+  fieldHost: { borderRadius: radius.lg, overflow: 'hidden' },
+  address: { height: 48, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
   cover: { height: 170, borderRadius: radius.lg, overflow: 'hidden' },
   coverRemove: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   coverPill: { position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
@@ -784,14 +801,14 @@ const styles = StyleSheet.create({
   tileIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   block: { paddingHorizontal: space.gutter, gap: 10, marginBottom: space[5] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  result: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderRadius: radius.lg },
+  result: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12, borderRadius: radius.lg, overflow: 'hidden' },
   dot: { width: 10, height: 10, borderRadius: 5 },
   custom: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, paddingHorizontal: 16, borderRadius: radius.pill, borderWidth: 1, borderStyle: 'dashed' },
   stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16 },
-  stepBtn: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
+  stepBtn: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   desc: { minHeight: 90, borderRadius: radius.md, padding: 14, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top' },
-  summary: { marginHorizontal: space.gutter, padding: 18, borderRadius: radius.xl, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  note: { marginHorizontal: space.gutter, padding: 14, borderRadius: radius.lg, flexDirection: 'row', gap: 10 },
+  summary: { marginHorizontal: space.gutter, padding: 18, borderRadius: radius.xl, flexDirection: 'row', alignItems: 'center', gap: 14, overflow: 'hidden' },
+  note: { marginHorizontal: space.gutter, padding: 14, borderRadius: radius.lg, flexDirection: 'row', gap: 10, overflow: 'hidden' },
   footer: { position: 'absolute', left: space.gutter, right: space.gutter },
   closeWrap: { position: 'absolute', width: BUTTON, height: BUTTON },
   close: { width: BUTTON, height: BUTTON, borderRadius: BUTTON / 2, alignItems: 'center', justifyContent: 'center' },

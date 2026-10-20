@@ -17,6 +17,7 @@ import { enter } from '@/motion/enter';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const STEPS: { icon: IconName; title: string; body: string }[] = [
   { icon: 'idCard', title: 'Licence and identity checked', body: 'Each provider’s trade licence and the person behind it will be checked first.' },
@@ -75,7 +76,8 @@ export default function Services() {
         ))}
       </View>
 
-      <View style={[styles.verify, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+      <View style={[styles.verify, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+        <GlassLayer radius={radius.xl} />
         <Text variant="overline" tone="tertiary">
           How listing will work
         </Text>

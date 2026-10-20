@@ -35,6 +35,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 import {
   openDirect,
   setFollow,
@@ -268,7 +269,8 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
             {p.interests.slice(0, 8).map((i) => {
               const it = INTERESTS[i as keyof typeof INTERESTS];
               return (
-                <View key={i} style={[styles.tag, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+                <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+                  <GlassLayer radius={14} />
                   {it ? <Icon name={it.icon} size={13} color={t.c.textSecondary} /> : null}
                   <Text variant="caption">{it?.label ?? i}</Text>
                 </View>
@@ -278,7 +280,8 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
         ) : null}
 
         {!p.visible ? (
-          <Animated.View entering={FadeIn} style={[styles.card, { backgroundColor: t.c.surface }]}>
+          <Animated.View entering={FadeIn} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.lg} />
             <Icon name="lock" size={18} color={t.c.textSecondary} />
             <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
               {tx('{name} keeps their profile private. You see their name and photo only.', { name: p.firstName })}
@@ -452,9 +455,10 @@ function PostsTab({ userId, own, name }: { userId: string; own: boolean; name: s
           haptic="select"
           scaleTo={0.98}
           onPress={() => router.push(`/comments?type=community_post&id=${x.id}`)}
-          style={[styles.post, { backgroundColor: t.c.surface, borderColor: t.c.line }]}
+          style={[styles.post, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
           accessibilityLabel={x.communityId ? tx('Post in {name}', { name: x.communityName }) : tx('Post on the profile')}
         >
+          <GlassLayer radius={radius.lg} />
           <View style={styles.meta}>
             {x.communityId ? (
               <PressableScale onPress={() => router.push(`/c/${x.communityId}`)} accessibilityRole="link" style={{ flex: 1 }}>
@@ -526,7 +530,8 @@ function LivesTab({ userId, own, name, cityId }: { userId: string; own: boolean;
       />
     );
   const row = (l: (typeof lives.items)[number], isLive: boolean) => (
-    <PressableScale key={l.id} haptic="select" scaleTo={0.98} onPress={isLive ? () => router.push('/live') : undefined} disabled={!isLive} style={[styles.post, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <PressableScale key={l.id} haptic="select" scaleTo={0.98} onPress={isLive ? () => router.push('/live') : undefined} disabled={!isLive} style={[styles.post, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.lg} />
       <View style={styles.meta}>
         {isLive ? <View style={[styles.dot, { backgroundColor: t.c.live }]} /> : null}
         <Text variant="caption" tone={isLive ? 'live' : 'tertiary'}>

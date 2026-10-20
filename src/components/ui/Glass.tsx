@@ -18,35 +18,37 @@ type Props = {
   level?: GlassLevel;
   /** Soft light along the top edge, like a real pane. */
   highlight?: boolean;
+  /** A soft drop shadow under the pane (cards, bars, sheets). */
+  lifted?: boolean;
   children?: ReactNode;
 };
 
 /**
- * Frosted glass: blur, a controlled tint, a hairline edge and a soft
- * highlight along the top, so a surface reads as physically placed above
- * the content behind it. On IRLY Noir the tint is smoked glass; on a photo
- * (`dark`) it is a whisper of white, as in the event page over its own
- * photo. On Android a dense tint keeps text legible without the cost of a
- * live blur. The blur never animates: a glass layer fades in as a whole.
+ * Frosted glass, the base surface of the IRLY design system:
+ * 1. a live blur of what is behind (iOS, web: backdrop-filter),
+ * 2. a controlled tint (smoked on IRLY Noir, milky on IRLY Clair, rose
+ *    veil in IRLY Girl, a whisper of white on a photo),
+ * 3. a light edge: brighter along the top, fading down the sides,
+ * 4. a sheen across the top half, like light on a real pane,
+ * 5. optionally a soft shadow that lifts it off the ground.
+ * On Android a denser tint stands in for the blur (no live blur cost) and
+ * keeps text legible. The blur never animates: a pane fades in as a whole.
  */
-export const Glass = memo(function Glass({ style, intensity, dark, light, border = true, level = 'regular', highlight = true, children }: Props) {
+export const Glass = memo(function Glass({ style, intensity, dark, light, border = true, level = 'regular', highlight = true, lifted, children }: Props) {
   const t = useTheme();
-  const night = t.mode === 'night' && !light;
+  const girl = t.flavor === 'girl' && !dark;
+  const night = t.mode === 'night' && !light && !girl;
   const isDark = dark || night;
   const spec = glassLevels[level];
-  const tint = dark ? 'rgba(255,255,255,0.12)' : night ? spec.night : spec.day;
-  const edge = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.9)';
-  const shine = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.6)';
+  const tint = dark ? 'rgba(255,255,255,0.12)' : girl ? spec.girl : night ? spec.night : spec.day;
+  const edgeTop = isDark ? 'rgba(255,255,255,0.28)' : girl ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.95)';
+  const edgeLow = isDark ? 'rgba(255,255,255,0.07)' : girl ? 'rgba(201,47,114,0.14)' : 'rgba(10,10,10,0.06)';
+  const shine = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.65)';
+  const solid = isDark ? (dark ? 'rgba(40,42,46,0.86)' : 'rgba(24,26,31,0.95)') : girl ? 'rgba(255,246,250,0.96)' : 'rgba(255,255,255,0.95)';
   return (
-    <View
-      style={[
-        styles.root,
-        border ? { borderWidth: StyleSheet.hairlineWidth * 2, borderColor: edge } : null,
-        style,
-      ]}
-    >
+    <View style={[styles.root, lifted ? { boxShadow: t.shadow.card } : null, style]}>
       {Platform.OS === 'android' ? (
-        <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: isDark ? (dark ? 'rgba(40,42,46,0.84)' : 'rgba(22,24,28,0.94)') : 'rgba(255,255,255,0.95)' }]} />
+        <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: solid }]} />
       ) : (
         <>
           <BlurView intensity={intensity ?? spec.blur} tint={isDark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, styles.under]} />
@@ -56,14 +58,25 @@ export const Glass = memo(function Glass({ style, intensity, dark, light, border
       {highlight ? (
         <LinearGradient colors={[shine, 'rgba(255,255,255,0)']} locations={[0, 0.55]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
       ) : null}
+      {border ? (
+        // The edge catches the light from above: bright on top, faint below.
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.edge, { borderColor: edgeLow, borderTopColor: edgeTop, borderLeftColor: edgeTop, borderRadius: flatRadius(style) }]} />
+      ) : null}
       {children}
     </View>
   );
 });
+
+/** The pane's own corner radius, so its edge follows the same curve. */
+function flatRadius(style: StyleProp<ViewStyle>): number | undefined {
+  const flat = StyleSheet.flatten(style);
+  return typeof flat?.borderRadius === 'number' ? flat.borderRadius : undefined;
+}
 
 const styles = StyleSheet.create({
   // The glass is its own stacking context and its layers sit under the
   // content, so icons (SVG) are never painted below the tint on web.
   root: { overflow: 'hidden', zIndex: 0 },
   under: { zIndex: -1 },
+  edge: { borderWidth: StyleSheet.hairlineWidth * 2, zIndex: 1 },
 });

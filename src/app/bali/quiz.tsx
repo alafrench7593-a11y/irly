@@ -15,6 +15,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * WHERE SHOULD I LIVE IN BALI? One question at a time, then the top 3
@@ -58,7 +59,8 @@ export default function BaliQuiz() {
           <Text variant="displayM">{tx(q.label)}</Text>
           <View style={{ gap: 10 }}>
             {q.options.map((o) => (
-              <PressableScale key={o.value} onPress={() => answer(o.value)} haptic={false} scaleTo={0.98} style={[styles.option, { backgroundColor: t.c.surface, borderColor: answers[q.id] === o.value ? t.c.text : t.c.line }]} accessibilityLabel={o.label}>
+              <PressableScale key={o.value} onPress={() => answer(o.value)} haptic={false} scaleTo={0.98} style={[styles.option, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: answers[q.id] === o.value ? t.c.text : t.c.line }]} accessibilityLabel={o.label}>
+                <GlassLayer radius={radius.lg} />
                 <Text variant="titleS">{tx(o.label)}</Text>
               </PressableScale>
             ))}

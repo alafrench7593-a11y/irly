@@ -19,6 +19,7 @@ import { Glass } from '../ui/Glass';
 import { Icon } from '../ui/Icon';
 import { Text } from '../ui/Text';
 import { Photo } from '../visual/Photo';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /** Large, photo-led event card for horizontal rails. */
 export const EventCard = memo(function EventCard({ event, width = 286, height = 368 }: { event: IrlEvent; width?: number; height?: number }) {
@@ -99,7 +100,8 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
   const people = peopleByIds(event.goingIds);
   const chip = dayChip(event.when, city);
   return (
-    <PressableScale ref={ref} onPress={onPress} style={[styles.rowCard, { backgroundColor: t.c.surface, borderColor: t.c.line, opacity: hidden ? 0 : 1 }]}>
+    <PressableScale ref={ref} onPress={onPress} style={[styles.rowCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}>
+      <GlassLayer radius={radius.lg} />
       <Photo visual={event.visual} light={city.light} scrim="soft" style={styles.thumb} recyclingKey={event.id} width={300}>
         <View style={styles.thumbDate}>
           <Text variant="overline" tone="onDark" style={{ fontSize: 9 }}>

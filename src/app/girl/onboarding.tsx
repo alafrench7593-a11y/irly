@@ -22,6 +22,9 @@ import { PressableScale } from '@/motion/PressableScale';
 import { friendlyError } from '@/lib/supabase';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
+import { Flavor } from '@/theme/flavor';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 
 type Slide = { photo: PhotoKey; title: string; body: string; points?: { icon: IconName; text: string }[]; flow?: string[] };
 
@@ -73,7 +76,7 @@ const SLIDES: Slide[] = [
  * stretch for the current slide. Completion is stored server-side.
  */
 /** IRLY Match is coming soon: its onboarding and profile wait, IRLY Girl opens instead. */
-export default function GirlOnboardingScreenGate() {
+function GirlOnboardingScreenGateInner() {
   return FEATURES.girlMatch ? <GirlOnboardingScreen /> : <Redirect href="/girl" />;
 }
 
@@ -127,6 +130,7 @@ function GirlOnboarding() {
 
   return (
     <View style={[styles.root, { backgroundColor: girl.bg }]}>
+      <Ambient variant="hero" />
       <Animated.ScrollView
         ref={scrollRef as never}
         style={{ flex: 1 }}
@@ -182,6 +186,7 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
         </View>
       </View>
       <Animated.View style={[styles.card, text]}>
+        <GlassLayer radius={radius.xxl} level="thick" />
         <Text variant="displayM" color={girl.ink} style={girlType.display}>
           {slide.title}
         </Text>
@@ -233,7 +238,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   photoWrap: { height: '50%', overflow: 'hidden', borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
   brand: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  card: { marginTop: -40, marginHorizontal: space.gutter, padding: 22, gap: 10, borderRadius: radius.xxl, backgroundColor: girl.surface, boxShadow: girl.shadow },
+  card: { marginTop: -40, marginHorizontal: space.gutter, padding: 22, gap: 10, borderRadius: radius.xxl, boxShadow: girl.shadow },
   point: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pointIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: girl.blush, alignItems: 'center', justifyContent: 'center' },
   flow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 6 },
@@ -245,3 +250,12 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', gap: 6, alignSelf: 'center' },
   dot: { height: 8, borderRadius: 4, backgroundColor: girl.rose },
 });
+
+/** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */
+export default function GirlOnboardingScreenGate() {
+  return (
+    <Flavor value="girl">
+      <GirlOnboardingScreenGateInner />
+    </Flavor>
+  );
+}

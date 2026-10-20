@@ -9,6 +9,7 @@ import { Text } from '@/components/ui/Text';
 import { useGuides, type Guide, type GuideKind } from '@/features/bali/data';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const KIND: Record<GuideKind, { label: string; icon: 'shield' | 'sparkles' | 'briefcase' }> = {
   official: { label: 'Official information', icon: 'shield' },
@@ -40,7 +41,8 @@ export default function GuideScreen() {
           </Text>
         ) : null}
         {!loading && !error && !data.length ? (
-          <View style={[styles.card, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="body" tone="secondary">
               This guide is being written. Ask your area’s community on IRLY in the meantime.
             </Text>
@@ -79,7 +81,8 @@ function Article({ g }: { g: Guide }) {
   const t = useTheme();
   const verified = date(g.lastVerifiedAt);
   return (
-    <View style={[styles.card, { backgroundColor: t.c.surface, borderColor: g.kind === 'official' ? t.c.positive : 'transparent' }]}>
+    <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: g.kind === 'official' ? t.c.positive : 'transparent' }]}>
+      <GlassLayer radius={radius.xl} />
       <Text variant="titleS">{tx(g.title)}</Text>
       <Text variant="body" tone="secondary">
         {tx(g.body)}

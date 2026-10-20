@@ -52,8 +52,8 @@ export default function Team() {
       <View style={adminStyles.body}>
         <Loadable data={staff} error={error} retry={load} empty="Nobody yet.">
           {(list) =>
-            list.map((s) => (
-              <Card key={s.user_id}>
+            list.map((s, i) => (
+              <Card index={i} key={s.user_id}>
                 <Text variant="titleS" raw>
                   {s.first_name ?? '—'} · {tx(s.role === 'owner' ? 'Owner' : (ROLES.find((r) => r.value === s.role)?.label ?? s.role))}
                 </Text>
@@ -81,8 +81,8 @@ export default function Team() {
         <Field icon="search" value={search} onChangeText={setSearch} placeholder="First name, username or email" accessibilityLabel="Search members" autoCapitalize="none" />
         {(search.trim().length < 2 ? [] : found)
           .filter((m) => m.role !== 'owner')
-          .map((m) => (
-            <Card key={m.user_id}>
+          .map((m, i) => (
+            <Card index={i} key={m.user_id}>
               <Text variant="bodyS" raw>
                 {m.first_name ?? '—'}
                 {m.username ? ` · @${m.username}` : ''}

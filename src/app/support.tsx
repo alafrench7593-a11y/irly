@@ -2,6 +2,8 @@ import Constants from 'expo-constants';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Chip, Field } from '@/components/ui/Controls';
@@ -12,7 +14,7 @@ import { useAccount } from '@/features/auth/account';
 import { useT } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type Kind = 'problem' | 'question' | 'safety' | 'privacy';
 const KINDS: { id: Kind; label: string }[] = [
@@ -34,7 +36,6 @@ const FAQ: { q: string; a: string }[] = [
 
 /** Help, contact and "Report a problem" (Settings → Support). */
 export default function Support() {
-  const t = useTheme();
   const tr = useT();
   const router = useRouter();
   const account = useAccount();
@@ -78,16 +79,19 @@ export default function Support() {
       <View style={styles.body}>
         <View style={{ gap: 8 }}>
           {FAQ.map((f, i) => (
-            <View key={f.q} style={[styles.faq, { backgroundColor: t.c.surface }]}>
-              <Text variant="titleS" onPress={() => setOpen(open === i ? null : i)} accessibilityRole="button">
-                {f.q}
-              </Text>
-              {open === i ? (
-                <Text variant="body" tone="secondary">
-                  {f.a}
+            <Animated.View key={f.q} entering={enter.rise(Math.min(i, 8))}>
+              <View style={[styles.faq, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                <GlassLayer radius={radius.lg} />
+                <Text variant="titleS" onPress={() => setOpen(open === i ? null : i)} accessibilityRole="button">
+                  {f.q}
                 </Text>
-              ) : null}
-            </View>
+                {open === i ? (
+                  <Text variant="body" tone="secondary">
+                    {f.a}
+                  </Text>
+                ) : null}
+              </View>
+            </Animated.View>
           ))}
         </View>
 

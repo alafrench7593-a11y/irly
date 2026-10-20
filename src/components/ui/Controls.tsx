@@ -126,7 +126,12 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
           sweep={sweep}
           fill={t.c.brand}
           radius={h / 2}
-          base={<View style={[box, { backgroundColor: restBg, borderColor: restBorder }]}>{content(t.c.text, dot ?? t.c.text)}</View>}
+          base={
+            <View style={[box, { backgroundColor: onDark ? restBg : 'transparent', borderColor: onDark ? restBorder : 'transparent', overflow: 'hidden' }]}>
+              {onDark ? null : <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: h / 2 }]} />}
+              {content(t.c.text, dot ?? t.c.text)}
+            </View>
+          }
           chosen={<View style={[box, { borderColor: t.c.brand }]}>{content(t.c.onBrand, t.c.onBrand)}</View>}
         />
       </PressableScale>
@@ -317,8 +322,9 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
   }));
   return (
     <Animated.View
-      style={[styles.field, { backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.06)' : t.c.surface }, animated, containerStyle]}
+      style={[styles.field, { backgroundColor: 'transparent', overflow: 'hidden' }, animated, containerStyle]}
     >
+      <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
       {icon ? <Icon name={icon} size={18} color={t.c.textTertiary} /> : null}
       <TextInput
         placeholder={placeholder ? tr(placeholder) : undefined}

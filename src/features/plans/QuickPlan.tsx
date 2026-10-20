@@ -8,6 +8,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Button } from '@/components/ui/Button';
 import { Chip, Field } from '@/components/ui/Controls';
 import type { IconName } from '@/components/ui/Icon';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
@@ -193,8 +194,9 @@ export function QuickPlan({
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on }}
                 accessibilityLabel={tx(t.label)}
-                style={[styles.tile, { backgroundColor: on ? girl.rose : girl.surface, borderColor: on ? girl.rose : girl.line }]}
+                style={[styles.tile, { backgroundColor: on ? girl.rose : 'transparent', borderColor: on ? girl.rose : 'transparent', boxShadow: on ? girl.shadow : undefined }]}
               >
+                {on ? null : <GlassLayer radius={16} level="thin" />}
                 <Icon name={t.icon} size={18} color={on ? '#FFFFFF' : girl.rose} />
                 <Text variant="caption" color={on ? '#FFFFFF' : girl.ink} align="center" numberOfLines={2}>
                   {t.label}
@@ -286,7 +288,7 @@ function Row({ children }: { children: React.ReactNode }) {
 const styles = StyleSheet.create({
   row: { gap: 8, paddingRight: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tile: { width: '31.5%', minHeight: 74, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, paddingVertical: 10 },
+  tile: { width: '31.5%', minHeight: 74, borderRadius: 16, borderWidth: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, paddingVertical: 10 },
   third: { width: '31.5%' },
   quarter: { width: '23%' },
 });

@@ -1,5 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { areaName, CITIES } from '@/data/destinations';
@@ -10,36 +12,39 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { useBadges, useToday, type Badge } from './engage';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /** Today on IRLY: real activities of the day, with time, place, organiser and spots. Hidden when there are none. */
 export function TodayStrip({ cityId }: { cityId: CityId }) {
-  const t = useTheme();
   const router = useRouter();
   const { items } = useToday(cityId);
   if (!items.length) return null;
   const city = CITIES[cityId];
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
-      {items.map((a) => (
-        <PressableScale key={a.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/a/${a.id}`)} style={[styles.today, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel={a.title}>
-          <Text variant="overline" tone="accent">
-            {cityWhen(a.startsAt, cityId)}
-          </Text>
-          <Text variant="titleS" numberOfLines={2} raw>
-            {a.title}
-          </Text>
-          <Text variant="caption" tone="secondary" numberOfLines={1} raw>
-            {a.place ?? areaName(city, a.areaId)}
-          </Text>
-          <Text variant="caption" tone="tertiary" numberOfLines={1}>
-            {[a.organizer ? tx('by {name}', { name: a.organizer }) : null, tx('{n} going', { n: a.going }), a.spotsLeft != null ? tx('{n} spots left', { n: a.spotsLeft }) : null].filter(Boolean).join(' · ')}
-          </Text>
-          {a.iGo ? (
-            <Text variant="label" tone="accent">
-              {tx("You're going")}
+      {items.map((a, idx) => (
+        <Animated.View key={a.id} entering={enter.rise(Math.min(idx, 8))}>
+          <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/a/${a.id}`)} style={[styles.today, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={a.title}>
+            <GlassLayer radius={radius.xl} />
+            <Text variant="overline" tone="accent">
+              {cityWhen(a.startsAt, cityId)}
             </Text>
-          ) : null}
-        </PressableScale>
+            <Text variant="titleS" numberOfLines={2} raw>
+              {a.title}
+            </Text>
+            <Text variant="caption" tone="secondary" numberOfLines={1} raw>
+              {a.place ?? areaName(city, a.areaId)}
+            </Text>
+            <Text variant="caption" tone="tertiary" numberOfLines={1}>
+              {[a.organizer ? tx('by {name}', { name: a.organizer }) : null, tx('{n} going', { n: a.going }), a.spotsLeft != null ? tx('{n} spots left', { n: a.spotsLeft }) : null].filter(Boolean).join(' · ')}
+            </Text>
+            {a.iGo ? (
+              <Text variant="label" tone="accent">
+                {tx("You're going")}
+              </Text>
+            ) : null}
+          </PressableScale>
+        </Animated.View>
       ))}
     </ScrollView>
   );
@@ -50,7 +55,8 @@ export function RecapDoor() {
   const t = useTheme();
   const router = useRouter();
   return (
-    <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/recap')} style={[styles.door, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel={tx('My recap')}>
+    <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/recap')} style={[styles.door, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={tx('My recap')}>
+      <GlassLayer radius={radius.xl} />
       <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
         <Icon name="sparkles" size={18} color={t.c.text} />
       </View>
@@ -81,7 +87,8 @@ export function BadgesRow({ userId }: { userId: string }) {
       {items.map((b) => {
         const d = BADGES[b.badge];
         return (
-          <View key={b.badge} style={[styles.badge, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel={`${tx(d.names[b.level - 1])}, ${tx(d.what, { n: b.count })}`}>
+          <View key={b.badge} style={[styles.badge, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={`${tx(d.names[b.level - 1])}, ${tx(d.what, { n: b.count })}`}>
+            <GlassLayer radius={999} />
             <Icon name={d.icon} size={14} color={t.c.text} />
             <Text variant="caption">{tx(d.names[b.level - 1])}</Text>
           </View>

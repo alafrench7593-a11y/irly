@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
@@ -90,20 +91,24 @@ export default function NewGroup() {
             haptic="select"
             scaleTo={0.94}
             onPress={() => pickPhoto().then((u) => u && setPhoto(u)).catch(() => toast('Could not open your photos', 'x', 'live'))}
-            style={[styles.photo, { backgroundColor: t.c.overlay }]}
+            style={styles.photo}
             accessibilityLabel={photo ? 'Change the group photo' : 'Add a group photo'}
           >
+            <GlassLayer radius={20} level="thin" />
             {photo ? <Photo visual={{ photo: 'meeting', uri: photo }} light="dubai" width={200} style={StyleSheet.absoluteFill} /> : <Icon name="camera" size={22} color={t.c.textSecondary} />}
           </PressableScale>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            maxLength={60}
-            placeholder={tx('Group name')}
-            placeholderTextColor={t.c.textTertiary}
-            style={[styles.name, { color: t.c.text, borderColor: t.c.line, backgroundColor: t.c.surface }]}
-            accessibilityLabel={a11y('Group name')}
-          />
+          <View style={styles.nameWrap}>
+            <GlassLayer radius={radius.md} level="thin" />
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              maxLength={60}
+              placeholder={tx('Group name')}
+              placeholderTextColor={t.c.textTertiary}
+              style={[styles.name, { color: t.c.text }]}
+              accessibilityLabel={a11y('Group name')}
+            />
+          </View>
         </View>
         <Text variant="overline" tone="tertiary" style={{ marginTop: space[6] }}>
           {tx('People · {n} chosen', { n: picked.length })}
@@ -117,7 +122,8 @@ export default function NewGroup() {
             {people.error}
           </Text>
         ) : !people.list.length ? (
-          <Animated.View entering={FadeIn} style={[styles.empty, { backgroundColor: t.c.surface }]}>
+          <Animated.View entering={enter.rise(0, 40)} style={styles.empty}>
+            <GlassLayer radius={radius.xl} />
             <Icon name="users" size={20} color={t.c.textSecondary} />
             <Text variant="bodyS" tone="secondary" align="center">
               Nobody to add yet. Make friends, follow people or talk to them first: you can add people who accept your messages.
@@ -128,12 +134,19 @@ export default function NewGroup() {
             const on = picked.includes(p.id);
             return (
               <Animated.View key={p.id} entering={enter.rise(Math.min(i, 8), 20)}>
-                <PressableScale onPress={() => toggle(p.id)} scaleTo={0.98} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={p.first_name} style={styles.row}>
+                <PressableScale onPress={() => toggle(p.id)} scaleTo={0.98} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={p.first_name} style={[styles.row, on ? { boxShadow: t.shadow.card } : null]}>
+                  <GlassLayer radius={radius.lg} level={on ? 'regular' : 'thin'} />
                   <Avatar name={p.first_name} hue={hueOf(p.id)} size={46} photo={p.photo_path ? faces[p.photo_path] : undefined} userId={p.id} />
                   <Text variant="titleS" style={{ flex: 1 }} raw>
                     {p.first_name}
                   </Text>
-                  <View style={[styles.check, { borderColor: on ? t.c.text : t.c.lineStrong, backgroundColor: on ? t.c.text : 'transparent' }]}>{on ? <Icon name="check" size={14} color={t.c.bg} /> : null}</View>
+                  <View style={[styles.check, { borderColor: on ? t.c.brand : t.c.lineStrong, backgroundColor: on ? t.c.brand : 'transparent' }]}>
+                    {on ? (
+                      <Animated.View entering={enter.pop(0)}>
+                        <Icon name="check" size={14} color={t.c.onBrand} />
+                      </Animated.View>
+                    ) : null}
+                  </View>
                 </PressableScale>
               </Animated.View>
             );
@@ -151,8 +164,9 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
   head: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   photo: { width: 64, height: 64, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  name: { flex: 1, height: 52, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
+  nameWrap: { flex: 1, height: 52, borderRadius: radius.md, overflow: 'hidden' },
+  name: { flex: 1, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, marginBottom: 6, borderRadius: radius.lg, overflow: 'hidden' },
   check: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
-  empty: { alignItems: 'center', gap: 8, padding: 24, borderRadius: radius.xl },
+  empty: { alignItems: 'center', gap: 8, padding: 24, borderRadius: radius.xl, overflow: 'hidden' },
 });

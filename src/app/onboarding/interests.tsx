@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
@@ -85,8 +85,8 @@ export default function Interests() {
           Interests
         </Text>
         <View style={styles.wrap}>
-          {INTEREST_ORDER.map((i) => (
-            <PhotoTile key={i} photo={INTEREST_PHOTO[i]} label={INTERESTS[i].label} selected={profile.interests.includes(i)} onPress={() => toggleInterest(i)} />
+          {INTEREST_ORDER.map((i, n) => (
+            <PhotoTile key={i} index={n} photo={INTEREST_PHOTO[i]} label={INTERESTS[i].label} selected={profile.interests.includes(i)} onPress={() => toggleInterest(i)} />
           ))}
         </View>
       </Animated.View>
@@ -95,8 +95,8 @@ export default function Interests() {
           Popular in {city.name}
         </Text>
         <View style={styles.wrap}>
-          {city.activityKinds.map((a) => (
-            <PhotoTile key={a} photo={ACTIVITIES[a].photo} label={ACTIVITIES[a].label} selected={profile.activities.includes(a)} onPress={() => toggleActivity(a)} />
+          {city.activityKinds.map((a, n) => (
+            <PhotoTile key={a} index={n} photo={ACTIVITIES[a].photo} label={ACTIVITIES[a].label} selected={profile.activities.includes(a)} onPress={() => toggleActivity(a)} />
           ))}
         </View>
       </Animated.View>
@@ -105,8 +105,9 @@ export default function Interests() {
 }
 
 /** A photo you tap to pick: the name on the picture, a white ring and a check once chosen. */
-function PhotoTile({ photo, label, selected, onPress }: { photo: PhotoKey; label: string; selected: boolean; onPress: () => void }) {
+function PhotoTile({ photo, label, selected, onPress, index }: { photo: PhotoKey; label: string; selected: boolean; onPress: () => void; index: number }) {
   return (
+    <Animated.View entering={enter.pop(Math.min(index, 8), 120)} style={styles.cell}>
     <PressableScale
       onPress={() => {
         haptic('select');
@@ -122,21 +123,23 @@ function PhotoTile({ photo, label, selected, onPress }: { photo: PhotoKey; label
       <Photo visual={{ photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
       {selected ? <View style={styles.tint} /> : null}
       {selected ? (
-        <View style={styles.check}>
+        <Animated.View entering={ZoomIn.springify().damping(14)} exiting={ZoomOut.duration(140)} style={styles.check}>
           <Icon name="check" size={13} color="#0A0A0A" strokeWidth={2.6} />
-        </View>
+        </Animated.View>
       ) : null}
       <Text variant="label" color="#FFFFFF" numberOfLines={2} style={styles.tileLabel}>
         {label}
       </Text>
     </PressableScale>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   block: { paddingHorizontal: space.gutter, gap: 12, marginBottom: space[7] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tile: { width: '31.6%', aspectRatio: 0.82, borderRadius: 16, overflow: 'hidden', borderWidth: 2, justifyContent: 'flex-end', backgroundColor: '#1A1A1C' },
+  cell: { width: '31.6%' },
+  tile: { width: '100%', aspectRatio: 0.82, borderRadius: 16, overflow: 'hidden', borderWidth: 2, justifyContent: 'flex-end', backgroundColor: '#1A1A1C' },
   tint: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.08)' },
   check: { position: 'absolute', top: 8, right: 8, width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   tileLabel: { padding: 10, textShadowColor: 'rgba(0,0,0,0.6)', textShadowRadius: 6 },

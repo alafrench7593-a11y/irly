@@ -15,6 +15,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const SECTIONS = ['visa', 'housing', 'banking', 'sim', 'internet', 'transport', 'healthcare', 'insurance', 'schools', 'childcare', 'work', 'coworking', 'business', 'accounting', 'tax', 'legal', 'real_estate', 'moving', 'pets', 'services'];
 const label = (s: string) => tx(s === 'sim' ? 'SIM / eSIM' : s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()));
@@ -55,7 +56,8 @@ export default function BaliMove() {
           </View>
         ) : null}
         {auth === 'out' ? (
-          <View style={[styles.note, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.lg} />
             <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
               Sign in to save your progress across devices.
             </Text>
@@ -64,14 +66,16 @@ export default function BaliMove() {
         ) : null}
         {loading && !steps.length ? <ActivityIndicator color={t.c.text} /> : null}
         {error && !steps.length ? (
-          <View style={[styles.note, { backgroundColor: t.c.surface }]}>
+          <View style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.lg} />
             <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
               Your checklist could not be loaded.
             </Text>
             <Button label="Try again" size="sm" onPress={reload} />
           </View>
         ) : null}
-        <View style={[styles.list, { backgroundColor: t.c.surface }]}>
+        <View style={[styles.list, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+          <GlassLayer radius={radius.xl} />
           {steps.map((s, i) => (
             <View key={s.id} style={[styles.step, i ? { borderTopWidth: StyleSheet.hairlineWidth, borderColor: t.c.line } : null]}>
               <PressableScale onPress={() => tick(s)} haptic={false} scaleTo={0.9} hitSlop={8} accessibilityRole="checkbox" accessibilityState={{ checked: s.done }} accessibilityLabel={s.label}>

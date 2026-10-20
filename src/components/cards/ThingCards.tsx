@@ -18,6 +18,7 @@ import { Glass } from '../ui/Glass';
 import { Icon } from '../ui/Icon';
 import { Text } from '../ui/Text';
 import { Photo } from '../visual/Photo';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /* ───────── Activity tile (a kind of activity) ───────── */
 
@@ -70,8 +71,9 @@ export const SessionCard = memo(function SessionCard({ session, width }: { sessi
     <PressableScale
       ref={ref}
       onPress={onPress}
-      style={[styles.session, { width, backgroundColor: t.c.surface, borderColor: t.c.line, opacity: hidden ? 0 : 1 }]}
+      style={[styles.session, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}
     >
+      <GlassLayer radius={radius.lg} />
       <View style={styles.sessionTop}>
         <View style={[styles.kindIcon, { backgroundColor: t.light.accentSoft }]}>
           <Icon name={a.icon} size={20} color={t.accent} />
@@ -150,7 +152,6 @@ export const PlaceCard = memo(function PlaceCard({ place, width = 220 }: { place
 /* ───────── Community card ───────── */
 
 export const CommunityCard = memo(function CommunityCard({ community, width = 250 }: { community: Community; width?: number }) {
-  const t = useTheme();
   const city = CITIES[community.cityId];
   const { ref, onPress, hidden } = useHeroCard('community', community.id);
   const member = useStore((s) => Boolean(s.memberOf[community.id]));
@@ -158,8 +159,9 @@ export const CommunityCard = memo(function CommunityCard({ community, width = 25
     <PressableScale
       ref={ref}
       onPress={onPress}
-      style={[styles.community, { width, backgroundColor: t.c.surface, borderColor: t.c.line, opacity: hidden ? 0 : 1 }]}
+      style={[styles.community, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}
     >
+      <GlassLayer radius={radius.lg} />
       <Photo pinned visual={community.visual} light={city.light} scrim="soft" style={styles.communityPhoto} recyclingKey={community.id} width={500}>
         <View style={{ padding: 10, flexDirection: 'row', gap: 6 }}>
           {community.verified ? <Badge kind="verified" onDark /> : null}
@@ -195,8 +197,9 @@ export const ServiceCard = memo(function ServiceCard({ service, compact }: { ser
     <PressableScale
       ref={ref}
       onPress={onPress}
-      style={[styles.service, { backgroundColor: t.c.surface, borderColor: t.c.line, opacity: hidden ? 0 : 1 }]}
+      style={[styles.service, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}
     >
+      <GlassLayer radius={radius.lg} />
       <View style={[styles.kindIcon, { backgroundColor: t.c.brandSoft, width: 48, height: 48 }]}>
         <Icon name={cat.icon} size={22} color={t.c.brand} />
       </View>

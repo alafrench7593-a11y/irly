@@ -28,7 +28,8 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { girlPhotoFor } from './photos';
 import { girl, GIRL_TINT, girlType } from './theme';
-import { GButton, GlassFill } from './ui';
+import { GButton, GChip, GlassFill } from './ui';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /* ───────── Kinds of plans ───────── */
 
@@ -232,6 +233,7 @@ export function Upcoming({
           </View>
         ) : !list.length && error ? (
           <View style={styles.empty}>
+            <GlassLayer radius={radius.xl} />
             <Text variant="bodyS" color={girl.inkSoft} align="center">
               {"Plans couldn't load. Check your connection."}
             </Text>
@@ -239,6 +241,7 @@ export function Upcoming({
           </View>
         ) : !list.length ? (
           <Animated.View entering={FadeIn} style={styles.empty}>
+            <GlassLayer radius={radius.xl} />
             <View style={styles.emptyIcon}>
               <Icon name="sparkles" size={20} color={girl.rose} />
             </View>
@@ -271,6 +274,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
   const full = a.capacity != null && a.going >= a.capacity;
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} accessibilityLabel={`${a.title}, ${cityWhen(a.startsAt, a.cityId)}`} style={styles.plan}>
+      <GlassLayer radius={radius.lg} />
       <View style={styles.planPhoto}>
         <Photo tint={GIRL_TINT} visual={{ photo, uri: a.coverUrl }} light="dubai" width={300} style={StyleSheet.absoluteFill} />
       </View>
@@ -315,15 +319,9 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
   );
 });
 
+/** A filter chip of IRLY Girl: the shared Chip (glass at rest, rose when selected, spring + haptic). */
 function Chip({ label, on, onPress, icon }: { label: string; on: boolean; onPress: () => void; icon?: IconName }) {
-  return (
-    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={tx(label)} style={[styles.chip, on ? { backgroundColor: girl.rose, borderColor: girl.rose } : null]}>
-      {icon ? <Icon name={icon} size={13} color={on ? '#FFFFFF' : girl.ink} /> : null}
-      <Text variant="label" color={on ? '#FFFFFF' : girl.ink}>
-        {label}
-      </Text>
-    </PressableScale>
-  );
+  return <GChip small label={label} icon={icon} selected={on} onPress={onPress} />;
 }
 
 /* ───────── Feed ───────── */
@@ -440,12 +438,14 @@ export function GirlFeed({ cityId, moms, onCommunities }: { cityId: string; moms
   if (state === 'loading')
     return (
       <View style={[styles.empty, { marginHorizontal: space.gutter }]}>
+        <GlassLayer radius={radius.xl} />
         <ActivityIndicator color={girl.rose} />
       </View>
     );
   if (state === 'error')
     return (
       <View style={[styles.empty, { marginHorizontal: space.gutter }]}>
+        <GlassLayer radius={radius.xl} />
         <Text variant="bodyS" color={girl.inkSoft} align="center">
           Posts could not load. Check your connection.
         </Text>
@@ -455,6 +455,7 @@ export function GirlFeed({ cityId, moms, onCommunities }: { cityId: string; moms
   if (!posts.length)
     return (
       <Animated.View entering={FadeIn} style={[styles.empty, { marginHorizontal: space.gutter }]}>
+        <GlassLayer radius={radius.xl} />
         <View style={styles.emptyIcon}>
           <Icon name="message" size={20} color={girl.rose} />
         </View>
@@ -483,6 +484,7 @@ export const GirlPostCard = memo(function PostCard({ p, eng, cityId }: { p: Girl
   const now = useNow();
   return (
     <View style={styles.post}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.postHead}>
         <PressableScale haptic="select" scaleTo={0.94} onPress={() => (p.mine ? router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile') : router.push(`/person/${p.authorId}`))} accessibilityLabel={p.mine ? 'My profile' : tx("View {name}'s profile", { name: p.firstName })}>
           <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={38} userId={p.authorId} photo={demoPhoto(p.authorId)} />
@@ -565,14 +567,13 @@ const styles = StyleSheet.create({
   kindCount: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   kindLabel: { textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
   chips: { paddingHorizontal: space.gutter, gap: 8 },
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, borderColor: girl.line, backgroundColor: girl.surface },
-  plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.lg, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
+  plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.lg, boxShadow: girl.shadowSoft },
   planPhoto: { width: 76, height: 76, borderRadius: radius.md, overflow: 'hidden', backgroundColor: girl.cream },
   meta: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, height: 26, borderRadius: 13 },
-  empty: { alignItems: 'center', gap: 10, padding: 22, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
+  empty: { alignItems: 'center', gap: 10, padding: 22, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   emptyIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: girl.blush, alignItems: 'center', justifyContent: 'center' },
-  post: { gap: 10, padding: 14, borderRadius: radius.xl, backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
+  post: { gap: 10, padding: 14, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   postHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: girl.bg },
   shortcuts: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, marginTop: space[4] },

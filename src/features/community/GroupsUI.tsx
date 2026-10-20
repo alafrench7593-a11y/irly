@@ -17,7 +17,25 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { addChannel, announce, communityPeople, createSubgroup, deleteChannel, renameChannel, setCommunityPrefs, setRole, type Channel, type CommunityPrefs, type Parent, type Person, type Rights, type Subgroup } from './groups';
+import {
+  addChannel,
+  announce,
+  communityPeople,
+  createSubgroup,
+  deleteChannel,
+  renameChannel,
+  setCommunityPrefs,
+  setRole,
+  type Channel,
+  type CommunityPrefs,
+  type Parent,
+  type Person,
+  type Rights,
+  type Subgroup,
+} from './groups';
+import { GlassLayer } from '@/components/ui/GlassLayer';
+import Animated from 'react-native-reanimated';
+import { enter } from '@/motion/enter';
 
 /** "← IRLY Sport" on a group's page. */
 export function ParentLink({ parent }: { parent: Parent }) {
@@ -37,7 +55,6 @@ export function ParentLink({ parent }: { parent: Parent }) {
 /** A community's topic groups: open one, or join it in one tap. */
 export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChanged: () => void }) {
   const router = useRouter();
-  const t = useTheme();
   const [busy, setBusy] = useState<string | null>(null);
   if (!groups.length) return null;
   return (
@@ -51,44 +68,53 @@ export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChan
         </Text>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
-        {groups.map((g) => (
-          <PressableScale key={g.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${g.id}`)} style={[styles.group, { backgroundColor: t.c.surface, borderColor: t.c.line }]} accessibilityLabel={g.name}>
-            <Text style={{ fontSize: 24 }} raw>
-              {g.emoji ?? '💬'}
-            </Text>
-            <Text variant="titleS" numberOfLines={1}>
-              {g.name}
-            </Text>
-            <Text variant="caption" tone="tertiary" numberOfLines={2}>
-              {g.tagline ?? ''}
-            </Text>
-            <Text variant="caption" tone="secondary">
-              {g.postsWeek ? tx('{n} members · {p} posts this week', { n: g.members, p: g.postsWeek }) : tx('{n} members', { n: g.members })}
-            </Text>
-            {g.isMember ? (
-              <Text variant="label" tone="tertiary">
-                Joined ✓
+        {groups.map((g, i) => (
+          <Animated.View key={g.id} entering={enter.slide(Math.min(i, 6))}>
+            <PressableScale
+              haptic="select"
+              scaleTo={0.97}
+              onPress={() => router.push(`/c/${g.id}`)}
+              style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
+              accessibilityLabel={g.name}
+            >
+              <GlassLayer radius={radius.xl} />
+              <Text style={{ fontSize: 24 }} raw>
+                {g.emoji ?? '💬'}
               </Text>
-            ) : (
-              <Button
-                label="Join"
-                size="sm"
-                variant="secondary"
-                loading={busy === g.id}
-                onPress={() => {
-                  setBusy(g.id);
-                  joinCommunity(g.id)
-                    .then(() => {
-                      haptic('success');
-                      toast(tx('You joined {name}', { name: g.name }), 'users', 'brand');
-                      onChanged();
-                    })
-                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'))
-                    .finally(() => setBusy(null));
-                }}
-              />
-            )}
-          </PressableScale>
+              <Text variant="titleS" numberOfLines={1}>
+                {g.name}
+              </Text>
+              <Text variant="caption" tone="tertiary" numberOfLines={2}>
+                {g.tagline ?? ''}
+              </Text>
+              <Text variant="caption" tone="secondary">
+                {g.postsWeek ? tx('{n} members · {p} posts this week', { n: g.members, p: g.postsWeek }) : tx('{n} members', { n: g.members })}
+              </Text>
+              {g.isMember ? (
+                <Text variant="label" tone="tertiary">
+                  Joined ✓
+                </Text>
+              ) : (
+                <Button
+                  label="Join"
+                  size="sm"
+                  variant="secondary"
+                  loading={busy === g.id}
+                  onPress={() => {
+                    setBusy(g.id);
+                    joinCommunity(g.id)
+                      .then(() => {
+                        haptic('success');
+                        toast(tx('You joined {name}', { name: g.name }), 'users', 'brand');
+                        onChanged();
+                      })
+                      .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'))
+                      .finally(() => setBusy(null));
+                  }}
+                />
+              )}
+            </PressableScale>
+          </Animated.View>
         ))}
       </ScrollView>
     </View>
@@ -130,14 +156,21 @@ export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: st
               ['announcements', 'Announcements', 'Important news from its hosts (at most 3 a day).'],
             ] as const
           ).map(([key, title, body]) => (
-            <View key={key} style={[styles.toggle, { backgroundColor: t.c.surface }]}>
+            <View key={key} style={[styles.toggle, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              <GlassLayer radius={radius.xl} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleS">{title}</Text>
                 <Text variant="bodyS" tone="secondary">
                   {body}
                 </Text>
               </View>
-              <Switch value={value[key]} onValueChange={(v) => save({ ...value, [key]: v })} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel={a11y(title)} />
+              <Switch
+                value={value[key]}
+                onValueChange={(v) => save({ ...value, [key]: v })}
+                trackColor={{ true: t.c.brand, false: t.c.overlay }}
+                thumbColor="#FFFFFF"
+                accessibilityLabel={a11y(title)}
+              />
             </View>
           ))}
         </View>
@@ -147,7 +180,23 @@ export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: st
 }
 
 /** Hosts' tools: notify every member, add a group, name moderators. */
-export function HostTools({ communityId, name, rights, isTop, official, parentId, onChanged }: { communityId: string; name: string; rights: Rights; isTop: boolean; official: boolean; parentId: string | null; onChanged: () => void }) {
+export function HostTools({
+  communityId,
+  name,
+  rights,
+  isTop,
+  official,
+  parentId,
+  onChanged,
+}: {
+  communityId: string;
+  name: string;
+  rights: Rights;
+  isTop: boolean;
+  official: boolean;
+  parentId: string | null;
+  onChanged: () => void;
+}) {
   const t = useTheme();
   const router = useRouter();
   const [sheet, setSheet] = useState<'announce' | 'group' | 'people' | null>(null);
@@ -166,7 +215,8 @@ export function HostTools({ communityId, name, rights, isTop, official, parentId
         .catch((e) => toast(e instanceof Error ? e.message : tx('Could not delete'), 'x', 'live')),
     );
   return (
-    <View style={[styles.pad, styles.tools, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+    <View style={[styles.pad, styles.tools, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+      <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <Icon name="shield" size={16} color={t.c.text} />
         <Text variant="titleS" style={{ flex: 1 }}>
@@ -219,7 +269,15 @@ function AnnounceSheet({ visible, communityId, name, rights, onClose, onSent }: 
           <Chip size="sm" label={tx('Event')} selected={kind === 'event'} onPress={() => setKind('event')} />
           <Chip size="sm" label={tx('Practical info')} selected={kind === 'info'} onPress={() => setKind('info')} />
         </View>
-        <TextInput value={body} onChangeText={(v) => setBody(v.slice(0, 500))} multiline placeholder={tx('What should everyone know?')} placeholderTextColor={t.c.textTertiary} style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]} accessibilityLabel={a11y('Announcement')} />
+        <TextInput
+          value={body}
+          onChangeText={(v) => setBody(v.slice(0, 500))}
+          multiline
+          placeholder={tx('What should everyone know?')}
+          placeholderTextColor={t.c.textTertiary}
+          style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]}
+          accessibilityLabel={a11y('Announcement')}
+        />
         <Chip size="sm" icon="pinPost" label={tx('Pin it at the top')} selected={pin} onPress={() => setPin(!pin)} />
         <Text variant="caption" tone="tertiary">
           {blocked
@@ -261,8 +319,22 @@ function NewGroupSheet({ visible, parentId, onClose, onMade }: { visible: boolea
   return (
     <Sheet visible={visible} onClose={onClose} title="Add a group" subtitle="A topic inside this community, with its own posts and chat.">
       <View style={{ paddingHorizontal: space.gutter, gap: space[3], paddingBottom: space[2] }}>
-        <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 60))} placeholder={tx('Padel, Startups, Brunch…')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Group name')} />
-        <TextInput value={tagline} onChangeText={(v) => setTagline(v.slice(0, 80))} placeholder={tx('One line about it (optional)')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('Tagline')} />
+        <TextInput
+          value={name}
+          onChangeText={(v) => setName(v.slice(0, 60))}
+          placeholder={tx('Padel, Startups, Brunch…')}
+          placeholderTextColor={t.c.textTertiary}
+          style={input}
+          accessibilityLabel={a11y('Group name')}
+        />
+        <TextInput
+          value={tagline}
+          onChangeText={(v) => setTagline(v.slice(0, 80))}
+          placeholder={tx('One line about it (optional)')}
+          placeholderTextColor={t.c.textTertiary}
+          style={input}
+          accessibilityLabel={a11y('Tagline')}
+        />
         <Button label="Create the group" icon="plus" full loading={busy} disabled={name.trim().length < 2} onPress={make} />
       </View>
     </Sheet>
@@ -341,7 +413,19 @@ function PeopleSheet({ visible, communityId, onClose }: { visible: boolean; comm
 /* ───────── Discussion spaces: General + the community's categories ───────── */
 
 /** "General · Good deals · Questions" chips above the posts; hosts can manage them. */
-export function SpaceChips({ channels, value, onChange, canManage, communityId }: { channels: Channel[]; value: string | null; onChange: (slug: string | null) => void; canManage: boolean; communityId: string }) {
+export function SpaceChips({
+  channels,
+  value,
+  onChange,
+  canManage,
+  communityId,
+}: {
+  channels: Channel[];
+  value: string | null;
+  onChange: (slug: string | null) => void;
+  canManage: boolean;
+  communityId: string;
+}) {
   const [open, setOpen] = useState(false);
   if (!channels.length && !canManage) return null;
   return (
@@ -353,15 +437,7 @@ export function SpaceChips({ channels, value, onChange, canManage, communityId }
         ))}
         {canManage ? <Chip size="sm" icon="settings" label={tx('Categories')} onPress={() => setOpen(true)} /> : null}
       </ScrollView>
-      {canManage ? (
-        <ChannelsSheet
-          visible={open}
-          communityId={communityId}
-          channels={channels}
-          onClose={() => setOpen(false)}
-          onRemoved={(slug) => value === slug && onChange(null)}
-        />
-      ) : null}
+      {canManage ? <ChannelsSheet visible={open} communityId={communityId} channels={channels} onClose={() => setOpen(false)} onRemoved={(slug) => value === slug && onChange(null)} /> : null}
     </>
   );
 }
@@ -395,7 +471,12 @@ function ChannelsSheet({ visible, communityId, channels, onClose, onRemoved }: {
           edit?.id === c.id ? (
             <View key={c.id} style={styles.row}>
               <TextInput value={edit.name} onChangeText={(v) => setEdit({ id: c.id, name: v.slice(0, 40) })} style={[input, { flex: 1 }]} accessibilityLabel={a11y('Category name')} />
-              <Button label="Save" size="sm" loading={busy === `r${c.id}`} onPress={() => run(`r${c.id}`, () => renameChannel(c.id, edit.name), 'Category renamed').then((ok) => ok && setEdit(null))} />
+              <Button
+                label="Save"
+                size="sm"
+                loading={busy === `r${c.id}`}
+                onPress={() => run(`r${c.id}`, () => renameChannel(c.id, edit.name), 'Category renamed').then((ok) => ok && setEdit(null))}
+              />
             </View>
           ) : (
             <View key={c.id} style={styles.row}>
@@ -408,15 +489,20 @@ function ChannelsSheet({ visible, communityId, channels, onClose, onRemoved }: {
                 icon="x"
                 label={tx('Delete')}
                 onPress={() =>
-                  confirm(tx('Delete this category? Its posts move to General.'), () =>
-                    run(`d${c.id}`, () => deleteChannel(c.id), 'Category deleted').then((ok) => ok && onRemoved(c.slug)),
-                  )
+                  confirm(tx('Delete this category? Its posts move to General.'), () => run(`d${c.id}`, () => deleteChannel(c.id), 'Category deleted').then((ok) => ok && onRemoved(c.slug)))
                 }
               />
             </View>
           ),
         )}
-        <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 40))} placeholder={tx('Questions & advice, Good deals, Restaurants…')} placeholderTextColor={t.c.textTertiary} style={input} accessibilityLabel={a11y('New category')} />
+        <TextInput
+          value={name}
+          onChangeText={(v) => setName(v.slice(0, 40))}
+          placeholder={tx('Questions & advice, Good deals, Restaurants…')}
+          placeholderTextColor={t.c.textTertiary}
+          style={input}
+          accessibilityLabel={a11y('New category')}
+        />
         <Button
           label="Add the category"
           icon="plus"

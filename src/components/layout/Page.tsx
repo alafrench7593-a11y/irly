@@ -4,6 +4,7 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
 import { Text } from '@/components/ui/Text';
+import { Ambient } from '@/components/visual/Ambient';
 import { enter } from '@/motion/enter';
 import { layout, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -34,6 +35,7 @@ export function Page({ title, overline, subtitle, right, children, overlay, cont
   });
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       {/* Forms on pages (sign-in, profile, create) stay above the keyboard. */}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <Animated.ScrollView

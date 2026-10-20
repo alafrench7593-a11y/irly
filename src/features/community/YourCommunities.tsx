@@ -8,10 +8,10 @@ import { Text } from '@/components/ui/Text';
 import { useAccount } from '@/features/auth/account';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { CITIES } from '@/data/destinations';
 import { CommunityThumb } from './CommunityThumb';
 import { useCommunityList } from './data';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * Home: the communities you are in (up to 5), the main communities ranked
@@ -19,7 +19,6 @@ import { useCommunityList } from './data';
  * an always-visible way to discover IRLY Communities.
  */
 export function YourCommunities({ cityId }: { cityId: string }) {
-  const t = useTheme();
   const router = useRouter();
   const reduced = useReducedMotion();
   const signedIn = Boolean(useAccount());
@@ -44,7 +43,8 @@ export function YourCommunities({ cityId }: { cityId: string }) {
         <Rail itemWidth={200}>
           {mine.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(i * 60)}>
-              <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
+              <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
+                <GlassLayer radius={radius.xl} />
                 <CommunityThumb id={c.id} name={c.name} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member />
                 <Text variant="titleS" numberOfLines={1}>
                   {c.name}
@@ -69,7 +69,8 @@ export function YourCommunities({ cityId }: { cityId: string }) {
           </View>
           <Rail itemWidth={200}>
             {ranked.map((c) => (
-              <PressableScale key={c.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: t.c.surface }]} accessibilityLabel={c.name}>
+              <PressableScale key={c.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
+                <GlassLayer radius={radius.xl} />
                 <CommunityThumb id={c.id} name={c.name} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member={c.isMember} />
                 <Text variant="titleS" numberOfLines={1}>
                   {c.name}
@@ -83,7 +84,8 @@ export function YourCommunities({ cityId }: { cityId: string }) {
         </>
       ) : null}
       {mine.length ? null : (
-        <View style={[styles.cta, { backgroundColor: t.c.surface, marginHorizontal: space.gutter }]}>
+        <View style={[styles.cta, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
+          <GlassLayer radius={radius.xl} />
           <Text variant="body" tone="secondary">
             You can join communities anytime to meet people who share your interests.
           </Text>

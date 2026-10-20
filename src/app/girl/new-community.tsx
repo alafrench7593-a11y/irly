@@ -36,6 +36,10 @@ import { haptic } from "@/motion/haptics";
 import { PressableScale } from "@/motion/PressableScale";
 import { useCityId } from "@/state/store";
 import { font, radius, space } from "@/theme/tokens";
+import { Flavor } from "@/theme/flavor";
+import { GlassLayer } from "@/components/ui/GlassLayer";
+import { Ambient } from "@/components/visual/Ambient";
+import type { TextInputProps } from "react-native";
 
 const NAME_MIN = 3;
 const NAME_MAX = 60;
@@ -50,7 +54,7 @@ const NAME_MAX = 60;
  * checks the creator's access and hides it from everyone without IRLY Girl.
  * Once created, the community opens: its page, its members, its chat.
  */
-export default function GirlNewCommunity() {
+function GirlNewCommunityInner() {
   const { moms, city } = useLocalSearchParams<{
     moms?: string;
     city?: string;
@@ -168,6 +172,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
   if (done) {
     return (
       <View style={[styles.root, styles.center]}>
+        <Ambient variant="hero" />
         <Animated.View
           entering={reduced ? undefined : ZoomIn.springify().damping(14)}
           style={styles.doneBadge}
@@ -195,6 +200,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
 
   return (
     <View style={styles.root}>
+      <Ambient />
       <View style={[styles.bar, { paddingTop: insets.top + 6 }]}>
         <PressableScale
           haptic="tap"
@@ -203,6 +209,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
           accessibilityLabel={a11y("Back")}
           style={styles.round}
         >
+          <GlassLayer radius={20} level="thin" />
           <Icon name="chevronLeft" size={20} color={girl.ink} />
         </PressableScale>
         <Text variant="label" color={girl.inkSoft}>
@@ -312,7 +319,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
 
           <View style={styles.form}>
             <Field n="1" label={tx("Name")}>
-              <TextInput
+              <GlassInput
                 value={name}
                 onChangeText={(v) => {
                   setName(v.slice(0, NAME_MAX));
@@ -345,7 +352,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
             </Field>
 
             <Field n="2" label={tx("In one line")}>
-              <TextInput
+              <GlassInput
                 value={tagline}
                 onChangeText={(v) => setTagline(v.slice(0, 80))}
                 placeholder={tx("Easy 5 km, then coffee")}
@@ -357,7 +364,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
             </Field>
 
             <Field n="3" label={tx("About")}>
-              <TextInput
+              <GlassInput
                 value={about}
                 onChangeText={(v) => setAbout(v.slice(0, 600))}
                 placeholder={tx("Who it's for, how often you meet, the vibe.")}
@@ -515,10 +522,11 @@ function Choice({
         styles.choice,
         {
           borderColor: on ? girl.rose : girl.line,
-          backgroundColor: on ? girl.cream : girl.surface,
+          backgroundColor: on ? girl.cream : "transparent",
         },
       ]}
     >
+      {on ? null : <GlassLayer radius={radius.lg} level="thin" />}
       <Icon name={icon} size={18} color={on ? girl.rose : girl.inkSoft} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="titleS" color={girl.ink}>
@@ -602,13 +610,14 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: girl.line,
-    backgroundColor: girl.surface,
+    borderColor: "transparent",
+    backgroundColor: "transparent",
     paddingHorizontal: 14,
     fontFamily: font.medium,
     fontSize: 16,
   },
   multi: { height: 116, paddingTop: 12, textAlignVertical: "top" },
+  inputPane: { borderRadius: radius.lg, boxShadow: girl.shadowSoft },
   choice: {
     flexDirection: "row",
     alignItems: "center",
@@ -649,3 +658,22 @@ const styles = StyleSheet.create({
     boxShadow: girl.shadow,
   },
 });
+
+/** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */
+export default function GirlNewCommunity() {
+  return (
+    <Flavor value="girl">
+      <GirlNewCommunityInner />
+    </Flavor>
+  );
+}
+
+/** A text field of the form on a pane of the shared glass (edge, sheen, rose veil in IRLY Girl). */
+function GlassInput(props: TextInputProps) {
+  return (
+    <View style={styles.inputPane}>
+      <GlassLayer radius={radius.lg} level="thin" />
+      <TextInput {...props} />
+    </View>
+  );
+}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { IrlyMark, type MarkState } from '@/brand/IrlyMark';
+import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
@@ -97,6 +98,7 @@ export default function Ready() {
         <View style={styles.lines}>
           {lines.slice(0, step).map((l) => (
             <Animated.View key={l} entering={FadeInDown.springify(420).dampingRatio(0.9)} style={styles.line}>
+              <Glass dark level="thin" style={[StyleSheet.absoluteFill, { borderRadius: 18 }]} />
               <View style={styles.check}>
                 <Icon name="check" size={12} color="#000000" strokeWidth={3} />
               </View>
@@ -114,7 +116,8 @@ export default function Ready() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#000000' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.gutter },
-  lines: { marginTop: space[8], gap: 12, minHeight: 150, alignSelf: 'stretch', paddingHorizontal: space[6] },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  lines: { marginTop: space[8], gap: 10, minHeight: 190, alignSelf: 'stretch', paddingHorizontal: space[4] },
+  // Each finished step lands as its own small pane of glass over the city.
+  line: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 18, overflow: 'hidden' },
   check: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
 });
