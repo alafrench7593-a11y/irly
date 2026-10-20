@@ -1,35 +1,49 @@
 import { memo, type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { Button } from '@/components/ui/Button';
+import { Chip } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
+import { GlassCard } from '@/components/ui/GlassCard';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { PressableScale } from '@/motion/PressableScale';
-import { SelectionLayers, useSelection } from '@/motion/Selection';
+import { enter } from '@/motion/enter';
 import { radius, type GlassLevel } from '@/theme/tokens';
 import { girl, girlType } from './theme';
 
 /**
- * IRLY Girl's frosted glass, laid under a control's content: the app's Glass
- * (blur, hairline edge, top highlight; a dense tint on Android) kept light in
- * every theme, with a rose veil on top. `dark` is for controls placed on a
- * photo, where white text needs a smoked pane. The parent sets the shape
- * (borderRadius) and keeps its own shadow, so the glass never clips it;
- * the parent also sets `zIndex: 0`, so the glass (at -1) stays under its
- * content, icons included, without falling behind the parent itself on web.
+ * IRLY Girl's frosted glass, laid under a control's content: the shared
+ * Glass of the design system (blur, lit edge, sheen; a dense tint on
+ * Android). Inside <Flavor value="girl"> it already carries the rose veil;
+ * `dark` is for controls placed on a photo, where white text needs a smoked
+ * pane. The parent sets the shape (borderRadius) and keeps its own shadow,
+ * so the glass never clips it; the parent also sets `zIndex: 0`, so the
+ * glass (at -1) stays under its content, icons included, on web too.
  */
 export const GlassFill = memo(function GlassFill({ dark, level = 'regular', radius: r }: { dark?: boolean; level?: GlassLevel; radius: number }) {
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, { zIndex: -1, borderRadius: r, overflow: 'hidden' }]}>
-      <Glass light={!dark} dark={dark} level={level} style={[StyleSheet.absoluteFill, { borderRadius: r }]}>
-        {dark ? null : <View style={[StyleSheet.absoluteFill, { backgroundColor: girl.glassRose }]} />}
-      </Glass>
+      <Glass light={!dark} dark={dark} level={level} style={[StyleSheet.absoluteFill, { borderRadius: r }]} />
     </View>
   );
 });
 
-/** Chip in the IRLY Girl palette: rose when selected, white with a pink hairline otherwise. */
+/**
+ * A pane of IRLY Girl glass that rises into place: the same GlassCard as
+ * IRLY Mixte (lit edge, sheen, lift), in the Girl flavor. `index` staggers
+ * a list; `onPress` makes the whole card sink a little under the finger.
+ */
+export function GCard({ children, index = 0, onPress, style, padding = 16, accessibilityLabel }: { children: ReactNode; index?: number; onPress?: () => void; style?: StyleProp<ViewStyle>; padding?: number; accessibilityLabel?: string }) {
+  return (
+    <Animated.View entering={enter.rise(Math.min(index, 8))}>
+      <GlassCard padding={padding} onPress={onPress} accessibilityLabel={accessibilityLabel} style={[{ boxShadow: girl.shadowSoft }, style]}>
+        {children}
+      </GlassCard>
+    </Animated.View>
+  );
+}
+
+/** Chip of IRLY Girl: the shared Chip (glass at rest, rose when selected, spring + haptic). */
 export const GChip = memo(function GChip({
   label,
   selected,
@@ -43,40 +57,14 @@ export const GChip = memo(function GChip({
   icon?: IconName;
   small?: boolean;
 }) {
-  const { p, sweep, outer } = useSelection(Boolean(selected));
-  const box = [styles.chip, small ? styles.chipSmall : null];
-  const content = (fg: string) => (
-    <>
-      {icon ? <Icon name={icon} size={small ? 13 : 15} color={fg} /> : null}
-      <Text variant="label" color={fg} style={small ? { fontSize: 12 } : null}>
-        {label}
-      </Text>
-    </>
-  );
-  return (
-    <Animated.View style={outer}>
-      <PressableScale
-        haptic={onPress ? 'select' : false}
-        scaleTo={0.95}
-        onPress={onPress}
-        disabled={!onPress}
-        accessibilityRole={onPress ? 'button' : 'text'}
-        accessibilityState={{ selected }}
-        accessibilityLabel={label}
-      >
-        <SelectionLayers
-          p={p}
-          sweep={sweep}
-          fill={girl.rose}
-          radius={small ? 15 : 19}
-          base={<View style={[box, { backgroundColor: girl.surface, borderColor: girl.line }]}>{content(girl.ink)}</View>}
-          chosen={<View style={[box, { borderColor: girl.rose }]}>{content('#FFFFFF')}</View>}
-        />
-      </PressableScale>
-    </Animated.View>
-  );
+  return <Chip label={label} icon={icon} selected={selected} onPress={onPress} size={small ? 'sm' : 'md'} />;
 });
 
+/**
+ * Button of IRLY Girl: the shared Button, so it has the same press depth,
+ * haptics, loading and morph as IRLY Mixte; inside the Girl flavor the
+ * primary is the rose gradient and the secondary a rose glass pane.
+ */
 export function GButton({
   label,
   onPress,
@@ -94,34 +82,7 @@ export function GButton({
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
-  const primary = variant === 'primary';
-  const bg = primary ? 'transparent' : variant === 'secondary' ? girl.surface : 'transparent';
-  const fg = primary ? '#FFFFFF' : variant === 'secondary' ? girl.rose : girl.ink;
-  return (
-    <PressableScale
-      haptic="press"
-      scaleTo={0.96}
-      onPress={onPress}
-      disabled={disabled || loading}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled: disabled || loading }}
-      style={[
-        styles.button,
-        { backgroundColor: bg, borderColor: variant === 'secondary' ? girl.blushStrong : 'transparent', opacity: disabled ? 0.45 : 1, boxShadow: primary && !disabled ? girl.shadow : undefined },
-        style,
-      ]}
-    >
-      {/* The candy-pink gradient of the primary button, under its label. */}
-      {primary ? <LinearGradient colors={girl.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" /> : null}
-      {loading ? <ActivityIndicator color={fg} /> : icon ? <Icon name={icon} size={18} color={fg} /> : null}
-      {!loading ? (
-        <Text variant="label" color={fg} style={styles.buttonLabel}>
-          {label}
-        </Text>
-      ) : null}
-    </PressableScale>
-  );
+  return <Button label={label} onPress={onPress} icon={icon} variant={variant} disabled={disabled} loading={loading} haptic="press" style={style} />;
 }
 
 export function GSection({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
@@ -159,10 +120,6 @@ export function ScorePill({ score, onDark }: { score: number; onDark?: boolean }
 }
 
 const styles = StyleSheet.create({
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: 1 },
-  chipSmall: { height: 30, paddingHorizontal: 11 },
-  button: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 56, paddingHorizontal: 24, borderRadius: radius.pill, borderWidth: 1.5, overflow: 'hidden' },
-  buttonLabel: { fontSize: 16, letterSpacing: 0.2 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   score: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 28, paddingHorizontal: 10, borderRadius: radius.pill, alignSelf: 'flex-start' },
 });
