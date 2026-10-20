@@ -1,7 +1,7 @@
 import { useEventListener } from 'expo';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { AppState, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 /**
@@ -17,6 +17,18 @@ export function Film({ uri, dim = 0 }: { uri: string; /** Darkens the film so wh
     p.play();
   });
   useEventListener(player, 'statusChange', ({ status }) => setReady(status === 'readyToPlay'));
+  // No decoding while the app is in the background: pause, then resume on return.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      try {
+        if (s === 'active') player.play();
+        else player.pause();
+      } catch {
+        // The player was released while unmounting: nothing left to pause.
+      }
+    });
+    return () => sub.remove();
+  }, [player]);
   if (!ready) {
     // Mounted but invisible until the first frames are there.
     return <VideoView player={player} style={[StyleSheet.absoluteFill, { opacity: 0 }]} contentFit="cover" nativeControls={false} pointerEvents="none" />;

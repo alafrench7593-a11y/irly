@@ -15,7 +15,9 @@ import { Chip, SectionHeader } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
+import { AreaPicker } from '@/components/ui/AreaPicker';
 import { toast } from '@/components/ui/Toast';
+import { startArea } from '@/data/areas';
 import { ACTIVITIES, INTENTS } from '@/data/catalog';
 import { areaName, CITIES } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
@@ -170,7 +172,9 @@ function PlanComposer({ visible, onClose }: { visible: boolean; onClose: () => v
   const [kind, setKind] = useState<ActivityKind>(city.activityKinds[0]);
   const [day, setDay] = useState(DAYS[1]);
   const [time, setTime] = useState(TIMES[3]);
-  const [area, setArea] = useState(city.areas[0].id);
+  // No neighbourhood is picked for the member.
+  const [picked, setArea] = useState<string | null>(null);
+  const area = startArea(city, picked);
   const [spots, setSpots] = useState(6);
 
   return (
@@ -205,11 +209,7 @@ function PlanComposer({ visible, onClose }: { visible: boolean; onClose: () => v
           <Text variant="overline" tone="tertiary">
             Where
           </Text>
-          <View style={styles.wrap}>
-            {city.areas.slice(0, 6).map((a) => (
-              <Chip key={a.id} size="sm" label={a.name} icon="pin" selected={area === a.id} onPress={() => setArea(a.id)} tone="accent" />
-            ))}
-          </View>
+          <AreaPicker cityId={cityId} value={area} onChange={setArea} />
         </View>
         <View style={[styles.block, styles.row, { justifyContent: 'space-between' }]}>
           <Text variant="titleS">Spots</Text>
@@ -233,6 +233,10 @@ function PlanComposer({ visible, onClose }: { visible: boolean; onClose: () => v
             haptic={false}
             loading={posting}
             onPress={async () => {
+              if (!area) {
+                toast('Choose a neighbourhood', 'pin', 'brand');
+                return;
+              }
               const plan = { cityId, kind, day, time, spots, areaId: area, title: ACTIVITIES[kind].label };
               // Signed in: the plan goes to IRLY, where others can see and join it.
               if (account) {

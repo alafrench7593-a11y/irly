@@ -79,6 +79,13 @@ const AREAS: Record<CityId, Record<string, [number, number]>> = {
   },
 };
 
+/** The middle of a city's known neighbourhoods: where a map opens when nothing else says where. */
+export function cityCoords(cityId: CityId): LatLng | undefined {
+  const pts = Object.values(AREAS[cityId] ?? {});
+  if (!pts.length) return undefined;
+  return { latitude: pts.reduce((s, p) => s + p[0], 0) / pts.length, longitude: pts.reduce((s, p) => s + p[1], 0) / pts.length };
+}
+
 export function areaCoords(cityId: CityId, areaId: string): LatLng | undefined {
   const c = AREAS[cityId]?.[areaId];
   return c ? { latitude: c[0], longitude: c[1] } : undefined;

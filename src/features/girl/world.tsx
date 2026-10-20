@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { ActionBar } from '@/components/social/ActionBar';
+import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -181,8 +182,11 @@ export function Upcoming({
   loading = false,
   error = null,
   onRetry,
+  grid = false,
 }: {
   activities: ServerActivity[];
+  /** The IRLY Girl home shows plans as a two-column grid of photo cards; elsewhere, rows. */
+  grid?: boolean;
   /** First load still running: a skeleton, never « nothing planned ». */
   loading?: boolean;
   /** The plans could not be loaded: say so and offer to try again. */
@@ -201,12 +205,15 @@ export function Upcoming({
   const [free, setFree] = useState(false);
   const [more, setMore] = useState(false);
   const k = kinds.find((x) => x.id === kind) ?? null;
+  const frame = useFrame();
+  const tileW = (frame.width - space.gutter * 2 - 12) / 2;
+  const first = grid ? 6 : 5;
 
   const list = useMemo(
     () => activities.filter((a) => inWindow(a.startsAt, when, a.cityId, now) && (!free || a.priceMinor === 0) && (!k || matchesKind(a, k))),
     [activities, when, free, k, now],
   );
-  const shown = more ? list : list.slice(0, 5);
+  const shown = more ? list : list.slice(0, first);
   const filtered = when !== 'all' || free || Boolean(k);
 
   return (
@@ -220,17 +227,36 @@ export function Upcoming({
       </ScrollView>
 
       <Animated.View layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)} style={{ gap: 10, paddingHorizontal: space.gutter }}>
-        {shown.map((a, i) => (
-          <Animated.View key={a.id} entering={reduced ? undefined : enter.rise(Math.min(i, 5))}>
-            <PlanRow a={a} photo={kindPhoto(a, kinds)} onPress={() => router.push(`/a/${a.id}`)} />
-          </Animated.View>
-        ))}
-        {list.length > 5 && !more ? <GButton label={tx('Show all {n}', { n: list.length })} variant="ghost" onPress={() => setMore(true)} /> : null}
+        {grid ? (
+          shown.length ? (
+            <View style={styles.grid}>
+              {shown.map((a, i) => (
+                <Animated.View key={a.id} entering={reduced ? undefined : enter.rise(Math.min(i, 6))}>
+                  <PlanTile a={a} width={tileW} photo={kindPhoto(a, kinds)} label={kinds.find((x) => matchesKind(a, x))?.label} onPress={() => router.push(`/a/${a.id}`)} />
+                </Animated.View>
+              ))}
+            </View>
+          ) : null
+        ) : (
+          shown.map((a, i) => (
+            <Animated.View key={a.id} entering={reduced ? undefined : enter.rise(Math.min(i, 5))}>
+              <PlanRow a={a} photo={kindPhoto(a, kinds)} onPress={() => router.push(`/a/${a.id}`)} />
+            </Animated.View>
+          ))
+        )}
+        {list.length > first && !more ? <GButton label={tx('Show all {n}', { n: list.length })} variant="ghost" onPress={() => setMore(true)} /> : null}
         {!list.length && loading ? (
-          <View style={{ gap: 10 }} accessibilityLabel="Loading plans">
-            <Skeleton height={84} radius={radius.lg} />
-            <Skeleton height={84} radius={radius.lg} />
-          </View>
+          grid ? (
+            <View style={styles.grid} accessibilityLabel="Loading plans">
+              <Skeleton width={tileW} height={Math.round(tileW * 0.78) + 110} radius={radius.xl} />
+              <Skeleton width={tileW} height={Math.round(tileW * 0.78) + 110} radius={radius.xl} />
+            </View>
+          ) : (
+            <View style={{ gap: 10 }} accessibilityLabel="Loading plans">
+              <Skeleton height={84} radius={radius.lg} />
+              <Skeleton height={84} radius={radius.lg} />
+            </View>
+          )
         ) : !list.length && error ? (
           <View style={styles.empty}>
             <GlassLayer radius={radius.xl} />
@@ -315,6 +341,57 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
       ) : (
         <Icon name="chevronRight" size={18} color={girl.inkFaint} />
       )}
+    </PressableScale>
+  );
+});
+
+/** One plan in the IRLY Girl home grid: its photo on top inside a glass card, then kind, title, place and when. */
+const PlanTile = memo(function PlanTile({ a, width, photo, label, onPress }: { a: ServerActivity; width: number; photo: PhotoKey; label?: string; onPress: () => void }) {
+  const full = a.capacity != null && a.going >= a.capacity;
+  return (
+    <PressableScale haptic="select" scaleTo={0.97} onPress={onPress} accessibilityLabel={`${a.title}, ${cityWhen(a.startsAt, a.cityId)}`} style={[styles.tile, { width }]}>
+      <GlassLayer radius={radius.xl} />
+      <View style={[styles.tilePhoto, { height: Math.round(width * 0.78) }]}>
+        <Photo tint={GIRL_TINT} visual={{ photo, uri: a.coverUrl }} light="dubai" width={500} style={StyleSheet.absoluteFill} recyclingKey={`gplan-${a.id}`} />
+        {a.joined ? (
+          <View style={[styles.badge, styles.tileBadge, { backgroundColor: girl.rose }]}>
+            <Icon name="check" size={12} color="#FFFFFF" />
+            <Text variant="caption" color="#FFFFFF">
+              Going
+            </Text>
+          </View>
+        ) : full ? (
+          <View style={[styles.badge, styles.tileBadge, { backgroundColor: girl.cream }]}>
+            <Text variant="caption" color={girl.inkSoft}>
+              Full
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.tileBody}>
+        {label ? (
+          <Text variant="overline" color={girl.rose} numberOfLines={1}>
+            {label}
+          </Text>
+        ) : null}
+        <Text variant="titleS" color={girl.ink} numberOfLines={2} raw>
+          {a.title}
+        </Text>
+        {a.placeName ? (
+          <Text variant="caption" color={girl.inkSoft} numberOfLines={1} raw>
+            {a.placeName}
+          </Text>
+        ) : null}
+        <View style={styles.tileWhen}>
+          <Icon name="clock" size={12} color={girl.rose} />
+          <Text variant="caption" color={girl.rose} numberOfLines={1} style={{ flexShrink: 1 }}>
+            {cityWhen(a.startsAt, a.cityId)}
+          </Text>
+        </View>
+        <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
+          {a.capacity ? tx('{n}/{max} going', { n: a.going, max: a.capacity }) : tx('{n} going', { n: a.going })} · {a.priceMinor === 0 ? tx('Free') : `${(a.priceMinor / 100).toFixed(0)} ${a.currency}`}
+        </Text>
+      </View>
     </PressableScale>
   );
 });
@@ -567,6 +644,12 @@ const styles = StyleSheet.create({
   kindCount: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   kindLabel: { textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
   chips: { paddingHorizontal: space.gutter, gap: 8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  tile: { borderRadius: radius.xl, overflow: 'hidden', boxShadow: girl.shadowSoft },
+  tilePhoto: { margin: 6, marginBottom: 0, borderRadius: radius.xl - 6, overflow: 'hidden', backgroundColor: girl.cream },
+  tileBadge: { position: 'absolute', top: 8, right: 8 },
+  tileBody: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12, gap: 4 },
+  tileWhen: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.lg, boxShadow: girl.shadowSoft },
   planPhoto: { width: 76, height: 76, borderRadius: radius.md, overflow: 'hidden', backgroundColor: girl.cream },
   meta: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },

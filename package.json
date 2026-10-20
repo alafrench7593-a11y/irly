@@ -67,13 +67,15 @@
     "export:web": "expo export --platform web",
     "lint": "expo lint",
     "test:intent": "node --experimental-strip-types --no-warnings scripts/check-intent.mts",
+    "test:when": "node --experimental-strip-types --no-warnings scripts/check-when.mts",
     "test:bali": "node --experimental-strip-types --no-warnings scripts/check-bali.mts",
     "sync:places": "node scripts/sync-places.mjs",
     "test:routes": "node scripts/check-routes.mjs",
     "test:community": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-community.mts",
     "test:sync": "node --experimental-strip-types --no-warnings scripts/check-sync.mts",
     "test:live": "node --experimental-strip-types --no-warnings scripts/check-live.mts",
-    "test:purge": "node scripts/check-purge.mjs"
+    "test:purge": "node scripts/check-purge.mjs",
+    "test:areas": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-area-order.mts"
   },
   "private": true,
   "engines": {

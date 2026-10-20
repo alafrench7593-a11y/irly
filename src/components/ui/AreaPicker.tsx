@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition } from 'react-native-reanimated';
+import { rankAreas } from '@/data/areas';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { zoneOf, zonesOf } from '@/data/zones';
@@ -30,8 +31,6 @@ type Props = {
   palette?: Palette;
 };
 
-const plain = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-
 /**
  * Choosing a neighbourhood without a wall of chips: a compact row
  * (« 📍 Dubai Marina › ») opens a sheet with a search field, the city's
@@ -59,35 +58,9 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
 
   const c: Palette = palette ?? { ink: t.c.text, soft: t.c.textSecondary, surface: t.c.surface, accent: t.c.brand, line: t.c.line };
 
-  const term = plain(q.trim());
-  const inZone = zones.find((x) => x.id === activeZone);
-  // Best name matches first (exact, then starts with, then a word starts
-  // with, then contains), then the rest of a zone named that way.
-  const score = (name: string) => {
-    const n = plain(name);
-    if (n === term) return 0;
-    if (n.startsWith(term)) return 1;
-    if (n.split(/[^a-z0-9]+/).some((w) => w.startsWith(term))) return 2;
-    return n.includes(term) ? 3 : -1;
-  };
-  // Only a zone whose name starts with it: "dubai" must not pull in Deira
-  // through "Creek & old Dubai".
-  const zoneHit = (name: string) => plain(name).startsWith(term);
-  const byName = city.areas
-    .map((a) => ({ a, s: score(a.name) }))
-    .filter((x) => x.s >= 0)
-    .sort((x, y) => x.s - y.s || x.a.name.localeCompare(y.a.name))
-    .map((x) => x.a);
-  const list = term
-    ? [
-        ...byName,
-        ...city.areas
-          .filter((a) => !byName.includes(a) && zoneHit(zoneOf(cityId, a.id)?.name ?? ''))
-          .sort((x, y) => x.name.localeCompare(y.name)),
-      ]
-    : inZone
-      ? inZone.areas.map((id) => city.areas.find((a) => a.id === id)!).filter(Boolean)
-      : city.areas;
+  // Best name matches first, then the rest of a zone named that way; no
+  // search: the active zone alphabetically, never the raw data order.
+  const list = rankAreas(city, q, zones.length ? activeZone : null);
 
   const summary = chosen.length
     ? chosen.length === 1

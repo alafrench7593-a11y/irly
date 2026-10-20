@@ -4,21 +4,22 @@ import { useAccount } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
 import { planDayLabel, upcomingPlans } from '@/features/plans/when';
 import { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
 import { EventCard } from '@/components/cards/EventCards';
-import { Carousel, CategoryCard, fromEvent, fromSession, HighlightCard, IdeaCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
+import { ActivityTile, Carousel, CategoryCard, fromEvent, fromSession, HighlightCard, IdeaCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
 import { CommunityCard, PlaceCard } from '@/components/cards/ThingCards';
 import { useFrame } from '@/components/layout/AppFrame';
 import { HomeHeader } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
-import { SectionHeader } from '@/components/ui/Controls';
+import { Chip, SectionHeader } from '@/components/ui/Controls';
+import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { CATEGORIES, CATEGORY_BY_ID, ideaPhoto } from '@/data/catalog/categories';
+import { CATEGORIES, CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
 import { openCreate } from '@/features/create/createStore';
 import { CreateMenu } from '@/features/create/CreateMenu';
 import { Photo } from '@/components/visual/Photo';
@@ -29,6 +30,7 @@ import { getCityContent } from '@/data/repo';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { momentFor } from '@/features/home/moment';
 import { HomeHero } from '@/features/home/HomeHero';
+import { HomeBackdrop } from '@/features/home/HomeBackdrop';
 import { GirlPortals } from '@/features/home/Portals';
 import { ExploreDoors } from '@/features/home/Explore';
 import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
@@ -39,13 +41,13 @@ import { FEATURES } from '@/lib/features';
 import { useNow } from '@/lib/useNow';
 import { useIntro } from '@/features/intro/introStore';
 import { ScrollReveal } from '@/motion/ScrollReveal';
+import { enter } from '@/motion/enter';
 import { spring } from '@/motion/tokens';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
-import { Ambient } from '@/components/visual/Ambient';
 
 /**
  * Home answers one question: "I just arrived. What can I do, and who can I
@@ -133,6 +135,12 @@ export default function Home() {
   const doors = sections.slice(3);
   const doorW = (frame.width - space.gutter * 2 - 12) / 2;
 
+  // The grid of plans near you, filtered by the category chips.
+  const [filter, setFilter] = useState<CategoryKey | null>(null);
+  const nearby = useMemo(() => happenings.filter((h) => h.id !== featured?.id), [happenings, featured]);
+  const groups = useMemo(() => [...new Set(nearby.map((h) => h.group))].filter((id) => CATEGORY_BY_ID[id]), [nearby]);
+  const grid = useMemo(() => nearby.filter((h) => !filter || h.group === filter).slice(0, 8), [nearby, filter]);
+
   const people = useMemo(
     () => [...content.people].sort((a, b) => Number(Boolean(b.online)) - Number(Boolean(a.online))).slice(0, 12),
     [content.people],
@@ -142,7 +150,7 @@ export default function Home() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <Ambient />
+      <HomeBackdrop city={city} now={now} scrollY={scrollY} heroH={heroH + insets.top} />
       <Animated.ScrollView
         key={cityId}
         onScroll={onScroll}
@@ -161,6 +169,15 @@ export default function Home() {
         />
 
         <Animated.View style={[styles.firstSection, arriveStyle]}>
+          <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/search')} accessibilityRole="search" accessibilityLabel={tx('Search everything')} style={styles.searchWrap}>
+            <Glass level="thick" lifted style={styles.search}>
+              <Icon name="search" size={18} color={t.c.textSecondary} />
+              <Text variant="body" tone="secondary" numberOfLines={1} raw style={{ flex: 1 }}>
+                {tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
+              </Text>
+              <Icon name="sliders" size={16} color={t.c.textSecondary} />
+            </Glass>
+          </PressableScale>
           <LiveStrip />
         </Animated.View>
 
@@ -258,19 +275,24 @@ export default function Home() {
           <MemberActivities cityId={cityId} />
         </ScrollReveal>
 
-        <ScrollReveal scrollY={scrollY} style={styles.section}>
-          <SectionHeader title="Activities near you" action="All" onAction={() => router.push('/social')} />
-          <Rail itemWidth={260}>
-            {happenings
-              .filter((h) => h.id !== featured?.id)
-              .slice(0, 8)
-              .map((h) => (
-                <View key={h.id} style={{ width: 260 }}>
-                  <HighlightCard h={h} height={320} compact />
-                </View>
+        {nearby.length ? (
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            <SectionHeader title="Activities near you" action="All" onAction={() => router.push('/social')} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+              <Chip size="sm" label="All" selected={!filter} onPress={() => setFilter(null)} />
+              {groups.map((id) => (
+                <Chip key={id} size="sm" label={CATEGORY_BY_ID[id].label} icon={CATEGORY_BY_ID[id].icon} selected={filter === id} onPress={() => setFilter(filter === id ? null : id)} />
               ))}
-          </Rail>
-        </ScrollReveal>
+            </ScrollView>
+            <View style={styles.grid}>
+              {grid.map((h, i) => (
+                <Animated.View key={`${filter ?? 'all'}-${h.id}`} entering={reduced ? undefined : enter.rise(Math.min(i, 6))}>
+                  <ActivityTile h={h} width={doorW} />
+                </Animated.View>
+              ))}
+            </View>
+          </ScrollReveal>
+        ) : null}
 
         {eat.length ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
@@ -382,5 +404,9 @@ const styles = StyleSheet.create({
   mine: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },
   mineIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   doors: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: space.gutter },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: space.gutter },
+  chips: { paddingHorizontal: space.gutter, gap: 8, paddingBottom: 12 },
+  searchWrap: { marginHorizontal: space.gutter, marginBottom: space[5] },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, paddingHorizontal: 16, borderRadius: 26 },
   footer: { alignItems: 'center', gap: 12, paddingVertical: space[8] },
 });

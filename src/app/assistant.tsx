@@ -16,6 +16,7 @@ import { Ambient } from '@/components/visual/Ambient';
 import { enter } from '@/motion/enter';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
+import { areasForDisplay } from '@/data/areas';
 import { ACTIVITIES } from '@/data/catalog';
 import { CITIES, cityOpen } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
@@ -135,7 +136,12 @@ export default function Assistant() {
     const e = cmd.entities;
     const kind = Object.entries(ACTIVITIES).find(([k]) => k === e.activity)?.[1];
     const label = kind?.label ?? (e.activity ? e.activity[0].toUpperCase() + e.activity.slice(1) : 'Meetup');
-    const area = e.areaId ?? city.areas[0].id;
+    // Never a neighbourhood the member did not say: the card above asks for one.
+    const area = e.areaId && city.areas.some((a) => a.id === e.areaId) ? e.areaId : null;
+    if (!area) {
+      toast('Choose a neighbourhood', 'pin', 'brand');
+      return;
+    }
     const areaLabel = city.areas.find((a) => a.id === area)?.name ?? city.name;
     const title = `${label} · ${areaLabel}`.slice(0, 80);
     const plan = {
@@ -208,7 +214,7 @@ export default function Assistant() {
             </View>
           ) : (
             <Animated.View entering={FadeInDown.springify(420).dampingRatio(0.85)} style={{ gap: space[6] }}>
-              <Understood cmd={cmd} cityName={city.name} areas={city.areas} onEdit={edit} />
+              <Understood cmd={cmd} cityName={city.name} areas={areasForDisplay(city, city.areas)} onEdit={edit} />
               <Act cmd={cmd} cityId={city.id} busy={busy} onCreate={create} onSwitch={() => {
                 if (!cityOpen(targetCity)) {
                   toast('Coming soon', 'globe', 'brand');

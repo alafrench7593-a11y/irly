@@ -418,21 +418,24 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\b(wadi|hik\w*|trek\w*|canyon)\b/i, 'wadiMix'],
   [/\b(dance|dancing|salsa|bachata|hip ?hop|zumba)\b/i, 'danceMix'],
   [/\b(swim\w*|open water)\b/i, 'swimMix'],
-  [/\btennis\b/i, 'tennisMix'],
+  [/(?<!table )\btennis\b/i, 'tennisMix'],
   [/\b(run|running|runners?|jog|jogging)\b/i, 'runMix'],
-  [/\b(gym|fitness|workout|hiit|bootcamp|boxing|sports?)\b/i, 'gymMix'],
+  // "Water sports" is surf and a "sports bar" is a bar, not a gym.
+  [/\b(gym|fitness|workout|hiit|bootcamp|boxing)\b|(?<!water )\bsports?\b(?! bars?)/i, 'gymMix'],
   [/\b(networking|meetings?|business|founders?|entrepreneurs?|startups?|cowork\w*)\b/i, 'meetingMix'],
   [/\b(dinner|dîner|restaurants?|dining)\b/i, 'dinnerMix'],
   [/\b(food|tasting|sushi|street food)\b/i, 'foodMix'],
+  // "Beach yoga" shows yoga, not the beach.
+  [/\b(yoga|breathwork)\b/i, 'yoga'],
   [/\bbeach\b(?! ?volley)/i, 'beachMix'],
   [/\b(palm jumeirah|the palm)\b/i, 'palmAerial'],
   // The rest of IRLY's own photos, for the subjects they show, before any library photo.
   [/\b(girl trips?)\b/i, 'girlTrip'],
   [/\b(stroller|baby|babies|bébés?|poussette|moms?|mums?|mamans?)\b/i, 'strollerMom'],
   [/\bpadel\b/i, 'padelGirl'],
-  [/\btennis\b/i, 'tennisGirl'],
+  [/(?<!table )\btennis\b/i, 'tennisGirl'],
   [/\b(run|running|runners?|jog|jogging)\b/i, 'runGirl'],
-  [/\b(gym|fitness|workout|hiit|bootcamp|sports?)\b/i, 'gymGirl'],
+  [/\b(gym|fitness|workout|hiit|bootcamp)\b|(?<!water )\bsports?\b(?! bars?)/i, 'gymGirl'],
   [/\b(yachts?|boats?|cruise)\b/i, 'yachtGirl'],
   [/\b(desert|dunes?|desert safari|camels?)\b/i, 'desertGirl'],
   [/\b(brunch|breakfast)\b/i, 'brunchGirl'],
@@ -562,6 +565,8 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\bcooking\b/i, 'cooking'],
   [/\b(tea|matcha)\b/i, 'coffee'],
   [/\b(coffee|cafes?|cafés?)\b/i, 'coffee'],
+  // "Schools, nurseries & clubs" are children's clubs, not nightclubs.
+  [/\b(schools?|nurser(y|ies)|kindergartens?)\b/i, 'kids'],
   [/\b(dj|clubs?|party|night events?)\b/i, 'rooftopNeon'],
   [/\b(rooftops?|drinks|bar)\b/i, 'rooftop'],
   [/\b(lounges?|wine|cocktails?|shisha|billiards|darts)\b/i, 'lounge'],
@@ -620,9 +625,10 @@ const SUB_LABEL: Record<string, string> = Object.fromEntries(CATEGORIES.flatMap(
  * its place, else its category's photo.
  */
 export function ideaPhoto(categoryId: CategoryKey, label: string, place?: string, subId?: string | null): PhotoKey {
-  const text = `${label} ${(subId && SUB_LABEL[subId]) || ''} ${place ?? ''}`;
+  const own = `${label} ${(subId && SUB_LABEL[subId]) || ''}`;
   if (WOMEN.test(label)) return girlPhotoFor(label);
-  for (const [re, key] of IDEA_PHOTOS) if (re.test(text)) return key;
+  // The activity before its place: a run at Kite Beach shows a run, not kitesurfing.
+  for (const text of [own, `${own} ${place ?? ''}`]) for (const [re, key] of IDEA_PHOTOS) if (re.test(text)) return key;
   // An unknown sport is not padel: a general fitness photo instead.
   if (categoryId === 'sport') return 'gym';
   return CATEGORY_BY_ID[categoryId].photo;

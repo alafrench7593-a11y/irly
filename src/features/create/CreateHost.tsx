@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Button } from '@/components/ui/Button';
-import { Sheet } from '@/components/ui/Sheet';
+import { DateTimePicker, WhenField, whenText } from '@/components/ui/DateTimePicker';
 import { Chip, Field } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { GlassLayer } from '@/components/ui/GlassLayer';
@@ -34,12 +34,8 @@ import { useNow } from '@/lib/useNow';
 import { useRouter } from 'expo-router';
 import { dropStagedCover, pickPhoto, stageCover } from '@/features/server/covers';
 import { useCreateStore, type CreateFormat } from './createStore';
+import { clockLabel, instants, localPlanDay, problemOf, type When } from './when';
 
-const DAYS = ['Today', 'Tomorrow', 'This weekend', 'Next week'];
-const TIMES = ['07:00', '10:00', '12:30', '16:00', '18:00', '19:30', '21:00'];
-/** Every half hour, for a start time the quick choices do not offer. */
-const ALL_TIMES = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
-const minutesOf = (x: string) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3));
 const PRIVACY: { id: NonNullable<MyPlan['privacy']>; label: string }[] = [
   { id: 'public', label: 'Public' },
   { id: 'connections', label: 'Friends' },
@@ -146,26 +142,14 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [unlimited, setUnlimited] = useState(false);
   const [query, setQuery] = useState('');
   const [custom, setCustom] = useState('');
-  const [pickedDay, setDay] = useState(DAYS[0]);
-  // No start time is chosen for the member: they pick one before publishing.
-  const [pickedTime, setTime] = useState<string | null>(null);
-  const [moreTimes, setMoreTimes] = useState(false);
-  // Today only offers times still ahead in the city (a past time used to become tomorrow
-  // while the summary said Today); once today is over, Today is not offered.
+  // No date or time is chosen for the member: they pick both (in the city's time) before publishing.
+  const [when, setWhen] = useState<When | null>(null);
+  const [picking, setPicking] = useState(false);
+  // Re-read every minute: a time picked earlier that has passed since is shown, never moved.
   const now = useNow();
-  const local = new Date(now + (city.utcOffset ?? 4) * 3600_000);
-  const minutesNow = local.getUTCHours() * 60 + local.getUTCMinutes();
-  const ahead = (x: string) => minutesOf(x) > minutesNow + 15;
-  const laterToday = ALL_TIMES.filter(ahead);
-  const days = laterToday.length ? DAYS : DAYS.slice(1);
-  const day = days.includes(pickedDay) ? pickedDay : days[0];
-  const allTimes = day === 'Today' ? laterToday : ALL_TIMES;
-  const times = day === 'Today' ? TIMES.filter(ahead) : TIMES;
-  // A time that has passed (Today chosen after it, or the clock moved on) is never swapped
-  // for another one: the member is asked to pick again.
-  const time = pickedTime && allTimes.includes(pickedTime) ? pickedTime : null;
-  const timePassed = Boolean(pickedTime && !time);
-  const [area, setArea] = useState(city.areas[0].id);
+  const whenProblem = when ? problemOf(when, city.utcOffset ?? 4, now) : null;
+  // No neighbourhood is chosen for the member either (it used to be the first one, Deira, silently).
+  const [area, setArea] = useState<string | null>(null);
   const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>(preset?.communityId ? 'community' : 'public');
   // Optional: the community (or group) it belongs to. Not needed to create an activity.
   const [communityId, setCommunityId] = useState<string | null>(preset?.communityId ?? null);
@@ -294,9 +278,24 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const router = useRouter();
   const post = async () => {
     if (!pick || !title || publishing) return;
-    if (!time) {
-      toast(tx('Pick a start time'), 'calendar', 'brand');
+    const offset = city.utcOffset ?? 4;
+    // Checked again at the tap: a time picked earlier may have passed while the form stayed open.
+    const problem = when ? problemOf(when, offset, Date.now()) : null;
+    if (!when || problem) {
+      toast(tx(!when ? 'Pick a date and a start time' : problem === 'past' ? 'This time has passed: pick a later one' : 'The end must be after the start'), 'calendar', 'brand');
       setStep(2);
+      return;
+    }
+    if (!area) {
+      toast(tx('Choose a neighbourhood'), 'pin', 'brand');
+      setStep(2);
+      return;
+    }
+    const { startsAt, endsAt } = instants(when, offset);
+    // Kept on this phone (signed out): the plan stores words ("Tomorrow", "Friday"), at most a week ahead.
+    const day = localPlanDay(when, Date.now(), offset);
+    if (!signedIn && !day) {
+      toast(tx('Sign in to plan more than a week ahead'), 'calendar', 'brand');
       return;
     }
     // "Community" visibility needs a community, otherwise nobody else could see it.
@@ -314,8 +313,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       note: pick.activity?.note,
       description: description.trim() || undefined,
       privacy,
-      day,
-      time,
+      day: day ?? 'Today',
+      time: clockLabel(when.start),
       spots: unlimited ? 0 : spots,
       areaId: area,
       format,
@@ -340,7 +339,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       const pending = cover ? stage(cover) : null;
       if (cover && staged.current?.uri === cover) staged.current.sent = true;
       const coverPath = pending ? await pending : null;
-      const serverId = await createServerActivity(plan, undefined, { coverUri: cover, coverPath, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
+      const serverId = await createServerActivity(plan, startsAt, { endsAt, coverUri: cover, coverPath, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
       // No id: nothing was created (session ended). Never "live" then; the form stays.
       if (!serverId) throw new Error(tx('your session has ended, sign in again'));
       // The photo now belongs to the activity: closing the form must not remove it.
@@ -363,7 +362,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     }
   };
 
-  const canNext = step === 0 ? false : step === 1 ? Boolean(pick?.sub || pick?.custom) : step === 2 ? Boolean(time) : true;
+  const canNext = step === 0 ? false : step === 1 ? Boolean(pick?.sub || pick?.custom) : step === 2 ? Boolean(when && !whenProblem && area) : true;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents={open ? 'auto' : 'none'}>
@@ -559,43 +558,17 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 <Text variant="overline" tone="secondary">
                   When
                 </Text>
-                <View style={styles.wrap}>
-                  {days.map((d) => (
-                    <Chip key={d} size="sm" label={d} selected={day === d} onPress={() => setDay(d)} />
-                  ))}
-                </View>
-                <View style={styles.wrap}>
-                  {times.map((x) => (
-                    <Chip key={x} size="sm" label={x} selected={time === x} onPress={() => setTime(x)} />
-                  ))}
-                  {time && !times.includes(time) ? <Chip size="sm" label={time} selected onPress={() => setMoreTimes(true)} /> : null}
-                  <Chip size="sm" label={tx('Other time')} onPress={() => setMoreTimes(true)} />
-                </View>
-                {timePassed ? (
+                <WhenField value={when} utcOffset={city.utcOffset ?? 4} onPress={() => setPicking(true)} invalid={Boolean(whenProblem)} />
+                {whenProblem ? (
                   <Text variant="caption" tone="critical">
-                    {tx('{time} has passed today: pick another time', { time: pickedTime ?? '' })}
+                    {whenProblem === 'past' ? tx('This time has already passed in {city}. Pick a later time.', { city: city.name }) : 'The end must be after the start.'}
                   </Text>
-                ) : !time ? (
+                ) : !when ? (
                   <Text variant="caption" tone="secondary">
-                    {tx('Pick a start time ({city} time)', { city: city.name })}
+                    {tx('Pick a date and a start time ({city} time)', { city: city.name })}
                   </Text>
                 ) : null}
-                <Sheet visible={moreTimes} onClose={() => setMoreTimes(false)} title="Start time" subtitle={tx('{city} time', { city: city.name })}>
-                  <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={[styles.wrap, { paddingHorizontal: space.gutter, paddingBottom: space[6] }]}>
-                    {allTimes.map((x) => (
-                      <Chip
-                        key={x}
-                        size="sm"
-                        label={x}
-                        selected={time === x}
-                        onPress={() => {
-                          setTime(x);
-                          setMoreTimes(false);
-                        }}
-                      />
-                    ))}
-                  </ScrollView>
-                </Sheet>
+                <DateTimePicker visible={picking} onClose={() => setPicking(false)} value={when} onConfirm={setWhen} utcOffset={city.utcOffset ?? 4} cityName={city.name} />
               </Animated.View>
               <Animated.View entering={enter.rise(3)} style={styles.block}>
                 <Text variant="overline" tone="secondary">
@@ -728,7 +701,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     {title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
-                    {day} · {time ?? tx('Time to pick')} · {place ?? areaName(city, area)} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
+                    {when ? whenText(when, city.utcOffset ?? 4, now) : tx('Time to pick')} · {place ?? (area ? areaName(city, area) : tx('Neighbourhood to pick'))} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
                   </Text>
                 </View>
               </Animated.View>

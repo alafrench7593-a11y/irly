@@ -9,7 +9,7 @@ import { useFrame } from '@/components/layout/AppFrame';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
-import { areaCoords, type LatLng } from '@/data/geo';
+import { areaCoords, cityCoords, type LatLng } from '@/data/geo';
 import { getCityContent } from '@/data/repo';
 import type { CityId } from '@/data/types';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
@@ -67,10 +67,12 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const start = useMemo<Region>(() => {
     const counts = new Map<string, number>();
     all.forEach((m) => counts.set(m.areaId, (counts.get(m.areaId) ?? 0) + 1));
-    const busiest = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? city.areas[0].id;
-    const c = areaCoords(cityId, areaId ?? busiest) ?? all[0]?.coords ?? { latitude: 25.2, longitude: 55.27 };
+    const busiest = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    // Nothing on the map yet: the middle of the city, not its first neighbourhood.
+    const focus = areaId ?? busiest;
+    const c = (focus ? areaCoords(cityId, focus) : undefined) ?? all[0]?.coords ?? cityCoords(cityId) ?? { latitude: 25.2, longitude: 55.27 };
     return { ...c, latitudeDelta: areaId ? 0.03 : 0.06, longitudeDelta: areaId ? 0.03 : 0.06 };
-  }, [all, city, cityId, areaId]);
+  }, [all, cityId, areaId]);
   const [region, setRegion] = useState<Region>(start);
 
   const placed = useMemo(() => placeMarkers(all, layer, region, frame), [all, layer, region, frame]);

@@ -115,6 +115,62 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236, comp
   );
 });
 
+/* ───────── Activities near you: a tile of the Home grid ───────── */
+
+/**
+ * One plan in the Home's two-column grid: its photo on top inside a glass
+ * card (lit edge, soft shadow), then category, title, place and when.
+ * Tapping it grows into the activity page like the big card.
+ */
+export const ActivityTile = memo(function ActivityTile({ h, width }: { h: Happening; width: number }) {
+  const t = useTheme();
+  const city = CITIES[h.item.cityId];
+  const { ref, onPress, hidden } = useHeroCard(h.type, h.id);
+  const live = isHappeningNow(h.item.when, city);
+  return (
+    <PressableScale
+      ref={ref}
+      onPress={onPress}
+      scaleTo={0.97}
+      style={[styles.tile, { width, boxShadow: t.shadow.card, opacity: hidden ? 0 : 1 }]}
+      accessibilityLabel={`${h.title}, ${h.label}, ${whenLabel(h.item.when, city)}`}
+    >
+      <GlassLayer radius={radius.xl} />
+      <View style={[styles.tilePhoto, { height: Math.round(width * 0.78) }]}>
+        <Photo visual={photoOf(h)} light={city.light} style={StyleSheet.absoluteFill} width={500} recyclingKey={`${h.id}-tile`} />
+        {live ? (
+          <Glass dark style={styles.tileLive}>
+            <LiveDot size={6} color={status.live} />
+            <Text variant="overline" tone="onDark">
+              Live
+            </Text>
+          </Glass>
+        ) : null}
+      </View>
+      <View style={styles.tileBody}>
+        <View style={styles.inline}>
+          <Icon name={h.icon} size={12} color={h.color} />
+          <Text variant="overline" color={h.color} numberOfLines={1} style={{ flexShrink: 1 }}>
+            {h.label}
+          </Text>
+        </View>
+        <Text variant="titleS" numberOfLines={2}>
+          {h.title}
+        </Text>
+        <Text variant="caption" tone="secondary" numberOfLines={1}>
+          {h.item.venue} · {areaName(city, h.item.areaId)}
+        </Text>
+        <View style={styles.inline}>
+          <Icon name="clock" size={12} color={t.c.textSecondary} />
+          <Text variant="caption" tone="secondary" numberOfLines={1} style={{ flexShrink: 1 }}>
+            {whenLabel(h.item.when, city)}
+          </Text>
+        </View>
+      </View>
+    </PressableScale>
+  );
+});
+
 /* ───────── Activities near you: one row per plan ───────── */
 
 export const HappeningRow = memo(function HappeningRow({ h }: { h: Happening }) {
@@ -266,6 +322,10 @@ export const PersonBubble = memo(function PersonBubble({ person, city }: { perso
 });
 
 const styles = StyleSheet.create({
+  tile: { borderRadius: radius.xl, overflow: 'hidden' },
+  tilePhoto: { margin: 6, marginBottom: 0, borderRadius: radius.xl - 6, overflow: 'hidden' },
+  tileLive: { position: 'absolute', top: 8, left: 8, flexDirection: 'row', alignItems: 'center', gap: 5, height: 24, paddingHorizontal: 9, borderRadius: 12 },
+  tileBody: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12, gap: 4 },
   category: { borderRadius: radius.xxl },
   categoryTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
   categoryIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
