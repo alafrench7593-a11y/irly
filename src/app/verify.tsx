@@ -20,13 +20,23 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { SpaceFlavor } from '@/theme/space';
 
 /**
  * Verify my profile (needed for Match): 3 photos of me, then a selfie
  * doing the gesture the server asks for. A person at IRLY compares it with
  * the photos; the selfie is deleted after the decision.
  */
-export default function VerifyScreen() {
+export default function VerifyScreenRoute() {
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <VerifyScreen />
+    </SpaceFlavor>
+  );
+}
+
+function VerifyScreen() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();

@@ -24,6 +24,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { SpaceFlavor } from '@/theme/space';
 
 const price = (n: number | null) => (n == null ? null : n === 0 ? 'Free' : '$'.repeat(n));
 const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
@@ -34,7 +35,16 @@ const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUppe
  * ordinary activities linked to the place, so they have a chat, a
  * calendar entry and a pin on the map.
  */
-export default function PlaceScreen() {
+export default function PlaceScreenRoute() {
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <PlaceScreen />
+    </SpaceFlavor>
+  );
+}
+
+function PlaceScreen() {
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();

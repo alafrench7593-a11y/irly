@@ -37,6 +37,9 @@ const SHARED = new Set([
   'calendar',
   'verify',
   'comments',
+  'preferences',
+  'communities',
+  'place/[slug]',
 ]);
 
 type RouteLike = { key?: string; name: string; params?: object; state?: StateLike };

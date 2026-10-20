@@ -27,6 +27,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { SpaceFlavor } from '@/theme/space';
 
 // The demonstration build: example threads and your comments in this tab only, never the server.
 const useThread = DEMO ? useDemoComments : useComments;
@@ -38,7 +39,16 @@ const useAuth = DEMO ? () => 'in' as const : useAuthStatus;
  * Replies are one level deep; your own comments can be deleted, anyone
  * else's reported. Live: new comments appear without refreshing.
  */
-export default function CommentsScreen() {
+export default function CommentsScreenRoute() {
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <CommentsScreen />
+    </SpaceFlavor>
+  );
+}
+
+function CommentsScreen() {
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
