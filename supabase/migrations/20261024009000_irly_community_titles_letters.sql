@@ -11,6 +11,11 @@
 -- one vowel; a real word that long always has two or more ("marathon",
 -- "networks", "midnight").
 --
+-- A stamp can also have two vowels or more ("mncukilg", about one in six):
+-- no word rule can tell it from a word, so the names the end-to-end scripts
+-- make ("Girls Padel", "Book & Matcha", "Sync club", "Photo club", "E2E
+-- Padel", then the stamp) are recognised as such, on the rows below only.
+--
 -- Then the fix of 20261024007100 runs again on the rows it covers (left by
 -- IRLY or a deleted account) and on the rows a test account
 -- (e2e-…@irly.test, the end-to-end scripts' accounts) created and still
@@ -35,6 +40,15 @@ language sql immutable set search_path = pg_catalog as $$
   end
 $$;
 revoke all on function private.community_word_is_technical(text) from public, anon, authenticated;
+
+-- A title the end-to-end scripts make: one of their names, then the run
+-- stamp (any eight base-36 characters starting with l, m or n, so every
+-- stamp is caught, vowels or not: "Sync club mncukilg"), maybe then "Bali".
+create or replace function private.community_name_from_e2e(p_name text) returns boolean
+language sql immutable set search_path = pg_catalog as $$
+  select coalesce(p_name, '') ~ '^(Girls Padel|Book & Matcha|Sync club|Photo club|E2E Padel) [l-n][a-z0-9]{7}( Bali)?$'
+$$;
+revoke all on function private.community_name_from_e2e(text) from public, anon, authenticated;
 
 -- A community created by one of the end-to-end scripts' accounts.
 create or replace function private.community_from_test_account(p_created_by uuid) returns boolean
@@ -64,7 +78,7 @@ begin
     select c.* from public.communities c
     where c.deleted_at is null
       and (c.created_by is null or c.official or private.community_from_test_account(c.created_by))
-      and private.community_name_is_technical(c.name)
+      and (private.community_name_is_technical(c.name) or private.community_name_from_e2e(c.name))
     order by c.created_at, c.id
   loop
     if not exists (select 1 from public.community_members m where m.community_id = r.id and not private.community_from_test_account(m.user_id)) then
@@ -73,7 +87,8 @@ begin
       delete from public.conversation_members cm using public.conversations v, public.communities x
       where v.community_id = x.id and (x.id = r.id or x.parent_id = r.id) and cm.conversation_id = v.id;
     else
-      base := coalesce(private.community_clean_name(r.name), private.community_fallback_name(r.topic, r.category_id, r.city_id));
+      base := case when private.community_name_from_e2e(r.name) then regexp_replace(r.name, ' [l-n][a-z0-9]{7}', '')
+                   else coalesce(private.community_clean_name(r.name), private.community_fallback_name(r.topic, r.category_id, r.city_id)) end;
       -- Never two communities of one city under one name: then the city, then a count.
       with_city := case when position(lower(private.community_city_label(r.city_id)) in lower(base)) > 0 then base
                         else base || ' · ' || private.community_city_label(r.city_id) end;

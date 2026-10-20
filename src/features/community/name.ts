@@ -83,11 +83,20 @@ export function fallbackCommunityName(row: NameRow): string {
   return city ? `${about} · ${city}` : about;
 }
 
+/**
+ * A title the end-to-end scripts make: one of their names and the run stamp
+ * (any eight base-36 characters starting with l, m or n, vowels or not:
+ * "Sync club mncukilg"), maybe then "Bali". Same as
+ * private.community_name_from_e2e() on the server.
+ */
+const E2E_TITLE = /^(Girls Padel|Book & Matcha|Sync club|Photo club|E2E Padel) [l-n][a-z0-9]{7}( Bali)?$/;
+
 /** The title to show for a community row (server or local). */
 export function displayCommunityName(row: NameRow | null | undefined): string {
   if (!row) return 'Community';
   const raw = typeof row.name === 'string' ? row.name.replace(/\s+/g, ' ').trim() : '';
   if (!raw) return fallbackCommunityName(row);
+  if (E2E_TITLE.test(raw)) return raw.replace(/ [l-n][a-z0-9]{7}/, '');
   const parts = raw.split(' ');
   if (!parts.some(isTechnicalWord)) return raw;
   const kept = parts

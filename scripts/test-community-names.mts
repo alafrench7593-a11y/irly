@@ -30,6 +30,10 @@ eq(displayCommunityName({ name: 'Photo club mvgq82y1 Bali', cityId: 'bali' }), '
 eq(displayCommunityName({ name: 'Padel abc12345' }), 'Padel', 'letters and five digits dropped');
 eq(displayCommunityName({ name: 'Book & Matcha mvdxpmvc', cityId: 'dubai' }), 'Book & Matcha', 'an all-letter run stamp is dropped');
 eq(displayCommunityName({ name: 'Girls Padel mvdx3mvc', cityId: 'dubai' }), 'Girls Padel', 'a run stamp with one digit is dropped');
+eq(displayCommunityName({ name: 'Sync club mncukilg', cityId: 'bali' }), 'Sync club', 'a test title with a vowel-rich stamp is fixed');
+eq(displayCommunityName({ name: 'Photo club mjehuz5h Bali', cityId: 'bali' }), 'Photo club Bali', 'a test title with the city after the stamp');
+eq(displayCommunityName({ name: 'Book & Matcha mbonodxa', cityId: 'dubai' }), 'Book & Matcha', 'Book & Matcha with any stamp');
+eq(displayCommunityName({ name: 'Morning marathon', cityId: 'dubai' }), 'Morning marathon', 'a real name with an eight-letter word is kept');
 eq(displayCommunityName({ name: 'Padel · 3f2a91c0' }), 'Padel', 'uuid fragment and its separator dropped');
 
 // Valid names are shown exactly as written.
