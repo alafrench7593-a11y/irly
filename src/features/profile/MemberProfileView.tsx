@@ -625,7 +625,7 @@ function ActivityRow({ a, cover, onPress, border }: { a: ProfileActivity; cover?
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} style={[styles.row, { borderColor: border }]} accessibilityLabel={`${a.title}, ${tx(badge[a.state].label)}`}>
       <View style={[styles.thumb, { backgroundColor: t.c.overlay }]}>
         {/* No uploaded cover: the activity's own photo (padel, brunch…), never a blank tile. */}
-        <Photo visual={{ photo: ideaPhoto(a.categoryId in CATEGORY_BY_ID ? (a.categoryId as CategoryKey) : 'sport', a.title, a.placeName ?? undefined), uri: cover }} light="dubai" width={160} style={StyleSheet.absoluteFill} />
+        <Photo visual={{ photo: ideaPhoto(a.categoryId in CATEGORY_BY_ID ? (a.categoryId as CategoryKey) : 'sport', a.title, a.placeName ?? undefined), uri: cover }} light="dubai" width={160} recyclingKey={`srv-${a.id}`} style={StyleSheet.absoluteFill} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="titleS" numberOfLines={1} raw>
