@@ -35,6 +35,8 @@ const STUBS: Record<string, string> = {
   ),
   '@/features/push/push': stub(`export const askPushInContext = async () => undefined;`),
   '@/features/moderation/moderation': stub(`const list = []; export const useBlocked = () => ({ list, refresh() {} });`),
+  // chat.ts translates the text of a share whose content was removed (the dictionary needs the device locale).
+  '@/i18n': stub(`export const t = (s) => s;`),
   './media': stub(`export const uploadChatPhoto = async () => 'p';`),
   './faces': stub(`export const primeFaces = () => undefined;`),
 };

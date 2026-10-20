@@ -156,6 +156,10 @@ export function useActivityThumbs(ids: string[]): Record<string, ActivityThumb> 
  * answer is kept for the session and dropped when a community changes.
  */
 const coverCache = new Map<string, string | null>();
+/** Signed out or account deleted: the previous member's community covers are forgotten on this phone. */
+export function clearCoverCache(): void {
+  coverCache.clear();
+}
 let coverWanted = new Set<string>();
 let coverWaiters: (() => void)[] = [];
 let coverTimer: ReturnType<typeof setTimeout> | null = null;

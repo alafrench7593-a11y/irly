@@ -4770,4 +4770,6 @@ export const fr: Record<string, string> = {
   'Tap a track. Three springs cover the app: soft for surfaces that change shape, medium for things that travel, strong for feedback that should be felt.': 'Touche une piste. Trois ressorts couvrent l’app : doux pour les surfaces qui changent de forme, moyen pour ce qui se déplace, fort pour les retours qu’on doit sentir.',
   'Every animation reads from these. Transform and opacity only; blur never animates.': 'Toutes les animations s’appuient sur ces valeurs. Transformation et opacité uniquement ; le flou ne s’anime jamais.',
   'This link is invalid or has expired. Ask for a new one': 'Ce lien n’est plus valide ou a expiré. Demandes-en un nouveau',
+  '{name} was live': '{name} était en live',
+  'This Live has ended': 'Ce live est terminé',
 };

@@ -695,7 +695,9 @@ export async function markNotificationRead(id: string): Promise<boolean> {
 export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => void; status: 'loading' | 'ok' | 'failed'; reload: () => void } {
   const account = useAccount();
   const uid = account?.userId;
-  const [items, setItems] = useState<ServerNotification[]>([]);
+  // Kept with the account they belong to: after a switch, the previous account's never show (not even its count).
+  const [held, setHeld] = useState<{ uid: string | undefined; items: ServerNotification[] }>({ uid: undefined, items: [] });
+  const items = held.uid === uid ? held.items : NONE;
   // Loading or unreachable is not "nothing new".
   const [status, setStatus] = useState<'loading' | 'ok' | 'failed'>('loading');
   const [retry, setRetry] = useState(0);
@@ -728,7 +730,7 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     load().then(
       (n) => {
         if (!alive || n0 !== seq.current) return;
-        setItems(n);
+        setHeld({ uid, items: n });
         setStatus('ok');
       },
       () => alive && setStatus((s) => (s === 'ok' ? s : 'failed')),
@@ -736,7 +738,7 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     return () => {
       alive = false;
     };
-  }, [version, load]);
+  }, [version, load, uid]);
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
@@ -744,7 +746,7 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     load().then(
       (n) => {
         if (!alive || n0 !== seq.current) return;
-        setItems(n);
+        setHeld({ uid, items: n });
         setStatus('ok');
       },
       () => alive && n0 === seq.current && setStatus((s) => (s === 'ok' ? s : 'failed')),
@@ -764,7 +766,7 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
       .is('read_at', null)
       .then(({ error }) => {
         if (error) return;
-        setItems((list) => list.map((n) => (n.readAt ? n : { ...n, readAt: Date.parse(now) })));
+        setHeld((h) => ({ uid, items: (h.uid === uid ? h.items : []).map((n) => (n.readAt ? n : { ...n, readAt: Date.parse(now) })) }));
         useNotifVersion.setState((s) => ({ n: s.n + 1 }));
       });
   }, [uid]);
