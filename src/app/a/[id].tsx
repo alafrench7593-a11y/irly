@@ -26,6 +26,8 @@ import { isContentStaff, useStaffRole } from '@/features/admin/api';
 import { setActivityCover } from '@/features/server/covers';
 import { cancelServerActivity, deleteServerActivity, icsFor, joinServerActivity, leaveServerActivity, updateServerActivity, useServerActivity } from '@/features/server/activities';
 import { Sheet } from '@/components/ui/Sheet';
+import { DateTimePicker, WhenField } from '@/components/ui/DateTimePicker';
+import { instants, problemOf, whenFrom, type When } from '@/features/create/when';
 import { confirm } from '@/lib/confirm';
 import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, useEngagement } from '@/features/server/engage';
@@ -300,16 +302,28 @@ function ActivityPage() {
  * One write to the server; every screen showing the activity (lists, map,
  * calendar, chat title, search) follows through the sync channel.
  */
-function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; title: string; placeName: string | null; description: string | null; cancelled: boolean }; over: boolean; onCancelled: () => void; onDeleted: () => void }) {
+function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; title: string; placeName: string | null; description: string | null; cancelled: boolean; cityId: string; startsAt: number; endsAt: number | null }; over: boolean; onCancelled: () => void; onDeleted: () => void }) {
   const [title, setTitle] = useState(a.title);
   const [place, setPlace] = useState(a.placeName ?? '');
   const [about, setAbout] = useState(a.description ?? '');
+  // Date and time read back in the activity's city time, as they were saved.
+  const city = CITIES[a.cityId as CityId] ?? CITIES.dubai;
+  const [when, setWhen] = useState<When>(() => whenFrom(a.startsAt, a.endsAt, city.utcOffset));
+  const [picking, setPicking] = useState(false);
+  // Set once a time is confirmed in the picker: other edits never move the activity.
+  const [timeChanged, setTimeChanged] = useState(false);
   const [saving, setSaving] = useState(false);
   const save = async () => {
     if (saving || title.trim().length < 3) return;
+    const moved = instants(when, city.utcOffset);
+    const problem = timeChanged ? problemOf(when, city.utcOffset, Date.now()) : null;
+    if (problem) {
+      toast(problem === 'past' ? 'This time has passed: pick a later one' : 'The end must be after the start', 'calendar', 'brand');
+      return;
+    }
     setSaving(true);
     try {
-      await updateServerActivity(a.id, { title, placeName: place.trim() || null, description: about.trim() || null });
+      await updateServerActivity(a.id, { title, placeName: place.trim() || null, description: about.trim() || null, ...(timeChanged ? { startsAt: moved.startsAt, endsAt: moved.endsAt } : {}) });
       haptic('success');
       toast('Saved. Everyone sees the new version', 'check', 'brand');
       onClose();
@@ -325,6 +339,18 @@ function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visi
         <Field value={title} onChangeText={setTitle} placeholder="Name" accessibilityLabel="Name" maxLength={80} />
         <Field value={place} onChangeText={setPlace} placeholder="Place (e.g. Kite Beach, court 3)" accessibilityLabel="Place" icon="pin" maxLength={120} />
         <Field value={about} onChangeText={setAbout} placeholder="Description" accessibilityLabel="Description" multiline maxLength={1000} />
+        <WhenField value={when} utcOffset={city.utcOffset} onPress={() => setPicking(true)} />
+        <DateTimePicker
+          visible={picking}
+          onClose={() => setPicking(false)}
+          value={when}
+          onConfirm={(w) => {
+            setWhen(w);
+            setTimeChanged(true);
+          }}
+          utcOffset={city.utcOffset}
+          cityName={city.name}
+        />
         <Button label="Save changes" icon="check" full loading={saving} disabled={saving || title.trim().length < 3} onPress={save} />
         {!a.cancelled && !over ? (
           <Button

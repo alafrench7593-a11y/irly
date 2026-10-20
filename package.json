@@ -67,6 +67,7 @@
     "export:web": "expo export --platform web",
     "lint": "expo lint",
     "test:intent": "node --experimental-strip-types --no-warnings scripts/check-intent.mts",
+    "test:when": "node --experimental-strip-types --no-warnings scripts/check-when.mts",
     "test:bali": "node --experimental-strip-types --no-warnings scripts/check-bali.mts",
     "sync:places": "node scripts/sync-places.mjs",
     "test:routes": "node scripts/check-routes.mjs",

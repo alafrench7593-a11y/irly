@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { t as tx, a11y } from '@/i18n';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -57,8 +56,6 @@ const WORD_STEP = 70;
  */
 export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, live, onDestination, onLive }: Props) {
   const t = useTheme();
-  const night = t.mode === 'night';
-  const base = night ? '5,5,6' : '246,246,244';
   const introDone = useIntro((s) => s.done);
   const reduced = useReducedMotion();
 
@@ -73,13 +70,7 @@ export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, liv
 
   return (
     <View style={{ height }}>
-      {/* The city itself is the page backdrop (HomeBackdrop); here only the shade that carries the words. */}
-      <LinearGradient
-        colors={[`rgba(${base},0)`, `rgba(${base},0)`, `rgba(${base},0.5)`, `rgba(${base},0.82)`]}
-        locations={[0, 0.45, 0.75, 1]}
-        style={StyleSheet.absoluteFill}
-        pointerEvents="none"
-      />
+      {/* The city and the shade that carries the words are the page backdrop (HomeBackdrop). */}
       <Animated.View style={[styles.words, words]}>
         {introDone ? (
           <>

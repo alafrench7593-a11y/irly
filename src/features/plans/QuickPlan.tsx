@@ -19,6 +19,7 @@ import { girl } from '@/features/girl/theme';
 import { GButton, GChip } from '@/features/girl/ui';
 import { createServerActivity } from '@/features/server/activities';
 import { track } from '@/lib/analytics';
+import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 
@@ -120,6 +121,7 @@ export function QuickPlan({
     end: null,
   }));
   const [picking, setPicking] = useState(false);
+  const now = useNow();
   // The place's neighbourhood when it has one; otherwise the member picks it (never a silent first one).
   const [area, setArea] = useState<string | null>(place?.areaId ?? null);
   const [busy, setBusy] = useState(false);
@@ -239,7 +241,7 @@ export function QuickPlan({
           {trip === 'other' ? <Field icon="pin" placeholder="Your destination" value={ownTrip} onChangeText={setOwnTrip} maxLength={40} accessibilityLabel="Your destination" /> : null}
         </View>
       ) : null}
-      <WhenField value={when} utcOffset={city.utcOffset} onPress={() => setPicking(true)} invalid={Boolean(problemOf(when, city.utcOffset, Date.now()))} />
+      <WhenField value={when} utcOffset={city.utcOffset} onPress={() => setPicking(true)} invalid={Boolean(problemOf(when, city.utcOffset, now))} />
       <DateTimePicker visible={picking} onClose={() => setPicking(false)} value={when} onConfirm={setWhen} utcOffset={city.utcOffset} cityName={city.name} />
       {!place?.areaId ? (
         <AreaPicker cityId={city.id} value={area} onChange={setArea} label={isTrip ? 'Meeting point' : undefined} palette={G ? GIRL_PICKER : undefined} />

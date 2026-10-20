@@ -5,6 +5,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { addDays, cityParts, clockLabel, endsNextDay, nextDays, problemOf, type Clock, type DayKey, type When } from '@/features/create/when';
 import { a11y, dateLocale, t as tx } from '@/i18n';
+import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
@@ -189,28 +190,31 @@ type PickerProps = {
  */
 export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, value, onConfirm, utcOffset, cityName, withEnd = true, title = 'When' }: PickerProps) {
   const t = useTheme();
-  const [draft, setDraft] = useState<When>(() => value ?? draftFor(utcOffset, Date.now()));
+  const now = useNow(15_000);
+  const [draft, setDraft] = useState<When>(() => value ?? draftFor(utcOffset, now));
   const [editing, setEditing] = useState<'start' | 'end'>('start');
-  const [days, setDays] = useState<DayKey[]>(() => nextDays(Date.now(), utcOffset));
   const strip = useRef<ScrollView>(null);
 
   // Each opening starts from the field's value (Cancel leaves it untouched).
-  useEffect(() => {
-    if (!visible) return;
-    const now = Date.now();
-    const list = nextDays(now, utcOffset);
-    const base = value ?? draftFor(utcOffset, now);
-    setDays(list.includes(base.day) ? list : [base.day, ...list]);
-    setDraft(base);
-    setEditing('start');
-  }, [visible, value, utcOffset]);
+  const [shown, setShown] = useState(visible);
+  if (visible !== shown) {
+    setShown(visible);
+    if (visible) {
+      setDraft(value ?? draftFor(utcOffset, now));
+      setEditing('start');
+    }
+  }
+  // The next 90 days in the city; an older date being edited stays offered first.
+  const today = cityParts(now, utcOffset).day;
+  const upcoming = nextDays(now, utcOffset);
+  const days = upcoming.includes(draft.day) || draft.day > today ? upcoming : [draft.day, ...upcoming];
 
   const clock = editing === 'end' && draft.end ? draft.end : draft.start;
   const setClock = useCallback(
     (c: Partial<Clock>) => setDraft((w) => (editing === 'end' && w.end ? { ...w, end: { ...w.end, ...c } } : { ...w, start: { ...w.start, ...c } })),
     [editing],
   );
-  const problem = problemOf(draft, utcOffset, Date.now());
+  const problem = problemOf(draft, utcOffset, now);
   const message =
     problem === 'past'
       ? tx('This time has already passed in {city}. Pick a later time.', { city: cityName })
@@ -244,9 +248,9 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
   return (
     <Sheet visible={visible} onClose={onClose} title={title} subtitle={tx('{city} time', { city: cityName })} maxHeight={0.94}>
       <View style={{ gap: space[4], paddingBottom: space[2] }}>
-        <Animated.View key={whenText(draft, utcOffset)} entering={FadeIn.duration(160)} style={{ paddingHorizontal: space.gutter }}>
+        <Animated.View key={whenText(draft, utcOffset, now)} entering={FadeIn.duration(160)} style={{ paddingHorizontal: space.gutter }}>
           <Text variant="titleM" raw accessibilityLiveRegion="polite">
-            {whenText(draft, utcOffset)}
+            {whenText(draft, utcOffset, now)}
           </Text>
         </Animated.View>
 
@@ -261,7 +265,7 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
             const on = d === draft.day;
             const [, , dd] = d.split('-').map(Number);
             const head = i === 0 || dd === 1 ? fmt(d, { month: 'long' }) : '';
-            const top = i === 0 && d === cityParts(Date.now(), utcOffset).day ? tx('Today') : d === addDays(cityParts(Date.now(), utcOffset).day, 1) ? tx('Tomorrow') : fmt(d, { weekday: 'short' });
+            const top = d === today ? tx('Today') : d === addDays(today, 1) ? tx('Tomorrow') : fmt(d, { weekday: 'short' });
             return (
               <View key={d} style={{ width: PILL, gap: 4 }}>
                 <Text variant="caption" tone="tertiary" raw numberOfLines={1} style={{ height: 16, textTransform: 'capitalize' }}>

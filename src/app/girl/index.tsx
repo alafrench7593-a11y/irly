@@ -47,7 +47,6 @@ import { friendlyError, supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 import { Flavor } from '@/theme/flavor';
 import { GlassLayer } from '@/components/ui/GlassLayer';
-
 import { enter } from '@/motion/enter';
 
 // The demonstration build reads the example communities and plans, never the server.
@@ -558,7 +557,7 @@ function GirlHomeInner() {
           <Text variant="titleM" color={girl.ink} style={[girlType.section, { paddingHorizontal: space.gutter, marginTop: space[3] }]}>
             {"Girls' plans coming up"}
           </Text>
-          <Upcoming activities={girlPlans} kinds={GIRL_KINDS} kind={kind} onKind={setKind} onPlan={() => goTo('plan')} emptyTitle="What if you organised the first meetup?" loading={plansLoading} error={plansError} onRetry={refreshPlans} />
+          <Upcoming activities={girlPlans} kinds={GIRL_KINDS} kind={kind} onKind={setKind} onPlan={() => goTo('plan')} emptyTitle="What if you organised the first meetup?" loading={plansLoading} error={plansError} onRetry={refreshPlans} grid />
         </View>
 
         <GirlMessages onCommunities={() => goTo('communities')} />

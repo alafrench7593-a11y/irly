@@ -169,11 +169,11 @@ export default function Home() {
         />
 
         <Animated.View style={[styles.firstSection, arriveStyle]}>
-          <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/search')} accessibilityRole="search" accessibilityLabel="Search IRLY" style={styles.searchWrap}>
+          <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/search')} accessibilityRole="search" accessibilityLabel={tx('Search everything')} style={styles.searchWrap}>
             <Glass level="thick" lifted style={styles.search}>
               <Icon name="search" size={18} color={t.c.textSecondary} />
-              <Text variant="body" tone="secondary" numberOfLines={1} style={{ flex: 1 }}>
-                Activities, people, places
+              <Text variant="body" tone="secondary" numberOfLines={1} raw style={{ flex: 1 }}>
+                {tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
               </Text>
               <Icon name="sliders" size={16} color={t.c.textSecondary} />
             </Glass>
