@@ -29,12 +29,13 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
+import { SpaceFlavor } from '@/theme/space';
 
 /** Example people (demo) have their page here; a real member (UUID) gets their server profile. */
 export default function PersonProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  if (!findPerson(id) && isServerId(id)) return <MemberProfileView userId={id} />;
-  return <SeedProfile />;
+  // Opened from IRLY Girl, the profile wears the Girl look (cosmetic only, see theme/space).
+  return <SpaceFlavor>{!findPerson(id) && isServerId(id) ? <MemberProfileView userId={id} /> : <SeedProfile />}</SpaceFlavor>;
 }
 
 function SeedProfile() {

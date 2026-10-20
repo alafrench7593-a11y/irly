@@ -5,7 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, w
 import type { HapticKind } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
-import { radius } from '@/theme/tokens';
+import { girlElevation, radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
@@ -78,11 +78,19 @@ export const Button = memo(function Button({
     done: { bg: t.c.positiveSoft, fg: t.c.positive, border: t.c.positive },
     danger: { bg: t.c.critical, fg: '#FFFFFF' },
   };
+  const girlFlavor = t.flavor === 'girl';
+  if (girlFlavor) {
+    // IRLY Girl: a luminous rose primary with its own glow, a dark plum
+    // glass secondary with pearl text, bordeaux for destructive actions.
+    palette.primary = { bg: t.c.brand, fg: '#FFFFFF', shadow: girlElevation.glow };
+    palette.secondary = { bg: 'transparent', fg: '#FFF6FA', shadow: girlElevation.plum };
+    palette.danger = { bg: t.c.critical, fg: '#FFFFFF', shadow: girlElevation.card };
+  }
   const p = palette[variant];
   // Secondary and glass actions are panes of the shared glass; the primary
   // of IRLY Girl is its rose gradient, the primary of Mixte stays solid.
   const glassy = variant === 'secondary' || variant === 'glass';
-  const girlPrimary = variant === 'primary' && t.flavor === 'girl';
+  const girlPrimary = variant === 'primary' && girlFlavor;
   const h = HEIGHT[size];
 
   return (
@@ -108,8 +116,15 @@ export const Button = memo(function Button({
           },
         ]}
       >
-        {glassy ? <Glass level="thin" dark={variant === 'glass'} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} /> : null}
-        {girlPrimary ? <LinearGradient colors={GIRL_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} /> : null}
+        {glassy ? <Glass level="thin" dark={variant === 'glass'} variant={girlFlavor && variant === 'secondary' ? 'plum' : undefined} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} /> : null}
+        {girlPrimary ? (
+          <>
+            <LinearGradient colors={GIRL_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
+            {/* Depth: light pooled in the top half and a thin pearl rim, like lacquer. */}
+            <LinearGradient colors={['rgba(255,255,255,0.26)', 'rgba(255,255,255,0)']} locations={[0, 0.55]} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} pointerEvents="none" />
+            <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.girlRim, { borderRadius: radius.pill }]} />
+          </>
+        ) : null}
         {loading ? (
           <ActivityIndicator color={p.fg} />
         ) : (
@@ -127,10 +142,12 @@ export const Button = memo(function Button({
   );
 });
 
-const GIRL_GRADIENT = ['#E04A8B', '#C92F72'] as const;
+/** Luminous rose, deepening to raspberry: white text stays above 4.5:1 under the label. */
+const GIRL_GRADIENT = ['#D63A7E', '#B92B69', '#9E2358'] as const;
 
 const styles = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   full: { alignSelf: 'stretch' },
+  girlRim: { borderWidth: 1, borderColor: 'rgba(255,214,232,0.45)', borderBottomColor: 'rgba(122,31,61,0.35)' },
 });

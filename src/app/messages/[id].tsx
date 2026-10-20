@@ -6,6 +6,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
@@ -47,8 +48,18 @@ import { spring } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { SpaceFlavor } from '@/theme/space';
 
-export default function ThreadScreen() {
+// Opened from IRLY Girl, the chat wears the Girl look (cosmetic only, see theme/space).
+export default function ThreadRoute() {
+  return (
+    <SpaceFlavor>
+      <ThreadScreen />
+    </SpaceFlavor>
+  );
+}
+
+function ThreadScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const status = useAuthStatus();
   // Server conversations (signed in) have UUIDs; the rest live on the device.
@@ -425,9 +436,7 @@ function ServerThreadView({ id }: { id: string }) {
               accessibilityLabel={a11y('Message')}
             />
           </View>
-          <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, opacity: text.trim() ? 1 : 0.4 }]} accessibilityLabel="Send">
-            <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />
-          </PressableScale>
+          <SendButton ready={Boolean(text.trim())} onPress={send} />
         </Glass>
       </KeyboardAvoidingView>
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
@@ -787,18 +796,11 @@ function Thread() {
   const [text, setText] = useState('');
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
-  const sendScale = useSharedValue(0.6);
 
   const conversationId = conversation?.id;
   useEffect(() => {
     if (conversationId) markRead(conversationId);
   }, [conversationId, markRead]);
-
-  useEffect(() => {
-    sendScale.set(withSpring(text.trim() ? 1 : 0.6, spring.bouncy));
-  }, [text, sendScale]);
-
-  const sendStyle = useAnimatedStyle(() => ({ transform: [{ scale: sendScale.value }], opacity: 0.4 + sendScale.value * 0.6 }));
 
   if (!conversation) return <NotFound title="This conversation is not available" />;
   const messages = allMessages(conversation, sent);
@@ -896,11 +898,7 @@ function Thread() {
               accessibilityLabel={a11y('Message')}
             />
           </View>
-          <Animated.View style={sendStyle}>
-            <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand }]} accessibilityLabel="Send">
-              <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />
-            </PressableScale>
-          </Animated.View>
+          <SendButton ready={Boolean(text.trim())} onPress={send} />
         </Glass>
       </KeyboardAvoidingView>
 
@@ -926,6 +924,37 @@ function Thread() {
         </View>
       </View>
     </View>
+  );
+}
+
+/**
+ * Send: the button grows ready as soon as there is something to say, and
+ * on send the paper plane flies off and lands back, while the message
+ * slides into the thread. Reduced motion keeps only the state change.
+ */
+function SendButton({ ready, onPress }: { ready: boolean; onPress: () => void }) {
+  const t = useTheme();
+  const reduced = useReducedMotion();
+  const scale = useSharedValue(ready ? 1 : 0.6);
+  const fly = useSharedValue(0);
+  useEffect(() => {
+    scale.set(reduced ? (ready ? 1 : 0.6) : withSpring(ready ? 1 : 0.6, spring.bouncy));
+  }, [ready, reduced, scale]);
+  const body = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }], opacity: 0.4 + (scale.value - 0.6) * 1.5 }));
+  // Out to the top right (0 → 1), then in again from the bottom left (-1 → 0).
+  const plane = useAnimatedStyle(() => ({ opacity: 1 - Math.abs(fly.value), transform: [{ translateX: fly.value * 16 }, { translateY: -fly.value * 16 }] }));
+  const press = () => {
+    if (ready && !reduced) fly.set(withSequence(withTiming(1, { duration: 170 }), withTiming(-1, { duration: 0 }), withSpring(0, spring.bouncy)));
+    onPress();
+  };
+  return (
+    <Animated.View style={body}>
+      <PressableScale haptic={false} onPress={press} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, overflow: 'hidden' }]} accessibilityLabel="Send">
+        <Animated.View style={plane}>
+          <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />
+        </Animated.View>
+      </PressableScale>
+    </Animated.View>
   );
 }
 

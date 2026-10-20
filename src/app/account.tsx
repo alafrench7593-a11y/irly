@@ -35,6 +35,8 @@ import { haptic } from '@/motion/haptics';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { enter } from '@/motion/enter';
+import { SpaceFlavor } from '@/theme/space';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE = /^\+?\d[\d\s-]{7,16}$/;
@@ -48,7 +50,16 @@ type Mode = 'choose' | 'email' | 'link' | 'code' | 'forgot' | 'phone' | 'phoneCo
  */
 
 const handledUrls = handledAuthUrls;
-export default function AccountScreen() {
+export default function AccountRoute() {
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <AccountScreen />
+    </SpaceFlavor>
+  );
+}
+
+function AccountScreen() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
@@ -152,38 +163,44 @@ export default function AccountScreen() {
     return (
       <Page overline="Signed in" title="Your account" subtitle={account.email}>
         <View style={styles.body}>
-          <View style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+          <Animated.View entering={enter.rise(0, 60)} style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
             <GlassLayer radius={radius.lg} />
-            <Icon name="check" size={18} color={t.c.positive} />
+            <Animated.View entering={enter.pop(2, 60)}>
+              <Icon name="check" size={18} color={t.c.positive} />
+            </Animated.View>
             <Text variant="body" style={{ flex: 1 }}>
               Your profile, matches, chats and sessions are saved on the IRLY server.
             </Text>
-          </View>
-          {onboarded && cityId ? (
-            <Button label="Continue to IRLY" icon="arrowRight" full onPress={() => router.replace(fromOnboarding ? '/onboarding/communities' : '/(tabs)')} />
-          ) : (
-            <>
-              <Text variant="body" tone="secondary">
-                One more step: finish your profile so people can find you.
-              </Text>
-              <Button label="Finish my profile" icon="arrowRight" full onPress={() => router.replace('/welcome')} />
-            </>
-          )}
-          <Button label="Change password" variant="secondary" icon="key" onPress={() => setMode('reset')} />
-          <Button
-            label="Sign out"
-            variant="secondary"
-            icon="arrowLeft"
-            loading={busy}
-            onPress={() =>
-              act(async () => {
-                // Same as Log out in Settings: session ended, this phone wiped, history reset.
-                const { serverEnded } = await signOut();
-                toast(serverEnded ? 'Signed out' : 'Signed out on this phone', 'check', 'brand');
-                goPublic();
-              })
-            }
-          />
+          </Animated.View>
+          <Animated.View entering={enter.rise(1, 60)} style={styles.stack}>
+            {onboarded && cityId ? (
+              <Button label="Continue to IRLY" icon="arrowRight" full onPress={() => router.replace(fromOnboarding ? '/onboarding/communities' : '/(tabs)')} />
+            ) : (
+              <>
+                <Text variant="body" tone="secondary">
+                  One more step: finish your profile so people can find you.
+                </Text>
+                <Button label="Finish my profile" icon="arrowRight" full onPress={() => router.replace('/welcome')} />
+              </>
+            )}
+          </Animated.View>
+          <Animated.View entering={enter.rise(2, 60)} style={styles.stack}>
+            <Button label="Change password" variant="secondary" icon="key" onPress={() => setMode('reset')} />
+            <Button
+              label="Sign out"
+              variant="secondary"
+              icon="arrowLeft"
+              loading={busy}
+              onPress={() =>
+                act(async () => {
+                  // Same as Log out in Settings: session ended, this phone wiped, history reset.
+                  const { serverEnded } = await signOut();
+                  toast(serverEnded ? 'Signed out' : 'Signed out on this phone', 'check', 'brand');
+                  goPublic();
+                })
+              }
+            />
+          </Animated.View>
         </View>
       </Page>
     );
@@ -355,6 +372,7 @@ const styles = StyleSheet.create({
   or: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 4 },
   orLine: { flex: 1, height: StyleSheet.hairlineWidth * 2 },
   body: { paddingHorizontal: space.gutter, gap: 12 },
+  stack: { gap: 12 },
   input: { height: 56, borderRadius: radius.lg, borderWidth: 1, paddingHorizontal: 16, fontFamily: font.medium, fontSize: 17 },
   code: { letterSpacing: 8, fontSize: 24, textAlign: 'center' },
   note: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 16, borderRadius: radius.lg },

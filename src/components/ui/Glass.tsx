@@ -2,7 +2,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { memo, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { glassLevels, type GlassLevel } from '@/theme/tokens';
+import { girlElevation, girlGlass, girlNacre, glassLevels, type GirlGlassVariant, type GlassLevel } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type Props = {
@@ -20,8 +20,24 @@ type Props = {
   highlight?: boolean;
   /** A soft drop shadow under the pane (cards, bars, sheets). */
   lifted?: boolean;
+  /**
+   * IRLY Girl only: the role of the pane (card, chip, field, bar, sheet, or
+   * the dark `plum` glass). Defaults to the level's (thin: chip, regular:
+   * card, thick: sheet). Ignored in Mixte.
+   */
+  variant?: GirlGlassVariant;
   children?: ReactNode;
 };
+
+// Web: an icon (an <svg>, not positioned) drawn after a glass layer would be
+// painted under it, blurred. Inside IRLY Girl the glass marks itself, and
+// the icons that follow it are lifted into the same layer as the text.
+if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('irly-girl-glass')) {
+  const css = document.createElement('style');
+  css.id = 'irly-girl-glass';
+  css.textContent = '[data-girl-glass] ~ svg { position: relative; }';
+  document.head.appendChild(css);
+}
 
 /**
  * Frosted glass, the base surface of the IRLY design system:
@@ -34,9 +50,16 @@ type Props = {
  * On Android a denser tint stands in for the blur (no live blur cost) and
  * keeps text legible. The blur never animates: a pane fades in as a whole.
  */
-export const Glass = memo(function Glass({ style, intensity, dark, light, border = true, level = 'regular', highlight = true, lifted, children }: Props) {
+export const Glass = memo(function Glass({ style, intensity, dark, light, border = true, level = 'regular', highlight = true, lifted, variant, children }: Props) {
   const t = useTheme();
   const girl = t.flavor === 'girl' && !dark;
+  if (girl) {
+    return (
+      <GirlGlass style={style} intensity={intensity} border={border} highlight={highlight} lifted={lifted} variant={variant ?? glassLevels[level].girl}>
+        {children}
+      </GirlGlass>
+    );
+  }
   const night = t.mode === 'night' && !light && !girl;
   const isDark = dark || night;
   const spec = glassLevels[level];
@@ -67,6 +90,50 @@ export const Glass = memo(function Glass({ style, intensity, dark, light, border
   );
 });
 
+const WEB_MARK = Platform.OS === 'web' ? ({ dataSet: { girlGlass: '1' } } as object) : null;
+
+/**
+ * IRLY Girl's glass: live blur, a pearl (or plum) tint, a thin nacre rim all
+ * round, a line of light along the top edge that fades out at the corners,
+ * a sheen over the top half and a faint mother-of-pearl iridescence. The
+ * rim is even (no lit side), so a pane reads as one piece of glass.
+ */
+function GirlGlass({ style, intensity, border, highlight, lifted, variant, children }: { style?: StyleProp<ViewStyle>; intensity?: number; border: boolean; highlight: boolean; lifted?: boolean; variant: GirlGlassVariant; children?: ReactNode }) {
+  const spec = girlGlass[variant];
+  const r = flatRadius(style);
+  const shadow = variant === 'plum' ? girlElevation.plum : variant === 'sheet' ? girlElevation.float : girlElevation.card;
+  return (
+    <View {...WEB_MARK} style={[styles.root, lifted ? { boxShadow: shadow } : null, style]}>
+      {Platform.OS === 'android' ? (
+        <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: spec.fallback }]} />
+      ) : (
+        <>
+          <BlurView intensity={intensity ?? spec.blur} tint={spec.dark ? 'dark' : 'light'} style={[StyleSheet.absoluteFill, styles.under]} />
+          <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: spec.tint }]} />
+        </>
+      )}
+      {highlight ? (
+        <>
+          {spec.dark ? null : <LinearGradient colors={girlNacre} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />}
+          <LinearGradient colors={[spec.sheen, 'rgba(255,255,255,0)']} locations={[0, 0.5]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
+        </>
+      ) : null}
+      {border ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.rim, { borderColor: spec.rim, borderRadius: r }]} /> : null}
+      {border && highlight ? (
+        // The top light: brightest in the middle of the edge, gone at the corners.
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(255,255,255,0)', spec.light, 'rgba(255,255,255,0)']}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          style={[styles.topLight, { left: Math.max(12, (r ?? 0) * 0.8), right: Math.max(12, (r ?? 0) * 0.8) }]}
+        />
+      ) : null}
+      {children}
+    </View>
+  );
+}
+
 /** The pane's own corner radius, so its edge follows the same curve. */
 function flatRadius(style: StyleProp<ViewStyle>): number | undefined {
   const flat = StyleSheet.flatten(style);
@@ -79,4 +146,6 @@ const styles = StyleSheet.create({
   root: { overflow: 'hidden', zIndex: 0 },
   under: { zIndex: -1 },
   edge: { borderWidth: StyleSheet.hairlineWidth * 2, zIndex: 1 },
+  rim: { borderWidth: 1, zIndex: 1 },
+  topLight: { position: 'absolute', top: 0, height: 1, zIndex: 1 },
 });

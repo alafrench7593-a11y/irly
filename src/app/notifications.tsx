@@ -25,6 +25,8 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { SpaceFlavor } from '@/theme/space';
+import { GirlLogo } from '@/features/girl/GirlLogo';
 
 type Item = { id: string; icon: IconName; title: string; body: string; ago: string; personId?: string; onPress?: () => void; unread?: boolean };
 
@@ -32,7 +34,16 @@ type Item = { id: string; icon: IconName; title: string; body: string; ago: stri
  * Notifications: few and useful. Someone joined your session, a session
  * starts near you, someone is live nearby, a reminder. No likes spam.
  */
-export default function Notifications() {
+export default function NotificationsRoute() {
+  // Opened from IRLY Girl, the list wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <Notifications />
+    </SpaceFlavor>
+  );
+}
+
+function Notifications() {
   const t = useTheme();
   const router = useRouter();
   const content = getCityContent(useCityId());
@@ -66,7 +77,7 @@ export default function Notifications() {
   items.unshift(...girlItems);
 
   return (
-    <Page title="Notifications" subtitle="Only what helps you meet people.">
+    <Page title="Notifications" subtitle="Only what helps you meet people." right={t.flavor === 'girl' ? <GirlLogo size={14} /> : undefined}>
       {/* The demo has no server: only its examples, no loading line. */}
       {DEMO ? null : <ServerNotifications />}
       {auth === 'out' && !items.length ? (
@@ -82,8 +93,8 @@ export default function Notifications() {
         {items.map((n, i) => {
           const p = n.personId ? (content.people.find((x) => x.id === n.personId) ?? findPerson(n.personId)) : undefined;
           return (
-            <Animated.View key={n.id} entering={enter.rise(i)}>
-              <PressableScale onPress={n.onPress} scaleTo={0.98} style={[styles.row, { overflow: 'hidden', boxShadow: n.unread ? t.shadow.card : undefined }]}>
+            <Animated.View key={n.id} entering={enter.rise(Math.min(i, 8), 60)}>
+              <PressableScale onPress={n.onPress} haptic="select" scaleTo={0.98} style={[styles.row, { overflow: 'hidden', boxShadow: n.unread ? t.shadow.card : undefined }]}>
                 {n.unread ? <GlassLayer radius={radius.lg} /> : null}
                 {p ? (
                   <Avatar name={p.name} hue={p.hue} size={44} photo={p.photo ?? demoPhoto(p.id)} />
@@ -305,8 +316,8 @@ function ServerNotifications() {
       {items.map((n, i) => {
         const d = describe(n);
         return (
-          <Animated.View key={n.id} entering={enter.rise(i)}>
-            <PressableScale onPress={() => open(n, d.go)} scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`${d.title}${n.readAt ? '' : ', unread'}`} style={[styles.row, { overflow: 'hidden', boxShadow: n.readAt ? undefined : t.shadow.card }]}>
+          <Animated.View key={n.id} entering={enter.rise(Math.min(i, 8), 60)}>
+            <PressableScale onPress={() => open(n, d.go)} haptic="select" scaleTo={0.98} accessibilityRole="button" accessibilityLabel={`${d.title}${n.readAt ? '' : ', unread'}`} style={[styles.row, { overflow: 'hidden', boxShadow: n.readAt ? undefined : t.shadow.card }]}>
               {n.readAt ? null : <GlassLayer radius={radius.lg} />}
               <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
                 <Icon name={d.icon} size={18} color={t.c.text} />

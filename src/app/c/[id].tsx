@@ -5,7 +5,7 @@ import { DemoCommunityScreen } from '@/features/girl/DemoScreens';
 import { t as tx, a11y } from '@/i18n';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
 import { ActionBar } from '@/components/social/ActionBar';
@@ -46,6 +46,8 @@ import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
+import { SpaceFlavor } from '@/theme/space';
+import { enter } from '@/motion/enter';
 
 type Tab = 'posts' | 'activities' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
@@ -61,7 +63,8 @@ const STATUS_LABEL: Partial<Record<ActivityStatus, string>> = { ongoing: 'Happen
 // The demonstration build's IRLY Girl communities (example content, nothing saved).
 export default function CommunityRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return isDemoId(id) ? <DemoCommunityScreen id={id} /> : <CommunityScreen />;
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return <SpaceFlavor>{isDemoId(id) ? <DemoCommunityScreen id={id} /> : <CommunityScreen />}</SpaceFlavor>;
 }
 
 function CommunityScreen() {
@@ -82,6 +85,7 @@ function CommunityScreen() {
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
   const [tab, setTab] = useState<Tab>('posts');
   const [busy, setBusy] = useState(false);
+  const reduced = useReducedMotion();
   // An assistant idea tapped goes into the post composer (n remounts it).
   const [idea, setIdea] = useState({ text: '', n: 0 });
 
@@ -117,6 +121,8 @@ function CommunityScreen() {
   }
 
   const join = async () => {
+    // One join at a time (a second tap while the first is on its way does nothing).
+    if (busy) return;
     setBusy(true);
     try {
       await joinCommunity(c.id);
@@ -183,7 +189,8 @@ function CommunityScreen() {
             </Text>
           </View>
 
-          <View style={[styles.pad, styles.row]}>
+          {/* Joining swaps Join for the chat: the new actions rise in. */}
+          <Animated.View key={c.isMember ? 'member' : 'visitor'} entering={reduced ? undefined : enter.rise(0)} style={[styles.pad, styles.row]}>
             {c.isMember ? (
               <>
                 <View style={{ flex: 1 }}>
@@ -227,7 +234,7 @@ function CommunityScreen() {
             ) : (
               <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
             )}
-          </View>
+          </Animated.View>
 
           {c.isMember ? (
             <View style={[styles.pad, styles.row]}>
@@ -251,118 +258,123 @@ function CommunityScreen() {
             />
           </View>
 
-          {tab === 'posts' ? (
-            <>
-              <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
-              <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate} communityId={c.id} />
-              {c.isMember ? (
-                <Composer
-                  key={idea.n}
-                  initial={idea.text}
-                  onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })}
-                  onMedia={(body) => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body, ...(channels.length && postSpace !== null ? { category: postSpace } : {}) } })}
-                />
-              ) : null}
-              {feed.error && !feed.posts.length ? (
-                <Text variant="body" tone="secondary" style={styles.pad}>
-                  Can’t reach IRLY right now. Check your connection.
-                </Text>
-              ) : !feed.loading && !feed.posts.length ? (
-                <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
-                  <GlassLayer radius={radius.xl} />
-                  <Icon name="message" size={22} color={t.c.textSecondary} />
-                  <Text variant="body" tone="secondary" align="center">
-                    {c.isMember ? 'No posts yet. Say hi or ask the assistant for ideas.' : 'No posts yet. Join to start the conversation.'}
-                  </Text>
-                </View>
-              ) : (
-                feed.posts.map((p) => (
-                  <PostCard
-                    cityId={city.id}
-                    key={p.id}
-                    p={p}
-                    eng={eng}
-                    canModerate={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate}
-                    onPin={(on) =>
-                      pinPost(p.id, on)
-                        .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
-                        .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
-                    }
-                    isMember={c.isMember}
-                    plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo) : null}
-                    onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
-                    onRemove={() => feed.remove(p).then(() => toast('Post removed', 'check', 'brand')).catch(() => toast('Could not remove', 'x', 'live'))}
-                    onPlan={(d) => createPlan({ ...d, title: `${d.title} · ${c.name}`.slice(0, 80) })}
+          {/* Switching Posts / Activities / About cross-fades the panel. */}
+          <Animated.View key={tab} entering={reduced ? undefined : FadeIn.duration(180)} style={{ gap: space[5] }}>
+            {tab === 'posts' ? (
+              <>
+                <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
+                <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate} communityId={c.id} />
+                {c.isMember ? (
+                  <Composer
+                    key={idea.n}
+                    initial={idea.text}
+                    onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })}
+                    onMedia={(body) => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body, ...(channels.length && postSpace !== null ? { category: postSpace } : {}) } })}
                   />
-                ))
-              )}
-            </>
-          ) : null}
-
-          {tab === 'activities' ? (
-            <View style={[styles.pad, { gap: 10 }]}>
-              <View style={[styles.row, { flexWrap: 'wrap' }]}>
-                <Chip size="sm" label={tx('Coming up')} selected={!past} onPress={() => setPast(false)} />
-                <Chip size="sm" label={tx('Past')} selected={past} onPress={() => setPast(true)} />
-                {c.isMember ? <Chip size="sm" icon="plus" label={tx('Create an activity')} onPress={() => openCreate(null, { communityId: c.id, cityId: c.cityId })} /> : null}
-              </View>
-              {acts.activities.length ? (
-                acts.activities.map((a) => (
-                  <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
+                ) : null}
+                {feed.error && !feed.posts.length ? (
+                  <Text variant="body" tone="secondary" style={styles.pad}>
+                    Can’t reach IRLY right now. Check your connection.
+                  </Text>
+                ) : !feed.loading && !feed.posts.length ? (
+                  <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
                     <GlassLayer radius={radius.xl} />
-                    <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
-                    <View style={{ flex: 1 }}>
-                      <Text variant="titleS" numberOfLines={1} raw>
-                        {a.title}
-                      </Text>
-                      <Text variant="caption" tone="tertiary" raw>
-                        {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`, a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : null]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </Text>
-                    </View>
-                    {(c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate) && a.status !== 'finished' && a.status !== 'cancelled' ? (
-                      <Chip
-                        size="sm"
-                        icon="pinPost"
-                        label={a.pinnedAt ? tx('Unpin') : tx('Pin')}
-                        onPress={() =>
-                          pinActivity(c.id, a.id, !a.pinnedAt)
-                            .then(() => toast(a.pinnedAt ? 'Unpinned' : 'Pinned at the top', 'pinPost', 'brand'))
-                            .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
-                        }
-                      />
-                    ) : null}
-                  </PressableScale>
-                ))
-              ) : (
-                <Text variant="body" tone="secondary">
-                  {acts.loading
-                    ? 'Loading…'
-                    : acts.error
-                      ? 'Can’t reach IRLY right now'
-                      : past
-                        ? 'No past activities yet.'
-                        : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
-                </Text>
-              )}
-            </View>
-          ) : null}
+                    <Icon name="message" size={22} color={t.c.textSecondary} />
+                    <Text variant="body" tone="secondary" align="center">
+                      {c.isMember ? 'No posts yet. Say hi or ask the assistant for ideas.' : 'No posts yet. Join to start the conversation.'}
+                    </Text>
+                  </View>
+                ) : (
+                  feed.posts.map((p) => (
+                    <PostCard
+                      cityId={city.id}
+                      key={p.id}
+                      p={p}
+                      eng={eng}
+                      canModerate={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate}
+                      onPin={(on) =>
+                        pinPost(p.id, on)
+                          .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
+                          .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
+                      }
+                      isMember={c.isMember}
+                      plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo) : null}
+                      onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
+                      onRemove={() => feed.remove(p).then(() => toast('Post removed', 'check', 'brand')).catch(() => toast('Could not remove', 'x', 'live'))}
+                      onPlan={(d) => createPlan({ ...d, title: `${d.title} · ${c.name}`.slice(0, 80) })}
+                    />
+                  ))
+                )}
+              </>
+            ) : null}
 
-          {tab === 'about' ? (
-            <View style={[styles.pad, { gap: 10 }]}>
-              <Text variant="body">{c.description ?? c.tagline ?? tx('A community on IRLY.')}</Text>
-              <Text variant="caption" tone="tertiary">
-                Members post, plan activities and talk in the community chat. Be kind: posts can be reported and removed by the community’s hosts.
-              </Text>
-              <Button
-                label="Report this community"
-                icon="flag"
-                variant="ghost"
-                onPress={() => openReport({ kind: 'community', id: c.id })}
-              />
-            </View>
-          ) : null}
+            {tab === 'activities' ? (
+              <View style={[styles.pad, { gap: 10 }]}>
+                <View style={[styles.row, { flexWrap: 'wrap' }]}>
+                  <Chip size="sm" label={tx('Coming up')} selected={!past} onPress={() => setPast(false)} />
+                  <Chip size="sm" label={tx('Past')} selected={past} onPress={() => setPast(true)} />
+                  {c.isMember ? <Chip size="sm" icon="plus" label={tx('Create an activity')} onPress={() => openCreate(null, { communityId: c.id, cityId: c.cityId })} /> : null}
+                </View>
+                {acts.activities.length ? (
+                  acts.activities.map((a, i) => (
+                    <Animated.View key={`${past ? 'past' : 'next'}-${a.id}`} entering={reduced ? undefined : enter.rise(Math.min(i, 8))}>
+                      <PressableScale onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
+                        <GlassLayer radius={radius.xl} />
+                        <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
+                        <View style={{ flex: 1 }}>
+                          <Text variant="titleS" numberOfLines={1} raw>
+                            {a.title}
+                          </Text>
+                          <Text variant="caption" tone="tertiary" raw>
+                            {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`, a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : null]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </Text>
+                        </View>
+                        {(c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate) && a.status !== 'finished' && a.status !== 'cancelled' ? (
+                          <Chip
+                            size="sm"
+                            icon="pinPost"
+                            label={a.pinnedAt ? tx('Unpin') : tx('Pin')}
+                            onPress={() =>
+                              pinActivity(c.id, a.id, !a.pinnedAt)
+                                .then(() => toast(a.pinnedAt ? 'Unpinned' : 'Pinned at the top', 'pinPost', 'brand'))
+                                .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
+                            }
+                          />
+                        ) : null}
+                      </PressableScale>
+                    </Animated.View>
+                  ))
+                ) : (
+                  <Text variant="body" tone="secondary">
+                    {acts.loading
+                      ? 'Loading…'
+                      : acts.error
+                        ? 'Can’t reach IRLY right now'
+                        : past
+                          ? 'No past activities yet.'
+                          : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
+                  </Text>
+                )}
+              </View>
+            ) : null}
+
+            {tab === 'about' ? (
+              <View style={[styles.pad, { gap: 10 }]}>
+                <Text variant="body">{c.description ?? c.tagline ?? tx('A community on IRLY.')}</Text>
+                <Text variant="caption" tone="tertiary">
+                  Members post, plan activities and talk in the community chat. Be kind: posts can be reported and removed by the community’s hosts.
+                </Text>
+                <Button
+                  label="Report this community"
+                  icon="flag"
+                  variant="ghost"
+                  onPress={() => openReport({ kind: 'community', id: c.id })}
+                />
+              </View>
+            ) : null}
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
       <PageHeader title={c.name} />

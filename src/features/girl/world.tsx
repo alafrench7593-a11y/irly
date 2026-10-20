@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { FEATURES } from '@/lib/features';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, LinearTransition, useReducedMotion } from 'react-native-reanimated';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { ActionBar } from '@/components/social/ActionBar';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Avatar } from '@/components/ui/Avatar';
@@ -28,8 +28,8 @@ import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { girlPhotoFor } from './photos';
-import { girl, GIRL_TINT, girlType } from './theme';
-import { GButton, GChip, GlassFill } from './ui';
+import { girl, GIRL_TINT } from './theme';
+import { GButton, GChip, GIconWell, GlassFill, GNotice, useGirlMotion } from './ui';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /* ───────── Kinds of plans ───────── */
@@ -97,13 +97,14 @@ export function kindPhoto(a: ServerActivity, kinds: Kind[]): PhotoKey {
 
 /** Horizontal rail of kinds: tap one to filter the plans below, tap again to clear. */
 export const KindRail = memo(function KindRail({ kinds, value, onChange, counts }: { kinds: Kind[]; value: string | null; onChange: (id: string | null) => void; counts: Record<string, number> }) {
+  const m = useGirlMotion();
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
       {kinds.map((k, i) => {
         const on = value === k.id;
         const n = counts[k.id] ?? 0;
         return (
-          <Animated.View key={k.id} entering={enter.slide(Math.min(i, 6), 60)}>
+          <Animated.View key={k.id} entering={m.reduced ? undefined : enter.slide(Math.min(i, 6), 60)}>
             <PressableScale
               haptic="select"
               scaleTo={0.96}
@@ -115,8 +116,8 @@ export const KindRail = memo(function KindRail({ kinds, value, onChange, counts 
             >
               <Photo tint={GIRL_TINT} visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
               <View style={styles.kindTop}>
-                <View style={[styles.kindIcon, on ? { backgroundColor: girl.rose } : null]}>
-                  <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#FFFFFF' : girl.ink} />
+                <View style={[styles.kindIcon, on ? { backgroundColor: girl.plum, borderColor: 'rgba(255,205,226,0.35)' } : null]}>
+                  <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#F4B3CF' : girl.ink} strokeWidth={on ? 2.6 : 2} />
                 </View>
                 {n ? (
                   <View style={styles.kindCount}>
@@ -200,7 +201,7 @@ export function Upcoming({
 }) {
   const router = useRouter();
   const now = useNow();
-  const reduced = useReducedMotion();
+  const m = useGirlMotion();
   const [when, setWhen] = useState<When>('all');
   const [free, setFree] = useState(false);
   const [more, setMore] = useState(false);
@@ -226,12 +227,12 @@ export function Upcoming({
         {k ? <Chip label={k.label} icon="x" on onPress={() => onKind(null)} /> : null}
       </ScrollView>
 
-      <Animated.View layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)} style={{ gap: 10, paddingHorizontal: space.gutter }}>
+      <Animated.View layout={m.layout} style={{ gap: 10, paddingHorizontal: space.gutter }}>
         {grid ? (
           shown.length ? (
             <View style={styles.grid}>
               {shown.map((a, i) => (
-                <Animated.View key={a.id} entering={reduced ? undefined : enter.rise(Math.min(i, 6))}>
+                <Animated.View key={a.id} entering={m.rise(i)} layout={m.layout}>
                   <PlanTile a={a} width={tileW} photo={kindPhoto(a, kinds)} label={kinds.find((x) => matchesKind(a, x))?.label} onPress={() => router.push(`/a/${a.id}`)} />
                 </Animated.View>
               ))}
@@ -239,7 +240,7 @@ export function Upcoming({
           ) : null
         ) : (
           shown.map((a, i) => (
-            <Animated.View key={a.id} entering={reduced ? undefined : enter.rise(Math.min(i, 5))}>
+            <Animated.View key={a.id} entering={m.rise(i)} layout={m.layout}>
               <PlanRow a={a} photo={kindPhoto(a, kinds)} onPress={() => router.push(`/a/${a.id}`)} />
             </Animated.View>
           ))
@@ -258,25 +259,11 @@ export function Upcoming({
             </View>
           )
         ) : !list.length && error ? (
-          <View style={styles.empty}>
-            <GlassLayer radius={radius.xl} />
-            <Text variant="bodyS" color={girl.inkSoft} align="center">
-              {"Plans couldn't load. Check your connection."}
-            </Text>
+          <GNotice icon="globe" tone="error" body={"Plans couldn't load. Check your connection."}>
             {onRetry ? <GButton label="Try again" variant="secondary" onPress={onRetry} /> : null}
-          </View>
+          </GNotice>
         ) : !list.length ? (
-          <Animated.View entering={FadeIn} style={styles.empty}>
-            <GlassLayer radius={radius.xl} />
-            <View style={styles.emptyIcon}>
-              <Icon name="sparkles" size={20} color={girl.rose} />
-            </View>
-            <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
-              {filtered ? 'Nothing planned here yet' : emptyTitle}
-            </Text>
-            <Text variant="bodyS" color={girl.inkSoft} align="center">
-              {filtered ? 'Change the filters, or plan it yourself: it takes a minute.' : 'Pick a moment and a place, and others join you.'}
-            </Text>
+          <GNotice icon="sparkles" title={filtered ? 'Nothing planned here yet' : emptyTitle} body={filtered ? 'Change the filters, or plan it yourself: it takes a minute.' : 'Pick a moment and a place, and others join you.'}>
             <GButton label="Plan it" onPress={onPlan} />
             {filtered ? (
               <GButton
@@ -289,7 +276,7 @@ export function Upcoming({
                 }}
               />
             ) : null}
-          </Animated.View>
+          </GNotice>
         ) : null}
       </Animated.View>
     </View>
@@ -326,15 +313,15 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
         </View>
       </View>
       {a.joined ? (
-        <View style={[styles.badge, { backgroundColor: girl.rose }]}>
-          <Icon name="check" size={12} color="#FFFFFF" />
-          <Text variant="caption" color="#FFFFFF">
+        <View style={[styles.badge, styles.going]}>
+          <Icon name="check" size={12} color="#F4B3CF" strokeWidth={2.6} />
+          <Text variant="caption" color={girl.pearl}>
             Going
           </Text>
         </View>
       ) : full ? (
-        <View style={[styles.badge, { backgroundColor: girl.cream }]}>
-          <Text variant="caption" color={girl.inkSoft}>
+        <View style={[styles.badge, { backgroundColor: girl.nude }]}>
+          <Text variant="caption" color={girl.plum}>
             Full
           </Text>
         </View>
@@ -354,15 +341,15 @@ const PlanTile = memo(function PlanTile({ a, width, photo, label, onPress }: { a
       <View style={[styles.tilePhoto, { height: Math.round(width * 0.78) }]}>
         <Photo tint={GIRL_TINT} visual={{ photo, uri: a.coverUrl }} light="dubai" width={500} style={StyleSheet.absoluteFill} recyclingKey={`gplan-${a.id}`} />
         {a.joined ? (
-          <View style={[styles.badge, styles.tileBadge, { backgroundColor: girl.rose }]}>
-            <Icon name="check" size={12} color="#FFFFFF" />
-            <Text variant="caption" color="#FFFFFF">
+          <View style={[styles.badge, styles.tileBadge, styles.going]}>
+            <Icon name="check" size={12} color="#F4B3CF" strokeWidth={2.6} />
+            <Text variant="caption" color={girl.pearl}>
               Going
             </Text>
           </View>
         ) : full ? (
-          <View style={[styles.badge, styles.tileBadge, { backgroundColor: girl.cream }]}>
-            <Text variant="caption" color={girl.inkSoft}>
+          <View style={[styles.badge, styles.tileBadge, { backgroundColor: girl.nude }]}>
+            <Text variant="caption" color={girl.plum}>
               Full
             </Text>
           </View>
@@ -508,47 +495,43 @@ const useEng = DEMO ? useDemoEngagement : useEngagement;
 
 export function GirlFeed({ cityId, moms, onCommunities }: { cityId: string; moms: boolean; onCommunities: () => void }) {
   const { posts, state, reload } = useFeed(cityId, moms);
+  const m = useGirlMotion();
   const eng = useEng(
     'community_post',
     posts.map((p) => p.id),
   );
   if (state === 'loading')
+    // The shape of a post, shimmering in powder rose: never a bare spinner.
     return (
-      <View style={[styles.empty, { marginHorizontal: space.gutter }]}>
+      <View style={[styles.post, { marginHorizontal: space.gutter }]} accessibilityLabel="Loading posts">
         <GlassLayer radius={radius.xl} />
-        <ActivityIndicator color={girl.rose} />
+        <View style={styles.postHead}>
+          <Skeleton width={38} height={38} radius={19} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <Skeleton width="40%" height={12} radius={6} />
+            <Skeleton width="60%" height={10} radius={5} />
+          </View>
+        </View>
+        <Skeleton width="92%" height={12} radius={6} />
+        <Skeleton width="70%" height={12} radius={6} />
       </View>
     );
   if (state === 'error')
     return (
-      <View style={[styles.empty, { marginHorizontal: space.gutter }]}>
-        <GlassLayer radius={radius.xl} />
-        <Text variant="bodyS" color={girl.inkSoft} align="center">
-          Posts could not load. Check your connection.
-        </Text>
+      <GNotice icon="globe" tone="error" body="Posts could not load. Check your connection." style={{ marginHorizontal: space.gutter }}>
         <GButton label="Try again" variant="secondary" onPress={reload} />
-      </View>
+      </GNotice>
     );
   if (!posts.length)
     return (
-      <Animated.View entering={FadeIn} style={[styles.empty, { marginHorizontal: space.gutter }]}>
-        <GlassLayer radius={radius.xl} />
-        <View style={styles.emptyIcon}>
-          <Icon name="message" size={20} color={girl.rose} />
-        </View>
-        <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
-          {moms ? 'No posts from moms yet' : 'No posts yet'}
-        </Text>
-        <Text variant="bodyS" color={girl.inkSoft} align="center">
-          Join a community and say hello: your post shows here for every woman nearby.
-        </Text>
+      <GNotice icon="message" title={moms ? 'No posts from moms yet' : 'No posts yet'} body="Join a community and say hello: your post shows here for every woman nearby." style={{ marginHorizontal: space.gutter }}>
         <GButton label="See communities" variant="secondary" onPress={onCommunities} />
-      </Animated.View>
+      </GNotice>
     );
   return (
     <View style={{ gap: 12, paddingHorizontal: space.gutter }}>
       {posts.map((p, i) => (
-        <Animated.View key={p.id} entering={enter.rise(Math.min(i, 4))}>
+        <Animated.View key={p.id} entering={m.rise(Math.min(i, 4))} layout={m.layout}>
           <GirlPostCard p={p} eng={eng} cityId={cityId} />
         </Animated.View>
       ))}
@@ -593,7 +576,8 @@ export const GirlPostCard = memo(function PostCard({ p, eng, cityId }: { p: Girl
       ) : null}
       {p.activityId ? (
         <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={styles.linked} accessibilityLabel={p.activityTitle ? tx('Open {title}', { title: p.activityTitle }) : tx('Open the activity')}>
-          <Icon name="calendar" size={18} color={girl.ink} />
+          <GlassLayer radius={radius.md} level="thin" />
+          <GIconWell icon="calendar" size={34} />
           <View style={{ flex: 1 }}>
             <Text variant="titleS" color={girl.ink} numberOfLines={1} raw>
               {p.activityTitle ?? tx('Activity')}
@@ -615,15 +599,14 @@ export const GirlPostCard = memo(function PostCard({ p, eng, cityId }: { p: Girl
 /* ───────── Shortcuts under the hero ───────── */
 
 export function Shortcuts({ items }: { items: { icon: IconName; label: string; onPress: () => void }[] }) {
+  const m = useGirlMotion();
   return (
     <View style={styles.shortcuts}>
       {items.map((s, i) => (
-        <Animated.View key={s.label} entering={enter.pop(i, 180)} style={{ flex: 1 }}>
+        <Animated.View key={s.label} entering={m.pop(i, 180)} style={{ flex: 1 }}>
           <PressableScale haptic="select" scaleTo={0.94} onPress={s.onPress} accessibilityRole="button" accessibilityLabel={tx(s.label)} style={styles.shortcut}>
             <GlassFill radius={radius.lg} />
-            <View style={styles.shortcutIcon}>
-              <Icon name={s.icon} size={18} color={girl.rose} />
-            </View>
+            <GIconWell icon={s.icon} size={36} />
             <Text variant="caption" color={girl.ink} align="center" numberOfLines={1} style={{ fontSize: 11 }}>
               {s.label}
             </Text>
@@ -638,15 +621,15 @@ const styles = StyleSheet.create({
   postPhoto: { height: 220, borderRadius: radius.lg, overflow: 'hidden' },
   rail: { paddingHorizontal: space.gutter, gap: 10 },
   kind: { width: 132, height: 168, borderRadius: radius.lg, overflow: 'hidden', padding: 10, justifyContent: 'space-between', boxShadow: girl.shadowSoft },
-  kindOn: { borderWidth: 2, borderColor: girl.rose },
+  kindOn: { borderWidth: 2, borderColor: girl.plum },
   kindTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  kindIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: girl.glass, alignItems: 'center', justifyContent: 'center' },
-  kindCount: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  kindIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,248,251,0.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' },
+  kindCount: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: 'rgba(255,248,251,0.92)', alignItems: 'center', justifyContent: 'center' },
   kindLabel: { textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
   chips: { paddingHorizontal: space.gutter, gap: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   tile: { borderRadius: radius.xl, overflow: 'hidden', boxShadow: girl.shadowSoft },
-  tilePhoto: { margin: 6, marginBottom: 0, borderRadius: radius.xl - 6, overflow: 'hidden', backgroundColor: girl.cream },
+  tilePhoto: { margin: 6, marginBottom: 0, borderRadius: radius.xl - 6, overflow: 'hidden', backgroundColor: girl.blush },
   tileBadge: { position: 'absolute', top: 8, right: 8 },
   tileBody: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12, gap: 4 },
   tileWhen: { flexDirection: 'row', alignItems: 'center', gap: 5 },
@@ -654,12 +637,10 @@ const styles = StyleSheet.create({
   planPhoto: { width: 76, height: 76, borderRadius: radius.md, overflow: 'hidden', backgroundColor: girl.cream },
   meta: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, height: 26, borderRadius: 13 },
-  empty: { alignItems: 'center', gap: 10, padding: 22, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
-  emptyIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: girl.blush, alignItems: 'center', justifyContent: 'center' },
+  going: { backgroundColor: girl.plum, borderWidth: 1, borderColor: 'rgba(255,205,226,0.28)', boxShadow: girl.shadowPlum },
   post: { gap: 10, padding: 14, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   postHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.md, backgroundColor: girl.bg },
+  linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: radius.md, overflow: 'hidden' },
   shortcuts: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, marginTop: space[4] },
-  shortcut: { alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 2, borderRadius: radius.lg, zIndex: 0, boxShadow: girl.shadow },
-  shortcutIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: girl.blush, alignItems: 'center', justifyContent: 'center' },
+  shortcut: { alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 2, borderRadius: radius.lg, zIndex: 0, boxShadow: girl.shadowSoft },
 });

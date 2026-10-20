@@ -33,6 +33,8 @@ import { useCommunityPhotoKeys } from '@/features/server/covers';
 import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { SpaceFlavor } from '@/theme/space';
+import { GirlLogo } from '@/features/girl/GirlLogo';
 
 type Tab = 'all' | 'private' | 'groups' | 'communities' | 'activities';
 
@@ -62,7 +64,16 @@ const EMPTY: Record<Tab, string> = {
  * the chat's own picture: the person's photo, the group's, the community's
  * or the activity's. Search covers names and last messages.
  */
-export default function Messages() {
+export default function MessagesRoute() {
+  // Opened from IRLY Girl, the list wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <Messages />
+    </SpaceFlavor>
+  );
+}
+
+function Messages() {
   const t = useTheme();
   const router = useRouter();
   const cityId = useCityId();
@@ -139,7 +150,7 @@ export default function Messages() {
   const loading = server.loading && !server.conversations.length;
 
   return (
-    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place.">
+    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlLogo size={14} /> : undefined}>
       <View style={styles.pad}>
         <View style={styles.search}>
           <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />

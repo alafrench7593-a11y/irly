@@ -40,6 +40,7 @@ import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
 import { enter } from '@/motion/enter';
+import { SpaceFlavor } from '@/theme/space';
 
 // The activity's own city time, wherever the phone is.
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
@@ -52,7 +53,8 @@ const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'lo
 // The demonstration build's IRLY Girl plans (example content, nothing saved).
 export default function ActivityRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return isDemoId(id) ? <DemoPlanScreen id={id} /> : <ActivityPage />;
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return <SpaceFlavor>{isDemoId(id) ? <DemoPlanScreen id={id} /> : <ActivityPage />}</SpaceFlavor>;
 }
 
 function ActivityPage() {
@@ -66,6 +68,10 @@ function ActivityPage() {
   const contentStaff = isContentStaff(useStaffRole());
   const eng = useEngagement('activity', a ? [a.id] : []);
   const [busy, setBusy] = useState(false);
+  // Right after joining: the button confirms ("You're in") until the page knows you are going,
+  // and at least a beat, so it never flashes back to Join while the detail refreshes.
+  const [confirming, setConfirming] = useState(false);
+  const [held, setHeld] = useState(false);
   const [managing, setManaging] = useState(false);
   const now = useNow();
   const auth = useAuthStatus();
@@ -134,7 +140,11 @@ function ActivityPage() {
   const isEvent = a.format === 'event';
   const target = { type: 'activity' as const, id: a.id, title: a.title };
 
+  const confirmingNow = confirming && (held || !going);
+
   const join = async () => {
+    // One join at a time (a second tap while the first is on its way does nothing).
+    if (busy || confirming) return;
     setBusy(true);
     try {
       const res = await joinServerActivity(a.id);
@@ -143,6 +153,11 @@ function ActivityPage() {
         haptic('success');
         track(isEvent ? 'EVENT_JOIN' : 'ACTIVITY_JOIN', { category: a.categoryId });
         toast("You're in. It's in your calendar and the chat is open", 'check', 'positive');
+        setConfirming(true);
+        setHeld(true);
+        setTimeout(() => setHeld(false), 1400);
+        // Never stuck on the confirmation if the refresh does not come back.
+        setTimeout(() => setConfirming(false), 6000);
       }
       refresh();
     } catch (e) {
@@ -153,6 +168,7 @@ function ActivityPage() {
   };
 
   const leave = async () => {
+    if (busy) return;
     setBusy(true);
     try {
       await leaveServerActivity(a.id);
@@ -219,11 +235,11 @@ function ActivityPage() {
             </View>
           ) : null}
           <ActionBar target={target} eng={eng} />
-          <Fact icon="clock" text={when(a.startsAt, a.cityId)} />
-          <Fact icon="pin" text={`${a.placeName ? `${a.placeName} · ` : ''}${city ? areaName(city, a.areaId) : a.areaId}`} />
-          <Fact icon="users" text={`${a.going}${a.capacity ? ` / ${a.capacity}` : ''} ${tx('going')}${full ? ` · ${tx('Full')}` : ''}`} />
-          <Fact icon="banknote" text={a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : tx('Free')} />
-          {a.creatorName ? <Fact icon="user" text={tx('Hosted by {name}', { name: a.creatorName })} /> : null}
+          <Fact index={0} icon="clock" text={when(a.startsAt, a.cityId)} />
+          <Fact index={1} icon="pin" text={`${a.placeName ? `${a.placeName} · ` : ''}${city ? areaName(city, a.areaId) : a.areaId}`} />
+          <Fact index={2} icon="users" text={`${a.going}${a.capacity ? ` / ${a.capacity}` : ''} ${tx('going')}${full ? ` · ${tx('Full')}` : ''}`} />
+          <Fact index={3} icon="banknote" text={a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : tx('Free')} />
+          {a.creatorName ? <Fact index={4} icon="user" text={tx('Hosted by {name}', { name: a.creatorName })} /> : null}
           {a.description ? (
             <Text variant="body" tone="secondary">
               {a.description}
@@ -248,26 +264,31 @@ function ActivityPage() {
 
       <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 14), backgroundColor: 'transparent', borderColor: 'transparent', overflow: 'hidden' }]}>
         <GlassLayer level="thick" />
-        {going && a.conversationId ? (
-          <>
-            <View style={{ flex: 1 }}>
-              <Button label="Open chat" icon="message" full onPress={() => router.push(`/messages/${a.conversationId}`)} />
-            </View>
-            {hosting ? null : <Button label="Leave" variant="secondary" loading={busy} onPress={leave} />}
-          </>
-        ) : a.primed && error ? (
-          // Just created, but the full detail did not load: offer to try again (never a dead spinner).
-          <Button label="Try again" full onPress={refresh} />
-        ) : a.primed ? (
-          // Just created: the page opened before its chat id arrived (a moment later).
-          <Button label="Open chat" icon="message" full loading disabled onPress={() => undefined} />
-        ) : a.cancelled ? (
-          <Button label="Cancelled" disabled full onPress={() => undefined} />
-        ) : over ? (
-          <Button label="Ended" disabled full onPress={() => undefined} />
-        ) : (
-          <Button label={full ? 'Full' : isEvent ? 'Join event' : 'Join'} icon="plus" full disabled={full} loading={busy} onPress={join} />
-        )}
+        {/* Each state of the action rises in, so joining reads as one gesture: Join → You're in → Open chat. */}
+        <Animated.View key={confirmingNow ? 'done' : going ? 'in' : 'out'} entering={reducedMotion ? undefined : enter.rise(0)} style={styles.ctaRow}>
+          {confirmingNow ? (
+            <Button label="You're in" icon="check" variant="done" full haptic={false} onPress={() => undefined} />
+          ) : going && a.conversationId ? (
+            <>
+              <View style={{ flex: 1 }}>
+                <Button label="Open chat" icon="message" full onPress={() => router.push(`/messages/${a.conversationId}`)} />
+              </View>
+              {hosting ? null : <Button label="Leave" variant="secondary" loading={busy} onPress={leave} />}
+            </>
+          ) : a.primed && error ? (
+            // Just created, but the full detail did not load: offer to try again (never a dead spinner).
+            <Button label="Try again" full onPress={refresh} />
+          ) : a.primed ? (
+            // Just created: the page opened before its chat id arrived (a moment later).
+            <Button label="Open chat" icon="message" full loading disabled onPress={() => undefined} />
+          ) : a.cancelled ? (
+            <Button label="Cancelled" disabled full onPress={() => undefined} />
+          ) : over ? (
+            <Button label="Ended" disabled full onPress={() => undefined} />
+          ) : (
+            <Button label={full ? 'Full' : isEvent ? 'Join event' : 'Join'} icon="plus" full disabled={full} loading={busy} onPress={join} />
+          )}
+        </Animated.View>
       </View>
 
       <View style={[styles.top, { paddingTop: insets.top + 6 }]}>
@@ -391,15 +412,16 @@ function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visi
   );
 }
 
-function Fact({ icon, text }: { icon: IconName; text: string }) {
+function Fact({ index, icon, text }: { index: number; icon: IconName; text: string }) {
   const t = useTheme();
+  const reduced = useReducedMotion();
   return (
-    <View style={styles.fact}>
+    <Animated.View entering={reduced ? undefined : enter.rise(index, 140)} style={styles.fact}>
       <Icon name={icon} size={18} color={t.c.textSecondary} />
       <Text variant="body" style={{ flex: 1 }}>
         {text}
       </Text>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -423,6 +445,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: radius.lg },
   cta: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
+  ctaRow: { flex: 1, flexDirection: 'row', gap: 10 },
   top: { position: 'absolute', left: space.gutter, right: space.gutter, top: 0, flexDirection: 'row', justifyContent: 'space-between' },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: space.gutter },
 });

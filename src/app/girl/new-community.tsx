@@ -28,7 +28,9 @@ import { GirlGate, safeBack } from "@/features/girl/access";
 import { girlCommunityPhoto } from "@/features/girl/photos";
 import { girl, girlType, GIRL_TINT } from "@/features/girl/theme";
 import { GButton, GChip, Wrap } from "@/features/girl/ui";
-import { pickPhoto, setCommunityCover } from "@/features/server/covers";
+import { setCommunityCover } from "@/features/server/covers";
+import { usePhotoSource } from "@/components/ui/PhotoSourceSheet";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { createServerCommunity } from "@/features/server/activities";
 import { Photo } from "@/components/visual/Photo";
 import { t as tx, a11y } from "@/i18n";
@@ -102,12 +104,16 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
   const valid = trimmed.length >= NAME_MIN;
   const missingMoms = moms && womenOnly && valid && !/moms?/i.test(trimmed);
 
+  // Library or camera from the shared photo sheet; cropped 16:10 and sent with the community (setCommunityCover).
+  const photos = usePhotoSource({ aspect: [16, 10], title: "Community photo", subtitle: "The picture women see first." });
   const choosePhoto = async () => {
     try {
-      const uri = await pickPhoto();
-      if (uri) {
+      const picked = await photos.pick();
+      if (picked) {
+        // Phone photos are 5–10 MB: 1280 px wide is plenty for a card and a header (same as covers.pickPhoto).
+        const small = await manipulateAsync(picked.uri, [{ resize: { width: 1280 } }], { compress: 0.75, format: SaveFormat.JPEG });
         haptic("select");
-        setPhoto(uri);
+        setPhoto(small.uri);
       }
     } catch {
       toast(
@@ -469,6 +475,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {photos.sheet}
     </View>
   );
 }
