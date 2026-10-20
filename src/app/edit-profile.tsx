@@ -141,6 +141,15 @@ export default function EditProfile() {
             gender={profile.gender}
             photoWidth={768}
             photoHint="A real photo of you, face visible."
+            // Signed in: a new photo is saved right away (same upload as Save), so the Save button does not send it again.
+            save={
+              account
+                ? async (uri) => {
+                    await updateMyProfile({ photoUri: uri });
+                    setPhoto((p) => (p === uri ? undefined : p));
+                  }
+                : undefined
+            }
           />
         </Section>
 

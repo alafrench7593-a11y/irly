@@ -1,4 +1,3 @@
-import * as ImagePicker from 'expo-image-picker';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { CharCount } from '@/components/ui/CharCount';
 import { t as tx, a11y } from '@/i18n';
@@ -7,9 +6,10 @@ import { Redirect, useRouter } from 'expo-router';
 import { FEATURES } from '@/lib/features';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInLeft, FadeInRight, FadeOut, interpolateColor, useAnimatedStyle, useSharedValue, withSpring, withTiming, ZoomOut, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
+import { usePhotoSource } from '@/components/ui/PhotoSourceSheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
@@ -21,6 +21,7 @@ import { EMPTY_DRAFT, type MatchProfileDraft } from '@/features/girl/types';
 import { GButton, GChip, GSection, Wrap } from '@/features/girl/ui';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
+import { spring } from '@/motion/tokens';
 import { PressableScale } from '@/motion/PressableScale';
 import { friendlyError } from '@/lib/supabase';
 import { useCityId, useStore } from '@/state/store';
@@ -80,6 +81,12 @@ function GirlProfile() {
     areas: [],
   }));
   const [step, setStep] = useState(0);
+  // Which way the steps move: forward slides in from the right, back from the left.
+  const [dir, setDir] = useState<1 | -1>(1);
+  const go = (to: number) => {
+    setDir(to > step ? 1 : -1);
+    setStep(to);
+  };
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
 
@@ -134,10 +141,16 @@ function GirlProfile() {
 
   const hint = ['Add at least one photo', 'Pick at least one', 'Pick at least three', 'Pick at least one', '', 'Pick at least one language', ''][step];
 
+  // Library or camera, from the shared photo sheet. Photos are uploaded with the profile (saveProfile).
+  const photos = usePhotoSource({ aspect: [4, 5], quality: 0.8, front: true, subtitle: 'Clear, friendly, recent. Up to 6.' });
+  const bioFocus = useSharedValue(0);
+  const focusBio = (v: number) => bioFocus.set(withTiming(v, { duration: 180 }));
   const pickPhoto = async () => {
     if (draft.photoUris.length >= 6) return;
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [4, 5] });
-    if (!res.canceled && res.assets[0]) set('photoUris', [...draft.photoUris, res.assets[0].uri]);
+    const picked = await photos.pick();
+    if (!picked) return;
+    touched.current = true;
+    setDraft((d) => (d.photoUris.length >= 6 || d.photoUris.includes(picked.uri) ? d : { ...d, photoUris: [...d.photoUris, picked.uri] }));
   };
 
   const save = async () => {
@@ -167,7 +180,7 @@ function GirlProfile() {
   const next = () => {
     if (!valid) return;
     haptic('select');
-    if (step < STEPS.length - 1) setStep(step + 1);
+    if (step < STEPS.length - 1) go(step + 1);
     else save();
   };
 
@@ -191,7 +204,7 @@ function GirlProfile() {
         <PressableScale
           haptic="tap"
           scaleTo={0.9}
-          onPress={() => (step > 0 ? setStep(step - 1) : safeBack(router, '/'))}
+          onPress={() => (step > 0 ? go(step - 1) : safeBack(router, '/'))}
           accessibilityLabel={step > 0 ? 'Previous step' : 'Close'}
           style={styles.round}
         >
@@ -200,15 +213,23 @@ function GirlProfile() {
         </PressableScale>
         <View style={styles.progress} accessibilityLabel={tx('Step {n} of {total}', { n: step + 1, total: STEPS.length })}>
           {STEPS.map((s, i) => (
-            <View key={s} style={[styles.bar, { backgroundColor: i <= step ? girl.rose : girl.blush }]} />
+            <ProgressBar key={s} done={i <= step} />
           ))}
         </View>
+        <Text variant="label" raw color={girl.inkSoft} style={styles.count}>
+          {`${step + 1}/${STEPS.length}`}
+        </Text>
       </View>
 
       {/* The bio field and the Continue button stay above the keyboard. */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
       <ScrollView contentContainerStyle={{ padding: space.gutter, paddingBottom: 140, gap: space[6] }} keyboardShouldPersistTaps="handled">
-        <Animated.View key={step} entering={FadeIn.duration(260)} exiting={FadeOut.duration(120)} style={{ gap: space[6] }}>
+        <Animated.View
+          key={step}
+          entering={(dir > 0 ? FadeInRight : FadeInLeft).springify(520).dampingRatio(0.92)}
+          exiting={FadeOut.duration(120)}
+          style={{ gap: space[6] }}
+        >
           <View style={{ gap: 6 }}>
             <Text variant="overline" color={girl.rose}>
               {editing ? 'Edit your profile' : 'Your IRLY Match profile'} · {STEPS[step]}
@@ -233,7 +254,7 @@ function GirlProfile() {
               <GSection title="Photos" hint="Up to 6. Clear, friendly, recent. Group photos are fine as the second one.">
                 <View style={styles.photos}>
                   {draft.photoUris.map((uri, i) => (
-                    <Animated.View key={uri} entering={enter.pop(i)} style={styles.photo}>
+                    <Animated.View key={uri} entering={enter.pop(i)} exiting={ZoomOut.duration(160)} style={styles.photo}>
                       <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" />
                       <PressableScale
                         haptic="tap"
@@ -255,18 +276,22 @@ function GirlProfile() {
                   ))}
                   {draft.photoUris.length < 6 ? (
                     <PressableScale haptic="select" scaleTo={0.96} onPress={pickPhoto} accessibilityLabel="Add a photo" style={[styles.photo, styles.addPhoto]}>
-                      <Icon name="plus" size={22} color={girl.rose} />
+                      <GlassLayer radius={radius.lg} level="thin" />
+                      <View style={styles.addIcon}>
+                        <Icon name="camera" size={18} color={girl.rose} />
+                      </View>
                       <Text variant="caption" color={girl.inkSoft}>
-                        Add
+                        {draft.photoUris.length ? 'Add' : 'Add a photo'}
                       </Text>
                     </PressableScale>
                   ) : null}
                 </View>
               </GSection>
               <GSection title="A few words" hint="What would you tell a new friend over coffee?">
-                <View style={styles.inputPane}>
-                <GlassLayer radius={radius.lg} level="thin" />
+                <FocusPane focus={bioFocus} invalid={draft.bio.trim().length > 0 && draft.bio.trim().length < 10}>
                 <TextInput
+                  onFocus={() => focusBio(1)}
+                  onBlur={() => focusBio(0)}
                   value={draft.bio}
                   onChangeText={(v) => set('bio', v.slice(0, 300))}
                   maxLength={300}
@@ -276,7 +301,7 @@ function GirlProfile() {
                   style={styles.input}
                   accessibilityLabel={a11y('Bio')}
                 />
-                </View>
+                </FocusPane>
                 <CharCount length={draft.bio.trim().length} min={10} max={300} color={girl.inkFaint} warn={girl.rose} />
               </GSection>
             </>
@@ -333,19 +358,12 @@ function GirlProfile() {
                     {([-1, 0, 1] as const).map((v) => {
                       const on = draft.lifestyle[dim.id] === v;
                       return (
-                        <PressableScale
+                        <SegItem
                           key={v}
-                          haptic="select"
-                          scaleTo={0.97}
+                          on={on}
+                          label={v === -1 ? dim.left : v === 0 ? dim.middle : dim.right}
                           onPress={() => set('lifestyle', { ...draft.lifestyle, [dim.id]: on ? undefined : v })}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: on }}
-                          style={[styles.segItem, on ? { backgroundColor: girl.rose } : null]}
-                        >
-                          <Text variant="caption" color={on ? '#FFFFFF' : girl.ink} align="center" numberOfLines={2}>
-                            {v === -1 ? dim.left : v === 0 ? dim.middle : dim.right}
-                          </Text>
-                        </PressableScale>
+                        />
                       );
                     })}
                   </View>
@@ -440,9 +458,11 @@ function GirlProfile() {
       <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <GlassLayer radius={0} level="thick" />
         {!valid && hint ? (
-          <Text variant="caption" color={girl.inkSoft} align="center">
-            {hint}
-          </Text>
+          <Animated.View key={hint} entering={FadeIn.duration(200)} exiting={FadeOut.duration(120)}>
+            <Text variant="caption" color={girl.inkSoft} align="center">
+              {hint}
+            </Text>
+          </Animated.View>
         ) : null}
         <GButton
           label={step < STEPS.length - 1 ? 'Continue' : editing ? 'Save changes' : 'Start matching'}
@@ -453,7 +473,53 @@ function GirlProfile() {
         />
       </View>
       </KeyboardAvoidingView>
+      {photos.sheet}
     </View>
+  );
+}
+
+/** One step of the progress: the rose fills in from the left as the step is reached. */
+function ProgressBar({ done }: { done: boolean }) {
+  const p = useSharedValue(done ? 1 : 0);
+  useEffect(() => {
+    p.set(withTiming(done ? 1 : 0, { duration: 320 }));
+  }, [done, p]);
+  const fill = useAnimatedStyle(() => ({ transform: [{ scaleX: p.value }] }));
+  return (
+    <View style={styles.bar}>
+      <Animated.View style={[styles.barFill, fill]} />
+    </View>
+  );
+}
+
+/** A glass field whose edge turns rose while typing, and red while what is typed is not enough yet. */
+function FocusPane({ focus, invalid, children }: { focus: SharedValue<number>; invalid?: boolean; children: React.ReactNode }) {
+  const edge = useAnimatedStyle(() => ({
+    borderColor: invalid ? girl.critical : interpolateColor(focus.value, [0, 1], [girl.line, girl.rose]),
+    boxShadow: focus.value > 0.5 ? girl.shadow : girl.shadowSoft,
+  }));
+  return (
+    <Animated.View style={[styles.inputPane, edge]}>
+      <GlassLayer radius={radius.lg} level="thin" />
+      {children}
+    </Animated.View>
+  );
+}
+
+/** A lifestyle answer: the rose fills in with a spring when it is chosen. */
+function SegItem({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
+  const p = useSharedValue(on ? 1 : 0);
+  useEffect(() => {
+    p.set(withSpring(on ? 1 : 0, spring.press));
+  }, [on, p]);
+  const fill = useAnimatedStyle(() => ({ opacity: p.value, transform: [{ scale: 0.85 + p.value * 0.15 }] }));
+  return (
+    <PressableScale haptic="select" scaleTo={0.97} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={styles.segItem}>
+      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.segFill, fill]} />
+      <Text variant="caption" color={on ? '#FFFFFF' : girl.ink} align="center" numberOfLines={2}>
+        {label}
+      </Text>
+    </PressableScale>
   );
 }
 
@@ -469,7 +535,15 @@ function ToggleRow({ label, hint, value, onChange }: { label: string; hint: stri
           {hint}
         </Text>
       </View>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: girl.rose, false: girl.blush }} thumbColor="#FFFFFF" accessibilityLabel={a11y(label)} />
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ true: girl.rose, false: girl.blushStrong }}
+        thumbColor="#FFFFFF"
+        // react-native-web paints the "on" thumb teal unless told otherwise.
+        {...(Platform.OS === 'web' ? ({ activeThumbColor: '#FFFFFF' } as object) : {})}
+        accessibilityLabel={a11y(label)}
+      />
     </View>
   );
 }
@@ -479,16 +553,21 @@ const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.gutter },
   round: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   progress: { flex: 1, flexDirection: 'row', gap: 4 },
-  bar: { flex: 1, height: 4, borderRadius: 2 },
+  bar: { flex: 1, height: 4, borderRadius: 2, overflow: 'hidden', backgroundColor: girl.blushStrong },
+  barFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: girl.rose, borderRadius: 2, transformOrigin: 'left' },
+  count: { minWidth: 30, textAlign: 'right', fontVariant: ['tabular-nums'] },
   photos: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   photo: { width: '30.5%', aspectRatio: 4 / 5, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: girl.cream },
-  addPhoto: { alignItems: 'center', justifyContent: 'center', gap: 4, borderWidth: 1.5, borderStyle: 'dashed', borderColor: girl.blushStrong },
+  addPhoto: { alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1.5, borderStyle: 'dashed', borderColor: girl.blushStrong, backgroundColor: 'transparent' },
+  addIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: girl.blush },
   remove: { position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(58,42,42,0.6)', alignItems: 'center', justifyContent: 'center' },
   mainTag: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, height: 22, borderRadius: 11, backgroundColor: 'rgba(58,42,42,0.6)', justifyContent: 'center' },
-  input: { minHeight: 110, borderRadius: radius.lg, padding: 14, color: girl.ink, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top' },
+  // The pane shows the focus (rose edge): no browser outline on top of it.
+  input: { minHeight: 110, borderRadius: radius.lg, padding: 14, color: girl.ink, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top', ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }) },
   segment: { flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.lg },
-  inputPane: { borderRadius: radius.lg },
-  segItem: { flex: 1, minHeight: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  inputPane: { borderRadius: radius.lg, borderWidth: 1.5, overflow: 'hidden' },
+  segItem: { flex: 1, minHeight: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6, overflow: 'hidden' },
+  segFill: { backgroundColor: girl.rose, borderRadius: radius.md },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   note: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: radius.lg, backgroundColor: girl.blush },
   footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.gutter, paddingTop: 12, gap: 8, overflow: 'hidden' },

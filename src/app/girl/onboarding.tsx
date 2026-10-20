@@ -15,6 +15,7 @@ import { CITIES } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 import { GirlGate, isGirlRefusal, safeBack } from '@/features/girl/access';
 import { matchApi } from '@/features/girl/api';
+import { GirlMark } from '@/features/girl/GirlMark';
 import { girl, GIRL_TINT, girlType } from '@/features/girl/theme';
 import { GButton } from '@/features/girl/ui';
 import { haptic } from '@/motion/haptics';
@@ -149,7 +150,10 @@ function GirlOnboarding() {
       <View style={[styles.close, { top: insets.top + 10 }]}>
         <PressableScale haptic="tap" scaleTo={0.9} onPress={() => safeBack(router, '/')} accessibilityLabel="Close" style={styles.closeBtn}>
           <Glass dark style={[StyleSheet.absoluteFill, { borderRadius: 20 }]} />
-          <Icon name="x" size={18} color="#FFFFFF" />
+          {/* Its own layer: on the web a bare icon was painted under the glass. */}
+          <View style={styles.closeIcon}>
+            <Icon name="x" size={18} color="#FFFFFF" />
+          </View>
         </PressableScale>
       </View>
 
@@ -180,13 +184,14 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
           <Photo tint={GIRL_TINT} visual={{ photo: slide.photo }} light="dubai" scrim="soft" style={StyleSheet.absoluteFill} width={1000} />
         </Animated.View>
         <View style={[styles.brand, { top: top + 18 }]}>
-          <Text variant="overline" color="#FFFFFF" style={{ letterSpacing: 3 }}>
-            IRLY GIRL
-          </Text>
+          <GirlMark variant="header" size={16} onDark />
         </View>
       </View>
       <Animated.View style={[styles.card, text]}>
         <GlassLayer radius={radius.xxl} level="thick" />
+        <Text variant="overline" raw color={girl.rose} style={styles.step}>
+          {`${String(i + 1).padStart(2, '0')} / ${String(SLIDES.length).padStart(2, '0')}`}
+        </Text>
         <Text variant="displayM" color={girl.ink} style={girlType.display}>
           {slide.title}
         </Text>
@@ -195,15 +200,8 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
         </Text>
         {slide.points ? (
           <View style={{ gap: 8, marginTop: 4 }}>
-            {slide.points.map((p) => (
-              <View key={p.text} style={styles.point}>
-                <View style={styles.pointIcon}>
-                  <Icon name={p.icon} size={15} color={girl.rose} />
-                </View>
-                <Text variant="bodyS" color={girl.ink} style={{ flex: 1 }}>
-                  {p.text}
-                </Text>
-              </View>
+            {slide.points.map((p, k) => (
+              <Point key={p.text} icon={p.icon} text={p.text} k={k} i={i} x={x} width={width} />
             ))}
           </View>
         ) : null}
@@ -226,6 +224,25 @@ function SlideView({ slide, i, x, width, top, city }: { slide: Slide; i: number;
   );
 }
 
+/** A point of a slide: the rows arrive one after the other as the slide comes in. */
+function Point({ icon, text, k, i, x, width }: { icon: IconName; text: string; k: number; i: number; x: SharedValue<number>; width: number }) {
+  const style = useAnimatedStyle(() => {
+    const d = Math.min(1, Math.abs(x.value / width - i));
+    const lag = Math.min(1, d * (1 + k * 0.45));
+    return { opacity: 1 - lag, transform: [{ translateX: lag * (18 + k * 6) }] };
+  });
+  return (
+    <Animated.View style={[styles.point, style]}>
+      <View style={styles.pointIcon}>
+        <Icon name={icon} size={15} color={girl.rose} />
+      </View>
+      <Text variant="bodyS" color={girl.ink} style={{ flex: 1 }}>
+        {text}
+      </Text>
+    </Animated.View>
+  );
+}
+
 function Dot({ i, x, width }: { i: number; x: SharedValue<number>; width: number }) {
   const style = useAnimatedStyle(() => {
     const d = Math.min(1, Math.abs(x.value / width - i));
@@ -238,6 +255,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   photoWrap: { height: '50%', overflow: 'hidden', borderBottomLeftRadius: 36, borderBottomRightRadius: 36 },
   brand: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  step: { letterSpacing: 2, fontVariant: ['tabular-nums'] },
   card: { marginTop: -40, marginHorizontal: space.gutter, padding: 22, gap: 10, borderRadius: radius.xxl, boxShadow: girl.shadow },
   point: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pointIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: girl.blush, alignItems: 'center', justifyContent: 'center' },
@@ -245,6 +263,7 @@ const styles = StyleSheet.create({
   flowItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   flowPill: { paddingHorizontal: 10, height: 28, borderRadius: 14, justifyContent: 'center', backgroundColor: girl.blush },
   close: { position: 'absolute', left: space.gutter },
+  closeIcon: { zIndex: 1 },
   closeBtn: { width: 40, height: 40, borderRadius: 20, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   footer: { paddingHorizontal: space.gutter, paddingTop: 12, gap: 16 },
   dots: { flexDirection: 'row', gap: 6, alignSelf: 'center' },

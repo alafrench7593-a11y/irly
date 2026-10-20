@@ -1,17 +1,17 @@
-import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
-import * as ImagePicker from 'expo-image-picker';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
 import { Chip, Segmented } from '@/components/ui/Controls';
 import { Icon, type IconName } from '@/components/ui/Icon';
+import { usePhotoSource, type PickedPhoto } from '@/components/ui/PhotoSourceSheet';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useT } from '@/i18n';
+import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
 import { radius, space } from '@/theme/tokens';
@@ -191,18 +191,6 @@ export const AvatarBuilder = memo(function AvatarBuilder({ gender = 'other', val
 
 /* ───────── Appearance: photo or avatar ───────── */
 
-/**
- * The camera needs its permission text in the native build (app config,
- * `expo-image-picker` plugin). Until it is there, taking a photo falls back
- * to the library instead of crashing on iOS.
- */
-function cameraAvailable(): boolean {
-  if (Platform.OS === 'web') return false;
-  const plugins = (Constants.expoConfig?.plugins ?? []) as unknown[];
-  const picker = plugins.find((p) => Array.isArray(p) && p[0] === 'expo-image-picker') as [string, { cameraPermission?: unknown }] | undefined;
-  return picker?.[1]?.cameraPermission !== false;
-}
-
 type AppearanceProps = {
   /** The current photo URI or avatar string. */
   value?: string;
@@ -212,6 +200,12 @@ type AppearanceProps = {
   photoWidth?: number;
   /** Shown under the choice in photo mode. */
   photoHint?: string;
+  /**
+   * Saves a picked photo at once (edit profile, signed in): the face shows
+   * it saving, then a check, or the error with Retry. Without it the photo
+   * is only handed to onChange and saved with the rest of the form.
+   */
+  save?: (photo: string) => Promise<void>;
 };
 
 /**
@@ -225,6 +219,7 @@ export const AppearanceChoice = memo(function AppearanceChoice({
   gender = 'other',
   photoWidth = 512,
   photoHint = 'Required. Your face, clearly visible. No logos or group photos.',
+  save,
 }: AppearanceProps) {
   const t = useTheme();
   const tr = useT();
@@ -233,32 +228,51 @@ export const AppearanceChoice = memo(function AppearanceChoice({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<AvatarConfig>(() => decodeAvatar(value) ?? defaultAvatar(gender));
 
-  const applyPicked = useCallback(
-    async (res: ImagePicker.ImagePickerResult) => {
-      const a = !res.canceled ? res.assets[0] : null;
-      if (!a) return;
-      // Kept as data (not a blob: or cache file:// URI, which die on reload or
-      // when the OS clears its cache) until it is uploaded.
+  // Library or camera (native, front lens) from the shared photo sheet, cropped square.
+  const photos = usePhotoSource({ aspect: [1, 1], front: true, title: 'Profile photo', subtitle: 'Your face, clearly visible.' });
+  // Each new pick plays the preview's entrance once (not when its saved link replaces it).
+  const [picks, setPicks] = useState(0);
+  const [saving, setSaving] = useState<{ state: 'saving' | 'saved' | 'error'; photo: string } | null>(null);
+
+  const persist = useCallback(
+    async (photo: string) => {
+      if (!save) return;
+      setSaving({ state: 'saving', photo });
       try {
-        const small = await manipulateAsync(a.uri, [{ resize: { width: photoWidth } }], { compress: 0.72, format: SaveFormat.JPEG, base64: true });
-        onChange(small.base64 ? `data:image/jpeg;base64,${small.base64}` : small.uri);
-      } catch {
-        onChange(a.uri);
+        await save(photo);
+        haptic('success');
+        setSaving({ state: 'saved', photo });
+        setTimeout(() => setSaving((s) => (s?.state === 'saved' && s.photo === photo ? null : s)), 1800);
+      } catch (e) {
+        haptic('error');
+        setSaving({ state: 'error', photo });
+        toast(e instanceof Error ? e.message : tr('Could not save your photo. Try again.'), 'x', 'live');
       }
     },
-    [onChange, photoWidth],
+    [save, tr],
   );
 
-  const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 1, allowsEditing: true, aspect: [1, 1] };
-  const library = async () => applyPicked(await ImagePicker.launchImageLibraryAsync(options));
-  const camera = async () => {
-    if (!cameraAvailable()) return library();
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      toast(tr('Allow camera access in Settings to take a photo.'), 'camera', 'live');
-      return;
-    }
-    await applyPicked(await ImagePicker.launchCameraAsync({ ...options, cameraType: ImagePicker.CameraType.front }));
+  const applyPicked = useCallback(
+    async (a: PickedPhoto) => {
+      // Kept as data (not a blob: or cache file:// URI, which die on reload or
+      // when the OS clears its cache) until it is uploaded.
+      let photo = a.uri;
+      try {
+        const small = await manipulateAsync(a.uri, [{ resize: { width: photoWidth } }], { compress: 0.72, format: SaveFormat.JPEG, base64: true });
+        photo = small.base64 ? `data:image/jpeg;base64,${small.base64}` : small.uri;
+      } catch {
+        // The original is still a photo: used as is.
+      }
+      setPicks((n) => n + 1);
+      onChange(photo);
+      void persist(photo);
+    },
+    [onChange, photoWidth, persist],
+  );
+
+  const library = async () => {
+    const a = await photos.pick();
+    if (a) await applyPicked(a);
   };
 
   const openBuilder = () => {
@@ -284,36 +298,72 @@ export const AppearanceChoice = memo(function AppearanceChoice({
         <PressableScale
           haptic="select"
           scaleTo={0.95}
+          disabled={saving?.state === 'saving'}
           onPress={mode === 'avatar' ? openBuilder : library}
           accessibilityLabel={mode === 'avatar' ? (avatar ? 'Edit your avatar' : 'Create your avatar') : value && !avatar ? 'Change profile photo' : 'Add a profile photo (required)'}
         >
           {value && avatar ? (
             <IrlyAvatar config={value} size={88} />
           ) : value ? (
-            <Image source={{ uri: value }} style={styles.face} contentFit="cover" />
+            <Animated.View key={picks} entering={picks ? ZoomIn.springify(440).dampingRatio(0.7) : undefined}>
+              <Image source={{ uri: value }} style={styles.face} contentFit="cover" transition={200} />
+            </Animated.View>
           ) : (
             <View style={[styles.face, styles.empty, { borderColor: t.c.lineStrong }]}>
               <Icon name={mode === 'avatar' ? 'sparkles' : 'camera'} size={24} color={t.c.text} />
             </View>
           )}
+          {saving?.state === 'saving' ? (
+            <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(160)} style={[styles.face, styles.veil]} accessibilityLabel={tr('Saving your photo…')}>
+              <ActivityIndicator color="#FFFFFF" />
+            </Animated.View>
+          ) : null}
+          {saving && saving.state !== 'saving' ? (
+            <Animated.View
+              key={saving.state}
+              entering={ZoomIn.springify(440).dampingRatio(0.6)}
+              exiting={ZoomOut.duration(160)}
+              style={[styles.status, { backgroundColor: saving.state === 'saved' ? t.c.positive : t.c.critical, borderColor: t.c.bg }]}
+            >
+              <Icon name={saving.state === 'saved' ? 'check' : 'x'} size={14} color="#FFFFFF" strokeWidth={2.6} />
+            </Animated.View>
+          ) : null}
         </PressableScale>
         <View style={styles.side}>
-          <Text variant="bodyS" tone="secondary">
-            {mode === 'avatar' ? 'An original IRLY avatar, made by you. You can switch to a photo anytime.' : avatar ? 'Pick a photo to replace your avatar.' : photoHint}
-          </Text>
+          {mode === 'photo' && saving ? (
+            <Animated.View key={saving.state} entering={FadeIn.duration(180)}>
+              <Text variant="bodyS" tone={saving.state === 'error' ? 'critical' : saving.state === 'saved' ? 'positive' : 'secondary'}>
+                {saving.state === 'saving' ? 'Saving your photo…' : saving.state === 'saved' ? 'Photo saved. Everyone sees the new one.' : 'Your photo was not saved.'}
+              </Text>
+            </Animated.View>
+          ) : (
+            <Text variant="bodyS" tone="secondary">
+              {mode === 'avatar' ? 'An original IRLY avatar, made by you. You can switch to a photo anytime.' : avatar ? 'Pick a photo to replace your avatar.' : photoHint}
+            </Text>
+          )}
           <View style={styles.actions}>
             {mode === 'avatar' ? (
               <Button label={avatar ? 'Edit your avatar' : 'Create your avatar'} icon="sparkles" variant="secondary" size="sm" onPress={openBuilder} />
-            ) : (
+            ) : saving?.state === 'error' ? (
               <>
-                {Platform.OS !== 'web' ? <Button label="Take a photo" icon="camera" variant="secondary" size="sm" onPress={camera} /> : null}
-                <Button label="Choose a photo" icon="plus" variant="secondary" size="sm" onPress={library} />
+                <Button label="Retry" icon="repeat" size="sm" onPress={() => void persist(saving.photo)} />
+                <Button label="Another photo" icon="camera" variant="secondary" size="sm" onPress={library} />
               </>
+            ) : (
+              <Button
+                label={value && !avatar ? 'Change photo' : 'Add a photo'}
+                icon="camera"
+                variant="secondary"
+                size="sm"
+                loading={saving?.state === 'saving'}
+                onPress={library}
+              />
             )}
           </View>
         </View>
       </View>
 
+      {photos.sheet}
       <Sheet visible={open} onClose={close} title="Your IRLY avatar" subtitle="Simple, friendly, yours. Tap to try styles and colours.">
         <AvatarBuilder gender={gender} value={draft} onChange={setDraft} />
         <View style={[styles.pad, { paddingTop: space[5] }]}>
@@ -373,6 +423,8 @@ const styles = StyleSheet.create({
   current: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   face: { width: 88, height: 88, borderRadius: 44 },
   empty: { borderWidth: 1.5, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  veil: { position: 'absolute', top: 0, left: 0, backgroundColor: 'rgba(0,0,0,0.42)', alignItems: 'center', justifyContent: 'center' },
+  status: { position: 'absolute', right: 0, bottom: 0, width: 26, height: 26, borderRadius: 13, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   side: { flex: 1, gap: 10 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

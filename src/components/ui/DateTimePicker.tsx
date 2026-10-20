@@ -2,12 +2,13 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 // The gesture handler's ScrollView: inside a Sheet (itself a pan gesture) the wheels keep their own vertical scroll.
 import { ScrollView } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 import { addDays, cityParts, clockLabel, endsNextDay, nextDays, problemOf, type Clock, type DayKey, type When } from '@/features/create/when';
 import { a11y, dateLocale, t as tx } from '@/i18n';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
+import { spring } from '@/motion/tokens';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Button } from './Button';
@@ -60,15 +61,34 @@ type FieldProps = { value: When | null; utcOffset: number; onPress: () => void; 
 /** The form's "When" field: shows the chosen date and time, opens the picker again on tap. */
 export const WhenField = memo(function WhenField({ value, utcOffset, onPress, placeholder = 'Pick a date and time', invalid }: FieldProps) {
   const t = useTheme();
+  const girl = t.flavor === 'girl';
+  const label = value ? whenText(value, utcOffset) : null;
+  // A confirmed change is felt: the field pops once, the new date fades in.
+  const pop = useSharedValue(1);
+  const seen = useRef(label);
+  useEffect(() => {
+    if (seen.current === label) return;
+    seen.current = label;
+    pop.set(withSequence(withSpring(1.025, spring.press), withSpring(1, spring.press)));
+  }, [label, pop]);
+  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
   return (
-    <PressableScale onPress={onPress} haptic="select" scaleTo={0.98} accessibilityRole="button" accessibilityLabel={a11y(value ? whenText(value, utcOffset) : placeholder)} accessibilityHint={a11y('Opens the date and time picker')}>
-      <View style={[styles.field, { borderColor: invalid ? t.c.critical : t.c.line }]}>
+    <PressableScale onPress={onPress} haptic="select" scaleTo={0.98} accessibilityRole="button" accessibilityLabel={a11y(label ?? placeholder)} accessibilityHint={a11y('Opens the date and time picker')}>
+      <Animated.View style={[styles.field, { borderColor: invalid ? t.c.critical : girl ? t.c.lineStrong : t.c.line }, girl ? { boxShadow: t.shadow.card } : null, popStyle]}>
         <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
-        <Icon name="clock" size={18} color={value ? t.c.text : t.c.textTertiary} />
-        {value ? (
-          <Text variant="titleS" raw numberOfLines={1} style={{ flex: 1 }}>
-            {whenText(value, utcOffset)}
-          </Text>
+        {girl ? (
+          <View style={[styles.fieldIcon, { backgroundColor: t.c.brandSoft }]}>
+            <Icon name="calendar" size={16} color={t.c.brand} />
+          </View>
+        ) : (
+          <Icon name="clock" size={18} color={value ? t.c.text : t.c.textTertiary} />
+        )}
+        {label ? (
+          <Animated.View key={label} entering={FadeIn.duration(200)} style={{ flex: 1 }}>
+            <Text variant="titleS" raw numberOfLines={1}>
+              {label}
+            </Text>
+          </Animated.View>
         ) : (
           <Text variant="body" tone="tertiary" numberOfLines={1} style={{ flex: 1 }}>
             {placeholder}
@@ -77,7 +97,7 @@ export const WhenField = memo(function WhenField({ value, utcOffset, onPress, pl
         <Text variant="label" tone="brand">
           {value ? 'Change' : 'Pick'}
         </Text>
-      </View>
+      </Animated.View>
     </PressableScale>
   );
 });
@@ -137,7 +157,7 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => go(index + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}
     >
-      <View pointerEvents="none" style={[styles.band, { backgroundColor: t.c.overlay, borderColor: t.c.line }]} />
+      <View pointerEvents="none" style={[styles.band, t.flavor === 'girl' ? { backgroundColor: t.c.brandSoft, borderColor: t.c.lineStrong } : { backgroundColor: t.c.overlay, borderColor: t.c.line }]} />
       <ScrollView
         ref={ref}
         showsVerticalScrollIndicator={false}
@@ -271,24 +291,14 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
                 <Text variant="caption" tone="tertiary" raw numberOfLines={1} style={{ height: 16, textTransform: 'capitalize' }}>
                   {head}
                 </Text>
-                <PressableScale
+                <DayPill
+                  on={on}
+                  width={PILL}
+                  top={top}
+                  day={dd}
+                  label={fmt(d, { weekday: 'long', day: 'numeric', month: 'long' })}
                   onPress={() => setDraft((w) => ({ ...w, day: d }))}
-                  haptic="select"
-                  scaleTo={0.94}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: on }}
-                  accessibilityLabel={fmt(d, { weekday: 'long', day: 'numeric', month: 'long' })}
-                >
-                  <View style={[styles.pill, { width: PILL, backgroundColor: on ? t.c.brand : 'transparent', borderColor: on ? t.c.brand : t.c.line }]}>
-                    {on ? null : <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />}
-                    <Text variant="caption" raw numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} color={on ? t.c.onBrand : t.c.textSecondary}>
-                      {top}
-                    </Text>
-                    <Text raw style={{ fontFamily: font.bold, fontSize: 22 }} color={on ? t.c.onBrand : t.c.text}>
-                      {dd}
-                    </Text>
-                  </View>
-                </PressableScale>
+                />
               </View>
             );
           })}
@@ -298,6 +308,7 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
           <View style={styles.tabs}>
             <PressableScale onPress={() => setEditing('start')} haptic="select" accessibilityRole="tab" accessibilityState={{ selected: editing === 'start' }} style={{ flex: 1 }}>
               <View style={[styles.tab, { borderColor: editing === 'start' ? t.c.brand : t.c.line }]}>
+                <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
                 <Text variant="caption" tone="secondary">
                   Starts
                 </Text>
@@ -309,6 +320,7 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
             {draft.end ? (
               <PressableScale onPress={() => setEditing('end')} haptic="select" accessibilityRole="tab" accessibilityState={{ selected: editing === 'end' }} style={{ flex: 1 }}>
                 <View style={[styles.tab, { borderColor: editing === 'end' ? t.c.brand : t.c.line }]}>
+                  <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
                   <Text variant="caption" tone="secondary">
                     {endsNextDay(draft) ? 'Ends (next day)' : 'Ends'}
                   </Text>
@@ -324,7 +336,8 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
               </PressableScale>
             ) : (
               <PressableScale onPress={addEnd} haptic="select" accessibilityRole="button" style={{ flex: 1 }}>
-                <View style={[styles.tab, { borderColor: t.c.line, borderStyle: 'dashed' }]}>
+                <View style={[styles.tab, { borderColor: t.c.lineStrong, borderStyle: 'dashed' }]}>
+                  <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
                   <Text variant="caption" tone="secondary">
                     Optional
                   </Text>
@@ -364,7 +377,38 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
   );
 });
 
+/** A day of the strip: the chosen one fills with the brand colour and springs up (a rose glow in IRLY Girl). */
+const DayPill = memo(function DayPill({ on, width, top, day, label, onPress }: { on: boolean; width: number; top: string; day: number; label: string; onPress: () => void }) {
+  const t = useTheme();
+  const lift = useSharedValue(on ? 1 : 0);
+  useEffect(() => {
+    lift.set(withSpring(on ? 1 : 0, spring.press));
+  }, [on, lift]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: 1 + lift.value * 0.04 }, { translateY: -lift.value * 2 }] }));
+  return (
+    <PressableScale onPress={onPress} haptic="select" scaleTo={0.94} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={label}>
+      <Animated.View
+        style={[
+          styles.pill,
+          { width, backgroundColor: on ? t.c.brand : 'transparent', borderColor: on ? t.c.brand : t.c.line },
+          on && t.flavor === 'girl' ? { boxShadow: t.shadow.glow } : null,
+          style,
+        ]}
+      >
+        {on ? null : <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />}
+        <Text variant="caption" raw numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} color={on ? t.c.onBrand : t.c.textSecondary}>
+          {top}
+        </Text>
+        <Text raw style={{ fontFamily: font.bold, fontSize: 22 }} color={on ? t.c.onBrand : t.c.text}>
+          {day}
+        </Text>
+      </Animated.View>
+    </PressableScale>
+  );
+});
+
 const styles = StyleSheet.create({
+  fieldIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginLeft: -4 },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -377,7 +421,7 @@ const styles = StyleSheet.create({
   },
   pill: { height: 64, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', gap: 2, overflow: 'hidden' },
   tabs: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter },
-  tab: { borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 8, gap: 2, minHeight: 56, justifyContent: 'center' },
+  tab: { borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 8, gap: 2, minHeight: 56, justifyContent: 'center', overflow: 'hidden' },
   wheels: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.gutter },
   wheel: { width: 96, height: ROW * VISIBLE },
   band: { position: 'absolute', left: 0, right: 0, top: ROW * ((VISIBLE - 1) / 2), height: ROW, borderRadius: radius.sm, borderWidth: StyleSheet.hairlineWidth * 2 },

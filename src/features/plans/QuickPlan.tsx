@@ -1,8 +1,9 @@
 import { useRouter } from 'expo-router';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx } from '@/i18n';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Icon } from '@/components/ui/Icon';
 import { DateTimePicker, WhenField } from '@/components/ui/DateTimePicker';
 import { Button } from '@/components/ui/Button';
@@ -22,6 +23,8 @@ import { track } from '@/lib/analytics';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
+import { spring } from '@/motion/tokens';
+import { useFlavor } from '@/theme/flavor';
 
 export type PlanType = { id: string; label: string; icon: IconName; audience: 'all' | 'girls' | 'moms' | 'families'; category: string; title: (where: string) => string };
 
@@ -127,7 +130,9 @@ export function QuickPlan({
   const [busy, setBusy] = useState(false);
   const [trip, setTrip] = useState(TRIP_PLACES[0]);
   const [ownTrip, setOwnTrip] = useState('');
-  const G = palette === 'girl';
+  // Inside IRLY Girl the plan is always in its colours, even when a screen forgets to say so.
+  const flavor = useFlavor();
+  const G = palette === 'girl' || flavor === 'girl';
   const ink = G ? girl.ink : undefined;
   const isTrip = type.id === 'GIRL_TRIP';
 
@@ -197,27 +202,9 @@ export function QuickPlan({
       {G ? (
         // IRLY Girl: every plan at a glance, three per row.
         <View style={styles.grid}>
-          {types.map((t) => {
-            const on = type.id === t.id;
-            return (
-              <PressableScale
-                key={t.id}
-                haptic="select"
-                scaleTo={0.95}
-                onPress={() => setType(t)}
-                accessibilityRole="radio"
-                accessibilityState={{ checked: on }}
-                accessibilityLabel={tx(t.label)}
-                style={[styles.tile, { backgroundColor: on ? girl.rose : 'transparent', borderColor: on ? girl.rose : 'transparent', boxShadow: on ? girl.shadow : undefined }]}
-              >
-                {on ? null : <GlassLayer radius={16} level="thin" />}
-                <Icon name={t.icon} size={18} color={on ? '#FFFFFF' : girl.rose} />
-                <Text variant="caption" color={on ? '#FFFFFF' : girl.ink} align="center" numberOfLines={2}>
-                  {t.label}
-                </Text>
-              </PressableScale>
-            );
-          })}
+          {types.map((t) => (
+            <PlanTile key={t.id} plan={t} on={type.id === t.id} onPress={() => setType(t)} />
+          ))}
         </View>
       ) : (
         <Row>
@@ -227,7 +214,7 @@ export function QuickPlan({
         </Row>
       )}
       {isTrip ? (
-        <View style={{ gap: 8 }}>
+        <Animated.View entering={FadeInDown.springify(520).dampingRatio(0.9)} exiting={FadeOut.duration(140)} style={{ gap: 8 }}>
           <Text variant="label" color={ink}>
             Where to?
           </Text>
@@ -239,7 +226,7 @@ export function QuickPlan({
             ))}
           </View>
           {trip === 'other' ? <Field icon="pin" placeholder="Your destination" value={ownTrip} onChangeText={setOwnTrip} maxLength={40} accessibilityLabel="Your destination" /> : null}
-        </View>
+        </Animated.View>
       ) : null}
       <WhenField value={when} utcOffset={city.utcOffset} onPress={() => setPicking(true)} invalid={Boolean(problemOf(when, city.utcOffset, now))} />
       <DateTimePicker visible={picking} onClose={() => setPicking(false)} value={when} onConfirm={setWhen} utcOffset={city.utcOffset} cityName={city.name} />
@@ -255,6 +242,36 @@ export function QuickPlan({
         <Button label={tx('Create: {title}', { title: type.title(where) })} icon="plus" full loading={busy} onPress={create} />
       )}
     </View>
+  );
+}
+
+/** An IRLY Girl plan: a glass tile the rose fills with a spring when it is chosen, its icon popping. */
+function PlanTile({ plan, on, onPress }: { plan: PlanType; on: boolean; onPress: () => void }) {
+  const p = useSharedValue(on ? 1 : 0);
+  useEffect(() => {
+    p.set(withSpring(on ? 1 : 0, spring.press));
+  }, [on, p]);
+  const fill = useAnimatedStyle(() => ({ opacity: p.value, transform: [{ scale: 0.88 + p.value * 0.12 }] }));
+  const icon = useAnimatedStyle(() => ({ transform: [{ scale: 1 + p.value * 0.12 }] }));
+  return (
+    <PressableScale
+      haptic="select"
+      scaleTo={0.95}
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: on }}
+      accessibilityLabel={tx(plan.label)}
+      style={[styles.tile, { borderColor: on ? girl.rose : 'transparent', boxShadow: on ? girl.shadow : undefined }]}
+    >
+      <GlassLayer radius={16} level="thin" />
+      <Animated.View pointerEvents="none" style={[styles.tileFill, fill]} />
+      <Animated.View style={icon}>
+        <Icon name={plan.icon} size={18} color={on ? '#FFFFFF' : girl.rose} />
+      </Animated.View>
+      <Text variant="caption" color={on ? '#FFFFFF' : girl.ink} align="center" numberOfLines={2}>
+        {plan.label}
+      </Text>
+    </PressableScale>
   );
 }
 
@@ -276,6 +293,7 @@ const styles = StyleSheet.create({
   row: { gap: 8, paddingRight: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tile: { width: '31.5%', minHeight: 74, borderRadius: 16, borderWidth: 1, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 6, paddingVertical: 10 },
+  tileFill: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 16, backgroundColor: girl.rose },
   third: { width: '31.5%' },
   quarter: { width: '23%' },
 });
