@@ -847,7 +847,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'brunch', after: 3 },
     city: 'Dubai',
-    updated: '2026-10-11',
+    updated: '2026-10-20',
     title: 'Networking in Dubai: Where to Meet Entrepreneurs | IRLY',
     description: 'Where to meet entrepreneurs and professionals in Dubai, from meetups and coworking events to business groups, and how to turn a first conversation into a real contact.',
     h1: 'Networking in Dubai: where to meet entrepreneurs',
@@ -888,6 +888,17 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'Going to an event on your own',
+        html: `<p>Most people at a networking event arrived alone, or with one colleague they will leave behind after five minutes. Walking in on your own is the normal case, not the exception.</p>
+<ul>
+<li><strong>Arrive early.</strong> The room is quieter, groups have not formed yet, and the organiser has time to introduce you to someone.</li>
+<li><strong>Join a group of three rather than two.</strong> A pair is often mid-conversation; a group of three or more is easier to step into.</li>
+<li><strong>Use the topic of the evening.</strong> "What brought you to this one?" works at any event and needs no introduction.</li>
+<li><strong>Set a small goal.</strong> Two real conversations and one follow-up is a good evening; you do not need to meet the whole room.</li>
+</ul>
+<p>More ideas in our guide to <a href="/dubai/going-out-alone/">going out alone in Dubai</a>.</p>`,
+      },
+      {
         h2: 'Timing in Dubai',
         html: `<ul>
 <li><strong>The busy season</strong> runs through the cooler months, when most events and conferences take place.</li>
@@ -910,7 +921,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Building your network in Dubai?', body: 'Create your professional profile and meet people whose goals match yours.', label: 'Create my pro profile' },
-    related: [{ label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+    related: [{ label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
   },
   {
     lang: 'fr',
@@ -919,7 +930,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'brunch', after: 3 },
     city: 'Dubai',
-    updated: '2026-10-11',
+    updated: '2026-10-20',
     title: 'Networking à Dubaï : où rencontrer des entrepreneurs | IRLY',
     description: 'Où rencontrer des entrepreneurs et des professionnels à Dubaï, des meetups aux événements de coworking et aux groupes d’affaires, et comment transformer une première conversation en vrai contact.',
     h1: 'Networking à Dubaï : où rencontrer des entrepreneurs',
@@ -960,6 +971,17 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'Aller seul à un événement',
+        html: `<p>À un événement de networking, la plupart des gens sont venus seuls, ou avec un collègue qu’ils quitteront au bout de cinq minutes. Entrer seul, c’est le cas normal, pas l’exception.</p>
+<ul>
+<li><strong>Arrive tôt.</strong> La salle est plus calme, les groupes ne sont pas encore formés et l’organisateur a le temps de te présenter à quelqu’un.</li>
+<li><strong>Rejoins un groupe de trois plutôt que de deux.</strong> Un duo est souvent en pleine conversation ; un groupe de trois ou plus est plus facile à rejoindre.</li>
+<li><strong>Sers-toi du thème de la soirée.</strong> « Qu’est-ce qui t’a amené ici ce soir ? » marche partout et n’a besoin d’aucune présentation.</li>
+<li><strong>Fixe-toi un petit objectif.</strong> Deux vraies conversations et une relance, c’est une bonne soirée ; pas besoin de rencontrer toute la salle.</li>
+</ul>
+<p>D’autres idées dans notre guide pour <a href="/fr/dubai/sortir-seul/">sortir seul à Dubaï</a>.</p>`,
+      },
+      {
         h2: 'Le bon moment à Dubaï',
         html: `<ul>
 <li><strong>La haute saison</strong> couvre les mois plus frais, quand se tiennent la plupart des événements et conférences.</li>
@@ -982,7 +1004,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu construis ton réseau à Dubaï ?', body: 'Crée ton profil pro et rencontre des personnes dont les objectifs correspondent aux tiens.', label: 'Créer mon profil pro' },
-    related: [{ label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+    related: [{ label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
   },
   {
     lang: 'en',
