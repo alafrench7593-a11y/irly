@@ -4,6 +4,7 @@ import { useLiveStore } from '@/features/live/liveStore';
 import { pendingJournal } from '@/features/live/pendingLive';
 import { clearFaces } from '@/features/server/faces';
 import { useDrafts } from '@/features/posts/posts';
+import { resetAppSpace } from './appSpace';
 import { useStore } from './store';
 
 /**
@@ -20,6 +21,8 @@ export function wipeLocal(): void {
     () => useStore.setState({ waitlist: {} }),
     clearFaces,
     () => useGirlStore.getState().reset(),
+    // The next person on this phone opens IRLY in its Mixte form.
+    resetAppSpace,
     () => useBaliStore.getState().setAnswers({}),
     () => useLiveStore.setState({ mine: [] }),
     // Unsent posts and Lives: never offered to the next person on this phone.
