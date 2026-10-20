@@ -272,8 +272,14 @@ begin
   perform pg_temp.as_user('e5000000-0000-0000-0000-0000000000a4');
   perform pg_temp.check(not exists (select 1 from public.profiles where id = 'e5000000-0000-0000-0000-0000000000a5'),
     'a community co-member cannot select the profile row of someone she only shares a community chat with');
+  -- 20261024009400_irly_security_fixes: a chat unlocks a profile only once its owner has written in it.
+  perform pg_temp.check(not exists (select 1 from public.profiles where id = 'e5000000-0000-0000-0000-0000000000a2'),
+    'a group chat co-member who has not written there yet keeps a private profile private');
+  perform pg_temp.as_user('e5000000-0000-0000-0000-0000000000a2');
+  insert into public.messages (conversation_id, sender_id, body) values ('e5000000-0000-0000-0000-0000000000c2', 'e5000000-0000-0000-0000-0000000000a2', 'Hi Di');
+  perform pg_temp.as_user('e5000000-0000-0000-0000-0000000000a4');
   perform pg_temp.check(exists (select 1 from public.profiles where id = 'e5000000-0000-0000-0000-0000000000a2'),
-    'a group chat co-member can select the profile row');
+    'a group chat co-member who wrote there can select the profile row');
 end $$;
 select pg_temp.as_admin();
 

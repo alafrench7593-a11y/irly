@@ -129,7 +129,7 @@ function SpaceScreen({ id }: { id: SpaceId }) {
   const extras = useCommunityExtras(row?.id ?? '');
 
   const join = async () => {
-    if (!row) return;
+    if (!row || busy) return;
     setBusy(true);
     try {
       await joinCommunity(row.id);

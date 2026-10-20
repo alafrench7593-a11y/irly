@@ -137,10 +137,10 @@ function PlanRow({ a, onPress }: { a: ServerActivity; onPress: () => void }) {
   );
 }
 
-/** The IRLY Girl communities near you, and a tile to start one (women only, with its own chat). */
+/** The IRLY Girl communities members created near you (IRLY's five official ones have their own cards), and a tile to start one. */
 export function GirlCommunities({ cityId }: { cityId: CityId }) {
   const router = useRouter();
-  const list = useGirlCommunities(cityId, '', true);
+  const list = useGirlCommunities(cityId, '', true, true);
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
       {!list.data.length && list.loading ? [0, 1].map((i) => <Skeleton key={i} width={168} height={200} radius={radius.xl} />) : null}

@@ -49,6 +49,7 @@ import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { useAppSpace } from '@/state/appSpace';
 import { GirlCommunities, useGirlPeople } from '@/features/girl/GirlSections';
+import { GirlOfficialCommunities } from '@/features/girl/GirlOfficial';
 import { GirlIntro } from '@/features/girl/GirlIntro';
 import { HOME_SECTIONS, type HomeSection } from '@/features/home/sections';
 
@@ -343,10 +344,17 @@ export default function Home() {
       case 'communities':
         // IRLY: the guide's communities. IRLY Girl, same place: the IRLY Girl communities (women only, with their own chat).
         return inGirl ? (
-          <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />
-            <GirlCommunities cityId={cityId} />
-          </ScrollReveal>
+          <>
+            {/* IRLY Girl's five official communities, then the ones members created. */}
+            <ScrollReveal scrollY={scrollY} style={styles.section}>
+              <SectionHeader overline="By IRLY · Women only" title="IRLY Girl communities" action="All" onAction={() => router.push('/communities')} />
+              <GirlOfficialCommunities />
+            </ScrollReveal>
+            <ScrollReveal scrollY={scrollY} style={styles.section}>
+              <SectionHeader title="Created by members" />
+              <GirlCommunities cityId={cityId} />
+            </ScrollReveal>
+          </>
         ) : content.communities.length ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />

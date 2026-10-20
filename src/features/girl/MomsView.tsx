@@ -285,7 +285,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
                 <Photo pinned tint={GIRL_TINT} visual={{ photo: girlCommunityPhoto(c.name, 'kids') }} light="dubai" width={200} style={StyleSheet.absoluteFill} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text variant="titleS" color={girl.ink} raw>
+                <Text variant="titleS" color={girl.ink} raw numberOfLines={2}>
                   {c.name}
                 </Text>
                 <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>

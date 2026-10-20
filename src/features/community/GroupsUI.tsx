@@ -101,6 +101,7 @@ export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChan
                   variant="secondary"
                   loading={busy === g.id}
                   onPress={() => {
+                    if (busy) return;
                     setBusy(g.id);
                     joinCommunity(g.id)
                       .then(() => {
@@ -262,7 +263,7 @@ function AnnounceSheet({ visible, communityId, name, rights, onClose, onSent }: 
     }
   };
   return (
-    <Sheet visible={visible} onClose={onClose} title="Notify all members" subtitle={tx('A push and an in-app notification to every member of {name}, who can turn these off.', { name })}>
+    <Sheet visible={visible} onClose={onClose} title="Notify all members" subtitle={tx('A push and an in-app notification to every member of {name}, who can turn these off.', { name })} scroll>
       <View style={{ paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[2] }}>
         <View style={styles.wrap}>
           <Chip size="sm" label={tx('Announcement')} selected={kind === 'announcement'} onPress={() => setKind('announcement')} />
@@ -360,7 +361,7 @@ function PeopleSheet({ visible, communityId, onClose }: { visible: boolean; comm
       title="Moderators"
       subtitle="Moderators can remove posts, pin them and notify all members."
     >
-      <View style={{ paddingHorizontal: space.gutter, gap: space[3], paddingBottom: space[2] }}>
+      <View style={{ flexShrink: 1, paddingHorizontal: space.gutter, gap: space[3], paddingBottom: space[2] }}>
         <TextInput
           value={query}
           onChangeText={(v) => {
@@ -374,12 +375,12 @@ function PeopleSheet({ visible, communityId, onClose }: { visible: boolean; comm
           accessibilityLabel={a11y('Search a member')}
         />
         {people === null ? <Button label="Show members" variant="secondary" onPress={() => load('')} /> : null}
-        <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ gap: 8 }}>
+        <ScrollView style={{ maxHeight: 360, flexShrink: 1 }} contentContainerStyle={{ gap: 8 }} keyboardShouldPersistTaps="handled">
           {(people ?? []).map((p) => (
             <View key={p.userId} style={[styles.row, { paddingVertical: 4 }]}>
               <Avatar name={p.firstName} hue={hueOf(p.userId)} size={36} userId={p.userId} />
               <View style={{ flex: 1 }}>
-                <Text variant="titleS" raw>
+                <Text variant="titleS" raw numberOfLines={1}>
                   {p.firstName}
                 </Text>
                 <Text variant="caption" tone="tertiary">
@@ -465,7 +466,7 @@ function ChannelsSheet({ visible, communityId, channels, onClose, onRemoved }: {
   };
   const input = [styles.line, { color: t.c.text, backgroundColor: t.c.overlay }];
   return (
-    <Sheet visible={visible} onClose={onClose} title="Categories" subtitle="Themes inside this community (not groups): members choose one when they post. General always stays.">
+    <Sheet visible={visible} onClose={onClose} title="Categories" subtitle="Themes inside this community (not groups): members choose one when they post. General always stays." scroll>
       <View style={{ paddingHorizontal: space.gutter, gap: space[3], paddingBottom: space[2] }}>
         {channels.map((c) =>
           edit?.id === c.id ? (

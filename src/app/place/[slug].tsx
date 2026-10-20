@@ -99,7 +99,7 @@ function PlaceScreen() {
             <Text variant="overline" color="#FFFFFF">
               {[label(p.kind), ...p.cuisines.slice(0, 2).map(label)].join(' · ')}
             </Text>
-            <Text variant="displayM" color="#FFFFFF" raw>
+            <Text variant="displayM" color="#FFFFFF" raw numberOfLines={2}>
               {p.name}
             </Text>
           </View>

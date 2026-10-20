@@ -161,7 +161,7 @@ export default function RecapScreen() {
                     {g.emoji ?? '💬'}
                   </Text>
                   <View style={{ flex: 1 }}>
-                    <Text variant="label">
+                    <Text variant="label" numberOfLines={2}>
                       {g.name}
                     </Text>
                     <Text variant="caption" tone="tertiary" raw>

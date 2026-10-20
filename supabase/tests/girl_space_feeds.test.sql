@@ -56,10 +56,15 @@ update public.profiles set interests = array['food'] where id = 'c5f00000-0000-0
 insert into public.girl_suspensions (user_id, reason, created_by) values
   ('c5f00000-0000-0000-0000-0000000000a4', 'test', 'c5f00000-0000-0000-0000-0000000000a2');
 
-insert into public.irl_posts (id, author_id, city_id, area_id, body, visibility, created_at, expires_at) values
-  ('c5f00000-0000-0000-0000-0000000000c1', 'c5f00000-0000-0000-0000-0000000000a2', 'dubai', 'marina', 'c5f Ada at the beach', 'everyone', now() - interval '1 minute', now() + interval '3 hours'),
-  ('c5f00000-0000-0000-0000-0000000000c2', 'c5f00000-0000-0000-0000-0000000000a3', 'dubai', 'marina', 'c5f Tom at the gym', 'everyone', now() - interval '2 minutes', now() + interval '3 hours'),
-  ('c5f00000-0000-0000-0000-0000000000c3', 'c5f00000-0000-0000-0000-0000000000a4', 'dubai', 'marina', 'c5f Zoe suspended', 'everyone', now() - interval '3 minutes', now() + interval '3 hours');
+-- Each Live is posted in one space (20261024009300_irly_girl_spaces): Ada's and Zoe's in IRLY Girl, Tom's
+-- in IRLY, plus a post forced into IRLY Girl for a man (only the server role could write it) and one Ada
+-- posted in IRLY.
+insert into public.irl_posts (id, author_id, city_id, area_id, body, visibility, created_at, expires_at, app_scope) values
+  ('c5f00000-0000-0000-0000-0000000000c1', 'c5f00000-0000-0000-0000-0000000000a2', 'dubai', 'marina', 'c5f Ada at the beach', 'everyone', now() - interval '1 minute', now() + interval '3 hours', 'irly_girl'),
+  ('c5f00000-0000-0000-0000-0000000000c2', 'c5f00000-0000-0000-0000-0000000000a3', 'dubai', 'marina', 'c5f Tom at the gym', 'everyone', now() - interval '2 minutes', now() + interval '3 hours', 'irly'),
+  ('c5f00000-0000-0000-0000-0000000000c3', 'c5f00000-0000-0000-0000-0000000000a4', 'dubai', 'marina', 'c5f Zoe suspended', 'everyone', now() - interval '3 minutes', now() + interval '3 hours', 'irly_girl'),
+  ('c5f00000-0000-0000-0000-0000000000c4', 'c5f00000-0000-0000-0000-0000000000a3', 'dubai', 'marina', 'c5f Tom forced into Girl', 'everyone', now() - interval '4 minutes', now() + interval '3 hours', 'irly_girl'),
+  ('c5f00000-0000-0000-0000-0000000000c5', 'c5f00000-0000-0000-0000-0000000000a2', 'dubai', 'marina', 'c5f Ada in IRLY', 'everyone', now() - interval '5 minutes', now() + interval '3 hours', 'irly');
 
 insert into public.activities (id, creator_id, title, category_id, city_id, area_id, starts_at, girl_only, audience) values
   ('c5f00000-0000-0000-0000-0000000000b1', 'c5f00000-0000-0000-0000-0000000000a2', 'c5f girls brunch', 'food', 'dubai', 'marina', now() + interval '1 day', true, 'girls'),
@@ -71,6 +76,10 @@ select pg_temp.check(exists (select 1 from public.irl_feed_girl('dubai') f where
   'Lea, IRLY Girl: sees a woman''s IRL post');
 select pg_temp.check(not exists (select 1 from public.irl_feed_girl('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c2'),
   'Lea, IRLY Girl: does not see a man''s IRL post');
+select pg_temp.check(not exists (select 1 from public.irl_feed_girl('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c4'),
+  'Lea, IRLY Girl: does not see a man''s post even if it reached the IRLY Girl space');
+select pg_temp.check(not exists (select 1 from public.irl_feed_girl('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c5'),
+  'Lea, IRLY Girl: does not see a woman''s post made in IRLY');
 select pg_temp.check(not exists (select 1 from public.irl_feed_girl('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c3'),
   'Lea, IRLY Girl: does not see a post by a woman whose IRLY Girl access was withdrawn');
 select pg_temp.check((select bool_and(private.girl_eligible_unchecked(f.author_id)) from public.irl_feed_girl('dubai') f),
@@ -85,9 +94,11 @@ select pg_temp.check((select r.reason from public.recommend_activities_girl('dub
   'Lea, IRLY Girl: same scoring and reasons as the IRLY recommendations');
 
 -- ───────── The calls the installed apps make: unchanged ─────────
-select pg_temp.check(exists (select 1 from public.irl_feed('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c1')
+select pg_temp.check(exists (select 1 from public.irl_feed('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c5')
   and exists (select 1 from public.irl_feed('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c2'),
-  'Lea, IRLY: irl_feed still shows everyone''s posts');
+  'Lea, IRLY: irl_feed still shows everyone''s IRLY posts');
+select pg_temp.check(not exists (select 1 from public.irl_feed('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c1'),
+  'Lea, IRLY: irl_feed does not show a post made in IRLY Girl');
 select pg_temp.check(exists (select 1 from public.recommend_activities('dubai', 50) r where r.id = 'c5f00000-0000-0000-0000-0000000000b2'),
   'Lea, IRLY: recommend_activities still recommends the open plan');
 select pg_temp.check(exists (select 1 from public.recommend_activities('dubai') r where r.id = 'c5f00000-0000-0000-0000-0000000000b1'),
@@ -97,8 +108,8 @@ select pg_temp.check(exists (select 1 from public.recommend_activities('dubai') 
 select pg_temp.as_user('c5f00000-0000-0000-0000-0000000000a3');
 select pg_temp.check(pg_temp.fails($$select * from public.irl_feed_girl('dubai')$$) = '42501', 'Tom: irl_feed_girl is refused');
 select pg_temp.check(pg_temp.fails($$select * from public.recommend_activities_girl('dubai', 20)$$) = '42501', 'Tom: recommend_activities_girl is refused');
-select pg_temp.check(exists (select 1 from public.irl_feed('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c1'),
-  'Tom, IRLY: irl_feed unchanged');
+select pg_temp.check(exists (select 1 from public.irl_feed('dubai') f where f.id = 'c5f00000-0000-0000-0000-0000000000c5'),
+  'Tom, IRLY: irl_feed unchanged for IRLY posts');
 select pg_temp.check(not exists (select 1 from public.recommend_activities('dubai', 50) r where r.id = 'c5f00000-0000-0000-0000-0000000000b1'),
   'Tom, IRLY: still never recommended a women-only plan');
 

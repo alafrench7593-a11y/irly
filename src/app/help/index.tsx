@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { enter } from '@/motion/enter';
 import Animated from 'react-native-reanimated';
@@ -48,19 +48,27 @@ export default function HelpScreen() {
   const cat = HELP_CATEGORIES.find((c) => c.id === category) ?? null;
   const hasGroups = feed.groups.length > 0;
 
+  // One ask at a time: a second tap while joining or opening the composer is ignored.
+  const opening = useRef(false);
   const ask = async (k: 'question' | 'recommendation', categoryId: string) => {
+    if (opening.current) return;
     const g = feed.groups.find((x) => x.category === categoryId);
     if (!g) {
       // Never a silent tap.
       toast(feed.error ? 'Can’t reach IRLY right now' : 'Not open in this city yet', 'x', 'live');
       return;
     }
+    opening.current = true;
     try {
       if (!g.isMember) await joinCommunity(g.id);
       setAsking(null);
       router.push({ pathname: '/post/new', params: { community: g.id, name: tx(HELP_CATEGORIES.find((c) => c.id === categoryId)?.label ?? g.name), kind: k } });
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not open', 'x', 'live');
+    } finally {
+      setTimeout(() => {
+        opening.current = false;
+      }, 700);
     }
   };
   const start = (k: 'question' | 'recommendation') => {
@@ -179,6 +187,8 @@ function HelpCard({ p, onSaved }: { p: HelpPost; onSaved: () => void }) {
   const router = useRouter();
   const now = useNow();
   const [saved, setSaved] = useState(p.saved);
+  // The server toggles: a second tap before its answer would undo the first.
+  const saving = useRef(false);
   const open = () => router.push({ pathname: '/comments', params: { type: 'community_post', id: p.id, title: p.body.slice(0, 60) } });
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={open} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={p.body.slice(0, 80)}>
@@ -216,6 +226,8 @@ function HelpCard({ p, onSaved }: { p: HelpPost; onSaved: () => void }) {
           haptic="select"
           hitSlop={8}
           onPress={() => {
+            if (saving.current) return;
+            saving.current = true;
             setSaved(!saved);
             toggleSave({ type: 'community_post', id: p.id })
               .then((now) => {
@@ -227,6 +239,9 @@ function HelpCard({ p, onSaved }: { p: HelpPost; onSaved: () => void }) {
               .catch(() => {
                 setSaved(saved);
                 toast('Could not save', 'x', 'live');
+              })
+              .finally(() => {
+                saving.current = false;
               });
           }}
           accessibilityLabel={saved ? 'Saved' : 'Save'}

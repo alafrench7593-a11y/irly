@@ -94,7 +94,7 @@ function SeedProfile() {
           </Animated.View>
           <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
             <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-              <Text variant="displayL" raw>{person.name}</Text>
+              <Text variant="displayL" raw numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1 }}>{person.name}</Text>
               <Text variant="titleM" tone="tertiary">
                 {person.age}
               </Text>

@@ -49,7 +49,12 @@ export type ServerIrlPost = {
   mediaRatio?: number | null;
   /** Its emirate: the feed covers the whole destination. */
   cityId: string | null;
+  /** The space it was posted in (your own posts on this phone): IRLY or IRLY Girl. */
+  scope?: LiveScope;
 };
+
+/** The space a Live belongs to: IRLY's Live and IRLY Girl's never show each other's posts (irl_posts.app_scope). */
+export type LiveScope = 'irly' | 'irly_girl';
 
 type FeedRow = {
   id: string;
@@ -210,9 +215,11 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   const shown = useMemo(() => {
     const live = (p: ServerIrlPost) => now - p.createdAt < LIVE_TTL_MIN * 60_000;
     const ids = new Set(posts.map((p) => p.id));
-    const fresh = mine.filter((p) => !ids.has(p.id) && (p.cityId === cityId || keep(p.cityId)) && live(p));
+    // Your own posts of this space only: one posted in IRLY Girl never shows in IRLY's Live, and back.
+    const space: LiveScope = girlSpace ? 'irly_girl' : 'irly';
+    const fresh = mine.filter((p) => !ids.has(p.id) && (p.scope ?? 'irly') === space && (p.cityId === cityId || keep(p.cityId)) && live(p));
     return [...fresh, ...posts.filter((p) => keep(p.cityId) && live(p))];
-  }, [posts, mine, keep, cityId, now]);
+  }, [posts, mine, keep, cityId, now, girlSpace]);
   return { posts: uid ? shown : NONE, refresh };
 }
 
@@ -275,6 +282,8 @@ export async function postServerIrl(input: {
   visibility?: 'everyone' | 'friends';
   /** IRL → activity: created with the post, in the same transaction. */
   activity?: LiveActivityPlan | null;
+  /** The space it is posted in; left out: IRLY. */
+  scope?: LiveScope;
   /** The post's id, made on the phone (kept across retries of the same post). */
   id?: string;
   /** An earlier try of this id got no answer (it may be saved already). */
@@ -340,6 +349,8 @@ export async function postServerIrl(input: {
     ...(media?.seconds !== undefined ? { media_seconds: Math.min(120, media.seconds) } : {}),
     ...(media && ratio ? { media_ratio: Math.round(Math.min(9.9, Math.max(0.11, ratio)) * 1000) / 1000 } : {}),
     ...(input.visibility ? { visibility: input.visibility } : {}),
+    // The server keeps it in this space, and refuses IRLY Girl to anyone without access.
+    scope: input.scope ?? 'irly',
   };
   const save = async (): Promise<SavedLive> => {
     const full = { ...post, ...(thumb_path ? { thumb_path } : {}) };
@@ -397,6 +408,7 @@ export async function postServerIrl(input: {
     activityId,
     activityTitle: input.activity ? input.activity.plan.title ?? null : null,
     cityId: input.cityId,
+    scope: input.scope ?? 'irly',
   };
   useIrlMine.setState((st) => ({
     posts: [

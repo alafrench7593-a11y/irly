@@ -25,28 +25,20 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
 };
 
 /**
- * Slot order in the bar. `network` (IRLY Network, the professional side)
- * opens the bar on the left; `match` is the Match IRLY disc, exactly in the
- * middle (people to meet); `live` just left of it is the live feed, spelled
- * out so nobody has to guess where it is. Your profile is at the top left of
- * every tab root, Settings at its top right.
+ * Slot order in the bar, every slot the same width. `match` is the Match
+ * IRLY disc (people to meet); `live` just left of it is the live feed, spelled
+ * out so nobody has to guess where it is; `network` (IRLY Network, the
+ * professional side) sits right next to the Map. Your profile is at the top
+ * left of every tab root, Settings at its top right.
  * Creating (activity, event, post, live, community) starts from Create on Home.
  */
-const SLOTS = ['network', 'index', 'live', 'match', 'discover', 'map'] as const;
+const SLOTS = ['index', 'discover', 'live', 'match', 'network', 'map'] as const;
 const MATCH_AT = SLOTS.indexOf('match');
 
-/**
- * Where each slot sits: Match IRLY gets an even share and stays in the
- * middle of the bar; the slots on each side share their half.
- */
+/** Where each slot sits: the same width for every slot, so the icons are evenly spaced. */
 function slotFrames(barW: number): { x: number; w: number }[] {
-  const matchW = barW / SLOTS.length;
-  const half = (barW - matchW) / 2;
-  const left = half / MATCH_AT;
-  const right = half / (SLOTS.length - MATCH_AT - 1);
-  return SLOTS.map((_, i) =>
-    i < MATCH_AT ? { x: i * left, w: left } : i === MATCH_AT ? { x: half, w: matchW } : { x: half + matchW + (i - MATCH_AT - 1) * right, w: right },
-  );
+  const w = barW / SLOTS.length;
+  return SLOTS.map((_, i) => ({ x: i * w, w }));
 }
 
 const SIDE = 12;

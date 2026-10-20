@@ -41,6 +41,8 @@ language sql stable set search_path = public as $$
   cross join lateral (select first_name from public.profiles_public where id = i.author_id) p
   left join public.activities a on a.id = i.activity_id
   where i.city_id = any (private.city_scope(p_city)) and i.expires_at > now()
+    -- IRLY's Live only, since 20261024009300_irly_girl_spaces (IRLY Girl's posts are listed by irl_feed_girl).
+    and i.app_scope = 'irly'
     and not exists (select 1 from public.hidden_items h where h.user_id = auth.uid() and h.target_type = 'irl_post' and h.target_id = i.id::text)
   order by i.created_at desc
   limit 100

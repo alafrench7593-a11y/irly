@@ -136,7 +136,7 @@ function ProCard({ pro, onProfile }: { pro: Professional; onProfile?: () => void
       <PressableScale onPress={onProfile} disabled={!onProfile} scaleTo={0.98} style={styles.proTop}>
         <Avatar name={pro.name} hue={pro.hue} size={50} verified />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text variant="titleS">{pro.name}</Text>
+          <Text variant="titleS" numberOfLines={1}>{pro.name}</Text>
           <Text variant="bodyS" tone="secondary" numberOfLines={1}>
             {pro.role} · {pro.org}
           </Text>
