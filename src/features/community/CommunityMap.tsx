@@ -7,7 +7,7 @@ import { t as tx } from '@/i18n';
 import { haptic } from '@/motion/haptics';
 import { useTheme } from '@/theme/useTheme';
 import { MapError, MapFrame, MapNotice, MapSkeleton, noticeFor, pinLabel, SpotPin, SpotSheet, useCommunityMapModel, type CommunityMapProps } from './CommunityMapParts';
-import { spotBounds } from './mapSpots';
+import { spotBounds, type MapView } from './mapSpots';
 
 /** OpenFreeMap: OpenStreetMap vector tiles, free for any use, no key (same as the Map tab). */
 const STYLE = {
@@ -45,7 +45,8 @@ function Engine(props: CommunityMapProps & { onFail: () => void }) {
   const host = useRef<View>(null);
   const [map, setMap] = useState<MapLibre | null>(null);
   const [, setTick] = useState(0);
-  const { spots, selected, select, fitKey } = useCommunityMapModel(props);
+  const [view, setView] = useState<MapView | null>(null);
+  const { spots, shown, selected, select, fitKey } = useCommunityMapModel(props, view);
 
   useEffect(() => {
     let alive = true;
@@ -83,6 +84,13 @@ function Engine(props: CommunityMapProps & { onFail: () => void }) {
       created.on('error', (e: { error?: { url?: string } }) => {
         if (!loaded && e.error?.url?.startsWith('https://tiles.openfreemap.org/styles/')) onFail();
       });
+      const sync = () => {
+        const b = created!.getBounds();
+        const box = created!.getContainer();
+        setView({ latSpan: b.getNorth() - b.getSouth(), lngSpan: b.getEast() - b.getWest(), width: box.clientWidth, height: box.clientHeight });
+      };
+      created.on('load', sync);
+      created.on('moveend', sync);
       created.on('move', () => setTick((n) => n + 1));
       created.on('click', () => select(null));
       setMap(created);
@@ -128,7 +136,7 @@ function Engine(props: CommunityMapProps & { onFail: () => void }) {
       </View>
       <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
         {map
-          ? spots.map((s) => {
+          ? shown.map((s) => {
               const at = map.project([s.coords.longitude, s.coords.latitude]);
               const isSel = selected?.id === s.id;
               return (

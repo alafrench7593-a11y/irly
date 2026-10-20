@@ -16,7 +16,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { CommunityThumb } from './CommunityThumb';
-import { buildSpots, useCommunityMeetups, type MapCommunity, type Spot } from './mapSpots';
+import { buildSpots, clusterSpots, useCommunityMeetups, type MapCommunity, type MapView, type Spot } from './mapSpots';
 import { displayCommunityName } from './name';
 
 /** Compact: the list under it stays on screen. */
@@ -34,7 +34,7 @@ export type CommunityMapProps = {
 };
 
 /** Markers and selection, shared by the web and phone maps. */
-export function useCommunityMapModel({ cityId, communities, status }: CommunityMapProps) {
+export function useCommunityMapModel({ cityId, communities, status }: CommunityMapProps, view: MapView | null) {
   const meetups = useCommunityMeetups(cityId);
   const { spots } = useMemo(() => buildSpots(status === 'ready' ? communities : [], meetups), [communities, meetups, status]);
   // Refit when the set of places changes, not on every list reload.
@@ -43,7 +43,10 @@ export function useCommunityMapModel({ cityId, communities, status }: CommunityM
   const [pick, setPick] = useState<{ id: string; key: string } | null>(null);
   const selected = pick && pick.key === fitKey ? (spots.find((s) => s.id === pick.id) ?? null) : null;
   const select = (id: string | null) => setPick(id ? { id, key: fitKey } : null);
-  return { spots, selected, select, fitKey };
+  // What is drawn: nearby places merged at this zoom (a selection of a merged marker closes on zoom).
+  const shown = useMemo(() => clusterSpots(spots, view), [spots, view]);
+  const selectedShown = selected ?? (pick && pick.key === fitKey ? (shown.find((s) => s.id === pick.id) ?? null) : null);
+  return { spots, shown, selected: selectedShown, select, fitKey };
 }
 
 /** The card the map sits in: rounded, thin border, like the app's glass cards. */
@@ -130,16 +133,19 @@ export function SpotPin({ spot, selected }: { spot: Spot; selected: boolean }) {
   );
 }
 
+/** A marker's place: its name, or how many places a merged marker holds. */
+export const spotTitle = (s: Spot) => (s.places ? tx('{n} places', { n: s.places }) : s.label);
+
 export const pinLabel = (s: Spot) => {
   const n = s.communities.length;
   const label =
     s.kind === 'meetup'
       ? n === 1
-        ? tx('{place}: 1 community meets here', { place: s.label })
-        : tx('{place}: {n} communities meet here', { place: s.label, n })
+        ? tx('{place}: 1 community meets here', { place: spotTitle(s) })
+        : tx('{place}: {n} communities meet here', { place: spotTitle(s), n })
       : n === 1
-        ? tx('{city}: 1 community', { city: s.label })
-        : tx('{city}: {n} communities', { city: s.label, n });
+        ? tx('{city}: 1 community', { city: spotTitle(s) })
+        : tx('{city}: {n} communities', { city: spotTitle(s), n });
   return a11y(label) ?? label;
 };
 
@@ -155,7 +161,7 @@ export function SpotSheet({ spot, cityId, onClose }: { spot: Spot; cityId: CityI
       <View style={styles.sheetHead}>
         <Icon name={spot.kind === 'meetup' ? 'pin' : 'building'} size={14} color={t.c.textSecondary} />
         <Text variant="label" numberOfLines={1} style={{ flex: 1 }} raw>
-          {spot.label}
+          {spotTitle(spot)}
         </Text>
         <Text variant="caption" tone="tertiary">
           {n === 1 ? tx('1 community') : tx('{n} communities', { n })}

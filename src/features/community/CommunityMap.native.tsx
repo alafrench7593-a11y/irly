@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -7,7 +7,7 @@ import { t as tx } from '@/i18n';
 import { haptic } from '@/motion/haptics';
 import { useTheme } from '@/theme/useTheme';
 import { MapError, MapFrame, MapNotice, MapSkeleton, noticeFor, pinLabel, SpotPin, SpotSheet, useCommunityMapModel, type CommunityMapProps } from './CommunityMapParts';
-import { spotBounds } from './mapSpots';
+import { spotBounds, type MapView } from './mapSpots';
 
 /**
  * Phones: the communities of the list on the same real map as the Map tab
@@ -26,7 +26,10 @@ function Engine(props: CommunityMapProps) {
   const reduced = useReducedMotion();
   const map = useRef<MapView>(null);
   const [ready, setReady] = useState(false);
-  const { spots, selected, select, fitKey } = useCommunityMapModel(props);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [region, setRegion] = useState<{ latitudeDelta: number; longitudeDelta: number } | null>(null);
+  const view = useMemo<MapView | null>(() => (region && size.width ? { latSpan: region.latitudeDelta, lngSpan: region.longitudeDelta, ...size } : null), [region, size]);
+  const { spots, shown, selected, select, fitKey } = useCommunityMapModel(props, view);
   const centre = cityCoords(cityId) ?? { latitude: 25.2, longitude: 55.27 };
 
   // The map follows the list: refit to its markers whenever the places change.
@@ -46,6 +49,8 @@ function Engine(props: CommunityMapProps) {
         style={StyleSheet.absoluteFill}
         initialRegion={{ ...centre, latitudeDelta: 0.2, longitudeDelta: 0.2 }}
         onMapReady={() => setReady(true)}
+        onLayout={(e) => setSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
+        onRegionChangeComplete={(r) => setRegion({ latitudeDelta: r.latitudeDelta, longitudeDelta: r.longitudeDelta })}
         onPress={() => select(null)}
         pitchEnabled={false}
         rotateEnabled={false}
@@ -54,7 +59,7 @@ function Engine(props: CommunityMapProps) {
         toolbarEnabled={false}
         userInterfaceStyle={t.mode === 'night' ? 'dark' : 'light'}
       >
-        {spots.map((s) => {
+        {shown.map((s) => {
           const isSel = selected?.id === s.id;
           return (
             <Marker
