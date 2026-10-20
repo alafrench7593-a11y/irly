@@ -24,6 +24,8 @@ const head = `
 html = html.replace('</head>', `${head}\n</head>`);
 fs.writeFileSync(file, html);
 fs.writeFileSync('dist/404.html', html);
+// The id this build carries (EXPO_PUBLIC_BUILD_ID): an open tab compares it and reloads on a newer one (src/lib/webUpdate.ts).
+if (process.env.EXPO_PUBLIC_BUILD_ID) fs.writeFileSync('dist/version.json', JSON.stringify({ v: process.env.EXPO_PUBLIC_BUILD_ID }));
 fs.copyFileSync('assets/icon.png', 'dist/apple-touch-icon.png');
 fs.copyFileSync('assets/icon.png', 'dist/icon-1024.png');
 fs.writeFileSync(
