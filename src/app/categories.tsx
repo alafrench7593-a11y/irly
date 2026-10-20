@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/Text';
 import { CATEGORY_BY_ID, DISCOVERY_ORDER, type CatalogCategory } from '@/data/catalog/categories';
 import { CITIES } from '@/data/destinations';
 import { openCreate } from '@/features/create/createStore';
-import { useHomeActivities } from '@/features/home/ActivitiesByCategory';
+import { useHomeActivities } from '@/features/home/HomeActivities';
 import { CategoryTile, type CategoryCounts } from '@/features/home/CategoryTile';
 import { t as tx, useT } from '@/i18n';
 import { enter } from '@/motion/enter';
