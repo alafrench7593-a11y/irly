@@ -103,6 +103,7 @@ export function IrlyStory({ onDone, scene: startAt = 0, hold = false }: { onDone
         </View>
         {!last ? (
           <PressableScale haptic="select" scaleTo={0.94} onPress={onDone} style={styles.skip} accessibilityLabel={tx('Skip')}>
+            <Glass dark level="thin" style={[StyleSheet.absoluteFill, { borderRadius: 16 }]} />
             <Text variant="label" color="rgba(255,255,255,0.78)">
               Skip
             </Text>
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
   bars: { flex: 1, flexDirection: 'row', gap: 5 },
   bar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)', overflow: 'hidden' },
   barFill: { backgroundColor: '#FFFFFF', borderRadius: 2 },
-  skip: { paddingHorizontal: 12, height: 32, borderRadius: 16, justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)' },
+  skip: { paddingHorizontal: 12, height: 32, borderRadius: 16, justifyContent: 'center', overflow: 'hidden' },
   stage: { position: 'absolute', left: 0, right: 0 },
   clip: { overflow: 'hidden' },
   words: { position: 'absolute', left: space.gutter, right: space.gutter, gap: 10 },

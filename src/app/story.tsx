@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { DotField } from '@/brand/DotField';
+import { Ambient } from '@/components/visual/Ambient';
 import { IrlyStory, STORY_VERSION } from '@/features/onboarding/IrlyStory';
 import { useStore } from '@/state/store';
 
@@ -16,6 +17,7 @@ export default function Story() {
   }, [hold, markStorySeen]);
   return (
     <View style={styles.root}>
+      <Ambient variant="hero" />
       <View style={[StyleSheet.absoluteFill, { opacity: 0.4 }]} pointerEvents="none">
         <DotField />
       </View>

@@ -12,6 +12,7 @@ import { scale, spring } from '@/motion/tokens';
 import { useStore } from '@/state/store';
 import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { GlassLayer } from './GlassLayer';
 import { Icon } from './Icon';
 import { Text } from './Text';
 import { toast } from './Toast';
@@ -90,11 +91,13 @@ export const JoinButton = memo(function JoinButton({ id, label = 'JOIN ACTIVITY'
           styles.base,
           {
             height: h,
-            backgroundColor: joined ? t.c.overlay : t.c.brand,
-            borderColor: joined ? t.c.lineStrong : t.c.brand,
+            // Joined, the action steps back into a pane of glass; open, it is the solid brand pill.
+            backgroundColor: joined ? 'transparent' : t.c.brand,
+            borderColor: joined ? 'transparent' : t.c.brand,
           },
         ]}
       >
+        {joined ? <GlassLayer radius={h / 2} level="thin" /> : null}
         <View style={styles.row}>
           {joined ? (
             <Animated.View style={checkStyle}>
@@ -112,7 +115,7 @@ export const JoinButton = memo(function JoinButton({ id, label = 'JOIN ACTIVITY'
 
 const styles = StyleSheet.create({
   full: { alignSelf: 'stretch' },
-  base: { borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22 },
+  base: { borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   label: { fontSize: 14, letterSpacing: 0.6 },
 });

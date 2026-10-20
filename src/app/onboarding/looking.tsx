@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { StyleSheet, Switch, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Chip } from '@/components/ui/Controls';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Text } from '@/components/ui/Text';
 import { StepShell } from '@/features/onboarding/StepShell';
 import { enter } from '@/motion/enter';
@@ -94,6 +95,7 @@ export default function LookingStep() {
           ))}
         </View>
         <View style={styles.row}>
+          <GlassLayer radius={18} level="thin" />
           <View style={{ flex: 1 }}>
             <Text variant="label">Show on my profile</Text>
             <Text variant="caption" tone="tertiary">
@@ -116,5 +118,6 @@ export default function LookingStep() {
 const styles = StyleSheet.create({
   block: { paddingHorizontal: space.gutter, gap: 12, marginBottom: space[6] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // The privacy switch sits on its own pane of glass, apart from the chips.
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, overflow: 'hidden' },
 });
