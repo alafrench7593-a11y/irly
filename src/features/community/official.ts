@@ -186,3 +186,57 @@ export function introDraft(p: Profile, cityName: string, interestLabels: string[
     .filter(Boolean)
     .join(' ');
 }
+
+/**
+ * IRLY Girl's official communities: the five IRLY runs for it, in its order
+ * (girl_official_communities on the server). Every page that features IRLY
+ * Girl's communities shows these and no other official one; the
+ * communities members create stay listed as theirs.
+ */
+export const GIRL_OFFICIAL_TOPICS = ['girl_newcomers', 'girl_network', 'girl_francophone', 'girl_trip', 'girl_activity'] as const;
+export type GirlOfficialTopic = (typeof GIRL_OFFICIAL_TOPICS)[number];
+
+export type GirlOfficialCommunity = { id: string; topic: GirlOfficialTopic; name: string; tagline: string; emoji: string; members: number; isMember: boolean; coverPath: string | null };
+
+export function useGirlOfficialCommunities(enabled = true) {
+  const uid = useAccount()?.userId;
+  const [list, setList] = useState<GirlOfficialCommunity[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const version = useCommunitiesVersion();
+  const [n, setN] = useState(0);
+  const refresh = useCallback(() => setN((x) => x + 1), []);
+  useEffect(() => {
+    if (!supabase || !uid || !enabled) return;
+    let alive = true;
+    supabase.rpc('girl_official_communities').then(({ data, error: e }) => {
+      if (!alive) return;
+      if (e) {
+        setError(e.message);
+        setList((l) => l ?? []);
+        return;
+      }
+      setError(null);
+      setList(
+        ((data as Row[]) ?? []).map((r) => ({
+          id: r.id as string,
+          topic: r.topic as GirlOfficialTopic,
+          name: (r.name as string) ?? '',
+          tagline: (r.tagline as string) ?? '',
+          emoji: (r.emoji as string) ?? '',
+          members: Number(r.members ?? 0),
+          isMember: Boolean(r.is_member),
+          coverPath: (r.cover_path as string | null) ?? null,
+        })),
+      );
+    }, (e: unknown) => {
+      // Never a spinner forever: an unreachable server ends the load with a message.
+      if (!alive) return;
+      setError(e instanceof Error ? e.message : 'offline');
+      setList((l) => l ?? []);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [uid, version, n, enabled]);
+  return { list: uid ? list : NONE, loading: Boolean(uid) && enabled && list === null, error, refresh, signedIn: Boolean(uid) };
+}

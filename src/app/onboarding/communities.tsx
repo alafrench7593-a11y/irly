@@ -11,7 +11,8 @@ import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
 import { CommunityIntro } from '@/features/community/CommunityIntro';
 import { CommunityThumb } from '@/features/community/CommunityThumb';
-import { joinCommunities, profileTags, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
+import { useAppSpace } from '@/state/appSpace';
+import { joinCommunities, profileTags, useGirlOfficialCommunities, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -38,7 +39,15 @@ export default function CommunitiesWelcome() {
   const introSeen = useStore((s) => s.communityIntroSeen);
   const markIntro = useStore((s) => s.markCommunityIntroSeen);
   const tags = useMemo(() => profileTags(profile), [profile]);
-  const { list, loading, error, signedIn } = useRecommendedCommunities(cityId, tags, 6);
+  // IRLY Girl: its five official communities; IRLY: the ones matching the answers.
+  const inGirl = useAppSpace() === 'girl';
+  const rec = useRecommendedCommunities(cityId, tags, 6);
+  const five = useGirlOfficialCommunities(inGirl);
+  const girlList = useMemo<OfficialCommunity[] | null>(
+    () => five.list?.map((c) => ({ id: c.id, topic: c.topic, name: c.name, tagline: c.tagline, emoji: c.emoji, girlOnly: true, introFirst: c.topic === 'girl_newcomers', members: c.members, isMember: c.isMember, score: 0, cityId: 'dubai' })) ?? null,
+    [five.list],
+  );
+  const { list, loading, error, signedIn } = inGirl ? { list: girlList, loading: five.loading, error: five.error, signedIn: five.signedIn } : rec;
   const fresh = useMemo(() => (list ?? []).filter((c) => !c.isMember), [list]);
   const [choosing, setChoosing] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());

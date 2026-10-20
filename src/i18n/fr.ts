@@ -4736,4 +4736,16 @@ export const fr: Record<string, string> = {
   'replied to your comment: “Count me in 🤍”': 'a répondu à ton commentaire : « Count me in 🤍 »',
   'started following you': 'a commencé à te suivre',
   'liked your post in Fitness Girls': 'a aimé ta publication dans Fitness Girls',
+  // IRLY Girl's five official communities.
+  'By IRLY · Women only': 'Par IRLY · Entre femmes',
+  'Created by members': 'Créées par les membres',
+  'Be one of the first': 'Sois parmi les premières',
+  'Join {name}': 'Rejoindre {name}',
+  'Leave {name}': 'Quitter {name}',
+  'Sign in to join IRLY Girl communities': 'Connecte-toi pour rejoindre les communautés IRLY Girl',
+  'Just arrived in Dubai? Ask anything, get tips and meet other newcomers.': 'Tout juste arrivée à Dubaï ? Pose tes questions, reçois des conseils et rencontre d’autres nouvelles arrivantes.',
+  'Women in business: entrepreneurship, opportunities, collaborations and your network.': 'Entre femmes qui entreprennent : opportunités, collaborations et développement de ton réseau.',
+  'French-speaking girls in Dubai: chats, meetups and activities in French.': 'Les filles francophones de Dubaï : échanges, rencontres et activités en français.',
+  'Trips, excursions, getaways and road trips between girls.': 'Voyages, excursions, escapades et road trips entre filles.',
+  'Sport, outings, restaurants, beach clubs, shopping, wellness and everything to do together.': 'Sport, sorties, restaurants, beach clubs, shopping, bien-être et tout ce qu’on peut faire ensemble.',
 };

@@ -6,7 +6,8 @@ import { friendlyError, supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { proConnect } from '@/features/network/api';
-import { addFriend, markNotificationRead, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
+import { setFriend } from '@/features/profile/member';
+import { markNotificationRead, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
 import { timeAgo } from '@/lib/time';
 import { FEATURES } from '@/lib/features';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -174,6 +175,22 @@ function ServerNotifications() {
     }
     go?.();
   };
+  // Accept / Decline on a request: one answer at a time per row, a second tap while it runs is ignored.
+  const answering = useRef(new Set<string>());
+  const [answer, setAnswer] = useState<Record<string, 'accept' | 'decline'>>({});
+  const respond = (id: string, which: 'accept' | 'decline', run: () => Promise<unknown>) => {
+    if (answering.current.has(id)) return;
+    answering.current.add(id);
+    setAnswer((a) => ({ ...a, [id]: which }));
+    void run().finally(() => {
+      answering.current.delete(id);
+      setAnswer((a) => {
+        const next = { ...a };
+        delete next[id];
+        return next;
+      });
+    });
+  };
   if (!items.length && status === 'loading') {
     return (
       <View style={[styles.list, { alignItems: 'center', paddingTop: space[6] }]}>
@@ -340,24 +357,32 @@ function ServerNotifications() {
                     label="Decline"
                     size="sm"
                     variant="secondary"
+                    loading={answer[n.id] === 'decline'}
+                    disabled={Boolean(answer[n.id])}
                     onPress={() =>
-                      removeFriend(d.accept!)
-                        .then(() => toast('Request declined', 'check', 'brand'))
-                        .catch((e) => toast(e instanceof Error ? e.message : 'Could not decline', 'x', 'live'))
+                      respond(n.id, 'decline', () =>
+                        (d.pro ? removeFriend(d.accept!) : setFriend(d.accept!, 'remove'))
+                          .then(() => toast('Request declined', 'check', 'brand'))
+                          .catch((e) => toast(e instanceof Error ? e.message : 'Could not decline', 'x', 'live')),
+                      )
                     }
                   />
                   <Button
                   label="Accept"
                   size="sm"
+                  loading={answer[n.id] === 'accept'}
+                  disabled={Boolean(answer[n.id])}
                   onPress={() =>
-                    (d.pro ? proConnect(d.accept!) : addFriend(d.accept!))
-                      .then((status) => {
-                        // The request may have been withdrawn meanwhile: then this only sent yours.
-                        if (status === 'accepted') toast(d.pro ? 'You are now connected' : 'You are now friends', 'check', 'positive');
-                        else toast('Request sent', 'check', 'brand');
-                        refresh();
-                      })
-                      .catch((e) => toast(e instanceof Error ? e.message : 'Could not accept', 'x', 'live'))
+                    respond(n.id, 'accept', () =>
+                      (d.pro ? proConnect(d.accept!).then((s) => s === 'accepted') : setFriend(d.accept!, 'add').then((s) => s === 'friends'))
+                        .then((accepted) => {
+                          // The request may have been withdrawn meanwhile: then this only sent yours.
+                          if (accepted) toast(d.pro ? 'You are now connected' : 'You are now friends', 'check', 'positive');
+                          else toast('Request sent', 'check', 'brand');
+                          refresh();
+                        })
+                        .catch((e) => toast(e instanceof Error ? e.message : 'Could not accept', 'x', 'live')),
+                    )
                   }
                 />
                 </View>

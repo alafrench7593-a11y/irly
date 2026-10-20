@@ -244,7 +244,7 @@ export function SafetySheet({
     onClose();
   };
   return (
-    <Sheet visible={visible} onClose={close} title={mode === 'report' ? tx('Report {name}', { name }) : mode === 'confirmBlock' ? tx('Block {name}?', { name }) : 'Safety'}>
+    <Sheet visible={visible} onClose={close} title={mode === 'report' ? tx('Report {name}', { name }) : mode === 'confirmBlock' ? tx('Block {name}?', { name }) : 'Safety'} scroll>
       <View style={{ paddingHorizontal: space.gutter, paddingBottom: 24, gap: 10 }}>
         {mode === 'menu' ? (
           <>

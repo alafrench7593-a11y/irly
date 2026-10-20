@@ -80,7 +80,7 @@ export const PersonCard = memo(function PersonCard({ match, width }: { match: Ma
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <View style={styles.row}>
-            <Text variant="titleM" raw>{p.name}</Text>
+            <Text variant="titleM" raw numberOfLines={1} style={{ flexShrink: 1 }}>{p.name}</Text>
             <Text variant="body" tone="tertiary">
               {p.age}
             </Text>

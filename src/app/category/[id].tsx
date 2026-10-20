@@ -231,7 +231,7 @@ export default function CategoryScreen() {
                   <Text variant="overline" tone="secondary">
                     {a.creatorId === uid ? 'Your session' : 'Planned by a member'}
                   </Text>
-                  <Text variant="titleS" raw>
+                  <Text variant="titleS" raw numberOfLines={2}>
                     {a.title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
@@ -293,7 +293,7 @@ export default function CategoryScreen() {
                 <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${c.id}`)} style={[styles.activity, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
                   <GlassLayer radius={radius.xl} />
                   <View style={{ flex: 1 }}>
-                    <Text variant="titleS" raw>
+                    <Text variant="titleS" raw numberOfLines={2}>
                       {c.name}
                     </Text>
                     <Text variant="bodyS" tone="secondary">

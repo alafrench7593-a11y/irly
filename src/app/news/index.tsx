@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -104,6 +104,8 @@ function NewsCard({ n }: { n: NewsItem }) {
   const t = useTheme();
   const now = useNow();
   const [saved, setSaved] = useState(n.saved);
+  // The server toggles: a second tap before its answer would undo the first.
+  const saving = useRef(false);
   const open = () => WebBrowser.openBrowserAsync(n.url).catch(() => toast('Could not open the article', 'x', 'live'));
   const minutes = Math.max(0, Math.round((now - n.publishedAt) / 60000));
   return (
@@ -139,6 +141,8 @@ function NewsCard({ n }: { n: NewsItem }) {
           haptic="select"
           hitSlop={8}
           onPress={() => {
+            if (saving.current) return;
+            saving.current = true;
             setSaved(!saved);
             toggleSave({ type: 'news', id: n.id })
               .then((now) => {
@@ -149,6 +153,9 @@ function NewsCard({ n }: { n: NewsItem }) {
               .catch(() => {
                 setSaved(saved);
                 toast('Could not save', 'x', 'live');
+              })
+              .finally(() => {
+                saving.current = false;
               });
           }}
           accessibilityLabel={saved ? a11y('Saved') : a11y('Save')}

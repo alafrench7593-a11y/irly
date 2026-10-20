@@ -25,14 +25,14 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
 };
 
 /**
- * Slot order in the bar. `network` (IRLY Network, the professional side)
- * opens the bar on the left; `match` is the Match IRLY disc, exactly in the
+ * Slot order in the bar. `match` is the Match IRLY disc, exactly in the
  * middle (people to meet); `live` just left of it is the live feed, spelled
- * out so nobody has to guess where it is. Your profile is at the top left of
- * every tab root, Settings at its top right.
+ * out so nobody has to guess where it is; `network` (IRLY Network, the
+ * professional side) sits right next to the Map. Your profile is at the top
+ * left of every tab root, Settings at its top right.
  * Creating (activity, event, post, live, community) starts from Create on Home.
  */
-const SLOTS = ['network', 'index', 'live', 'match', 'discover', 'map'] as const;
+const SLOTS = ['index', 'discover', 'live', 'match', 'map', 'network'] as const;
 const MATCH_AT = SLOTS.indexOf('match');
 
 /**

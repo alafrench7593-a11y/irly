@@ -182,7 +182,18 @@ function CommunitiesButton() {
   const t = useTheme();
   const router = useRouter();
   // On phones up to 420 pt (profile and logo on the left, three doors on the right) the word keeps its room: the icon steps aside, never « Communi… ».
-  const narrow = useFrame().width < 420;
+  // Below 360 pt there is no room for the word at all: a round door with the icon, like the others.
+  const width = useFrame().width;
+  const narrow = width < 420;
+  const tiny = width < 360;
+  if (tiny) {
+    return (
+      <PressableScale haptic="select" scaleTo={0.92} hitSlop={6} onPress={() => router.push('/communities')} accessibilityRole="button" accessibilityLabel={tx('Communities')} style={[styles.action, styles.actionNarrow]}>
+        <GlassLayer radius={18} level="thin" />
+        <Icon name="users" size={17} color={t.c.text} />
+      </PressableScale>
+    );
+  }
   return (
     <PressableScale
       haptic="select"

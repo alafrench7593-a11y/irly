@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
@@ -39,6 +39,8 @@ export default function NewGroup() {
   const [picked, setPicked] = useState<string[]>([]);
   const [photo, setPhoto] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // A second tap before the first one re-rendered must not create a second group.
+  const sending = useRef(false);
   const faces = useSignedLinks('profile-photos', people.list.map((p) => p.photo_path));
 
   useEffect(() => {
@@ -55,8 +57,10 @@ export default function NewGroup() {
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   };
   const create = async () => {
+    if (sending.current) return;
     if (!name.trim()) return toast('Give the group a name', 'x', 'live');
     if (!picked.length) return toast('Add at least one person', 'x', 'live');
+    sending.current = true;
     setBusy(true);
     try {
       const path = photo ? await uploadCover(photo) : null;
@@ -66,6 +70,7 @@ export default function NewGroup() {
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create the group', 'x', 'live');
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   };

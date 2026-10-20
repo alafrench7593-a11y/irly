@@ -3,7 +3,7 @@ import { FEATURES } from '@/lib/features';
 import { destinationOpen } from '@/data/destinations';
 import { dateLocale, t as tx } from '@/i18n';
 import { useState, useRef } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon } from '@/components/ui/Icon';
@@ -98,7 +98,9 @@ function GirlsMoving() {
   return (
     <View style={[styles.root]}>
       <Ambient />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40, gap: space[6] }} showsVerticalScrollIndicator={false}>
+      {/* The quick plan's field stays above the keyboard. */}
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 40, gap: space[6] }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <PressableScale haptic="tap" scaleTo={0.9} onPress={() => safeBack(router, '/girl')} accessibilityLabel="Back" style={styles.round}>
             <GlassLayer radius={20} variant="bar" />
@@ -198,7 +200,7 @@ function GirlsMoving() {
                 <GlassLayer radius={radius.xl} />
                 <Avatar name={m.firstName} hue={hueOf(m.userId)} size={48} userId={m.userId} />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text variant="titleS" color={girl.ink} raw>
+                  <Text variant="titleS" color={girl.ink} raw numberOfLines={1}>
                     {m.firstName}
                   </Text>
                   <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
@@ -255,7 +257,7 @@ function GirlsMoving() {
             <Animated.View key={c.id} entering={rise(i)} layout={layout} style={[styles.card, styles.row]}>
               <GlassLayer radius={radius.xl} />
               <PressableScale onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={{ flex: 1 }} accessibilityLabel={tx('Open {title}', { title: c.name })}>
-                <Text variant="titleS" color={girl.ink} raw>
+                <Text variant="titleS" color={girl.ink} raw numberOfLines={2}>
                   {c.name}
                 </Text>
                 {c.tagline ? (
@@ -282,12 +284,14 @@ function GirlsMoving() {
         </View>
         ) : null}
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: girl.bg },
+  flex: { flex: 1 },
   pad: { paddingHorizontal: space.gutter },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.gutter },
   round: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },

@@ -290,7 +290,7 @@ function FullContent({ marker }: { marker: MapMarkerData }) {
             <PressableScale key={p.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/person/${p.id}`)} style={styles.personRow}>
               <Avatar name={p.name} hue={p.hue} size={40} online={p.online} photo={p.photo} />
               <View style={{ flex: 1 }}>
-                <Text variant="label" raw>{p.name}</Text>
+                <Text variant="label" raw numberOfLines={1}>{p.name}</Text>
                 <Text variant="caption" tone="tertiary" numberOfLines={1}>
                   {p.headline}
                 </Text>

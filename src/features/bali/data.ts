@@ -481,11 +481,12 @@ export function useGirlExtras() {
 }
 
 /** Communities of a destination matching a word (Moms, Girls…), with membership. */
-export function useCommunitiesLike(cityId: string, like: string, girlOnly = false) {
+/** Communities by name; `membersOnly`: only the ones members created (no official IRLY community). */
+export function useCommunitiesLike(cityId: string, like: string, girlOnly = false, membersOnly = false) {
   const account = useAccount();
   const { keep } = useCityFilter(cityId as CityId);
   const q = useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string; coverPath: string | null }[]>(
-    `comm-${cityId}-${like}-${girlOnly}-${account?.userId ?? 'anon'}`,
+    `comm-${cityId}-${like}-${girlOnly}-${membersOnly}-${account?.userId ?? 'anon'}`,
     async () => {
       if (!account) return [];
       // Top-level communities only (sub-groups live inside them), counted by
@@ -500,6 +501,7 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
         .is('parent_id', null)
         .eq('community_members.user_id', account.userId);
       if (girlOnly) q = q.eq('girl_only', true);
+      if (membersOnly) q = q.eq('official', false);
       const { data, error } = await q.order('name').limit(60);
       if (error) throw new Error(error.message);
       return (data ?? []).map((c) => {

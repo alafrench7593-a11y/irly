@@ -43,6 +43,7 @@ import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
+import { useAppSpace } from '@/state/appSpace';
 import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -522,6 +523,8 @@ function PostMenu({ id, authorId, onHide }: { id: string; authorId: string; onHi
 function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?: 'post' | 'now'; onClose: () => void }) {
   const t = useTheme();
   const cityId = useCityId();
+  // The space this Live is posted in: it shows only in that space's Live.
+  const scope = useAppSpace() === 'girl' ? 'irly_girl' : 'irly';
   const city = CITIES[cityId];
   const post = useLiveStore((s) => s.post);
   const liveDraft = useDrafts((s) => s.byKey.live);
@@ -741,6 +744,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         onProgress: media ? (p) => mounted.current && setProgress(p) : undefined,
         visibility: chosen ?? undefined,
         activity,
+        scope,
       });
       track('IRL_CREATE', { photo: media?.kind === 'photo', video: media?.kind === 'video', activity: Boolean(res.activityId) });
       if (res.activityCreated) track('ACTIVITY_CREATE', { via: 'irl' });

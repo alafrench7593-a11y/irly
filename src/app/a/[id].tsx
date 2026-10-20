@@ -230,7 +230,7 @@ function ActivityPage() {
             <Text variant="overline" color="#FFFFFF">
               {[tx(isEvent ? 'Event' : (category?.label ?? 'Activity')), a.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
             </Text>
-            <Text variant="displayM" color="#FFFFFF">
+            <Text variant="displayM" color="#FFFFFF" numberOfLines={3}>
               {a.title}
             </Text>
           </View>
@@ -390,7 +390,7 @@ function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visi
     }
   };
   return (
-    <Sheet visible={visible} onClose={onClose} title="Your activity" subtitle="You organise it">
+    <Sheet visible={visible} onClose={onClose} title="Your activity" subtitle="You organise it" scroll>
       <View style={{ gap: 12, paddingBottom: 12 }}>
         <Field value={title} onChangeText={setTitle} placeholder="Name" accessibilityLabel="Name" maxLength={80} />
         <Field value={place} onChangeText={setPlace} placeholder="Place (e.g. Kite Beach, court 3)" accessibilityLabel="Place" icon="pin" maxLength={120} />

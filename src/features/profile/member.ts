@@ -1,3 +1,4 @@
+import { useAppSpace } from '@/state/appSpace';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
@@ -336,9 +337,10 @@ export function useMemberPosts(userId: string, enabled = true) {
 }
 
 /** Rows of a profile RPC, reloaded when its kinds of data change anywhere. */
-function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds: Parameters<typeof useRefreshOn>[0], enabled: boolean) {
+function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds: Parameters<typeof useRefreshOn>[0], enabled: boolean, extra?: Record<string, string>) {
   const uid = useAccount()?.userId;
-  const key = `${uid}|${userId}`;
+  const extraKey = extra ? JSON.stringify(extra) : '';
+  const key = `${uid}|${userId}|${extraKey}`;
   const [state, setState] = useState<{ for: string; items: T[]; error: string | null }>({ for: '', items: [], error: null });
   const seq = useRef(0);
   const mapRef = useRef(map);
@@ -349,7 +351,7 @@ function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds
     if (!supabase || !uid || !enabled) return;
     const n = ++seq.current;
     sb()
-      .rpc(fn, { p_user: userId })
+      .rpc(fn, { p_user: userId, ...(extraKey ? (JSON.parse(extraKey) as Record<string, string>) : {}) })
       .then(({ data, error }) => {
         if (n !== seq.current) return;
         if (error) setState((s) => ({ ...s, for: key, error: netError(error.message) }));
@@ -357,7 +359,7 @@ function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds
       })
       // Lost on the way: said, never a spinner forever.
       .then(undefined, (e: unknown) => n === seq.current && setState((s) => ({ ...s, for: key, error: netError(e) })));
-  }, [uid, key, userId, fn, enabled]);
+  }, [uid, key, userId, fn, enabled, extraKey]);
   useEffect(() => {
     load();
     return () => {
@@ -395,12 +397,15 @@ export const useMemberActivities = (userId: string, enabled = true) =>
     enabled,
   );
 
-/** Their IRL posts: live ones in their audience; the author also sees past ones. */
-export const useMemberLives = (userId: string, enabled = true) =>
-  useProfileRpc<LiveRow, ProfileLive>(
+/** Their IRL posts of this space (IRLY or IRLY Girl): live ones in their audience; the author also sees past ones. */
+export const useMemberLives = (userId: string, enabled = true) => {
+  const scope = useAppSpace() === 'girl' ? 'irly_girl' : 'irly';
+  return useProfileRpc<LiveRow, ProfileLive>(
     'member_lives',
     userId,
     (r) => ({ id: r.id, body: r.body, media: r.media_path, video: r.media_kind === 'video', poster: r.thumb_path ?? null, seconds: r.media_seconds ?? null, areaId: r.area_id, placeName: r.place_name, at: Date.parse(r.created_at), expiresAt: Date.parse(r.expires_at), live: r.live }),
     ['friends', 'people'],
     enabled,
+    { p_scope: scope },
   );
+};

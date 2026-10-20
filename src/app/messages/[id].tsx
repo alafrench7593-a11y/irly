@@ -140,9 +140,12 @@ function ServerThreadView({ id }: { id: string }) {
   if (openedAt === null && !thread.loading) setOpenedAt(thread.messages.length ? thread.messages[thread.messages.length - 1].at : 0);
   const slideIn = (at: number) => (openedAt !== null && at > openedAt ? FadeInDown.springify(380).dampingRatio(0.8) : undefined);
 
+  // One send at a time: a double tap must not post the same message twice.
+  const sending = useRef(false);
   const send = async () => {
     const body = text.trim();
-    if (!body) return;
+    if (!body || sending.current) return;
+    sending.current = true;
     haptic('tap');
     setText('');
     stick.current = true;
@@ -151,6 +154,8 @@ function ServerThreadView({ id }: { id: string }) {
       await thread.send(body);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live');
+    } finally {
+      sending.current = false;
     }
   };
   // Photos to send: picked, previewed, then sent (or cancelled).
@@ -170,8 +175,11 @@ function ServerThreadView({ id }: { id: string }) {
       toast(e instanceof Error ? e.message : 'Could not open your photos', 'x', 'live');
     }
   };
+  const sendingPhotos = useRef(false);
   const sendPreview = async () => {
     const uris = preview;
+    if (!uris.length || sendingPhotos.current) return;
+    sendingPhotos.current = true;
     setPreview([]);
     stick.current = true;
     haptic('tap');
@@ -179,6 +187,8 @@ function ServerThreadView({ id }: { id: string }) {
       await thread.sendPhotos(uris);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Photo not sent', 'x', 'live');
+    } finally {
+      sendingPhotos.current = false;
     }
   };
   const [info, setInfo] = useState(false);
@@ -231,6 +241,8 @@ function ServerThreadView({ id }: { id: string }) {
           }}
           scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           {thread.loading ? <ActivityIndicator color={t.c.text} /> : null}
           {thread.error ? (
@@ -713,7 +725,7 @@ function ChatInfo({
   };
   return (
     <Sheet visible={visible} onClose={onClose} title={title} subtitle={tx('{n} members', { n: list.length })}>
-      <ScrollView style={{ maxHeight: 460 }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+      <ScrollView style={{ maxHeight: 460, flexShrink: 1 }} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }} keyboardShouldPersistTaps="handled">
         {communityId ? <Button label="Open the community" icon="heartHandshake" variant="secondary" full onPress={() => go(`/c/${communityId}`)} /> : null}
         {activityId ? <Button label="Open the activity" icon="calendar" variant="secondary" full onPress={() => go(`/a/${activityId}`)} /> : null}
         {canEditPhoto ? <Button label={communityId ? 'Change the community photo' : 'Change the photo'} icon="camera" variant="secondary" full onPress={onEditPhoto} /> : null}
@@ -834,6 +846,8 @@ function Thread() {
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           <View style={styles.intro}>
             {person ? <Avatar name={person.name} hue={person.hue} size={64} verified={person.verified} photo={person.photo} /> : null}

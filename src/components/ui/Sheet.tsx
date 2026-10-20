@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { a11y } from '@/i18n';
 import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useFrame } from '@/components/layout/AppFrame';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
@@ -30,6 +30,8 @@ type Props = {
   children: ReactNode;
   /** Max height as a fraction of the screen. */
   maxHeight?: number;
+  /** Wraps the children in a scroll view, for forms: the field and its button stay reachable when the keyboard shrinks the sheet. */
+  scroll?: boolean;
 };
 
 /**
@@ -37,7 +39,7 @@ type Props = {
  * flick or a drag past a third of its height. The backdrop dims with the
  * sheet's position so the gesture always feels connected.
  */
-export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, children, maxHeight = 0.88 }: Props) {
+export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, children, maxHeight = 0.88, scroll = false }: Props) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const { height: screenH } = useWindowDimensions();
@@ -143,7 +145,13 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
                 ) : null}
               </View>
             ) : null}
-            {children}
+            {scroll ? (
+              <ScrollView style={styles.body} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} alwaysBounceVertical={false}>
+                {children}
+              </ScrollView>
+            ) : (
+              children
+            )}
           </Animated.View>
         </GestureDetector>
       </GestureHandlerRootView>
@@ -164,6 +172,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     ...Platform.select({ web: { cursor: 'auto' } as object, default: {} }),
   },
+  body: { flexShrink: 1 },
   pane: { borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl, borderRadius: radius.xxl },
   grabberWrap: { alignItems: 'center', paddingVertical: 6 },
   grabber: { width: 38, height: 5, borderRadius: 3 },

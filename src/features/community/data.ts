@@ -410,6 +410,10 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
   return { posts: uid ? posts : NONE, loading: uid ? loading : false, error, refresh, post, vote, remove };
 }
 
+const GIRL_OFFICIAL = new Set(['girl_newcomers', 'girl_network', 'girl_francophone', 'girl_trip', 'girl_activity']);
+/** One of IRLY Girl's five official communities (official.ts, GIRL_OFFICIAL_TOPICS). */
+const isGirlOfficial = (topic: string | null) => Boolean(topic && GIRL_OFFICIAL.has(topic));
+
 export function useCommunityList(cityId: string) {
   const account = useAccount();
   const uid = account?.userId;
@@ -446,7 +450,11 @@ export function useCommunityList(cityId: string) {
     };
   }, [cityId, uid, version]);
   const { keep } = useCityFilter(cityId as CityId);
-  const shown = useMemo(() => list.filter((c) => keep(c.cityId) && (!girlSpace || c.girlOnly)), [list, keep, girlSpace]);
+  // Each space lists its own: IRLY Girl, its communities (of IRLY's official ones, only its five); IRLY, none of them.
+  const shown = useMemo(
+    () => list.filter((c) => keep(c.cityId) && (girlSpace ? c.girlOnly && (!c.official || isGirlOfficial(c.topic)) : !c.girlOnly)),
+    [list, keep, girlSpace],
+  );
   return uid ? shown : NONE;
 }
 

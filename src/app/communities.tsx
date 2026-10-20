@@ -21,6 +21,7 @@ import { displayCommunityName } from '@/features/community/name';
 import { joinCommunity, leaveCommunity, useCommunityList, type CommunitySummary } from '@/features/community/data';
 import { profileTags, TOPIC_GROUPS, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
 import { isDemoId, useDemoCommunitiesLike, useDemoGirl } from '@/features/girl/demo';
+import { GirlOfficialCommunities } from '@/features/girl/GirlOfficial';
 import { useMemberProfile, type MemberCommunity } from '@/features/profile/member';
 import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
@@ -83,7 +84,7 @@ function Communities() {
   // The demo build has no server: in IRLY Girl it shows the demo's example communities (as its Girl home does).
   const demoGirl = DEMO && inGirl;
   const signedIn = Boolean(uid) || demoGirl;
-  const [tab, setTab] = useState<Tab>(params.tab === 'all' || params.tab === 'mine' ? params.tab : demoGirl ? 'all' : 'foryou');
+  const [tab, setTab] = useState<Tab>(params.tab === 'all' || params.tab === 'mine' ? params.tab : 'foryou');
   const serverAll = useCommunityList(cityId);
   const demo = useDemoCommunitiesLike(cityId, '');
   const demoAll = useMemo<CommunitySummary[]>(
@@ -173,7 +174,8 @@ function Communities() {
               ]}
             />
           </View>
-          {tab === 'foryou' ? <ForYou rec={rec} cityId={cityId} onSeeAll={() => setTab('all')} /> : null}
+          {/* IRLY Girl: « For you » is IRLY Girl's five official communities. */}
+          {tab === 'foryou' ? inGirl ? <GirlOfficialCommunities /> : <ForYou rec={rec} cityId={cityId} onSeeAll={() => setTab('all')} /> : null}
           {tab === 'all' ? <All list={all} shown={shown} cityId={cityId} query={query} onQuery={setQuery} group={group} onGroup={setGroup} /> : null}
           {tab === 'mine' ? <Mine list={mine.communities} loading={mine.loading} error={mine.error} onReload={mine.reload} onBrowse={() => setTab('all')} /> : null}
         </>

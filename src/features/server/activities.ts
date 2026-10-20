@@ -318,7 +318,8 @@ export function useServerActivities(
       .gte('starts_at', new Date(Date.now() - 2 * 3600_000).toISOString());
     // A category or IRLY Girl page asks the server for its own sessions, not the first 60 of everything.
     if (categoryId) q = q.eq('category_id', categoryId);
-    if (girlOnly) q = q.eq('girl_only', true);
+    // Each space lists its own sessions: IRLY Girl's women-only ones there, none of them in IRLY.
+    q = q.eq('girl_only', girlOnly);
     const { data, error } = await q.order('starts_at').limit(60);
     if (error) throw new Error(error.message);
     const links = await coverLinks((data ?? []).map((a) => a.cover_path as string | null));

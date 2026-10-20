@@ -75,7 +75,7 @@ const toRow = (c: DemoCommunity, joined: Record<string, boolean>): DemoCommunity
 });
 
 /** Same shape as useCommunitiesLike. */
-export function useDemoCommunitiesLike(_cityId: string, like: string, _girlOnly = false) {
+export function useDemoCommunitiesLike(_cityId: string, like: string, _girlOnly = false, _membersOnly = false) {
   const joined = useDemoGirl((s) => s.joined);
   const data = useMemo(
     () =>
