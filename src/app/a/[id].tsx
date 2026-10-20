@@ -241,9 +241,14 @@ function ActivityPage() {
           <Fact index={3} icon="banknote" text={a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : tx('Free')} />
           {a.creatorName ? <Fact index={4} icon="user" text={tx('Hosted by {name}', { name: a.creatorName })} /> : null}
           {a.description ? (
-            <Text variant="body" tone="secondary">
-              {a.description}
-            </Text>
+            <View style={styles.about}>
+              <Text variant="overline" tone="secondary">
+                About
+              </Text>
+              <Text variant="body" raw>
+                {a.description}
+              </Text>
+            </View>
           ) : null}
           <Text variant="caption" tone="tertiary">
             The exact meeting point is shared in the activity chat.
@@ -323,10 +328,13 @@ function ActivityPage() {
  * One write to the server; every screen showing the activity (lists, map,
  * calendar, chat title, search) follows through the sync channel.
  */
-function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; title: string; placeName: string | null; description: string | null; cancelled: boolean; cityId: string; startsAt: number; endsAt: number | null }; over: boolean; onCancelled: () => void; onDeleted: () => void }) {
+function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visible: boolean; onClose: () => void; a: { id: string; title: string; placeName: string | null; description: string | null; cancelled: boolean; cityId: string; startsAt: number; endsAt: number | null; priceMinor: number; currency: string; capacity: number | null; going: number }; over: boolean; onCancelled: () => void; onDeleted: () => void }) {
   const [title, setTitle] = useState(a.title);
   const [place, setPlace] = useState(a.placeName ?? '');
   const [about, setAbout] = useState(a.description ?? '');
+  // Price (0: free) and spots (empty: unlimited), as on the creation form.
+  const [price, setPrice] = useState(a.priceMinor ? String(a.priceMinor / 100) : '');
+  const [spots, setSpots] = useState(a.capacity ? String(a.capacity) : '');
   // Date and time read back in the activity's city time, as they were saved.
   const city = CITIES[a.cityId as CityId] ?? CITIES.dubai;
   const [when, setWhen] = useState<When>(() => whenFrom(a.startsAt, a.endsAt, city.utcOffset));
@@ -342,9 +350,26 @@ function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visi
       toast(problem === 'past' ? 'This time has passed: pick a later one' : 'The end must be after the start', 'calendar', 'brand');
       return;
     }
+    const priceValue = price.trim() ? Number(price.replace(',', '.')) : 0;
+    const spotsValue = spots.trim() ? Math.round(Number(spots)) : null;
+    if (!Number.isFinite(priceValue) || priceValue < 0) {
+      toast('Enter a price, or leave it empty for free', 'banknote', 'brand');
+      return;
+    }
+    if (spotsValue !== null && (!Number.isFinite(spotsValue) || spotsValue < Math.max(2, a.going) || spotsValue > 1000)) {
+      toast(tx('Spots: between {min} and 1000, or empty for unlimited', { min: Math.max(2, a.going) }), 'users', 'brand');
+      return;
+    }
     setSaving(true);
     try {
-      await updateServerActivity(a.id, { title, placeName: place.trim() || null, description: about.trim() || null, ...(timeChanged ? { startsAt: moved.startsAt, endsAt: moved.endsAt } : {}) });
+      await updateServerActivity(a.id, {
+        title,
+        placeName: place.trim() || null,
+        description: about.trim() || null,
+        priceMinor: Math.round(priceValue * 100),
+        capacity: spotsValue,
+        ...(timeChanged ? { startsAt: moved.startsAt, endsAt: moved.endsAt } : {}),
+      });
       haptic('success');
       toast('Saved. Everyone sees the new version', 'check', 'brand');
       onClose();
@@ -360,6 +385,14 @@ function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visi
         <Field value={title} onChangeText={setTitle} placeholder="Name" accessibilityLabel="Name" maxLength={80} />
         <Field value={place} onChangeText={setPlace} placeholder="Place (e.g. Kite Beach, court 3)" accessibilityLabel="Place" icon="pin" maxLength={120} />
         <Field value={about} onChangeText={setAbout} placeholder="Description" accessibilityLabel="Description" multiline maxLength={1000} />
+        <View style={styles.row}>
+          <View style={{ flex: 1 }}>
+            <Field value={price} onChangeText={(v) => setPrice(v.replace(/[^0-9.,]/g, '').slice(0, 9))} placeholder={tx('Price in {currency} (empty: free)', { currency: a.currency })} accessibilityLabel="Price" icon="banknote" keyboardType="decimal-pad" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Field value={spots} onChangeText={(v) => setSpots(v.replace(/[^0-9]/g, '').slice(0, 4))} placeholder={tx('Spots (empty: unlimited)')} accessibilityLabel="Spots" icon="users" keyboardType="number-pad" />
+          </View>
+        </View>
         <WhenField value={when} utcOffset={city.utcOffset} onPress={() => setPicking(true)} />
         <DateTimePicker
           visible={picking}
@@ -443,6 +476,7 @@ const styles = StyleSheet.create({
   body: { padding: space.gutter, gap: 14 },
   fact: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
+  about: { gap: 4 },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: radius.lg },
   cta: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
   ctaRow: { flex: 1, flexDirection: 'row', gap: 10 },

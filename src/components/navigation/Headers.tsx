@@ -122,9 +122,7 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
           <SpaceLogo />
           <CommunitiesButton />
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <InboxButtons />
-        </View>
+        <InboxButtons gap={4} />
       </View>
     </View>
   );
@@ -138,7 +136,7 @@ export function SpaceLogo() {
   const t = useTheme();
   return (
     <View accessible accessibilityRole="header" accessibilityLabel={t.flavor === 'girl' ? 'IRLY Girl' : 'IRLY'} style={styles.logo}>
-      {t.flavor === 'girl' ? <GirlHeaderMark size={15} /> : <IrlyLogo size={13} color={t.c.text} />}
+      {t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : <IrlyLogo size={11} color={t.c.text} />}
     </View>
   );
 }
@@ -178,12 +176,12 @@ export function useBell(): number {
   return account ? serverBell : DEMO && auth === 'out' ? 2 : 0;
 }
 
-export function InboxButtons() {
+export function InboxButtons({ gap = 8 }: { gap?: number }) {
   const router = useRouter();
   const unread = useUnread();
   const bell = useBell();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap }}>
       <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />
       <IconButton icon="message" label={unread ? tx('Messages, {n} unread', { n: unread }) : tx('Messages')} badge={unread} onPress={() => router.push('/messages')} />
       <IconButton icon="bell" label={bell ? tx('Notifications, {n} new', { n: bell }) : tx('Notifications')} badge={bell} onPress={() => router.push('/notifications')} />
@@ -245,8 +243,8 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
 const styles = StyleSheet.create({
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
-  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 12, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
-  lead: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1, minWidth: 0, marginRight: 8 },
+  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 11, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  lead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, minWidth: 0, marginRight: 6 },
   logo: { height: 38, justifyContent: 'center' },
   row: {
     flex: 1,
