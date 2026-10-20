@@ -62,14 +62,14 @@ export default function ProProfileEditor() {
   // The form opens once the saved profile (if any) has loaded, already filled in.
   if (me.signedIn && me.loading)
     return (
-      <Page overline="Networking" title="Professional profile">
+      <Page overline="IRLY Network" title="Professional profile">
         <ActivityIndicator color={t.c.text} style={{ marginTop: 24 }} accessibilityLabel="Loading" />
       </Page>
     );
   // Unread is not "no profile": an empty form saved here would replace the real one.
   if (me.signedIn && me.error && !me.pro)
     return (
-      <Page overline="Networking" title="Professional profile">
+      <Page overline="IRLY Network" title="Professional profile">
         <View style={{ paddingHorizontal: 20, gap: 12 }}>
           <Text variant="body" tone="secondary">
             Can’t reach IRLY right now
@@ -149,7 +149,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
 
   if (!me.signedIn) {
     return (
-      <Page overline="Networking" title="Professional profile">
+      <Page overline="IRLY Network" title="Professional profile">
         <View style={[styles.box, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
           <GlassLayer radius={radius.xl} />
           <Text variant="body" tone="secondary">
@@ -164,7 +164,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
   const city = CITIES[(d.cityId in CITIES ? d.cityId : cityId) as CityId];
 
   return (
-    <Page overline="Networking" title="Professional profile" subtitle="What you do, what you build, what you look for. Shown in Networking and used for your matches.">
+    <Page overline="IRLY Network" title="Professional profile" subtitle="What you do, what you build, what you look for. Shown in Networking and used for your matches.">
       <View style={styles.form}>
         <Section title="I am">
           <View style={styles.wrap}>
