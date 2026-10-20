@@ -3,7 +3,8 @@ import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useStore } from '@/state/store';
 import { lights, type Light, type LightId } from './lights';
-import { elevation, palettes, type Mode, type Palette } from './tokens';
+import { useFlavor, type FlavorId } from './flavor';
+import { elevation, girlPalette, palettes, type Mode, type Palette } from './tokens';
 
 export type Theme = {
   mode: Mode;
@@ -13,6 +14,8 @@ export type Theme = {
   accent: string;
   shadow: (typeof elevation)[Mode];
   isDay: boolean;
+  /** mixte or girl: same components, the identity of the experience. */
+  flavor: FlavorId;
 };
 
 /**
@@ -25,7 +28,19 @@ export function resolveMode(appearance: 'auto' | 'day' | 'night', cityId: CityId
   return appearance === 'day' ? 'day' : 'night';
 }
 
-export function buildTheme(mode: Mode, lightId: LightId): Theme {
+const girlShadows = {
+  card: '0px 10px 28px rgba(201, 47, 114, 0.10)',
+  float: '0px 22px 54px rgba(201, 47, 114, 0.18)',
+  glow: '0px 10px 30px rgba(214, 53, 121, 0.32)',
+};
+
+export function buildTheme(mode: Mode, lightId: LightId, flavor: FlavorId = 'mixte'): Theme {
+  if (flavor === 'girl') {
+    const rose = girlPalette.brand;
+    const light: Light = { ...lights[lightId], accent: rose, accentDay: rose, accentSoft: girlPalette.brandSoft };
+    // IRLY Girl stays light whatever the appearance setting: its identity is the rose-white ground.
+    return { mode: 'day', c: girlPalette, light, accent: rose, shadow: girlShadows, isDay: true, flavor };
+  }
   // The destination keeps its sky (onboarding, portal transition) but no
   // longer tints the interface: accents are white, colour is reserved for
   // categories and statuses.
@@ -38,6 +53,7 @@ export function buildTheme(mode: Mode, lightId: LightId): Theme {
     accent: light.accent,
     shadow: elevation[mode],
     isDay: mode === 'day',
+    flavor,
   };
 }
 
@@ -51,5 +67,6 @@ export function useTheme(override?: { mode?: Mode; light?: LightId }): Theme {
   const onboarded = useStore((s) => s.onboarded);
   const mode = override?.mode ?? resolveMode(appearance, onboarded ? cityId : null);
   const lightId: LightId = override?.light ?? (cityId ? CITIES[cityId].light : 'dubai');
-  return useMemo(() => buildTheme(mode, lightId), [mode, lightId]);
+  const flavor = useFlavor();
+  return useMemo(() => buildTheme(mode, lightId, flavor), [mode, lightId, flavor]);
 }

@@ -8,7 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { t as tx } from '@/i18n';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
-import { radius, space } from '@/theme/tokens';
+import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { STATUS_LABEL, type CaseStatus } from './api';
 
