@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { enter } from '@/motion/enter';
 import Animated from 'react-native-reanimated';
@@ -11,13 +12,31 @@ import { cityWhen } from '@/lib/time';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { useBadges, useToday, type Badge } from './engage';
+import { useBadges, useToday, type Badge, type TodayActivity } from './engage';
+import { useServerActivities } from '@/features/server/activities';
+import { useAppSpace } from '@/state/appSpace';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /** Today on IRLY: real activities of the day, with time, place, organiser and spots. Hidden when there are none. */
 export function TodayStrip({ cityId }: { cityId: CityId }) {
+  const inGirl = useAppSpace() === 'girl';
+  return inGirl ? <GirlTodayStrip cityId={cityId} /> : <TodayList cityId={cityId} />;
+}
+
+/** IRLY Girl space: today's plans that are women only (the IRLY Girl list of plans, girl_only on the server). */
+function GirlTodayStrip({ cityId }: { cityId: CityId }) {
+  const { activities } = useServerActivities(cityId, { girlOnly: true });
+  const keep = useMemo(() => {
+    const ids = new Set(activities.filter((a) => a.girlOnly).map((a) => a.id));
+    return (a: TodayActivity) => ids.has(a.id);
+  }, [activities]);
+  return <TodayList cityId={cityId} keep={keep} />;
+}
+
+function TodayList({ cityId, keep }: { cityId: CityId; keep?: (a: TodayActivity) => boolean }) {
   const router = useRouter();
-  const { items } = useToday(cityId);
+  const { items: all } = useToday(cityId);
+  const items = keep ? all.filter(keep) : all;
   if (!items.length) return null;
   const city = CITIES[cityId];
   return (

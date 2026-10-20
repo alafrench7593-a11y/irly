@@ -34,6 +34,8 @@ import { useCityId, useStore, type MyPlan } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Ambient } from '@/components/visual/Ambient';
+import { useAppSpace } from '@/state/appSpace';
+import { GirlPlans, useGirlPeople } from '@/features/girl/GirlSections';
 
 const INTENT_ORDER: Intent[] = ['similar', 'friends', 'sports', 'business', 'activities', 'explore'];
 
@@ -57,9 +59,13 @@ export default function Social() {
   const [composer, setComposer] = useState(false);
   const intent: Intent = lastIntent ?? 'friends';
 
+  // IRLY Girl: the same page with women and girls' plans (IRLY Girl rows only reach eligible women).
+  const inGirl = useAppSpace() === 'girl';
+  const women = useGirlPeople(cityId);
+  const people = useMemo(() => (inGirl ? women : content.people), [inGirl, women, content.people]);
   const matches = useMemo(
-    () => rankMatches(profile, content.people, intent, (id) => areaName(city, id)).slice(0, 6),
-    [profile, content.people, intent, city],
+    () => rankMatches(profile, people, intent, (id) => areaName(city, id)).slice(0, 6),
+    [profile, people, intent, city],
   );
 
   return (
@@ -115,12 +121,19 @@ export default function Social() {
               <MyPlanCard plan={p} />
             </Animated.View>
           ))}
-          {content.feed.map((plan, i) => (
-            <Animated.View key={plan.id} entering={enter.rise(i + 2)} layout={LinearTransition.springify(420)}>
-              <PlanCard plan={plan} />
-            </Animated.View>
-          ))}
+          {inGirl
+            ? null
+            : content.feed.map((plan, i) => (
+                <Animated.View key={plan.id} entering={enter.rise(i + 2)} layout={LinearTransition.springify(420)}>
+                  <PlanCard plan={plan} />
+                </Animated.View>
+              ))}
         </View>
+        {inGirl ? (
+          <View style={{ marginTop: space[4] }}>
+            <GirlPlans cityId={cityId} onPlan={() => setComposer(true)} />
+          </View>
+        ) : null}
       </Animated.ScrollView>
 
       <View style={[styles.fab, { bottom: bottom - 12 }]}>
@@ -168,6 +181,7 @@ function PlanComposer({ visible, onClose }: { visible: boolean; onClose: () => v
   const postPlan = useStore((s) => s.postPlan);
   const account = useAccount();
   const router = useRouter();
+  const inGirlSpace = useAppSpace() === 'girl';
   const [posting, setPosting] = useState(false);
   const [kind, setKind] = useState<ActivityKind>(city.activityKinds[0]);
   const [day, setDay] = useState(DAYS[1]);
@@ -242,7 +256,8 @@ function PlanComposer({ visible, onClose }: { visible: boolean; onClose: () => v
               if (account) {
                 setPosting(true);
                 try {
-                  const id = await createServerActivity(plan);
+                  // Posted from IRLY Girl: a girls-only plan (the server checks she may).
+                  const id = await createServerActivity(plan, undefined, { girlOnly: inGirlSpace });
                   if (!id) throw new Error('Could not post the plan. Check your connection and try again.');
                   haptic('success');
                   toast('Plan posted. Its chat is ready', 'send', 'brand');

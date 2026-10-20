@@ -168,7 +168,7 @@ function GirlProfile() {
       await api.saveProfile(draft);
       haptic('success');
       toast(editing ? 'Profile updated' : 'Your IRLY Match profile is live', 'sparkles', 'brand');
-      router.replace('/girl');
+      router.replace('/girl/match');
     } catch (e) {
       if (isGirlRefusal(e)) router.replace('/girl');
       else toast(friendlyError(e instanceof Error ? e.message : 'Could not save. Check your connection and try again.'), 'x', 'live');

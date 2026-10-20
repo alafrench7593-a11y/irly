@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { isAvatar } from '@/features/avatar/avatar';
-import { useFace } from '@/features/server/faces';
+import { cardPhoto, shownPhoto } from '@/features/server/faceRule';
+import { useAccountFace } from '@/features/server/faces';
 import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
 import { initials } from '@/lib/format';
 import { font } from '@/theme/tokens';
@@ -23,7 +24,12 @@ type Props = {
   ring?: boolean;
   /** A real photo (member's profile picture), or an IRLY avatar string (`irly-avatar:v1:...`). */
   photo?: string;
-  /** The member's id: their current profile photo is fetched (shared, kept in sync) and wins over `photo`. */
+  /**
+   * The member's id: their current profile photo is fetched (shared, kept in
+   * sync) and wins over `photo`. For a real account, `photo` is only shown
+   * while the face is still unknown: once the server says she has no photo,
+   * the initials are shown, never a photo from somewhere else.
+   */
   userId?: string | null;
 };
 
@@ -34,10 +40,10 @@ type Props = {
  * photo; example portraits exist only in the demonstration build.
  */
 export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verified, ring, photo: given, userId }: Props) {
-  const face = useFace(userId);
-  const photo = (userId && face?.uri) || given;
+  const face = useAccountFace(userId);
+  const photo = shownPhoto(userId, face, given);
   // Cached on the phone under the file's stored path, not its signed link (which changes).
-  const cacheKey = userId && face?.uri === photo ? face?.key : undefined;
+  const cacheKey = face && face.uri === photo ? face.key : undefined;
   const t = useTheme();
   const night = t.mode === 'night';
   const ringW = ring ? Math.max(2, size * 0.06) : 0;
@@ -123,7 +129,7 @@ export const AvatarStack = memo(function AvatarStack({ people, size = 26, max = 
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       {shown.map((p, i) => (
         <View key={p.id} style={{ marginLeft: i === 0 ? 0 : -size * 0.32, zIndex: max - i }}>
-          <Avatar name={p.name} hue={p.hue} size={size} ring photo={p.photo} />
+          <Avatar name={p.name} hue={p.hue} size={size} ring photo={p.photo} userId={p.id} />
         </View>
       ))}
       {rest > 0 ? (
@@ -151,6 +157,50 @@ export const AvatarStack = memo(function AvatarStack({ people, size = 26, max = 
   );
 });
 
+type FacePhotoProps = {
+  name: string;
+  hue: number;
+  /** The member's id: her current profile photo, the same one as everywhere else in IRLY. */
+  userId?: string | null;
+  /** Her own other photos (e.g. IRLY Girl photos), shown when she has no profile photo. */
+  photos?: string[];
+  style?: StyleProp<ViewStyle>;
+  /** Size of the initials disc on the neutral placeholder. */
+  placeholderSize?: number;
+  /** Background of the neutral placeholder. */
+  placeholderColor?: string;
+};
+
+/**
+ * A member's photo filling a card (IRLY Girl deck, match moment): her
+ * profile photo first, the same as on every other screen, then her own
+ * other photos, else a quiet placeholder with her initials. Never someone
+ * else's photo, never a stock picture.
+ */
+export const FacePhoto = memo(function FacePhoto({ name, hue, userId, photos, style, placeholderSize = 88, placeholderColor }: FacePhotoProps) {
+  const t = useTheme();
+  const face = useAccountFace(userId);
+  // A real photo wins over an IRLY avatar: on a big card the drawing is the last resort.
+  const uri = cardPhoto(face, photos);
+  const cacheKey = face && face.uri === uri ? face.key : undefined;
+  return (
+    <View style={[styles.fill, { backgroundColor: placeholderColor ?? t.c.surface }, style]}>
+      {uri && isAvatar(uri) ? (
+        <View style={[StyleSheet.absoluteFill, styles.center]}>
+          <IrlyAvatar config={uri} size={placeholderSize * 1.8} />
+        </View>
+      ) : uri ? (
+        <Image source={{ uri, cacheKey }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={200} recyclingKey={userId ?? undefined} />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, styles.center]}>
+          <Avatar name={name} hue={hue} size={placeholderSize} />
+        </View>
+      )}
+    </View>
+  );
+});
+
 const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
+  fill: { overflow: 'hidden' },
 });

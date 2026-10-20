@@ -1,14 +1,15 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useFocusEffect, usePathname, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { useAccount } from '@/features/auth/account';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { useRefreshOn } from '@/features/server/sync';
 import { t as tx } from '@/i18n';
 import { hasSession, supabase } from '@/lib/supabase';
 import { DEMO } from '@/config/app';
+import { resetAppSpace, useAppSpace, useSpaceStore } from '@/state/appSpace';
 import { useStore } from '@/state/store';
 import { space } from '@/theme/tokens';
 import { girl, girlType } from './theme';
@@ -71,6 +72,25 @@ export async function readGirlAccess(): Promise<Exclude<GirlAccess, 'checking' |
   return data === 'open' ? 'open' : data === 'suspended' ? 'suspended' : 'not_eligible';
 }
 
+type Answer = Exclude<GirlAccess, 'checking' | 'error'>;
+
+/** The last answer of the server, per account: the checks every page makes stay cheap. */
+let last: { uid: string | null; access: Answer; at: number } | null = null;
+
+/** How long an answer is reused by the pages of IRLY Girl (the app coming back to the foreground always asks again). */
+export const ACCESS_FRESH = 60_000;
+
+/** The member's access, reusing an answer younger than `maxAge` for the same account (0: always ask). */
+export async function girlAccessFor(uid: string | null, maxAge = 0): Promise<Answer> {
+  if (maxAge && last && last.uid === uid && Date.now() - last.at < maxAge) return last.access;
+  const access = await withLimit(readGirlAccess(), ACCESS_LIMIT);
+  last = { uid, access, at: Date.now() };
+  return access;
+}
+
+/** The cached answer for this account, if any (to open a page without a spinner). */
+const cachedAccess = (uid: string | null): Answer | null => (last && last.uid === uid ? last.access : null);
+
 /**
  * The member's access, checked when the screen opens, each time it comes
  * back into focus, when the account changes, and when the app returns from
@@ -80,8 +100,9 @@ export async function readGirlAccess(): Promise<Exclude<GirlAccess, 'checking' |
 export function useGirlAccess(): { access: GirlAccess; retry: () => void } {
   const uid = useAccount()?.userId ?? null;
   const gender = useStore((s) => s.profile.gender);
-  const [access, setAccess] = useState<GirlAccess>('checking');
-  const known = useRef<{ uid: string | null; ok: boolean }>({ uid, ok: false });
+  // Already answered for this account (another page of IRLY Girl): no spinner, the check runs behind.
+  const [access, setAccess] = useState<GirlAccess>(() => cachedAccess(uid) ?? 'checking');
+  const known = useRef<{ uid: string | null; ok: boolean }>({ uid, ok: cachedAccess(uid) != null });
   const seq = useRef(0);
 
   const check = useCallback(() => {
@@ -89,7 +110,7 @@ export function useGirlAccess(): { access: GirlAccess; retry: () => void } {
     if (known.current.uid !== uid) known.current = { uid, ok: false };
     if (!known.current.ok) setAccess('checking');
     const n = ++seq.current;
-    withLimit(readGirlAccess(), ACCESS_LIMIT)
+    girlAccessFor(uid)
       .then((a) => {
         if (n !== seq.current) return;
         known.current.ok = true;
@@ -114,6 +135,43 @@ export function useGirlAccess(): { access: GirlAccess; retry: () => void } {
     check();
   }, [check]);
   return { access, retry };
+}
+
+/**
+ * While the app is in IRLY Girl (state/appSpace), every page re-checks the
+ * access as it opens (the answer of the last minute is reused, so it costs
+ * nothing) and the server is asked again whenever the app comes back to the
+ * foreground or the account changes. Refused (paused after reports, not a
+ * woman's account, signed out): back to IRLY and the screen that says why.
+ * A failed check (offline) changes nothing. The space never grants data:
+ * every IRLY Girl row is guarded by the server (RLS).
+ */
+export function GirlSpaceGuard() {
+  const space = useAppSpace();
+  const uid = useAccount()?.userId ?? null;
+  const auth = useAuthStatus();
+  const pathname = usePathname();
+  const router = useRouter();
+  const check = useCallback(
+    (maxAge: number) => {
+      // The stored session is still being read: no answer about « signed out » yet.
+      if (auth === 'unknown' || useSpaceStore.getState().space !== 'girl') return;
+      girlAccessFor(uid, maxAge)
+        .then((a) => {
+          if (a === 'open' || useSpaceStore.getState().space !== 'girl') return;
+          resetAppSpace();
+          // The gate says why (and offers the way forward).
+          router.push('/girl');
+        })
+        .catch(() => undefined);
+    },
+    [uid, auth, router],
+  );
+  useEffect(() => {
+    if (space === 'girl' && pathname !== '/girl') check(ACCESS_FRESH);
+  }, [space, pathname, check]);
+  useRefreshOn(['people'], () => check(0));
+  return null;
 }
 
 /** The IRLY Girl waiting screen: words with the spinner, never a bare one. */

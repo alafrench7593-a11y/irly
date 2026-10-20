@@ -38,6 +38,8 @@ import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Ambient } from '@/components/visual/Ambient';
+import { useAppSpace } from '@/state/appSpace';
+import { GirlActivitiesPage, GirlPeoplePage, useGirlPeople } from '@/features/girl/GirlSections';
 
 const TABS = [
   { id: 'people', label: 'People' },
@@ -121,19 +123,24 @@ export default function Discover() {
     pager.current?.scrollTo({ x: i * W, animated: true });
   };
 
+  const inGirl = useAppSpace() === 'girl';
+  const girlPeople = useGirlPeople(cityId);
   const results = useMemo(() => {
     const term = q.trim().toLowerCase();
     if (term.length < 2) return null;
     const has = (...fields: string[]) => fields.some((f) => f.toLowerCase().includes(term));
+    // IRLY Girl space: the guide's people, sessions and communities are open to
+    // everyone (they do not say who is a woman). People found are the women of
+    // IRLY Girl; women-only plans and communities come from the server search.
     return {
       events: content.events.filter((e) => has(e.title, e.venue, e.description, e.category)),
-      sessions: content.sessions.filter((s) => has(s.title, s.venue, ACTIVITIES[s.kind].label)),
+      sessions: inGirl ? [] : content.sessions.filter((s) => has(s.title, s.venue, ACTIVITIES[s.kind].label)),
       places: content.places.filter((p) => has(p.name, p.blurb, ...p.tags)),
-      communities: content.communities.filter((c) => has(c.name, c.tagline, c.description)),
+      communities: inGirl ? [] : content.communities.filter((c) => has(c.name, c.tagline, c.description)),
       services: content.services.filter((s) => has(s.name, s.tagline, SERVICE_CATEGORIES[s.category].label)),
-      people: content.people.filter((p) => has(p.name, p.headline, p.bio)),
+      people: (inGirl ? girlPeople : content.people).filter((p) => has(p.name, p.headline, p.bio)),
     };
-  }, [q, content]);
+  }, [q, content, inGirl, girlPeople]);
   const total = results ? Object.values(results).reduce((n, list) => n + list.length, 0) : 0;
 
   // The header folds with the page under it, blended across a swipe.
@@ -156,7 +163,8 @@ export default function Discover() {
     resultsY.set(e.contentOffset.y);
   });
 
-  const pages = [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
+  // IRLY Girl: the same four pages; People and Activities show women, girls' plans and IRLY Girl communities.
+  const pages = inGirl ? [GirlPeoplePage, GirlActivitiesPage, PlacesPage, EventsPage] : [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>

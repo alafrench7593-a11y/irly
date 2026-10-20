@@ -5,8 +5,11 @@ import { storageName } from '@/config/app';
 import { useAccount } from '@/features/auth/account';
 import { isAvatar } from '@/features/avatar/avatar';
 import { supabase } from '@/lib/supabase';
+import { isAccountId } from './faceRule';
 import { signedLinks, thumbOf, uploadFaceThumb } from './media';
 import { useSyncVersion } from './sync';
+
+export { isAccountId };
 
 /**
  * Members' faces, one logic for the whole app: any avatar given a member id
@@ -108,6 +111,7 @@ async function flush() {
 }
 
 function want(id: string) {
+  if (!isAccountId(id)) return;
   pending.add(id);
   if (!timer) timer = setTimeout(flush, 30);
 }
@@ -125,22 +129,34 @@ export function primeFaces(list: { id: string; path: string | null | undefined }
 }
 
 let seenVersion = 0;
-/** The face of a member (link + cache key, or an IRLY avatar string), or undefined while unknown / without photo. */
-export function useFace(userId?: string | null): Face | undefined {
-  const entry = useFaces((s) => (userId ? s.byId[userId] : undefined));
+/**
+ * The face of a member: a Face (link + cache key, or an IRLY avatar string),
+ * null when the server says this account has no photo, or undefined while
+ * unknown (and for anything that is not a real account id).
+ */
+export function useAccountFace(userId?: string | null): Face | null | undefined {
+  const id = isAccountId(userId) ? userId : undefined;
+  const entry = useFaces((s) => (id ? s.byId[id] : undefined));
   const version = useSyncVersion('people');
   useEffect(() => {
-    if (!userId) return;
+    if (!id) return;
     // A profile changed somewhere: every face known is checked again, once per change.
     if (version !== seenVersion) {
       seenVersion = version;
       checked.clear();
     }
-    const e = useFaces.getState().byId[userId];
-    if (!checked.has(userId) || !e || e.until < Date.now()) want(userId);
-  }, [userId, version]);
-  if (!entry?.uri) return undefined;
+    const e = useFaces.getState().byId[id];
+    if (!checked.has(id) || !e || e.until < Date.now()) want(id);
+  }, [id, version]);
+  if (!entry) return undefined;
+  if (!entry.src) return null;
+  if (!entry.uri) return undefined;
   return { uri: entry.uri, key: entry.path && !isAvatar(entry.path) ? entry.path : undefined };
+}
+
+/** The face of a member (link + cache key, or an IRLY avatar string), or undefined while unknown / without photo. */
+export function useFace(userId?: string | null): Face | undefined {
+  return useAccountFace(userId) ?? undefined;
 }
 
 /** Mounted once at the root: your own face is known early (and gets its small copy if it has none). */

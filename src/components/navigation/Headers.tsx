@@ -6,6 +6,7 @@ import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { useServerBell } from '@/features/server/social';
 import { memo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useFrame } from '@/components/layout/AppFrame';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -24,6 +25,8 @@ import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { IrlyLogoCompact } from '@/brand/IrlyLogo';
+import { GirlHeaderMark } from '@/features/girl/GirlMark';
 
 export function useUnread(): number {
   const cityId = useCityId();
@@ -116,19 +119,35 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
       </Animated.View>
       <View style={styles.row}>
-        <CommunitiesButton />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <InboxButtons />
+        <View style={styles.lead}>
+          <SpaceLogo />
+          <CommunitiesButton />
         </View>
+        <InboxButtons gap={4} />
       </View>
     </View>
   );
 }
 
-/** Top left of Home: the way into communities (the heart of IRLY), in place of the logo. */
+/**
+ * Top left of Home: the logo of the space the app is in (IRLY, or IRLY
+ * Girl), at the same place in both, right before the way into communities.
+ */
+export function SpaceLogo() {
+  const t = useTheme();
+  return (
+    <View accessible accessibilityRole="header" accessibilityLabel={t.flavor === 'girl' ? 'IRLY Girl' : 'IRLY'} style={styles.logo}>
+      {t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : <IrlyLogoCompact size={15} color={t.c.text} />}
+    </View>
+  );
+}
+
+/** Top left of Home, next to the logo: the way into communities (the heart of IRLY). */
 function CommunitiesButton() {
   const t = useTheme();
   const router = useRouter();
+  // On the narrowest phones (375 pt and less) the word keeps its room: the icon steps aside, never « Communi… ».
+  const narrow = useFrame().width < 380;
   return (
     <PressableScale
       haptic="select"
@@ -139,7 +158,7 @@ function CommunitiesButton() {
       style={[styles.communities, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
     >
       <GlassLayer radius={radius.pill} level="thin" />
-      <Icon name="users" size={16} color={t.c.text} />
+      {narrow ? null : <Icon name="users" size={16} color={t.c.text} />}
       <Text variant="label" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={{ flexShrink: 1 }}>
         Communities
       </Text>
@@ -160,12 +179,12 @@ export function useBell(): number {
   return account ? serverBell : DEMO && auth === 'out' ? 2 : 0;
 }
 
-export function InboxButtons() {
+export function InboxButtons({ gap = 8 }: { gap?: number }) {
   const router = useRouter();
   const unread = useUnread();
   const bell = useBell();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap }}>
       <IconButton icon="sparkles" label="IRLY assistant" onPress={() => router.push('/assistant')} />
       <IconButton icon="message" label={unread ? tx('Messages, {n} unread', { n: unread }) : tx('Messages')} badge={unread} onPress={() => router.push('/messages')} />
       <IconButton icon="bell" label={bell ? tx('Notifications, {n} new', { n: bell }) : tx('Notifications')} badge={bell} onPress={() => router.push('/notifications')} />
@@ -227,7 +246,10 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
 const styles = StyleSheet.create({
   header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
-  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 14, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 11, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
+  lead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, minWidth: 0, marginRight: 4 },
+  // The logo never shrinks: the Communities pill gives way first.
+  logo: { height: 38, justifyContent: 'center', flexShrink: 0 },
   row: {
     flex: 1,
     flexDirection: 'row',

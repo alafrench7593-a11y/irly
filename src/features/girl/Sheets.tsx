@@ -5,17 +5,17 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Sheet } from '@/components/ui/Sheet';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { Photo } from '@/components/visual/Photo';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { reasonLines } from './suggest';
 import { AVAILABILITY, GOALS, INTERESTS, LANGUAGES, SPORTS, labelOf } from './taxonomy';
-import { girl, GIRL_TINT, girlType } from './theme';
+import { girl, girlType } from './theme';
 import { REPORT_CATEGORIES, type Candidate, type Filters, type ReportCategory } from './types';
 import { GButton, GChip, GField, GIconWell, GSection, ScorePill, Wrap } from './ui';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { FacePhoto } from '@/components/ui/Avatar';
 
 const AGES: { label: string; min?: number; max?: number }[] = [
   { label: 'Any' },
@@ -133,7 +133,7 @@ export function ProfileSheet({
       {c ? (
         <ScrollView contentContainerStyle={{ paddingHorizontal: space.gutter, paddingBottom: 24, gap: space[5] }}>
           <View style={styles.hero}>
-            {c.cover ? <Photo tint={GIRL_TINT} visual={{ photo: c.cover }} light="dubai" style={StyleSheet.absoluteFill} width={900} /> : null}
+            <FacePhoto name={c.firstName} hue={c.hue} userId={c.userId} photos={c.photoUrls} placeholderColor={girl.cream} placeholderSize={110} style={StyleSheet.absoluteFill} />
           </View>
           <View style={styles.nameRow}>
             <View style={{ flex: 1 }}>

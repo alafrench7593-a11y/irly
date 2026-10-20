@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { create } from 'zustand';
 import { DEMO } from '@/config/app';
 import { DEMO_COMMUNITIES, DEMO_NOTIFICATIONS, DEMO_PLANS, DEMO_POSTS, ME, type DemoCommunity, type DemoPlan, type DemoPost } from '@/data/content/girlDemo';
-import { portrait, type PhotoKey } from '@/data/photos';
+import type { PhotoKey } from '@/data/photos';
 import { findPerson, getCityContent } from '@/data/repo';
 import type { CityId, Conversation } from '@/data/types';
 import type { ServerActivity } from '@/features/server/activities';
@@ -26,8 +26,12 @@ const T0 = Date.now();
 
 export const isDemoId = (id: string | undefined | null): boolean => DEMO && Boolean(id && /^(gc|gp|ga|gcv)-/.test(id));
 
-/** The illustrative portrait of a demo woman (g-*, w-*, p-*), demo build only. */
-export const demoPhoto = (id?: string | null): string | undefined => (DEMO && id && /^(g|w|p)-[a-z]+$/.test(id) ? (findPerson(id)?.photo ?? portrait(id)) : undefined);
+/**
+ * The illustrative portrait of a demo person (g-*, w-*, p-*), demo build
+ * only: the one photo of that person's record, never a guess. Real accounts
+ * (uuids) and unknown ids get nothing (their own photo, or initials).
+ */
+export const demoPhoto = (id?: string | null): string | undefined => (DEMO && id && /^(g|w|p)-[a-z]+$/.test(id) ? findPerson(id)?.photo : undefined);
 
 export const demoName = (id: string) => (id === ME ? 'You' : (findPerson(id)?.name ?? ''));
 

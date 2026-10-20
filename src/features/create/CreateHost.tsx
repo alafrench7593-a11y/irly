@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { Image } from 'expo-image';
 import { a11y, t as tx } from '@/i18n';
-import { BackHandler, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -32,7 +33,12 @@ import { createServerActivity, useGeocoderOn, useMyCommunityOptions } from '@/fe
 import { useAccount } from '@/features/auth/account';
 import { useNow } from '@/lib/useNow';
 import { useRouter } from 'expo-router';
-import { dropStagedCover, pickPhoto, stageCover } from '@/features/server/covers';
+import { dropStagedCover, stageCover } from '@/features/server/covers';
+import { usePhotoSource } from '@/components/ui/PhotoSourceSheet';
+import { useAppSpace } from '@/state/appSpace';
+import { lastLibraryPhoto, rememberLibraryPhoto } from './lastPhoto';
+import { libraryFor, libraryKindOf, surprise } from './photoLibrary';
+import { PhotoLibrarySheet } from './PhotoLibrarySheet';
 import { useCreateStore, type CreateFormat } from './createStore';
 import { clockLabel, instants, localPlanDay, problemOf, type When } from './when';
 
@@ -61,6 +67,17 @@ const FORMAT: Record<CreateFormat, { title: string; cta: string }> = {
 };
 
 type Pick = { categoryId: CategoryKey; sub?: CatalogSub; activity?: CatalogActivity; custom?: string };
+
+/**
+ * The activity's photo, exactly as it is published: a photo of the IRLY
+ * library (picked in the grid, or drawn by « Surprise me »; `auto` when IRLY
+ * drew it for the member), her own photo, or none (the app's photo of the
+ * category). Shown big before publishing; never swapped behind her back.
+ */
+type PhotoChoice = { type: 'library'; url: string; kind: string; auto: boolean } | { type: 'own'; uri: string } | { type: 'none' };
+
+/** The longest description the server keeps (activities.description). */
+const DESCRIPTION_MAX = 1000;
 
 /**
  * WHAT DO YOU WANT TO DO? The twelve things people start most, one tap
@@ -159,9 +176,16 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [address, setAddress] = useState('');
   const [spots, setSpots] = useState(6);
   const [description, setDescription] = useState('');
+  // The name as published: the activity's own by default, the member may rewrite it.
+  const [titleEdit, setTitleEdit] = useState<string | null>(null);
   const signedIn = Boolean(useAccount());
-  // Optional: the creator's own photo instead of the catalogue one.
-  const [cover, setCoverUri] = useState<string | null>(null);
+  // IRLY Girl: the same form, in the Girl look, and the activity is for women only.
+  const girlSpace = useAppSpace() === 'girl';
+  // The photo: an IRLY library photo (drawn at random for the type until the member chooses), her own, or none.
+  const [photoChoice, setPhotoChoice] = useState<PhotoChoice | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [upload, setUpload] = useState<'idle' | 'uploading' | 'failed'>('idle');
+  const cover = photoChoice?.type === 'own' ? photoChoice.uri : null;
   // Signed in, the photo is cleaned and uploaded as soon as it is picked, while the
   // form is still being filled: publishing then only saves the row (one round trip).
   // sent: a publish went out with it. unsure: one of those tries ended without a clear answer
@@ -171,9 +195,14 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
     const cur = staged.current;
     if (cur?.uri === uri && !cur.failed) return cur.path;
     const job = { uri, path: stageCover(uri), failed: false, sent: false };
-    job.path.catch(() => {
-      job.failed = true;
-    });
+    setUpload('uploading');
+    job.path.then(
+      () => staged.current === job && setUpload('idle'),
+      () => {
+        job.failed = true;
+        if (staged.current === job) setUpload('failed');
+      },
+    );
     staged.current = job;
     return job.path;
   };
@@ -182,18 +211,29 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const unstage = () => {
     const cur = staged.current;
     staged.current = null;
+    setUpload('idle');
     if (cur && !cur.sent) cur.path.then(dropStagedCover, () => undefined);
   };
   // Closing the form (unmount) drops a photo that was not published.
   useEffect(() => unstage, []);
-  const setCover = (uri: string | null) => {
+  const choosePhoto = (next: PhotoChoice) => {
+    const uri = next.type === 'own' ? next.uri : null;
     if (staged.current && staged.current.uri !== uri) unstage();
-    setCoverUri(uri);
+    setPhotoChoice(next);
     if (uri && signedIn) void stage(uri).catch(() => undefined);
   };
-  const pickCover = async () => {
-    const uri = await pickPhoto();
-    if (uri) setCover(uri);
+  // MY PHOTOS: the shared photo sheet (library or camera), cropped 16:10 like every cover.
+  const photos = usePhotoSource({ aspect: [16, 10], title: tx('Activity photo'), subtitle: tx('Everyone who sees the activity sees it.') });
+  const pickOwn = async () => {
+    try {
+      const picked = await photos.pick();
+      if (!picked) return;
+      // Phone photos are 5–10 MB: 1280 px wide is plenty for a card and a header (as covers.pickPhoto).
+      const small = await manipulateAsync(picked.uri, [{ resize: { width: 1280 } }], { compress: 0.75, format: SaveFormat.JPEG });
+      choosePhoto({ type: 'own', uri: small.uri });
+    } catch {
+      toast(tx('Photos are not available. Check the access in Settings.'), 'image', 'live');
+    }
   };
 
   const D = 2 * Math.hypot(Math.max(origin.x, frame.width - origin.x), Math.max(origin.y, frame.height - origin.y));
@@ -233,6 +273,28 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const category = pick ? CATEGORY_BY_ID[pick.categoryId] : undefined;
   const title = pick?.custom ?? pick?.activity?.label ?? (pick?.sub ? `${tx('{what} session', { what: tx(pick.sub.label) })}` : undefined);
   const place = pick?.activity?.place;
+  const finalTitle = (titleEdit ?? title ?? '').trim();
+
+  // The IRLY library for this type of activity (padel, brunch, beach…), every photo of it.
+  const kind = pick ? libraryKindOf(pick.categoryId, pick.custom ?? pick.activity?.label ?? pick.sub?.label ?? '', place, pick.sub?.label) : null;
+  const library = useMemo(() => (kind ? libraryFor(kind, { girl: girlSpace }) : []), [kind, girlSpace]);
+  const draw = (avoid: (string | null)[]) => (kind ? surprise(library, [...avoid, lastLibraryPhoto(kind)]) : null);
+  // On the last step the activity always shows a photo: one drawn at random from its type
+  // (never the one used last time), until the member picks another, her own, or none.
+  // The type changed (another activity chosen): IRLY's own draw follows it; her choice stays.
+  if (step === 3 && kind && (photoChoice === null || (photoChoice.type === 'library' && photoChoice.auto && photoChoice.kind !== kind))) {
+    const url = draw([]);
+    if (url) setPhotoChoice({ type: 'library', url, kind, auto: true });
+  }
+  const surpriseMe = () => {
+    if (!kind) return;
+    const url = draw([photoChoice?.type === 'library' ? photoChoice.url : null]);
+    if (!url) return;
+    haptic('select');
+    choosePhoto({ type: 'library', url, kind, auto: false });
+  };
+  const defaultPhoto = pick ? photo(ideaPhoto(pick.categoryId, pick.custom ?? pick.activity?.label ?? '', place, pick.sub?.id), 900, undefined, true) : undefined;
+  const previewUri = photoChoice?.type === 'library' ? photoChoice.url : photoChoice?.type === 'own' ? photoChoice.uri : defaultPhoto;
 
   const chooseCategory = (id: CategoryKey) => {
     setPick({ categoryId: id });
@@ -275,9 +337,15 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   };
 
   const [publishing, setPublishing] = useState(false);
+  // One tap, one activity: a second tap before the button shows « Publishing… » is ignored.
+  const sending = useRef(false);
   const router = useRouter();
   const post = async () => {
-    if (!pick || !title || publishing) return;
+    if (!pick || !title || publishing || sending.current) return;
+    if (finalTitle.length < 3) {
+      toast(tx('Give the activity a name (3 characters or more)'), 'edit', 'brand');
+      return;
+    }
     const offset = city.utcOffset ?? 4;
     // Checked again at the tap: a time picked earlier may have passed while the form stayed open.
     const problem = when ? problemOf(when, offset, Date.now()) : null;
@@ -308,7 +376,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       categoryId: pick.categoryId,
       subId: pick.sub?.id,
       activityId: pick.activity?.id,
-      title,
+      title: finalTitle,
       place: place ?? areaName(city, area),
       note: pick.activity?.note,
       description: description.trim() || undefined,
@@ -321,16 +389,22 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       price: paid ? price : 0,
       currency: city.currency,
     };
+    // The photo exactly as previewed: the library photo chosen, her own photo, or none.
+    // `null`: no photo on purpose (or her own): the server never draws one in its place.
+    const libraryCover = photoChoice?.type === 'library' ? photoChoice.url : null;
     // Signed out: the plan lives on this phone only, and says so.
     if (!signedIn) {
-      postPlan({ ...plan, ...(cover ? { coverUri: cover } : {}) });
+      const shown = cover ?? libraryCover;
+      postPlan({ ...plan, ...(shown ? { coverUri: shown } : {}) });
+      if (libraryCover && kind) rememberLibraryPhoto(kind, libraryCover);
       haptic('success');
-      toast(tx('{title} saved on this phone. Sign in to share it', { title }), 'send', 'brand');
+      toast(tx('{title} saved on this phone. Sign in to share it', { title: finalTitle }), 'send', 'brand');
       hide();
       return;
     }
     // Signed in: the server is the only copy. "Live" only once it really is;
     // a failure keeps the form so the same plan can be sent again (never twice).
+    sending.current = true;
     setPublishing(true);
     try {
       const chosen = myCommunities.find((x) => x.id === communityId);
@@ -339,13 +413,25 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       const pending = cover ? stage(cover) : null;
       if (cover && staged.current?.uri === cover) staged.current.sent = true;
       const coverPath = pending ? await pending : null;
-      const serverId = await createServerActivity(plan, startsAt, { endsAt, coverUri: cover, coverPath, communityId, girlOnly: chosen?.girlOnly || undefined, address: geocoderOn ? address : null });
+      const serverId = await createServerActivity(plan, startsAt, {
+        endsAt,
+        coverUri: cover,
+        coverPath,
+        libraryCover,
+        communityId,
+        // IRLY Girl: the activity is for women only (the server checks the member may create one).
+        girlOnly: girlSpace || chosen?.girlOnly || undefined,
+        ...(girlSpace ? { audience: 'girls' as const } : {}),
+        address: geocoderOn ? address : null,
+      });
       // No id: nothing was created (session ended). Never "live" then; the form stays.
       if (!serverId) throw new Error(tx('your session has ended, sign in again'));
       // The photo now belongs to the activity: closing the form must not remove it.
       if (staged.current?.uri === cover) staged.current = null;
+      // « Surprise me » next time starts from another photo of this type.
+      if (libraryCover && kind) rememberLibraryPhoto(kind, libraryCover);
       haptic('success');
-      toast(tx('{title} is live. Chat created', { title }), 'send', 'brand');
+      toast(tx('{title} is live. Chat created', { title: finalTitle }), 'send', 'brand');
       hide();
       router.push(`/a/${serverId}`);
     } catch (e) {
@@ -358,6 +444,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
       }
       toast(tx('Not published: {why}. Try again', { why: e instanceof Error ? e.message : 'server error' }), 'x', 'live');
     } finally {
+      sending.current = false;
       setPublishing(false);
     }
   };
@@ -365,7 +452,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const canNext = step === 0 ? false : step === 1 ? Boolean(pick?.sub || pick?.custom) : step === 2 ? Boolean(when && !whenProblem && area) : true;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents={open ? 'auto' : 'none'}>
+    // Clipped: the reveal circle is wider than the screen (on the web it made the page scroll sideways).
+    <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents={open ? 'auto' : 'none'}>
       <Animated.View
         style={[
           styles.circle,
@@ -627,6 +715,24 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   How many people?
                 </Text>
               </Animated.View>
+              <Animated.View entering={enter.rise(1)} style={styles.block}>
+                <Text variant="overline" tone="secondary">
+                  Name
+                </Text>
+                <Field
+                  value={titleEdit ?? title}
+                  onChangeText={(v) => setTitleEdit(v.slice(0, 80))}
+                  placeholder={tx('Name your activity')}
+                  maxLength={80}
+                  accessibilityLabel={a11y('Name of the activity')}
+                  invalid={finalTitle.length < 3}
+                />
+                {girlSpace ? (
+                  <Text variant="caption" tone="secondary">
+                    {tx('IRLY Girl: only women members can see and join it.')}
+                  </Text>
+                ) : null}
+              </Animated.View>
               <Animated.View entering={enter.rise(1)} style={[styles.block, styles.wrap, { justifyContent: 'center' }]}>
                 {[2, 4, 10, 50].map((n) => (
                   <Chip key={n} size="sm" label={`${n}`} selected={!unlimited && spots === n} onPress={() => { setUnlimited(false); setSpots(n); }} />
@@ -663,42 +769,88 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 ) : null}
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.block}>
-                {/* The session's photo: the app's photo for this activity, or the creator's own. */}
-                <PressableScale haptic="select" scaleTo={0.98} onPress={pickCover} style={styles.cover} accessibilityLabel="Change the photo">
-                  <Image source={{ uri: cover ?? (pick ? photo(ideaPhoto(pick.categoryId, pick.custom ?? pick.activity?.label ?? '', place, pick.sub?.id), 900) : undefined) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} />
-                  <View style={[styles.coverPill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
-                    <Icon name="camera" size={16} color="#FFFFFF" />
-                    <Text variant="label" style={{ color: '#FFFFFF' }}>
-                      {cover ? 'Your photo' : 'Change the photo'}
+                <Text variant="overline" tone="secondary">
+                  Photo
+                </Text>
+                {/* The final render: the photo as it will be published, with the activity's name on it. */}
+                <View style={styles.cover} accessibilityLabel={tx('Photo of the activity')} testID="create-cover">
+                  {previewUri ? <Image source={{ uri: previewUri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} /> : null}
+                  <View style={styles.coverScrim} pointerEvents="none" />
+                  <View style={styles.coverText} pointerEvents="none">
+                    <Text variant="overline" color="#FFFFFF">
+                      {[tx(category.label), girlSpace ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
+                    </Text>
+                    <Text variant="titleL" color="#FFFFFF" numberOfLines={2}>
+                      {finalTitle || title}
                     </Text>
                   </View>
-                  {cover ? (
-                    <PressableScale haptic="select" disabled={publishing} onPress={() => setCover(null)} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel="Use the IRLY photo" hitSlop={8}>
+                  <View style={[styles.coverPill, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
+                    {upload === 'uploading' && cover ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Icon name={photoChoice?.type === 'own' ? 'camera' : 'image'} size={14} color="#FFFFFF" />}
+                    <Text variant="caption" style={{ color: '#FFFFFF' }}>
+                      {photoChoice?.type === 'own'
+                        ? upload === 'uploading'
+                          ? tx('Your photo · uploading…')
+                          : upload === 'failed'
+                            ? tx('Your photo · sent again when you publish')
+                            : tx('Your photo')
+                        : photoChoice?.type === 'library'
+                          ? tx('IRLY library')
+                          : tx('IRLY photo of the category')}
+                    </Text>
+                  </View>
+                  {photoChoice && photoChoice.type !== 'none' ? (
+                    <PressableScale haptic="select" disabled={publishing} onPress={() => choosePhoto({ type: 'none' })} style={[styles.coverRemove, { backgroundColor: 'rgba(0,0,0,0.55)' }]} accessibilityLabel={tx('Remove the photo')} hitSlop={8}>
                       <Icon name="x" size={16} color="#FFFFFF" strokeWidth={2.6} />
                     </PressableScale>
                   ) : null}
-                </PressableScale>
+                </View>
+                <View style={styles.photoRow}>
+                  <PhotoOption icon="image" label={tx('IRLY library')} hint={tx('{n} photos', { n: library.length })} disabled={publishing || !library.length} onPress={() => setLibraryOpen(true)} />
+                  <PhotoOption icon="camera" label={tx('My photos')} hint={tx('From your phone')} disabled={publishing} onPress={pickOwn} />
+                  <PhotoOption icon="sparkles" label={tx('Surprise me')} hint={tx('At random')} disabled={publishing || library.length < 2} onPress={surpriseMe} />
+                </View>
+                <PhotoLibrarySheet
+                  visible={libraryOpen}
+                  onClose={() => setLibraryOpen(false)}
+                  urls={library}
+                  selected={photoChoice?.type === 'library' ? photoChoice.url : null}
+                  title={finalTitle || title}
+                  onPick={(url) => {
+                    if (kind) choosePhoto({ type: 'library', url, kind, auto: false });
+                    setLibraryOpen(false);
+                  }}
+                />
+                {photos.sheet}
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.block}>
+                <Text variant="overline" tone="secondary">
+                  Description
+                </Text>
                 <View style={styles.fieldHost}>
                 <GlassLayer radius={radius.lg} level="thin" />
                 <TextInput
                   value={description}
-                  onChangeText={setDescription}
-                  placeholder={tx('Add a few words (optional): meeting point, level, what to bring…')}
+                  onChangeText={(v) => setDescription(v.slice(0, DESCRIPTION_MAX))}
+                  placeholder={tx('What you will do, the level, what to bring, where to meet…')}
                   placeholderTextColor={t.c.textTertiary}
                   multiline
-                  maxLength={240}
+                  maxLength={DESCRIPTION_MAX}
                   style={[styles.desc, { color: t.c.text }]}
+                  accessibilityLabel={a11y('Description')}
                 />
                 </View>
+                {description.length > DESCRIPTION_MAX - 200 ? (
+                  <Text variant="caption" tone="tertiary" align="right">
+                    {description.length} / {DESCRIPTION_MAX}
+                  </Text>
+                ) : null}
               </Animated.View>
               <Animated.View entering={enter.rise(3)} style={[styles.summary, { boxShadow: t.shadow.card }]}>
                 <GlassLayer radius={radius.xl} />
                 <View style={[styles.dot, { backgroundColor: category.color, width: 12, height: 12, borderRadius: 6 }]} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="cardTitle" style={{ fontSize: 20, lineHeight: 24 }}>
-                    {title}
+                    {finalTitle || title}
                   </Text>
                   <Text variant="bodyS" tone="secondary">
                     {when ? whenText(when, city.utcOffset ?? 4, now) : tx('Time to pick')} · {place ?? (area ? areaName(city, area) : tx('Neighbourhood to pick'))} · {unlimited ? tx('Unlimited') : tx('{n} spots', { n: spots })} · {formatPrice(paid ? price : 0, city.currency)} · {PRIVACY.find((x) => x.id === privacy)?.label}
@@ -740,6 +892,23 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   );
 }
 
+/** One way to get the activity's photo: the IRLY library, the member's photos, or a surprise. */
+function PhotoOption({ icon, label, hint, disabled, onPress }: { icon: IconName; label: string; hint: string; disabled?: boolean; onPress: () => void }) {
+  const t = useTheme();
+  return (
+    <PressableScale haptic="select" scaleTo={0.95} disabled={disabled} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}. ${hint}`} style={[styles.photoOption, disabled ? { opacity: 0.45 } : null]}>
+      <GlassLayer radius={radius.lg} level="thin" />
+      <Icon name={icon} size={20} color={t.c.text} />
+      <Text variant="label" numberOfLines={1} adjustsFontSizeToFit>
+        {label}
+      </Text>
+      <Text variant="caption" tone="tertiary" numberOfLines={1}>
+        {hint}
+      </Text>
+    </PressableScale>
+  );
+}
+
 function CustomButton({ text, onPress }: { text: string; onPress: () => void }) {
   const t = useTheme();
   return (
@@ -756,7 +925,11 @@ function CustomButton({ text, onPress }: { text: string; onPress: () => void }) 
 const styles = StyleSheet.create({
   fieldHost: { borderRadius: radius.lg, overflow: 'hidden' },
   address: { height: 48, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 16 },
-  cover: { height: 170, borderRadius: radius.lg, overflow: 'hidden' },
+  cover: { height: 200, borderRadius: radius.lg, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: 'rgba(127,127,127,0.18)' },
+  coverScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.28)' },
+  coverText: { position: 'absolute', left: 14, right: 14, bottom: 52, gap: 2 },
+  photoRow: { flexDirection: 'row', gap: 8 },
+  photoOption: { flex: 1, minHeight: 84, borderRadius: radius.lg, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 6, paddingVertical: 10 },
   coverRemove: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   coverPill: { position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999 },
   quick: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.gutter - 4, marginTop: space[5] },
@@ -765,6 +938,7 @@ const styles = StyleSheet.create({
   tileLabel: { textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
   or: { paddingHorizontal: space.gutter, marginTop: space[6] },
   circle: { position: 'absolute' },
+  clip: { overflow: 'hidden' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.gutter, height: 44 },
   back: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
   title: { paddingHorizontal: space.gutter, marginTop: space[3], marginBottom: space[5] },

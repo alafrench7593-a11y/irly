@@ -1,14 +1,16 @@
-import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
+import { Tabs } from 'expo-router/js-tabs';
 import { TabBar } from '@/components/navigation/TabBar';
-import { Flavor } from '@/theme/flavor';
-import { useSpace } from '@/theme/space';
 import { useTheme } from '@/theme/useTheme';
 
+/**
+ * The same five tabs in IRLY and in IRLY Girl: the bar and every tab wear
+ * the look of the app space (the root layout sets the flavor).
+ */
 export default function TabsLayout() {
   const t = useTheme();
   return (
     <Tabs
-      tabBar={(props) => <SpaceTabBar {...props} />}
+      tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         headerShown: false,
         // Tabs slide a little and cross-fade (`shift`): you feel the direction.
@@ -26,20 +28,5 @@ export default function TabsLayout() {
       {/* Real-life plans: reached from Home and Discover, no longer a tab. */}
       <Tabs.Screen name="social" options={{ title: 'Plans', href: null }} />
     </Tabs>
-  );
-}
-
-/**
- * Over the Messages list opened from IRLY Girl, the bar wears the Girl look
- * like the list itself; on every other tab (and from Home) it stays Mixte.
- * Cosmetic only (see theme/space).
- */
-function SpaceTabBar(props: BottomTabBarProps) {
-  const space = useSpace();
-  const onMessages = props.state.routes[props.state.index]?.name === 'messages';
-  return (
-    <Flavor value={onMessages ? space : 'mixte'}>
-      <TabBar {...props} />
-    </Flavor>
   );
 }

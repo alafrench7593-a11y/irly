@@ -15,6 +15,10 @@ import { heroPhoto } from './HomeHero';
 const TRAVEL = 120;
 /** How far below the hero the shade keeps deepening. */
 const SHADE = 200;
+/** IRLY Girl ground (#FBF2F4, girlPalette.bg) as an rgb triplet for the veils. */
+const GIRL_BASE = '251,242,244';
+/** IRLY Girl light: rose poudré at the top, beige chaud through the middle, crème below. */
+const GIRL_WASH = ['rgba(244,200,214,0.42)', 'rgba(240,218,204,0.30)', 'rgba(251,242,244,0.22)'] as const;
 
 /**
  * The city behind the whole Home: fixed, cropped to cover, with a veil
@@ -29,7 +33,9 @@ const SHADE = 200;
 export const HomeBackdrop = memo(function HomeBackdrop({ city, now, scrollY, heroH }: { city: City; now: number; scrollY: SharedValue<number>; heroH: number }) {
   const t = useTheme();
   const night = t.mode === 'night';
-  const base = night ? '5,5,6' : '246,246,244';
+  const girl = t.flavor === 'girl';
+  // The veil is the page ground: IRLY Noir/Clair, or the warm rose-cream of IRLY Girl (never grey).
+  const base = night ? '5,5,6' : girl ? GIRL_BASE : '246,246,244';
   const reduced = useReducedMotion();
   const introDone = useIntro((s) => s.done);
   const settle = useSharedValue(reduced ? 1 : 0);
@@ -56,9 +62,11 @@ export const HomeBackdrop = memo(function HomeBackdrop({ city, now, scrollY, her
         <Photo visual={{ photo: key }} light={city.light} width={1400} style={StyleSheet.absoluteFill} recyclingKey={`backdrop-${city.id}`} />
         {film && !reduced ? <Film uri={film} /> : null}
       </Animated.View>
+      {/* IRLY Girl: a powder-rose and warm-beige light over the city, so the first screen reads rose poudré / crème. */}
+      {girl ? <LinearGradient colors={GIRL_WASH} locations={[0, 0.55, 1]} style={StyleSheet.absoluteFill} /> : null}
       {/* One shade from the top bar to below the hero (it carries the question), then an even veil: no seam. */}
       <LinearGradient
-        colors={[night ? 'rgba(0,0,0,0.5)' : 'rgba(246,246,244,0.6)', `rgba(${base},0)`, `rgba(${base},0.55)`, `rgba(${base},0.78)`]}
+        colors={[night ? 'rgba(0,0,0,0.5)' : `rgba(${base},0.6)`, `rgba(${base},0)`, `rgba(${base},0.55)`, `rgba(${base},0.78)`]}
         locations={[0, 0.2, heroH / (heroH + SHADE), 1]}
         style={[styles.shade, { height: heroH + SHADE }]}
       />

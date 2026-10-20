@@ -16,6 +16,7 @@ import { CITIES } from '@/data/destinations';
 import { useAccount } from '@/features/auth/account';
 import { createServerCommunity } from '@/features/server/activities';
 import { haptic } from '@/motion/haptics';
+import { useAppSpace } from '@/state/appSpace';
 import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -36,7 +37,10 @@ export default function NewCommunity() {
   const [tagline, setTagline] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<string | undefined>();
-  const [girlOnly, setGirlOnly] = useState(false);
+  // Created from IRLY Girl: always an IRLY Girl community (the server checks she may create one).
+  const inGirl = useAppSpace() === 'girl';
+  const [girlPick, setGirlOnly] = useState(false);
+  const girlOnly = inGirl || girlPick;
   const [busy, setBusy] = useState(false);
   // A second tap before the first one re-rendered must not send a second request.
   const sending = useRef(false);
@@ -116,16 +120,16 @@ export default function NewCommunity() {
             ))}
           </View>
         </View>
-        {woman ? (
+        {woman || inGirl ? (
           <Animated.View entering={enter.rise(1, 40)} style={styles.toggle}>
             <GlassLayer radius={radius.xl} />
             <View style={{ flex: 1 }}>
               <Text variant="titleS">IRLY Girl community</Text>
               <Text variant="bodyS" tone="secondary">
-                Only women can see and join it.
+                {inGirl ? 'Created in IRLY Girl: only women can see and join it.' : 'Only women can see and join it.'}
               </Text>
             </View>
-            <Switch value={girlOnly} onValueChange={setGirlOnly} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel={a11y('IRLY Girl community')} />
+            <Switch value={girlOnly} disabled={inGirl} onValueChange={setGirlOnly} trackColor={{ true: t.c.brand, false: t.c.overlay }} thumbColor="#FFFFFF" accessibilityLabel={a11y('IRLY Girl community')} />
           </Animated.View>
         ) : null}
         <Button label="Create community" icon="users" full loading={busy} disabled={!valid} onPress={create} />

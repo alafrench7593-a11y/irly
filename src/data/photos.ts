@@ -281,30 +281,91 @@ const sized = (template: string, px: number) => template.replace('{w}', String(t
 /**
  * Never the same picture twice: each thing shown with a key (an activity, a
  * community, a card) gets its own photo of that subject. With a seed (the
- * thing's id) the choice is stable everywhere it appears; without one, each
+ * thing's id) the choice is a hash of the id: the same activity shows the
+ * same photo on every screen, after a restart and on every phone, and
+ * different activities spread over the subject's photos. Without one, each
  * new place showing the key takes the next photo.
  */
-const bySeed = new Map<string, number>();
 const next = new Map<string, number>();
 /** One thing, one seed: a list card ("srv-<id>"), its page ("a-<id>") and its thumb ("<id>-thumb") share the photo. */
 const seedOf = (seed: string) => seed.replace(/^(srv|act|a|c)-/, '').replace(/-thumb$/, '');
+/** FNV-1a then a final mix (murmur3 fmix32): close ids ("srv-1", "srv-2") land far apart. */
+function hash(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return (h ^ (h >>> 16)) >>> 0;
+}
 function pick(key: string, count: number, seed?: string): number {
   if (count <= 1) return 0;
-  const id = seed ? `${key}|${seedOf(seed)}` : undefined;
-  if (id && bySeed.has(id)) return bySeed.get(id)!;
+  if (seed) return hash(`${key}|${seedOf(seed)}`) % count;
   const n = next.get(key) ?? 0;
   next.set(key, n + 1);
-  if (id) bySeed.set(id, n % count);
   return n % count;
 }
 
 /** Keys whose first picture is the same file as another key's (jbr = surf, roadtrip = hikeDesert, meeting = founders): only their own variants are shown. */
 const SHARED_PRIMARY = new Set<string>(['jbr', 'roadtrip', 'meeting']);
 
-/** With `pinned`, always the key's first picture: for Dubai keys, the photo taken in Dubai (variants may be from anywhere). */
-export function photo(key: PhotoKey, width = 900, seed?: string, pinned = false): string {
+/**
+ * IRLY's own photos of a mixed group or of women ("footballMix", "padelGirl")
+ * are one picture each: the most common activities would all wear it. They
+ * also take the photos of the same subject (the plain key's variants), so a
+ * football game shows IRLY's photo or one of the football photos. In IRLY
+ * Girl, a key of women keeps IRLY's photo of women (no mixed stock photos).
+ */
+const COUNTERPART: Partial<Record<string, string>> = {
+  footballMix: 'football',
+  gymMix: 'gym',
+  dinnerMix: 'dinner',
+  beachMix: 'beachClub',
+  buggyMix: 'dunes',
+  waterParkMix: 'waterPark',
+  foodMix: 'dinnerGroup',
+  meetingMix: 'meeting',
+  vrMix: 'vr',
+  wadiMix: 'hikeDesert',
+  runMix: 'running',
+  danceMix: 'dance',
+  swimMix: 'swimming',
+  tennisMix: 'tennis',
+  padelGirl: 'padel',
+  tennisGirl: 'tennis',
+  gymGirl: 'gym',
+  runGirl: 'running',
+  brunchGirl: 'brunch',
+  yachtGirl: 'yacht',
+  golfGirl: 'golf',
+  spaGirl: 'spa',
+  desertGirl: 'dunes',
+  quadGirl: 'dunes',
+  pilatesGirl: 'yoga',
+  restaurantGirl: 'dinner',
+  beachClubGirl: 'beachClub',
+  drinksGirl: 'coffeeBar',
+  networkingGirl: 'meeting',
+  bikeGirl: 'cycling',
+  mosqueGirl: 'mosque',
+  readingGirl: 'girlBookClub',
+};
+
+/** The other pictures of a key (its own variants, else its plain counterpart's), each once. */
+export function variantsOf(key: string, girl = false): readonly string[] {
+  const own = VARIANTS[key];
+  if (own?.length) return own;
+  const plain = COUNTERPART[key];
+  if (!plain || (girl && key.endsWith('Girl'))) return [];
+  return VARIANTS[plain] ?? [];
+}
+
+/**
+ * With `pinned`, always the key's first picture: for Dubai keys, the photo taken in Dubai (variants may be from anywhere).
+ * `girl`: shown in IRLY Girl, where a key of women keeps its own photo.
+ */
+export function photo(key: PhotoKey, width = 900, seed?: string, pinned = false, girl = false): string {
   const px = pixels(width);
-  const variants = VARIANTS[key] ?? [];
+  const variants = variantsOf(key, girl);
   if (pinned && !SHARED_PRIMARY.has(key)) return primary(key, px);
   if (SHARED_PRIMARY.has(key) && variants.length) return sized(variants[pick(key, variants.length, seed)], px);
   const i = pick(key, variants.length + 1, seed);

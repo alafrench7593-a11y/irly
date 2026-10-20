@@ -12,7 +12,11 @@ import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import type { MyPlan } from '@/state/store';
 import { cleanImage } from '@/lib/media';
+import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
+import { lastLibraryPhoto, rememberLibraryPhoto } from '@/features/create/lastPhoto';
+import { libraryFor, libraryKindOf, surprise } from '@/features/create/photoLibrary';
 import { askPushInContext } from '@/features/push/push';
+import { useAppSpace } from '@/state/appSpace';
 
 /**
  * Activities on the server (signed in). Creating a session in the app also
@@ -38,6 +42,8 @@ export type ActivityExtras = {
   coverUri?: string | null;
   /** A photo already uploaded while the form was filled (covers.stageCover): the caller owns and cleans it up. */
   coverPath?: string | null;
+  /** A photo of the IRLY library (its link, see features/create/photoLibrary), saved as the activity's photo when it has none of its own. */
+  libraryCover?: string | null;
   address?: string | null;
   /** When it ends (optional): after the start, as the server's check requires. */
   endsAt?: Date | null;
@@ -101,11 +107,16 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
     const up = await supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType });
     if (up.error) throw new Error('Could not upload the photo');
   }
+  // No photo given at all (the assistant, a Live, a quick plan): one of the IRLY library for its type,
+  // drawn at random. `libraryCover: null` is « no photo » on purpose: nothing is drawn then.
+  const drawn = !coverPath && extras.libraryCover === undefined ? drawCover(plan, Boolean(extras.girlOnly || extras.audience === 'girls' || extras.audience === 'moms')) : null;
+  const libraryCover = extras.libraryCover ?? drawn?.url ?? null;
   const { data, error } = await supabase
     .from('activities')
     .insert({
       creator_id: uid,
-      cover_path: coverPath,
+      // The member's own photo, else the library photo she chose (the server only accepts IRLY library links).
+      cover_path: coverPath ?? libraryCover,
       ...activityColumns(plan, at),
       ends_at: extras.endsAt ? extras.endsAt.toISOString() : null,
       place_id: extras.placeId ?? null,
@@ -135,10 +146,24 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   if (error) throw new Error(error.message);
   if (!data) throw new Error('Could not create');
   const row = data as unknown as InsertedRow;
-  prime(row, extras.coverUri ?? null);
+  prime(row, extras.coverUri ?? (coverPath ? null : libraryCover));
+  if (drawn) rememberLibraryPhoto(drawn.kind, drawn.url);
   // Its chat is new too.
   changed('activities', 'inbox');
   return row.id;
+}
+
+/**
+ * A library photo for a plan that came without one: its type read from its
+ * words (as the form does), drawn uniformly at random, never the photo last
+ * used for that type on this phone. Women-only plans skip photos of mixed groups.
+ */
+function drawCover(plan: Omit<MyPlan, 'id' | 'createdAt'>, girl: boolean): { kind: string; url: string } | null {
+  const id = activityColumns(plan).category_id;
+  const categoryId = (id in CATEGORY_BY_ID ? id : 'entertainment') as CategoryKey;
+  const kind = libraryKindOf(categoryId, plan.title ?? '', plan.place);
+  const url = surprise(libraryFor(kind, { girl }), [lastLibraryPhoto(kind)]);
+  return url ? { kind, url } : null;
 }
 
 /**
@@ -266,7 +291,10 @@ export function useServerActivities(
   cityId: CityId,
   only: { categoryId?: string; girlOnly?: boolean } = {},
 ): { activities: ServerActivity[]; refresh: () => void; loading: boolean; error: string | null } {
-  const { categoryId, girlOnly } = only;
+  const { categoryId } = only;
+  // In IRLY Girl every list shows IRLY Girl sessions (the server returns them to eligible women only).
+  const space = useAppSpace();
+  const girlOnly = Boolean(only.girlOnly) || space === 'girl';
   const account = useAccount();
   const uid = account?.userId;
   const [activities, setActivities] = useState<ServerActivity[]>([]);
@@ -587,7 +615,7 @@ export async function cancelServerActivity(activityId: string): Promise<void> {
 }
 
 /** The host edits a plan: every screen showing it (lists, map, calendar, chat) gets the new version. */
-export async function updateServerActivity(activityId: string, patch: { title?: string; description?: string | null; placeName?: string | null; areaId?: string; startsAt?: Date; endsAt?: Date | null; priceMinor?: number; capacity?: number | null }): Promise<void> {
+export async function updateServerActivity(activityId: string, patch: { title?: string; description?: string | null; placeName?: string | null; areaId?: string; startsAt?: Date; endsAt?: Date | null; priceMinor?: number; capacity?: number | null; /** An IRLY library photo link, or null for the app's photo. */ libraryCover?: string | null }): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const row: Record<string, unknown> = {};
   if (patch.title !== undefined) row.title = patch.title.trim().slice(0, 80);
@@ -598,6 +626,7 @@ export async function updateServerActivity(activityId: string, patch: { title?: 
   if (patch.endsAt !== undefined) row.ends_at = patch.endsAt ? patch.endsAt.toISOString() : null;
   if (patch.priceMinor !== undefined) row.price_minor = patch.priceMinor;
   if (patch.capacity !== undefined) row.capacity = patch.capacity;
+  if (patch.libraryCover !== undefined) row.cover_path = patch.libraryCover;
   const { error } = await supabase.from('activities').update(row).eq('id', activityId);
   if (error) throw new Error(error.message);
   changed('activities', 'inbox');
@@ -700,12 +729,18 @@ export function useRecommendations(cityId: string): Recommendation[] {
   const version = useSyncVersion('activities');
   const account = useAccount();
   const uid = account?.userId;
+  // In the IRLY Girl space: women-only plans only (recommend_activities_girl, checked by the server).
+  const girlSpace = useAppSpace() === 'girl';
   const [list, setList] = useState<Recommendation[]>([]);
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    supabase.rpc('recommend_activities', { p_city: cityId, p_limit: 12 }).then(({ data, error }) => {
-      if (error) return;
+    supabase.rpc(girlSpace ? 'recommend_activities_girl' : 'recommend_activities', { p_city: cityId, p_limit: 12 }).then(({ data, error }) => {
+      // Refused or not on this server yet: nothing rather than the other space's picks.
+      if (error) {
+        if (alive) setList([]);
+        return;
+      }
       if (!alive) return;
       setList(
         ((data as Record<string, string | number>[]) ?? []).map((r) => ({
@@ -725,7 +760,7 @@ export function useRecommendations(cityId: string): Recommendation[] {
     return () => {
       alive = false;
     };
-  }, [cityId, uid, version]);
+  }, [cityId, uid, version, girlSpace]);
   const { keep } = useCityFilter(cityId as CityId);
   const shown = useMemo(() => list.filter((r) => keep(r.cityId)), [list, keep]);
   return uid ? shown : NONE;

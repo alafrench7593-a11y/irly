@@ -10,6 +10,7 @@ import { CITIES } from '@/data/destinations';
 import { LANGUAGES } from '@/data/languages';
 import { AppearanceChoice } from '@/features/avatar/AvatarBuilder';
 import { StepShell } from '@/features/onboarding/StepShell';
+import { profileStepDone } from '@/features/auth/signup';
 import { enter } from '@/motion/enter';
 import { useCityId, useStore, type Gender } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
@@ -36,13 +37,7 @@ export default function ProfileStep() {
   const languages = profile.languages ?? [];
   const bio = profile.bio ?? '';
 
-  const ok =
-    Boolean(profile.photoUri) &&
-    (profile.age ?? 0) >= 18 &&
-    bio.trim().length >= 10 &&
-    Boolean(profile.country?.trim()) &&
-    languages.length > 0 &&
-    Boolean(profile.gender);
+  const ok = profileStepDone(profile);
 
   return (
     <StepShell
@@ -125,6 +120,9 @@ export default function ProfileStep() {
         </View>
         <Text variant="caption" tone="tertiary">
           Women get access to IRLY Girl, a space reserved for women.
+        </Text>
+        <Text variant="caption" tone="tertiary">
+          This cannot be changed after sign-up.
         </Text>
       </Animated.View>
     </StepShell>

@@ -116,6 +116,40 @@ export function usePhotoLink(path: string | null | undefined): string | null {
   return path && link?.path === path ? link.url : null;
 }
 
+/** An activity's picture in a list: its saved photo (signed link) or the app's photo of its subject. */
+export type ActivityThumb = { photo: PhotoKey; uri: string | null };
+
+/**
+ * The pictures of activities a list only knows by id (search results, a
+ * community's activities): one request for all, the same photo as on the
+ * activity's page (same key; give the Photo the recyclingKey `srv-<id>`).
+ */
+export function useActivityThumbs(ids: string[]): Record<string, ActivityThumb> {
+  const [thumbs, setThumbs] = useState<{ list: string; map: Record<string, ActivityThumb> }>({ list: '', map: {} });
+  const v = useSyncVersion('activities');
+  const list = [...new Set(ids)].sort().join(',');
+  useEffect(() => {
+    if (!supabase || !list) return;
+    const sb = supabase;
+    let alive = true;
+    (async () => {
+      const { data } = await sb.from('activities').select('id, title, category_id, sub_id, place_name, cover_path').in('id', list.split(','));
+      const rows = (data ?? []) as { id: string; title: string; category_id: string; sub_id: string | null; place_name: string | null; cover_path: string | null }[];
+      const links = await coverLinks(rows.map((r) => r.cover_path));
+      const map: Record<string, ActivityThumb> = {};
+      for (const r of rows) {
+        const cat = (CATEGORY_BY_ID[r.category_id as CategoryKey] ? r.category_id : 'sport') as CategoryKey;
+        map[r.id] = { photo: ideaPhoto(cat, r.title, r.place_name ?? undefined, r.sub_id), uri: r.cover_path ? (links[r.cover_path] ?? null) : null };
+      }
+      if (alive) setThumbs({ list, map });
+    })().catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [list, v]);
+  return thumbs.map;
+}
+
 /**
  * A community's own photo path, for lists that only know its id. All the
  * thumbnails shown at the same moment are asked for in one request; the

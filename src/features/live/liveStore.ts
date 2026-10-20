@@ -3,6 +3,9 @@ import { create } from 'zustand';
 import type { PhotoKey } from '@/data/photos';
 import { useNow } from '@/lib/useNow';
 import { getCityContent } from '@/data/repo';
+import { GIRL_PEOPLE } from '@/data/content/girls';
+import { DEMO } from '@/config/app';
+import { useAppSpace } from '@/state/appSpace';
 import type { CityId } from '@/data/types';
 import { useCityId } from '@/state/store';
 
@@ -38,9 +41,11 @@ const TEMPLATES: { text: string; photo?: PhotoKey; place: string }[] = [
   { text: 'Rooftop drinks after work?', photo: 'rooftop', place: 'the rooftop' },
 ];
 
-function demo(cityId: CityId, now: number): Live[] {
-  const content = getCityContent(cityId);
-  return content.people.slice(0, TEMPLATES.length).map((p, i) => ({
+function demo(cityId: CityId, now: number, girl: boolean): Live[] {
+  // IRLY Girl space: women only. The example women in the demo build; none
+  // otherwise (the city's example members do not say who is a woman).
+  const people = girl ? (DEMO ? [...GIRL_PEOPLE.values()].filter((p) => p.cityId === cityId) : []) : getCityContent(cityId).people;
+  return people.slice(0, TEMPLATES.length).map((p, i) => ({
     id: `live-${cityId}-${p.id}`,
     cityId,
     authorId: p.id,
@@ -72,11 +77,12 @@ export function useLives(): Live[] {
   const cityId = useCityId();
   const mine = useLiveStore((s) => s.mine);
   const now = useNow();
+  const girl = useAppSpace() === 'girl';
   return useMemo(() => {
-    return [...mine.filter((m) => m.cityId === cityId), ...demo(cityId, started)]
+    return [...mine.filter((m) => m.cityId === cityId), ...demo(cityId, started, girl)]
       .filter((l) => now - l.postedAt < LIVE_TTL_MIN * 60_000)
       .sort((a, b) => b.postedAt - a.postedAt);
-  }, [mine, cityId, now]);
+  }, [mine, cityId, now, girl]);
 }
 
 export function useLiveCount(): number {

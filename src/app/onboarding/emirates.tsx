@@ -13,6 +13,7 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { citiesOf, DESTINATIONS } from '@/data/destinations';
 import type { City } from '@/data/types';
+import { SIGNUP_ROUTES, signupStep } from '@/features/auth/signup';
 import { useExpand } from '@/features/onboarding/useExpand';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
@@ -41,7 +42,8 @@ export default function ChooseEmirate() {
   const pick = (city: City, ref: RefObject<View | null>) => {
     haptic('press');
     setDestination('emirates', city.id);
-    expand(ref, { photo: city.photo }, city.light, () => router.push('/onboarding/you'));
+    // A sign-up left halfway continues at its first unanswered step (Back reaches the others).
+    expand(ref, { photo: city.photo }, city.light, () => router.push(SIGNUP_ROUTES[signupStep(useStore.getState().profile)] as never));
   };
 
   return (

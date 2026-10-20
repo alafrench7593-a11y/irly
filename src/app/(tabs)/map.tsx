@@ -265,7 +265,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
       {/* Fog at the horizon: in 3D the far edge of the map dissolves into black. */}
       <Animated.View style={[styles.fog, fogStyle]} pointerEvents="none">
         <LinearGradient
-          colors={t.mode === 'night' ? ['#050506', 'rgba(5,5,6,0.85)', 'rgba(5,5,6,0)'] : ['#F6F6F4', 'rgba(246,246,244,0.85)', 'rgba(246,246,244,0)']}
+          colors={[t.c.bg, `${t.c.bg}D9`, `${t.c.bg}00`]}
           locations={[0, 0.45, 1]}
           style={StyleSheet.absoluteFill}
         />
@@ -330,6 +330,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
 
 /** Honest about what the 3D button shows without Google's 3D tiles. */
 function TiltNote() {
+  const t = useTheme();
   const [shown, setShown] = useState(true);
   useEffect(() => {
     const id = setTimeout(() => setShown(false), 3200);
@@ -339,7 +340,7 @@ function TiltNote() {
   return (
     <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.normal)} style={styles.noteWrap} pointerEvents="none">
       <Glass style={styles.note} intensity={blur.medium}>
-        <Icon name="orbit3d" size={14} color="#FFFFFF" />
+        <Icon name="orbit3d" size={14} color={t.c.text} />
         <Text variant="caption">Tilted view · photorealistic 3D arrives with Google Maps</Text>
       </Glass>
     </Animated.View>

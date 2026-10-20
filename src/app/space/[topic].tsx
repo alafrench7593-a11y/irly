@@ -30,8 +30,8 @@ type Space = { title: string; line: string; womenOnly: boolean; rules: { icon: I
 
 const SPACES: Record<SpaceId, Space> = {
   moms: {
-    title: 'IRLY Mom',
-    line: 'Mums meeting mums in the city: coffees, playdates, advice and recommendations.',
+    title: 'IRLY Moms',
+    line: 'Moms meeting moms in the city: coffees, playdates, advice and recommendations.',
     womenOnly: true,
     help: 'schools',
     rules: [
@@ -54,7 +54,7 @@ const SPACES: Record<SpaceId, Space> = {
     ],
   },
   girls: {
-    title: 'IRLY Only Girls',
+    title: 'IRLY Girl',
     line: 'Women meeting women: brunches, padel, wellness, nights out, trips and a network that helps.',
     womenOnly: true,
     rules: [
