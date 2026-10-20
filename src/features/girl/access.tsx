@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -16,6 +16,7 @@ import { GButton } from './ui';
 import { enter } from '@/motion/enter';
 import Animated from 'react-native-reanimated';
 import { Ambient } from '@/components/visual/Ambient';
+import { GirlLoader } from './GirlMark';
 
 /**
  * Who may enter IRLY Girl (and IRLY Moms, which lives inside it), as seen
@@ -120,13 +121,7 @@ export function GirlLoading({ label = 'Opening your space…' }: { label?: strin
   return (
     <View style={[styles.root, styles.center, { gap: 14, padding: space.gutter }]} accessibilityLabel={tx('Loading')}>
       <Ambient variant="hero" />
-      <ActivityIndicator color={girl.rose} />
-      <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
-        IRLY Girl
-      </Text>
-      <Text variant="body" color={girl.inkSoft} align="center">
-        {label}
-      </Text>
+      <GirlLoader label={label} />
     </View>
   );
 }

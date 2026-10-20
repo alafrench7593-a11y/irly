@@ -25,6 +25,7 @@ import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { enter } from '@/motion/enter';
+import { SpaceFlavor } from '@/theme/space';
 
 type Tab = 'foryou' | 'all' | 'mine';
 
@@ -57,7 +58,16 @@ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
  * belong to, created or joined, with Leave. Everything comes from the server
  * and reloads on any join or leave, here or on another phone.
  */
-export default function Communities() {
+export default function CommunitiesRoute() {
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <Communities />
+    </SpaceFlavor>
+  );
+}
+
+function Communities() {
   const cityId = useCityId();
   const city = CITIES[cityId];
   const router = useRouter();

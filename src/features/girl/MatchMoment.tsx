@@ -192,6 +192,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
                     </View>
                   </PressableScale>
                   <PressableScale haptic="select" scaleTo={0.96} onPress={() => onFindExisting(s)} accessibilityLabel={tx('Find activities: {what}', { what: tx(s.label) })} style={styles.findBtn}>
+                    <GlassLayer radius={16} level="thin" />
                     <Text variant="caption" color={girl.ink}>
                       Find existing
                     </Text>
@@ -214,10 +215,10 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
 
 const styles = StyleSheet.create({
   stage: { height: CARD_H + 40, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
-  halo: { position: 'absolute', width: 260, height: 260, borderRadius: 130, backgroundColor: girl.blush },
-  photoCard: { width: CARD_W, height: CARD_H, borderRadius: 26, overflow: 'hidden', borderWidth: 4, borderColor: '#FFFFFF', boxShadow: girl.shadow, backgroundColor: girl.cream },
+  halo: { position: 'absolute', width: 260, height: 260, borderRadius: 130, backgroundColor: girl.powder, boxShadow: '0px 0px 80px rgba(232,76,140,0.35)' },
+  photoCard: { width: CARD_W, height: CARD_H, borderRadius: 26, overflow: 'hidden', borderWidth: 4, borderColor: girl.pearl, boxShadow: girl.shadow, backgroundColor: girl.blush },
   center: { alignItems: 'center', justifyContent: 'center' },
-  mark: { position: 'absolute', width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },
+  mark: { position: 'absolute', width: 64, height: 64, borderRadius: 32, backgroundColor: girl.pearl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center', boxShadow: girl.glow },
   texts: { paddingHorizontal: space.gutter, gap: 6 },
   why: { marginHorizontal: space.gutter, padding: 18, gap: 8, borderRadius: radius.xxl, boxShadow: girl.shadowSoft },
   whyHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -225,6 +226,6 @@ const styles = StyleSheet.create({
   suggestion: { width: 150, gap: 6 },
   suggestionPhoto: { height: 170, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end' },
   suggestionText: { padding: 12, gap: 6 },
-  findBtn: { height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: girl.cream },
+  findBtn: { height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   later: { alignSelf: 'center', padding: 12 },
 });

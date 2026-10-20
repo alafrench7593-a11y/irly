@@ -4,7 +4,7 @@ import type { CityId } from '@/data/types';
 import { useStore } from '@/state/store';
 import { lights, type Light, type LightId } from './lights';
 import { useFlavor, type FlavorId } from './flavor';
-import { elevation, girlPalette, palettes, type Mode, type Palette } from './tokens';
+import { elevation, girlElevation, girlPalette, palettes, type Mode, type Palette } from './tokens';
 
 export type Theme = {
   mode: Mode;
@@ -28,18 +28,12 @@ export function resolveMode(appearance: 'auto' | 'day' | 'night', cityId: CityId
   return appearance === 'day' ? 'day' : 'night';
 }
 
-const girlShadows = {
-  card: '0px 10px 28px rgba(201, 47, 114, 0.10)',
-  float: '0px 22px 54px rgba(201, 47, 114, 0.18)',
-  glow: '0px 10px 30px rgba(214, 53, 121, 0.32)',
-};
-
 export function buildTheme(mode: Mode, lightId: LightId, flavor: FlavorId = 'mixte'): Theme {
   if (flavor === 'girl') {
     const rose = girlPalette.brand;
     const light: Light = { ...lights[lightId], accent: rose, accentDay: rose, accentSoft: girlPalette.brandSoft };
     // IRLY Girl stays light whatever the appearance setting: its identity is the rose-white ground.
-    return { mode: 'day', c: girlPalette, light, accent: rose, shadow: girlShadows, isDay: true, flavor };
+    return { mode: 'day', c: girlPalette, light, accent: rose, shadow: girlElevation, isDay: true, flavor };
   }
   // The destination keeps its sky (onboarding, portal transition) but no
   // longer tints the interface: accents are white, colour is reserved for

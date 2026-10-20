@@ -23,10 +23,10 @@ import { FiltersSheet, ProfileSheet, SafetySheet } from '@/features/girl/Sheets'
 import type { Suggestion } from '@/features/girl/suggest';
 import { girl, GIRL_TINT, girlType } from '@/features/girl/theme';
 import type { Candidate, Filters, MatchResult, MatchState, MatchSummary, Section } from '@/features/girl/types';
-import { GButton, GlassFill } from '@/features/girl/ui';
+import { GButton, GIconWell, GlassFill } from '@/features/girl/ui';
 import { GirlBackdrop, GirlHero } from '@/features/girl/GirlHero';
 import { GirlMessages } from '@/features/girl/GirlMessages';
-import { useUnread } from '@/components/navigation/Headers';
+import { useBell, useUnread } from '@/components/navigation/Headers';
 import { usePhotoLink } from '@/features/server/covers';
 import { girlCommunityPhoto } from '@/features/girl/photos';
 import { ScrollReveal } from '@/motion/ScrollReveal';
@@ -48,6 +48,7 @@ import { radius, space } from '@/theme/tokens';
 import { Flavor } from '@/theme/flavor';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { enter } from '@/motion/enter';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // The demonstration build reads the example communities and plans, never the server.
 const useGirlCommunities = DEMO ? useDemoCommunitiesLike : useCommunitiesLike;
@@ -101,6 +102,7 @@ function GirlHomeInner() {
   const [mode, setMode] = useState<'all' | 'moms'>(params.mode === 'moms' ? 'moms' : 'all');
   const serverCommunities = useGirlCommunities(cityId, '', true);
   const unread = useUnread();
+  const bell = useBell();
   // Plans created in IRLY Girl (girls and moms): they show up right here.
   const { activities: girlPlans, loading: plansLoading, error: plansError, refresh: refreshPlans } = useGirlPlans(cityId, { girlOnly: true });
   const [kind, setKind] = useState<string | null>(null);
@@ -329,7 +331,7 @@ function GirlHomeInner() {
     <View style={styles.root}>
       <GirlBackdrop mode={mode} scrollY={scrollY} width={frame.width || window.width} />
       <Animated.ScrollView ref={scrollRef} onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-        <GirlHero mode={mode} scrollY={scrollY} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} onMessages={() => router.push('/messages')} unread={unread} />
+        <GirlHero mode={mode} scrollY={scrollY} onBack={() => safeBack(router, '/')} onProfile={() => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile')} onMessages={() => router.push('/messages')} onNotifications={() => router.push('/notifications')} unread={unread} bell={bell} />
 
 
         {FEATURES.girlMatch && matches.length ? (
@@ -353,8 +355,12 @@ function GirlHomeInner() {
         ) : null}
 
         <View style={styles.modes} onLayout={(e) => setModesW(e.nativeEvent.layout.width)}>
-          <GlassFill level="thick" radius={26} />
-          <Animated.View style={[styles.modeThumb, { width: (modesW - 8) / 2 }, thumb]} />
+          <GlassFill variant="bar" radius={26} />
+          {/* The chosen side is a bead of plum glass that slides and stretches; pearl label on it. */}
+          <Animated.View style={[styles.modeThumb, { width: (modesW - 8) / 2 }, thumb]}>
+            <LinearGradient colors={girl.plumGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: 22 }]} />
+            <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.thumbRim]} />
+          </Animated.View>
           {(['all', 'moms'] as const).map((m) => (
             <PressableScale
               key={m}
@@ -366,8 +372,8 @@ function GirlHomeInner() {
               accessibilityState={{ selected: mode === m }}
               accessibilityLabel={m === 'all' ? 'All girls' : 'Moms'}
             >
-              <Icon name={m === 'all' ? 'heart' : 'baby'} size={14} color={mode === m ? '#FFFFFF' : girl.ink} />
-              <Text variant="label" color={mode === m ? '#FFFFFF' : girl.ink}>
+              <Icon name={m === 'all' ? 'heart' : 'baby'} size={14} color={mode === m ? '#F4B3CF' : girl.ink} />
+              <Text variant="label" color={mode === m ? girl.pearl : girl.ink}>
                 {m === 'all' ? 'All girls' : 'Moms'}
               </Text>
             </PressableScale>
@@ -391,6 +397,15 @@ function GirlHomeInner() {
                 ]
           }
         />
+        {/* Her own pages, one tap away: agenda, alerts and settings, in the same glass tiles. */}
+        <Shortcuts
+          items={[
+            { icon: 'calendar', label: 'Calendar', onPress: () => router.push('/calendar') },
+            { icon: 'bell', label: 'Notifications', onPress: () => router.push('/notifications') },
+            { icon: 'user', label: 'Profile', onPress: () => router.push(FEATURES.girlMatch ? '/girl/profile' : '/edit-profile') },
+            { icon: 'settings', label: 'Settings', onPress: () => router.push('/preferences') },
+          ]}
+        />
 
         {mode === 'moms' ? (
           <View onLayout={(e) => record('momsBase', e)}>
@@ -401,7 +416,7 @@ function GirlHomeInner() {
         {cityId === 'bali' ? (
           <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push('/girl/moving')} style={styles.moving} accessibilityLabel="Girls moving to Bali">
             <GlassLayer radius={radius.xl} />
-            <Icon name="plane" size={20} color={girl.rose} />
+            <GIconWell icon="plane" size={40} />
             <View style={{ flex: 1 }}>
               <Text variant="titleS" color={girl.ink}>
                 Girls moving to Bali
@@ -428,11 +443,11 @@ function GirlHomeInner() {
                 onPress={() => applyFilters({ ...filters, section: s.id })}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: on }}
-                style={[styles.section, { backgroundColor: on ? girl.rose : 'transparent' }]}
+                style={[styles.section, { backgroundColor: on ? girl.plum : 'transparent' }]}
               >
                 {on ? null : <GlassLayer radius={radius.pill} level="thin" />}
-                <Icon name={s.icon} size={14} color={on ? '#FFFFFF' : girl.ink} />
-                <Text variant="label" color={on ? '#FFFFFF' : girl.ink}>
+                <Icon name={s.icon} size={14} color={on ? '#F4B3CF' : girl.ink} />
+                <Text variant="label" color={on ? girl.pearl : girl.ink}>
                   {s.id === 'new' ? tr('New in {city}', { city: city.name }) : s.label(city.name)}
                 </Text>
               </PressableScale>
@@ -475,7 +490,7 @@ function GirlHomeInner() {
           ) : deckError ? (
             <Animated.View entering={enter.rise(0)} style={[styles.empty, { width, height }]}>
               <GlassLayer radius={32} />
-              <Icon name="globe" size={24} color={girl.ink} />
+              <GIconWell icon="globe" tone="error" />
               <Text variant="titleS" color={girl.ink} align="center">
                 {/verify your profile/i.test(deckError) ? tx('Verify your profile to use Match: 3 photos of you and a selfie reviewed by IRLY.') : deckError}
               </Text>
@@ -488,7 +503,7 @@ function GirlHomeInner() {
           ) : (
             <Animated.View entering={enter.rise(0)} style={[styles.empty, { width, height }]}>
               <GlassLayer radius={32} />
-              <Icon name="sparkles" size={26} color={girl.rose} />
+              <GIconWell icon="sparkles" />
               <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
                 {filters.section === 'saved' ? 'Nobody saved yet' : "You've seen everyone here for now"}
               </Text>
@@ -512,18 +527,19 @@ function GirlHomeInner() {
           </>
         ) : (
           // IRLY Match is coming soon: meanwhile, plans and communities.
-          <Animated.View entering={enter.rise(1)} style={styles.soon}>
-            <GlassLayer radius={radius.xl} />
+          // A plum glass panel: the one dark moment of the page, pearl type, a rose action.
+          <Animated.View entering={reduced ? undefined : enter.rise(1)} style={styles.soon}>
+            <GlassLayer radius={radius.xl} variant="plum" />
             <View style={styles.soonBadge}>
-              <Icon name="sparkles" size={14} color="#FFFFFF" />
-              <Text variant="label" color="#FFFFFF">
+              <Icon name="sparkles" size={13} color="#F4B3CF" />
+              <Text variant="overline" color={girl.pearl}>
                 Coming soon
               </Text>
             </View>
-            <Text variant="titleM" color={girl.ink} align="center" style={girlType.section}>
-              IRLY Match
+            <Text variant="titleM" color={girl.pearl} align="center" style={[girlType.section, { fontSize: 34, lineHeight: 38 }]}>
+              IRLY <Text variant="titleM" color="#F4B3CF" style={[girlType.section, girlType.accent, { fontSize: 34, lineHeight: 38 }]}>Match</Text>
             </Text>
-            <Text variant="bodyS" color={girl.inkSoft} align="center">
+            <Text variant="bodyS" color="rgba(255,240,247,0.80)" align="center">
               Meet women who share your interests in {city.name}, matched on what you love. Until then, plan something with girls below.
             </Text>
             <GButton label="Plan something" icon="plus" onPress={() => goTo('plan')} />
@@ -579,7 +595,7 @@ function GirlHomeInner() {
             {!serverCommunities.data.length && serverCommunities.error && !serverCommunities.loading ? (
               <View style={[styles.community, styles.newCommunity, { borderStyle: 'solid' }]}>
                 <GlassLayer radius={radius.xl} />
-                <Icon name="globe" size={20} color={girl.ink} />
+                <GIconWell icon="globe" tone="error" size={36} />
                 <Text variant="bodyS" color={girl.inkSoft}>
                   Communities could not load.
                 </Text>
@@ -591,10 +607,8 @@ function GirlHomeInner() {
             ))}
             <PressableScale haptic="select" scaleTo={0.96} onPress={() => router.push('/girl/new-community')} style={[styles.community, styles.newCommunity]} accessibilityLabel="Create a community">
               <GlassLayer radius={radius.xl} />
-              <View style={styles.communityBadge}>
-                <Icon name="plus" size={16} color={girl.rose} />
-              </View>
-              <Text variant="titleS" color={girl.ink}>
+              <GIconWell icon="plus" size={36} />
+              <Text variant="titleS" color={girl.ink} style={{ marginTop: 'auto' }}>
                 {serverCommunities.data.length || serverCommunities.loading || serverCommunities.error ? 'Create a community' : 'Start the first community'}
               </Text>
               <Text variant="caption" color={girl.inkSoft}>
@@ -682,7 +696,9 @@ function GirlHomeInner() {
         }}
         onFindExisting={(s: Suggestion) => {
           setMoment(null);
-          router.push(s.preset.categoryId ? `/category/${s.preset.categoryId}` : '/discover');
+          // Without a category, the plans of IRLY Girl right here (Discover is the Mixte tab).
+          if (s.preset.categoryId) router.push(`/category/${s.preset.categoryId}`);
+          else goTo('plans');
         }}
       />
 
@@ -691,6 +707,7 @@ function GirlHomeInner() {
   );
 }
 
+/** Deck actions: the rose lacquer for « Connect », plum when saved, pearl glass for the rest. */
 function ActionButton({ icon, label, onPress, big, small, active }: { icon: IconName; label: string; onPress: () => void; big?: boolean; small?: boolean; active?: boolean }) {
   const size = big ? 68 : small ? 46 : 56;
   return (
@@ -699,13 +716,18 @@ function ActionButton({ icon, label, onPress, big, small, active }: { icon: Icon
       scaleTo={0.88}
       onPress={onPress}
       accessibilityLabel={label}
-      style={[
-        styles.action,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: big ? girl.rose : active ? girl.blush : 'transparent', boxShadow: big ? girl.shadow : girl.shadowSoft },
-      ]}
+      accessibilityState={active ? { selected: true } : undefined}
+      style={[styles.action, { width: size, height: size, borderRadius: size / 2, boxShadow: big ? girl.glow : active ? girl.shadowPlum : girl.shadowSoft }]}
     >
-      {big || active ? null : <GlassLayer radius={size / 2} />}
-      <Icon name={icon} size={big ? 28 : 20} color={big ? '#FFFFFF' : girl.ink} fill={active ? girl.rose : 'none'} />
+      {big ? (
+        <>
+          <LinearGradient colors={girl.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: size / 2, zIndex: -1 }]} />
+          <LinearGradient colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)']} locations={[0, 0.55]} style={[StyleSheet.absoluteFill, { borderRadius: size / 2, zIndex: -1 }]} />
+        </>
+      ) : (
+        <GlassFill radius={size / 2} variant={active ? 'plum' : 'chip'} />
+      )}
+      <Icon name={icon} size={big ? 28 : 20} color={big ? '#FFFFFF' : active ? '#F4B3CF' : girl.ink} fill={active ? '#F4B3CF' : 'none'} />
     </PressableScale>
   );
 }
@@ -739,8 +761,9 @@ function CommunityTile({ c, away, onPress }: { c: { id: string; name: string; me
 }
 
 const styles = StyleSheet.create({
-  modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, zIndex: 0, boxShadow: girl.shadow },
-  modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, backgroundColor: girl.rose },
+  modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, zIndex: 0, boxShadow: girl.shadowSoft },
+  modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, boxShadow: girl.shadowPlum },
+  thumbRim: { borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,205,226,0.26)' },
   mode: { flex: 1, flexDirection: 'row', gap: 6, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   moving: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: space.gutter, marginTop: space[5], padding: 14, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   root: { flex: 1, backgroundColor: girl.bg },
@@ -748,8 +771,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: space.gutter },
   round: { width: 40, height: 40, borderRadius: 20, backgroundColor: girl.surface, alignItems: 'center', justifyContent: 'center' },
   matchItem: { alignItems: 'center', gap: 6, width: 64 },
-  soon: { marginTop: space[5], marginHorizontal: space.gutter, padding: 20, gap: 10, alignItems: 'center', borderRadius: radius.xl, boxShadow: girl.shadowSoft },
-  soonBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 28, borderRadius: 14, backgroundColor: girl.rose },
+  soon: { marginTop: space[5], marginHorizontal: space.gutter, paddingHorizontal: 22, paddingVertical: 24, gap: 10, alignItems: 'center', borderRadius: radius.xl, boxShadow: girl.shadowPlum },
+  soonBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 26, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(255,205,226,0.30)', backgroundColor: 'rgba(255,255,255,0.08)' },
   matchRing: { padding: 2, borderRadius: 32, borderWidth: 2, borderColor: girl.rose },
   sections: { paddingHorizontal: space.gutter, gap: 8, marginTop: space[5], marginBottom: space[4] },
   section: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 13, borderRadius: radius.pill, boxShadow: girl.shadowSoft },
@@ -757,9 +780,9 @@ const styles = StyleSheet.create({
   deckLayer: { alignItems: 'center' },
   empty: { borderRadius: 32, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, boxShadow: girl.shadowSoft },
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: space[4] },
-  action: { alignItems: 'center', justifyContent: 'center', boxShadow: girl.shadowSoft },
+  action: { alignItems: 'center', justifyContent: 'center', zIndex: 0 },
   community: { width: 168, height: 200, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end', boxShadow: girl.shadowSoft },
-  newCommunity: { padding: 14, gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: girl.blushStrong },
+  newCommunity: { padding: 14, gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(185,43,105,0.30)', justifyContent: 'flex-start' },
   plan: { width: 220, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
   planPhoto: { height: 120, overflow: 'hidden' },
   communityBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,250,246,0.92)', alignItems: 'center', justifyContent: 'center' },

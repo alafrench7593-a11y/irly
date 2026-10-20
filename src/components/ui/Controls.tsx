@@ -3,13 +3,16 @@ import { memo, useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type LayoutChangeEvent, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
+  interpolateColor,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withRepeat,
   withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { SelectionLayers, useSelection } from '@/motion/Selection';
 import { spring } from '@/motion/tokens';
@@ -109,6 +112,11 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
   const restBorder = glassy ? 'rgba(255,255,255,0.14)' : t.c.line;
   const h = size === 'md' ? 40 : 34;
   const box = [styles.chip, { height: h, paddingHorizontal: size === 'md' ? 15 : 13 }];
+  // IRLY Girl: a pearl glass pill at rest; chosen, it floods with plum and the
+  // label turns pearl (selection reads apart from the rose of the main action).
+  const girlFlavor = t.flavor === 'girl' && !onDark;
+  const fill = girlFlavor ? GIRL_PLUM : t.c.brand;
+  const onFill = girlFlavor ? '#FFF6FA' : t.c.onBrand;
   const content = (fg: string, iconColor: string) => (
     <>
       {dot && !icon ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
@@ -124,7 +132,7 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
         <SelectionLayers
           p={p}
           sweep={sweep}
-          fill={t.c.brand}
+          fill={fill}
           radius={h / 2}
           base={
             <View style={[box, { backgroundColor: onDark ? restBg : 'transparent', borderColor: onDark ? restBorder : 'transparent', overflow: 'hidden' }]}>
@@ -132,12 +140,15 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
               {content(t.c.text, dot ?? t.c.text)}
             </View>
           }
-          chosen={<View style={[box, { borderColor: t.c.brand }]}>{content(t.c.onBrand, t.c.onBrand)}</View>}
+          chosen={<View style={[box, { borderColor: girlFlavor ? 'rgba(255,205,226,0.28)' : t.c.brand }]}>{content(onFill, onFill)}</View>}
         />
       </PressableScale>
     </Animated.View>
   );
 });
+
+/** Plum of a chosen IRLY Girl chip (pearl text on it: 11:1). */
+const GIRL_PLUM = '#3A1A31';
 
 /* ───────── Badges ───────── */
 
@@ -311,9 +322,23 @@ export function Segmented<T extends string>({ options, value, onChange }: Segmen
 
 /* ───────── Text field ───────── */
 
-type FieldProps = TextInputProps & { icon?: IconName; trailing?: ReactNode; containerStyle?: StyleProp<ViewStyle> };
+type FieldProps = TextInputProps & {
+  icon?: IconName;
+  trailing?: ReactNode;
+  containerStyle?: StyleProp<ViewStyle>;
+  /** The value was refused: IRLY Girl edges the field in bordeaux and shakes it once. */
+  invalid?: boolean;
+  /** The value is good: IRLY Girl shows a small tick. */
+  valid?: boolean;
+};
 
-export const Field = memo(function Field({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, accessibilityLabel, ...rest }: FieldProps) {
+/** Text field. Inside IRLY Girl it is the Girl field (nacre focus ring, error and success states). */
+export const Field = memo(function Field(props: FieldProps) {
+  const t = useTheme();
+  return t.flavor === 'girl' ? <GirlField {...props} /> : <MixteField {...props} />;
+});
+
+const MixteField = memo(function MixteField({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, accessibilityLabel, invalid: _invalid, valid: _valid, ...rest }: FieldProps) {
   const t = useTheme();
   const tr = useT();
   const focus = useSharedValue(0);
@@ -349,6 +374,102 @@ export const Field = memo(function Field({ icon, trailing, containerStyle, style
     </Animated.View>
   );
 });
+
+const GirlField = memo(function GirlField({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, accessibilityLabel, invalid, valid, multiline, ...rest }: FieldProps) {
+  const t = useTheme();
+  const tr = useT();
+  const [focused, setFocused] = useState(false);
+  return (
+    <GirlFieldFrame focused={focused} invalid={invalid} valid={valid} multiline={multiline} style={containerStyle}>
+      {icon ? <Icon name={icon} size={18} color={focused ? t.c.brand : t.c.textSecondary} /> : null}
+      <TextInput
+        placeholder={placeholder ? tr(placeholder) : undefined}
+        placeholderTextColor={t.c.textTertiary}
+        selectionColor={t.c.brand}
+        multiline={multiline}
+        onFocus={(e) => {
+          setFocused(true);
+          onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          onBlur?.(e);
+        }}
+        style={[styles.girlInput, { color: t.c.text, fontFamily: font.medium }, multiline ? styles.girlMulti : null, style]}
+        {...rest}
+        accessibilityLabel={accessibilityLabel ? tr(accessibilityLabel) : undefined}
+      />
+      {trailing}
+    </GirlFieldFrame>
+  );
+});
+
+const RING = 'rgba(232,140,182,0.42)';
+const RING_ERROR = 'rgba(142,31,69,0.24)';
+
+/**
+ * The frame of an IRLY Girl text field, shared with the Girl screens' own
+ * inputs: a pane of field glass; on focus a nacre ring blooms around it and
+ * the edge turns rose; a refused value edges it in bordeaux and shakes it
+ * once; a good value shows a tick that pops in. With « Reduce motion » the
+ * states switch without moving. The browser outline is replaced by the ring.
+ */
+export function GirlFieldFrame({
+  focused,
+  invalid,
+  valid,
+  multiline,
+  style,
+  children,
+}: {
+  focused: boolean;
+  invalid?: boolean;
+  valid?: boolean;
+  multiline?: boolean;
+  style?: StyleProp<ViewStyle>;
+  children: ReactNode;
+}) {
+  const t = useTheme();
+  const reduced = useReducedMotion();
+  const f = useSharedValue(focused ? 1 : 0);
+  const e = useSharedValue(invalid ? 1 : 0);
+  const x = useSharedValue(0);
+  useEffect(() => {
+    f.set(reduced ? (focused ? 1 : 0) : withTiming(focused ? 1 : 0, { duration: 200 }));
+  }, [focused, reduced, f]);
+  useEffect(() => {
+    e.set(reduced ? (invalid ? 1 : 0) : withTiming(invalid ? 1 : 0, { duration: 180 }));
+    if (invalid && !reduced) {
+      x.set(withSequence(withTiming(-7, { duration: 45 }), withTiming(7, { duration: 70 }), withTiming(-5, { duration: 65 }), withTiming(3, { duration: 60 }), withTiming(0, { duration: 55 })));
+    }
+  }, [invalid, reduced, e, x]);
+  const rest = 'rgba(255,255,255,0.85)';
+  const brand = t.c.brand;
+  const critical = t.c.critical;
+  const shell = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  const edge = useAnimatedStyle(() => ({
+    borderColor: e.value > 0.01 ? interpolateColor(e.value, [0, 1], [brand, critical]) : interpolateColor(f.value, [0, 1], [rest, brand]),
+  }));
+  const ring = useAnimatedStyle(() => ({
+    opacity: Math.max(f.value, e.value),
+    borderColor: e.value > 0.5 ? RING_ERROR : RING,
+    transform: [{ scale: 0.985 + 0.015 * Math.max(f.value, e.value) }],
+  }));
+  return (
+    <Animated.View style={[styles.girlShell, shell, style]}>
+      <Animated.View pointerEvents="none" style={[styles.girlRing, ring]} />
+      <Animated.View style={[styles.girlField, multiline ? styles.girlFieldMulti : null, edge]}>
+        <Glass variant="field" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
+        {children}
+        {valid && !invalid ? (
+          <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[styles.tick, { backgroundColor: t.c.positive }]} accessibilityLabel="Looks good">
+            <Icon name="check" size={12} color="#FFFFFF" strokeWidth={3} />
+          </Animated.View>
+        ) : null}
+      </Animated.View>
+    </Animated.View>
+  );
+}
 
 /* ───────── Divider & spacer ───────── */
 
@@ -417,4 +538,23 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth * 2,
   },
+  girlShell: { borderRadius: radius.md },
+  girlRing: { position: 'absolute', top: -4, left: -4, right: -4, bottom: -4, borderRadius: radius.md + 4, borderWidth: 3 },
+  girlField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minHeight: 52,
+    paddingHorizontal: 16,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    overflow: 'hidden',
+    zIndex: 0,
+    boxShadow: '0px 6px 16px rgba(74,36,64,0.06)',
+  },
+  girlFieldMulti: { alignItems: 'flex-start', paddingVertical: 12 },
+  // No browser outline: the nacre ring is the focus indicator.
+  girlInput: { flex: 1, minWidth: 0, width: '100%', fontSize: 16, paddingVertical: 0, outlineWidth: 0 },
+  girlMulti: { minHeight: 92, textAlignVertical: 'top' },
+  tick: { width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 });

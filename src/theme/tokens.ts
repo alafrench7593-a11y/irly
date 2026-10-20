@@ -119,36 +119,78 @@ export const palettes: Record<Mode, Palette> = { night, day: light };
 /**
  * IRLY Girl, as a palette of the same design system: the shared components
  * (buttons, chips, fields, glass, sheets, pages) render in it inside IRLY
- * Girl. Values come from features/girl/theme (rose-white ground, plum ink,
- * rose for text and filled controls, 4.5:1 or better for small text).
+ * Girl. Values come from features/girl/theme: a rosy-pearl ground, plum ink,
+ * a deep luminous rose for text and filled controls, bordeaux for errors.
+ * Small text is 4.5:1 or better on the pearl glass (measured, WCAG).
  */
 export const girlPalette: Palette = {
-  bg: '#FFF5F8',
+  bg: '#FBF2F4',
   surface: '#FFFFFF',
   raised: '#FFFFFF',
-  overlay: '#FBE4EE',
-  glass: 'rgba(255,245,248,0.72)',
-  line: 'rgba(201,47,114,0.12)',
-  lineStrong: 'rgba(201,47,114,0.22)',
-  text: '#382832',
-  textSecondary: '#7E6873',
-  textTertiary: '#947F8A',
+  overlay: '#F6E4EB',
+  glass: 'rgba(255,249,251,0.72)',
+  line: 'rgba(74,36,64,0.10)',
+  lineStrong: 'rgba(74,36,64,0.18)',
+  text: '#2F1B29',
+  textSecondary: '#6F5A67',
+  textTertiary: '#86707D',
   onDark: '#FFFFFF',
-  brand: '#C92F72',
-  brandPressed: '#AE2762',
-  brandSoft: 'rgba(201,47,114,0.10)',
+  brand: '#B92B69',
+  brandPressed: '#9E2358',
+  brandSoft: 'rgba(185,43,105,0.10)',
   onBrand: '#FFFFFF',
   live: '#E5352B',
   liveSoft: 'rgba(229,53,43,0.12)',
-  positive: '#2F8F5E',
-  positiveSoft: 'rgba(47,143,94,0.14)',
-  caution: '#C26A00',
-  critical: '#B3261E',
-  scrim: 'rgba(56,40,50,0.34)',
-  shadow: 'rgba(201,47,114,0.14)',
-  steel: '#B07C9A',
+  positive: '#2B7F55',
+  positiveSoft: 'rgba(43,127,85,0.14)',
+  caution: '#B05F00',
+  critical: '#8E1F45',
+  scrim: 'rgba(36,18,30,0.46)',
+  shadow: 'rgba(74,36,64,0.14)',
+  steel: '#9C7088',
   card: '#FFFFFF',
 };
+
+/**
+ * IRLY Girl glass, one recipe per role. Each pane is a live blur, a tint,
+ * a thin nacre rim, a pearl light along its top edge and a soft sheen;
+ * Android (no live blur) paints `fallback` instead, dense enough to read on.
+ * - card: content panes, translucent so the rose light behind shows through
+ * - chip: chips and small controls, a touch lighter
+ * - field: text fields, whiter so typed text keeps its contrast
+ * - bar: floating and navigation bars, translucent like the ground
+ * - sheet: sheets and modals, the densest pearl
+ * - plum: the dark plum glass of secondary actions and contrast panels
+ */
+export type GirlGlassVariant = 'card' | 'chip' | 'field' | 'bar' | 'sheet' | 'plum';
+export const girlGlass: Record<GirlGlassVariant, { blur: number; tint: string; fallback: string; rim: string; light: string; sheen: string; dark?: boolean }> = {
+  card: { blur: 40, tint: 'rgba(255,250,252,0.56)', fallback: 'rgba(255,248,250,0.95)', rim: 'rgba(255,255,255,0.78)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.50)' },
+  chip: { blur: 28, tint: 'rgba(255,250,252,0.60)', fallback: 'rgba(255,248,250,0.95)', rim: 'rgba(255,255,255,0.85)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.55)' },
+  field: { blur: 28, tint: 'rgba(255,252,253,0.70)', fallback: 'rgba(255,250,252,0.97)', rim: 'rgba(255,255,255,0.85)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.45)' },
+  bar: { blur: 50, tint: 'rgba(252,242,246,0.62)', fallback: 'rgba(252,244,247,0.96)', rim: 'rgba(255,255,255,0.70)', light: 'rgba(255,255,255,0.95)', sheen: 'rgba(255,255,255,0.40)' },
+  sheet: { blur: 70, tint: 'rgba(255,248,250,0.86)', fallback: 'rgba(255,248,250,0.98)', rim: 'rgba(255,255,255,0.90)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.55)' },
+  plum: { blur: 40, tint: 'rgba(46,18,38,0.86)', fallback: 'rgba(46,18,38,0.96)', rim: 'rgba(255,205,226,0.22)', light: 'rgba(255,222,236,0.55)', sheen: 'rgba(255,255,255,0.10)', dark: true },
+};
+
+/** Mother-of-pearl: rose, lavender and peach, barely there (glass, highlights). */
+export const girlNacre = ['rgba(255,214,232,0.30)', 'rgba(236,224,250,0.20)', 'rgba(255,228,214,0.24)'] as const;
+
+/**
+ * IRLY Girl depth: diffuse plum-tinted shadows (never grey, never a hard
+ * pink halo), and a rose glow reserved for the main action.
+ */
+export const girlElevation = {
+  card: '0px 14px 34px rgba(74,36,64,0.10), 0px 2px 6px rgba(74,36,64,0.05)',
+  float: '0px 24px 60px rgba(46,22,40,0.22), 0px 4px 14px rgba(46,22,40,0.08)',
+  glow: '0px 12px 26px rgba(185,43,105,0.30), 0px 3px 8px rgba(122,31,61,0.20)',
+  plum: '0px 12px 28px rgba(36,18,30,0.26), 0px 2px 6px rgba(36,18,30,0.14)',
+} as const;
+
+/** Editorial serif of IRLY Girl (Instrument Serif, bundled), for titles. */
+export const girlSerif = {
+  regular: 'InstrumentSerif_400Regular',
+  italic: 'InstrumentSerif_400Regular_Italic',
+} as const;
 
 /**
  * Ambient light: the soft glows painted once behind every screen so glass
@@ -160,9 +202,10 @@ export const ambient = {
     night: { base: '#050506', glows: ['rgba(110,142,180,0.62)', 'rgba(88,86,214,0.42)', 'rgba(196,140,92,0.30)'] },
     day: { base: '#F4F4F1', glows: ['rgba(142,165,191,0.42)', 'rgba(190,200,230,0.40)', 'rgba(240,214,190,0.40)'] },
   },
+  // IRLY Girl: luminous rose, a warm nude and a plum-lavender, on a pearl ground.
   girl: {
-    night: { base: '#FFF5F8', glows: ['rgba(241,91,154,0.30)', 'rgba(241,236,248,0.95)', 'rgba(248,220,231,0.90)'] },
-    day: { base: '#FFF5F8', glows: ['rgba(241,91,154,0.30)', 'rgba(241,236,248,0.95)', 'rgba(248,220,231,0.90)'] },
+    night: { base: '#FBF2F4', glows: ['rgba(232,76,140,0.34)', 'rgba(240,206,188,0.80)', 'rgba(176,132,190,0.34)'] },
+    day: { base: '#FBF2F4', glows: ['rgba(232,76,140,0.34)', 'rgba(240,206,188,0.80)', 'rgba(176,132,190,0.34)'] },
   },
 } as const;
 
@@ -310,11 +353,11 @@ export const elevation = { night: nightShadows, day: dayShadows } as const;
  * - regular: cards and panels over a photo or the blurred backdrop
  * - thick: bars, sheets and menus that hold their own content
  */
-export const glassLevels = {
-  thin: { blur: 30, night: 'rgba(255,255,255,0.07)', day: 'rgba(255,255,255,0.45)', girl: 'rgba(255,240,246,0.46)' },
-  regular: { blur: 55, night: 'rgba(24,27,33,0.38)', day: 'rgba(255,255,255,0.58)', girl: 'rgba(255,243,248,0.60)' },
-  thick: { blur: 80, night: 'rgba(14,15,18,0.62)', day: 'rgba(255,255,255,0.80)', girl: 'rgba(255,245,249,0.82)' },
-} as const;
+export const glassLevels: Record<'thin' | 'regular' | 'thick', { blur: number; night: string; day: string; girl: GirlGlassVariant }> = {
+  thin: { blur: 30, night: 'rgba(255,255,255,0.07)', day: 'rgba(255,255,255,0.45)', girl: 'chip' },
+  regular: { blur: 55, night: 'rgba(24,27,33,0.38)', day: 'rgba(255,255,255,0.58)', girl: 'card' },
+  thick: { blur: 80, night: 'rgba(14,15,18,0.62)', day: 'rgba(255,255,255,0.80)', girl: 'sheet' },
+};
 export type GlassLevel = keyof typeof glassLevels;
 
 /** Layout constants shared by navigation chrome. */

@@ -15,6 +15,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { SpaceFlavor } from '@/theme/space';
 
 // Days and hours in each activity's own city (a Bali plan seen from Dubai stays at Bali time).
 const dayKey = (ms: number, city: string) => cityDayKey(ms, city);
@@ -30,7 +31,16 @@ const hour = (ms: number, city: string) => cityWhen(ms, city, { hour: '2-digit',
  * Your calendar: every activity and event you're going to or hosting,
  * by day. Joining anywhere in the app adds it here at once.
  */
-export default function CalendarScreen() {
+export default function CalendarRoute() {
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <CalendarScreen />
+    </SpaceFlavor>
+  );
+}
+
+function CalendarScreen() {
   const t = useTheme();
   const router = useRouter();
   const { items, loading, error } = useCalendar();
@@ -54,7 +64,7 @@ export default function CalendarScreen() {
     <Page overline="Your plans" title="Calendar" subtitle="Everything you're going to, in one place.">
       <View style={styles.body}>
         {auth === 'unknown' ? (
-          <ActivityIndicator style={{ marginTop: 24 }} />
+          <ActivityIndicator color={t.c.textSecondary} style={{ marginTop: 24 }} />
         ) : auth === 'out' ? (
           <Empty text="Sign in to keep your plans in sync across devices." action="Sign in" onPress={() => router.push('/account')} />
         ) : error && !items.length ? (
@@ -63,7 +73,7 @@ export default function CalendarScreen() {
           <Empty text="Nothing planned yet. Join a session or create one." action="Find something to do" onPress={() => router.push('/discover')} />
         ) : (
           days.map((d, idx) => (
-            <Animated.View key={d.key} entering={enter.rise(Math.min(idx, 8))}>
+            <Animated.View key={d.key} entering={enter.rise(Math.min(idx, 8), 60)}>
               <View style={{ gap: 10 }}>
                 <Text variant="overline" tone="tertiary">
                   {d.label}
@@ -107,14 +117,14 @@ export default function CalendarScreen() {
 function Empty({ text, action, onPress }: { text: string; action: string; onPress: () => void }) {
   const t = useTheme();
   return (
-    <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+    <Animated.View entering={enter.rise(0, 60)} style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
       <GlassLayer radius={radius.xl} />
       <Icon name="calendar" size={24} color={t.c.textSecondary} />
       <Text variant="body" tone="secondary" align="center">
         {text}
       </Text>
       <Button label={action} size="sm" onPress={onPress} />
-    </View>
+    </Animated.View>
   );
 }
 

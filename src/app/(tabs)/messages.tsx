@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated';
@@ -33,6 +33,8 @@ import { useCommunityPhotoKeys } from '@/features/server/covers';
 import { useCityId, useStore } from '@/state/store';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { SpaceFlavor } from '@/theme/space';
+import { GirlHeaderMark } from '@/features/girl/GirlMark';
 
 type Tab = 'all' | 'private' | 'groups' | 'communities' | 'activities';
 
@@ -62,7 +64,16 @@ const EMPTY: Record<Tab, string> = {
  * the chat's own picture: the person's photo, the group's, the community's
  * or the activity's. Search covers names and last messages.
  */
-export default function Messages() {
+export default function MessagesRoute() {
+  // Opened from IRLY Girl, the list wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <Messages />
+    </SpaceFlavor>
+  );
+}
+
+function Messages() {
   const t = useTheme();
   const router = useRouter();
   const cityId = useCityId();
@@ -137,9 +148,18 @@ export default function Messages() {
   // A community chat without a photo of its own shows its community's picture, as on the community's page.
   const appPhotos = useCommunityPhotoKeys(useMemo(() => all.filter((c) => isServerId(c.id) && tabOf(c) === 'communities' && c.refId).map((c) => c.refId!), [all]));
   const loading = server.loading && !server.conversations.length;
+  // Back returns to the page that opened the list (IRLY Girl, a plan...): the tabs' own history
+  // would land on the Home tab. Opened from a tab root, the tabs' back is kept.
+  const navigation = useNavigation();
+  const back = () => {
+    const stack = navigation.getParent();
+    if (stack?.canGoBack()) stack.goBack();
+    else if (router.canGoBack()) router.back();
+    else router.replace('/');
+  };
 
   return (
-    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place.">
+    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined} onBack={back}>
       <View style={styles.pad}>
         <View style={styles.search}>
           <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />

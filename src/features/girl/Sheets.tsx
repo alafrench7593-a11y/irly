@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx, a11y } from '@/i18n';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Sheet } from '@/components/ui/Sheet';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -9,12 +9,12 @@ import { Photo } from '@/components/visual/Photo';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { PressableScale } from '@/motion/PressableScale';
-import { font, radius, space } from '@/theme/tokens';
+import { radius, space } from '@/theme/tokens';
 import { reasonLines } from './suggest';
 import { AVAILABILITY, GOALS, INTERESTS, LANGUAGES, SPORTS, labelOf } from './taxonomy';
 import { girl, GIRL_TINT, girlType } from './theme';
 import { REPORT_CATEGORIES, type Candidate, type Filters, type ReportCategory } from './types';
-import { GButton, GChip, GSection, ScorePill, Wrap } from './ui';
+import { GButton, GChip, GField, GIconWell, GSection, ScorePill, Wrap } from './ui';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 const AGES: { label: string; min?: number; max?: number }[] = [
@@ -174,12 +174,14 @@ export function ProfileSheet({
           </View>
           <View style={styles.row}>
             <PressableScale haptic="select" scaleTo={0.96} onPress={onSave} style={styles.link} accessibilityLabel={c.saved ? 'Remove from saved' : 'Save for later'}>
+              <GlassLayer radius={22} level="thin" />
               <Icon name="bookmark" size={16} color={girl.ink} fill={c.saved ? girl.ink : 'none'} />
               <Text variant="label" color={girl.ink}>
                 {c.saved ? 'Saved' : 'Save for later'}
               </Text>
             </PressableScale>
             <PressableScale haptic="select" scaleTo={0.96} onPress={onSafety} style={styles.link} accessibilityLabel="Block, report or hide">
+              <GlassLayer radius={22} level="thin" />
               <Icon name="shield" size={16} color={girl.inkSoft} />
               <Text variant="label" color={girl.inkSoft}>
                 Block or report
@@ -259,6 +261,7 @@ export function SafetySheet({
             <GButton
               label={tx('Block {name}', { name })}
               icon="shield"
+              variant="danger"
               onPress={() => {
                 onBlock();
                 close();
@@ -274,13 +277,11 @@ export function SafetySheet({
                 <GChip key={r.id} small label={r.label} selected={category === r.id} onPress={() => setCategory(r.id)} />
               ))}
             </Wrap>
-            <TextInput
+            <GField
               value={details}
               onChangeText={(v) => setDetails(v.slice(0, 1000))}
               placeholder={tx('What happened? (optional)')}
-              placeholderTextColor={girl.inkFaint}
               multiline
-              style={styles.input}
               accessibilityLabel={a11y('Details')}
             />
             <GButton
@@ -304,11 +305,9 @@ function Row({ icon, label, hint, onPress, danger }: { icon: 'eye' | 'shield' | 
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={onPress} style={styles.safetyRow} accessibilityLabel={label}>
       <GlassLayer radius={radius.lg} />
-      <View style={[styles.safetyIcon, { backgroundColor: danger ? '#FDE7E4' : girl.cream }]}>
-        <Icon name={icon} size={18} color={danger ? '#C8443A' : girl.ink} />
-      </View>
+      <GIconWell icon={icon} size={40} tone={danger ? 'error' : 'pearl'} />
       <View style={{ flex: 1 }}>
-        <Text variant="titleS" color={danger ? '#C8443A' : girl.ink}>
+        <Text variant="titleS" color={danger ? girl.bordeaux : girl.ink}>
           {label}
         </Text>
         <Text variant="bodyS" color={girl.inkSoft}>
@@ -321,11 +320,9 @@ function Row({ icon, label, hint, onPress, danger }: { icon: 'eye' | 'shield' | 
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10 },
-  hero: { height: 300, borderRadius: radius.xxl, overflow: 'hidden', backgroundColor: girl.cream },
+  hero: { height: 300, borderRadius: radius.xxl, overflow: 'hidden', backgroundColor: girl.blush, boxShadow: girl.shadowSoft },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   line: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  link: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 22, backgroundColor: girl.cream },
-  safetyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg, borderWidth: 1, borderColor: girl.line },
-  safetyIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  input: { minHeight: 90, borderRadius: radius.lg, padding: 12, backgroundColor: girl.cream, color: girl.ink, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top' },
+  link: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 22, overflow: 'hidden' },
+  safetyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg, boxShadow: girl.shadowSoft },
 });

@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { isModerator, useStaffRole } from '@/features/admin/api';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +15,9 @@ import { supabase } from '@/lib/supabase';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { GirlHeaderMark } from '@/features/girl/GirlMark';
+import { enter } from '@/motion/enter';
+import { SpaceFlavor } from '@/theme/space';
 
 type Safety = {
   profile_visibility: 'everyone' | 'friends' | 'communities' | 'nobody';
@@ -47,7 +51,19 @@ const AUDIENCE = [
  * device and are enforced there (search hides a profile set to Nobody, a
  * muted notification is never created).
  */
-export default function SettingsScreen() {
+export default function SettingsRoute() {
+  // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
+  return (
+    <SpaceFlavor>
+      <SettingsScreen />
+    </SpaceFlavor>
+  );
+}
+
+function SettingsScreen() {
+  const t = useTheme();
+  // The IRLY Girl mark in the header when the page is opened from IRLY Girl.
+  const mark = t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined;
   const staff = isModerator(useStaffRole());
   const router = useRouter();
   const account = useAccount();
@@ -170,7 +186,7 @@ export default function SettingsScreen() {
 
   if (!account) {
     return (
-      <Page overline="Profile" title="Privacy & notifications">
+      <Page overline="Profile" title="Privacy & notifications" right={mark}>
         <View style={styles.body}>
           <Text variant="body" tone="secondary">
             Sign in to choose who sees you and what you hear about.
@@ -182,7 +198,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <Page overline="Profile" title="Privacy & notifications" subtitle="Your exact location is never shared. At most, your neighbourhood.">
+    <Page overline="Profile" title="Privacy & notifications" subtitle="Your exact location is never shared. At most, your neighbourhood." right={mark}>
       <View style={styles.body}>
         {failed ? (
           <View style={{ gap: space[2] }}>
@@ -192,35 +208,35 @@ export default function SettingsScreen() {
             <Button label="Try again" onPress={reload} />
           </View>
         ) : null}
-        <View style={{ gap: 8 }}>
+        <Animated.View entering={enter.rise(0, 60)} style={{ gap: 8 }}>
           <Button label="Verify my profile (for Match)" icon="shield" variant="secondary" full onPress={() => router.push('/verify')} />
           {staff ? <Button label="IRLY back office" icon="shield" variant="ghost" full onPress={() => router.push('/admin')} /> : null}
-        </View>
-        <Audience label="Who can find my profile" value={safety.profile_visibility} onChange={(v) => saveSafety({ profile_visibility: v })} />
-        <Audience label="Who sees my IRL moments by default" value={safety.irl_visibility} onChange={(v) => saveSafety({ irl_visibility: v })} />
-        <Audience label="Who sees which activities I join" value={safety.activity_visibility} onChange={(v) => saveSafety({ activity_visibility: v })} />
-        <View style={{ gap: 8 }}>
+        </Animated.View>
+        <Audience index={1} label="Who can find my profile" value={safety.profile_visibility} onChange={(v) => saveSafety({ profile_visibility: v })} />
+        <Audience index={2} label="Who sees my IRL moments by default" value={safety.irl_visibility} onChange={(v) => saveSafety({ irl_visibility: v })} />
+        <Audience index={3} label="Who sees which activities I join" value={safety.activity_visibility} onChange={(v) => saveSafety({ activity_visibility: v })} />
+        <Animated.View entering={enter.rise(4, 60)} style={{ gap: 8 }}>
           <Text variant="label">Location shown on my posts</Text>
           <View style={styles.wrap}>
             {(['area', 'city', 'hidden'] as const).map((p) => (
               <Chip key={p} size="sm" label={p === 'area' ? 'Neighbourhood' : p === 'city' ? 'City only' : 'Hidden'} selected={safety.location_precision === p} onPress={() => saveSafety({ location_precision: p })} />
             ))}
           </View>
-        </View>
-        <View style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+        </Animated.View>
+        <Animated.View entering={enter.rise(5, 60)} style={styles.group}>
           <GlassLayer radius={radius.xl} />
           <Row label="Show when I'm active" value={safety.show_active} onChange={(v) => saveSafety({ show_active: v })} />
-        </View>
+        </Animated.View>
 
-        <Text variant="titleM" style={{ marginTop: space[4] }}>
-          Notifications
-        </Text>
-        <View style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+        <Animated.View entering={enter.rise(6, 60)} style={{ marginTop: space[4] }}>
+          <Text variant="titleM">Notifications</Text>
+        </Animated.View>
+        <Animated.View entering={enter.rise(7, 60)} style={styles.group}>
           <GlassLayer radius={radius.xl} />
           <Row label="Notifications on my phone" value={push} onChange={togglePush} />
           <Divider inset={16} />
           <Row label="Show message previews" value={previews} onChange={togglePreviews} />
-        </View>
+        </Animated.View>
         <Text variant="caption" tone="tertiary">
           {Platform.OS === 'web'
             ? tx('Phone notifications work in the IRLY app on iPhone and Android.')
@@ -230,7 +246,7 @@ export default function SettingsScreen() {
                 ? tx("This version of IRLY can't receive notifications yet.")
                 : tx('Messages, requests and your activities, even when IRLY is closed. Choose which below.')}
         </Text>
-        <View style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+        <Animated.View entering={enter.rise(8, 60)} style={styles.group}>
           <GlassLayer radius={radius.xl} />
           {GROUPS.map((g, i) => (
             <View key={g.label}>
@@ -238,22 +254,22 @@ export default function SettingsScreen() {
               <Row label={g.label} value={!g.kinds.every((k) => muted.includes(k))} onChange={(v) => toggleGroup(g.kinds, v)} />
             </View>
           ))}
-        </View>
+        </Animated.View>
       </View>
     </Page>
   );
 }
 
-function Audience<V extends string>({ label, value, onChange }: { label: string; value: V; onChange: (v: V) => void }) {
+function Audience<V extends string>({ index, label, value, onChange }: { index: number; label: string; value: V; onChange: (v: V) => void }) {
   return (
-    <View style={{ gap: 8 }}>
+    <Animated.View entering={enter.rise(index, 60)} style={{ gap: 8 }}>
       <Text variant="label">{label}</Text>
       <View style={styles.wrap}>
         {AUDIENCE.map((a) => (
           <Chip key={a.id} size="sm" label={a.label} selected={value === a.id} onPress={() => onChange(a.id as V)} />
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -272,6 +288,6 @@ function Row({ label, value, onChange }: { label: string; value: boolean; onChan
 const styles = StyleSheet.create({
   body: { paddingHorizontal: space.gutter, gap: space[5] },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  group: { borderRadius: radius.xl, overflow: 'hidden' },
+  group: { borderRadius: radius.xl, overflow: 'hidden', backgroundColor: 'transparent' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, height: 56 },
 });

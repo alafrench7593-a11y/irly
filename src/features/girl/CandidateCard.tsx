@@ -145,8 +145,8 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         </View>
 
         <Animated.View style={[styles.stamp, styles.stampLike, likeStamp]} pointerEvents="none">
-          <Icon name="heartHandshake" size={18} color={girl.ink} />
-          <Text variant="label" color={girl.ink}>
+          <Icon name="heartHandshake" size={18} color="#F4B3CF" />
+          <Text variant="label" color={girl.pearl}>
             CONNECT
           </Text>
         </Animated.View>
@@ -157,7 +157,8 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         </Animated.View>
 
         <View style={styles.bottom} pointerEvents="none">
-          <Glass light style={styles.panel} intensity={60}>
+          {/* Information sits on the densest pearl glass: no sheen or reflection over the text. */}
+          <Glass light variant="sheet" highlight={false} style={styles.panel}>
             <View style={styles.nameRow}>
               <Avatar name={c.firstName} hue={c.hue} size={36} photo={c.photoUrls[0]} />
               <View style={{ flex: 1 }}>
@@ -188,7 +189,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
             <View style={styles.goals}>
               {c.goals.slice(0, 3).map((g) => (
                 <View key={g} style={styles.goal}>
-                  <Text variant="caption" color={girl.ink}>
+                  <Text variant="caption" color={girl.plum}>
                     {labelOf(g)}
                   </Text>
                 </View>
@@ -202,17 +203,17 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
 });
 
 const styles = StyleSheet.create({
-  card: { position: 'absolute', borderRadius: 32, overflow: 'hidden', backgroundColor: girl.cream, boxShadow: girl.shadow },
+  card: { position: 'absolute', borderRadius: 32, overflow: 'hidden', backgroundColor: girl.blush, boxShadow: girl.shadow },
   scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(58,42,42,0.08)' },
   top: { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', gap: 6 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, paddingHorizontal: 10, borderRadius: radius.pill },
   dot: { width: 7, height: 7, borderRadius: 4 },
   stamp: { position: 'absolute', top: 60, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 40, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.92)' },
-  stampLike: { left: 18, transform: [{ rotate: '-10deg' }] },
+  stampLike: { left: 18, transform: [{ rotate: '-10deg' }], backgroundColor: girl.plum, borderWidth: 1, borderColor: 'rgba(255,205,226,0.35)' },
   stampPass: { right: 18, transform: [{ rotate: '10deg' }] },
   bottom: { position: 'absolute', left: 10, right: 10, bottom: 10 },
   panel: { borderRadius: 24, padding: 16, gap: 10 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   goals: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  goal: { paddingHorizontal: 10, height: 26, borderRadius: 13, justifyContent: 'center', backgroundColor: girl.blush },
+  goal: { paddingHorizontal: 10, height: 26, borderRadius: 13, justifyContent: 'center', backgroundColor: girl.nude },
 });

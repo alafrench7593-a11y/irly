@@ -15,7 +15,8 @@ import { hueOf } from "@/lib/format";
 import { PressableScale } from "@/motion/PressableScale";
 import { radius, space } from "@/theme/tokens";
 import { girl, girlType } from "./theme";
-import { GButton } from "./ui";
+import { GButton, useGirlMotion } from "./ui";
+import Animated from "react-native-reanimated";
 import { GlassLayer } from "@/components/ui/GlassLayer";
 
 // The demonstration build shows its example IRLY Girl chats (the local inbox), never the server's.
@@ -31,6 +32,7 @@ export function GirlMessages({ onCommunities }: { onCommunities: () => void }) {
   const router = useRouter();
   const account = useAccount();
   const { conversations, loading, error, refresh } = useInbox();
+  const motion = useGirlMotion();
   if (!account && !DEMO) return null;
   const recent = conversations.filter((c) => !c.archived).slice(0, 3);
 
@@ -102,12 +104,13 @@ export function GirlMessages({ onCommunities }: { onCommunities: () => void }) {
           </View>
         ) : (
           recent.map((c, i) => (
-            <Row
-              key={c.id}
-              c={c}
-              last={i === recent.length - 1}
-              onPress={() => router.push(`/messages/${c.id}`)}
-            />
+            <Animated.View key={c.id} entering={motion.fade(i)} layout={motion.layout}>
+              <Row
+                c={c}
+                last={i === recent.length - 1}
+                onPress={() => router.push(`/messages/${c.id}`)}
+              />
+            </Animated.View>
           ))
         )}
       </View>
@@ -193,8 +196,6 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: girl.line,
     overflow: "hidden",
     boxShadow: girl.shadowSoft,
   },

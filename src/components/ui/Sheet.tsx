@@ -1,3 +1,4 @@
+import { BlurView } from 'expo-blur';
 import { a11y } from '@/i18n';
 import { memo, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -16,7 +17,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { haptic } from '@/motion/haptics';
 import { useKeyboardHeight } from '@/motion/keyboard';
 import { duration, easing, spring } from '@/motion/tokens';
-import { layout, radius, space } from '@/theme/tokens';
+import { girlSerif, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Glass } from './Glass';
 import { Text } from './Text';
@@ -96,11 +97,14 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
   if (!mounted) return null;
 
   const width = Math.min(frame.width, layout.maxContentWidth + 40);
+  // IRLY Girl: the page behind dims to plum and softly blurs; the panel is the densest pearl glass.
+  const girl = t.flavor === 'girl';
 
   return (
     <Modal transparent visible animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={dismiss}>
       <GestureHandlerRootView style={styles.flex}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.scrim }, backdropStyle]}>
+          {girl && Platform.OS !== 'android' ? <BlurView intensity={14} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" /> : null}
           <Pressable style={styles.flex} onPress={dismiss} accessibilityLabel={a11y('Close')} />
         </Animated.View>
         <GestureDetector gesture={pan}>
@@ -123,13 +127,13 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
             ]}
             accessibilityViewIsModal
           >
-            <Glass level="thick" style={[StyleSheet.absoluteFill, styles.pane]} />
+            <Glass level="thick" variant={girl ? 'sheet' : undefined} style={[StyleSheet.absoluteFill, styles.pane]} />
             <View style={styles.grabberWrap}>
               <View style={[styles.grabber, { backgroundColor: t.c.lineStrong }]} />
             </View>
             {title ? (
               <View style={styles.header}>
-                <Text variant="titleL" accessibilityRole="header">
+                <Text variant="titleL" accessibilityRole="header" style={girl ? styles.girlTitle : undefined}>
                   {title}
                 </Text>
                 {subtitle ? (
@@ -164,4 +168,5 @@ const styles = StyleSheet.create({
   grabberWrap: { alignItems: 'center', paddingVertical: 6 },
   grabber: { width: 38, height: 5, borderRadius: 3 },
   header: { paddingHorizontal: space.gutter + 4, paddingTop: space[3], paddingBottom: space[4], gap: 4 },
+  girlTitle: { fontFamily: girlSerif.regular, fontSize: 30, lineHeight: 34, letterSpacing: -0.2, fontWeight: 'normal' },
 });

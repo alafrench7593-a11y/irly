@@ -13,7 +13,7 @@ import { useT } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { ease, motion } from '@/motion/tokens';
 import { space } from '@/theme/tokens';
-import { GirlLogo } from './GirlLogo';
+import { GirlHeaderMark } from './GirlMark';
 import { girl, GIRL_TINT, girlType } from './theme';
 import { GlassFill } from './ui';
 
@@ -87,7 +87,9 @@ export function GirlHero({
   onBack,
   onProfile,
   onMessages,
+  onNotifications,
   unread = 0,
+  bell = 0,
 }: {
   mode: 'all' | 'moms';
   scrollY: SharedValue<number>;
@@ -95,7 +97,10 @@ export function GirlHero({
   onProfile: () => void;
   /** Messages are one tap away from the top of IRLY Girl, with the unread count. */
   onMessages: () => void;
+  /** Notifications sit beside Messages, with the count of new ones. */
+  onNotifications: () => void;
   unread?: number;
+  bell?: number;
 }) {
   const insets = useSafeAreaInsets();
   const tr = useT();
@@ -118,10 +123,7 @@ export function GirlHero({
           <GlassFill dark level="thin" radius={20} />
           <Icon name="chevronLeft" size={20} color="#FFFFFF" />
         </PressableScale>
-        <View style={styles.brand}>
-          <GlassFill dark level="thin" radius={18} />
-          <GirlLogo size={18} onDark word={mode === 'moms' ? 'Moms' : 'Girl'} />
-        </View>
+        <GirlHeaderMark pill onDark size={18} section={mode} word={mode === 'moms' ? 'Moms' : 'Girl'} />
         <View style={styles.actions}>
           <PressableScale
             haptic="select"
@@ -136,6 +138,23 @@ export function GirlHero({
               <View style={styles.badge}>
                 <Text variant="caption" color="#FFFFFF" raw style={styles.badgeText}>
                   {unread > 99 ? '99+' : String(unread)}
+                </Text>
+              </View>
+            ) : null}
+          </PressableScale>
+          <PressableScale
+            haptic="select"
+            scaleTo={0.9}
+            onPress={onNotifications}
+            accessibilityLabel={bell ? tr('Notifications, {n} new', { n: bell }) : tr('Notifications')}
+            style={styles.round}
+          >
+            <GlassFill dark level="thin" radius={20} />
+            <Icon name="bell" size={18} color="#FFFFFF" />
+            {bell ? (
+              <View style={styles.badge}>
+                <Text variant="caption" color="#FFFFFF" raw style={styles.badgeText}>
+                  {bell > 99 ? '99+' : String(bell)}
                 </Text>
               </View>
             ) : null}
@@ -181,7 +200,6 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 10, lineHeight: 12, fontWeight: '700' },
   round: { width: 40, height: 40, borderRadius: 20, zIndex: 0, alignItems: 'center', justifyContent: 'center' },
   words: { position: 'absolute', left: space.gutter, right: space.gutter, bottom: 44 },
-  brand: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 36, borderRadius: 18, zIndex: 0 },
   shadow: { textShadowColor: 'rgba(0,0,0,0.25)', textShadowRadius: 12, textShadowOffset: { width: 0, height: 2 } },
   line: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 9 },
 });
