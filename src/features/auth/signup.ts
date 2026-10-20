@@ -20,6 +20,8 @@ export const MESSAGES = {
   providerOff: 'This sign-in option is not switched on yet. Use email for now',
   phoneOff: 'Phone sign-in is not switched on yet. Use email for now',
   badCode: 'This code is wrong or has expired. Ask for a new one',
+  badLink: 'This link is invalid or has expired. Ask for a new one',
+  signInIncomplete: 'Sign-in did not complete. Try again.',
   signupsClosed: 'New accounts are paused for now. Try again later',
   sessionEnded: 'Your session has ended. Sign in again',
   serverDown: 'IRLY could not do this right now. Try again in a moment',
@@ -72,6 +74,7 @@ export function authMessage(e: unknown): string {
   if (/password should be at least/i.test(m)) return MESSAGES.passwordTooShort;
   if (code === 'same_password' || /should be different from the old password/i.test(m)) return MESSAGES.samePassword;
   if (/rate[_ ]limit|too many/i.test(`${code} ${m}`) || status === 429) return MESSAGES.rateLimited;
+  if (/link is invalid or has expired/i.test(m)) return MESSAGES.badLink;
   if (code === 'otp_expired' || /token has expired|otp.*(expired|invalid)|invalid otp/i.test(m)) return MESSAGES.badCode;
   if (/^(signup_disabled|email_provider_disabled)$/.test(code) || /signups? not allowed|signup(s)? (are|is) disabled/i.test(m)) return MESSAGES.signupsClosed;
   if (code === 'provider_disabled' || /provider is not enabled|unsupported provider/i.test(m)) return MESSAGES.providerOff;
@@ -84,6 +87,24 @@ export function authMessage(e: unknown): string {
   // A raw technical answer (JSON, a stack, an HTTP dump) is never shown as is.
   if (/^[{[]|\bat .+\(.+:\d+:\d+\)|status code \d{3}|AuthApiError|AuthUnknownError|PGRST\d+|SQLSTATE/i.test(m)) return MESSAGES.unknown;
   return m;
+}
+
+/**
+ * A sign-in return link (email link, Apple, Google) that carries an error
+ * (`#error=…&error_code=…&error_description=…`): the sentence to show, or
+ * null when the link has no error. The provider's own text is never shown as
+ * is (it is English, technical, sometimes a provider dump): a known case gets
+ * its sentence, anything else "Sign-in did not complete".
+ */
+export function returnLinkError(url: string): string | null {
+  const params = new URLSearchParams((url.split('#')[1] ?? url.split('?')[1] ?? '').replace(/\+/g, '%20'));
+  const description = params.get('error_description');
+  const code = params.get('error_code') ?? '';
+  if (!description && !params.get('error')) return null;
+  // An email link already used or too old comes back as otp_expired: it is a link here, not a typed code.
+  if (code === 'otp_expired' || /link is invalid or has expired/i.test(description ?? '')) return MESSAGES.badLink;
+  const said = authMessage({ code, message: description ?? '' });
+  return (Object.values(MESSAGES) as string[]).includes(said) ? said : MESSAGES.signInIncomplete;
 }
 
 /**

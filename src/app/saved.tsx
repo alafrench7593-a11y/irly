@@ -51,19 +51,28 @@ async function titlesFor(items: SavedItem[]): Promise<Record<string, string>> {
     ids('activity').length ? supabase.from('activities').select('id, title').in('id', ids('activity')) : null,
     ids('place').length ? supabase.from('places').select('slug, name').in('slug', ids('place')) : null,
     ids('community').length ? supabase.from('communities').select('id, name, topic, category_id, city_id').in('id', ids('community')) : null,
-    ids('irl_post').length ? supabase.from('irl_posts').select('id, body').in('id', ids('irl_post')) : null,
+    ids('irl_post').length ? supabase.from('irl_posts').select('id, body, expires_at').in('id', ids('irl_post')) : null,
     ids('profile').length ? supabase.from('profiles_public').select('id, first_name').in('id', ids('profile')) : null,
-    ids('community_post').length ? supabase.from('community_posts').select('id, body, community_id').in('id', ids('community_post')) : null,
+    ids('community_post').length ? supabase.from('community_posts').select('id, body, community_id, deleted_at').in('id', ids('community_post')) : null,
   ]);
   acts?.data?.forEach((r) => (out[`activity:${r.id}`] = r.title));
   places?.data?.forEach((r) => (out[`place:${r.slug}`] = r.name));
   comms?.data?.forEach((r) => (out[`community:${r.id}`] = displayCommunityName(r)));
   posts?.data?.forEach((r) => (out[`irl_post:${r.id}`] = r.body));
+  // A Live that ended or was deleted, a post removed: it would open nothing, so it is not listed
+  // (the server drops the save of a removed one; an ended Live has no event to drop it).
+  const gone = (type: TargetType, found: { id: string }[] | null | undefined) => {
+    if (!found) return;
+    const have = new Set(found.map((r) => r.id));
+    for (const id of ids(type)) if (!have.has(id)) out[`${type}:${id}:gone`] = '1';
+  };
+  if (posts && !posts.error) gone('irl_post', (posts.data ?? []).filter((r) => Date.parse(r.expires_at) > Date.now()));
   people?.data?.forEach((r) => (out[`profile:${r.id}`] = r.first_name));
   cposts?.data?.forEach((r) => {
     out[`community_post:${r.id}`] = r.body;
     out[`community_post:${r.id}:community`] = r.community_id;
   });
+  if (cposts && !cposts.error) gone('community_post', (cposts.data ?? []).filter((r) => !r.deleted_at));
   return out;
 }
 
@@ -86,7 +95,7 @@ export default function SavedScreen() {
     };
   }, [items]);
 
-  const shown = items.filter((i) => tab === 'all' || i.type === tab || (tab === 'irl_post' && i.type === 'community_post'));
+  const shown = items.filter((i) => !titles[`${i.type}:${i.id}:gone`] && (tab === 'all' || i.type === tab || (tab === 'irl_post' && i.type === 'community_post')));
 
   const open = (i: SavedItem) => {
     const postCommunity = titles[`community_post:${i.id}:community`];

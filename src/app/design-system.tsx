@@ -1,4 +1,6 @@
+import { Redirect } from 'expo-router';
 import { useState, type ReactNode } from 'react';
+import { DEMO } from '@/config/app';
 import { t as tx } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -47,7 +49,13 @@ function Block({ title, note, children }: { title: string; note?: string; childr
   );
 }
 
-export default function DesignSystem() {
+/** The component gallery is for the team (demo and development builds); a production deep link lands on Home. */
+export default function DesignSystemRoute() {
+  if (!DEMO && !__DEV__) return <Redirect href="/" />;
+  return <DesignSystem />;
+}
+
+function DesignSystem() {
   const t = useTheme();
   const cityId = useCityId();
   const city = CITIES[cityId];

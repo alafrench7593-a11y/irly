@@ -27,7 +27,7 @@ Limites App Store Connect : nom 30, sous-titre 30, texte promotionnel 170, descr
 Feeling alone in a new city? IRLY helps you meet people, find your community and share real experiences. Less loneliness. More life. (132)
 
 **Keywords (100 bytes)**:
-`friends,meet people,expat,newcomer,dubai,bali,activities,community,social,meetup,events,nomad`
+`friends,meet people,expat,newcomer,dubai,uae,activities,community,social,meetup,events,nomad`
 
 **Description**:
 IRLY helps you meet people in real life. Whether you just moved to a new city or want to grow your circle, IRLY brings together people who like the same things, around plans you can actually join.
@@ -38,8 +38,8 @@ Join IRLY's communities in your city, from newcomers and expats to running, foot
 ACTIVITIES
 Find activities near you, see who is going and join in one tap. Create your own plan, a run, a padel game, a brunch, choose the place, the time and the number of spots, and a group chat opens for everyone going.
 
-MATCH IRLY
-See members who share your interests, activities and goals, always with the reason why. Send a friend request when you want to connect; nothing happens without the other person's agreement.
+LIVE
+See who is out right now near you: a photo or a few words, your neighbourhood only, gone after 4 hours. Join them or say hi.
 
 MESSAGES
 Private chats with friends, group chats and community chats, with photos.
@@ -48,12 +48,12 @@ PROFILE
 Your photo, a short bio, your interests and the activities and communities you are part of. You choose who can see your profile and the activities you join.
 
 IRLY GIRL
-Spaces reserved for women: women-only communities, plans and matching.
+Spaces reserved for women: women-only communities, plans and a women-only Live.
 
 SAFE BY DESIGN
 Report or block any member or content in two taps. Your exact location is never shared: at most your neighbourhood. You can delete your account and your data from the app at any time.
 
-IRLY is available in English and French, starting with Dubai, Abu Dhabi and Bali.
+IRLY is available in English and French, starting with Dubai and the other emirates of the UAE.
 
 ## 3. Fiche française
 
@@ -63,7 +63,7 @@ IRLY is available in English and French, starting with Dubai, Abu Dhabi and Bali
 Seul dans une nouvelle ville ? IRLY t'aide à rencontrer du monde, trouver ta communauté et partager de vrais moments. Moins de solitude. Plus de vie.
 
 **Mots-clés (100 octets)** :
-`amis,rencontrer,expatrié,expat,dubai,bali,activités,communauté,sorties,nouveaux arrivants,social`
+`amis,rencontrer,expatrié,expat,dubai,emirats,activités,communauté,sorties,nouveaux arrivants,social`
 
 **Description** :
 IRLY t'aide à rencontrer des gens en vrai. Que tu viennes d'arriver dans une nouvelle ville ou que tu veuilles agrandir ton cercle, IRLY réunit des personnes qui aiment les mêmes choses, autour de sorties que tu peux vraiment rejoindre.
@@ -74,8 +74,8 @@ Rejoins les communautés IRLY de ta ville, des nouveaux arrivants et expatriés 
 ACTIVITÉS
 Trouve des activités près de toi, vois qui y va et rejoins-les en un geste. Crée ton propre plan, un run, un padel, un brunch : choisis le lieu, l'heure et le nombre de places, et un chat de groupe s'ouvre pour tous les participants.
 
-MATCH IRLY
-Découvre les membres qui partagent tes centres d'intérêt, tes activités et tes envies, toujours avec la raison. Envoie une demande d'ami quand tu veux te connecter ; rien ne se fait sans l'accord de l'autre personne.
+LIVE
+Vois qui sort en ce moment près de toi : une photo ou quelques mots, ton quartier seulement, disparu après 4 heures. Rejoins-les ou dis bonjour.
 
 MESSAGES
 Discussions privées avec tes amis, chats de groupe et chats de communauté, avec photos.
@@ -89,7 +89,7 @@ Des espaces réservés aux femmes : communautés, sorties et rencontres entre fe
 SÉCURITÉ
 Signale ou bloque un membre ou un contenu en deux gestes. Ta position exacte n'est jamais partagée : au plus ton quartier. Tu peux supprimer ton compte et tes données depuis l'application à tout moment.
 
-IRLY est disponible en français et en anglais, d'abord à Dubaï, Abu Dhabi et Bali.
+IRLY est disponible en français et en anglais, d'abord à Dubaï et dans les autres émirats.
 
 **Campagne de lancement (texte promotionnel alternatif)** :
 FR — IRLY arrive sur iPhone. Rejoins ta communauté, trouve ta prochaine sortie et rencontre les gens de ta ville, pour de vrai.
@@ -107,7 +107,7 @@ Précautions : compte de revue ou compte de l'équipe uniquement ; aucune photo,
 | 2 | Communautés, onglet « Pour toi » | Find your communities / Trouve tes communautés | Titre, liste des communautés IRLY |
 | 3 | Fiche d'une activité (participants, bouton Rejoindre) | Join plans near you / Rejoins des sorties près de toi | Titre, photo de l'activité, bouton visible |
 | 4 | Créer une activité | Start your own plan / Lance ta propre sortie | Titre, étapes de création |
-| 5 | Match IRLY | Meet people who like what you like / Rencontre ceux qui aiment ce que tu aimes | Titre, cartes avec « Vous aimez tous les deux » |
+| 5 | Live (IRL) | See who is out right now / Vois qui sort en ce moment | Titre, fil Live avec photos de l'équipe (Match IRLY n'est pas disponible dans ce build : ne pas le montrer) |
 | 6 | Messages (chats privés, groupes, communautés) | Chat before you meet / Discute avant de te retrouver | Titre, liste des conversations de l'équipe |
 | 7 | Profil | Your profile, your rules / Ton profil, tes règles | Titre, en-tête du profil, onglets |
 | 8 | Réglages de confidentialité | Safe by design / La sécurité d'abord | Titre, réglages de visibilité |
@@ -124,7 +124,7 @@ Mise en forme conseillée : fond noir IRLY, titre en blanc (Manrope, gras), capt
 
 > IRLY helps people meet in real life through communities, group activities and friend connections, in Dubai and across the UAE.
 >
-> Sign in: open the app, choose the Emirates as destination (Bali is shown as coming soon), go through the short welcome, then Profile tab → "Sign in or create an account" → email and password with the demo account provided. The demo account is set in Dubai and is hidden from other members.
+> Sign in: open the app, choose the Emirates as destination (Bali is shown as coming soon), go through the short welcome, then the avatar at the top left (Profile) → "Sign in or create an account" → email and password with the demo account provided. The demo account is set in Dubai and is hidden from other members.
 >
 > What to test:
 > - Home and Discover: categories, recommended plans and places.

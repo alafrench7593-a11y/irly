@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useStore } from '@/state/store';
 import { AppleLogo, GoogleG } from '@/brand/ProviderLogos';
 import { t as tx, a11y } from '@/i18n';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import * as Linking from 'expo-linking';
@@ -29,7 +29,7 @@ import {
   verifyCode,
   verifyPhoneCode,
 } from '@/features/auth/account';
-import { isValidEmail, MESSAGES, PASSWORD_MIN } from '@/features/auth/signup';
+import { isValidEmail, MESSAGES, PASSWORD_MIN, returnLinkError } from '@/features/auth/signup';
 import { APP } from '@/config/app';
 import { track } from '@/lib/analytics';
 import { enabledProviders, hasBackend } from '@/lib/supabase';
@@ -75,6 +75,8 @@ function AccountScreen() {
   const [code, setCode] = useState('');
   const [creating, setCreating] = useState(fromOnboarding);
   const [busy, setBusy] = useState(false);
+  // A ref, not the state: two taps in the same frame both see busy === false.
+  const inFlight = useRef(false);
   const url = Linking.useURL();
   // Only offer Apple / Google when they are switched on in Supabase.
   const [providers, setProviders] = useState<{ apple: boolean; google: boolean; phone: boolean } | null>(null);
@@ -88,10 +90,10 @@ function AccountScreen() {
     // (replaying it signed people back in after Sign out, or reused a spent token).
     if (!url || handledUrls.has(url)) return;
     handledUrls.add(url);
-    // An expired or already-used link comes back as #error=…&error_description=…
-    const failed = url?.match(/[#?&]error_description=([^&]+)/);
+    // An expired or already-used link comes back as #error=…&error_description=…: said in plain words, never the server's text.
+    const failed = returnLinkError(url);
     if (failed) {
-      toast(decodeURIComponent(failed[1].replace(/\+/g, ' ')), 'x', 'live');
+      toast(failed, 'x', 'live');
       return;
     }
     if (url && url.includes('access_token')) {
@@ -107,13 +109,15 @@ function AccountScreen() {
 
   const act = async (fn: () => Promise<void>) => {
     // One request at a time: a second tap never sends a second sign-up or code.
-    if (busy) return;
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     try {
       await fn();
     } catch (e) {
       toast(authMessage(e), 'x', 'live');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   };
@@ -242,7 +246,7 @@ function AccountScreen() {
         {mode === 'choose' ? (
           <>
             {/* Apple: the native sheet on iPhone (the web flow would need a Services ID and secret key). */}
-            {providers?.apple && Platform.OS === 'ios' ? <Button label="Continue with Apple" variant="inverse" leading={(c) => <AppleLogo size={18} color={c} />} full onPress={() => act(() => signInWithProvider('apple'))} /> : null}
+            {providers?.apple && Platform.OS === 'ios' ? <Button label="Continue with Apple" variant="inverse" leading={(c) => <AppleLogo size={18} color={c} />} full loading={busy} onPress={() => act(() => signInWithProvider('apple'))} /> : null}
             {/* App Store rule 4.8: on iPhone, Google sign-in is only offered next to Sign in with Apple. */}
             {providers?.google && (Platform.OS !== 'ios' || providers.apple) ? <Button label="Continue with Google" leading={() => <GoogleG size={18} />} full variant="secondary" loading={busy} onPress={() => act(() => signInWithProvider('google'))} /> : null}
             {providers?.phone ? <Button label="Continue with phone" icon="message" full variant="secondary" onPress={() => setMode('phone')} /> : null}

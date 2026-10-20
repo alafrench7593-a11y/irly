@@ -278,7 +278,8 @@ export function SettingsSections() {
       <DestinationSheet visible={destSheet} onClose={() => setDestSheet(false)} />
       <Sheet
         visible={confirmDelete}
-        onClose={() => setConfirmDelete(false)}
+        // A deletion under way keeps its sheet (and its spinner) until the server answers.
+        onClose={() => !deleting && setConfirmDelete(false)}
         title="Delete your IRLY account?"
         subtitle="This cannot be undone."
       >

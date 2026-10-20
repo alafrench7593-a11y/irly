@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { Text } from '@/components/ui/Text';
+import { t as tx } from '@/i18n';
 import { ease, easing, motion, spring } from '@/motion/tokens';
 import { GirlLogo } from './GirlLogo';
 import { girl } from './theme';
@@ -413,7 +414,7 @@ export function GirlLoader({ size = 26, word = 'Girl', label, onDark = false, st
     return () => cancelAnimation(breath);
   }, [reduced, breath]);
   return (
-    <View style={[styles.loader, style]} accessible accessibilityRole="progressbar" accessibilityLabel={`IRLY ${word}, loading`}>
+    <View style={[styles.loader, style]} accessible accessibilityRole="progressbar" accessibilityLabel={tx('IRLY {word}, loading', { word })}>
       <View style={styles.mark}>
         <Halo progress={breath} width={size * 9} height={size * 5.4} onDark={onDark} />
         <GirlMark variant="intro" size={size} word={word} onDark={onDark} />

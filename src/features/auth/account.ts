@@ -14,7 +14,7 @@ import { wipeLocal } from '@/state/wipe';
 import { CITIES } from '@/data/destinations';
 import { ACTIVITIES, INTERESTS } from '@/data/catalog';
 import { isAvatar } from '@/features/avatar/avatar';
-import { authMessage, errorCode, MESSAGES, passwordProblem, signUpHitExisting } from './signup';
+import { authMessage, errorCode, MESSAGES, passwordProblem, returnLinkError, signUpHitExisting } from './signup';
 
 export { authMessage, errorCode };
 
@@ -71,15 +71,24 @@ if (supabase) {
     })
     .catch(() => setSession(null));
   supabase.auth.onAuthStateChange((event, session) => {
+    // Already signed out here (Log out finished, a late answer of its server call): nothing more to say.
+    const wasIn = useAuthStore.getState().status !== 'out';
     setSession(session?.user);
     // Signed out in another tab, or the session ended elsewhere (signed out on the server, account
     // deleted on another phone, refresh token revoked): forget this person here too, and leave
     // the private screens (Log out and Delete account do that themselves).
     if (event === 'SIGNED_OUT') {
       wipeLocal();
-      if (!ending) {
+      if (!ending && wasIn) {
         void closeRealtime();
+        // This phone stops getting the account's notifications (released without a session, see push.ts).
+        void settled(
+          import('@/features/push/push').then((m) => m.unregisterPush()),
+          PUSH_MS,
+        );
         setTimeout(goPublic, 0);
+        // Said, never a silent jump to Welcome (an expired or revoked session, signed out elsewhere).
+        void import('@/components/ui/Toast').then((m) => m.toast(MESSAGES.sessionEnded, 'lock', 'live')).catch(() => undefined);
       }
     }
     // Signed in: a returning member gets their profile back on this device;
@@ -515,12 +524,14 @@ export async function refreshOwnPhoto(uid: string): Promise<void> {
   const { data } = await supabase.rpc('my_profile');
   const path = ((data as ServerProfile[] | null) ?? [])[0]?.photo_paths?.[0];
   if (!path) return;
+  // Signed out (or another account signed in) while asking: this photo is no longer this phone's profile.
+  const stillMine = () => stillSignedIn(uid) && useStore.getState().onboarded && (!useStore.getState().profile.ownerId || useStore.getState().profile.ownerId === uid);
   if (isAvatar(path)) {
-    st.updateProfile({ photoUri: path });
+    if (stillMine()) useStore.getState().updateProfile({ photoUri: path });
     return;
   }
   const { data: signed } = await supabase.storage.from('profile-photos').createSignedUrl(path, 7 * 24 * 3600);
-  if (signed?.signedUrl) st.updateProfile({ photoUri: signed.signedUrl });
+  if (signed?.signedUrl && stillMine()) useStore.getState().updateProfile({ photoUri: signed.signedUrl });
 }
 
 /* ───────── Log out, delete account, download my data ───────── */
@@ -903,8 +914,9 @@ export async function signInWithProvider(provider: 'google' | 'apple'): Promise<
     // In-app auth session: closes itself and hands back the redirect URL.
     const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo());
     if (res.type !== 'success' || !res.url) return;
-    const failed = res.url.match(/[#?&]error_description=([^&]+)/);
-    if (failed) throw new Error(decodeURIComponent(failed[1].replace(/\+/g, ' ')));
+    // The provider's own text is never shown as is.
+    const failed = returnLinkError(res.url);
+    if (failed) throw new Error(failed);
     handledAuthUrls.add(res.url);
     if (!(await completeFromUrl(res.url))) throw new Error('Sign-in did not complete. Try again.');
   }

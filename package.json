@@ -76,7 +76,8 @@
     "test:live": "node --experimental-strip-types --no-warnings scripts/check-live.mts",
     "test:purge": "node scripts/check-purge.mjs",
     "test:areas": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-area-order.mts",
-    "test:auth": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/test-auth.mts"
+    "test:auth": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/test-auth.mts",
+    "test:i18n": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-i18n.mts"
   },
   "private": true,
   "engines": {

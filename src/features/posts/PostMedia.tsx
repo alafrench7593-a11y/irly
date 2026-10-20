@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { Glass } from '@/components/ui/Glass';
 import { Text } from '@/components/ui/Text';
+import { t as tx } from '@/i18n';
 import { LiveVideo } from '@/features/live/LiveVideo';
 import { useSignedLinks } from '@/features/server/media';
 import { radius } from '@/theme/tokens';
@@ -28,7 +29,7 @@ export function PostMedia({ paths, kind, thumb, seconds, height = 260 }: { paths
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={(e) => w && setPage(Math.round(e.nativeEvent.contentOffset.x / w))}
-        accessibilityLabel={paths.length > 1 ? `${paths.length} photos` : 'Photo'}
+        accessibilityLabel={paths.length > 1 ? tx('{n} photos', { n: paths.length }) : tx('Photo')}
       >
         {paths.map((p) => (
           <View key={p} style={{ width: w || 1, height }}>
