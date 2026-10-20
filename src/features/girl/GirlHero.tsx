@@ -13,7 +13,7 @@ import { useT } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { ease, motion } from '@/motion/tokens';
 import { space } from '@/theme/tokens';
-import { GirlLogo } from './GirlLogo';
+import { GirlHeaderMark } from './GirlMark';
 import { girl, GIRL_TINT, girlType } from './theme';
 import { GlassFill } from './ui';
 
@@ -118,10 +118,7 @@ export function GirlHero({
           <GlassFill dark level="thin" radius={20} />
           <Icon name="chevronLeft" size={20} color="#FFFFFF" />
         </PressableScale>
-        <View style={styles.brand}>
-          <GlassFill dark level="thin" radius={18} />
-          <GirlLogo size={18} onDark word={mode === 'moms' ? 'Moms' : 'Girl'} />
-        </View>
+        <GirlHeaderMark pill onDark size={18} section={mode} word={mode === 'moms' ? 'Moms' : 'Girl'} />
         <View style={styles.actions}>
           <PressableScale
             haptic="select"
@@ -181,7 +178,6 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 10, lineHeight: 12, fontWeight: '700' },
   round: { width: 40, height: 40, borderRadius: 20, zIndex: 0, alignItems: 'center', justifyContent: 'center' },
   words: { position: 'absolute', left: space.gutter, right: space.gutter, bottom: 44 },
-  brand: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 36, borderRadius: 18, zIndex: 0 },
   shadow: { textShadowColor: 'rgba(0,0,0,0.25)', textShadowRadius: 12, textShadowOffset: { width: 0, height: 2 } },
   line: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 9 },
 });

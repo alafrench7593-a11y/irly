@@ -1,52 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Glass } from '@/components/ui/Glass';
-import { Text } from '@/components/ui/Text';
 import { haptic } from '@/motion/haptics';
 import { ease, transition } from '@/motion/tokens';
-import { girl, girlType } from './theme';
+import { GirlMark } from './GirlMark';
+import { girl } from './theme';
 
 let shownThisSession = false;
 
 /**
  * Crossing from IRLY into IRLY Girl. The light IRLY page blurs, a cream
- * wash rises over it, "IRLY" holds for a beat, "GIRL" slides in beside it
- * and the letters open up, then the whole layer lifts to reveal the warm
- * universe underneath. Once per session; reduced motion skips it.
+ * wash rises over it, the IRLY Girl mark opens over a soft halo and one
+ * pearl shimmer crosses it (GirlMark `launch`); when it has arrived the
+ * whole layer lifts, the mark rising a little, to reveal the warm universe
+ * underneath. Once per session; reduced motion skips it.
  */
 export function GirlIntro() {
   const reduced = useReducedMotion();
   const [done, setDone] = useState(reduced || shownThisSession);
   const wash = useSharedValue(0);
-  const word = useSharedValue(0);
   const lift = useSharedValue(0);
 
   useEffect(() => {
     if (done) return;
     shownThisSession = true;
-    const t = transition.morph;
-    wash.set(withTiming(1, { duration: t.wash, easing: ease.enter }));
-    word.set(withDelay(t.wash - 160, withTiming(1, { duration: t.hold + 200, easing: ease.standard })));
-    lift.set(
-      withDelay(
-        t.wash + t.hold + 160,
-        withSequence(
-          withTiming(1, { duration: t.reveal, easing: ease.exit }, (fin) => {
-            if (fin) scheduleOnRN(setDone, true);
-          }),
-        ),
-      ),
-    );
-    const h = setTimeout(() => haptic('select'), t.wash);
+    wash.set(withTiming(1, { duration: transition.morph.wash, easing: ease.enter }));
+    const h = setTimeout(() => haptic('select'), transition.morph.wash);
     return () => clearTimeout(h);
-  }, [done, wash, word, lift]);
+  }, [done, wash]);
+
+  // The mark has arrived and shimmered: lift the layer away.
+  const reveal = useCallback(() => {
+    lift.set(
+      withTiming(1, { duration: transition.morph.reveal, easing: ease.exit }, (fin) => {
+        if (fin) scheduleOnRN(setDone, true);
+      }),
+    );
+  }, [lift]);
 
   const layer = useAnimatedStyle(() => ({ opacity: 1 - lift.value }));
   const cream = useAnimatedStyle(() => ({ opacity: wash.value, transform: [{ scale: 1.08 - wash.value * 0.08 }] }));
-  const girlWord = useAnimatedStyle(() => ({ opacity: word.value, transform: [{ translateX: (1 - word.value) * 24 }] }));
-  const letters = useAnimatedStyle(() => ({ transform: [{ translateY: -lift.value * 20 }, { scale: 1 + word.value * 0.04 }] }));
+  const rise = useAnimatedStyle(() => ({ transform: [{ translateY: -lift.value * 20 }] }));
 
   if (done) return null;
   return (
@@ -54,15 +50,8 @@ export function GirlIntro() {
       <Glass light style={StyleSheet.absoluteFill} border={false} intensity={80} />
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: girl.bg }, cream]} />
       <View style={styles.center}>
-        <Animated.View style={[styles.row, letters]}>
-          <Text raw style={{ fontFamily: 'Manrope_800ExtraBold', fontSize: 26, letterSpacing: 6, color: girl.ink }}>
-            IRLY
-          </Text>
-          <Animated.View style={girlWord}>
-            <Text raw style={{ ...girlType.accent, fontSize: 58, lineHeight: 64, color: girl.brand }}>
-              {' '}Girl
-            </Text>
-          </Animated.View>
+        <Animated.View style={rise}>
+          <GirlMark variant="launch" size={40} delay={transition.morph.wash - 200} onDone={reveal} />
         </Animated.View>
       </View>
     </Animated.View>
@@ -72,5 +61,4 @@ export function GirlIntro() {
 const styles = StyleSheet.create({
   root: { zIndex: 50 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', alignItems: 'baseline' },
 });
