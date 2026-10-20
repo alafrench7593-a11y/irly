@@ -104,7 +104,7 @@ export function RoleCard({ label, hint, icon, selected, width, onPress }: { labe
   );
   return (
     <Animated.View style={[{ width }, outer]}>
-      <PressableScale haptic="select" scaleTo={0.96} onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: selected, selected }} accessibilityLabel={`${label}. ${hint}`}>
+      <PressableScale haptic="select" scaleTo={0.96} onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: selected, selected }} aria-checked={selected} accessibilityLabel={`${label}. ${hint}`}>
         <SelectionLayers p={p} sweep={sweep} fill={t.c.text} radius={radius.lg} base={body(t.c.text, t.c.textSecondary, t.c.lineStrong, false)} chosen={body(t.c.bg, t.c.bg, t.c.bg, true)} />
       </PressableScale>
     </Animated.View>
@@ -129,7 +129,7 @@ export function Tile({ emoji, label, selected, width, onPress }: { emoji: string
   );
   return (
     <Animated.View style={[{ width }, outer]}>
-      <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} accessibilityRole="checkbox" accessibilityState={{ checked: selected }} accessibilityLabel={label}>
+      <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} accessibilityRole="checkbox" accessibilityState={{ checked: selected }} aria-checked={selected} accessibilityLabel={label}>
         <SelectionLayers p={p} sweep={sweep} fill={t.c.text} radius={radius.md} base={body(t.c.text, false)} chosen={body(t.c.bg, true)} />
       </PressableScale>
     </Animated.View>

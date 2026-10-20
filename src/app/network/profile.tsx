@@ -377,7 +377,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
 
     // 5 · Visibility & confirm
     <Fragment key="confirm">
-      <PressableScale haptic="select" scaleTo={0.98} onPress={() => set('visible', !d.visible)} style={[styles.toggle, { borderColor: t.c.line }]} accessibilityRole="switch" accessibilityState={{ checked: d.visible }} accessibilityLabel="Show me in Networking">
+      <PressableScale haptic="select" scaleTo={0.98} onPress={() => set('visible', !d.visible)} style={[styles.toggle, { borderColor: t.c.line }]} accessibilityRole="switch" accessibilityState={{ checked: d.visible }} aria-checked={d.visible} accessibilityLabel="Show me in Networking">
         <GlassLayer radius={radius.lg} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="titleS">Show me in Networking</Text>
