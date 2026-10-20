@@ -8,6 +8,7 @@ import { Chip, Field } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
+import { areasForDisplay } from '@/data/areas';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { isOpenNow } from '@/features/bali/fit';
@@ -67,7 +68,7 @@ export default function Eat() {
         <Field icon="search" placeholder={tx('Search a restaurant or cuisine')} value={q} onChangeText={setQ} autoCorrect={false} accessibilityLabel="Search restaurants" />
         <Filters>
           <Chip size="sm" label={tx('All areas')} selected={!area} onPress={() => setArea(null)} />
-          {(mainAreas.length ? mainAreas : city.areas.map((a) => ({ id: a.id, name: a.name }))).map((a) => (
+          {(mainAreas.length ? mainAreas : areasForDisplay(city, city.areas).map((a) => ({ id: a.id, name: a.name }))).map((a) => (
             <Chip key={a.id} size="sm" label={a.name} selected={area === a.id} onPress={() => setArea(area === a.id ? null : a.id)} />
           ))}
         </Filters>

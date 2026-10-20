@@ -12,6 +12,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { ACTIVITIES, EVENT_CATEGORIES, LEVELS, PLACE_KINDS, SERVICE_CATEGORIES } from '@/data/catalog';
+import { cityCentre } from '@/data/areas';
 import { areaName, CITIES } from '@/data/destinations';
 import {
   findCommunity,
@@ -270,7 +271,8 @@ function Highlights({ items }: { items: string[] }) {
 
 export function MiniMap({ city, areaId }: { city: City; areaId: string }) {
   const t = useTheme();
-  const area = city.areas.find((a) => a.id === areaId) ?? city.areas[0];
+  // An unknown neighbourhood shows the middle of the city, not its first area.
+  const area = city.areas.find((a) => a.id === areaId) ?? { name: city.name, point: cityCentre(city) };
   const w = 340;
   const h = 150;
   const vbW = 420;

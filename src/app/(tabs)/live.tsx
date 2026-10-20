@@ -31,6 +31,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
 import { TapPhoto } from '@/features/photo/TapPhoto';
+import { startArea } from '@/data/areas';
 import { areaName, CITIES, placeLabel } from '@/data/destinations';
 import { ScopeToggle } from '@/components/ui/ScopeToggle';
 import { useCityFilter } from '@/features/server/scope';
@@ -526,9 +527,10 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const liveDraft = useDrafts((s) => s.byKey.live);
   const saveDraft = useDrafts((s) => s.save);
   const [text, setText] = useState(() => liveDraft?.body ?? '');
-  const [picked, setArea] = useState(city.areas[0].id);
+  // No neighbourhood is chosen for the member: they say where they are.
+  const [picked, setArea] = useState<string | null>(null);
   // Switching destination keeps the composer mounted: never post a Dubai area in Bali.
-  const area = city.areas.some((a) => a.id === picked) ? picked : city.areas[0].id;
+  const area = startArea(city, picked);
   const [media, setMedia] = useState<LiveMedia | undefined>();
   const uri = media?.uri;
   // The picked photo (or the video's poster) is prepared while the member writes: Post then only uploads.
@@ -670,6 +672,10 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
 
   const submit = async () => {
     if ((!text.trim() && !media) || sending.current) return;
+    if (!area) {
+      toast('Choose a neighbourhood', 'pin', 'brand');
+      return;
+    }
     if (!account) {
       post({ cityId, kind: media?.kind === 'photo' ? 'photo' : 'text', text: text.trim(), photoUri: media?.kind === 'photo' ? uri : undefined, place: areaName(city, area), areaId: area });
       haptic('success');

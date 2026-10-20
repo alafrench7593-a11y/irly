@@ -1,6 +1,7 @@
 import type { IconName } from '@/components/ui/Icon';
 import { t as tx } from '@/i18n';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
+import { cityCentre } from '@/data/areas';
 import { areaCoords, toLatLng, type LatLng } from '@/data/geo';
 import type { City, CityContent, MapPoint } from '@/data/types';
 import type { HeroKind } from '@/features/hero/heroStore';
@@ -114,7 +115,7 @@ export function activityMarkers(city: City, rows: MapActivityRow[], whenText: (m
 export type MapActivityRow = { id: string; title: string; description: string | null; startsAt: number; place: string | null; address: string | null; latitude: number; longitude: number; communityName: string | null; status: 'upcoming' | 'ongoing'; going: number };
 
 export function buildMarkers(city: City, content: CityContent, lives: Live[] = []): MapMarkerData[] {
-  const pt = (areaId: string) => (city.areas.find((a) => a.id === areaId) ?? city.areas[0]).point;
+  const pt = (areaId: string) => city.areas.find((a) => a.id === areaId)?.point ?? cityCentre(city);
   const list: MapMarkerData[] = [];
   lives.forEach((l) => {
     const p = l.authorId === 'me' ? undefined : content.people.find((x) => x.id === l.authorId);

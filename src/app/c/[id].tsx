@@ -136,7 +136,12 @@ function CommunityScreen() {
       toast('Join the community first', 'users', 'brand');
       return false;
     }
-    const area = d.areaId ?? city.areas[0].id;
+    // A plan says where it happens: no neighbourhood is picked for the member.
+    const area = d.areaId && city.areas.some((a) => a.id === d.areaId) ? d.areaId : null;
+    if (!area) {
+      toast('Choose a neighbourhood', 'pin', 'brand');
+      return false;
+    }
     const areaLabel = city.areas.find((a) => a.id === area)?.name ?? city.name;
     try {
       const actId = await createServerActivity(

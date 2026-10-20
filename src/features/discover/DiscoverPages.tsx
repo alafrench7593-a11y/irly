@@ -16,6 +16,7 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { ACTIVITIES, INTENTS, SERVICE_CATEGORIES } from '@/data/catalog';
 import { CATEGORIES } from '@/data/catalog/categories';
+import { areasForDisplay } from '@/data/areas';
 import { areaName, CITIES } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 import { getCityContent } from '@/data/repo';
@@ -285,7 +286,7 @@ export function PlacesPage({ cityId, scrollY, top, bottom }: PageProps) {
       <ScrollReveal scrollY={scrollY} style={styles.section}>
         <SectionHeader overline="Neighbourhoods" title={tx('Around {city}', { city: city.name })} action="Map" onAction={() => router.push('/map')} />
         <View style={styles.areas}>
-          {city.areas.map((a) => {
+          {areasForDisplay(city, city.areas).map((a) => {
             const n =
               content.events.filter((e) => e.areaId === a.id).length +
               content.sessions.filter((s) => s.areaId === a.id).length +

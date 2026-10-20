@@ -39,6 +39,8 @@ export type ActivityExtras = {
   /** A photo already uploaded while the form was filled (covers.stageCover): the caller owns and cleans it up. */
   coverPath?: string | null;
   address?: string | null;
+  /** When it ends (optional): after the start, as the server's check requires. */
+  endsAt?: Date | null;
   /** The request's id, chosen by the caller (a Live passes its own id): the server keeps one activity per id. */
   clientRef?: string;
 };
@@ -105,6 +107,7 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
       creator_id: uid,
       cover_path: coverPath,
       ...activityColumns(plan, at),
+      ends_at: extras.endsAt ? extras.endsAt.toISOString() : null,
       place_id: extras.placeId ?? null,
       activity_type: extras.activityType ?? null,
       audience: extras.audience ?? 'all',
@@ -584,7 +587,7 @@ export async function cancelServerActivity(activityId: string): Promise<void> {
 }
 
 /** The host edits a plan: every screen showing it (lists, map, calendar, chat) gets the new version. */
-export async function updateServerActivity(activityId: string, patch: { title?: string; description?: string | null; placeName?: string | null; areaId?: string; startsAt?: Date; priceMinor?: number; capacity?: number | null }): Promise<void> {
+export async function updateServerActivity(activityId: string, patch: { title?: string; description?: string | null; placeName?: string | null; areaId?: string; startsAt?: Date; endsAt?: Date | null; priceMinor?: number; capacity?: number | null }): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const row: Record<string, unknown> = {};
   if (patch.title !== undefined) row.title = patch.title.trim().slice(0, 80);
@@ -592,6 +595,7 @@ export async function updateServerActivity(activityId: string, patch: { title?: 
   if (patch.placeName !== undefined) row.place_name = patch.placeName;
   if (patch.areaId !== undefined) row.area_id = patch.areaId;
   if (patch.startsAt !== undefined) row.starts_at = patch.startsAt.toISOString();
+  if (patch.endsAt !== undefined) row.ends_at = patch.endsAt ? patch.endsAt.toISOString() : null;
   if (patch.priceMinor !== undefined) row.price_minor = patch.priceMinor;
   if (patch.capacity !== undefined) row.capacity = patch.capacity;
   const { error } = await supabase.from('activities').update(row).eq('id', activityId);

@@ -73,7 +73,8 @@
     "test:community": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-community.mts",
     "test:sync": "node --experimental-strip-types --no-warnings scripts/check-sync.mts",
     "test:live": "node --experimental-strip-types --no-warnings scripts/check-live.mts",
-    "test:purge": "node scripts/check-purge.mjs"
+    "test:purge": "node scripts/check-purge.mjs",
+    "test:areas": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-area-order.mts"
   },
   "private": true,
   "engines": {

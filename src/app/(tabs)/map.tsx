@@ -24,7 +24,8 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
-import type { CityId, MapPoint } from '@/data/types';
+import { cityCentre } from '@/data/areas';
+import type { City, CityId, MapPoint } from '@/data/types';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { MapArt } from '@/features/map/MapArt';
 import { ClusterView, MarkerView, Projected, TILT, type Camera } from '@/features/map/MapMarkers';
@@ -46,8 +47,10 @@ const MAX_Z = 2.8;
 /** Opens at street level on the busiest neighbourhood: people and plans, not bubbles. */
 const START_Z = 1.5;
 
-/** Point of the area holding the most markers. */
-function busiestArea(areas: { id: string; point: MapPoint }[], markers: { point: MapPoint }[]): MapPoint {
+/** Point of the area holding the most markers; with none, the middle of the city. */
+function busiestArea(city: City, markers: { point: MapPoint }[]): MapPoint {
+  const areas = city.areas;
+  if (!markers.length || !areas.length) return cityCentre(city);
   const counts = new Map<string, number>();
   for (const m of markers) {
     let nearest = areas[0];
@@ -124,7 +127,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
     [S],
   );
 
-  const hub = useMemo(() => busiestArea(city.areas, all), [city, all]);
+  const hub = useMemo(() => busiestArea(city, all), [city, all]);
   const area = areaId ? city.areas.find((a) => a.id === areaId) : undefined;
   const focus = area?.point ?? hub;
   const cam: Camera = {
