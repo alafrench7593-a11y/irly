@@ -17,7 +17,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { matchSentence, roundDistance, type ProMatch, type ProProfile } from './match';
-import { INDUSTRY, ROLE_LABEL } from './taxonomy';
+import { INDUSTRY, INTENT, ROLE_LABEL } from './taxonomy';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 export const hueOf = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
@@ -147,28 +147,40 @@ export function IndustryTags({ ids, max = 3 }: { ids: ProProfile['industries']; 
   );
 }
 
-/** A professional in the Discover list. */
+/**
+ * A professional in the Discover list: who (photo, name, job, company),
+ * where (neighbourhood, rounded distance), two domains, three skills (the
+ * ones you share first), the goals you share, then Connect and the profile.
+ */
 export function ProCard({
   pro,
   photo,
   match,
+  mine,
   onConnection,
 }: {
   pro: ProProfile;
   photo?: string;
   match: ProMatch | null;
+  /** Your own professional profile, for what you share. */
+  mine?: ProProfile | null;
   onConnection: (c: ProProfile['connection']) => void;
 }) {
   const t = useTheme();
   const tr = useT();
   const router = useRouter();
   const where = [placeOf(pro), match?.distanceKm != null ? roundDistance(match.distanceKm) : null].filter(Boolean).join(' · ');
+  const sharedSkill = (s: string) => Boolean(mine?.skills.some((x) => x.toLowerCase() === s.toLowerCase()));
+  const skills = [...pro.skills].sort((a, b) => Number(sharedSkill(b)) - Number(sharedSkill(a))).slice(0, 3);
+  const goals = mine ? pro.intents.filter((i) => i !== 'meet' && mine.intents.includes(i)).slice(0, 2) : [];
+  const open = () => router.push(`/network/${pro.userId}`);
+  const profile = <Button label="View profile" variant="secondary" size="sm" iconRight="chevronRight" onPress={open} />;
   return (
     <PressableScale
       haptic="select"
       scaleTo={0.985}
-      onPress={() => router.push(`/network/${pro.userId}`)}
-      accessibilityLabel={`${pro.firstName}, ${pro.jobTitle}`}
+      onPress={open}
+      accessibilityLabel={[pro.firstName, pro.jobTitle, pro.company].filter(Boolean).join(', ')}
       style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', boxShadow: t.shadow.card }]}
     >
       <GlassLayer radius={radius.xl} />
@@ -188,7 +200,7 @@ export function ProCard({
           </Text>
           <View style={styles.whereRow}>
             <Icon name="pin" size={12} color={t.c.textTertiary} />
-            <Text variant="caption" tone="tertiary" numberOfLines={1} raw>
+            <Text variant="caption" tone="tertiary" numberOfLines={1} raw style={{ flexShrink: 1 }}>
               {where}
             </Text>
           </View>
@@ -197,14 +209,40 @@ export function ProCard({
       </View>
 
       {pro.project ? (
-        <Text variant="bodyS" tone="secondary" numberOfLines={2} raw>
+        <Text variant="bodyS" tone="secondary" numberOfLines={1} raw>
           {pro.project}
         </Text>
       ) : null}
-      <IndustryTags ids={pro.industries} />
+      <View style={styles.tags}>
+        {pro.industries.slice(0, 2).map((id) => (
+          <View key={id} style={[styles.tag, { borderColor: t.c.line }]}>
+            <Text variant="caption" numberOfLines={1} raw>
+              {`${INDUSTRY[id].emoji} ${tr(INDUSTRY[id].short)}`}
+            </Text>
+          </View>
+        ))}
+        {skills.map((s) => {
+          const shared = sharedSkill(s);
+          return (
+            <View key={s} style={[styles.tag, { maxWidth: '100%', borderColor: shared ? t.c.text : t.c.line, backgroundColor: shared ? t.c.text : 'transparent' }]}>
+              <Text variant="caption" color={shared ? t.c.bg : t.c.textSecondary} numberOfLines={1}>
+                {s}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+      {goals.length ? (
+        <View style={styles.whereRow}>
+          <Icon name="target" size={12} color={t.c.textSecondary} />
+          <Text variant="caption" tone="secondary" numberOfLines={1} raw style={{ flexShrink: 1 }}>
+            {tr('You both: {what}', { what: goals.map((g) => `${INTENT[g].emoji} ${tr(INTENT[g].label)}`).join(', ') })}
+          </Text>
+        </View>
+      ) : null}
       {match ? (
         <View style={[styles.why, { backgroundColor: t.c.bg }]}>
-          <Text variant="caption" raw>
+          <Text variant="caption" numberOfLines={3} raw>
             <Text variant="caption" style={{ fontWeight: '700' }} raw>
               {tr('{n}% match', { n: match.percent })}
             </Text>
@@ -212,12 +250,20 @@ export function ProCard({
           </Text>
         </View>
       ) : null}
-      <View style={styles.actions}>
-        <View style={{ flex: 1 }}>
+      {pro.connection === 'incoming' ? (
+        // Accept and Decline need the width: the profile goes underneath.
+        <View style={{ gap: 8, marginTop: space[1] }}>
           <ConnectAction pro={pro} onChange={onConnection} full />
+          {profile}
         </View>
-        <Button label="Profile" variant="secondary" size="sm" iconRight="chevronRight" onPress={() => router.push(`/network/${pro.userId}`)} />
-      </View>
+      ) : (
+        <View style={styles.actions}>
+          <View style={{ flex: 1 }}>
+            <ConnectAction pro={pro} onChange={onConnection} full />
+          </View>
+          {profile}
+        </View>
+      )}
     </PressableScale>
   );
 }
