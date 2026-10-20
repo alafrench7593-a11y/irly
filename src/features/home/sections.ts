@@ -1,7 +1,8 @@
 import type { AppSpace } from '@/state/appSpace';
 
 /**
- * The sections of the Home, top to bottom, under the hero. IRLY and IRLY
+ * The sections of the Home, top to bottom, under the hero: who is live
+ * (in `search`), then the real plans of today, then the rest. IRLY and IRLY
  * Girl render this one list in this one order with the same components;
  * only the data differs (IRLY Girl: women, girls' plans, IRLY Girl
  * communities, events open to everyone). A section with nothing to show
@@ -10,19 +11,18 @@ import type { AppSpace } from '@/state/appSpace';
  */
 export const HOME_SECTIONS = [
   'search',
+  'today',
   'categories',
   'featured',
   'create',
   'bali',
   'sessions',
   'people',
-  'today',
   'explore',
   'portals',
   'members',
   'nearby',
   'eat',
-  'events',
   'yourCommunities',
   'communities',
   'forYou',

@@ -15,6 +15,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Avatar } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -105,7 +106,7 @@ type HomeHeaderProps = {
 };
 
 /**
- * Home header: Communities on the left; Network, Messages, notifications and Settings on the right.
+ * Home header: your profile, the logo and Communities on the left; Messages, notifications and Settings on the right.
  * IRL lives in the centre of the tab bar. It sits
  * on the page and turns into glass as content scrolls under it.
  */
@@ -121,12 +122,45 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
       </Animated.View>
       <View style={styles.row}>
         <View style={styles.lead}>
+          <ProfileButton />
           <SpaceLogo />
           <CommunitiesButton />
         </View>
         <InboxButtons gap={4} />
       </View>
     </View>
+  );
+}
+
+/**
+ * Top left of every tab root, at the very edge: your profile (your face,
+ * or your initials), lit while you are on it. The same door in both spaces.
+ */
+export function ProfileButton() {
+  const t = useTheme();
+  const router = useRouter();
+  const pathname = usePathname();
+  const name = useStore((s) => s.profile.name);
+  const photo = useStore((s) => s.profile.photoUri);
+  const account = useAccount();
+  const narrow = useFrame().width < 420;
+  const here = pathname === '/profile';
+  const size = narrow ? 36 : 40;
+  return (
+    <PressableScale
+      haptic="select"
+      scaleTo={0.92}
+      hitSlop={6}
+      onPress={() => {
+        if (!here) router.push('/profile');
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={here ? tx('Profile, current section') : tx('Profile')}
+      accessibilityState={here ? { selected: true } : undefined}
+      style={[styles.profile, { width: size, height: size, borderRadius: size / 2, borderColor: here ? (t.flavor === 'girl' ? t.c.brand : t.c.text) : 'transparent' }]}
+    >
+      <Avatar name={name || tx('You')} hue={0} size={size - 6} photo={photo ?? undefined} userId={account?.userId} />
+    </PressableScale>
   );
 }
 
@@ -147,7 +181,7 @@ export function SpaceLogo() {
 function CommunitiesButton() {
   const t = useTheme();
   const router = useRouter();
-  // On phones up to 420 pt (four round doors on the right) the word keeps its room: the icon steps aside, never « Communi… ».
+  // On phones up to 420 pt (profile and logo on the left, three doors on the right) the word keeps its room: the icon steps aside, never « Communi… ».
   const narrow = useFrame().width < 420;
   return (
     <PressableScale
@@ -175,12 +209,7 @@ export function useBell(): number {
   return account ? serverBell : DEMO && auth === 'out' ? 2 : 0;
 }
 
-/** On the Network section (/network or any page under it). */
-function onNetwork(pathname: string): boolean {
-  return pathname === '/network' || pathname.startsWith('/network/');
-}
-
-/** On Settings (/preferences, the page the tab bar's gear opens too, or its privacy page /settings). */
+/** On Settings (/preferences, or its privacy page /settings). */
 function onSettings(pathname: string): boolean {
   return pathname === '/settings' || pathname === '/preferences';
 }
@@ -197,7 +226,7 @@ type HeaderActionProps = { icon: IconName; label: string; onPress: () => void; b
 const HeaderAction = memo(function HeaderAction({ icon, label, onPress, badge, active }: HeaderActionProps) {
   const t = useTheme();
   const reduced = useReducedMotion();
-  // Four doors on phones up to 420 pt: a little smaller, so the Communities pill keeps its word.
+  // On phones up to 420 pt: a little smaller, so the Communities pill keeps its word.
   const narrow = useFrame().width < 420;
   const girl = t.flavor === 'girl';
   const fill = girl ? t.c.brand : t.c.text;
@@ -229,7 +258,6 @@ const HeaderAction = memo(function HeaderAction({ icon, label, onPress, badge, a
 
 /**
  * The doors every tab root keeps at the top right, in both spaces:
- * Network (the professional side of IRLY, lit while you are in it),
  * Messages (private chats, group chats, the community area), the bell and
  * Settings (the one Settings page, lit while you are in it). The assistant
  * is reached from Settings.
@@ -239,18 +267,9 @@ export function InboxButtons({ gap = 8 }: { gap?: number }) {
   const pathname = usePathname();
   const unread = useUnread();
   const bell = useBell();
-  const network = onNetwork(pathname);
   const settings = onSettings(pathname);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap }}>
-      <HeaderAction
-        icon="network"
-        label={network ? tx('Network, current section') : tx('Network')}
-        active={network}
-        onPress={() => {
-          if (pathname !== '/network') router.push('/network');
-        }}
-      />
       <HeaderAction icon="message" label={unread ? tx('Messages, {n} unread', { n: unread }) : tx('Messages')} badge={unread} onPress={() => router.push('/messages')} />
       <HeaderAction icon="bell" label={bell ? tx('Notifications, {n} new', { n: bell }) : tx('Notifications')} badge={bell} onPress={() => router.push('/notifications')} />
       <HeaderAction
@@ -271,7 +290,7 @@ type PageHeaderProps = {
   right?: ReactNode;
   /** Header sits on a photo: white controls until the page scrolls. */
   overImage?: boolean;
-  /** Tab roots have no back button. */
+  /** Tab roots have no back button: your profile sits there instead. */
   back?: boolean;
   /** Replaces the default back (e.g. to ask before leaving a draft). */
   onBack?: () => void;
@@ -303,7 +322,7 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
             onPress={onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))}
           />
         ) : (
-          <View style={{ width: 40 }} />
+          <ProfileButton />
         )}
         <Animated.View style={[styles.title, titleStyle]} pointerEvents="none">
           <Text variant="titleS" numberOfLines={1}>
@@ -321,6 +340,7 @@ const styles = StyleSheet.create({
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   communities: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, flexShrink: 1, minWidth: 0, paddingHorizontal: 11, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
   communitiesNarrow: { paddingHorizontal: 9 },
+  profile: { alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, flexShrink: 0 },
   lead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1, minWidth: 0, marginRight: 4 },
   // The logo never shrinks: the Communities pill gives way first.
   logo: { height: 38, justifyContent: 'center', flexShrink: 0 },

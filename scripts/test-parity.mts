@@ -25,6 +25,8 @@ check(!(HOME_SECTIONS as readonly string[]).includes('byCategory'), 'no « Activ
 check(!(HOME_SECTIONS as readonly string[]).includes('find'), 'no « Find something to do » section');
 check(count('members') === 1, 'exactly one « Planned by members »');
 check(HOME_SECTIONS[0] === 'search' && HOME_SECTIONS.at(-1) === 'footer', 'search first, footer last');
+check(HOME_SECTIONS[1] === 'today', '« Real plans, today » right after Live now (in search)');
+check(!(HOME_SECTIONS as readonly string[]).includes('events'), 'no « Events this week » on the Home');
 console.log(`  order: ${HOME_SECTIONS.join(' › ')}`);
 
 // 2. The Home renders that list, every section has its case, and no Girl-only block is left.

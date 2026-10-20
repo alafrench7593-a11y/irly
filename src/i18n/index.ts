@@ -18,8 +18,12 @@ import { fr } from './fr';
 export type Lang = 'en' | 'fr';
 export type LangSetting = Lang | 'auto';
 
-export const LANGS: { id: LangSetting; label: string }[] = [
-  { id: 'auto', label: 'Auto' },
+/**
+ * The two languages a member picks between, nothing else: the app is
+ * written in each, never machine-translated. 'auto' (the phone's language)
+ * is only where a member starts before choosing one.
+ */
+export const LANGS: { id: Lang; label: string }[] = [
   { id: 'en', label: 'English' },
   { id: 'fr', label: 'Français' },
 ];

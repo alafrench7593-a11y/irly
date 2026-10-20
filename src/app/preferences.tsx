@@ -4,7 +4,7 @@ import { SettingsSections } from '@/features/settings/SettingsSections';
 import { SpaceFlavor } from '@/theme/space';
 import { useTheme } from '@/theme/useTheme';
 
-/** Settings on their own screen: the gear in the tab bar. */
+/** Settings on their own screen: the gear at the top right of every tab root. */
 export default function PreferencesRoute() {
   // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
   return (
