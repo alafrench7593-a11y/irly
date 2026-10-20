@@ -32,7 +32,13 @@ export type CategoryKey =
   | 'animals'
   | 'family'
   | 'creative'
-  | 'learning';
+  | 'learning'
+  | 'outings'
+  | 'cafes'
+  | 'beach'
+  | 'games'
+  | 'experiences'
+  | 'communities';
 
 export type CatalogActivity = {
   id: string;
@@ -128,7 +134,7 @@ export const CATEGORIES: CatalogCategory[] = [
   },
   {
     id: 'food',
-    label: 'Food & drink',
+    label: 'Restaurants',
     tagline: 'Find people to eat with',
     icon: 'utensils',
     color: '#FF9500',
@@ -145,7 +151,7 @@ export const CATEGORIES: CatalogCategory[] = [
   },
   {
     id: 'travel',
-    label: 'Travel & trips',
+    label: 'Trips & travel',
     tagline: 'Explore the UAE together',
     icon: 'plane',
     color: '#007AFF',
@@ -186,7 +192,7 @@ export const CATEGORIES: CatalogCategory[] = [
   },
   {
     id: 'outdoor',
-    label: 'Beach & outdoor',
+    label: 'Outdoor & desert',
     tagline: 'Sun, sea and sand, together',
     icon: 'palm',
     color: '#F2B600',
@@ -323,6 +329,70 @@ export const CATEGORIES: CatalogCategory[] = [
       ...list('Business', 'Tech', 'Finance', 'Photography', 'Design', 'Fitness', 'Personal development'),
     ],
   },
+  {
+    id: 'outings',
+    label: 'Going out',
+    tagline: 'Plans with people, tonight or this weekend',
+    icon: 'sparkles',
+    color: '#FF7A59',
+    photo: 'dinnerMix',
+    subs: list('Friends outing', 'Group outing', 'New places', 'Weekend plans', 'Walks', 'Spontaneous plans', 'Last-minute plans', 'Member outings', 'Discover Dubai'),
+  },
+  {
+    id: 'cafes',
+    label: 'Cafés',
+    tagline: 'Coffee, a chat, some work',
+    icon: 'coffee',
+    color: '#A0662D',
+    photo: 'coffeeBar',
+    subs: list('Coffee shops', 'Coffee & a chat', 'Work from a café', 'Founders coffee', 'New cafés', 'Afternoon coffee'),
+  },
+  {
+    id: 'beach',
+    label: 'Beach & beach clubs',
+    tagline: 'Sun, sea and good company',
+    icon: 'waves',
+    color: '#00A5C8',
+    photo: 'beachClub',
+    subs: list('Beach clubs', 'Beach day', 'Beach day with friends', 'Water sports', 'Paddleboard', 'Kayak', 'Swimming', 'By the sea'),
+  },
+  {
+    id: 'games',
+    label: 'Games & social',
+    tagline: 'Play and get to know people',
+    icon: 'gamepad',
+    color: '#7B61FF',
+    photo: 'bowling',
+    subs: list('Board games', 'Game night', 'Quiz night', 'Bowling', 'Escape game', 'Karaoke', 'Group games', 'Icebreakers'),
+  },
+  {
+    id: 'experiences',
+    label: 'Experiences',
+    tagline: 'Something you have never done',
+    icon: 'compass',
+    color: '#D99A00',
+    photo: 'souk',
+    subs: list('Unusual experiences', 'Hidden places', 'Food experiences', 'Tourist activities', 'Local experiences', 'Organised experiences'),
+  },
+  {
+    id: 'communities',
+    label: 'Meetups',
+    tagline: 'Newcomers, expats, shared passions',
+    icon: 'users',
+    color: '#2EAD6B',
+    photo: 'festival',
+    subs: list('Newcomers', 'Expats', 'Interest meetups', 'Community activities', 'Shared passions'),
+  },
+];
+
+/**
+ * The categories in the order members discover them (Home, all
+ * categories): the plans people look for first, then the rest. Every
+ * category is listed, with activities or not.
+ */
+export const DISCOVERY_ORDER: CategoryKey[] = [
+  'outings', 'food', 'cafes', 'sport', 'beach', 'nightlife', 'travel', 'animals', 'networking', 'shopping',
+  'culture', 'wellness', 'games', 'experiences', 'communities', 'family', 'entertainment', 'outdoor', 'creative', 'learning',
 ];
 
 export const CATEGORY_BY_ID: Record<CategoryKey, CatalogCategory> = Object.fromEntries(CATEGORIES.map((c) => [c.id, c])) as Record<
@@ -356,15 +426,18 @@ export function searchCatalog(query: string, limit = 12): CatalogEntry[] {
 const HINTS: [RegExp, CategoryKey][] = [
   // Word starts only ("Muay thai" is not "AI", "Spanish" is not "spa", "Darts" is not "art").
   [/\b(book club|reading|coding|hackathon|calligraphy|pottery|ceramics?|knitting|crochet|sewing|crafts?)\b/i, 'learning'],
-  [/\b(chess|board games?|poker|trivia|quiz|paintball|darts|billiards|escape rooms?|laser tag|trampoline)\b/i, 'entertainment'],
+  [/\b(chess|board games?|game nights?|poker|trivia|quiz|darts|billiards|escape (rooms?|games?)|karaoke|bowling)\b/i, 'games'],
+  [/\b(paintball|laser tag|trampoline)\b/i, 'entertainment'],
+  [/\b(coffee|cafés?|cafes?|matcha)\b/i, 'cafes'],
+  [/\b(beach ?clubs?|beach|paddle ?board\w*|sup)\b/i, 'beach'],
   [/\b(padel|tennis|squash|pickleball|foot\w*|soccer|run\w*|gym|box\w*|surf\w*|kite\w*|swim\w*|golf|cricket|climb\w*|cycl\w*|bike|volley\w*|basket\w*|mma|yoga|pilates|muay thai|jiu ?jitsu|judo|karate|hiit|rugby|hockey|ski\w*|wakeboard\w*|jet ?ski|freediving|triathlon)\b/i, 'sport'],
   [/\b(founders?|startups?|network\w*|ai|tech|crypto|invest\w*|e-?com\w*|shopify|amazon sellers?|business|pitch)\b/i, 'networking'],
-  [/\b(brunch|dinner|lunch|coffee|tea|food|restaurants?|sushi|burgers?|pizza|cafes?|desserts?|shawarma|biryani)\b/i, 'food'],
+  [/\b(brunch|dinner|lunch|tea|food|restaurants?|sushi|burgers?|pizza|desserts?|shawarma|biryani)\b/i, 'food'],
   [/\b(trips?|abu dhabi|oman|hatta|road|weekend|visit|day out|mosques?|louvre)\b/i, 'travel'],
-  [/\b(beach|desert|dunes?|quad|sunset|sunrise|picnic|bbq|camp|camping|hike|hiking|boat|yacht|kayak|fishing|walk|walking|stargazing)\b/i, 'outdoor'],
+  [/\b(desert|dunes?|quad|sunset|sunrise|picnic|bbq|camp|camping|hike|hiking|boat|yacht|kayak|fishing|walk|walking|stargazing)\b/i, 'outdoor'],
   [/\b(shop\w*|malls?|souks?|sneakers?|fashion|vintage|beauty)\b/i, 'shopping'],
   [/\b(museums?|art|arts|gallery|galleries|heritage|exhibitions?|history)\b/i, 'culture'],
-  [/\b(cinema|movies?|concerts?|comedy|karting|bowling|arcade|shows?|festivals?|gaming)\b/i, 'entertainment'],
+  [/\b(cinema|movies?|concerts?|comedy|karting|arcade|shows?|festivals?|gaming)\b/i, 'entertainment'],
   [/\b(clubs?|lounges?|rooftops?|dj|night\w*|party|cocktails?|wine|shisha)\b/i, 'nightlife'],
   [/\b(spa|massage|sauna|meditat\w*|breath\w*|wellness|plunge)\b/i, 'wellness'],
   [/\b(dogs?|cats?|pets?|horses?|pupp\w*|animals?)\b/i, 'animals'],

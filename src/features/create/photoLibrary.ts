@@ -99,6 +99,12 @@ export const CATEGORY_KINDS: Record<CategoryKey, LibraryKind[]> = {
   family: ['family'],
   creative: ['creative'],
   learning: ['learning'],
+  outings: ['outings', 'walk'],
+  cafes: ['cafe'],
+  beach: ['beach', 'watersports', 'yacht'],
+  games: ['outings'],
+  experiences: ['travel', 'desert', 'culture'],
+  communities: ['outings'],
 };
 
 /** The type of an activity read from its words, most specific first ("Beach yoga" is yoga). */

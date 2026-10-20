@@ -16,7 +16,7 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { CATALOG_ENTRIES, CATEGORIES, CATEGORY_BY_ID, guessCategory, ideaPhoto, photoForText, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
+import { CATALOG_ENTRIES, CATEGORY_BY_ID, DISCOVERY_ORDER, guessCategory, ideaPhoto, photoForText, searchCatalog, type CatalogActivity, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { photo, type PhotoKey } from '@/data/photos';
@@ -537,7 +537,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     Or browse everything
                   </Text>
                   <View style={styles.grid}>
-                    {CATEGORIES.map((c, i) => (
+                    {DISCOVERY_ORDER.map((k) => CATEGORY_BY_ID[k]).map((c, i) => (
                       <Animated.View key={c.id} entering={enter.pop(Math.min(i, 8), 160)} style={styles.cell}>
                         <PressableScale
                           haptic="select"
@@ -636,7 +636,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                     Category · suggested by IRLY, change it if needed
                   </Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                    {CATEGORIES.map((c) => (
+                    {DISCOVERY_ORDER.map((k) => CATEGORY_BY_ID[k]).map((c) => (
                       <Chip key={c.id} size="sm" label={c.label} dot={c.color} selected={pick.categoryId === c.id} onPress={() => setPick({ ...pick, categoryId: c.id })} />
                     ))}
                   </ScrollView>

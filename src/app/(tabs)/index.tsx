@@ -33,7 +33,7 @@ import { HomeHero } from '@/features/home/HomeHero';
 import { HomeBackdrop } from '@/features/home/HomeBackdrop';
 import { GirlPortals } from '@/features/home/Portals';
 import { ExploreDoors } from '@/features/home/Explore';
-import { ActivitiesByCategory } from '@/features/home/ActivitiesByCategory';
+import { ActivitiesByCategory, DiscoverCategories } from '@/features/home/ActivitiesByCategory';
 import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
 import { LiveStrip } from '@/features/live/LiveStrip';
 import { useLives } from '@/features/live/liveStore';
@@ -193,6 +193,13 @@ export default function Home() {
             </PressableScale>
             <LiveStrip />
           </Animated.View>
+        );
+      case 'categories':
+        // Every kind of plan, on its photo, right under the header (girls' plans counted in IRLY Girl).
+        return (
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            <DiscoverCategories cityId={cityId} />
+          </ScrollReveal>
         );
       case 'featured':
         return featured ? (
