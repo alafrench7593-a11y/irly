@@ -14,7 +14,7 @@ import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import type { NewsItem } from '@/features/news/news';
 import type { ServerActivity } from '@/features/server/activities';
-import { useT } from '@/i18n';
+import { t as tx, useT } from '@/i18n';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
@@ -143,7 +143,7 @@ export function SectionState({
   const t = useTheme();
   if (kind === 'loading')
     return (
-      <ScrollView horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail} accessibilityLabel="Loading">
+      <ScrollView horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail} accessibilityLabel={tx('Loading')}>
         {[0, 1, 2].map((i) => (
           <Skeleton key={i} width={skeleton.width} height={skeleton.height} radius={radius.lg} />
         ))}

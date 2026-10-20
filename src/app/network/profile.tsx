@@ -33,7 +33,7 @@ import {
   type IndustryId,
   type IntentId,
 } from '@/features/network/taxonomy';
-import { useT } from '@/i18n';
+import { t as tx, useT } from '@/i18n';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -88,7 +88,7 @@ export default function ProProfileEditor() {
   if (me.signedIn && me.loading)
     return (
       <Page overline="IRLY Network" title={TITLE}>
-        <ActivityIndicator color={t.c.text} style={{ marginTop: 24 }} accessibilityLabel="Loading" />
+        <ActivityIndicator color={t.c.text} style={{ marginTop: 24 }} accessibilityLabel={tx('Loading')} />
       </Page>
     );
   // Unread is not "no profile": an empty form saved here would replace the real one.
@@ -344,7 +344,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
               <View key={k.id} style={{ gap: 6 }}>
                 <Field
                   icon={k.icon}
-                  placeholder={`${k.label} · ${k.placeholder}`}
+                  placeholder={`${tr(k.label)} · ${k.placeholder}`}
                   value={typed}
                   onChangeText={(v) => setTypedLinks((x) => ({ ...x, [k.id]: v }))}
                   onEndEditing={() => {

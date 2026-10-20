@@ -72,6 +72,7 @@ export function wipeLocal(): void {
     .catch(() => undefined);
   import('@/features/server/activities').then((m) => m.clearActivityCache()).catch(() => undefined);
   import('@/features/server/media').then((m) => m.clearLinkCache()).catch(() => undefined);
+  import('@/features/server/covers').then((m) => m.clearCoverCache()).catch(() => undefined);
   import('@/features/live/liveMedia').then((m) => m.clearLiveCache()).catch(() => undefined);
   import('@/features/girl/api').then((m) => m.clearMatchLinks()).catch(() => undefined);
   import('@/features/network/api').then((m) => m.clearNetworkLinks()).catch(() => undefined);

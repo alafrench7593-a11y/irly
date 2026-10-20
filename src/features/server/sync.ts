@@ -291,6 +291,8 @@ const SIGNAL_KINDS: Record<string, SyncKind[]> = {
   follows: ['follows'],
   friends: ['friends'],
   saved: ['saved'],
+  // A notification taken back (its Live, post or comment removed): Realtime cannot hear that DELETE.
+  notifs: ['notifs'],
 };
 const SIGNAL_CATCH_UP: SyncKind[] = ['activities', 'communities', 'inbox', 'follows', 'friends', 'saved'];
 

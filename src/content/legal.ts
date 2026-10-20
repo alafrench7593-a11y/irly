@@ -132,6 +132,7 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
         title: 'Moderation',
         body: [
           'You can report profiles, messages and content, and block members. Moderators review reports and may remove content, limit features or close accounts that break these Terms or the Guidelines.',
+          'IRLY has zero tolerance for objectionable content and abusive users. Reports are reviewed within 24 hours; content that breaks these rules is removed and the account responsible is suspended or closed.',
         ],
       },
       {
@@ -165,7 +166,10 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
       },
       {
         title: 'Be respectful',
-        body: ['No harassment, bullying, unwanted sexual messages, hate speech or discrimination based on origin, religion, gender, sexual orientation, disability or any other characteristic.'],
+        body: [
+          'No harassment, bullying, unwanted sexual messages, hate speech or discrimination based on origin, religion, gender, sexual orientation, disability or any other characteristic.',
+          'IRLY has zero tolerance for objectionable content and abusive users: reports are reviewed within 24 hours, the content is removed and the account responsible is suspended or closed.',
+        ],
       },
       {
         title: 'Keep everyone safe',
@@ -354,7 +358,10 @@ export const LEGAL_FR: typeof LEGAL = {
       },
       {
         title: 'Sois respectueux',
-        body: ['Pas de harcèlement, d’intimidation, de messages sexuels non désirés, de discours haineux ni de discrimination fondée sur l’origine, la religion, le genre, l’orientation sexuelle, le handicap ou toute autre caractéristique.'],
+        body: [
+          'Pas de harcèlement, d’intimidation, de messages sexuels non désirés, de discours haineux ni de discrimination fondée sur l’origine, la religion, le genre, l’orientation sexuelle, le handicap ou toute autre caractéristique.',
+          'IRLY applique une tolérance zéro envers les contenus répréhensibles et les utilisateurs abusifs : les signalements sont examinés sous 24 heures, le contenu est retiré et le compte responsable suspendu ou fermé.',
+        ],
       },
       {
         title: 'Protège tout le monde',

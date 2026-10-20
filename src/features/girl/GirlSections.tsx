@@ -94,7 +94,7 @@ export function GirlPlanRows({ plans, limit }: { plans: { activities: ServerActi
   const list = limit ? plans.activities.slice(0, limit) : plans.activities;
   if (!list.length && plans.loading) {
     return (
-      <View style={{ gap: 10 }} accessibilityLabel="Loading plans">
+      <View style={{ gap: 10 }} accessibilityLabel={tx('Loading plans')}>
         <Skeleton height={84} radius={radius.lg} />
         <Skeleton height={84} radius={radius.lg} />
       </View>

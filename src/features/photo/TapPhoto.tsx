@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Icon } from '@/components/ui/Icon';
+import { t as tx } from '@/i18n';
 import { haptic } from '@/motion/haptics';
 import { motion, spring } from '@/motion/tokens';
 import { openPhoto, type ViewerPhoto } from './photoViewer';
@@ -58,8 +59,8 @@ export function TapPhoto({ photo, style, children, liked, onLike }: { photo: Vie
         collapsable={false}
         style={style}
         accessibilityRole="imagebutton"
-        accessibilityLabel="Open photo"
-        accessibilityActions={onLike ? [{ name: 'activate' }, { name: 'like', label: 'Like' }] : [{ name: 'activate' }]}
+        accessibilityLabel={tx('Open photo')}
+        accessibilityActions={onLike ? [{ name: 'activate' }, { name: 'like', label: tx('Like') }] : [{ name: 'activate' }]}
         onAccessibilityAction={(e) => (e.nativeEvent.actionName === 'like' ? like() : open())}
       >
         {children}

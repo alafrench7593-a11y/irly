@@ -249,12 +249,12 @@ export function Upcoming({
         {list.length > first && !more ? <GButton label={tx('Show all {n}', { n: list.length })} variant="ghost" onPress={() => setMore(true)} /> : null}
         {!list.length && loading ? (
           grid ? (
-            <View style={styles.grid} accessibilityLabel="Loading plans">
+            <View style={styles.grid} accessibilityLabel={tx('Loading plans')}>
               <Skeleton width={tileW} height={Math.round(tileW * 0.78) + 110} radius={radius.xl} />
               <Skeleton width={tileW} height={Math.round(tileW * 0.78) + 110} radius={radius.xl} />
             </View>
           ) : (
-            <View style={{ gap: 10 }} accessibilityLabel="Loading plans">
+            <View style={{ gap: 10 }} accessibilityLabel={tx('Loading plans')}>
               <Skeleton height={84} radius={radius.lg} />
               <Skeleton height={84} radius={radius.lg} />
             </View>
@@ -504,7 +504,7 @@ export function GirlFeed({ cityId, moms, onCommunities }: { cityId: string; moms
   if (state === 'loading')
     // The shape of a post, shimmering in powder rose: never a bare spinner.
     return (
-      <View style={[styles.post, { marginHorizontal: space.gutter }]} accessibilityLabel="Loading posts">
+      <View style={[styles.post, { marginHorizontal: space.gutter }]} accessibilityLabel={tx('Loading posts')}>
         <GlassLayer radius={radius.xl} />
         <View style={styles.postHead}>
           <Skeleton width={38} height={38} radius={19} />

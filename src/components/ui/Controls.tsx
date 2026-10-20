@@ -430,6 +430,7 @@ export function GirlFieldFrame({
   children: ReactNode;
 }) {
   const t = useTheme();
+  const tr = useT();
   const reduced = useReducedMotion();
   const f = useSharedValue(focused ? 1 : 0);
   const e = useSharedValue(invalid ? 1 : 0);
@@ -462,7 +463,7 @@ export function GirlFieldFrame({
         <Glass variant="field" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
         {children}
         {valid && !invalid ? (
-          <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[styles.tick, { backgroundColor: t.c.positive }]} accessibilityLabel="Looks good">
+          <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[styles.tick, { backgroundColor: t.c.positive }]} accessibilityLabel={tr('Looks good')}>
             <Icon name="check" size={12} color="#FFFFFF" strokeWidth={3} />
           </Animated.View>
         ) : null}

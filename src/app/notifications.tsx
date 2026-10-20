@@ -28,6 +28,8 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { SpaceFlavor } from '@/theme/space';
 import { GirlHeaderMark } from '@/features/girl/GirlMark';
+import { LIVE_TTL_MIN } from '@/features/live/liveStore';
+import { useNow } from '@/lib/useNow';
 import { displayCommunityName } from '@/features/community/name';
 
 type Item = { id: string; icon: IconName; title: string; body: string; ago: string; personId?: string; onPress?: () => void; unread?: boolean };
@@ -156,6 +158,7 @@ function ServerNotifications() {
   const router = useRouter();
   const { items, markAllRead, status, reload } = useServerNotifications();
   const { friends, refresh } = useFriends();
+  const now = useNow();
   const names = useNames(items.map((n) => (typeof n.payload?.from === 'string' ? n.payload.from : '')).filter((x) => /^[0-9a-f-]{36}$/.test(x)));
   const unread = items.some((n) => !n.readAt);
   // A notification is read when it is opened, not because the list was shown: tapping one marks
@@ -307,6 +310,8 @@ function ServerNotifications() {
       case 'COMMUNITY_POST':
         return { icon: 'message', title: tx('{name} posted in {community}', { name: name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : '' }), body: p.body ?? '', go: () => router.push(p.community_id ? `/c/${p.community_id}` : '/communities') };
       case 'IRLY_POST_CREATED':
+        // A Live lasts 4 hours (a deleted one takes its notice with it): an ended one neither quotes nor opens it.
+        if (now - n.createdAt >= LIVE_TTL_MIN * 60_000) return { icon: 'zap', title: tx('{name} was live', { name: name(p.from) }), body: tx('This Live has ended') };
         return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? 'See what they are doing', go: () => router.push('/live') };
       case 'PROFILE_UPDATED':
         if (p.type === 'friend_request') {

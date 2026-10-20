@@ -12,12 +12,17 @@ import { uploadChatPhoto } from './media';
 import { primeFaces } from './faces';
 import { askPushInContext } from '@/features/push/push';
 import { useBlocked } from '@/features/moderation/moderation';
+import { t as tx } from '@/i18n';
 
 /**
  * Server chats (signed in): the inbox from `my_conversations()` and live
  * threads over Supabase Realtime. Conversation ids are UUIDs, which is how
  * the thread screen tells them apart from on-device chats.
  */
+
+/** What the server writes in a share of something since removed (private.gone_share_body): shown translated, never opened. */
+const GONE_SHARE = 'This is no longer available';
+const shownBody = (body: string) => (body === GONE_SHARE ? tx(GONE_SHARE) : body);
 
 export const isServerId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
@@ -241,7 +246,7 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
       lastSenderName: r.last_sender_name ?? undefined,
       archived: Boolean(r.archived),
       messages: r.last_body
-        ? [{ id: `${r.conversation_id}-last`, from: r.last_sender === uid ? 'me' : r.last_sender ? 'member' : 'irly', text: r.last_body, minAgo: 0, at: Date.parse(r.last_at) }]
+        ? [{ id: `${r.conversation_id}-last`, from: r.last_sender === uid ? 'me' : r.last_sender ? 'member' : 'irly', text: shownBody(r.last_body), minAgo: 0, at: Date.parse(r.last_at) }]
         : [],
         }),
       ),
@@ -824,10 +829,11 @@ export function useServerThread(conversationId: string): ServerThread {
           from: r.sender_id === uid ? 'me' : r.sender_id ? r.sender_id : 'irly',
           senderId: r.sender_id,
           name: r.sender_id ? names[r.sender_id] : undefined,
-          text: r.body,
+          text: r.kind === 'share' ? shownBody(r.body) : r.body,
           minAgo: 0,
           at: Date.parse(r.created_at),
-          share: r.kind === 'share' && r.ref_type ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
+          // A share of something removed since (a deleted Live or post) says so and opens nothing.
+          share: r.kind === 'share' && r.ref_type && r.body !== GONE_SHARE ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
           media: r.kind === 'photo' && (r.media_path || r.local) ? { path: r.media_path ?? null, local: r.local ?? (r.id in pending ? (pending[r.id].local ?? null) : null) } : undefined,
           status: pending[r.id] ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
         }),
