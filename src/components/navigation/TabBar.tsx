@@ -32,7 +32,7 @@ const TABS: Record<string, { label: string; icon: IconName }> = {
  * left of every tab root, Settings at its top right.
  * Creating (activity, event, post, live, community) starts from Create on Home.
  */
-const SLOTS = ['index', 'discover', 'live', 'match', 'map', 'network'] as const;
+const SLOTS = ['index', 'discover', 'live', 'match', 'network', 'map'] as const;
 const MATCH_AT = SLOTS.indexOf('match');
 
 /** Where each slot sits: the same width for every slot, so the icons are evenly spaced. */
