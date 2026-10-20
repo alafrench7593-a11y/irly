@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { t as tx, a11y } from '@/i18n';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -14,11 +13,10 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { Avatar } from '@/components/ui/Avatar';
+import { Avatar, FacePhoto } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { Photo } from '@/components/visual/Photo';
 import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { haptic } from '@/motion/haptics';
@@ -26,7 +24,7 @@ import { spring } from '@/motion/tokens';
 import { radius } from '@/theme/tokens';
 import { reasonLines } from './suggest';
 import { labelOf } from './taxonomy';
-import { girl, GIRL_TINT, girlType } from './theme';
+import { girl, girlType } from './theme';
 import type { Candidate } from './types';
 import { ScorePill } from './ui';
 
@@ -116,13 +114,8 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         accessibilityRole="button"
         accessibilityLabel={a11y(`${c.firstName}${c.age ? `, ${c.age}` : ''}. ${tx('{n}% match', { n: c.score })}. ${lines.join(', ')}. ${tx('Open profile')}`)}
       >
-        {c.photoUrls[0] ? (
-          <Image source={{ uri: c.photoUrls[0] }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
-        ) : c.cover ? (
-          <Photo tint={GIRL_TINT} visual={{ photo: c.cover }} light="dubai" style={StyleSheet.absoluteFill} width={900} recyclingKey={`girl-${c.userId}`} />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: girl.cream }]} />
-        )}
+        {/* Her own photo: the same profile photo as everywhere in IRLY, then her IRLY Girl photos, else a neutral placeholder. */}
+        <FacePhoto name={c.firstName} hue={c.hue} userId={c.userId} photos={c.photoUrls} placeholderColor={girl.cream} placeholderSize={120} style={StyleSheet.absoluteFill} />
         <View style={styles.scrim} pointerEvents="none" />
 
         <View style={styles.top} pointerEvents="none">
@@ -160,7 +153,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
           {/* Information sits on the densest pearl glass: no sheen or reflection over the text. */}
           <Glass light variant="sheet" highlight={false} style={styles.panel}>
             <View style={styles.nameRow}>
-              <Avatar name={c.firstName} hue={c.hue} size={36} photo={c.photoUrls[0]} />
+              <Avatar name={c.firstName} hue={c.hue} size={36} userId={c.userId} photo={c.photoUrls[0]} />
               <View style={{ flex: 1 }}>
                 <Text variant="titleL" color={girl.ink} numberOfLines={1} style={girlType.section}>
                   {c.firstName}

@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { t as tx } from '@/i18n';
 import { useEffect } from 'react';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
@@ -16,9 +15,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
-import { isAvatar } from '@/features/avatar/avatar';
-import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
-import { Avatar } from '@/components/ui/Avatar';
+import { FacePhoto } from '@/components/ui/Avatar';
+import { useAccount } from '@/features/auth/account';
 import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -58,6 +56,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const me = useStore((s) => s.profile);
+  const myId = useAccount()?.userId;
   const p = useSharedValue(0);
   const glow = useSharedValue(0);
   const mark = useSharedValue(0);
@@ -105,29 +104,12 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
         <ScrollView contentContainerStyle={{ paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32, gap: space[6] }} showsVerticalScrollIndicator={false}>
           <View style={styles.stage}>
             <Animated.View style={[styles.halo, halo]} />
+            {/* Each card is tied to its account: my face on the left, hers on the right, never a stand-in. */}
             <Animated.View style={[styles.photoCard, left]}>
-              {me.photoUri && isAvatar(me.photoUri) ? (
-                <View style={[StyleSheet.absoluteFill, styles.center]}>
-                  <IrlyAvatar config={me.photoUri} size={160} />
-                </View>
-              ) : me.photoUri ? (
-                <Image source={{ uri: me.photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
-              ) : (
-                <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: girl.blush }]}>
-                  <Avatar name={me.name || 'You'} hue={330} size={72} />
-                </View>
-              )}
+              <FacePhoto name={me.name || tx('You')} hue={330} userId={myId} photos={me.photoUri ? [me.photoUri] : []} placeholderColor={girl.blush} placeholderSize={72} style={StyleSheet.absoluteFill} />
             </Animated.View>
             <Animated.View style={[styles.photoCard, right]}>
-              {person.photoUrls[0] ? (
-                <Image source={{ uri: person.photoUrls[0] }} style={StyleSheet.absoluteFill} contentFit="cover" />
-              ) : person.cover ? (
-                <Photo tint={GIRL_TINT} visual={{ photo: person.cover }} light="dubai" style={StyleSheet.absoluteFill} width={400} />
-              ) : (
-                <View style={[StyleSheet.absoluteFill, styles.center, { backgroundColor: girl.blush }]}>
-                  <Avatar name={person.firstName} hue={person.hue} size={72} />
-                </View>
-              )}
+              <FacePhoto name={person.firstName} hue={person.hue} userId={person.userId} photos={person.photoUrls} placeholderColor={girl.blush} placeholderSize={72} style={StyleSheet.absoluteFill} />
             </Animated.View>
             <Animated.View style={[styles.mark, markStyle]}>
               <IrlyMark size={44} state="static" ringColor={girl.rose} lensColor={girl.ink} glow={false} />
