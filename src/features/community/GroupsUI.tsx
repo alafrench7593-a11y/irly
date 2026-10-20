@@ -55,7 +55,6 @@ export function ParentLink({ parent }: { parent: Parent }) {
 /** A community's topic groups: open one, or join it in one tap. */
 export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChanged: () => void }) {
   const router = useRouter();
-  const t = useTheme();
   const [busy, setBusy] = useState<string | null>(null);
   if (!groups.length) return null;
   return (
@@ -75,7 +74,7 @@ export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChan
               haptic="select"
               scaleTo={0.97}
               onPress={() => router.push(`/c/${g.id}`)}
-              style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]}
+              style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
               accessibilityLabel={g.name}
             >
               <GlassLayer radius={radius.xl} />
@@ -216,7 +215,7 @@ export function HostTools({
         .catch((e) => toast(e instanceof Error ? e.message : tx('Could not delete'), 'x', 'live')),
     );
   return (
-    <View style={[styles.pad, styles.tools, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]}>
+    <View style={[styles.pad, styles.tools, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
       <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <Icon name="shield" size={16} color={t.c.text} />

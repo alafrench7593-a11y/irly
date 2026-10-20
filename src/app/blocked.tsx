@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -40,36 +42,38 @@ export default function BlockedMembers() {
             You have not blocked anyone.
           </Text>
         ) : (
-          list.map((b) => (
-            <View key={b.userId} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
-              <GlassLayer radius={radius.lg} />
-              <Avatar name={b.firstName} hue={hueOf(b.userId)} size={44} userId={b.userId} />
-              <Text variant="titleS" style={{ flex: 1 }} raw>
-                {b.firstName}
-              </Text>
-              <Button
-                label="Unblock"
-                size="sm"
-                variant="secondary"
-                loading={busy === b.userId}
-                onPress={() =>
-                  confirm(
-                    tr('Unblock {name}? You may see each other again.', { name: b.firstName }),
-                    () => {
-                      setBusy(b.userId);
-                      unblockUser(b.userId)
-                        .then(() => {
-                          toast(tr('{name} is unblocked', { name: b.firstName }), 'check', 'brand');
-                          refresh();
-                        })
-                        .catch(() => toast(tr('Could not unblock. Try again.'), 'x', 'live'))
-                        .finally(() => setBusy(null));
-                    },
-                    'Unblock',
-                  )
-                }
-              />
-            </View>
+          list.map((b, idx) => (
+            <Animated.View key={b.userId} entering={enter.rise(Math.min(idx, 8))}>
+              <View style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                <GlassLayer radius={radius.lg} />
+                <Avatar name={b.firstName} hue={hueOf(b.userId)} size={44} userId={b.userId} />
+                <Text variant="titleS" style={{ flex: 1 }} raw>
+                  {b.firstName}
+                </Text>
+                <Button
+                  label="Unblock"
+                  size="sm"
+                  variant="secondary"
+                  loading={busy === b.userId}
+                  onPress={() =>
+                    confirm(
+                      tr('Unblock {name}? You may see each other again.', { name: b.firstName }),
+                      () => {
+                        setBusy(b.userId);
+                        unblockUser(b.userId)
+                          .then(() => {
+                            toast(tr('{name} is unblocked', { name: b.firstName }), 'check', 'brand');
+                            refresh();
+                          })
+                          .catch(() => toast(tr('Could not unblock. Try again.'), 'x', 'live'))
+                          .finally(() => setBusy(null));
+                      },
+                      'Unblock',
+                    )
+                  }
+                />
+              </View>
+            </Animated.View>
           ))
         )}
       </View>

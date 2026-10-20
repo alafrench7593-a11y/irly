@@ -3,6 +3,8 @@ import { useAuthStatus } from '@/features/auth/account';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from '@/components/ui/Toast';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Segmented } from '@/components/ui/Controls';
@@ -115,30 +117,32 @@ export default function SavedScreen() {
                 </Text>
               </View>
             ) : (
-              shown.map((i) => (
-                <PressableScale key={`${i.type}-${i.id}`} onPress={() => open(i)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={titles[`${i.type}:${i.id}`] ?? 'Saved item'}>
-                  <GlassLayer radius={radius.lg} />
-                  <Icon name={ICON[i.type] ?? 'bookmark'} size={20} color={t.c.text} />
-                  <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
-                    {titles[`${i.type}:${i.id}`] ?? i.id.replace(/-/g, ' ')}
-                  </Text>
-                  <PressableScale
-                    onPress={() => {
-                      // The server toggles: a second tap before the answer would save it again.
-                      const k = `${i.type}:${i.id}`;
-                      if (removing.current.has(k)) return;
-                      removing.current.add(k);
-                      toggleSave({ type: i.type, id: i.id })
-                        .then(refresh, (e) => toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live'))
-                        .finally(() => removing.current.delete(k));
-                    }}
-                    haptic="select"
-                    hitSlop={8}
-                    accessibilityLabel="Remove from saved"
-                  >
-                    <Icon name="bookmark" size={20} color={t.c.text} fill={t.c.text} />
+              shown.map((i, idx) => (
+                <Animated.View key={`${i.type}-${i.id}`} entering={enter.rise(Math.min(idx, 8))}>
+                  <PressableScale onPress={() => open(i)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={titles[`${i.type}:${i.id}`] ?? 'Saved item'}>
+                    <GlassLayer radius={radius.lg} />
+                    <Icon name={ICON[i.type] ?? 'bookmark'} size={20} color={t.c.text} />
+                    <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
+                      {titles[`${i.type}:${i.id}`] ?? i.id.replace(/-/g, ' ')}
+                    </Text>
+                    <PressableScale
+                      onPress={() => {
+                        // The server toggles: a second tap before the answer would save it again.
+                        const k = `${i.type}:${i.id}`;
+                        if (removing.current.has(k)) return;
+                        removing.current.add(k);
+                        toggleSave({ type: i.type, id: i.id })
+                          .then(refresh, (e) => toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live'))
+                          .finally(() => removing.current.delete(k));
+                      }}
+                      haptic="select"
+                      hitSlop={8}
+                      accessibilityLabel="Remove from saved"
+                    >
+                      <Icon name="bookmark" size={20} color={t.c.text} fill={t.c.text} />
+                    </PressableScale>
                   </PressableScale>
-                </PressableScale>
+                </Animated.View>
               ))
             )}
           </>

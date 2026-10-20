@@ -6,7 +6,7 @@ import { cityWhen } from '@/lib/time';
 import { t as tx } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionBar } from '@/components/social/ActionBar';
 import { Button } from '@/components/ui/Button';
@@ -36,6 +36,8 @@ import { useNow } from '@/lib/useNow';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
+import { enter } from '@/motion/enter';
 
 // The activity's own city time, wherever the phone is.
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
@@ -186,6 +188,7 @@ function ActivityPage() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
         <View style={styles.cover}>
           <Photo visual={{ photo: ideaPhoto((category?.id ?? 'sport') as CategoryKey, a.title, a.placeName ?? undefined, a.subId), uri: a.coverUrl }} light={city?.light} scrim="strong" style={StyleSheet.absoluteFill} width={1000} recyclingKey={`a-${a.id}`} drift />
@@ -205,7 +208,7 @@ function ActivityPage() {
           </View>
         </View>
 
-        <Animated.View entering={FadeIn.duration(260)} style={styles.body}>
+        <Animated.View entering={enter.rise(0, 80)} style={styles.body}>
           {a.cancelled ? (
             <View style={[styles.banner, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
               <GlassLayer radius={radius.lg} />
@@ -241,7 +244,8 @@ function ActivityPage() {
         </Animated.View>
       </ScrollView>
 
-      <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 14), backgroundColor: t.c.bg, borderColor: t.c.line }]}>
+      <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 14), backgroundColor: 'transparent', borderColor: 'transparent', overflow: 'hidden' }]}>
+        <GlassLayer level="thick" />
         {going && a.conversationId ? (
           <>
             <View style={{ flex: 1 }}>
@@ -375,7 +379,12 @@ function Fact({ icon, text }: { icon: IconName; text: string }) {
 
 function Centered({ children }: { children: React.ReactNode }) {
   const t = useTheme();
-  return <View style={[styles.centered, { backgroundColor: t.c.bg }]}>{children}</View>;
+  return (
+    <View style={[styles.centered, { backgroundColor: t.c.bg }]}>
+      <Ambient />
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

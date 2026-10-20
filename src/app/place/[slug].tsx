@@ -3,6 +3,8 @@ import { cityWhen } from '@/lib/time';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { dateLocale, t as tx } from '@/i18n';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActionBar } from '@/components/social/ActionBar';
 import { Button } from '@/components/ui/Button';
@@ -116,20 +118,22 @@ export default function PlaceScreen() {
           <View style={{ gap: 10 }}>
             <Text variant="titleM">{tx("Who's going?")}</Text>
             {going.data.length ? (
-              going.data.map((a) => (
-                <PressableScale key={a.id} onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
-                  <GlassLayer radius={radius.lg} />
-                  <Icon name={a.audience === 'moms' ? 'baby' : a.audience === 'girls' ? 'heart' : 'users'} size={18} color={t.c.text} />
-                  <View style={{ flex: 1 }}>
-                    <Text variant="titleS" numberOfLines={1}>
-                      {a.title}
-                    </Text>
-                    <Text variant="caption" tone="tertiary">
-                      {cityWhen(a.startsAt, p.cityId)} · {a.going} {tx('going')}
-                    </Text>
-                  </View>
-                  <Text variant="label">{tx('Join')}</Text>
-                </PressableScale>
+              going.data.map((a, idx) => (
+                <Animated.View key={a.id} entering={enter.rise(Math.min(idx, 8))}>
+                  <PressableScale onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
+                    <GlassLayer radius={radius.lg} />
+                    <Icon name={a.audience === 'moms' ? 'baby' : a.audience === 'girls' ? 'heart' : 'users'} size={18} color={t.c.text} />
+                    <View style={{ flex: 1 }}>
+                      <Text variant="titleS" numberOfLines={1}>
+                        {a.title}
+                      </Text>
+                      <Text variant="caption" tone="tertiary">
+                        {cityWhen(a.startsAt, p.cityId)} · {a.going} {tx('going')}
+                      </Text>
+                    </View>
+                    <Text variant="label">{tx('Join')}</Text>
+                  </PressableScale>
+                </Animated.View>
               ))
             ) : (
               <Text variant="bodyS" tone="secondary">

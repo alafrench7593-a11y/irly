@@ -3,6 +3,8 @@ import { t as tx } from '@/i18n';
 import { useAuthStatus } from '@/features/auth/account';
 import { cityDayKey, cityWhen } from '@/lib/time';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
@@ -60,39 +62,41 @@ export default function CalendarScreen() {
         ) : !loading && !items.length ? (
           <Empty text="Nothing planned yet. Join a session or create one." action="Find something to do" onPress={() => router.push('/discover')} />
         ) : (
-          days.map((d) => (
-            <View key={d.key} style={{ gap: 10 }}>
-              <Text variant="overline" tone="tertiary">
-                {d.label}
-              </Text>
-              {d.items.map((it) => {
-                const cat = CATEGORY_BY_ID[it.categoryId as CategoryKey];
-                return (
-                  <PressableScale key={it.id} onPress={() => router.push(`/a/${it.id}`)} haptic="select" scaleTo={0.98} style={[styles.item, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={it.title}>
-                    <GlassLayer radius={radius.lg} />
-                    <View style={[styles.bar, { backgroundColor: cat?.color ?? t.c.text }]} />
-                    <View style={{ width: 52 }}>
-                      <Text variant="titleS">{hour(it.startsAt, it.cityId)}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text variant="titleS" numberOfLines={1}>
-                        {it.title}
-                      </Text>
-                      <Text variant="caption" tone="tertiary" numberOfLines={1}>
-                        {it.hosting ? `${tx('Hosting')} · ` : ''}
-                        {it.format === 'event' ? `${tx('Event')} · ` : ''}
-                        {it.placeName ?? it.areaId}
-                      </Text>
-                    </View>
-                    {it.conversationId ? (
-                      <PressableScale onPress={() => router.push(`/messages/${it.conversationId}`)} haptic="select" hitSlop={8} accessibilityLabel="Open chat">
-                        <Icon name="message" size={20} color={t.c.text} />
-                      </PressableScale>
-                    ) : null}
-                  </PressableScale>
-                );
-              })}
-            </View>
+          days.map((d, idx) => (
+            <Animated.View key={d.key} entering={enter.rise(Math.min(idx, 8))}>
+              <View style={{ gap: 10 }}>
+                <Text variant="overline" tone="tertiary">
+                  {d.label}
+                </Text>
+                {d.items.map((it) => {
+                  const cat = CATEGORY_BY_ID[it.categoryId as CategoryKey];
+                  return (
+                    <PressableScale key={it.id} onPress={() => router.push(`/a/${it.id}`)} haptic="select" scaleTo={0.98} style={[styles.item, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={it.title}>
+                      <GlassLayer radius={radius.lg} />
+                      <View style={[styles.bar, { backgroundColor: cat?.color ?? t.c.text }]} />
+                      <View style={{ width: 52 }}>
+                        <Text variant="titleS">{hour(it.startsAt, it.cityId)}</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text variant="titleS" numberOfLines={1}>
+                          {it.title}
+                        </Text>
+                        <Text variant="caption" tone="tertiary" numberOfLines={1}>
+                          {it.hosting ? `${tx('Hosting')} · ` : ''}
+                          {it.format === 'event' ? `${tx('Event')} · ` : ''}
+                          {it.placeName ?? it.areaId}
+                        </Text>
+                      </View>
+                      {it.conversationId ? (
+                        <PressableScale onPress={() => router.push(`/messages/${it.conversationId}`)} haptic="select" hitSlop={8} accessibilityLabel="Open chat">
+                          <Icon name="message" size={20} color={t.c.text} />
+                        </PressableScale>
+                      ) : null}
+                    </PressableScale>
+                  );
+                })}
+              </View>
+            </Animated.View>
           ))
         )}
       </View>

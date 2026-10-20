@@ -28,6 +28,7 @@ import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 
 /** Example people (demo) have their page here; a real member (UUID) gets their server profile. */
 export default function PersonProfile() {
@@ -61,6 +62,7 @@ function SeedProfile() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
         {/* Their cover is the thing they do most, in a real photo */}
         <Cover

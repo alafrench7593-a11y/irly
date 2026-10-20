@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
+import { Ambient } from '@/components/visual/Ambient';
 import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
 import { enter } from '@/motion/enter';
@@ -41,9 +42,10 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
   const city = CITIES[useCityId()];
   return (
     <View style={styles.root}>
+      <Ambient variant="hero" />
       <View style={styles.sky}>
         <Photo visual={{ photo: city.photo }} light={city.light} width={1200} style={StyleSheet.absoluteFill} />
-        <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.8)', '#000000']} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
+        <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.78)', 'rgba(5,5,6,0)']} locations={[0, 0.62, 1]} style={StyleSheet.absoluteFill} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <View style={[styles.top, { paddingTop: insets.top + 8 }]}>
@@ -70,7 +72,7 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
           {children}
         </ScrollView>
         <View style={[styles.footer, { paddingBottom: insets.bottom + space[4] }]}>
-          <LinearGradient colors={['rgba(0,0,0,0)', '#000000']} locations={[0, 0.45]} style={StyleSheet.absoluteFill} pointerEvents="none" />
+          <LinearGradient colors={['rgba(5,5,6,0)', 'rgba(5,5,6,0.92)']} locations={[0, 0.45]} style={StyleSheet.absoluteFill} pointerEvents="none" />
           <Button label={cta} onPress={onContinue} disabled={!canContinue} full iconRight="arrowRight" haptic="press" />
         </View>
       </KeyboardAvoidingView>

@@ -45,6 +45,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 
 type Tab = 'posts' | 'activities' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
@@ -157,6 +158,7 @@ function CommunityScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40, gap: space[5] }} showsVerticalScrollIndicator={false}>
           <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} staff={contentStaff} onChanged={refresh} />
@@ -740,13 +742,19 @@ function PostCard({
 
 function Centered({ children }: { children: React.ReactNode }) {
   const t = useTheme();
-  return <View style={[styles.centered, { backgroundColor: t.c.bg }]}>{children}</View>;
+  return (
+    <View style={[styles.centered, { backgroundColor: t.c.bg }]}>
+      <Ambient />
+      {children}
+    </View>
+  );
 }
 
 function Loading() {
   const t = useTheme();
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <View style={styles.centered} accessibilityLabel={tx('Loading')}>
         <ActivityIndicator color={t.c.text} />
         <Text variant="body" tone="secondary" align="center">
@@ -775,7 +783,8 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       {c.isMember ? (
-        <Animated.View entering={FadeInDown.springify(480).dampingRatio(0.85)} style={[styles.card, { backgroundColor: c.introFirst ? t.c.text : t.c.surface }]}>
+        <Animated.View entering={FadeInDown.springify(480).dampingRatio(0.85)} style={[styles.card, { backgroundColor: c.introFirst ? t.c.text : 'transparent', overflow: 'hidden' }]}>
+          {c.introFirst ? null : <GlassLayer radius={radius.xl} />}
           <Text variant="titleS" color={c.introFirst ? t.c.bg : undefined}>
             Introduce yourself
           </Text>

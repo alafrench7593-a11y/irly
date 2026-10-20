@@ -1,6 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { NotFound } from '@/components/layout/NotFound';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -198,13 +200,15 @@ function SpaceScreen({ id }: { id: SpaceId }) {
         <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
           <GlassLayer radius={radius.xl} />
           <Text variant="titleS">Safety and respect</Text>
-          {s.rules.map((r) => (
-            <View key={r.text} style={styles.rule}>
-              <Icon name={r.icon} size={16} color={t.c.text} />
-              <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
-                {tx(r.text)}
-              </Text>
-            </View>
+          {s.rules.map((r, idx) => (
+            <Animated.View key={r.text} entering={enter.rise(Math.min(idx, 8))}>
+              <View style={styles.rule}>
+                <Icon name={r.icon} size={16} color={t.c.text} />
+                <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
+                  {tx(r.text)}
+                </Text>
+              </View>
+            </Animated.View>
           ))}
         </View>
       </View>

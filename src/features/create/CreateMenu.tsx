@@ -4,6 +4,7 @@ import { Modal, Platform, StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { Glass } from '@/components/ui/Glass';
+import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -147,7 +148,6 @@ function Menu({ origin, p, onClosed }: { origin: { x: number; y: number }; p: Sh
 
 function Tile({ option, index, p, onPress }: { option: Option; index: number; p: SharedValue<number>; origin: { x: number; y: number }; onPress: () => void }) {
   const t = useTheme();
-  const night = t.mode === 'night';
   // Each tile has its own progress, started `staggerStep` after the previous one.
   const own = useSharedValue(0);
   useEffect(() => {
@@ -167,13 +167,9 @@ function Tile({ option, index, p, onPress }: { option: Option; index: number; p:
         scaleTo={0.94}
         onPress={onPress}
         accessibilityLabel={`${option.label}. ${option.hint}`}
-        style={[
-          styles.tile,
-          night
-            ? { backgroundColor: 'rgba(255,255,255,0.07)', borderColor: 'rgba(255,255,255,0.12)', borderWidth: StyleSheet.hairlineWidth * 2 }
-            : { backgroundColor: t.c.surface, boxShadow: t.shadow.card },
-        ]}
+        style={[styles.tile, { boxShadow: t.shadow.card }]}
       >
+        <GlassLayer radius={radius.xl} />
         <View style={[styles.tileIcon, { backgroundColor: option.color ? `${option.color}1F` : t.c.brandSoft }]}>
           <Icon name={option.icon} size={20} color={option.color ?? t.c.text} />
         </View>
@@ -196,7 +192,7 @@ const styles = StyleSheet.create({
   head: { paddingHorizontal: space.gutter, gap: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.gutter - 5 },
   cell: { width: '33.333%', padding: 5 },
-  tile: { minHeight: 112, borderRadius: radius.xl, padding: 12, gap: 6 },
+  tile: { minHeight: 112, borderRadius: radius.xl, padding: 12, gap: 6, overflow: 'hidden' },
   tileIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   closeRow: { alignItems: 'center' },
   close: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },

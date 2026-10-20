@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Glass } from '@/components/ui/Glass';
 import { Text } from '@/components/ui/Text';
 import { LiveVideo } from '@/features/live/LiveVideo';
 import { useSignedLinks } from '@/features/server/media';
@@ -37,6 +38,7 @@ export function PostMedia({ paths, kind, thumb, seconds, height = 260 }: { paths
       </ScrollView>
       {paths.length > 1 ? (
         <View style={styles.count}>
+          <Glass dark level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: 10 }]} />
           <Text variant="caption" style={{ color: '#fff' }} raw>
             {`${page + 1}/${paths.length}`}
           </Text>
@@ -48,5 +50,5 @@ export function PostMedia({ paths, kind, thumb, seconds, height = 260 }: { paths
 
 const styles = StyleSheet.create({
   box: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: 'rgba(127,127,127,0.12)' },
-  count: { position: 'absolute', top: 10, right: 10, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.55)' },
+  count: { position: 'absolute', top: 10, right: 10, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.35)' },
 });

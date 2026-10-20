@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -111,14 +113,16 @@ export default function HelpScreen() {
             <Text variant="bodyS" tone="secondary">
               Rules and fees change: members share what they lived, the official sites say what applies today.
             </Text>
-            {cat.official.map((o) => (
-              <PressableScale key={o.url} haptic="select" onPress={() => Linking.openURL(o.url)} style={styles.link} accessibilityRole="link" accessibilityLabel={o.label}>
-                <Icon name="link" size={14} color={t.c.text} />
-                <Text variant="label" style={{ flex: 1 }}>
-                  {tx(o.label)}
-                </Text>
-                <Icon name="chevronRight" size={14} color={t.c.textTertiary} />
-              </PressableScale>
+            {cat.official.map((o, idx) => (
+              <Animated.View key={o.url} entering={enter.rise(Math.min(idx, 8))}>
+                <PressableScale haptic="select" onPress={() => Linking.openURL(o.url)} style={styles.link} accessibilityRole="link" accessibilityLabel={o.label}>
+                  <Icon name="link" size={14} color={t.c.text} />
+                  <Text variant="label" style={{ flex: 1 }}>
+                    {tx(o.label)}
+                  </Text>
+                  <Icon name="chevronRight" size={14} color={t.c.textTertiary} />
+                </PressableScale>
+              </Animated.View>
             ))}
           </View>
         ) : null}

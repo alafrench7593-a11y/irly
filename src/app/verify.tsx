@@ -2,6 +2,8 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { FEATURES } from '@/lib/features';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -119,30 +121,32 @@ export default function VerifyScreen() {
               </Text>
               <View style={styles.grid}>
                 {paths.map((p, i) => (
-                  <View key={p} style={[styles.photo, { backgroundColor: t.c.overlay }]}>
-                    {links[p] && !isAvatar(p) ? <Image source={{ uri: links[p], cacheKey: p }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Icon name="user" size={22} color={t.c.textTertiary} />}
-                    {i > 0 ? (
-                      <PressableScale
-                        haptic="select"
-                        hitSlop={8}
-                        style={styles.remove}
-                        onPress={() =>
-                          removeProfilePhoto(paths, p)
-                            .then(reload)
-                            .catch((e) => toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live'))
-                        }
-                        accessibilityLabel={a11y('Remove this photo')}
-                      >
-                        <Icon name="x" size={12} color="#fff" />
-                      </PressableScale>
-                    ) : (
-                      <View style={styles.main}>
-                        <Text variant="caption" style={{ color: '#fff' }}>
-                          {tx('Main')}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
+                  <Animated.View key={p} entering={enter.rise(Math.min(i, 8))}>
+                    <View style={[styles.photo, { backgroundColor: t.c.overlay }]}>
+                      {links[p] && !isAvatar(p) ? <Image source={{ uri: links[p], cacheKey: p }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Icon name="user" size={22} color={t.c.textTertiary} />}
+                      {i > 0 ? (
+                        <PressableScale
+                          haptic="select"
+                          hitSlop={8}
+                          style={styles.remove}
+                          onPress={() =>
+                            removeProfilePhoto(paths, p)
+                              .then(reload)
+                              .catch((e) => toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live'))
+                          }
+                          accessibilityLabel={a11y('Remove this photo')}
+                        >
+                          <Icon name="x" size={12} color="#fff" />
+                        </PressableScale>
+                      ) : (
+                        <View style={styles.main}>
+                          <Text variant="caption" style={{ color: '#fff' }}>
+                            {tx('Main')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </Animated.View>
                 ))}
                 {paths.length < MAX_PHOTOS ? (
                   <PressableScale haptic="select" onPress={add} disabled={busy !== null} style={[styles.photo, styles.add, { borderColor: t.c.lineStrong }]} accessibilityLabel={a11y('Add photos')}>

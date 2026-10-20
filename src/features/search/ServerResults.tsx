@@ -2,6 +2,8 @@ import { useIsFocused, useRouter } from 'expo-router';
 import { cityWhen } from '@/lib/time';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { useAccount } from '@/features/auth/account';
@@ -110,23 +112,25 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
       <Text variant="overline" tone="tertiary">
         On IRLY now
       </Text>
-      {shown.map((h) => (
-        <PressableScale key={`${h.kind}-${h.id}`} onPress={() => open(h)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={h.title}>
-          <GlassLayer radius={radius.lg} />
-          <View style={[styles.icon, { backgroundColor: t.c.bg }]}>
-            <Icon name={ICON[h.kind]} size={18} color={t.c.text} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text variant="titleS" numberOfLines={1}>
-              {h.title}
-            </Text>
-            <Text variant="caption" tone="tertiary" numberOfLines={1}>
-              {h.startsAt ? cityWhen(h.startsAt, h.cityId) : (h.subtitle ?? h.kind)}
-              {h.areaId && h.kind === 'activity' ? ` · ${h.areaId}` : ''}
-            </Text>
-          </View>
-          <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
-        </PressableScale>
+      {shown.map((h, idx) => (
+        <Animated.View key={`${h.kind}-${h.id}`} entering={enter.rise(Math.min(idx, 8))}>
+          <PressableScale onPress={() => open(h)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={h.title}>
+            <GlassLayer radius={radius.lg} />
+            <View style={[styles.icon, { backgroundColor: t.c.brandSoft }]}>
+              <Icon name={ICON[h.kind]} size={18} color={t.c.text} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text variant="titleS" numberOfLines={1}>
+                {h.title}
+              </Text>
+              <Text variant="caption" tone="tertiary" numberOfLines={1}>
+                {h.startsAt ? cityWhen(h.startsAt, h.cityId) : (h.subtitle ?? h.kind)}
+                {h.areaId && h.kind === 'activity' ? ` · ${h.areaId}` : ''}
+              </Text>
+            </View>
+            <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+          </PressableScale>
+        </Animated.View>
       ))}
     </View>
   );

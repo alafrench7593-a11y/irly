@@ -25,6 +25,7 @@ import { enter } from '@/motion/enter';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { Ambient } from '@/components/visual/Ambient';
 
 /** A professional's profile: who they are, what they build, why you fit. */
 export default function ProProfileScreen() {
@@ -45,6 +46,7 @@ export default function ProProfileScreen() {
   if (state === 'loading')
     return (
       <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+        <Ambient />
         <PageHeader title="" />
       </View>
     );
@@ -57,6 +59,7 @@ export default function ProProfileScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      <Ambient />
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 72, paddingBottom: insets.bottom + 140 }}>
         <View style={styles.identity}>
           <Animated.View entering={enter.pop(0)}>

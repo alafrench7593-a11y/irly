@@ -2,6 +2,8 @@ import Constants from 'expo-constants';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
+import { enter } from '@/motion/enter';
+import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Chip, Field } from '@/components/ui/Controls';
@@ -77,17 +79,19 @@ export default function Support() {
       <View style={styles.body}>
         <View style={{ gap: 8 }}>
           {FAQ.map((f, i) => (
-            <View key={f.q} style={[styles.faq, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
-              <GlassLayer radius={radius.lg} />
-              <Text variant="titleS" onPress={() => setOpen(open === i ? null : i)} accessibilityRole="button">
-                {f.q}
-              </Text>
-              {open === i ? (
-                <Text variant="body" tone="secondary">
-                  {f.a}
+            <Animated.View key={f.q} entering={enter.rise(Math.min(i, 8))}>
+              <View style={[styles.faq, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                <GlassLayer radius={radius.lg} />
+                <Text variant="titleS" onPress={() => setOpen(open === i ? null : i)} accessibilityRole="button">
+                  {f.q}
                 </Text>
-              ) : null}
-            </View>
+                {open === i ? (
+                  <Text variant="body" tone="secondary">
+                    {f.a}
+                  </Text>
+                ) : null}
+              </View>
+            </Animated.View>
           ))}
         </View>
 
