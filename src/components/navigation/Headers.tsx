@@ -24,7 +24,7 @@ import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
-import { IrlyLogo } from '@/brand/IrlyLogo';
+import { IrlyLogoCompact } from '@/brand/IrlyLogo';
 import { GirlHeaderMark } from '@/features/girl/GirlMark';
 
 export function useUnread(): number {
@@ -136,7 +136,7 @@ export function SpaceLogo() {
   const t = useTheme();
   return (
     <View accessible accessibilityRole="header" accessibilityLabel={t.flavor === 'girl' ? 'IRLY Girl' : 'IRLY'} style={styles.logo}>
-      {t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : <IrlyLogo size={11} color={t.c.text} />}
+      {t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : <IrlyLogoCompact size={15} color={t.c.text} />}
     </View>
   );
 }

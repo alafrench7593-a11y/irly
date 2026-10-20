@@ -36,6 +36,9 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { SpaceSwitchCard } from '@/features/girl/GirlSections';
+import { useAppSpace } from '@/state/appSpace';
+import { useStore } from '@/state/store';
 import {
   openDirect,
   setFollow,
@@ -73,6 +76,8 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
   const [busy, setBusy] = useState<'follow' | 'message' | 'friend' | 'unfriend' | 'block' | null>(null);
   const [tab, setTab] = useState<Tab>('posts');
   const [menu, setMenu] = useState(false);
+  const inGirl = useAppSpace() === 'girl';
+  const woman = useStore((st) => st.profile.gender) === 'woman';
   const back = () => (router.canGoBack() ? router.back() : router.replace('/messages'));
   const onBack = own ? undefined : back;
 
@@ -277,6 +282,13 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
               );
             })}
           </View>
+        ) : null}
+
+        {/* Your profile: IRLY or IRLY Girl, the same switch as on the Home (IRLY Girl is offered to women, as there). */}
+        {own && (inGirl || woman) ? (
+          <Animated.View entering={reduced ? undefined : FadeIn} style={styles.spaceSwitch}>
+            <SpaceSwitchCard compact />
+          </Animated.View>
         ) : null}
 
         {!p.visible ? (
@@ -789,6 +801,7 @@ const styles = StyleSheet.create({
   tag: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, height: 28, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth * 2 },
   card: { flexDirection: 'row', gap: 10, alignItems: 'center', margin: space.gutter, marginTop: space[6], padding: 14, borderRadius: radius.lg },
   tabs: { paddingHorizontal: space.gutter, marginTop: space[6], marginBottom: space[3] },
+  spaceSwitch: { paddingHorizontal: space.gutter, marginTop: space[6] },
   list: { paddingHorizontal: space.gutter, gap: 10 },
   post: { gap: 8, padding: 14, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 5 },

@@ -1,6 +1,6 @@
 import { a11y } from '@/i18n';
 import { memo, useEffect, useMemo } from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -116,5 +116,27 @@ export const IrlyLogo = memo(function IrlyLogo({ size = 18, state = 'static', co
       <IrlyMark size={size * 1.6} state={state} ringColor={ink} lensColor={ink} glow={false} />
       <IrlyWordmark size={size} color={ink} />
     </View>
+  );
+});
+
+/**
+ * The compact IRLY logo for small sizes (top bars): the name set solid in
+ * spaced Manrope capitals, like the parent brand inside the IRLY Girl
+ * wordmark. Below about 16 px the dot wordmark breaks into a dot pattern
+ * that no longer reads; this stays crisp at any size.
+ */
+export const IrlyLogoCompact = memo(function IrlyLogoCompact({ size = 15, color }: { size?: number; color?: string }) {
+  const t = useTheme();
+  const ink = color ?? t.c.text;
+  return (
+    <Text
+      accessibilityRole="image"
+      accessibilityLabel={a11y('IRLY')}
+      allowFontScaling={false}
+      numberOfLines={1}
+      style={{ fontFamily: 'Manrope_800ExtraBold', fontSize: size, lineHeight: size * 1.2, letterSpacing: size * 0.24, marginRight: -size * 0.24, color: ink }}
+    >
+      IRLY
+    </Text>
   );
 });

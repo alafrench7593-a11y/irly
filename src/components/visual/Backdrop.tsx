@@ -23,7 +23,8 @@ type Props = {
 export const Backdrop = memo(function Backdrop({ visual, light, style, dim = 0.55 }: Props) {
   const t = useTheme();
   const night = t.mode === 'night';
-  const base = night ? '5,5,6' : '246,246,244';
+  // IRLY Girl veils its pages in its own rose-cream ground (#FBF2F4), never grey.
+  const base = night ? '5,5,6' : t.flavor === 'girl' ? '251,242,244' : '246,246,244';
   return (
     <View style={[StyleSheet.absoluteFill, styles.clip, style]} pointerEvents="none">
       <Photo visual={visual} light={light} blur={48} width={480} style={[StyleSheet.absoluteFill, styles.zoom]} />

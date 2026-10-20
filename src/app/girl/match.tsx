@@ -413,7 +413,7 @@ function GirlMatchInner() {
               IRLY <Text variant="titleM" color="#F4B3CF" style={[girlType.section, girlType.accent, { fontSize: 34, lineHeight: 38 }]}>Match</Text>
             </Text>
             <Text variant="bodyS" color="rgba(255,240,247,0.80)" align="center">
-              Meet women who share your interests in {city.name}, matched on what you love. Until then, plan something with girls.
+              {tx('Meet women who share your interests in {city}, matched on what you love. Until then, plan something with girls.', { city: city.name })}
             </Text>
             <GButton label="Plan something" icon="plus" onPress={() => openCreate(null)} />
           </Animated.View>

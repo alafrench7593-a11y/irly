@@ -16,6 +16,7 @@ import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { a11y, LANGS, t as tx, useLangStore } from '@/i18n';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
+import { setAppSpace, useAppSpace } from '@/state/appSpace';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -30,6 +31,7 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 export function SettingsSections() {
   const t = useTheme();
   const router = useRouter();
+  const inGirl = useAppSpace() === 'girl';
   const account = useAccount();
   const langSetting = useLangStore((s) => s.setting);
   const setLang = useLangStore((s) => s.set);
@@ -186,7 +188,20 @@ export function SettingsSections() {
         <Divider inset={16} />
         <SettingLink icon="briefcase" label="Professional profile" value="Networking" onPress={() => router.push('/network/profile')} />
         <Divider inset={16} />
-        <SettingLink icon="heartHandshake" label="IRLY Girl" value="Women only" onPress={() => router.push('/girl')} />
+        {/* The other space: IRLY Girl from Mixte (through its gate), back to IRLY Mixte from Girl. */}
+        {inGirl ? (
+          <SettingLink
+            icon="globe"
+            label="IRLY Mixte"
+            value="Every kind of plan"
+            onPress={() => {
+              setAppSpace('mixte');
+              toast('Back to IRLY', 'globe', 'brand');
+            }}
+          />
+        ) : (
+          <SettingLink icon="heartHandshake" label="IRLY Girl" value="Women only" onPress={() => router.push('/girl')} />
+        )}
         <Divider inset={16} />
         <SettingLink icon="sparkles" label="Assistant" value="Ask or speak" onPress={() => router.push('/assistant')} />
         <Divider inset={16} />

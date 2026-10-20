@@ -19,6 +19,7 @@ import type { MyPlan } from '@/state/store';
 import { rememberRatio } from '@/features/live/liveRatio';
 import { LIVE_TTL_MIN } from '@/features/live/liveStore';
 import { useNow } from '@/lib/useNow';
+import { useAppSpace } from '@/state/appSpace';
 
 /**
  * IRL posts, friends and notifications on the server (signed in), live
@@ -90,15 +91,19 @@ const irlCache = new Map<string, ServerIrlPost[]>();
 export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh: () => void } {
   const account = useAccount();
   const uid = account?.userId;
-  const key = `${uid ?? ''}:${cityId}`;
-  const [posts, setPostsState] = useState<ServerIrlPost[]>(() => irlCache.get(key) ?? []);
+  // In the IRLY Girl space the feed is women's posts only (irl_feed_girl, checked by the server).
+  const girlSpace = useAppSpace() === 'girl';
+  const key = `${uid ?? ''}:${cityId}:${girlSpace ? 'girl' : 'mixte'}`;
+  // Kept with the feed it belongs to: switching space (or account, or city) never shows the other feed's posts.
+  const [feed, setFeed] = useState<{ key: string; posts: ServerIrlPost[] }>(() => ({ key, posts: irlCache.get(key) ?? [] }));
+  const posts = feed.key === key ? feed.posts : (irlCache.get(key) ?? NONE);
   // Loads can overlap (Realtime, your own post, focus): only the latest one
   // started may write, so an older, slower answer never hides a newer post.
   const seq = useRef(0);
   const setPosts = useCallback(
     (p: ServerIrlPost[]) => {
       irlCache.set(key, p);
-      setPostsState(p);
+      setFeed({ key, posts: p });
       // Confirmed by the server: from now on the feed alone decides (expiry, removal).
       const ids = new Set(p.map((x) => x.id));
       if (useIrlMine.getState().posts.some((x) => ids.has(x.id))) useIrlMine.setState((s) => ({ posts: s.posts.filter((x) => !ids.has(x.id)) }));
@@ -108,7 +113,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
 
   const load = useCallback(async (): Promise<ServerIrlPost[]> => {
     if (!supabase || !uid) return [];
-    const { data, error } = await supabase.rpc('irl_feed', { p_city: cityId });
+    const { data, error } = await supabase.rpc(girlSpace ? 'irl_feed_girl' : 'irl_feed', { p_city: cityId });
     if (error) throw new Error(error.message);
     const rows = (data as FeedRow[]) ?? [];
     const links = await signedAll(rows.flatMap((r) => [r.media_path, r.thumb_path ?? null]));
@@ -133,7 +138,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         mediaRatio: r.media_ratio ?? null,
         cityId: (r as { city_id?: string }).city_id ?? null,
       }));
-  }, [cityId, uid]);
+  }, [cityId, uid, girlSpace]);
 
   /** Loads and applies the result if no newer load started meanwhile. On error, what is shown stays. */
   const reload = useCallback(

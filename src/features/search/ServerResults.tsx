@@ -1,6 +1,6 @@
 import { useIsFocused, useRouter } from 'expo-router';
 import { cityWhen } from '@/lib/time';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { enter } from '@/motion/enter';
 import Animated from 'react-native-reanimated';
@@ -10,6 +10,10 @@ import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import { useSyncVersion } from '@/features/server/sync';
+import { useServerActivities } from '@/features/server/activities';
+import { useCommunityList } from '@/features/community/data';
+import type { CityId } from '@/data/types';
+import { useAppSpace } from '@/state/appSpace';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
@@ -45,6 +49,27 @@ const ICON: Record<SearchHit['kind'], IconName> = { activity: 'calendar', commun
  * place directory, above the curated city guide. Hidden when signed out.
  */
 export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
+  const inGirl = useAppSpace() === 'girl';
+  return inGirl ? <GirlServerResults q={q} cityId={cityId} /> : <ResultsList q={q} cityId={cityId} />;
+}
+
+/**
+ * IRLY Girl space: the plans and communities found are the women-only ones
+ * (the lists IRLY Girl already shows, girl_only on the server). People,
+ * places and the guide stay as found: the search does not say who is a woman.
+ */
+function GirlServerResults({ q, cityId }: { q: string; cityId: string }) {
+  const { activities } = useServerActivities(cityId as CityId, { girlOnly: true });
+  const communities = useCommunityList(cityId);
+  const keep = useMemo(() => {
+    const plans = new Set(activities.filter((a) => a.girlOnly).map((a) => a.id));
+    const groups = new Set(communities.filter((c) => c.girlOnly).map((c) => c.id));
+    return (h: SearchHit) => (h.kind === 'activity' ? plans.has(h.id) : h.kind === 'community' ? groups.has(h.id) : true);
+  }, [activities, communities]);
+  return <ResultsList q={q} cityId={cityId} keep={keep} />;
+}
+
+function ResultsList({ q, cityId, keep }: { q: string; cityId: string; keep?: (h: SearchHit) => boolean }) {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
@@ -84,7 +109,7 @@ export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
   }, [q, cityId, uid, seen]);
 
   const current = uid && q.trim().length >= 2 && res.key === `${q}|${cityId}|${uid}`;
-  const shown = current ? res.hits : [];
+  const shown = current ? (keep ? res.hits.filter(keep) : res.hits) : [];
   if (current && res.failed)
     return (
       <Text variant="bodyS" tone="secondary" style={{ paddingHorizontal: space.gutter }}>

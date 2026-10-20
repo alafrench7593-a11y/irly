@@ -76,6 +76,8 @@ export const Photo = memo(function Photo({
   const uri = visual.uri && visual.uri !== failedUri ? visual.uri : stockUrl;
   const t = useTheme();
   const night = t.mode === "night";
+  // IRLY Girl waits on a warm rose-cream, never a grey box.
+  const girl = t.flavor === "girl";
   void light;
   const pulse = useSharedValue(0);
   const loading = status === "loading";
@@ -126,13 +128,13 @@ export const Photo = memo(function Photo({
       <View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: tint?.base ?? (night ? "#15171B" : "#E4E4E1") },
+          { backgroundColor: tint?.base ?? (night ? "#15171B" : girl ? "#F3E1E6" : "#E4E4E1") },
         ]}
       />
       <Animated.View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: tint?.pulse ?? (night ? "#20232A" : "#F4F4F2") },
+          { backgroundColor: tint?.pulse ?? (night ? "#20232A" : girl ? "#FBF2F4" : "#F4F4F2") },
           pulseStyle,
         ]}
         pointerEvents="none"
