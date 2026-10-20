@@ -1,6 +1,6 @@
 import { useIsFocused, useRouter } from 'expo-router';
 import { cityWhen } from '@/lib/time';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { enter } from '@/motion/enter';
 import Animated from 'react-native-reanimated';
@@ -10,9 +10,6 @@ import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { supabase } from '@/lib/supabase';
 import { useSyncVersion } from '@/features/server/sync';
-import { useServerActivities } from '@/features/server/activities';
-import { useCommunityList } from '@/features/community/data';
-import type { CityId } from '@/data/types';
 import { useAppSpace } from '@/state/appSpace';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
@@ -25,12 +22,20 @@ import { useActivityThumbs } from '@/features/server/covers';
 
 export type SearchHit = { kind: 'activity' | 'community' | 'person' | 'place' | 'area' | 'city' | 'category'; id: string; title: string; subtitle: string | null; cityId: string | null; areaId: string | null; startsAt: number | null };
 
-/** The one server search (typed, voice and assistant all use it). */
-export async function searchServer(q: string, cityId: string | null, limit = 30): Promise<SearchHit[]> {
+/**
+ * The one server search (typed, voice and assistant all use it). In the
+ * IRLY Girl space it is search_all_girl: women with IRLY Girl access and
+ * women-only plans and communities. That search failing (refused or
+ * unreachable) finds nothing: never the IRLY results instead.
+ */
+export async function searchServer(q: string, cityId: string | null, limit = 30, girl = false): Promise<SearchHit[]> {
   if (!supabase || q.trim().length < 1) return [];
-  const { data, error } = await supabase.rpc('search_all', { p_q: q.trim(), p_city: cityId, p_limit: limit });
-  // Unreachable is not "nothing found".
-  if (error) throw new Error(error.message);
+  const { data, error } = await supabase.rpc(girl ? 'search_all_girl' : 'search_all', { p_q: q.trim(), p_city: cityId, p_limit: limit });
+  if (error) {
+    if (girl) return [];
+    // Unreachable is not "nothing found".
+    throw new Error(error.message);
+  }
   return ((data as Record<string, string | null>[]) ?? []).map((r) => ({
     kind: r.kind as SearchHit['kind'],
     id: r.id as string,
@@ -52,27 +57,13 @@ const ICON: Record<SearchHit['kind'], IconName> = { activity: 'calendar', commun
  * place directory, above the curated city guide. Hidden when signed out.
  */
 export function ServerResults({ q, cityId }: { q: string; cityId: string }) {
-  const inGirl = useAppSpace() === 'girl';
-  return inGirl ? <GirlServerResults q={q} cityId={cityId} /> : <ResultsList q={q} cityId={cityId} />;
+  // IRLY Girl space: the server search of that space (search_all_girl), so
+  // people, plans and communities found are women only.
+  const girl = useAppSpace() === 'girl';
+  return <ResultsList key={girl ? 'girl' : 'mixte'} q={q} cityId={cityId} girl={girl} />;
 }
 
-/**
- * IRLY Girl space: the plans and communities found are the women-only ones
- * (the lists IRLY Girl already shows, girl_only on the server). People,
- * places and the guide stay as found: the search does not say who is a woman.
- */
-function GirlServerResults({ q, cityId }: { q: string; cityId: string }) {
-  const { activities } = useServerActivities(cityId as CityId, { girlOnly: true });
-  const communities = useCommunityList(cityId);
-  const keep = useMemo(() => {
-    const plans = new Set(activities.filter((a) => a.girlOnly).map((a) => a.id));
-    const groups = new Set(communities.filter((c) => c.girlOnly).map((c) => c.id));
-    return (h: SearchHit) => (h.kind === 'activity' ? plans.has(h.id) : h.kind === 'community' ? groups.has(h.id) : true);
-  }, [activities, communities]);
-  return <ResultsList q={q} cityId={cityId} keep={keep} />;
-}
-
-function ResultsList({ q, cityId, keep }: { q: string; cityId: string; keep?: (h: SearchHit) => boolean }) {
+function ResultsList({ q, cityId, girl }: { q: string; cityId: string; girl: boolean }) {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
@@ -96,7 +87,7 @@ function ResultsList({ q, cityId, keep }: { q: string; cityId: string; keep?: (h
     if (!uid || q.trim().length < 2) return;
     let alive = true;
     const timer = setTimeout(() => {
-      searchServer(q, cityId).then(
+      searchServer(q, cityId, 30, girl).then(
         (h) => {
           if (!alive) return;
           setRes({ key: `${q}|${cityId}|${uid}`, hits: h });
@@ -109,10 +100,10 @@ function ResultsList({ q, cityId, keep }: { q: string; cityId: string; keep?: (h
       alive = false;
       clearTimeout(timer);
     };
-  }, [q, cityId, uid, seen]);
+  }, [q, cityId, uid, seen, girl]);
 
   const current = uid && q.trim().length >= 2 && res.key === `${q}|${cityId}|${uid}`;
-  const shown = current ? (keep ? res.hits.filter(keep) : res.hits) : [];
+  const shown = current ? res.hits : [];
   // An activity found shows its photo: the one saved on it, else the app's photo of its subject (the same as on its page).
   const thumbs = useActivityThumbs(shown.filter((h) => h.kind === 'activity').map((h) => h.id));
   if (current && res.failed)

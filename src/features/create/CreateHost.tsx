@@ -452,7 +452,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const canNext = step === 0 ? false : step === 1 ? Boolean(pick?.sub || pick?.custom) : step === 2 ? Boolean(when && !whenProblem && area) : true;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents={open ? 'auto' : 'none'}>
+    // Clipped: the reveal circle is wider than the screen (on the web it made the page scroll sideways).
+    <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents={open ? 'auto' : 'none'}>
       <Animated.View
         style={[
           styles.circle,
@@ -937,6 +938,7 @@ const styles = StyleSheet.create({
   tileLabel: { textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
   or: { paddingHorizontal: space.gutter, marginTop: space[6] },
   circle: { position: 'absolute' },
+  clip: { overflow: 'hidden' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.gutter, height: 44 },
   back: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
   title: { paddingHorizontal: space.gutter, marginTop: space[3], marginBottom: space[5] },
