@@ -22,11 +22,12 @@ import { supabase, topic } from '@/lib/supabase';
  * already started after that write was committed (see "Echoes" below). A
  * change committed after the last reload (anyone's) always reloads.
  */
-export type SyncKind = 'activities' | 'communities' | 'inbox' | 'people' | 'saved' | 'notifs' | 'follows' | 'friends';
-const KINDS: SyncKind[] = ['activities', 'communities', 'inbox', 'people', 'saved', 'notifs', 'follows', 'friends'];
+// 'irl': the Live feeds, reloaded with everything else when the app comes back or goes online again.
+export type SyncKind = 'activities' | 'communities' | 'inbox' | 'people' | 'saved' | 'notifs' | 'follows' | 'friends' | 'irl';
+const KINDS: SyncKind[] = ['activities', 'communities', 'inbox', 'people', 'saved', 'notifs', 'follows', 'friends', 'irl'];
 
 type Versions = Record<SyncKind, number> & { online: boolean };
-const useVersions = create<Versions>(() => ({ activities: 0, communities: 0, inbox: 0, people: 0, saved: 0, notifs: 0, follows: 0, friends: 0, online: true }));
+const useVersions = create<Versions>(() => ({ activities: 0, communities: 0, inbox: 0, people: 0, saved: 0, notifs: 0, follows: 0, friends: 0, irl: 0, online: true }));
 
 /** The version of a kind of data: put it in an effect's dependencies to reload when it changes. */
 export const useSyncVersion = (kind: SyncKind) => useVersions((s) => s[kind]);
@@ -130,7 +131,7 @@ export function echoGate(reload: () => void, wait: number, lastStart: () => numb
 }
 
 // When each kind last reloaded everywhere (a version bump; screens read the server just after).
-const reloadedAt: Record<SyncKind, number> = { activities: -Infinity, communities: -Infinity, inbox: -Infinity, people: -Infinity, saved: -Infinity, notifs: -Infinity, follows: -Infinity, friends: -Infinity };
+const reloadedAt: Record<SyncKind, number> = { activities: -Infinity, communities: -Infinity, inbox: -Infinity, people: -Infinity, saved: -Infinity, notifs: -Infinity, follows: -Infinity, friends: -Infinity, irl: -Infinity };
 
 // Bursts (ten people joining, a big cascade) become one reload per kind.
 const pending = new Set<SyncKind>();
