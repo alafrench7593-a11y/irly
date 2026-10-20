@@ -43,10 +43,12 @@ SplashScreen.setOptions({ duration: 250, fade: true });
 // Web (phone browsers): an input is ~200 px wide by default and does not
 // shrink in a flex row, so narrow fields overflowed under their neighbours
 // and could not be tapped on iPhone. Inputs also keep 16 px text so iOS
-// Safari does not zoom in on focus.
+// Safari does not zoom in on focus. Inputs are positioned so they paint
+// above the glass pane laid behind them (an absolutely positioned layer
+// would otherwise cover, and blur, the typed text).
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   const css = document.createElement('style');
-  css.textContent = 'input,textarea{min-width:0;max-width:100%;font-size:16px}';
+  css.textContent = 'input,textarea{min-width:0;max-width:100%;font-size:16px;position:relative}';
   document.head.appendChild(css);
 }
 
