@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { photo as photoUrl } from "@/data/photos";
-import { storedKey } from "@/features/server/media";
+import { forgetLink, signedLinks, storedKey, type Bucket } from "@/features/server/media";
 import type { Visual } from "@/data/types";
 import type { LightId } from "@/theme/lights";
 import { useTheme } from "@/theme/useTheme";
@@ -74,10 +74,14 @@ export const Photo = memo(function Photo({
   // With a recyclingKey (the thing's id), the same photo on every screen;
   // without one, chosen once per place on screen (never on every render).
   const stockUrl = useMemo(() => photoUrl(visual.photo, width, recyclingKey, pinned, girl), [visual.photo, width, recyclingKey, pinned, girl]);
-  // A cover link that fails (expired, file gone) falls back to the stock
-  // photo once, instead of leaving a grey box.
+  // A stored photo's link that fails (expired: the screen kept it for hours)
+  // is signed again once; if that fails too (file gone), the stock photo
+  // shows instead of a grey box. Both are tied to this very link: another
+  // cover (a new link) is never replaced by what was found for this one.
+  const [renewed, setRenewed] = useState<{ from: string; uri: string } | null>(null);
   const [failedUri, setFailedUri] = useState<string | null>(null);
-  const uri = visual.uri && visual.uri !== failedUri ? visual.uri : stockUrl;
+  const own = visual.uri && renewed?.from === visual.uri ? renewed.uri : visual.uri;
+  const uri = own && visual.uri !== failedUri ? own : stockUrl;
   const night = t.mode === "night";
   void light;
   const pulse = useSharedValue(0);
@@ -154,8 +158,19 @@ export const Photo = memo(function Photo({
           blurRadius={blur}
           onLoad={() => setStatus("done")}
           onError={() => {
-            if (visual.uri && uri === visual.uri) setFailedUri(visual.uri);
-            else setStatus("done");
+            const from = visual.uri;
+            if (!from || uri !== own) return setStatus("done");
+            const stored = renewed?.from === from ? undefined : storedKey(from);
+            const slash = stored ? stored.indexOf("/") : -1;
+            if (!stored || slash < 0) return setFailedUri(from);
+            forgetLink(from);
+            signedLinks(stored.slice(0, slash) as Bucket, [stored.slice(slash + 1)])
+              .then((m) => {
+                const fresh = m[stored.slice(slash + 1)];
+                if (fresh && fresh !== from) setRenewed({ from, uri: fresh });
+                else setFailedUri(from);
+              })
+              .catch(() => setFailedUri(from));
           }}
           accessibilityIgnoresInvertColors
         />

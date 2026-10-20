@@ -157,11 +157,16 @@ function CommunityScreen() {
         dateFor(d.day, d.time, new Date(), city.utcOffset),
         { communityId: c.id, girlOnly: c.girlOnly },
       );
+      // No id: nothing was created (the session ended). Never a success then: the draft stays.
+      if (!actId) {
+        toast(tx('Your session has ended. Sign in again'), 'x', 'live');
+        return false;
+      }
       haptic('success');
       track('ACTIVITY_CREATE', { via: 'community' });
       acts.refresh();
       // The activity is its own record, shown in Activities (no copy in the posts).
-      toast(actId ? tx('{title} is live. Chat created', { title: d.title }) : tx('Could not create'), actId ? 'send' : 'x', actId ? 'brand' : 'live');
+      toast(tx('{title} is live. Chat created', { title: d.title }), 'send', 'brand');
       return true;
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create', 'x', 'live');

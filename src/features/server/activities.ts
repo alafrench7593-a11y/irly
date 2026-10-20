@@ -16,7 +16,7 @@ import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { lastLibraryPhoto, rememberLibraryPhoto } from '@/features/create/lastPhoto';
 import { libraryFor, libraryKindOf, surprise } from '@/features/create/photoLibrary';
 import { askPushInContext } from '@/features/push/push';
-import { useAppSpace } from '@/state/appSpace';
+import { useAppSpace, useSpaceStore } from '@/state/appSpace';
 import { displayCommunityName } from '@/features/community/name';
 
 /**
@@ -61,7 +61,10 @@ export const coverLinks = (paths: (string | null | undefined)[]): Promise<Record
 // server refuses a second row with that ref.
 const inFlight = new Map<string, { at: number; ref: string; promise: Promise<string | null> }>();
 
-export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, extras: ActivityExtras = {}): Promise<string | null> {
+export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, given: ActivityExtras = {}): Promise<string | null> {
+  // Not said by the caller (the assistant, a quick plan from a place…): made in IRLY Girl, it is an
+  // IRLY Girl plan, so it shows in the space it was made in (its lists read girl_only = the space).
+  const extras: ActivityExtras = given.girlOnly === undefined ? { ...given, girlOnly: useSpaceStore.getState().space === 'girl' } : given;
   // Everything the member chose: changing anything (photo, spots, privacy…) is a new plan, not a replay.
   const key = JSON.stringify([plan, at?.getTime() ?? null, extras]);
   const now = Date.now();
@@ -140,7 +143,8 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
     // Already created by the first tap: hand back that one.
     const { data: same } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).is('cancelled_at', null).maybeSingle();
     if (same) {
-      bumpActivities();
+      // Its chat too (the first answer, lost, never said so).
+      changed('activities', 'inbox');
       return same.id as string;
     }
   }
