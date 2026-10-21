@@ -7,7 +7,6 @@ import { cardDay, cardTime } from '@/components/cards/HomeCards';
 import { Button } from '@/components/ui/Button';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Icon, type IconName } from '@/components/ui/Icon';
-import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { areaName, CITIES } from '@/data/destinations';
@@ -15,6 +14,7 @@ import type { CityId } from '@/data/types';
 import type { NewsItem } from '@/features/news/news';
 import type { ServerActivity } from '@/features/server/activities';
 import { t as tx, useT } from '@/i18n';
+import { initials } from '@/lib/format';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
@@ -22,7 +22,10 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { NetCommunity, NetPost } from './hub';
 import { LINK_KINDS, linkLabel, safeLink, type ProLinks } from './links';
-import { AccentFill, layered, PaneLight, useNetworkTone } from './tone';
+import type { ProProfile } from './match';
+import { blockIn, REVEAL_BATCH, stateIn, useBump, usePressLight } from './motion';
+import { AccentFill, layered, NetworkPane, useNetworkTone } from './tone';
+import { Shimmer, useGlint } from './ui';
 
 /**
  * The parts of the IRLY Network page: the intro, section heads, rails of
@@ -31,35 +34,82 @@ import { AccentFill, layered, PaneLight, useNetworkTone } from './tone';
  * page wears the IRLY Girl look in IRLY Girl.
  */
 
-/** "What IRLY Network is, who it is for" and the way to your professional profile. */
+/**
+ * The top of IRLY Network. Without a professional profile: what IRLY
+ * Network is, who it is for, and the way in (sign in, or create the
+ * profile). With one: a compact strip of your profile (your match is
+ * computed from it), which opens it, with Edit.
+ */
 export function NetworkIntro({
   signedIn,
-  hasPro,
+  pro,
+  name,
   loading,
   onProfile,
   onMine,
   onSignIn,
+  index = 0,
 }: {
   signedIn: boolean;
-  hasPro: boolean;
+  pro: ProProfile | null;
+  /** Your first name (your IRLY profile), for the initials. */
+  name: string;
   loading: boolean;
   onProfile: () => void;
   onMine: () => void;
   onSignIn: () => void;
+  index?: number;
 }) {
   const t = useTheme();
+  const tone = useNetworkTone();
+  const { press, onPressIn, onPressOut } = usePressLight();
+  if (signedIn && loading) return <StripSkeleton index={index} />;
+  if (signedIn && pro)
+    return (
+      <Animated.View entering={blockIn(index)} style={styles.stripWrap}>
+        <PressableScale
+          haptic="select"
+          scaleTo={0.98}
+          onPress={onMine}
+          onPressIn={onPressIn}
+          onPressOut={onPressOut}
+          accessibilityLabel="Your professional profile"
+          style={[styles.strip, { boxShadow: tone.surface.shadow }]}
+        >
+          <NetworkPane radius={radius.xl} press={press} />
+          <View style={[styles.mine, layered, { overflow: 'hidden', boxShadow: tone.glow }]}>
+            <AccentFill colors={tone.gradient} />
+            <Text variant="titleS" color={tone.onAccent} raw>
+              {initials(name || pro.firstName)}
+            </Text>
+          </View>
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="overline" tone="tertiary" numberOfLines={1}>
+              Your professional profile
+            </Text>
+            <Text variant="titleS" numberOfLines={1} raw>
+              {pro.company ? `${pro.jobTitle} · ${pro.company}` : pro.jobTitle}
+            </Text>
+            <Text variant="caption" tone="secondary" numberOfLines={1}>
+              Used for your matches
+            </Text>
+          </View>
+          <PressableScale haptic="select" scaleTo={0.9} onPress={onProfile} hitSlop={6} accessibilityLabel="Edit my profile" style={[styles.editMine, { backgroundColor: tone.soft, borderColor: tone.softLine }]}>
+            <Icon name="edit" size={16} color={tone.isGirl ? tone.accent : t.c.text} />
+          </PressableScale>
+        </PressableScale>
+      </Animated.View>
+    );
   const points: { icon: IconName; text: string }[] = [
     { icon: 'briefcase', text: 'A professional profile next to your IRLY profile' },
     { icon: 'sparkles', text: 'Your match with founders, freelancers and investors' },
     { icon: 'calendar', text: 'Meetups, communities and posts about business' },
   ];
-  const tone = useNetworkTone();
   return (
-    <Animated.View entering={enter.rise(0)} style={[styles.intro, { borderColor: t.c.line }]}>
-      <GlassLayer radius={radius.xl} level="regular" variant="card" />
-      <PaneLight radius={radius.xl} />
+    <Animated.View entering={blockIn(index)} style={[styles.intro, { boxShadow: tone.surface.shadow }]}>
+      <NetworkPane radius={radius.xl} />
       <View style={styles.introHead}>
-        <Animated.View entering={enter.pop(0, 120)} style={[styles.introMark, layered, { borderWidth: 0, overflow: 'hidden', boxShadow: tone.isGirl ? tone.glow : undefined }]}>
+        <Animated.View entering={enter.pop(0, 260)} style={[styles.introMark, layered, { overflow: 'hidden', boxShadow: tone.glow }]}>
           <AccentFill colors={tone.gradient} />
           <Icon name="network" size={20} color={tone.onAccent} />
         </Animated.View>
@@ -73,11 +123,13 @@ export function NetworkIntro({
       <Text variant="bodyS" tone="secondary">
         For founders, freelancers, employees and investors who want to meet in real life: find the right people, join business meetups and communities, then connect and talk.
       </Text>
-      <View style={{ gap: 8 }}>
+      <View style={{ gap: 10 }}>
         {points.map((p, i) => (
-          <Animated.View key={p.text} entering={enter.fade(i + 1)} style={styles.point}>
-            <Icon name={p.icon} size={14} color={tone.accent} />
-            <Text variant="caption" tone="secondary" style={{ flex: 1 }}>
+          <Animated.View key={p.text} entering={enter.fade(i + 3)} style={styles.point}>
+            <View style={[styles.pointIcon, { backgroundColor: tone.soft, borderColor: tone.softLine }]}>
+              <Icon name={p.icon} size={13} color={tone.accent} />
+            </View>
+            <Text variant="caption" style={{ flex: 1, color: t.c.textSecondary }}>
               {p.text}
             </Text>
           </Animated.View>
@@ -85,17 +137,6 @@ export function NetworkIntro({
       </View>
       {!signedIn ? (
         <Button label="Sign in to join IRLY Network" icon="user" size="md" full onPress={onSignIn} />
-      ) : loading ? (
-        <Skeleton height={44} radius={radius.pill} />
-      ) : hasPro ? (
-        <View style={styles.introActions}>
-          <View style={{ flex: 1 }}>
-            <Button label="Edit my profile" icon="edit" size="md" full onPress={onProfile} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Button label="View it" variant="secondary" size="md" iconRight="chevronRight" full onPress={onMine} />
-          </View>
-        </View>
       ) : (
         <Button label="Create my professional profile" icon="briefcase" size="md" full onPress={onProfile} />
       )}
@@ -103,13 +144,41 @@ export function NetworkIntro({
   );
 }
 
-/** A section title, with an optional "See all". */
-export function SectionHead({ title, caption, action, onAction, index = 0 }: { title: string; caption?: string; action?: string; onAction?: () => void; index?: number }) {
+function StripSkeleton({ index }: { index: number }) {
   const tone = useNetworkTone();
+  const glint = useGlint();
+  return (
+    <Animated.View entering={blockIn(index)} style={[styles.stripWrap, styles.strip, { boxShadow: tone.surface.shadow }]} accessibilityLabel={tx('Loading')}>
+      <NetworkPane radius={radius.xl} />
+      <Shimmer glint={glint} width={48} height={48} radius={24} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <Shimmer glint={glint} width="40%" height={9} radius={5} />
+        <Shimmer glint={glint} width="70%" height={14} radius={7} />
+      </View>
+    </Animated.View>
+  );
+}
+
+/** A section title, with an optional count and "See all". */
+export function SectionHead({ title, caption, action, onAction, index = 0, count }: { title: string; caption?: string; action?: string; onAction?: () => void; index?: number; count?: number }) {
+  const t = useTheme();
+  const tone = useNetworkTone();
+  const bump = useBump(count);
   return (
     <Animated.View entering={enter.rise(index)} style={styles.head}>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="titleS">{title}</Text>
+      <View style={{ flex: 1, gap: 3 }}>
+        <View style={styles.headRow}>
+          <Text variant="titleM" accessibilityRole="header">
+            {title}
+          </Text>
+          {count != null ? (
+            <Animated.View style={[styles.count, { backgroundColor: tone.soft, borderColor: tone.softLine }, bump]}>
+              <Text variant="caption" color={tone.isGirl ? tone.accent : t.c.text} raw>
+                {String(count)}
+              </Text>
+            </Animated.View>
+          ) : null}
+        </View>
         {caption ? (
           <Text variant="caption" tone="tertiary">
             {caption}
@@ -117,10 +186,11 @@ export function SectionHead({ title, caption, action, onAction, index = 0 }: { t
         ) : null}
       </View>
       {action && onAction ? (
-        <PressableScale haptic="select" onPress={onAction} hitSlop={10} accessibilityRole="link" accessibilityLabel={action}>
+        <PressableScale haptic="select" onPress={onAction} hitSlop={10} accessibilityRole="link" accessibilityLabel={action} style={styles.headAction}>
           <Text variant="label" tone={tone.isGirl ? undefined : 'secondary'} color={tone.isGirl ? tone.accent : undefined}>
             {action}
           </Text>
+          <Icon name="chevronRight" size={14} color={tone.isGirl ? tone.accent : t.c.textSecondary} />
         </PressableScale>
       ) : null}
     </Animated.View>
@@ -150,14 +220,12 @@ export function SectionState({
   if (kind === 'loading')
     return (
       <ScrollView horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail} accessibilityLabel={tx('Loading')}>
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} width={skeleton.width} height={skeleton.height} radius={radius.lg} />
-        ))}
+        <RailSkeleton width={skeleton.width} height={skeleton.height} />
       </ScrollView>
     );
   return (
-    <Animated.View entering={enter.fade(0)} style={[styles.state, { borderColor: t.c.line }]}>
-      <GlassLayer radius={radius.lg} variant="card" />
+    <Animated.View entering={stateIn} style={[styles.state, { boxShadow: tone.surface.shadow }]}>
+      <NetworkPane radius={radius.lg} light={false} />
       <View style={[styles.well, { backgroundColor: tone.soft, borderColor: tone.softLine }]}>
         <Icon name={kind === 'error' ? 'satellite' : icon} size={16} color={kind === 'error' ? t.c.textSecondary : tone.accent} />
       </View>
@@ -178,6 +246,30 @@ export function SectionState({
   );
 }
 
+/** Placeholders of a rail (meetups, communities) in the Network colours. */
+function RailSkeleton({ width, height }: { width: number | `${number}%`; height: number }) {
+  const glint = useGlint();
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <Shimmer key={i} glint={glint} width={width} height={height} radius={radius.lg} />
+      ))}
+    </>
+  );
+}
+
+/** Placeholders of a list of rows (posts, news). */
+export function RowsSkeleton({ count = 2, height }: { count?: number; height: number }) {
+  const glint = useGlint();
+  return (
+    <View style={{ paddingHorizontal: space.gutter, gap: 10 }} accessibilityLabel={tx('Loading')}>
+      {Array.from({ length: count }, (_, i) => (
+        <Shimmer key={i} glint={glint} height={height} radius={radius.lg} />
+      ))}
+    </View>
+  );
+}
+
 export function Rail({ children }: { children: ReactNode }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail} decelerationRate="fast">
@@ -195,17 +287,19 @@ export function MeetupCard({ a, index }: { a: ServerActivity; index: number }) {
   const place = a.placeName || (city ? areaName(city, a.areaId) : a.areaId);
   const when = `${cardDay(a.startsAt, a.cityId)} · ${cardTime(a.startsAt, a.cityId)}`;
   const tone = useNetworkTone();
+  const { press, onPressIn, onPressOut } = usePressLight();
   return (
-    <Animated.View entering={enter.slide(index)}>
+    <Animated.View entering={index < REVEAL_BATCH ? enter.slide(index) : undefined}>
       <PressableScale
         haptic="select"
         scaleTo={0.97}
         onPress={() => router.push(`/a/${a.id}`)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
         accessibilityLabel={`${a.title}, ${when}, ${place}`}
-        style={[styles.meetup, { borderColor: t.c.line }]}
+        style={[styles.meetup, { boxShadow: tone.surface.shadow }]}
       >
-        <GlassLayer radius={radius.lg} variant="card" />
-        <PaneLight radius={radius.lg} />
+        <NetworkPane radius={radius.lg} press={press} />
         <View style={styles.row}>
           <Icon name="calendar" size={13} color={tone.accent} />
           <Text variant="caption" tone="secondary" raw numberOfLines={1} style={{ flex: 1 }}>
@@ -245,6 +339,8 @@ export function PostRow({ p, index, now }: { p: NetPost; index: number; now: num
   const t = useTheme();
   const tr = useT();
   const router = useRouter();
+  const tone = useNetworkTone();
+  const { press, onPressIn, onPressOut } = usePressLight();
   const ago = timeAgo(Math.max(0, Math.round((now - p.at) / 60000)));
   return (
     <Animated.View entering={enter.rise(index)}>
@@ -252,10 +348,12 @@ export function PostRow({ p, index, now }: { p: NetPost; index: number; now: num
         haptic="select"
         scaleTo={0.98}
         onPress={() => router.push(`/comments?type=community_post&id=${encodeURIComponent(p.id)}`)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
         accessibilityLabel={tr('Post in {name}', { name: p.communityName })}
-        style={[styles.post, { borderColor: t.c.line }]}
+        style={[styles.post, { boxShadow: tone.surface.shadow }]}
       >
-        <GlassLayer radius={radius.lg} variant="card" />
+        <NetworkPane radius={radius.lg} press={press} light={false} />
         <PressableScale onPress={() => router.push(`/c/${p.communityId}`)} accessibilityRole="link" accessibilityLabel={p.communityName} hitSlop={6}>
           <Text variant="caption" tone="tertiary" numberOfLines={1} raw>
             {[p.communityName, p.authorName, ago].filter(Boolean).join(' · ')}
@@ -282,15 +380,22 @@ export function PostRow({ p, index, now }: { p: NetPost; index: number; now: num
 
 /** A networking community; opens it. */
 export function CommunityTile({ c, index }: { c: NetCommunity; index: number }) {
-  const t = useTheme();
   const tr = useT();
   const router = useRouter();
   const tone = useNetworkTone();
+  const { press, onPressIn, onPressOut } = usePressLight();
   return (
-    <Animated.View entering={enter.slide(index)}>
-      <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} accessibilityLabel={c.name} style={[styles.community, { borderColor: t.c.line }]}>
-        <GlassLayer radius={radius.lg} variant="card" />
-        <PaneLight radius={radius.lg} />
+    <Animated.View entering={index < REVEAL_BATCH ? enter.slide(index) : undefined}>
+      <PressableScale
+        haptic="select"
+        scaleTo={0.97}
+        onPress={() => router.push(`/c/${c.id}`)}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityLabel={c.name}
+        style={[styles.community, { boxShadow: tone.surface.shadow }]}
+      >
+        <NetworkPane radius={radius.lg} press={press} />
         <View style={styles.row}>
           <View style={[styles.emoji, { borderColor: tone.softLine, backgroundColor: tone.soft }]}>
             {c.emoji ? (
@@ -334,10 +439,20 @@ export function OpportunityRow({ n, index, now }: { n: NewsItem; index: number; 
     if (!/^https:\/\//i.test(n.url)) return toast('Could not open the article', 'x', 'live');
     WebBrowser.openBrowserAsync(n.url).catch(() => toast('Could not open the article', 'x', 'live'));
   };
+  const { press, onPressIn, onPressOut } = usePressLight();
   return (
     <Animated.View entering={enter.rise(index)}>
-      <PressableScale haptic="select" scaleTo={0.98} onPress={open} accessibilityRole="link" accessibilityLabel={n.title} style={[styles.post, { borderColor: t.c.line }]}>
-        <GlassLayer radius={radius.lg} variant="card" />
+      <PressableScale
+        haptic="select"
+        scaleTo={0.98}
+        onPress={open}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityRole="link"
+        accessibilityLabel={n.title}
+        style={[styles.post, { boxShadow: tone.surface.shadow }]}
+      >
+        <NetworkPane radius={radius.lg} press={press} light={false} />
         <View style={styles.row}>
           <Icon name="news" size={13} color={t.c.textTertiary} />
           <Text variant="caption" tone="tertiary" numberOfLines={1} raw style={{ flex: 1 }}>
@@ -406,19 +521,26 @@ export function ProLinkButtons({ links, index = 0 }: { links: ProLinks; index?: 
 }
 
 const styles = StyleSheet.create({
-  intro: { marginHorizontal: space.gutter, padding: 18, gap: 14, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
-  introHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  introMark: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  introActions: { flexDirection: 'row', gap: 8 },
-  point: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  head: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: space.gutter, marginTop: space[6], marginBottom: space[2] },
-  rail: { paddingHorizontal: space.gutter, paddingVertical: 4, gap: 10 },
-  state: { marginHorizontal: space.gutter, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
+  intro: { marginHorizontal: space.gutter, padding: 20, gap: 16, borderRadius: radius.xl, overflow: 'hidden' },
+  introHead: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  introMark: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  point: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pointIcon: { width: 26, height: 26, borderRadius: 13, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
+  stripWrap: { marginHorizontal: space.gutter },
+  strip: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, paddingRight: 12, borderRadius: radius.xl, overflow: 'hidden' },
+  mine: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  editMine: { width: 40, height: 40, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
+  head: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: space.gutter, marginTop: space[9], marginBottom: space[4] },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  count: { minWidth: 26, height: 22, paddingHorizontal: 7, borderRadius: 11, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
+  headAction: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingBottom: 2 },
+  rail: { paddingHorizontal: space.gutter, paddingTop: 4, paddingBottom: 14, gap: 12 },
+  state: { marginHorizontal: space.gutter, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   badge: { height: 20, paddingHorizontal: 8, borderRadius: radius.pill, justifyContent: 'center' },
-  meetup: { width: 240, minHeight: 140, padding: 14, gap: 8, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
-  post: { marginHorizontal: space.gutter, padding: 14, gap: 8, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
-  community: { width: 200, minHeight: 150, padding: 14, gap: 8, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
+  meetup: { width: 248, minHeight: 148, padding: 16, gap: 8, borderRadius: radius.lg, overflow: 'hidden' },
+  post: { marginHorizontal: space.gutter, padding: 16, gap: 8, borderRadius: radius.lg, overflow: 'hidden' },
+  community: { width: 204, minHeight: 156, padding: 16, gap: 8, borderRadius: radius.lg, overflow: 'hidden' },
   well: { width: 32, height: 32, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
   emoji: { width: 36, height: 36, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
   links: { paddingHorizontal: space.gutter, marginTop: space[6], gap: 10 },

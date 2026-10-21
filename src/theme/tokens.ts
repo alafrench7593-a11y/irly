@@ -272,6 +272,100 @@ export const networkAmbient = {
 } as const;
 
 /**
+ * The surfaces of IRLY Network pages only: the glass of its cards, their
+ * light and depth, the slow light drifting behind the page, portraits and
+ * loaders. Two systems on one recipe:
+ * - IRLY (Mixte): silver glass. Anthracite panes with a cool silver rim on
+ *   IRLY Noir, milky off-white panes with a grey rim on IRLY Clair.
+ * - IRLY Girl: lavender glass, a violet light, deep plum scrims.
+ * Cards fake the glass (gradients and rims, no live blur) so long lists stay
+ * smooth on any phone. Read through useNetworkTone(), never elsewhere.
+ */
+export type NetworkSurface = {
+  /** Fill of a pane, top to bottom (translucent, the ambient light shows through). */
+  pane: readonly [string, string];
+  /** Thin rim of a pane, and its brighter top edge (light from above). */
+  rim: string;
+  rimTop: string;
+  /** Sheen across the top half of a pane. */
+  sheen: string;
+  /** Light that blooms on a pane while a finger is on it. */
+  press: string;
+  /** Diffuse shadow of a card, and the deeper one of a hero (profile photo, contrast panel). */
+  shadow: string;
+  shadowHero: string;
+  /** The two slow lights drifting behind the top of the page. */
+  drift: readonly [string, string];
+  /** Loading placeholders: the block and the glint that sweeps it. */
+  skeleton: string;
+  glint: string;
+  /** Bottom scrim over a photo, so a name stays legible on any picture. */
+  scrim: readonly [string, string];
+  /** Behind a portrait without photo (or until it loads), and its initials. */
+  portrait: readonly [string, string];
+  initials: string;
+  /** Resting filter chip: fill and line. */
+  chip: string;
+  chipLine: string;
+};
+
+export const networkSurface: { mixte: Record<Mode, NetworkSurface>; girl: NetworkSurface } = {
+  mixte: {
+    night: {
+      pane: ['rgba(48,51,58,0.66)', 'rgba(20,22,26,0.74)'],
+      rim: 'rgba(255,255,255,0.08)',
+      rimTop: 'rgba(226,232,240,0.30)',
+      sheen: 'rgba(255,255,255,0.055)',
+      press: 'rgba(214,222,234,0.11)',
+      shadow: '0px 18px 40px rgba(0,0,0,0.46), 0px 2px 6px rgba(0,0,0,0.32)',
+      shadowHero: '0px 30px 72px rgba(0,0,0,0.62), 0px 4px 12px rgba(0,0,0,0.36)',
+      drift: ['rgba(176,188,206,0.22)', 'rgba(120,130,146,0.18)'],
+      skeleton: 'rgba(255,255,255,0.055)',
+      glint: 'rgba(255,255,255,0.09)',
+      scrim: ['rgba(5,5,6,0)', 'rgba(5,5,6,0.84)'],
+      portrait: ['#2C2F36', '#15171B'],
+      initials: 'rgba(236,240,246,0.88)',
+      chip: 'rgba(255,255,255,0.06)',
+      chipLine: 'rgba(255,255,255,0.13)',
+    },
+    day: {
+      pane: ['rgba(255,255,255,0.86)', 'rgba(241,242,245,0.78)'],
+      rim: 'rgba(16,20,28,0.075)',
+      rimTop: 'rgba(255,255,255,1)',
+      sheen: 'rgba(255,255,255,0.7)',
+      press: 'rgba(110,122,140,0.09)',
+      shadow: '0px 14px 34px rgba(28,32,40,0.08), 0px 2px 6px rgba(28,32,40,0.05)',
+      shadowHero: '0px 26px 60px rgba(28,32,40,0.18), 0px 4px 12px rgba(28,32,40,0.08)',
+      drift: ['rgba(148,160,178,0.30)', 'rgba(198,204,214,0.34)'],
+      skeleton: 'rgba(28,32,40,0.06)',
+      glint: 'rgba(255,255,255,0.8)',
+      scrim: ['rgba(10,10,10,0)', 'rgba(10,10,10,0.74)'],
+      portrait: ['#E6E8EC', '#CED2D8'],
+      initials: '#3A3E46',
+      chip: 'rgba(255,255,255,0.72)',
+      chipLine: 'rgba(16,20,28,0.09)',
+    },
+  },
+  girl: {
+    pane: ['rgba(255,255,255,0.82)', 'rgba(242,236,255,0.72)'],
+    rim: 'rgba(106,59,238,0.11)',
+    rimTop: 'rgba(255,255,255,1)',
+    sheen: 'rgba(255,255,255,0.66)',
+    press: 'rgba(139,92,246,0.11)',
+    shadow: '0px 16px 38px rgba(45,29,84,0.11), 0px 2px 6px rgba(45,29,84,0.06)',
+    shadowHero: '0px 28px 64px rgba(45,29,84,0.24), 0px 4px 12px rgba(45,29,84,0.10)',
+    drift: ['rgba(139,92,246,0.24)', 'rgba(186,208,255,0.44)'],
+    skeleton: 'rgba(106,59,238,0.07)',
+    glint: 'rgba(255,255,255,0.88)',
+    scrim: ['rgba(30,19,64,0)', 'rgba(30,19,64,0.80)'],
+    portrait: ['#EAE2FF', '#CBBBF6'],
+    initials: '#3A2670',
+    chip: 'rgba(255,255,255,0.74)',
+    chipLine: 'rgba(106,59,238,0.13)',
+  },
+};
+
+/**
  * Category and status colours. Used on an icon, a dot or a halo, never as
  * a background fill.
  */

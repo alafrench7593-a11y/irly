@@ -103,5 +103,14 @@ export const SKILL_SUGGESTIONS = [
   'Finance', 'Legal', 'Operations', 'Hiring', 'Content', 'Video', 'Social media', 'Partnerships', 'Supply chain', 'Real estate',
 ];
 
+/** Names of technologies among the suggestions: the same in every language ("React" is never « Réagir »). */
+const AS_WRITTEN = new Set(['React', 'Python', 'SEO', 'UI/UX', 'AI/ML']);
+
+/**
+ * A skill as shown on a profile: a suggestion in your language, a
+ * technology or a member's own skill exactly as written.
+ */
+export const skillLabel = (s: string, tr: (key: string) => string): string => (SKILL_SUGGESTIONS.includes(s) && !AS_WRITTEN.has(s) ? tr(s) : s);
+
 export const MAX_INDUSTRIES = 3;
 export const MAX_SKILLS = 12;
