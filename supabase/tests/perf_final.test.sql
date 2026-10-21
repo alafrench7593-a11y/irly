@@ -1,4 +1,4 @@
--- Speed (migration 20261027950000_irly_perf_final): search and the map
+-- Speed (migration 20261028400000_irly_perf_final): search and the map
 -- bound their activities by plain columns before the read rule runs, and the
 -- members' read rule asks for IRLY Girl access once per query. Nothing anyone sees
 -- changes: every edge of « not over yet » (no end, started under / over two
