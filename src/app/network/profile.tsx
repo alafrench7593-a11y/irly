@@ -29,6 +29,7 @@ import {
   ROLE_LABEL,
   roleChoice,
   SKILL_SUGGESTIONS,
+  skillLabel,
   type IndustryId,
   type IntentId,
 } from '@/features/network/taxonomy';
@@ -282,7 +283,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
       <FormSection title="Skills" count={`${d.skills.length}/${MAX_SKILLS}`}>
         <View style={styles.wrap}>
           {SKILL_SUGGESTIONS.map((s) => (
-            <Chip key={s} size="sm" label={s} selected={hasSkill(s)} onPress={() => toggleSkill(s)} />
+            <Chip key={s} size="sm" label={skillLabel(s, tr)} raw selected={hasSkill(s)} onPress={() => toggleSkill(s)} />
           ))}
         </View>
         <Field
@@ -402,7 +403,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
           <NetworkPane radius={radius.xl} />
           <Row label="I am" value={[tr(ROLE_LABEL[shownRole]), d.company.trim() ? `${d.jobTitle.trim()} · ${d.company.trim()}` : d.jobTitle.trim()].filter(Boolean).join(' · ')} onEdit={() => go(0)} />
           <Row label="Industries" value={d.industries.map((i) => `${INDUSTRY[i].emoji} ${tr(INDUSTRY[i].short)}`).join(', ')} onEdit={() => go(1)} />
-          <Row label="Skills" value={d.skills.map((s) => tr(s)).join(', ')} onEdit={() => go(1)} />
+          <Row label="Skills" value={d.skills.map((s) => skillLabel(s, tr)).join(', ')} onEdit={() => go(1)} />
           <Row label="Goals" value={GOALS.filter((g) => d.intents.includes(g.id)).map((g) => `${g.emoji} ${tr(g.label)}`).join(', ')} onEdit={() => go(2)} />
           {me.linksOn ? <Row label="Links" value={filledLinks.map((k) => k.label).join(', ')} onEdit={() => go(3)} /> : null}
           <Row label="Where I work from" value={d.areaId ? `${areaName(city, d.areaId)} · ${city.name}` : ''} onEdit={() => go(3)} last />
