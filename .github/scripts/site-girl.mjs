@@ -513,6 +513,11 @@ section{position:relative;padding:72px 0;scroll-margin-top:76px}
 .label::before{content:"";flex:none;width:6px;height:6px;border-radius:6px;background:var(--rose)}
 /* ───────── Hero ───────── */
 .hero{min-height:calc(100svh - 68px);display:grid;align-items:center;padding:28px 0 48px;isolation:isolate}
+/* Hero film: Dubai at golden hour under a pearl veil, so the dark text keeps its contrast. Fades in only once it plays. */
+.hvid{position:absolute;inset:-80px 0 -40px;z-index:-2;overflow:hidden;pointer-events:none}
+.hvid video{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease}
+.hvid video.on{opacity:1}
+.hvid::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(251,242,244,.78) 0%,rgba(251,242,244,.62) 45%,rgba(251,242,244,.9) 88%,#FBF2F4 100%)}
 .aura{position:absolute;inset:-80px 0 -40px;z-index:-1;overflow:hidden;pointer-events:none}
 .aura i{position:absolute;border-radius:50%;opacity:.9;animation:drift 18s ease-in-out infinite alternate}
 .aura i:nth-child(1){width:70vmax;height:70vmax;left:30%;top:-30vmax;background:radial-gradient(closest-side,rgba(246,197,216,.85),transparent)}
@@ -802,6 +807,7 @@ function page(lang) {
   const H = t.hero;
   const sofia = byId("g-sofia");
   const heroHtml = `<section class="hero" aria-labelledby="h1">
+  <div class="hvid" aria-hidden="true"><video muted loop playsinline preload="none" disablepictureinpicture data-bg-s="/video/bg/girl-720" data-bg-l="/video/bg/girl-1080"></video></div>
   <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="wrap hgrid">
     <div class="hcopy">
@@ -1053,6 +1059,21 @@ ${tourHtml}
   addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
   addEventListener('resize', onScroll, { passive: true });
   onScroll();
+
+  // Hero film: light encode on phones, 1080p on large screens; never with reduced motion or Save-Data; paused off-screen.
+  const bgVid = document.querySelector('.hvid video');
+  if (bgVid && !reduce && !(navigator.connection && navigator.connection.saveData)) {
+    const base = bgVid.dataset[matchMedia('(max-aspect-ratio: 4/5)').matches ? 'bgS' : 'bgL'];
+    bgVid.innerHTML = '<source src="' + base + '.webm" type="video/webm"><source src="' + base + '.mp4" type="video/mp4">';
+    bgVid.addEventListener('playing', () => bgVid.classList.add('on'), { once: true });
+    const play = () => { const p = bgVid.play(); if (p) p.catch(() => {}); };
+    let seen = true;
+    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { seen = e.isIntersecting; seen && !document.hidden ? play() : bgVid.pause(); }).observe(bgVid);
+    document.addEventListener('visibilitychange', () => (document.hidden || !seen ? bgVid.pause() : play()));
+    bgVid.preload = 'auto';
+    bgVid.load();
+    play();
+  } else if (bgVid) bgVid.parentNode.remove();
 
   // Hero: the constellation leans toward a mouse pointer, very slightly.
   const stage = document.querySelector('.hstage'), tilt = document.querySelector('.tilt');
