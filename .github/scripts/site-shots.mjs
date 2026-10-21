@@ -25,8 +25,17 @@ const srv = http
 const browser = await chromium.launch();
 const errors = [];
 
-async function open(colorScheme = 'dark') {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, locale: 'en-US', colorScheme });
+// The demo's "Demo · nothing is saved" pill is for visitors of the live demo, not
+// for pictures of the app: the screens are taken without it (the website says
+// they come from the demo, with example people).
+const NO_BADGE = '[aria-label^="Demo: example content"],[aria-label^="Démo : contenu"]{visibility:hidden!important}';
+
+async function open(colorScheme = 'dark', lang = 'en', scale = 2) {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: scale, locale: lang === 'fr' ? 'fr-FR' : 'en-US', colorScheme });
+  await ctx.addInitScript((css) => {
+    const add = () => { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); };
+    if (document.head) add(); else document.addEventListener('DOMContentLoaded', add);
+  }, NO_BADGE);
   // Photos not deployed yet (new portraits) come from this checkout.
   await ctx.route(/alafrench7593-a11y\.github\.io\/irly\/photos\/(.+)$/, (route) => {
     const f = `public-photos/${route.request().url().split('/photos/')[1].split('?')[0]}`;
@@ -43,10 +52,10 @@ async function open(colorScheme = 'dark') {
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('http://localhost:8095/');
   // IRLY Girl screens are shown in the app's light appearance, the others in IRLY Noir.
-  await page.evaluate((appearance) => {
+  await page.evaluate(([appearance, lang]) => {
     localStorage.setItem('irly-v2-demo', JSON.stringify({ state: { onboarded: true, destinationId: 'emirates', cityId: 'dubai', appearance, profile: { name: 'Sara', gender: 'woman', age: 29, types: [], interests: ['startups', 'food'], activities: ['padel'], languages: ['English'], lookingFor: [] } }, version: 1 }));
-    localStorage.setItem('irly-lang-demo', JSON.stringify({ state: { setting: 'en' }, version: 0 }));
-  }, colorScheme === 'light' ? 'day' : 'auto');
+    localStorage.setItem('irly-lang-demo', JSON.stringify({ state: { setting: lang }, version: 0 }));
+  }, [colorScheme === 'light' ? 'day' : 'auto', lang]);
   return { ctx, page };
 }
 
@@ -74,19 +83,20 @@ const SHOTS = [
 // IRLY Girl, as a woman sees it in the demo (example women, posts, plans and
 // chats of src/data/content/girlDemo.ts), in the light theme of IRLY Girl.
 // The website's slideshow and screens use these: real screens of the app.
+// text: a string, or a pattern matching the English and the French title.
 const to = (text) => async (page) => {
-  await page.getByText(text, { exact: false }).first().scrollIntoViewIfNeeded();
+  await page.getByText(text, typeof text === 'string' ? { exact: false } : undefined).first().scrollIntoViewIfNeeded();
   await page.mouse.wheel(0, -60);
 };
 const GIRL_SHOTS = [
   ['girl-home', '/girl', 7000],
-  ['girl-feed', '/girl', 7000, to('Recent posts')],
+  ['girl-feed', '/girl', 7000, to(/Recent posts|Publications récentes/)],
   ['girl-post', '/comments?type=community_post&id=gp-arrived&title=Just%20landed%20in%20Dubai', 5000],
   ['girl-profile', '/person/w-noor', 5000],
-  ['girl-communities', '/girl', 7000, to('IRLY Girl communities')],
+  ['girl-communities', '/girl', 7000, to(/IRLY Girl communities|Communautés IRLY Girl/)],
   ['girl-group', '/c/gc-new-dubai', 5000],
   ['girl-chat', '/messages/gcv-brunch', 4500],
-  ['girl-plans', '/girl', 7000, to("Girls' plans coming up")],
+  ['girl-plans', '/girl', 7000, to(/Girls['’] plans coming up|Prochains plans entre filles/)],
   ['girl-invite', '/a/ga-brunch', 5000],
   ['girl-notifications', '/notifications', 5000],
   ['girl-create', '/post/new', 4500],
@@ -94,12 +104,17 @@ const GIRL_SHOTS = [
 ];
 for (const [name, url, wait, act] of GIRL_SHOTS) {
   SHOTS.push([name, url, wait, act, 'light']);
+  // The French IRLY Girl page shows the app in French (site/shots/fr/).
+  SHOTS.push([`fr/${name}`, url, wait, act, 'light', 'fr']);
 }
+// The home page's map screen, in each language (600 × 1298, like site/shots/app/<lang>/).
+for (const lang of ['en', 'fr']) SHOTS.push([`app/${lang}/map`, '/map', 9000, null, 'dark', lang, 600 / 390]);
 
 const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
-for (const [name, url, wait, act, scheme] of SHOTS) {
+for (const [name, url, wait, act, scheme, lang, scale] of SHOTS) {
   if (only && !only.includes(name)) continue;
-  const { ctx, page } = await open(scheme);
+  fs.mkdirSync(path.dirname(`${OUT}/${name}.jpg`), { recursive: true });
+  const { ctx, page } = await open(scheme, lang, scale);
   try {
     await page.goto(`http://localhost:8095${url}`);
     await page.waitForTimeout(wait);

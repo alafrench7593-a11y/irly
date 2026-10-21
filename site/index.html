@@ -3,8 +3,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@1&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
-<link rel="preload" as="image" href="img/heroBurj.webp" imagesrcset="img/heroBurj-sm.webp 960w, img/heroBurj.webp 1280w" imagesizes="100vw" media="(min-aspect-ratio: 4/5)">
-<link rel="preload" as="image" href="img/heroPortrait.webp" imagesrcset="img/heroPortrait.webp 720w, img/heroPortrait-lg.webp 1080w" imagesizes="100vw" media="(max-aspect-ratio: 4/5)">
+<link rel="preload" as="image" href="img/hero/skyline-1920.webp" imagesrcset="img/hero/skyline-960.webp 960w, img/hero/skyline-1920.webp 1920w" imagesizes="100vw" media="(min-aspect-ratio: 4/5)" fetchpriority="high">
+<link rel="preload" as="image" href="img/hero/skyline-p.webp" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
 <style>
 /* ───────────────────────── IRLY design system ─────────────────────────
    Black, white and greys, as in the app (IRLY Noir). One accent, live red,
@@ -15,7 +15,7 @@
 :root {
   --black: #000; --ink: #050505; --ink-2: #0c0c0d; --ink-3: #141416;
   --white: #fff; --paper: #f5f5f4; --grey-1: #d6d6d3; --grey-2: #a6a6a1; --grey-3: #75756f; --grey-4: #3a3a39;
-  --live: #ff453a; --girl: #f2a7c3;
+  --live: #ff453a; --girl: #b69cff;
   --bg: var(--ink); --fg: var(--paper); --muted: var(--grey-2); --faint: var(--grey-3);
   --line: rgba(255,255,255,.1); --line-strong: rgba(255,255,255,.2);
   --glass: rgba(22,22,24,.55); --glass-hi: rgba(255,255,255,.07);
@@ -143,13 +143,18 @@ html.js:not(.still) [data-split].in .w > span { transform: none; }
 
 /* ───────── HERO ───────── */
 .hero { position: relative; min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: calc(var(--navh) + 32px) 0 56px; overflow: hidden; isolation: isolate; }
-.hero-bg { position: absolute; inset: 0; z-index: -2; }
-.hero-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: saturate(.5) brightness(.62) contrast(1.05); transform: scale(1.06); }
-html:not(.still) .hero-bg img { animation: settle 2.4s var(--ease) both; }
-@keyframes settle { from { transform: scale(1.16); } }
-/* Background film: fades in over the photo once it actually plays, so a slow network only ever shows the photo. */
-.hero-vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.7) brightness(.7) contrast(1.05); opacity: 0; transition: opacity 1.4s var(--ease); }
-.hero-vid.on { opacity: 1; }
+/* Dubai photos in a slow crossfade with a gentle Ken Burns drift. The first one is
+   the page's largest paint; the others load after the page, one ahead. Still with
+   reduced motion, paused off-screen and in a hidden tab. */
+.hero-bg { position: absolute; inset: 0; z-index: -2; overflow: hidden; background: var(--ink); pointer-events: none; }
+.hero-bg .sl { position: absolute; inset: 0; opacity: 0; transition: opacity 2.4s var(--ease-io); }
+.hero-bg .sl.on { opacity: 1; }
+.hero-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; filter: saturate(.72) brightness(.6) contrast(1.06); transform: scale(1.04); }
+html:not(.still) .hero-bg .sl.kb img { animation: kb 17s linear both; }
+html:not(.still) .hero-bg .sl:nth-child(even).kb img { animation-name: kb-b; }
+.hero-bg.paused img { animation-play-state: paused !important; }
+@keyframes kb { from { transform: scale(1.04) translate3d(0, 0, 0); } to { transform: scale(1.14) translate3d(-1.6%, -1.2%, 0); } }
+@keyframes kb-b { from { transform: scale(1.14) translate3d(1.4%, -1%, 0); } to { transform: scale(1.04) translate3d(0, 0, 0); } }
 .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(120% 80% at 75% 40%, transparent 0%, rgba(5,5,5,.35) 55%, rgba(5,5,5,.9) 100%), linear-gradient(180deg, rgba(5,5,5,.55) 0%, rgba(5,5,5,.15) 30%, rgba(5,5,5,.4) 70%, var(--ink) 100%); }
 .hero::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .5; background-image: radial-gradient(rgba(255,255,255,.16) 1px, transparent 1.4px); background-size: 14px 14px; -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,.65), transparent 70%); mask-image: linear-gradient(180deg, rgba(0,0,0,.65), transparent 70%); pointer-events: none; }
 .hero-in { display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: clamp(24px, 4vw, 64px); align-items: center; }
@@ -316,9 +321,9 @@ html.js:not(.still) .steps.in .line { transform: scaleX(1); }
 .step .k { position: relative; z-index: 1; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--ink); border: 1px solid var(--line-strong); font-size: 13px; font-weight: 800; }
 .step .vis { position: relative; display: grid; place-items: center; min-height: clamp(300px, 30vw, 400px); padding: 26px 0; border-radius: var(--r-lg); background: linear-gradient(180deg, var(--ink-3), var(--ink-2)); border: 1px solid var(--line); overflow: hidden; }
 .step .vis .phone { --w: clamp(140px, 12vw, 172px); transition: transform 1s var(--ease); }
-.step:hover .vis .phone { transform: translateY(-6px) rotate(-1.5deg); }
+@media (hover: hover) { .step:hover .vis .phone { transform: translateY(-6px) rotate(-1.5deg); } }
 .step .vis > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
-.step:hover .vis > img { transform: scale(1.05); }
+@media (hover: hover) { .step:hover .vis > img { transform: scale(1.05); } }
 .step .vis .badge { position: absolute; left: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--r-pill); font-size: 13px; font-weight: 700; color: var(--white); }
 .step h3 { font-size: clamp(20px, 1.8vw, 24px); }
 .step p { font-size: 15px; }
@@ -342,7 +347,7 @@ html.js:not(.still) .steps.in .line { transform: scaleX(1); }
 .ph { position: relative; margin: 0; border-radius: var(--r-md); overflow: hidden; background: var(--ink-3); }
 .ph .par { position: absolute; inset: -10% 0; will-change: transform; }
 .ph img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.9); transition: filter .6s, transform 1.2s var(--ease); }
-.ph:hover img { filter: saturate(1.05); transform: scale(1.03); }
+@media (hover: hover) { .ph:hover img { filter: saturate(1.05); transform: scale(1.03); } }
 .ph figcaption { position: absolute; left: 10px; bottom: 10px; padding: 6px 11px; border-radius: var(--r-pill); font-size: 12px; font-weight: 700; color: var(--white); }
 html[dir="rtl"] .ph figcaption { left: auto; right: 10px; }
 .m1 { grid-column: 1 / 5; grid-row: 1 / 4; }
@@ -397,7 +402,11 @@ html:not(.still) .qa[open] p { animation: fade-up .6s var(--ease); }
 /* ───────── WAITLIST ───────── */
 .wl { position: relative; overflow: hidden; border-radius: var(--r-xl); padding: clamp(36px, 6vw, 80px) clamp(20px, 5vw, 72px); border: 1px solid var(--line); background: radial-gradient(80% 120% at 50% 0%, rgba(255,255,255,.08), transparent 60%), var(--ink-2); text-align: center; }
 .wl::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.12) 1px, transparent 1.4px); background-size: 16px 16px; -webkit-mask-image: radial-gradient(60% 70% at 50% 0%, #000, transparent); mask-image: radial-gradient(60% 70% at 50% 0%, #000, transparent); pointer-events: none; }
-.wl > * { position: relative; }
+.wl > * { position: relative; z-index: 1; }
+/* A slow light drifting across the card: decorative, never in the way of a click. */
+.wl::after { content: ""; position: absolute; z-index: 0; inset: -30% -10% auto; height: 110%; background: radial-gradient(38% 50% at 50% 50%, rgba(255,255,255,.075), transparent 70%); pointer-events: none; }
+html:not(.still) .wl::after { animation: sheen 16s var(--ease-io) infinite alternate; }
+@keyframes sheen { from { transform: translate3d(-28%, 0, 0); } to { transform: translate3d(28%, 12%, 0); } }
 .wl h2 { font-size: clamp(32px, 4.6vw, 60px); margin-top: 18px; }
 .wl .lede { margin: 16px auto 0; }
 .soon { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: var(--r-pill); border: 1px solid var(--line-strong); font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--grey-1); }
@@ -438,7 +447,7 @@ html:not(.still) .done.on { animation: fade-up .7s var(--ease); }
 .pane { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 18px; min-height: clamp(460px, 48vw, 640px); padding: clamp(24px, 3.4vw, 48px); border-radius: var(--r-xl); overflow: hidden; isolation: isolate; }
 .pane .bgp { position: absolute; inset: -6% 0; z-index: -2; will-change: transform; }
 .pane .bgp img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.65) brightness(.8); transition: transform 1.6s var(--ease); }
-.pane:hover .bgp img { transform: scale(1.04); }
+@media (hover: hover) { .pane:hover .bgp img { transform: scale(1.04); } }
 .pane::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(0,0,0,.1) 0%, rgba(0,0,0,.35) 40%, rgba(0,0,0,.88) 100%); }
 .pane .who { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: var(--white); }
 .pane .who em { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.5em; letter-spacing: 0; text-transform: none; }
@@ -470,6 +479,12 @@ footer { border-top: 1px solid var(--line); padding: 64px 0 calc(48px + env(safe
 .fine { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
 .fine p { font-size: 12px; color: var(--faint); max-width: none; }
 @media (max-width: 900px) { .foot { grid-template-columns: repeat(2, minmax(0, 1fr)); } .foot > div:first-child { grid-column: 1 / -1; } }
+
+/* ───────── Photos arrive softly instead of popping in (JavaScript marks them; without it they simply show) ───────── */
+html.js:not(.still) img.fade { opacity: 0; transition: opacity .9s var(--ease), transform 1.2s var(--ease), filter .6s; }
+html.js:not(.still) img.fade.ok { opacity: 1; }
+/* The showcase phone leans toward a mouse pointer, very slightly. */
+#showPhone { transition: transform .9s var(--ease); }
 
 /* ───────── Reduced motion: still, everything visible ───────── */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
@@ -515,12 +530,13 @@ footer { border-top: 1px solid var(--line); padding: 64px 0 calc(48px + env(safe
 <main id="main">
   <!-- 1. Hero: the brand, the promise, the two experiences, the real availability. -->
   <section class="hero" id="top" aria-labelledby="h1">
-    <div class="hero-bg" aria-hidden="true">
-      <picture>
-        <source media="(max-aspect-ratio: 4/5)" srcset="img/heroPortrait.webp 720w, img/heroPortrait-lg.webp 1080w" sizes="100vw">
-        <img src="img/heroBurj.webp" srcset="img/heroBurj-sm.webp 960w, img/heroBurj.webp 1280w" sizes="100vw" width="1280" height="853" alt="" fetchpriority="high" decoding="async">
-      </picture>
-      <video class="hero-vid" muted loop playsinline preload="none" disablepictureinpicture data-bg-s="video/bg/home-720" data-bg-l="video/bg/home-1080"></video>
+    <div class="hero-bg" id="heroBg" aria-hidden="true">
+      <picture class="sl on kb"><source media="(max-aspect-ratio: 4/5)" srcset="img/hero/skyline-p.webp"><img src="img/hero/skyline-1920.webp" srcset="img/hero/skyline-960.webp 960w, img/hero/skyline-1920.webp 1920w" sizes="100vw" width="1920" height="1200" alt="" fetchpriority="high" decoding="async"></picture>
+      <picture class="sl" data-p="img/hero/marina-p.webp" data-set="img/hero/marina-960.webp 960w, img/hero/marina-1920.webp 1920w"></picture>
+      <picture class="sl" data-p="img/hero/burj-p.webp" data-set="img/hero/burj-960.webp 960w, img/hero/burj-1920.webp 1920w"></picture>
+      <picture class="sl" data-p="img/hero/arab-p.webp" data-set="img/hero/arab-960.webp 960w, img/hero/arab-1920.webp 1920w"></picture>
+      <picture class="sl" data-p="img/hero/creek-p.webp" data-set="img/hero/creek-960.webp 960w, img/hero/creek-1920.webp 1920w"></picture>
+      <picture class="sl" data-p="img/hero/desert-p.webp" data-set="img/hero/desert-960.webp 960w, img/hero/desert-1920.webp 1920w"></picture>
     </div>
     <div class="wrap hero-in">
       <div class="hero-copy" id="heroCopy">
@@ -583,7 +599,7 @@ footer { border-top: 1px solid var(--line); padding: 64px 0 calc(48px + env(safe
             <img data-src="shots/app/en/people.jpg" width="600" height="1298" alt="" data-k="people">
             <img data-src="shots/app/en/live.jpg" width="600" height="1298" alt="" data-k="live">
             <img data-src="shots/app/en/network.jpg" width="600" height="1298" alt="" data-k="network">
-            <img data-src="shots/app/map.jpg" width="600" height="1298" alt="" data-k="map">
+            <img data-src="shots/app/en/map.jpg" width="600" height="1298" alt="" data-k="map">
             <img data-src="shots/app/en/communities.jpg" width="600" height="1298" alt="" data-k="communities">
             <img data-src="shots/app/en/activities.jpg" width="600" height="1298" alt="" data-k="activities">
             <img data-src="shots/app/en/messages.jpg" width="600" height="1298" alt="" data-k="messages">
@@ -970,21 +986,54 @@ footer { border-top: 1px solid var(--line); padding: 64px 0 calc(48px + env(safe
   };
   if (!reduce) $$('[data-split]').forEach(split);
 
-  /* ───────── Hero film: light encode on phones, 1080p on large screens; never with reduced motion or Save-Data; paused off-screen ───────── */
-  const bgVid = $('.hero-vid');
-  if (bgVid && !reduce && !navigator.connection?.saveData) {
-    const base = bgVid.dataset[matchMedia('(max-aspect-ratio: 4/5)').matches ? 'bgS' : 'bgL'];
-    // Unquoted types: the FR/AR build prefixes every quoted "video/…" path with ../
-    bgVid.innerHTML = `<source src="${base}.webm" type=video/webm><source src="${base}.mp4" type=video/mp4>`;
-    bgVid.addEventListener('playing', () => bgVid.classList.add('on'), { once: true });
-    const play = () => { const p = bgVid.play(); if (p) p.catch(() => {}); };
-    let seen = true;
-    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { seen = e.isIntersecting; seen && !document.hidden ? play() : bgVid.pause(); }).observe(bgVid);
-    document.addEventListener('visibilitychange', () => (document.hidden || !seen ? bgVid.pause() : play()));
-    bgVid.preload = 'auto';
-    bgVid.load();
-    play();
-  } else if (bgVid) bgVid.remove();
+  /* ───────── Hero: six views of Dubai, one at a time, fading slowly into each other ───────── */
+  const heroBg = $('#heroBg');
+  const slides = heroBg ? $$('.sl', heroBg) : [];
+  if (slides.length > 1 && !reduce && !navigator.connection?.saveData) {
+    const SLIDE = 7000;
+    let cur = 0, timer = null, seen = true;
+    // A slide's sources are written only when it comes next (data-p and data-set hold whole paths, so /fr/ and /ar/ get theirs).
+    const fill = (sl) => {
+      if (sl.dataset.set) {
+        sl.innerHTML = `<source media="(max-aspect-ratio: 4/5)" srcset="${sl.dataset.p}"><img srcset="${sl.dataset.set}" sizes="100vw" width="1920" height="1200" alt="" decoding="async">`;
+        delete sl.dataset.set;
+      }
+      return $('img', sl);
+    };
+    const ready = (img) => new Promise((done) => {
+      if (img.complete && img.naturalWidth) { done(); return; }
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    }).then(() => (img.decode ? img.decode().catch(() => {}) : null));
+    const show = (n) => {
+      const prev = slides[cur], next = slides[n];
+      next.classList.remove('kb');
+      void next.offsetWidth;
+      next.classList.add('kb', 'on');
+      prev.classList.remove('on');
+      // The old photo keeps drifting while it fades out, then rests.
+      setTimeout(() => { if (!prev.classList.contains('on')) prev.classList.remove('kb'); }, 2600);
+      cur = n;
+    };
+    const step = () => {
+      clearTimeout(timer);
+      if (!seen || document.hidden) return;
+      timer = setTimeout(async () => {
+        const n = (cur + 1) % slides.length;
+        const img = fill(slides[n]);
+        await ready(img);
+        if (!seen || document.hidden || !img.naturalWidth) { step(); return; }
+        show(n);
+        fill(slides[(n + 1) % slides.length]);
+        step();
+      }, SLIDE);
+    };
+    const run = () => { const on = seen && !document.hidden; heroBg.classList.toggle('paused', !on); if (on) step(); else clearTimeout(timer); };
+    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { seen = e.isIntersecting; run(); }).observe(heroBg);
+    document.addEventListener('visibilitychange', run);
+    const start = () => { fill(slides[1]); run(); };
+    if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
+  }
 
   /* ───────── Reveal on entry: once, a little before the element is fully in view ───────── */
   const once = (els, fn, opts = { rootMargin: '0px 0px -10% 0px', threshold: 0.08 }) => {
@@ -1018,6 +1067,15 @@ footer { border-top: 1px solid var(--line); padding: 64px 0 calc(48px + env(safe
     }), { rootMargin: '-45% 0px -50% 0px' });
     ['app', 'categories', 'how', 'dubai', 'faq', 'top', 'waitlist', 'join'].forEach((id) => { const s = document.getElementById(id); if (s) so.observe(s); });
   }
+
+  /* ───────── Photos fade in as they load (only those still loading) ───────── */
+  if (!reduce) $$('.cat img, .ph img, .pane .bgp img, .step .vis > img').forEach((img) => {
+    if (img.complete && img.naturalWidth) return;
+    img.classList.add('fade');
+    const ok = () => img.classList.add('ok');
+    img.addEventListener('load', ok, { once: true });
+    img.addEventListener('error', ok, { once: true });
+  });
 
   /* ───────── Magnetic buttons (mouse only) ───────── */
   if (finePointer && !reduce) {
@@ -1071,6 +1129,16 @@ footer { border-top: 1px solid var(--line); padding: 64px 0 calc(48px + env(safe
   });
   $('#prevScr').addEventListener('click', () => { stop(); go(at - 1); });
   $('#nextScr').addEventListener('click', () => { stop(); go(at + 1); });
+  // The phone leans toward the mouse (fine pointers only), and settles back.
+  const showPhone = $('#showPhone');
+  if (finePointer && !reduce && showPhone) {
+    screen.addEventListener('pointermove', (e) => {
+      const r = screen.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      showPhone.style.transform = `perspective(1100px) rotateY(${(x * 7).toFixed(2)}deg) rotateX(${(-y * 5).toFixed(2)}deg)`;
+    });
+    screen.addEventListener('pointerleave', () => (showPhone.style.transform = ''));
+  }
   // Swipe on the phone (touch).
   let sx = null;
   screen.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
