@@ -61,7 +61,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   // Where the member is (once they tapped locate): for the distance filter.
   const [origin, setOrigin] = useState<LatLng | null>(null);
   // Activities, people who chose to appear, and the demo build's examples, for the space shown.
-  const { all: layers, acts, ready } = useMapLayers(city, origin, layer);
+  const { all: layers, acts, ready, failed } = useMapLayers(city, origin, layer);
   // Bumped on every camera frame so the IRLY layer follows the map.
   const [, setFrameTick] = useState(0);
 
@@ -267,7 +267,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
       </Animated.View>
 
       {/* Nothing where the map looks: said plainly (never example content). */}
-      {ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} /> : null}
+      {ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} failed={failed} /> : null}
 
       {selected ? (
         <MapSheet

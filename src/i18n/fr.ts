@@ -1882,6 +1882,7 @@ export const fr: Record<string, string> = {
   'Join the community to post': 'Rejoins la communauté pour publier',
   'Join the community to vote': 'Rejoins la communauté pour voter',
   'Could not load. Check your connection.': 'Chargement impossible. Vérifie ta connexion.',
+  'Plans could not load': 'Les activités n’ont pas pu se charger',
   'No mom communities here yet.': 'Pas encore de communauté de mamans ici.',
   'Your settings are still loading': 'Tes réglages sont en cours de chargement',
   'Could not load your settings. Check your connection.': 'Impossible de charger tes réglages. Vérifie ta connexion.',

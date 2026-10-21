@@ -14,7 +14,7 @@ import { NO_FILTERS, useMapActivities, type MapFilters } from './serverActivitie
 export function useActivityLayer(city: City, origin: { latitude: number; longitude: number } | null = null, layer?: string) {
   const [filters, setFilters] = useState<MapFilters>(NO_FILTERS);
   // The filters are shown on the Activities layer only, so they apply there only.
-  const { list: rows, ready } = useMapActivities(city.id, layer && layer !== 'activity' ? NO_FILTERS : filters, origin);
+  const { list: rows, ready, failed } = useMapActivities(city.id, layer && layer !== 'activity' ? NO_FILTERS : filters, origin);
   const mine = useMyCommunityOptions();
   const girl = useAppSpace() === 'girl';
   const markers: MapMarkerData[] = useMemo(() => activityMarkers(city, rows, (ms) => cityWhen(ms, city.id)), [city, rows]);
@@ -28,7 +28,7 @@ export function useActivityLayer(city: City, origin: { latitude: number; longitu
     }),
     [rows, mine, origin, filters.category, girl],
   );
-  return { markers, filters, setFilters, filterOptions, ready };
+  return { markers, filters, setFilters, filterOptions, ready, failed };
 }
 
 /**
@@ -47,5 +47,5 @@ export function useMapLayers(city: City, origin: { latitude: number; longitude: 
     () => [...buildMarkers(city, content, lives, girl), ...peopleMarkers(city, people.list), ...acts.markers],
     [city, content, lives, girl, people.list, acts.markers],
   );
-  return { all, acts, ready: acts.ready && people.ready };
+  return { all, acts, ready: acts.ready && people.ready, failed: acts.failed };
 }

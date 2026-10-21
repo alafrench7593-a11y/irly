@@ -44,7 +44,7 @@ const until = (when: MapWhen, cityId: string): string | null => {
   return new Date(endLocal - shift).toISOString();
 };
 
-export function useMapActivities(cityId: string, filters: MapFilters, origin: { latitude: number; longitude: number } | null): { list: MapActivity[]; ready: boolean } {
+export function useMapActivities(cityId: string, filters: MapFilters, origin: { latitude: number; longitude: number } | null): { list: MapActivity[]; ready: boolean; failed: boolean } {
   const uid = useAccount()?.userId;
   // Each space shows its own plans: IRLY Girl's women-only ones there, none of them in IRLY (as every other list).
   const girl = useAppSpace() === 'girl';
@@ -54,7 +54,9 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
   // and a new filter keeps the markers until its answer (no empty state before the first answer).
   const base = `${uid}|${cityId}|${girl}`;
   const key = `${base}|${filters.when}|${filters.category}|${filters.community}|${filters.km}|${lat}|${lng}`;
-  const [state, setState] = useState<{ base: string; key: string; list: MapActivity[] }>({ base: '', key: '', list: [] });
+  // `failed`: the last read for this key did not answer (offline, server error). The markers already
+  // shown stay (never wiped by a failed refresh) and the map says it could not load, not « nothing here ».
+  const [state, setState] = useState<{ base: string; key: string; list: MapActivity[]; failed?: boolean }>({ base: '', key: '', list: [] });
   const seq = useRef(0);
   const load = useCallback(() => {
     if (!uid || !supabase) return;
@@ -73,9 +75,10 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
       })
       .then(
         ({ data, error }) => {
-          // Server not updated yet, offline, or IRLY Girl refused: no activity markers (never a guess).
+          // Offline, server error or IRLY Girl refused: never a guess. A refresh of the same question keeps
+          // its markers; another question (filter, city) shows none, and the map says it could not load.
           if (n !== seq.current) return;
-          if (error) return setState({ base, key, list: [] });
+          if (error) return setState((s) => ({ base, key, list: s.key === key ? s.list : [], failed: true }));
           setState({
             base,
             key,
@@ -98,13 +101,13 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
             })),
           });
         },
-        () => n === seq.current && setState({ base, key, list: [] }),
+        () => n === seq.current && setState((s) => ({ base, key, list: s.key === key ? s.list : [], failed: true })),
       );
   }, [uid, cityId, girl, base, key, filters.when, filters.category, filters.community, filters.km, lat, lng]);
   useEffect(load, [load]);
   // Created, edited, cancelled or deleted anywhere: the map follows.
   useRefreshOn(['activities'], load);
   // Signed out or without a server: nothing to wait for.
-  if (!uid || !supabase) return { list: [], ready: true };
-  return { list: state.base === base ? state.list : [], ready: state.key === key };
+  if (!uid || !supabase) return { list: [], ready: true, failed: false };
+  return { list: state.base === base ? state.list : [], ready: state.key === key, failed: state.key === key && Boolean(state.failed) };
 }
