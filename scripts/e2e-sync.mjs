@@ -284,7 +284,7 @@ async function main() {
   await step('… and in search', async () => (await page.goto(`${BASE}/discover?q=${encodeURIComponent(liveTitle)}`), await visible(page, liveTitle), true));
   await step('Uma joins it → the plan\'s chat is in her inbox, the count says 2 going', async () => {
     await page.goto(`${BASE}/a/${veraAct}`);
-    await page.getByRole('button', { name: 'Join', exact: true }).click();
+    await page.getByRole('button', { name: 'Join the activity', exact: true }).click();
     await visible(page, '2 going', 20000);
     await page.goto(`${BASE}/messages`);
     await visible(page, liveTitle, 20000);
