@@ -1,7 +1,8 @@
 -- Speed (final performance audit). Nothing anyone sees changes: the same
 -- rows, the same rules, measured faster on a database seeded with realistic
 -- volumes (5k members, 1.1k communities, 5k activities, 50k messages).
--- Additive only. Tested by supabase/tests/perf_final.test.sql.
+-- Additive only. Tested by supabase/tests/perf_final.test.sql. Section 3 is a
+-- fix found by the live E2E on the way (members could not delete their files).
 --
 -- 1. Search and the map no longer check the read rule of every past activity.
 --    Their « not over yet » test, coalesce(ends_at, starts_at + 2 h), is not
@@ -87,4 +88,30 @@ begin
     expr := replace(p.qual, 'private.is_girl_eligible()', '(select private.is_girl_eligible())');
     execute format('alter policy %I on %s using (%s)', p.polname, p.tbl, expr);
   end loop;
+end $$;
+
+-- ───────── 3. Members can delete their own files again ─────────
+-- Found by the live E2E (« Alice deletes the video post »: permission denied
+-- for table app_photo_overrides). Storage checks EVERY delete rule of
+-- storage.objects for a delete, and app_photos_delete (20261027700000) read
+-- public.app_photo_overrides as the caller, who may not read that table: every
+-- member's file removal (a Live, a post's photos, an old profile photo)
+-- failed. The same rule, with that check done by a function that may read it.
+create or replace function private.app_photo_kept(p_name text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.app_photo_overrides o where o.storage_path = p_name)
+$$;
+revoke all on function private.app_photo_kept(text) from public, anon;
+grant execute on function private.app_photo_kept(text) to authenticated;
+
+do $$
+begin
+  if exists (select 1 from information_schema.schemata where schema_name = 'storage') then
+    execute 'drop policy if exists app_photos_delete on storage.objects';
+    execute $p$
+      create policy app_photos_delete on storage.objects for delete to authenticated
+      using (bucket_id = 'app-photos' and (storage.foldername(name))[1] = auth.uid()::text and private.is_content_staff(auth.uid())
+             and not private.app_photo_kept(name))
+    $p$;
+  end if;
 end $$;
