@@ -166,3 +166,17 @@ export function signupStep(p: Partial<SignupProfile>): SignupStep {
   if (!(p.lookingFor ?? []).length) return 'looking';
   return 'ready';
 }
+
+const DAY_MS = 86_400_000;
+
+/**
+ * "How long have you been here?" as answered at sign-up, read back from the
+ * arrival date the server keeps (looking.tsx turns the answer into that date;
+ * "I'm from here" stores none). Newcomer communities depend on it.
+ */
+export function sinceFromArrival(arrivedAt: string | null | undefined, now = Date.now()): Profile['since'] {
+  if (!arrivedAt) return 'local';
+  const days = (now - Date.parse(arrivedAt)) / DAY_MS;
+  if (!Number.isFinite(days)) return undefined;
+  return days < 60 ? 'new' : days < 365 ? 'year' : 'years';
+}

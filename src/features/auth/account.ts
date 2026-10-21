@@ -12,9 +12,9 @@ import { cleanImage } from '@/lib/media';
 import { thumbOf, uploadFaceThumb as uploadThumb } from '@/features/server/media';
 import { wipeLocal } from '@/state/wipe';
 import { CITIES } from '@/data/destinations';
-import { ACTIVITIES, INTERESTS } from '@/data/catalog';
+import { ACTIVITIES, INTERESTS, USER_TYPES } from '@/data/catalog';
 import { isAvatar } from '@/features/avatar/avatar';
-import { authMessage, errorCode, MESSAGES, passwordProblem, returnLinkError, signUpHitExisting } from './signup';
+import { authMessage, errorCode, MESSAGES, passwordProblem, returnLinkError, signUpHitExisting, sinceFromArrival } from './signup';
 
 export { authMessage, errorCode };
 
@@ -241,7 +241,13 @@ type ServerProfile = {
   activity_prefs: string[] | null;
   intentions: string[] | null;
   photo_paths: string[] | null;
+  /** "Who are you?" (sign-up step 1); absent on a server without migration 20261027500000. */
+  member_types?: string[] | null;
 };
+
+/** The "Who are you?" answers this version of the app knows, at most 3 (the server's rule). */
+const knownTypes = (types: readonly string[] | null | undefined): Profile['types'] =>
+  (types ?? []).filter((x): x is Profile['types'][number] => x in USER_TYPES).slice(0, 3);
 
 const restoring = new Map<string, Promise<boolean>>();
 
@@ -320,6 +326,9 @@ async function readBack(uid: string, force = false, strict = false): Promise<boo
     faith: r.faith ?? undefined,
     faithVisible: Boolean(r.faith_visible),
     arrivedAt: r.arrived_at ? Date.parse(r.arrived_at) : undefined,
+    since: sinceFromArrival(r.arrived_at),
+    // A server without the answer (published before it was kept) leaves this phone's answer as it is.
+    ...(r.member_types?.length ? { types: knownTypes(r.member_types) } : {}),
     // Only values this version of the app knows (older or newer apps may differ).
     interests: (r.interests ?? []).filter((i): i is Profile['interests'][number] => i in INTERESTS),
     activities: (r.activity_prefs ?? []).filter((a): a is Profile['activities'][number] => a in ACTIVITIES),
@@ -408,12 +417,13 @@ function toRow(uid: string, p: Profile, cityId: string) {
     interests: (p.interests ?? []).map(String),
     activity_prefs: (p.activities ?? []).map(String),
     intentions: (p.lookingFor ?? []).map(String),
+    member_types: knownTypes(p.types),
     onboarded_at: new Date().toISOString(),
   };
 }
 
 /** The fields a member can change after signup (gender and birth date stay as declared: the server refuses changes). */
-export type ProfilePatch = Partial<Pick<Profile, 'name' | 'bio' | 'country' | 'languages' | 'interests' | 'activities' | 'lookingFor'>> & {
+export type ProfilePatch = Partial<Pick<Profile, 'name' | 'bio' | 'country' | 'languages' | 'interests' | 'activities' | 'lookingFor' | 'types'>> & {
   /** Unique @username (server only); empty clears it. */
   username?: string;
   /** A new photo picked on the phone (local or data URI). */
@@ -440,6 +450,7 @@ export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
     if (patch.interests !== undefined) row.interests = patch.interests.map(String);
     if (patch.activities !== undefined) row.activity_prefs = patch.activities.map(String);
     if (patch.lookingFor !== undefined) row.intentions = patch.lookingFor.map(String);
+    if (patch.types !== undefined) row.member_types = knownTypes(patch.types);
     if (patch.cityId !== undefined) row.city_id = patch.cityId;
     if (patch.username !== undefined) row.username = patch.username.trim().toLowerCase() || null;
     if (isAvatar(patch.photoUri)) {
@@ -522,10 +533,17 @@ export async function refreshOwnPhoto(uid: string): Promise<void> {
   const st = useStore.getState();
   if (!st.onboarded || (st.profile.ownerId && st.profile.ownerId !== uid)) return;
   const { data } = await supabase.rpc('my_profile');
-  const path = ((data as ServerProfile[] | null) ?? [])[0]?.photo_paths?.[0];
-  if (!path) return;
+  const row = ((data as ServerProfile[] | null) ?? [])[0];
   // Signed out (or another account signed in) while asking: this photo is no longer this phone's profile.
   const stillMine = () => stillSignedIn(uid) && useStore.getState().onboarded && (!useStore.getState().profile.ownerId || useStore.getState().profile.ownerId === uid);
+  // Profiles published before the "Who are you?" answer was kept on the server: sent once from this phone
+  // (best effort), so another phone gets it back. Only on a server that has the column.
+  const local = knownTypes(useStore.getState().profile.types);
+  if (row && Array.isArray(row.member_types) && !row.member_types.length && local.length && stillMine() && useStore.getState().profile.ownerId === uid) {
+    void supabase.from('profiles').update({ member_types: local }).eq('id', uid).then(() => undefined);
+  }
+  const path = row?.photo_paths?.[0];
+  if (!path) return;
   if (isAvatar(path)) {
     if (stillMine()) useStore.getState().updateProfile({ photoUri: path });
     return;

@@ -96,6 +96,8 @@ type ChipProps = {
   /** Kept for older call sites; v3 chips are always black and white. */
   tone?: 'brand' | 'accent';
   onDark?: boolean;
+  /** Member content or a proper name (a skill, a technology): shown as written, never translated. */
+  raw?: boolean;
 };
 
 /**
@@ -103,7 +105,7 @@ type ChipProps = {
  * gives a small spring bump (scale.selected territory, kept subtle) and a
  * selection haptic.
  */
-export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, size = 'md', onDark }: ChipProps) {
+export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, size = 'md', onDark, raw }: ChipProps) {
   const t = useTheme();
   const { p, sweep, outer } = useSelection(Boolean(selected));
   const night = t.mode === 'night';
@@ -121,7 +123,7 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
     <>
       {dot && !icon ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
       {icon ? <Icon name={icon} size={size === 'md' ? 16 : 14} color={iconColor} strokeWidth={2} /> : null}
-      <Text variant="label" color={fg} style={size === 'sm' ? { fontSize: 12.5 } : undefined}>
+      <Text variant="label" color={fg} style={size === 'sm' ? { fontSize: 12.5 } : undefined} raw={raw}>
         {label}
       </Text>
     </>
