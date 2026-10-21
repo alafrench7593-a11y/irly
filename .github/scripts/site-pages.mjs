@@ -101,7 +101,7 @@ for (const l of ['fr', 'ar']) {
   const d = T[l];
   // What Google shows for "IRLY": the brand first, then what it is for, in each language.
   const META = {
-    fr: ['IRLY — Moins de solitude. Plus de vie. Rencontrer du monde à Dubaï', 'Se faire des amis dans une nouvelle ville ne devrait pas être si difficile. IRLY t’aide à rencontrer du monde, trouver ta communauté et faire des choses ensemble, en vrai, à commencer par Dubaï. Gratuit.'],
+    fr: ['IRLY — Tes gens. Ta ville. Tes moments. Rencontrer du monde à Dubaï', 'IRLY transforme les rencontres en ligne en vrais moments : rencontre des gens qui partagent tes passions, rejoins des communautés et des activités, et fais-toi des amis à Dubaï. Gratuit, dans ton navigateur dès aujourd’hui.'],
     ar: ['IRLY — وحدة أقل. حياة أكثر. تعرّف على أشخاص في دبي', 'IRLY هو التطبيق للتعرّف على أشخاص في دبي: انضم إلى مجتمعات، واكتشف ما تفعله مع الآخرين، وكوّن صداقات حقيقية. التسجيل مجاني.'],
   };
   const [title, desc] = META[l];
@@ -116,7 +116,9 @@ for (const l of ['fr', 'ar']) {
     .replace(/(<meta name="twitter:description" content=")[^"]*"/, `$1${esc(desc)}"`)
     .replace(/(<meta property="og:url" content=")[^"]*"/, `$1${homeHref(l)}"`)
     // The live app opens in the page's language (French on /fr/), with no first load in English.
-    .replace(/\/app\/\?lang=en/g, `/app/?lang=${l === 'fr' ? 'fr' : 'en'}`)
+    .replace(/(\/app\/[^"?\s]*)\?lang=en/g, `$1?lang=${l === 'fr' ? 'fr' : 'en'}`)
+    // The app screens of the French page are the French app.
+    .replace(/shots\/app\/en\//g, l === 'fr' ? 'shots/app/fr/' : 'shots/app/en/')
     .replace(/(<meta property="og:locale" content=")[^"]*"/, `$1${l === 'fr' ? 'fr_FR' : 'ar_AE'}"`)
     .replace(/(<link rel="canonical" href=")[^"]*"/, `$1${INDEXED.includes(l) ? homeHref(l) : SITE}"`)
     .replace('<meta charset="utf-8">', INDEXED.includes(l) ? '<meta charset="utf-8">' : '<meta charset="utf-8">\n<meta name="robots" content="noindex, follow">')
