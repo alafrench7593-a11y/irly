@@ -4787,4 +4787,6 @@ export const fr: Record<string, string> = {
   'Shown around their neighbourhood, never at an exact place.': 'Affiché autour de son quartier, jamais à un endroit précis.',
   'Zoom out or move the map to see what is happening nearby.': 'Dézoome ou déplace la carte pour voir ce qui se passe autour.',
   'On the map': 'Sur la carte',
+  'Open IRL': 'Ouvrir IRL',
+  'No email app found. Write to {email}': 'Aucune app mail trouvée. Écris à {email}',
 };

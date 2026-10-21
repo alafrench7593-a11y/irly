@@ -53,7 +53,7 @@ function PageScroll({ scrollY, top, bottom, children }: { scrollY: SharedValue<n
     scrollY.set(e.contentOffset.y);
   });
   return (
-    <Animated.ScrollView
+    <Animated.ScrollView keyboardShouldPersistTaps="handled"
       onScroll={onScroll}
       scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}

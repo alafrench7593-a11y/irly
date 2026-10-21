@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { enter } from '@/motion/enter';
+import { PressableScale } from '@/motion/PressableScale';
 import Animated from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -55,15 +56,22 @@ export default function Support() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase.from('support_requests').insert({
-      user_id: account.userId,
-      kind,
-      body: body.trim().slice(0, 2000),
-      contact: account.email ?? null,
-      app_version: Constants.expoConfig?.version ?? null,
-      platform: Platform.OS === 'ios' || Platform.OS === 'android' ? Platform.OS : 'web',
-    });
-    setBusy(false);
+    // A dropped connection can reject instead of returning an error: the button never stays spinning.
+    let error: { message: string } | null;
+    try {
+      ({ error } = await supabase.from('support_requests').insert({
+        user_id: account.userId,
+        kind,
+        body: body.trim().slice(0, 2000),
+        contact: account.email ?? null,
+        app_version: Constants.expoConfig?.version ?? null,
+        platform: Platform.OS === 'ios' || Platform.OS === 'android' ? Platform.OS : 'web',
+      }));
+    } catch (e) {
+      error = { message: e instanceof Error ? e.message : String(e) };
+    } finally {
+      setBusy(false);
+    }
     if (error) {
       toast(/slow down/i.test(error.message) ? tr("You've already sent several messages. Try again in an hour.") : tr('Could not send. Check your connection and try again.'), 'x', 'live');
       return;
@@ -80,17 +88,23 @@ export default function Support() {
         <View style={{ gap: 8 }}>
           {FAQ.map((f, i) => (
             <Animated.View key={f.q} entering={enter.rise(Math.min(i, 8))}>
-              <View style={[styles.faq, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              {/* The whole card opens its answer, not only the words of the question. */}
+              <PressableScale
+                onPress={() => setOpen(open === i ? null : i)}
+                haptic="select"
+                scaleTo={0.98}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: open === i }}
+                style={[styles.faq, { backgroundColor: 'transparent', overflow: 'hidden' }]}
+              >
                 <GlassLayer radius={radius.lg} />
-                <Text variant="titleS" onPress={() => setOpen(open === i ? null : i)} accessibilityRole="button">
-                  {f.q}
-                </Text>
+                <Text variant="titleS">{f.q}</Text>
                 {open === i ? (
                   <Text variant="body" tone="secondary">
                     {f.a}
                   </Text>
                 ) : null}
-              </View>
+              </PressableScale>
             </Animated.View>
           ))}
         </View>
@@ -109,7 +123,7 @@ export default function Support() {
           <Text variant="caption" tone="tertiary">
             {isMissing(email) ? tr('Email contact: {email}', { email }) : tr('Or email {email}', { email })}
           </Text>
-          {!isMissing(email) ? <Button label="Open email" variant="ghost" onPress={() => Linking.openURL(`mailto:${email}`)} /> : null}
+          {!isMissing(email) ? <Button label="Open email" variant="ghost" onPress={() => Linking.openURL(`mailto:${email}`).catch(() => toast(tr('No email app found. Write to {email}', { email }), 'x', 'live'))} /> : null}
         </View>
       </View>
     </Page>

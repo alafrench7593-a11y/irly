@@ -544,7 +544,7 @@ function ServerThreadView({ id }: { id: string }) {
       </Sheet>
       <Sheet visible={preview.length > 0} onClose={() => setPreview([])} title={preview.length > 1 ? tx('{n} photos', { n: preview.length }) : tx('Photo')} subtitle={tx('Check it before sending')}>
         <View style={{ paddingHorizontal: space.gutter, gap: 12 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {preview.map((u) => (
               <Image key={u} source={{ uri: u }} style={styles.previewPhoto} contentFit="cover" accessibilityLabel={tx('Photo')} />
             ))}

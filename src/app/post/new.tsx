@@ -271,7 +271,7 @@ function Picked({ media, onRemove, disabled }: { media: DraftMedia; onRemove: (i
     );
   }
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+    <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
       {media.files.map((f, i) => {
         const uri = src(f);
         return (

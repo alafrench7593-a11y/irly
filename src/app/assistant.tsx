@@ -297,17 +297,17 @@ function Understood({ cmd, cityName, areas, onEdit }: { cmd: Command; cityName: 
           <Text variant="caption" tone="tertiary">
             Change anything before confirming
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {(['today', 'tomorrow', 'weekend', 'next_week'] as const).map((d) => (
               <Chip key={d} size="sm" label={planDay(d)} selected={(e.day ?? 'today') === d} onPress={() => onEdit({ day: d })} />
             ))}
           </ScrollView>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {TIMES.map((h) => (
               <Chip key={h} size="sm" label={h} selected={(e.time ?? '19:00') === h} onPress={() => onEdit({ time: h })} />
             ))}
           </ScrollView>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {areas.map((a) => (
               <Chip key={a.id} size="sm" label={a.name} selected={e.areaId === a.id} onPress={() => onEdit({ areaId: a.id })} />
             ))}

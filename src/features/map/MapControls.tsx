@@ -120,7 +120,7 @@ export function MapTopBar({
           </Glass>
         </Animated.View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
           {LAYERS.map((l) => (
             <Glass key={l.id} style={{ borderRadius: radius.pill }} border={false} intensity={blur.light}>
               <Chip size="sm" label={l.label} icon={l.icon} selected={layer === l.id} onPress={() => onLayer(l.id)} />
@@ -141,7 +141,7 @@ function ActivityFilters({ filters, onFilters, options }: { filters: MapFilters;
     </Glass>
   );
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
+    <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
       {chip('w-any', tx('Any time'), filters.when === 'any', { ...filters, when: 'any' })}
       {chip('w-today', tx('Today'), filters.when === 'today', { ...filters, when: 'today' })}
       {chip('w-week', tx('This week'), filters.when === 'week', { ...filters, when: 'week' })}
@@ -222,7 +222,7 @@ export function ModeSwitch({ three, onChange }: { three: boolean; onChange: (thr
 export function MapButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const t = useTheme();
   return (
-    <PressableScale haptic="select" scaleTo={0.9} onPress={onPress} accessibilityLabel={label} hitSlop={4}>
+    <PressableScale haptic="select" scaleTo={0.9} repeat onPress={onPress} accessibilityLabel={label} hitSlop={4}>
       <Glass style={[styles.button, { boxShadow: t.shadow.card }]} intensity={blur.medium}>
         <Icon name={icon} size={18} color={t.c.text} />
       </Glass>

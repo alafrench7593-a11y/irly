@@ -99,7 +99,7 @@ export default function HelpScreen() {
             <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search: Emirates ID, nursery, Marina…')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} returnKeyType="search" accessibilityLabel={a11y('Search questions')} />
           </View>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
           <Chip size="sm" label={tx('All')} selected={!category} onPress={() => setCategory(null)} />
           {HELP_CATEGORIES.map((c) => (
             <Chip key={c.id} size="sm" icon={c.icon} label={tx(c.label)} selected={category === c.id} onPress={() => setCategory(category === c.id ? null : c.id)} />

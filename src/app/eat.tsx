@@ -120,7 +120,7 @@ export default function Eat() {
 
 function Filters({ children }: { children: React.ReactNode }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: space.gutter }} style={{ marginHorizontal: -space.gutter }}>
+    <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: space.gutter }} style={{ marginHorizontal: -space.gutter }}>
       {children}
     </ScrollView>
   );

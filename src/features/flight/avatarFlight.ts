@@ -37,10 +37,21 @@ export function flyFrom(ref: View | null, person: { id: string; name: string; hu
     go();
     return;
   }
+  // Navigates exactly once, even if the measure never reports back (the face
+  // scrolled away or unmounted mid-tap): then the page opens without the flight.
+  let done = false;
+  const navigate = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(fallback);
+    go();
+  };
+  const fallback = setTimeout(navigate, 300);
   ref.measureInWindow((x, y, width, height) => {
+    if (done) return;
     const { hostOffset, launch } = useAvatarFlight.getState();
     if (width > 0) launch({ personId: person.id, name: person.name, hue: person.hue, from: { x: x - hostOffset.x, y: y - hostOffset.y, width, height } });
-    go();
+    navigate();
   });
 }
 

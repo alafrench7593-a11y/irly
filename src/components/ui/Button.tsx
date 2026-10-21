@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, type ReactNode } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -63,17 +63,6 @@ export const Button = memo(function Button({
   }, [variant, pulse]);
 
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
-  // A double tap fires once: the second press lands before `loading`/`disabled` re-render
-  // (or on a plain navigation, which never sets them) and would push a screen twice.
-  const lastPress = useRef(0);
-  const press = onPress
-    ? () => {
-        const now = Date.now();
-        if (now - lastPress.current < 450) return;
-        lastPress.current = now;
-        onPress();
-      }
-    : undefined;
 
   const night = t.mode === 'night';
   const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string; shadow?: string }> = {
@@ -106,8 +95,10 @@ export const Button = memo(function Button({
 
   return (
     <Animated.View style={[full ? styles.full : null, animated, style]}>
+      {/* A double tap fires once: PressableScale drops the second press (it lands before
+          `loading`/`disabled` re-render, or on a plain navigation that never sets them). */}
       <PressableScale
-        onPress={press}
+        onPress={onPress}
         disabled={disabled || loading}
         haptic={haptic}
         accessibilityLabel={label}

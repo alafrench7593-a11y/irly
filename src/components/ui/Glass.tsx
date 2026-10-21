@@ -71,7 +71,7 @@ export const Glass = memo(function Glass({ style, intensity, dark, light, border
   const shine = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.65)';
   const solid = isDark ? (dark ? 'rgba(40,42,46,0.86)' : 'rgba(24,26,31,0.95)') : girl ? 'rgba(250,247,255,0.96)' : 'rgba(255,255,255,0.95)';
   return (
-    <View {...MIXTE_MARK} style={[styles.root, lifted ? { boxShadow: t.shadow.card } : null, style]}>
+    <View {...MIXTE_MARK} pointerEvents={decorative(children)} style={[styles.root, lifted ? { boxShadow: t.shadow.card } : null, style]}>
       {Platform.OS === 'android' ? (
         <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: solid }]} />
       ) : (
@@ -106,7 +106,7 @@ function GirlGlass({ style, intensity, border, highlight, lifted, variant, child
   const r = flatRadius(style);
   const shadow = variant === 'plum' ? girlElevation.plum : variant === 'sheet' ? girlElevation.float : girlElevation.card;
   return (
-    <View {...WEB_MARK} style={[styles.root, lifted ? { boxShadow: shadow } : null, style]}>
+    <View {...WEB_MARK} pointerEvents={decorative(children)} style={[styles.root, lifted ? { boxShadow: shadow } : null, style]}>
       {Platform.OS === 'android' ? (
         <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: spec.fallback }]} />
       ) : (
@@ -140,6 +140,15 @@ function GirlGlass({ style, intensity, border, highlight, lifted, variant, child
       {children}
     </View>
   );
+}
+
+/**
+ * A pane with nothing in it is the background of something else (a button,
+ * a card, a sheet, laid as an absolute fill): it never takes the touch, so
+ * the control it dresses, or the one under it, gets the tap.
+ */
+function decorative(children: ReactNode): 'none' | undefined {
+  return children == null || children === false ? 'none' : undefined;
 }
 
 /** The pane's own corner radius, so its edge follows the same curve. */

@@ -93,7 +93,7 @@ function Review({ v, onDone }: { v: PendingVerification; onDone: () => void }) {
           </Text>
           <View style={[styles.selfie, { backgroundColor: t.c.overlay }]}>{v.selfie && selfie[v.selfie] ? <Image source={{ uri: selfie[v.selfie] }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}</View>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingTop: 18 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingTop: 18 }}>
           {v.photos.map((p) => (
             <View key={p} style={[styles.photo, { backgroundColor: t.c.overlay }]}>
               {photos[p] ? <Image source={{ uri: photos[p] }} style={StyleSheet.absoluteFill} contentFit="cover" /> : null}
