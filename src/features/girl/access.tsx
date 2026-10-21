@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
-import { useRefreshOn } from '@/features/server/sync';
+import { changed, useRefreshOn } from '@/features/server/sync';
 import { t as tx } from '@/i18n';
 import { hasSession, supabase } from '@/lib/supabase';
 import { DEMO } from '@/config/app';
@@ -18,6 +18,7 @@ import { enter } from '@/motion/enter';
 import Animated from 'react-native-reanimated';
 import { Ambient } from '@/components/visual/Ambient';
 import { GirlLoader } from './GirlMark';
+import { useGirlStore } from './girlStore';
 
 /**
  * Who may enter IRLY Girl (and IRLY Moms, which lives inside it), as seen
@@ -84,8 +85,35 @@ export const ACCESS_FRESH = 60_000;
 export async function girlAccessFor(uid: string | null, maxAge = 0): Promise<Answer> {
   if (maxAge && last && last.uid === uid && Date.now() - last.at < maxAge) return last.access;
   const access = await withLimit(readGirlAccess(), ACCESS_LIMIT);
+  // Open a moment ago, closed now (suspended, gender corrected, signed out): what this phone kept of IRLY Girl goes.
+  if (last && last.uid === uid && last.access === 'open' && access !== 'open') forgetGirlData();
   last = { uid, access, at: Date.now() };
   return access;
+}
+
+/**
+ * IRLY Girl access ended for this account: everything of IRLY Girl that the
+ * app kept in memory (chats and their messages, Lives, plans, signed photo
+ * links, Network cards, the on-device Match) is forgotten, and the lists
+ * read again from the server, which no longer returns any of it (RLS). The
+ * account stays signed in and keeps the rest of IRLY. Never throws.
+ */
+export function forgetGirlData(): void {
+  try {
+    useGirlStore.getState().reset();
+  } catch {
+    // The caches below are still cleared.
+  }
+  // Loaded lazily, as in state/wipe: these modules import the account module.
+  import('@/features/server/chat').then((m) => m.clearChatCache()).catch(() => undefined);
+  import('@/features/server/social').then((m) => m.clearSocialCache()).catch(() => undefined);
+  import('@/features/server/activities').then((m) => m.clearActivityCache()).catch(() => undefined);
+  import('@/features/server/media').then((m) => m.clearLinkCache()).catch(() => undefined);
+  import('@/features/server/covers').then((m) => m.clearCoverCache()).catch(() => undefined);
+  import('@/features/live/liveMedia').then((m) => m.clearLiveCache()).catch(() => undefined);
+  import('./api').then((m) => m.clearMatchLinks()).catch(() => undefined);
+  import('@/features/network/api').then((m) => m.forgetGirlNetwork()).catch(() => undefined);
+  changed('inbox', 'activities', 'communities', 'notifs', 'irl');
 }
 
 /** The cached answer for this account, if any (to open a page without a spinner). */
@@ -159,6 +187,8 @@ export function GirlSpaceGuard() {
       girlAccessFor(uid, maxAge)
         .then((a) => {
           if (a === 'open' || useSpaceStore.getState().space !== 'girl') return;
+          // The app was in IRLY Girl: what it kept of it is forgotten with the space.
+          forgetGirlData();
           resetAppSpace();
           // The gate says why (and offers the way forward).
           router.push('/girl');

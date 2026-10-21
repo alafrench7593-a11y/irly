@@ -28,6 +28,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'a removed item cannot be edited or restored': 'A removed item cannot be edited or restored',
   'a removed item cannot be restored': 'A removed item cannot be restored',
   'a sent photo cannot be swapped': 'A sent photo cannot be swapped',
+  'a women-only plan stays women-only': 'A women-only plan stays women-only',
   'a suspension lasts 1 to 365 days': 'A suspension lasts 1 to 365 days',
   'account still exists': GENERIC,
   'activity not found': 'This activity no longer exists',

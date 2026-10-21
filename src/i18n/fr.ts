@@ -4874,6 +4874,7 @@ export const fr: Record<string, string> = {
   'Only the owner can do this': 'Seul le créateur peut faire ça',
   'Only the owner or IRLY can change roles': 'Seuls le créateur ou IRLY peuvent changer les rôles',
   'People joined this girls-only activity: it stays girls-only': 'Des membres ont rejoint cette activité entre filles : elle le reste',
+  'A women-only plan stays women-only': 'Un plan entre femmes reste entre femmes',
   'Pick one of your own photos': 'Choisis une de tes propres photos',
   'Pick one of your own photos or an IRLY library photo': 'Choisis une de tes photos ou une photo de la bibliothèque IRLY',
   'Say why you need to read it': 'Explique pourquoi tu dois le lire',
