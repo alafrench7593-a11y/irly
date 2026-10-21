@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { YourCommunities } from '@/features/community/YourCommunities';
 import { useAccount } from '@/features/auth/account';
-import { t as tx } from '@/i18n';
+import { t as tx, useLang } from '@/i18n';
 import { planDayLabel, upcomingPlans } from '@/features/plans/when';
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -51,7 +51,11 @@ import { useAppSpace } from '@/state/appSpace';
 import { GirlCommunities, useGirlPeople } from '@/features/girl/GirlSections';
 import { GirlOfficialCommunities } from '@/features/girl/GirlOfficial';
 import { GirlIntro } from '@/features/girl/GirlIntro';
-import { HOME_SECTIONS, type HomeSection } from '@/features/home/sections';
+import { type HomeSection } from '@/features/home/sections';
+import { openDestination } from '@/features/cms/go';
+import { useHomeLayout, useHomeSpace } from '@/features/cms/feed';
+import { entryCount, entryText } from '@/features/cms/layout';
+import { BannerSection, NewsSection, useCmsVisuals } from '@/features/cms/ui';
 import { useGirlEntry } from '@/features/profile/girlEntry';
 
 /**
@@ -123,7 +127,26 @@ export default function Home() {
 
   // Everything happening in the next days, soonest first.
   // IRLY Girl: the events (open to everyone); the guide's sessions are not scoped to women.
-  const inGirl = useAppSpace() === 'girl';
+  // (The back office's preview may draw the Home in the other flavour: features/cms/feed.)
+  const homeSpace = useHomeSpace(useAppSpace());
+  const inGirl = homeSpace === 'girl';
+  // The team's layout for this flavour (order, on/off, words, numbers), else the app's own.
+  const { entries, feed } = useHomeLayout(homeSpace);
+  const lang = useLang();
+  const entryOf = useMemo(() => new Map(entries.map((e) => [e.key, e])), [entries]);
+  const count = (key: HomeSection) => entryCount(entryOf.get(key), key);
+  // A section's header: the team's words where it set some (shown as written), else the app's own.
+  const head = (key: HomeSection, title: string, overline?: string, action?: string, onAction?: () => void) => {
+    const e = entryOf.get(key);
+    const own = { title: entryText(e, 'title', lang), overline: entryText(e, 'subtitle', lang), action: entryText(e, 'cta_label', lang) };
+    return {
+      title: own.title ?? title,
+      overline: own.overline ?? overline,
+      action: own.action ?? (e?.cta_url ? 'All' : action),
+      onAction: e?.cta_url ? () => openDestination(e.cta_url) : onAction,
+      rawParts: (['title', 'overline', 'action'] as const).filter((k) => own[k] !== undefined),
+    };
+  };
   const happenings = useMemo<Happening[]>(() => {
     const list = [...(inGirl ? [] : content.sessions.map(fromSession)), ...content.events.map(fromEvent)];
     return list.sort(
@@ -152,22 +175,29 @@ export default function Home() {
     });
   }, [happenings, moment]);
   // Three rails for this moment (every category stays one tap away in « Discover activities »).
-  const forYou = sections.slice(0, 3);
+  const lead = entryOf.get('forYou')?.category;
+  const forYou = [...sections].sort((a, b) => Number(b.category.id === lead) - Number(a.category.id === lead)).slice(0, count('forYou'));
   const doorW = (frame.width - space.gutter * 2 - 12) / 2;
 
   // The grid of plans near you, filtered by the category chips.
-  const [filter, setFilter] = useState<CategoryKey | null>(null);
+  const [picked, setFilter] = useState<CategoryKey | null | undefined>(undefined);
+  const filter = picked === undefined ? (entryOf.get('nearby')?.category ?? null) : picked;
   const nearby = useMemo(() => happenings.filter((h) => h.id !== featured?.id), [happenings, featured]);
   const groups = useMemo(() => [...new Set(nearby.map((h) => h.group))].filter((id) => CATEGORY_BY_ID[id]), [nearby]);
-  const grid = useMemo(() => nearby.filter((h) => !filter || h.group === filter).slice(0, 8), [nearby, filter]);
+  const nearbyCount = count('nearby');
+  const grid = useMemo(() => nearby.filter((h) => !filter || h.group === filter).slice(0, nearbyCount), [nearby, filter, nearbyCount]);
 
   // People near you: everyone in IRLY, women in IRLY Girl.
   const women = useGirlPeople(cityId);
+  const peopleCount = count('people');
   const people = useMemo(
-    () => [...(inGirl ? women : content.people)].sort((a, b) => Number(Boolean(b.online)) - Number(Boolean(a.online))).slice(0, 12),
-    [content.people, inGirl, women],
+    () => [...(inGirl ? women : content.people)].sort((a, b) => Number(Boolean(b.online)) - Number(Boolean(a.online))).slice(0, peopleCount),
+    [content.people, inGirl, women, peopleCount],
   );
-  const eat = useMemo(() => content.places.filter((pl) => EAT_KINDS.has(pl.kind)), [content.places]);
+  const eatCount = count('eat');
+  const eat = useMemo(() => content.places.filter((pl) => EAT_KINDS.has(pl.kind)).slice(0, eatCount), [content.places, eatCount]);
+  const baliEntry = entryOf.get('bali');
+  const [baliCover] = useCmsVisuals(useMemo(() => [{ path: baliEntry?.cover_path, key: baliEntry?.cover_key, fallback: 'bali' }], [baliEntry]));
   const girl = useGirlEntry();
   const seeAllPeople = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
   // « IRLY Moms » (an entry of IRLY, /girl?mode=moms) lands here: IRLY Moms lives in Discover › People.
@@ -195,6 +225,19 @@ export default function Home() {
             <LiveStrip />
           </Animated.View>
         );
+      case 'news':
+        // The IRLY team's news for this flavour (none published: nothing).
+        return feed?.news.length ? (
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            <NewsSection entry={entryOf.get('news')} items={feed.news} />
+          </ScrollReveal>
+        ) : null;
+      case 'banners':
+        return feed?.banners.length ? (
+          <ScrollReveal scrollY={scrollY} style={styles.section}>
+            <BannerSection entry={entryOf.get('banners')} banners={feed.banners} />
+          </ScrollReveal>
+        ) : null;
       case 'categories':
         // Every kind of plan, on its photo, right under the header (girls' plans counted in IRLY Girl).
         return (
@@ -205,9 +248,13 @@ export default function Home() {
       case 'featured':
         return featured ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader overline={featuredLive ? 'Live' : undefined} live={featuredLive} title={featuredLive ? 'Happening now' : 'Next up'} />
+            <SectionHeader {...head('featured', featuredLive ? 'Happening now' : 'Next up', featuredLive ? 'Live' : undefined)} live={featuredLive} />
             <View style={styles.rows}>
-              <HighlightCard h={featured} height={Math.round(Math.min(460, frame.width * 1.12))} />
+              {entryOf.get('featured')?.style === 'compact' ? (
+                <HighlightCard h={featured} height={260} compact />
+              ) : (
+                <HighlightCard h={featured} height={Math.round(Math.min(460, frame.width * 1.12))} />
+              )}
             </View>
           </ScrollReveal>
         ) : null;
@@ -222,7 +269,7 @@ export default function Home() {
         return cityId === 'bali' ? (
           <ScrollReveal scrollY={scrollY} style={[styles.section, { paddingHorizontal: space.gutter }]}>
             <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(inGirl ? '/girl/moving' : '/bali')} accessibilityLabel={inGirl ? 'Girls moving to Bali' : 'Live Bali'}>
-              <Photo visual={{ photo: 'bali' }} light="bali" scrim="strong" style={{ height: 150, borderRadius: radius.xl, overflow: 'hidden' }} width={900}>
+              <Photo visual={baliCover} light="bali" scrim="strong" style={{ height: 150, borderRadius: radius.xl, overflow: 'hidden' }} width={900}>
                 <View style={{ flex: 1, padding: 16, justifyContent: 'flex-end', gap: 4 }}>
                   <Text variant="overline" color="#FFFFFF">
                     {inGirl ? 'IRLY Girl Bali' : 'IRLY Bali'}
@@ -241,9 +288,9 @@ export default function Home() {
       case 'sessions':
         return upcoming.length ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader title="Your sessions" action="All" onAction={() => router.push('/social')} />
+            <SectionHeader {...head('sessions', 'Your sessions', undefined, 'All', () => router.push('/social'))} />
             <View style={styles.rows}>
-              {upcoming.slice(0, 3).map((p) => {
+              {upcoming.slice(0, count('sessions')).map((p) => {
                 const d = planDisplay(p);
                 return (
                   <View key={p.id} style={[styles.mine, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
@@ -270,9 +317,7 @@ export default function Home() {
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             {/* "See all" is Match IRLY (IRLY Match in IRLY Girl): only once it is open (src/lib/features.ts). */}
             <SectionHeader
-              title={inGirl ? 'Women near you' : 'People near you'}
-              action={seeAllPeople ? 'See all' : undefined}
-              onAction={seeAllPeople ? () => router.push(inGirl ? '/girl/match' : '/match?intent=friends') : undefined}
+              {...head('people', inGirl ? 'Women near you' : 'People near you', undefined, seeAllPeople ? 'See all' : undefined, seeAllPeople ? () => router.push(inGirl ? '/girl/match' : '/match?intent=friends') : undefined)}
             />
             <Carousel data={people} itemWidth={76} gap={10} keyOf={(p) => p.id} render={(p) => <PersonBubble person={p} city={city} />} />
           </ScrollReveal>
@@ -280,7 +325,7 @@ export default function Home() {
       case 'today':
         return account ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader overline="Real plans, today" title="Today on IRLY" />
+            <SectionHeader {...head('today', 'Today on IRLY', 'Real plans, today')} />
             <TodayStrip cityId={cityId} />
             <RecapDoor />
           </ScrollReveal>
@@ -288,7 +333,7 @@ export default function Home() {
       case 'explore':
         return (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader overline="Help, news and spaces" title="Explore IRLY" />
+            <SectionHeader {...head('explore', 'Explore IRLY', 'Help, news and spaces')} />
             <ExploreDoors />
           </ScrollReveal>
         );
@@ -296,7 +341,7 @@ export default function Home() {
         // IRLY: the doors into IRLY Girl and IRLY Moms (women). IRLY Girl, same doors: back to IRLY, and IRLY Moms.
         return inGirl || girl ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader overline="Women only · Not dating" title="Find your people" />
+            <SectionHeader {...head('portals', 'Find your people', 'Women only · Not dating')} />
             <GirlPortals light={city.light} />
           </ScrollReveal>
         ) : null;
@@ -309,7 +354,7 @@ export default function Home() {
       case 'nearby':
         return nearby.length ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader title="Activities near you" action="All" onAction={() => router.push('/social')} />
+            <SectionHeader {...head('nearby', 'Activities near you', undefined, 'All', () => router.push('/social'))} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
               <Chip size="sm" label="All" selected={!filter} onPress={() => setFilter(null)} />
               {groups.map((id) => (
@@ -328,7 +373,7 @@ export default function Home() {
       case 'eat':
         return eat.length ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader overline="Restaurants & cafés" title="Find someone to eat with" action="All" onAction={() => router.push('/eat')} />
+            <SectionHeader {...head('eat', 'Find someone to eat with', 'Restaurants & cafés', 'All', () => router.push('/eat'))} />
             <Rail itemWidth={220}>
               {eat.map((pl) => (
                 <PlaceCard key={pl.id} place={pl} width={220} />
@@ -348,7 +393,7 @@ export default function Home() {
           <>
             {/* IRLY Girl's five official communities, then the ones members created. */}
             <ScrollReveal scrollY={scrollY} style={styles.section}>
-              <SectionHeader overline="By IRLY · Women only" title="IRLY Girl communities" action="All" onAction={() => router.push('/communities')} />
+              <SectionHeader {...head('communities', 'IRLY Girl communities', 'By IRLY · Women only', 'All', () => router.push('/communities'))} />
               <GirlOfficialCommunities />
             </ScrollReveal>
             <ScrollReveal scrollY={scrollY} style={styles.section}>
@@ -358,9 +403,9 @@ export default function Home() {
           </>
         ) : content.communities.length ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader title="Communities near you" action="All" onAction={() => router.push('/communities')} />
+            <SectionHeader {...head('communities', 'Communities near you', undefined, 'All', () => router.push('/communities'))} />
             <Rail itemWidth={250}>
-              {content.communities.map((c) => (
+              {content.communities.slice(0, count('communities')).map((c) => (
                 <CommunityCard key={c.id} community={c} />
               ))}
             </Rail>
@@ -430,9 +475,9 @@ export default function Home() {
           onLive={() => router.push('/live')}
         />
 
-        {/* The same sections, in the same order, in IRLY and in IRLY Girl. */}
-        {HOME_SECTIONS.map((id) => (
-          <Fragment key={id}>{section(id)}</Fragment>
+        {/* The same sections in IRLY and in IRLY Girl, in the order the team published (else HOME_SECTIONS). */}
+        {entries.filter((e) => e.enabled).map((e) => (
+          <Fragment key={e.key}>{section(e.key)}</Fragment>
         ))}
       </Animated.ScrollView>
 

@@ -4,7 +4,7 @@ import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Divider } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
-import { isAdmin, isModerator, loadDashboard, loadOverview, type Dashboard, type Overview } from '@/features/admin/api';
+import { isAdmin, isContentStaff, isModerator, loadDashboard, loadOverview, type Dashboard, type Overview } from '@/features/admin/api';
 import { ACTION_LABEL } from '@/features/admin/labels';
 import { adminStyles, ago, Card, NoAccess, Stat, useAdminRole, useLoad } from '@/features/admin/ui';
 import { t as tx } from '@/i18n';
@@ -40,6 +40,9 @@ export default function AdminHome() {
               <Button label="Communities" icon="network" variant="secondary" full onPress={() => router.push('/admin/communities')} />
               <Button label="Activities and posts" icon="layers" variant="secondary" full onPress={() => router.push('/admin/content')} />
               <Button label="Photos" icon="image" variant="secondary" full onPress={() => router.push('/admin/photos')} />
+              {isContentStaff(role) ? <Button label="IRLY news" icon="megaphone" variant="secondary" full onPress={() => router.push('/admin/actu')} /> : null}
+              {isContentStaff(role) ? <Button label="Home layout" icon="layers" variant="secondary" full onPress={() => router.push('/admin/home-layout')} /> : null}
+              {isContentStaff(role) ? <Button label="Banners & visuals" icon="image" variant="secondary" full onPress={() => router.push('/admin/banners')} /> : null}
               {isModerator(role) ? <Button label="Reports" icon="flag" variant="secondary" full onPress={() => router.push('/admin/reports')} /> : null}
               {admin ? <Button label="Moderation log" icon="file" variant="secondary" full onPress={() => router.push('/admin/audit')} /> : null}
               {admin ? <Button label="Admin settings" icon="settings" variant="secondary" full onPress={() => router.push('/admin/settings')} /> : null}

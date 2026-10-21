@@ -42,6 +42,7 @@ const GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Communities', kinds: ['COMMUNITY_JOINED', 'COMMUNITY_INVITATION', 'COMMUNITY_POST', 'COMMUNITY_ANNOUNCEMENT'] },
   { label: 'IRLY Girl matches', kinds: ['MATCH_CREATED', 'MATCH_SUGGESTION', 'MATCH_REMOVED'] },
   { label: 'Networking', kinds: ['PRO_CONNECT_REQUEST', 'PRO_CONNECT_ACCEPTED'] },
+  { label: 'IRLY news', kinds: ['IRLY_NEWS'] },
 ];
 
 const AUDIENCE = [

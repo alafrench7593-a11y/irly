@@ -28,6 +28,22 @@ export const ACTION_LABEL: Record<string, string> = {
   'photo.app_restored': 'IRLY photo restored',
   'settings.changed': 'Setting changed',
   'email.retry': 'Report email sent again',
+  'news.created': 'News item created',
+  'news.edited': 'News item edited',
+  'news.published': 'News item published',
+  'news.scheduled': 'News item scheduled',
+  'news.republished': 'News item published again',
+  'news.unpublished': 'News item unpublished',
+  'news.deleted': 'News item deleted',
+  'news.reordered': 'News order changed',
+  'news.notified': 'News notification sent',
+  'banner.created': 'Banner created',
+  'banner.edited': 'Banner edited',
+  'banner.deleted': 'Banner deleted',
+  'banner.reordered': 'Banner order changed',
+  'home.draft_saved': 'Home layout draft saved',
+  'home.published': 'Home layout published',
+  'home.restored': 'Home layout version brought back',
 };
 
 export const ITEM_LABEL: Record<string, string> = {
@@ -39,4 +55,7 @@ export const ITEM_LABEL: Record<string, string> = {
   message: 'Private message',
   profile: 'Profile',
   app_photo: 'IRLY photo',
+  news: 'IRLY news',
+  banner: 'Banner',
+  home_layout: 'Home layout',
 };

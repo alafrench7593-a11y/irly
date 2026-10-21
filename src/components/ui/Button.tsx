@@ -29,6 +29,8 @@ type Props = {
   haptic?: HapticKind | false;
   style?: StyleProp<ViewStyle>;
   accessibilityHint?: string;
+  /** A label written by the IRLY team (back office): shown as written, never translated. */
+  raw?: boolean;
 };
 
 const HEIGHT: Record<Size, number> = { lg: 54, md: 44, sm: 34 };
@@ -52,6 +54,7 @@ export const Button = memo(function Button({
   haptic = 'tap',
   style,
   accessibilityHint,
+  raw,
 }: Props) {
   const t = useTheme();
   const pulse = useSharedValue(1);
@@ -133,7 +136,7 @@ export const Button = memo(function Button({
           <View style={styles.row}>
             {leading ? leading(p.fg) : null}
             {icon ? <Icon name={icon} size={size === 'sm' ? 15 : 18} color={p.fg} strokeWidth={2.2} /> : null}
-            <Text variant={size === 'sm' ? 'label' : 'titleS'} color={p.fg} numberOfLines={1}>
+            <Text variant={size === 'sm' ? 'label' : 'titleS'} color={p.fg} numberOfLines={1} raw={raw}>
               {label}
             </Text>
             {iconRight ? <Icon name={iconRight} size={size === 'sm' ? 15 : 18} color={p.fg} strokeWidth={2.2} /> : null}
