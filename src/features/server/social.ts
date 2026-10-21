@@ -647,7 +647,7 @@ export async function addFriend(userId: string): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data, error } = await supabase.rpc('add_friend', { p_user: userId });
   if (error) throw new Error(friendlyError(error.message));
-  changed('friends', 'notifs');
+  changed('friends', 'notifs', 'inbox');
   return data as string;
 }
 
@@ -655,7 +655,7 @@ export async function removeFriend(userId: string): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.rpc('remove_friend', { p_user: userId });
   if (error) throw new Error(friendlyError(error.message));
-  changed('friends', 'notifs');
+  changed('friends', 'notifs', 'inbox');
 }
 
 /* ───────────────────────── Notifications ───────────────────────── */
