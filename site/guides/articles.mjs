@@ -709,7 +709,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-11',
+    updated: '2026-10-21',
     title: '15 Group Activities to Meet People in Dubai | IRLY',
     description: 'Fifteen group activities that make it easy to meet people in Dubai, from run clubs and padel to classes and volunteering, and how to pick the right ones for you.',
     h1: '15 group activities to meet people in Dubai',
@@ -764,12 +764,23 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'Your first session: what to expect',
+        html: `<p>Walking into a group where people already know each other is the hardest part, and everyone in that group went through it once. A few habits make it easier:</p>
+<ul>
+<li><strong>Message the organiser before you go.</strong> Ask about the level, what to bring and exactly where the group meets. That way, at least one person is expecting you.</li>
+<li><strong>Arrive a few minutes early.</strong> Introduce yourself to the organiser and say it is your first time, so they can introduce you to one or two people.</li>
+<li><strong>Stay for the part after.</strong> The coffee or the drink after the session is when people really talk. Even twenty minutes is enough.</li>
+<li><strong>Judge the group on your second visit, not your first.</strong> The first time, you are new to everyone. The second time, someone usually remembers your name.</li>
+</ul>
+<p>If going alone is what holds you back, <a href="../going-out-alone/">going out alone in Dubai</a> has simple habits to feel at ease. Women who prefer women-only groups will find ideas in <a href="../activities-for-women/">activities for women in Dubai</a>, and <a href="../make-friends/">how to make friends in Dubai</a> has a four-week plan to go from a first session to real friendships.</p>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY lets you find group activities by interest, join the communities that run them, or create your own plan, a run, a padel game, a brunch, and invite people who like the same thing. IRLY Girl offers spaces for women only. It is one option among others; going back every week is what turns an activity into friends.</p>`,
       },
     ],
     cta: { title: 'Looking for a plan this week?', body: 'Find a group activity around what you like, or create your own, and meet in real life.', label: 'Find an activity' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Networking in Dubai: where to meet entrepreneurs', path: 'dubai/networking/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Activities for women in Dubai', path: 'dubai/activities-for-women/' }],
   },
   {
     lang: 'fr',
@@ -778,7 +789,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-11',
+    updated: '2026-10-21',
     title: '15 activités de groupe pour rencontrer du monde à Dubaï | IRLY',
     description: 'Quinze activités de groupe qui facilitent les rencontres à Dubaï, des clubs de course au padel en passant par les cours et le bénévolat, et comment choisir les tiennes.',
     h1: '15 activités de groupe pour rencontrer du monde à Dubaï',
@@ -833,12 +844,23 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'Ta première séance : à quoi t’attendre',
+        html: `<p>Arriver dans un groupe où les gens se connaissent déjà, c’est le plus dur, et tous ceux qui en font partie sont passés par là. Quelques réflexes aident :</p>
+<ul>
+<li><strong>Écris à l’organisateur avant d’y aller.</strong> Demande le niveau, ce qu’il faut apporter et le point de rendez-vous exact. Comme ça, au moins une personne t’attend.</li>
+<li><strong>Arrive quelques minutes en avance.</strong> Présente-toi à l’organisateur et dis-lui que c’est ta première fois, pour qu’il puisse te présenter à une ou deux personnes.</li>
+<li><strong>Reste pour l’après.</strong> Le café ou le verre après la séance, c’est là que les gens discutent vraiment. Même vingt minutes suffisent.</li>
+<li><strong>Juge le groupe à ta deuxième venue, pas à la première.</strong> La première fois, tu es nouveau pour tout le monde. La deuxième, quelqu’un se souvient en général de ton prénom.</li>
+</ul>
+<p>Si c’est le fait d’y aller seul qui te retient, <a href="../sortir-seul/">sortir seul à Dubaï</a> donne des réflexes simples pour être à l’aise. Les femmes qui préfèrent des groupes entre femmes trouveront des idées dans <a href="../activites-entre-femmes/">activités entre femmes à Dubaï</a>, et <a href="../se-faire-des-amis/">se faire des amis à Dubaï</a> propose un plan sur quatre semaines pour passer d’une première séance à de vraies amitiés.</p>`,
+      },
+      {
         h2: 'La place d’IRLY',
         html: `<p>IRLY permet de trouver des activités de groupe par centre d’intérêt, de rejoindre les communautés qui les organisent, ou de créer ton propre plan, une course, un match de padel, un brunch, et d’inviter des gens qui aiment la même chose. IRLY Girl propose des espaces réservés aux femmes. C’est une option parmi d’autres ; c’est en revenant chaque semaine qu’une activité devient des amis.</p>`,
       },
     ],
     cta: { title: 'Tu cherches un plan cette semaine ?', body: 'Trouve une activité de groupe autour de ce que tu aimes, ou crée la tienne, et retrouvez-vous en vrai.', label: 'Trouver une activité' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Networking à Dubaï : où rencontrer des entrepreneurs', path: 'fr/dubai/networking/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }],
   },
   {
     lang: 'en',
