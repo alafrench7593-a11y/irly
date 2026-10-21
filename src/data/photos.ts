@@ -207,6 +207,19 @@ export const LIBRARY = [
 /** IRLY's own photos, taken in Dubai and used with permission; served with the website (site/img/own). */
 export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl', 'dubaiPink', 'restaurantGirl', 'gymGirl', 'runGirl', 'girlTrip', 'footballMix', 'gymMix', 'dinnerMix', 'beachMix', 'buggyMix', 'waterParkMix', 'foodMix', 'meetingMix', 'vrMix', 'wadiMix', 'runMix', 'danceMix', 'swimMix', 'tennisMix', 'palmAerial', 'padelMix', 'newcomerGirl', 'dinnerView'] as const;
 const OWN_SET = new Set<string>(OWN);
+
+/**
+ * Photos the IRLY team put instead of the app's own, from the back office
+ * (public.app_photo_overrides, loaded by src/features/photo/overrides.ts):
+ * key → link. A replaced key shows that one photo everywhere, whatever the
+ * seed; without an entry, the app's own photos as before.
+ */
+let overrides: Readonly<Record<string, string>> = {};
+export function setPhotoOverrides(next: Readonly<Record<string, string>>): void {
+  overrides = next;
+}
+/** The team's photo for this key, if there is one. */
+export const photoOverride = (key: string): string | undefined => overrides[key];
 const OWN_BASE = 'https://getirly.com/img/own';
 
 const LIBRARY_SET = new Set<string>([...LIBRARY, ...DUBAI_KEYS]);
@@ -247,7 +260,8 @@ const FILMS: Partial<Record<string, string>> = {
 const OWN_FILM = new Set(KEY_FILMS);
 /** The film for a photo key, if there is one: its own clip first, never one shared with another subject. */
 export const filmFor = (key: string): string | undefined =>
-  OWN_FILM.has(key) ? `${FILM_BASE}/k-${key}.mp4` : FILMS[key] ? `${FILM_BASE}/${FILMS[key]}.mp4` : undefined;
+  // A photo the IRLY team put instead (back office) is shown as it is, without the film.
+  overrides[key] ? undefined : OWN_FILM.has(key) ? `${FILM_BASE}/k-${key}.mp4` : FILMS[key] ? `${FILM_BASE}/${FILMS[key]}.mp4` : undefined;
 
 /** The Home hero film of a city: Dubai and Abu Dhabi have theirs, by day and by night. */
 export const cityFilm = (cityId: string, heroKey: string): string | undefined => (cityId === 'dubai' || cityId === 'abudhabi' ? filmFor(heroKey) : undefined);
@@ -362,11 +376,14 @@ export function variantsOf(key: string, girl = false): readonly string[] {
   return VARIANTS[plain] ?? [];
 }
 
+
 /**
  * With `pinned`, always the key's first picture: for Dubai keys, the photo taken in Dubai (variants may be from anywhere).
  * `girl`: shown in IRLY Girl, where a key of women keeps its own photo.
  */
 export function photo(key: PhotoKey, width = 900, seed?: string, pinned = false, girl = false): string {
+  const own = overrides[key];
+  if (own) return own;
   const px = pixels(width);
   const variants = variantsOf(key, girl);
   if (pinned && !SHARED_PRIMARY.has(key)) return primary(key, px);

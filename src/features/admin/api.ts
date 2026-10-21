@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { DEMO } from '@/config/app';
 import { useAccount } from '@/features/auth/account';
-import { changed } from '@/features/server/sync';
+import { refreshPhotoOverrides } from '@/features/photo/overrides';
+import type { Bucket } from '@/features/server/media';
+import { changed, type SyncKind } from '@/features/server/sync';
 import { cleanImage } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 
@@ -111,7 +113,7 @@ export type AuditRow = { at: string; actor_name: string; action: string; target_
 export type StaffRow = { user_id: string; first_name: string | null; role: StaffRole; granted_at: string | null };
 
 async function call<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
-  if (DEMO && !supabase) return (await import('./demo')).demoCall(fn) as T;
+  if (DEMO && !supabase) return (await import('./demo')).demoCall(fn, args) as T;
   if (!supabase) throw new Error('Not connected');
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
@@ -341,4 +343,98 @@ export function useStaffRole(): StaffRole | null | undefined {
   }, [uid]);
   if (!uid || !supabase) return null;
   return state.for === uid ? state.role : undefined;
+}
+
+// ───────── Photos (migration 20261027700000_irly_admin_photos) ─────────
+
+/** Members' photos the team can browse. */
+export type PhotoKind = 'community' | 'activity' | 'community_post' | 'irl_post' | 'profile';
+export type PhotoRow = {
+  id: string;
+  kind: PhotoKind;
+  title: string | null;
+  owner_id: string | null;
+  owner_name: string | null;
+  bucket: Bucket;
+  paths: string[];
+  media: 'photo' | 'video' | null;
+  created_at: string;
+  girl_only: boolean;
+  hidden: boolean;
+};
+/** One photo of a thing, on its sheet: 'cover' (community, activity), 'media' (post, Live), 'profile' and 'match' (a member). */
+export type PhotoSlot = { slot: 'cover' | 'media' | 'profile' | 'match'; bucket: Bucket; path: string; media: 'photo' | 'video' | null; thumb: string | null };
+export type PhotoStep = 'checking' | 'uploading' | 'saving';
+
+export const loadPhotos = (kind: PhotoKind, search: string) => call<PhotoRow[]>('admin_photos', { p_kind: kind, p_search: search || null, p_limit: 60 });
+export const loadItemPhotos = (kind: PhotoKind, id: string) => call<PhotoSlot[]>('admin_item_photos', { p_kind: kind, p_id: id });
+
+/** Largest photo the team sends (after cleanImage re-encodes it as a JPEG of 1600 px at most). */
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+
+/**
+ * A picked image, checked and sent to the staff member's own folder of a
+ * bucket under a new name (so every screen fetches it fresh). The image is
+ * decoded and re-encoded first: a file that is not an image fails here, and
+ * no EXIF or location is kept.
+ */
+async function uploadStaffPhoto(bucket: 'activity-photos' | 'app-photos', uri: string, onStep?: (step: PhotoStep) => void): Promise<string> {
+  if (!supabase) throw new Error('Not connected');
+  onStep?.('checking');
+  const img = await cleanImage(uri).catch(() => {
+    throw new Error('This file is not a photo IRLY can use');
+  });
+  if (img.body.byteLength > PHOTO_MAX_BYTES) throw new Error('This photo is too large');
+  const { data: session } = await supabase.auth.getSession();
+  const uid = session.session?.user.id;
+  if (!uid) throw new Error('Sign in first');
+  const path = `${uid}/${Date.now()}.${img.ext}`;
+  onStep?.('uploading');
+  const { error } = await supabase.storage.from(bucket).upload(path, img.body, { contentType: img.contentType });
+  if (error) throw new Error('Could not upload the photo');
+  onStep?.('saving');
+  return path;
+}
+
+/**
+ * Replaces (uri) or removes (null) the photo of a community or an activity:
+ * upload, then the server saves the new reference and queues the old file
+ * for removal once nothing uses it. A refused save removes the upload.
+ */
+export async function replaceItemPhoto(kind: 'community' | 'activity', id: string, uri: string | null, reason: string, onStep?: (step: PhotoStep) => void): Promise<void> {
+  if (DEMO && !supabase) throw new Error('Demo: nothing is saved');
+  if (!supabase) throw new Error('Not connected');
+  const path = uri ? await uploadStaffPhoto('activity-photos', uri, onStep) : null;
+  if (!uri) onStep?.('saving');
+  const { error } = await supabase.rpc('admin_set_photo', { p_kind: kind, p_id: id, p_path: path, p_old: null, p_reason: reason });
+  if (error) {
+    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    throw new Error(error.message);
+  }
+  changed(kind === 'community' ? 'communities' : 'activities', 'inbox');
+}
+
+/** Takes one of a member's photos off (profile, IRLY Match, post or Live): never replaced by another picture. */
+export const removeMemberPhoto = (kind: 'profile' | 'match' | 'community_post' | 'irl_post', id: string, path: string, reason: string) =>
+  call<void>('admin_set_photo', { p_kind: kind, p_id: id, p_path: null, p_old: path, p_reason: reason }).then(() =>
+    changed(...((kind === 'profile' || kind === 'match' ? ['people'] : kind === 'irl_post' ? ['irl'] : ['communities']) as SyncKind[])),
+  );
+
+/**
+ * Puts the team's photo (uri) in place of IRLY's own photo for a key, or
+ * (null) goes back to IRLY's own photo, for everyone: the new list is read
+ * at once here, and by every phone when it next syncs.
+ */
+export async function replaceAppPhoto(key: string, uri: string | null, reason: string, onStep?: (step: PhotoStep) => void): Promise<void> {
+  if (DEMO && !supabase) throw new Error('Demo: nothing is saved');
+  if (!supabase) throw new Error('Not connected');
+  const path = uri ? await uploadStaffPhoto('app-photos', uri, onStep) : null;
+  if (!uri) onStep?.('saving');
+  const { error } = await supabase.rpc('admin_set_app_photo', { p_key: key, p_path: path, p_reason: reason });
+  if (error) {
+    if (path) await supabase.storage.from('app-photos').remove([path]).catch(() => undefined);
+    throw new Error(error.message);
+  }
+  await refreshPhotoOverrides(true);
+  changed('communities', 'activities');
 }

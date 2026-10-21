@@ -34,6 +34,7 @@ import { UnreadSync } from '@/features/server/chat';
 import { BellSync } from '@/features/server/social';
 import { FaceSync } from '@/features/server/faces';
 import { SyncBridge } from '@/features/server/sync';
+import { PhotoOverridesBridge } from '@/features/photo/overrides';
 import { OfflineBar } from '@/features/server/OfflineBar';
 import { useLangHydrated } from '@/i18n';
 import { useAppSpace, useSpaceStore } from '@/state/appSpace';
@@ -160,6 +161,7 @@ function App() {
       <MatchHost />
       <ReportHost />
       <SyncBridge />
+      <PhotoOverridesBridge />
       <UnreadSync />
       <BellSync />
       <FaceSync />

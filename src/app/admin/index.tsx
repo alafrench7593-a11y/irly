@@ -39,6 +39,7 @@ export default function AdminHome() {
               <Button label="Users" icon="users" variant="secondary" full onPress={() => router.push('/admin/members')} />
               <Button label="Communities" icon="network" variant="secondary" full onPress={() => router.push('/admin/communities')} />
               <Button label="Activities and posts" icon="layers" variant="secondary" full onPress={() => router.push('/admin/content')} />
+              <Button label="Photos" icon="image" variant="secondary" full onPress={() => router.push('/admin/photos')} />
               {isModerator(role) ? <Button label="Reports" icon="flag" variant="secondary" full onPress={() => router.push('/admin/reports')} /> : null}
               {admin ? <Button label="Moderation log" icon="file" variant="secondary" full onPress={() => router.push('/admin/audit')} /> : null}
               {admin ? <Button label="Admin settings" icon="settings" variant="secondary" full onPress={() => router.push('/admin/settings')} /> : null}

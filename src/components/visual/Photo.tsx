@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { photo as photoUrl } from "@/data/photos";
+import { usePhotoOverridesVersion } from "@/features/photo/overrides";
 import { forgetLink, signedLinks, storedKey, type Bucket } from "@/features/server/media";
 import type { Visual } from "@/data/types";
 import type { LightId } from "@/theme/lights";
@@ -73,7 +74,13 @@ export const Photo = memo(function Photo({
   const girl = t.flavor === "girl";
   // With a recyclingKey (the thing's id), the same photo on every screen;
   // without one, chosen once per place on screen (never on every render).
-  const stockUrl = useMemo(() => photoUrl(visual.photo, width, recyclingKey, pinned, girl), [visual.photo, width, recyclingKey, pinned, girl]);
+  // The IRLY team may have replaced this key's photo (back office): a new list re-resolves it.
+  const overrides = usePhotoOverridesVersion();
+  const stockUrl = useMemo(
+    () => photoUrl(visual.photo, width, recyclingKey, pinned, girl),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [visual.photo, width, recyclingKey, pinned, girl, overrides],
+  );
   // A stored photo's link that fails (expired: the screen kept it for hours)
   // is signed again once; if that fails too (file gone), the stock photo
   // shows instead of a grey box. Both are tied to this very link: another

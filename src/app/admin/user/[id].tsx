@@ -20,6 +20,7 @@ import {
   type UserSheet,
 } from '@/features/admin/api';
 import { ACTION_LABEL } from '@/features/admin/labels';
+import { PhotoPanel } from '@/features/admin/photos';
 import { AdminInput, adminStyles, Card, day, Fact, StatePill, StatusPill, useAdminRole, useLoad } from '@/features/admin/ui';
 import { t as tx } from '@/i18n';
 import { space } from '@/theme/tokens';
@@ -110,6 +111,9 @@ export default function UserSheetScreen() {
           />
           <Fact label={tx('Reports')} value={tx('{n} about them · {m} filed', { n: u.counts.reports_about, m: u.counts.reports_filed })} />
         </Card>
+
+        {/* Profile and IRLY Match photos (moderators): removed only, never replaced; verification selfies stay in Profile verifications. */}
+        {isModerator(role) && u.status !== 'deleted' ? <PhotoPanel kind="profile" id={u.id} role={role} onChanged={reload} /> : null}
 
         {u.reports.length ? (
           <Card>
