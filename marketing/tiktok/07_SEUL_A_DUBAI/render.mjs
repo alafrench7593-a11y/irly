@@ -12,6 +12,7 @@ const { chromium } = await import(process.env.PW || 'playwright');
 const dir = path.dirname(new URL(import.meta.url).pathname);
 const src = (f) => `file://${dir}/_src/${f}`;
 const fonts = path.resolve(dir, '../../../node_modules/@expo-google-fonts/manrope');
+const tt = (w) => ['latin', 'latin-ext'].map((sub, k) => `@font-face{font-family:'TikTok Sans${k ? ' Ext' : ''}';font-weight:${w};src:url(file://${dir}/../_tools/fonts/tiktok-sans-${sub}-${w}-normal.woff2)}`).join('');
 const font = (w, n) => `@font-face{font-family:Manrope;font-weight:${w};src:url(file://${fonts}/${n}/Manrope_${n}.ttf)}`;
 
 // Le logo IRLY en points (mêmes lettres que src/brand/dots.ts).
@@ -37,6 +38,7 @@ function logo(step, color = '#fff') {
 }
 
 const css = `
+${tt(600)}${tt(700)}${tt(800)}
 ${font(500, '500Medium')}${font(600, '600SemiBold')}${font(700, '700Bold')}${font(800, '800ExtraBold')}
 *{margin:0;box-sizing:border-box}
 html,body{width:1080px;height:1920px;background:#050506;overflow:hidden}
@@ -53,6 +55,12 @@ html,body{width:1080px;height:1920px;background:#050506;overflow:hidden}
 .t{font-weight:800;font-size:86px;line-height:1.06;letter-spacing:-2px;text-shadow:0 2px 30px rgba(0,0,0,.45)}
 .t i{font-style:normal;color:rgba(255,255,255,.55)}
 .swipe{position:absolute;right:150px;top:1260px;font-weight:600;font-size:30px;letter-spacing:2px;color:rgba(255,255,255,.75)}
+/* Écriture TikTok : TikTok Sans centrée, texte noir sur bandeaux blancs arrondis (le fond de texte de l'app). */
+.tk{position:absolute;left:110px;right:110px;top:440px;text-align:center;font-family:'TikTok Sans','TikTok Sans Ext',sans-serif}
+.tk .t{font-weight:700;font-size:60px;line-height:1.5;letter-spacing:0;text-shadow:none}
+.tk .t span{background:#fff;color:#111;padding:6px 22px;border-radius:14px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.tk .sw{margin-top:40px;font-weight:700;font-size:40px;color:#fff;text-shadow:0 0 4px rgba(0,0,0,.95),0 2px 10px rgba(0,0,0,.8)}
+.light .top-shade{opacity:.35}.light .bot-shade{opacity:.5}
 /* Slide 2 : la photo paysage en bande nette, sur son propre flou. */
 .blur{position:absolute;inset:-60px;background-size:cover;background-position:center;filter:blur(40px) saturate(.5) brightness(.45)}
 .band{position:absolute;left:0;top:820px;width:1080px;height:675px;background-size:cover;background-position:center;filter:saturate(.62) contrast(1.06) brightness(.86);box-shadow:0 30px 80px rgba(0,0,0,.55)}
@@ -69,24 +77,26 @@ html,body{width:1080px;height:1920px;background:#050506;overflow:hidden}
 const S = [
   { cls: 'cold', img: 'u79.jpg', pos: '50% 40%', b: 0.82, k: 'Dubaï', t: 'Tu es venu à Dubaï pour réussir…', swipe: true },
   { band: 'laptop.jpg', k: 'Dubaï', t: '…mais tu galères à te créer un vrai réseau.' },
-  { cls: 'cold', img: 'u80.jpg', pos: '50% 55%', b: 0.8, k: 'Dubaï', t: 'Et malgré tout ce monde, tu te retrouves <i>seul.</i>' },
+  { cls: 'cold', img: 'u80.jpg', pos: '50% 55%', b: 0.8, k: 'Dubaï', t: 'Et malgré tout ce monde, tu te retrouves seul.' },
   { cls: 'warm', img: 'u83.jpg', pos: '50% 60%', b: 0.9, k: 'Dubaï', t: 'Tu n’es pas venu ici pour tout vivre tout seul.' },
   { cls: 'warm', img: 'u82.jpg', pos: '50% 30%', b: 0.9, final: true, t: 'Dubaï est plus belle quand tu ne la vis pas seul.' },
 ];
 
+// Le texte en bandeaux blancs, comme l'outil texte de TikTok.
+const tk = (t, extra = '') => `<div class="tk"><div class="t"><span>${t}</span></div>${extra}</div>`;
+
 function html(s) {
   if (s.band) {
-    return `<div class="s"><div class="blur" style="background-image:url(${src(s.band)})"></div><div class="band" style="background-image:url(${src(s.band)})"></div><div class="top-shade" style="height:820px"></div><div class="grain"></div>
-      <div class="txt"><div class="k">${s.k}</div><div class="t">${s.t}</div></div></div>`;
+    return `<div class="s light"><div class="blur" style="background-image:url(${src(s.band)})"></div><div class="band" style="background-image:url(${src(s.band)})"></div><div class="grain"></div>${tk(s.t)}</div>`;
   }
-  const head = `<div class="s ${s.cls}"><div class="bg" style="background-image:url(${src(s.img)});--pos:${s.pos};--b:${s.b}"></div><div class="top-shade"></div><div class="bot-shade"></div><div class="vig"></div><div class="grain"></div>`;
+  const head = `<div class="s ${s.cls} light"><div class="bg" style="background-image:url(${src(s.img)});--pos:${s.pos};--b:${s.b}"></div><div class="top-shade"></div><div class="bot-shade"></div><div class="vig"></div><div class="grain"></div>`;
   if (s.final) {
-    return `${head}<div class="txt" style="top:300px"><div class="t" style="font-size:80px">${s.t}</div></div>
+    return `${head}<div class="tk" style="top:330px"><div class="t"><span>${s.t}</span></div></div>
       <div class="card"><div class="phone"><div style="background-image:url(${src('app-home.jpg')})"></div></div>
         <div class="in">${logo(15)}<div class="tag">Fais des rencontres.<br>Développe ton réseau.<br>Vis de vrais moments.</div>
         <div class="cta">Bientôt à Dubaï · Suis <b>@irlyofficial</b></div></div></div></div>`;
   }
-  return `${head}<div class="txt"><div class="k">${s.k}</div><div class="t">${s.t}</div></div>${s.swipe ? '<div class="swipe">glisse →</div>' : ''}</div>`;
+  return `${head}${tk(s.t)}</div>`;
 }
 
 const out = path.join(dir, 'FR');
