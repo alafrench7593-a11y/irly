@@ -169,7 +169,7 @@ async function main() {
   await check('Girls moving to Bali', '/girl/moving', ["don’t know anyone", 'Bali girl communities']);
   // Back to IRLY Mixte (Settings › IRLY): the rest of this walk is the Mixte app.
   await check('Settings → IRLY Mixte brings the app back to IRLY', '/preferences', [], async () => {
-    await page.getByText('IRLY Mixte', { exact: true }).first().click();
+    await page.getByText('IRLY Mixte', { exact: true }).filter({ visible: true }).first().click();
     for (let i = 0; i < 20 && (await space()) !== 'mixte'; i++) await page.waitForTimeout(500);
     if ((await space()) !== 'mixte') throw new Error('still in IRLY Girl');
   });
@@ -303,8 +303,13 @@ async function main() {
     await page.getByRole('button', { name: 'Confirm', exact: true }).click();
     await page.getByRole('button', { name: 'Tomorrow · 20:30' }).waitFor({ timeout: 10000 });
     await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
+    // Create takes the place of Next: a tap on it within 450 ms is the same tap landing twice (PressableScale), dropped.
+    await page.waitForTimeout(800);
     await page.getByRole('button', { name: /^Create (session|activity|sport session|event|meetup|trip)$/ }).last().click();
-    await page.waitForURL(/\/a\//, { timeout: 30000 });
+    await page.waitForURL(/\/a\//, { timeout: 30000 }).catch(async (e) => {
+      const why = await page.getByText(/^Not published: /).first().textContent({ timeout: 1000 }).catch(() => null);
+      throw why ? new Error(why) : e;
+    });
   });
   await verify('the activity starts tomorrow at 20:30, Bali time', async () => {
     const [a] = await sql(`select to_char(starts_at at time zone 'Asia/Makassar', 'HH24:MI') as hm, (starts_at at time zone 'Asia/Makassar')::date - (now() at time zone 'Asia/Makassar')::date as days, timezone from public.activities where creator_id = '${uid}' and title ilike '%padel%' order by created_at desc limit 1`);

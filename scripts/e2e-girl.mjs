@@ -118,9 +118,15 @@ async function createInGirl({ category, kind, title, double = false }) {
   await page.getByRole('button', { name: 'Tomorrow · 20:30' }).waitFor({ timeout: 10000 });
   await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
   if (title) await page.getByLabel('Name of the activity').fill(title);
+  // Create takes the place of Next: a tap on it within 450 ms is the same tap landing twice (PressableScale), dropped.
+  await page.waitForTimeout(800);
   const create = page.getByRole('button', { name: /^Create (session|activity|sport session|event|meetup|trip)$/ }).last();
   await (double ? create.dblclick() : create.click());
-  await page.waitForURL(/\/a\//, { timeout: 25000 });
+  // On the plan, or the form's own message saying why it was not published.
+  await page.waitForURL(/\/a\//, { timeout: 25000 }).catch(async (e) => {
+    const why = await page.getByText(/^Not published: /).first().textContent({ timeout: 1000 }).catch(() => null);
+    throw why ? new Error(why) : e;
+  });
 }
 
 async function signIn(browser, who) {
@@ -323,7 +329,8 @@ async function main() {
   // IRLY Girl has the same Home as IRLY now (no separate « Your messages » block): the inbox row opens the chat.
   await step('… and in that inbox the conversation opens the community chat', async () => {
     const [{ conv }] = await sql(`select id as conv from public.conversations where community_id = '${circleId}'`);
-    await page.getByText(circleName).filter({ visible: true }).first().click({ timeout: 20000 });
+    await page.goto(`${BASE}/messages`);
+    await page.getByRole('button', { name: new RegExp(`^${circleName}`) }).filter({ visible: true }).first().click({ timeout: 20000 });
     await page.waitForURL(new RegExp(`/messages/${conv}`), { timeout: 20000 });
     await page.getByText(`Welcome Mia ${run}`).filter({ visible: true }).first().waitFor({ timeout: 20000 });
     return true;

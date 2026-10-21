@@ -137,7 +137,7 @@ async function enterGirl(page) {
 async function backToMixte(page) {
   if ((await spaceOf(page)) === 'mixte') return;
   await page.goto(`${BASE}/preferences`);
-  await page.getByText('IRLY Mixte', { exact: true }).first().click({ timeout: 20000 });
+  await page.getByText('IRLY Mixte', { exact: true }).filter({ visible: true }).first().click({ timeout: 20000 });
   await inSpace(page, 'mixte');
 }
 // A community's row in the lists, whatever its shown title (a run stamp is never shown: src/features/community/name.ts).
