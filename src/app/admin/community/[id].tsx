@@ -1,17 +1,16 @@
-import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Divider } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { CATEGORY_LABEL, isAdmin, isContentStaff, loadCommunity, moderate, replaceCommunityCover, updateCommunity, type CommunitySheet } from '@/features/admin/api';
+import { CATEGORY_LABEL, isAdmin, isContentStaff, loadCommunity, moderate, updateCommunity, type CommunitySheet } from '@/features/admin/api';
+import { PhotoPanel } from '@/features/admin/photos';
 import { AdminInput, adminStyles, Card, day, Fact, StatePill, StatusPill, useAdminRole, useLoad } from '@/features/admin/ui';
-import { pickPhoto, usePhotoLink } from '@/features/server/covers';
 import { t as tx } from '@/i18n';
-import { radius, space } from '@/theme/tokens';
+import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
@@ -49,14 +48,12 @@ export default function AdminCommunity() {
 }
 
 function Sheet({ c, reload, role }: { c: CommunitySheet; reload: () => void; role: ReturnType<typeof useAdminRole> }) {
-  const t = useTheme();
   const [name, setName] = useState(c.name);
   const [tagline, setTagline] = useState(c.tagline ?? '');
   const [description, setDescription] = useState(c.description ?? '');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const cover = usePhotoLink(c.cover_path);
 
   const run = async (key: string, fn: () => Promise<unknown>, done: string) => {
     setBusy(key);
@@ -105,40 +102,7 @@ function Sheet({ c, reload, role }: { c: CommunitySheet; reload: () => void; rol
           {c.creator ? <Button size="sm" variant="ghost" label="Creator's sheet" onPress={() => router.push(`/admin/user/${c.creator?.id}`)} /> : null}
         </Card>
 
-        <Card>
-          <Text variant="label">Photo</Text>
-          {cover ? (
-            <Image source={{ uri: cover }} style={[styles.cover, { backgroundColor: t.c.overlay }]} contentFit="cover" accessibilityLabel={tx('Community photo')} />
-          ) : (
-            <Text variant="bodyS" tone="secondary">
-              {c.cover_path ? tx('Loading…') : tx('No own photo: the app shows its photo for the category.')}
-            </Text>
-          )}
-          {editable ? (
-            <>
-              <Text variant="caption" tone="secondary">
-                The new photo replaces the old one everywhere in the app; the old file is deleted once nothing uses it. Give a reason first.
-              </Text>
-              <View style={adminStyles.row}>
-                <Button
-                  size="sm"
-                  label="Replace the photo"
-                  icon="image"
-                  variant="secondary"
-                  disabled={why.length < 3 || busy !== null}
-                  loading={busy === 'photo'}
-                  onPress={async () => {
-                    const picked = await pickPhoto().catch(() => null);
-                    if (picked) await run('photo', () => replaceCommunityCover(c.id, picked, why), tx('Photo replaced'));
-                  }}
-                />
-                {c.cover_path ? (
-                  <Button size="sm" label="Remove the photo" variant="ghost" disabled={why.length < 3 || busy !== null} loading={busy === 'nophoto'} onPress={() => run('nophoto', () => replaceCommunityCover(c.id, null, why), tx('Photo removed'))} />
-                ) : null}
-              </View>
-            </>
-          ) : null}
-        </Card>
+        <PhotoPanel kind="community" id={c.id} role={role} onChanged={reload} />
 
         {editable ? (
           <Card>
@@ -218,6 +182,3 @@ function Sheet({ c, reload, role }: { c: CommunitySheet; reload: () => void; rol
   );
 }
 
-const styles = StyleSheet.create({
-  cover: { width: '100%', aspectRatio: 16 / 10, borderRadius: radius.lg },
-});

@@ -18,6 +18,14 @@ export const ACTION_LABEL: Record<string, string> = {
   'community.photo_removed': 'Community photo removed',
   'cover.community': 'Community photo changed',
   'cover.activity': 'Activity photo changed',
+  'activity.photo_replaced': 'Activity photo replaced',
+  'activity.photo_removed': 'Activity photo removed',
+  'profile.photo_removed': 'Profile photo removed',
+  'match.photo_removed': 'IRLY Match photo removed',
+  'post.photo_removed': 'Post photo removed',
+  'live.photo_removed': 'Live photo removed',
+  'photo.app_replaced': 'IRLY photo replaced',
+  'photo.app_restored': 'IRLY photo restored',
   'settings.changed': 'Setting changed',
   'email.retry': 'Report email sent again',
 };
@@ -30,4 +38,5 @@ export const ITEM_LABEL: Record<string, string> = {
   irl_post: 'Live post',
   message: 'Private message',
   profile: 'Profile',
+  app_photo: 'IRLY photo',
 };

@@ -14,6 +14,7 @@ const K1 = 'd0000000-0000-0000-0000-0000000000a1';
 const K2 = 'd0000000-0000-0000-0000-0000000000a2';
 const A1 = 'd0000000-0000-0000-0000-0000000000e1';
 const P1 = 'd0000000-0000-0000-0000-0000000000f1';
+const LIB = 'https://alafrench7593-a11y.github.io/irly/photos';
 
 const READS: Record<string, unknown> = {
   mod_dashboard: { new: 2, high: 1, reviewing: 1, need_info: 0, week: 3, sanctions: 1, members: 128 },
@@ -73,10 +74,31 @@ const READS: Record<string, unknown> = {
   },
   staff_list: [{ user_id: U2, first_name: 'Demo admin', role: 'owner', granted_at: ago(60 * 24 * 60) }],
   mod_user_sanctions: [],
+  // Photos: IRLY library pictures stand in for members' files (links show as they are).
+  admin_photos: [
+    { id: C1, kind: 'community', title: 'Demo runners', owner_id: U1, owner_name: 'Demo member', bucket: 'activity-photos', paths: [`${LIB}/running-480.jpg`], media: 'photo', created_at: ago(60 * 24 * 30), girl_only: false, hidden: false },
+    { id: K1, kind: 'community', title: 'Demo padel club', owner_id: U2, owner_name: 'Demo reporter', bucket: 'activity-photos', paths: [`${LIB}/padel-480.jpg`], media: 'photo', created_at: ago(60 * 24 * 12), girl_only: false, hidden: false },
+    { id: K2, kind: 'community', title: 'Demo brunch girls', owner_id: U1, owner_name: 'Demo member', bucket: 'activity-photos', paths: [`${LIB}/brunch-480.jpg`], media: 'photo', created_at: ago(60 * 24 * 3), girl_only: true, hidden: false },
+    { id: A1, kind: 'community', title: 'Demo sunset club', owner_id: U2, owner_name: 'Demo reporter', bucket: 'activity-photos', paths: [], media: 'photo', created_at: ago(60 * 5), girl_only: false, hidden: true },
+  ],
 };
 
+/** The photos of one thing in the demo, by kind: a cover, a post's photos, a member's profile photos. */
+function demoPhotos(kind: unknown): unknown {
+  if (kind === 'profile') {
+    return [
+      { slot: 'profile', bucket: 'profile-photos', path: `${LIB}/girlCoffee-480.jpg`, media: 'photo', thumb: null },
+      { slot: 'profile', bucket: 'profile-photos', path: `${LIB}/girlHike-480.jpg`, media: 'photo', thumb: null },
+      { slot: 'match', bucket: 'match-photos', path: `${LIB}/girlTravel-480.jpg`, media: 'photo', thumb: null },
+    ];
+  }
+  if (kind === 'community_post' || kind === 'irl_post') return [{ slot: 'media', bucket: 'post-media', path: `${LIB}/marathon-480.jpg`, media: 'photo', thumb: null }];
+  return [{ slot: 'cover', bucket: 'activity-photos', path: `${LIB}/running-1200.jpg`, media: 'photo', thumb: null }];
+}
+
 /** The demo's answer to a back office call. */
-export function demoCall(fn: string): unknown {
+export function demoCall(fn: string, args: Record<string, unknown> = {}): unknown {
+  if (fn === 'admin_item_photos') return demoPhotos(args.p_kind);
   if (fn in READS) return READS[fn];
   throw new Error('Demo: nothing is saved');
 }

@@ -8,6 +8,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { CATEGORY_LABEL, isAdmin, loadContentItem, moderate, type ContentItem, type ContentKind } from '@/features/admin/api';
 import { ITEM_LABEL } from '@/features/admin/labels';
+import { PhotoPanel } from '@/features/admin/photos';
 import { AdminInput, adminStyles, Card, day, Fact, StatePill, StatusPill, useAdminRole, useLoad } from '@/features/admin/ui';
 import { t as tx } from '@/i18n';
 import { space } from '@/theme/tokens';
@@ -101,6 +102,8 @@ export default function AdminItem() {
           <Fact label={tx('Id')} value={c.id} />
           {c.author_id ? <Button size="sm" variant="ghost" label="Author's sheet" onPress={() => router.push(`/admin/user/${c.author_id}`)} /> : null}
         </Card>
+
+        {kind !== 'comment' && !c.gone ? <PhotoPanel kind={kind} id={id} role={role} onChanged={reload} /> : null}
 
         {isAdmin(role) && !c.gone ? (
           <Card>

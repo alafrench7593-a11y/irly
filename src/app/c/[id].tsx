@@ -306,6 +306,7 @@ function CommunityScreen() {
                       }
                       isMember={c.isMember}
                       plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo, tx) : null}
+                      areas={geo.areas}
                       onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
                       onRemove={() => feed.remove(p).then(() => toast('Post removed', 'check', 'brand')).catch(() => toast('Could not remove', 'x', 'live'))}
                       onPlan={(d) => createPlan({ ...d, title: `${d.title} · ${c.name}`.slice(0, 80) })}
@@ -661,6 +662,7 @@ function PostCard({
   onPlan,
   onPin,
   cityId,
+  areas,
 }: {
   p: CommunityPost;
   eng: ReturnType<typeof useEngagement>;
@@ -672,11 +674,15 @@ function PostCard({
   onPlan: (d: PlanDraft) => void;
   onPin: (on: boolean) => void;
   cityId: string;
+  /** The community city's neighbourhoods: a plan needs one, and a post rarely names it. */
+  areas: GeoIndex['areas'];
 }) {
   const t = useTheme();
   const router = useRouter();
   const now = useNow();
   const total = p.pollCounts.reduce((n, x) => n + x, 0);
+  // "Make it an activity" from a post that names no neighbourhood: the member picks one (none preselected).
+  const [where, setWhere] = useState<{ open: boolean; areaId?: string }>({ open: false });
   return (
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
       <GlassLayer radius={radius.xl} />
@@ -773,7 +779,28 @@ function PostCard({
           <Text variant="label">{tx('Join')}</Text>
         </PressableScale>
       ) : plan ? (
-        <Button label={tx('Make it an activity: {title}', { title: plan.title })} icon="calendar" size="sm" variant="secondary" onPress={() => onPlan(plan)} />
+        <View style={{ gap: 8 }}>
+          <Button
+            label={tx('Make it an activity: {title}', { title: plan.title })}
+            icon="calendar"
+            size="sm"
+            variant="secondary"
+            onPress={() => (plan.areaId ? onPlan(plan) : setWhere((w) => ({ ...w, open: !w.open })))}
+          />
+          {!plan.areaId && where.open ? (
+            <>
+              <Text variant="caption" tone="secondary">
+                Where? Choose a neighbourhood
+              </Text>
+              <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {areas.map((a) => (
+                  <Chip key={a.id} size="sm" icon="pin" label={a.name} raw selected={where.areaId === a.id} onPress={() => setWhere({ open: true, areaId: where.areaId === a.id ? undefined : a.id })} />
+                ))}
+              </ScrollView>
+              <Button label="Create the activity" icon="plus" size="sm" disabled={!where.areaId} onPress={() => onPlan({ ...plan, areaId: where.areaId })} />
+            </>
+          ) : null}
+        </View>
       ) : null}
 
       {!p.pending ? <ActionBar target={{ type: 'community_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} /> : null}

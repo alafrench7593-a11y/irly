@@ -15,8 +15,8 @@ Roles live in `public.staff_roles`, which no client can read or write.
 | --------- | ------------------------------------------------------------------------------------ |
 | owner     | everything, and gives or removes roles (Team and roles)                              |
 | admin     | everything except roles: overview, hide/restore/delete, bans, account deletion, settings |
-| moderator | reports, notes, warnings, suspensions of 7 days at most, member sheets               |
-| content   | community names, texts and photos                                                    |
+| moderator | reports, notes, warnings, suspensions of 7 days at most, member sheets, removing members' photos |
+| content   | community names, texts and photos; activity photos and IRLY's own photos (Photos) |
 
 ## 1. Make the owner's account owner (once)
 
@@ -89,6 +89,26 @@ Local check (mocked provider, no network): `npm run test:report-email`.
   name and texts, replace or remove the photo (new file name, so every screen
   loads the new one; the old file is queued for the storage purge once nothing
   uses it), suspend / restore / delete.
+- **Photos** (Back office → Photos; migration `20261027700000_irly_admin_photos.sql`):
+  - *IRLY photos*: every photo the app ships, by where it shows (categories,
+    activities catalogue, official communities, Home and destinations, IRLY Girl
+    and IRLY Moms, all keys), with search. A photo's sheet says where it shows;
+    content staff and admins **Replace** it (the picked image is re-encoded, checked
+    ≤ 5 MB, uploaded to the public `app-photos` bucket in their own folder, then
+    saved in `public.app_photo_overrides` with a new version) or **Restore IRLY's
+    photo**. Every member gets it without a new app version: phones read the list
+    at launch, when they sync (back to the app, back online) and the team member's
+    own phone at once. The app's own photo stays the fallback.
+  - *Member photos*: communities and activities (replace or remove, content staff
+    and above), posts, Lives and profiles (remove only, moderators and above: a
+    member's photo is never replaced by another picture; a profile falls back to
+    the next photo, the avatar or initials). Each opens the item's sheet, where a
+    **Photos** panel does the same. Verification selfies are never shown there
+    (review only, in Profile verifications); private message photos are not browsed
+    (a reported message is removed from its report).
+  - Every change needs a reason and is in the moderation log. The old file is
+    queued for the storage purge once the new reference is saved, and deleted only
+    if nothing uses it any more (checked again when the purge job runs).
 - **Activities and posts** (activities, community posts, comments, lives): search,
   sheet, linked reports, hide (restorable), restore, delete (final; words kept 12
   months). Hidden items leave lists, details, search and the IRLY Map for

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -20,7 +20,8 @@ const FILTERS: { value: string | null; label: string }[] = [
 export default function AdminCommunities() {
   const [search, setSearch] = useState('');
   const [q, setQ] = useState('');
-  const [filter, setFilter] = useState<string | null>(null);
+  const params = useLocalSearchParams<{ filter?: string }>();
+  const [filter, setFilter] = useState<string | null>(FILTERS.some((f) => f.value === params.filter) ? (params.filter ?? null) : null);
   useEffect(() => {
     const id = setTimeout(() => setQ(search.trim()), 300);
     return () => clearTimeout(id);
