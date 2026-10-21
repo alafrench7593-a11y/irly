@@ -255,7 +255,7 @@ export const CATEGORIES: CatalogCategory[] = [
     tagline: 'Your night, with people',
     icon: 'martini',
     color: '#AF52DE',
-    photo: 'rooftopNeon',
+    photo: 'nightDinner',
     subs: [
       s('rooftops', 'Rooftops', [a('rooftop-night', 'Rooftop night')]),
       s('dinner-dj', 'Dinner & DJ', [a('dinner-dj', 'Dinner & DJ')]),
@@ -282,7 +282,7 @@ export const CATEGORIES: CatalogCategory[] = [
     tagline: 'Walk together',
     icon: 'pawPrint',
     color: '#C69C6D',
-    photo: 'dogPark',
+    photo: 'dogWalk',
     subs: [
       s('dog-walk', 'Dog walk', [a('marina-dog-walk', 'Dog walk on the Marina', 'Dubai Marina', 'dubai'), a('dog-beach', 'Dog beach morning')]),
       s('dog-park', 'Dog park', [a('dog-playdate', 'Dog playdate')]),
@@ -354,7 +354,7 @@ export const CATEGORIES: CatalogCategory[] = [
     icon: 'waves',
     color: '#00A5C8',
     photo: 'beachClub',
-    subs: list('Beach clubs', 'Beach day', 'Beach day with friends', 'Water sports', 'Paddleboard', 'Kayak', 'Swimming', 'By the sea'),
+    subs: list('Beach clubs', 'Beach day', 'Beach day with friends', 'Pool day', 'Water sports', 'Paddleboard', 'Kayak', 'Swimming', 'By the sea'),
   },
   {
     id: 'games',
@@ -362,7 +362,7 @@ export const CATEGORIES: CatalogCategory[] = [
     tagline: 'Play and get to know people',
     icon: 'gamepad',
     color: '#7B61FF',
-    photo: 'bowling',
+    photo: 'vrMix',
     subs: list('Board games', 'Game night', 'Quiz night', 'Bowling', 'Escape game', 'Karaoke', 'Group games', 'Icebreakers'),
   },
   {
@@ -485,7 +485,9 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\b(pilates|reformer)\b/i, 'pilatesGirl'],
   [/\b(golf|topgolf|driving range)\b/i, 'golfGirl'],
   [/\bsheikh zayed grand mosque\b/i, 'mosqueGirl'],
-  [/\bbeach clubs?\b/i, 'beachClubGirl'],
+  // Everyone's beach clubs and pools show IRLY's photos of mixed groups (IRLY Girl has its own, of women).
+  [/\bbeach clubs?\b/i, 'beachMix'],
+  [/\b(pools?|pool day|piscines?)\b/i, 'swimMix'],
   [/\bkite beach\b/i, 'kiteBeach'],
   // IRLY's own photos of mixed groups, for everyone's activities.
   [/\b(football|soccer|futsal)\b/i, 'footballMix'],

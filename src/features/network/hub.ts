@@ -21,8 +21,12 @@ import { useAppSpace } from '@/state/appSpace';
  * (useNews, Business category) come from their own hooks.
  */
 
-/** Official IRLY communities about business, by topic (migration 20261008003400). */
-export const NETWORK_TOPICS = new Set(['network', 'entrepreneurs', 'ecom', 'tech', 'ai']);
+/**
+ * Official IRLY communities about business, by topic (migration
+ * 20261008003400): IRLY Network, and Girl CEO in IRLY Girl (20261028100000:
+ * both live here, not in the community lists; the others are retired).
+ */
+export const NETWORK_TOPICS = new Set(['network', 'girl_network', 'entrepreneurs', 'ecom', 'tech', 'ai']);
 export const NETWORK_CATEGORY = 'networking';
 
 export type NetCommunity = {
@@ -97,7 +101,8 @@ export function useNetworkCommunities(cityId: CityId) {
       state.list
         // Same rule as every community list: in IRLY Girl, IRLY Girl communities only.
         .filter((c) => keep(c.cityId) && (!girlSpace || c.girlOnly))
-        .sort((a, b) => Number(b.cityId === cityId) - Number(a.cityId === cityId) || b.postsWeek - a.postsWeek || b.members - a.members),
+        // IRLY Network's own community (Girl CEO in IRLY Girl) first: it lives here.
+        .sort((a, b) => Number(b.cityId === cityId) - Number(a.cityId === cityId) || Number(b.official) - Number(a.official) || b.postsWeek - a.postsWeek || b.members - a.members),
     [state.list, keep, girlSpace, cityId],
   );
   const on = Boolean(uid && supabase);

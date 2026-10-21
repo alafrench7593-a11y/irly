@@ -101,7 +101,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
   );
   const trimmed = name.trim();
   const valid = trimmed.length >= NAME_MIN;
-  const missingMoms = moms && womenOnly && valid && !/moms?/i.test(trimmed);
+  const missingMoms = moms && womenOnly && valid && !/moms?|mamans?/i.test(trimmed);
 
   // Library or camera from the shared photo sheet; cropped 16:10 and sent with the community (setCommunityCover).
   const photos = usePhotoSource({ aspect: [16, 10], title: "Community photo", subtitle: "The picture women see first." });
@@ -223,7 +223,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
           <Icon name="chevronLeft" size={20} color={girl.ink} />
         </PressableScale>
         <Text variant="label" color={girl.inkSoft}>
-          {moms ? "IRLY Moms" : "IRLY Girl"}
+          {moms ? "IRLY Maman" : "IRLY Girl"}
         </Text>
         <View style={styles.round} />
       </View>
@@ -302,7 +302,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
             </View>
             <View style={styles.previewText}>
               <Text variant="caption" color="rgba(255,255,255,0.9)">
-                {womenOnly ? (moms ? "IRLY Moms" : "IRLY Girl") : "IRLY"} ·{" "}
+                {womenOnly ? (moms ? "IRLY Maman" : "IRLY Girl") : "IRLY"} ·{" "}
                 {city.name}
               </Text>
               <Text
@@ -355,7 +355,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
               {missingMoms ? (
                 <Text variant="caption" color={girl.bordeaux}>
                   {tx(
-                    "Add “Moms” to the name so mothers find it in IRLY Moms.",
+                    "Add “Maman” or “Moms” to the name so mothers find it in IRLY Maman.",
                   )}
                 </Text>
               ) : null}

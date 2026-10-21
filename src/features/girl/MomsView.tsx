@@ -18,6 +18,7 @@ import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { joinCommunity, useCommunitiesLike, useGirlCircle, useGirlExtras, usePlaces } from '@/features/bali/data';
 import { MOM_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
+import { MAMAN_OFFICIAL_TOPICS } from '@/features/community/official';
 import { useServerActivities } from '@/features/server/activities';
 import { DEMO } from '@/config/app';
 import { useDemoActivities, useDemoCommunitiesLike } from './demo';
@@ -45,7 +46,7 @@ const AGES = [
 const ageLabel = (id: string) => AGES.find((a) => a.id === id)?.label ?? null;
 
 /**
- * IRLY Moms, inside IRLY Girl (same account, same women-only rule). Mom
+ * IRLY Maman, inside IRLY Girl (same account, same women-only rule). Mom
  * mode is optional: turn it on to appear to other moms and see them. Then:
  * moms near you, mom communities, plans with children (playdates, beach,
  * park, kids sports…) and family-friendly places. Dubai and Bali alike,
@@ -73,7 +74,8 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
     });
   };
   const moms = useGirlCircle(cityId, { moms: true });
-  const communities = useMomCommunities(cityId, 'Moms', true);
+  // IRLY Maman first (IRLY's official one), then the mom communities members created.
+  const communities = useMomCommunities(cityId, 'Maman|Moms', true, false, MAMAN_OFFICIAL_TOPICS);
   const { activities, loading: plansLoading, error: plansError, refresh: refreshPlans } = useMomPlans(cityId);
   const family = usePlaces(cityId, { kids: true });
   const plans = useMemo(

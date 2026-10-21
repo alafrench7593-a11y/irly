@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/Text';
 import { Ambient } from '@/components/visual/Ambient';
 import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
+import type { PhotoKey } from '@/data/photos';
 import { enter } from '@/motion/enter';
 import { spring } from '@/motion/tokens';
 import { useCityId } from '@/state/store';
@@ -25,7 +26,12 @@ type Props = {
   canContinue: boolean;
   onContinue: () => void;
   children: ReactNode;
+  /** This step's photo in the Emirates (IRLY's own, a different one on each step); elsewhere the city's. */
+  photo?: PhotoKey;
 };
+
+/** The sign-up steps' photos, in order: IRLY's own photos of mixed groups in Dubai, never the same twice in a row. */
+export const STEP_PHOTOS: readonly PhotoKey[] = ['dinnerMix', 'padelMix', 'runMix', 'beachMix'];
 
 function Dot({ active, done }: { active: boolean; done: boolean }) {
   const style = useAnimatedStyle(() => ({
@@ -36,15 +42,16 @@ function Dot({ active, done }: { active: boolean; done: boolean }) {
 }
 
 /** Shared frame for onboarding steps: the city's light at the top, progress, a single clear action. */
-export function StepShell({ step, total, overline, title, subtitle, cta, canContinue, onContinue, children }: Props) {
+export function StepShell({ step, total, overline, title, subtitle, cta, canContinue, onContinue, children, photo }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const city = CITIES[useCityId()];
+  const key = city.destinationId === 'emirates' ? (photo ?? STEP_PHOTOS[step % STEP_PHOTOS.length]) : city.photo;
   return (
     <View style={styles.root}>
       <Ambient variant="hero" />
       <View style={styles.sky}>
-        <Photo visual={{ photo: city.photo }} light={city.light} width={1200} style={StyleSheet.absoluteFill} />
+        <Photo visual={{ photo: key }} light={city.light} width={1200} style={StyleSheet.absoluteFill} pinned recyclingKey={`step-${step}`} />
         <LinearGradient colors={['rgba(0,0,0,0.35)', 'rgba(0,0,0,0.78)', 'rgba(5,5,6,0)']} locations={[0, 0.62, 1]} style={StyleSheet.absoluteFill} />
       </View>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>

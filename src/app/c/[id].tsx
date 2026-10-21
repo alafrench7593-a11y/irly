@@ -15,7 +15,7 @@ import { Chip, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { ACTIVITIES , INTERESTS } from '@/data/catalog';
+import { ACTIVITIES } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import type { LightId } from '@/theme/lights';
@@ -27,8 +27,8 @@ import { createServerActivity } from '@/features/server/activities';
 import { setCommunityCover, useActivityThumbs, usePhotoLink } from '@/features/server/covers';
 import { CoverEditor, coverEditorSlot } from '@/components/visual/CoverEditor';
 import { isContentStaff, useStaffRole } from '@/features/admin/api';
-import { communityPhoto, GUIDELINES, introDraft } from '@/features/community/official';
-import { useStore } from '@/state/store';
+import { communityPhoto, GUIDELINES } from '@/features/community/official';
+import { CommunityEmpty, IntroCard, WelcomeCharter } from '@/features/community/Welcome';
 import { Photo } from '@/components/visual/Photo';
 import { openReport } from '@/features/moderation/reportStore';
 import { useEngagement } from '@/features/server/engage';
@@ -266,7 +266,14 @@ function CommunityScreen() {
           <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} official={c.official} parentId={extras.parent?.id ?? null} onChanged={() => (extras.reload(), feed.refresh())} />
           {!extras.parent ? <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), refresh())} /> : null}
 
-          {c.official ? <OfficialBlock c={c} cityName={city.name} onMuted={refresh} /> : null}
+          {/* IRLY's own: the welcome, the introduction and the rules; a member's community: the introduction. */}
+          {c.official ? (
+            <OfficialBlock c={c} cityName={city.name} onMuted={refresh} />
+          ) : c.isMember ? (
+            <View style={styles.pad}>
+              <IntroCard c={c} cityName={city.name} />
+            </View>
+          ) : null}
 
           <View style={styles.pad}>
             <Segmented
@@ -302,10 +309,7 @@ function CommunityScreen() {
                 ) : !feed.loading && !feed.posts.length ? (
                   <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
                     <GlassLayer radius={radius.xl} />
-                    <Icon name="message" size={22} color={t.c.textSecondary} />
-                    <Text variant="body" tone="secondary" align="center">
-                      {c.isMember ? 'No posts yet. Say hi or ask the assistant for ideas.' : 'No posts yet. Join to start the conversation.'}
-                    </Text>
+                    <CommunityEmpty c={c} cityName={city.name} />
                   </View>
                 ) : (
                   feed.posts.map((p) => (
@@ -851,33 +855,17 @@ function Loading() {
 }
 
 /**
- * IRLY's own communities: say hello first (strongly suggested for
- * newcomers), the house rules, and the member's controls (mute, report).
+ * IRLY's own communities: who it is for and how it works (the welcome),
+ * say hello first (strongly suggested for newcomers, asked once), the
+ * house rules, and the member's controls (mute, report).
  */
 function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName: string; onMuted: () => void }) {
   const t = useTheme();
-  const router = useRouter();
-  const profile = useStore((s) => s.profile);
   const [rules, setRules] = useState(!c.isMember);
-  const introduce = () => {
-    if (!c.conversationId) return;
-    const draft = introDraft(profile, cityName, profile.interests.map((i) => tx(INTERESTS[i]?.label ?? i)));
-    router.push({ pathname: '/messages/[id]', params: { id: c.conversationId, draft } });
-  };
   return (
     <View style={[styles.pad, { gap: 10 }]}>
-      {c.isMember ? (
-        <Animated.View entering={FadeInDown.springify(480).dampingRatio(0.85)} style={[styles.card, { backgroundColor: c.introFirst ? t.c.text : 'transparent', overflow: 'hidden' }]}>
-          {c.introFirst ? null : <GlassLayer radius={radius.xl} />}
-          <Text variant="titleS" color={c.introFirst ? t.c.bg : undefined}>
-            Introduce yourself
-          </Text>
-          <Text variant="bodyS" color={c.introFirst ? t.c.bg : undefined} tone={c.introFirst ? undefined : 'secondary'}>
-            {c.introFirst ? 'Say hello and tell people what you’re looking for: it’s the fastest way to meet someone here.' : 'Tell the community a little about yourself.'}
-          </Text>
-          <Button label="Introduce myself" icon="message" variant={c.introFirst ? 'inverse' : 'secondary'} onPress={introduce} />
-        </Animated.View>
-      ) : null}
+      <WelcomeCharter c={c} />
+      {c.isMember ? <IntroCard c={c} cityName={cityName} /> : null}
       <PressableScale haptic="select" onPress={() => setRules((x) => !x)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityRole="button" accessibilityState={{ expanded: rules }} accessibilityLabel="Community guidelines">
         <GlassLayer radius={radius.xl} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
