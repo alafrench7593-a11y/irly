@@ -39,15 +39,20 @@ export function ideasFor(categoryId: string | null | undefined): string[] {
   return IDEAS[categoryId ?? ''] ?? IDEAS.default;
 }
 
-function title(activity: string | undefined, label: string | undefined, communityName: string): string {
-  const what = label ?? (activity ? activity[0].toUpperCase() + activity.slice(1) : 'Meetup');
+/** The words the assistant adds itself ("Yes", "Meetup"), in the member's language; as written by default (tests). */
+type Tx = (text: string) => string;
+const same: Tx = (text) => text;
+
+function title(activity: string | undefined, label: string | undefined, communityName: string, tx: Tx): string {
+  const what = label ?? (activity ? activity[0].toUpperCase() + activity.slice(1) : tx('Meetup'));
   return `${what} · ${communityName}`.slice(0, 80);
 }
 
 const flat = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 /** Parse a request typed in the community assistant. */
-export function communityAssist(input: string, ctx: { communityName: string; categoryId?: string | null; geo: GeoIndex; activityLabel?: (id: string) => string | undefined }): Assist {
+export function communityAssist(input: string, ctx: { communityName: string; categoryId?: string | null; geo: GeoIndex; activityLabel?: (id: string) => string | undefined; tx?: Tx }): Assist {
+  const tx = ctx.tx ?? same;
   const text = norm(input);
   if (!text) return { kind: 'help' };
 
@@ -61,7 +66,7 @@ export function communityAssist(input: string, ctx: { communityName: string; cat
       .filter(Boolean)
       .map((o) => o[0].toUpperCase() + o.slice(1))
       .slice(0, 6);
-    return { kind: 'poll', question: question[0].toUpperCase() + question.slice(1), options: options.length >= 2 ? options : ['Yes', 'No'] };
+    return { kind: 'poll', question: question[0].toUpperCase() + question.slice(1), options: options.length >= 2 ? options : [tx('Yes'), tx('No')] };
   }
 
   // Accent-free on both sides (JS \b does not see "é" as a word letter).
@@ -79,21 +84,21 @@ export function communityAssist(input: string, ctx: { communityName: string; cat
   if (wantsPlan || e.activity) {
     return {
       kind: 'plan',
-      draft: { title: title(e.activity, e.activity ? ctx.activityLabel?.(e.activity) : undefined, ctx.communityName), activity: e.activity, category: e.category ?? ctx.categoryId ?? 'sport', day: e.day, time: e.time ?? '19:00', areaId: e.areaId },
+      draft: { title: title(e.activity, e.activity ? ctx.activityLabel?.(e.activity) : undefined, ctx.communityName, tx), activity: e.activity, category: e.category ?? ctx.categoryId ?? 'sport', day: e.day, time: e.time ?? '19:00', areaId: e.areaId },
     };
   }
   return { kind: 'help' };
 }
 
 /** "Padel saturday 9am, who's in?" → worth turning into an activity. */
-export function postLooksLikeAPlan(body: string, geo: GeoIndex): PlanDraft | null {
+export function postLooksLikeAPlan(body: string, geo: GeoIndex, tx: Tx = same): PlanDraft | null {
   const text = norm(body);
   const inviting = /\b(who s in|whos in|who is in|anyone|qui vient|qui est chaud|qui est dispo|partant|partante|join me|let s|on fait|who wants)\b|\?$/.test(flat(text));
   if (!inviting) return null;
   const cmd = parseCommand(body, geo);
   const e = cmd.entities;
   if (!e.activity && !e.day && !e.time) return null;
-  return { title: (e.activity ? e.activity[0].toUpperCase() + e.activity.slice(1) : 'Meetup').slice(0, 80), activity: e.activity, category: e.category ?? 'sport', day: e.day, time: e.time ?? '19:00', areaId: e.areaId };
+  return { title: (e.activity ? e.activity[0].toUpperCase() + e.activity.slice(1) : tx('Meetup')).slice(0, 80), activity: e.activity, category: e.category ?? 'sport', day: e.day, time: e.time ?? '19:00', areaId: e.areaId };
 }
 
 export type DigestInput = { postsWeek: number; newMembersWeek: number; members: number; upcoming: number; nextTitle: string | null; nextStartsAt: number | null; topPostBody: string | null; topPostLikes: number };

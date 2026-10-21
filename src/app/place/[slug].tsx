@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { cityWhen } from '@/lib/time';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { dateLocale, t as tx } from '@/i18n';
+import { dateLocale, t as tx, formatNumber } from '@/i18n';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { enter } from '@/motion/enter';
 import Animated from 'react-native-reanimated';
@@ -108,7 +108,7 @@ function PlaceScreen() {
         <View style={styles.body}>
           <ActionBar target={{ type: 'place', id: p.slug, title: p.name }} eng={eng} />
           <View style={styles.facts}>
-            {p.rating != null ? <Fact icon="star" text={`${p.rating.toFixed(1)} · ${(p.reviewCount ?? 0).toLocaleString('en-US')} ${tx('reviews')}`} /> : null}
+            {p.rating != null ? <Fact icon="star" text={`${formatNumber(p.rating, 1)} · ${formatNumber(p.reviewCount ?? 0)} ${tx('reviews')}`} /> : null}
             {price(p.priceLevel) ? <Fact icon="banknote" text={price(p.priceLevel) as string} /> : null}
             {open != null ? <Fact icon="clock" text={open ? tx('Open now') : tx('Closed now')} tone={open ? t.c.positive : t.c.live} /> : null}
             {kids ? <Fact icon="baby" text={tx('Kid-friendly')} /> : null}

@@ -221,25 +221,25 @@ function ServerNotifications() {
       </View>
     );
   }
-  const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? (id ? names[id] : undefined) ?? 'Someone';
+  const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? (id ? names[id] : undefined) ?? tx('Someone');
   const describe = (n: ServerNotification): { icon: IconName; title: string; body: string; go?: () => void; accept?: string; pro?: boolean } => {
     const p = n.payload;
     switch (n.kind) {
       case 'MATCH_CREATED':
-        return { icon: 'sparkles', title: "It's an IRLY match", body: 'Say hello and find something to do', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
+        return { icon: 'sparkles', title: "It's an IRLY match", body: tx('Say hello and find something to do'), go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'MATCH_REMOVED':
-        return { icon: 'x', title: 'A match ended', body: 'The private chat is closed' };
+        return { icon: 'x', title: 'A match ended', body: tx('The private chat is closed') };
       case 'MESSAGE_CREATED':
-        return { icon: 'message', title: 'New message', body: 'Tap to open the conversation', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
+        return { icon: 'message', title: 'New message', body: tx('Tap to open the conversation'), go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'ACTIVITY_JOINED':
-        return { icon: 'users', title: 'Someone joined your activity', body: 'Their name is in the activity chat', go: () => router.push(p.activity_id ? `/a/${p.activity_id}` : '/messages') };
+        return { icon: 'users', title: 'Someone joined your activity', body: tx('Their name is in the activity chat'), go: () => router.push(p.activity_id ? `/a/${p.activity_id}` : '/messages') };
       case 'ACTIVITY_UPDATED':
         // Deleted by its organiser: nothing left to open.
-        if (p.change === 'deleted') return { icon: 'x', title: tx('{title} was deleted', { title: p.title ?? '' }), body: 'It\'s been removed from your calendar' };
+        if (p.change === 'deleted') return { icon: 'x', title: tx('{title} was deleted', { title: p.title ?? '' }), body: tx('It\'s been removed from your calendar') };
         return {
           icon: p.cancelled ? 'x' : 'clock',
           title: p.cancelled ? tx('{title} was cancelled', { title: p.title ?? '' }) : tx('{title} changed', { title: p.title ?? '' }),
-          body: p.cancelled ? 'It\'s been removed from your calendar' : 'New time or place: check the details',
+          body: tx(p.cancelled ? 'It\'s been removed from your calendar' : 'New time or place: check the details'),
           go: () => router.push(`/a/${p.activity_id}`),
         };
       case 'LIKE':
@@ -279,7 +279,7 @@ function ServerNotifications() {
         return {
           icon: 'user',
           title: tx('{name} wants to be friends', { name: name(p.from) }),
-          body: pending ? 'Accept to chat and see each other’s IRL posts' : friends.some((f) => f.userId === p.from && f.status === 'accepted') ? 'You are now friends' : 'See their profile',
+          body: tx(pending ? 'Accept to chat and see each other’s IRL posts' : friends.some((f) => f.userId === p.from && f.status === 'accepted') ? 'You are now friends' : 'See their profile'),
           go: () => router.push(`/person/${p.from}`),
           accept: pending ? p.from : undefined,
         };
@@ -289,22 +289,22 @@ function ServerNotifications() {
         return {
           icon: 'network',
           title: tx('{name} wants to connect', { name: name(p.from) }),
-          body: 'Networking · see their professional profile',
+          body: tx('Networking · see their professional profile'),
           go: () => router.push(`/network/${p.from}`),
           accept: pending ? p.from : undefined,
           pro: true,
         };
       }
       case 'PRO_CONNECT_ACCEPTED':
-        return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: 'Networking · say hi', go: () => router.push(`/network/${p.from}`) };
+        return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: tx('Networking · say hi'), go: () => router.push(`/network/${p.from}`) };
       case 'NEW_FOLLOWER':
-        return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: 'See their profile', go: () => router.push(`/person/${p.from}`) };
+        return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: tx('See their profile'), go: () => router.push(`/person/${p.from}`) };
       case 'GROUP_ADDED':
-        return { icon: 'users', title: tx('{name} added you to {title}', { name: name(p.from), title: String(p.title ?? '') }), body: 'Open the group chat', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
+        return { icon: 'users', title: tx('{name} added you to {title}', { name: name(p.from), title: String(p.title ?? '') }), body: tx('Open the group chat'), go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'FRIEND_ACCEPTED':
-        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends: say hi', go: () => router.push(`/person/${p.from}`) };
+        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends: say hi'), go: () => router.push(`/person/${p.from}`) };
       case 'COMMUNITY_JOINED':
-        return { icon: 'heartHandshake', title: 'You joined a community', body: 'Its chat is in Messages', go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
+        return { icon: 'heartHandshake', title: 'You joined a community', body: tx('Its chat is in Messages'), go: () => router.push(p.conversation_id ? `/messages/${p.conversation_id}` : '/messages') };
       case 'COMMUNITY_ANNOUNCEMENT':
         return { icon: 'megaphone', title: tx('Announcement · {name}', { name: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: p.body ?? '', go: () => router.push(p.community_id ? `/c/${p.community_id}` : '/communities') };
       case 'COMMUNITY_POST':
@@ -312,18 +312,18 @@ function ServerNotifications() {
       case 'IRLY_POST_CREATED':
         // A Live lasts 4 hours (a deleted one takes its notice with it): an ended one neither quotes nor opens it.
         if (now - n.createdAt >= LIVE_TTL_MIN * 60_000) return { icon: 'zap', title: tx('{name} was live', { name: name(p.from) }), body: tx('This Live has ended') };
-        return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? 'See what they are doing', go: () => router.push('/live') };
+        return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? tx('See what they are doing'), go: () => router.push('/live') };
       case 'PROFILE_UPDATED':
         if (p.type === 'friend_request') {
           const pending = friends.find((f) => f.userId === p.from && f.incoming);
-          return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: 'Friends see each other’s IRL posts', accept: pending ? p.from : undefined };
+          return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: tx('Friends see each other’s IRL posts'), accept: pending ? p.from : undefined };
         }
-        if (p.type === 'friend_accepted') return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends' };
+        if (p.type === 'friend_accepted') return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends') };
         if (p.type === 'verified')
           return FEATURES.matchIrly
-            ? { icon: 'shield', title: 'Your profile is verified ✓', body: 'Match is open', go: () => router.push('/match') }
-            : { icon: 'shield', title: 'Your profile is verified ✓', body: 'The badge shows on your profile', go: () => router.push('/verify') };
-        if (p.type === 'verification_rejected') return { icon: 'x', title: 'Verification declined', body: p.reason ? tx('Reason: {reason}. You can try again.', { reason: p.reason }) : 'You can try again', go: () => router.push('/verify') };
+            ? { icon: 'shield', title: 'Your profile is verified ✓', body: tx('Match is open'), go: () => router.push('/match') }
+            : { icon: 'shield', title: 'Your profile is verified ✓', body: tx('The badge shows on your profile'), go: () => router.push('/verify') };
+        if (p.type === 'verification_rejected') return { icon: 'x', title: 'Verification declined', body: p.reason ? tx('Reason: {reason}. You can try again.', { reason: p.reason }) : tx('You can try again'), go: () => router.push('/verify') };
         return { icon: 'user', title: 'Profile update', body: '' };
       default:
         return { icon: 'bell', title: 'IRLY', body: '' };

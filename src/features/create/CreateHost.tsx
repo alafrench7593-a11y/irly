@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { Image } from 'expo-image';
-import { a11y, t as tx } from '@/i18n';
+import { a11y, t as tx, formatNumber } from '@/i18n';
 import { ActivityIndicator, BackHandler, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import Animated, { Extrapolation, FadeIn, interpolate, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -55,7 +55,7 @@ const PRICES: Record<'AED' | 'IDR', number[]> = {
   AED: [25, 50, 80, 150, 300],
   IDR: [50_000, 100_000, 250_000, 500_000, 1_000_000],
 };
-export const formatPrice = (n: number, currency: string) => (n ? `${currency} ${n.toLocaleString('en-US')}` : 'Free');
+export const formatPrice = (n: number, currency: string) => (n ? `${currency} ${formatNumber(n)}` : tx('Free'));
 
 const FORMAT: Record<CreateFormat, { title: string; cta: string }> = {
   activity: { title: 'What do you want to do?', cta: 'Create activity' },

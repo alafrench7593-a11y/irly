@@ -197,14 +197,14 @@ function Lead({ marker }: { marker: MapMarkerData }) {
 function HalfContent({ marker }: { marker: MapMarkerData }) {
   const router = useRouter();
   const joined = useStore((s) => Boolean(s.joined[marker.id]));
-  const me = useStore((s) => s.profile.name) || 'You';
+  const me = useStore((s) => s.profile.name) || tx('You');
   const myPhoto = useStore((s) => s.profile.photoUri);
   const going = peopleByIds(marker.goingIds ?? []).slice(0, 4);
   const person = marker.personId ? findPerson(marker.personId) : undefined;
   if (person) {
     return (
       <View style={{ gap: space[5] }}>
-        <Text variant="body" tone="secondary" numberOfLines={3}>
+        <Text variant="body" tone="secondary" numberOfLines={3} raw>
           {person.bio}
         </Text>
         <View style={styles.actions}>

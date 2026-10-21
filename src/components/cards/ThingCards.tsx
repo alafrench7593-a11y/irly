@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import { ACTIVITIES, LEVELS, PLACE_KINDS, SERVICE_CATEGORIES } from '@/data/catalog';
 import { areaName, CITIES } from '@/data/destinations';
@@ -141,7 +141,7 @@ export const PlaceCard = memo(function PlaceCard({ place, width = 220 }: { place
         <View style={styles.metaRow}>
           <Icon name="star" size={12} color={t.accent} fill={t.accent} />
           <Text variant="caption" tone="secondary">
-            {place.rating.toFixed(1)}
+            {formatNumber(place.rating, 1)}
           </Text>
         </View>
       </View>
@@ -217,7 +217,7 @@ export const ServiceCard = memo(function ServiceCard({ service, compact }: { ser
           <View style={[styles.metaRow, { marginTop: 4 }]}>
             <Icon name="star" size={12} color={t.accent} fill={t.accent} />
             <Text variant="caption" tone="secondary">
-              {[service.rating.toFixed(1), tx('{n} reviews', { n: formatCount(service.reviews) }), tx('Replies in {time}', { time: tx(service.responseTime.replace('Replies in ', '')) })].join(' · ')}
+              {[formatNumber(service.rating, 1), tx('{n} reviews', { n: formatCount(service.reviews) }), tx('Replies in {time}', { time: tx(service.responseTime.replace('Replies in ', '')) })].join(' · ')}
             </Text>
           </View>
         ) : null}

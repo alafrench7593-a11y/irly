@@ -208,7 +208,7 @@ function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () =>
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={styles.row}>
       <Avatar name={c.firstName} hue={hueOf(c.authorId)} size={32} userId={c.authorId} photo={demoPhoto(c.authorId)} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="label">
+        <Text variant="label" raw>
           {c.firstName}{' '}
           <Text variant="caption" tone="tertiary">
             {c.id.startsWith('tmp-') ? 'Sending…' : timeAgo(Math.max(0, Math.round((now - c.createdAt) / 60000)))}

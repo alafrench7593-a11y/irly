@@ -14,6 +14,14 @@
 //     out from the components themselves, so a new component is covered too.
 // Strings built at run time (tx(item.label), `${a} b`) are out of reach.
 //
+// Also checked, so neither language leaks into the other:
+//   - new Error('…') messages (they end up in toasts);
+//   - every `raise exception '…'` of supabase/migrations has its sentence in
+//     src/i18n/errors.ts, and that sentence its French entry;
+//   - a member's name, username or bio never reaches the dictionary (a bio
+//     reading "Coffee" would become « Café »): <Text raw> or no t();
+//   - no UI literal sits in a <Text raw>, where it would stay English.
+//
 // --props lists the translated props found per component; --audit lists English
 // literals given to props nothing translates (React Native a11y labels, Alert).
 import fs from 'node:fs';
@@ -54,6 +62,11 @@ const EXCEPTIONS = new Set<string>([
   // Units and symbols.
   '°C',
   'ms · ζ',
+]);
+
+/** Errors thrown for the code's own control flow, caught before anyone reads them. */
+const INTERNAL_ERRORS = new Set<string>([
+  'still stored', // sign-out: the session survived its removal, retried silently
 ]);
 
 type Kind = 'text' | 'label';
@@ -324,6 +337,8 @@ const jsxText = (s: string) => decode(s.split('\n').map((l) => l.trim()).filter(
 
 const uses: Use[] = [];
 let dynamic = 0;
+/** What separates the parts of a label (as localizeLabel splits it), plus the edges of a template's text. */
+const LABEL_PARTS = /, |\. |: | · |^[\s,.:·–-]+|[\s,.:·–-]+$/;
 function collect(file: string, sf: ts.SourceFile, e: ts.Expression | ts.JsxText, kind: Kind, trim: boolean) {
   const at = (n: ts.Node) => `${path.relative(ROOT, file)}:${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`;
   if (ts.isJsxText(e)) {
@@ -336,7 +351,20 @@ function collect(file: string, sf: ts.SourceFile, e: ts.Expression | ts.JsxText,
       // <Text> trims what it looks up; t() takes the string as it is.
       const key = trim ? o.text.trim() : o.text;
       if (/[A-Za-z]/.test(key)) uses.push({ key, kind, at: at(o) });
-    } else if (ts.isTemplateExpression(o)) dynamic++;
+    } else if (ts.isTemplateExpression(o)) {
+      dynamic++;
+      // `${title}, unread`: the words written around the values are looked up
+      // on their own (labels are translated part by part), so they need entries.
+      if (kind === 'label') {
+        const inner = o.templateSpans.flatMap((s) => outcomes(s.expression)).filter((x) => ts.isStringLiteral(x) || ts.isNoSubstitutionTemplateLiteral(x)) as ts.StringLiteral[];
+        for (const part of [o.head.text, ...o.templateSpans.map((s) => s.literal.text), ...inner.map((x) => x.text)]) {
+          for (const piece of part.split(LABEL_PARTS)) {
+            const key = piece.trim();
+            if (/[A-Za-z]{2}/.test(key)) uses.push({ key, kind, at: at(o) });
+          }
+        }
+      }
+    }
   }
 }
 
@@ -344,8 +372,63 @@ for (const [file, sf] of files) {
   if (file === I18N) continue;
   const visit = (n: ts.Node) => {
     if (ts.isCallExpression(n)) callSinks(file, n).forEach((s) => collect(file, sf, s.arg, s.kind, false));
+    // new Error('…'): its message ends up in a toast or an error line, through t().
+    if (ts.isNewExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === 'Error' && n.arguments?.[0]) {
+      const a = n.arguments[0];
+      if ((ts.isStringLiteral(a) || ts.isNoSubstitutionTemplateLiteral(a)) && !INTERNAL_ERRORS.has(a.text)) collect(file, sf, a, 'text', false);
+    }
     if (ts.isJsxElement(n)) jsxSinks(file, n.openingElement, n).forEach((s) => collect(file, sf, s.arg, s.kind, s.kind === 'text'));
     if (ts.isJsxSelfClosingElement(n)) jsxSinks(file, n).forEach((s) => collect(file, sf, s.arg, s.kind, s.kind === 'text'));
+    ts.forEachChild(n, visit);
+  };
+  visit(sf);
+}
+
+// ---------------------------------------------------------------- user content kept as written
+// What members write is shown as typed, in the language they wrote it in:
+// never looked up in the dictionary, where a bio that reads "Coffee" would
+// come out as « Café ». A member's name, username or bio reaching a
+// translating <Text> (without `raw`) or t() is reported. So is UI text given
+// to a <Text raw>, which would stay English in French.
+/** Words a <Text raw> may hold as they are: the brand's own, the same in both languages. */
+const RAW_OK = new Set<string>([
+  'IN REAL LIFE', // the wordmark's tagline on the welcome screen
+  'MATCH', // "MATCH IRLY" in the tab bar
+  '[INFORMATION JURIDIQUE REQUISE]', // the French side of a lang === 'fr' switch
+]);
+const USER_FIELDS = /^(bio|firstName|first_name|lastName|last_name|fullName|full_name|displayName|display_name|username)$/;
+const userContent: string[] = [];
+const rawLiterals: string[] = [];
+for (const [file, sf] of files) {
+  if (file === I18N) continue;
+  const at = (n: ts.Node) => `${path.relative(ROOT, file)}:${sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1}`;
+  const check = (e: ts.Expression | ts.JsxText) => {
+    if (ts.isJsxText(e)) return;
+    for (const o of outcomes(e)) {
+      const name = ts.isPropertyAccessExpression(o) ? o.name.text : undefined;
+      if (name && USER_FIELDS.test(name)) userContent.push(`${at(o)}  ${o.getText(sf).slice(0, 60)}`);
+    }
+  };
+  const uiText = (s: string) => /[A-Za-z]{2}/.test(s) && !EXCEPTIONS.has(s.trim()) && !RAW_OK.has(s.trim());
+  // raw={!c.deleted}: only what the member wrote is raw, the rest is translated.
+  const alwaysRaw = (attrs: ts.JsxAttributes) =>
+    attrs.properties.some((p) => ts.isJsxAttribute(p) && ts.isIdentifier(p.name) && p.name.text === 'raw' && (!p.initializer || (ts.isJsxExpression(p.initializer) && p.initializer.expression?.kind === ts.SyntaxKind.TrueKeyword)));
+  const visit = (n: ts.Node) => {
+    if (ts.isCallExpression(n)) callSinks(file, n).forEach((s) => check(s.arg));
+    if (ts.isJsxElement(n)) {
+      jsxSinks(file, n.openingElement, n).forEach((s) => s.prop === 'children' && check(s.arg));
+      const name = tagName(n.openingElement.tagName);
+      if (name && resolveName(file, name) === TEXT_ID && alwaysRaw(n.openingElement.attributes)) {
+        for (const c of n.children) {
+          if (ts.isJsxText(c) && uiText(jsxText(c.text))) rawLiterals.push(`${at(c)}  ${jsxText(c.text).slice(0, 60)}`);
+          if (ts.isJsxExpression(c) && c.expression) {
+            for (const o of outcomes(c.expression)) {
+              if ((ts.isStringLiteral(o) || ts.isNoSubstitutionTemplateLiteral(o)) && uiText(o.text)) rawLiterals.push(`${at(o)}  ${o.text.slice(0, 60)}`);
+            }
+          }
+        }
+      }
+    }
     ts.forEachChild(n, visit);
   };
   visit(sf);
@@ -395,6 +478,52 @@ ts.forEachChild(files.get(I18N)!, function visit(n) {
   ts.forEachChild(n, visit);
 });
 
+// ---------------------------------------------------------------- server refusals
+// Every `raise exception '…'` of the migrations reaches a member as an error
+// message: src/i18n/errors.ts turns it into a sentence of the app, which
+// needs its French entry like any other.
+const ERRORS = path.join(SRC, 'i18n', 'errors.ts');
+const serverKeys = new Map<string, string>();
+const serverPatterns: RegExp[] = [];
+ts.forEachChild(files.get(ERRORS)!, function visit(n) {
+  if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.initializer) {
+    if (n.name.text === 'SERVER_ERRORS' && ts.isObjectLiteralExpression(n.initializer)) {
+      for (const p of n.initializer.properties) {
+        if (!ts.isPropertyAssignment(p) || !ts.isStringLiteral(p.name)) continue;
+        const v = literalText(p.initializer);
+        serverKeys.set(p.name.text, v ?? '');
+        if (v) uses.push({ key: v, kind: 'text', at: `src/i18n/errors.ts (${JSON.stringify(p.name.text)})` });
+      }
+    }
+    if (n.name.text === 'SERVER_PATTERNS' && ts.isArrayLiteralExpression(n.initializer)) {
+      for (const row of n.initializer.elements) {
+        if (!ts.isArrayLiteralExpression(row)) continue;
+        const [re, text] = row.elements;
+        const m = re && ts.isRegularExpressionLiteral(re) ? /^\/(.*)\/([a-z]*)$/s.exec(re.text) : null;
+        if (m) serverPatterns.push(new RegExp(m[1], m[2]));
+        const v = text ? literalText(text) : undefined;
+        if (v) uses.push({ key: v, kind: 'text', at: 'src/i18n/errors.ts (SERVER_PATTERNS)' });
+      }
+    }
+  }
+  ts.forEachChild(n, visit);
+});
+const unmapped: string[] = [];
+const sqlFiles = [path.join(ROOT, 'supabase', 'setup.sql'), ...fs.readdirSync(path.join(ROOT, 'supabase', 'migrations')).map((f) => path.join(ROOT, 'supabase', 'migrations', f))].filter((f) => f.endsWith('.sql') && fs.existsSync(f));
+const raised = new Map<string, string>();
+for (const f of sqlFiles) {
+  for (const m of fs.readFileSync(f, 'utf8').matchAll(/raise exception '((?:[^']|'')*)'/g)) {
+    const msg = m[1].replace(/''/g, "'");
+    if (!raised.has(msg)) raised.set(msg, path.relative(ROOT, f));
+  }
+}
+for (const [msg, where] of raised) {
+  // '% is at most % characters' is tried as '9 is at most 9 characters'.
+  const sample = msg.replace(/%/g, '9');
+  if (serverKeys.has(msg) || serverPatterns.some((re) => re.test(sample)) || fr.has(msg)) continue;
+  unmapped.push(`${JSON.stringify(msg)}  ← ${where}`);
+}
+
 // ---------------------------------------------------------------- checks
 
 const excepted = new Set<string>();
@@ -437,6 +566,9 @@ list(
   [...missing].sort(([a], [b]) => a.localeCompare(b)).map(([k, at]) => `${JSON.stringify(k)}  ← ${at[0]}${at.length > 1 ? ` (+${at.length - 1})` : ''}`),
 );
 list('Placeholders differ', mismatches);
+list('Member content sent to the dictionary (show it with <Text raw>, keep it out of t())', userContent);
+list('UI text in a <Text raw>, never translated (use t() or drop raw)', rawLiterals);
+list('Server refusals with no sentence in src/i18n/errors.ts', unmapped);
 list('Empty translations', empties);
 list('Duplicate keys', duplicates);
 
@@ -448,6 +580,8 @@ if (shadowed.length) console.log(`\nExceptions that also have an entry in fr.ts:
 console.log(`\nKeys checked: ${checked.size} (${uses.length} uses; ${dynamic} built at run time, not checked)`);
 console.log(`Dictionary entries: ${fr.size}`);
 console.log(`Missing: ${missing.size}`);
+console.log(`Server refusals: ${raised.size} (${unmapped.length} unmapped)`);
+console.log(`Member content sent to the dictionary: ${userContent.length}  UI text in <Text raw>: ${rawLiterals.length}`);
 console.log(`Placeholder mismatches: ${mismatches.length}`);
 console.log(`Empty: ${empties.length}  Duplicates: ${duplicates.length}`);
 if (process.argv.includes('--props')) {
@@ -486,4 +620,4 @@ if (process.argv.includes('--audit')) {
     visit(sf);
   }
 }
-process.exit(missing.size + mismatches.length + empties.length + duplicates.length ? 1 : 0);
+process.exit(missing.size + mismatches.length + empties.length + duplicates.length + unmapped.length + userContent.length + rawLiterals.length ? 1 : 0);

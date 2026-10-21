@@ -1,5 +1,5 @@
 import type { IconName } from '@/components/ui/Icon';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
 import { cityCentre } from '@/data/areas';
 import { areaCoords, toLatLng, type LatLng } from '@/data/geo';
@@ -208,7 +208,7 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       areaId: p.areaId,
       point: jitter(pt(p.areaId), p.id),
       title: p.name,
-      subtitle: `${tx(PLACE_KINDS[p.kind].label)} · ★ ${p.rating.toFixed(1)}`,
+      subtitle: `${tx(PLACE_KINDS[p.kind].label)} · ★ ${formatNumber(p.rating, 1)}`,
       icon: PLACE_KINDS[p.kind].icon,
       color: placeColor(p.kind),
       hero: { kind: 'place', id: p.id },

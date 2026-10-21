@@ -1,6 +1,7 @@
 import { webLink } from '@/config/app';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/components/ui/Toast';
+import { t as tx } from '@/i18n';
 import { NONE } from '@/lib/none';
 import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
@@ -260,7 +261,7 @@ export async function reportItem(t: Target, category: ReportCategory, ownerId?: 
 /** Native share sheet (or clipboard on the web). Logged as a share. */
 export async function shareNative(t: Target): Promise<void> {
   const url = deepLink(t);
-  const message = t.title ? `${t.title} on IRLY\n${url}` : url;
+  const message = t.title ? `${tx('{title} on IRLY', { title: t.title })}\n${url}` : url;
   if (Platform.OS === 'web') {
     const nav = globalThis.navigator as Navigator | undefined;
     if (nav?.share) await nav.share({ title: t.title ?? 'IRLY', url });
@@ -270,7 +271,7 @@ export async function shareNative(t: Target): Promise<void> {
     }
   } else {
     // iOS shares message and url separately (the link appeared twice); Android only has message.
-    const res = await Share.share(Platform.OS === 'ios' ? { message: t.title ? `${t.title} on IRLY` : 'IRLY', url } : { message });
+    const res = await Share.share(Platform.OS === 'ios' ? { message: t.title ? tx('{title} on IRLY', { title: t.title }) : 'IRLY', url } : { message });
     if (res.action !== Share.sharedAction) return; // dismissed: nothing was shared
   }
   logShare(t, Platform.OS === 'web' ? 'link' : 'native');

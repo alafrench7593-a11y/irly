@@ -138,7 +138,7 @@ function SeedProfile() {
           <Text variant="overline" tone="tertiary">
             About
           </Text>
-          <Text variant="bodyL" tone="secondary">
+          <Text variant="bodyL" tone="secondary" raw>
             {person.bio}
           </Text>
         </Animated.View>

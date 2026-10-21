@@ -1,5 +1,5 @@
 import { memo, useMemo, useState, type ReactNode } from 'react';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, ZoomIn, ZoomOut } from 'react-native-reanimated';
 import { Avatar, AvatarStack } from '@/components/ui/Avatar';
@@ -100,7 +100,7 @@ export function getHeader(item: HeroItem): DetailHeader | null {
         overline: PLACE_KINDS[p.kind].label,
         overlineIcon: PLACE_KINDS[p.kind].icon,
         title: p.name,
-        meta: `${areaName(city, p.areaId)} · ${priceLevel(p.priceLevel)} · ★ ${p.rating.toFixed(1)}`,
+        meta: `${areaName(city, p.areaId)} · ${priceLevel(p.priceLevel)} · ★ ${formatNumber(p.rating, 1)}`,
         pick: p.irlyPick,
       };
     }
@@ -413,7 +413,7 @@ const PlaceBody = memo(function PlaceBody({ id, go }: { id: string; go: Go }) {
       <Section index={1}>
         <View style={{ gap: space[5] }}>
           <InfoRow icon="pin" label="Area" value={areaName(city, p.areaId)} />
-          <InfoRow icon="star" label="Members rate it" value={`${p.rating.toFixed(1)} / 5`} />
+          <InfoRow icon="star" label="Members rate it" value={`${formatNumber(p.rating, 1)} / 5`} />
           <InfoRow icon="banknote" label="Price" value={priceLevel(p.priceLevel)} />
         </View>
       </Section>
@@ -518,7 +518,7 @@ const ServiceBody = memo(function ServiceBody({ id }: { id: string; go: Go }) {
         <View style={[styles.trustCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
           <GlassLayer radius={radius.lg} />
           <View style={styles.trustItem}>
-            <Text variant="number">{s.rating.toFixed(1)}</Text>
+            <Text variant="number">{formatNumber(s.rating, 1)}</Text>
             <Text variant="bodyS" tone="secondary">
               {formatCount(s.reviews)} reviews
             </Text>

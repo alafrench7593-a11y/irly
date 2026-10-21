@@ -69,7 +69,7 @@ function LocalProfile() {
   });
   const coverH = insets.top + 250;
 
-  const name = profile.name || 'You';
+  const name = profile.name || tx('You');
   const plans = Object.keys(joined)
     .map((id) => {
       const e = findEvent(id);
@@ -111,7 +111,7 @@ function LocalProfile() {
             </View>
           </Animated.View>
           <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 4 }}>
-            <Text variant="displayL">{name}</Text>
+            <Text variant="displayL" raw>{name}</Text>
             <Text variant="body" tone="secondary">
               {[profile.age, profile.country, tx(city.name)].filter(Boolean).join(' · ')} {city.destinationId === 'bali' ? '🌴' : dest.flag}
             </Text>
@@ -123,7 +123,7 @@ function LocalProfile() {
               </View>
             ) : null}
             {profile.bio ? (
-              <Text variant="body" align="center" style={{ marginTop: 8, paddingHorizontal: 12 }}>
+              <Text variant="body" align="center" style={{ marginTop: 8, paddingHorizontal: 12 }} raw>
                 {profile.bio}
               </Text>
             ) : null}

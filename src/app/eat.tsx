@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
@@ -76,7 +76,7 @@ export default function Eat() {
           <Chip size="sm" icon="clock" label={tx('Open now')} selected={openNow} onPress={() => setOpenNow(!openNow)} />
           <Chip size="sm" icon="baby" label={tx('With kids')} selected={kids} onPress={() => setKids(!kids)} />
           {RATINGS.map((r) => (
-            <Chip key={r} size="sm" icon="star" label={`${r.toFixed(1)}+`} selected={minRating === r} onPress={() => setMinRating(minRating === r ? null : r)} />
+            <Chip key={r} size="sm" icon="star" label={`${formatNumber(r, 1)}+`} selected={minRating === r} onPress={() => setMinRating(minRating === r ? null : r)} />
           ))}
           {[1, 2, 3, 4].map((n) => (
             <Chip key={n} size="sm" label={`≤ ${'$'.repeat(n)}`} selected={maxPrice === n} onPress={() => setMaxPrice(maxPrice === n ? null : n)} />
@@ -147,7 +147,7 @@ function Card({ p, rank, open, onPress, cityId }: { p: PlaceHit; rank: number; o
           {p.name}
         </Text>
         <Text variant="caption" tone="secondary" numberOfLines={1}>
-          {[p.rating != null ? `★ ${p.rating.toFixed(1)} (${(p.reviewCount ?? 0).toLocaleString('en-US')})` : null, p.priceLevel ? '$'.repeat(p.priceLevel) : null, p.cuisines[0] ? label(p.cuisines[0]) : null, p.areaId]
+          {[p.rating != null ? `★ ${formatNumber(p.rating, 1)} (${formatNumber(p.reviewCount ?? 0)})` : null, p.priceLevel ? '$'.repeat(p.priceLevel) : null, p.cuisines[0] ? label(p.cuisines[0]) : null, p.areaId]
             .filter(Boolean)
             .join(' · ')}
         </Text>

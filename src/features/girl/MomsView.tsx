@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { FEATURES } from '@/lib/features';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { Image } from 'expo-image';
 import { useMemo, useState, useRef } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
@@ -343,7 +343,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
                   </Text>
                   <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
                     {p.kind.replace('_', ' ')}
-                    {p.rating != null ? ` · ★ ${p.rating.toFixed(1)}` : ''}
+                    {p.rating != null ? ` · ★ ${formatNumber(p.rating, 1)}` : ''}
                   </Text>
                 </View>
               </PressableScale>

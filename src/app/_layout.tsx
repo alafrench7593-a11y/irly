@@ -35,6 +35,7 @@ import { BellSync } from '@/features/server/social';
 import { FaceSync } from '@/features/server/faces';
 import { SyncBridge } from '@/features/server/sync';
 import { OfflineBar } from '@/features/server/OfflineBar';
+import { useLangHydrated } from '@/i18n';
 import { useAppSpace, useSpaceStore } from '@/state/appSpace';
 import { useStore } from '@/state/store';
 import { Flavor } from '@/theme/flavor';
@@ -71,7 +72,8 @@ export default function RootLayout() {
   });
   const hydrated = useStore((s) => s.hydrated);
   const spaceHydrated = useSpaceHydrated();
-  const ready = (fontsLoaded || Boolean(fontError)) && hydrated && spaceHydrated;
+  const langHydrated = useLangHydrated();
+  const ready = (fontsLoaded || Boolean(fontError)) && hydrated && spaceHydrated && langHydrated;
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => undefined);
