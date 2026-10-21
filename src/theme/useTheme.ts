@@ -30,10 +30,10 @@ export function resolveMode(appearance: 'auto' | 'day' | 'night', cityId: CityId
 
 export function buildTheme(mode: Mode, lightId: LightId, flavor: FlavorId = 'mixte'): Theme {
   if (flavor === 'girl') {
-    const rose = girlPalette.brand;
-    const light: Light = { ...lights[lightId], accent: rose, accentDay: rose, accentSoft: girlPalette.brandSoft };
-    // IRLY Girl stays light whatever the appearance setting: its identity is the rose-white ground.
-    return { mode: 'day', c: girlPalette, light, accent: rose, shadow: girlElevation, isDay: true, flavor };
+    const violet = girlPalette.brand;
+    const light: Light = { ...lights[lightId], accent: violet, accentDay: violet, accentSoft: girlPalette.brandSoft };
+    // IRLY Girl stays light whatever the appearance setting: its identity is the lavender-pearl ground.
+    return { mode: 'day', c: girlPalette, light, accent: violet, shadow: girlElevation, isDay: true, flavor };
   }
   // The destination keeps its sky (onboarding, portal transition) but no
   // longer tints the interface: accents are white, colour is reserved for

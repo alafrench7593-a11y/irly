@@ -17,13 +17,13 @@ type Portal = { title: string; line: string; overline: string; photo: PhotoKey; 
 
 const PORTALS: Portal[] = [
   { title: 'IRLY Girl', line: 'Meet girls who get you.', overline: 'Women only', photo: 'brunch', icon: 'sparkles', route: '/girl' },
-  { title: 'IRLY Moms', line: 'With kids or without.', overline: 'Women only', photo: 'beachSunset', icon: 'heart', route: '/girl?mode=moms' },
+  { title: 'IRLY Moms', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: '/girl?mode=moms' },
 ];
 
 /** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Moms (Discover › People). */
 const GIRL_SPACE_PORTALS: Portal[] = [
   { title: 'IRLY Mixte', line: 'The same app, for everyone.', overline: 'Switch space', photo: 'dubaiMarina', icon: 'globe', route: 'mixte' },
-  { title: 'IRLY Moms', line: 'With kids or without.', overline: 'Women only', photo: 'beachSunset', icon: 'heart', route: '/discover?tab=people&moms=1' },
+  { title: 'IRLY Moms', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: '/discover?tab=people&moms=1' },
 ];
 
 /**

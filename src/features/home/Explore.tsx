@@ -18,7 +18,7 @@ const DOORS: Door[] = [
   { title: 'Help & Questions', line: 'Ask, answer, recommend', icon: 'question', route: '/help' },
   { title: 'Dubai News & Life', line: 'What’s happening, from the sources', icon: 'news', route: '/news' },
   { title: 'IRLY Family', line: 'Outings, schools, families nearby', icon: 'home', route: '/space/families' },
-  { title: 'IRLY Moms', line: 'Moms meeting moms', icon: 'heart', route: '/space/moms', women: true },
+  { title: 'IRLY Moms', line: 'Moms meeting moms', icon: 'baby', route: '/space/moms', women: true },
   { title: 'IRLY Girl', line: 'Plans and a network between women', icon: 'sparkles', route: '/space/girls', women: true },
 ];
 

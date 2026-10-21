@@ -21,9 +21,9 @@ import { ProCard } from '@/features/network/ui';
 import { useT } from '@/i18n';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PaneLight, useNetworkTone } from '@/features/network/tone';
 
 /**
  * IRLY Network: what it is and your professional profile, then networking
@@ -33,7 +33,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
  * Everything is read from the server; nothing is made up for an empty city.
  */
 export default function NetworkDiscover() {
-  const t = useTheme();
+  const tone = useNetworkTone();
   const tr = useT();
   const router = useRouter();
   const cityId = useCityId();
@@ -198,7 +198,8 @@ export default function NetworkDiscover() {
         {!signedIn ? (
           <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
             <GlassLayer radius={radius.xl} />
-            <Icon name="network" size={24} color={t.c.textSecondary} />
+            <PaneLight radius={radius.xl} />
+            <Icon name="network" size={24} color={tone.accent} />
             <Text variant="titleS" align="center">
               Sign in to meet professionals
             </Text>
@@ -210,7 +211,8 @@ export default function NetworkDiscover() {
         ) : error && !list.length ? (
           <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
             <GlassLayer radius={radius.xl} />
-            <Icon name="network" size={24} color={t.c.textSecondary} />
+            <PaneLight radius={radius.xl} />
+            <Icon name="network" size={24} color={tone.accent} />
             <Text variant="bodyS" tone="secondary" align="center">
               Can’t reach IRLY right now. Check your connection.
             </Text>
@@ -221,7 +223,8 @@ export default function NetworkDiscover() {
         ) : !ranked.length ? (
           <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
             <GlassLayer radius={radius.xl} />
-            <Icon name="search" size={24} color={t.c.textSecondary} />
+            <PaneLight radius={radius.xl} />
+            <Icon name="search" size={24} color={tone.accent} />
             <Text variant="titleS" align="center">
               {industry || role || intent || onlyCity || q ? tr('No one matches these filters yet') : tr('No professionals here yet')}
             </Text>

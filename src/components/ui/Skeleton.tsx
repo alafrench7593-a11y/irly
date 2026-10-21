@@ -23,7 +23,7 @@ export const Skeleton = memo(function Skeleton({ width = '100%', height, radius 
   const band = useAnimatedStyle(() => ({ transform: [{ translateX: `${-100 + x.value * 200}%` }] }));
   const girl = t.flavor === 'girl';
   // IRLY Girl: powder rose with a pearl glint (a whisper of lavender at its edge).
-  const sheen = girl ? 'rgba(255,250,252,0.92)' : night ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.7)';
+  const sheen = girl ? 'rgba(251,250,255,0.92)' : night ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.7)';
   const edge = girl ? 'rgba(236,224,250,0)' : 'rgba(255,255,255,0)';
   return (
     <View style={[styles.root, { width, height, borderRadius: radius, backgroundColor: girl ? '#F4E2E9' : night ? '#15171B' : '#EDEDEA' }, style]}>
@@ -43,7 +43,7 @@ export const Skeleton = memo(function Skeleton({ width = '100%', height, radius 
 export function HappeningRowSkeleton() {
   const t = useTheme();
   return (
-    <View style={[styles.row, { borderColor: t.c.line, backgroundColor: t.flavor === 'girl' ? 'rgba(255,250,252,0.7)' : t.c.surface }]}>
+    <View style={[styles.row, { borderColor: t.c.line, backgroundColor: t.flavor === 'girl' ? 'rgba(251,250,255,0.7)' : t.c.surface }]}>
       <Skeleton width={60} height={60} radius={18} />
       <View style={{ flex: 1, gap: 8 }}>
         <Skeleton width="40%" height={10} radius={5} />

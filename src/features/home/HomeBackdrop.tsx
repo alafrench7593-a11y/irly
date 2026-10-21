@@ -15,10 +15,10 @@ import { heroPhoto } from './HomeHero';
 const TRAVEL = 120;
 /** How far below the hero the shade keeps deepening. */
 const SHADE = 200;
-/** IRLY Girl ground (#FBF2F4, girlPalette.bg) as an rgb triplet for the veils. */
-const GIRL_BASE = '251,242,244';
-/** IRLY Girl light: rose poudré at the top, beige chaud through the middle, crème below. */
-const GIRL_WASH = ['rgba(244,200,214,0.42)', 'rgba(240,218,204,0.30)', 'rgba(251,242,244,0.22)'] as const;
+/** IRLY Girl ground (#F6F2FF, girlPalette.bg) as an rgb triplet for the veils. */
+const GIRL_BASE = '246,242,255';
+/** IRLY Girl light: soft violet at the top, an ice-blue glint through the middle, pearl below. */
+const GIRL_WASH = ['rgba(206,190,255,0.42)', 'rgba(204,222,255,0.30)', 'rgba(246,242,255,0.22)'] as const;
 
 /**
  * The city behind the whole Home: fixed, cropped to cover, with a veil

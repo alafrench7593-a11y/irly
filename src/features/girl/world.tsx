@@ -71,22 +71,22 @@ export const GIRL_KINDS: Kind[] = [
   { id: 'create', label: 'Book club & workshops', icon: 'palette', photo: 'readingGirl', match: /book|workshop|atelier|art|paint|pottery|craft/i },
 ];
 
-/** IRLY Moms: plans with (or around) the children. */
+/** IRLY Moms: plans with (or around) the children, on family photos only (never IRLY Girl's). */
 export const MOM_KINDS: Kind[] = [
   { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
   { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
   { id: 'park', label: 'Park & playdates', icon: 'baby', photo: 'momPlaydate', match: /park|playdate|playground|picnic/i },
   { id: 'stroller', label: 'Stroller walks', icon: 'footprints', photo: 'strollerMom', match: /stroller|poussette|baby walk|walk/i },
   { id: 'brunch', label: 'Moms’ brunch', icon: 'utensils', photo: 'brunch', match: /brunch/i },
-  { id: 'coffee', label: 'Coffee', icon: 'coffee', photo: 'girlCoffee', match: /coffee|café|cafe/i },
+  { id: 'coffee', label: 'Coffee', icon: 'coffee', photo: 'strollerMom', match: /coffee|café|cafe/i },
   { id: 'beach', label: 'Beach', icon: 'sun', photo: 'momBeach', match: /beach|plage/i },
   { id: 'pool', label: 'Pool & swimming', icon: 'waves', photo: 'swimming', match: /swim|pool|piscine/i },
   { id: 'sport', label: 'Moms’ sport', icon: 'activity', photo: 'momYoga', match: /yoga|pilates|fitness|football|padel|tennis|sport/i },
-  { id: 'create', label: 'Creative workshops', icon: 'palette', photo: 'girlBookClub', match: /workshop|art|craft|atelier|paint/i },
-  { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|culture|aquarium/i },
+  { id: 'create', label: 'Creative workshops', icon: 'palette', photo: 'gallery', match: /workshop|art|craft|atelier|paint/i },
+  { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'kids', match: /museum|gallery|culture|aquarium/i },
   { id: 'restaurant', label: 'Family restaurants', icon: 'utensils', photo: 'dinnerGroup', match: /restaurant|lunch|dinner|family meal/i },
   { id: 'weekend', label: 'Weekend outings', icon: 'calendar', photo: 'familyBeach', match: /weekend|outing|sortie|family day/i },
-  { id: 'trip', label: 'Trips', icon: 'plane', photo: 'girlTravel', match: /trip|travel|excursion|getaway/i },
+  { id: 'trip', label: 'Trips', icon: 'plane', photo: 'family', match: /trip|travel|excursion|getaway/i },
 ];
 
 const matchesKind = (a: ServerActivity, k: Kind) => k.match.test(a.title) || Boolean(k.cats?.includes(a.categoryId));
@@ -117,8 +117,8 @@ export const KindRail = memo(function KindRail({ kinds, value, onChange, counts 
             >
               <Photo tint={GIRL_TINT} visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
               <View style={styles.kindTop}>
-                <View style={[styles.kindIcon, on ? { backgroundColor: girl.plum, borderColor: 'rgba(255,205,226,0.35)' } : null]}>
-                  <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#F4B3CF' : girl.ink} strokeWidth={on ? 2.6 : 2} />
+                <View style={[styles.kindIcon, on ? { backgroundColor: girl.plum, borderColor: 'rgba(201,182,255,0.35)' } : null]}>
+                  <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#C9B6FF' : girl.ink} strokeWidth={on ? 2.6 : 2} />
                 </View>
                 {n ? (
                   <View style={styles.kindCount}>
@@ -315,7 +315,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
       </View>
       {a.joined ? (
         <View style={[styles.badge, styles.going]}>
-          <Icon name="check" size={12} color="#F4B3CF" strokeWidth={2.6} />
+          <Icon name="check" size={12} color="#C9B6FF" strokeWidth={2.6} />
           <Text variant="caption" color={girl.pearl}>
             Going
           </Text>
@@ -343,7 +343,7 @@ const PlanTile = memo(function PlanTile({ a, width, photo, label, onPress }: { a
         <Photo tint={GIRL_TINT} visual={{ photo, uri: a.coverUrl }} light="dubai" width={500} style={StyleSheet.absoluteFill} recyclingKey={`gplan-${a.id}`} />
         {a.joined ? (
           <View style={[styles.badge, styles.tileBadge, styles.going]}>
-            <Icon name="check" size={12} color="#F4B3CF" strokeWidth={2.6} />
+            <Icon name="check" size={12} color="#C9B6FF" strokeWidth={2.6} />
             <Text variant="caption" color={girl.pearl}>
               Going
             </Text>
@@ -624,8 +624,8 @@ const styles = StyleSheet.create({
   kind: { width: 132, height: 168, borderRadius: radius.lg, overflow: 'hidden', padding: 10, justifyContent: 'space-between', boxShadow: girl.shadowSoft },
   kindOn: { borderWidth: 2, borderColor: girl.plum },
   kindTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  kindIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,248,251,0.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' },
-  kindCount: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: 'rgba(255,248,251,0.92)', alignItems: 'center', justifyContent: 'center' },
+  kindIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(250,248,255,0.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' },
+  kindCount: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: 'rgba(250,248,255,0.92)', alignItems: 'center', justifyContent: 'center' },
   kindLabel: { textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
   chips: { paddingHorizontal: space.gutter, gap: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
   planPhoto: { width: 76, height: 76, borderRadius: radius.md, overflow: 'hidden', backgroundColor: girl.cream },
   meta: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, height: 26, borderRadius: 13 },
-  going: { backgroundColor: girl.plum, borderWidth: 1, borderColor: 'rgba(255,205,226,0.28)', boxShadow: girl.shadowPlum },
+  going: { backgroundColor: girl.plum, borderWidth: 1, borderColor: 'rgba(201,182,255,0.28)', boxShadow: girl.shadowPlum },
   post: { gap: 10, padding: 14, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   postHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: radius.md, overflow: 'hidden' },

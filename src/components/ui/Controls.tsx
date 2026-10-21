@@ -116,7 +116,7 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
   // label turns pearl (selection reads apart from the rose of the main action).
   const girlFlavor = t.flavor === 'girl' && !onDark;
   const fill = girlFlavor ? GIRL_PLUM : t.c.brand;
-  const onFill = girlFlavor ? '#FFF6FA' : t.c.onBrand;
+  const onFill = girlFlavor ? '#FAF7FF' : t.c.onBrand;
   const content = (fg: string, iconColor: string) => (
     <>
       {dot && !icon ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: dot }} /> : null}
@@ -140,7 +140,7 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
               {content(t.c.text, dot ?? t.c.text)}
             </View>
           }
-          chosen={<View style={[box, { borderColor: girlFlavor ? 'rgba(255,205,226,0.28)' : t.c.brand }]}>{content(onFill, onFill)}</View>}
+          chosen={<View style={[box, { borderColor: girlFlavor ? 'rgba(201,182,255,0.28)' : t.c.brand }]}>{content(onFill, onFill)}</View>}
         />
       </PressableScale>
     </Animated.View>
@@ -148,7 +148,7 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
 });
 
 /** Plum of a chosen IRLY Girl chip (pearl text on it: 11:1). */
-const GIRL_PLUM = '#3A1A31';
+const GIRL_PLUM = '#2A1B52';
 
 /* ───────── Badges ───────── */
 
@@ -404,8 +404,8 @@ const GirlField = memo(function GirlField({ icon, trailing, containerStyle, styl
   );
 });
 
-const RING = 'rgba(232,140,182,0.42)';
-const RING_ERROR = 'rgba(142,31,69,0.24)';
+const RING = 'rgba(150,118,255,0.42)';
+const RING_ERROR = 'rgba(160,21,74,0.24)';
 
 /**
  * The frame of an IRLY Girl text field, shared with the Girl screens' own
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     zIndex: 0,
-    boxShadow: '0px 6px 16px rgba(74,36,64,0.06)',
+    boxShadow: '0px 6px 16px rgba(45,29,84,0.06)',
   },
   girlFieldMulti: { alignItems: 'flex-start', paddingVertical: 12 },
   // No browser outline: the nacre ring is the focus indicator.

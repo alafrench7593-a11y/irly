@@ -205,6 +205,6 @@ const styles = StyleSheet.create({
   plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.lg, overflow: 'hidden' },
   planPhoto: { width: 64, height: 64, borderRadius: radius.md, overflow: 'hidden' },
   community: { width: 168, height: 200, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end', boxShadow: girl.shadowSoft },
-  newCommunity: { padding: 14, gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(185,43,105,0.30)', justifyContent: 'flex-start' },
-  communityBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,250,246,0.92)', alignItems: 'center', justifyContent: 'center' },
+  newCommunity: { padding: 14, gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(106,59,238,0.30)', justifyContent: 'flex-start' },
+  communityBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(251,250,255,0.92)', alignItems: 'center', justifyContent: 'center' },
 });

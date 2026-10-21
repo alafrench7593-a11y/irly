@@ -91,15 +91,15 @@ export const Button = memo(function Button({
   };
   const girlFlavor = t.flavor === 'girl';
   if (girlFlavor) {
-    // IRLY Girl: a luminous rose primary with its own glow, a dark plum
-    // glass secondary with pearl text, bordeaux for destructive actions.
+    // IRLY Girl: an electric violet primary with its own glow, a deep violet
+    // glass secondary with pearl text, berry for destructive actions.
     palette.primary = { bg: t.c.brand, fg: '#FFFFFF', shadow: girlElevation.glow };
-    palette.secondary = { bg: 'transparent', fg: '#FFF6FA', shadow: girlElevation.plum };
+    palette.secondary = { bg: 'transparent', fg: '#FAF7FF', shadow: girlElevation.plum };
     palette.danger = { bg: t.c.critical, fg: '#FFFFFF', shadow: girlElevation.card };
   }
   const p = palette[variant];
   // Secondary and glass actions are panes of the shared glass; the primary
-  // of IRLY Girl is its rose gradient, the primary of Mixte stays solid.
+  // of IRLY Girl is its violet gradient, the primary of Mixte stays solid.
   const glassy = variant === 'secondary' || variant === 'glass';
   const girlPrimary = variant === 'primary' && girlFlavor;
   const h = HEIGHT[size];
@@ -153,12 +153,12 @@ export const Button = memo(function Button({
   );
 });
 
-/** Luminous rose, deepening to raspberry: white text stays above 4.5:1 under the label. */
-const GIRL_GRADIENT = ['#D63A7E', '#B92B69', '#9E2358'] as const;
+/** Electric violet, deepening to indigo-violet: white text stays above 4.5:1 under the label. */
+const GIRL_GRADIENT = ['#8B5CF6', '#6A3BEE', '#5A2FD6'] as const;
 
 const styles = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   full: { alignSelf: 'stretch' },
-  girlRim: { borderWidth: 1, borderColor: 'rgba(255,214,232,0.45)', borderBottomColor: 'rgba(122,31,61,0.35)' },
+  girlRim: { borderWidth: 1, borderColor: 'rgba(214,200,255,0.45)', borderBottomColor: 'rgba(64,34,150,0.35)' },
 });

@@ -224,7 +224,7 @@ export const Halo = memo(function Halo({
   const id = `gh${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const style = useAnimatedStyle(() => ({ opacity: progress.value, transform: [{ scale: 0.8 + progress.value * 0.2 }] }));
   const heart = onDark ? '#FFFFFF' : girl.brand;
-  const nacre = onDark ? '#FFE3EE' : girl.blush;
+  const nacre = onDark ? '#E6DCFF' : girl.blush;
   return (
     <Animated.View pointerEvents="none" style={[styles.halo, { width, height, marginLeft: -width / 2, marginTop: -height / 2 }, style]}>
       <Svg width={width} height={height}>
@@ -329,7 +329,7 @@ export function GirlMark({ variant = 'inline', size = 20, onDark = false, word =
 
   // Room around the letters: the italic word leans past its box, the halo needs air.
   const pad = staged ? { paddingHorizontal: size * 0.3, paddingVertical: size * 0.18 } : { paddingHorizontal: size * 0.08 };
-  const sheen = onDark ? '#FFD9E8' : '#F9C6DB';
+  const sheen = onDark ? '#DCD0FF' : '#D4C6FF';
 
   if (!animated) {
     return (

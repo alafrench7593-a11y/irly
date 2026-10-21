@@ -32,8 +32,8 @@ const LAYOUTS = {
 
 /**
  * The light of the IRLY world, painted once behind a screen: the ground
- * colour and three soft glows (steel and indigo on IRLY Noir, rose and
- * lavender in IRLY Girl). It is what glass panels refract, so surfaces read
+ * colour and three soft glows (cool steel greys on IRLY Noir, violet and
+ * ice blue in IRLY Girl). It is what glass panels refract, so surfaces read
  * as layered panes instead of grey boxes. Vector radial gradients: sharp at
  * any size, identical on iOS, Android and web, nothing animated in a loop
  * (the light fades in once with the screen).

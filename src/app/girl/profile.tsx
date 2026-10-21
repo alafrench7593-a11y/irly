@@ -560,8 +560,8 @@ const styles = StyleSheet.create({
   photo: { width: '30.5%', aspectRatio: 4 / 5, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: girl.cream },
   addPhoto: { alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1.5, borderStyle: 'dashed', borderColor: girl.blushStrong, backgroundColor: 'transparent' },
   addIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: girl.blush },
-  remove: { position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(58,42,42,0.6)', alignItems: 'center', justifyContent: 'center' },
-  mainTag: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, height: 22, borderRadius: 11, backgroundColor: 'rgba(58,42,42,0.6)', justifyContent: 'center' },
+  remove: { position: 'absolute', top: 6, right: 6, width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(30,22,52,0.6)', alignItems: 'center', justifyContent: 'center' },
+  mainTag: { position: 'absolute', left: 6, bottom: 6, paddingHorizontal: 8, height: 22, borderRadius: 11, backgroundColor: 'rgba(30,22,52,0.6)', justifyContent: 'center' },
   // The pane shows the focus (rose edge): no browser outline on top of it.
   input: { minHeight: 110, borderRadius: radius.lg, padding: 14, color: girl.ink, fontFamily: font.medium, fontSize: 15, textAlignVertical: 'top', ...Platform.select({ web: { outlineStyle: 'none' } as object, default: {} }) },
   segment: { flexDirection: 'row', gap: 6, padding: 4, borderRadius: radius.lg },

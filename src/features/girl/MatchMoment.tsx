@@ -197,7 +197,7 @@ export function MatchMoment({ match, person, onHello, onSuggestion, onFindExisti
 
 const styles = StyleSheet.create({
   stage: { height: CARD_H + 40, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
-  halo: { position: 'absolute', width: 260, height: 260, borderRadius: 130, backgroundColor: girl.powder, boxShadow: '0px 0px 80px rgba(232,76,140,0.35)' },
+  halo: { position: 'absolute', width: 260, height: 260, borderRadius: 130, backgroundColor: girl.powder, boxShadow: '0px 0px 80px rgba(124,77,255,0.35)' },
   photoCard: { width: CARD_W, height: CARD_H, borderRadius: 26, overflow: 'hidden', borderWidth: 4, borderColor: girl.pearl, boxShadow: girl.shadow, backgroundColor: girl.blush },
   center: { alignItems: 'center', justifyContent: 'center' },
   mark: { position: 'absolute', width: 64, height: 64, borderRadius: 32, backgroundColor: girl.pearl, borderWidth: 1, borderColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center', boxShadow: girl.glow },

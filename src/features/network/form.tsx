@@ -3,6 +3,7 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useFrame } from '@/components/layout/AppFrame';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { useNetworkTone } from './tone';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { useT } from '@/i18n';
@@ -21,6 +22,7 @@ import { useTheme } from '@/theme/useTheme';
 /** Steps as segments that fill in; the ones already done take you back. */
 export function StepProgress({ steps, step, onStep }: { steps: string[]; step: number; onStep: (i: number) => void }) {
   const t = useTheme();
+  const tone = useNetworkTone();
   const tr = useT();
   const reduced = useReducedMotion();
   const pos = useSharedValue(step + 1);
@@ -41,7 +43,7 @@ export function StepProgress({ steps, step, onStep }: { steps: string[]; step: n
             accessibilityState={{ disabled: i >= step, selected: i === step }}
             style={styles.segment}
           >
-            <Segment index={i} pos={pos} track={t.c.line} fill={t.c.text} />
+            <Segment index={i} pos={pos} track={t.c.line} fill={tone.accent} />
           </PressableScale>
         ))}
       </View>
@@ -82,6 +84,7 @@ export function useColumns(min = 150, gap = 8) {
 /** One large "I am" card: icon, name and a short line. A radio among four. */
 export function RoleCard({ label, hint, icon, selected, width, onPress }: { label: string; hint: string; icon: IconName; selected: boolean; width: number; onPress: () => void }) {
   const t = useTheme();
+  const tone = useNetworkTone();
   const { p, sweep, outer } = useSelection(selected);
   const body = (fg: string, soft: string, ring: string, on: boolean) => (
     <View style={[styles.role, { borderColor: on ? 'transparent' : t.c.line }]}>
@@ -105,7 +108,7 @@ export function RoleCard({ label, hint, icon, selected, width, onPress }: { labe
   return (
     <Animated.View style={[{ width }, outer]}>
       <PressableScale haptic="select" scaleTo={0.96} onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: selected, selected }} aria-checked={selected} accessibilityLabel={`${label}. ${hint}`}>
-        <SelectionLayers p={p} sweep={sweep} fill={t.c.text} radius={radius.lg} base={body(t.c.text, t.c.textSecondary, t.c.lineStrong, false)} chosen={body(t.c.bg, t.c.bg, t.c.bg, true)} />
+        <SelectionLayers p={p} sweep={sweep} fill={tone.accent} radius={radius.lg} base={body(t.c.text, t.c.textSecondary, t.c.lineStrong, false)} chosen={body(tone.onAccent, tone.onAccent, tone.onAccent, true)} />
       </PressableScale>
     </Animated.View>
   );
@@ -114,6 +117,7 @@ export function RoleCard({ label, hint, icon, selected, width, onPress }: { labe
 /** A compact tile (emoji + label) in a grid of choices: a checkbox. */
 export function Tile({ emoji, label, selected, width, onPress }: { emoji: string; label: string; selected: boolean; width: number; onPress: () => void }) {
   const t = useTheme();
+  const tone = useNetworkTone();
   const { p, sweep, outer } = useSelection(selected);
   const body = (fg: string, on: boolean) => (
     <View style={[styles.tile, { borderColor: on ? 'transparent' : t.c.line }]}>
@@ -130,7 +134,7 @@ export function Tile({ emoji, label, selected, width, onPress }: { emoji: string
   return (
     <Animated.View style={[{ width }, outer]}>
       <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} accessibilityRole="checkbox" accessibilityState={{ checked: selected }} aria-checked={selected} accessibilityLabel={label}>
-        <SelectionLayers p={p} sweep={sweep} fill={t.c.text} radius={radius.md} base={body(t.c.text, false)} chosen={body(t.c.bg, true)} />
+        <SelectionLayers p={p} sweep={sweep} fill={tone.accent} radius={radius.md} base={body(t.c.text, false)} chosen={body(tone.onAccent, true)} />
       </PressableScale>
     </Animated.View>
   );
