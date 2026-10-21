@@ -101,7 +101,8 @@ export function useNetworkCommunities(cityId: CityId) {
       state.list
         // Each space its own (listed.ts): in IRLY Girl, women-only communities only.
         .filter((c) => keep(c.cityId) && networkListed(c, girlSpace))
-        .sort((a, b) => Number(b.cityId === cityId) - Number(a.cityId === cityId) || b.postsWeek - a.postsWeek || b.members - a.members),
+        // IRLY Network's own community (Girl CEO in IRLY Girl) first: it lives here.
+        .sort((a, b) => Number(b.cityId === cityId) - Number(a.cityId === cityId) || Number(b.official) - Number(a.official) || b.postsWeek - a.postsWeek || b.members - a.members),
     [state.list, keep, girlSpace, cityId],
   );
   const on = Boolean(uid && supabase);

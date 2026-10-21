@@ -4,7 +4,7 @@ import { girl, serif } from './theme';
 
 /**
  * The IRLY Girl wordmark: the parent brand set in spaced Manrope capitals,
- * then « Girl » (or « Moms ») in Instrument Serif italic, a small rose stop between them.
+ * then « Girl » (or « Maman ») in Instrument Serif italic, a small rose stop between them.
  * `onDark` inverts it for photos; sizes stay crisp from 14 to 48.
  *
  * This is the static logo. For motion (launch, intro, headers, loaders) use
@@ -21,7 +21,7 @@ export function GirlLogo({
 }: {
   size?: number;
   onDark?: boolean;
-  word?: 'Girl' | 'Moms';
+  word?: 'Girl' | 'Maman';
   tint?: string;
   decorative?: boolean;
 }) {

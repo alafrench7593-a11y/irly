@@ -865,14 +865,15 @@ select pg_temp.check((select count(*) from public.communities where official and
 select pg_temp.check(private.ensure_official_communities() = 0, 'creating official communities again makes no duplicate');
 select pg_temp.check(exists (select 1 from public.messages m join public.conversations v on v.id = m.conversation_id join public.communities c on c.id = v.community_id where c.official and c.topic = 'newcomers' and m.kind = 'system'), 'official chats open with a welcome');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
-select pg_temp.check((select topic from public.community_recommend('dubai', '{newcomer,activity:gym,goal:networking}') limit 1) in ('newcomers', 'gym'), 'recommendations follow the answers');
-select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer}') where topic = 'football'), 'nothing recommended without a matching answer');
+select pg_temp.check((select topic from public.community_recommend('dubai', '{newcomer,activity:gym,goal:networking}') limit 1) in ('expats', 'sport'), 'recommendations follow the answers (IRLY Expat, IRLY Sport)');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer}') where topic = 'sport'), 'nothing recommended without a matching answer');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer,activity:gym,activity:football,interest:food}') where topic in ('newcomers', 'help', 'gym', 'football', 'food')), 'retired official communities are never recommended');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{}')), 'no answers, no recommendations');
 select pg_temp.check((select count(*) from public.community_recommend('sharjah', '{activity:gym}')) = 1, 'a city without its own gets the nearest one, once');
--- Newcomers: IRLY Newcomers, IRLY Help & Questions; gym: IRLY Gym.
-select pg_temp.check(public.join_communities(array(select id from public.community_recommend('dubai', '{newcomer,activity:gym}'))) = 3, 'join all');
-select pg_temp.check((select count(*) from public.community_recommend('dubai', '{newcomer,activity:gym}') where is_member) = 3, 'joined communities show as joined');
-select pg_temp.check(exists (select 1 from public.messages m join public.conversations v on v.id = m.conversation_id join public.communities c on c.id = v.community_id where c.topic = 'gym' and c.city_id = 'dubai' and m.kind = 'system' and m.body like '% just joined 👋%'), 'a new member is announced in the chat');
+-- Newcomers: IRLY Expat; gym: IRLY Sport (20261028100000: four official communities).
+select pg_temp.check(public.join_communities(array(select id from public.community_recommend('dubai', '{newcomer,activity:gym}'))) = 2, 'join all');
+select pg_temp.check((select count(*) from public.community_recommend('dubai', '{newcomer,activity:gym}') where is_member) = 2, 'joined communities show as joined');
+select pg_temp.check(exists (select 1 from public.messages m join public.conversations v on v.id = m.conversation_id join public.communities c on c.id = v.community_id where c.topic = 'sport' and c.city_id = 'dubai' and m.kind = 'system' and m.body like '% just joined 👋%'), 'a new member is announced in the chat');
 select pg_temp.expect_denied($$insert into public.communities (city_id, name, official, topic, created_by) values ('dubai', 'Fake IRLY Gym', true, 'gym', '00000000-0000-0000-0000-00000000000b')$$, 'members cannot create official communities');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{goal:irlygirl,goal:friends}') where topic = 'girls'), 'IRLY Girls is not recommended to men');
@@ -1293,7 +1294,7 @@ select pg_temp.check(not exists (select 1 from public.member_lives('00000000-000
 -- ───── Community catalog and Match IRLY (J, K, L) ─────
 select pg_temp.as_admin();
 select pg_temp.check(private.ensure_official_communities() = 0, 'running the catalog again creates no duplicate');
-select pg_temp.check((select count(*) from public.communities where official and topic = 'expats' and city_id = 'dubai' and deleted_at is null) = 1, 'one IRLY Expats in Dubai');
+select pg_temp.check((select count(*) from public.communities where official and topic = 'expats' and city_id = 'dubai' and deleted_at is null and name = 'IRLY Expat') = 1, 'one IRLY Expat in Dubai');
 insert into auth.users (id) values ('00000000-0000-0000-0000-000000000013'), ('00000000-0000-0000-0000-000000000014'), ('00000000-0000-0000-0000-000000000015');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000013');
 insert into public.profiles (id, first_name, birthdate, gender, city_id, interests, activity_prefs, languages) values ('00000000-0000-0000-0000-000000000013', 'Jade', '1995-01-01', 'woman', 'dubai', '{sports,startups}', '{football}', '{en,fr}');
@@ -1306,10 +1307,10 @@ insert into public.profiles (id, first_name, birthdate, gender, city_id, interes
 select pg_temp.as_user('00000000-0000-0000-0000-000000000013');
 select pg_temp.check((select count(*) from public.community_list('dubai') where official and not is_member) >= 10, 'a new member sees IRLY communities without joining');
 select pg_temp.check(not exists (select 1 from public.community_members where user_id = auth.uid()), 'nobody is joined to anything silently');
-select pg_temp.check(exists (select 1 from public.community_recommend('dubai', array['newcomer', 'interest:sports', 'activity:football'], 12) where topic = 'newcomers')
-  and exists (select 1 from public.community_recommend('dubai', array['newcomer', 'interest:sports', 'activity:football'], 12) where topic = 'football'), 'newcomer + football answers recommend IRLY Newcomers and IRLY Football');
+select pg_temp.check(exists (select 1 from public.community_recommend('dubai', array['newcomer', 'interest:sports', 'activity:football'], 12) where topic = 'expats')
+  and exists (select 1 from public.community_recommend('dubai', array['newcomer', 'interest:sports', 'activity:football'], 12) where topic = 'sport'), 'newcomer + football answers recommend IRLY Expat and IRLY Sport');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', array['interest:sports'], 12) where topic = 'girls'), 'IRLY Girls is not recommended to someone who did not ask for it');
-select id as football_id from public.communities where official and topic = 'football' and city_id = 'dubai' \gset
+select id as football_id from public.communities where official and topic = 'sport' and city_id = 'dubai' and parent_id is null \gset
 select public.join_community(:'football_id');
 select pg_temp.check((select is_member from public.community_list('dubai') where id = :'football_id'), 'joining shows it as mine in the list');
 select pg_temp.check(exists (select 1 from public.member_communities(auth.uid()) where id = :'football_id' and role = 'joined'), 'joining shows it under Joined on the profile');
@@ -1651,7 +1652,11 @@ select public.create_community('Count Club', 'dubai') as count_club \gset
 select pg_temp.check((select members_count from public.communities where id = :'count_club') = 1, 'ranking: a new community counts its owner');
 select pg_temp.expect_denied(format('update public.communities set members_count = 99999 where id = %L', :'count_club'), 'ranking: nobody writes a member count by hand, owners included');
 select pg_temp.as_admin();
-select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (), true) as ok from (select members from public.community_list('dubai') where city_id = 'dubai') l) x), 'ranking: main communities come most members first');
+-- Since 20261028100000: IRLY's official ones first, then the members', each most members first.
+select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (partition by official order by n), true)
+    and coalesce(official >= lead(official) over (order by n), true) as ok
+  from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
+  where city_id = 'dubai') x), 'ranking: main communities come official first, then most members first');
 select pg_temp.check(not exists (select 1 from public.community_list('dubai') l join public.communities c on c.id = l.id where c.parent_id is not null), 'ranking: no group among main communities');
 select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (), true) as ok from (select members from public.community_subgroups(:'sport_id')) l) x), 'ranking: groups come most members first');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
@@ -1718,9 +1723,9 @@ select pg_temp.check(not exists (select 1 from public.communities where official
 select pg_temp.check((select count(*) from public.communities where official and topic = 'sport' and city_id = 'sharjah' and parent_id is null and deleted_at is null) = 1, 'emirates: created once (running it again adds nothing)');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
 select pg_temp.check((select city_id from public.community_recommend('sharjah', array['goal:sport'], 6) where topic = 'sport') = 'sharjah', 'emirates: a Sharjah member who looks for sport gets IRLY Sport in Sharjah');
-select pg_temp.check(exists (select 1 from public.community_recommend('ajman', array['goal:wellness'], 6) where topic = 'wellness' and city_id = 'ajman'), 'emirates: wellness leads to IRLY Wellness in Ajman');
-select pg_temp.check(exists (select 1 from public.community_recommend('sharjah', array['goal:nightlife'], 6) where topic = 'nights'), 'emirates: nightlife still finds IRLY Nights (another emirate) from Sharjah');
-select pg_temp.check(exists (select 1 from public.community_recommend('rak', array['goal:help'], 6) where topic = 'help' and city_id = 'rak'), 'emirates: help & tips leads to IRLY Help & Questions in Ras Al Khaimah');
+select pg_temp.check(exists (select 1 from public.community_recommend('ajman', array['goal:wellness'], 6) where topic = 'sport' and city_id = 'ajman'), 'emirates: wellness leads to IRLY Sport in Ajman');
+select pg_temp.check(exists (select 1 from public.community_recommend('sharjah', array['goal:nightlife'], 6) where topic = 'lifestyle'), 'emirates: nightlife finds IRLY Activité from Sharjah');
+select pg_temp.check(exists (select 1 from public.community_recommend('rak', array['goal:help'], 6) where topic = 'expats' and city_id = 'rak'), 'emirates: help & tips leads to IRLY Expat in Ras Al Khaimah');
 select pg_temp.check(exists (select 1 from public.community_recommend('fujairah', array['goal:dogwalk'], 6)), 'emirates: every answer leads somewhere (dog walk)');
 
 -- ===== Pre-launch audit =====
