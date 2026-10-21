@@ -48,7 +48,7 @@ export const GirlPortals = memo(function GirlPortals({ light, onMoms }: { light:
     <View style={styles.row}>
       {(inGirl ? GIRL_SPACE_PORTALS : PORTALS).map((p) => (
         <PressableScale key={p.title} haptic="select" scaleTo={0.97} onPress={() => open(p)} accessibilityLabel={`${p.title}. ${p.line}`}>
-          <Photo visual={{ photo: p.photo }} light={light} scrim="strong" style={[styles.card, { width: w }]} width={600} recyclingKey={`portal-${p.title}`}>
+          <Photo visual={{ photo: p.photo }} light={light} scrim="strong" style={[styles.card, { width: w }]} width={600} recyclingKey={`portal-${p.title}`} pinned>
             <View style={styles.top}>
               <Glass dark level="thin" style={styles.icon}>
                 <Icon name={p.icon} size={16} color="#FFFFFF" />

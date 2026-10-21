@@ -27,7 +27,7 @@ import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Film } from '@/components/visual/Film';
-import { filmFor, photo as photoUrl, portrait, type PhotoKey } from '@/data/photos';
+import { filmFor, isOwnPhoto, photo as photoUrl, portrait, type PhotoKey } from '@/data/photos';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
@@ -232,25 +232,25 @@ function Face({ face, index, w, h, reduced }: { face: FaceDef; index: number; w:
   );
 }
 
-// Dubai photos only (checked, served from the photo library).
-const ROWS: { photo: PhotoKey; label: string }[][] = [
+// Dubai photos only: IRLY's own first (site/img/own, always that very photo), then the photo library.
+export const STORY_ROWS: { photo: PhotoKey; label: string }[][] = [
   [
-    { photo: 'gym', label: 'Gym' },
-    { photo: 'beachSunset', label: 'Beach' },
-    { photo: 'yacht', label: 'Boat day' },
-    { photo: 'streetFood', label: 'Street food' },
+    { photo: 'gymMix', label: 'Gym' },
+    { photo: 'beachMix', label: 'Beach' },
+    { photo: 'yachtGirl', label: 'Boat day' },
+    { photo: 'foodMix', label: 'Street food' },
   ],
   [
-    { photo: 'dunes', label: 'Desert' },
+    { photo: 'buggyMix', label: 'Desert' },
     { photo: 'souk', label: 'Souk' },
-    { photo: 'djSunset', label: 'Sunset' },
+    { photo: 'burjArabSunset', label: 'Sunset' },
     { photo: 'coffeeBar', label: 'Coffee' },
   ],
   [
-    { photo: 'kayak', label: 'Hatta' },
-    { photo: 'rooftopNeon', label: 'Night out' },
+    { photo: 'wadiMix', label: 'Hatta' },
+    { photo: 'nightDinner', label: 'Night out' },
     { photo: 'dubaiMarina', label: 'Marina walk' },
-    { photo: 'steak', label: 'Dinner' },
+    { photo: 'dinnerMix', label: 'Dinner' },
   ],
 ];
 
@@ -258,7 +258,7 @@ const ROWS: { photo: PhotoKey; label: string }[][] = [
 const ActivitiesScene = memo(function ActivitiesScene({ h, reduced }: SceneProps) {
   return (
     <View style={[StyleSheet.absoluteFill, styles.clip, { justifyContent: 'center', gap: 12 }]}>
-      {ROWS.map((row, i) => (
+      {STORY_ROWS.map((row, i) => (
         <Marquee key={i} items={row} dir={i % 2 ? 1 : -1} speed={12000 + i * 2400} reduced={reduced} delay={i * 120} tileH={Math.min(118, Math.max(84, h * 0.2))} />
       ))}
     </View>
@@ -281,7 +281,7 @@ function Marquee({ items, dir, speed, reduced, delay, tileH }: { items: { photo:
   const tiles = (copy: number) =>
     items.map((c) => (
       <View key={`${copy}-${c.label}`} style={[styles.tile, { height: tileH, width: tileH * 1.45 }]}>
-        <Image source={{ uri: photoUrl(c.photo, 480) }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
+        <Image source={{ uri: photoUrl(c.photo, 480, undefined, isOwnPhoto(c.photo)) }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" />
         <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.7)']} start={{ x: 0, y: 0.45 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} />
         <Text variant="label" color="#FFFFFF" style={styles.tileLabel}>
           {c.label}

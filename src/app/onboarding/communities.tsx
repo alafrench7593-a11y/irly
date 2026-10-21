@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
 import { CommunityIntro } from '@/features/community/CommunityIntro';
 import { CommunityThumb } from '@/features/community/CommunityThumb';
@@ -85,6 +87,11 @@ export default function CommunitiesWelcome() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
+      {/* A photo of people together behind the title (IRLY's own: IRLY Girl's in IRLY Girl), fading into the page so the text stays readable. */}
+      <View style={[styles.band, { height: insets.top + 300 }]} pointerEvents="none">
+        <Photo visual={{ photo: inGirl ? 'girlsOut' : 'footballMix' }} light={city.light} width={900} style={StyleSheet.absoluteFill} pinned />
+        <LinearGradient colors={[`${t.c.bg}B3`, `${t.c.bg}E0`, t.c.bg]} locations={[0, 0.6, 1]} style={StyleSheet.absoluteFill} />
+      </View>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + space[6], paddingBottom: insets.bottom + 200, paddingHorizontal: space.gutter, gap: space[5] }} showsVerticalScrollIndicator={false}>
         <Animated.View entering={reduced ? undefined : FadeInDown.springify(560).dampingRatio(0.85)} style={{ gap: 8 }}>
           <Text variant="overline" tone="accent">
@@ -204,6 +211,7 @@ function CommunityRow({ c, index, reduced, choosing, picked, onToggle }: { c: Of
 }
 
 const styles = StyleSheet.create({
+  band: { position: 'absolute', top: 0, left: 0, right: 0 },
   root: { flex: 1 },
   card: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: radius.xl, borderWidth: 1.5 },
   emoji: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center' },

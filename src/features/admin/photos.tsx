@@ -11,6 +11,8 @@ import { DUBAI_KEYS } from '@/data/dubaiKeys';
 import { LIBRARY, OWN, PHOTO_IDS, type PhotoKey } from '@/data/photos';
 import { GIRL_OFFICIAL_PHOTO, TOPIC_PHOTO } from '@/features/community/official';
 import { GIRL_KINDS, MOM_KINDS } from '@/features/girl/world';
+import { STORY_ROWS } from '@/features/onboarding/IrlyStory';
+import { STEP_PHOTOS } from '@/features/onboarding/StepShell';
 import { pickPhoto } from '@/features/server/covers';
 import { useSignedLinks } from '@/features/server/media';
 import { t as tx } from '@/i18n';
@@ -21,11 +23,13 @@ import { AdminInput, adminStyles, Card, useLoad } from './ui';
 
 /* ───────── IRLY's own photos, by where the app shows them ───────── */
 
-export type EditorialGroupId = 'categories' | 'catalogue' | 'official' | 'home' | 'girl' | 'all';
+export type EditorialGroupId = 'discover' | 'intro' | 'categories' | 'catalogue' | 'official' | 'home' | 'girl' | 'all';
 export type EditorialItem = { key: string; label: string; uses: string[] };
 export type EditorialGroup = { id: EditorialGroupId; label: string; items: EditorialItem[] };
 
 export const EDITORIAL_LABEL: Record<EditorialGroupId, string> = {
+  discover: 'Discover activities',
+  intro: 'Introduction and sign-up',
   categories: 'Categories',
   catalogue: 'Activities catalogue',
   official: 'Official communities',
@@ -55,6 +59,19 @@ export function editorialGroups(): EditorialGroup[] {
   for (const c of [...CATEGORIES, GIRL_CATEGORY]) collect(categories, c.photo, c.label);
   const catalogue = new Map<string, EditorialItem>();
   for (const e of CATALOG_ENTRIES) collect(catalogue, ideaPhoto(e.categoryId, e.label, e.activity?.place, e.sub.id), e.label);
+  // Home › Discover activities: each category card, then the photo of every activity inside it (Global Village, zoo & safari, desert, pool, beach clubs, Kite Beach…).
+  const discover = new Map<string, EditorialItem>();
+  for (const c of CATEGORIES) collect(discover, c.photo, `${c.label} (card)`);
+  for (const e of CATALOG_ENTRIES) collect(discover, ideaPhoto(e.categoryId, e.label, e.activity?.place, e.sub.id), `${CATEGORIES.find((c) => c.id === e.categoryId)?.label ?? e.categoryId} · ${e.label}`);
+  // The introduction: the story's photo rows, each sign-up step, the communities step, IRLY Girl's intro slides (src/app/girl/onboarding.tsx).
+  const intro = new Map<string, EditorialItem>();
+  for (const row of STORY_ROWS) for (const c of row) collect(intro, c.photo, `What is IRLY? · ${c.label}`);
+  collect(intro, 'dubai', 'What is IRLY? · Dubai');
+  STEP_PHOTOS.forEach((k, i) => collect(intro, k, `Sign-up · step ${i + 1}`));
+  collect(intro, 'footballMix', 'Sign-up · Your communities');
+  collect(intro, 'girlsOut', 'IRLY Girl · Your communities');
+  for (const [i, k] of (['poolGirl', 'padelGirl', 'drinksGirl', 'yachtGirl', 'spaGirl'] as const).entries()) collect(intro, k, `IRLY Girl intro · slide ${i + 1}`);
+  for (const d of Object.values(DESTINATIONS)) collect(intro, d.photo, `Welcome · ${d.name}`);
   const official = new Map<string, EditorialItem>();
   for (const [topic, key] of Object.entries(TOPIC_PHOTO)) collect(official, key, `IRLY ${topic[0].toUpperCase()}${topic.slice(1)}`);
   for (const [topic, key] of Object.entries(GIRL_OFFICIAL_PHOTO)) collect(official, key, `IRLY Girl · ${topic.replace(/^girl_/, '')}`);
@@ -64,12 +81,18 @@ export function editorialGroups(): EditorialGroup[] {
   collect(home, 'dubaiNight', 'Dubai by night');
   collect(home, 'abudhabiSkyline', 'Abu Dhabi by night');
   collect(home, 'baliDawn', 'Bali at dawn');
+  // The Home background on phones in Dubai (HomeBackdrop): IRLY's own photos.
+  collect(home, 'burjArabSunset', 'Home background · IRLY, by day (phones)');
+  collect(home, 'burjNight', 'Home background · IRLY, by night (phones)');
+  collect(home, 'poolGirl', 'Home background · IRLY Girl (phones)');
   const girl = new Map<string, EditorialItem>();
   for (const k of GIRL_KINDS) collect(girl, k.photo, `IRLY Girl · ${k.label}`);
   for (const k of MOM_KINDS) collect(girl, k.photo, `IRLY Moms · ${k.label}`);
   const all = new Map<string, EditorialItem>();
   for (const key of [...Object.keys(PHOTO_IDS), ...LIBRARY, ...OWN, ...DUBAI_KEYS]) collect(all, key, key);
   groups = [
+    { id: 'discover', label: EDITORIAL_LABEL.discover, items: [...discover.values()] },
+    { id: 'intro', label: EDITORIAL_LABEL.intro, items: [...intro.values()] },
     { id: 'categories', label: EDITORIAL_LABEL.categories, items: [...categories.values()] },
     { id: 'catalogue', label: EDITORIAL_LABEL.catalogue, items: [...catalogue.values()] },
     { id: 'official', label: EDITORIAL_LABEL.official, items: [...official.values()] },

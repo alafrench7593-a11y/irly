@@ -1,12 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming, type SharedValue } from 'react-native-reanimated';
-import { Film } from '@/components/visual/Film';
 import { Photo } from '@/components/visual/Photo';
-import { cityFilm } from '@/data/photos';
+import { bestPhoto, type PhotoKey } from '@/data/photos';
 import type { City } from '@/data/types';
 import { useIntro } from '@/features/intro/introStore';
+import { usePhotoOverridesVersion } from '@/features/photo/overrides';
+import { useFrame } from '@/components/layout/AppFrame';
 import { ease, motion } from '@/motion/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { heroPhoto } from './HomeHero';
@@ -23,8 +24,14 @@ const GIRL_WASH = ['rgba(244,200,214,0.42)', 'rgba(240,218,204,0.30)', 'rgba(251
 /**
  * The city behind the whole Home: fixed, cropped to cover, with a veil
  * that deepens as you scroll so the glass panels on top stay readable.
- * The photo is there first (never a black screen); the film, when the city
- * has one, fades in over it once it can play and pauses in the background.
+ * One still photo, the best we have, and nothing else: no film fades in
+ * over it any more (the Dubai Fountain clip used to pop in over the night
+ * photo seconds after the page opened). It is decoration only: it never
+ * takes a tap (pointerEvents none on the whole layer).
+ *
+ * On a phone in Dubai it is IRLY's own photo (see OWN_DAY), served whole on
+ * dense screens; on wide screens the city's own HD photo (2400 px), always
+ * the same one.
  *
  * Motion: it fades in with a slight zoom that settles once the app's
  * curtain lifts, then only follows the scroll (slower than the page).
@@ -54,13 +61,18 @@ export const HomeBackdrop = memo(function HomeBackdrop({ city, now, scrollY, her
   // Under the hero the city is clear; under the content it sits behind a veil.
   const veil = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.value, [heroH * 0.25, heroH * 0.95], [0, 1], Extrapolation.CLAMP) }));
 
-  const key = heroPhoto(city, now);
-  const film = cityFilm(city.id, key);
+  const frame = useFrame();
+  const key = backdropPhoto(city, now, frame.width < frame.height, girl);
+  // The longest side of the screen: a full-screen cover needs that many points (times the density).
+  const size = Math.max(frame.width, frame.height);
+  // The IRLY team may replace the photo from the back office: a new list re-resolves it.
+  const overrides = usePhotoOverridesVersion();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const uri = useMemo(() => bestPhoto(key, size), [key, size, overrides]);
   return (
     <View style={[StyleSheet.absoluteFill, styles.clip, { backgroundColor: t.c.bg }]} pointerEvents="none">
       <Animated.View style={[styles.photo, photo]}>
-        <Photo visual={{ photo: key }} light={city.light} width={1400} style={StyleSheet.absoluteFill} recyclingKey={`backdrop-${city.id}`} />
-        {film && !reduced ? <Film uri={film} /> : null}
+        <Photo visual={{ photo: key, uri }} light={city.light} width={size} style={StyleSheet.absoluteFill} recyclingKey={`backdrop-${city.id}`} pinned />
       </Animated.View>
       {/* IRLY Girl: a powder-rose and warm-beige light over the city, so the first screen reads rose poudré / crème. */}
       {girl ? <LinearGradient colors={GIRL_WASH} locations={[0, 0.55, 1]} style={StyleSheet.absoluteFill} /> : null}
@@ -75,6 +87,24 @@ export const HomeBackdrop = memo(function HomeBackdrop({ city, now, scrollY, her
     </View>
   );
 });
+
+/**
+ * IRLY's own photos of the city, for tall (phone) screens, by space and by
+ * day / night: IRLY Girl opens on friends in a pool above Dubai Marina
+ * (1125 px), IRLY on the Burj Al Arab at sunset (1080 × 1920) and, at night,
+ * the Burj Khalifa (736 px only: IRLY needs a larger original for very dense
+ * screens). Wide screens keep the city's HD photo (2400 px).
+ */
+const OWN_DAY: Partial<Record<City['id'], { mixte: PhotoKey; girl: PhotoKey }>> = { dubai: { mixte: 'burjArabSunset', girl: 'poolGirl' } };
+const OWN_NIGHT: Partial<Record<City['id'], { mixte: PhotoKey }>> = { dubai: { mixte: 'burjNight' } };
+
+/** The Home background: IRLY's own photo first where it fits the screen, else the city's (by night, the city at night). */
+export function backdropPhoto(city: City, now: number, tall: boolean, girl: boolean): PhotoKey {
+  const key = heroPhoto(city, now);
+  if (!tall) return key;
+  if (key === city.photo) return OWN_DAY[city.id]?.[girl ? 'girl' : 'mixte'] ?? key;
+  return (!girl && OWN_NIGHT[city.id]?.mixte) || key;
+}
 
 const styles = StyleSheet.create({
   clip: { overflow: 'hidden' },

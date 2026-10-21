@@ -19,7 +19,7 @@ import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type Tab = 'app' | 'members';
-const GROUPS: EditorialGroupId[] = ['categories', 'catalogue', 'official', 'home', 'girl', 'all'];
+const GROUPS: EditorialGroupId[] = ['discover', 'intro', 'categories', 'catalogue', 'official', 'home', 'girl', 'all'];
 const KINDS: { value: PhotoKind; label: string }[] = [
   { value: 'community', label: 'Communities' },
   { value: 'activity', label: 'Activities' },
@@ -69,7 +69,7 @@ export default function AdminPhotos() {
         />
         <Field icon="search" value={search} onChangeText={setSearch} placeholder={tab === 'app' ? 'Category, activity, place or key' : 'Name, words, author or id'} accessibilityLabel="Search photos" autoCapitalize="none" />
         {tab === 'app' ? (
-          <AppPhotos q={q} initial={GROUPS.includes(p.group as EditorialGroupId) ? (p.group as EditorialGroupId) : 'categories'} />
+          <AppPhotos q={q} initial={GROUPS.includes(p.group as EditorialGroupId) ? (p.group as EditorialGroupId) : 'discover'} />
         ) : (
           <MemberPhotos q={q} profiles={isModerator(role)} initial={KINDS.some((k) => k.value === p.kind) ? (p.kind as PhotoKind) : 'community'} />
         )}
