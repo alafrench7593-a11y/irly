@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
+import { DEMO } from '@/config/app';
 import { useAccount } from '@/features/auth/account';
+import { changed } from '@/features/server/sync';
+import { cleanImage } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -11,13 +14,14 @@ export type StaffRole = 'owner' | 'admin' | 'moderator' | 'content';
 export type CaseStatus = 'open' | 'reviewing' | 'need_info' | 'actioned' | 'dismissed' | 'closed';
 export type SanctionKind = 'warning' | 'suspension' | 'ban';
 
+/** The team's words for each status (the server keeps its own names). */
 export const STATUS_LABEL: Record<CaseStatus, string> = {
   open: 'New',
-  reviewing: 'Under review',
-  need_info: 'More information needed',
-  actioned: 'Action taken',
-  dismissed: 'No violation found',
-  closed: 'Closed',
+  reviewing: 'In review',
+  need_info: 'Action needed',
+  actioned: 'Resolved: action taken',
+  dismissed: 'Rejected',
+  closed: 'Resolved',
 };
 
 export const KIND_LABEL: Record<string, string> = {
@@ -40,7 +44,8 @@ export const CATEGORY_LABEL: Record<string, string> = {
   inappropriate: 'Inappropriate content',
   hate_speech: 'Discrimination or hate',
   scam: 'Scam',
-  unsafe: 'Unsafe behaviour',
+  unsafe: 'Dangerous behaviour',
+  sexual_content: 'Sexual content',
   other: 'Other',
 };
 
@@ -106,6 +111,7 @@ export type AuditRow = { at: string; actor_name: string; action: string; target_
 export type StaffRow = { user_id: string; first_name: string | null; role: StaffRole; granted_at: string | null };
 
 async function call<T>(fn: string, args: Record<string, unknown> = {}): Promise<T> {
+  if (DEMO && !supabase) return (await import('./demo')).demoCall(fn) as T;
   if (!supabase) throw new Error('Not connected');
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
@@ -128,6 +134,198 @@ export const memberSanctions = (user: string) => call<SanctionRow[]>('mod_user_s
 export const loadAudit = () => call<AuditRow[]>('mod_audit', { p_limit: 200 });
 export const loadStaff = () => call<StaffRow[]>('staff_list');
 export const setRole = (user: string, role: Exclude<StaffRole, 'owner'> | null) => call<void>('staff_set_role', { p_user: user, p_role: role });
+
+// ───────── Back office, completed (migrations 20261027200000, 20261027200100) ─────────
+
+export type Overview = {
+  users: number;
+  new_7d: number;
+  new_30d: number;
+  active_30d: number;
+  signins_30d: number | null;
+  communities: number;
+  activities: number;
+  activities_upcoming: number;
+  posts: number;
+  lives: number;
+  reports_open: number;
+  reports_review: number;
+  reports_action: number;
+  reports_7d: number;
+  important_7d: number;
+  suspended: number;
+  banned: number;
+  hidden: number;
+  email_pending: number;
+  email_failed: number;
+  recent: { at: string; by: string; action: string; target: string | null }[];
+};
+
+export type UserSheet = {
+  id: string;
+  first_name: string | null;
+  username: string | null;
+  city_id: string | null;
+  created_at: string;
+  verified: boolean;
+  role: StaffRole | null;
+  photos: number;
+  email: string | null;
+  status: 'active' | 'suspended' | 'banned' | 'deleted';
+  status_until: string | null;
+  counts: { activities: number; communities: number; posts: number; reports_about: number; reports_filed: number };
+  reports: { case_id: string; status: CaseStatus; category: string; target_kind: string; created_at: string }[];
+  sanctions: { id: string; kind: SanctionKind; reason: string; created_at: string; ends_at: string | null; lifted_at: string | null; lift_reason: string | null; by: string | null }[];
+  history: { at: string; action: string; by: string; reason: string | null }[];
+};
+
+export type CommunityRow = {
+  id: string;
+  name: string;
+  city_id: string;
+  girl_only: boolean;
+  official: boolean;
+  parent_id: string | null;
+  members_count: number;
+  created_at: string;
+  removed: boolean;
+  hidden: boolean;
+  cover_path: string | null;
+  creator_name: string | null;
+  reports: number;
+};
+
+export type Hold = { reason: string; at: string; by: string | null; final?: boolean } | null;
+export type ItemReport = { case_id: string; status: CaseStatus; category: string; created_at: string };
+
+export type CommunitySheet = {
+  id: string;
+  name: string;
+  tagline: string | null;
+  description: string | null;
+  city_id: string;
+  girl_only: boolean;
+  official: boolean;
+  emoji: string | null;
+  cover_path: string | null;
+  created_at: string;
+  parent_id: string | null;
+  parent_name: string | null;
+  creator: { id: string; name: string } | null;
+  admins: { id: string; name: string; role: string }[];
+  member_count: number;
+  groups: number;
+  removed: boolean;
+  hold: Hold;
+  reports: ItemReport[];
+};
+
+export type ContentKind = 'activity' | 'community_post' | 'comment' | 'irl_post';
+export type ModerationKind = ContentKind | 'community';
+export type ContentRow = {
+  id: string;
+  kind: ContentKind;
+  title: string | null;
+  body: string | null;
+  author_id: string | null;
+  author_name: string | null;
+  created_at: string;
+  state: 'visible' | 'hidden' | 'cancelled' | 'past' | 'deleted' | 'expired';
+  girl_only: boolean;
+  context: string | null;
+  reports: number;
+};
+export type ContentItem = {
+  kind: ContentKind;
+  id: string;
+  title?: string;
+  body?: string | null;
+  author_id?: string;
+  author_name?: string | null;
+  created_at?: string;
+  starts_at?: string;
+  place?: string;
+  city?: string;
+  community?: string | null;
+  girl_only?: boolean;
+  cancelled?: boolean;
+  hidden?: boolean;
+  deleted?: boolean;
+  gone?: boolean;
+  going?: number;
+  media?: number | string | null;
+  hold: Hold;
+  reports: ItemReport[];
+};
+export type RelatedRow = { case_id: string; status: CaseStatus; category: string; target_kind: string; created_at: string; same_item: boolean };
+export type JournalRow = { id: number; at: string; actor_name: string; action: string; target_user: string | null; target_name: string | null; case_id: string | null; kind: string | null; item_id: string | null; reason: string | null; result: string };
+export type EmailScope = 'off' | 'important' | 'all';
+export type AdminSettings = {
+  report_email_to: string | null;
+  report_email_scope: EmailScope;
+  dashboard_url: string;
+  updated: Record<string, { at: string; by: string | null }> | null;
+  outbox: {
+    pending: number;
+    sent: number;
+    failed: number;
+    last_sent: string | null;
+    recent: { id: string; case_id: string; status: 'pending' | 'sending' | 'sent' | 'failed'; attempts: number; last_error: string | null; created_at: string; sent_at: string | null }[];
+  };
+};
+
+export const loadOverview = () => call<Overview>('admin_overview');
+export const loadUser = (id: string) => call<UserSheet>('admin_user', { p_user: id });
+export const suspendUntil = (user: string, until: Date, reason: string, caseId: string | null = null) =>
+  call<string>('admin_suspend', { p_user: user, p_until: until.toISOString(), p_reason: reason, p_case: caseId });
+export const reactivate = (user: string, reason: string) => call<number>('admin_reactivate', { p_user: user, p_reason: reason });
+export const deleteAccount = (user: string, confirm: string, reason: string) => call<void>('admin_delete_account', { p_user: user, p_confirm: confirm, p_reason: reason });
+export const loadCommunities = (search: string, filter: string | null) => call<CommunityRow[]>('admin_communities', { p_search: search || null, p_filter: filter, p_limit: 60 });
+export const loadCommunity = (id: string) => call<CommunitySheet>('admin_community', { p_id: id });
+export const updateCommunity = (id: string, name: string, tagline: string, description: string, reason: string) =>
+  call<void>('admin_update_community', { p_id: id, p_name: name, p_tagline: tagline, p_description: description, p_reason: reason }).then(() => changed('communities'));
+export const loadContent = (kind: ContentKind, search: string, filter: string | null) => call<ContentRow[]>('admin_content', { p_kind: kind, p_search: search || null, p_filter: filter, p_limit: 60 });
+export const loadContentItem = (kind: ContentKind, id: string) => call<ContentItem>('admin_content_item', { p_kind: kind, p_id: id });
+export const moderate = (kind: ModerationKind, id: string, action: 'hide' | 'restore' | 'delete', reason: string, caseId: string | null = null) =>
+  call<void>('admin_moderate', { p_kind: kind, p_id: id, p_action: action, p_reason: reason, p_case: caseId }).then(() => changed('communities', 'activities', 'inbox'));
+export const loadRelated = (caseId: string) => call<RelatedRow[]>('admin_case_related', { p_case: caseId });
+export const loadJournal = (before?: string) => call<JournalRow[]>('admin_journal', { p_limit: 200, p_before: before ?? null });
+export const loadSettings = () => call<AdminSettings>('admin_settings');
+export const saveSetting = (key: 'report_email_to' | 'report_email_scope' | 'dashboard_url', value: string) => call<void>('admin_set_setting', { p_key: key, p_value: value });
+export const retryEmail = (id: string) => call<void>('admin_email_retry', { p_id: id });
+
+/** Largest photo the team sends (after cleanImage re-encodes it as a JPEG of 1600 px at most). */
+const COVER_MAX_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Replaces a community's photo: the picked image is decoded and re-encoded
+ * (a file that is not an image fails here; no EXIF or location kept), checked
+ * for size, uploaded to the staff member's own folder under a new name (so
+ * every screen fetches it fresh), then saved by the server, which queues the
+ * old file for removal. A refused save removes the upload. null removes the photo.
+ */
+export async function replaceCommunityCover(id: string, uri: string | null, reason: string): Promise<void> {
+  if (!supabase) throw new Error('Not connected');
+  let path: string | null = null;
+  if (uri) {
+    const img = await cleanImage(uri).catch(() => {
+      throw new Error('This file is not a photo IRLY can use');
+    });
+    if (img.body.byteLength > COVER_MAX_BYTES) throw new Error('This photo is too large');
+    const { data: session } = await supabase.auth.getSession();
+    const uid = session.session?.user.id;
+    if (!uid) throw new Error('Sign in first');
+    path = `${uid}/${Date.now()}.${img.ext}`;
+    const { error } = await supabase.storage.from('activity-photos').upload(path, img.body, { contentType: img.contentType });
+    if (error) throw new Error('Could not upload the photo');
+  }
+  const { error } = await supabase.rpc('admin_set_community_cover', { p_id: id, p_path: path, p_reason: reason });
+  if (error) {
+    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    throw new Error(error.message);
+  }
+  changed('communities', 'inbox');
+}
 
 /** The signed-in person's staff role: undefined while it loads, null for members and signed-out visitors. */
 export function useStaffRole(): StaffRole | null | undefined {
