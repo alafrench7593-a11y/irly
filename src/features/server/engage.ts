@@ -22,7 +22,18 @@ export type TargetType = 'irl_post' | 'activity' | 'community' | 'community_post
 export type Target = { type: TargetType; id: string; title?: string };
 
 /** What a member can report something for (stored with the report). */
-export type ReportCategory = 'harassment' | 'hate_speech' | 'spam' | 'scam' | 'fake_profile' | 'inappropriate' | 'threats' | 'other';
+export type ReportCategory =
+  | 'harassment'
+  | 'hate_speech'
+  | 'spam'
+  | 'scam'
+  | 'fake_profile'
+  | 'inappropriate'
+  | 'threats'
+  | 'sexual_content'
+  | 'impersonation'
+  | 'unsafe'
+  | 'other';
 
 export type Engagement = { likes: number; comments: number; saves: number; liked: boolean; saved: boolean };
 const EMPTY: Engagement = { likes: 0, comments: 0, saves: 0, liked: false, saved: false };

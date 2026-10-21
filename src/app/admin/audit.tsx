@@ -1,56 +1,65 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Page } from '@/components/layout/Page';
+import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
-import { loadAudit, type AuditRow } from '@/features/admin/api';
-import { adminStyles, Card, day, Loadable } from '@/features/admin/ui';
+import { loadJournal, type JournalRow } from '@/features/admin/api';
+import { ACTION_LABEL, ITEM_LABEL } from '@/features/admin/labels';
+import { adminStyles, Card, day, Loadable, useLoad } from '@/features/admin/ui';
 import { t as tx } from '@/i18n';
 
-const ACTION: Record<string, string> = {
-  'role.set': 'Role changed',
-  'role.owner_granted': 'Owner granted from the server',
-  'case.status': 'Report status changed',
-  'message.read': 'Reported private message read',
-  'content.removed': 'Content removed',
-  'sanction.warning': 'Warning sent',
-  'sanction.suspension': 'Member suspended',
-  'sanction.ban': 'Member banned',
-  'sanction.lifted': 'Sanction lifted',
-};
-
-/** Every staff action, newest first (admins and owner). Kept 24 months. */
+/** Moderation log: every staff action, newest first (admins and owner). Append-only, kept 24 months. */
 export default function AuditLog() {
-  const [rows, setRows] = useState<AuditRow[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const load = useCallback(() => {
-    loadAudit()
-      .then((r) => {
-        setRows(r);
-        setError(null);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : 'Could not load'));
-  }, []);
-  useEffect(load, [load]);
+  const { data, error, reload } = useLoad<JournalRow[]>(() => loadJournal(), 'journal');
+  const [older, setOlder] = useState<JournalRow[]>([]);
+  const [more, setMore] = useState(true);
+  const rows = data ? [...data, ...older] : null;
+
   return (
-    <Page title="Audit log" subtitle="Who did what, and when. Nobody can edit or delete these lines from the app.">
+    <Page title="Moderation log" subtitle="Who did what, when and why. Nobody can edit or delete these lines, not even from the database.">
       <View style={adminStyles.body}>
-        <Loadable data={rows} error={error} retry={load} empty="Nothing yet.">
-          {(list) =>
-            list.map((a, i) => (
-              <Card index={i} key={i} onPress={a.case_id ? () => router.push(`/admin/case/${a.case_id}`) : undefined}>
-                <Text variant="caption" tone="tertiary" raw>
-                  {day(a.at)} · {a.actor_name}
-                </Text>
-                <Text variant="bodyS" raw>
-                  {tx(ACTION[a.action] ?? a.action)}
-                  {a.target_name ? ` · ${a.target_name}` : ''}
-                  {a.action === 'role.set' ? ` · ${String(a.details.from ?? '—')} → ${String(a.details.to ?? '—')}` : ''}
-                  {typeof a.details.reason === 'string' ? ` · “${a.details.reason}”` : ''}
-                </Text>
-              </Card>
-            ))
-          }
+        <Loadable data={rows} error={error} retry={reload} empty="Nothing yet.">
+          {(list) => (
+            <>
+              {list.map((a, i) => (
+                <Card
+                  index={i}
+                  key={a.id}
+                  onPress={a.case_id ? () => router.push(`/admin/case/${a.case_id}`) : a.target_user ? () => router.push(`/admin/user/${a.target_user}`) : undefined}
+                >
+                  <Text variant="caption" tone="tertiary" raw>
+                    {day(a.at)} · {a.actor_name}
+                  </Text>
+                  <Text variant="bodyS" raw>
+                    {tx(ACTION_LABEL[a.action] ?? a.action)}
+                    {a.kind ? ` · ${tx(ITEM_LABEL[a.kind] ?? a.kind)}` : ''}
+                    {a.target_name ? ` · ${a.target_name}` : ''}
+                  </Text>
+                  {a.reason ? (
+                    <Text variant="caption" tone="secondary" raw>
+                      “{a.reason}”
+                    </Text>
+                  ) : null}
+                </Card>
+              ))}
+              {more && list.length >= 200 ? (
+                <Button
+                  label="Load more"
+                  variant="ghost"
+                  onPress={() =>
+                    loadJournal(list[list.length - 1].at).then(
+                      (r) => {
+                        setOlder((o) => [...o, ...r]);
+                        setMore(r.length === 200);
+                      },
+                      () => setMore(false),
+                    )
+                  }
+                />
+              ) : null}
+            </>
+          )}
         </Loadable>
       </View>
     </Page>

@@ -14,14 +14,33 @@ import type { ReportCategory } from '@/features/server/engage';
 
 export const REPORT_CATEGORIES: { id: ReportCategory; label: string }[] = [
   { id: 'harassment', label: 'Harassment' },
-  { id: 'hate_speech', label: 'Hate speech' },
-  { id: 'spam', label: 'Spam' },
-  { id: 'scam', label: 'Scam' },
-  { id: 'fake_profile', label: 'Fake profile' },
-  { id: 'inappropriate', label: 'Inappropriate content' },
   { id: 'threats', label: 'Threats' },
+  { id: 'hate_speech', label: 'Hate speech' },
+  { id: 'sexual_content', label: 'Sexual content' },
+  { id: 'fake_profile', label: 'Fake profile' },
+  { id: 'impersonation', label: 'Impersonation' },
+  { id: 'scam', label: 'Scam' },
+  { id: 'spam', label: 'Spam' },
+  { id: 'inappropriate', label: 'Inappropriate content' },
+  { id: 'unsafe', label: 'Dangerous behaviour' },
   { id: 'other', label: 'Other' },
 ];
+
+/** The reasons that fit what is reported (the server accepts any of them). */
+const REASONS_FOR: Record<ReportTarget['kind'], ReportCategory[]> = {
+  profile: ['harassment', 'threats', 'fake_profile', 'impersonation', 'sexual_content', 'hate_speech', 'scam', 'spam', 'unsafe', 'other'],
+  message: ['harassment', 'threats', 'sexual_content', 'hate_speech', 'scam', 'spam', 'unsafe', 'other'],
+  activity: ['unsafe', 'scam', 'spam', 'inappropriate', 'sexual_content', 'hate_speech', 'harassment', 'other'],
+  community: ['inappropriate', 'hate_speech', 'sexual_content', 'impersonation', 'scam', 'spam', 'other'],
+  irl_post: ['inappropriate', 'sexual_content', 'harassment', 'hate_speech', 'threats', 'spam', 'unsafe', 'other'],
+  comment: ['harassment', 'threats', 'hate_speech', 'sexual_content', 'spam', 'scam', 'other'],
+  community_post: ['inappropriate', 'sexual_content', 'harassment', 'hate_speech', 'threats', 'scam', 'spam', 'unsafe', 'other'],
+};
+
+export function reasonsFor(kind: ReportTarget['kind']): { id: ReportCategory; label: string }[] {
+  const ids = REASONS_FOR[kind] ?? REPORT_CATEGORIES.map((c) => c.id);
+  return ids.map((id) => REPORT_CATEGORIES.find((c) => c.id === id)).filter((c): c is { id: ReportCategory; label: string } => Boolean(c));
+}
 
 /** What is being reported. A message or profile is reported with its author. */
 export type ReportTarget =

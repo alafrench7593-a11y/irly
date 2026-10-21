@@ -21,5 +21,7 @@ jobs:
         run: npx eslint src
       - name: Storage purge script (local stand-ins, no network)
         run: npm run -s test:purge
+      - name: Report email script (mocked provider, no network)
+        run: npm run -s test:report-email
       - name: Web build
         run: npx expo export --platform web

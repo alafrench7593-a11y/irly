@@ -13,23 +13,30 @@ import {
   KIND_LABEL,
   liftSanction,
   loadCase,
+  loadRelated,
+  moderate,
   readReportedMessage,
   removeContent,
   sanction,
   setCaseStatus,
   STATUS_LABEL,
-  useStaffRole,
   type CaseDetail,
   type CaseStatus,
   type ContextMessage,
+  type ModerationKind,
+  type RelatedRow,
   type SanctionKind,
 } from '@/features/admin/api';
-import { adminStyles, Card, day, StatusPill } from '@/features/admin/ui';
+import { ACTION_LABEL } from '@/features/admin/labels';
+import { adminStyles, Card, day, StatusPill, useAdminRole } from '@/features/admin/ui';
 import { a11y, t as tx } from '@/i18n';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-const NEXT: CaseStatus[] = ['reviewing', 'need_info', 'dismissed', 'closed', 'open'];
+const NEXT: CaseStatus[] = ['reviewing', 'need_info', 'closed', 'dismissed', 'open'];
+/** Closing a report (resolved or rejected) says why. */
+const NEEDS_NOTE: CaseStatus[] = ['closed', 'dismissed', 'actioned'];
+const RESTORABLE: Record<string, ModerationKind> = { activity: 'activity', event: 'activity', community: 'community', community_post: 'community_post', comment: 'comment', irl_post: 'irl_post' };
 const DAYS = [1, 3, 7, 30];
 
 /**
@@ -41,8 +48,9 @@ const DAYS = [1, 3, 7, 30];
 export default function CaseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const t = useTheme();
-  const role = useStaffRole();
+  const role = useAdminRole();
   const [c, setC] = useState<CaseDetail | null>(null);
+  const [related, setRelated] = useState<RelatedRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
@@ -60,6 +68,7 @@ export default function CaseScreen() {
         setError(null);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load'));
+    loadRelated(id).then(setRelated, () => setRelated([]));
   }, [id]);
   useEffect(load, [load]);
 
@@ -137,7 +146,7 @@ export default function CaseScreen() {
               No details given.
             </Text>
           )}
-          {target ? <Button label="Member history" icon="user" size="sm" variant="ghost" onPress={() => router.push(`/admin/members?q=${target.id}`)} /> : null}
+          {target ? <Button label="Member sheet" icon="user" size="sm" variant="ghost" onPress={() => router.push(`/admin/user/${target.id}`)} /> : null}
         </Card>
 
         {r.target_kind === 'message' ? (
@@ -204,13 +213,23 @@ export default function CaseScreen() {
           <TextInput value={note} onChangeText={(x) => setNote(x.slice(0, 2000))} placeholder={tx('Internal note (staff only)')} placeholderTextColor={t.c.textTertiary} style={[input, { height: 80, paddingTop: 10 }]} multiline accessibilityLabel={a11y('Note')} />
           <View style={adminStyles.row}>
             {NEXT.filter((s) => s !== c.case.status).map((s) => (
-              <Button key={s} size="sm" variant="secondary" label={STATUS_LABEL[s]} loading={busy === s} disabled={busy !== null} onPress={() => run(s, () => setCaseStatus(c.case.id, s, note.trim()), tx('Status: {s}', { s: tx(STATUS_LABEL[s]) })).then((ok) => ok && setNote(''))} />
+              <Button key={s} size="sm" variant="secondary" label={STATUS_LABEL[s]} loading={busy === s} disabled={busy !== null || (NEEDS_NOTE.includes(s) && note.trim().length < 3)} onPress={() => run(s, () => setCaseStatus(c.case.id, s, note.trim()), tx('Status: {s}', { s: tx(STATUS_LABEL[s]) })).then((ok) => ok && setNote(''))} />
             ))}
             <Button size="sm" variant="ghost" label="Add note" disabled={!note.trim() || busy !== null} loading={busy === 'note'} onPress={() => run('note', () => addCaseNote(c.case.id, note.trim()), tx('Note added')).then((ok) => ok && setNote(''))} />
           </View>
           {isAdmin(role) && r.target_kind !== 'profile' && !c.target.removed ? (
             <Button label="Remove the reported content" icon="x" variant="danger" disabled={note.trim().length < 3 || busy !== null} loading={busy === 'remove'} onPress={() => run('remove', () => removeContent(c.case.id, note.trim()), tx('Content removed')).then((ok) => ok && setNote(''))} />
           ) : null}
+          {isAdmin(role) && c.target.removed && r.target_id && RESTORABLE[r.target_kind] ? (
+            <Button label="Restore the content" icon="eye" variant="secondary" disabled={note.trim().length < 3 || busy !== null} loading={busy === 'restore'} onPress={() => run('restore', () => moderate(RESTORABLE[r.target_kind], r.target_id as string, 'restore', note.trim(), c.case.id), tx('Restored')).then((ok) => ok && setNote(''))} />
+          ) : null}
+          {r.target_id && RESTORABLE[r.target_kind] && r.target_kind !== 'community' ? (
+            <Button label="Open the content" size="sm" variant="ghost" onPress={() => router.push(`/admin/item?kind=${RESTORABLE[r.target_kind]}&id=${r.target_id}`)} />
+          ) : null}
+          {r.target_id && r.target_kind === 'community' ? <Button label="Open the community" size="sm" variant="ghost" onPress={() => router.push(`/admin/community/${r.target_id}`)} /> : null}
+          <Text variant="caption" tone="tertiary">
+            Closing a report needs a note saying why. Nothing is decided automatically: reports only rank the inbox.
+          </Text>
         </Card>
 
         {target && !target.role ? (
@@ -255,6 +274,24 @@ export default function CaseScreen() {
           </Text>
         ) : null}
 
+        {related.length ? (
+          <Card>
+            <Text variant="label">Related reports</Text>
+            {related.map((x, i) => (
+              <View key={x.case_id} style={{ gap: 4 }}>
+                {i ? <Divider /> : null}
+                <View style={adminStyles.row}>
+                  <StatusPill status={x.status} />
+                  <Text variant="bodyS" style={{ flex: 1 }} raw>
+                    {tx(CATEGORY_LABEL[x.category] ?? x.category)} · {tx(x.same_item ? 'Same content' : 'Same member')} · {day(x.created_at)}
+                  </Text>
+                </View>
+                <Button size="sm" variant="ghost" label="Open the report" onPress={() => router.push(`/admin/case/${x.case_id}`)} />
+              </View>
+            ))}
+          </Card>
+        ) : null}
+
         {c.notes.length || c.history.length ? (
           <Card>
             <Text variant="label">History</Text>
@@ -279,15 +316,6 @@ export default function CaseScreen() {
 }
 
 const SANCTION_LABEL: Record<SanctionKind, string> = { warning: 'Warning', suspension: 'Suspension', ban: 'Ban' };
-const ACTION_LABEL: Record<string, string> = {
-  'case.status': 'Status changed',
-  'message.read': 'Reported message read',
-  'content.removed': 'Content removed',
-  'sanction.warning': 'Warning sent',
-  'sanction.suspension': 'Member suspended',
-  'sanction.ban': 'Member banned',
-  'sanction.lifted': 'Sanction lifted',
-};
 
 const styles = {
   input: { minHeight: 44, borderRadius: radius.lg, paddingHorizontal: 12, fontFamily: font.medium, fontSize: 15 },

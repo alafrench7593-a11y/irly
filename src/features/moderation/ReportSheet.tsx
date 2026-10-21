@@ -15,7 +15,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { ReportCategory } from '@/features/server/engage';
-import { blockUser, report, REPORT_CATEGORIES, type ReportTarget } from './moderation';
+import { blockUser, reasonsFor, report, type ReportTarget } from './moderation';
 import { useReportStore } from './reportStore';
 
 /**
@@ -68,7 +68,8 @@ export function ReportSheet({
         onBlocked?.();
       }
       haptic('success');
-      toast(alsoBlock ? tr('Reported and blocked. Thank you') : tr('Reported. Our team will review it'), 'flag', 'brand');
+      // Never a promise of a quick outcome: the team reviews reports as they come.
+      toast(alsoBlock ? tr('Reported and blocked. Thank you') : tr('Thank you. Our team will review your report'), 'flag', 'brand');
       close();
     } catch (e) {
       toast(e instanceof Error ? e.message : tr('Could not send the report'), 'x', 'live');
@@ -82,7 +83,7 @@ export function ReportSheet({
       {/* Scrolls when the keyboard shrinks the sheet, so Send stays reachable. */}
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={{ gap: 6 }} accessibilityRole="radiogroup">
-          {REPORT_CATEGORIES.map((c) => {
+          {(target ? reasonsFor(target.kind) : []).map((c) => {
             const on = category === c.id;
             return (
               <PressableScale
@@ -126,7 +127,7 @@ export function ReportSheet({
         ) : null}
         <Button label="Send report" icon="flag" full loading={busy} disabled={!category} onPress={send} />
         <Text variant="caption" tone="tertiary" align="center">
-          In danger? Contact local emergency services first.
+          The person you report is not told who reported them. Reviews can take some time. In danger? Contact local emergency services first.
         </Text>
       </ScrollView>
     </Sheet>
