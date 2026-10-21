@@ -19,6 +19,7 @@ import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Backdrop } from '@/components/visual/Backdrop';
+import { t as tx } from '@/i18n';
 import { Photo } from '@/components/visual/Photo';
 import { haptic } from '@/motion/haptics';
 import { spring } from '@/motion/tokens';
@@ -267,7 +268,7 @@ export function HeroHost() {
                   label="Share"
                   variant="glass"
                   onPress={() => {
-                    Share.share({ message: `${header.title} · ${header.meta} on IRLY` }).catch(() => undefined);
+                    Share.share({ message: tx('{title} on IRLY', { title: `${header.title} · ${header.meta}` }) }).catch(() => undefined);
                   }}
                 />
                 <IconButton icon="x" label="Close" variant="glass" onPress={requestClose} />

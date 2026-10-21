@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -143,7 +143,7 @@ function ProCard({ pro, onProfile }: { pro: Professional; onProfile?: () => void
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
             <Icon name="star" size={12} color={t.accent} fill={t.accent} />
             <Text variant="caption" tone="secondary">
-              {[pro.rating.toFixed(1), tx('{n} reviews', { n: pro.reviews }), pro.languages.map((l) => tx(l)).join(', ')].join(' · ')}
+              {[formatNumber(pro.rating, 1), tx('{n} reviews', { n: pro.reviews }), pro.languages.map((l) => tx(l)).join(', ')].join(' · ')}
             </Text>
           </View>
         </View>

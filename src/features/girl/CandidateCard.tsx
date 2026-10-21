@@ -158,7 +158,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
             <View style={styles.nameRow}>
               <Avatar name={c.firstName} hue={c.hue} size={36} userId={c.userId} photo={c.photoUrls[0]} />
               <View style={{ flex: 1 }}>
-                <Text variant="titleL" color={girl.ink} numberOfLines={1} style={girlType.section}>
+                <Text variant="titleL" color={girl.ink} numberOfLines={1} style={girlType.section} raw>
                   {c.firstName}
                   {c.age ? <Text variant="titleM" color={girl.inkSoft}>{`  ${c.age}`}</Text> : null}
                 </Text>

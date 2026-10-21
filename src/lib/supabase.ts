@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { DEMO } from '@/config/app';
+import { t } from '@/i18n';
+import { serverError } from '@/i18n/errors';
 import { secureSessionStorage } from '@/lib/secureSession';
 
 /**
@@ -29,8 +31,10 @@ export class TimeoutError extends Error {
     super('IRLY did not answer in time. Check your connection and try again.');
   }
 }
-/** A server or network error in words a member understands (the server's own refusals pass through). */
+/** A server or network error in words a member understands, in their language (see i18n/errors). */
 export function friendlyError(message: string): string {
+  const server = serverError(message);
+  if (server) return t(server.text, server.vars);
   if (/did not answer|abort/i.test(message)) return 'IRLY did not answer in time. Check your connection and try again.';
   if (/fetch|network|Failed to fetch|Network request failed/i.test(message)) return 'No connection: try again';
   if (/JWT|token is expired|sign in required/i.test(message)) return 'Your session has ended. Sign in again';

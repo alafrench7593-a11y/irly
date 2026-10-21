@@ -223,7 +223,7 @@ export const useStore = create<State & Actions>()(
       onboarded: DEMO,
       destinationId: DEMO ? 'emirates' : null,
       cityId: DEMO ? 'dubai' : null,
-      profile: DEMO ? { ...emptyProfile, name: 'Guest', interests: ['food', 'startups'], activities: ['padel'], languages: ['English'] } : emptyProfile,
+      profile: DEMO ? { ...emptyProfile, interests: ['food', 'startups'], activities: ['padel'], languages: ['English'] } : emptyProfile,
       appearance: 'auto',
       hapticsOn: true,
       joined: {},

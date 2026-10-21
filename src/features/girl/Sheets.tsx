@@ -138,7 +138,7 @@ export function ProfileSheet({
           </View>
           <View style={styles.nameRow}>
             <View style={{ flex: 1 }}>
-              <Text variant="displayM" color={girl.ink} style={girlType.display}>
+              <Text variant="displayM" color={girl.ink} style={girlType.display} raw>
                 {c.firstName}
                 {c.age ? `, ${c.age}` : ''}
               </Text>
@@ -149,7 +149,7 @@ export function ProfileSheet({
             <ScorePill score={c.score} />
           </View>
           {c.bio ? (
-            <Text variant="body" color={girl.ink}>
+            <Text variant="body" color={girl.ink} raw>
               {c.bio}
             </Text>
           ) : null}

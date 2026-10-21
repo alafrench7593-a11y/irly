@@ -146,7 +146,7 @@ export default function Social() {
 function MyPlanCard({ plan }: { plan: MyPlan }) {
   const t = useTheme();
   const city = CITIES[plan.cityId];
-  const name = useStore((s) => s.profile.name) || 'You';
+  const name = useStore((s) => s.profile.name) || tx('You');
   const a = planDisplay(plan);
   return (
     <View style={[styles.mine, { backgroundColor: t.c.brandSoft, borderColor: t.c.brand }]}>

@@ -1,9 +1,10 @@
 import { storageName } from '@/config/app';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
-import { useCallback } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { serverError } from './errors';
 import { fr } from './fr';
 
 /**
@@ -58,6 +59,17 @@ export const useLangStore = create<LangState>()(
 );
 
 export const resolveLang = (s: LangSetting): Lang => (s === 'auto' ? deviceLang() : s);
+
+/**
+ * The chosen language has been read from storage. The app's first frame
+ * waits for it (app/_layout), so a member who picked French on an English
+ * phone never sees the screens flash in English first.
+ */
+export function useLangHydrated(): boolean {
+  return useSyncExternalStore(subscribeLangHydration, langHydrated, langHydrated);
+}
+const subscribeLangHydration = (done: () => void) => useLangStore.persist.onFinishHydration(done);
+const langHydrated = () => useLangStore.persist.hasHydrated();
 
 // Web: the page says which language it is in and asks browsers not to
 // translate it. A browser translating the app rewrites its text under React,
@@ -116,6 +128,12 @@ const ONE: Record<string, string> = {
 };
 
 export function translate(lang: Lang, rawText: string, vars?: Record<string, string | number>): string {
+  // A server refusal ("community not found", shown from error.message) reads as
+  // the app's own sentence, in either language (see ./errors).
+  if (!vars && /^[a-z]/.test(rawText)) {
+    const server = serverError(rawText);
+    if (server) return translate(lang, server.text, server.vars);
+  }
   // English uses the singular for 1 only; French for 0 and 1 (« 0 activité »).
   const n = vars ? Number(vars.n) : NaN;
   const singular = lang === 'fr' ? Math.abs(n) < 2 : n === 1;
@@ -167,6 +185,14 @@ export function a11y(label: string | undefined): string | undefined {
 /** Locale for dates and times in the current language. */
 export function dateLocale(): string {
   return resolveLang(useLangStore.getState().setting) === 'fr' ? 'fr-FR' : 'en-GB';
+}
+
+/**
+ * A number written the way the language writes it (« 1 234 », « 4,5 » in
+ * French; "1,234", "4.5" in English), with `digits` decimals when given.
+ */
+export function formatNumber(n: number, digits?: number): string {
+  return n.toLocaleString(dateLocale(), digits === undefined ? undefined : { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
 export type T = (text: string, vars?: Record<string, string | number>) => string;

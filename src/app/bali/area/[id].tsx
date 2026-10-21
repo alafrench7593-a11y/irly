@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { switchToBali } from '@/features/bali/switch';
 import { cityWhen } from '@/lib/time';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -224,7 +224,7 @@ export default function BaliArea() {
                       {p.name}
                     </Text>
                     <Text variant="caption" tone="tertiary">
-                      {p.rating != null ? `★ ${p.rating.toFixed(1)} (${(p.reviewCount ?? 0).toLocaleString('en-US')})` : p.kind}
+                      {p.rating != null ? `★ ${formatNumber(p.rating, 1)} (${formatNumber(p.reviewCount ?? 0)})` : p.kind}
                     </Text>
                   </View>
                 </PressableScale>

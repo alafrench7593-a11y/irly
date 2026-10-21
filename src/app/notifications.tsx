@@ -287,30 +287,30 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
       </View>
     );
   }
-  const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? (id ? names[id] : undefined) ?? 'Someone';
+  const name = (id?: string) => friends.find((f) => f.userId === id)?.firstName ?? (id ? names[id] : undefined) ?? tx('Someone');
   // What a row says. Where it leads is features/notifications/open (the same for a phone notification).
   const describe = (n: ServerNotification): { icon: IconName; title: string; body: string; accept?: string; pro?: boolean } => {
     const p = n.payload;
     switch (n.kind) {
       case 'MATCH_CREATED':
-        return { icon: 'sparkles', title: "It's an IRLY match", body: 'Say hello and find something to do' };
+        return { icon: 'sparkles', title: "It's an IRLY match", body: tx('Say hello and find something to do') };
       case 'MATCH_REMOVED':
-        return { icon: 'x', title: 'A match ended', body: 'The private chat is closed' };
+        return { icon: 'x', title: 'A match ended', body: tx('The private chat is closed') };
       case 'MESSAGE_CREATED':
-        return { icon: 'message', title: 'New message', body: 'Tap to open the conversation' };
+        return { icon: 'message', title: 'New message', body: tx('Tap to open the conversation') };
       case 'ACTIVITY_JOINED':
-        return { icon: 'users', title: 'Someone joined your activity', body: 'Their name is in the activity chat' };
+        return { icon: 'users', title: 'Someone joined your activity', body: tx('Their name is in the activity chat') };
       case 'ACTIVITY_REMINDER':
-        return { icon: 'clock', title: p.title ? tx('{title} starts soon', { title: p.title }) : 'Your activity starts soon', body: 'Open the activity' };
+        return { icon: 'clock', title: p.title ? tx('{title} starts soon', { title: p.title }) : 'Your activity starts soon', body: tx('Open the activity') };
       case 'ACTIVITY_INVITATION':
-        return { icon: 'calendar', title: tx('{name} invited you', { name: name(p.from) }), body: p.title ?? 'Open the activity' };
+        return { icon: 'calendar', title: tx('{name} invited you', { name: name(p.from) }), body: p.title ?? tx('Open the activity') };
       case 'ACTIVITY_UPDATED':
         // Deleted by its organiser: nothing left to open.
-        if (p.change === 'deleted') return { icon: 'x', title: tx('{title} was deleted', { title: p.title ?? '' }), body: 'It\'s been removed from your calendar' };
+        if (p.change === 'deleted') return { icon: 'x', title: tx('{title} was deleted', { title: p.title ?? '' }), body: tx('It\'s been removed from your calendar') };
         return {
           icon: p.cancelled ? 'x' : 'clock',
           title: p.cancelled ? tx('{title} was cancelled', { title: p.title ?? '' }) : tx('{title} changed', { title: p.title ?? '' }),
-          body: p.cancelled ? 'It\'s been removed from your calendar' : 'New time or place: check the details',
+          body: tx(p.cancelled ? 'It\'s been removed from your calendar' : 'New time or place: check the details'),
         };
       case 'LIKE':
       case 'COMMENT':
@@ -332,7 +332,7 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
         return {
           icon: 'user',
           title: tx('{name} wants to be friends', { name: name(p.from) }),
-          body: pending ? 'Accept to chat and see each other’s IRL posts' : friends.some((f) => f.userId === p.from && f.status === 'accepted') ? 'You are now friends' : 'See their profile',
+          body: tx(pending ? 'Accept to chat and see each other’s IRL posts' : friends.some((f) => f.userId === p.from && f.status === 'accepted') ? 'You are now friends' : 'See their profile'),
           accept: pending ? p.from : undefined,
         };
       }
@@ -341,23 +341,23 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
         return {
           icon: 'network',
           title: tx('{name} wants to connect', { name: name(p.from) }),
-          body: 'Networking · see their professional profile',
+          body: tx('Networking · see their professional profile'),
           accept: pending ? p.from : undefined,
           pro: true,
         };
       }
       case 'PRO_CONNECT_ACCEPTED':
-        return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: 'Networking · say hi' };
+        return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: tx('Networking · say hi') };
       case 'NEW_FOLLOWER':
-        return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: 'See their profile' };
+        return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: tx('See their profile') };
       case 'GROUP_ADDED':
-        return { icon: 'users', title: tx('{name} added you to {title}', { name: name(p.from), title: String(p.title ?? '') }), body: 'Open the group chat' };
+        return { icon: 'users', title: tx('{name} added you to {title}', { name: name(p.from), title: String(p.title ?? tx('')) }), body: tx('Open the group chat') };
       case 'FRIEND_ACCEPTED':
-        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends: say hi' };
+        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends: say hi') };
       case 'COMMUNITY_JOINED':
-        return { icon: 'heartHandshake', title: 'You joined a community', body: 'Its chat is in Messages' };
+        return { icon: 'heartHandshake', title: 'You joined a community', body: tx('Its chat is in Messages') };
       case 'COMMUNITY_INVITATION':
-        return { icon: 'heartHandshake', title: tx('{name} invited you to {community}', { name: name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: 'Open the community' };
+        return { icon: 'heartHandshake', title: tx('{name} invited you to {community}', { name: name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: tx('Open the community') };
       case 'COMMUNITY_ANNOUNCEMENT':
         return { icon: 'megaphone', title: tx('Announcement · {name}', { name: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: p.body ?? '' };
       case 'COMMUNITY_POST':
@@ -365,15 +365,15 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
       case 'IRLY_POST_CREATED':
         // A Live lasts 4 hours (a deleted one takes its notice with it): an ended one neither quotes nor opens it.
         if (!destinationOf(n, now)) return { icon: 'zap', title: tx('{name} was live', { name: name(p.from) }), body: tx('This Live has ended') };
-        return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? 'See what they are doing' };
+        return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? tx('See what they are doing') };
       case 'PROFILE_UPDATED':
         if (p.type === 'friend_request') {
           const pending = friends.find((f) => f.userId === p.from && f.incoming);
-          return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: 'Friends see each other’s IRL posts', accept: pending ? p.from : undefined };
+          return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: tx('Friends see each other’s IRL posts'), accept: pending ? p.from : undefined };
         }
-        if (p.type === 'friend_accepted') return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: 'You are now friends' };
-        if (p.type === 'verified') return { icon: 'shield', title: 'Your profile is verified ✓', body: FEATURES.matchIrly ? 'Match is open' : 'The badge shows on your profile' };
-        if (p.type === 'verification_rejected') return { icon: 'x', title: 'Verification declined', body: p.reason ? tx('Reason: {reason}. You can try again.', { reason: p.reason }) : 'You can try again' };
+        if (p.type === 'friend_accepted') return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends') };
+        if (p.type === 'verified') return { icon: 'shield', title: 'Your profile is verified ✓', body: tx(FEATURES.matchIrly ? 'Match is open' : 'The badge shows on your profile') };
+        if (p.type === 'verification_rejected') return { icon: 'x', title: 'Verification declined', body: p.reason ? tx('Reason: {reason}. You can try again.', { reason: p.reason }) : tx('You can try again') };
         return { icon: 'user', title: 'Profile update', body: '' };
       default:
         return { icon: 'bell', title: 'IRLY', body: '' };

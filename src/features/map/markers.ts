@@ -1,5 +1,5 @@
 import type { IconName } from '@/components/ui/Icon';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
 import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { cityCentre } from '@/data/areas';
@@ -274,7 +274,7 @@ function placeMarker(p: CityContent['places'][number], pt: (areaId: string) => M
     areaId: p.areaId,
     point: jitter(pt(p.areaId), p.id),
     title: p.name,
-    subtitle: `${tx(PLACE_KINDS[p.kind].label)} · ★ ${p.rating.toFixed(1)}`,
+    subtitle: `${tx(PLACE_KINDS[p.kind].label)} · ★ ${formatNumber(p.rating, 1)}`,
     icon: PLACE_KINDS[p.kind].icon,
     color: placeColor(p.kind),
     hero: { kind: 'place', id: p.id },

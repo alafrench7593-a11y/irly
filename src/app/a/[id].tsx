@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoPlanScreen } from '@/features/girl/DemoScreens';
 import { cityWhen } from '@/lib/time';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
@@ -230,7 +230,7 @@ function ActivityPage() {
             <Text variant="overline" color="#FFFFFF">
               {[tx(isEvent ? 'Event' : (category?.label ?? 'Activity')), a.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
             </Text>
-            <Text variant="displayM" color="#FFFFFF" numberOfLines={3}>
+            <Text variant="displayM" color="#FFFFFF" numberOfLines={3} raw>
               {a.title}
             </Text>
           </View>
@@ -248,7 +248,7 @@ function ActivityPage() {
           <Fact index={0} icon="clock" text={when(a.startsAt, a.cityId)} />
           <Fact index={1} icon="pin" text={`${a.placeName ? `${a.placeName} · ` : ''}${city ? areaName(city, a.areaId) : a.areaId}`} />
           <Fact index={2} icon="users" text={`${a.going}${a.capacity ? ` / ${a.capacity}` : ''} ${tx('going')}${full ? ` · ${tx('Full')}` : ''}`} />
-          <Fact index={3} icon="banknote" text={a.priceMinor ? `${a.currency} ${(a.priceMinor / 100).toLocaleString('en-US')}` : tx('Free')} />
+          <Fact index={3} icon="banknote" text={a.priceMinor ? `${a.currency} ${formatNumber(a.priceMinor / 100)}` : tx('Free')} />
           {a.creatorName ? <Fact index={4} icon="user" text={tx('Hosted by {name}', { name: a.creatorName })} /> : null}
           {a.description ? (
             <View style={styles.about}>

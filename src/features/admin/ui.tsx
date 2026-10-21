@@ -5,7 +5,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { Button } from '@/components/ui/Button';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { t as tx } from '@/i18n';
+import { dateLocale, t as tx } from '@/i18n';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
 import { space } from '@/theme/tokens';
@@ -13,7 +13,7 @@ import { useTheme } from '@/theme/useTheme';
 import { STATUS_LABEL, type CaseStatus } from './api';
 
 export const ago = (iso: string) => timeAgo(Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000)));
-export const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+export const day = (iso: string) => new Date(iso).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 /** Loading, error (with retry) and empty states shared by every back office list. */
 export function Loadable<T>({ data, error, retry, empty, children }: { data: T[] | null; error: string | null; retry: () => void; empty: string; children: (rows: T[]) => ReactNode }) {

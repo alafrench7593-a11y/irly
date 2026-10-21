@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { DEMO } from '@/config/app';
 import { GIRLS as EXAMPLE_GIRLS } from '@/data/content/girls';
 import { isAvatar } from '@/features/avatar/avatar';
@@ -254,7 +255,7 @@ function me(): MatchProfile | null {
   return {
     ...draft,
     userId: 'me',
-    firstName: profile.name || 'You',
+    firstName: profile.name || t('You'),
     age: profile.age ?? 28,
     cityId,
     communities: [],
