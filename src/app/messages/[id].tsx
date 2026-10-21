@@ -33,6 +33,8 @@ import { toast } from '@/components/ui/Toast';
 import { chatDraft, isServerId, removeConversationForMe, setConversationArchived, useServerThread } from '@/features/server/chat';
 import { leaveGroup, renameGroup } from '@/features/server/groups';
 import { sharedHref } from '@/features/server/engage';
+import { useActivityCards } from '@/features/server/activityCards';
+import { ActivityChatBanner, ActivityShareCard } from '@/components/cards/ActivityCards';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { pickPhoto, setChatPhoto, setCommunityCover, useChatPhoto, usePhotoLink } from '@/features/server/covers';
 import { pickChatPhotos, takeChatPhoto, useSignedLinks } from '@/features/server/media';
@@ -227,6 +229,10 @@ function ServerThreadView({ id }: { id: string }) {
     }
   };
 
+  // Activities referenced here (shares, and this chat's own activity): read live, never from the message text.
+  const activityCards = useActivityCards([...thread.messages.map((m) => (m.share?.type === 'activity' ? m.share.id : null)), thread.kind === 'activity' ? thread.activityId : null]);
+  const ownActivity = thread.kind === 'activity' && thread.activityId ? activityCards.get(thread.activityId) : undefined;
+  const BANNER = 52;
   const group = thread.kind !== null && thread.kind !== 'direct' && thread.kind !== 'match';
   const other = thread.otherId;
   return (
@@ -235,7 +241,7 @@ function ServerThreadView({ id }: { id: string }) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
+          contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24 + (ownActivity ? BANNER : 0), paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
           onContentSizeChange={() => {
             if (stick.current) scrollRef.current?.scrollToEnd({ animated: false });
           }}
@@ -363,6 +369,13 @@ function ServerThreadView({ id }: { id: string }) {
                           </View>
                         ) : null}
                       </PressableScale>
+                    ) : m.share?.type === 'activity' && m.share.id && !activityCards.failed ? (
+                      // A shared activity: its live card (or « not available » for whoever may not see it).
+                      <ActivityShareCard
+                        card={activityCards.get(m.share.id)}
+                        onOpen={() => router.push(`/a/${m.share?.id}`)}
+                        onLongPress={() => onLong(m)}
+                      />
                     ) : (
                   <PressableScale
                     haptic={false}
@@ -490,6 +503,12 @@ function ServerThreadView({ id }: { id: string }) {
           </PressableScale>
           {other ? <IconButton icon="shield" label={tx('Safety: report or block')} onPress={() => setMenu(true)} /> : <View style={{ width: 40 }} />}
         </View>
+        {ownActivity && thread.activityId ? (
+          // An activity's chat: the activity itself, live, one tap away.
+          <View style={styles.banner}>
+            <ActivityChatBanner card={ownActivity} onOpen={() => router.push(`/a/${thread.activityId}`)} />
+          </View>
+        ) : null}
       </View>
       {other ? (
         <Sheet visible={menu} onClose={() => setMenu(false)} title={thread.title} subtitle={tx('Private chat')}>
@@ -1024,4 +1043,5 @@ const styles = StyleSheet.create({
   send: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   header: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: 8 },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: space.gutter, height: layout.headerHeight },
+  banner: { paddingHorizontal: space.gutter, paddingTop: 4 },
 });

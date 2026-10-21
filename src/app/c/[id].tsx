@@ -39,6 +39,7 @@ import { useNow } from '@/lib/useNow';
 import { PostMedia } from '@/features/posts/PostMedia';
 import { pinPost, useChannels, useCommunityExtras } from '@/features/community/groups';
 import { openCreate } from '@/features/create/createStore';
+import { CommunityActivityFeed, ProposeActivity } from '@/features/community/CommunityActivitiesSlot';
 import { HostTools, NotifyPrefs, ParentLink, SpaceChips, SubgroupList } from '@/features/community/GroupsUI';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -144,6 +145,18 @@ function CommunityScreen() {
       toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live');
     } finally {
       setBusy(false);
+    }
+  };
+
+  /** « + Propose an activity » by a visitor: joins first (true when she is in). */
+  const joinFirst = async (): Promise<boolean> => {
+    try {
+      await joinCommunity(c.id);
+      refresh();
+      return true;
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live');
+      return false;
     }
   };
 
@@ -253,6 +266,8 @@ function CommunityScreen() {
             )}
           </Animated.View>
 
+          <ProposeActivity c={c} join={joinFirst} />
+
           {c.isMember ? (
             <View style={[styles.pad, styles.row]}>
               <NotifyPrefs communityId={c.id} prefs={extras.prefs} onChanged={extras.reload} />
@@ -286,6 +301,7 @@ function CommunityScreen() {
           <Animated.View key={tab} entering={reduced ? undefined : FadeIn.duration(180)} style={{ gap: space[5] }}>
             {tab === 'posts' ? (
               <>
+                <CommunityActivityFeed communityId={c.id} onSeeAll={() => setTab('activities')} />
                 <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
                 <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate} communityId={c.id} />
                 {c.isMember ? (
@@ -335,7 +351,7 @@ function CommunityScreen() {
                 <View style={[styles.row, { flexWrap: 'wrap' }]}>
                   <Chip size="sm" label={tx('Coming up')} selected={!past} onPress={() => setPast(false)} />
                   <Chip size="sm" label={tx('Past')} selected={past} onPress={() => setPast(true)} />
-                  {c.isMember ? <Chip size="sm" icon="plus" label={tx('Create an activity')} onPress={() => openCreate(null, { communityId: c.id, cityId: c.cityId })} /> : null}
+                  {c.isMember ? <Chip size="sm" icon="plus" label={tx('Create an activity')} onPress={() => openCreate(null, { communityId: c.id, cityId: c.cityId, communityName: c.official ? tx(c.name) : c.name, girlOnly: c.girlOnly || undefined })} /> : null}
                 </View>
                 {acts.activities.length ? (
                   acts.activities.map((a, i) => (
