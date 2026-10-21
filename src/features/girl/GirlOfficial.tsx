@@ -21,17 +21,16 @@ import { GButton, GIconWell } from './ui';
 /** Each official community's photo (until its hosts set one): the same as on its page (official.ts). */
 const PHOTO: Record<GirlOfficialTopic, PhotoKey> = GIRL_OFFICIAL_PHOTO;
 
-/** The demo build has no server: the same five, with no members and nothing to join. */
-const DEMO_FIVE: GirlOfficialCommunity[] = [
-  { id: 'demo-girl_newcomers', topic: 'girl_newcomers', name: 'IRLY Nouvelle Arrivante', tagline: 'Just arrived in Dubai? Ask anything, get tips and meet other newcomers.', emoji: '👋', members: 0, isMember: false, coverPath: null },
-  { id: 'demo-girl_network', topic: 'girl_network', name: 'IRLY Girl Networking', tagline: 'Women in business: entrepreneurship, opportunities, collaborations and your network.', emoji: '💼', members: 0, isMember: false, coverPath: null },
-  { id: 'demo-girl_francophone', topic: 'girl_francophone', name: 'IRLY Francophone', tagline: 'French-speaking girls in Dubai: chats, meetups and activities in French.', emoji: '🥐', members: 0, isMember: false, coverPath: null },
-  { id: 'demo-girl_trip', topic: 'girl_trip', name: 'IRLY Girl Trip', tagline: 'Trips, excursions, getaways and road trips between girls.', emoji: '✈️', members: 0, isMember: false, coverPath: null },
-  { id: 'demo-girl_activity', topic: 'girl_activity', name: 'IRLY Activité', tagline: 'Sport, outings, restaurants, beach clubs, shopping, wellness and everything to do together.', emoji: '✨', members: 0, isMember: false, coverPath: null },
+/** The demo build has no server: the same four, with no members and nothing to join. */
+const DEMO_FOUR: GirlOfficialCommunity[] = [
+  { id: 'demo-girl_trip', topic: 'girl_trip', name: 'Girl Trip', tagline: 'Trips, excursions, getaways and road trips between girls.', emoji: '✈️', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_newcomers', topic: 'girl_newcomers', name: 'Girl Expat', tagline: 'Just arrived in Dubai? Ask anything, get tips and meet other newcomers.', emoji: '👋', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_activity', topic: 'girl_activity', name: 'Girl Activité', tagline: 'Outings between women: restaurants, cafés, beach clubs, shopping, nights out and more.', emoji: '✨', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_sport', topic: 'girl_sport', name: 'Girl Sport', tagline: 'Find sports partners and train together, between women.', emoji: '🎾', members: 0, isMember: false, coverPath: null },
 ];
 
 /**
- * IRLY Girl's five official communities, as cards: photo, name, what it is
+ * IRLY Girl's four official communities, as cards: photo, name, what it is
  * for, its real member count and a Join button that answers at once (the
  * count follows the server). Joining twice or leaving twice is never sent:
  * a card waits for its answer.
@@ -39,7 +38,7 @@ const DEMO_FIVE: GirlOfficialCommunity[] = [
 export function GirlOfficialCommunities() {
   const router = useRouter();
   const server = useGirlOfficialCommunities();
-  const list = DEMO ? DEMO_FIVE : server.list;
+  const list = DEMO ? DEMO_FOUR : server.list;
   if (!DEMO && server.loading) {
     return (
       <View style={styles.list}>

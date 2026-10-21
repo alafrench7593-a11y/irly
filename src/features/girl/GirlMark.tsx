@@ -265,7 +265,7 @@ type MarkProps = {
   variant?: GirlMarkVariant;
   size?: number;
   onDark?: boolean;
-  word?: 'Girl' | 'Moms';
+  word?: 'Girl' | 'Maman';
   /** Header: the current section; the mark pulses softly when it changes. */
   section?: string;
   /** Launch and intro: wait this long before starting. */
@@ -385,7 +385,7 @@ export function GirlHeaderMark({
   style,
 }: {
   section?: string;
-  word?: 'Girl' | 'Moms';
+  word?: 'Girl' | 'Maman';
   onDark?: boolean;
   size?: number;
   pill?: boolean;
@@ -404,7 +404,7 @@ export function GirlHeaderMark({
  * Loading state: the mark fades in over a halo that breathes slowly a fixed
  * number of times, then stays lit. With Reduce Motion, a still halo.
  */
-export function GirlLoader({ size = 26, word = 'Girl', label, onDark = false, style }: { size?: number; word?: 'Girl' | 'Moms'; label?: string; onDark?: boolean; style?: StyleProp<ViewStyle> }) {
+export function GirlLoader({ size = 26, word = 'Girl', label, onDark = false, style }: { size?: number; word?: 'Girl' | 'Maman'; label?: string; onDark?: boolean; style?: StyleProp<ViewStyle> }) {
   const reduced = useReducedMotion();
   const breath = useSharedValue(reduced ? 1 : 0);
   useEffect(() => {
