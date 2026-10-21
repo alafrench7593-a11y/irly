@@ -56,12 +56,15 @@ export const GIRL_KINDS: Kind[] = [
   { id: 'yoga', label: 'Yoga', icon: 'leaf', photo: 'yoga', match: /yoga|breath|meditat/i },
   // IRLY's own Dubai photos: listed before the broader kinds (a safari park is not a park, quads are not a hike).
   { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
-  { id: 'quad', label: 'Quad biking', icon: 'mountain', photo: 'quadGirl', match: /quad|atv|buggy|buggies|dune bashing/i },
+  { id: 'quad', label: 'Quad biking', icon: 'mountain', photo: 'quadsGirl', match: /quad|atv|buggy|buggies|dune bashing/i },
   { id: 'desert', label: 'Desert', icon: 'sun', photo: 'desertGirl', match: /desert|camel|dunes?|safari(?! park)/i },
   { id: 'nightout', label: 'Girls’ night out', icon: 'sparkles', photo: 'nightDinner', match: /night out|girls.? night|rooftop|soirée|sortie|party|dinner with a view/i },
   { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
   { id: 'yacht', label: 'Yacht & boat', icon: 'sailboat', photo: 'yachtGirl', match: /yacht|boat|cruise|sailing|catamaran/i },
-  { id: 'beach', label: 'Beach', icon: 'sun', photo: 'beachClubGirl', match: /beach|plage|sunset|swim/i, cats: ['beach'] },
+  { id: 'pool', label: 'Pool', icon: 'waves', photo: 'poolGirl', match: /\bpools?\b|piscine|infinity/i },
+  { id: 'beachclub', label: 'Beach clubs', icon: 'sun', photo: 'beachClubGirl', match: /beach club/i },
+  { id: 'kitebeach', label: 'Kite Beach', icon: 'sun', photo: 'kiteBeach', match: /kite beach/i },
+  { id: 'beach', label: 'Beach', icon: 'sun', photo: 'girlSunset', match: /beach|plage|sunset|swim/i, cats: ['beach'] },
   { id: 'dinner', label: 'Restaurants', icon: 'utensils', photo: 'restaurantGirl', match: /dinner|dîner|restaurant|lunch|food/i, cats: ['food'] },
   { id: 'travel', label: 'Girl trip', icon: 'plane', photo: 'girlTrip', match: /girl trip|travel|trip|voyage|getaway|weekend away/i, cats: ['travel'] },
   { id: 'wellness', label: 'Wellness', icon: 'sparkles', photo: 'spaGirl', match: /wellness|spa|self.?care|massage|beauty/i, cats: ['wellness'] },
@@ -78,9 +81,12 @@ export const MOM_KINDS: Kind[] = [
   { id: 'park', label: 'Park & playdates', icon: 'baby', photo: 'momPlaydate', match: /park|playdate|playground|picnic/i },
   { id: 'stroller', label: 'Stroller walks', icon: 'footprints', photo: 'strollerMom', match: /stroller|poussette|baby walk|walk/i },
   { id: 'brunch', label: 'Moms’ brunch', icon: 'utensils', photo: 'brunch', match: /brunch/i },
-  { id: 'coffee', label: 'Coffee', icon: 'coffee', photo: 'strollerMom', match: /coffee|café|cafe/i },
+  // Not the stroller walk's photo again (the two tiles sit side by side).
+  { id: 'coffee', label: 'Coffee', icon: 'coffee', photo: 'coffee', match: /coffee|café|cafe/i },
   { id: 'beach', label: 'Beach', icon: 'sun', photo: 'momBeach', match: /beach|plage/i },
   { id: 'pool', label: 'Pool & swimming', icon: 'waves', photo: 'swimming', match: /swim|pool|piscine/i },
+  { id: 'waterpark', label: 'Water parks', icon: 'waves', photo: 'waterParkMix', match: /water ?park|aquaventure|wild wadi|laguna/i },
+  { id: 'kitebeach', label: 'Kite Beach', icon: 'sun', photo: 'kiteBeach', match: /kite beach/i },
   { id: 'sport', label: 'Moms’ sport', icon: 'activity', photo: 'momYoga', match: /yoga|pilates|fitness|football|padel|tennis|sport/i },
   { id: 'create', label: 'Creative workshops', icon: 'palette', photo: 'gallery', match: /workshop|art|craft|atelier|paint/i },
   { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'kids', match: /museum|gallery|culture|aquarium/i },
@@ -115,7 +121,7 @@ export const KindRail = memo(function KindRail({ kinds, value, onChange, counts 
               accessibilityLabel={n ? tx('{kind}: {n} upcoming', { kind: tx(k.label), n }) : tx(k.label)}
               style={[styles.kind, on ? styles.kindOn : null]}
             >
-              <Photo tint={GIRL_TINT} visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
+              <Photo tint={GIRL_TINT} visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} pinned />
               <View style={styles.kindTop}>
                 <View style={[styles.kindIcon, on ? { backgroundColor: girl.plum, borderColor: 'rgba(255,205,226,0.35)' } : null]}>
                   <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#F4B3CF' : girl.ink} strokeWidth={on ? 2.6 : 2} />

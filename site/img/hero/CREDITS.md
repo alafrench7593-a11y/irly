@@ -14,3 +14,13 @@ Each view: `<name>-1920.webp` and `<name>-960.webp` (16:10, landscape screens) a
 - **arab** (Burj Al Arab and palm trees at sunset): by nextvoyage, https://pixabay.com/photos/burj-al-arab-hotel-dubai-palm-trees-5740344/ (public-photos/v/beachSunset-4)
 - **creek** (an abra on Dubai Creek, old Dubai): by SalvadorNavarroMaldonad, https://pixabay.com/photos/boat-river-tour-city-travel-islam-7767575/ (public-photos/v/dubaiCreek-1)
 - **desert** (sunset over the dunes near Dubai): by mufaddalap, https://pixabay.com/photos/dubai-landscape-sand-nature-scenic-4598073/ (public-photos/v/dunes-2)
+
+## First picture and IRLY's own photo
+
+- **The hero's first picture** (home /, /fr/, /ar/) is again the one it had before the slideshow:
+  `site/img/heroPortrait.webp` / `heroPortrait-lg.webp` (phones: downtown Dubai and the Burj Khalifa at dusk,
+  a frame of the Pixabay film https://pixabay.com/videos/id-296958/ by engrahmad2653, also `site/video/hero.mp4`)
+  and `site/img/heroBurj.webp` / `heroBurj-sm.webp` (wide screens: the Burj Khalifa at night, the same Pixabay
+  photo as **burj** below, whose 1920 px copy serves large screens). Restored from git (removed in fc6565c).
+- **sunset** (`sunset-p.webp` 810 × 1440, `sunset-p-lg.webp` 1080 × 1920): IRLY's own photo of the Burj Al Arab
+  at sunset (site/img/own/burjArabSunset), used with the owner's permission. Phones only; wide screens show **arab**.

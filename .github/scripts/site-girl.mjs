@@ -37,8 +37,10 @@ const face = (id) => `/faces/${id}.jpg`;
 const shot = (n) => `/shots/${n}.jpg`;
 const og = (lang) => `/img/girl/og-${lang}.jpg`;
 // The hero's views of Dubai (site/img/hero, sources in site/img/hero/CREDITS.md), the first one painted first.
-const HERO = ["skyline", "arab", "marina", "desert", "creek"];
+// On phones the Burj Al Arab view is IRLY's own photo (its 1080 × 1920 original), so it comes first.
+const HERO = ["arab", "skyline", "marina", "desert", "creek"];
 const heroSet = (k) => `/img/hero/${k}-960.webp 960w, /img/hero/${k}-1920.webp 1920w`;
+const heroP = (k) => (k === "arab" ? "/img/hero/sunset-p.webp 810w, /img/hero/sunset-p-lg.webp 1080w" : `/img/hero/${k}-p.webp`);
 // The publishable key of IRLY's waitlist (the same one as the home page): the server only lets it call join_waitlist().
 const WAITLIST_API = "https://yqutcmgslwxcmnsqmhvy.supabase.co/rest/v1/rpc/join_waitlist";
 const WAITLIST_KEY = "sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v";
@@ -233,7 +235,7 @@ const T = {
     usesT: "Everything that’s better with girlfriends.",
     usesP: "Meeting women, finding partners for your activities, going out, travelling, talking: all women-only, in the same IRLY app.",
     uses: [
-      ["yachtGirl", "Meet women in Dubai", "Women from everywhere who live here, around the things you love.", "Two friends raising their glasses on a boat at sunset"],
+      ["poolGirl", "Meet women in Dubai", "Women from everywhere who live here, around the things you love.", "Three friends raising their cocktails in an infinity pool above Dubai Marina"],
       ["tennisGirl", "Activity partners", "A tennis partner, a running buddy, someone for pilates.", "The shadows of two women holding tennis rackets"],
       ["drinksGirl", "Coffee & outings", "Matcha dates, shopping, beach clubs and nights out, together.", "Two friends in abayas holding matcha drinks"],
       ["girlsOut", "Girl Live", "See which women are out right now near you, and join them.", "Two friends raising their arms facing the Burj Khalifa at sunset"],
@@ -380,7 +382,7 @@ const T = {
     usesT: "Tout ce qui est mieux entre copines.",
     usesP: "Rencontrer des femmes, trouver des partenaires d’activité, sortir, voyager, discuter : entre femmes, dans la même app IRLY.",
     uses: [
-      ["yachtGirl", "Rencontrer des femmes à Dubaï", "Des femmes venues de partout qui vivent ici, autour de ce que tu aimes.", "Deux amies lèvent leur verre sur un bateau au coucher du soleil"],
+      ["poolGirl", "Rencontrer des femmes à Dubaï", "Des femmes venues de partout qui vivent ici, autour de ce que tu aimes.", "Trois amies lèvent leur cocktail dans une piscine à débordement au-dessus de Dubai Marina"],
       ["tennisGirl", "Partenaires d’activité", "Une partenaire de tennis, une copine de running, quelqu’un pour le pilates.", "Les ombres de deux femmes avec des raquettes de tennis"],
       ["drinksGirl", "Cafés & sorties", "Matcha, shopping, beach clubs et soirées, ensemble.", "Deux amies en abaya tiennent des boissons au matcha"],
       ["girlsOut", "Girl Live", "Vois quelles femmes sortent en ce moment près de toi, et rejoins-les.", "Deux amies lèvent les bras face à la Burj Khalifa au coucher du soleil"],
@@ -783,7 +785,10 @@ function page(lang) {
   const own = (k, alt, sizes, cls = "", lazy = true, extra = "") => {
     const [w1, h1] = jpegSize(`site${img(k)}`);
     const [w0] = jpegSize(`site${thumb(k)}`);
-    const set = w0 === w1 ? `${img(k)} ${w1}w` : `${thumb(k)} ${w0}w, ${img(k)} ${w1}w`;
+    // IRLY's untouched original, when it is larger than the -1200 file (site/img/own/<key>-hd.jpg), for dense screens.
+    const hd = `/img/own/${k}-hd.jpg`;
+    const [w2] = fs.existsSync(`site${hd}`) ? jpegSize(`site${hd}`) : [0];
+    const set = (w0 === w1 ? `${img(k)} ${w1}w` : `${thumb(k)} ${w0}w, ${img(k)} ${w1}w`) + (w2 > w1 ? `, ${hd} ${w2}w` : "");
     return im(img(k), alt, cls, lazy, ` srcset="${set}" sizes="${sizes}" width="${w1}" height="${h1}"${extra}`);
   };
   // The French page shows the app in French (site/shots/fr, site/img/girl/*-fr.jpg) when that capture exists.
@@ -828,7 +833,7 @@ function page(lang) {
   const H = t.hero;
   const sofia = byId("g-sofia");
   const heroHtml = `<section class="hero" aria-labelledby="h1">
-  <div class="hvid" id="heroBg" aria-hidden="true">${HERO.map((k, i) => (i ? `<picture class="sl" data-p="/img/hero/${k}-p.webp" data-set="${heroSet(k)}"></picture>` : `<picture class="sl on kb"><source media="(max-aspect-ratio: 4/5)" srcset="/img/hero/${k}-p.webp"><img src="/img/hero/${k}-1920.webp" srcset="${heroSet(k)}" sizes="100vw" width="1920" height="1200" alt="" fetchpriority="high" decoding="async"></picture>`)).join("")}</div>
+  <div class="hvid" id="heroBg" aria-hidden="true">${HERO.map((k, i) => (i ? `<picture class="sl" data-p="${heroP(k)}" data-set="${heroSet(k)}"></picture>` : `<picture class="sl on kb"><source media="(max-aspect-ratio: 4/5)" srcset="${heroP(k)}" sizes="100vw"><img src="/img/hero/${k}-1920.webp" srcset="${heroSet(k)}" sizes="100vw" width="1920" height="1200" alt="" fetchpriority="high" decoding="async"></picture>`)).join("")}</div>
   <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="wrap hgrid">
     <div class="hcopy">
@@ -949,7 +954,7 @@ function page(lang) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
 <link rel="preload" as="image" href="/img/hero/${HERO[0]}-1920.webp" imagesrcset="${heroSet(HERO[0])}" imagesizes="100vw" media="(min-aspect-ratio: 4/5)" fetchpriority="high">
-<link rel="preload" as="image" href="/img/hero/${HERO[0]}-p.webp" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
+<link rel="preload" as="image" href="/img/hero/sunset-p.webp" imagesrcset="${heroP(HERO[0])}" imagesizes="100vw" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
 <link rel="preload" as="image" href="${sh(shot("girl-home"))}">
 <style>${CSS}</style>
 <script>document.documentElement.classList.add('js')</script>

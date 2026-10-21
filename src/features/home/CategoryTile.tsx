@@ -6,6 +6,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import type { CatalogCategory, CategoryKey } from '@/data/catalog/categories';
+import { isOwnPhoto } from '@/data/photos';
 import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius } from '@/theme/tokens';
@@ -32,7 +33,7 @@ export const CategoryTile = memo(function CategoryTile({ category, width, height
       accessibilityRole="link"
       accessibilityLabel={planned ? `${label}. ${planned}` : `${label}. ${tx(category.tagline)}`}
     >
-      <Photo visual={{ photo: category.photo }} light={light} scrim="strong" style={[styles.tile, { height }]} width={500} recyclingKey={`category-${category.id}`}>
+      <Photo visual={{ photo: category.photo }} light={light} scrim="strong" style={[styles.tile, { height }]} width={500} recyclingKey={`category-${category.id}`} pinned={isOwnPhoto(category.photo)}>
         <View style={styles.inner}>
           <View style={styles.top}>
             <Glass dark level="thin" style={styles.icon}>

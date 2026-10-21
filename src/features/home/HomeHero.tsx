@@ -36,7 +36,11 @@ export function heroPhoto(city: City, now: number): PhotoKey {
 type Props = {
   city: City;
   now: number;
+  /** Where the words start: right under the header (safe area + header + a small gap). */
+  top: number;
+  /** The hero's height, measured from its words (the page lays the backdrop's shade and the header on it). */
   height: number;
+  onHeight: (height: number) => void;
   scrollY: SharedValue<number>;
   /** People live around you right now. */
   live: number;
@@ -54,7 +58,7 @@ const WORD_STEP = 70;
  * live line. Scrolling lifts and fades the words. Transforms and opacity
  * only; with Reduce Motion everything is simply there.
  */
-export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, live, onDestination, onLive }: Props) {
+export const HomeHero = memo(function HomeHero({ city, now, top, height, onHeight, scrollY, live, onDestination, onLive }: Props) {
   const t = useTheme();
   const introDone = useIntro((s) => s.done);
   const reduced = useReducedMotion();
@@ -68,13 +72,15 @@ export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, liv
   const parts = question.split(' ');
   const after = 160 + parts.length * WORD_STEP;
 
+  // The words sit right under the header (no empty band above them) and the hero is as tall as they are.
+  // Before the app's curtain lifts they are laid out but invisible, so the page never jumps when they arrive;
+  // the key remounts them then, so they still come in word by word.
   return (
-    <View style={{ height }}>
+    <View style={{ paddingTop: top, paddingBottom: space[5] }} onLayout={(e) => onHeight(Math.round(e.nativeEvent.layout.height))}>
       {/* The city and the shade that carries the words are the page backdrop (HomeBackdrop). */}
       <Animated.View style={[styles.words, words]}>
-        {introDone ? (
-          <>
-            <Animated.View entering={reduced ? undefined : FadeIn.duration(motion.slow).delay(after)} style={{ alignSelf: 'flex-start' }}>
+        <View key={introDone ? 'on' : 'off'} style={[styles.stack, introDone ? null : styles.hidden]} pointerEvents={introDone ? 'box-none' : 'none'}>
+            <Animated.View entering={reduced || !introDone ? undefined : FadeIn.duration(motion.slow).delay(after)} style={{ alignSelf: 'flex-start' }}>
               <PressableScale
                 haptic="select"
                 scaleTo={0.96}
@@ -94,7 +100,7 @@ export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, liv
               {parts.map((w, i) => (
                 <Animated.View
                   key={`${w}-${i}`}
-                  entering={reduced ? undefined : FadeInDown.springify(640).dampingRatio(0.8).delay(140 + i * WORD_STEP)}
+                  entering={reduced || !introDone ? undefined : FadeInDown.springify(640).dampingRatio(0.8).delay(140 + i * WORD_STEP)}
                   importantForAccessibility="no-hide-descendants"
                 >
                   <Text raw variant="displayL" style={{ marginRight: i < parts.length - 1 ? type.displayL.fontSize * 0.24 : 0 }}>
@@ -104,7 +110,7 @@ export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, liv
               ))}
             </View>
             {live ? (
-              <Animated.View entering={reduced ? undefined : FadeIn.duration(motion.slow).delay(after + 120)} style={{ alignSelf: 'flex-start' }}>
+              <Animated.View entering={reduced || !introDone ? undefined : FadeIn.duration(motion.slow).delay(after + 120)} style={{ alignSelf: 'flex-start' }}>
                 <PressableScale haptic="select" scaleTo={0.97} onPress={onLive} style={styles.live} accessibilityLabel={tx('{n} people live right now. Open IRL', { n: live })}>
                   <LiveDot size={7} />
                   <Text variant="label" tone="secondary">
@@ -114,15 +120,16 @@ export const HomeHero = memo(function HomeHero({ city, now, height, scrollY, liv
                 </PressableScale>
               </Animated.View>
             ) : null}
-          </>
-        ) : null}
+        </View>
       </Animated.View>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
-  words: { position: 'absolute', left: space.gutter, right: space.gutter, bottom: space[5], gap: 12 },
+  words: { paddingHorizontal: space.gutter },
+  stack: { gap: 12 },
+  hidden: { opacity: 0 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: 16 },
   title: { flexDirection: 'row', flexWrap: 'wrap', maxWidth: 360 },
   live: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
