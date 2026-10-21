@@ -47,6 +47,8 @@ const PHRASES_OK = [
   /^Thinking about it\. First time, any tips\?$/g,
   /^Building a fashion brand between Paris and Dubai\..*$/g,
   /^Born here, still discovering it\..*$/g,
+  // A demo professional's own project (IRLY Network card): member content, shown as written.
+  /^Same-day freight between Jebel Ali and the city$/g,
 ];
 
 function hits(text, lang) {
