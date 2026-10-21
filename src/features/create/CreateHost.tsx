@@ -171,6 +171,9 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   // Optional: the community (or group) it belongs to. Not needed to create an activity.
   const [communityId, setCommunityId] = useState<string | null>(preset?.communityId ?? null);
   const myCommunities = useMyCommunityOptions();
+  // The community it is proposed in (from « + Propose an activity », or chosen below), named on the form.
+  const chosenCommunity = myCommunities.find((x) => x.id === communityId);
+  const originName = chosenCommunity ? (chosenCommunity.groupOf ? `${tx(chosenCommunity.name)} · ${tx(chosenCommunity.groupOf)}` : tx(chosenCommunity.name)) : communityId && communityId === preset?.communityId ? (preset.communityName ?? null) : null;
   // Optional: an exact address, so the activity can appear on the map once the server matched it.
   const geocoderOn = useGeocoderOn();
   const [address, setAddress] = useState('');
@@ -420,7 +423,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
         libraryCover,
         communityId,
         // IRLY Girl: the activity is for women only (the server checks the member may create one).
-        girlOnly: girlSpace || chosen?.girlOnly || undefined,
+        girlOnly: girlSpace || chosen?.girlOnly || (communityId === preset?.communityId && preset?.girlOnly) || undefined,
         ...(girlSpace ? { audience: 'girls' as const } : {}),
         address: geocoderOn ? address : null,
       });
@@ -473,6 +476,16 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             {tx('Step {n} / {total}', { n: step + 1, total: 4 })}{category ? ` · ${tx(category.label)}` : ''}
           </Text>
         </View>
+        {originName ? (
+          // Proposed from a community (or attached to one): where it will be shown, on every step.
+          <View style={styles.origin} accessibilityLabel={tx('Proposed in {name}', { name: originName })}>
+            <GlassLayer radius={radius.pill} level="thin" />
+            <Icon name="users" size={14} color={t.c.text} />
+            <Text variant="caption" numberOfLines={1} style={{ flexShrink: 1 }}>
+              {tx('Proposed in {name}', { name: originName })}
+            </Text>
+          </View>
+        ) : null}
 
         <ScrollView
           ref={scroller}
@@ -940,6 +953,7 @@ const styles = StyleSheet.create({
   circle: { position: 'absolute' },
   clip: { overflow: 'hidden' },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: space.gutter, height: 44 },
+  origin: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', maxWidth: '100%', marginHorizontal: space.gutter, marginBottom: 6, paddingHorizontal: 12, height: 28, borderRadius: radius.pill, overflow: 'hidden' },
   back: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
   title: { paddingHorizontal: space.gutter, marginTop: space[3], marginBottom: space[5] },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: space.gutter - 5, marginBottom: space[6] },
