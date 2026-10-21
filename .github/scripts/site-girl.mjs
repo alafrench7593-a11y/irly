@@ -1,17 +1,23 @@
 /**
  * The IRLY Girl page of the website, in English (/girl) and French
  * (/fr/girl): part of getirly.com (same menu, same app links), never a
- * second site.
+ * second site. Its own look (pearl rose, nude and plum, editorial serif,
+ * frosted glass), the palette of the app's IRLY Girl theme
+ * (src/features/girl/theme.ts).
  *
  * Honesty rules for this page:
  * - Every person shown is an ILLUSTRATIVE profile (example portraits from
  *   public-photos/faces, Pixabay licence or CC0, the same files the demo build
  *   uses), labelled as such on the page. None is an IRLY member; nothing here
- *   is read from or written to IRLY's database.
+ *   is read from IRLY's database.
  * - A person keeps one name and one photo everywhere on the page.
+ * - Photos are IRLY's own (site/img/own), women only.
  * - Features are described as they exist today: IRLY Match is coming soon, the
- *   iPhone and Android apps are coming soon, the app screens are real captures
- *   of the demo build (site/shots).
+ *   iPhone and Android apps are coming soon (no store link exists), the app
+ *   screens are real captures of the demo build (site/shots; the
+ *   notifications screen is cut above a row that is not IRLY Girl's, see
+ *   site/img/girl). Access follows the gender chosen at sign-up and is
+ *   checked by the server; nothing here claims an identity check.
  * Usage: node .github/scripts/site-girl.mjs <out dir>  (after site-legal)
  */
 import fs from "node:fs";
@@ -26,6 +32,10 @@ const img = (k) => `/img/own/${k}-1200.jpg`;
 const thumb = (k) => `/img/own/${k}-480.jpg`;
 const face = (id) => `/faces/${id}.jpg`;
 const shot = (n) => `/shots/${n}.jpg`;
+const og = (lang) => `/img/girl/og-${lang}.jpg`;
+// The publishable key of IRLY's waitlist (the same one as the home page): the server only lets it call join_waitlist().
+const WAITLIST_API = "https://yqutcmgslwxcmnsqmhvy.supabase.co/rest/v1/rpc/join_waitlist";
+const WAITLIST_KEY = "sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v";
 const esc = (s) =>
   String(s)
     .replace(/&/g, "&amp;")
@@ -74,12 +84,7 @@ const CAST = [
   // Only the portraits that exist (a missing file never shows as a broken image).
   .filter(([id]) => fs.existsSync(`public-photos/faces/${id}.jpg`))
   .map(([id, name, area, likes]) => ({ id, name, area, likes }));
-// Pick people by position, so the page works with any number of portraits.
-const pick = (from, n) =>
-  Array.from(
-    { length: Math.min(n, CAST.length) },
-    (_, i) => CAST[(from + i) % CAST.length],
-  );
+const byId = (id) => CAST.find((c) => c.id === id);
 
 const LIKES_FR = {
   brunch: "brunch",
@@ -131,534 +136,605 @@ const LIKES_FR = {
   design: "design",
 };
 
+/* ───────── Small inline icons (stroke, 24 × 24), never the only label ───────── */
+const ICON = {
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+  sparkle: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/>',
+  circles: '<circle cx="9" cy="9" r="5"/><circle cx="15" cy="15" r="5"/>',
+  pin: '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  shield: '<path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  flag: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  heart: '<path d="M12 20s-8-4.8-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.2 12 20 12 20z"/>',
+  arrow: '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>',
+  back: '<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>',
+};
+const icon = (k, cls = "ic") => `<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICON[k]}</svg>`;
+
 const T = {
   en: {
     locale: "en_US",
     other: "Français",
     otherLang: "fr",
-    title: "IRLY Girl — The women-only space of IRLY in Dubai",
+    title: "IRLY Girl — Meet women and make friends in Dubai",
     description:
-      "IRLY Girl is the space of IRLY reserved for women in Dubai: meet women, welcome newcomers, find activity partners, build your network, plan outings, restaurants and trips, and chat in women-only communities.",
-    nav: {
-      home: "IRLY",
-      uses: "What for",
-      circles: "Communities",
-      access: "Access",
-      app: "The app",
-    },
+      "IRLY Girl is IRLY’s women-only space in Dubai: meet women, make new friends, join women’s communities and activities, plan outings and trips, and chat, in the IRLY app.",
+    ogAlt: "IRLY Girl: Your next friendship starts here. Friends at sunset in Dubai.",
+    skip: "Skip to content",
+    nav: { home: "IRLY", circles: "Communities", app: "The app", how: "How it works", dubai: "Dubai" },
+    navLabel: "Main",
     menu: "Menu",
     open: "Open IRLY Girl",
-    how: "Discover",
+    waitCta: "Get the apps first",
     kicker: "Women only · Dubai",
-    h1a: "Girlfriends, plans,",
-    h1b: "memories.",
-    lead: "Meet women in Dubai, find partners for your activities, build your network and plan trips together. A space inside IRLY, reserved for women.",
-    webNote:
-      "Works in your browser today. iPhone and Android apps are coming soon.",
-    illustrative:
-      "Illustrative profiles — a preview of the IRLY Girl experience. They are not IRLY members.",
-    usesK: "What it’s for",
-    usesT: "Everything you do better with girlfriends.",
-    usesP: "Women-only communities, activities, Live and chats, in the same IRLY app.",
-    uses: [
-      ["yachtGirl", "Meet women in Dubai", "Women from everywhere who live here, around the things you love.", "Two friends raising their glasses on a boat at sunset"],
-      ["newcomerGirl", "Welcome newcomers", "Just arrived? Ask anything, get tips, find your first friends.", "A woman photographing Downtown Dubai at dusk"],
-      ["networkingGirl", "A professional network", "Founders and professionals meeting over coffee and ideas.", "A pink Dubai book next to a laptop"],
-      ["tennisGirl", "Activity partners", "A tennis partner, a running buddy, a pilates class with someone.", "The shadows of two women holding tennis rackets"],
-      ["drinksGirl", "Outings", "Beach clubs, brunches, shopping, nights out, together.", "Two friends in abayas holding matcha drinks"],
-      ["restaurantGirl", "Restaurants & experiences", "New tables to try and experiences to share.", "A rooftop restaurant terrace at night in Dubai"],
-      ["desertGirl", "Trips", "Desert evenings, weekends away and road trips between girls.", "Three women watching the sunset in the desert"],
-      ["runGirl", "Girl Live", "See which women are out right now near you, and join them.", "A group of women running along a palm-lined beach path"],
-      ["spaGirl", "Member chat", "Private chats, group chats and community chats, with photos.", "Two friends in robes talking by a window over Dubai"],
-    ],
-    plansK: "Girl activities",
-    plansT: "What women plan together.",
-    plansP:
-      "Pick a day and a time: the activity gets its own group chat and lands in your calendar. These are the kinds of plans you can create in IRLY Girl.",
-    plans: [
-      ["brunchGirl", "Brunch", "Saturday, 11:00"],
-      ["drinksGirl", "Coffee & matcha", "Weekday, 08:00"],
-      ["pilatesGirl", "Pilates", "Tuesday, 19:00"],
-      ["padelGirl", "Padel", "Thursday, 20:00"],
-      ["golfGirl", "Golf evening", "Sunday, 19:00"],
-      ["yachtGirl", "Yacht day", "Friday, 16:00"],
-      ["readingGirl", "Book club", "Wednesday, 19:30"],
-      ["quadGirl", "Desert quad", "Saturday, 15:00"],
-      ["spaGirl", "Spa & wellness", "Sunday, 10:00"],
-    ],
-    going: "going",
-    peopleK: "Discover",
-    peopleT: "Women who like what you like.",
-    peopleP:
-      "Brunch lovers, padel players, readers, runners, founders, travellers: women from everywhere who live in the UAE.",
-    circlesK: "Official communities",
-    circlesT: "Five circles to start with.",
-    circlesP:
-      "IRLY runs five official communities for women. Each has its posts, its activities and its group chat. You can also start your own.",
-    circles: [
-      ["IRLY Nouvelle Arrivante", "Just arrived in Dubai? Ask anything, get tips and meet other newcomers.", "newcomerGirl", "👋", "A woman photographing Downtown Dubai at dusk"],
-      ["IRLY Girl Networking", "Women in business: entrepreneurship, opportunities, collaborations and your network.", "networkingGirl", "💼", "A pink Dubai book next to a laptop"],
-      ["IRLY Francophone", "French-speaking girls in Dubai: chats, meetups and activities in French.", "brunchGirl", "🥐", "A brunch table with sushi and drinks by a pool"],
-      ["IRLY Girl Trip", "Trips, excursions, getaways and road trips between girls.", "girlTrip", "✈️", "Friends in scarves celebrating the sunset in the desert"],
-      ["IRLY Activité", "Sport, outings, restaurants, beach clubs, shopping, wellness and everything to do together.", "padelGirl", "✨", "Padel rackets on a blue court"],
-    ],
+    h1: ["Your next", "friendship", "starts here."],
+    sub: "Meet your girls. Discover your city. Create real connections.",
+    lead: "The women-only space inside IRLY: communities, activities, Live and chats, to grow your circle in Dubai.",
+    webNote: "Works in your browser today. iPhone and Android apps are coming soon.",
+    illustrative: "Illustrative profiles — a preview of the IRLY Girl experience. They are not IRLY members.",
+    hero: {
+      phonesAlt: "IRLY Girl home screen with the Live now row",
+      live: "Live now",
+      plan: "Girls brunch in Jumeirah",
+      planWhen: "Sat 11:00 · 5/8 going",
+      comment: "Welcome girl!! 🥹",
+      likes: "brunch · JLT",
+      joined: "Joined",
+    },
+    ticker: ["Brunch", "Padel", "Newcomers", "Networking", "Girl trips", "Pilates", "Book club", "Desert evenings", "Coffee mornings", "Beach days"],
+    tourK: "Inside IRLY Girl",
+    tourT: "A space that feels like yours.",
+    tourP: "Real screens of the app, scene by scene. Use the arrows or swipe.",
     tour: {
-      k: "A tour of IRLY Girl",
       label: "IRLY Girl, scene by scene",
       note: "Screens of the IRLY demo, with example women and conversations. They are not IRLY members.",
       prev: "Previous scene",
       next: "Next scene",
       pause: "Pause",
       play: "Play",
-      cta: "Discover IRLY Girl",
+      cta: "Open IRLY Girl",
       scenes: [
-        { shot: "girl-home", k: "Welcome", t: "A little space that feels like yours.", p: "IRLY Girl lives inside IRLY, just for women: your activities, your communities and your chats, in their own look." },
-        { shot: "girl-feed", k: "The community", t: "Meet the girls around you.", p: "New friends, brunch spots, padel partners, travel plans. Posts come from the women-only communities." },
-        { shot: "girl-post", k: "Conversations", t: "Real conversations, not polished ones.", p: "Comments, replies and likes, in English or French. A hello can turn into a plan in a few messages." },
-        { shot: "girl-invite", k: "Activities", t: "From a post to a plan to a friend.", p: "Join an activity in one tap, see who’s going, and talk it through in its group chat before you meet." },
-        { shot: "girl-chat", k: "Your turn", t: "Your people might be closer than you think.", p: "Open IRLY Girl in your browser today. iPhone and Android apps are coming soon." },
+        { src: shot("girl-home"), alt: "IRLY Girl home: what’s happening around you, and the women live now", k: "Home & Live", t: "What’s happening around you.", p: "Your city at a glance, and Girl Live: see which women are out right now near you, and join them." },
+        { src: shot("girl-communities"), alt: "The IRLY Girl communities, women only", k: "Communities", t: "Five official circles, and more.", p: "IRLY Nouvelle Arrivante, IRLY Girl Networking, IRLY Francophone, IRLY Girl Trip and IRLY Activité, plus the communities women create." },
+        { src: shot("girl-group"), alt: "A women-only community with its posts, plans and chat", k: "Inside a community", t: "Posts, plans and a chat.", p: "Each community has its posts, its plans and its group chat. Ask anything, share your tips, meet the girls." },
+        { src: shot("girl-post"), alt: "A post and the comments of other women", k: "Conversations", t: "A hello turns into a plan.", p: "Comments, replies and likes, in English or French. A welcome can become a brunch in a few messages." },
+        { src: shot("girl-invite"), alt: "An activity: girls brunch in Jumeirah, who’s going", k: "Activities", t: "See who’s going, then go.", p: "Join an activity in one tap. It gets its own group chat and lands in your calendar." },
+        { src: shot("girl-chat"), alt: "The group chat of a brunch club", k: "Group chat", t: "Talk it through before you meet.", p: "Private chats, group chats and community chats, so the first meeting already feels familiar." },
+        { src: "/img/girl/notifications.jpg", alt: "Notifications: a message, an invitation, a reply", k: "Notifications", t: "Only what helps you meet.", p: "Messages, invitations, replies and new followers, in one place." },
+        { src: shot("girl-me"), alt: "Your profile with your interests and upcoming plans", k: "Your profile", t: "Your interests, your plans.", p: "Your profile shows your area, your interests and your upcoming plans. Your exact location is never shown." },
       ],
       bubbles: {
-        welcome: ["Girls brunch · Sat 11:00", "Sunrise yoga · Kite Beach"],
-        feed: ["Girls, I just landed in Dubai and I’m looking for girls to discover the city with 🩷"],
-        comments: [["g-nour", "Welcome girl!! 🥹"], ["g-sofia", "We should organise a girls brunch!"], ["w-ana", "I’m new here too, let’s go together!"], ["g-ines", "Girls, we should really start a little group."], ["g-hana", "Count me in 🤍"]],
-        connect: ["Sofía invited you to Girls brunch in Jumeirah", "You’re going · 6/8", "Yuna: Want to meet at the entrance at 6:15?"],
-        groups: ["IRLY Nouvelle Arrivante", "IRLY Girl Networking", "IRLY Francophone", "IRLY Girl Trip", "IRLY Activité"],
+        live: ["Live now", "Layla · live nearby", "Coffee and laptop, anyone around?"],
+        circles: ["IRLY Nouvelle Arrivante", "IRLY Girl Networking", "IRLY Francophone", "IRLY Girl Trip", "IRLY Activité"],
+        group: ["Yuna · New in Dubai", "Girls, I just landed in Dubai and I’m looking for girls to discover the city with 🩷"],
+        comments: [["g-nour", "Welcome girl!! 🥹"], ["g-sofia", "We should organise a girls brunch this weekend!"], ["g-chloe", "I’m in. Saturday?"]],
+        invite: ["Sofía invited you to Girls brunch in Jumeirah", "You’re going · 6/8", "Want to meet at the entrance at 10:45?"],
+        chat: ["Girls Brunch Club · 6 members", "Added to your calendar · Sat 11:00"],
+        notif: ["Yuna sent you a message", "Camille joined Girls brunch"],
+        me: ["Startups · Food · Padel", "Your area, never your exact location"],
       },
     },
-    members: "members shown here are illustrative",
-    appK: "The app",
-    appT: "Screens of the app.",
-    appP: "Captured from IRLY’s demo build, with example content. IRLY Match is shown as coming soon, as it is in the app.",
-    shots: [
-      ["girl-home", "IRLY Girl home"],
-      ["girl-feed", "Recent posts"],
-      ["girl-post", "A post and its comments"],
-      ["girl-chat", "Group chat"],
-      ["girl-plans", "Activities coming up"],
-      ["girl-invite", "Joining an activity"],
-      ["girl-notifications", "Notifications"],
-      ["girl-create", "Writing a post"],
-      ["girl-me", "Your profile"],
+    circlesK: "Official communities",
+    circlesT: "Five circles to start with.",
+    circlesP: "IRLY runs five official communities for women. Each has its posts, its activities and its group chat. You can also start your own.",
+    womenOnly: "Women only",
+    circles: [
+      ["IRLY Nouvelle Arrivante", "Just arrived in Dubai? Ask anything, get tips and meet other newcomers.", "newcomerGirl", "👋", "A woman photographing Downtown Dubai at dusk"],
+      ["IRLY Girl Networking", "Women in business: entrepreneurship, opportunities, collaborations and your network.", "networkingGirl", "💼", "A pink Dubai book next to a laptop"],
+      ["IRLY Francophone", "French-speaking girls in Dubai: chats, meetups and activities in French.", "brunchGirl", "🥐", "A brunch table with sushi and drinks above the Dubai Fountain"],
+      ["IRLY Girl Trip", "Trips, excursions, getaways and road trips between girls.", "girlTrip", "✈️", "Friends in scarves celebrating the sunset in the desert"],
+      ["IRLY Activité", "Sport, outings, restaurants, beach clubs, shopping, wellness and everything to do together.", "padelGirl", "✨", "Padel rackets on a blue court between friends’ feet"],
     ],
-    accessK: "Access",
-    accessT: "Reserved for women. Here is how it works.",
-    access: [
-      ["Register as a woman", "Create your IRLY account and choose “woman” when you sign up. The gender is set at sign-up and can’t be changed afterwards in the app."],
-      ["Open IRLY Girl", "From the app, open IRLY Girl. It is the same IRLY, with women-only content and its own look."],
-      ["Checked by IRLY’s server", "Every women-only community, activity, Live and chat is refused by the server to accounts that are not registered as women."],
+    usesK: "What it’s for",
+    usesT: "Everything that’s better with girlfriends.",
+    usesP: "Meeting women, finding partners for your activities, going out, travelling, talking: all women-only, in the same IRLY app.",
+    uses: [
+      ["yachtGirl", "Meet women in Dubai", "Women from everywhere who live here, around the things you love.", "Two friends raising their glasses on a boat at sunset"],
+      ["tennisGirl", "Activity partners", "A tennis partner, a running buddy, someone for pilates.", "The shadows of two women holding tennis rackets"],
+      ["drinksGirl", "Coffee & outings", "Matcha dates, shopping, beach clubs and nights out, together.", "Two friends in abayas holding matcha drinks"],
+      ["girlsOut", "Girl Live", "See which women are out right now near you, and join them.", "Two friends raising their arms facing the Burj Khalifa at sunset"],
+      ["desertGirl", "Trips with friends", "Desert evenings, weekends away and road trips between girls.", "Three women watching the sunset in the desert"],
+      ["restaurantGirl", "Restaurants & experiences", "New tables to try and experiences to share.", "A rooftop restaurant terrace at night facing the Burj Khalifa"],
+      ["spaGirl", "Chats", "Private chats, group chats and community chats.", "Two friends in robes talking by a window over Dubai"],
+      ["pilatesGirl", "Sport & wellness", "Pilates, padel, yoga, spa days: better with a friend.", "A woman stretching on a pilates reformer"],
+      ["readingGirl", "Book club & workshops", "Book clubs, painting, pottery: plans for curious minds.", "An open book held up in front of Dubai Marina towers"],
     ],
-    safeK: "Your safety",
-    safe: [
-      "Your exact location is never shown, only your area.",
-      "Block or report anyone. Reports are reviewed by the IRLY team, and an account can lose access to IRLY Girl.",
+    peopleK: "Discover",
+    peopleT: "Women who like what you like.",
+    peopleP: "Brunch lovers, padel players, readers, runners, founders, travellers: women from everywhere who live in the UAE.",
+    howK: "How it works",
+    howT: "Four steps to your new circle.",
+    how: [
+      ["user", "Sign up as a woman", "Create your IRLY account and choose “woman”. The gender is set at sign-up and can’t be changed afterwards in the app."],
+      ["sparkle", "Open IRLY Girl", "From the IRLY app, open IRLY Girl: the same account, with women-only content and its own look."],
+      ["circles", "Join your circles", "Pick a community, newcomers, networking, French speakers, trips or activities, and say hello."],
+      ["heart", "Meet in real life", "Join an activity, talk in its group chat, and meet your girls for real."],
+    ],
+    trust: [
+      ["shield", "Checked by IRLY’s server", "Women-only communities, activities, Live and chats are refused by the server to accounts not registered as women."],
+      ["pin", "Your area, not your spot", "Your exact location is never shown, only your area."],
+      ["flag", "Block & report", "Block or report anyone. Reports are reviewed by the IRLY team, and an account can lose access to IRLY Girl."],
+    ],
+    dubaiK: "Dubai life",
+    dubaiT: "Your city, with your girls.",
+    dubaiP: "Desert afternoons, rooftop dinners, a golf evening, a day trip to Abu Dhabi: life here is better shared. IRLY Girl helps you find the women to share it with.",
+    dubai: [
+      ["mosqueGirl", "Abu Dhabi day trips", "A woman in an abaya at the Sheikh Zayed Grand Mosque"],
+      ["quadGirl", "Desert afternoons", "A woman in a keffiyeh waving from a red quad bike in the desert"],
+      ["golfGirl", "Golf under the lights", "A woman swinging a golf club at a driving range at night"],
+      ["dinnerView", "Dinner with a view", "A dinner table with glasses above the Dubai skyline at dusk"],
+      ["palmAerial", "The Palm at dusk", "An aerial view of Palm Jumeirah and the Dubai skyline at dusk"],
     ],
     soonK: "Coming soon",
     soonT: "IRLY Match.",
-    soonP:
-      "Meet women who share your interests, matched on what you love. It is not open yet: for now, communities and activities are where friendships start.",
+    soonP: "Meet women who share your interests, matched on what you love. It is not open yet: for now, communities and activities are where friendships start.",
     faqT: "Questions",
     faq: [
-      [
-        "Who can join IRLY Girl?",
-        "Women with an IRLY account registered as women. Access follows the gender on the account and is checked by IRLY’s server, not only by the app.",
-      ],
-      [
-        "Is it a separate app?",
-        "No. IRLY Girl is a space inside IRLY: the same account and the same app, with women-only communities, activities, Live and chats.",
-      ],
-      [
-        "Are the women on this page members?",
-        "No. They are illustrative profiles that show what IRLY Girl looks like. Real members only appear inside the app, to other members.",
-      ],
-      [
-        "Is it a dating app?",
-        "No. IRLY Girl is about friendship, activities and networking between women.",
-      ],
-      [
-        "How much does it cost?",
-        "IRLY Girl is free. Some activities, like a brunch or a class, have a price set by the person who organises them.",
-      ],
-      [
-        "Where is it available?",
-        "In Dubai and across the UAE, in your browser at getirly.com/app, in English and French. The iPhone and Android apps are coming soon.",
-      ],
+      ["Who can join IRLY Girl?", "Women with an IRLY account registered as women. Access follows the gender on the account and is checked by IRLY’s server, not only by the app."],
+      ["Is it a separate app?", "No. IRLY Girl is a space inside IRLY: the same account and the same app, with women-only communities, activities, Live and chats."],
+      ["Are the women on this page members?", "No. They are illustrative profiles that show what IRLY Girl looks like. Real members only appear inside the app, to other members."],
+      ["Is it a dating app?", "No. IRLY Girl is about friendship, activities and networking between women."],
+      ["How much does it cost?", "IRLY Girl is free. Some activities, like a brunch or a class, have a price set by the person who organises them."],
+      ["Where is it available?", "In Dubai and across the UAE, in your browser at getirly.com/app, in English and French. The iPhone and Android apps are coming soon."],
     ],
-    endT: "Your next girlfriends are one plan away.",
+    endT: ["Your next best friend might be", "one tap away."],
     endP: "Sign in with your IRLY account and open IRLY Girl.",
+    wait: {
+      t: "Be first on iPhone and Android.",
+      p: "IRLY Girl already works in your browser. Leave your email and we’ll tell you when the apps are out.",
+      label: "Your email",
+      ph: "Email",
+      btn: "Notify me",
+      legal: "We’ll only use your email to tell you when the IRLY apps launch.",
+      done1: "You’re on the list.",
+      done2: "We’ll let you know when the apps are out.",
+      errEmpty: "Enter your email.",
+      errInvalid: "This email doesn’t look right.",
+      errBusy: "Lots of sign-ups right now. Try again in a few minutes.",
+      errNet: "We couldn’t reach IRLY. Check your connection and try again.",
+    },
     back: "Back to IRLY",
     privacy: "Privacy",
     terms: "Terms",
     guidelines: "Community guidelines",
     support: "Support",
+    footer: "Footer",
   },
   fr: {
     locale: "fr_FR",
     other: "English",
     otherLang: "en",
-    title: "IRLY Girl — L’espace d’IRLY réservé aux femmes à Dubaï",
+    title: "IRLY Girl — Rencontrer des femmes et se faire des amies à Dubaï",
     description:
-      "IRLY Girl est l’espace d’IRLY réservé aux femmes à Dubaï : rencontrer des femmes, accueillir les nouvelles arrivantes, trouver des partenaires d’activité, développer son réseau, organiser sorties, restos et voyages, et discuter dans des communautés entre femmes.",
-    nav: {
-      home: "IRLY",
-      uses: "Pour quoi",
-      circles: "Communautés",
-      access: "Accès",
-      app: "L’app",
-    },
+      "IRLY Girl est l’espace d’IRLY réservé aux femmes à Dubaï : rencontre des femmes, fais-toi de nouvelles amies, rejoins des communautés et des activités entre femmes, organise sorties et voyages, et discute, dans l’app IRLY.",
+    ogAlt: "IRLY Girl : Ta prochaine amitié commence ici. Des amies au coucher du soleil à Dubaï.",
+    skip: "Aller au contenu",
+    nav: { home: "IRLY", circles: "Communautés", app: "L’app", how: "Comment ça marche", dubai: "Dubaï" },
+    navLabel: "Principale",
     menu: "Menu",
     open: "Ouvrir IRLY Girl",
-    how: "Découvrir",
+    waitCta: "Être prévenue des apps",
     kicker: "Réservé aux femmes · Dubaï",
-    h1a: "Des copines, des sorties,",
-    h1b: "des souvenirs.",
-    lead: "Rencontre des femmes à Dubaï, trouve des partenaires pour tes activités, développe ton réseau et organisez vos voyages. Un espace dans IRLY, réservé aux femmes.",
-    webNote:
-      "Fonctionne déjà dans ton navigateur. Les apps iPhone et Android arrivent bientôt.",
-    illustrative:
-      "Profils illustratifs — aperçu de l’expérience IRLY Girl. Ce ne sont pas des membres d’IRLY.",
-    usesK: "Pour quoi faire",
-    usesT: "Tout ce qui est mieux entre copines.",
-    usesP: "Communautés, activités, Live et conversations entre femmes, dans la même app IRLY.",
-    uses: [
-      ["yachtGirl", "Rencontrer des femmes à Dubaï", "Des femmes venues de partout qui vivent ici, autour de ce que tu aimes.", "Deux amies lèvent leur verre sur un bateau au coucher du soleil"],
-      ["newcomerGirl", "Accueillir les nouvelles", "Tu viens d’arriver ? Pose tes questions, récupère les bons plans, trouve tes premières amies.", "Une femme photographie Downtown Dubai au crépuscule"],
-      ["networkingGirl", "Un réseau pro", "Entrepreneures et professionnelles autour d’un café et d’idées.", "Un livre rose sur Dubaï à côté d’un ordinateur portable"],
-      ["tennisGirl", "Des partenaires d’activité", "Une partenaire de tennis, une copine de running, un cours de pilates à deux.", "Les ombres de deux femmes avec des raquettes de tennis"],
-      ["drinksGirl", "Des sorties", "Beach clubs, brunchs, shopping, soirées, ensemble.", "Deux amies en abaya tiennent des boissons au matcha"],
-      ["restaurantGirl", "Restos et expériences", "De nouvelles tables à tester et des expériences à partager.", "La terrasse d’un restaurant sur un toit de Dubaï la nuit"],
-      ["desertGirl", "Des voyages", "Soirées dans le désert, week-ends et road trips entre filles.", "Trois femmes regardent le coucher du soleil dans le désert"],
-      ["runGirl", "Girl Live", "Vois quelles femmes sortent en ce moment près de toi, et rejoins-les.", "Un groupe de femmes court sur une promenade bordée de palmiers"],
-      ["spaGirl", "Le chat entre membres", "Discussions privées, de groupe et de communauté, avec photos.", "Deux amies en peignoir discutent devant une baie vitrée sur Dubaï"],
-    ],
-    plansK: "Activités Girl",
-    plansT: "Ce que les femmes organisent ensemble.",
-    plansP:
-      "Choisis le jour et l’heure : l’activité a sa conversation de groupe et arrive dans ton calendrier. Voici les types de sorties que tu peux créer dans IRLY Girl.",
-    plans: [
-      ["brunchGirl", "Brunch", "Samedi, 11 h"],
-      ["drinksGirl", "Café & matcha", "En semaine, 8 h"],
-      ["pilatesGirl", "Pilates", "Mardi, 19 h"],
-      ["padelGirl", "Padel", "Jeudi, 20 h"],
-      ["golfGirl", "Soirée golf", "Dimanche, 19 h"],
-      ["yachtGirl", "Journée en yacht", "Vendredi, 16 h"],
-      ["readingGirl", "Club de lecture", "Mercredi, 19 h 30"],
-      ["quadGirl", "Quad dans le désert", "Samedi, 15 h"],
-      ["spaGirl", "Spa & bien-être", "Dimanche, 10 h"],
-    ],
-    going: "participent",
-    peopleK: "Découvrir",
-    peopleT: "Des femmes qui aiment ce que tu aimes.",
-    peopleP:
-      "Amatrices de brunch, joueuses de padel, lectrices, runneuses, entrepreneures, voyageuses : des femmes venues de partout qui vivent aux Émirats.",
-    circlesK: "Communautés officielles",
-    circlesT: "Cinq cercles pour commencer.",
-    circlesP:
-      "IRLY anime cinq communautés officielles pour les femmes. Chacune a ses publications, ses activités et sa conversation de groupe. Tu peux aussi créer la tienne.",
-    circles: [
-      ["IRLY Nouvelle Arrivante", "Tu viens d’arriver à Dubaï ? Pose tes questions, récupère des conseils et rencontre d’autres nouvelles.", "newcomerGirl", "👋", "Une femme photographie Downtown Dubai au crépuscule"],
-      ["IRLY Girl Networking", "Les femmes dans le business : entrepreneuriat, opportunités, collaborations et réseau.", "networkingGirl", "💼", "Un livre rose sur Dubaï à côté d’un ordinateur portable"],
-      ["IRLY Francophone", "Les filles francophones de Dubaï : discussions, rencontres et activités en français.", "brunchGirl", "🥐", "Une table de brunch avec sushis et boissons au bord d’une piscine"],
-      ["IRLY Girl Trip", "Voyages, excursions, escapades et road trips entre filles.", "girlTrip", "✈️", "Des amies en foulard fêtent le coucher du soleil dans le désert"],
-      ["IRLY Activité", "Sport, sorties, restos, beach clubs, shopping, bien-être et tout ce qui se fait à plusieurs.", "padelGirl", "✨", "Des raquettes de padel sur un terrain bleu"],
-    ],
+    h1: ["Ta prochaine", "amitié", "commence ici."],
+    sub: "Rencontre tes copines. Découvre ta ville. Crée de vrais liens.",
+    lead: "L’espace d’IRLY réservé aux femmes : communautés, activités, Live et conversations, pour agrandir ton cercle à Dubaï.",
+    webNote: "Fonctionne déjà dans ton navigateur. Les apps iPhone et Android arrivent bientôt.",
+    illustrative: "Profils illustratifs — aperçu de l’expérience IRLY Girl. Ce ne sont pas des membres d’IRLY.",
+    hero: {
+      phonesAlt: "L’accueil d’IRLY Girl avec la rangée Live",
+      live: "En live",
+      plan: "Brunch entre filles à Jumeirah",
+      planWhen: "sam. 11:00 · 5/8 participent",
+      comment: "Bienvenue !! 🥹",
+      likes: "brunch · JLT",
+      joined: "Membre",
+    },
+    ticker: ["Brunch", "Padel", "Nouvelles arrivantes", "Networking", "Girl trips", "Pilates", "Club de lecture", "Soirées dans le désert", "Cafés du matin", "Journées plage"],
+    tourK: "Dans IRLY Girl",
+    tourT: "Un espace qui te ressemble.",
+    tourP: "De vrais écrans de l’app, scène par scène. Utilise les flèches ou fais glisser.",
     tour: {
-      k: "IRLY Girl en visite",
       label: "IRLY Girl, scène par scène",
-      note: "Écrans de la démo d’IRLY, avec des femmes et des conversations d’exemple. Ce ne sont pas des membres d’IRLY.",
+      note: "Écrans de la démo d’IRLY (en anglais), avec des femmes et des conversations d’exemple. Ce ne sont pas des membres d’IRLY.",
       prev: "Scène précédente",
       next: "Scène suivante",
       pause: "Pause",
       play: "Lecture",
-      cta: "Découvrir IRLY Girl",
+      cta: "Ouvrir IRLY Girl",
       scenes: [
-        { shot: "girl-home", k: "Bienvenue", t: "Un petit espace qui te ressemble.", p: "IRLY Girl vit dans IRLY, rien qu’entre femmes : tes activités, tes communautés et tes conversations, avec leur propre style." },
-        { shot: "girl-feed", k: "La communauté", t: "Rencontre les filles autour de toi.", p: "Nouvelles amitiés, bonnes adresses, partenaires de padel, voyages. Les publications viennent des communautés entre femmes." },
-        { shot: "girl-post", k: "Conversations", t: "De vraies conversations, pas des vitrines.", p: "Commentaires, réponses et j’aime, en français ou en anglais. Un bonjour devient une sortie en quelques messages." },
-        { shot: "girl-invite", k: "Activités", t: "D’une publication à une sortie, puis à une amie.", p: "Rejoins une activité en un geste, vois qui vient, et parlez-en dans sa conversation de groupe avant de vous retrouver." },
-        { shot: "girl-chat", k: "À toi", t: "Tes personnes sont peut-être plus proches que tu ne le crois.", p: "Ouvre IRLY Girl dans ton navigateur dès aujourd’hui. Les apps iPhone et Android arrivent bientôt." },
+        { src: shot("girl-home"), alt: "L’accueil d’IRLY Girl : ce qui se passe autour de toi, et les femmes en live", k: "Accueil & Live", t: "Ce qui se passe autour de toi.", p: "Ta ville en un coup d’œil, et Girl Live : vois quelles femmes sortent en ce moment près de toi, et rejoins-les." },
+        { src: shot("girl-communities"), alt: "Les communautés IRLY Girl, réservées aux femmes", k: "Communautés", t: "Cinq cercles officiels, et plus encore.", p: "IRLY Nouvelle Arrivante, IRLY Girl Networking, IRLY Francophone, IRLY Girl Trip et IRLY Activité, plus les communautés créées par les membres." },
+        { src: shot("girl-group"), alt: "Une communauté entre femmes, ses publications, ses plans et son chat", k: "Dans une communauté", t: "Publications, plans et conversation.", p: "Chaque communauté a ses publications, ses plans et sa conversation de groupe. Pose tes questions, partage tes bons plans, rencontre les filles." },
+        { src: shot("girl-post"), alt: "Une publication et les commentaires d’autres femmes", k: "Conversations", t: "Un bonjour devient une sortie.", p: "Commentaires, réponses et j’aime, en français ou en anglais. Un mot de bienvenue peut devenir un brunch en quelques messages." },
+        { src: shot("girl-invite"), alt: "Une activité : brunch entre filles à Jumeirah, qui vient", k: "Activités", t: "Vois qui vient, puis vas-y.", p: "Rejoins une activité en un geste. Elle a sa conversation de groupe et arrive dans ton calendrier." },
+        { src: shot("girl-chat"), alt: "La conversation de groupe d’un club de brunch", k: "Conversation de groupe", t: "Faites connaissance avant de vous voir.", p: "Discussions privées, de groupe et de communauté : la première rencontre a déjà un air familier." },
+        { src: "/img/girl/notifications.jpg", alt: "Les notifications : un message, une invitation, une réponse", k: "Notifications", t: "Seulement ce qui aide à se rencontrer.", p: "Messages, invitations, réponses et nouvelles abonnées, au même endroit." },
+        { src: shot("girl-me"), alt: "Ton profil avec tes centres d’intérêt et tes prochains plans", k: "Ton profil", t: "Tes envies, tes plans.", p: "Ton profil montre ton quartier, tes centres d’intérêt et tes prochains plans. Ta position exacte n’est jamais affichée." },
       ],
       bubbles: {
-        welcome: ["Brunch entre filles · sam. 11:00", "Yoga au lever du soleil · Kite Beach"],
-        feed: ["Les filles, je viens d’arriver à Dubaï et je cherche des copines pour découvrir la ville 🩷"],
-        comments: [["g-nour", "Bienvenue !! 🥹"], ["g-sofia", "On devrait organiser un brunch entre filles !"], ["w-ana", "Je suis nouvelle aussi, on y va ensemble !"], ["g-ines", "Les filles, on devrait vraiment créer un petit groupe."], ["g-hana", "Je viens 🤍"]],
-        connect: ["Sofía t’invite au brunch entre filles à Jumeirah", "Tu y vas · 6/8", "Yuna : On se retrouve à l’entrée à 6h15 ?"],
-        groups: ["IRLY Nouvelle Arrivante", "IRLY Girl Networking", "IRLY Francophone", "IRLY Girl Trip", "IRLY Activité"],
+        live: ["En live", "Layla · en live près de toi", "Café et ordi, quelqu’un dans le coin ?"],
+        circles: ["IRLY Nouvelle Arrivante", "IRLY Girl Networking", "IRLY Francophone", "IRLY Girl Trip", "IRLY Activité"],
+        group: ["Yuna · New in Dubai", "Les filles, je viens d’arriver à Dubaï et je cherche des copines pour découvrir la ville 🩷"],
+        comments: [["g-nour", "Bienvenue !! 🥹"], ["g-sofia", "On organise un brunch entre filles ce week-end !"], ["g-chloe", "Je viens. Samedi ?"]],
+        invite: ["Sofía t’invite au brunch entre filles à Jumeirah", "Tu y vas · 6/8", "On se retrouve à l’entrée à 10h45 ?"],
+        chat: ["Girls Brunch Club · 6 membres", "Ajouté à ton calendrier · sam. 11:00"],
+        notif: ["Yuna t’a envoyé un message", "Camille a rejoint le brunch"],
+        me: ["Startups · Food · Padel", "Ton quartier, jamais ta position exacte"],
       },
     },
-    members: "les membres montrés ici sont illustratifs",
-    appK: "L’app",
-    appT: "Des écrans de l’app.",
-    appP: "Captures de la version de démonstration d’IRLY, avec du contenu d’exemple. IRLY Match y apparaît « bientôt disponible », comme dans l’app.",
-    shots: [
-      ["girl-home", "Accueil IRLY Girl"],
-      ["girl-feed", "Publications récentes"],
-      ["girl-post", "Une publication et ses commentaires"],
-      ["girl-chat", "Conversation de groupe"],
-      ["girl-plans", "Activités à venir"],
-      ["girl-invite", "Rejoindre une activité"],
-      ["girl-notifications", "Notifications"],
-      ["girl-create", "Écrire une publication"],
-      ["girl-me", "Ton profil"],
+    circlesK: "Communautés officielles",
+    circlesT: "Cinq cercles pour commencer.",
+    circlesP: "IRLY anime cinq communautés officielles pour les femmes. Chacune a ses publications, ses activités et sa conversation de groupe. Tu peux aussi créer la tienne.",
+    womenOnly: "Entre femmes",
+    circles: [
+      ["IRLY Nouvelle Arrivante", "Tu viens d’arriver à Dubaï ? Pose tes questions, récupère des conseils et rencontre d’autres nouvelles.", "newcomerGirl", "👋", "Une femme photographie Downtown Dubai au crépuscule"],
+      ["IRLY Girl Networking", "Les femmes dans le business : entrepreneuriat, opportunités, collaborations et réseau.", "networkingGirl", "💼", "Un livre rose sur Dubaï à côté d’un ordinateur portable"],
+      ["IRLY Francophone", "Les filles francophones de Dubaï : discussions, rencontres et activités en français.", "brunchGirl", "🥐", "Une table de brunch avec sushis et boissons au-dessus de la fontaine de Dubaï"],
+      ["IRLY Girl Trip", "Voyages, excursions, escapades et road trips entre filles.", "girlTrip", "✈️", "Des amies en foulard fêtent le coucher du soleil dans le désert"],
+      ["IRLY Activité", "Sport, sorties, restos, beach clubs, shopping, bien-être et tout ce qui se fait à plusieurs.", "padelGirl", "✨", "Des raquettes de padel sur un terrain bleu entre les pieds d’amies"],
     ],
-    accessK: "Accès",
-    accessT: "Réservé aux femmes. Voici comment ça marche.",
-    access: [
-      ["Inscris-toi comme femme", "Crée ton compte IRLY et choisis « femme » à l’inscription. Le genre est fixé à l’inscription et ne peut plus être changé ensuite dans l’app."],
-      ["Ouvre IRLY Girl", "Depuis l’app, ouvre IRLY Girl. C’est le même IRLY, avec du contenu entre femmes et son propre style."],
-      ["Vérifié par le serveur d’IRLY", "Chaque communauté, activité, Live et conversation entre femmes est refusé par le serveur aux comptes qui ne sont pas inscrits comme femmes."],
+    usesK: "Pour quoi faire",
+    usesT: "Tout ce qui est mieux entre copines.",
+    usesP: "Rencontrer des femmes, trouver des partenaires d’activité, sortir, voyager, discuter : entre femmes, dans la même app IRLY.",
+    uses: [
+      ["yachtGirl", "Rencontrer des femmes à Dubaï", "Des femmes venues de partout qui vivent ici, autour de ce que tu aimes.", "Deux amies lèvent leur verre sur un bateau au coucher du soleil"],
+      ["tennisGirl", "Partenaires d’activité", "Une partenaire de tennis, une copine de running, quelqu’un pour le pilates.", "Les ombres de deux femmes avec des raquettes de tennis"],
+      ["drinksGirl", "Cafés & sorties", "Matcha, shopping, beach clubs et soirées, ensemble.", "Deux amies en abaya tiennent des boissons au matcha"],
+      ["girlsOut", "Girl Live", "Vois quelles femmes sortent en ce moment près de toi, et rejoins-les.", "Deux amies lèvent les bras face à la Burj Khalifa au coucher du soleil"],
+      ["desertGirl", "Voyages entre amies", "Soirées dans le désert, week-ends et road trips entre filles.", "Trois femmes regardent le coucher du soleil dans le désert"],
+      ["restaurantGirl", "Restos & expériences", "De nouvelles tables à tester et des expériences à partager.", "La terrasse d’un restaurant sur un toit, la nuit, face à la Burj Khalifa"],
+      ["spaGirl", "Conversations", "Discussions privées, de groupe et de communauté.", "Deux amies en peignoir discutent devant une baie vitrée sur Dubaï"],
+      ["pilatesGirl", "Sport & bien-être", "Pilates, padel, yoga, journées spa : mieux à deux.", "Une femme s’étire sur un reformer de pilates"],
+      ["readingGirl", "Club de lecture & ateliers", "Clubs de lecture, peinture, poterie : des sorties pour les curieuses.", "Un livre ouvert devant les tours de Dubai Marina"],
     ],
-    safeK: "Ta sécurité",
-    safe: [
-      "Ta position exacte n’est jamais affichée, seulement ton quartier.",
-      "Bloque ou signale n’importe qui. L’équipe IRLY examine les signalements, et un compte peut perdre l’accès à IRLY Girl.",
+    peopleK: "Découvrir",
+    peopleT: "Des femmes qui aiment ce que tu aimes.",
+    peopleP: "Amatrices de brunch, joueuses de padel, lectrices, runneuses, entrepreneures, voyageuses : des femmes venues de partout qui vivent aux Émirats.",
+    howK: "Comment ça marche",
+    howT: "Quatre étapes vers ton nouveau cercle.",
+    how: [
+      ["user", "Inscris-toi comme femme", "Crée ton compte IRLY et choisis « femme ». Le genre est fixé à l’inscription et ne peut plus être changé ensuite dans l’app."],
+      ["sparkle", "Ouvre IRLY Girl", "Depuis l’app IRLY, ouvre IRLY Girl : le même compte, avec du contenu entre femmes et son propre style."],
+      ["circles", "Rejoins tes cercles", "Choisis une communauté, nouvelles arrivantes, networking, francophones, voyages ou activités, et dis bonjour."],
+      ["heart", "Rencontrez-vous en vrai", "Rejoins une activité, discutez dans sa conversation de groupe, et retrouve tes copines en vrai."],
+    ],
+    trust: [
+      ["shield", "Vérifié par le serveur d’IRLY", "Les communautés, activités, Live et conversations entre femmes sont refusés par le serveur aux comptes qui ne sont pas inscrits comme femmes."],
+      ["pin", "Ton quartier, pas ta position", "Ta position exacte n’est jamais affichée, seulement ton quartier."],
+      ["flag", "Bloquer & signaler", "Bloque ou signale n’importe qui. L’équipe IRLY examine les signalements, et un compte peut perdre l’accès à IRLY Girl."],
+    ],
+    dubaiK: "La vie à Dubaï",
+    dubaiT: "Ta ville, avec tes copines.",
+    dubaiP: "Après-midis dans le désert, dîners sur les toits, soirée golf, escapade à Abu Dhabi : ici, la vie se partage. IRLY Girl t’aide à trouver les femmes avec qui la partager.",
+    dubai: [
+      ["mosqueGirl", "Escapades à Abu Dhabi", "Une femme en abaya à la grande mosquée Sheikh Zayed"],
+      ["quadGirl", "Après-midis dans le désert", "Une femme en keffieh salue depuis un quad rouge dans le désert"],
+      ["golfGirl", "Golf sous les projecteurs", "Une femme frappe une balle de golf sur un practice, la nuit"],
+      ["dinnerView", "Dîner avec vue", "Une table de dîner avec des verres au-dessus de Dubaï au crépuscule"],
+      ["palmAerial", "La Palm au crépuscule", "Vue aérienne de Palm Jumeirah et des tours de Dubaï au crépuscule"],
     ],
     soonK: "Bientôt disponible",
     soonT: "IRLY Match.",
-    soonP:
-      "Rencontrer des femmes qui partagent tes centres d’intérêt. Ce n’est pas encore ouvert : pour l’instant, les amitiés commencent dans les communautés et les activités.",
+    soonP: "Rencontrer des femmes qui partagent tes centres d’intérêt. Ce n’est pas encore ouvert : pour l’instant, les amitiés commencent dans les communautés et les activités.",
     faqT: "Questions",
     faq: [
-      [
-        "Qui peut rejoindre IRLY Girl ?",
-        "Les femmes qui ont un compte IRLY inscrit comme femme. L’accès dépend du genre du compte et il est vérifié par le serveur d’IRLY, pas seulement par l’app.",
-      ],
-      [
-        "Est-ce une app à part ?",
-        "Non. IRLY Girl est un espace dans IRLY : le même compte et la même app, avec des communautés, des activités, un Live et des conversations entre femmes.",
-      ],
-      [
-        "Les femmes de cette page sont-elles membres ?",
-        "Non. Ce sont des profils illustratifs qui montrent à quoi ressemble IRLY Girl. Les vraies membres n’apparaissent que dans l’app, aux autres membres.",
-      ],
-      [
-        "Est-ce une app de rencontres amoureuses ?",
-        "Non. IRLY Girl est fait pour l’amitié, les activités et le networking entre femmes.",
-      ],
-      [
-        "Combien ça coûte ?",
-        "IRLY Girl est gratuit. Certaines activités, comme un brunch ou un cours, ont un prix fixé par la personne qui les organise.",
-      ],
-      [
-        "Où est-ce disponible ?",
-        "À Dubaï et dans tous les Émirats, dans ton navigateur sur getirly.com/app, en français et en anglais. Les apps iPhone et Android arrivent bientôt.",
-      ],
+      ["Qui peut rejoindre IRLY Girl ?", "Les femmes qui ont un compte IRLY inscrit comme femme. L’accès dépend du genre du compte et il est vérifié par le serveur d’IRLY, pas seulement par l’app."],
+      ["Est-ce une app à part ?", "Non. IRLY Girl est un espace dans IRLY : le même compte et la même app, avec des communautés, des activités, un Live et des conversations entre femmes."],
+      ["Les femmes de cette page sont-elles membres ?", "Non. Ce sont des profils illustratifs qui montrent à quoi ressemble IRLY Girl. Les vraies membres n’apparaissent que dans l’app, aux autres membres."],
+      ["Est-ce une app de rencontres amoureuses ?", "Non. IRLY Girl est fait pour l’amitié, les activités et le networking entre femmes."],
+      ["Combien ça coûte ?", "IRLY Girl est gratuit. Certaines activités, comme un brunch ou un cours, ont un prix fixé par la personne qui les organise."],
+      ["Où est-ce disponible ?", "À Dubaï et dans tous les Émirats, dans ton navigateur sur getirly.com/app, en français et en anglais. Les apps iPhone et Android arrivent bientôt."],
     ],
-    endT: "Tes prochaines copines sont à une sortie près.",
+    endT: ["Ta future meilleure amie n’est peut-être", "qu’à un clic."],
     endP: "Connecte-toi avec ton compte IRLY et ouvre IRLY Girl.",
+    wait: {
+      t: "Sois parmi les premières sur iPhone et Android.",
+      p: "IRLY Girl marche déjà dans ton navigateur. Laisse ton e-mail et on te prévient à la sortie des apps.",
+      label: "Ton e-mail",
+      ph: "E-mail",
+      btn: "Me prévenir",
+      legal: "Ton e-mail sert uniquement à te prévenir de la sortie des apps IRLY.",
+      done1: "Tu es sur la liste.",
+      done2: "On te prévient dès que les apps sont disponibles.",
+      errEmpty: "Indique ton e-mail.",
+      errInvalid: "Cet e-mail ne semble pas valide.",
+      errBusy: "Beaucoup d’inscriptions en ce moment. Réessaie dans quelques minutes.",
+      errNet: "Impossible de joindre IRLY. Vérifie ta connexion et réessaie.",
+    },
     back: "Retour à IRLY",
     privacy: "Confidentialité",
     terms: "Conditions",
     guidelines: "Règles de la communauté",
     support: "Assistance",
+    footer: "Pied de page",
   },
 };
 
 const CSS = `
-:root{--bg:#FBF2F4;--cream:#FCEFF3;--beige:#F8F1EB;--surface:#FFFFFF;--blush:#F6E1E8;--pastel:#F6C5D8;--brand:#E83E87;--rose:#B92B69;--plum:#4A2440;--ink:#2F1B29;--soft:#6F5A67;--warm:#8C7684;--line:rgba(201,47,114,.14);--glass:rgba(255,255,255,.58);--glass-line:rgba(255,255,255,.75);--ease:cubic-bezier(.2,.7,.2,1);--spring:cubic-bezier(.34,1.4,.5,1)}
-*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 "Manrope",system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-a{color:inherit}img{display:block;max-width:100%}
-.wrap{width:min(1160px,100% - 32px);margin-inline:auto}
-.glass{background:var(--glass);backdrop-filter:saturate(1.5) blur(18px);-webkit-backdrop-filter:saturate(1.5) blur(18px);border:1px solid var(--glass-line);box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 18px 40px rgba(56,40,50,.08)}
-/* Menu: IRLY Girl marked as the page you are on. */
-header.top{position:sticky;top:0;z-index:20;padding:10px 16px 0}
-.bar{display:flex;align-items:center;gap:10px;height:60px;padding:0 10px 0 18px;border-radius:999px;width:min(1160px,100%);margin:0 auto}
-.logo{display:inline-flex;align-items:center;gap:8px;text-decoration:none;flex:none}
-.logo b{font-weight:800;font-size:13px;letter-spacing:.32em}
+:root{--bg:#FBF2F4;--pearl:#FFF9FB;--cream:#FCEFF3;--beige:#F8F1EB;--nude:#F2E3DB;--surface:#FFFFFF;--blush:#F6E1E8;--powder:#F3D3DF;--pink:#F6C5D8;--lavender:#F1ECF8;--brand:#E83E87;--rose:#B92B69;--plum:#4A2440;--plum-black:#24121E;--ink:#2F1B29;--soft:#6F5A67;--line:rgba(74,36,64,.10);--glass:rgba(255,249,251,.66);--glass-line:rgba(255,255,255,.8);--shadow:0 16px 36px rgba(122,31,61,.13),0 3px 8px rgba(74,36,64,.06);--shadow-lg:0 40px 90px rgba(122,31,61,.20),0 8px 20px rgba(74,36,64,.08);--ease:cubic-bezier(.2,.7,.2,1);--spring:cubic-bezier(.34,1.4,.5,1);--serif:"Instrument Serif",Georgia,"Times New Roman",serif;--sans:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;--gut:16px}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:84px;overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:clip}
+a{color:inherit}img,svg{display:block;max-width:100%}button,input{font:inherit;color:inherit}
+.wrap{width:min(1200px,100% - 2 * var(--gut));margin-inline:auto}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.glass{background:var(--glass);-webkit-backdrop-filter:saturate(1.6) blur(18px);backdrop-filter:saturate(1.6) blur(18px);border:1px solid var(--glass-line);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,var(--shadow)}
+.skip{position:fixed;top:10px;left:10px;z-index:60;padding:10px 16px;border-radius:999px;background:var(--rose);color:#fff;font-weight:700;text-decoration:none;transform:translateY(-160px)}.skip:focus{transform:none}
+:focus-visible{outline:3px solid var(--rose);outline-offset:3px;border-radius:10px}
+/* Scroll progress, a thin rose thread at the very top. */
+.progress{position:fixed;inset:0 0 auto;height:3px;z-index:50;background:linear-gradient(90deg,var(--brand),var(--rose));transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+/* Menu: a pearl capsule that firms up once you scroll. */
+header.top{position:sticky;top:0;z-index:40;padding:10px var(--gut) 0}
+.bar{display:flex;align-items:center;gap:6px;height:58px;padding:0 8px 0 18px;border-radius:999px;width:min(1200px,100%);margin:0 auto;transition:box-shadow .4s var(--ease),background .4s var(--ease),transform .4s var(--ease)}
+.scrolled .bar{background:rgba(255,249,251,.86);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 14px 34px rgba(122,31,61,.14)}
+.logo{display:inline-flex;align-items:center;gap:7px;text-decoration:none;flex:none;padding:6px 0}
+.logo b{font-weight:800;font-size:12.5px;letter-spacing:.34em}
 .logo i{width:6px;height:6px;border-radius:9px;background:var(--brand)}
-.logo span{font:italic 400 28px/1 "Instrument Serif",Georgia,serif;color:var(--brand)}
-.links{display:flex;gap:2px;margin-inline-start:auto}
-.links a{font-size:14px;font-weight:600;color:var(--soft);text-decoration:none;padding:8px 12px;border-radius:999px;transition:color .2s,background .2s}
-.links a:hover{color:var(--ink);background:rgba(201,47,114,.08)}
-.links a[aria-current="page"]{color:var(--rose);background:rgba(232,62,135,.12)}
-.lang{font-size:13px;font-weight:700;color:var(--soft);text-decoration:none;padding:8px 10px;border-radius:999px}
-.lang:hover{background:rgba(201,47,114,.08)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 26px;border-radius:999px;background:linear-gradient(135deg,#D63A7E,#B92B69 55%,#9E2358);color:#fff;font-weight:700;font-size:16px;text-decoration:none;box-shadow:0 12px 30px rgba(201,47,114,.24);transition:transform .25s var(--ease),box-shadow .25s var(--ease);position:relative;overflow:hidden}
-.btn::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);transition:transform .8s var(--ease)}
-.btn:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(201,47,114,.3)}.btn:hover::after{transform:translateX(120%)}.btn:active{transform:scale(.97)}
-.btn.small{height:40px;padding:0 18px;font-size:14px;box-shadow:none}
-.btn.ghost{background:var(--surface);color:var(--rose);box-shadow:inset 0 0 0 1.5px var(--pastel)}
-.menu-btn{display:none;width:44px;height:44px;border-radius:22px;border:0;background:rgba(201,47,114,.08);cursor:pointer;place-items:center;align-content:center}
-.menu-btn span{display:block;width:18px;height:2px;border-radius:2px;background:var(--ink);transition:transform .3s var(--ease)}
+.logo span{font:italic 400 27px/1 var(--serif);color:var(--rose)}
+.links{display:none;gap:2px;margin-inline-start:auto}
+.links a{position:relative;font-size:14px;font-weight:600;color:var(--soft);text-decoration:none;padding:9px 12px;border-radius:999px;transition:color .25s,background .25s}
+.links a::after{content:"";position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;border-radius:2px;background:var(--rose);transform:scaleX(0);transform-origin:0 50%;transition:transform .35s var(--ease)}
+.links a:hover{color:var(--ink)}.links a:hover::after{transform:scaleX(1)}
+.links a[aria-current="page"]{color:var(--rose);background:rgba(232,62,135,.10)}
+.lang{margin-inline-start:auto;font-size:13px;font-weight:700;color:var(--soft);text-decoration:none;padding:12px 10px;border-radius:999px;transition:background .25s}
+.lang:hover{background:rgba(185,43,105,.08)}
+.bar .btn.small{display:none}
+.menu-btn{width:44px;height:44px;border-radius:22px;border:0;background:rgba(185,43,105,.09);cursor:pointer;display:grid;place-items:center;align-content:center;transition:background .25s,transform .2s var(--ease)}
+.menu-btn:active{transform:scale(.92)}
+.menu-btn span{display:block;width:18px;height:2px;border-radius:2px;background:var(--ink);transition:transform .35s var(--ease)}
 .menu-btn span+span{margin-top:5px}
 .open .menu-btn span:first-child{transform:translateY(3.5px) rotate(45deg)}.open .menu-btn span:last-child{transform:translateY(-3.5px) rotate(-45deg)}
-.sheet{position:fixed;inset:0;z-index:15;background:rgba(255,246,248,.95);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);display:grid;align-content:center;gap:4px;padding:100px 24px 40px;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
-.sheet a{font:400 clamp(38px,10vw,52px)/1.1 "Instrument Serif",Georgia,serif;text-decoration:none;transform:translateY(14px);opacity:0;transition:transform .45s var(--ease),opacity .45s}
+.sheet{position:fixed;inset:0;z-index:35;background:radial-gradient(80% 60% at 80% 10%,rgba(246,197,216,.7),transparent 70%),rgba(255,246,248,.96);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);display:grid;align-content:center;gap:2px;padding:100px 28px 40px;opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s .35s}
+.sheet a{font:400 clamp(36px,10vw,52px)/1.15 var(--serif);text-decoration:none;justify-self:start;transform:translateY(18px);opacity:0;transition:transform .5s var(--ease),opacity .5s var(--ease)}
 .sheet a[aria-current="page"]{color:var(--rose);font-style:italic}
-.sheet a.btn{font:700 16px/1 "Manrope",sans-serif;justify-self:start;margin-top:22px}
-.open+.sheet{opacity:1;visibility:visible}.open+.sheet a{transform:none;opacity:1}
-${Array.from({ length: 8 }, (_, i) => `.open+.sheet a:nth-child(${i + 1}){transition-delay:${(i * 0.04).toFixed(2)}s}`).join("")}
-/* Tour: the IRLY Girl slideshow. Real screens in a phone, scene cards around it. */
-.tour{padding:30px 0 70px;position:relative}
-.tour::before{content:"";position:absolute;inset:40px 0 0;background:radial-gradient(50% 45% at 30% 40%,rgba(246,197,216,.55),transparent 70%),radial-gradient(40% 40% at 80% 70%,rgba(243,226,220,.8),transparent 70%);z-index:-1;pointer-events:none}
-.tgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:center}
-.tstage{position:relative;height:640px;display:grid;place-items:center;touch-action:pan-y}
-.tphone{position:relative;width:296px;aspect-ratio:390/844;border-radius:46px;padding:10px;background:#fff;box-shadow:0 40px 90px rgba(56,40,50,.18),0 0 0 1px rgba(201,47,114,.08);transform:translateZ(0)}
-.tphone .scr{position:absolute;inset:10px;border-radius:37px;overflow:hidden;background:var(--blush)}
-.tphone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.035);transition:opacity .7s var(--ease),transform 1.1s var(--ease)}
+.sheet a.btn{font:700 16px/1 var(--sans);margin-top:24px}
+.open+.sheet{opacity:1;visibility:visible;transition:opacity .35s var(--ease),visibility 0s}.open+.sheet a{transform:none;opacity:1}
+${Array.from({ length: 9 }, (_, i) => `.open+.sheet a:nth-child(${i + 1}){transition-delay:${(0.05 + i * 0.045).toFixed(3)}s}`).join("")}
+/* Buttons: rose gradient, a nacre glint on hover, a press you can feel. */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;border-radius:999px;border:0;cursor:pointer;background:linear-gradient(135deg,#D63A7E,#B92B69 55%,#9E2358);color:#fff;font-weight:700;font-size:16px;text-decoration:none;box-shadow:0 14px 32px rgba(185,43,105,.28),0 1px 0 rgba(255,255,255,.35) inset;transition:transform .3s var(--ease),box-shadow .3s var(--ease);position:relative;overflow:hidden;isolation:isolate;white-space:nowrap}
+.btn::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.38) 50%,transparent 70%);transform:translateX(-120%);transition:transform .9s var(--ease)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 20px 40px rgba(185,43,105,.34),0 1px 0 rgba(255,255,255,.35) inset}.btn:hover::after{transform:translateX(120%)}.btn:active{transform:translateY(0) scale(.96);transition-duration:.1s}
+.btn .ic{width:18px;height:18px;transition:transform .3s var(--ease)}.btn:hover .ic{transform:translateX(3px)}
+.btn.small{min-height:42px;padding:0 18px;font-size:14px;box-shadow:0 8px 18px rgba(185,43,105,.22)}
+.btn.ghost{background:rgba(255,255,255,.72);color:var(--rose);box-shadow:inset 0 0 0 1.5px rgba(185,43,105,.28),0 8px 22px rgba(122,31,61,.08);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.btn.ghost:hover{box-shadow:inset 0 0 0 1.5px rgba(185,43,105,.5),0 14px 30px rgba(122,31,61,.12)}
+.tlink{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--rose);text-decoration:none;min-height:44px}
+.tlink .ic{width:18px;height:18px;transition:transform .3s var(--ease)}.tlink:hover .ic{transform:translateX(-3px)}
+/* Type */
+.k{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--rose);margin:0 0 14px}
+.k::before{content:"";width:22px;height:1.5px;background:currentColor;border-radius:2px}
+h2{font:400 clamp(38px,6vw,72px)/1.02 var(--serif);letter-spacing:-.012em;margin:0 0 16px;text-wrap:balance}
+h2 em,h1 em{font-style:italic;color:var(--rose)}
+h3{font:400 26px/1.1 var(--serif);margin:0 0 8px}
+.p{color:var(--soft);max-width:56ch;margin:0}
+.head{display:grid;gap:8px;margin-bottom:34px}
+.head.center{text-align:center;justify-items:center}.head.center .p{margin-inline:auto}
+section{position:relative;padding:72px 0;scroll-margin-top:76px}
+.label{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;line-height:1.4;color:var(--soft);padding:7px 12px;border-radius:14px;background:rgba(255,255,255,.72);border:1px solid var(--line);max-width:100%}
+.label::before{content:"";flex:none;width:6px;height:6px;border-radius:6px;background:var(--rose)}
+/* ───────── Hero ───────── */
+.hero{min-height:calc(100svh - 68px);display:grid;align-items:center;padding:28px 0 48px;isolation:isolate}
+.aura{position:absolute;inset:-80px 0 -40px;z-index:-1;overflow:hidden;pointer-events:none}
+.aura i{position:absolute;border-radius:50%;opacity:.9;animation:drift 18s ease-in-out infinite alternate}
+.aura i:nth-child(1){width:70vmax;height:70vmax;left:30%;top:-30vmax;background:radial-gradient(closest-side,rgba(246,197,216,.85),transparent)}
+.aura i:nth-child(2){width:55vmax;height:55vmax;left:-20vmax;top:10%;background:radial-gradient(closest-side,rgba(242,227,219,.95),transparent);animation-duration:22s;animation-direction:alternate-reverse}
+.aura i:nth-child(3){width:45vmax;height:45vmax;right:-15vmax;bottom:-10vmax;background:radial-gradient(closest-side,rgba(241,236,248,.95),transparent);animation-duration:26s}
+.hgrid{display:grid;gap:34px;align-items:center}
+.hcopy{min-width:0}
+.mark{display:inline-flex;align-items:center;gap:10px;padding:9px 18px 9px 16px;border-radius:999px;margin-bottom:22px}
+.mark b{font-weight:800;font-size:13px;letter-spacing:.36em;animation:rise .6s var(--ease) both}
+.mark i{width:7px;height:7px;border-radius:9px;background:var(--brand);box-shadow:0 0 0 0 rgba(232,62,135,.5);animation:pop .5s var(--spring) .15s both,pulse 2.8s ease-out 1s infinite}
+.mark span{font:italic 400 30px/1 var(--serif);color:var(--rose);display:inline-block;animation:rise .7s var(--ease) .2s both}
+.mark small{font-size:12px;font-weight:700;color:var(--soft);padding-inline-start:12px;margin-inline-start:4px;border-inline-start:1px solid var(--line);letter-spacing:.02em}
+h1{font:400 clamp(52px,12.5vw,112px)/.95 var(--serif);letter-spacing:-.02em;margin:0 0 20px;text-wrap:balance}
+h1 .ln{display:block}
+h1 .w{display:inline-block;animation:word .7s var(--ease) both}
+.sub{font:italic 400 clamp(22px,3.2vw,30px)/1.25 var(--serif);color:var(--plum);margin:0 0 14px;max-width:30ch;animation:rise .7s var(--ease) .3s both}
+.lead{font-size:clamp(16px,1.5vw,18px);color:var(--soft);max-width:44ch;margin:0 0 28px;animation:rise .7s var(--ease) .38s both}
+.ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center;animation:rise .7s var(--ease) .45s both}
+.note{font-size:13px;color:var(--soft);margin:14px 0 0}
+/* The phone constellation: three real screens, glass cards around them. */
+.hstage{position:relative;width:min(560px,100%);margin-inline:auto;aspect-ratio:560/620;container-type:inline-size;animation:rise .9s var(--ease) .1s both}
+.tilt{position:absolute;inset:0;transition:transform .8s var(--ease);transform-style:preserve-3d}
+.par{position:absolute;will-change:transform}
+.phone{position:relative;border-radius:7.4cqw;padding:1.5cqw;background:linear-gradient(150deg,#fff,#F7E6EC 60%,#fff);box-shadow:var(--shadow-lg),0 0 0 1px rgba(185,43,105,.08)}
+.phone .scr{border-radius:6cqw;overflow:hidden;background:var(--blush);aspect-ratio:390/844}
+.phone img{width:100%;height:100%;object-fit:cover;object-position:top}
+.ph-main{left:27%;top:2%;width:46%;z-index:3}
+.ph-l{left:1%;top:15%;width:36%;z-index:1}.ph-l .phone{transform:rotate(-9deg)}
+.ph-r{right:1%;top:17%;width:36%;z-index:2}.ph-r .phone{transform:rotate(8deg)}
+.ph-l .phone,.ph-r .phone{border-radius:5.8cqw;padding:1.2cqw}
+.ph-l .scr,.ph-r .scr{border-radius:4.7cqw}
+.chip{position:absolute;z-index:5;max-width:100%;display:flex;align-items:center;gap:2.2cqw;padding:1.6cqw 3.4cqw 1.6cqw 1.6cqw;border-radius:999px;font-size:clamp(11px,2.6cqw,14px);line-height:1.25;font-weight:700;white-space:nowrap}
+.chip img{width:clamp(28px,7.4cqw,40px);height:clamp(28px,7.4cqw,40px);border-radius:50%;object-fit:cover;background:var(--blush);flex:none}
+.chip small{display:block;font-weight:600;color:var(--soft);font-size:.86em}
+.chip .fl{animation:bob 6s ease-in-out infinite}
+.c-live{left:-1%;top:9%}.c-plan{right:0;top:61%;border-radius:22px;padding-inline-end:3.4cqw}.c-plan img{border-radius:14px;width:clamp(36px,10cqw,52px);height:clamp(36px,10cqw,52px)}
+.c-com{left:0;top:66%;border-radius:20px 20px 20px 6px}.c-prof{right:-1%;top:5%}
+.c-heart{right:20%;bottom:3%;color:var(--rose);padding:1.6cqw 3.4cqw}
+.dot{width:8px;height:8px;border-radius:8px;background:#E5352B;flex:none;box-shadow:0 0 0 0 rgba(229,53,43,.45);animation:pulse 2.2s ease-out infinite}
+.stack{display:flex}.stack img{width:clamp(22px,5.6cqw,30px);height:clamp(22px,5.6cqw,30px);border:2px solid #fff;margin-inline-start:-1.6cqw}.stack img:first-child{margin:0}
+.c-live{padding:1.6cqw 1.8cqw 1.6cqw 3.4cqw}
+.hlabel{margin-top:14px;display:flex;justify-content:center}
+/* Ticker */
+.ticker{overflow:hidden;padding:18px 0;border-block:1px solid var(--line);background:rgba(255,255,255,.45);-webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.ticker ul{display:flex;width:max-content;margin:0;padding:0;list-style:none;animation:slide 40s linear infinite}
+.ticker li{font:italic 400 clamp(24px,3.4vw,38px)/1 var(--serif);color:var(--plum);padding:0 22px;display:flex;align-items:center;gap:44px;white-space:nowrap}
+.ticker li::after{content:"";width:7px;height:7px;border-radius:7px;background:var(--brand);margin-inline-start:22px}
+/* ───────── Tour: the app, scene by scene ───────── */
+.tour{background:linear-gradient(180deg,transparent,rgba(246,225,232,.55) 30%,rgba(246,225,232,.55) 70%,transparent)}
+.tgrid{display:grid;gap:22px;align-items:center}
+.tstage{position:relative;height:540px;display:grid;place-items:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.tstage::before{content:"";position:absolute;width:min(440px,96%);aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(246,197,216,.9),rgba(246,197,216,0));z-index:-1}
+.tphone{position:relative;width:236px;aspect-ratio:390/844;border-radius:38px;padding:8px;background:linear-gradient(150deg,#fff,#F7E6EC 60%,#fff);box-shadow:var(--shadow-lg),0 0 0 1px rgba(185,43,105,.08)}
+.tphone .scr{position:absolute;inset:8px;border-radius:31px;overflow:hidden;background:var(--blush)}
+.tphone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0;transform:scale(1.04);transition:opacity .7s var(--ease),transform 1.1s var(--ease)}
 .tphone img.on{opacity:1;transform:none}
 .tlayer{position:absolute;inset:0;pointer-events:none}
 .tlayer>div{position:absolute;inset:0;visibility:hidden}
 .tlayer>div.on{visibility:visible}
-.tb{position:absolute;display:flex;align-items:center;gap:10px;max-width:270px;padding:10px 14px;border-radius:20px;font-size:14px;line-height:1.35;font-weight:600;color:var(--ink);opacity:0;transform:translateY(16px) scale(.96);transition:opacity .55s var(--ease),transform .7s var(--ease);transition-delay:calc(var(--i,0) * .32s + .25s)}
-.on .tb{opacity:1;transform:none}
-.tb img{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none}
-.tb small{display:block;font-size:12px;font-weight:700;color:var(--rose)}
-.tb .heart{color:var(--brand);font-weight:800;white-space:nowrap}
-.tb.pill{border-radius:999px;padding:9px 16px}
-.tb.pink{background:linear-gradient(135deg,#D63579,#C2296B);color:#fff;border:0}
-.tlogo{position:absolute;top:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:999px;opacity:0;transition:opacity .6s var(--ease)}
-.on>.tlogo{opacity:1}
-.tlogo b{font-weight:800;font-size:12px;letter-spacing:.32em}.tlogo i{width:6px;height:6px;border-radius:9px;background:var(--brand)}
-.tlogo span{font:italic 400 30px/1 "Instrument Serif",Georgia,serif;color:var(--brand);clip-path:inset(0 100% 0 0);transition:clip-path 1s var(--ease) .35s}
-.on>.tlogo span{clip-path:inset(0)}
-.tring{position:absolute;inset:0;--rx:190px;--ry:250px}
-.tring .tb{flex-direction:column;gap:4px;padding:8px;border-radius:18px;font-size:12px;text-align:center;max-width:none}
-.tring .tb img{width:52px;height:52px}
-.tchips{position:absolute;right:-6px;top:90px;display:grid;gap:8px;justify-items:end}
-.tchips .tb{position:static}
-.tcopy{min-width:0}
+.tb{position:absolute;display:flex;align-items:center;gap:10px;max-width:min(250px,58%);padding:9px 13px;border-radius:20px;font-size:13px;line-height:1.35;font-weight:600;color:var(--ink);opacity:0;transform:translateY(16px) scale(.96);transition:opacity .55s var(--ease),transform .7s var(--spring);transition-delay:calc(var(--i,0) * .3s + .25s)}
+.on>.tb,.on>.tcol>.tb{opacity:1;transform:none}
+.tb img{width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;background:var(--blush)}
+.tb small{display:block;font-size:11.5px;font-weight:700;color:var(--rose)}
+.tb.pill{border-radius:999px;padding:8px 14px}
+.tb.pink{background:linear-gradient(135deg,#D63A7E,#B92B69);color:#fff;border:0;box-shadow:0 10px 24px rgba(185,43,105,.3)}
+.tb .heart{color:var(--rose);font-weight:800;white-space:nowrap}
+.p1{left:0;top:9%}.p2{right:0;top:30%}.p3{left:0;top:56%}.p4{right:0;bottom:8%}
+.tcol{position:absolute;right:0;top:12%;display:grid;gap:8px;justify-items:end}.tcol .tb{position:static;max-width:none}
+.tcopy{min-width:0;text-align:center}
 .tslides{display:grid}
-.tslide{grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .5s var(--ease),transform .6s var(--ease),visibility 0s .6s}
-.tslide.on{opacity:1;visibility:visible;transform:none;transition:opacity .6s var(--ease) .1s,transform .7s var(--ease) .1s,visibility 0s}
-.tslide h2{margin:6px 0 14px}
-.tslide .btn{margin-top:22px}
-.tctrl{display:flex;align-items:center;gap:10px;margin-top:30px}
-.tctrl>button{flex:none;width:44px;height:44px;border-radius:22px;border:0;background:var(--surface);color:var(--ink);box-shadow:0 4px 14px rgba(56,40,50,.08);cursor:pointer;display:grid;place-items:center;font:700 18px/1 "Manrope",sans-serif;transition:transform .2s var(--ease),background .2s}
-.tctrl>button:hover{background:#fff;transform:translateY(-1px)}.tctrl>button:active{transform:scale(.94)}
-.tctrl>button:focus-visible,.tdots button:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
-.tdots{display:flex;gap:6px;flex:1;min-width:0}
-.tdots button{flex:1;height:30px;min-width:0;border:0;background:none;padding:0;cursor:pointer;display:grid;align-items:center}
-.tdots button span{display:block;height:4px;border-radius:4px;background:rgba(201,47,114,.16);overflow:hidden}
-.tdots button span i{display:block;height:100%;width:0;background:var(--rose);border-radius:4px}
-.tdots button.done span i{width:100%}
-.tdots button.on span i{width:var(--p,0%)}
-.tour .fine{margin-top:18px}
-@media (max-width:920px){.tring{--rx:150px;--ry:210px}.tgrid{grid-template-columns:1fr;gap:20px}.tstage{height:560px}.tphone{width:250px}.tchips{right:0;top:70px}.tb{max-width:220px;font-size:13px}.tcopy{order:2}}
-@media (max-width:420px){.tstage{height:520px}.tphone{width:232px}.tb{max-width:200px}.tlayer>div>.tb:nth-child(n+5){display:none}.tring .tb img{width:42px;height:42px}}
-@media (prefers-reduced-motion:reduce){.tphone img,.tb,.tslide,.tlogo,.tlogo span{transition:none!important}.tb{transform:none}}
-/* Hero */
-.hero{padding:56px 0 30px;position:relative}
-.hero::before{content:"";position:absolute;inset:-120px 0 auto;height:620px;background:radial-gradient(60% 60% at 70% 30%,rgba(246,197,216,.65),transparent 70%),radial-gradient(40% 50% at 15% 20%,rgba(243,226,220,.9),transparent 70%);z-index:-1;pointer-events:none}
-.hero .grid{display:grid;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center}
-.kicker{font-size:12px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--rose);margin:0}
-h1{font:400 clamp(50px,7.6vw,100px)/.96 "Instrument Serif",Georgia,serif;letter-spacing:-.015em;margin:18px 0 22px}
-h1 em{color:var(--brand)}
-h1 .w{display:inline-block;animation:word 1s var(--ease) both}
-.lead{font-size:clamp(17px,1.6vw,20px);color:var(--soft);max-width:36ch;margin:0 0 28px;animation:rise .9s var(--ease) .5s both}
-.ctas{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.note{font-size:13px;color:var(--soft);margin:14px 0 0}
-.faces{display:flex;align-items:center;margin-top:26px}
-.faces img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2.5px solid var(--bg);margin-inline-start:-10px;animation:pop .7s var(--spring) both;background:var(--blush)}
-.faces img:first-child{margin-inline-start:0}
-.faces small{margin-inline-start:12px;font-size:12.5px;color:var(--soft);max-width:26ch;line-height:1.35}
-.stage{position:relative;aspect-ratio:1/1.05}
-.stage .main{position:absolute;inset:4% 14% 10% 6%;border-radius:36px;overflow:hidden;box-shadow:0 30px 70px rgba(56,40,50,.18);animation:rise 1.1s var(--ease) .1s both;background:var(--blush)}
-.stage .main img{width:100%;height:100%;object-fit:cover}
-.card-p{position:absolute;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:999px;font-size:13px;font-weight:700;animation:float-in .9s var(--spring) both,bob 7s ease-in-out 1.6s infinite}
-.card-p img{width:40px;height:40px;border-radius:50%;object-fit:cover;background:var(--blush)}
-.card-p small{display:block;font-weight:500;color:var(--soft);font-size:11px}
-.card-p.a{top:6%;right:0;animation-delay:.45s,1.6s}.card-p.b{left:-2%;bottom:20%;animation-delay:.6s,2.2s}.card-p.c{right:4%;bottom:2%;animation-delay:.75s,2.8s}
-.label{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--soft);padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.7);border:1px solid var(--line);max-width:100%}
-.label::before{content:"";flex:none;width:6px;height:6px;border-radius:6px;background:var(--warm)}
-section{padding:80px 0;scroll-margin-top:70px}
-.k{font-size:12px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--rose);margin:0 0 12px}
-h2{font:400 clamp(38px,4.8vw,64px)/1.02 "Instrument Serif",Georgia,serif;letter-spacing:-.01em;margin:0 0 16px}
-.p{color:var(--soft);max-width:52ch;margin:0}
-.head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:16px 40px;margin-bottom:34px}
-/* Discover: an editorial wall, cards of different sizes. */
-.wall{display:grid;grid-template-columns:repeat(6,1fr);grid-auto-rows:118px;grid-auto-flow:dense;gap:14px}
-.pc{position:relative;border-radius:24px;overflow:hidden;background:var(--blush);grid-row:span 2;margin:0;box-shadow:0 12px 30px rgba(56,40,50,.08);transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
-.pc:hover{transform:translateY(-4px) rotate(-.4deg);box-shadow:0 22px 44px rgba(56,40,50,.14)}
-.pc.big{grid-column:span 2;grid-row:span 3}.pc.tall{grid-row:span 3}.pc.wide{grid-column:span 2}
-.pc img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
-.pc:hover img{transform:scale(1.04)}
-.pc .meta{position:absolute;left:8px;right:8px;bottom:8px;padding:9px 12px;border-radius:16px;font-size:12px;line-height:1.3}
-.pc .meta b{display:block;font:400 21px/1.05 "Instrument Serif",Georgia,serif}
-.pc .meta span{color:var(--soft)}
-.pc .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
-.pc .tags i{font-style:normal;font-size:10.5px;font-weight:700;color:var(--rose);background:rgba(232,62,135,.1);padding:3px 7px;border-radius:999px}
-.more{margin-top:18px;font-size:13px;color:var(--soft)}
-.fine{font-size:12.5px;color:var(--soft);margin:34px 0 0}
-/* What it is for: photo cards in an editorial grid. */
-.uses{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.use{margin:0;border-radius:26px;overflow:hidden;background:var(--surface);box-shadow:0 14px 34px rgba(56,40,50,.08);display:grid;grid-template-rows:auto 1fr}
+.tslide{grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .45s var(--ease),transform .55s var(--ease),visibility 0s .55s}
+.tslide.on{opacity:1;visibility:visible;transform:none;transition:opacity .6s var(--ease) .08s,transform .7s var(--ease) .08s,visibility 0s}
+.tslide .kk{font-size:12px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--rose);margin:0 0 8px}
+.tslide h3{font-size:clamp(30px,4vw,46px);line-height:1.04;margin:0 0 12px;text-wrap:balance}
+.tslide .p{margin-inline:auto;max-width:44ch}
+.tslide .btn{margin-top:20px}
+.tctrl{display:flex;align-items:center;gap:8px;margin:24px auto 0;max-width:460px}
+.tctrl>button{flex:none;width:44px;height:44px;border-radius:22px;border:0;background:var(--surface);color:var(--ink);box-shadow:0 6px 16px rgba(122,31,61,.10);cursor:pointer;display:grid;place-items:center;transition:transform .2s var(--ease),box-shadow .2s}
+.tctrl>button .ic{width:18px;height:18px}
+.tctrl>button:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(122,31,61,.14)}.tctrl>button:active{transform:scale(.92)}
+.tdots{display:flex;gap:5px;flex:1;min-width:0}
+.tdots button{flex:1;height:44px;min-width:0;border:0;background:none;padding:0;cursor:pointer;display:grid;align-items:center}
+.tdots button span{display:block;height:4px;border-radius:4px;background:rgba(185,43,105,.16);overflow:hidden}
+.tdots button span i{display:block;height:100%;width:100%;background:var(--rose);border-radius:4px;transform:scaleX(0);transform-origin:0 50%}
+.tdots button.done span i{transform:none}
+.tdots button.on span i{transform:scaleX(var(--p,0))}
+.tour .fine{font-size:12.5px;color:var(--soft);margin:18px auto 0;max-width:52ch}
+/* ───────── Communities ───────── */
+.circles{display:grid;gap:14px}
+.circle{position:relative;margin:0;border-radius:28px;overflow:hidden;min-height:300px;display:flex;align-items:flex-end;color:#fff;background:var(--plum);box-shadow:var(--shadow);isolation:isolate;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
+.circle img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform 1.2s var(--ease)}
+.circle::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(36,18,30,0) 30%,rgba(36,18,30,.5) 60%,rgba(36,18,30,.86))}
+.circle:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}.circle:hover img{transform:scale(1.06)}
+.circle .em{position:absolute;top:16px;left:16px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:rgba(255,249,251,.9);box-shadow:0 6px 16px rgba(36,18,30,.2);transition:transform .5s var(--spring)}
+.circle:hover .em{transform:rotate(-10deg) scale(1.08)}
+.circle .tag{position:absolute;top:22px;right:16px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;border-radius:999px;background:rgba(36,18,30,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#FFF6FA}
+.circle .tx{padding:22px}
+.circle h3{font-size:clamp(27px,3vw,34px);margin:0 0 6px;color:#FFF6FA}
+.circle p{margin:0;color:rgba(255,246,250,.92);font-size:15px;max-width:44ch}
+/* ───────── Uses: an editorial bento ───────── */
+.uses{display:grid;gap:14px}
+.use{position:relative;margin:0;border-radius:26px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow);display:grid;grid-template-rows:auto 1fr;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
 .use .ph{aspect-ratio:4/3;overflow:hidden;background:var(--blush)}
 .use .ph img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
-.use:hover .ph img{transform:scale(1.04)}
-.use .tx{padding:16px 20px 20px}
-.use h3{font:400 27px/1.08 "Instrument Serif",Georgia,serif;margin:0 0 6px}
-.use p{margin:0;color:var(--soft);font-size:15px}
-.use:nth-child(3n+2){transform:translateY(26px)}.use.reveal:nth-child(3n+2){transform:translateY(48px)}.use.reveal.in:nth-child(3n+2){transform:translateY(26px)}
-/* Access: three steps. */
-.access-sec{background:linear-gradient(180deg,var(--bg),var(--cream))}
-.steps{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:s}
-.steps li{position:relative;background:var(--surface);border-radius:24px;padding:24px 22px 22px;box-shadow:inset 0 0 0 1px var(--line)}
-.steps .n{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--plum);color:#FFF6FA;font:400 22px/1 "Instrument Serif",Georgia,serif;margin-bottom:14px}
-.steps h3{font:400 26px/1.1 "Instrument Serif",Georgia,serif;margin:0 0 8px}
+.use:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}.use:hover .ph img{transform:scale(1.06)}
+.use .tx{padding:16px 20px 20px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;align-content:start}
+.use h3{margin:0}
+.use p{grid-column:1/-1;margin:0;color:var(--soft);font-size:15px}
+.use .n{font:italic 400 20px/1 var(--serif);color:var(--rose);padding-top:6px}
+/* ───────── Discover: two slow rivers of illustrative profiles ───────── */
+.people{display:grid;gap:14px;overflow:hidden;-webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);padding:8px 0 14px}
+.river{display:flex;gap:14px;width:max-content;animation:slide 70s linear infinite}
+.river.rev{animation-direction:reverse;animation-duration:80s}
+.people:hover .river{animation-play-state:paused}
+.pc{display:flex;align-items:center;gap:12px;padding:10px 18px 10px 10px;border-radius:999px;margin:0;flex:none}
+.pc img{width:56px;height:56px;border-radius:50%;object-fit:cover;background:var(--blush)}
+.pc b{display:block;font:400 22px/1.05 var(--serif)}
+.pc span{display:block;font-size:12.5px;color:var(--soft)}
+.pc .tags{display:flex;gap:4px;margin-top:4px}
+.pc .tags i{font-style:normal;font-size:11px;font-weight:700;color:var(--rose);background:rgba(232,62,135,.10);padding:3px 8px;border-radius:999px}
+.people-foot{display:flex;justify-content:center;margin-top:14px}
+/* ───────── How it works ───────── */
+.how-sec{background:linear-gradient(180deg,transparent,var(--beige) 20%,var(--cream) 80%,transparent)}
+.steps{list-style:none;padding:0;margin:0;display:grid;gap:16px;position:relative}
+.steps::before{content:"";position:absolute;left:31px;top:30px;bottom:30px;width:2px;background:linear-gradient(180deg,var(--brand),var(--rose));border-radius:2px;transform-origin:50% 0;transform:scaleY(var(--line,1));transition:transform 1.6s var(--ease)}
+.steps li{position:relative;display:grid;grid-template-columns:64px 1fr;gap:16px;align-items:start;padding:4px 0}
+.steps .n{position:relative;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:var(--rose);background:var(--pearl);box-shadow:0 0 0 6px var(--bg),var(--shadow)}
+.steps .n .ic{width:26px;height:26px}
+.steps .n small{position:absolute;top:-4px;right:-4px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--plum);color:#FFF6FA;font:700 12px/1 var(--sans)}
+.steps .card{padding:18px 20px;border-radius:22px}
+.steps h3{margin:0 0 6px}
 .steps p{margin:0;color:var(--soft);font-size:15px}
-.skip{position:fixed;top:10px;left:10px;z-index:40;padding:10px 16px;border-radius:999px;background:var(--rose);color:#fff;font-weight:700;text-decoration:none;transform:translateY(-200%)}.skip:focus{transform:none}
-/* Plans */
-.rail{display:grid;grid-auto-flow:column;grid-auto-columns:min(290px,76vw);gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 18px;scrollbar-width:none;overscroll-behavior-x:contain}
-.rail::-webkit-scrollbar{display:none}
-.plan{scroll-snap-align:start;border-radius:26px;overflow:hidden;background:var(--surface);box-shadow:0 14px 34px rgba(56,40,50,.08)}
-.plan .ph{aspect-ratio:4/5;position:relative;background:var(--blush)}
-.plan .ph img{width:100%;height:100%;object-fit:cover}
-.plan .chip{position:absolute;left:12px;top:12px;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:800}
-.plan .body{padding:14px 16px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.plan .body b{font:400 24px/1.1 "Instrument Serif",Georgia,serif}
-.plan .body small{display:block;color:var(--soft);font-size:12.5px}
-.stack{display:flex;align-items:center;flex-wrap:wrap}.stack img{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-inline-start:-9px;background:var(--blush)}.stack img:first-child{margin:0}
-.stack em{font-style:normal;font-size:11px;font-weight:700;color:var(--soft);margin-inline-start:8px}
-.hint{font-size:12.5px;color:var(--soft);margin:4px 0 0}
-/* Communities */
-.circles{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
-.circle{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;padding:12px;border-radius:26px}
-.circle:last-child:nth-child(odd){grid-column:1/-1}
-.circle img.cv{width:150px;height:150px;border-radius:20px;object-fit:cover;background:var(--blush)}
-.circle b{font:400 28px/1.05 "Instrument Serif",Georgia,serif}
-.circle p{color:var(--soft);font-size:14.5px;margin:6px 0 12px}
-/* App screens */
-.shots{display:grid;grid-auto-flow:column;grid-auto-columns:min(236px,62vw);gap:22px;overflow-x:auto;padding:10px 2px 26px;scroll-snap-type:x mandatory;scrollbar-width:none}
-.shots::-webkit-scrollbar{display:none}
-.shot{scroll-snap-align:center;margin:0}
-.shot .phone{border-radius:34px;padding:8px;background:#1d1418;box-shadow:0 26px 60px rgba(56,40,50,.22)}
-.shot img{width:100%;aspect-ratio:390/844;object-fit:cover;object-position:top;border-radius:27px;background:var(--blush)}
-.shot figcaption{text-align:center;font-size:13px;color:var(--soft);margin-top:12px}
-.soon{border-radius:36px;padding:48px;text-align:center}
-.soon .badge{display:inline-flex;padding:8px 14px;border-radius:999px;background:var(--rose);color:#fff;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
-.soon h2{margin-top:18px}.soon .p{margin-inline:auto}
-.safe{list-style:none;padding:0;margin:24px 0 0;display:grid;gap:14px}
-.safe li{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border-radius:20px;padding:18px 20px;box-shadow:inset 0 0 0 1px var(--line)}
-.safe li::before{content:"";flex:0 0 10px;height:10px;border-radius:10px;background:var(--brand);margin-top:8px}
-.faq details{border-bottom:1px solid var(--line);padding:18px 0}
-.faq summary{cursor:pointer;font:400 26px/1.2 "Instrument Serif",Georgia,serif;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.trust{display:grid;gap:12px;margin-top:40px}
+.trust li{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:22px;background:var(--plum);color:#FFF6FA;box-shadow:0 18px 40px rgba(74,36,64,.22)}
+.trust li .ic{color:var(--pink);margin-top:2px}
+.trust b{display:block;font:400 22px/1.15 var(--serif);margin-bottom:4px}
+.trust p{margin:0;color:rgba(255,246,250,.86);font-size:14.5px}
+.trust{list-style:none;padding:0}
+/* ───────── Dubai life ───────── */
+.dubai{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.dph{position:relative;margin:0;border-radius:24px;overflow:hidden;background:var(--blush);aspect-ratio:3/4;box-shadow:var(--shadow)}
+.dph .dpi{position:absolute;inset:-12% 0;will-change:transform}
+.dph img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
+.dph:hover img{transform:scale(1.05)}
+.dph figcaption{position:absolute;left:10px;bottom:10px;right:10px;padding:8px 12px;border-radius:14px;font-size:13px;font-weight:700;line-height:1.3;width:max-content;max-width:calc(100% - 20px)}
+.dph.wide{grid-column:1/-1;aspect-ratio:16/9}
+/* ───────── IRLY Match, coming soon: the plum panel ───────── */
+.soon{position:relative;overflow:hidden;border-radius:34px;padding:44px 24px;text-align:center;background:linear-gradient(150deg,#55294A,#3A1A31 55%,#24121E);color:#FFF6FA;box-shadow:0 30px 70px rgba(74,36,64,.3);isolation:isolate}
+.soon::before{content:"";position:absolute;width:520px;height:520px;left:50%;top:-260px;margin-left:-260px;border-radius:50%;background:radial-gradient(closest-side,rgba(241,91,154,.45),transparent);z-index:-1;animation:breathe 7s ease-in-out infinite}
+.soon .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,246,250,.12);border:1px solid rgba(255,246,250,.25);color:#FFF6FA;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.soon h2{margin:18px 0 12px}.soon .p{margin-inline:auto;color:rgba(255,246,250,.86)}
+/* ───────── FAQ ───────── */
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{cursor:pointer;font:400 clamp(22px,2.4vw,27px)/1.2 var(--serif);list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;min-height:44px}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";font-family:"Manrope",sans-serif;font-weight:600;color:var(--rose);transition:transform .3s var(--ease)}
+.faq summary::after{content:"+";flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:600 20px/1 var(--sans);color:var(--rose);background:rgba(185,43,105,.08);transition:transform .35s var(--ease),background .25s}
+.faq summary:hover::after{background:rgba(185,43,105,.14)}
 .faq details[open] summary::after{transform:rotate(45deg)}
-.faq p{color:var(--soft);margin:10px 0 0;max-width:62ch}
-.end{text-align:center;padding:100px 0 110px}
-.end .faces{justify-content:center;margin:0 0 26px}
-.end h2{max-width:16ch;margin-inline:auto}
+.faq details p{color:var(--soft);margin:0 0 22px;max-width:64ch;animation:rise .45s var(--ease) both}
+.faq .wrap{max-width:860px}
+/* ───────── Finale ───────── */
+.end{padding:40px 0 90px}
+.endcard{position:relative;overflow:hidden;border-radius:38px;padding:56px 22px 40px;text-align:center;isolation:isolate;background:linear-gradient(160deg,#FFF9FB,#F6E1E8 55%,#F2E3DB)}
+.endcard .aura{inset:0}
+.endcard .faces{display:flex;justify-content:center;margin-bottom:22px}
+.endcard .faces img{width:48px;height:48px;border-radius:50%;object-fit:cover;border:3px solid var(--pearl);margin-inline-start:-12px;background:var(--blush)}
+.endcard .faces img:first-child{margin:0}
+.endcard h2{max-width:17ch;margin-inline:auto}
+.endcard .ctas{justify-content:center;margin-top:26px;animation:none}
+.endcard>.p{margin-inline:auto}
+.wl{margin:40px auto 0;max-width:540px;padding:24px 20px;border-radius:26px;text-align:left}
+.wl h3{font-size:clamp(24px,2.6vw,30px);margin:0 0 6px}
+.wl>p{margin:0 0 16px;color:var(--soft);font-size:15px}
+.field{display:flex;gap:8px;padding:6px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1.5px rgba(185,43,105,.18);transition:box-shadow .25s}
+.field:focus-within{box-shadow:inset 0 0 0 2px var(--rose),0 0 0 5px rgba(232,62,135,.12)}
+.field.bad{box-shadow:inset 0 0 0 2px #8E1F45;animation:shake .4s var(--ease)}
+.field input{flex:1;min-width:0;border:0;background:none;padding:0 14px;font-size:16px;outline:none;color:var(--ink)}
+.field input::placeholder{color:#8C7684}
+.field .btn{min-height:46px;padding:0 20px;font-size:15px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.msgline{min-height:22px;margin:10px 4px 0;font-size:14px;color:#8E1F45;font-weight:600}
+.legal{font-size:12.5px;color:var(--soft);margin:4px 4px 0}.legal a{color:var(--rose);display:inline-block;padding:6px 0}
+.wl.loading .btn{opacity:.7;pointer-events:none}
+.done{display:none;align-items:center;gap:14px}
+.done.on{display:flex;animation:rise .5s var(--ease) both}
+.done .tick{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#D63A7E,#9E2358);color:#fff;flex:none}
+.done b{font:400 24px/1.1 var(--serif);display:block}.done p{margin:2px 0 0;color:var(--soft);font-size:14px}
+.backlink{margin-top:26px;display:flex;justify-content:center}
 footer{border-top:1px solid var(--line);padding:28px 0 40px;font-size:14px;color:var(--soft)}
-footer .wrap{display:flex;flex-wrap:wrap;gap:10px 22px;justify-content:space-between}
-footer nav{display:flex;flex-wrap:wrap;gap:8px 18px}footer a{text-decoration:none}footer a:hover{color:var(--rose)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:12px 22px;justify-content:space-between;align-items:center}
+footer nav{display:flex;flex-wrap:wrap;gap:4px 6px}footer a{text-decoration:none;display:inline-block;padding:10px 8px}footer a:hover{color:var(--rose)}
+.flogo{display:inline-flex;align-items:center;gap:6px}.flogo b{font-weight:800;font-size:11px;letter-spacing:.3em;color:var(--ink)}.flogo i{width:5px;height:5px;border-radius:5px;background:var(--brand)}.flogo span{font:italic 400 22px/1 var(--serif);color:var(--rose)}
 img.missing{opacity:0}
-/* Motion: one vocabulary, delays vary by position so cards never move in lockstep. */
-.reveal{opacity:0;transform:translateY(22px) scale(.985);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:var(--d,0s)}
-.reveal.in{opacity:1;transform:none}
-@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
-@keyframes word{from{opacity:0;transform:translateY(.4em);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
-@keyframes pop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
-@keyframes float-in{from{opacity:0;transform:translateY(16px) scale(.92)}to{opacity:1;transform:none}}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.reveal,.page.reveal{opacity:1!important}.reveal:not(.page){transform:none!important}.page.reveal{transform:var(--r)!important}html{scroll-behavior:auto}}
-@media (max-width:1100px){.links a.hide-md{display:none}}
-@media (max-width:920px){.uses{grid-template-columns:repeat(2,1fr)}.uses .use:nth-child(n){transform:none}.steps{grid-template-columns:1fr}.links,.bar .btn.small{display:none}.menu-btn{display:grid}.lang{margin-inline-start:auto}.hero{padding-top:34px}.hero .grid{grid-template-columns:1fr;gap:34px}.stage{max-width:460px;width:100%;margin-inline:auto}.wall{grid-template-columns:repeat(2,1fr);grid-auto-rows:104px}.pages{grid-template-columns:1fr;max-width:420px;margin-inline:auto;gap:34px}.circles{grid-template-columns:1fr}section{padding:56px 0}.soon{padding:32px 22px}}
-@media (max-width:600px){.uses{grid-template-columns:1fr}}
-@media (max-width:480px){.circle{grid-template-columns:96px 1fr}.circle img.cv{width:96px;height:96px}.card-p{font-size:12px;padding-inline-end:12px}.card-p img{width:34px;height:34px}.card-p.b{left:0}.hero .faces{flex-wrap:wrap;row-gap:10px}.hero .faces small{flex-basis:100%;margin-inline-start:0;max-width:none}.pc .tags i:nth-child(n+2){display:none}}
-:focus-visible{outline:3px solid var(--brand);outline-offset:3px;border-radius:8px}
+/* ───────── Motion: one vocabulary, delays vary by position so cards never move in lockstep ───────── */
+.js .reveal{opacity:0;transform:translateY(26px) scale(.985);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:var(--d,0s)}
+.js .reveal.in{opacity:1;transform:none}
+.js .reveal.zoom{transform:scale(.94)}.js .reveal.zoom.in{transform:none}
+.js .reveal.circle.in:hover,.js .reveal.use.in:hover{transform:translateY(-5px);transition-delay:0s}
+.js .steps:not(.in){--line:0}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes word{from{opacity:0;transform:translateY(.35em) rotate(2deg)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,62,135,.45)}80%,100%{box-shadow:0 0 0 10px rgba(232,62,135,0)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(6vmax,4vmax,0) scale(1.12)}}
+@keyframes slide{to{transform:translateX(-50%)}}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.15);opacity:1}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.chip{animation:float-in .8s var(--spring) both,bob 7s ease-in-out infinite}
+.c-live{animation-delay:.45s,1.3s}.c-prof{animation-delay:.6s,2.1s}.c-plan{animation-delay:.75s,2.9s}.c-com{animation-delay:.9s,3.4s}.c-heart{animation-delay:1.05s,1.8s}
+@keyframes float-in{from{opacity:0;transform:translateY(18px) scale(.9)}to{opacity:1;transform:none}}
+/* ───────── Wider screens ───────── */
+@media (min-width:600px){:root{--gut:24px}.uses{grid-template-columns:repeat(2,1fr)}.circles{grid-template-columns:repeat(2,1fr)}.circle:first-child{grid-column:1/-1;min-height:380px}.dubai{grid-template-columns:repeat(3,1fr)}.dph.wide{grid-column:span 2;aspect-ratio:auto}.trust{grid-template-columns:repeat(3,1fr)}.tstage{height:600px}.tphone{width:262px}.tb{font-size:14px}.wl{padding:28px}}
+@media (min-width:768px){section{padding:96px 0}.steps{grid-template-columns:repeat(4,1fr);gap:20px}.steps::before{left:32px;right:calc(25% - 32px);top:31px;bottom:auto;width:auto;height:2px;transform-origin:0 50%;transform:scaleX(var(--line,1))}.steps li{grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:18px}.steps .card{padding:20px;height:100%}.head{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:end;gap:10px 48px}.head .p{align-self:end}.head.center{grid-template-columns:1fr}.hgrid{gap:40px}.endcard{padding:80px 48px 56px}}
+@media (min-width:1024px){:root{--gut:32px}.links{display:flex}.lang{margin-inline-start:4px}.bar .btn.small{display:inline-flex;margin-inline-start:4px}.menu-btn{display:none}.hgrid{grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);gap:40px}.hero{padding:20px 0 60px}.tgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px}.tcopy{text-align:left}.tslide .p{margin-inline:0}.tctrl{margin-inline:0}.tour .fine{margin-inline:0}.tstage{height:640px}.tphone{width:286px}.uses{grid-template-columns:repeat(6,1fr);gap:18px}.use{grid-column:span 2}.use:nth-child(1),.use:nth-child(4){grid-column:span 4}.use:nth-child(8),.use:nth-child(9){grid-column:span 3}.use:nth-child(-n+4) .ph{aspect-ratio:auto;height:340px}.use:nth-child(8) .ph,.use:nth-child(9) .ph{aspect-ratio:16/9}.circles{grid-template-columns:repeat(6,1fr);gap:18px}.circle{grid-column:span 2;min-height:360px}.circle:first-child{grid-column:span 4;min-height:360px}.circle:nth-child(2){grid-column:span 2}.circle:nth-child(n+3){grid-column:span 2}.dubai{grid-template-columns:repeat(4,1fr);grid-auto-rows:240px;gap:16px}.dph{aspect-ratio:auto;grid-row:span 2}.dph:nth-child(4),.dph.wide{grid-row:span 1;grid-column:auto}}
+@media (min-width:1100px){.p1{left:2%}.p3{left:2%}.p2,.p4{right:2%}}
+@media (min-width:1440px){h1{font-size:120px}.hstage{width:min(600px,100%)}}
+@media (max-width:1023px){.hcopy{text-align:center}.hcopy .mark{margin-inline:auto}.sub,.lead{margin-inline:auto}.ctas{justify-content:center}.hero{min-height:auto}}
+@media (max-width:420px){.tb{max-width:62%;font-size:12.5px;padding:8px 11px}.tb img{width:28px;height:28px}.tlayer>div>.tb:nth-child(n+3){display:none}.tcol .tb:nth-child(n+4){display:none}.tstage{height:500px}.tphone{width:220px}.chip small{display:none}.c-plan small{display:block}.ctas .btn{flex:1 1 100%}.mark{gap:8px;padding-inline:14px}.mark small{padding-inline-start:9px;font-size:11px}.mark span{font-size:26px}}
+@media (max-width:359px){h1{font-size:46px}.mark b{letter-spacing:.24em}.c-heart{display:none}.field{flex-wrap:wrap;border-radius:22px}.field input{min-height:44px}.field .btn{flex:1 1 100%}}
+/* Reduced motion: everything visible and still. */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}.js .reveal{opacity:1!important;transform:none!important}.steps{--line:1!important}.par,.dph .dpi,.tilt{transform:none!important}.ticker ul,.river{transform:none!important}.people{overflow-x:auto;-webkit-mask:none;mask:none}.ticker{overflow-x:auto}.tb{opacity:1;transform:none}}
 `;
 
 /** Width and height of a JPEG (owner photos), so the page reserves their space before they load. */
@@ -682,6 +758,7 @@ function page(lang) {
     `<img${cls ? ` class="${cls}"` : ""} src="${src}" alt="${esc(alt)}"${lazy ? ' loading="lazy"' : ""} decoding="async" onerror="this.classList.add('missing')"${extra}>`;
   // A portrait of the illustrative cast (400 × 400).
   const fc = (p, alt = p.name, lazy = true, extra = "") => im(face(p.id), alt, "", lazy, ` width="400" height="400"${extra}`);
+  const fcId = (id, alt = "", lazy = true) => (byId(id) ? fc(byId(id), alt, lazy) : "");
   // An owner photo: the 480 and 1200 files with their real widths, and its size reserved.
   const own = (k, alt, sizes, cls = "", lazy = true, extra = "") => {
     const [w1, h1] = jpegSize(`site${img(k)}`);
@@ -689,32 +766,19 @@ function page(lang) {
     const set = w0 === w1 ? `${img(k)} ${w1}w` : `${thumb(k)} ${w0}w, ${img(k)} ${w1}w`;
     return im(img(k), alt, cls, lazy, ` srcset="${set}" sizes="${sizes}" width="${w1}" height="${h1}"${extra}`);
   };
-  const avatars = (people, max = 4) =>
-    people
-      .slice(0, max)
-      .map((p) => fc(p))
-      .join("");
+  const screen = (src, alt, lazy = true, extra = "") => im(src, alt, "", lazy, ` width="780" height="1688"${extra}`);
   const nav = [
     [t.nav.home, home(lang)],
-    [t.nav.uses, "#uses"],
+    [t.nav.app, "#tour"],
     [t.nav.circles, "#circles"],
-    [t.nav.access, "#access"],
-    [t.nav.app, "#tour", "hide-md"],
+    [t.nav.how, "#how"],
+    [t.nav.dubai, "#dubai"],
   ];
-  const navLinks = (sheet) =>
+  const navLinks = () =>
     [
-      ...nav.map(
-        ([label, to, cls]) =>
-          `<a${!sheet && cls ? ` class="${cls}"` : ""} href="${to}">${esc(label)}</a>`,
-      ),
+      ...nav.map(([label, to]) => `<a href="${to}">${esc(label)}</a>`),
       `<a href="${href(lang)}" aria-current="page"><span translate="no">IRLY Girl</span></a>`,
     ].join("");
-
-  // Fixed positions in the cast, so a woman keeps her name and photo in every section.
-  const heroFaces = pick(0, 7);
-  const floating = [CAST[3], CAST[12], CAST[29] ?? CAST[5]].filter(Boolean);
-  const wall = pick(0, Math.min(CAST.length, 12));
-  const sizes = ["big", "", "tall", "", "wide", "", "", "tall", "", "", "wide", ""];
   const ld = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -723,6 +787,7 @@ function page(lang) {
     url: SITE + href(lang),
     inLanguage: lang,
     isPartOf: { "@id": `${SITE}/#website` },
+    primaryImageOfPage: SITE + og(lang),
     mainEntity: {
       "@type": "FAQPage",
       mainEntity: t.faq.map(([q, a]) => ({
@@ -732,65 +797,94 @@ function page(lang) {
       })),
     },
   };
-  const shots = t.shots.filter(([n]) => fs.existsSync(`site/shots/${n}.jpg`));
-  // The tour: a few scenes, each a real screen of the demo with the cards it shows coming alive.
-  const tt = t.tour;
-  const tourScenes = tt.scenes.filter((x) => fs.existsSync(`site/shots/${x.shot}.jpg`));
-  const byId = (id) => CAST.find((c) => c.id === id);
-  const bub = (html, style, i, cls = "glass") => `<div class="tb ${cls}" style="${style};--i:${i}">${html}</div>`;
-  const faceTag = (id) => (byId(id) ? fc(byId(id), "") : "");
-  const B = tt.bubbles;
-  // The cards around the phone, per screen.
-  const layers = {
-    "girl-home":
-      `<div class="tlogo glass" translate="no"><b>IRLY</b><i aria-hidden="true"></i><span>Girl</span></div>` +
-      bub(esc(B.welcome[0]), "left:-6px;bottom:150px", 1, "glass pill") +
-      bub(esc(B.welcome[1]), "right:-6px;bottom:90px", 2, "glass pill"),
-    "girl-feed":
-      bub(`${faceTag("w-noor")}<div><small>Yuna · IRLY Nouvelle Arrivante</small>${esc(B.feed[0])}</div>`, "left:-16px;top:120px", 0) +
-      bub(`<span class="heart" data-count="22">♥ 22</span>`, "right:6px;top:300px", 2, "glass pill") +
-      bub(`${faceTag("g-sofia")}<div><small>${esc(byId("g-sofia")?.name ?? "")}</small>Saturday 11:00 ✨</div>`, "right:-10px;bottom:110px", 3),
-    "girl-post": B.comments.map(([id, text], i) => bub(`${faceTag(id)}<div><small>${esc(byId(id)?.name ?? "")}</small>${esc(text)}</div>`, `${i % 2 ? "right:-14px" : "left:-14px"};top:${80 + i * 92}px`, i)).join(""),
-    "girl-invite":
-      bub(`${faceTag("g-sofia")}<div><small>IRLY Girl</small>${esc(B.connect[0])}</div>`, "left:-18px;top:70px", 0) +
-      bub(`✓ ${esc(B.connect[1])}`, "right:4px;top:330px", 2, "pink pill") +
-      bub(`${faceTag("w-noor")}<div>${esc(B.connect[2])}</div>`, "left:-10px;bottom:90px", 3),
-    "girl-chat": `<div class="tchips">${B.groups.map((g, i) => bub(esc(g), "", i * 0.5, i === 0 ? "pink pill" : "glass pill")).join("")}</div>`,
-  };
-  const tourHtml = tourScenes.length
-    ? `<section id="tour" class="tour" aria-roledescription="carousel" aria-label="${esc(tt.label)}"><div class="wrap tgrid">
-  <div class="tstage" aria-hidden="true">
-    <div class="tphone"><div class="scr">${tourScenes.map((x, i) => `<img src="${shot(x.shot)}" alt="" width="780" height="1688"${i ? ' loading="lazy"' : ""} decoding="async" data-i="${i}"${i ? "" : ' class="on"'}>`).join("")}</div></div>
-    <div class="tlayer">${tourScenes.map((x, i) => `<div data-i="${i}"${i ? "" : ' class="on"'}>${layers[x.shot] ?? ""}</div>`).join("")}</div>
+
+  /* Hero: the real home screen in front, communities and an activity behind, the cards that happen around them. */
+  const H = t.hero;
+  const sofia = byId("g-sofia");
+  const heroHtml = `<section class="hero" aria-labelledby="h1">
+  <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="wrap hgrid">
+    <div class="hcopy">
+      <p class="mark glass" translate="no"><b>IRLY</b><i aria-hidden="true"></i><span>Girl</span><small translate="yes">${esc(t.kicker)}</small></p>
+      <h1 id="h1">${t.h1
+        .map((part, li) => {
+          const ws = part.split(" ").map((w, wi) => `<span class="w" style="animation-delay:${(0.08 + li * 0.12 + wi * 0.06).toFixed(2)}s">${esc(w)}</span>`).join(" ");
+          return li === 1 ? ` <em>${ws}</em> ` : li === 0 ? `<span class="ln">${ws}</span>` : `<span class="ln">${ws}</span>`;
+        })
+        .join("")}</h1>
+      <p class="sub">${esc(t.sub)}</p>
+      <p class="lead">${esc(t.lead)}</p>
+      <div class="ctas"><a class="btn" href="${APP_GIRL}">${esc(t.open)}${icon("arrow")}</a><a class="btn ghost" href="#waitlist">${esc(t.waitCta)}</a></div>
+      <p class="note">${esc(t.webNote)}</p>
+    </div>
+    <div>
+      <div class="hstage">
+        <div class="tilt">
+          <div class="par ph-l" data-speed="-0.06" aria-hidden="true"><div class="phone"><div class="scr">${screen(shot("girl-communities"), "", false)}</div></div></div>
+          <div class="par ph-r" data-speed="-0.1" aria-hidden="true"><div class="phone"><div class="scr">${screen(shot("girl-invite"), "", false)}</div></div></div>
+          <div class="par ph-main" data-speed="0.05"><div class="phone"><div class="scr">${screen(shot("girl-home"), H.phonesAlt, false, ' fetchpriority="high"')}</div></div></div>
+          <div class="chip glass c-live" aria-hidden="true"><span class="dot"></span>${esc(H.live)}<span class="stack">${["g-ines", "g-maya", "g-amira"].map((id) => fcId(id, "", false)).join("")}</span></div>
+          ${sofia ? `<div class="chip glass c-prof" aria-hidden="true">${fc(sofia, "", false)}<span>${esc(sofia.name)}<small>${esc(H.likes)}</small></span></div>` : ""}
+          <div class="chip glass c-plan" aria-hidden="true">${own("brunchGirl", "", "52px", "", false)}<span>${esc(H.plan)}<small>${esc(H.planWhen)}</small></span></div>
+          <div class="chip glass c-com" aria-hidden="true">${fcId("g-nour", "", false)}<span><small>${esc(byId("g-nour")?.name ?? "")}</small>${esc(H.comment)}</span></div>
+          <div class="chip glass c-heart" aria-hidden="true">♥ 23</div>
+        </div>
+      </div>
+      <p class="hlabel"><span class="label">${esc(t.illustrative)}</span></p>
+    </div>
   </div>
-  <div class="tcopy">
-    <p class="k">${esc(tt.k)}</p>
-    <div class="tslides" aria-live="polite">${tourScenes
+</section>`;
+
+  /* Tour: real screens with the moments they show coming alive around the phone. */
+  const tt = t.tour;
+  const B = tt.bubbles;
+  const scenes = tt.scenes.filter((x) => fs.existsSync(`site${x.src}`));
+  const bub = (html, pos, i, cls = "glass") => `<div class="tb ${cls}${pos ? ` ${pos}` : ""}" style="--i:${i}">${html}</div>`;
+  const who = (id, small, text) => `${fcId(id)}<span>${small ? `<small>${esc(small)}</small>` : ""}${esc(text)}</span>`;
+  const layerFor = (src) => {
+    if (src.endsWith("girl-home.jpg")) return bub(`<span class="dot"></span>${esc(B.live[0])}<span class="stack">${["g-ines", "g-maya", "g-sofia"].map((id) => fcId(id)).join("")}</span>`, "p1", 0, "glass pill") + bub(who("p-layla", B.live[1], B.live[2]), "p4", 1);
+    if (src.endsWith("girl-communities.jpg")) return `<div class="tcol">${B.circles.map((c, i) => bub(`<span translate="no">${esc(c)}</span>`, "", i * 0.5, i === 0 ? "pink pill" : "glass pill")).join("")}</div>`;
+    if (src.endsWith("girl-group.jpg")) return bub(who("w-noor", B.group[0], B.group[1]), "p1", 0) + bub(`<span class="heart" data-count="22">♥ 22</span>`, "p2", 1.5, "glass pill");
+    if (src.endsWith("girl-post.jpg")) return B.comments.map(([id, text], i) => bub(who(id, byId(id)?.name ?? "", text), ["p1", "p2", "p3"][i], i)).join("");
+    if (src.endsWith("girl-invite.jpg")) return bub(who("g-sofia", "IRLY Girl", B.invite[0]), "p1", 0) + bub(`✓ ${esc(B.invite[1])}`, "p2", 1.2, "pink pill") + bub(who("w-noor", "Yuna", B.invite[2]), "p3", 2);
+    if (src.endsWith("girl-chat.jpg")) return bub(esc(B.chat[0]), "p1", 0, "glass pill") + bub(`📅 ${esc(B.chat[1])}`, "p4", 1, "pink pill");
+    if (src.endsWith("notifications.jpg")) return bub(who("w-noor", "", B.notif[0]), "p2", 0) + bub(who("g-chloe", "", B.notif[1]), "p3", 1);
+    if (src.endsWith("girl-me.jpg")) return bub(esc(B.me[0]), "p2", 0, "glass pill") + bub(`📍 ${esc(B.me[1])}`, "p3", 1, "glass pill");
+    return "";
+  };
+  const tourHtml = scenes.length
+    ? `<section id="tour" class="tour" aria-labelledby="tour-t"><div class="wrap">
+  <div class="head center reveal"><p class="k">${esc(t.tourK)}</p><h2 id="tour-t">${esc(t.tourT)}</h2><p class="p">${esc(t.tourP)}</p></div>
+  <div class="tgrid" role="region" aria-roledescription="carousel" aria-label="${esc(tt.label)}">
+  <div class="tstage reveal zoom">
+    <div class="tphone"><div class="scr">${scenes.map((x, i) => `<img src="${x.src}" alt="${esc(x.alt)}" width="780" height="1688"${i ? ' loading="lazy" aria-hidden="true"' : ""} decoding="async" data-i="${i}"${i ? "" : ' class="on"'}>`).join("")}</div></div>
+    <div class="tlayer" aria-hidden="true">${scenes.map((x, i) => `<div data-i="${i}"${i ? "" : ' class="on"'}>${layerFor(x.src)}</div>`).join("")}</div>
+  </div>
+  <div class="tcopy reveal">
+    <div class="tslides" aria-live="polite">${scenes
       .map(
         (x, i) =>
-          `<article class="tslide${i ? "" : " on"}" role="group" aria-roledescription="slide" aria-label="${i + 1} / ${tourScenes.length}" data-i="${i}"${i ? ' aria-hidden="true"' : ""}><p class="kicker">${esc(x.k)}</p><h2>${esc(x.t)}</h2><p class="p">${esc(x.p)}</p>${i === tourScenes.length - 1 ? `<a class="btn" href="${APP_GIRL}"${i ? ' tabindex="-1"' : ""}>${esc(tt.cta)}</a>` : ""}</article>`,
+          `<article class="tslide${i ? "" : " on"}" role="group" aria-roledescription="slide" aria-label="${i + 1} / ${scenes.length}" data-i="${i}"${i ? ' aria-hidden="true"' : ""}><p class="kk">${esc(x.k)}</p><h3>${esc(x.t)}</h3><p class="p">${esc(x.p)}</p>${i === scenes.length - 1 ? `<a class="btn" href="${APP_GIRL}"${i ? ' tabindex="-1"' : ""}>${esc(tt.cta)}${icon("arrow")}</a>` : ""}</article>`,
       )
       .join("")}</div>
     <div class="tctrl">
-      <button type="button" class="tprev" aria-label="${esc(tt.prev)}">←</button>
-      <div class="tdots">${tourScenes.map((x, i) => `<button type="button" aria-label="${i + 1}. ${esc(x.k)}"${i ? "" : ' class="on" aria-current="true"'}><span><i></i></span></button>`).join("")}</div>
-      <button type="button" class="tnext" aria-label="${esc(tt.next)}">→</button>
+      <button type="button" class="tprev" aria-label="${esc(tt.prev)}">${icon("back")}</button>
+      <div class="tdots">${scenes.map((x, i) => `<button type="button" aria-label="${i + 1}. ${esc(x.k)}"${i ? "" : ' class="on" aria-current="true"'}><span><i></i></span></button>`).join("")}</div>
+      <button type="button" class="tnext" aria-label="${esc(tt.next)}">${icon("arrow")}</button>
       <button type="button" class="tplay" aria-label="${esc(tt.pause)}" data-pause="${esc(tt.pause)}" data-play="${esc(tt.play)}">❚❚</button>
     </div>
     <p class="fine">${esc(tt.note)}</p>
   </div>
+  </div>
 </div></section>`
     : "";
-  const words = (s, d0) =>
-    s
-      .split(" ")
-      .map(
-        (w, i) =>
-          `<span class="w" style="animation-delay:${(d0 + i * 0.07).toFixed(2)}s">${esc(w)}</span>`,
-      )
-      .join(" ");
-  const navLinksHtml = navLinks(false);
-  const heroAlt = lang === "fr" ? "Deux amies lèvent les bras face à la Burj Khalifa au coucher du soleil" : "Two friends raising their arms facing the Burj Khalifa at sunset";
+
+  // Two rivers of illustrative profiles; the second copy of each river is for the loop and hidden from assistive tech.
+  const half = Math.ceil(CAST.length / 2);
+  const pcard = (p, hidden) => `<figure class="pc glass"${hidden ? ' aria-hidden="true"' : ""}>${fc(p, hidden ? "" : p.name)}<figcaption><b>${esc(p.name)}</b><span>${esc(p.area)}</span><span class="tags">${p.likes.map((l) => `<i>${esc(like(l))}</i>`).join("")}</span></figcaption></figure>`;
+  const river = (list, cls) => `<div class="river${cls}">${list.map((p) => pcard(p, false)).join("")}${list.map((p) => pcard(p, true)).join("")}</div>`;
+  const endFaces = ["w-noor", "g-sofia", "g-nour", "g-chloe", "w-ana", "g-ines"].map((id) => fcId(id)).join("");
+  const W = t.wait;
 
   return `<!doctype html>
 <html lang="${lang}" dir="ltr">
@@ -813,128 +907,165 @@ function page(lang) {
 <meta property="og:title" content="${esc(t.title)}">
 <meta property="og:description" content="${esc(t.description)}">
 <meta property="og:url" content="${SITE + href(lang)}">
-<meta property="og:image" content="${SITE + img("girlsOut")}">
-<meta property="og:image:alt" content="${esc(heroAlt)}">
+<meta property="og:image" content="${SITE + og(lang)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(t.ogAlt)}">
 <meta property="og:locale" content="${t.locale}">
 <meta property="og:locale:alternate" content="${T[other].locale}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(t.title)}">
 <meta name="twitter:description" content="${esc(t.description)}">
-<meta name="twitter:image" content="${SITE + img("girlsOut")}">
+<meta name="twitter:image" content="${SITE + og(lang)}">
+<meta name="twitter:image:alt" content="${esc(t.ogAlt)}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="preload" as="image" href="${img("girlsOut")}" imagesrcset="${thumb("girlsOut")} ${jpegSize(`site${thumb("girlsOut")}`)[0]}w, ${img("girlsOut")} ${jpegSize(`site${img("girlsOut")}`)[0]}w" imagesizes="(max-width: 920px) 90vw, 460px">
+<link rel="preload" as="image" href="${shot("girl-home")}" fetchpriority="high">
 <style>${CSS}</style>
+<script>document.documentElement.classList.add('js')</script>
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
 </head>
 <body>
-<a class="skip" href="#main">${lang === "fr" ? "Aller au contenu" : "Skip to content"}</a>
+<a class="skip" href="#main">${esc(t.skip)}</a>
+<div class="progress" aria-hidden="true"></div>
 <header class="top" id="top"><div class="bar glass">
   <a class="logo" translate="no" href="${href(lang)}" aria-label="IRLY Girl"><b>IRLY</b><i aria-hidden="true"></i><span>Girl</span></a>
-  <nav class="links" aria-label="${lang === "fr" ? "Principale" : "Main"}">${navLinksHtml}</nav>
+  <nav class="links" aria-label="${esc(t.navLabel)}">${navLinks()}</nav>
   <a class="lang" href="${href(other)}" hreflang="${other}" lang="${other}">${t.other}</a>
-  <a class="btn small" href="${APP_GIRL}">${t.open}</a>
-  <button class="menu-btn" type="button" aria-expanded="false" aria-controls="sheet" aria-label="${t.menu}"><span></span><span></span></button>
+  <a class="btn small" href="${APP_GIRL}">${esc(t.open)}</a>
+  <button class="menu-btn" type="button" aria-expanded="false" aria-controls="sheet" aria-label="${esc(t.menu)}"><span></span><span></span></button>
 </div></header>
-<nav class="sheet" id="sheet" aria-label="${t.menu}" aria-hidden="true">${navLinks(true)}<a class="btn" href="${APP_GIRL}">${t.open}</a></nav>
+<nav class="sheet" id="sheet" aria-label="${esc(t.menu)}" aria-hidden="true" inert>${navLinks()}<a class="btn" href="${APP_GIRL}">${esc(t.open)}</a></nav>
 <main id="main">
-<section class="hero"><div class="wrap grid">
-  <div>
-    <p class="kicker">${t.kicker}</p>
-    <h1>${words(t.h1a, 0.05)} <em>${words(t.h1b, 0.35)}</em></h1>
-    <p class="lead">${t.lead}</p>
-    <div class="ctas"><a class="btn" href="${APP_GIRL}">${t.open}</a><a class="btn ghost" href="#uses">${t.how}</a></div>
-    <p class="note">${t.webNote}</p>
-    <div class="faces">${heroFaces.map((p, i) => fc(p, p.name, false, ` style="animation-delay:${(0.6 + i * 0.07).toFixed(2)}s"`)).join("")}<small>${esc(t.illustrative)}</small></div>
-  </div>
-  <div class="stage">
-    <div class="main">${own("girlsOut", heroAlt, "(max-width: 920px) 90vw, 460px", "", false, ' fetchpriority="high"')}</div>
-    ${floating.map((p, i) => `<div class="card-p ${"abc"[i]} glass">${fc(p, "", false)}<div>${esc(p.name)}<small>${esc(like(p.likes[0]))} · ${esc(p.area)}</small></div></div>`).join("\n    ")}
-  </div>
-</div></section>
+${heroHtml}
 
-<section id="uses" class="uses-sec"><div class="wrap">
-  <div class="head"><div><p class="k">${t.usesK}</p><h2>${t.usesT}</h2><p class="p">${t.usesP}</p></div></div>
-  <div class="uses">${t.uses
-    .map(
-      ([photo, title, text, alt], i) =>
-        `<article class="use reveal" style="--d:${((i % 3) * 0.08).toFixed(2)}s"><div class="ph">${own(photo, alt, "(max-width: 600px) 92vw, (max-width: 920px) 46vw, 370px")}</div><div class="tx"><h3>${esc(title)}</h3><p>${esc(text)}</p></div></article>`,
-    )
-    .join("")}</div>
-</div></section>
-
-<section id="circles"><div class="wrap">
-  <div class="head"><div><p class="k">${t.circlesK}</p><h2>${t.circlesT}</h2><p class="p">${t.circlesP}</p></div></div>
-  <div class="circles">${t.circles
-    .map(
-      ([name, about, photo, emoji, alt], i) =>
-        `<article class="circle glass reveal" style="--d:${(i * 0.08).toFixed(2)}s">${own(photo, alt, "150px", "cv")}<div><b translate="no"><span aria-hidden="true">${emoji}</span> ${esc(name)}</b><p>${esc(about)}</p></div></article>`,
-    )
-    .join("")}</div>
-</div></section>
+<div class="ticker" aria-hidden="true"><ul>${[...t.ticker, ...t.ticker].map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>
 
 ${tourHtml}
 
-<section id="plans"><div class="wrap">
-  <div class="head"><div><p class="k">${t.plansK}</p><h2>${t.plansT}</h2><p class="p">${t.plansP}</p></div><span class="label">${esc(t.illustrative)}</span></div>
-  <div class="rail">${t.plans
-    .map(([photo, name, when], i) => {
-      const who = pick(4 + i * 3, 3 + (i % 3));
-      return `<article class="plan reveal" style="--d:${(Math.min(i, 4) * 0.06).toFixed(2)}s"><div class="ph">${own(photo, "", "(max-width: 920px) 76vw, 290px")}<span class="chip glass">${esc(when)}</span></div><div class="body"><div><b>${esc(name)}</b><small>${who.length} ${t.going}</small></div><div class="stack">${avatars(who, 3)}</div></div></article>`;
-    })
-    .join("")}</div>
-</div></section>
-
-<section id="people"><div class="wrap">
-  <div class="head"><div><p class="k">${t.peopleK}</p><h2>${t.peopleT}</h2><p class="p">${t.peopleP}</p></div><span class="label">${esc(t.illustrative)}</span></div>
-  <div class="wall">${wall
+<section id="circles" aria-labelledby="circles-t"><div class="wrap">
+  <div class="head reveal"><div><p class="k">${esc(t.circlesK)}</p><h2 id="circles-t">${esc(t.circlesT)}</h2></div><p class="p">${esc(t.circlesP)}</p></div>
+  <div class="circles">${t.circles
     .map(
-      (p, i) =>
-        `<figure class="pc ${sizes[i] ?? ""} reveal" style="--d:${((i % 6) * 0.06).toFixed(2)}s">${fc(p)}<figcaption class="meta glass"><b>${esc(p.name)}</b><span>${esc(p.area)}</span><span class="tags">${p.likes.map((l) => `<i>${esc(like(l))}</i>`).join("")}</span></figcaption></figure>`,
+      ([name, about, photo, emoji, alt], i) =>
+        `<article class="circle reveal" style="--d:${((i % 3) * 0.08).toFixed(2)}s">${own(photo, alt, i === 0 ? "(min-width: 1024px) 760px, 100vw" : "(min-width: 1024px) 380px, (min-width: 600px) 50vw, 100vw")}<span class="em" aria-hidden="true">${emoji}</span><span class="tag">${esc(t.womenOnly)}</span><div class="tx"><h3 translate="no">${esc(name)}</h3><p>${esc(about)}</p></div></article>`,
     )
     .join("")}</div>
 </div></section>
 
-<section id="access" class="access-sec"><div class="wrap">
-  <div class="head"><div><p class="k">${t.accessK}</p><h2>${t.accessT}</h2></div></div>
-  <ol class="steps">${t.access.map(([h, p], i) => `<li class="reveal" style="--d:${(i * 0.08).toFixed(2)}s"><span class="n" aria-hidden="true">${i + 1}</span><h3>${esc(h)}</h3><p>${esc(p)}</p></li>`).join("")}</ol>
-  <p class="k" style="margin-top:44px">${t.safeK}</p>
-  <ul class="safe">${t.safe.map((s) => `<li class="reveal">${esc(s)}</li>`).join("")}</ul>
-  <div class="ctas" style="margin-top:28px"><a class="btn" href="${APP_GIRL}">${t.open}</a></div>
+<section id="uses" aria-labelledby="uses-t"><div class="wrap">
+  <div class="head reveal"><div><p class="k">${esc(t.usesK)}</p><h2 id="uses-t">${esc(t.usesT)}</h2></div><p class="p">${esc(t.usesP)}</p></div>
+  <div class="uses">${t.uses
+    .map(
+      ([photo, title, text, alt], i) =>
+        `<article class="use reveal" style="--d:${((i % 3) * 0.08).toFixed(2)}s"><div class="ph">${own(photo, alt, i === 0 || i === 3 ? "(min-width: 1024px) 580px, (min-width: 600px) 50vw, 100vw" : "(min-width: 1024px) 380px, (min-width: 600px) 50vw, 100vw")}</div><div class="tx"><h3>${esc(title)}</h3><span class="n" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span><p>${esc(text)}</p></div></article>`,
+    )
+    .join("")}</div>
 </div></section>
 
-<section><div class="wrap"><div class="soon glass reveal"><span class="badge">${t.soonK}</span><h2>${t.soonT}</h2><p class="p">${t.soonP}</p></div></div></section>
+<section id="people" aria-labelledby="people-t">
+  <div class="wrap"><div class="head center reveal"><p class="k">${esc(t.peopleK)}</p><h2 id="people-t">${esc(t.peopleT)}</h2><p class="p">${esc(t.peopleP)}</p></div></div>
+  <div class="people reveal">${river(CAST.slice(0, half), "")}${river(CAST.slice(half), " rev")}</div>
+  <div class="wrap people-foot"><span class="label">${esc(t.illustrative)}</span></div>
+</section>
 
-${
-  shots.length
-    ? `<section id="app"><div class="wrap">
-  <div class="head"><div><p class="k">${t.appK}</p><h2>${t.appT}</h2><p class="p">${t.appP}</p></div></div>
-  <div class="shots">${shots.map(([n, cap], i) => `<figure class="shot reveal" style="--d:${(i * 0.07).toFixed(2)}s"><div class="phone">${im(shot(n), cap, "", true, ' width="780" height="1688"')}</div><figcaption>${esc(cap)}</figcaption></figure>`).join("")}</div>
-</div></section>`
-    : ""
-}
+<section id="how" class="how-sec" aria-labelledby="how-t"><div class="wrap">
+  <div class="head reveal"><div><p class="k">${esc(t.howK)}</p><h2 id="how-t">${esc(t.howT)}</h2></div></div>
+  <ol class="steps reveal">${t.how.map(([ic, h, p], i) => `<li class="reveal" style="--d:${(0.15 + i * 0.12).toFixed(2)}s"><span class="n" aria-hidden="true">${icon(ic)}<small>${i + 1}</small></span><div class="card glass"><h3>${esc(h)}</h3><p>${esc(p)}</p></div></li>`).join("")}</ol>
+  <ul class="trust">${t.trust.map(([ic, h, p], i) => `<li class="reveal" style="--d:${(i * 0.08).toFixed(2)}s">${icon(ic)}<div><b>${esc(h)}</b><p>${esc(p)}</p></div></li>`).join("")}</ul>
+</div></section>
 
-<section class="faq"><div class="wrap"><h2 class="reveal">${t.faqT}</h2>
+<section id="dubai" aria-labelledby="dubai-t"><div class="wrap">
+  <div class="head reveal"><div><p class="k">${esc(t.dubaiK)}</p><h2 id="dubai-t">${esc(t.dubaiT)}</h2></div><p class="p">${esc(t.dubaiP)}</p></div>
+  <div class="dubai">${t.dubai
+    .map(
+      ([photo, cap, alt], i) =>
+        `<figure class="dph reveal${photo === "palmAerial" ? " wide" : ""}" style="--d:${((i % 3) * 0.08).toFixed(2)}s"><div class="dpi" data-speed="${i % 2 ? "0.05" : "-0.05"}">${own(photo, alt, photo === "palmAerial" ? "(min-width: 1024px) 300px, (min-width: 600px) 66vw, 100vw" : "(min-width: 1024px) 300px, (min-width: 600px) 33vw, 50vw")}</div><figcaption class="glass">${esc(cap)}</figcaption></figure>`,
+    )
+    .join("")}</div>
+</div></section>
+
+<section aria-labelledby="soon-t"><div class="wrap"><div class="soon reveal zoom"><span class="badge"><span class="dot" aria-hidden="true"></span>${esc(t.soonK)}</span><h2 id="soon-t">${esc(t.soonT)}</h2><p class="p">${esc(t.soonP)}</p></div></div></section>
+
+<section class="faq" aria-labelledby="faq-t"><div class="wrap"><h2 id="faq-t" class="reveal">${esc(t.faqT)}</h2>
   ${t.faq.map(([q, a]) => `<details class="reveal"><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("\n  ")}
 </div></section>
 
-<section class="end"><div class="wrap reveal"><div class="faces">${avatars(pick(24, 6), 6)}</div><h2>${t.endT}</h2><p class="p" style="margin:0 auto 28px">${t.endP}</p><a class="btn" href="${APP_GIRL}">${t.open}</a></div></section>
+<section class="end" aria-labelledby="end-t"><div class="wrap"><div class="endcard reveal zoom">
+  <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="faces" aria-hidden="true">${endFaces}</div>
+  <h2 id="end-t">${esc(t.endT[0])} <em>${esc(t.endT[1])}</em></h2>
+  <p class="p">${esc(t.endP)}</p>
+  <div class="ctas"><a class="btn" href="${APP_GIRL}">${esc(t.open)}${icon("arrow")}</a></div>
+  <div class="wl glass" id="waitlist">
+    <h3>${esc(W.t)}</h3>
+    <p>${esc(W.p)}</p>
+    <form id="wl-form" novalidate>
+      <div class="field" id="wl-field">
+        <label for="wl-email" class="hp">${esc(W.label)}</label>
+        <input id="wl-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="${esc(W.ph)}" aria-describedby="wl-msg wl-legal">
+        <input class="hp" id="wl-company" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="btn" type="submit">${esc(W.btn)}</button>
+      </div>
+      <p class="msgline" id="wl-msg" role="status" aria-live="polite"></p>
+      <p class="legal" id="wl-legal">${esc(W.legal)} <a href="${lang === "fr" ? "/fr/privacy" : "/privacy"}">${esc(t.privacy)}</a></p>
+    </form>
+    <div class="done" id="wl-done"><span class="tick" aria-hidden="true"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div><b>${esc(W.done1)}</b><p>${esc(W.done2)}</p></div></div>
+  </div>
+  <p class="backlink"><a class="tlink" href="${home(lang)}">${icon("back")}${esc(t.back)}</a></p>
+</div></div></section>
 </main>
 <footer><div class="wrap">
+  <span class="flogo" translate="no"><b>IRLY</b><i aria-hidden="true"></i><span>Girl</span></span>
   <span>© 2026 IRLY · <a href="mailto:getirly@gmail.com">getirly@gmail.com</a></span>
-  <nav aria-label="Footer"><a href="${home(lang)}">${t.back}</a><a href="${lang === "fr" ? "/fr/privacy" : "/privacy"}">${t.privacy}</a><a href="${lang === "fr" ? "/fr/terms" : "/terms"}">${t.terms}</a><a href="${lang === "fr" ? "/fr/guidelines" : "/guidelines"}">${t.guidelines}</a><a href="${lang === "fr" ? "/fr/support" : "/support"}">${t.support}</a></nav>
+  <nav aria-label="${esc(t.footer)}"><a href="${home(lang)}">${esc(t.back)}</a><a href="${lang === "fr" ? "/fr/privacy" : "/privacy"}">${esc(t.privacy)}</a><a href="${lang === "fr" ? "/fr/terms" : "/terms"}">${esc(t.terms)}</a><a href="${lang === "fr" ? "/fr/guidelines" : "/guidelines"}">${esc(t.guidelines)}</a><a href="${lang === "fr" ? "/fr/support" : "/support"}">${esc(t.support)}</a></nav>
 </div></footer>
 <script>
 (() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const bar = document.querySelector('header.top');
   const btn = document.querySelector('.menu-btn');
   const sheet = document.getElementById('sheet');
-  const set = (open) => { bar.classList.toggle('open', open); btn.setAttribute('aria-expanded', String(open)); sheet.setAttribute('aria-hidden', String(!open)); document.body.style.overflow = open ? 'hidden' : ''; };
+  const set = (open) => { bar.classList.toggle('open', open); btn.setAttribute('aria-expanded', String(open)); sheet.setAttribute('aria-hidden', String(!open)); sheet.inert = !open; document.body.style.overflow = open ? 'hidden' : ''; if (open) sheet.querySelector('a').focus(); };
   btn.addEventListener('click', () => set(!bar.classList.contains('open')));
   sheet.addEventListener('click', (e) => { if (e.target.closest('a')) set(false); });
-  addEventListener('keydown', (e) => { if (e.key === 'Escape') set(false); });
-  matchMedia('(min-width: 921px)').addEventListener('change', (m) => { if (m.matches) set(false); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && bar.classList.contains('open')) { set(false); btn.focus(); } });
+  matchMedia('(min-width: 1024px)').addEventListener('change', (m) => { if (m.matches) set(false); });
+
+  // Scroll: the menu firms up, the progress thread grows, the phones and photos drift at their own pace.
+  const progress = document.querySelector('.progress');
+  const pars = reduce ? [] : [...document.querySelectorAll('[data-speed]')];
+  let ticking = false;
+  const onScroll = () => {
+    ticking = false;
+    const y = scrollY, h = document.documentElement.scrollHeight - innerHeight;
+    bar.classList.toggle('scrolled', y > 8);
+    progress.style.transform = 'scaleX(' + (h > 0 ? Math.min(1, y / h) : 0).toFixed(4) + ')';
+    for (const el of pars) {
+      const r = el.parentElement.getBoundingClientRect();
+      if (r.bottom < -200 || r.top > innerHeight + 200) continue;
+      const max = el.classList.contains('dpi') ? r.height * 0.09 : 80;
+      const off = Math.max(-max, Math.min(max, (r.top + r.height / 2 - innerHeight / 2) * parseFloat(el.dataset.speed)));
+      el.style.transform = 'translate3d(0,' + off.toFixed(1) + 'px,0)';
+    }
+  };
+  addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  addEventListener('resize', onScroll, { passive: true });
+  onScroll();
+
+  // Hero: the constellation leans toward a mouse pointer, very slightly.
+  const stage = document.querySelector('.hstage'), tilt = document.querySelector('.tilt');
+  if (stage && !reduce && matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    const hero = document.querySelector('.hero');
+    hero.addEventListener('pointermove', (e) => {
+      const r = stage.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      tilt.style.transform = 'perspective(1200px) rotateY(' + (x * 6).toFixed(2) + 'deg) rotateX(' + (-y * 5).toFixed(2) + 'deg)';
+    });
+    hero.addEventListener('pointerleave', () => (tilt.style.transform = ''));
+  }
+
   // Tour: autoplay while on screen (paused on hover, focus, hidden tab or reduced motion), swipe, arrows.
   const tour = document.getElementById('tour');
   if (tour) {
@@ -943,59 +1074,93 @@ ${
     const layers = [...tour.querySelectorAll('.tlayer>div')];
     const dots = [...tour.querySelectorAll('.tdots button')];
     const playBtn = tour.querySelector('.tplay');
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const N = slides.length, DUR = 6500;
-    let cur = 0, start = 0, raf = 0, visible = false, hold = false, paused = reduce;
+    let cur = 0, start = 0, prog = 0, visible = false, hold = false, paused = reduce;
     const count = (el) => {
       const to = +el.dataset.count + 1;
       if (reduce) { el.textContent = '♥ ' + to; return; }
       el.textContent = '♥ ' + (to - 1);
-      setTimeout(() => { el.textContent = '♥ ' + to; el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' }); }, 1400);
+      setTimeout(() => { el.textContent = '♥ ' + to; el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' }); }, 1300);
     };
     const go = (n) => {
       cur = (n + N) % N;
       slides.forEach((s, i) => { const on = i === cur; s.classList.toggle('on', on); s.setAttribute('aria-hidden', String(!on)); s.querySelectorAll('a').forEach((a) => (a.tabIndex = on ? 0 : -1)); });
-      imgs.forEach((m, i) => m.classList.toggle('on', i === cur));
+      imgs.forEach((m, i) => { m.classList.toggle('on', i === cur); m.toggleAttribute('aria-hidden', i !== cur); });
       layers.forEach((l, i) => l.classList.toggle('on', i === cur));
-      dots.forEach((d, i) => { d.classList.toggle('on', i === cur); d.classList.toggle('done', i < cur); d.toggleAttribute('aria-current', i === cur); d.style.setProperty('--p', '0%'); });
+      dots.forEach((d, i) => { d.classList.toggle('on', i === cur); d.classList.toggle('done', i < cur); if (i === cur) d.setAttribute('aria-current', 'true'); else d.removeAttribute('aria-current'); d.style.setProperty('--p', '0'); });
       // The next screen loads ahead, so a scene never opens on a blank phone.
       const next = imgs[(cur + 1) % N]; if (next) next.loading = 'eager';
-      layers[cur]?.querySelectorAll('[data-count]').forEach(count);
-      start = performance.now();
+      layers[cur] && layers[cur].querySelectorAll('[data-count]').forEach(count);
+      prog = 0; start = performance.now();
     };
     const tick = (now) => {
-      raf = requestAnimationFrame(tick);
-      if (paused || hold || !visible || document.hidden) { start = now - (parseFloat(dots[cur].style.getPropertyValue('--p')) || 0) / 100 * DUR; return; }
-      const p = Math.min(1, (now - start) / DUR);
-      dots[cur].style.setProperty('--p', (p * 100).toFixed(1) + '%');
-      if (p >= 1) { if (cur === N - 1) { paused = true; setPlay(); } else go(cur + 1); }
+      requestAnimationFrame(tick);
+      if (paused || hold || !visible || document.hidden) { start = now - prog * DUR; return; }
+      prog = Math.min(1, (now - start) / DUR);
+      dots[cur].style.setProperty('--p', prog.toFixed(3));
+      if (prog >= 1) { if (cur === N - 1) { paused = true; setPlay(); } else go(cur + 1); }
     };
     const setPlay = () => { playBtn.textContent = paused ? '▶' : '❚❚'; playBtn.setAttribute('aria-label', paused ? playBtn.dataset.play : playBtn.dataset.pause); };
     tour.querySelector('.tprev').addEventListener('click', () => go(cur - 1));
     tour.querySelector('.tnext').addEventListener('click', () => go(cur + 1));
     dots.forEach((d, i) => d.addEventListener('click', () => go(i)));
-    playBtn.addEventListener('click', () => { paused = !paused; if (!paused && cur === N - 1 && dots[cur].style.getPropertyValue('--p') === '100.0%') go(0); setPlay(); });
-    tour.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') hold = true; });
-    tour.addEventListener('pointerleave', () => (hold = false));
-    tour.addEventListener('focusin', () => (hold = true));
-    tour.addEventListener('focusout', () => (hold = false));
-    tour.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') go(cur + 1); if (e.key === 'ArrowLeft') go(cur - 1); });
+    playBtn.addEventListener('click', () => { paused = !paused; if (!paused && cur === N - 1 && prog >= 1) go(0); setPlay(); });
+    const box = tour.querySelector('.tgrid');
+    box.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') hold = true; });
+    box.addEventListener('pointerleave', () => (hold = false));
+    box.addEventListener('focusin', () => (hold = true));
+    box.addEventListener('focusout', () => (hold = false));
+    box.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') go(cur + 1); if (e.key === 'ArrowLeft') go(cur - 1); });
     let x0 = null;
-    const stage = tour.querySelector('.tstage');
-    stage.addEventListener('pointerdown', (e) => (x0 = e.clientX));
-    stage.addEventListener('pointerup', (e) => { if (x0 !== null && Math.abs(e.clientX - x0) > 40) go(cur + (e.clientX < x0 ? 1 : -1)); x0 = null; });
-    if ('IntersectionObserver' in window) new IntersectionObserver(([x]) => (visible = x.isIntersecting), { threshold: 0.35 }).observe(tour);
+    const st = tour.querySelector('.tstage');
+    st.addEventListener('pointerdown', (e) => (x0 = e.clientX));
+    st.addEventListener('pointerup', (e) => { if (x0 !== null && Math.abs(e.clientX - x0) > 40) go(cur + (e.clientX < x0 ? 1 : -1)); x0 = null; });
+    if ('IntersectionObserver' in window) new IntersectionObserver(([x]) => (visible = x.isIntersecting), { threshold: 0.35 }).observe(box);
     else visible = true;
     setPlay();
     go(0);
-    raf = requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
   }
+
+  // Waitlist for the iPhone and Android apps (the same list as the home page).
+  const form = document.getElementById('wl-form');
+  if (form) {
+    const M = ${JSON.stringify({ errEmpty: W.errEmpty, errInvalid: W.errInvalid, errBusy: W.errBusy, errNet: W.errNet })};
+    const field = document.getElementById('wl-field'), email = document.getElementById('wl-email'), msg = document.getElementById('wl-msg'), done = document.getElementById('wl-done'), box = document.getElementById('waitlist');
+    const EMAIL = /^[^\\s@]+@[^\\s@.]+(\\.[^\\s@.]+)*\\.[^\\s@.]{2,}$/;
+    const fail = (k) => { msg.textContent = M[k]; field.classList.remove('bad'); void field.offsetWidth; field.classList.add('bad'); email.setAttribute('aria-invalid', 'true'); email.focus(); };
+    email.addEventListener('input', () => { msg.textContent = ''; field.classList.remove('bad'); email.removeAttribute('aria-invalid'); });
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (box.classList.contains('loading')) return;
+      const v = email.value.trim();
+      if (!v) return fail('errEmpty');
+      if (v.length > 254 || !EMAIL.test(v)) return fail('errInvalid');
+      if (form.company.value) return; // only bots fill the hidden field
+      box.classList.add('loading'); form.setAttribute('aria-busy', 'true');
+      try {
+        const r = await fetch(${JSON.stringify(WAITLIST_API)}, { method: 'POST', headers: { 'content-type': 'application/json', apikey: ${JSON.stringify(WAITLIST_KEY)}, authorization: 'Bearer ' + ${JSON.stringify(WAITLIST_KEY)} }, body: JSON.stringify({ p_email: v, p_lang: ${JSON.stringify(lang)}, p_source: 'site-girl' }) });
+        if (!r.ok) {
+          const body = await r.text();
+          if (/invalid email/.test(body)) return fail('errInvalid');
+          if (/slow down/.test(body)) return fail('errBusy');
+          throw new Error(String(r.status));
+        }
+        form.hidden = true;
+        done.classList.add('on'); done.setAttribute('tabindex', '-1'); done.setAttribute('role', 'status'); done.focus();
+      } catch (err) {
+        fail('errNet');
+      } finally {
+        box.classList.remove('loading'); form.removeAttribute('aria-busy');
+      }
+    });
+  }
+
+  // Reveals: once, as each block comes into view. Steps draw their line when the list arrives.
   const els = document.querySelectorAll('.reveal');
-  if (!('IntersectionObserver' in window) || matchMedia('(prefers-reduced-motion: reduce)').matches) { els.forEach((e) => e.classList.add('in')); return; }
-  // Cards in a sideways rail reveal with their rail: off-screen to the side, they would never intersect.
-  const show = (el) => (el.matches('.rail,.shots') ? el.querySelectorAll('.reveal') : [el]).forEach((e) => e.classList.add('in'));
-  const io = new IntersectionObserver((list) => list.forEach((x) => { if (x.isIntersecting) { show(x.target); io.unobserve(x.target); } }), { rootMargin: '0px 0px -8% 0px' });
-  new Set([...els].map((e) => e.closest('.rail,.shots') || e)).forEach((e) => io.observe(e));
+  if (!('IntersectionObserver' in window) || reduce) { els.forEach((e) => e.classList.add('in')); return; }
+  const io = new IntersectionObserver((list) => list.forEach((x) => { if (x.isIntersecting) { x.target.classList.add('in'); io.unobserve(x.target); } }), { rootMargin: '0px 0px -8% 0px', threshold: 0.01 });
+  els.forEach((e) => io.observe(e));
 })();
 </script>
 </body>
