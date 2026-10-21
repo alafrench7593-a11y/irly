@@ -30,11 +30,18 @@ expect(KNOWN.size > 100, `photo registry read (${KNOWN.size} keys)`);
 
 // The official communities' photo, as communityPhoto (official.ts, which needs the app runtime) computes it.
 const official = fs.readFileSync('src/features/community/official.ts', 'utf8');
-const block = (name: string) => Object.fromEntries([...official.slice(official.indexOf(`${name} = {`), official.indexOf('}', official.indexOf(`${name} = {`))).matchAll(/(\w+): '(\w+)'/g)].map((m) => [m[1], m[2]]));
+// `NAME = {` or `NAME: Type = {`: the object literal that follows the name.
+const block = (name: string) => {
+  const start = official.indexOf('{', official.search(new RegExp(`\\b${name}\\b[^=]*= \\{`)));
+  return Object.fromEntries([...official.slice(start, official.indexOf('}', start)).matchAll(/(\w+): '(\w+)'/g)].map((m) => [m[1], m[2]]));
+};
 const TOPIC_PHOTO = block('TOPIC_PHOTO');
 const DUBAI_INSTEAD = block('DUBAI_INSTEAD');
+const GIRL_OFFICIAL = block('GIRL_OFFICIAL_PHOTO');
 const CATEGORY_PHOTO = Object.fromEntries(CATEGORIES.map((c) => [c.id, c.photo]));
 const communityPhoto = (topic: string | null, categoryId: string | null, name?: string) => {
+  if (topic && GIRL_OFFICIAL[topic]) return GIRL_OFFICIAL[topic];
+  if (topic === 'girls' && name) return girlPhotoFor(name, TOPIC_PHOTO.girls);
   const named = name ? photoForText(name) : null;
   if (named) return named;
   if (topic && TOPIC_PHOTO[topic]) return TOPIC_PHOTO[topic];
@@ -127,11 +134,22 @@ expect(!/Girl$|^girl/.test(ideaPhoto('sport', 'Padel')), 'Mixte padel shows a ph
 // IRLY Girl's five official communities: each its own photo, all IRLY's own photos taken in Dubai.
 {
   const src = fs.readFileSync('src/features/girl/GirlOfficial.tsx', 'utf8');
-  const map = Object.fromEntries([...src.slice(src.indexOf('const PHOTO'), src.indexOf('};', src.indexOf('const PHOTO'))).matchAll(/(girl_\w+): '(\w+)'/g)].map((m) => [m[1], m[2]]));
+  expect(/const PHOTO: Record<GirlOfficialTopic, PhotoKey> = GIRL_OFFICIAL_PHOTO;/.test(src), 'Girl official card takes its photo from GIRL_OFFICIAL_PHOTO (official.ts)');
+  const map = GIRL_OFFICIAL;
+  // The community page, thumbnail and chat header (communityPhoto) show the card's photo, whatever the name says.
+  for (const [topic, name] of topics.filter(([t]) => t.startsWith('girl_'))) expect(communityPhoto(topic, null, name) === map[topic], `${name}: page photo = card photo (${map[topic]})`, communityPhoto(topic, null, name));
+  for (const topic of Object.keys(map)) expect(communityPhoto(topic, 'communities', 'Padel and dinner') === map[topic], `${topic}: topic photo before name`, communityPhoto(topic, 'communities', 'Padel and dinner'));
   const own = new Set(listOf('OWN'));
   expect(Object.keys(map).length === 5 && Object.values(map).every((k) => own.has(k)), 'Girl official communities: five photos, all IRLY\'s own', map);
   expect(new Set(Object.values(map)).size === 5, 'Girl official communities: no photo twice', map);
 }
+// IRLY Girls' groups: IRLY's photos of women, never a mixed group.
+for (const s of subtopics.filter((g) => g.parent === 'girls')) {
+  const key = communityPhoto('girls', null, s.name);
+  expect(!/Mix$/.test(key) && key === girlPhotoFor(s.name, TOPIC_PHOTO.girls), `girls group ${s.name} → ${key} (photos of women)`, key);
+}
+// Classic help and lifestyle communities: not a photo of women only.
+for (const topic of ['help', 'lifestyle']) expect(Boolean(TOPIC_PHOTO[topic]) && !/Girl$|^girl/.test(TOPIC_PHOTO[topic]), `${topic} topic → ${TOPIC_PHOTO[topic]} (not gendered)`, TOPIC_PHOTO[topic]);
 // Every own photo exists at both sizes.
 const ownMissing = listOf('OWN').filter((k) => !['480', '1200'].every((w) => fs.existsSync(`site/img/own/${k}-${w}.jpg`)));
 expect(ownMissing.length === 0, 'every own photo has its 480 and 1200 files', ownMissing);

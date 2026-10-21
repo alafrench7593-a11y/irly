@@ -51,7 +51,7 @@ export type LibraryKind =
 /** The photo keys of each type of activity (every key expands to all of its photos). */
 export const KIND_KEYS: Record<LibraryKind, PhotoKey[]> = {
   football: ['footballMix', 'football'],
-  padel: ['padelGirl', 'padel'],
+  padel: ['padelMix', 'padelGirl', 'padel'],
   tennis: ['tennisMix', 'tennis', 'tennisGirl'],
   running: ['runMix', 'running', 'runGirl', 'marathon'],
   gym: ['gymMix', 'gym', 'gymGirl', 'crossfit', 'girlFitness', 'boxing'],
@@ -74,7 +74,7 @@ export const KIND_KEYS: Record<LibraryKind, PhotoKey[]> = {
   walk: ['nature', 'wadiMix', 'hikeDesert', 'waterfall', 'lake', 'dogWalk', 'picnic', 'girlHike', 'girlWaterfall', 'palmAerial'],
   spa: ['spa', 'spaGirl', 'massage', 'sauna', 'girlSpa', 'girlChill', 'meditation', 'yoga', 'pilatesGirl', 'beauty'],
   nightlife: ['rooftop', 'rooftopNeon', 'lounge', 'djSunset', 'nightDinner', 'drinksGirl', 'dubaiNight', 'karaoke'],
-  outings: ['concert', 'liveMusic', 'festival', 'cinema', 'comedy', 'theatre', 'globalVillage', 'themePark', 'waterParkMix', 'waterPark', 'arcade', 'bowling', 'karting', 'vrMix', 'vr', 'danceMix', 'dance'],
+  outings: ['concert', 'liveMusic', 'festival', 'cinema', 'comedy', 'theatre', 'globalVillage', 'themePark', 'waterParkMix', 'waterPark', 'arcade', 'bowling', 'karting', 'vrMix', 'vr', 'dance'],
   culture: ['gallery', 'mosque', 'mosqueGirl', 'burjKhalifa', 'dubaiCreek', 'souk', 'fort', 'photography', 'globalVillage'],
   animals: ['dog', 'dogPark', 'dogWalk', 'cat', 'petCafe', 'horse', 'horseRiding', 'safariPark'],
   family: ['family', 'kids', 'playground', 'familyBeach', 'momPlaydate', 'strollerMom', 'waterPark', 'themePark', 'momBaby', 'momBeach'],

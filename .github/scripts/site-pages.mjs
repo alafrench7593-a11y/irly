@@ -115,6 +115,8 @@ for (const l of ['fr', 'ar']) {
     .replace(/(<meta name="twitter:title" content=")[^"]*"/, `$1${esc(title)}"`)
     .replace(/(<meta name="twitter:description" content=")[^"]*"/, `$1${esc(desc)}"`)
     .replace(/(<meta property="og:url" content=")[^"]*"/, `$1${homeHref(l)}"`)
+    // The live app opens in the page's language (French on /fr/), with no first load in English.
+    .replace(/\/app\/\?lang=en/g, `/app/?lang=${l === 'fr' ? 'fr' : 'en'}`)
     .replace(/(<meta property="og:locale" content=")[^"]*"/, `$1${l === 'fr' ? 'fr_FR' : 'ar_AE'}"`)
     .replace(/(<link rel="canonical" href=")[^"]*"/, `$1${INDEXED.includes(l) ? homeHref(l) : SITE}"`)
     .replace('<meta charset="utf-8">', INDEXED.includes(l) ? '<meta charset="utf-8">' : '<meta charset="utf-8">\n<meta name="robots" content="noindex, follow">')

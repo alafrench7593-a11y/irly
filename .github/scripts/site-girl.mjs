@@ -162,8 +162,8 @@ const T = {
     usesP: "Women-only communities, activities, Live and chats, in the same IRLY app.",
     uses: [
       ["yachtGirl", "Meet women in Dubai", "Women from everywhere who live here, around the things you love.", "Two friends raising their glasses on a boat at sunset"],
-      ["mosqueGirl", "Welcome newcomers", "Just arrived? Ask anything, get tips, find your first friends.", "A woman visiting the Sheikh Zayed Grand Mosque"],
-      ["golfGirl", "A professional network", "Founders and professionals meeting over coffee and ideas.", "A woman swinging a golf club at a driving range at night"],
+      ["newcomerGirl", "Welcome newcomers", "Just arrived? Ask anything, get tips, find your first friends.", "A woman photographing Downtown Dubai at dusk"],
+      ["networkingGirl", "A professional network", "Founders and professionals meeting over coffee and ideas.", "A pink Dubai book next to a laptop"],
       ["tennisGirl", "Activity partners", "A tennis partner, a running buddy, a pilates class with someone.", "The shadows of two women holding tennis rackets"],
       ["beachClubGirl", "Outings", "Beach clubs, brunches, shopping, nights out, together.", "A sunny beach club with the Burj Al Arab in the distance"],
       ["restaurantGirl", "Restaurants & experiences", "New tables to try and experiences to share.", "A rooftop restaurant terrace at night in Dubai"],
@@ -196,7 +196,7 @@ const T = {
     circlesP:
       "IRLY runs five official communities for women. Each has its posts, its activities and its group chat. You can also start your own.",
     circles: [
-      ["IRLY Nouvelle Arrivante", "Just arrived in Dubai? Ask anything, get tips and meet other newcomers.", "dubaiPink", "👋", "A pink DUBAI sign in front of the Burj Khalifa"],
+      ["IRLY Nouvelle Arrivante", "Just arrived in Dubai? Ask anything, get tips and meet other newcomers.", "newcomerGirl", "👋", "A woman photographing Downtown Dubai at dusk"],
       ["IRLY Girl Networking", "Women in business: entrepreneurship, opportunities, collaborations and your network.", "networkingGirl", "💼", "A pink Dubai book next to a laptop"],
       ["IRLY Francophone", "French-speaking girls in Dubai: chats, meetups and activities in French.", "brunchGirl", "🥐", "A brunch table with sushi and drinks by a pool"],
       ["IRLY Girl Trip", "Trips, excursions, getaways and road trips between girls.", "girlTrip", "✈️", "Friends in scarves celebrating the sunset in the desert"],
@@ -322,8 +322,8 @@ const T = {
     usesP: "Communautés, activités, Live et conversations entre femmes, dans la même app IRLY.",
     uses: [
       ["yachtGirl", "Rencontrer des femmes à Dubaï", "Des femmes venues de partout qui vivent ici, autour de ce que tu aimes.", "Deux amies lèvent leur verre sur un bateau au coucher du soleil"],
-      ["mosqueGirl", "Accueillir les nouvelles", "Tu viens d’arriver ? Pose tes questions, récupère les bons plans, trouve tes premières amies.", "Une femme visite la grande mosquée Sheikh Zayed"],
-      ["golfGirl", "Un réseau pro", "Entrepreneures et professionnelles autour d’un café et d’idées.", "Une femme frappe une balle de golf sur un practice de nuit"],
+      ["newcomerGirl", "Accueillir les nouvelles", "Tu viens d’arriver ? Pose tes questions, récupère les bons plans, trouve tes premières amies.", "Une femme photographie Downtown Dubai au crépuscule"],
+      ["networkingGirl", "Un réseau pro", "Entrepreneures et professionnelles autour d’un café et d’idées.", "Un livre rose sur Dubaï à côté d’un ordinateur portable"],
       ["tennisGirl", "Des partenaires d’activité", "Une partenaire de tennis, une copine de running, un cours de pilates à deux.", "Les ombres de deux femmes avec des raquettes de tennis"],
       ["beachClubGirl", "Des sorties", "Beach clubs, brunchs, shopping, soirées, ensemble.", "Un beach club ensoleillé avec la Burj Al Arab au loin"],
       ["restaurantGirl", "Restos et expériences", "De nouvelles tables à tester et des expériences à partager.", "La terrasse d’un restaurant sur un toit de Dubaï la nuit"],
@@ -356,7 +356,7 @@ const T = {
     circlesP:
       "IRLY anime cinq communautés officielles pour les femmes. Chacune a ses publications, ses activités et sa conversation de groupe. Tu peux aussi créer la tienne.",
     circles: [
-      ["IRLY Nouvelle Arrivante", "Tu viens d’arriver à Dubaï ? Pose tes questions, récupère des conseils et rencontre d’autres nouvelles.", "dubaiPink", "👋", "Un panneau DUBAI rose devant la Burj Khalifa"],
+      ["IRLY Nouvelle Arrivante", "Tu viens d’arriver à Dubaï ? Pose tes questions, récupère des conseils et rencontre d’autres nouvelles.", "newcomerGirl", "👋", "Une femme photographie Downtown Dubai au crépuscule"],
       ["IRLY Girl Networking", "Les femmes dans le business : entrepreneuriat, opportunités, collaborations et réseau.", "networkingGirl", "💼", "Un livre rose sur Dubaï à côté d’un ordinateur portable"],
       ["IRLY Francophone", "Les filles francophones de Dubaï : discussions, rencontres et activités en français.", "brunchGirl", "🥐", "Une table de brunch avec sushis et boissons au bord d’une piscine"],
       ["IRLY Girl Trip", "Voyages, excursions, escapades et road trips entre filles.", "girlTrip", "✈️", "Des amies en foulard fêtent le coucher du soleil dans le désert"],

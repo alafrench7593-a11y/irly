@@ -9,7 +9,7 @@ import { Photo } from '@/components/visual/Photo';
 import { DEMO } from '@/config/app';
 import type { PhotoKey } from '@/data/photos';
 import { joinCommunity, leaveCommunity } from '@/features/community/data';
-import { useGirlOfficialCommunities, type GirlOfficialCommunity, type GirlOfficialTopic } from '@/features/community/official';
+import { GIRL_OFFICIAL_PHOTO, useGirlOfficialCommunities, type GirlOfficialCommunity, type GirlOfficialTopic } from '@/features/community/official';
 import { usePhotoLink } from '@/features/server/covers';
 import { t as tx } from '@/i18n';
 import { enter } from '@/motion/enter';
@@ -18,14 +18,8 @@ import { radius, space } from '@/theme/tokens';
 import { girl, GIRL_TINT, girlType } from './theme';
 import { GButton, GIconWell } from './ui';
 
-/** Each official community's photo (until its hosts set one): IRLY's own photos taken in Dubai. */
-const PHOTO: Record<GirlOfficialTopic, PhotoKey> = {
-  girl_newcomers: 'newcomerGirl',
-  girl_network: 'networkingGirl',
-  girl_francophone: 'brunchGirl',
-  girl_trip: 'girlTrip',
-  girl_activity: 'padelGirl',
-};
+/** Each official community's photo (until its hosts set one): the same as on its page (official.ts). */
+const PHOTO: Record<GirlOfficialTopic, PhotoKey> = GIRL_OFFICIAL_PHOTO;
 
 /** The demo build has no server: the same five, with no members and nothing to join. */
 const DEMO_FIVE: GirlOfficialCommunity[] = [
