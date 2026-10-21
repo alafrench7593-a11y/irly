@@ -30,7 +30,7 @@ export const EDITORIAL_LABEL: Record<EditorialGroupId, string> = {
   catalogue: 'Activities catalogue',
   official: 'Official communities',
   home: 'Home and destinations',
-  girl: 'IRLY Girl and IRLY Moms',
+  girl: 'IRLY Girl and IRLY Maman',
   all: 'All IRLY photos',
 };
 
@@ -47,7 +47,7 @@ let groups: EditorialGroup[] | null = null;
  * Every photo key the app shows, grouped by where it shows: the categories,
  * the photo of each activity of the catalogue, the default photos of IRLY's
  * official communities, Home (destinations, cities, by day and by night),
- * IRLY Girl and IRLY Moms, and every key of the library. Built once.
+ * IRLY Girl and IRLY Maman, and every key of the library. Built once.
  */
 export function editorialGroups(): EditorialGroup[] {
   if (groups) return groups;
@@ -66,7 +66,7 @@ export function editorialGroups(): EditorialGroup[] {
   collect(home, 'baliDawn', 'Bali at dawn');
   const girl = new Map<string, EditorialItem>();
   for (const k of GIRL_KINDS) collect(girl, k.photo, `IRLY Girl · ${k.label}`);
-  for (const k of MOM_KINDS) collect(girl, k.photo, `IRLY Moms · ${k.label}`);
+  for (const k of MOM_KINDS) collect(girl, k.photo, `IRLY Maman · ${k.label}`);
   const all = new Map<string, EditorialItem>();
   for (const key of [...Object.keys(PHOTO_IDS), ...LIBRARY, ...OWN, ...DUBAI_KEYS]) collect(all, key, key);
   groups = [

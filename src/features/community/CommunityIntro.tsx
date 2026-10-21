@@ -46,12 +46,12 @@ const INTERESTS = [
   { emoji: '💼', label: 'Network' },
   { emoji: '🍔', label: 'Food' },
 ];
+// IRLY's official communities (20261028100000_irly_official_communities_four).
 const COMMUNITIES = [
-  { emoji: '🏋️', name: 'IRLY Gym' },
+  { emoji: '🌍', name: 'IRLY Expat' },
   { emoji: '🏅', name: 'IRLY Sport' },
-  { emoji: '✈️', name: 'IRLY Trip' },
   { emoji: '🤝', name: 'IRLY Network' },
-  { emoji: '👋', name: 'IRLY Newcomers' },
+  { emoji: '✨', name: 'IRLY Activité' },
 ];
 
 /** `scene` opens on one scene and `hold` keeps it there (screenshots). */
@@ -245,9 +245,9 @@ function ChatScene() {
   return (
     <View style={[styles.center, { alignItems: 'stretch', gap: 10, paddingHorizontal: space.gutter }]}>
       <Animated.View entering={spring(0)} style={styles.chatHead}>
-        <Text style={styles.emoji}>🏋️</Text>
+        <Text style={styles.emoji}>🏅</Text>
         <Text variant="titleS" style={styles.white}>
-          IRLY Gym
+          IRLY Sport
         </Text>
       </Animated.View>
       <Animated.View entering={FadeIn.delay(200)} style={styles.system}>
@@ -290,7 +290,7 @@ function RealScene({ width }: { width: number }) {
         </Animated.View>
         <View style={styles.photoTag}>
           <Text variant="label" style={styles.white}>
-            {`🏋️ IRLY Gym · ${tx('Saturday 8:00')}`}
+            {`🏅 IRLY Sport · ${tx('Saturday 8:00')}`}
           </Text>
         </View>
       </Animated.View>

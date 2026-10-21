@@ -64,6 +64,8 @@ export type DemoCommunity = {
   faces: string[];
   moms?: boolean;
   member?: boolean;
+  /** Run by IRLY (listed first, as on the server). */
+  official?: boolean;
 };
 
 export const DEMO_COMMUNITIES: DemoCommunity[] = [
@@ -76,6 +78,7 @@ export const DEMO_COMMUNITIES: DemoCommunity[] = [
   { id: 'gc-fashion', name: 'Fashion & Beauty', tagline: 'Shopping spots, salons, swaps.', about: 'Where to get your nails done, which mall for what, and a clothes swap every month.', cover: 'beachClubGirl', members: 24, faces: ['g-zara', 'g-amira', 'w-lina'] },
   { id: 'gc-solo', name: 'Solo Girls', tagline: 'Going alone? Not anymore.', about: 'For the girls who go to the concert, the beach or the museum alone, and would rather meet someone there.', cover: 'readingGirl', members: 17, faces: ['w-noor', 'w-aisha', 'g-hana'] },
   { id: 'gc-irly-girl', name: 'IRLY Girl Feedback', tagline: 'Ideas, feedback and hellos.', about: 'The place to tell us what you want from IRLY Girl, and to meet the women building it with us.', cover: 'dubaiPink', members: 44, faces: ['g-maya', 'w-naomi', 'w-giulia'] },
+  { id: 'gc-irly-maman', name: 'IRLY Maman', tagline: 'Moms meeting moms, with or without the kids.', about: 'A community for moms who want to meet other moms, share their experiences, swap tips and organise activities that fit their family life. Members can introduce themselves, chat, share recommendations and suggest outings with their children.', cover: 'strollerMom', members: 0, faces: [], moms: true, official: true },
   { id: 'gc-moms', name: 'Moms in Dubai', tagline: 'Playdates, schools and coffee while they nap.', about: 'Moms of little ones and big ones: tips, playdates and a coffee when you need one.', cover: 'strollerMom', members: 21, faces: ['g-elena', 'w-salma'], moms: true },
 ];
 

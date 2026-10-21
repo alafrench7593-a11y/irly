@@ -123,7 +123,7 @@ export function GirlHero({
           <GlassFill dark level="thin" radius={20} />
           <Icon name="chevronLeft" size={20} color="#FFFFFF" />
         </PressableScale>
-        <GirlHeaderMark pill onDark size={18} section={mode} word={mode === 'moms' ? 'Moms' : 'Girl'} />
+        <GirlHeaderMark pill onDark size={18} section={mode} word={mode === 'moms' ? 'Maman' : 'Girl'} />
         <View style={styles.actions}>
           <PressableScale
             haptic="select"

@@ -200,7 +200,7 @@ const T = {
       cta: "Open IRLY Girl",
       scenes: [
         { src: shot("girl-home"), alt: "IRLY Girl home: what’s happening around you, and the women live now", k: "Home & Live", t: "What’s happening around you.", p: "Your city at a glance, and Girl Live: see which women are out right now near you, and join them." },
-        { src: shot("girl-communities"), alt: "The IRLY Girl communities, women only", k: "Communities", t: "Five official circles, and more.", p: "IRLY Nouvelle Arrivante, IRLY Girl Networking, IRLY Francophone, IRLY Girl Trip and IRLY Activité, plus the communities women create." },
+        { src: shot("girl-communities"), alt: "The IRLY Girl communities, women only", k: "Communities", t: "Four official circles, and more.", p: "Girl Trip, Girl Expat, Girl Activité and Girl Sport, plus the communities women create." },
         { src: shot("girl-group"), alt: "A women-only community with its posts, plans and chat", k: "Inside a community", t: "Posts, plans and a chat.", p: "Each community has its posts, its plans and its group chat. Ask anything, share your tips, meet the girls." },
         { src: shot("girl-post"), alt: "A post and the comments of other women", k: "Conversations", t: "A hello turns into a plan.", p: "Comments, replies and likes, in English or French. A welcome can become a brunch in a few messages." },
         { src: shot("girl-invite"), alt: "An activity: girls brunch in Jumeirah, who’s going", k: "Activities", t: "See who’s going, then go.", p: "Join an activity in one tap. It gets its own group chat and lands in your calendar." },
@@ -210,7 +210,7 @@ const T = {
       ],
       bubbles: {
         live: ["Live now", "Layla · live nearby", "Coffee and laptop, anyone around?"],
-        circles: ["IRLY Nouvelle Arrivante", "IRLY Girl Networking", "IRLY Francophone", "IRLY Girl Trip", "IRLY Activité"],
+        circles: ["Girl Trip", "Girl Expat", "Girl Activité", "Girl Sport"],
         group: ["Yuna · New in Dubai", "Girls, I just landed in Dubai and I’m looking for girls to discover the city with 🩷"],
         comments: [["g-nour", "Welcome girl!! 🥹"], ["g-sofia", "We should organise a girls brunch this weekend!"], ["g-chloe", "I’m in. Saturday?"]],
         invite: ["Sofía invited you to Girls brunch in Jumeirah", "You’re going · 6/8", "Want to meet at the entrance at 10:45?"],
@@ -220,15 +220,14 @@ const T = {
       },
     },
     circlesK: "Official communities",
-    circlesT: "Five circles to start with.",
-    circlesP: "IRLY runs five official communities for women. Each has its posts, its activities and its group chat. You can also start your own.",
+    circlesT: "Four circles to start with.",
+    circlesP: "IRLY runs four official communities for women. Each has its posts, its activities and its group chat. You can also start your own; Girl CEO, for women in business, is in IRLY Network.",
     womenOnly: "Women only",
     circles: [
-      ["IRLY Nouvelle Arrivante", "Just arrived in Dubai? Ask anything, get tips and meet other newcomers.", "newcomerGirl", "👋", "A woman photographing Downtown Dubai at dusk"],
-      ["IRLY Girl Networking", "Women in business: entrepreneurship, opportunities, collaborations and your network.", "networkingGirl", "💼", "A pink Dubai book next to a laptop"],
-      ["IRLY Francophone", "French-speaking girls in Dubai: chats, meetups and activities in French.", "brunchGirl", "🥐", "A brunch table with sushi and drinks above the Dubai Fountain"],
-      ["IRLY Girl Trip", "Trips, excursions, getaways and road trips between girls.", "girlTrip", "✈️", "Friends in scarves celebrating the sunset in the desert"],
-      ["IRLY Activité", "Sport, outings, restaurants, beach clubs, shopping, wellness and everything to do together.", "padelGirl", "✨", "Padel rackets on a blue court between friends’ feet"],
+      ["Girl Trip", "For women who want to travel together, plan weekends, discover new destinations and share experiences.", "girlTrip", "✈️", "Friends in scarves celebrating the sunset in the desert"],
+      ["Girl Expat", "For women who are expats or newly arrived in Dubai and want to meet friends, swap tips and build their social circle.", "newcomerGirl", "👋", "A woman photographing Downtown Dubai at dusk"],
+      ["Girl Activité", "Outings between women: restaurants, cafés, the beach, beach clubs, shopping, nights out, discoveries and more.", "brunchGirl", "✨", "A brunch table with sushi and drinks above the Dubai Fountain"],
+      ["Girl Sport", "For women who want to find sports partners, organise workouts, do physical activities together and share their goals.", "padelGirl", "🎾", "Padel rackets on a blue court between friends’ feet"],
     ],
     usesK: "What it’s for",
     usesT: "Everything that’s better with girlfriends.",
@@ -252,7 +251,7 @@ const T = {
     how: [
       ["user", "Sign up as a woman", "Create your IRLY account and choose “woman”. The gender is set at sign-up and can’t be changed afterwards in the app."],
       ["sparkle", "Open IRLY Girl", "From the IRLY app, open IRLY Girl: the same account, with women-only content and its own look."],
-      ["circles", "Join your circles", "Pick a community, newcomers, networking, French speakers, trips or activities, and say hello."],
+      ["circles", "Join your circles", "Pick a community, trips, expats, outings or sport, and say hello."],
       ["heart", "Meet in real life", "Join an activity, talk in its group chat, and meet your girls for real."],
     ],
     trust: [
@@ -348,7 +347,7 @@ const T = {
       cta: "Ouvrir IRLY Girl",
       scenes: [
         { src: shot("girl-home"), alt: "L’accueil d’IRLY Girl : ce qui se passe autour de toi, et les femmes en live", k: "Accueil & Live", t: "Ce qui se passe autour de toi.", p: "Ta ville en un coup d’œil, et Girl Live : vois quelles femmes sortent en ce moment près de toi, et rejoins-les." },
-        { src: shot("girl-communities"), alt: "Les communautés IRLY Girl, réservées aux femmes", k: "Communautés", t: "Cinq cercles officiels, et plus encore.", p: "IRLY Nouvelle Arrivante, IRLY Girl Networking, IRLY Francophone, IRLY Girl Trip et IRLY Activité, plus les communautés créées par les membres." },
+        { src: shot("girl-communities"), alt: "Les communautés IRLY Girl, réservées aux femmes", k: "Communautés", t: "Quatre cercles officiels, et plus encore.", p: "Girl Trip, Girl Expat, Girl Activité et Girl Sport, plus les communautés créées par les membres." },
         { src: shot("girl-group"), alt: "Une communauté entre femmes, ses publications, ses plans et son chat", k: "Dans une communauté", t: "Publications, plans et conversation.", p: "Chaque communauté a ses publications, ses plans et sa conversation de groupe. Pose tes questions, partage tes bons plans, rencontre les filles." },
         { src: shot("girl-post"), alt: "Une publication et les commentaires d’autres femmes", k: "Conversations", t: "Un bonjour devient une sortie.", p: "Commentaires, réponses et j’aime, en français ou en anglais. Un mot de bienvenue peut devenir un brunch en quelques messages." },
         { src: shot("girl-invite"), alt: "Une activité : brunch entre filles à Jumeirah, qui vient", k: "Activités", t: "Vois qui vient, puis vas-y.", p: "Rejoins une activité en un geste. Elle a sa conversation de groupe et arrive dans ton calendrier." },
@@ -358,7 +357,7 @@ const T = {
       ],
       bubbles: {
         live: ["En live", "Layla · en live près de toi", "Café et ordi, quelqu’un dans le coin ?"],
-        circles: ["IRLY Nouvelle Arrivante", "IRLY Girl Networking", "IRLY Francophone", "IRLY Girl Trip", "IRLY Activité"],
+        circles: ["Girl Trip", "Girl Expat", "Girl Activité", "Girl Sport"],
         group: ["Yuna · New in Dubai", "Les filles, je viens d’arriver à Dubaï et je cherche des copines pour découvrir la ville 🩷"],
         comments: [["g-nour", "Bienvenue !! 🥹"], ["g-sofia", "On organise un brunch entre filles ce week-end !"], ["g-chloe", "Je viens. Samedi ?"]],
         invite: ["Sofía t’invite au brunch entre filles à Jumeirah", "Tu y vas · 6/8", "On se retrouve à l’entrée à 10h45 ?"],
@@ -368,15 +367,14 @@ const T = {
       },
     },
     circlesK: "Communautés officielles",
-    circlesT: "Cinq cercles pour commencer.",
-    circlesP: "IRLY anime cinq communautés officielles pour les femmes. Chacune a ses publications, ses activités et sa conversation de groupe. Tu peux aussi créer la tienne.",
+    circlesT: "Quatre cercles pour commencer.",
+    circlesP: "IRLY anime quatre communautés officielles pour les femmes. Chacune a ses publications, ses activités et sa conversation de groupe. Tu peux aussi créer la tienne ; Girl CEO, pour les femmes entrepreneures, est dans IRLY Network.",
     womenOnly: "Entre femmes",
     circles: [
-      ["IRLY Nouvelle Arrivante", "Tu viens d’arriver à Dubaï ? Pose tes questions, récupère des conseils et rencontre d’autres nouvelles.", "newcomerGirl", "👋", "Une femme photographie Downtown Dubai au crépuscule"],
-      ["IRLY Girl Networking", "Les femmes dans le business : entrepreneuriat, opportunités, collaborations et réseau.", "networkingGirl", "💼", "Un livre rose sur Dubaï à côté d’un ordinateur portable"],
-      ["IRLY Francophone", "Les filles francophones de Dubaï : discussions, rencontres et activités en français.", "brunchGirl", "🥐", "Une table de brunch avec sushis et boissons au-dessus de la fontaine de Dubaï"],
-      ["IRLY Girl Trip", "Voyages, excursions, escapades et road trips entre filles.", "girlTrip", "✈️", "Des amies en foulard fêtent le coucher du soleil dans le désert"],
-      ["IRLY Activité", "Sport, sorties, restos, beach clubs, shopping, bien-être et tout ce qui se fait à plusieurs.", "padelGirl", "✨", "Des raquettes de padel sur un terrain bleu entre les pieds d’amies"],
+      ["Girl Trip", "Une communauté pour les femmes qui souhaitent voyager ensemble, organiser des week-ends, découvrir de nouvelles destinations et partager des expériences.", "girlTrip", "✈️", "Des amies en foulard fêtent le coucher du soleil dans le désert"],
+      ["Girl Expat", "Une communauté pour les femmes expatriées ou nouvellement arrivées à Dubaï qui souhaitent rencontrer des amies, échanger des conseils et créer leur cercle social.", "newcomerGirl", "👋", "Une femme photographie Downtown Dubai au crépuscule"],
+      ["Girl Activité", "Une communauté pour organiser des sorties entre femmes : restaurants, cafés, plage, beach clubs, shopping, soirées, découvertes et autres activités.", "brunchGirl", "✨", "Une table de brunch avec sushis et boissons au-dessus de la fontaine de Dubaï"],
+      ["Girl Sport", "Une communauté pour les femmes qui souhaitent trouver des partenaires sportives, organiser des entraînements, pratiquer des activités physiques ensemble et partager leurs objectifs.", "padelGirl", "🎾", "Des raquettes de padel sur un terrain bleu entre les pieds d’amies"],
     ],
     usesK: "Pour quoi faire",
     usesT: "Tout ce qui est mieux entre copines.",
@@ -400,7 +398,7 @@ const T = {
     how: [
       ["user", "Inscris-toi comme femme", "Crée ton compte IRLY et choisis « femme ». Le genre est fixé à l’inscription et ne peut plus être changé ensuite dans l’app."],
       ["sparkle", "Ouvre IRLY Girl", "Depuis l’app IRLY, ouvre IRLY Girl : le même compte, avec du contenu entre femmes et son propre style."],
-      ["circles", "Rejoins tes cercles", "Choisis une communauté, nouvelles arrivantes, networking, francophones, voyages ou activités, et dis bonjour."],
+      ["circles", "Rejoins tes cercles", "Choisis une communauté, voyages, expatriées, sorties ou sport, et dis bonjour."],
       ["heart", "Rencontrez-vous en vrai", "Rejoins une activité, discutez dans sa conversation de groupe, et retrouve tes copines en vrai."],
     ],
     trust: [
@@ -747,9 +745,9 @@ img.missing{opacity:0}
 .c-live{animation-delay:.45s,1.3s}.c-prof{animation-delay:.6s,2.1s}.c-plan{animation-delay:.75s,2.9s}.c-com{animation-delay:.9s,3.4s}.c-heart{animation-delay:1.05s,1.8s}
 @keyframes float-in{from{opacity:0;transform:translateY(18px) scale(.9)}to{opacity:1;transform:none}}
 /* ───────── Wider screens ───────── */
-@media (min-width:600px){:root{--gut:24px}.uses{grid-template-columns:repeat(2,1fr)}.circles{grid-template-columns:repeat(2,1fr)}.circle:first-child{grid-column:1/-1;min-height:380px}.dubai{grid-template-columns:repeat(3,1fr)}.dph.wide{grid-column:span 2;aspect-ratio:auto}.trust{grid-template-columns:repeat(3,1fr)}.tstage{height:600px}.tphone{width:262px}.tb{font-size:14px}.wl{padding:28px}}
+@media (min-width:600px){:root{--gut:24px}.uses{grid-template-columns:repeat(2,1fr)}.circles{grid-template-columns:repeat(2,1fr)}.circle:first-child{grid-column:1/-1;min-height:380px}.circle:last-child:nth-child(even){grid-column:1/-1}.dubai{grid-template-columns:repeat(3,1fr)}.dph.wide{grid-column:span 2;aspect-ratio:auto}.trust{grid-template-columns:repeat(3,1fr)}.tstage{height:600px}.tphone{width:262px}.tb{font-size:14px}.wl{padding:28px}}
 @media (min-width:768px){section{padding:96px 0}.steps{grid-template-columns:repeat(4,1fr);gap:20px}.steps::before{left:32px;right:calc(25% - 32px);top:31px;bottom:auto;width:auto;height:2px;transform-origin:0 50%;transform:scaleX(var(--line,1))}.steps li{grid-template-columns:1fr;grid-template-rows:auto 1fr;gap:18px}.steps .card{padding:20px;height:100%}.head{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:end;gap:10px 48px}.head .p{align-self:end}.head.center{grid-template-columns:1fr}.hgrid{gap:40px}.endcard{padding:80px 48px 56px}}
-@media (min-width:1024px){:root{--gut:32px}.links{display:flex}.lang{margin-inline-start:4px}.bar .btn.small{display:inline-flex;margin-inline-start:4px}.menu-btn{display:none}.hgrid{grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);gap:40px}.hero{padding:20px 0 60px}.tgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px}.tcopy{text-align:left}.tslide .p{margin-inline:0}.tctrl{margin-inline:0}.tour .fine{margin-inline:0}.tstage{height:640px}.tphone{width:286px}.uses{grid-template-columns:repeat(6,1fr);gap:18px}.use{grid-column:span 2}.use:nth-child(1),.use:nth-child(4){grid-column:span 4}.use:nth-child(8),.use:nth-child(9){grid-column:span 3}.use:nth-child(-n+4) .ph{aspect-ratio:auto;height:340px}.use:nth-child(8) .ph,.use:nth-child(9) .ph{aspect-ratio:16/9}.circles{grid-template-columns:repeat(6,1fr);gap:18px}.circle{grid-column:span 2;min-height:360px}.circle:first-child{grid-column:span 4;min-height:360px}.circle:nth-child(2){grid-column:span 2}.circle:nth-child(n+3){grid-column:span 2}.dubai{grid-template-columns:repeat(4,1fr);grid-auto-rows:240px;gap:16px}.dph{aspect-ratio:auto;grid-row:span 2}.dph:nth-child(4),.dph.wide{grid-row:span 1;grid-column:auto}}
+@media (min-width:1024px){:root{--gut:32px}.links{display:flex}.lang{margin-inline-start:4px}.bar .btn.small{display:inline-flex;margin-inline-start:4px}.menu-btn{display:none}.hgrid{grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);gap:40px}.hero{padding:20px 0 60px}.tgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px}.tcopy{text-align:left}.tslide .p{margin-inline:0}.tctrl{margin-inline:0}.tour .fine{margin-inline:0}.tstage{height:640px}.tphone{width:286px}.uses{grid-template-columns:repeat(6,1fr);gap:18px}.use{grid-column:span 2}.use:nth-child(1),.use:nth-child(4){grid-column:span 4}.use:nth-child(8),.use:nth-child(9){grid-column:span 3}.use:nth-child(-n+4) .ph{aspect-ratio:auto;height:340px}.use:nth-child(8) .ph,.use:nth-child(9) .ph{aspect-ratio:16/9}.circles{grid-template-columns:repeat(6,1fr);gap:18px}.circle{grid-column:span 2;min-height:360px}.circle:first-child{grid-column:span 4;min-height:360px}.circle:nth-child(2){grid-column:span 2}.circle:nth-child(n+3),.circle:last-child:nth-child(even){grid-column:span 3}.dubai{grid-template-columns:repeat(4,1fr);grid-auto-rows:240px;gap:16px}.dph{aspect-ratio:auto;grid-row:span 2}.dph:nth-child(4),.dph.wide{grid-row:span 1;grid-column:auto}}
 @media (min-width:1100px){.p1{left:2%}.p3{left:2%}.p2,.p4{right:2%}}
 @media (min-width:1440px){h1{font-size:120px}.hstage{width:min(600px,100%)}}
 @media (max-width:1023px){.hcopy{text-align:center}.hcopy .mark{margin-inline:auto}.sub,.lead{margin-inline:auto}.ctas{justify-content:center}.hero{min-height:auto}}
