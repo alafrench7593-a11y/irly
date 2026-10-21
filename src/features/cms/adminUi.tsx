@@ -125,7 +125,7 @@ export function PhotoSlot({ path, photoKey, fallback, onChange, height = 150 }: 
       {local && local.for === path ? (
         <Image source={{ uri: local.uri }} style={[styles.preview, { height, backgroundColor: t.c.overlay }]} contentFit="cover" accessibilityLabel={tx('New photo')} />
       ) : (
-        <Photo visual={visual} light="dubai" width={900} style={[styles.preview, { height }]} />
+        <Photo visual={visual} light="dubai" width={900} pinned style={[styles.preview, { height }]} />
       )}
       <View style={styles.wrap}>
         <Button size="sm" icon="image" label={path ? 'Replace the photo' : 'Choose a photo'} variant="secondary" loading={step !== null} onPress={() => void pick()} />
@@ -157,7 +157,7 @@ function OwnPick({ photoKey, selected, onPress }: { photoKey: string; selected: 
   const [visual] = useCmsVisuals([{ path: null, key: photoKey, fallback: photoKey }]);
   return (
     <PressableScale haptic="select" onPress={onPress} accessibilityRole="button" accessibilityLabel={tx('IRLY photo')} accessibilityState={{ selected }} style={[styles.own, { borderColor: selected ? t.c.brand : 'transparent' }]}>
-      <Photo visual={visual} light="dubai" width={200} style={styles.ownImg} />
+      <Photo visual={visual} light="dubai" width={200} pinned style={styles.ownImg} />
     </PressableScale>
   );
 }

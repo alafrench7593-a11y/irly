@@ -41,7 +41,7 @@ export default function NewsList() {
           items.map((n, i) => (
             <PressableScale key={n.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/actu/${n.id}`)} accessibilityRole="link" accessibilityLabel={n.title} style={styles.row} testID="news-card">
               <GlassLayer radius={radius.xl} />
-              <Photo visual={visuals[i]} light={light} width={300} recyclingKey={n.id} style={styles.thumb} />
+              <Photo visual={visuals[i]} light={light} width={300} pinned style={styles.thumb} />
               <View style={{ flex: 1, gap: 2 }}>
                 <Text variant="caption" tone="brand">
                   {`${tx(NEWS_CATEGORY_LABEL[n.category])} · ${newsDate(n.publish_at)}`}

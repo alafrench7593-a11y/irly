@@ -77,7 +77,7 @@ function Row({ n, index, busy, onUp, onDown }: { n: AdminNews; index: number; bu
   return (
     <Card index={index} onPress={() => router.push(`/admin/actu/${n.id}`)} accessibilityLabel={n.title}>
       <View style={styles.row} testID="admin-news-row">
-        <Photo visual={visual} light="dubai" width={240} style={styles.thumb} />
+        <Photo visual={visual} light="dubai" width={240} pinned style={styles.thumb} />
         <View style={{ flex: 1, gap: 4 }}>
           <Text variant="titleS" numberOfLines={2} raw>
             {n.title}

@@ -485,3 +485,6 @@ export function demoCms(fn: string, args: Record<string, unknown> = {}): unknown
   }
   throw new Error('Demo: nothing is saved');
 }
+
+// The demo journeys (scripts/e2e-demo-cms.mjs) also drive the demo's server directly.
+(globalThis as { __irlyCmsDemo?: typeof demoCms }).__irlyCmsDemo = demoCms;

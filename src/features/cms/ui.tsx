@@ -44,7 +44,7 @@ const NewsTile = memo(function NewsTile({ item, visual, width, light }: { item: 
   const router = useRouter();
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(`/actu/${item.id}`)} accessibilityRole="link" accessibilityLabel={item.title} testID="news-card">
-      <Photo visual={visual} light={light} scrim="strong" width={700} recyclingKey={item.id} style={[styles.tile, { width }]}>
+      <Photo visual={visual} light={light} scrim="strong" width={700} pinned style={[styles.tile, { width }]}>
         <View style={styles.tileText}>
           <View style={styles.tileTop}>
             <Text variant="overline" color="rgba(255,255,255,0.9)">
@@ -72,7 +72,7 @@ const NewsRow = memo(function NewsRow({ item, visual, light }: { item: NewsCard;
   return (
     <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(`/actu/${item.id}`)} accessibilityRole="link" accessibilityLabel={item.title} testID="news-card" style={styles.row}>
       <GlassLayer radius={radius.xl} />
-      <Photo visual={visual} light={light} width={240} recyclingKey={item.id} style={styles.thumb} />
+      <Photo visual={visual} light={light} width={240} pinned style={styles.thumb} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="caption" tone="brand">
           {`${tx(NEWS_CATEGORY_LABEL[item.category])} · ${newsDate(item.publish_at)}`}
@@ -132,7 +132,7 @@ export function NewsSection({ entry, items }: { entry?: LayoutEntry; items: News
 const BannerCard = memo(function BannerCard({ b, visual, width, light }: { b: Banner; visual: Visual; width: number; light: LightId }) {
   const opens = Boolean(b.cta_url);
   const body = (
-    <Photo visual={visual} light={light} scrim="strong" width={900} recyclingKey={b.id} style={[styles.banner, { width }]}>
+    <Photo visual={visual} light={light} scrim="strong" width={900} pinned style={[styles.banner, { width }]}>
       <View style={styles.bannerText}>
         <Text variant="titleL" color="#FFFFFF" numberOfLines={2} raw>
           {b.title}
@@ -213,7 +213,7 @@ export function NewsArticleView({ item }: { item: NewsArticle }) {
   const cell = (frame.width - space.gutter * 2 - 8) / 2;
   return (
     <View style={{ gap: space[4] }} testID="news-article">
-      <Photo visual={cover} light={light} width={1200} recyclingKey={item.id} style={styles.hero} />
+      <Photo visual={cover} light={light} width={1200} pinned style={styles.hero} />
       <View style={styles.pad}>
         <Text variant="caption" tone="brand">
           {`${tx(NEWS_CATEGORY_LABEL[item.category])} · ${newsDate(item.publish_at)}`}
@@ -248,7 +248,7 @@ export function NewsArticleView({ item }: { item: NewsArticle }) {
       {gallery.length ? (
         <View style={[styles.pad, styles.gallery]}>
           {gallery.map((v, i) => (
-            <Photo key={i} visual={v} light={light} width={600} style={{ width: cell, height: cell, borderRadius: radius.lg, overflow: 'hidden' }} />
+            <Photo key={i} visual={v} light={light} width={600} pinned style={{ width: cell, height: cell, borderRadius: radius.lg, overflow: 'hidden' }} />
           ))}
         </View>
       ) : null}

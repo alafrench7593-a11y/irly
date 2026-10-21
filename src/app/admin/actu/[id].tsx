@@ -320,7 +320,7 @@ function Gallery({ paths, onRemove }: { paths: string[]; onRemove: (p: string) =
     <View style={styles.gallery}>
       {paths.map((p, i) => (
         <View key={p} style={{ gap: 4 }}>
-          <Photo visual={visuals[i]} light="dubai" width={300} style={styles.cell} />
+          <Photo visual={visuals[i]} light="dubai" width={300} pinned style={styles.cell} />
           <Button size="sm" variant="ghost" label="Remove" onPress={() => onRemove(p)} />
         </View>
       ))}
