@@ -1,6 +1,6 @@
 // The editorial back office against the LIVE IRLY Supabase project, through
 // the public API and the rules the app uses (publishable key, real sign-in).
-// NEEDS migration 20261028200000_irly_admin_cms DEPLOYED first; until then
+// NEEDS migration 20261028300000_irly_admin_cms DEPLOYED first; until then
 // every step fails at its first call. Not part of .github/workflows/e2e.yml:
 // run it by hand once the migration is live.
 //

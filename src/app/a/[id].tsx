@@ -31,7 +31,10 @@ import { DateTimePicker, WhenField } from '@/components/ui/DateTimePicker';
 import { instants, problemOf, whenFrom, type When } from '@/features/create/when';
 import { confirm } from '@/lib/confirm';
 import { openReport } from '@/features/moderation/reportStore';
-import { hideItem, useEngagement } from '@/features/server/engage';
+import { hideItem, openDirect, useEngagement } from '@/features/server/engage';
+import { useActivityCards } from '@/features/server/activityCards';
+import { displayCommunityName } from '@/features/community/name';
+import { PressableScale } from '@/motion/PressableScale';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
 import { addToPhoneCalendar } from '@/lib/phoneCalendar';
@@ -68,6 +71,8 @@ function ActivityPage() {
   const { detail: a, loading, error, refresh } = useServerActivity(id);
   const contentStaff = isContentStaff(useStaffRole());
   const eng = useEngagement('activity', a ? [a.id] : []);
+  // Its live card: the origin community's name and whether its organiser accepts a message from me.
+  const card = useActivityCards(a ? [a.id] : []).get(id);
   const [busy, setBusy] = useState(false);
   // Right after joining: the button confirms ("You're in") until the page knows you are going,
   // and at least a beat, so it never flashes back to Join while the detail refreshes.
@@ -208,6 +213,21 @@ function ActivityPage() {
     }
   };
 
+  // « Contact the organiser »: her private chat (opened or reused), when her settings allow it (the server checks again).
+  const contact = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const conv = await openDirect(a.creatorId);
+      router.push(`/messages/${conv}`);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not open the chat', 'x', 'live');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const shareInChat = () => router.push(`/share?type=activity&id=${encodeURIComponent(a.id)}&title=${encodeURIComponent(a.title)}`);
+
   const more = () => {
     hideItem(target)
       .then(() => toast("Hidden. We won't suggest it again", 'eye', 'brand'))
@@ -250,6 +270,16 @@ function ActivityPage() {
           <Fact index={2} icon="users" text={`${a.going}${a.capacity ? ` / ${a.capacity}` : ''} ${tx('going')}${full ? ` · ${tx('Full')}` : ''}`} />
           <Fact index={3} icon="banknote" text={a.priceMinor ? `${a.currency} ${formatNumber(a.priceMinor / 100)}` : tx('Free')} />
           {a.creatorName ? <Fact index={4} icon="user" text={tx('Hosted by {name}', { name: a.creatorName })} /> : null}
+          {a.communityId && card?.communityName ? (
+            // Its origin community (one activity, shown there too): one tap back to it.
+            <PressableScale haptic="select" onPress={() => router.push(`/c/${a.communityId}`)} style={styles.fact} accessibilityLabel={tx('Open {title}', { title: card.communityName })}>
+              <Icon name="users" size={18} color={t.c.textSecondary} />
+              <Text variant="body" style={{ flex: 1 }} numberOfLines={1}>
+                {tx('Proposed in {name}', { name: tx(displayCommunityName({ name: card.communityName })) })}
+              </Text>
+              <Icon name="chevronRight" size={16} color={t.c.textSecondary} />
+            </PressableScale>
+          ) : null}
           {a.description ? (
             <View style={styles.about}>
               <Text variant="overline" tone="secondary">
@@ -264,6 +294,8 @@ function ActivityPage() {
             The exact meeting point is shared in the activity chat.
           </Text>
           <View style={styles.row}>
+            {!a.cancelled ? <Button label="Share in a chat" icon="send" size="sm" variant="secondary" onPress={shareInChat} /> : null}
+            {!hosting && card?.canMessageHost ? <Button label="Contact the organiser" icon="message" size="sm" variant="secondary" loading={busy} onPress={contact} /> : null}
             <Button label="Add to my calendar" icon="calendar" size="sm" variant="secondary" onPress={addToCalendar} />
             <Button label="Not for me" icon="eye" size="sm" variant="ghost" onPress={more} />
             <Button
@@ -301,7 +333,7 @@ function ActivityPage() {
           ) : over ? (
             <Button label="Ended" disabled full onPress={() => undefined} />
           ) : (
-            <Button label={full ? 'Full' : isEvent ? 'Join event' : 'Join'} icon="plus" full disabled={full} loading={busy} onPress={join} />
+            <Button label={full ? 'Full' : isEvent ? 'Join event' : 'Join the activity'} icon="plus" full disabled={full} loading={busy} onPress={join} />
           )}
         </Animated.View>
       </View>

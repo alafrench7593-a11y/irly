@@ -1,5 +1,5 @@
 // The editorial back office (news, Home layout, banners) checks the same
-// rules on the server (supabase/migrations/20261028200000_irly_admin_cms.sql)
+// rules on the server (supabase/migrations/20261028300000_irly_admin_cms.sql)
 // and in the app (src/features/cms): this compares them, checks that every
 // screen a button may open exists, and walks the app-side checks a member's
 // Home relies on (a broken layout never empties the Home, another flavour's
@@ -16,7 +16,7 @@ import { checkLayout, defaultLayout, entryCount, SECTION_SPEC } from '../src/fea
 import { HOME_SECTIONS } from '../src/features/home/sections.ts';
 
 const root = path.join(import.meta.dirname, '..');
-const sql = fs.readFileSync(path.join(root, 'supabase/migrations/20261028200000_irly_admin_cms.sql'), 'utf8');
+const sql = fs.readFileSync(path.join(root, 'supabase/migrations/20261028300000_irly_admin_cms.sql'), 'utf8');
 let passed = 0;
 const fails: string[] = [];
 const check = (ok: boolean, what: string) => {

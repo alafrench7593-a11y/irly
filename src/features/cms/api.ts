@@ -10,7 +10,7 @@ import { layoutForServer } from './layout';
 
 /**
  * The editorial back office as the server exposes it (migration
- * 20261028200000_irly_admin_cms): news, the Home layout and banners. Every
+ * 20261028300000_irly_admin_cms): news, the Home layout and banners. Every
  * call is checked by the server against the caller's staff role (content
  * staff and above) and written to the staff journal; the app only decides
  * what to show. The demo build answers from features/cms/demo.

@@ -2,7 +2,7 @@
  * Where a button of the team's content (a news item, a banner, a Home
  * section) may lead: a screen of the app from this list, or a secure web
  * address. The server checks the same rules (private.cms_destination_ok in
- * migration 20261028200000_irly_admin_cms); scripts/check-cms.mts compares
+ * migration 20261028300000_irly_admin_cms); scripts/check-cms.mts compares
  * the two and checks that every screen listed exists.
  */
 export const SCREEN_ROUTES = [

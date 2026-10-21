@@ -18,11 +18,13 @@ import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
-import { demoPhoto, demoPostsOf, findDemoCommunity, findDemoPlan, planGoing, planStartsAt, useDemoEngagement, useDemoGirl } from './demo';
+import { demoPhoto, demoPlanCard, demoPostsOf, findDemoCommunity, findDemoPlan, planGoing, planStartsAt, useDemoEngagement, useDemoGirl } from './demo';
 import { girl, GIRL_TINT, girlType } from './theme';
 import { GButton, GlassFill, GNotice } from './ui';
 import { GirlPostCard } from './world';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { ActivityFeedCard, ProposeActivityButton } from '@/components/cards/ActivityCards';
+import { openCreate } from '@/features/create/createStore';
 
 /**
  * The IRLY Girl community and plan pages of the demonstration build. They
@@ -66,6 +68,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
   const eng = useDemoEngagement('community_post', posts.map((p) => p.id));
   const plans = useMemo(() => DEMO_PLANS.filter((p) => p.community === id), [id]);
   const chat = DEMO_CHATS.find((x) => x.kind === 'group' && x.title === c?.name);
+  const goingMap = useDemoGirl((s) => s.going);
   const { y, onScroll, photo } = useHero();
   if (!c) return <Missing />;
   const members = c.members + (joined && !c.member ? 1 : 0) - (!joined && c.member ? 1 : 0);
@@ -122,6 +125,14 @@ export function DemoCommunityScreen({ id }: { id: string }) {
           </View>
         </Animated.View>
 
+        {/* « + Propose an activity », as in every real community: the Create form, attached to this one. */}
+        <View style={{ paddingHorizontal: space.gutter, marginTop: 12 }}>
+          <ProposeActivityButton
+            communityName={c.name}
+            onPress={() => (joined ? openCreate(null, { communityId: c.id, communityName: c.name, cityId: 'dubai', girlOnly: true }) : toast('Join the community first', 'users', 'brand'))}
+          />
+        </View>
+
         <View style={styles.tabs}>
           {(['posts', 'plans', 'about'] as const).map((k) => (
             <Tab key={k} label={k === 'posts' ? tx('Posts') : k === 'plans' ? tx('Plans') : tx('About')} on={tab === k} onPress={() => setTab(k)} />
@@ -129,6 +140,21 @@ export function DemoCommunityScreen({ id }: { id: string }) {
         </View>
 
         <Animated.View layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)} style={{ gap: 12, paddingHorizontal: space.gutter }}>
+          {/* Its activities in the feed: the same card as the real community page. */}
+          {tab === 'posts'
+            ? plans.slice(0, 2).map((p) => (
+                <ActivityFeedCard
+                  key={`card-${p.id}`}
+                  card={demoPlanCard(p, goingMap)}
+                  onOpen={() => router.push(`/a/${p.id}`)}
+                  onJoin={() => {
+                    haptic('success');
+                    toggle('going', p.id);
+                    toast(tx('You’re going! The group chat is in Messages'), 'sparkles', 'brand');
+                  }}
+                />
+              ))
+            : null}
           {tab === 'posts'
             ? posts.map((p, i) => (
                 <Animated.View key={p.id} entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
