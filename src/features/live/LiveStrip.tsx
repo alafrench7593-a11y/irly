@@ -56,9 +56,11 @@ export function LiveStrip() {
     <View style={{ gap: 12 }}>
       <View style={styles.head}>
         <Text variant="titleM">{friendsLive ? 'Friends live now' : 'Live now'}</Text>
-        <Text variant="label" tone="secondary" onPress={() => router.push('/live')}>
-          IRL
-        </Text>
+        <PressableScale haptic="select" scaleTo={0.94} hitSlop={12} onPress={() => router.push('/live')} accessibilityRole="link" accessibilityLabel="Open IRL">
+          <Text variant="label" tone="secondary">
+            IRL
+          </Text>
+        </PressableScale>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push('/live')} style={styles.item} accessibilityLabel="Go live">

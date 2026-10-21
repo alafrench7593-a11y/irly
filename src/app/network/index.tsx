@@ -181,14 +181,14 @@ export default function NetworkDiscover() {
         <IconButton icon="sliders" label={tr('Filters')} onPress={() => setOpen(true)} badge={count || undefined} />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
         <Chip size="sm" label="All domains" selected={!industry} onPress={() => setIndustry(null)} />
         {INDUSTRIES.map((i) => (
           <Chip key={i.id} size="sm" label={`${i.emoji} ${tr(i.short)}`} selected={industry === i.id} onPress={() => setIndustry(industry === i.id ? null : i.id)} />
         ))}
       </ScrollView>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.rail, { paddingTop: 0 }]}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.rail, { paddingTop: 0 }]}>
         {LOOKING_FILTERS.map((l) => (
           <Chip key={l.id} size="sm" label={l.label} selected={intent === l.id} onPress={() => setIntent(intent === l.id ? null : l.id)} />
         ))}

@@ -467,7 +467,7 @@ function Assistant({
           <Icon name="send" size={18} color={t.c.text} />
         </PressableScale>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {chips.map((q) => (
           <Chip key={q} size="sm" label={tx(q)} onPress={() => ask(tx(q))} />
         ))}
@@ -476,12 +476,12 @@ function Assistant({
       {result?.kind === 'plan' && draft ? (
         <Animated.View entering={FadeInDown.springify(380)} style={{ gap: 10 }}>
           <Text variant="titleS">{draft.title}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {(['today', 'tomorrow', 'sat', 'sun', 'next_week'] as Day[]).map((d) => (
               <Chip key={d} size="sm" label={d === 'sat' ? tx('Saturday') : d === 'sun' ? tx('Sunday') : tx(planDay(d))} selected={(draft.day ?? 'today') === d} onPress={() => setDraft({ ...draft, day: d })} />
             ))}
           </ScrollView>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {['08:00', '09:00', '11:00', '16:00', '18:00', '19:30'].map((h) => (
               <Chip key={h} size="sm" label={h} selected={draft.time === h} onPress={() => setDraft({ ...draft, time: h })} />
             ))}
@@ -497,8 +497,12 @@ function Assistant({
               setBusy(true);
               const asked = result;
               const typed = text;
-              const ok = await onPlan(draft);
-              setBusy(false);
+              let ok = false;
+              try {
+                ok = await onPlan(draft);
+              } finally {
+                setBusy(false);
+              }
               if (!ok) return;
               // Clear only this plan: a question asked meanwhile keeps its answer.
               setResult((r) => (r === asked ? null : r));

@@ -45,6 +45,10 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
   const { height: screenH } = useWindowDimensions();
   const frame = useFrame();
   const [mounted, setMounted] = useState(visible);
+  // While the sheet slides away it takes no more taps: a second tap on the
+  // backdrop or on a button of the leaving sheet would act twice, and on web
+  // the tap goes straight to the page underneath instead of being lost.
+  const [closing, setClosing] = useState(false);
   const y = useSharedValue(screenH);
   const sheetH = useSharedValue(screenH * 0.6);
 
@@ -56,9 +60,11 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
   useEffect(() => {
     if (visible) {
       setMounted(true);
+      setClosing(false);
       y.set(screenH);
       y.set(withSpring(0, spring.sheet));
     } else if (mounted) {
+      setClosing(true);
       y.set(withTiming(sheetH.value + 40, { duration: duration.base, easing: easing.exit }, (fin) => {
         if (fin) scheduleOnRN(setMounted, false);
       }));
@@ -67,10 +73,12 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
   }, [visible]);
 
   const dismiss = useCallback(() => {
+    if (closing) return;
+    setClosing(true);
     y.set(withTiming(sheetH.value + 40, { duration: duration.base, easing: easing.exit }, (fin) => {
       if (fin) scheduleOnRN(finishClose);
     }));
-  }, [finishClose, sheetH, y]);
+  }, [closing, finishClose, sheetH, y]);
 
   const pan = Gesture.Pan()
     .activeOffsetY([-6, 6])
@@ -82,6 +90,7 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
         y.set(withTiming(sheetH.value + 40, { duration: duration.base, easing: easing.exit }, (fin) => {
           if (fin) scheduleOnRN(finishClose);
         }));
+        scheduleOnRN(setClosing, true);
         scheduleOnRN(haptic, 'tap');
       } else {
         y.set(withSpring(0, spring.sheet));
@@ -104,7 +113,7 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
 
   return (
     <Modal transparent visible animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={dismiss}>
-      <GestureHandlerRootView style={styles.flex}>
+      <GestureHandlerRootView style={styles.flex} pointerEvents={closing ? 'none' : 'auto'}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.scrim }, backdropStyle]}>
           {girl && Platform.OS !== 'android' ? <BlurView intensity={14} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" /> : null}
           <Pressable style={styles.flex} onPress={dismiss} accessibilityLabel={a11y('Close')} />

@@ -45,12 +45,12 @@ export default function ReportsInbox() {
     <Page title="Reports" subtitle="Open a report to review it. Private messages are only shown for a report about a message, with a reason, and every read is logged.">
       <View style={adminStyles.body}>
         <Field icon="search" value={search} onChangeText={setSearch} placeholder="Search a name, a reason or a case number" accessibilityLabel="Search reports" autoCapitalize="none" />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
           {STATUSES.map((s) => (
             <Chip key={String(s)} size="sm" label={s === null ? 'All' : s === 'active' ? 'To handle' : STATUS_LABEL[s]} selected={status === s} onPress={() => setStatus(s)} />
           ))}
         </ScrollView>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
           <Chip size="sm" icon="flame" label="High priority" selected={priority === 'high'} onPress={() => setPriority(priority === 'high' ? null : 'high')} />
           {KINDS.map((k) => (
             <Chip key={String(k)} size="sm" label={k ? KIND_LABEL[k] : 'Every kind'} selected={kind === k} onPress={() => setKind(k)} />

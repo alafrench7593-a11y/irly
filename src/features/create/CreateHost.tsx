@@ -635,7 +635,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   <Text variant="overline" tone="secondary">
                     Category · suggested by IRLY, change it if needed
                   </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                     {DISCOVERY_ORDER.map((k) => CATEGORY_BY_ID[k]).map((c) => (
                       <Chip key={c.id} size="sm" label={c.label} dot={c.color} selected={pick.categoryId === c.id} onPress={() => setPick({ ...pick, categoryId: c.id })} />
                     ))}
@@ -740,14 +740,14 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                 <Chip size="sm" label="Unlimited" selected={unlimited} onPress={() => setUnlimited(true)} />
               </Animated.View>
               <Animated.View entering={enter.rise(1)} style={[styles.block, styles.stepperRow, unlimited ? { opacity: 0.35 } : null]} pointerEvents={unlimited ? 'none' : 'auto'}>
-                <PressableScale haptic="select" scaleTo={0.85} onPress={() => setSpots((n) => Math.max(2, n - 1))} style={styles.stepBtn} accessibilityLabel="Fewer spots">
+                <PressableScale haptic="select" scaleTo={0.85} repeat onPress={() => setSpots((n) => Math.max(2, n - 1))} style={styles.stepBtn} accessibilityLabel="Fewer spots">
                   <GlassLayer radius={28} level="thin" />
                   <Icon name="minus" size={22} color={t.c.text} />
                 </PressableScale>
                 <Text variant="displayXL" style={{ minWidth: 90 }} align="center">
                   {spots}
                 </Text>
-                <PressableScale haptic="select" scaleTo={0.85} onPress={() => setSpots((n) => Math.min(60, n + 1))} style={styles.stepBtn} accessibilityLabel="More spots">
+                <PressableScale haptic="select" scaleTo={0.85} repeat onPress={() => setSpots((n) => Math.min(60, n + 1))} style={styles.stepBtn} accessibilityLabel="More spots">
                   <GlassLayer radius={28} level="thin" />
                   <Icon name="plus" size={22} color={t.c.text} />
                 </PressableScale>

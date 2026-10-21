@@ -4774,4 +4774,6 @@ export const fr: Record<string, string> = {
   'This Live has ended': 'Ce live est terminé',
   'Only the host can cancel this activity': 'Seul l’organisateur peut annuler cette activité',
   'Only the host can edit this activity': 'Seul l’organisateur peut modifier cette activité',
+  'Open IRL': 'Ouvrir IRL',
+  'No email app found. Write to {email}': 'Aucune app mail trouvée. Écris à {email}',
 };

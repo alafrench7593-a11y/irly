@@ -215,7 +215,8 @@ export function HeroHost() {
   const header = rendered ? getHeader(rendered) : null;
 
   return (
-    <View ref={hostRef} style={StyleSheet.absoluteFill} pointerEvents="box-none" onLayout={onLayout}>
+    // Closing (item gone, the card still shrinking back for ~0.5 s): the page underneath takes taps again at once.
+    <View ref={hostRef} style={StyleSheet.absoluteFill} pointerEvents={item ? 'box-none' : 'none'} onLayout={onLayout}>
       {rendered && header ? (
         <>
           <StatusBar style="light" />

@@ -237,7 +237,7 @@ function FriendsLiveNow() {
       <Text variant="overline" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
         {friends.length ? 'Friends live now' : 'Live around you'}
       </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
         {list.map((l, i) => {
           const p = findPerson(l.authorId);
           if (!p) return null;

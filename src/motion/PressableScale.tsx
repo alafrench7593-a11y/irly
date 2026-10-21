@@ -1,4 +1,4 @@
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, useRef, type ReactNode } from 'react';
 import { Pressable, type PressableProps, type StyleProp, type View, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { localizeLabel, useLang } from '@/i18n';
@@ -14,17 +14,28 @@ export type PressableScaleProps = Omit<PressableProps, 'style' | 'children'> & {
   scaleTo?: number;
   /** Haptic fired on press. `false` to stay silent. */
   haptic?: HapticKind | false;
+  /**
+   * Lets presses follow each other as fast as the finger goes (steppers,
+   * zoom). Otherwise a second press within `REPEAT_GAP` is the same tap
+   * landing twice (a double tap, a bounce) and is dropped, so one tap
+   * never pushes a screen twice, sends twice or pops two pages.
+   */
+  repeat?: boolean;
 };
+
+/** Below this gap, two presses on the same control are one accidental double tap. */
+const REPEAT_GAP = 450;
 
 /**
  * The base of every tappable surface: scales down on touch with a spring,
  * springs back on release, fires a haptic on press. Runs on the UI thread.
  */
 export const PressableScale = forwardRef<View, PressableScaleProps>(function PressableScale(
-  { scaleTo = pressScale, haptic = 'tap', onPressIn, onPressOut, onPress, style, children, disabled, accessibilityLabel, ...rest },
+  { scaleTo = pressScale, haptic = 'tap', repeat = false, onPressIn, onPressOut, onPress, style, children, disabled, accessibilityLabel, ...rest },
   ref,
 ) {
   const lang = useLang();
+  const lastPress = useRef(0);
   const scale = useSharedValue(1);
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
@@ -42,6 +53,11 @@ export const PressableScale = forwardRef<View, PressableScaleProps>(function Pre
         onPressOut?.(e);
       }}
       onPress={(e) => {
+        if (!repeat) {
+          const now = Date.now();
+          if (now - lastPress.current < REPEAT_GAP) return;
+          lastPress.current = now;
+        }
         if (haptic) triggerHaptic(haptic);
         onPress?.(e);
       }}

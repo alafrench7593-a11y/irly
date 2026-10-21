@@ -42,14 +42,23 @@ export function openHero(item: HeroItem, ref?: RefObject<View | null>) {
     open(item, null);
     return;
   }
+  // The card opens exactly once, even if the measure never reports back
+  // (a card scrolled away or unmounted mid-tap): then it grows from the centre.
+  let done = false;
+  const go = (origin: Rect | null) => {
+    if (done) return;
+    done = true;
+    clearTimeout(fallback);
+    open(item, origin);
+  };
+  const fallback = setTimeout(() => go(null), MEASURE_TIMEOUT);
   node.measureInWindow((x, y, width, height) => {
-    if (!width || !height) {
-      open(item, null);
-      return;
-    }
-    open(item, { x: x - hostOffset.x, y: y - hostOffset.y, width, height });
+    go(width && height ? { x: x - hostOffset.x, y: y - hostOffset.y, width, height } : null);
   });
 }
+
+/** Past this, a measure that has not answered is not waited for: the tap must open something. */
+const MEASURE_TIMEOUT = 300;
 
 export function closeHero() {
   useHeroStore.getState().close();

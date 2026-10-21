@@ -45,6 +45,8 @@ function Portal({ target }: { target: CityId }) {
   const frame = useFrame();
   const insets = useSafeAreaInsets();
   const [mark, setMark] = useState<MarkState>('loading');
+  // Once the light starts to lift, taps reach the new city underneath.
+  const [leaving, setLeaving] = useState(false);
 
   const portal = useSharedValue(0);
   const content = useSharedValue(0);
@@ -68,14 +70,18 @@ function Portal({ target }: { target: CityId }) {
       haptic('success');
     }, 1150);
     const t3 = setTimeout(() => {
+      setLeaving(true);
       fade.set(withTiming(0, { duration: 460, easing: Easing.out(Easing.quad) }, (fin) => {
         if (fin) scheduleOnRN(clearSwitch);
       }));
     }, 1700);
+    // Never left on screen (invisible, catching every tap) if the fade's end is not reported.
+    const t4 = setTimeout(clearSwitch, 2600);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearTimeout(t4);
     };
   }, [target, setCity, portal, content, fade]);
 
@@ -93,7 +99,7 @@ function Portal({ target }: { target: CityId }) {
   const dest = DESTINATIONS[city.destinationId];
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, rootStyle]} pointerEvents="auto">
+    <Animated.View style={[StyleSheet.absoluteFill, rootStyle]} pointerEvents={leaving ? 'none' : 'auto'}>
       <Animated.View
         style={[
           styles.circle,
