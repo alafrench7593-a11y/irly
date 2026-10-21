@@ -79,6 +79,7 @@ export default function Discover() {
   }
 
   const W = frame.width;
+  const narrowHead = W < 360;
   const initial = Math.max(0, TABS.findIndex((x) => x.id === (params.tab as TabId)));
   const [active, setActive] = useState(initial);
   const [mounted, setMounted] = useState<Set<number>>(() => new Set([initial]));
@@ -296,15 +297,27 @@ export default function Discover() {
         <Glass level="thick" border={false} highlight={false} style={StyleSheet.absoluteFill} />
         <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
         <View style={{ paddingTop: insets.top + space[3] }}>
-          <Animated.View style={[styles.head, styles.headRow, titleStyle]}>
-            <ProfileButton />
-            <View style={{ flex: 1 }}>
-              <Text variant="overline" tone="secondary">
-                {city.name}
-              </Text>
-              <Text variant="displayM">Discover</Text>
+          <Animated.View style={[styles.head, titleStyle]}>
+            <View style={styles.headRow}>
+              <ProfileButton />
+              <View style={{ flex: 1 }}>
+                <Text variant="overline" tone="secondary">
+                  {city.name}
+                </Text>
+                {narrowHead ? null : (
+                  <Text variant="displayM" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                    Discover
+                  </Text>
+                )}
+              </View>
+              <InboxButtons />
             </View>
-            <InboxButtons />
+            {/* Below 360 pt the inbox buttons leave ~95 pt beside the avatar: "Découvrir" broke mid-word, so it gets its own line. */}
+            {narrowHead ? (
+              <Text variant="displayM" numberOfLines={1}>
+                Discover
+              </Text>
+            ) : null}
           </Animated.View>
           <View style={{ paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[4] }}>
             <Field

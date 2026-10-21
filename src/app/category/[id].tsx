@@ -32,6 +32,7 @@ import { useTheme } from '@/theme/useTheme';
 import { useAppSpace } from '@/state/appSpace';
 import { useGirlPeople } from '@/features/girl/GirlSections';
 import { useDemoActivities } from '@/features/girl/demo';
+import { useGirlEntry } from '@/features/profile/girlEntry';
 import { DEMO } from '@/config/app';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
@@ -51,7 +52,8 @@ export default function CategoryScreen() {
   const cityId = useCityId();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
-  const gender = useStore((s) => s.profile.gender);
+  // A woman's profile, unless the server closed IRLY Girl for this account (suspended): same check as GirlGate.
+  const girlEntry = useGirlEntry();
   const myPlans = useStore((s) => s.myPlans);
   const isGirl = id === 'girl';
   const uid = useAccount()?.userId;
@@ -124,7 +126,7 @@ export default function CategoryScreen() {
     );
   }
 
-  if (isGirl && gender !== 'woman') {
+  if (isGirl && !girlEntry) {
     return (
       <View style={[styles.root, styles.gate, { backgroundColor: '#FBF6F1', paddingTop: insets.top + 40 }]}>
         <Icon name="lock" size={28} color="#3A2A2A" />

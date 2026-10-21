@@ -185,7 +185,8 @@ function CommunitiesButton() {
   // Below 360 pt there is no room for the word at all: a round door with the icon, like the others.
   const width = useFrame().width;
   const narrow = width < 420;
-  const tiny = width < 360;
+  // The IRLY Girl mark is wider than the IRLY one: at 375 pt in French the word lost its end (« Communa… »).
+  const tiny = width < (t.flavor === 'girl' ? 400 : 360);
   if (tiny) {
     return (
       <PressableScale haptic="select" scaleTo={0.92} hitSlop={6} onPress={() => router.push('/communities')} accessibilityRole="button" accessibilityLabel={tx('Communities')} style={[styles.action, styles.actionNarrow]}>

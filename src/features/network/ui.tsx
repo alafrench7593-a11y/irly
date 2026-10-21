@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -47,8 +47,11 @@ export function ConnectAction({
   const router = useRouter();
   const tr = useT();
   const [busy, setBusy] = useState(false);
+  // State lags a fast double tap; the ref does not, so each action (and each chat push) runs once.
+  const inFlight = useRef(false);
   const run = async (next: ProProfile['connection'], work: () => Promise<unknown>, done: string) => {
-    if (busy) return;
+    if (busy || inFlight.current) return;
+    inFlight.current = true;
     const before = pro.connection;
     setBusy(true);
     onChange(next);
@@ -63,6 +66,7 @@ export function ConnectAction({
       onChange(before);
       toast(e instanceof Error ? e.message : tr('Could not connect'), 'x', 'live');
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   };
@@ -76,6 +80,8 @@ export function ConnectAction({
         full={full}
         loading={busy}
         onPress={async () => {
+          if (inFlight.current) return;
+          inFlight.current = true;
           setBusy(true);
           try {
             const conv = await openDirect(pro.userId);
@@ -84,6 +90,9 @@ export function ConnectAction({
             toast(e instanceof Error ? e.message : tr('Could not open the chat'), 'x', 'live');
           } finally {
             setBusy(false);
+            setTimeout(() => {
+              inFlight.current = false;
+            }, 700);
           }
         }}
       />

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Share, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,10 +112,18 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
       setBusy(null);
     }
   };
+  // One chat push per tap: `busy` is state, so a fast double tap reads the stale value twice.
+  const opening = useRef(false);
   const message = async () => {
-    if (!p || busy) return;
+    if (!p || busy || opening.current) return;
+    opening.current = true;
+    const release = () =>
+      setTimeout(() => {
+        opening.current = false;
+      }, 700);
     if (p.directId) {
       router.push(`/messages/${p.directId}`);
+      release();
       return;
     }
     setBusy('message');
@@ -126,6 +134,7 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
       toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
     } finally {
       setBusy(null);
+      release();
     }
   };
   const share = async () => {

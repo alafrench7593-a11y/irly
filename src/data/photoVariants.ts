@@ -298,11 +298,9 @@ export const VARIANTS: Readonly<Record<string, readonly string[]>> = {
   "https://alafrench7593-a11y.github.io/irly/photos/v/yacht-7-{w}.jpg"
  ],
  "coffee": [
-  "https://alafrench7593-a11y.github.io/irly/photos/v/coffee-1-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/coffee-2-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/coffee-3-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/coffee-4-{w}.jpg",
-  "https://alafrench7593-a11y.github.io/irly/photos/v/coffee-5-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/coffee-6-{w}.jpg",
   "https://alafrench7593-a11y.github.io/irly/photos/v/coffee-7-{w}.jpg"
  ],

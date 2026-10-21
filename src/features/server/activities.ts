@@ -615,8 +615,10 @@ function activityError(m: string): string {
 
 export async function cancelServerActivity(activityId: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const { error } = await supabase.from('activities').update({ cancelled_at: new Date().toISOString() }).eq('id', activityId);
-  if (error) throw new Error(error.message);
+  // .select: row level security can match no row without any error (not the host), and nothing was cancelled.
+  const { data, error } = await supabase.from('activities').update({ cancelled_at: new Date().toISOString() }).eq('id', activityId).select('id');
+  if (error) throw new Error(activityError(error.message));
+  if (!data?.length) throw new Error('Only the host can cancel this activity');
   changed('activities', 'inbox');
 }
 
@@ -633,8 +635,10 @@ export async function updateServerActivity(activityId: string, patch: { title?: 
   if (patch.priceMinor !== undefined) row.price_minor = patch.priceMinor;
   if (patch.capacity !== undefined) row.capacity = patch.capacity;
   if (patch.libraryCover !== undefined) row.cover_path = patch.libraryCover;
-  const { error } = await supabase.from('activities').update(row).eq('id', activityId);
-  if (error) throw new Error(error.message);
+  // .select: row level security can match no row without any error (not the host), and nothing was saved.
+  const { data, error } = await supabase.from('activities').update(row).eq('id', activityId).select('id');
+  if (error) throw new Error(activityError(error.message));
+  if (!data?.length) throw new Error('Only the host can edit this activity');
   changed('activities', 'inbox');
 }
 

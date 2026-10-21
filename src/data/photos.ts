@@ -205,7 +205,7 @@ export const LIBRARY = [
 ] as const;
 // Keys that now have a Dubai photo (Pixabay / Pexels) are served from the library too.
 /** IRLY's own photos, taken in Dubai and used with permission; served with the website (site/img/own). */
-export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl', 'dubaiPink', 'restaurantGirl', 'gymGirl', 'runGirl', 'girlTrip', 'footballMix', 'gymMix', 'dinnerMix', 'beachMix', 'buggyMix', 'waterParkMix', 'foodMix', 'meetingMix', 'vrMix', 'wadiMix', 'runMix', 'danceMix', 'swimMix', 'tennisMix', 'palmAerial'] as const;
+export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl', 'dubaiPink', 'restaurantGirl', 'gymGirl', 'runGirl', 'girlTrip', 'footballMix', 'gymMix', 'dinnerMix', 'beachMix', 'buggyMix', 'waterParkMix', 'foodMix', 'meetingMix', 'vrMix', 'wadiMix', 'runMix', 'danceMix', 'swimMix', 'tennisMix', 'palmAerial', 'padelMix', 'newcomerGirl', 'dinnerView'] as const;
 const OWN_SET = new Set<string>(OWN);
 const OWN_BASE = 'https://getirly.com/img/own';
 
@@ -327,9 +327,12 @@ const COUNTERPART: Partial<Record<string, string>> = {
   vrMix: 'vr',
   wadiMix: 'hikeDesert',
   runMix: 'running',
-  danceMix: 'dance',
+  // The photo IRLY sent as danceMix is an MMA sparring scene (the same picture as boxing).
+  danceMix: 'boxing',
   swimMix: 'swimming',
   tennisMix: 'tennis',
+  padelMix: 'padel',
+  dinnerView: 'fineDining',
   padelGirl: 'padel',
   tennisGirl: 'tennis',
   gymGirl: 'gym',

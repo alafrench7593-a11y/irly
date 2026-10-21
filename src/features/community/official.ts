@@ -6,6 +6,7 @@ import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
 import { CATEGORY_BY_ID, photoForText, type CategoryKey } from '@/data/catalog/categories';
 import type { PhotoKey } from '@/data/photos';
+import { girlPhotoFor } from '@/features/girl/photos';
 import type { Profile } from '@/state/store';
 import { displayCommunityName } from './name';
 
@@ -145,13 +146,30 @@ export const TOPIC_PHOTO = {
   nights: 'rooftopNeon',
   shopping: 'mall',
   families: 'waterPark',
+  // Everyone's questions and the city's good addresses: Dubai itself, and a table with a view.
+  help: 'dubai',
+  lifestyle: 'dinnerView',
 } as Record<string, PhotoKey>;
+
+/** IRLY Girl's five official communities: IRLY's own photos taken in Dubai, the same on the card, the page, the thumbnail and the chat. */
+export const GIRL_OFFICIAL_PHOTO: Record<GirlOfficialTopic, PhotoKey> = {
+  girl_newcomers: 'newcomerGirl',
+  girl_network: 'networkingGirl',
+  girl_francophone: 'brunchGirl',
+  girl_trip: 'girlTrip',
+  girl_activity: 'padelGirl',
+};
 
 /** Category photos that were not taken in Dubai, and the Dubai photo a community shows instead. */
 const DUBAI_INSTEAD = { gallery: 'souk', concert: 'festival', dogPark: 'nature', family: 'waterPark', education: 'office' } as Record<string, PhotoKey>;
 
 /** A community's photo: its IRLY topic, else its category (a Dubai photo either way), else none. */
 export function communityPhoto(topic: string | null | undefined, categoryId: string | null | undefined, name?: string | null): PhotoKey {
+  // IRLY Girl's official communities: their own photo, whatever their name says.
+  const official = topic ? GIRL_OFFICIAL_PHOTO[topic as GirlOfficialTopic] : undefined;
+  if (official) return official;
+  // A group of IRLY Girls: IRLY's photos of women, on its subject.
+  if (topic === 'girls' && name) return girlPhotoFor(name, TOPIC_PHOTO.girls);
   // What the community is about, from its own name, first: "Padel girls" shows padel.
   const named = name ? photoForText(name) : null;
   if (named) return named;

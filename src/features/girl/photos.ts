@@ -25,16 +25,16 @@ const RULES: [RegExp, PhotoKey][] = [
   [/\b(hik\w*|trek\w*|nature|waterfalls?)\b/i, 'hikeDesert'],
   [/\b(travel\w*|trips?|voyage\w*|explor\w*)\b/i, 'girlTrip'],
   [/\b(brunch\w*)\b/i, 'brunchGirl'],
-  [/\b(dinner\w*|dîner|food\w*|eat\w*)\b/i, 'girlCafe'],
+  [/\b(dinner\w*|dîner|food\w*|eat\w*)\b/i, 'restaurantGirl'],
   [/\b(coffee|café|cafes?|matcha|drinks?)\b/i, 'drinksGirl'],
   [/\b(desert|camels?|dunes?)\b/i, 'desertGirl'],
   [/\b(night out|rooftop|soirée|sorties?|party)\b/i, 'nightDinner'],
-  [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'girlWork'],
+  [/\b(entrepreneurs?|founders?|business|career|work\w*|cowork\w*|network\w*)\b/i, 'networkingGirl'],
   [/\b(books?|book club|reading|lecture)\b/i, 'readingGirl'],
   [/\b(mosques?)\b/i, 'mosqueGirl'],
   [/\b(shopping|fashion|mode)\b/i, 'girlShopping'],
   [/\b(beach\w*|plage|sunset|coucher)\b/i, 'beachClubGirl'],
-  [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'girlTravel'],
+  [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'newcomerGirl'],
 ];
 
 /** A photo for a girls' plan or community, from its name; friends by default. */
@@ -73,7 +73,7 @@ const COMMUNITY_RULES: [RegExp, PhotoKey][] = [
   [/\b(mosques?)\b/i, 'mosqueGirl'],
   [/\b(art|culture)\b/i, 'souk'],
   [/\b(shopping|fashion|mode)\b/i, 'mall'],
-  [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'emirates'],
+  [/\b(moving|new in|relocat\w*|expats?|arriv\w*)\b/i, 'newcomerGirl'],
 ];
 
 export function girlCommunityPhoto(text: string, fallback: PhotoKey = 'girlsOut'): PhotoKey {

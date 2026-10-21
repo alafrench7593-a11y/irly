@@ -473,6 +473,10 @@ export const GIRL_CATEGORY: Omit<CatalogCategory, 'id'> & { id: 'girl' } = {
  * activity itself (padel, yacht, desert, mosque...), else its category's.
  */
 const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
+  // Subjects a broader rule below would take: a pet café is not a coffee, a dhow is not a yacht, a horse ride is not the desert.
+  [/\bpet cafes?\b/i, 'petCafe'],
+  [/\bdhows?\b/i, 'dhow'],
+  [/\b(horse\w*|equestrian)\b/i, 'horseRiding'],
   // IRLY's own Dubai photos first.
   [/\bglobal village\b/i, 'globalVillage'],
   [/\b(zoo|safari park|wildlife park)\b/i, 'safariPark'],
@@ -485,21 +489,22 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\bkite beach\b/i, 'kiteBeach'],
   // IRLY's own photos of mixed groups, for everyone's activities.
   [/\b(football|soccer|futsal)\b/i, 'footballMix'],
+  [/\bpadel\b/i, 'padelMix'],
   [/\b(water parks?|aquaventure|wild wadi)\b/i, 'waterParkMix'],
   [/\b(quad\w*|atv|buggy|buggies|dune bashing)\b/i, 'buggyMix'],
   [/\b(vr|virtual reality|arcade|gaming|esports?)\b/i, 'vrMix'],
   [/\b(wadi|hik\w*|trek\w*|canyon)\b/i, 'wadiMix'],
-  [/\b(dance|dancing|salsa|bachata|hip ?hop|zumba)\b/i, 'danceMix'],
   [/\b(swim\w*|open water)\b/i, 'swimMix'],
   [/(?<!table )\btennis\b/i, 'tennisMix'],
   [/\b(run|running|runners?|jog|jogging)\b/i, 'runMix'],
   // "Water sports" is surf and a "sports bar" is a bar, not a gym.
-  [/\b(gym|fitness|workout|hiit|bootcamp|boxing)\b|(?<!water )\bsports?\b(?! bars?)/i, 'gymMix'],
+  [/\b(gym|fitness|workout|hiit|bootcamp)\b|(?<!water )\bsports?\b(?! bars?)/i, 'gymMix'],
   [/\b(networking|meetings?|business|founders?|entrepreneurs?|startups?|cowork\w*)\b/i, 'meetingMix'],
-  [/\b(dinner|dîner|restaurants?|dining)\b/i, 'dinnerMix'],
+  [/\b(fine dining|restaurants?)\b/i, 'dinnerView'],
+  [/\b(dinner|dîner|dining)\b/i, 'dinnerMix'],
   [/\b(food|tasting|sushi|street food)\b/i, 'foodMix'],
   // "Beach yoga" shows yoga, not the beach.
-  [/\b(yoga|breathwork)\b/i, 'yoga'],
+  [/\b(yoga|breathwork|wellness|well-?being)\b/i, 'yoga'],
   [/\bbeach\b(?! ?volley)/i, 'beachMix'],
   [/\b(palm jumeirah|the palm)\b/i, 'palmAerial'],
   // The rest of IRLY's own photos, for the subjects they show, before any library photo.
@@ -514,11 +519,11 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\b(brunch|breakfast)\b/i, 'brunchGirl'],
   [/\b(books?|book club|reading|lecture)\b/i, 'readingGirl'],
   [/\b(coffee|cafes?|cafés?|matcha|tea|drinks?)\b/i, 'drinksGirl'],
-  [/\b(spa|massage|beauty|wellness|self.?care)\b/i, 'spaGirl'],
+  [/\b(spa|massage|beauty|self.?care)\b/i, 'spaGirl'],
   [/\b(networking|founders?|entrepreneurs?|business|startups?)\b/i, 'networkingGirl'],
   [/\b(cycl\w*|bikes?|biking|vélo)\b/i, 'bikeGirl'],
   [/\b(dinner|dîner|restaurants?|dining|food)\b/i, 'restaurantGirl'],
-  [/\b(night out|nightlife|rooftops?|soirée|party)\b/i, 'nightDinner'],
+  [/\b(nights? out|nightlife|rooftops?|soirée|party)\b/i, 'nightDinner'],
   [/\b(travel\w*|voyages?)\b/i, 'girlTrip'],
   [/\bmosques?\b/i, 'mosqueGirl'],
   [/\bbeach\b(?! ?volley)/i, 'beachClubGirl'],
@@ -599,7 +604,7 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\bfamil\w*/i, 'family'],
   [/\bislands?\b/i, 'islands'],
   // Shopping
-  [/\b(malls?|outlet)\b/i, 'mall'],
+  [/\b(malls?|outlet|shopping)\b/i, 'mall'],
   [/\b(global village|souks?|gold souk|spice souk|madinat)\b/i, 'souk'],
   [/\bmarkets?\b/i, 'nightMarket'],
   [/\bsneakers?\b/i, 'sneakers'],
@@ -664,19 +669,24 @@ const IDEA_PHOTOS: [RegExp, PhotoKey][] = [
   [/\b(tourism|hospitality)\b/i, 'beachClub'],
   [/\bautomotive\b/i, 'automotive'],
   [/\b(cowork\w*|remote|laptop)\b/i, 'coworking'],
+  [/\b(jobs?|careers?)\b/i, 'founders'],
   [/\b(networking|meetups?|meeting|talks?|sales|marketing|recruitment|hr|media|creators?|consulting|healthcare)\b/i, 'meeting'],
-  [/\b(walk|walking|bird watching|volunteer\w*|nature|parks?)\b/i, 'nature'],
+  [/\b(housing|apartments?|flats?)\b/i, 'apartment'],
+  [/\b(bird watching|volunteer\w*|nature|parks?)\b/i, 'nature'],
   // Places last: the activity says more than where it happens.
   [/\b(burj khalifa|downtown)\b/i, 'burjKhalifa'],
   [/\bjbr\b/i, 'jbr'],
   [/\b(marina|palm|bluewaters)\b/i, 'dubaiMarina'],
-  [/\b(creek|old dubai|heritage|abra|al fahidi)\b/i, 'dubaiCreek'],
+  // The other emirates before Dubai's heritage words: a Sharjah heritage walk shows Sharjah.
   [/\babu dhabi\b/i, 'abudhabiSkyline'],
   [/\bsharjah\b/i, 'sharjah'],
   [/\bfujairah\b/i, 'fujairah'],
   [/\b(ras al khaimah|rak)\b/i, 'rak'],
   [/\bajman\b/i, 'ajman'],
   [/\bumm al quwain\b/i, 'uaq'],
+  [/\b(creek|old dubai|heritage|abra|al fahidi)\b/i, 'dubaiCreek'],
+  // A walk shows where it goes (Downtown, the Marina…), else a walk in nature.
+  [/\b(walks?|walking)\b/i, 'nature'],
   [/\bdubai\b/i, 'dubai'],
 ];
 

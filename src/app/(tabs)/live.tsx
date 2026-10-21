@@ -117,7 +117,7 @@ function LiveCard({ live }: { live: Live }) {
     <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}>
       <GlassLayer radius={radius.xl} />
       <View style={styles.head}>
-        <Avatar name={name} hue={person?.hue ?? 0} size={40} online={person?.online} />
+        <Avatar name={name} hue={person?.hue ?? 0} size={40} online={person?.online} photo={person?.photo} />
         <View style={{ flex: 1 }}>
           <Text variant="titleS">{name}</Text>
           <View style={styles.meta}>
@@ -252,7 +252,7 @@ function FriendsLiveNow() {
               >
                 <GlassLayer radius={radius.xl} />
                 <LiveRing size={48}>
-                  <Avatar name={p.name} hue={p.hue} size={38} />
+                  <Avatar name={p.name} hue={p.hue} size={38} photo={p.photo} />
                 </LiveRing>
                 <View style={{ gap: 1, maxWidth: 120 }}>
                   <Text variant="label" numberOfLines={1}>

@@ -370,6 +370,7 @@ function Row({
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const join = () => {
+    if (busy) return;
     if (isDemoId(id)) {
       useDemoGirl.getState().toggle('joined', id);
       toast(tx('You joined {name}', { name }));
@@ -382,6 +383,7 @@ function Row({
       .finally(() => setBusy(false));
   };
   const leave = () => {
+    if (busy) return;
     if (!confirm) {
       setConfirm(true);
       return;
