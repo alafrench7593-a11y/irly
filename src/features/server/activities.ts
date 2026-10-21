@@ -1,6 +1,7 @@
 import { webLink } from '@/config/app';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NONE } from '@/lib/none';
+import { together } from '@/lib/together';
 import type { CityId } from '@/data/types';
 import { CITIES, cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
@@ -294,9 +295,10 @@ export type ServerActivity = {
 /** Upcoming activities members created in this destination (all seven emirates, or Bali), your city first. */
 export function useServerActivities(
   cityId: CityId,
-  only: { categoryId?: string; girlOnly?: boolean } = {},
+  only: { categoryId?: string; girlOnly?: boolean; skip?: boolean } = {},
 ): { activities: ServerActivity[]; refresh: () => void; loading: boolean; error: string | null } {
-  const { categoryId } = only;
+  // skip: the screen does not show this list right now (IRLY Girl's plans on a page seen in IRLY): nothing is asked.
+  const { categoryId, skip } = only;
   // In IRLY Girl every list shows IRLY Girl sessions (the server returns them to eligible women only).
   const space = useAppSpace();
   const girlOnly = Boolean(only.girlOnly) || space === 'girl';
@@ -305,56 +307,60 @@ export function useServerActivities(
   const [activities, setActivities] = useState<ServerActivity[]>([]);
   // Which question the list on screen answers: until the first answer for this one, it is loading
   // (an empty list then means "none", not "not loaded yet"). A failure keeps what is shown and says so.
-  const ask = `${uid ?? ''}|${cityId}|${categoryId ?? ''}|${girlOnly ? 1 : 0}`;
+  const ask = `${uid ?? ''}|${cityId}|${categoryId ?? ''}|${girlOnly ? 1 : 0}|${skip ? 'skip' : ''}`;
   const [status, setStatus] = useState<{ for: string; error: string | null }>({ for: '', error: null });
 
-  const load = useCallback(async (): Promise<ServerActivity[]> => {
-    if (!supabase || !uid) return [];
-    let q = supabase
-      .from('activities')
-      .select('id, title, category_id, sub_id, area_id, city_id, girl_only, audience, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
-      .in('city_id', cityScope(cityId))
-      // Only your own participation comes along (for « joined »): the count is `going`, exact on the server.
-      // Embedding every participant ran their privacy rule once per row (measured ×17 slower for 60 × 40).
-      .eq('activity_participants.user_id', uid)
-      .is('cancelled_at', null)
-      // Upcoming and happening now (started less than two hours ago).
-      .gte('starts_at', new Date(Date.now() - 2 * 3600_000).toISOString());
-    // A category or IRLY Girl page asks the server for its own sessions, not the first 60 of everything.
-    if (categoryId) q = q.eq('category_id', categoryId);
-    // Each space lists its own sessions: IRLY Girl's women-only ones there, none of them in IRLY.
-    q = q.eq('girl_only', girlOnly);
-    const { data, error } = await q.order('starts_at').limit(60);
-    if (error) throw new Error(error.message);
-    const links = await coverLinks((data ?? []).map((a) => a.cover_path as string | null));
-    return (
-      (data ?? []).map((a) => {
-        const parts = (a.activity_participants ?? []) as { user_id: string; status: string }[];
-        return {
-          id: a.id,
-          title: a.title,
-          categoryId: a.category_id,
-          subId: a.sub_id,
-          areaId: a.area_id,
-          cityId: a.city_id as string,
-          girlOnly: Boolean(a.girl_only),
-          audience: ((a.audience as ServerActivity['audience'] | null) ?? 'all'),
-          placeName: a.place_name,
-          startsAt: Date.parse(a.starts_at),
-          capacity: a.capacity,
-          // Exact count (participant rows are filtered by each member's privacy).
-          going: (a.going as number | null) ?? parts.filter((p) => p.status === 'going').length,
-          priceMinor: a.price_minor,
-          currency: a.currency,
-          creatorId: a.creator_id,
-          coverUrl: a.cover_path ? (links[a.cover_path as string] ?? null) : null,
-          joined: parts.some((p) => p.user_id === uid && p.status === 'going'),
-        };
-      })
-        // Your own emirate first, then the others, each by time.
-        .sort((x, y) => Number(y.cityId === cityId) - Number(x.cityId === cityId) || x.startsAt - y.startsAt)
-    );
-  }, [cityId, uid, categoryId, girlOnly]);
+  const load = useCallback((): Promise<ServerActivity[]> => {
+    if (!supabase || !uid || skip) return Promise.resolve([]);
+    const sb = supabase;
+    // Home asks for the same list from several sections as it opens (and again on each sync bump): one read.
+    return together(`activities:${ask}`, async () => {
+      let q = sb
+        .from('activities')
+        .select('id, title, category_id, sub_id, area_id, city_id, girl_only, audience, place_name, starts_at, capacity, price_minor, currency, creator_id, going, cover_path, activity_participants(user_id, status)')
+        .in('city_id', cityScope(cityId))
+        // Only your own participation comes along (for « joined »): the count is `going`, exact on the server.
+        // Embedding every participant ran their privacy rule once per row (measured ×17 slower for 60 × 40).
+        .eq('activity_participants.user_id', uid)
+        .is('cancelled_at', null)
+        // Upcoming and happening now (started less than two hours ago).
+        .gte('starts_at', new Date(Date.now() - 2 * 3600_000).toISOString());
+      // A category or IRLY Girl page asks the server for its own sessions, not the first 60 of everything.
+      if (categoryId) q = q.eq('category_id', categoryId);
+      // Each space lists its own sessions: IRLY Girl's women-only ones there, none of them in IRLY.
+      q = q.eq('girl_only', girlOnly);
+      const { data, error } = await q.order('starts_at').limit(60);
+      if (error) throw new Error(error.message);
+      const links = await coverLinks((data ?? []).map((a) => a.cover_path as string | null));
+      return (
+        (data ?? []).map((a) => {
+          const parts = (a.activity_participants ?? []) as { user_id: string; status: string }[];
+          return {
+            id: a.id,
+            title: a.title,
+            categoryId: a.category_id,
+            subId: a.sub_id,
+            areaId: a.area_id,
+            cityId: a.city_id as string,
+            girlOnly: Boolean(a.girl_only),
+            audience: ((a.audience as ServerActivity['audience'] | null) ?? 'all'),
+            placeName: a.place_name,
+            startsAt: Date.parse(a.starts_at),
+            capacity: a.capacity,
+            // Exact count (participant rows are filtered by each member's privacy).
+            going: (a.going as number | null) ?? parts.filter((p) => p.status === 'going').length,
+            priceMinor: a.price_minor,
+            currency: a.currency,
+            creatorId: a.creator_id,
+            coverUrl: a.cover_path ? (links[a.cover_path as string] ?? null) : null,
+            joined: parts.some((p) => p.user_id === uid && p.status === 'going'),
+          };
+        })
+          // Your own emirate first, then the others, each by time.
+          .sort((x, y) => Number(y.cityId === cityId) - Number(x.cityId === cityId) || x.startsAt - y.startsAt)
+      );
+    });
+  }, [cityId, uid, categoryId, girlOnly, skip, ask]);
 
   const refresh = useCallback(() => {
     load()

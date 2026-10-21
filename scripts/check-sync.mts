@@ -556,6 +556,29 @@ let missedBeforeListening = 0;
   await advance(60_000);
   joinDelay = 5;
 }
+// The app opens and Bob writes before the inbox channels listen (2 s later): no event will say so.
+// The inbox reads once as it opens and once after the channels listen (the app's sync catch-up,
+// which the inbox's own catch-up no longer doubles), and that read has Bob's message.
+let inboxOpening = 0;
+let inboxAfterMessage = 0;
+{
+  joinDelay = 2_000;
+  sync.resetSyncEchoes?.();
+  server.unread = 0;
+  requests = [];
+  const app = [mount(() => sync.SyncBridge()), mount(() => chat.UnreadSync())];
+  await advance(300);
+  server.unread = 1;
+  commit([{ table: 'messages', event: 'INSERT', row: { id: 'm-early', conversation_id: CONV, sender_id: BOB, created_at: new RealDate(EPOCH + now).toISOString() } }]);
+  const before = requests.filter((r) => r === 'my_conversations').length;
+  await advance(10_000);
+  inboxOpening = requests.filter((r) => r === 'my_conversations').length;
+  inboxAfterMessage = inboxOpening - before;
+  app.forEach((m) => m.unmount());
+  await advance(60_000);
+  server.unread = 0;
+  joinDelay = 5;
+}
 
 await scenario('create activity', null, async () => {
   await supabase.rpc('create_activity');
@@ -852,6 +875,8 @@ expect(n('whole-second commit times: join, then Bob adds me to a group 0.3 s lat
 expect(sync.stampMs('2026-10-15 09:00:01.5+04') === Date.UTC(2026, 9, 15, 5, 0, 1, 500) && Number.isNaN(sync.stampMs('soon')), 'commit times are read in any Postgres / ISO form');
 expect(n('join activity, then Bob adds me to a group 0.3 s later', 'my_conversations') === 2, 'being added to a group right after my own join still reloads the inbox');
 expect(missedBeforeListening === 1, `a change committed before the channels listen is caught up once they do (community list reloads: ${missedBeforeListening})`);
+expect(inboxAfterMessage >= 1, `a message sent before the inbox listens is read once it does (inbox reads after it: ${inboxAfterMessage})`);
+expect(inboxOpening <= 2, `opening the app: the inbox is read at most twice (first read, one catch-up; was 3) (reads: ${inboxOpening})`);
 if (failed) {
   console.error(`\n${failed} sync check(s) failed`);
   process.exit(1);

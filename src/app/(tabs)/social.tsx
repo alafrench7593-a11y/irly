@@ -62,7 +62,8 @@ export default function Social() {
   // IRLY Girl: the same page with women and girls' plans (IRLY Girl rows only reach eligible women).
   const inGirl = useAppSpace() === 'girl';
   const women = useGirlPeople(cityId);
-  const girlPlans = useGirlPlans(cityId, { girlOnly: true });
+  // Shown in IRLY Girl only: not asked for in IRLY.
+  const girlPlans = useGirlPlans(cityId, { girlOnly: true, skip: !inGirl });
   const people = useMemo(() => (inGirl ? women : content.people), [inGirl, women, content.people]);
   const matches = useMemo(
     () => rankMatches(profile, people, intent, (id) => areaName(city, id)).slice(0, 6),

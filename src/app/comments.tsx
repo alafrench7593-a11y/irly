@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { confirm } from '@/lib/confirm';
 import { t as tx, a11y } from '@/i18n';
-import { useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,8 +60,7 @@ function CommentsScreen() {
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [sending, setSending] = useState(false);
 
-  const roots = comments.filter((c) => !c.parentId);
-  const replies = (id: string) => comments.filter((c) => c.parentId === id);
+  const roots = useMemo(() => comments.filter((c) => !c.parentId), [comments]);
 
   const send = async () => {
     if (!text.trim() || sending) return;
@@ -78,28 +77,35 @@ function CommentsScreen() {
     }
   };
 
-  const onMore = (c: Comment) => {
-    if (c.mine) {
-      confirm('Delete this comment?', () =>
-        remove(c.id)
-          .then(() => toast('Comment deleted', 'check', 'brand'))
-          .catch(() => toast('Could not delete the comment', 'x', 'live')),
-      );
-    } else {
-      openReport({ kind: 'comment', id: c.id, userId: c.authorId }, c.firstName);
-    }
-  };
+  // Stable: the thread only re-renders when its comments change, not on each key typed below.
+  const onMore = useCallback(
+    (c: Comment) => {
+      if (c.mine) {
+        confirm('Delete this comment?', () =>
+          remove(c.id)
+            .then(() => toast('Comment deleted', 'check', 'brand'))
+            .catch(() => toast('Could not delete the comment', 'x', 'live')),
+        );
+      } else {
+        openReport({ kind: 'comment', id: c.id, userId: c.authorId }, c.firstName);
+      }
+    },
+    [remove],
+  );
 
   // The server toggles: a second tap before the first answer would undo the like.
   const liking = useRef(new Set<string>());
-  const onLike = (c: Comment) => {
-    if (liking.current.has(c.id)) return;
-    liking.current.add(c.id);
-    likeComment({ type: 'comment', id: c.id })
-      .then(refresh)
-      .catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'))
-      .finally(() => liking.current.delete(c.id));
-  };
+  const onLike = useCallback(
+    (c: Comment) => {
+      if (liking.current.has(c.id)) return;
+      liking.current.add(c.id);
+      likeComment({ type: 'comment', id: c.id })
+        .then(refresh)
+        .catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'))
+        .finally(() => liking.current.delete(c.id));
+    },
+    [refresh],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
@@ -150,16 +156,7 @@ function CommentsScreen() {
               </Text>
             </Animated.View>
           ) : (
-            roots.map((c) => (
-              <View key={c.id} style={{ gap: 12 }}>
-                <CommentRow c={c} onReply={() => setReplyTo(c)} onMore={() => onMore(c)} onLike={() => onLike(c)} />
-                {replies(c.id).map((r) => (
-                  <View key={r.id} style={{ paddingLeft: 44 }}>
-                    <CommentRow c={r} onReply={() => setReplyTo(c)} onMore={() => onMore(r)} onLike={() => onLike(r)} />
-                  </View>
-                ))}
-              </View>
-            ))
+            <CommentList comments={comments} onReply={setReplyTo} onMore={onMore} onLike={onLike} />
           )}
         </ScrollView>
         {signedIn ? (
@@ -200,6 +197,43 @@ function CommentsScreen() {
     </View>
   );
 }
+
+/**
+ * The thread. Its own memoised component: typing a comment (a state of the
+ * screen) used to re-render every comment of the thread on each key.
+ */
+const CommentList = memo(function CommentList({
+  comments,
+  onReply,
+  onMore,
+  onLike,
+}: {
+  comments: Comment[];
+  onReply: (c: Comment) => void;
+  onMore: (c: Comment) => void;
+  onLike: (c: Comment) => void;
+}) {
+  // Replies grouped once (each root used to scan the whole thread for its replies).
+  const { roots, replies } = useMemo(() => {
+    const byParent = new Map<string, Comment[]>();
+    for (const c of comments) if (c.parentId) byParent.set(c.parentId, [...(byParent.get(c.parentId) ?? []), c]);
+    return { roots: comments.filter((c) => !c.parentId), replies: byParent };
+  }, [comments]);
+  return (
+    <>
+      {roots.map((c) => (
+        <View key={c.id} style={{ gap: 12 }}>
+          <CommentRow c={c} onReply={() => onReply(c)} onMore={() => onMore(c)} onLike={() => onLike(c)} />
+          {(replies.get(c.id) ?? []).map((r) => (
+            <View key={r.id} style={{ paddingLeft: 44 }}>
+              <CommentRow c={r} onReply={() => onReply(c)} onMore={() => onMore(r)} onLike={() => onLike(r)} />
+            </View>
+          ))}
+        </View>
+      ))}
+    </>
+  );
+});
 
 function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () => void; onMore: () => void; onLike: () => void }) {
   const t = useTheme();

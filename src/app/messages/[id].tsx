@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { NotFound } from '@/components/layout/NotFound';
 import { dateLocale, t as tx, a11y } from '@/i18n';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -142,7 +142,6 @@ function ServerThreadView({ id }: { id: string }) {
   // (dozens of entry animations on opening a chat cost frames for nothing).
   const [openedAt, setOpenedAt] = useState<number | null>(null);
   if (openedAt === null && !thread.loading) setOpenedAt(thread.messages.length ? thread.messages[thread.messages.length - 1].at : 0);
-  const slideIn = (at: number) => (openedAt !== null && at > openedAt ? FadeInDown.springify(380).dampingRatio(0.8) : undefined);
 
   // One send at a time: a double tap must not post the same message twice.
   const sending = useRef(false);
@@ -200,19 +199,24 @@ function ServerThreadView({ id }: { id: string }) {
     'chat-media',
     thread.messages.map((m) => m.media?.path),
   );
-  const retry = (id: string) => {
-    haptic('tap');
-    thread.retry(id).catch((e) => toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live'));
-  };
+  // Stable: the message list only re-renders when its messages change (not on each key typed).
+  const threadRetry = thread.retry;
+  const retry = useCallback(
+    (id: string) => {
+      haptic('tap');
+      threadRetry(id).catch((e) => toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live'));
+    },
+    [threadRetry],
+  );
 
   // Long press on a message: delete it for me, for everyone (mine only), or report it.
   const [msgMenu, setMsgMenu] = useState<(typeof thread.messages)[number] | null>(null);
   const [msgBusy, setMsgBusy] = useState(false);
-  const onLong = (m: (typeof thread.messages)[number]) => {
+  const onLong = useCallback((m: ThreadMessage) => {
     if (m.from === 'irly') return;
     haptic('select');
     setMsgMenu(m);
-  };
+  }, []);
   const runOnMessage = async (action: () => Promise<void>, done: string) => {
     setMsgBusy(true);
     try {
@@ -281,146 +285,16 @@ function ServerThreadView({ id }: { id: string }) {
               Say hello 👋 Messages appear here for both of you.
             </Text>
           ) : null}
-          {thread.messages.map((m, i) => {
-            const prev = thread.messages[i - 1];
-            const newDay = !prev || new Date(prev.at).toDateString() !== new Date(m.at).toDateString();
-            const next = thread.messages[i + 1];
-            // The time shows under the last message of a run (same sender, within 5 minutes).
-            const showTime = !next || next.from !== m.from || next.at - m.at > 5 * 60_000;
-            const day = newDay ? (
-              <Text key={`d-${m.id}`} variant="caption" tone="tertiary" align="center" style={{ marginVertical: 6 }}>
-                {dayLabel(m.at)}
-              </Text>
-            ) : null;
-            if (m.from === 'irly') {
-              // "Sara just joined 👋 Say hello!" in a community: one tap to welcome them.
-              const joined = /^(.+) just joined 👋/.exec(m.text)?.[1];
-              const recent = now - m.at < 3 * 86_400_000;
-              return (
-                <View key={m.id}>
-                  {day}
-                  <Animated.View entering={joined ? FadeInDown.springify(420).dampingRatio(0.8) : undefined} style={styles.note}>
-                    <GlassLayer radius={16} level="thin" />
-                    <Text variant="bodyS" tone="secondary" align="center">
-                      {m.text}
-                    </Text>
-                    {joined && recent ? (
-                      <PressableScale
-                        haptic="select"
-                        onPress={() => setText(tx('Welcome {name}! 👋', { name: joined }))}
-                        style={styles.hello}
-                        accessibilityLabel={tx('Say hello to {name}', { name: joined })}
-                      >
-                        <GlassLayer radius={16} level="thin" />
-                        <Text variant="label">Say hello</Text>
-                      </PressableScale>
-                    ) : null}
-                  </Animated.View>
-                </View>
-              );
-            }
-            const mine = m.from === 'me';
-            const showName = !mine && group && prev?.from !== m.from;
-            // In a group, the sender's face sits by the last message of their run; tap it for their profile.
-            const showFace = !mine && group && (!next || next.from !== m.from);
-            const openSender = m.senderId ? () => router.push(`/person/${m.senderId}`) : undefined;
-            const photoUri = m.media ? (m.media.path ? media[m.media.path] : null) ?? m.media.local : null;
-            return (
-              <View key={m.id}>
-                {day}
-                <Animated.View entering={slideIn(m.at)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
-                  {showName ? (
-                    <PressableScale haptic="select" onPress={openSender} hitSlop={6} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })} style={{ marginLeft: group ? 46 : 12, marginBottom: 2 }}>
-                      <Text variant="caption" tone="tertiary" raw>
-                        {m.name ?? tx('Member')}
-                      </Text>
-                    </PressableScale>
-                  ) : null}
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '100%' }}>
-                    {!mine && group ? (
-                      showFace ? (
-                        <PressableScale haptic="select" scaleTo={0.9} onPress={openSender} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })}>
-                          <Avatar name={m.name ?? '?'} hue={hueOf(m.senderId ?? m.id)} size={30} userId={m.senderId} />
-                        </PressableScale>
-                      ) : (
-                        <View style={{ width: 30 }} />
-                      )
-                    ) : null}
-                    {m.media ? (
-                      <PressableScale haptic={false} onLongPress={() => onLong(m)} delayLongPress={350} accessibilityHint={mine ? tx('Long press to delete') : tx('Long press to report')}>
-                        {photoUri ? (
-                          <TapPhoto photo={{ uri: photoUri }} style={[styles.photoBubble, { opacity: m.status === 'sending' ? 0.6 : 1 }]}>
-                            <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={180} accessibilityLabel={tx('Photo')} />
-                          </TapPhoto>
-                        ) : (
-                          <View style={[styles.photoBubble, { backgroundColor: t.c.overlay, alignItems: 'center', justifyContent: 'center' }]}>
-                            <ActivityIndicator color={t.c.textSecondary} />
-                          </View>
-                        )}
-                        {m.status === 'sending' ? (
-                          <View style={styles.photoSending}>
-                            <ActivityIndicator color="#FFFFFF" />
-                          </View>
-                        ) : null}
-                      </PressableScale>
-                    ) : (
-                  <PressableScale
-                    haptic={false}
-                    scaleTo={0.98}
-                    onLongPress={() => onLong(m)}
-                    delayLongPress={350}
-                    onPress={
-                      m.share
-                        ? () => {
-                            const sh = m.share;
-                            if (sh) sharedHref(sh.type, sh.id, m.text).then((href) => router.push(href as never));
-                          }
-                        : undefined
-                    }
-                    accessibilityHint={mine ? tx('Long press to delete') : tx('Long press to report')}
-                    style={[
-                      styles.bubble,
-                      mine
-                        ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
-                        : { borderBottomLeftRadius: 6, overflow: 'hidden' },
-                    ]}
-                  >
-                    {mine ? null : <GlassLayer radius={20} />}
-                    {m.share ? (
-                      <View style={styles.shared}>
-                        <Icon name={m.share.type === 'activity' ? 'calendar' : m.share.type === 'place' ? 'pin' : 'link'} size={16} color={mine ? t.c.onBrand : t.c.text} />
-                        <Text variant="titleS" raw color={mine ? t.c.onBrand : t.c.text} numberOfLines={2} style={{ flexShrink: 1 }}>
-                          {m.text}
-                        </Text>
-                        <Icon name="chevronRight" size={16} color={mine ? t.c.onBrand : t.c.text} />
-                      </View>
-                    ) : (
-                      <Text variant="body" raw color={mine ? t.c.onBrand : t.c.text} selectable>
-                        {m.text}
-                      </Text>
-                    )}
-                  </PressableScale>
-                    )}
-                  </View>
-                  {m.status === 'failed' ? (
-                    <PressableScale haptic={false} onPress={() => retry(m.id)} accessibilityRole="button" accessibilityLabel={tx('Not sent. Retry')} style={{ alignSelf: 'flex-end', marginTop: 2, marginRight: 6 }}>
-                      <Text variant="caption" color={t.c.live}>
-                        Not sent · Retry
-                      </Text>
-                    </PressableScale>
-                  ) : m.status === 'sending' ? (
-                    <Text variant="caption" tone="tertiary" style={{ marginTop: 2, textAlign: 'right', marginRight: 6 }}>
-                      Sending…
-                    </Text>
-                  ) : showTime ? (
-                    <Text variant="caption" tone="tertiary" style={[{ marginTop: 2 }, mine ? { textAlign: 'right', marginRight: 6 } : { marginLeft: 6 }]} raw>
-                      {clock(m.at)}
-                    </Text>
-                  ) : null}
-                </Animated.View>
-              </View>
-            );
-          })}
+          <ThreadMessages
+            messages={thread.messages}
+            media={media}
+            group={group}
+            now={now}
+            openedAt={openedAt}
+            onLong={onLong}
+            onRetry={retry}
+            onHello={setText}
+          />
           {thread.typing.length ? (
             <View style={{ gap: 2 }}>
               <Typing />
@@ -626,6 +500,182 @@ function ServerThreadView({ id }: { id: string }) {
  * Archive (or unarchive) the chat, or delete it from my list. Mine only: the
  * other members keep the conversation and its history.
  */
+type ThreadMessage = ReturnType<typeof useServerThread>['messages'][number];
+/**
+ * The messages of an open chat. Its own memoised component: typing in the
+ * composer (a state of the screen) re-rendered every bubble of the thread
+ * on each key (measured: ~70 ms of script per key with 50 messages, CPU ×4).
+ * Now only a change of the messages themselves (or their photos) renders it.
+ */
+const ThreadMessages = memo(function ThreadMessages({
+  messages,
+  media,
+  group,
+  now,
+  openedAt,
+  onLong,
+  onRetry,
+  onHello,
+}: {
+  messages: ThreadMessage[];
+  media: Record<string, string>;
+  group: boolean;
+  now: number;
+  openedAt: number | null;
+  onLong: (m: ThreadMessage) => void;
+  onRetry: (id: string) => void;
+  onHello: (text: string) => void;
+}) {
+  const t = useTheme();
+  const router = useRouter();
+  const slideIn = (at: number) => (openedAt !== null && at > openedAt ? FadeInDown.springify(380).dampingRatio(0.8) : undefined);
+  return (
+    <>
+    {messages.map((m, i) => {
+      const prev = messages[i - 1];
+      const newDay = !prev || new Date(prev.at).toDateString() !== new Date(m.at).toDateString();
+      const next = messages[i + 1];
+      // The time shows under the last message of a run (same sender, within 5 minutes).
+      const showTime = !next || next.from !== m.from || next.at - m.at > 5 * 60_000;
+      const day = newDay ? (
+        <Text key={`d-${m.id}`} variant="caption" tone="tertiary" align="center" style={{ marginVertical: 6 }}>
+          {dayLabel(m.at)}
+        </Text>
+      ) : null;
+      if (m.from === 'irly') {
+        // "Sara just joined 👋 Say hello!" in a community: one tap to welcome them.
+        const joined = /^(.+) just joined 👋/.exec(m.text)?.[1];
+        const recent = now - m.at < 3 * 86_400_000;
+        return (
+          <View key={m.id}>
+            {day}
+            <Animated.View entering={joined ? FadeInDown.springify(420).dampingRatio(0.8) : undefined} style={styles.note}>
+              <GlassLayer radius={16} level="thin" />
+              <Text variant="bodyS" tone="secondary" align="center">
+                {m.text}
+              </Text>
+              {joined && recent ? (
+                <PressableScale
+                  haptic="select"
+                  onPress={() => onHello(tx('Welcome {name}! 👋', { name: joined }))}
+                  style={styles.hello}
+                  accessibilityLabel={tx('Say hello to {name}', { name: joined })}
+                >
+                  <GlassLayer radius={16} level="thin" />
+                  <Text variant="label">Say hello</Text>
+                </PressableScale>
+              ) : null}
+            </Animated.View>
+          </View>
+        );
+      }
+      const mine = m.from === 'me';
+      const showName = !mine && group && prev?.from !== m.from;
+      // In a group, the sender's face sits by the last message of their run; tap it for their profile.
+      const showFace = !mine && group && (!next || next.from !== m.from);
+      const openSender = m.senderId ? () => router.push(`/person/${m.senderId}`) : undefined;
+      const photoUri = m.media ? (m.media.path ? media[m.media.path] : null) ?? m.media.local : null;
+      return (
+        <View key={m.id}>
+          {day}
+          <Animated.View entering={slideIn(m.at)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
+            {showName ? (
+              <PressableScale haptic="select" onPress={openSender} hitSlop={6} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })} style={{ marginLeft: group ? 46 : 12, marginBottom: 2 }}>
+                <Text variant="caption" tone="tertiary" raw>
+                  {m.name ?? tx('Member')}
+                </Text>
+              </PressableScale>
+            ) : null}
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '100%' }}>
+              {!mine && group ? (
+                showFace ? (
+                  <PressableScale haptic="select" scaleTo={0.9} onPress={openSender} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })}>
+                    <Avatar name={m.name ?? '?'} hue={hueOf(m.senderId ?? m.id)} size={30} userId={m.senderId} />
+                  </PressableScale>
+                ) : (
+                  <View style={{ width: 30 }} />
+                )
+              ) : null}
+              {m.media ? (
+                <PressableScale haptic={false} onLongPress={() => onLong(m)} delayLongPress={350} accessibilityHint={mine ? tx('Long press to delete') : tx('Long press to report')}>
+                  {photoUri ? (
+                    <TapPhoto photo={{ uri: photoUri }} style={[styles.photoBubble, { opacity: m.status === 'sending' ? 0.6 : 1 }]}>
+                      {/* Cached by the stored file, not by its signed link (a new one every few hours and at each launch): seen once, not downloaded again. */}
+                      <Image source={{ uri: photoUri, cacheKey: m.media.path && photoUri === media[m.media.path] ? `chat-media/${m.media.path}` : undefined }} style={StyleSheet.absoluteFill} contentFit="cover" transition={180} accessibilityLabel={tx('Photo')} />
+                    </TapPhoto>
+                  ) : (
+                    <View style={[styles.photoBubble, { backgroundColor: t.c.overlay, alignItems: 'center', justifyContent: 'center' }]}>
+                      <ActivityIndicator color={t.c.textSecondary} />
+                    </View>
+                  )}
+                  {m.status === 'sending' ? (
+                    <View style={styles.photoSending}>
+                      <ActivityIndicator color="#FFFFFF" />
+                    </View>
+                  ) : null}
+                </PressableScale>
+              ) : (
+            <PressableScale
+              haptic={false}
+              scaleTo={0.98}
+              onLongPress={() => onLong(m)}
+              delayLongPress={350}
+              onPress={
+                m.share
+                  ? () => {
+                      const sh = m.share;
+                      if (sh) sharedHref(sh.type, sh.id, m.text).then((href) => router.push(href as never));
+                    }
+                  : undefined
+              }
+              accessibilityHint={mine ? tx('Long press to delete') : tx('Long press to report')}
+              style={[
+                styles.bubble,
+                mine
+                  ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
+                  : { borderBottomLeftRadius: 6, overflow: 'hidden' },
+              ]}
+            >
+              {mine ? null : <GlassLayer radius={20} />}
+              {m.share ? (
+                <View style={styles.shared}>
+                  <Icon name={m.share.type === 'activity' ? 'calendar' : m.share.type === 'place' ? 'pin' : 'link'} size={16} color={mine ? t.c.onBrand : t.c.text} />
+                  <Text variant="titleS" raw color={mine ? t.c.onBrand : t.c.text} numberOfLines={2} style={{ flexShrink: 1 }}>
+                    {m.text}
+                  </Text>
+                  <Icon name="chevronRight" size={16} color={mine ? t.c.onBrand : t.c.text} />
+                </View>
+              ) : (
+                <Text variant="body" raw color={mine ? t.c.onBrand : t.c.text} selectable>
+                  {m.text}
+                </Text>
+              )}
+            </PressableScale>
+              )}
+            </View>
+            {m.status === 'failed' ? (
+              <PressableScale haptic={false} onPress={() => onRetry(m.id)} accessibilityRole="button" accessibilityLabel={tx('Not sent. Retry')} style={{ alignSelf: 'flex-end', marginTop: 2, marginRight: 6 }}>
+                <Text variant="caption" color={t.c.live}>
+                  Not sent · Retry
+                </Text>
+              </PressableScale>
+            ) : m.status === 'sending' ? (
+              <Text variant="caption" tone="tertiary" style={{ marginTop: 2, textAlign: 'right', marginRight: 6 }}>
+                Sending…
+              </Text>
+            ) : showTime ? (
+              <Text variant="caption" tone="tertiary" style={[{ marginTop: 2 }, mine ? { textAlign: 'right', marginRight: 6 } : { marginLeft: 6 }]} raw>
+                {clock(m.at)}
+              </Text>
+            ) : null}
+          </Animated.View>
+        </View>
+      );
+    })}
+    </>
+  );
+});
+
 function ConversationActions({ id, archived, onDone }: { id: string; archived: boolean; onDone: () => void }) {
   const router = useRouter();
   const [busy, setBusy] = useState<'archive' | 'delete' | null>(null);

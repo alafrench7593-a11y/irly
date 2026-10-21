@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CityId } from '@/data/types';
 import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
+import { together } from '@/lib/together';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
@@ -427,7 +428,9 @@ export function useCommunityList(cityId: string) {
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
-    supabase.rpc('community_list', { p_city: cityId }).then(({ data, error }) => {
+    const sb = supabase;
+    // Home, Profile and Communities list the same communities (tabs stay mounted, a sync bump reaches them all): one read.
+    together(`community_list:${uid}:${cityId}`, () => sb.rpc('community_list', { p_city: cityId })).then(({ data, error }) => {
       // A failed load keeps the list already on screen.
       if (!alive || error) return;
       setList(

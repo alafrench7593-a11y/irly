@@ -8,6 +8,7 @@ import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { t as tx } from '@/i18n';
 import { hasSession, supabase } from '@/lib/supabase';
+import { together } from '@/lib/together';
 import { DEMO } from '@/config/app';
 import { resetAppSpace, useAppSpace, useSpaceStore } from '@/state/appSpace';
 import { useStore } from '@/state/store';
@@ -84,7 +85,8 @@ export const ACCESS_FRESH = 60_000;
 /** The member's access, reusing an answer younger than `maxAge` for the same account (0: always ask). */
 export async function girlAccessFor(uid: string | null, maxAge = 0): Promise<Answer> {
   if (maxAge && last && last.uid === uid && Date.now() - last.at < maxAge) return last.access;
-  const access = await withLimit(readGirlAccess(), ACCESS_LIMIT);
+  // Checks asked in the same moment (Home's two IRLY Girl doors, as it opens or comes back into focus) are one read.
+  const access = await withLimit(together(`girl-access:${uid ?? ''}`, readGirlAccess), ACCESS_LIMIT);
   // Open a moment ago, closed now (suspended, gender corrected, signed out): what this phone kept of IRLY Girl goes.
   if (last && last.uid === uid && last.access === 'open' && access !== 'open') forgetGirlData();
   last = { uid, access, at: Date.now() };
