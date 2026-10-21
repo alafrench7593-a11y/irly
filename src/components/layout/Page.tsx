@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 import { PageHeader } from '@/components/navigation/Headers';
 import { Text } from '@/components/ui/Text';
 import { Ambient } from '@/components/visual/Ambient';
@@ -23,15 +24,27 @@ type Props = {
   back?: boolean;
   /** Replaces the default back (e.g. to ask before leaving a draft). */
   onBack?: () => void;
+  /** Told (on the JS thread, every few dozen points) when the page scrolls: what is on screen changed. */
+  onScrolled?: () => void;
 };
 
 /** Standard stack page: large editorial title that hands over to a compact header on scroll. */
-export function Page({ title, overline, subtitle, right, children, overlay, contentStyle, bottomInset = 40, back = true, onBack }: Props) {
+export function Page({ title, overline, subtitle, right, children, overlay, contentStyle, bottomInset = 40, back = true, onBack, onScrolled }: Props) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((e) => {
-    scrollY.set(e.contentOffset.y);
+  const told = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollY.set(e.contentOffset.y);
+      if (onScrolled && Math.abs(e.contentOffset.y - told.get()) > 24) {
+        told.set(e.contentOffset.y);
+        scheduleOnRN(onScrolled);
+      }
+    },
+    onMomentumEnd: () => {
+      if (onScrolled) scheduleOnRN(onScrolled);
+    },
   });
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>

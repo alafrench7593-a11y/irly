@@ -29,6 +29,7 @@ import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { IrlyLogoCompact } from '@/brand/IrlyLogo';
 import { GirlHeaderMark } from '@/features/girl/GirlMark';
+import { useDemoUnread } from '@/features/girl/demo';
 
 export function useUnread(): number {
   const cityId = useCityId();
@@ -218,7 +219,9 @@ export function useBell(): number {
   const account = useAccount();
   const auth = useAuthStatus();
   const serverBell = useServerBell((st) => st.n);
-  return account ? serverBell : DEMO && auth === 'out' ? 2 : 0;
+  // The demo's examples go down as they are seen, like real ones.
+  const demoBell = useDemoUnread();
+  return account ? serverBell : DEMO && auth === 'out' ? demoBell : 0;
 }
 
 /** On Settings (/preferences, or its privacy page /settings). */
