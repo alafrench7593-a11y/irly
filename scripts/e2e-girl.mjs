@@ -93,6 +93,35 @@ const must = (r) => {
   return r.data;
 };
 const pathOf = () => new URL(page.url()).pathname;
+// IRLY Girl is a space of the same app (src/app/girl/index.tsx): /girl asks the server, switches the
+// app to IRLY Girl and lands on Home (IRLY Girl's content, and the way back to IRLY Mixte).
+const spaceOf = () => page.evaluate(() => JSON.parse(localStorage.getItem('irly-space') ?? '{}')?.state?.space ?? 'mixte');
+async function inGirl() {
+  for (let i = 0; i < 30 && (await spaceOf()) !== 'girl'; i++) await page.waitForTimeout(500);
+  return (await spaceOf()) === 'girl';
+}
+// A plan made from the Create form in IRLY Girl: a category page, its kind, a neighbourhood, tomorrow at 20:30.
+async function createInGirl({ category, kind, title, double = false }) {
+  await page.goto(`${BASE}/category/${category}`);
+  await page.getByText(kind, { exact: true }).first().click({ timeout: 25000 });
+  await page.getByRole('button', { name: new RegExp(`^Create an? ${kind} session$`) }).first().click();
+  await page.getByRole('button', { name: 'Choose a neighbourhood' }).click();
+  await page.getByPlaceholder('Search a neighbourhood').fill('Dubai Marina');
+  await page.getByRole('radio', { name: /^Dubai Marina/ }).first().click();
+  await page.getByRole('button', { name: 'Pick a date and time' }).click();
+  await page.getByRole('button').filter({ hasText: 'Tomorrow' }).first().click();
+  await page.getByLabel('Hour', { exact: true }).getByText('20', { exact: true }).click();
+  await page.waitForTimeout(500);
+  await page.getByLabel('Minutes', { exact: true }).getByText('30', { exact: true }).click();
+  await page.waitForTimeout(500);
+  await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+  await page.getByRole('button', { name: 'Tomorrow · 20:30' }).waitFor({ timeout: 10000 });
+  await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
+  if (title) await page.getByLabel('Name of the activity').fill(title);
+  const create = page.getByRole('button', { name: /^Create (session|activity|sport session|event|meetup|trip)$/ }).last();
+  await (double ? create.dblclick() : create.click());
+  await page.waitForURL(/\/a\//, { timeout: 25000 });
+}
 
 async function signIn(browser, who) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'en-US' });
@@ -126,18 +155,22 @@ async function main() {
   // ───────── Opening IRLY Girl as a new member ─────────
   await step('Lea opens IRLY Girl: it opens directly, no IRLY Match sign-up first', async () => {
     await page.goto(`${BASE}/girl`);
-    await page.getByText('IRLY Match', { exact: true }).first().waitFor({ timeout: 25000 });
-    await page.getByText('Coming soon', { exact: true }).first().waitFor();
+    await page.waitForURL((u) => new URL(u).pathname === '/', { timeout: 25000 });
+    if (!(await inGirl())) throw new Error('the app did not switch to IRLY Girl');
+    // IRLY Girl's Home: the way back to IRLY Mixte is there.
+    await page.getByText('IRLY Mixte', { exact: true }).filter({ visible: true }).first().waitFor({ timeout: 25000 });
     await page.waitForTimeout(1500);
-    return pathOf() === '/girl';
+    return pathOf() === '/';
   });
   await step('… IRLY Match is announced as coming soon, and its old sign-up pages lead back to IRLY Girl', async () => {
+    await page.goto(`${BASE}/discover?tab=people`);
+    await page.getByText('IRLY Match is coming soon').filter({ visible: true }).first().waitFor({ timeout: 25000 });
     await page.goto(`${BASE}/girl/onboarding`);
     await page.waitForTimeout(3000);
     const a = pathOf();
     await page.goto(`${BASE}/girl/profile`);
     await page.waitForTimeout(3000);
-    return a === '/girl' && pathOf() === '/girl';
+    return a === '/' && pathOf() === '/' && (await spaceOf()) === 'girl';
   });
   await step('… nothing was created for IRLY Match on her account by opening IRLY Girl', async () => {
     const [{ n }] = await sql(`select (select count(*) from public.irly_match_profiles where user_id = '${lea.id}') + (select count(*) from public.irly_match_onboarding where user_id = '${lea.id}') as n`);
@@ -146,31 +179,21 @@ async function main() {
 
   // ───────── Planning a girl trip ─────────
   let tripId = null;
-  await step('Lea plans a girl trip to Oman at 20:30 (Other time) → she lands on the plan', async () => {
-    await page.goto(`${BASE}/girl`);
-    await page.getByText('Plan something with girls').first().scrollIntoViewIfNeeded({ timeout: 25000 });
-    await page.getByRole('radio', { name: 'Girl trip' }).click();
-    await page.getByRole('button', { name: 'Oman', exact: true }).click();
-    await page.getByRole('button', { name: 'Other time', exact: true }).click();
-    await page.getByRole('button', { name: '20:30', exact: true }).last().click();
-    await page.getByRole('button', { name: /^Create: Girl trip · Oman/ }).click();
-    await page.waitForURL(/\/a\//, { timeout: 25000 });
+  await step('Lea plans a girl trip to Oman at 20:30 from IRLY Girl\'s Create form → she lands on the plan', async () => {
+    await createInGirl({ category: 'travel', kind: 'Oman', title: 'Girl trip · Oman' });
     tripId = pathOf().split('/').pop();
     return Boolean(tripId);
   });
   await step('… on the server: women only, girls audience, Oman, 20:30 Dubai time', async () => {
+    if (!tripId) throw new Error('no plan was created');
     const [a] = await sql(`select girl_only, audience, title, to_char(starts_at at time zone 'Asia/Dubai', 'HH24:MI') as t from public.activities where id = '${tripId}'`);
     console.log(`   ${a?.title} · ${a?.t} · girl_only=${a?.girl_only} · ${a?.audience}`);
     return a?.girl_only === true && a.audience === 'girls' && /Oman/.test(a.title) && a.t === '20:30';
   });
   await step('A double tap on Create makes one pilates plan, not two', async () => {
-    await page.goto(`${BASE}/girl`);
-    await page.getByText('Plan something with girls').first().scrollIntoViewIfNeeded({ timeout: 25000 });
-    await page.getByRole('radio', { name: 'Pilates' }).click();
-    await page.getByRole('button', { name: /^Create: Pilates · / }).dblclick();
-    await page.waitForURL(/\/a\//, { timeout: 25000 });
+    await createInGirl({ category: 'sport', kind: 'Pilates', double: true });
     await page.waitForTimeout(3000);
-    const [{ n }] = await sql(`select count(*)::int as n from public.activities where creator_id = '${lea.id}' and title like 'Pilates%'`);
+    const [{ n }] = await sql(`select count(*)::int as n from public.activities where creator_id = '${lea.id}' and title ilike '%pilates%'`);
     return n === 1;
   });
 
@@ -297,10 +320,12 @@ async function main() {
     await page.getByText(circleName).filter({ visible: true }).first().waitFor({ timeout: 20000 });
     return true;
   });
-  await step('… and the IRLY Girl home shows "Your messages" with that conversation', async () => {
-    await page.goto(`${BASE}/girl`);
-    await page.getByText('Your messages', { exact: true }).first().waitFor({ timeout: 25000 });
-    await page.getByText(circleName).nth(1).waitFor({ timeout: 20000 }).catch(() => page.getByText(circleName).first().waitFor({ timeout: 5000 }));
+  // IRLY Girl has the same Home as IRLY now (no separate « Your messages » block): the inbox row opens the chat.
+  await step('… and in that inbox the conversation opens the community chat', async () => {
+    const [{ conv }] = await sql(`select id as conv from public.conversations where community_id = '${circleId}'`);
+    await page.getByText(circleName).filter({ visible: true }).first().click({ timeout: 20000 });
+    await page.waitForURL(new RegExp(`/messages/${conv}`), { timeout: 20000 });
+    await page.getByText(`Welcome Mia ${run}`).filter({ visible: true }).first().waitFor({ timeout: 20000 });
     return true;
   });
   await step('Lea logs out and back in: her community and its conversation are still there', async () => {
