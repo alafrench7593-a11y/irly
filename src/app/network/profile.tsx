@@ -41,6 +41,7 @@ import { useCityId } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 const TITLE = 'Professional profile';
 const SUBTITLE = 'What you do, what you build, what you look for. Shown in Networking and used for your matches.';
@@ -80,7 +81,16 @@ const draftOf = (p: ProProfile, visible: boolean): ProDraft => ({
 });
 
 /** The "Professional" part of your profile: what Networking shows and matches on. */
+/** Network pages are violet in IRLY Girl, grey in IRLY (see NetworkScope). */
 export default function ProProfileEditor() {
+  return (
+    <NetworkScreen>
+      <ProProfileEditorPage />
+    </NetworkScreen>
+  );
+}
+
+function ProProfileEditorPage() {
   const cityId = useCityId();
   const me = useMyPro();
   const t = useTheme();
@@ -88,7 +98,7 @@ export default function ProProfileEditor() {
   if (me.signedIn && me.loading)
     return (
       <Page overline="IRLY Network" title={TITLE}>
-        <ActivityIndicator color={t.c.text} style={{ marginTop: 24 }} accessibilityLabel={tx('Loading')} />
+        <ActivityIndicator color={t.flavor === 'girl' ? t.c.brand : t.c.text} style={{ marginTop: 24 }} accessibilityLabel={tx('Loading')} />
       </Page>
     );
   // Unread is not "no profile": an empty form saved here would replace the real one.
@@ -114,6 +124,7 @@ export default function ProProfileEditor() {
  */
 function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; initial: ProDraft; cityId: CityId }) {
   const t = useTheme();
+  const tone = useNetworkTone();
   const tr = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -300,11 +311,11 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
           <View style={styles.wrap}>
             {customSkills.map((s) => (
               <Animated.View key={s} entering={reduced ? undefined : FadeIn.duration(180)} layout={reduced ? undefined : LinearTransition.springify().dampingRatio(0.9)}>
-                <PressableScale haptic="select" scaleTo={0.95} onPress={() => toggleSkill(s)} style={[styles.skill, { backgroundColor: t.c.text }]} accessibilityLabel={tr('Remove {skill}', { skill: s })}>
-                  <Text variant="label" color={t.c.bg} raw>
+                <PressableScale haptic="select" scaleTo={0.95} onPress={() => toggleSkill(s)} style={[styles.skill, { backgroundColor: tone.accent }]} accessibilityLabel={tr('Remove {skill}', { skill: s })}>
+                  <Text variant="label" color={tone.onAccent} raw>
                     {s}
                   </Text>
-                  <Icon name="x" size={14} color={t.c.bg} />
+                  <Icon name="x" size={14} color={tone.onAccent} />
                 </PressableScale>
               </Animated.View>
             ))}
@@ -385,8 +396,8 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
             {d.visible ? 'Professionals across the country can find you.' : 'Hidden from Networking'}
           </Text>
         </View>
-        <View style={[styles.switch, { backgroundColor: d.visible ? t.c.text : t.c.line }]}>
-          <Animated.View layout={reduced ? undefined : LinearTransition.springify().dampingRatio(0.8)} style={[styles.knob, { backgroundColor: t.c.bg, alignSelf: d.visible ? 'flex-end' : 'flex-start' }]} />
+        <View style={[styles.switch, { backgroundColor: d.visible ? tone.accent : t.c.line }]}>
+          <Animated.View layout={reduced ? undefined : LinearTransition.springify().dampingRatio(0.8)} style={[styles.knob, { backgroundColor: d.visible ? tone.onAccent : t.c.bg, alignSelf: d.visible ? 'flex-end' : 'flex-start' }]} />
         </View>
       </PressableScale>
 

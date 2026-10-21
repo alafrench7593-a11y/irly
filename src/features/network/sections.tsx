@@ -22,6 +22,7 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { NetCommunity, NetPost } from './hub';
 import { LINK_KINDS, linkLabel, safeLink, type ProLinks } from './links';
+import { AccentFill, layered, PaneLight, useNetworkTone } from './tone';
 
 /**
  * The parts of the IRLY Network page: the intro, section heads, rails of
@@ -52,13 +53,16 @@ export function NetworkIntro({
     { icon: 'sparkles', text: 'Your match with founders, freelancers and investors' },
     { icon: 'calendar', text: 'Meetups, communities and posts about business' },
   ];
+  const tone = useNetworkTone();
   return (
     <Animated.View entering={enter.rise(0)} style={[styles.intro, { borderColor: t.c.line }]}>
       <GlassLayer radius={radius.xl} level="regular" variant="card" />
+      <PaneLight radius={radius.xl} />
       <View style={styles.introHead}>
-        <View style={[styles.introMark, { borderColor: t.c.lineStrong }]}>
-          <Icon name="network" size={20} color={t.c.text} />
-        </View>
+        <Animated.View entering={enter.pop(0, 120)} style={[styles.introMark, layered, { borderWidth: 0, overflow: 'hidden', boxShadow: tone.isGirl ? tone.glow : undefined }]}>
+          <AccentFill colors={tone.gradient} />
+          <Icon name="network" size={20} color={tone.onAccent} />
+        </Animated.View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="overline" tone="tertiary">
             IRLY Network
@@ -72,7 +76,7 @@ export function NetworkIntro({
       <View style={{ gap: 8 }}>
         {points.map((p, i) => (
           <Animated.View key={p.text} entering={enter.fade(i + 1)} style={styles.point}>
-            <Icon name={p.icon} size={14} color={t.c.textSecondary} />
+            <Icon name={p.icon} size={14} color={tone.accent} />
             <Text variant="caption" tone="secondary" style={{ flex: 1 }}>
               {p.text}
             </Text>
@@ -101,6 +105,7 @@ export function NetworkIntro({
 
 /** A section title, with an optional "See all". */
 export function SectionHead({ title, caption, action, onAction, index = 0 }: { title: string; caption?: string; action?: string; onAction?: () => void; index?: number }) {
+  const tone = useNetworkTone();
   return (
     <Animated.View entering={enter.rise(index)} style={styles.head}>
       <View style={{ flex: 1, gap: 2 }}>
@@ -113,7 +118,7 @@ export function SectionHead({ title, caption, action, onAction, index = 0 }: { t
       </View>
       {action && onAction ? (
         <PressableScale haptic="select" onPress={onAction} hitSlop={10} accessibilityRole="link" accessibilityLabel={action}>
-          <Text variant="label" tone="secondary">
+          <Text variant="label" tone={tone.isGirl ? undefined : 'secondary'} color={tone.isGirl ? tone.accent : undefined}>
             {action}
           </Text>
         </PressableScale>
@@ -141,6 +146,7 @@ export function SectionState({
   skeleton?: { width: number | `${number}%`; height: number };
 }) {
   const t = useTheme();
+  const tone = useNetworkTone();
   if (kind === 'loading')
     return (
       <ScrollView horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail} accessibilityLabel={tx('Loading')}>
@@ -152,7 +158,9 @@ export function SectionState({
   return (
     <Animated.View entering={enter.fade(0)} style={[styles.state, { borderColor: t.c.line }]}>
       <GlassLayer radius={radius.lg} variant="card" />
-      <Icon name={kind === 'error' ? 'satellite' : icon} size={18} color={t.c.textSecondary} />
+      <View style={[styles.well, { backgroundColor: tone.soft, borderColor: tone.softLine }]}>
+        <Icon name={kind === 'error' ? 'satellite' : icon} size={16} color={kind === 'error' ? t.c.textSecondary : tone.accent} />
+      </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="label">{kind === 'error' ? 'Can’t reach IRLY right now' : (title ?? '')}</Text>
         {body || kind === 'error' ? (
@@ -186,6 +194,7 @@ export function MeetupCard({ a, index }: { a: ServerActivity; index: number }) {
   const city = CITIES[a.cityId as CityId];
   const place = a.placeName || (city ? areaName(city, a.areaId) : a.areaId);
   const when = `${cardDay(a.startsAt, a.cityId)} · ${cardTime(a.startsAt, a.cityId)}`;
+  const tone = useNetworkTone();
   return (
     <Animated.View entering={enter.slide(index)}>
       <PressableScale
@@ -196,14 +205,15 @@ export function MeetupCard({ a, index }: { a: ServerActivity; index: number }) {
         style={[styles.meetup, { borderColor: t.c.line }]}
       >
         <GlassLayer radius={radius.lg} variant="card" />
+        <PaneLight radius={radius.lg} />
         <View style={styles.row}>
-          <Icon name="calendar" size={13} color={t.c.textSecondary} />
+          <Icon name="calendar" size={13} color={tone.accent} />
           <Text variant="caption" tone="secondary" raw numberOfLines={1} style={{ flex: 1 }}>
             {when}
           </Text>
           {a.joined ? (
-            <View style={[styles.badge, { backgroundColor: t.c.text }]}>
-              <Text variant="caption" color={t.c.bg}>
+            <View style={[styles.badge, { backgroundColor: tone.accent }]}>
+              <Text variant="caption" color={tone.onAccent}>
                 Going
               </Text>
             </View>
@@ -275,23 +285,25 @@ export function CommunityTile({ c, index }: { c: NetCommunity; index: number }) 
   const t = useTheme();
   const tr = useT();
   const router = useRouter();
+  const tone = useNetworkTone();
   return (
     <Animated.View entering={enter.slide(index)}>
       <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} accessibilityLabel={c.name} style={[styles.community, { borderColor: t.c.line }]}>
         <GlassLayer radius={radius.lg} variant="card" />
+        <PaneLight radius={radius.lg} />
         <View style={styles.row}>
-          <View style={[styles.emoji, { borderColor: t.c.line }]}>
+          <View style={[styles.emoji, { borderColor: tone.softLine, backgroundColor: tone.soft }]}>
             {c.emoji ? (
               <Text variant="titleS" raw>
                 {c.emoji}
               </Text>
             ) : (
-              <Icon name="users" size={16} color={t.c.text} />
+              <Icon name="users" size={16} color={tone.accent} />
             )}
           </View>
           {c.isMember ? (
-            <View style={[styles.badge, { backgroundColor: t.c.text, marginLeft: 'auto' }]}>
-              <Text variant="caption" color={t.c.bg}>
+            <View style={[styles.badge, { backgroundColor: tone.accent, marginLeft: 'auto' }]}>
+              <Text variant="caption" color={tone.onAccent}>
                 Member
               </Text>
             </View>
@@ -316,6 +328,7 @@ export function CommunityTile({ c, index }: { c: NetCommunity; index: number }) 
 /** A business headline from IRLY's news sources; opens the original article. */
 export function OpportunityRow({ n, index, now }: { n: NewsItem; index: number; now: number }) {
   const t = useTheme();
+  const tone = useNetworkTone();
   const open = () => {
     // Only an https article address is opened.
     if (!/^https:\/\//i.test(n.url)) return toast('Could not open the article', 'x', 'live');
@@ -335,7 +348,7 @@ export function OpportunityRow({ n, index, now }: { n: NewsItem; index: number; 
               Sponsored
             </Text>
           ) : null}
-          <Icon name="arrowUpRight" size={14} color={t.c.textSecondary} />
+          <Icon name="arrowUpRight" size={14} color={tone.accent} />
         </View>
         <Text variant="label" numberOfLines={2} raw>
           {n.title}
@@ -354,6 +367,7 @@ export function OpportunityRow({ n, index, now }: { n: NewsItem; index: number; 
 export function ProLinkButtons({ links, index = 0 }: { links: ProLinks; index?: number }) {
   const t = useTheme();
   const tr = useT();
+  const tone = useNetworkTone();
   const shown = LINK_KINDS.map((k) => ({ ...k, url: safeLink(k.id, links[k.id]) })).filter((k): k is (typeof k & { url: string }) => Boolean(k.url));
   if (!shown.length) return null;
   return (
@@ -374,7 +388,7 @@ export function ProLinkButtons({ links, index = 0 }: { links: ProLinks; index?: 
             style={[styles.link, { borderColor: t.c.line }]}
           >
             <GlassLayer radius={radius.pill} variant="chip" />
-            <Icon name={k.icon} size={14} color={t.c.text} />
+            <Icon name={k.icon} size={14} color={tone.accent} />
             <View style={{ flexShrink: 1 }}>
               <Text variant="caption" tone="tertiary" raw>
                 {k.label}
@@ -405,6 +419,7 @@ const styles = StyleSheet.create({
   meetup: { width: 240, minHeight: 140, padding: 14, gap: 8, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
   post: { marginHorizontal: space.gutter, padding: 14, gap: 8, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
   community: { width: 200, minHeight: 150, padding: 14, gap: 8, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
+  well: { width: 32, height: 32, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
   emoji: { width: 36, height: 36, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
   links: { paddingHorizontal: space.gutter, marginTop: space[6], gap: 10 },
   linkWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

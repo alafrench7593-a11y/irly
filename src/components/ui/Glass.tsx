@@ -2,7 +2,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { memo, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { girlElevation, girlGlass, girlNacre, glassLevels, type GirlGlassVariant, type GlassLevel } from '@/theme/tokens';
+import { girlElevation, girlGlass, girlNacre, glassLevels, networkGirlGlass, networkGirlNacre, type GirlGlassVariant, type GlassLevel } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type Props = {
@@ -71,7 +71,7 @@ export const Glass = memo(function Glass({ style, intensity, dark, light, border
   const shine = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.65)';
   const solid = isDark ? (dark ? 'rgba(40,42,46,0.86)' : 'rgba(24,26,31,0.95)') : girl ? 'rgba(255,246,250,0.96)' : 'rgba(255,255,255,0.95)';
   return (
-    <View {...MIXTE_MARK} style={[styles.root, lifted ? { boxShadow: t.shadow.card } : null, style]}>
+    <View {...MIXTE_MARK} pointerEvents={decorative(children)} style={[styles.root, lifted ? { boxShadow: t.shadow.card } : null, style]}>
       {Platform.OS === 'android' ? (
         <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: solid }]} />
       ) : (
@@ -102,11 +102,13 @@ const MIXTE_MARK = Platform.OS === 'web' ? ({ dataSet: { irlyGlass: '1' } } as o
  * rim is even (no lit side), so a pane reads as one piece of glass.
  */
 function GirlGlass({ style, intensity, border, highlight, lifted, variant, children }: { style?: StyleProp<ViewStyle>; intensity?: number; border: boolean; highlight: boolean; lifted?: boolean; variant: GirlGlassVariant; children?: ReactNode }) {
-  const spec = girlGlass[variant];
+  // IRLY Network is the one violet place of IRLY Girl.
+  const network = useTheme().network;
+  const spec = (network ? networkGirlGlass : girlGlass)[variant];
   const r = flatRadius(style);
   const shadow = variant === 'plum' ? girlElevation.plum : variant === 'sheet' ? girlElevation.float : girlElevation.card;
   return (
-    <View {...WEB_MARK} style={[styles.root, lifted ? { boxShadow: shadow } : null, style]}>
+    <View {...WEB_MARK} pointerEvents={decorative(children)} style={[styles.root, lifted ? { boxShadow: shadow } : null, style]}>
       {Platform.OS === 'android' ? (
         <View style={[StyleSheet.absoluteFill, styles.under, { backgroundColor: spec.fallback }]} />
       ) : (
@@ -119,9 +121,9 @@ function GirlGlass({ style, intensity, border, highlight, lifted, variant, child
         <>
           {spec.dark ? (
             // Plum glass glows from below with a bordeaux-rose light, so it reads deep, never grey.
-            <LinearGradient colors={['rgba(185,43,105,0)', 'rgba(185,43,105,0.24)']} locations={[0.35, 1]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
+            <LinearGradient colors={network ? ['rgba(106,59,238,0)', 'rgba(106,59,238,0.24)'] : ['rgba(185,43,105,0)', 'rgba(185,43,105,0.24)']} locations={[0.35, 1]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
           ) : (
-            <LinearGradient colors={girlNacre} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
+            <LinearGradient colors={network ? networkGirlNacre : girlNacre} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
           )}
           <LinearGradient colors={[spec.sheen, 'rgba(255,255,255,0)']} locations={[0, 0.5]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
         </>
@@ -140,6 +142,15 @@ function GirlGlass({ style, intensity, border, highlight, lifted, variant, child
       {children}
     </View>
   );
+}
+
+/**
+ * A pane with nothing in it is the background of something else (a button,
+ * a card, a sheet, laid as an absolute fill): it never takes the touch, so
+ * the control it dresses, or the one under it, gets the tap.
+ */
+function decorative(children: ReactNode): 'none' | undefined {
+  return children == null || children === false ? 'none' : undefined;
 }
 
 /** The pane's own corner radius, so its edge follows the same curve. */

@@ -6,7 +6,7 @@ import { create } from 'zustand';
 import { NONE } from '@/lib/none';
 import { useAccount } from '@/features/auth/account';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
-import { changed, useRefreshOn, useSyncVersion } from './sync';
+import { changed, expectEcho, useRefreshOn, useSyncVersion } from './sync';
 import { seedLink, signedLinks } from './media';
 import { uuid } from '@/lib/uuid';
 import { prepareLiveMedia, uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
@@ -672,30 +672,42 @@ const useNotifVersion = create<{ n: number }>(() => ({ n: 0 }));
  */
 const useReadHere = create<{ ids: Record<string, number> }>(() => ({ ids: {} }));
 
+function setReadHere(ids: string[], at: number | null) {
+  useReadHere.setState((s) => {
+    const next = { ...s.ids };
+    ids.forEach((id) => (at === null ? delete next[id] : (next[id] = at)));
+    return { ids: next };
+  });
+}
+
 /**
- * Marks one notification read: on screen at once, then on the server (its own
- * row only: RLS). An already-read one, or one already being marked, sends
- * nothing. Resolves false when the server refused (it shows unread again).
+ * Marks notifications read: on screen at once (the list and the bell), then on
+ * the server in one request (its own rows only: RLS), which tells the member's
+ * other phones too (Realtime, 'notifs'). Already read ones, or ones already
+ * being marked, send nothing. Resolves false when the server refused or could
+ * not be reached: they show unread again.
  */
-export async function markNotificationRead(id: string): Promise<boolean> {
-  if (!supabase) return true;
-  if (useReadHere.getState().ids[id]) return true;
+export async function markNotificationsRead(ids: string[]): Promise<boolean> {
+  const marked = useReadHere.getState().ids;
+  const todo = [...new Set(ids)].filter((id) => !marked[id]);
+  if (!supabase || !todo.length) return true;
   const at = Date.now();
-  useReadHere.setState((s) => ({ ids: { ...s.ids, [id]: at } }));
-  const { error } = await supabase.from('notifications').update({ read_at: new Date(at).toISOString() }).eq('id', id).is('read_at', null);
+  setReadHere(todo, at);
+  // Their realtime echo is this very change: not a reason to read the list again.
+  todo.forEach((id) => expectEcho('notifications', (row) => row.id === id));
+  const { error } = await supabase.from('notifications').update({ read_at: new Date(at).toISOString() }).in('id', todo).is('read_at', null);
   if (error) {
-    useReadHere.setState((s) => {
-      const ids = { ...s.ids };
-      delete ids[id];
-      return { ids };
-    });
+    setReadHere(todo, null);
     return false;
   }
   useNotifVersion.setState((s) => ({ n: s.n + 1 }));
   return true;
 }
 
-export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => void; status: 'loading' | 'ok' | 'failed'; reload: () => void } {
+/** Marks one notification read (opened from the list or from a phone notification). */
+export const markNotificationRead = (id: string): Promise<boolean> => markNotificationsRead([id]);
+
+export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => Promise<boolean>; status: 'loading' | 'ok' | 'failed'; reload: () => void } {
   const account = useAccount();
   const uid = account?.userId;
   // Kept with the account they belong to: after a switch, the previous account's never show (not even its count).
@@ -760,19 +772,22 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
       alive = false;
     };
   }, [uid, load, retry]);
-  const markAllRead = useCallback(() => {
-    if (!supabase || !uid) return;
-    const now = new Date().toISOString();
-    supabase
-      .from('notifications')
-      .update({ read_at: now })
-      .is('read_at', null)
-      .then(({ error }) => {
-        if (error) return;
-        setHeld((h) => ({ uid, items: (h.uid === uid ? h.items : []).map((n) => (n.readAt ? n : { ...n, readAt: Date.parse(now) })) }));
-        useNotifVersion.setState((s) => ({ n: s.n + 1 }));
-      });
-  }, [uid]);
+  // All at once, shown read before the answer like a single one, unread again if the server refused.
+  // A chat's message notices are read by reading that chat, never from the bell.
+  const markAllRead = useCallback(async (): Promise<boolean> => {
+    if (!supabase || !uid) return true;
+    const marked = useReadHere.getState().ids;
+    const ids = items.filter((n) => !n.readAt && !marked[n.id]).map((n) => n.id);
+    const at = Date.now();
+    setReadHere(ids, at);
+    const { error } = await supabase.from('notifications').update({ read_at: new Date(at).toISOString() }).is('read_at', null).neq('kind', 'MESSAGE_CREATED');
+    if (error) {
+      setReadHere(ids, null);
+      return false;
+    }
+    useNotifVersion.setState((s) => ({ n: s.n + 1 }));
+    return true;
+  }, [uid, items]);
   const readHere = useReadHere((s) => s.ids);
   const list = useMemo(() => (uid ? items.map((n) => (n.readAt || !readHere[n.id] ? n : { ...n, readAt: readHere[n.id] })) : NONE), [uid, items, readHere]);
   // Messages have their own badge (the chat icon): the bell never counts them twice.

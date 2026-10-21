@@ -5,9 +5,10 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
-import { useAccount } from '@/features/auth/account';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
+import { openNotification } from '@/features/notifications/open';
 import { dateLocale, useLang, type Lang } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
@@ -15,8 +16,9 @@ import { supabase } from '@/lib/supabase';
  * Phone notifications. Each signed-in phone registers its Expo push token
  * on the server (register_push_token); the server pushes every
  * notification you have not muted (migrations 2700 and 20261013), titled in
- * the phone's language, with the screen to open. Tapping one opens that
- * screen. On the web nothing happens here.
+ * the phone's language, with the screen to open and the notification's id.
+ * Tapping one marks it read and opens its page (openTapped), once, even at a
+ * cold start. On the web nothing happens here.
  *
  * Permission is asked in context, never on the first screen: the first time
  * you send a friend request, join an activity or a community, or write a
@@ -264,10 +266,40 @@ export async function askPushInContext(lang: Lang = dateLocale() === 'fr-FR' ? '
   await registerPush(lang, true).catch(() => undefined);
 }
 
-/** Opens the screen a notification points to. */
-function open(response: Notifications.NotificationResponse | null) {
-  const url = (response?.notification.request.content.data as { url?: unknown } | undefined)?.url;
-  if (typeof url === 'string' && url.startsWith('/')) router.push(url as never);
+/** A phone notification tapped, waiting to be opened: its screen, and the notification it tells (when the server says). */
+type Tapped = { url: string | null; id: string | null };
+
+// Taps already handled: the one that launched the app is reported twice (the last
+// response, and the listener), and opening it twice stacked the same page twice.
+const handled = new Set<string>();
+
+function tapped(response: Notifications.NotificationResponse | null): Tapped | null {
+  if (!response || response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return null;
+  const key = response.notification.request.identifier;
+  if (handled.has(key)) return null;
+  handled.add(key);
+  const data = response.notification.request.content.data as { url?: unknown; notification_id?: unknown } | undefined;
+  const url = typeof data?.url === 'string' && data.url.startsWith('/') ? data.url : null;
+  const id = typeof data?.notification_id === 'string' && /^[0-9a-f-]{36}$/i.test(data.notification_id) ? data.notification_id : null;
+  return url || id ? { url, id } : null;
+}
+
+/**
+ * Opens a tapped notification. With its id (servers from migration
+ * 20261025000200): read on the server, then opened like a row of the list
+ * (features/notifications/open: the right page, or a message if it is gone).
+ * Without (older pushes), or when the notification cannot be read (another
+ * account, offline): its screen. Waits for the stored session at launch.
+ */
+async function openTapped(t: Tapped, uid: string | undefined): Promise<void> {
+  if (t.id && uid && supabase) {
+    const { data, error } = await supabase.from('notifications').select('id, kind, payload, created_at').eq('id', t.id).maybeSingle();
+    if (!error && data) {
+      await openNotification({ id: data.id, kind: data.kind, payload: data.payload ?? {}, createdAt: Date.parse(data.created_at) }, 'push');
+      return;
+    }
+  }
+  router.push((t.url ?? '/notifications') as never);
 }
 
 /**
@@ -277,7 +309,10 @@ function open(response: Notifications.NotificationResponse | null) {
  */
 export function usePush() {
   const uid = useAccount()?.userId;
+  const auth = useAuthStatus();
   const lang = useLang();
+  const waiting = useRef<Tapped[]>([]);
+  const [taps, setTaps] = useState(0);
 
   // Signed in: register if this phone already allows notifications (no prompt here).
   useEffect(() => {
@@ -308,17 +343,29 @@ export function usePush() {
     return () => sub.remove();
   }, [uid, lang]);
 
+  // Taps: the one that launched the app, then each one while it runs (open or in the background).
   useEffect(() => {
     if (!native) return;
-    Notifications.getLastNotificationResponseAsync()
-      .then((r) => {
-        if (r) {
-          open(r);
-          Notifications.clearLastNotificationResponseAsync?.().catch(() => undefined);
-        }
-      })
-      .catch(() => undefined);
-    const sub = Notifications.addNotificationResponseReceivedListener(open);
+    const take = (r: Notifications.NotificationResponse | null) => {
+      const t = tapped(r);
+      if (!t) return;
+      waiting.current.push(t);
+      setTaps((n) => n + 1);
+    };
+    try {
+      take(Notifications.getLastNotificationResponse());
+      Notifications.clearLastNotificationResponse();
+    } catch {
+      // No launch response to read on this phone: the listener still hears taps.
+    }
+    const sub = Notifications.addNotificationResponseReceivedListener(take);
     return () => sub.remove();
   }, []);
+
+  // Opened once the stored session is known (a cold start reads it first): the latest tap wins.
+  useEffect(() => {
+    if (!taps || auth === 'unknown') return;
+    const next = waiting.current.splice(0).pop();
+    if (next) void openTapped(next, uid).catch(() => router.push((next.url ?? '/notifications') as never));
+  }, [taps, auth, uid]);
 }

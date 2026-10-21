@@ -19,7 +19,7 @@ import { DEMO } from '@/config/app';
 import { demoPhoto, useDemoEngagement, useDemoGirlFeed } from './demo';
 import type { ServerActivity } from '@/features/server/activities';
 import { useRefreshOn } from '@/features/server/sync';
-import { t as tx } from '@/i18n';
+import { t as tx, formatNumber } from '@/i18n';
 import { hueOf } from '@/lib/format';
 import { liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { cityWhen, offsetOf, timeAgo } from '@/lib/time';
@@ -71,22 +71,22 @@ export const GIRL_KINDS: Kind[] = [
   { id: 'create', label: 'Book club & workshops', icon: 'palette', photo: 'readingGirl', match: /book|workshop|atelier|art|paint|pottery|craft/i },
 ];
 
-/** IRLY Moms: plans with (or around) the children. */
+/** IRLY Moms: plans with (or around) the children, on family photos only (never IRLY Girl's). */
 export const MOM_KINDS: Kind[] = [
   { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
   { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },
   { id: 'park', label: 'Park & playdates', icon: 'baby', photo: 'momPlaydate', match: /park|playdate|playground|picnic/i },
   { id: 'stroller', label: 'Stroller walks', icon: 'footprints', photo: 'strollerMom', match: /stroller|poussette|baby walk|walk/i },
   { id: 'brunch', label: 'Moms’ brunch', icon: 'utensils', photo: 'brunch', match: /brunch/i },
-  { id: 'coffee', label: 'Coffee', icon: 'coffee', photo: 'girlCoffee', match: /coffee|café|cafe/i },
+  { id: 'coffee', label: 'Coffee', icon: 'coffee', photo: 'strollerMom', match: /coffee|café|cafe/i },
   { id: 'beach', label: 'Beach', icon: 'sun', photo: 'momBeach', match: /beach|plage/i },
   { id: 'pool', label: 'Pool & swimming', icon: 'waves', photo: 'swimming', match: /swim|pool|piscine/i },
   { id: 'sport', label: 'Moms’ sport', icon: 'activity', photo: 'momYoga', match: /yoga|pilates|fitness|football|padel|tennis|sport/i },
-  { id: 'create', label: 'Creative workshops', icon: 'palette', photo: 'girlBookClub', match: /workshop|art|craft|atelier|paint/i },
-  { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'gallery', match: /museum|gallery|culture|aquarium/i },
+  { id: 'create', label: 'Creative workshops', icon: 'palette', photo: 'gallery', match: /workshop|art|craft|atelier|paint/i },
+  { id: 'museum', label: 'Museums & culture', icon: 'landmark', photo: 'kids', match: /museum|gallery|culture|aquarium/i },
   { id: 'restaurant', label: 'Family restaurants', icon: 'utensils', photo: 'dinnerGroup', match: /restaurant|lunch|dinner|family meal/i },
   { id: 'weekend', label: 'Weekend outings', icon: 'calendar', photo: 'familyBeach', match: /weekend|outing|sortie|family day/i },
-  { id: 'trip', label: 'Trips', icon: 'plane', photo: 'girlTravel', match: /trip|travel|excursion|getaway/i },
+  { id: 'trip', label: 'Trips', icon: 'plane', photo: 'family', match: /trip|travel|excursion|getaway/i },
 ];
 
 const matchesKind = (a: ServerActivity, k: Kind) => k.match.test(a.title) || Boolean(k.cats?.includes(a.categoryId));
@@ -309,7 +309,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
             {a.capacity ? tx('{n}/{max} going', { n: a.going, max: a.capacity }) : tx('{n} going', { n: a.going })}
           </Text>
           <Text variant="caption" color={girl.inkSoft}>
-            {a.priceMinor === 0 ? tx('Free') : `${(a.priceMinor / 100).toFixed(0)} ${a.currency}`}
+            {a.priceMinor === 0 ? tx('Free') : `${formatNumber(a.priceMinor / 100, 0)} ${a.currency}`}
           </Text>
         </View>
       </View>
@@ -377,7 +377,7 @@ const PlanTile = memo(function PlanTile({ a, width, photo, label, onPress }: { a
           </Text>
         </View>
         <Text variant="caption" color={girl.inkSoft} numberOfLines={1}>
-          {a.capacity ? tx('{n}/{max} going', { n: a.going, max: a.capacity }) : tx('{n} going', { n: a.going })} · {a.priceMinor === 0 ? tx('Free') : `${(a.priceMinor / 100).toFixed(0)} ${a.currency}`}
+          {a.capacity ? tx('{n}/{max} going', { n: a.going, max: a.capacity }) : tx('{n} going', { n: a.going })} · {a.priceMinor === 0 ? tx('Free') : `${formatNumber(a.priceMinor / 100, 0)} ${a.currency}`}
         </Text>
       </View>
     </PressableScale>

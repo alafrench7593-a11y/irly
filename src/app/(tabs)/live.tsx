@@ -107,7 +107,7 @@ function LiveCard({ live }: { live: Live }) {
   const t = useTheme();
   const router = useRouter();
   const city = CITIES[live.cityId];
-  const me = useStore((s) => s.profile.name) || 'You';
+  const me = useStore((s) => s.profile.name) || tx('You');
   const person = live.authorId === 'me' ? undefined : findPerson(live.authorId);
   const name = person?.name ?? me;
   const now = useNow();
@@ -137,7 +137,7 @@ function LiveCard({ live }: { live: Live }) {
           </TapPhoto>
         )
       ) : null}
-      <Text variant={hasPhoto ? 'body' : 'titleM'}>{live.text}</Text>
+      <Text variant={hasPhoto ? 'body' : 'titleM'} raw={live.authorId === 'me'}>{live.text}</Text>
       {person ? (
         <View style={styles.actions}>
           <ReactButton id={live.id} />
@@ -163,7 +163,7 @@ function LiveCard({ live }: { live: Live }) {
  */
 function GoLiveCard({ onText, onPhoto }: { onText: () => void; onPhoto: () => void }) {
   const t = useTheme();
-  const name = useStore((s) => s.profile.name) || 'You';
+  const name = useStore((s) => s.profile.name) || tx('You');
   const photo = useStore((s) => s.profile.photoUri);
   return (
     <View style={[styles.goLive, { marginHorizontal: space.gutter, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
@@ -237,7 +237,7 @@ function FriendsLiveNow() {
       <Text variant="overline" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
         {friends.length ? 'Friends live now' : 'Live around you'}
       </Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
         {list.map((l, i) => {
           const p = findPerson(l.authorId);
           if (!p) return null;
@@ -325,7 +325,7 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
                 <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} userId={p.authorId} />
               </PressableScale>
               <View style={{ flex: 1 }}>
-                <Text variant="titleS" onPress={() => router.push(`/person/${p.authorId}`)}>{p.mine ? 'You' : p.firstName}</Text>
+                <Text variant="titleS" onPress={() => router.push(`/person/${p.authorId}`)} raw>{p.mine ? tx('You') : p.firstName}</Text>
                 <View style={styles.meta}>
                   <LiveDot size={6} color={t.c.live} />
                   <Text variant="caption" tone="secondary" numberOfLines={1}>

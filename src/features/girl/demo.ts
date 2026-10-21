@@ -247,3 +247,15 @@ export function useDemoGirlInbox(): { conversations: Conversation[]; refresh: ()
 }
 
 export const demoNotifications = () => DEMO_NOTIFICATIONS.map((n) => ({ ...n, name: demoName(n.by) }));
+
+/** The examples of the signed-out list (notifications.tsx) that start unread, besides the IRLY Girl ones. */
+export const EXAMPLE_UNREAD = ['n1', 'n2'];
+
+/**
+ * Example notifications read on this tab (seen on screen or opened), as the
+ * server's are: the list and the bell follow. Memory only, nothing written.
+ */
+export const useDemoRead = create<{ ids: Record<string, true> }>(() => ({ ids: {} }));
+export const markDemoRead = (ids: string[]) => useDemoRead.setState((s) => ({ ids: { ...s.ids, ...Object.fromEntries(ids.map((id) => [id, true as const])) } }));
+/** Unread examples for the bell (the demo build, signed out). */
+export const useDemoUnread = () => useDemoRead((s) => [...DEMO_NOTIFICATIONS.filter((n) => n.unread).map((n) => n.id), ...EXAMPLE_UNREAD].filter((id) => !s.ids[id]).length);

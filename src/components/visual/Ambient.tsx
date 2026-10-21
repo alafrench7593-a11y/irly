@@ -3,7 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { enter } from '@/motion/enter';
-import { ambient } from '@/theme/tokens';
+import { ambient, networkAmbient } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type Props = {
@@ -40,7 +40,7 @@ const LAYOUTS = {
  */
 export const Ambient = memo(function Ambient({ variant = 'page', style }: Props) {
   const t = useTheme();
-  const spec = ambient[t.flavor][t.mode];
+  const spec = (t.network ? networkAmbient : ambient)[t.flavor][t.mode];
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const glows = LAYOUTS[variant];
   return (

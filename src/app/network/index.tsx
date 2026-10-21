@@ -21,9 +21,9 @@ import { ProCard } from '@/features/network/ui';
 import { useT } from '@/i18n';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { PaneLight, useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 /**
  * IRLY Network: what it is and your professional profile, then networking
@@ -32,8 +32,17 @@ import { Skeleton } from '@/components/ui/Skeleton';
  * professionals of the country (sorted by match when you have a profile).
  * Everything is read from the server; nothing is made up for an empty city.
  */
+/** Network pages are violet in IRLY Girl, grey in IRLY (see NetworkScope). */
 export default function NetworkDiscover() {
-  const t = useTheme();
+  return (
+    <NetworkScreen>
+      <NetworkDiscoverPage />
+    </NetworkScreen>
+  );
+}
+
+function NetworkDiscoverPage() {
+  const tone = useNetworkTone();
   const tr = useT();
   const router = useRouter();
   const cityId = useCityId();
@@ -181,14 +190,14 @@ export default function NetworkDiscover() {
         <IconButton icon="sliders" label={tr('Filters')} onPress={() => setOpen(true)} badge={count || undefined} />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
         <Chip size="sm" label="All domains" selected={!industry} onPress={() => setIndustry(null)} />
         {INDUSTRIES.map((i) => (
           <Chip key={i.id} size="sm" label={`${i.emoji} ${tr(i.short)}`} selected={industry === i.id} onPress={() => setIndustry(industry === i.id ? null : i.id)} />
         ))}
       </ScrollView>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.rail, { paddingTop: 0 }]}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.rail, { paddingTop: 0 }]}>
         {LOOKING_FILTERS.map((l) => (
           <Chip key={l.id} size="sm" label={l.label} selected={intent === l.id} onPress={() => setIntent(intent === l.id ? null : l.id)} />
         ))}
@@ -198,7 +207,8 @@ export default function NetworkDiscover() {
         {!signedIn ? (
           <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
             <GlassLayer radius={radius.xl} />
-            <Icon name="network" size={24} color={t.c.textSecondary} />
+            <PaneLight radius={radius.xl} />
+            <Icon name="network" size={24} color={tone.accent} />
             <Text variant="titleS" align="center">
               Sign in to meet professionals
             </Text>
@@ -210,7 +220,8 @@ export default function NetworkDiscover() {
         ) : error && !list.length ? (
           <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
             <GlassLayer radius={radius.xl} />
-            <Icon name="network" size={24} color={t.c.textSecondary} />
+            <PaneLight radius={radius.xl} />
+            <Icon name="network" size={24} color={tone.accent} />
             <Text variant="bodyS" tone="secondary" align="center">
               Can’t reach IRLY right now. Check your connection.
             </Text>
@@ -221,7 +232,8 @@ export default function NetworkDiscover() {
         ) : !ranked.length ? (
           <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
             <GlassLayer radius={radius.xl} />
-            <Icon name="search" size={24} color={t.c.textSecondary} />
+            <PaneLight radius={radius.xl} />
+            <Icon name="search" size={24} color={tone.accent} />
             <Text variant="titleS" align="center">
               {industry || role || intent || onlyCity || q ? tr('No one matches these filters yet') : tr('No professionals here yet')}
             </Text>

@@ -1,0 +1,182 @@
+/**
+ * What the server says when it refuses something (a `raise exception` in
+ * supabase/migrations, read back as the error's message) is written for the
+ * code, in lower-case English. A member reads it as a sentence of the app,
+ * in their language: each refusal maps to an English sentence that the
+ * French dictionary has, and the technical ones to a calm generic message.
+ *
+ * `npm run test:i18n` checks that every `raise exception` of the migrations
+ * is listed here (or matched by SERVER_PATTERNS) and that every sentence it
+ * maps to has its French entry.
+ */
+const GENERIC = 'Something went wrong. Try again';
+
+export const SERVER_ERRORS: Record<string, string> = {
+  'IRLY Girl content stays in IRLY Girl': 'IRLY Girl content stays in IRLY Girl',
+  'IRLY Girl is paused for you: you can only cancel this plan': 'IRLY Girl is paused for you: you can only cancel this plan',
+  'IRLY admins only': 'IRLY admins only',
+  'IRLY moderators only': 'IRLY moderators only',
+  'a Live needs its id': GENERIC,
+  'a Live stays in the space it was posted in': 'A Live stays in the space it was posted in',
+  'a category stays in its community': 'A category stays in its community',
+  'a community has 30 groups at most': 'A community has 30 groups at most',
+  'a group belongs to a top community': 'A group belongs to a main community',
+  'a group cannot move': 'A group cannot move to another community',
+  'a poll cannot change once people voted': 'A poll cannot change once people voted',
+  "a post can only show its author's own files": 'A post can only show its author’s own photos and videos',
+  'a private chat has two members': 'A private chat has two members',
+  'a removed item cannot be edited or restored': 'A removed item cannot be edited or restored',
+  'a removed item cannot be restored': 'A removed item cannot be restored',
+  'a sent photo cannot be swapped': 'A sent photo cannot be swapped',
+  'a suspension lasts 1 to 365 days': 'A suspension lasts 1 to 365 days',
+  'account still exists': GENERIC,
+  'activity not found': 'This activity no longer exists',
+  'add at least 3 photos of yourself first': 'Add at least 3 photos of yourself first',
+  'add between 1 and 49 people': 'Add between 1 and 49 people',
+  'admins only': 'Admins only',
+  'already decided': 'This has already been decided',
+  'an owner cannot be changed here': 'An owner cannot be changed here',
+  'cannot act on yourself': 'You cannot do this to yourself',
+  'capacity is below the number of people going': 'Capacity is below the number of people going',
+  "check the source's terms of use before turning it on": 'Check the source’s terms of use before turning it on',
+  'community not found': 'This community no longer exists',
+  'connect first to send a private message': 'Connect first to send a private message',
+  'create an account first': 'Create an account first',
+  'create your IRLY Match profile first': 'Create your IRLY Match profile first',
+  'created_at cannot be changed': GENERIC,
+  'created_at is set by IRLY': GENERIC,
+  'five tries a day: try again tomorrow': 'Five tries a day: try again tomorrow',
+  'gender is set at signup; contact support to change it': 'Gender is set at signup. Contact support to change it',
+  'give a reason': 'Give a reason',
+  'give the group a name (60 characters at most)': 'Give the group a name (60 characters at most)',
+  'invalid email': 'This email address is not valid',
+  'invalid file': 'This file cannot be used',
+  'invalid install id': GENERIC,
+  'invalid message': 'This message cannot be sent',
+  'invalid platform': GENERIC,
+  'invalid push token': GENERIC,
+  'invalid subject': GENERIC,
+  'is_admin is not editable': GENERIC,
+  'kind: announcement, event or info': GENERIC,
+  'moderators can only remove a post': 'Moderators can only remove a post',
+  'moderators only': 'Moderators only',
+  'name: 2 to 60 characters': 'The name needs 2 to 60 characters',
+  'no IRLY account with this email: sign up in the app first': 'No IRLY account with this email: sign up in the app first',
+  'no such case': 'This case no longer exists',
+  'no such member': 'This member no longer exists',
+  'no such sanction': 'This sanction no longer exists',
+  'not a group': 'This is not a group',
+  'not a member': 'You are not a member',
+  'not allowed': 'You are not allowed to do this',
+  'not available': 'Not available',
+  'not found': 'This is no longer available',
+  'nothing to take down for this kind of report': 'Nothing to take down for this kind of report',
+  'one announcement per hour: try again later': 'One announcement per hour: try again later',
+  'one of these people does not accept messages from you': 'One of these people does not accept messages from you',
+  'only IRLY Girl members can create a girls-only community': 'Only IRLY Girl members can create a girls-only community',
+  'only IRLY creates official communities': 'Only IRLY creates official communities',
+  'only moderators can notify all members': 'Only moderators can notify all members',
+  'only moderators can pin': 'Only moderators can pin',
+  'only moderators post announcements': 'Only moderators post announcements',
+  'only the author can edit this post': 'Only the author can edit this post',
+  'only the chat admin can change its photo': 'Only the chat admin can change its photo',
+  'only the community owner or a moderator can change its photo': 'Only the community owner or a moderator can change its photo',
+  "only the community's moderators can add a group": 'Only the community’s moderators can add a group',
+  'only the group admin can rename it': 'Only the group admin can rename it',
+  'only the host can change its photo': 'Only the host can change its photo',
+  'only the hosts can pin': 'Only the hosts can pin',
+  'only the owner can change admin rights': 'Only the owner can change admin rights',
+  'only the owner can delete this community': 'Only the owner can delete this community',
+  'only the owner or IRLY can change roles': 'Only the owner or IRLY can change roles',
+  'owner only': 'Only the owner can do this',
+  'people joined a girl-only activity: it stays girl-only': 'People joined this girls-only activity: it stays girls-only',
+  'post not found': 'This post no longer exists',
+  'profile not available': 'Profile not available',
+  'reply must belong to the same thread': GENERIC,
+  'role: moderator or member': GENERIC,
+  'say why you need to read it': 'Say why you need to read it',
+  'sign in first': 'Sign in first',
+  'sign in required': 'Your session has ended. Sign in again',
+  'slow down: too many in a short time': 'Slow down: too many in a short time',
+  'slow down: too many requests': 'Slow down: too many requests',
+  'slow down: try again in a few minutes': 'Slow down: try again in a few minutes',
+  'slow down: try again later': 'Slow down: try again later',
+  'someone else reviews your own request': 'Someone else reviews your own request',
+  'someone without IRLY Girl joined: this plan cannot become girl-only': 'Someone without IRLY Girl joined: this plan cannot become girls-only',
+  'start again: this request is no longer open': 'Start again: this request is no longer open',
+  'that is you': 'That is you',
+  'the message no longer exists': 'This message no longer exists',
+  'the photo must be one of your own uploads': 'Pick one of your own photos',
+  'the photo must be one of your own uploads or an IRLY library photo': 'Pick one of your own photos or an IRLY library photo',
+  'the photos changed since the selfie: decline and ask for a new one': 'The photos changed since the selfie: decline and ask for a new one',
+  'these two members already have a private chat': 'These two members already have a private chat',
+  'this Live has ended': 'This Live has ended',
+  'this Live was abandoned': 'This Live was abandoned',
+  'this activity is not in this community': 'This activity is not in this community',
+  'this activity is reserved for IRLY Girl': 'This activity is reserved for IRLY Girl',
+  'this activity no longer exists': 'This activity no longer exists',
+  'this announcement was already sent this week': 'This announcement was already sent this week',
+  'this case is not about a message': 'This case is not about a message',
+  'this chat has no photo of its own': 'This chat has no photo of its own',
+  'this community is reserved for IRLY Girl': 'This community is reserved for IRLY Girl',
+  'this community no longer exists': 'This community no longer exists',
+  'this member does not accept new messages from you': 'This member does not accept new messages from you',
+  'this member is not available': 'This member is not available',
+  'this notification token belongs to another app install': GENERIC,
+  'this profile is not verified': 'This profile is not verified',
+  'this profile is private': 'This profile is private',
+  'this username is reserved': 'This username is reserved',
+  'three announcements a day at most': 'Three announcements a day at most',
+  'unknown category in this community': 'This category is not in this community',
+  'unknown role': GENERIC,
+  'unknown sanction': GENERIC,
+  'unknown service': GENERIC,
+  'unknown status': GENERIC,
+  'unpin a post first: 10 pinned at most': 'Unpin a post first: 10 pinned at most',
+  'up to 12 categories per community': 'Up to 12 categories per community',
+  'up to 5 pinned activities': 'Up to 5 pinned activities',
+  'verification is done by IRLY': 'Verification is done by IRLY',
+  'verify your profile to use Match': 'Verify your profile to use Match',
+  'what are you reporting?': 'What are you reporting?',
+  'write 3 to 500 characters': 'Write 3 to 500 characters',
+  'write a note': 'Write a note',
+  'you are not in that community': 'You are not in that community',
+  'you can create up to 3 communities a day': 'You can create up to 3 communities a day',
+  'you cannot change your own role': 'You cannot change your own role',
+  'you cannot follow yourself': 'You cannot follow yourself',
+  'you cannot report yourself': 'You cannot report yourself',
+  'you cannot sanction this member': 'You cannot sanction this member',
+  'you cannot sanction yourself': 'You cannot sanction yourself',
+  'your account is suspended': 'Your account is suspended',
+  'your selfie is being reviewed': 'Your selfie is being reviewed',
+};
+
+/**
+ * Refusals with a value in them (`raise exception '% is at most % characters'`):
+ * the regular expression, the sentence, and which capture fills {max}.
+ */
+export const SERVER_PATTERNS: [RegExp, string][] = [
+  [/^.+ is at most (\d+) characters$/, 'Too long: {max} characters at most'],
+  [/^.+ items are at most (\d+) characters$/, 'Too long: {max} characters at most'],
+  [/^.+ has too many items \(at most (\d+)\)$/, 'Too many items: {max} at most'],
+  [/^.+ is too large \(at most \d+ bytes\)$/, 'This file is too large'],
+  [/^.+ cannot be changed$/, GENERIC],
+  [/^.+ is read-only$/, GENERIC],
+  [/^unknown action .+$/, GENERIC],
+  [/^unsupported conversation kind .+$/, GENERIC],
+];
+
+/**
+ * The member-facing English sentence for a server refusal, with its {max}
+ * value, or undefined when the text is not one. Feed the result to t().
+ */
+export function serverError(message: string): { text: string; vars?: { max: string } } | undefined {
+  const m = message.trim();
+  const known = SERVER_ERRORS[m] ?? SERVER_ERRORS[m.replace(/’/g, "'")];
+  if (known) return { text: known };
+  for (const [re, text] of SERVER_PATTERNS) {
+    const hit = re.exec(m);
+    if (hit) return { text, vars: hit[1] ? { max: hit[1] } : undefined };
+  }
+  return undefined;
+}

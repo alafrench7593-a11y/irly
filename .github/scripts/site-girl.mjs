@@ -3,7 +3,8 @@
  * (/fr/girl): part of getirly.com (same menu, same app links), never a
  * second site. Its own look (pearl rose, nude and plum, editorial serif,
  * frosted glass), the palette of the app's IRLY Girl theme
- * (src/features/girl/theme.ts).
+ * (src/features/girl/theme.ts). The website stays rose: violet belongs
+ * only to IRLY Network inside the app.
  *
  * Honesty rules for this page:
  * - Every person shown is an ILLUSTRATIVE profile (example portraits from
@@ -11,7 +12,9 @@
  *   uses), labelled as such on the page. None is an IRLY member; nothing here
  *   is read from IRLY's database.
  * - A person keeps one name and one photo everywhere on the page.
- * - Photos are IRLY's own (site/img/own), women only.
+ * - Photos of people are IRLY's own (site/img/own), women only; IRLY Girl is
+ *   shown through friends together (two women, friendship, never romance).
+ *   The hero's views of Dubai, without people, are in site/img/hero.
  * - Features are described as they exist today: IRLY Match is coming soon, the
  *   iPhone and Android apps are coming soon (no store link exists), the app
  *   screens are real captures of the demo build (site/shots; the
@@ -33,6 +36,9 @@ const thumb = (k) => `/img/own/${k}-480.jpg`;
 const face = (id) => `/faces/${id}.jpg`;
 const shot = (n) => `/shots/${n}.jpg`;
 const og = (lang) => `/img/girl/og-${lang}.jpg`;
+// The hero's views of Dubai (site/img/hero, sources in site/img/hero/CREDITS.md), the first one painted first.
+const HERO = ["skyline", "arab", "marina", "desert", "creek"];
+const heroSet = (k) => `/img/hero/${k}-960.webp 960w, /img/hero/${k}-1920.webp 1920w`;
 // The publishable key of IRLY's waitlist (the same one as the home page): the server only lets it call join_waitlist().
 const WAITLIST_API = "https://yqutcmgslwxcmnsqmhvy.supabase.co/rest/v1/rpc/join_waitlist";
 const WAITLIST_KEY = "sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v";
@@ -334,7 +340,7 @@ const T = {
     tourP: "De vrais écrans de l’app, scène par scène. Utilise les flèches ou fais glisser.",
     tour: {
       label: "IRLY Girl, scène par scène",
-      note: "Écrans de la démo d’IRLY (en anglais), avec des femmes et des conversations d’exemple. Ce ne sont pas des membres d’IRLY.",
+      note: "Écrans de la démo d’IRLY, avec des femmes et des conversations d’exemple (certaines en anglais). Ce ne sont pas des membres d’IRLY.",
       prev: "Scène précédente",
       next: "Scène suivante",
       pause: "Pause",
@@ -513,10 +519,14 @@ section{position:relative;padding:72px 0;scroll-margin-top:76px}
 .label::before{content:"";flex:none;width:6px;height:6px;border-radius:6px;background:var(--rose)}
 /* ───────── Hero ───────── */
 .hero{min-height:calc(100svh - 68px);display:grid;align-items:center;padding:28px 0 48px;isolation:isolate}
-/* Hero film: Dubai at golden hour under a pearl veil, so the dark text keeps its contrast. Fades in only once it plays. */
-.hvid{position:absolute;inset:-80px 0 -40px;z-index:-2;overflow:hidden;pointer-events:none}
-.hvid video{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease}
-.hvid video.on{opacity:1}
+/* Hero: views of Dubai in a slow crossfade with a gentle Ken Burns drift, under a pearl-rose veil so the dark text keeps its contrast. */
+.hvid{position:absolute;inset:-80px 0 -40px;z-index:-2;overflow:hidden;pointer-events:none;background:var(--bg)}
+.hvid .sl{position:absolute;inset:0;opacity:0;transition:opacity 2.4s cubic-bezier(.65,0,.35,1)}
+.hvid .sl.on{opacity:1}
+.hvid img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;transform:scale(1.04);filter:saturate(.9)}
+.hvid .sl.kb img{animation:kb 17s linear both}
+.hvid .sl:nth-child(even).kb img{animation-name:kb-b}
+.hvid.paused img{animation-play-state:paused!important}
 .hvid::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(251,242,244,.78) 0%,rgba(251,242,244,.62) 45%,rgba(251,242,244,.9) 88%,#FBF2F4 100%)}
 .aura{position:absolute;inset:-80px 0 -40px;z-index:-1;overflow:hidden;pointer-events:none}
 .aura i{position:absolute;border-radius:50%;opacity:.9;animation:drift 18s ease-in-out infinite alternate}
@@ -610,9 +620,9 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .circle{position:relative;margin:0;border-radius:28px;overflow:hidden;min-height:300px;display:flex;align-items:flex-end;color:#fff;background:var(--plum);box-shadow:var(--shadow);isolation:isolate;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
 .circle img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform 1.2s var(--ease)}
 .circle::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(36,18,30,0) 30%,rgba(36,18,30,.5) 60%,rgba(36,18,30,.86))}
-.circle:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}.circle:hover img{transform:scale(1.06)}
+@media (hover:hover){.circle:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}.circle:hover img{transform:scale(1.06)}}
 .circle .em{position:absolute;top:16px;left:16px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:rgba(255,249,251,.9);box-shadow:0 6px 16px rgba(36,18,30,.2);transition:transform .5s var(--spring)}
-.circle:hover .em{transform:rotate(-10deg) scale(1.08)}
+@media (hover:hover){.circle:hover .em{transform:rotate(-10deg) scale(1.08)}}
 .circle .tag{position:absolute;top:22px;right:16px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;border-radius:999px;background:rgba(36,18,30,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#FFF6FA}
 .circle .tx{padding:22px}
 .circle h3{font-size:clamp(27px,3vw,34px);margin:0 0 6px;color:#FFF6FA}
@@ -622,7 +632,7 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .use{position:relative;margin:0;border-radius:26px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow);display:grid;grid-template-rows:auto 1fr;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
 .use .ph{aspect-ratio:4/3;overflow:hidden;background:var(--blush)}
 .use .ph img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
-.use:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}.use:hover .ph img{transform:scale(1.06)}
+@media (hover:hover){.use:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}.use:hover .ph img{transform:scale(1.06)}}
 .use .tx{padding:16px 20px 20px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;align-content:start}
 .use h3{margin:0}
 .use p{grid-column:1/-1;margin:0;color:var(--soft);font-size:15px}
@@ -661,7 +671,7 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .dph{position:relative;margin:0;border-radius:24px;overflow:hidden;background:var(--blush);aspect-ratio:3/4;box-shadow:var(--shadow)}
 .dph .dpi{position:absolute;inset:-12% 0;will-change:transform}
 .dph img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
-.dph:hover img{transform:scale(1.05)}
+@media (hover:hover){.dph:hover img{transform:scale(1.05)}}
 .dph figcaption{position:absolute;left:10px;bottom:10px;right:10px;padding:8px 12px;border-radius:14px;font-size:13px;font-weight:700;line-height:1.3;width:max-content;max-width:calc(100% - 20px)}
 .dph.wide{grid-column:1/-1;aspect-ratio:16/9}
 /* ───────── IRLY Match, coming soon: the plum panel ───────── */
@@ -700,7 +710,10 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .msgline{min-height:22px;margin:10px 4px 0;font-size:14px;color:#8E1F45;font-weight:600}
 .legal{font-size:12.5px;color:var(--soft);margin:4px 4px 0}.legal a{color:var(--rose);display:inline-block;padding:6px 0}
-.wl.loading .btn{opacity:.7;pointer-events:none}
+.wl.loading .btn{opacity:.8;pointer-events:none}
+.wl .spin{display:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
+.wl.loading .spin{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
 .done{display:none;align-items:center;gap:14px}
 .done.on{display:flex;animation:rise .5s var(--ease) both}
 .done .tick{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#D63A7E,#9E2358);color:#fff;flex:none}
@@ -715,7 +728,9 @@ img.missing{opacity:0}
 .js .reveal{opacity:0;transform:translateY(26px) scale(.985);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:var(--d,0s)}
 .js .reveal.in{opacity:1;transform:none}
 .js .reveal.zoom{transform:scale(.94)}.js .reveal.zoom.in{transform:none}
-.js .reveal.circle.in:hover,.js .reveal.use.in:hover{transform:translateY(-5px);transition-delay:0s}
+@media (hover:hover){.js .reveal.circle.in:hover,.js .reveal.use.in:hover{transform:translateY(-5px);transition-delay:0s}}
+/* Photos arrive softly instead of popping in (only those still loading when the page runs). */
+.js img.fade{opacity:0;transition:opacity .9s var(--ease),transform 1.2s var(--ease)}.js img.fade.ok{opacity:1}
 .js .steps:not(.in){--line:0}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes word{from{opacity:0;transform:translateY(.35em) rotate(2deg)}to{opacity:1;transform:none}}
@@ -724,6 +739,8 @@ img.missing{opacity:0}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(6vmax,4vmax,0) scale(1.12)}}
 @keyframes slide{to{transform:translateX(-50%)}}
+@keyframes kb{from{transform:scale(1.04) translate3d(0,0,0)}to{transform:scale(1.14) translate3d(-1.6%,-1.2%,0)}}
+@keyframes kb-b{from{transform:scale(1.14) translate3d(1.4%,-1%,0)}to{transform:scale(1.04) translate3d(0,0,0)}}
 @keyframes breathe{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.15);opacity:1}}
 @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .chip{animation:float-in .8s var(--spring) both,bob 7s ease-in-out infinite}
@@ -771,6 +788,12 @@ function page(lang) {
     const set = w0 === w1 ? `${img(k)} ${w1}w` : `${thumb(k)} ${w0}w, ${img(k)} ${w1}w`;
     return im(img(k), alt, cls, lazy, ` srcset="${set}" sizes="${sizes}" width="${w1}" height="${h1}"${extra}`);
   };
+  // The French page shows the app in French (site/shots/fr, site/img/girl/*-fr.jpg) when that capture exists.
+  const sh = (src) => {
+    if (lang !== "fr") return src;
+    const fr = src.startsWith("/shots/") ? src.replace("/shots/", "/shots/fr/") : src.replace(/\.jpg$/, "-fr.jpg");
+    return fs.existsSync(`site${fr}`) ? fr : src;
+  };
   const screen = (src, alt, lazy = true, extra = "") => im(src, alt, "", lazy, ` width="780" height="1688"${extra}`);
   const nav = [
     [t.nav.home, home(lang)],
@@ -807,7 +830,7 @@ function page(lang) {
   const H = t.hero;
   const sofia = byId("g-sofia");
   const heroHtml = `<section class="hero" aria-labelledby="h1">
-  <div class="hvid" aria-hidden="true"><video muted loop playsinline preload="none" disablepictureinpicture data-bg-s="/video/bg/girl-720" data-bg-l="/video/bg/girl-1080"></video></div>
+  <div class="hvid" id="heroBg" aria-hidden="true">${HERO.map((k, i) => (i ? `<picture class="sl" data-p="/img/hero/${k}-p.webp" data-set="${heroSet(k)}"></picture>` : `<picture class="sl on kb"><source media="(max-aspect-ratio: 4/5)" srcset="/img/hero/${k}-p.webp"><img src="/img/hero/${k}-1920.webp" srcset="${heroSet(k)}" sizes="100vw" width="1920" height="1200" alt="" fetchpriority="high" decoding="async"></picture>`)).join("")}</div>
   <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="wrap hgrid">
     <div class="hcopy">
@@ -826,9 +849,9 @@ function page(lang) {
     <div>
       <div class="hstage">
         <div class="tilt">
-          <div class="par ph-l" data-speed="-0.06" aria-hidden="true"><div class="phone"><div class="scr">${screen(shot("girl-communities"), "", false)}</div></div></div>
-          <div class="par ph-r" data-speed="-0.1" aria-hidden="true"><div class="phone"><div class="scr">${screen(shot("girl-invite"), "", false)}</div></div></div>
-          <div class="par ph-main" data-speed="0.05"><div class="phone"><div class="scr">${screen(shot("girl-home"), H.phonesAlt, false, ' fetchpriority="high"')}</div></div></div>
+          <div class="par ph-l" data-speed="-0.06" aria-hidden="true"><div class="phone"><div class="scr">${screen(sh(shot("girl-communities")), "", false)}</div></div></div>
+          <div class="par ph-r" data-speed="-0.1" aria-hidden="true"><div class="phone"><div class="scr">${screen(sh(shot("girl-invite")), "", false)}</div></div></div>
+          <div class="par ph-main" data-speed="0.05"><div class="phone"><div class="scr">${screen(sh(shot("girl-home")), H.phonesAlt, false, ' fetchpriority="high"')}</div></div></div>
           <div class="chip glass c-live" aria-hidden="true"><span class="dot"></span>${esc(H.live)}<span class="stack">${["g-ines", "g-maya", "g-amira"].map((id) => fcId(id, "", false)).join("")}</span></div>
           ${sofia ? `<div class="chip glass c-prof" aria-hidden="true">${fc(sofia, "", false)}<span>${esc(sofia.name)}<small>${esc(H.likes)}</small></span></div>` : ""}
           <div class="chip glass c-plan" aria-hidden="true">${own("brunchGirl", "", "52px", "", false)}<span>${esc(H.plan)}<small>${esc(H.planWhen)}</small></span></div>
@@ -844,7 +867,7 @@ function page(lang) {
   /* Tour: real screens with the moments they show coming alive around the phone. */
   const tt = t.tour;
   const B = tt.bubbles;
-  const scenes = tt.scenes.filter((x) => fs.existsSync(`site${x.src}`));
+  const scenes = tt.scenes.filter((x) => fs.existsSync(`site${x.src}`)).map((x) => ({ ...x, src: sh(x.src) }));
   const bub = (html, pos, i, cls = "glass") => `<div class="tb ${cls}${pos ? ` ${pos}` : ""}" style="--i:${i}">${html}</div>`;
   const who = (id, small, text) => `${fcId(id)}<span>${small ? `<small>${esc(small)}</small>` : ""}${esc(text)}</span>`;
   const layerFor = (src) => {
@@ -854,7 +877,7 @@ function page(lang) {
     if (src.endsWith("girl-post.jpg")) return B.comments.map(([id, text], i) => bub(who(id, byId(id)?.name ?? "", text), ["p1", "p2", "p3"][i], i)).join("");
     if (src.endsWith("girl-invite.jpg")) return bub(who("g-sofia", "IRLY Girl", B.invite[0]), "p1", 0) + bub(`✓ ${esc(B.invite[1])}`, "p2", 1.2, "pink pill") + bub(who("w-noor", "Yuna", B.invite[2]), "p3", 2);
     if (src.endsWith("girl-chat.jpg")) return bub(esc(B.chat[0]), "p1", 0, "glass pill") + bub(`📅 ${esc(B.chat[1])}`, "p4", 1, "pink pill");
-    if (src.endsWith("notifications.jpg")) return bub(who("w-noor", "", B.notif[0]), "p2", 0) + bub(who("g-chloe", "", B.notif[1]), "p3", 1);
+    if (src.includes("/notifications")) return bub(who("w-noor", "", B.notif[0]), "p2", 0) + bub(who("g-chloe", "", B.notif[1]), "p3", 1);
     if (src.endsWith("girl-me.jpg")) return bub(esc(B.me[0]), "p2", 0, "glass pill") + bub(`📍 ${esc(B.me[1])}`, "p3", 1, "glass pill");
     return "";
   };
@@ -927,7 +950,9 @@ function page(lang) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="preload" as="image" href="${shot("girl-home")}" fetchpriority="high">
+<link rel="preload" as="image" href="/img/hero/${HERO[0]}-1920.webp" imagesrcset="${heroSet(HERO[0])}" imagesizes="100vw" media="(min-aspect-ratio: 4/5)" fetchpriority="high">
+<link rel="preload" as="image" href="/img/hero/${HERO[0]}-p.webp" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
+<link rel="preload" as="image" href="${sh(shot("girl-home"))}">
 <style>${CSS}</style>
 <script>document.documentElement.classList.add('js')</script>
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
@@ -1012,7 +1037,7 @@ ${tourHtml}
         <label for="wl-email" class="hp">${esc(W.label)}</label>
         <input id="wl-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="${esc(W.ph)}" aria-describedby="wl-msg wl-legal">
         <input class="hp" id="wl-company" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <button class="btn" type="submit">${esc(W.btn)}</button>
+        <button class="btn" type="submit">${esc(W.btn)}<span class="spin" aria-hidden="true"></span></button>
       </div>
       <p class="msgline" id="wl-msg" role="status" aria-live="polite"></p>
       <p class="legal" id="wl-legal">${esc(W.legal)} <a href="${lang === "fr" ? "/fr/privacy" : "/privacy"}">${esc(t.privacy)}</a></p>
@@ -1060,20 +1085,53 @@ ${tourHtml}
   addEventListener('resize', onScroll, { passive: true });
   onScroll();
 
-  // Hero film: light encode on phones, 1080p on large screens; never with reduced motion or Save-Data; paused off-screen.
-  const bgVid = document.querySelector('.hvid video');
-  if (bgVid && !reduce && !(navigator.connection && navigator.connection.saveData)) {
-    const base = bgVid.dataset[matchMedia('(max-aspect-ratio: 4/5)').matches ? 'bgS' : 'bgL'];
-    bgVid.innerHTML = '<source src="' + base + '.webm" type="video/webm"><source src="' + base + '.mp4" type="video/mp4">';
-    bgVid.addEventListener('playing', () => bgVid.classList.add('on'), { once: true });
-    const play = () => { const p = bgVid.play(); if (p) p.catch(() => {}); };
-    let seen = true;
-    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { seen = e.isIntersecting; seen && !document.hidden ? play() : bgVid.pause(); }).observe(bgVid);
-    document.addEventListener('visibilitychange', () => (document.hidden || !seen ? bgVid.pause() : play()));
-    bgVid.preload = 'auto';
-    bgVid.load();
-    play();
-  } else if (bgVid) bgVid.parentNode.remove();
+  // Hero: views of Dubai fading slowly into each other. The first is painted first; the next one loads
+  // after the page, one ahead. Still with reduced motion or Save-Data, paused off-screen and in a hidden tab.
+  const heroBg = document.getElementById('heroBg');
+  const slides = heroBg ? [...heroBg.querySelectorAll('.sl')] : [];
+  if (slides.length > 1 && !reduce && !(navigator.connection && navigator.connection.saveData)) {
+    const SLIDE = 7000;
+    let cur = 0, timer = null, seen = true;
+    const fill = (sl) => {
+      if (sl.dataset.set) {
+        sl.innerHTML = '<source media="(max-aspect-ratio: 4/5)" srcset="' + sl.dataset.p + '"><img srcset="' + sl.dataset.set + '" sizes="100vw" width="1920" height="1200" alt="" decoding="async">';
+        delete sl.dataset.set;
+      }
+      return sl.querySelector('img');
+    };
+    const ready = (img) => new Promise((done) => {
+      if (img.complete && img.naturalWidth) { done(); return; }
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    }).then(() => (img.decode ? img.decode().catch(() => {}) : null));
+    const show = (n) => {
+      const prev = slides[cur], next = slides[n];
+      next.classList.remove('kb');
+      void next.offsetWidth;
+      next.classList.add('kb', 'on');
+      prev.classList.remove('on');
+      setTimeout(() => { if (!prev.classList.contains('on')) prev.classList.remove('kb'); }, 2600);
+      cur = n;
+    };
+    const step = () => {
+      clearTimeout(timer);
+      if (!seen || document.hidden) return;
+      timer = setTimeout(async () => {
+        const n = (cur + 1) % slides.length;
+        const img = fill(slides[n]);
+        await ready(img);
+        if (!seen || document.hidden || !img.naturalWidth) { step(); return; }
+        show(n);
+        fill(slides[(n + 1) % slides.length]);
+        step();
+      }, SLIDE);
+    };
+    const run = () => { const on = seen && !document.hidden; heroBg.classList.toggle('paused', !on); if (on) step(); else clearTimeout(timer); };
+    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { seen = e.isIntersecting; run(); }).observe(heroBg);
+    document.addEventListener('visibilitychange', run);
+    const start = () => { fill(slides[1]); run(); };
+    if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
+  }
 
   // Hero: the constellation leans toward a mouse pointer, very slightly.
   const stage = document.querySelector('.hstage'), tilt = document.querySelector('.tilt');
@@ -1176,6 +1234,15 @@ ${tourHtml}
       }
     });
   }
+
+  // Photos fade in as they load (only those still loading).
+  if (!reduce) document.querySelectorAll('.circle img, .use img, .dph img').forEach((img) => {
+    if (img.complete && img.naturalWidth) return;
+    img.classList.add('fade');
+    const ok = () => img.classList.add('ok');
+    img.addEventListener('load', ok, { once: true });
+    img.addEventListener('error', ok, { once: true });
+  });
 
   // Reveals: once, as each block comes into view. Steps draw their line when the list arrives.
   const els = document.querySelectorAll('.reveal');

@@ -91,6 +91,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
       <View style={[styles.wrap, { bottom, left: SIDE, width: barW }]}>
         <Glass level="thick" style={[styles.bar, { boxShadow: t.shadow.float }]}>
           <Animated.View
+            pointerEvents="none"
             style={[
               styles.indicator,
               {

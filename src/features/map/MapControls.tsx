@@ -1,8 +1,10 @@
+import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { t as tx, a11y } from '@/i18n';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { DestinationPill } from '@/components/navigation/Headers';
+import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -118,7 +120,7 @@ export function MapTopBar({
           </Glass>
         </Animated.View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
           {LAYERS.map((l) => (
             <Glass key={l.id} style={{ borderRadius: radius.pill }} border={false} intensity={blur.light}>
               <Chip size="sm" label={l.label} icon={l.icon} selected={layer === l.id} onPress={() => onLayer(l.id)} />
@@ -139,7 +141,7 @@ function ActivityFilters({ filters, onFilters, options }: { filters: MapFilters;
     </Glass>
   );
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
+    <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.layers}>
       {chip('w-any', tx('Any time'), filters.when === 'any', { ...filters, when: 'any' })}
       {chip('w-today', tx('Today'), filters.when === 'today', { ...filters, when: 'today' })}
       {chip('w-week', tx('This week'), filters.when === 'week', { ...filters, when: 'week' })}
@@ -147,6 +149,39 @@ function ActivityFilters({ filters, onFilters, options }: { filters: MapFilters;
       {options.categories.map((c) => chip(`c-${c.id}`, tx(c.label), filters.category === c.id, { ...filters, category: filters.category === c.id ? null : c.id }))}
       {options.communities.map((c) => chip(`m-${c.id}`, tx(c.name), filters.community === c.id, { ...filters, community: filters.community === c.id ? null : c.id }))}
     </ScrollView>
+  );
+}
+
+/**
+ * Nothing on the part of the map shown: said plainly (never example
+ * content). On the People layer, how to appear and why few people show.
+ */
+export function MapEmpty({ layer, bottom }: { layer: Layer; bottom: number }) {
+  const t = useTheme();
+  const router = useRouter();
+  const people = layer === 'person';
+  return (
+    <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)} style={[styles.emptyWrap, { bottom }]} pointerEvents="box-none">
+      <Glass style={[styles.empty, { boxShadow: t.shadow.float }]} intensity={blur.strong}>
+        <Icon name={people ? 'users' : 'pin'} size={20} color={t.c.textSecondary} />
+        {people ? (
+          <View style={styles.emptyText}>
+            <Text variant="titleS">Nobody to show here</Text>
+            <Text variant="caption" tone="secondary">
+              Only members who choose to appear are on the map, around their neighbourhood.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.emptyText}>
+            <Text variant="titleS">Nothing here right now</Text>
+            <Text variant="caption" tone="secondary">
+              Zoom out or move the map to see what is happening nearby.
+            </Text>
+          </View>
+        )}
+        {people ? <Button label="Settings" size="sm" variant="secondary" onPress={() => router.push('/settings')} /> : null}
+      </Glass>
+    </Animated.View>
   );
 }
 
@@ -187,7 +222,7 @@ export function ModeSwitch({ three, onChange }: { three: boolean; onChange: (thr
 export function MapButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const t = useTheme();
   return (
-    <PressableScale haptic="select" scaleTo={0.9} onPress={onPress} accessibilityLabel={label} hitSlop={4}>
+    <PressableScale haptic="select" scaleTo={0.9} repeat onPress={onPress} accessibilityLabel={label} hitSlop={4}>
       <Glass style={[styles.button, { boxShadow: t.shadow.card }]} intensity={blur.medium}>
         <Icon name={icon} size={18} color={t.c.text} />
       </Glass>
@@ -207,4 +242,7 @@ const styles = StyleSheet.create({
   modePill: { position: 'absolute', top: 4, left: 4, width: 40, height: 40, borderRadius: 20 },
   modeItem: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   button: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  emptyWrap: { position: 'absolute', left: space.gutter - 4, right: space.gutter - 4, zIndex: 4 },
+  empty: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: radius.xl, padding: 14 },
+  emptyText: { flex: 1, gap: 2 },
 });

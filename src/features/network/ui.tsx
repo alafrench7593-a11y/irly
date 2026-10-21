@@ -19,6 +19,8 @@ import { useTheme } from '@/theme/useTheme';
 import { matchSentence, roundDistance, type ProMatch, type ProProfile } from './match';
 import { INDUSTRY, INTENT, ROLE_LABEL } from './taxonomy';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { AccentFill, layered, PaneLight, useNetworkTone } from './tone';
+import { NetworkScope } from '@/theme/flavor';
 
 export const hueOf = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
 
@@ -127,13 +129,30 @@ export function ConnectAction({
   return <Button label="Connect" icon="plus" size={size} full={full} loading={busy} onPress={() => run('requested', () => proConnect(pro.userId), 'Request sent to {name}')} />;
 }
 
-/** "92%" in a black pill, with the reason underneath on cards. */
+/**
+ * "92%" in a pill of the accent (violet gradient in IRLY Girl, ink in IRLY),
+ * with the reason underneath on cards. `inverted` sits on a contrast panel.
+ */
 export function MatchPill({ percent, inverted }: { percent: number; inverted?: boolean }) {
   const t = useTheme();
+  const tone = useNetworkTone();
+  if (inverted) {
+    const bg = tone.isGirl ? '#FFFFFF' : t.c.bg;
+    const fg = tone.isGirl ? tone.accent : t.c.text;
+    return (
+      <View style={[styles.pill, { backgroundColor: bg }]}>
+        <Icon name="sparkles" size={12} color={fg} />
+        <Text variant="label" color={fg} raw>
+          {`${percent}%`}
+        </Text>
+      </View>
+    );
+  }
   return (
-    <View style={[styles.pill, { backgroundColor: inverted ? t.c.bg : t.c.text }]}>
-      <Icon name="sparkles" size={12} color={inverted ? t.c.text : t.c.bg} />
-      <Text variant="label" color={inverted ? t.c.text : t.c.bg} raw>
+    <View style={[styles.pill, layered, { overflow: 'hidden', boxShadow: tone.isGirl ? tone.glow : undefined }]}>
+      <AccentFill colors={tone.gradient} />
+      <Icon name="sparkles" size={12} color={tone.onAccent} />
+      <Text variant="label" color={tone.onAccent} raw>
         {`${percent}%`}
       </Text>
     </View>
@@ -176,6 +195,7 @@ export function ProCard({
   onConnection: (c: ProProfile['connection']) => void;
 }) {
   const t = useTheme();
+  const tone = useNetworkTone();
   const tr = useT();
   const router = useRouter();
   const where = [placeOf(pro), match?.distanceKm != null ? roundDistance(match.distanceKm) : null].filter(Boolean).join(' · ');
@@ -193,6 +213,7 @@ export function ProCard({
       style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', boxShadow: t.shadow.card }]}
     >
       <GlassLayer radius={radius.xl} />
+      <PaneLight radius={radius.xl} />
       <View style={styles.head}>
         <Avatar name={pro.firstName} hue={hueOf(pro.userId)} size={56} photo={photo} />
         <View style={{ flex: 1, gap: 2 }}>
@@ -233,8 +254,8 @@ export function ProCard({
         {skills.map((s) => {
           const shared = sharedSkill(s);
           return (
-            <View key={s} style={[styles.tag, { maxWidth: '100%', borderColor: shared ? t.c.text : t.c.line, backgroundColor: shared ? t.c.text : 'transparent' }]}>
-              <Text variant="caption" color={shared ? t.c.bg : t.c.textSecondary} numberOfLines={1}>
+            <View key={s} style={[styles.tag, { maxWidth: '100%', borderColor: shared ? tone.accent : t.c.line, backgroundColor: shared ? tone.accent : 'transparent' }]}>
+              <Text variant="caption" color={shared ? tone.onAccent : t.c.textSecondary} numberOfLines={1}>
                 {s}
               </Text>
             </View>
@@ -243,14 +264,14 @@ export function ProCard({
       </View>
       {goals.length ? (
         <View style={styles.whereRow}>
-          <Icon name="target" size={12} color={t.c.textSecondary} />
+          <Icon name="target" size={12} color={tone.accent} />
           <Text variant="caption" tone="secondary" numberOfLines={1} raw style={{ flexShrink: 1 }}>
             {tr('You both: {what}', { what: goals.map((g) => `${INTENT[g].emoji} ${tr(INTENT[g].label)}`).join(', ') })}
           </Text>
         </View>
       ) : null}
       {match ? (
-        <View style={[styles.why, { backgroundColor: t.c.bg }]}>
+        <View style={[styles.why, { backgroundColor: tone.soft, borderColor: tone.softLine }]}>
           <Text variant="caption" numberOfLines={3} raw>
             <Text variant="caption" style={{ fontWeight: '700' }} raw>
               {tr('{n}% match', { n: match.percent })}
@@ -285,15 +306,26 @@ const styles = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 28, paddingHorizontal: 10, borderRadius: radius.pill },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tag: { height: 26, paddingHorizontal: 10, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, justifyContent: 'center' },
-  why: { padding: 12, borderRadius: radius.md },
+  why: { padding: 12, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: space[1] },
 });
 
 /** The way into professional networking, from the Networking category, Business and your profile. */
+/** The door to IRLY Network: already in Network's colours (violet in IRLY Girl). */
 export function NetworkDoor({ style }: { style?: object }) {
-  const t = useTheme();
+  return (
+    <NetworkScope>
+      <NetworkDoorCard style={style} />
+    </NetworkScope>
+  );
+}
+
+function NetworkDoorCard({ style }: { style?: object }) {
+  const tone = useNetworkTone();
   const tr = useT();
   const router = useRouter();
+  // IRLY Girl: the deep violet panel; IRLY: the ink panel. Same door, own identity.
+  const fg = tone.onPanel;
   return (
     <PressableScale
       haptic="tap"
@@ -301,23 +333,24 @@ export function NetworkDoor({ style }: { style?: object }) {
       onPress={() => router.push('/network')}
       accessibilityRole="button"
       accessibilityLabel={tr('Professionals: meet founders, freelancers and investors')}
-      style={[doorStyles.door, { backgroundColor: t.c.text }, style]}
+      style={[doorStyles.door, layered, { overflow: 'hidden', boxShadow: tone.isGirl ? tone.glow : undefined }, style]}
     >
-      <View style={[doorStyles.icon, { borderColor: t.c.bg }]}>
-        <Icon name="network" size={20} color={t.c.bg} />
+      <AccentFill colors={tone.panel} />
+      <View style={[doorStyles.icon, { borderColor: fg }]}>
+        <Icon name="network" size={20} color={fg} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="overline" color={t.c.bg} style={{ opacity: 0.7 }}>
+        <Text variant="overline" color={fg} style={{ opacity: 0.7 }}>
           Networking
         </Text>
-        <Text variant="titleM" color={t.c.bg}>
+        <Text variant="titleM" color={fg}>
           Professionals
         </Text>
-        <Text variant="bodyS" color={t.c.bg} style={{ opacity: 0.75 }} numberOfLines={2}>
+        <Text variant="bodyS" color={fg} style={{ opacity: 0.75 }} numberOfLines={2}>
           Founders, freelancers, investors. See your match, connect, meet IRL.
         </Text>
       </View>
-      <Icon name="arrowRight" size={20} color={t.c.bg} />
+      <Icon name="arrowRight" size={20} color={fg} />
     </PressableScale>
   );
 }

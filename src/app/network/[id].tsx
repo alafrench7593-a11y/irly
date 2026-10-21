@@ -27,10 +27,21 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
+import { AccentFill, layered, useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 /** A professional's profile: who they are, what they build, why you fit. */
+/** Network pages are violet in IRLY Girl, grey in IRLY (see NetworkScope). */
 export default function ProProfileScreen() {
+  return (
+    <NetworkScreen>
+      <ProProfileScreenPage />
+    </NetworkScreen>
+  );
+}
+
+function ProProfileScreenPage() {
   const t = useTheme();
+  const tone = useNetworkTone();
   const tr = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -74,8 +85,8 @@ export default function ProProfileScreen() {
               {pro.company ? `${pro.jobTitle} · ${pro.company}` : pro.jobTitle}
             </Text>
             <View style={styles.row}>
-              <View style={[styles.role, { borderColor: t.c.text }]}>
-                <Text variant="caption">{ROLE_LABEL[pro.role]}</Text>
+              <View style={[styles.role, { borderColor: tone.softLine, backgroundColor: tone.soft }]}>
+                <Text variant="caption" color={tone.isGirl ? tone.accent : undefined}>{ROLE_LABEL[pro.role]}</Text>
               </View>
               <Icon name="pin" size={13} color={t.c.textTertiary} />
               <Text variant="caption" tone="tertiary" raw>
@@ -86,10 +97,11 @@ export default function ProProfileScreen() {
         </View>
 
         {match ? (
-          <Animated.View entering={enter.rise(2)} style={[styles.card, { backgroundColor: t.c.text }]}>
+          <Animated.View entering={enter.rise(2)} style={[styles.card, layered, { overflow: 'hidden', boxShadow: tone.isGirl ? tone.glow : t.shadow.card }]}>
+            <AccentFill colors={tone.panel} />
             <View style={styles.row}>
               <MatchPill percent={match.percent} inverted />
-              <Text variant="label" color={t.c.bg}>
+              <Text variant="label" color={tone.onPanel}>
                 Why you should meet
               </Text>
             </View>
@@ -98,15 +110,15 @@ export default function ProProfileScreen() {
                 const s = reasonText(r, tr);
                 return (
                   <View key={r.kind + s} style={styles.reason}>
-                    <View style={[styles.dot, { backgroundColor: t.c.bg }]} />
-                    <Text variant="body" color={t.c.bg} style={{ flex: 1 }} raw>
+                    <View style={[styles.dot, { backgroundColor: tone.isGirl ? '#C9B6FF' : tone.onPanel }]} />
+                    <Text variant="body" color={tone.onPanel} style={{ flex: 1 }} raw>
                       {s.charAt(0).toUpperCase() + s.slice(1)}
                     </Text>
                   </View>
                 );
               })
             ) : (
-              <Text variant="body" color={t.c.bg}>
+              <Text variant="body" color={tone.onPanel}>
                 Different worlds: sometimes the best intros.
               </Text>
             )}
@@ -145,8 +157,8 @@ export default function ProProfileScreen() {
               {pro.skills.map((s) => {
                 const shared = me.pro?.skills.some((x) => x.toLowerCase() === s.toLowerCase());
                 return (
-                  <View key={s} style={[styles.tag, { borderColor: shared ? t.c.text : t.c.line, backgroundColor: shared ? t.c.text : t.c.surface }]}>
-                    <Text variant="label" color={shared ? t.c.bg : undefined} raw>
+                  <View key={s} style={[styles.tag, { borderColor: shared ? tone.accent : t.c.line, backgroundColor: shared ? tone.accent : tone.soft }]}>
+                    <Text variant="label" color={shared ? tone.onAccent : undefined} raw>
                       {s}
                     </Text>
                   </View>
@@ -165,7 +177,7 @@ export default function ProProfileScreen() {
               {pro.intents.map((i) => {
                 const shared = me.pro?.intents.includes(i);
                 return (
-                  <View key={i} style={[styles.tag, { borderColor: shared ? t.c.text : t.c.line, backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                  <View key={i} style={[styles.tag, { borderColor: shared ? tone.accent : t.c.line, backgroundColor: 'transparent', overflow: 'hidden' }]}>
                     <GlassLayer radius={radius.pill} />
                     <Text variant="label" raw>{`${INTENT[i].emoji} ${tr(INTENT[i].label)}`}</Text>
                   </View>

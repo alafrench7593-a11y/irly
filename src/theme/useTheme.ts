@@ -3,8 +3,8 @@ import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useStore } from '@/state/store';
 import { lights, type Light, type LightId } from './lights';
-import { useFlavor, type FlavorId } from './flavor';
-import { elevation, girlElevation, girlPalette, palettes, type Mode, type Palette } from './tokens';
+import { useFlavor, useNetworkScope, type FlavorId } from './flavor';
+import { elevation, girlElevation, girlPalette, networkGirlPalette, palettes, type Mode, type Palette } from './tokens';
 
 export type Theme = {
   mode: Mode;
@@ -16,6 +16,8 @@ export type Theme = {
   isDay: boolean;
   /** mixte or girl: same components, the identity of the experience. */
   flavor: FlavorId;
+  /** Inside IRLY Network: violet in IRLY Girl (see NetworkScope). */
+  network: boolean;
 };
 
 /**
@@ -28,12 +30,13 @@ export function resolveMode(appearance: 'auto' | 'day' | 'night', cityId: CityId
   return appearance === 'day' ? 'day' : 'night';
 }
 
-export function buildTheme(mode: Mode, lightId: LightId, flavor: FlavorId = 'mixte'): Theme {
+export function buildTheme(mode: Mode, lightId: LightId, flavor: FlavorId = 'mixte', network = false): Theme {
   if (flavor === 'girl') {
-    const rose = girlPalette.brand;
-    const light: Light = { ...lights[lightId], accent: rose, accentDay: rose, accentSoft: girlPalette.brandSoft };
+    const c = network ? networkGirlPalette : girlPalette;
+    const rose = c.brand;
+    const light: Light = { ...lights[lightId], accent: rose, accentDay: rose, accentSoft: c.brandSoft };
     // IRLY Girl stays light whatever the appearance setting: its identity is the rose-white ground.
-    return { mode: 'day', c: girlPalette, light, accent: rose, shadow: girlElevation, isDay: true, flavor };
+    return { mode: 'day', c, light, accent: rose, shadow: girlElevation, isDay: true, flavor, network };
   }
   // The destination keeps its sky (onboarding, portal transition) but no
   // longer tints the interface: accents are white, colour is reserved for
@@ -48,6 +51,7 @@ export function buildTheme(mode: Mode, lightId: LightId, flavor: FlavorId = 'mix
     shadow: elevation[mode],
     isDay: mode === 'day',
     flavor,
+    network,
   };
 }
 
@@ -62,5 +66,6 @@ export function useTheme(override?: { mode?: Mode; light?: LightId }): Theme {
   const mode = override?.mode ?? resolveMode(appearance, onboarded ? cityId : null);
   const lightId: LightId = override?.light ?? (cityId ? CITIES[cityId].light : 'dubai');
   const flavor = useFlavor();
-  return useMemo(() => buildTheme(mode, lightId, flavor), [mode, lightId, flavor]);
+  const network = useNetworkScope();
+  return useMemo(() => buildTheme(mode, lightId, flavor, network), [mode, lightId, flavor, network]);
 }

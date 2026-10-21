@@ -269,7 +269,7 @@ export default function Discover() {
           </View>
         </Animated.ScrollView>
       ) : (
-        <Animated.ScrollView
+        <Animated.ScrollView keyboardShouldPersistTaps="handled"
           ref={pager}
           horizontal
           pagingEnabled

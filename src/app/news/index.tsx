@@ -54,7 +54,7 @@ export default function NewsScreen() {
             <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search the news')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} accessibilityLabel={a11y('Search the news')} />
           </View>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
           <Chip size="sm" label={tx('Latest')} selected={!category && !saved} onPress={() => (setCategory(null), setSaved(false))} />
           <Chip size="sm" icon="bookmark" label={tx('Saved')} selected={saved} onPress={() => setSaved(!saved)} />
           {NEWS_CATEGORIES.map((c) => (

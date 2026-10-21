@@ -299,7 +299,7 @@ function C({ label, on, onPress, girl: g }: { label: string; on: boolean; onPres
 
 function Row({ children }: { children: React.ReactNode }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {children}
     </ScrollView>
   );

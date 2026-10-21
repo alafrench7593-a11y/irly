@@ -5,6 +5,7 @@ import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { t as tx } from '@/i18n';
 import { toast } from '@/components/ui/Toast';
 import { useServerInbox } from '@/features/server/chat';
 import { openDirect, copyLink, shareNative, shareToChat, type TargetType } from '@/features/server/engage';
@@ -147,7 +148,7 @@ function Row({ title, subtitle, done, onPress, avatar }: { title: string; subtit
         disabled={done}
         haptic="select"
         style={[styles.send, { backgroundColor: done ? t.c.surface : t.c.brand }]}
-        accessibilityLabel={done ? 'Sent' : `Send to ${title}`}
+        accessibilityLabel={done ? 'Sent' : tx('Send to {name}', { name: title })}
       >
         <Text variant="label" color={done ? t.c.text : t.c.onBrand}>
           {done ? 'Sent' : 'Send'}

@@ -1,11 +1,11 @@
-import { memo, useEffect, useRef, type ReactNode } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import type { HapticKind } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
-import { girlElevation, radius } from '@/theme/tokens';
+import { girlElevation, networkGirl, radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
@@ -63,17 +63,6 @@ export const Button = memo(function Button({
   }, [variant, pulse]);
 
   const animated = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
-  // A double tap fires once: the second press lands before `loading`/`disabled` re-render
-  // (or on a plain navigation, which never sets them) and would push a screen twice.
-  const lastPress = useRef(0);
-  const press = onPress
-    ? () => {
-        const now = Date.now();
-        if (now - lastPress.current < 450) return;
-        lastPress.current = now;
-        onPress();
-      }
-    : undefined;
 
   const night = t.mode === 'night';
   const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string; shadow?: string }> = {
@@ -93,7 +82,7 @@ export const Button = memo(function Button({
   if (girlFlavor) {
     // IRLY Girl: a luminous rose primary with its own glow, a dark plum
     // glass secondary with pearl text, bordeaux for destructive actions.
-    palette.primary = { bg: t.c.brand, fg: '#FFFFFF', shadow: girlElevation.glow };
+    palette.primary = { bg: t.c.brand, fg: '#FFFFFF', shadow: t.network ? networkGirl.glow : girlElevation.glow };
     palette.secondary = { bg: 'transparent', fg: '#FFF6FA', shadow: girlElevation.plum };
     palette.danger = { bg: t.c.critical, fg: '#FFFFFF', shadow: girlElevation.card };
   }
@@ -106,8 +95,10 @@ export const Button = memo(function Button({
 
   return (
     <Animated.View style={[full ? styles.full : null, animated, style]}>
+      {/* A double tap fires once: PressableScale drops the second press (it lands before
+          `loading`/`disabled` re-render, or on a plain navigation that never sets them). */}
       <PressableScale
-        onPress={press}
+        onPress={onPress}
         disabled={disabled || loading}
         haptic={haptic}
         accessibilityLabel={label}
@@ -130,7 +121,7 @@ export const Button = memo(function Button({
         {glassy ? <Glass level="thin" dark={variant === 'glass'} variant={girlFlavor && variant === 'secondary' ? 'plum' : undefined} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} /> : null}
         {girlPrimary ? (
           <>
-            <LinearGradient colors={GIRL_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
+            <LinearGradient colors={t.network ? networkGirl.gradient : GIRL_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
             {/* Depth: light pooled in the top half and a thin pearl rim, like lacquer. */}
             <LinearGradient colors={['rgba(255,255,255,0.26)', 'rgba(255,255,255,0)']} locations={[0, 0.55]} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} pointerEvents="none" />
             <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.girlRim, { borderRadius: radius.pill }]} />

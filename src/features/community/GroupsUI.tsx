@@ -67,7 +67,7 @@ export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChan
           {tx('{n} topics', { n: groups.length })}
         </Text>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
         {groups.map((g, i) => (
           <Animated.View key={g.id} entering={enter.slide(Math.min(i, 6))}>
             <PressableScale
@@ -431,7 +431,7 @@ export function SpaceChips({
   if (!channels.length && !canManage) return null;
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
         <Chip size="sm" label={tx('General')} selected={value === null} onPress={() => onChange(null)} />
         {channels.map((c) => (
           <Chip key={c.id} size="sm" label={c.name} selected={value === c.slug} onPress={() => onChange(c.slug)} />

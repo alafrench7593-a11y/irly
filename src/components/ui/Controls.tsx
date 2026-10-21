@@ -16,7 +16,7 @@ import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { SelectionLayers, useSelection } from '@/motion/Selection';
 import { spring } from '@/motion/tokens';
-import { font, radius, space } from '@/theme/tokens';
+import { font, radius, space, networkGirl } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Glass } from './Glass';
 import { Icon, type IconName } from './Icon';
@@ -115,7 +115,7 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
   // IRLY Girl: a pearl glass pill at rest; chosen, it floods with plum and the
   // label turns pearl (selection reads apart from the rose of the main action).
   const girlFlavor = t.flavor === 'girl' && !onDark;
-  const fill = girlFlavor ? GIRL_PLUM : t.c.brand;
+  const fill = girlFlavor ? (t.network ? networkGirl.plum : GIRL_PLUM) : t.c.brand;
   const onFill = girlFlavor ? '#FFF6FA' : t.c.onBrand;
   const content = (fg: string, iconColor: string) => (
     <>
@@ -140,7 +140,7 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
               {content(t.c.text, dot ?? t.c.text)}
             </View>
           }
-          chosen={<View style={[box, { borderColor: girlFlavor ? 'rgba(255,205,226,0.28)' : t.c.brand }]}>{content(onFill, onFill)}</View>}
+          chosen={<View style={[box, { borderColor: girlFlavor ? (t.network ? 'rgba(201,182,255,0.30)' : 'rgba(255,205,226,0.28)') : t.c.brand }]}>{content(onFill, onFill)}</View>}
         />
       </PressableScale>
     </Animated.View>
@@ -447,13 +447,14 @@ export function GirlFieldFrame({
   const rest = 'rgba(255,255,255,0.85)';
   const brand = t.c.brand;
   const critical = t.c.critical;
+  const focusRing = t.network ? 'rgba(139,92,246,0.40)' : RING;
   const shell = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   const edge = useAnimatedStyle(() => ({
     borderColor: e.value > 0.01 ? interpolateColor(e.value, [0, 1], [brand, critical]) : interpolateColor(f.value, [0, 1], [rest, brand]),
   }));
   const ring = useAnimatedStyle(() => ({
     opacity: Math.max(f.value, e.value),
-    borderColor: e.value > 0.5 ? RING_ERROR : RING,
+    borderColor: e.value > 0.5 ? RING_ERROR : focusRing,
     transform: [{ scale: 0.985 + 0.015 * Math.max(f.value, e.value) }],
   }));
   return (

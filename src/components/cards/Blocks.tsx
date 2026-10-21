@@ -43,7 +43,7 @@ export function Rail({ children, itemWidth, gap = 12 }: { children: ReactNode; i
     x.set(e.contentOffset.x);
   });
   return (
-    <Animated.ScrollView
+    <Animated.ScrollView keyboardShouldPersistTaps="handled"
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: space.gutter, gap }}

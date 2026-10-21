@@ -1,7 +1,8 @@
 import type { City } from '@/data/types';
+import { formatNumber, t as tx } from '@/i18n';
 
 export function formatPrice(amount: number, currency: City['currency']): string {
-  if (amount === 0) return 'Free';
+  if (amount === 0) return tx('Free');
   if (currency === 'IDR') {
     if (amount >= 1_000_000) {
       const m = amount / 1_000_000;
@@ -9,7 +10,7 @@ export function formatPrice(amount: number, currency: City['currency']): string 
     }
     return `IDR ${Math.round(amount / 1000)}K`;
   }
-  return `AED ${amount.toLocaleString('en-US')}`;
+  return `AED ${formatNumber(amount)}`;
 }
 
 export function formatCount(n: number): string {

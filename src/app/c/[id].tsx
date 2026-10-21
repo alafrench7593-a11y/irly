@@ -185,7 +185,7 @@ function CommunityScreen() {
             <Text variant="overline" tone="accent">
               {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
             </Text>
-            <Text variant="displayM">{c.name}</Text>
+            <Text variant="displayM" raw={!c.official}>{c.name}</Text>
             {c.tagline ? (
               <Text variant="body" tone="secondary">
                 {c.tagline}
@@ -305,7 +305,7 @@ function CommunityScreen() {
                           .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
                       }
                       isMember={c.isMember}
-                      plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo) : null}
+                      plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo, tx) : null}
                       onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
                       onRemove={() => feed.remove(p).then(() => toast('Post removed', 'check', 'brand')).catch(() => toast('Could not remove', 'x', 'live'))}
                       onPlan={(d) => createPlan({ ...d, title: `${d.title} · ${c.name}`.slice(0, 80) })}
@@ -376,7 +376,7 @@ function CommunityScreen() {
 
             {tab === 'about' ? (
               <View style={[styles.pad, { gap: 10 }]}>
-                <Text variant="body">{c.description ?? c.tagline ?? tx('A community on IRLY.')}</Text>
+                <Text variant="body" raw={!c.official}>{c.description ?? c.tagline ?? tx('A community on IRLY.')}</Text>
                 <Text variant="caption" tone="tertiary">
                   Members post, plan activities and talk in the community chat. Be kind: posts can be reported and removed by the community’s hosts.
                 </Text>
@@ -426,7 +426,7 @@ function Assistant({
   const [busy, setBusy] = useState(false);
 
   const ask = (input: string) => {
-    const r = communityAssist(input, { communityName: name, categoryId, geo, activityLabel: (id) => ACTIVITIES[id as keyof typeof ACTIVITIES]?.label });
+    const r = communityAssist(input, { communityName: name, categoryId, geo, activityLabel: (id) => { const l = ACTIVITIES[id as keyof typeof ACTIVITIES]?.label; return l ? tx(l) : undefined; }, tx });
     setResult(r);
     setDigest(null);
     setDraft(r.kind === 'plan' ? r.draft : null);
@@ -467,7 +467,7 @@ function Assistant({
           <Icon name="send" size={18} color={t.c.text} />
         </PressableScale>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
         {chips.map((q) => (
           <Chip key={q} size="sm" label={tx(q)} onPress={() => ask(tx(q))} />
         ))}
@@ -476,12 +476,12 @@ function Assistant({
       {result?.kind === 'plan' && draft ? (
         <Animated.View entering={FadeInDown.springify(380)} style={{ gap: 10 }}>
           <Text variant="titleS">{draft.title}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {(['today', 'tomorrow', 'sat', 'sun', 'next_week'] as Day[]).map((d) => (
               <Chip key={d} size="sm" label={d === 'sat' ? tx('Saturday') : d === 'sun' ? tx('Sunday') : tx(planDay(d))} selected={(draft.day ?? 'today') === d} onPress={() => setDraft({ ...draft, day: d })} />
             ))}
           </ScrollView>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {['08:00', '09:00', '11:00', '16:00', '18:00', '19:30'].map((h) => (
               <Chip key={h} size="sm" label={h} selected={draft.time === h} onPress={() => setDraft({ ...draft, time: h })} />
             ))}
@@ -497,8 +497,12 @@ function Assistant({
               setBusy(true);
               const asked = result;
               const typed = text;
-              const ok = await onPlan(draft);
-              setBusy(false);
+              let ok = false;
+              try {
+                ok = await onPlan(draft);
+              } finally {
+                setBusy(false);
+              }
               if (!ok) return;
               // Clear only this plan: a question asked meanwhile keeps its answer.
               setResult((r) => (r === asked ? null : r));
@@ -510,7 +514,7 @@ function Assistant({
 
       {result?.kind === 'poll' ? (
         <View style={{ gap: 8 }}>
-          <Text variant="titleS">{result.question}</Text>
+          <Text variant="titleS" raw>{result.question}</Text>
           <Text variant="bodyS" tone="secondary">
             {result.options.join(' · ')}
           </Text>
@@ -673,7 +677,7 @@ function PostCard({
       <View style={styles.row}>
         <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
         <View style={{ flex: 1 }}>
-          <Text variant="titleS">{p.mine ? tx('You') : p.firstName}</Text>
+          <Text variant="titleS" raw>{p.mine ? tx('You') : p.firstName}</Text>
           <Text variant="caption" tone="tertiary">
             {p.pending ? tx('Sending…') : timeAgo(Math.max(0, Math.round((now - p.createdAt) / 60000)))}
           </Text>
