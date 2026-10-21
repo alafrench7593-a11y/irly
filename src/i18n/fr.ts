@@ -4774,4 +4774,17 @@ export const fr: Record<string, string> = {
   'This Live has ended': 'Ce live est terminé',
   'Only the host can cancel this activity': 'Seul l’organisateur peut annuler cette activité',
   'Only the host can edit this activity': 'Seul l’organisateur peut modifier cette activité',
+  // IRLY Map: people who chose to appear, empty states.
+  '{n} people here. Zoom in': '{n} personnes ici. Zoome',
+  'Allow location for IRLY to appear on the map': 'Autorise la localisation pour IRLY pour apparaître sur la carte',
+  'Choose « Neighbourhood » for your location to appear on the map': 'Choisis « Quartier » pour ta localisation pour apparaître sur la carte',
+  'Nobody to show here': 'Personne à afficher ici',
+  'Nothing here right now': 'Rien ici pour le moment',
+  'Off unless you turn it on. Only your neighbourhood is shown, never your exact position, and only to members your profile settings allow.': 'Désactivé tant que tu ne l’actives pas. Seul ton quartier est affiché, jamais ta position exacte, et seulement aux membres autorisés par tes réglages de profil.',
+  'Only members who choose to appear are on the map, around their neighbourhood.': 'Seuls les membres qui choisissent d’apparaître sont sur la carte, autour de leur quartier.',
+  'Show me on the IRLY Girl map': 'M’afficher sur la carte IRLY Girl',
+  'Show me on the IRLY map': 'M’afficher sur la carte IRLY',
+  'Shown around their neighbourhood, never at an exact place.': 'Affiché autour de son quartier, jamais à un endroit précis.',
+  'Zoom out or move the map to see what is happening nearby.': 'Dézoome ou déplace la carte pour voir ce qui se passe autour.',
+  'On the map': 'Sur la carte',
 };

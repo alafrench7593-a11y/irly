@@ -1,3 +1,4 @@
+import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
@@ -11,7 +12,9 @@ import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { phonePermission, registerPush, type PushState } from '@/features/push/push';
 import { t as tx, useLang, a11y } from '@/i18n';
+import { changed } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
+import { useAppSpace } from '@/state/appSpace';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
@@ -26,6 +29,8 @@ type Safety = {
   location_precision: 'area' | 'city' | 'hidden';
   show_active: boolean;
 };
+/** Appearing on the map (IRLY, IRLY Girl): off until the member turns it on. Read apart, so an older server never blocks the page. */
+type MapVisibility = { map_visible: boolean; map_visible_girl: boolean };
 const DEFAULTS: Safety = { profile_visibility: 'everyone', irl_visibility: 'friends', activity_visibility: 'everyone', location_precision: 'area', show_active: false };
 
 const GROUPS: { label: string; kinds: string[] }[] = [
@@ -69,6 +74,8 @@ function SettingsScreen() {
   const account = useAccount();
   const uid = account?.userId;
   const [safety, setSafety] = useState<Safety>(DEFAULTS);
+  const [mapVis, setMapVis] = useState<MapVisibility | null>(null);
+  const girlSpace = useAppSpace() === 'girl';
   const [muted, setMuted] = useState<string[]>([]);
   const [push, setPush] = useState(true);
   const [previews, setPreviews] = useState(true);
@@ -84,7 +91,10 @@ function SettingsScreen() {
       supabase.from('notification_prefs').select('muted_kinds, push_enabled, push_previews').eq('user_id', uid).maybeSingle(),
     ]);
     if (s.error || n.error) throw new Error(s.error?.message ?? n.error?.message);
-    return { safety: { ...DEFAULTS, ...(s.data ?? {}) } as Safety, muted: (n.data?.muted_kinds as string[]) ?? [], push: (n.data?.push_enabled as boolean | undefined) ?? true, previews: (n.data?.push_previews as boolean | undefined) ?? true };
+    // Without these columns (server not updated yet) the map rows are simply not shown.
+    const m = await supabase.from('safety_settings').select('map_visible, map_visible_girl').eq('user_id', uid).maybeSingle();
+    const map: MapVisibility | null = m.error ? null : { map_visible: Boolean(m.data?.map_visible), map_visible_girl: Boolean(m.data?.map_visible_girl) };
+    return { map, safety: { ...DEFAULTS, ...(s.data ?? {}) } as Safety, muted: (n.data?.muted_kinds as string[]) ?? [], push: (n.data?.push_enabled as boolean | undefined) ?? true, previews: (n.data?.push_previews as boolean | undefined) ?? true };
   }, [uid]);
 
   const [failed, setFailed] = useState(false);
@@ -103,6 +113,7 @@ function SettingsScreen() {
         safetyNow.current = r.safety;
         mutedNow.current = r.muted;
         setSafety(r.safety);
+        setMapVis(r.map);
         setMuted(r.muted);
         setPush(r.push);
         setPreviews(r.previews);
@@ -153,6 +164,33 @@ function SettingsScreen() {
     safetyNow.current = { ...safetyNow.current, ...patch };
     setSafety(safetyNow.current);
     enqueue(() => supabase!.from('safety_settings').upsert({ user_id: uid, ...safetyNow.current, updated_at: new Date().toISOString() }));
+  };
+
+  /**
+   * Appear on the map, at neighbourhood level only. Turning it on needs the
+   * location allowed on this device and « Neighbourhood » above (the server
+   * shows nobody whose location is « City only » or « Hidden »).
+   */
+  const toggleMap = async (key: keyof MapVisibility, on: boolean) => {
+    if (!supabase || !uid || notReady() || !mapVis) return;
+    if (on) {
+      if (safetyNow.current.location_precision !== 'area') {
+        toast('Choose « Neighbourhood » for your location to appear on the map', 'pin', 'brand');
+        return;
+      }
+      const perm = await Location.requestForegroundPermissionsAsync().catch(() => null);
+      if (perm?.status !== 'granted') {
+        toast('Allow location for IRLY to appear on the map', 'pin', 'brand');
+        return;
+      }
+    }
+    setMapVis((v) => (v ? { ...v, [key]: on } : v));
+    enqueue(async () => {
+      const res = await supabase!.from('safety_settings').upsert({ user_id: uid, [key]: on, updated_at: new Date().toISOString() });
+      // The map (here and on the member's other screens) follows at once.
+      if (!res.error) changed('people');
+      return res;
+    });
   };
 
   // Push on this account's phones; turning it on also asks this phone's permission.
@@ -223,6 +261,23 @@ function SettingsScreen() {
             ))}
           </View>
         </Animated.View>
+        {mapVis ? (
+          <Animated.View entering={enter.rise(5, 60)} style={{ gap: 8 }}>
+            <View style={styles.group}>
+              <GlassLayer radius={radius.xl} />
+              <Row label="Show me on the IRLY map" value={mapVis.map_visible} onChange={(v) => toggleMap('map_visible', v)} />
+              {girlSpace ? (
+                <>
+                  <Divider inset={16} />
+                  <Row label="Show me on the IRLY Girl map" value={mapVis.map_visible_girl} onChange={(v) => toggleMap('map_visible_girl', v)} />
+                </>
+              ) : null}
+            </View>
+            <Text variant="caption" tone="secondary">
+              Off unless you turn it on. Only your neighbourhood is shown, never your exact position, and only to members your profile settings allow.
+            </Text>
+          </Animated.View>
+        ) : null}
         <Animated.View entering={enter.rise(5, 60)} style={styles.group}>
           <GlassLayer radius={radius.xl} />
           <Row label="Show when I'm active" value={safety.show_active} onChange={(v) => saveSafety({ show_active: v })} />

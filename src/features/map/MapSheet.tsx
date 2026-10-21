@@ -169,6 +169,8 @@ export function MapSheet({
 function label(m: MapMarkerData) {
   switch (m.type) {
     case 'person':
+      // A member who chose to appear (no availability is known for her).
+      if (m.userId) return 'On the map';
       return m.color === '#32D74B' ? 'Available now' : 'Available later';
     case 'activity':
       return 'Activity';
@@ -187,6 +189,8 @@ function Lead({ marker }: { marker: MapMarkerData }) {
   const t = useTheme();
   const p = marker.personId ? findPerson(marker.personId) : undefined;
   if (p) return <Avatar name={p.name} hue={p.hue} size={48} verified={p.verified} online={p.online} photo={p.photo} />;
+  // A member: her own profile photo, read by her id (the same everywhere in IRLY).
+  if (marker.userId) return <Avatar name={marker.title} hue={0} size={48} userId={marker.userId} />;
   return (
     <View style={[styles.lead, { backgroundColor: t.c.overlay }]}>
       <Icon name={marker.icon} size={22} color={marker.color} />
@@ -195,12 +199,31 @@ function Lead({ marker }: { marker: MapMarkerData }) {
 }
 
 function HalfContent({ marker }: { marker: MapMarkerData }) {
+  const t = useTheme();
   const router = useRouter();
   const joined = useStore((s) => Boolean(s.joined[marker.id]));
   const me = useStore((s) => s.profile.name) || 'You';
   const myPhoto = useStore((s) => s.profile.photoUri);
   const going = peopleByIds(marker.goingIds ?? []).slice(0, 4);
   const person = marker.personId ? findPerson(marker.personId) : undefined;
+  if (marker.userId) {
+    const userId = marker.userId;
+    return (
+      <View style={{ gap: space[5] }}>
+        <View style={styles.row}>
+          <Icon name="pin" size={16} color={t.c.textSecondary} />
+          <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
+            Shown around their neighbourhood, never at an exact place.
+          </Text>
+        </View>
+        <View style={styles.actions}>
+          <View style={{ flex: 1 }}>
+            <Button label="View profile" iconRight="arrowUpRight" size="lg" full onPress={() => router.push(`/person/${userId}`)} />
+          </View>
+        </View>
+      </View>
+    );
+  }
   if (person) {
     return (
       <View style={{ gap: space[5] }}>
