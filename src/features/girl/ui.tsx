@@ -170,12 +170,12 @@ export function GSection({ title, hint, children }: { title: string; hint?: stri
  * icon), or plum with a pearl icon (`plum`), or bordeaux-tinted for errors.
  */
 export const GIconWell = memo(function GIconWell({ icon, size = 44, tone = 'pearl' }: { icon: IconName; size?: number; tone?: 'pearl' | 'plum' | 'error' }) {
-  const colors = tone === 'plum' ? girl.plumGradient : tone === 'error' ? (['#FBE9EE', '#F6D6E0'] as const) : (['#FFFFFF', '#EDE7FF'] as const);
+  const colors = tone === 'plum' ? girl.plumGradient : tone === 'error' ? (['#FBE9EE', '#F6D6E0'] as const) : (['#FFFFFF', '#F6E1E8'] as const);
   const fg = tone === 'plum' ? girl.pearl : tone === 'error' ? girl.bordeaux : girl.rose;
   return (
-    <View style={[styles.well, { width: size, height: size, borderRadius: size / 2, boxShadow: tone === 'plum' ? girl.shadowPlum : '0px 4px 10px rgba(64,34,150,0.10)' }]}>
+    <View style={[styles.well, { width: size, height: size, borderRadius: size / 2, boxShadow: tone === 'plum' ? girl.shadowPlum : '0px 4px 10px rgba(122,31,61,0.10)' }]}>
       <LinearGradient colors={colors} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: size / 2, zIndex: -1 }]} />
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.wellRim, { borderRadius: size / 2, borderColor: tone === 'plum' ? 'rgba(201,182,255,0.25)' : 'rgba(255,255,255,0.9)' }]} />
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.wellRim, { borderRadius: size / 2, borderColor: tone === 'plum' ? 'rgba(255,205,226,0.25)' : 'rgba(255,255,255,0.9)' }]} />
       <Icon name={icon} size={Math.round(size * 0.44)} color={fg} />
     </View>
   );
@@ -215,8 +215,8 @@ export function Wrap({ children }: { children: ReactNode }) {
 /** "92% match" pill: pearl on plum (on a photo: plum on pearl). */
 export function ScorePill({ score, onDark }: { score: number; onDark?: boolean }) {
   return (
-    <View style={[styles.score, { backgroundColor: onDark ? 'rgba(250,248,255,0.94)' : girl.plum }]}>
-      <Icon name="sparkles" size={13} color={onDark ? girl.rose : '#C9B6FF'} />
+    <View style={[styles.score, { backgroundColor: onDark ? 'rgba(255,248,251,0.94)' : girl.plum }]}>
+      <Icon name="sparkles" size={13} color={onDark ? girl.rose : '#F4B3CF'} />
       <Text variant="label" color={onDark ? girl.plum : girl.pearl}>
         {score}% match
       </Text>

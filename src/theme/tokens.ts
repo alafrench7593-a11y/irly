@@ -119,16 +119,48 @@ export const palettes: Record<Mode, Palette> = { night, day: light };
 /**
  * IRLY Girl, as a palette of the same design system: the shared components
  * (buttons, chips, fields, glass, sheets, pages) render in it inside IRLY
- * Girl. Values come from features/girl/theme: a lavender-pearl ground, deep
- * plum-violet ink, an electric violet for text and filled controls, berry
- * for errors. Feminine and tech: violet light, ice-blue glints, no pink wash.
- * Contrast (WCAG, measured): brand 5.5:1 on the ground and 6:1 under white
- * text; text 15.5:1, textSecondary 6.7:1, textTertiary 4.75:1 on the ground.
+ * Girl. Values come from features/girl/theme: a rosy-pearl ground, plum ink,
+ * a deep luminous rose for text and filled controls, bordeaux for errors.
+ * Small text is 4.5:1 or better on the pearl glass (measured, WCAG).
  */
 export const girlPalette: Palette = {
-  bg: '#F6F2FF',
+  bg: '#FBF2F4',
   surface: '#FFFFFF',
   raised: '#FFFFFF',
+  overlay: '#F6E4EB',
+  glass: 'rgba(255,249,251,0.72)',
+  line: 'rgba(74,36,64,0.10)',
+  lineStrong: 'rgba(74,36,64,0.18)',
+  text: '#2F1B29',
+  textSecondary: '#6F5A67',
+  textTertiary: '#86707D',
+  onDark: '#FFFFFF',
+  brand: '#B92B69',
+  brandPressed: '#9E2358',
+  brandSoft: 'rgba(185,43,105,0.10)',
+  onBrand: '#FFFFFF',
+  live: '#E5352B',
+  liveSoft: 'rgba(229,53,43,0.12)',
+  positive: '#2B7F55',
+  positiveSoft: 'rgba(43,127,85,0.14)',
+  caution: '#B05F00',
+  critical: '#8E1F45',
+  scrim: 'rgba(36,18,30,0.46)',
+  shadow: 'rgba(74,36,64,0.14)',
+  steel: '#9C7088',
+  card: '#FFFFFF',
+};
+
+/**
+ * IRLY Network inside IRLY Girl: the one violet place of the app. Same
+ * roles as girlPalette, violet and lavender instead of rose; the rest of
+ * IRLY Girl (and the website) keeps its rose. Read through <NetworkScope>.
+ * Contrast (WCAG): brand 5.5:1 on the ground and 6:1 under white text,
+ * text 15.5:1, secondary 6.7:1, tertiary 4.75:1.
+ */
+export const networkGirlPalette: Palette = {
+  ...girlPalette,
+  bg: '#F6F2FF',
   overlay: '#ECE6FF',
   glass: 'rgba(250,247,255,0.72)',
   line: 'rgba(45,29,84,0.10)',
@@ -136,36 +168,16 @@ export const girlPalette: Palette = {
   text: '#211634',
   textSecondary: '#5B5072',
   textTertiary: '#71678A',
-  onDark: '#FFFFFF',
   brand: '#6A3BEE',
   brandPressed: '#5A2FD6',
   brandSoft: 'rgba(106,59,238,0.10)',
-  onBrand: '#FFFFFF',
-  live: '#E5352B',
-  liveSoft: 'rgba(229,53,43,0.12)',
-  positive: '#2B7F55',
-  positiveSoft: 'rgba(43,127,85,0.14)',
-  caution: '#B05F00',
-  critical: '#A0154A',
   scrim: 'rgba(22,14,46,0.46)',
   shadow: 'rgba(45,29,84,0.14)',
   steel: '#8A7FB0',
-  card: '#FFFFFF',
 };
 
-/**
- * IRLY Girl glass, one recipe per role. Each pane is a live blur, a tint,
- * a thin pearl rim, a light along its top edge and a soft sheen; Android
- * (no live blur) paints `fallback` instead, dense enough to read on.
- * - card: content panes, translucent so the violet light behind shows through
- * - chip: chips and small controls, a touch lighter
- * - field: text fields, whiter so typed text keeps its contrast
- * - bar: floating and navigation bars, translucent like the ground
- * - sheet: sheets and modals, the densest pearl
- * - plum: the deep violet glass of secondary actions and contrast panels
- */
-export type GirlGlassVariant = 'card' | 'chip' | 'field' | 'bar' | 'sheet' | 'plum';
-export const girlGlass: Record<GirlGlassVariant, { blur: number; tint: string; fallback: string; rim: string; light: string; sheen: string; dark?: boolean }> = {
+/** The violet glass of IRLY Network in IRLY Girl (same recipe as girlGlass). */
+export const networkGirlGlass: typeof girlGlass = {
   card: { blur: 40, tint: 'rgba(251,249,255,0.56)', fallback: 'rgba(249,246,255,0.95)', rim: 'rgba(255,255,255,0.78)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.50)' },
   chip: { blur: 28, tint: 'rgba(251,249,255,0.60)', fallback: 'rgba(249,246,255,0.95)', rim: 'rgba(255,255,255,0.85)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.55)' },
   field: { blur: 28, tint: 'rgba(253,252,255,0.70)', fallback: 'rgba(251,250,255,0.97)', rim: 'rgba(255,255,255,0.85)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.45)' },
@@ -173,19 +185,52 @@ export const girlGlass: Record<GirlGlassVariant, { blur: number; tint: string; f
   sheet: { blur: 70, tint: 'rgba(250,248,255,0.86)', fallback: 'rgba(250,248,255,0.98)', rim: 'rgba(255,255,255,0.90)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.55)' },
   plum: { blur: 40, tint: 'rgba(30,20,62,0.86)', fallback: 'rgba(30,20,62,0.96)', rim: 'rgba(201,182,255,0.24)', light: 'rgba(220,208,255,0.55)', sheen: 'rgba(255,255,255,0.10)', dark: true },
 };
+export const networkGirlNacre = ['rgba(214,200,255,0.30)', 'rgba(204,226,255,0.20)', 'rgba(236,222,255,0.24)'] as const;
 
-/** Iridescence: lavender, ice blue and lilac, barely there (glass, highlights). */
-export const girlNacre = ['rgba(214,200,255,0.30)', 'rgba(204,226,255,0.20)', 'rgba(236,222,255,0.24)'] as const;
+/** The violet accents of IRLY Network in IRLY Girl (buttons, selected chips, panels). */
+export const networkGirl = {
+  gradient: ['#8B5CF6', '#6A3BEE', '#5A2FD6'] as const,
+  plum: '#2D1D54',
+  plumGradient: ['#3A2670', '#2D1D54', '#1E1340'] as const,
+  pearl: '#FAF7FF',
+  lilac: '#C9B6FF',
+  glow: '0px 10px 28px rgba(106,59,238,0.32)',
+};
+
 
 /**
- * IRLY Girl depth: diffuse violet-tinted shadows (never grey, never a hard
- * halo), and a violet glow reserved for the main action.
+ * IRLY Girl glass, one recipe per role. Each pane is a live blur, a tint,
+ * a thin nacre rim, a pearl light along its top edge and a soft sheen;
+ * Android (no live blur) paints `fallback` instead, dense enough to read on.
+ * - card: content panes, translucent so the rose light behind shows through
+ * - chip: chips and small controls, a touch lighter
+ * - field: text fields, whiter so typed text keeps its contrast
+ * - bar: floating and navigation bars, translucent like the ground
+ * - sheet: sheets and modals, the densest pearl
+ * - plum: the dark plum glass of secondary actions and contrast panels
+ */
+export type GirlGlassVariant = 'card' | 'chip' | 'field' | 'bar' | 'sheet' | 'plum';
+export const girlGlass: Record<GirlGlassVariant, { blur: number; tint: string; fallback: string; rim: string; light: string; sheen: string; dark?: boolean }> = {
+  card: { blur: 40, tint: 'rgba(255,250,252,0.56)', fallback: 'rgba(255,248,250,0.95)', rim: 'rgba(255,255,255,0.78)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.50)' },
+  chip: { blur: 28, tint: 'rgba(255,250,252,0.60)', fallback: 'rgba(255,248,250,0.95)', rim: 'rgba(255,255,255,0.85)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.55)' },
+  field: { blur: 28, tint: 'rgba(255,252,253,0.70)', fallback: 'rgba(255,250,252,0.97)', rim: 'rgba(255,255,255,0.85)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.45)' },
+  bar: { blur: 50, tint: 'rgba(252,242,246,0.62)', fallback: 'rgba(252,244,247,0.96)', rim: 'rgba(255,255,255,0.70)', light: 'rgba(255,255,255,0.95)', sheen: 'rgba(255,255,255,0.40)' },
+  sheet: { blur: 70, tint: 'rgba(255,248,250,0.86)', fallback: 'rgba(255,248,250,0.98)', rim: 'rgba(255,255,255,0.90)', light: 'rgba(255,255,255,1)', sheen: 'rgba(255,255,255,0.55)' },
+  plum: { blur: 40, tint: 'rgba(46,18,38,0.86)', fallback: 'rgba(46,18,38,0.96)', rim: 'rgba(255,205,226,0.22)', light: 'rgba(255,222,236,0.55)', sheen: 'rgba(255,255,255,0.10)', dark: true },
+};
+
+/** Mother-of-pearl: rose, lavender and peach, barely there (glass, highlights). */
+export const girlNacre = ['rgba(255,214,232,0.30)', 'rgba(236,224,250,0.20)', 'rgba(255,228,214,0.24)'] as const;
+
+/**
+ * IRLY Girl depth: diffuse plum-tinted shadows (never grey, never a hard
+ * pink halo), and a rose glow reserved for the main action.
  */
 export const girlElevation = {
-  card: '0px 14px 34px rgba(45,29,84,0.10), 0px 2px 6px rgba(45,29,84,0.05)',
-  float: '0px 24px 60px rgba(30,20,62,0.22), 0px 4px 14px rgba(30,20,62,0.08)',
-  glow: '0px 12px 26px rgba(106,59,238,0.32), 0px 3px 8px rgba(64,34,150,0.20)',
-  plum: '0px 12px 28px rgba(22,14,46,0.26), 0px 2px 6px rgba(22,14,46,0.14)',
+  card: '0px 14px 34px rgba(74,36,64,0.10), 0px 2px 6px rgba(74,36,64,0.05)',
+  float: '0px 24px 60px rgba(46,22,40,0.22), 0px 4px 14px rgba(46,22,40,0.08)',
+  glow: '0px 12px 26px rgba(185,43,105,0.30), 0px 3px 8px rgba(122,31,61,0.20)',
+  plum: '0px 12px 28px rgba(36,18,30,0.26), 0px 2px 6px rgba(36,18,30,0.14)',
 } as const;
 
 /** Editorial serif of IRLY Girl (Instrument Serif, bundled), for titles. */
@@ -200,12 +245,26 @@ export const girlSerif = {
  * flat colour). Three glows per flavor and mode, never animated in a loop.
  */
 export const ambient = {
-  // IRLY (Mixte): cool greys with a whisper of steel, sober and technical.
+  mixte: {
+    night: { base: '#050506', glows: ['rgba(110,142,180,0.62)', 'rgba(88,86,214,0.42)', 'rgba(196,140,92,0.30)'] },
+    day: { base: '#F4F4F1', glows: ['rgba(142,165,191,0.42)', 'rgba(190,200,230,0.40)', 'rgba(240,214,190,0.40)'] },
+  },
+  // IRLY Girl: luminous rose, a warm nude and a plum-lavender, on a pearl ground.
+  girl: {
+    night: { base: '#FBF2F4', glows: ['rgba(232,76,140,0.34)', 'rgba(240,206,188,0.80)', 'rgba(176,132,190,0.34)'] },
+    day: { base: '#FBF2F4', glows: ['rgba(232,76,140,0.34)', 'rgba(240,206,188,0.80)', 'rgba(176,132,190,0.34)'] },
+  },
+} as const;
+
+/**
+ * The light of IRLY Network pages: steel greys only in IRLY (Mixte), violet,
+ * ice blue and lilac on a lavender ground in IRLY Girl.
+ */
+export const networkAmbient = {
   mixte: {
     night: { base: '#050506', glows: ['rgba(118,134,156,0.52)', 'rgba(86,94,110,0.44)', 'rgba(150,156,166,0.22)'] },
     day: { base: '#F4F4F2', glows: ['rgba(150,162,178,0.40)', 'rgba(196,202,212,0.44)', 'rgba(214,214,210,0.40)'] },
   },
-  // IRLY Girl: an electric violet, an ice-blue glint and a soft lilac, on a lavender-pearl ground.
   girl: {
     night: { base: '#F6F2FF', glows: ['rgba(124,77,255,0.30)', 'rgba(190,212,255,0.70)', 'rgba(176,140,240,0.36)'] },
     day: { base: '#F6F2FF', glows: ['rgba(124,77,255,0.30)', 'rgba(190,212,255,0.70)', 'rgba(176,140,240,0.36)'] },

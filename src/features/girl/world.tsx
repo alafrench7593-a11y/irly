@@ -117,8 +117,8 @@ export const KindRail = memo(function KindRail({ kinds, value, onChange, counts 
             >
               <Photo tint={GIRL_TINT} visual={{ photo: k.photo }} light="dubai" scrim="strong" width={360} style={StyleSheet.absoluteFill} />
               <View style={styles.kindTop}>
-                <View style={[styles.kindIcon, on ? { backgroundColor: girl.plum, borderColor: 'rgba(201,182,255,0.35)' } : null]}>
-                  <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#C9B6FF' : girl.ink} strokeWidth={on ? 2.6 : 2} />
+                <View style={[styles.kindIcon, on ? { backgroundColor: girl.plum, borderColor: 'rgba(255,205,226,0.35)' } : null]}>
+                  <Icon name={on ? 'check' : k.icon} size={14} color={on ? '#F4B3CF' : girl.ink} strokeWidth={on ? 2.6 : 2} />
                 </View>
                 {n ? (
                   <View style={styles.kindCount}>
@@ -315,7 +315,7 @@ const PlanRow = memo(function PlanRow({ a, photo, onPress }: { a: ServerActivity
       </View>
       {a.joined ? (
         <View style={[styles.badge, styles.going]}>
-          <Icon name="check" size={12} color="#C9B6FF" strokeWidth={2.6} />
+          <Icon name="check" size={12} color="#F4B3CF" strokeWidth={2.6} />
           <Text variant="caption" color={girl.pearl}>
             Going
           </Text>
@@ -343,7 +343,7 @@ const PlanTile = memo(function PlanTile({ a, width, photo, label, onPress }: { a
         <Photo tint={GIRL_TINT} visual={{ photo, uri: a.coverUrl }} light="dubai" width={500} style={StyleSheet.absoluteFill} recyclingKey={`gplan-${a.id}`} />
         {a.joined ? (
           <View style={[styles.badge, styles.tileBadge, styles.going]}>
-            <Icon name="check" size={12} color="#C9B6FF" strokeWidth={2.6} />
+            <Icon name="check" size={12} color="#F4B3CF" strokeWidth={2.6} />
             <Text variant="caption" color={girl.pearl}>
               Going
             </Text>
@@ -624,8 +624,8 @@ const styles = StyleSheet.create({
   kind: { width: 132, height: 168, borderRadius: radius.lg, overflow: 'hidden', padding: 10, justifyContent: 'space-between', boxShadow: girl.shadowSoft },
   kindOn: { borderWidth: 2, borderColor: girl.plum },
   kindTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  kindIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(250,248,255,0.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' },
-  kindCount: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: 'rgba(250,248,255,0.92)', alignItems: 'center', justifyContent: 'center' },
+  kindIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,248,251,0.92)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', alignItems: 'center', justifyContent: 'center' },
+  kindCount: { minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: 'rgba(255,248,251,0.92)', alignItems: 'center', justifyContent: 'center' },
   kindLabel: { textShadowColor: 'rgba(0,0,0,0.35)', textShadowRadius: 6 },
   chips: { paddingHorizontal: space.gutter, gap: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
@@ -638,7 +638,7 @@ const styles = StyleSheet.create({
   planPhoto: { width: 76, height: 76, borderRadius: radius.md, overflow: 'hidden', backgroundColor: girl.cream },
   meta: { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, height: 26, borderRadius: 13 },
-  going: { backgroundColor: girl.plum, borderWidth: 1, borderColor: 'rgba(201,182,255,0.28)', boxShadow: girl.shadowPlum },
+  going: { backgroundColor: girl.plum, borderWidth: 1, borderColor: 'rgba(255,205,226,0.28)', boxShadow: girl.shadowPlum },
   post: { gap: 10, padding: 14, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   postHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: radius.md, overflow: 'hidden' },

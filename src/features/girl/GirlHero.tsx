@@ -67,7 +67,7 @@ export function GirlBackdrop({ mode, scrollY, width }: { mode: 'all' | 'moms'; s
       </Animated.View>
       {/* One rose shade from the top bar to below the hero (it carries the headline), then the cream veil: no seam. */}
       <LinearGradient
-        colors={['rgba(32,24,58,0.45)', 'rgba(32,24,58,0)', 'rgba(106,59,238,0.12)', 'rgba(32,24,58,0.5)', 'rgba(247,244,255,0.78)']}
+        colors={['rgba(56,40,50,0.45)', 'rgba(56,40,50,0)', 'rgba(201,47,114,0.12)', 'rgba(56,40,50,0.5)', 'rgba(255,245,248,0.78)']}
         locations={[0, 0.2, 0.36, 0.52, 1]}
         style={[styles.top, { height: h + SHADE }]}
       />
@@ -192,8 +192,8 @@ const styles = StyleSheet.create({
   backdrop: { overflow: 'hidden', backgroundColor: girl.bg },
   photo: { position: 'absolute', left: 0, right: 0, top: 0, bottom: -TRAVEL },
   top: { position: 'absolute', left: 0, right: 0, top: 0 },
-  below: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(247,244,255,0.78)' },
-  veil: { backgroundColor: 'rgba(247,244,255,0.7)' },
+  below: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,245,248,0.78)' },
+  veil: { backgroundColor: 'rgba(255,245,248,0.7)' },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.gutter },
   actions: { flexDirection: 'row', gap: 8 },
   badge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: girl.rose, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' },

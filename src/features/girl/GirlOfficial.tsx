@@ -155,8 +155,8 @@ const styles = StyleSheet.create({
   card: { height: 148, borderRadius: radius.xl, overflow: 'hidden', boxShadow: girl.shadowSoft },
   inner: { flex: 1, padding: 14, justifyContent: 'space-between' },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  badge: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(251,250,255,0.92)', alignItems: 'center', justifyContent: 'center' },
+  badge: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,250,246,0.92)', alignItems: 'center', justifyContent: 'center' },
   bottom: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
-  join: { minWidth: 84, height: 40, paddingHorizontal: 16, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(251,250,255,0.95)' },
-  joined: { backgroundColor: 'rgba(106,59,238,0.92)' },
+  join: { minWidth: 84, height: 40, paddingHorizontal: 16, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,250,246,0.95)' },
+  joined: { backgroundColor: 'rgba(185,43,105,0.92)' },
 });

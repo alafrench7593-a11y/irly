@@ -3,7 +3,7 @@ import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Svg, { Defs, Ellipse, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { enter } from '@/motion/enter';
-import { ambient } from '@/theme/tokens';
+import { ambient, networkAmbient } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type Props = {
@@ -32,15 +32,15 @@ const LAYOUTS = {
 
 /**
  * The light of the IRLY world, painted once behind a screen: the ground
- * colour and three soft glows (cool steel greys on IRLY Noir, violet and
- * ice blue in IRLY Girl). It is what glass panels refract, so surfaces read
+ * colour and three soft glows (steel and indigo on IRLY Noir, rose and
+ * lavender in IRLY Girl). It is what glass panels refract, so surfaces read
  * as layered panes instead of grey boxes. Vector radial gradients: sharp at
  * any size, identical on iOS, Android and web, nothing animated in a loop
  * (the light fades in once with the screen).
  */
 export const Ambient = memo(function Ambient({ variant = 'page', style }: Props) {
   const t = useTheme();
-  const spec = ambient[t.flavor][t.mode];
+  const spec = (t.network ? networkAmbient : ambient)[t.flavor][t.mode];
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
   const glows = LAYOUTS[variant];
   return (

@@ -319,7 +319,7 @@ function GirlMatchInner() {
                 style={[styles.section, { backgroundColor: on ? girl.plum : 'transparent' }]}
               >
                 {on ? null : <GlassLayer radius={radius.pill} level="thin" />}
-                <Icon name={s.icon} size={14} color={on ? '#C9B6FF' : girl.ink} />
+                <Icon name={s.icon} size={14} color={on ? '#F4B3CF' : girl.ink} />
                 <Text variant="label" color={on ? girl.pearl : girl.ink}>
                   {s.id === 'new' ? tr('New in {city}', { city: city.name }) : s.label(city.name)}
                 </Text>
@@ -394,15 +394,15 @@ function GirlMatchInner() {
           <Animated.View entering={reduced ? undefined : enter.rise(1)} style={styles.soon}>
             <GlassLayer radius={radius.xl} variant="plum" />
             <View style={styles.soonBadge}>
-              <Icon name="sparkles" size={13} color="#C9B6FF" />
+              <Icon name="sparkles" size={13} color="#F4B3CF" />
               <Text variant="overline" color={girl.pearl}>
                 Coming soon
               </Text>
             </View>
             <Text variant="titleM" color={girl.pearl} align="center" style={[girlType.section, { fontSize: 34, lineHeight: 38 }]}>
-              IRLY <Text variant="titleM" color="#C9B6FF" style={[girlType.section, girlType.accent, { fontSize: 34, lineHeight: 38 }]}>Match</Text>
+              IRLY <Text variant="titleM" color="#F4B3CF" style={[girlType.section, girlType.accent, { fontSize: 34, lineHeight: 38 }]}>Match</Text>
             </Text>
-            <Text variant="bodyS" color="rgba(240,236,255,0.80)" align="center">
+            <Text variant="bodyS" color="rgba(255,240,247,0.80)" align="center">
               {tx('Meet women who share your interests in {city}, matched on what you love. Until then, plan something with girls.', { city: city.name })}
             </Text>
             <GButton label="Plan something" icon="plus" onPress={() => openCreate(null)} />
@@ -486,7 +486,7 @@ function GirlMatchInner() {
 const styles = StyleSheet.create({
   modes: { flexDirection: 'row', marginHorizontal: space.gutter, marginTop: -26, padding: 4, borderRadius: 26, zIndex: 0, boxShadow: girl.shadowSoft },
   modeThumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 22, boxShadow: girl.shadowPlum },
-  thumbRim: { borderRadius: 22, borderWidth: 1, borderColor: 'rgba(201,182,255,0.26)' },
+  thumbRim: { borderRadius: 22, borderWidth: 1, borderColor: 'rgba(255,205,226,0.26)' },
   mode: { flex: 1, flexDirection: 'row', gap: 6, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   moving: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: space.gutter, marginTop: space[5], padding: 14, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   root: { flex: 1, backgroundColor: girl.bg },
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   round: { width: 40, height: 40, borderRadius: 20, backgroundColor: girl.surface, alignItems: 'center', justifyContent: 'center' },
   matchItem: { alignItems: 'center', gap: 6, width: 64 },
   soon: { marginTop: space[5], marginHorizontal: space.gutter, paddingHorizontal: 22, paddingVertical: 24, gap: 10, alignItems: 'center', borderRadius: radius.xl, boxShadow: girl.shadowPlum },
-  soonBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 26, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(201,182,255,0.30)', backgroundColor: 'rgba(255,255,255,0.08)' },
+  soonBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, height: 26, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(255,205,226,0.30)', backgroundColor: 'rgba(255,255,255,0.08)' },
   matchRing: { padding: 2, borderRadius: 32, borderWidth: 2, borderColor: girl.rose },
   sections: { paddingHorizontal: space.gutter, gap: 8, marginTop: space[5], marginBottom: space[4] },
   section: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 13, borderRadius: radius.pill, boxShadow: girl.shadowSoft },
@@ -504,10 +504,10 @@ const styles = StyleSheet.create({
   more: { alignItems: 'center', marginTop: space[5], minHeight: 48, justifyContent: 'center' },
   empty: { minHeight: 320, borderRadius: 32, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, boxShadow: girl.shadowSoft },
   community: { width: 168, height: 200, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'flex-end', boxShadow: girl.shadowSoft },
-  newCommunity: { padding: 14, gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(106,59,238,0.30)', justifyContent: 'flex-start' },
+  newCommunity: { padding: 14, gap: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(185,43,105,0.30)', justifyContent: 'flex-start' },
   plan: { width: 220, borderRadius: radius.xl, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft },
   planPhoto: { height: 120, overflow: 'hidden' },
-  communityBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(251,250,255,0.92)', alignItems: 'center', justifyContent: 'center' },
+  communityBadge: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,250,246,0.92)', alignItems: 'center', justifyContent: 'center' },
 });
 
 /** IRLY Girl Match: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */

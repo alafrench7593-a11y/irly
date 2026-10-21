@@ -41,7 +41,7 @@ import { useCityId } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
-import { useNetworkTone } from '@/features/network/tone';
+import { useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 const TITLE = 'Professional profile';
 const SUBTITLE = 'What you do, what you build, what you look for. Shown in Networking and used for your matches.';
@@ -81,7 +81,16 @@ const draftOf = (p: ProProfile, visible: boolean): ProDraft => ({
 });
 
 /** The "Professional" part of your profile: what Networking shows and matches on. */
+/** Network pages are violet in IRLY Girl, grey in IRLY (see NetworkScope). */
 export default function ProProfileEditor() {
+  return (
+    <NetworkScreen>
+      <ProProfileEditorPage />
+    </NetworkScreen>
+  );
+}
+
+function ProProfileEditorPage() {
   const cityId = useCityId();
   const me = useMyPro();
   const t = useTheme();

@@ -275,14 +275,14 @@ function PlanTile({ plan, on, onPress }: { plan: PlanType; on: boolean; onPress:
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
       accessibilityLabel={tx(plan.label)}
-      style={[styles.tile, { borderColor: on ? 'rgba(201,182,255,0.28)' : 'transparent', boxShadow: on ? girl.shadowPlum : undefined }]}
+      style={[styles.tile, { borderColor: on ? 'rgba(255,205,226,0.28)' : 'transparent', boxShadow: on ? girl.shadowPlum : undefined }]}
     >
       <GlassLayer radius={16} level="thin" />
       <Animated.View pointerEvents="none" style={[styles.tileFill, fill]}>
         <LinearGradient colors={girl.plumGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       </Animated.View>
       <Animated.View style={icon}>
-        <Icon name={plan.icon} size={18} color={on ? '#C9B6FF' : girl.rose} />
+        <Icon name={plan.icon} size={18} color={on ? '#F4B3CF' : girl.rose} />
       </Animated.View>
       <Text variant="caption" color={on ? girl.pearl : girl.ink} align="center" numberOfLines={2}>
         {plan.label}

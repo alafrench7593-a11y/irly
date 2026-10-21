@@ -530,17 +530,17 @@ function Choice({
       style={[styles.choice, { boxShadow: on ? girl.shadowPlum : girl.shadowSoft }]}
     >
       <GlassLayer radius={radius.lg} variant={on ? "plum" : "card"} />
-      <Icon name={icon} size={18} color={on ? "#C9B6FF" : girl.inkSoft} />
+      <Icon name={icon} size={18} color={on ? "#F4B3CF" : girl.inkSoft} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="titleS" color={on ? girl.pearl : girl.ink}>
           {title}
         </Text>
-        <Text variant="caption" color={on ? "rgba(240,236,255,0.82)" : girl.inkSoft}>
+        <Text variant="caption" color={on ? "rgba(255,240,247,0.82)" : girl.inkSoft}>
           {body}
         </Text>
       </View>
       <View
-        style={[styles.radio, { borderColor: on ? "#C9B6FF" : girl.inkFaint }]}
+        style={[styles.radio, { borderColor: on ? "#F4B3CF" : girl.inkFaint }]}
       >
         {on ? <Animated.View entering={m.pop(0)} style={styles.radioDot} /> : null}
       </View>
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(32,24,58,0.18)",
+    backgroundColor: "rgba(56,40,50,0.18)",
   },
   photoPill: {
     position: "absolute",
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#C9B6FF",
+    backgroundColor: "#F4B3CF",
   },
   error: {
     flexDirection: "row",
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: "rgba(160,21,74,0.22)",
+    borderColor: "rgba(142,31,69,0.22)",
     backgroundColor: "#FBE9EE",
   },
   doneBadge: {

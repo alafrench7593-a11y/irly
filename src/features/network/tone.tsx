@@ -1,8 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
-import { girl } from '@/features/girl/theme';
-import { girlElevation } from '@/theme/tokens';
+import { NetworkScope } from '@/theme/flavor';
+import { networkGirl } from '@/theme/tokens';
 import { useTheme, type Theme } from '@/theme/useTheme';
 
 /**
@@ -40,14 +40,14 @@ export type NetworkTone = {
 export function networkTone(t: Theme): NetworkTone {
   if (t.flavor === 'girl') {
     return {
-      accent: girl.rose,
+      accent: t.c.brand,
       onAccent: '#FFFFFF',
       soft: 'rgba(106,59,238,0.09)',
       softLine: 'rgba(106,59,238,0.22)',
-      gradient: girl.gradient,
-      glow: girlElevation.glow,
-      panel: girl.plumGradient,
-      onPanel: girl.pearl,
+      gradient: networkGirl.gradient,
+      glow: networkGirl.glow,
+      panel: networkGirl.plumGradient,
+      onPanel: networkGirl.pearl,
       light: ['rgba(124,77,255,0.14)', 'rgba(124,77,255,0)'],
       isGirl: true,
     };
@@ -94,6 +94,11 @@ export const PaneLight = memo(function PaneLight({ radius }: { radius: number })
   const tone = useNetworkTone();
   return <LinearGradient pointerEvents="none" colors={tone.light} start={{ x: 0, y: 0 }} end={{ x: 0.75, y: 0.9 }} style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />;
 });
+
+/** A Network page: violet in IRLY Girl, grey in IRLY (theme, glass and light, see NetworkScope). */
+export function NetworkScreen({ children }: { children: ReactNode }) {
+  return <NetworkScope>{children}</NetworkScope>;
+}
 
 const styles = StyleSheet.create({
   under: { zIndex: -1 },

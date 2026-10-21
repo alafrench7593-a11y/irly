@@ -20,6 +20,7 @@ import { matchSentence, roundDistance, type ProMatch, type ProProfile } from './
 import { INDUSTRY, INTENT, ROLE_LABEL } from './taxonomy';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { AccentFill, layered, PaneLight, useNetworkTone } from './tone';
+import { NetworkScope } from '@/theme/flavor';
 
 export const hueOf = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
 
@@ -310,7 +311,16 @@ const styles = StyleSheet.create({
 });
 
 /** The way into professional networking, from the Networking category, Business and your profile. */
+/** The door to IRLY Network: already in Network's colours (violet in IRLY Girl). */
 export function NetworkDoor({ style }: { style?: object }) {
+  return (
+    <NetworkScope>
+      <NetworkDoorCard style={style} />
+    </NetworkScope>
+  );
+}
+
+function NetworkDoorCard({ style }: { style?: object }) {
   const tone = useNetworkTone();
   const tr = useT();
   const router = useRouter();

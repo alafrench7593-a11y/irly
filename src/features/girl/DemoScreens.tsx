@@ -335,5 +335,5 @@ const styles = StyleSheet.create({
   post: { padding: 16, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   planPhoto: { width: 76, height: 76, borderRadius: radius.lg, overflow: 'hidden' },
-  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingHorizontal: space.gutter, paddingTop: 12, overflow: 'hidden', boxShadow: '0px -10px 30px rgba(45,29,84,0.08)' },
+  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', paddingHorizontal: space.gutter, paddingTop: 12, overflow: 'hidden', boxShadow: '0px -10px 30px rgba(74,36,64,0.08)' },
 });

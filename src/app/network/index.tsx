@@ -23,7 +23,7 @@ import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { PaneLight, useNetworkTone } from '@/features/network/tone';
+import { PaneLight, useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 /**
  * IRLY Network: what it is and your professional profile, then networking
@@ -32,7 +32,16 @@ import { PaneLight, useNetworkTone } from '@/features/network/tone';
  * professionals of the country (sorted by match when you have a profile).
  * Everything is read from the server; nothing is made up for an empty city.
  */
+/** Network pages are violet in IRLY Girl, grey in IRLY (see NetworkScope). */
 export default function NetworkDiscover() {
+  return (
+    <NetworkScreen>
+      <NetworkDiscoverPage />
+    </NetworkScreen>
+  );
+}
+
+function NetworkDiscoverPage() {
   const tone = useNetworkTone();
   const tr = useT();
   const router = useRouter();

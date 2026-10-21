@@ -141,7 +141,7 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
         </View>
 
         <Animated.View style={[styles.stamp, styles.stampLike, likeStamp]} pointerEvents="none">
-          <Icon name="heartHandshake" size={18} color="#C9B6FF" />
+          <Icon name="heartHandshake" size={18} color="#F4B3CF" />
           <Text variant="label" color={girl.pearl}>
             CONNECT
           </Text>
@@ -200,12 +200,12 @@ export const CandidateCard = memo(function CandidateCard({ candidate: c, width, 
 
 const styles = StyleSheet.create({
   card: { position: 'absolute', borderRadius: 32, overflow: 'hidden', backgroundColor: girl.blush, boxShadow: girl.shadow },
-  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(30,22,52,0.08)' },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(58,42,42,0.08)' },
   top: { position: 'absolute', top: 14, left: 14, right: 14, flexDirection: 'row', gap: 6 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, paddingHorizontal: 10, borderRadius: radius.pill },
   dot: { width: 7, height: 7, borderRadius: 4 },
   stamp: { position: 'absolute', top: 60, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 40, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.92)' },
-  stampLike: { left: 18, transform: [{ rotate: '-10deg' }], backgroundColor: girl.plum, borderWidth: 1, borderColor: 'rgba(201,182,255,0.35)' },
+  stampLike: { left: 18, transform: [{ rotate: '-10deg' }], backgroundColor: girl.plum, borderWidth: 1, borderColor: 'rgba(255,205,226,0.35)' },
   stampPass: { right: 18, transform: [{ rotate: '10deg' }] },
   bottom: { position: 'absolute', left: 10, right: 10, bottom: 10 },
   panel: { borderRadius: 24, padding: 16, gap: 10 },
@@ -251,7 +251,7 @@ export const CandidateTile = memo(function CandidateTile({ candidate: c, width, 
       >
         <View style={{ width, height: photoH }}>
           <ProfilePhoto name={c.firstName} hue={c.hue} userId={c.userId} photos={c.photoUrls} ground={girl.blush} placeholderSize={compact ? 56 : 72} style={StyleSheet.absoluteFill} />
-          <LinearGradient colors={['rgba(22,14,46,0)', 'rgba(22,14,46,0.62)']} start={{ x: 0, y: 0.5 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
+          <LinearGradient colors={['rgba(36,18,30,0)', 'rgba(36,18,30,0.62)']} start={{ x: 0, y: 0.5 }} end={{ x: 0, y: 1 }} style={StyleSheet.absoluteFill} pointerEvents="none" />
           <View style={tileStyles.top} pointerEvents="none">
             {badge ? (
               <View style={tileStyles.badge}>
@@ -264,7 +264,7 @@ export const CandidateTile = memo(function CandidateTile({ candidate: c, width, 
               <View />
             )}
             <View style={tileStyles.score}>
-              <Icon name="sparkles" size={11} color="#C9B6FF" />
+              <Icon name="sparkles" size={11} color="#F4B3CF" />
               <Text variant="caption" color={girl.pearl} raw>
                 {`${c.score}%`}
               </Text>
@@ -273,10 +273,10 @@ export const CandidateTile = memo(function CandidateTile({ candidate: c, width, 
           <View style={tileStyles.name} pointerEvents="none">
             <Text variant="titleM" color={girl.pearl} numberOfLines={1} raw style={[girlType.card, compact ? { fontSize: 21, lineHeight: 25 } : null]}>
               {c.firstName}
-              {c.age ? <Text variant="titleS" color="rgba(250,247,255,0.86)" raw>{`  ${c.age}`}</Text> : null}
+              {c.age ? <Text variant="titleS" color="rgba(255,246,250,0.86)" raw>{`  ${c.age}`}</Text> : null}
             </Text>
             {area ? (
-              <Text variant="caption" color="rgba(250,247,255,0.86)" numberOfLines={1} raw>
+              <Text variant="caption" color="rgba(255,246,250,0.86)" numberOfLines={1} raw>
                 {area}
               </Text>
             ) : null}
@@ -317,8 +317,8 @@ export const CandidateTile = memo(function CandidateTile({ candidate: c, width, 
 const tileStyles = StyleSheet.create({
   card: { borderRadius: 24, overflow: 'hidden', backgroundColor: girl.surface, boxShadow: girl.shadowSoft, flex: 1 },
   top: { position: 'absolute', top: 8, left: 8, right: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 6 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 24, paddingHorizontal: 8, borderRadius: radius.pill, backgroundColor: 'rgba(250,248,255,0.92)', flexShrink: 1 },
-  score: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 8, borderRadius: radius.pill, backgroundColor: 'rgba(45,29,84,0.82)' },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 24, paddingHorizontal: 8, borderRadius: radius.pill, backgroundColor: 'rgba(255,248,251,0.92)', flexShrink: 1 },
+  score: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 24, paddingHorizontal: 8, borderRadius: radius.pill, backgroundColor: 'rgba(74,36,64,0.82)' },
   name: { position: 'absolute', left: 12, right: 12, bottom: 10, gap: 1 },
   body: { paddingHorizontal: 12, paddingTop: 10, gap: 8 },
   bio: { minHeight: 36 },

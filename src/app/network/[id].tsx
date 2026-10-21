@@ -27,10 +27,19 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
-import { AccentFill, layered, useNetworkTone } from '@/features/network/tone';
+import { AccentFill, layered, useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 /** A professional's profile: who they are, what they build, why you fit. */
+/** Network pages are violet in IRLY Girl, grey in IRLY (see NetworkScope). */
 export default function ProProfileScreen() {
+  return (
+    <NetworkScreen>
+      <ProProfileScreenPage />
+    </NetworkScreen>
+  );
+}
+
+function ProProfileScreenPage() {
   const t = useTheme();
   const tone = useNetworkTone();
   const tr = useT();

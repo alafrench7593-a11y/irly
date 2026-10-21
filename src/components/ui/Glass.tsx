@@ -2,7 +2,7 @@ import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { memo, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { girlElevation, girlGlass, girlNacre, glassLevels, type GirlGlassVariant, type GlassLevel } from '@/theme/tokens';
+import { girlElevation, girlGlass, girlNacre, glassLevels, networkGirlGlass, networkGirlNacre, type GirlGlassVariant, type GlassLevel } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type Props = {
@@ -44,8 +44,8 @@ if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getEle
 /**
  * Frosted glass, the base surface of the IRLY design system:
  * 1. a live blur of what is behind (iOS, web: backdrop-filter),
- * 2. a controlled tint (smoked on IRLY Noir, milky on IRLY Clair, a
- *    violet-pearl veil in IRLY Girl, a whisper of white on a photo),
+ * 2. a controlled tint (smoked on IRLY Noir, milky on IRLY Clair, rose
+ *    veil in IRLY Girl, a whisper of white on a photo),
  * 3. a light edge: brighter along the top, fading down the sides,
  * 4. a sheen across the top half, like light on a real pane,
  * 5. optionally a soft shadow that lifts it off the ground.
@@ -67,9 +67,9 @@ export const Glass = memo(function Glass({ style, intensity, dark, light, border
   const spec = glassLevels[level];
   const tint = dark ? 'rgba(255,255,255,0.12)' : girl ? spec.girl : night ? spec.night : spec.day;
   const edgeTop = isDark ? 'rgba(255,255,255,0.28)' : girl ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.95)';
-  const edgeLow = isDark ? 'rgba(255,255,255,0.07)' : girl ? 'rgba(106,59,238,0.14)' : 'rgba(10,10,10,0.06)';
+  const edgeLow = isDark ? 'rgba(255,255,255,0.07)' : girl ? 'rgba(201,47,114,0.14)' : 'rgba(10,10,10,0.06)';
   const shine = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.65)';
-  const solid = isDark ? (dark ? 'rgba(40,42,46,0.86)' : 'rgba(24,26,31,0.95)') : girl ? 'rgba(250,247,255,0.96)' : 'rgba(255,255,255,0.95)';
+  const solid = isDark ? (dark ? 'rgba(40,42,46,0.86)' : 'rgba(24,26,31,0.95)') : girl ? 'rgba(255,246,250,0.96)' : 'rgba(255,255,255,0.95)';
   return (
     <View {...MIXTE_MARK} pointerEvents={decorative(children)} style={[styles.root, lifted ? { boxShadow: t.shadow.card } : null, style]}>
       {Platform.OS === 'android' ? (
@@ -102,7 +102,9 @@ const MIXTE_MARK = Platform.OS === 'web' ? ({ dataSet: { irlyGlass: '1' } } as o
  * rim is even (no lit side), so a pane reads as one piece of glass.
  */
 function GirlGlass({ style, intensity, border, highlight, lifted, variant, children }: { style?: StyleProp<ViewStyle>; intensity?: number; border: boolean; highlight: boolean; lifted?: boolean; variant: GirlGlassVariant; children?: ReactNode }) {
-  const spec = girlGlass[variant];
+  // IRLY Network is the one violet place of IRLY Girl.
+  const network = useTheme().network;
+  const spec = (network ? networkGirlGlass : girlGlass)[variant];
   const r = flatRadius(style);
   const shadow = variant === 'plum' ? girlElevation.plum : variant === 'sheet' ? girlElevation.float : girlElevation.card;
   return (
@@ -118,10 +120,10 @@ function GirlGlass({ style, intensity, border, highlight, lifted, variant, child
       {highlight ? (
         <>
           {spec.dark ? (
-            // Plum glass glows from below with a violet light, so it reads deep, never grey.
-            <LinearGradient colors={['rgba(106,59,238,0)', 'rgba(106,59,238,0.24)']} locations={[0.35, 1]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
+            // Plum glass glows from below with a bordeaux-rose light, so it reads deep, never grey.
+            <LinearGradient colors={network ? ['rgba(106,59,238,0)', 'rgba(106,59,238,0.24)'] : ['rgba(185,43,105,0)', 'rgba(185,43,105,0.24)']} locations={[0.35, 1]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
           ) : (
-            <LinearGradient colors={girlNacre} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
+            <LinearGradient colors={network ? networkGirlNacre : girlNacre} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
           )}
           <LinearGradient colors={[spec.sheen, 'rgba(255,255,255,0)']} locations={[0, 0.5]} style={[StyleSheet.absoluteFill, styles.under]} pointerEvents="none" />
         </>

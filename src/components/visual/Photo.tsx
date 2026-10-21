@@ -139,7 +139,7 @@ export const Photo = memo(function Photo({
       <Animated.View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: tint?.pulse ?? (night ? "#20232A" : girl ? "#F6F2FF" : "#F4F4F2") },
+          { backgroundColor: tint?.pulse ?? (night ? "#20232A" : girl ? "#FBF2F4" : "#F4F4F2") },
           pulseStyle,
         ]}
         pointerEvents="none"
