@@ -207,7 +207,8 @@ async function main() {
   await step('Mia joins Lea’s girl trip → Lea’s open plan says 2 going', async () => {
     must(await mia.sb.rpc('join_activity', { p_activity: tripId, p_status: 'going' }));
     await page.goto(`${BASE}/a/${tripId}`);
-    await page.getByText(/2 going/).first().waitFor({ timeout: 20000 });
+    // A plan from the Create form has spots (« 2 / 6 going »).
+    await page.getByText(/\b2( \/ \d+)? going/).first().waitFor({ timeout: 20000 });
     return true;
   });
   await step('Max (a man) cannot see the girl trip, nor join it, even through the API', async () => {
