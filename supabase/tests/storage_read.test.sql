@@ -173,7 +173,7 @@ create or replace function pg_temp.files(uid uuid) returns text language plpgsql
 declare out text;
 begin
   perform pg_temp.as_user(uid);
-  select coalesce(string_agg(split_part(name, '/', 2), ',' order by split_part(name, '/', 2)), '') into out
+  select coalesce(string_agg(split_part(name, '/', 2), ',' order by split_part(name, '/', 2) collate "C"), '') into out
     from storage.objects where name like 'ce000000-0000-0000-0000-000000000001/%';
   perform pg_temp.as_admin();
   return out;
