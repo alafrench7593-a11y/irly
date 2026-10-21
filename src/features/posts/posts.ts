@@ -88,22 +88,50 @@ async function store(uid: string, media: DraftMedia | null, onProgress?: (p: num
 const friendly = (msg: string) =>
   /row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down|rate/i.test(msg) ? 'Slow down a little' : /author''s own files|own files/i.test(msg) ? 'This file cannot be used' : friendlyError(msg);
 
-/** Publishes a post (profile when no community). Files already sent are removed if the post is refused. */
-export async function createPost(input: { communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; onProgress?: (p: number) => void }): Promise<string> {
+/**
+ * Publishes a post (profile when no community). `id` is made by the composer
+ * and kept while the post is the same, so tapping Post again after an answer
+ * that never came (network gone, timeout) is the same post, never a second
+ * one. Files already sent are removed only when the server really refused
+ * the post: without an answer it may have been saved with them.
+ */
+export async function createPost(input: { id: string; communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; onProgress?: (p: number) => void }): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
-  const { data: auth } = await supabase.auth.getSession();
+  const sb = supabase;
+  const { data: auth } = await sb.auth.getSession();
   const uid = auth.session?.user.id;
   if (!uid) throw new Error('Sign in to post');
   const body = input.body.trim();
   if (!body && !input.media?.files.length) throw new Error('Write something or add a photo');
   const { row, fresh } = await store(uid, input.media, input.onProgress);
-  const { data, error } = await supabase.from('community_posts').insert({ community_id: input.communityId, author_id: uid, body, kind: input.kind ?? 'post', ...(input.communityId && input.category ? { category: input.category } : {}), ...row }).select('id').single();
-  if (error || !data) {
-    if (fresh.length) await supabase.storage.from('post-media').remove(fresh);
-    throw new Error(friendly(error?.message ?? 'Could not post'));
+  const dropFresh = () => (fresh.length ? sb.storage.from('post-media').remove(fresh).then(() => undefined, () => undefined) : Promise.resolve());
+  const { error } = await sb
+    .from('community_posts')
+    .insert({ id: input.id, community_id: input.communityId, author_id: uid, body, kind: input.kind ?? 'post', ...(input.communityId && input.category ? { category: input.category } : {}), ...row })
+    .select('id')
+    .single();
+  if (error) {
+    // Already there: an earlier try landed (its answer was lost). That post, with its own files, is the one.
+    if (error.code === '23505') {
+      await dropFresh();
+      changed('communities');
+      return input.id;
+    }
+    // No answer (no code): saved or not, the server says. Not there (yet: a late request can still
+    // land) or unknown: the files stay, and the next try with the same id settles it.
+    if (!error.code) {
+      const { data: saved, error: readError } = await sb.from('community_posts').select('id').eq('id', input.id).maybeSingle();
+      if (!readError && saved) {
+        changed('communities');
+        return input.id;
+      }
+      throw new Error(friendly(error.message));
+    }
+    await dropFresh();
+    throw new Error(friendly(error.message));
   }
   changed('communities');
-  return (data as { id: string }).id;
+  return input.id;
 }
 
 /** Saves the author's changes (text and media); files no longer used are removed. */

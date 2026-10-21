@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { storageName } from '@/config/app';
 import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
@@ -330,9 +333,39 @@ function merge(list: MessageRow[], more: MessageRow[]): MessageRow[] {
  * Your messages the server has not confirmed yet, by chat (`uid|conversation`):
  * kept when you leave the chat, so one still sending or failed (Retry) is there
  * when you come back. A confirmed one keeps its server row until the thread has it.
+ * Kept on the phone too: a message not delivered when the app was closed (or
+ * killed) is still there at the next start, as "Not sent. Retry" (never shown
+ * as sent, never lost). A retry uses its own id, so one that did land is not
+ * sent twice, and the thread drops it as soon as the server shows it.
+ * Forgotten with the account's chats (clearChatCache: sign-out, another account).
  */
 type Pending = Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null; sent?: MessageRow }>;
-const usePendingStore = create<Record<string, Pending>>(() => ({}));
+type PendingByChat = Record<string, Pending>;
+const usePendingStore = create<PendingByChat>()(
+  persist(() => ({}) as PendingByChat, {
+    name: storageName('irly-chat-pending'),
+    storage: createJSONStorage(() => AsyncStorage),
+    // Only what the server has not confirmed (a confirmed one is in the thread when it opens).
+    partialize: (s) => {
+      const out: PendingByChat = {};
+      for (const [k, p] of Object.entries(s)) {
+        const left = Object.entries(p).filter(([, m]) => !m.sent);
+        if (left.length) out[k] = Object.fromEntries(left);
+      }
+      return out;
+    },
+    // Stored by an earlier run: whatever was "sending" then got no answer here, so it shows Retry.
+    // Messages started in this run before the stored ones were read are kept alongside them.
+    merge: (stored, current) => {
+      const out: PendingByChat = {};
+      for (const [k, p] of Object.entries((stored as PendingByChat | undefined) ?? {})) {
+        out[k] = Object.fromEntries(Object.entries(p ?? {}).map(([id, m]) => [id, { ...m, failed: true }]));
+      }
+      for (const [k, p] of Object.entries(current)) out[k] = { ...out[k], ...p };
+      return out;
+    },
+  }),
+);
 const NO_PENDING: Pending = {};
 
 type Channel = ReturnType<NonNullable<typeof supabase>['channel']>;
@@ -844,12 +877,15 @@ export function useServerThread(conversationId: string): ServerThread {
   const blocked = useBlocked();
   useRefreshOn(['people'], blocked.refresh);
   const blockedIds = useMemo(() => new Set(blocked.list.map((b) => b.userId)), [blocked.list]);
-  // Confirmed and now in the thread: nothing left to keep for them.
+  // In the thread (its server row, from the insert's answer, the realtime echo or a catch-up):
+  // nothing left to keep for it. A send whose answer was lost but which did land shows as
+  // sent, never as "Not sent. Retry" next to its own server copy.
   useEffect(() => {
-    const done = Object.keys(pending).filter((id) => pending[id].sent && rows.some((r) => r.id === id));
+    const done = Object.keys(pending).filter((id) => rows.some((r) => r.id === id));
     if (!done.length) return;
     setPending((p) => Object.fromEntries(Object.entries(p).filter(([id]) => !done.includes(id))));
   }, [pending, rows, setPending]);
+  const inRows = useMemo(() => new Set(rows.map((r) => r.id)), [rows]);
   const messages = useMemo(
     () =>
       [
@@ -871,10 +907,11 @@ export function useServerThread(conversationId: string): ServerThread {
           // A share of something removed since (a deleted Live or post) says so and opens nothing.
           share: r.kind === 'share' && r.ref_type && r.body !== GONE_SHARE ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
           media: r.kind === 'photo' && (r.media_path || r.local) ? { path: r.media_path ?? null, local: r.local ?? (r.id in pending ? (pending[r.id].local ?? null) : null) } : undefined,
-          status: pending[r.id] && !pending[r.id].sent ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
+          // Only while the server has not given it back: a row of the thread is a message sent.
+          status: pending[r.id] && !pending[r.id].sent && !inRows.has(r.id) ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
         }),
       ),
-    [rows, names, uid, pending, blockedIds],
+    [rows, names, uid, pending, blockedIds, inRows],
   );
   const otherId = kind === 'direct' || kind === 'match' ? (Object.keys(names).find((id) => id !== uid) ?? null) : null;
   const typingNames = useMemo(() => Object.keys(typing).map((id) => names[id] ?? 'Someone'), [typing, names]);
@@ -961,6 +998,20 @@ export function useServerThread(conversationId: string): ServerThread {
   };
 }
 
+/**
+ * What you were writing in each chat, not sent yet: leaving the chat (a
+ * profile, a photo, another chat) and coming back gives it back. Memory only,
+ * and forgotten with the rest of the account's chats (clearChatCache).
+ */
+const drafts = new Map<string, string>();
+export const chatDraft = {
+  get: (conversationId: string): string => drafts.get(conversationId) ?? '',
+  set: (conversationId: string, text: string): void => {
+    if (text.trim()) drafts.set(conversationId, text);
+    else drafts.delete(conversationId);
+  },
+};
+
 /** Archives (or brings back) a conversation in MY list only; the others are not affected. */
 export async function setConversationArchived(conversationId: string, archived: boolean): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
@@ -984,6 +1035,7 @@ export async function removeConversationForMe(conversationId: string): Promise<v
 export function clearChatCache(): void {
   threadCache.clear();
   heads.clear();
+  drafts.clear();
   readHere.clear();
   usePendingStore.setState({}, true);
   inboxRead = null;

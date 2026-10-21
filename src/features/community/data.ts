@@ -354,6 +354,9 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       queued.current.delete(temp.id);
       if (e || !data) {
         setPosts((p) => p.filter((x) => x.id !== temp.id));
+        // No answer (network, timeout): it may have been saved. The feed shows what the server has,
+        // so a post that landed is not written and sent a second time.
+        if (e && !e.code) refresh();
         const msg = e?.message ?? 'Could not post';
         throw new Error(/row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down/i.test(msg) ? 'Slow down a little' : friendlyError(msg));
       }

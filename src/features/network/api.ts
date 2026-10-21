@@ -7,7 +7,7 @@ import { thumbOf } from '@/features/server/media';
 import { changed, useSyncVersion } from '@/features/server/sync';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
-import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useDemoMyPro, useDemoPro, useDemoPros } from './demo';
 import { LINK_KINDS, NO_LINKS, safeLink, type ProLinks } from './links';
 import type { ProProfile } from './match';
@@ -306,15 +306,13 @@ function useServerPros(cityId: string, filters: ProFilters) {
           setRes((r) => ({ for: current, list: r.list, error: e instanceof Error ? e.message : 'offline' }));
         });
     };
+    // Requests sent or accepted (here or on another phone) update the buttons: the app's one
+    // friendships channel (SyncBridge) moves friendsV, which reads again here, and catches up
+    // after a reconnection. A channel of its own read the list three times per request
+    // (its event, then friendsV tearing it down and joining again) and churned the socket.
     reload();
-    // Requests sent or accepted (here or on another phone) update the buttons.
-    const channel = liveChannel(`pros-${uid}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, reload)
-      // Listening: a request sent or accepted before then is in no event.
-      .subscribe(whenListening(reload));
     return () => {
       alive = false;
-      supabase?.removeChannel(channel);
     };
   }, [uid, load, current, attempt, friendsV]);
 
@@ -376,13 +374,10 @@ function useServerPro(userId: string) {
             setRes((r) => ({ id: userId, pro: r.id === userId ? r.pro : null, failed: true }));
           });
       })();
+    // Friendship changes arrive through friendsV (SyncBridge), as for the list above.
     reload();
-    const channel = liveChannel(`pro-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, reload)
-      .subscribe(whenListening(reload));
     return () => {
       alive = false;
-      supabase?.removeChannel(channel);
     };
   }, [uid, userId, load, friendsV, attempt]);
 

@@ -41,6 +41,10 @@ const STUBS: Record<string, string> = {
   '@/i18n': stub(`export const t = (s) => s;`),
   './media': stub(`export const uploadChatPhoto = async () => 'p';`),
   './faces': stub(`export const primeFaces = () => undefined;`),
+  // chat.ts keeps undelivered messages on the phone: an in-memory store stands for it here.
+  '@react-native-async-storage/async-storage': stub(
+    `const m = new Map(); export default { getItem: async (k) => (m.has(k) ? m.get(k) : null), setItem: async (k, v) => void m.set(k, v), removeItem: async (k) => void m.delete(k) };`,
+  ),
 };
 const hooks = `
 import fs from 'node:fs';
@@ -651,6 +655,24 @@ await scenario(
   },
   { thread: true },
 );
+await scenario(
+  'lost answer, then the catch-up brings it',
+  null,
+  async () => {
+    // Saved on the server, answer and echo lost: "Retry" at first. Back to the app, the catch-up
+    // page has it: it is a sent message now (no Retry beside its own server copy, nothing kept).
+    server.insertMode = 'lost';
+    await threadNow().send('landed anyway').catch(() => undefined);
+    server.insertMode = null;
+    await sleep(1_000);
+    const id = threadNow().messages.find((m) => m.status === 'failed')?.id ?? '';
+    appListeners.forEach((fn) => fn('active'));
+    await sleep(30_000);
+    const shown = threadNow().messages.filter((m) => m.id === id);
+    return [`failed first: ${Boolean(id)}`, `after catch-up: ${shown.length === 1 && !shown[0].status ? 'sent' : shown.length ? shown[0].status : 'missing'}`, `saved: ${server.messages.filter((m) => m.id === id).length}`];
+  },
+  { thread: true },
+);
 await scenario('a failed message after leaving the chat and coming back', null, async () => {
   const open = () => {
     const box: { t: ReturnType<typeof chat.useServerThread> | null } = { t: null };
@@ -812,6 +834,10 @@ const notes = (label: string) => get(label).notes;
 expect(notes('history with equal times (3 per second): every page').join() === 'shown: 120/120,doubles: 0,in order: true', 'history: older pages leave no gap and no double, in server order (equal times too)');
 expect(notes("Bob's message lands while the chat catches up").includes('shown: true'), 'a message heard live while a catch-up page is on its way stays on screen');
 expect(notes('retry after a lost answer').join() === 'failed first: true,after retry: sent,saved: 1', 'retry after a lost answer: shown as sent, saved once (same id)');
+expect(
+  notes('lost answer, then the catch-up brings it').join() === 'failed first: true,after catch-up: sent,saved: 1',
+  'a send whose answer was lost but which landed shows as sent once the thread has it (never "Retry" beside its own copy)',
+);
 expect(
   notes('a failed message after leaving the chat and coming back').join() === 'failed first: true,back: failed,after retry: sent,saved: 1',
   'a failed message is still there (Retry) after leaving the chat, and sends once',

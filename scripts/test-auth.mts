@@ -132,6 +132,8 @@ const WIPED_BY: Record<string, RegExp> = {
   'irly-girl': /useGirlStore\.getState\(\)\.reset\(\)/,
   'irly-recap-seen': /AsyncStorage\.removeItem\(RECAP_SEEN\)/,
   'irly-live-pending': /pendingJournal\.clear\(\)/,
+  // Chat messages not delivered yet (their text): cleared with the account's chats.
+  'irly-chat-pending': /m\.clearChatCache\(\)/,
   'irly-space': /\bresetAppSpace\b/,
 };
 const persisted = new Map<string, string>();
