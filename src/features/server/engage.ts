@@ -455,6 +455,9 @@ export function useComments(t: Target) {
         .single();
       if (error || !data) {
         setList((l) => l.filter((c) => c.id !== temp.id));
+        // No answer (network, timeout): it may have been saved. The thread shows what the server has,
+        // so a comment that landed is not typed and sent a second time.
+        if (error && !error.code) refresh();
         throw new Error(error?.message.includes('slow down') ? 'Slow down a little' : friendlyError(error?.message ?? 'Could not post'));
       }
       // The real row replaces the pending one, even if the refresh below fails.

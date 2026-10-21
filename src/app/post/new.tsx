@@ -16,6 +16,7 @@ import { LiveVideo } from '@/features/live/LiveVideo';
 import { createPost, draftKey, loadPost, MAX_PHOTOS, pickPhotos, pickVideo, updatePost, useDrafts, type DraftMedia } from '@/features/posts/posts';
 import { useSignedLinks } from '@/features/server/media';
 import { a11y, t as tx } from '@/i18n';
+import { uuid } from '@/lib/uuid';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
@@ -172,6 +173,9 @@ export default function NewPost() {
   };
 
   const sending = useRef(false);
+  // The new post's id, kept while it is the same post: Post tapped again after an answer that
+  // never came is that post (the server keeps one), a changed post is a new one.
+  const postId = useRef<{ sig: string; id: string } | null>(null);
   const send = async () => {
     if (!canSend || sending.current) return;
     if (!account) {
@@ -184,7 +188,12 @@ export default function NewPost() {
     try {
       const onProgress = media?.kind === 'video' || files.length > 1 ? setProgress : undefined;
       if (editing) await updatePost(editing, { body, media, before, onProgress });
-      else await createPost({ communityId, body, media, onProgress, kind: kind ?? 'post', category: communityId === params.community ? (params.category ?? null) : null });
+      else {
+        const category = communityId === params.community ? (params.category ?? null) : null;
+        const sig = JSON.stringify([communityId, body.trim(), kind ?? 'post', category, media?.kind ?? null, media?.files.map((f) => f.path ?? f.uri) ?? []]);
+        if (postId.current?.sig !== sig) postId.current = { sig, id: uuid() };
+        await createPost({ id: postId.current.id, communityId, body, media, onProgress, kind: kind ?? 'post', category });
+      }
       if (!editing) saveDraft(key, null);
       haptic('success');
       toast(editing ? 'Post updated' : communityId ? 'Posted in the community' : 'Posted on your profile', 'check', 'brand');
