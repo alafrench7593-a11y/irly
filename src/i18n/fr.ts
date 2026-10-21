@@ -4772,4 +4772,6 @@ export const fr: Record<string, string> = {
   'This link is invalid or has expired. Ask for a new one': 'Ce lien n’est plus valide ou a expiré. Demandes-en un nouveau',
   '{name} was live': '{name} était en live',
   'This Live has ended': 'Ce live est terminé',
+  'Only the host can cancel this activity': 'Seul l’organisateur peut annuler cette activité',
+  'Only the host can edit this activity': 'Seul l’organisateur peut modifier cette activité',
 };
