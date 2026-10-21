@@ -45,15 +45,15 @@ const empty = digestLines({ postsWeek: 0, newMembersWeek: 0, members: 1, upcomin
 expect(empty[0].startsWith('No posts') && empty[2].startsWith('Nothing planned'), 'empty week is said honestly', empty);
 
 // IRLY Network's communities, per space: each space lists the ones its members can join.
-const mixed = { topic: 'network', girlOnly: false, official: true };
-const girlNetworking = { topic: 'girl_network', girlOnly: true, official: true };
-const womenClub = { categoryId: 'networking', girlOnly: true, official: false };
-const club = { categoryId: 'networking', girlOnly: false, official: false };
+const mixed = { categoryId: null, topic: 'network', girlOnly: false, official: true };
+const girlNetworking = { categoryId: null, topic: 'girl_network', girlOnly: true, official: true };
+const womenClub = { categoryId: 'networking', topic: null, girlOnly: true, official: false };
+const club = { categoryId: 'networking', topic: null, girlOnly: false, official: false };
 expect(networkListed(mixed, false) && networkListed(club, false), 'Network (Mixte): IRLY Network and a networking community');
 expect(!networkListed(womenClub, false) && !networkListed(girlNetworking, false), 'Network (Mixte): no women-only community');
 expect(networkListed(girlNetworking, true), 'Network (Girl): IRLY Girl Networking is listed (there was nothing to join)');
 expect(networkListed(womenClub, true) && !networkListed(mixed, true) && !networkListed(club, true), 'Network (Girl): women-only networking communities only');
-expect(!networkListed({ topic: 'girls', girlOnly: true, official: true }, true) && !networkListed({ categoryId: 'sport', girlOnly: true, official: false }, true), 'Network (Girl): not a community about something else');
+expect(!networkListed({ categoryId: null, topic: 'girls', girlOnly: true, official: true }, true) && !networkListed({ categoryId: 'sport', topic: null, girlOnly: true, official: false }, true), 'Network (Girl): not a community about something else');
 
 if (failed) {
   console.error(`${failed} community check(s) failed`);

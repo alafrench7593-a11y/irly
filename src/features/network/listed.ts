@@ -13,10 +13,12 @@ export const NETWORK_CATEGORY = 'networking';
 /** IRLY Girl's five official communities (community/official.ts, GIRL_OFFICIAL_TOPICS). */
 const GIRL_OFFICIAL = new Set(['girl_newcomers', 'girl_network', 'girl_francophone', 'girl_trip', 'girl_activity']);
 
-type Listed = { categoryId?: string | null; topic?: string | null; girlOnly: boolean; official: boolean };
+// Both fields required: a community without its category is never taken for a networking one.
+type About = { categoryId: string | null; topic: string | null };
+type Listed = About & { girlOnly: boolean; official: boolean };
 
 /** About business: the Networking category, or one of the official business topics. */
-export const isNetworkCommunity = (c: { categoryId?: string | null; topic?: string | null }) =>
+export const isNetworkCommunity = (c: About) =>
   c.categoryId === NETWORK_CATEGORY || (c.topic != null && NETWORK_TOPICS.has(c.topic));
 
 /**

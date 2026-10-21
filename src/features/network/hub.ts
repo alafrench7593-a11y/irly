@@ -40,6 +40,7 @@ export type NetCommunity = {
   girlOnly: boolean;
   cityId: string | null;
   topic: string | null;
+  categoryId: string | null;
 };
 
 export type NetPost = {
@@ -87,6 +88,7 @@ export function useNetworkCommunities(cityId: CityId) {
           girlOnly: Boolean(r.girl_only),
           cityId: (r.city_id as string | null) ?? null,
           topic: (r.topic as string | null) ?? null,
+          categoryId: (r.category_id as string | null) ?? null,
         }));
       setState({ for: key, list, error: null });
     });
@@ -132,6 +134,7 @@ function useDemoNetworkCommunities(girlSpace: boolean): NetCommunity[] {
             girlOnly: true,
             cityId: 'dubai',
             topic: null,
+            categoryId: 'networking',
           })),
     [girlSpace, joined],
   );
