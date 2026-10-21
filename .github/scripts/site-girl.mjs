@@ -1,9 +1,11 @@
 /**
  * The IRLY Girl page of the website, in English (/girl) and French
  * (/fr/girl): part of getirly.com (same menu, same app links), never a
- * second site. Its own look (pearl rose, nude and plum, editorial serif,
- * frosted glass), the palette of the app's IRLY Girl theme
- * (src/features/girl/theme.ts).
+ * second site. Its own look: violet and lavender on pearl, deep plum-violet,
+ * editorial serif, frosted glass (IRLY Girl's identity: feminine, tech,
+ * premium; the app's IRLY Girl theme, src/features/girl/theme.ts, moves to
+ * the same violet). The CSS keeps its token names (--rose, --pink…): their
+ * values are the violet ones. Text colours pass WCAG AA on their backgrounds.
  *
  * Honesty rules for this page:
  * - Every person shown is an ILLUSTRATIVE profile (example portraits from
@@ -11,7 +13,9 @@
  *   uses), labelled as such on the page. None is an IRLY member; nothing here
  *   is read from IRLY's database.
  * - A person keeps one name and one photo everywhere on the page.
- * - Photos are IRLY's own (site/img/own), women only.
+ * - Photos of people are IRLY's own (site/img/own), women only; IRLY Girl is
+ *   shown through friends together (two women, friendship, never romance).
+ *   The hero's views of Dubai, without people, are in site/img/hero.
  * - Features are described as they exist today: IRLY Match is coming soon, the
  *   iPhone and Android apps are coming soon (no store link exists), the app
  *   screens are real captures of the demo build (site/shots; the
@@ -33,6 +37,9 @@ const thumb = (k) => `/img/own/${k}-480.jpg`;
 const face = (id) => `/faces/${id}.jpg`;
 const shot = (n) => `/shots/${n}.jpg`;
 const og = (lang) => `/img/girl/og-${lang}.jpg`;
+// The hero's views of Dubai (site/img/hero, sources in site/img/hero/CREDITS.md), the first one painted first.
+const HERO = ["skyline", "arab", "marina", "desert", "creek"];
+const heroSet = (k) => `/img/hero/${k}-960.webp 960w, /img/hero/${k}-1920.webp 1920w`;
 // The publishable key of IRLY's waitlist (the same one as the home page): the server only lets it call join_waitlist().
 const WAITLIST_API = "https://yqutcmgslwxcmnsqmhvy.supabase.co/rest/v1/rpc/join_waitlist";
 const WAITLIST_KEY = "sb_publishable_hOfFpr32TkUPj0G880vNgw_fqz2CK0v";
@@ -334,7 +341,7 @@ const T = {
     tourP: "De vrais écrans de l’app, scène par scène. Utilise les flèches ou fais glisser.",
     tour: {
       label: "IRLY Girl, scène par scène",
-      note: "Écrans de la démo d’IRLY (en anglais), avec des femmes et des conversations d’exemple. Ce ne sont pas des membres d’IRLY.",
+      note: "Écrans de la démo d’IRLY, avec des femmes et des conversations d’exemple (certaines en anglais). Ce ne sont pas des membres d’IRLY.",
       prev: "Scène précédente",
       next: "Scène suivante",
       pause: "Pause",
@@ -450,7 +457,7 @@ const T = {
 };
 
 const CSS = `
-:root{--bg:#FBF2F4;--pearl:#FFF9FB;--cream:#FCEFF3;--beige:#F8F1EB;--nude:#F2E3DB;--surface:#FFFFFF;--blush:#F6E1E8;--powder:#F3D3DF;--pink:#F6C5D8;--lavender:#F1ECF8;--brand:#E83E87;--rose:#B92B69;--plum:#4A2440;--plum-black:#24121E;--ink:#2F1B29;--soft:#6F5A67;--line:rgba(74,36,64,.10);--glass:rgba(255,249,251,.66);--glass-line:rgba(255,255,255,.8);--shadow:0 16px 36px rgba(122,31,61,.13),0 3px 8px rgba(74,36,64,.06);--shadow-lg:0 40px 90px rgba(122,31,61,.20),0 8px 20px rgba(74,36,64,.08);--ease:cubic-bezier(.2,.7,.2,1);--spring:cubic-bezier(.34,1.4,.5,1);--serif:"Instrument Serif",Georgia,"Times New Roman",serif;--sans:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;--gut:16px}
+:root{--bg:#F6F3FC;--pearl:#FBFAFF;--cream:#F3EFFB;--beige:#F4F1FA;--nude:#ECE6F7;--surface:#FFFFFF;--blush:#EDE6FA;--powder:#E2D7F6;--pink:#D9C8F7;--lavender:#F1ECF8;--brand:#8B5CF6;--rose:#6D3FD6;--plum:#2E1F4F;--plum-black:#170F2B;--ink:#1F1833;--soft:#5E5672;--line:rgba(46,31,79,.10);--glass:rgba(251,250,255,.66);--glass-line:rgba(255,255,255,.8);--shadow:0 16px 36px rgba(60,32,140,.13),0 3px 8px rgba(46,31,79,.06);--shadow-lg:0 40px 90px rgba(60,32,140,.20),0 8px 20px rgba(46,31,79,.08);--ease:cubic-bezier(.2,.7,.2,1);--spring:cubic-bezier(.34,1.4,.5,1);--serif:"Instrument Serif",Georgia,"Times New Roman",serif;--sans:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;--gut:16px}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:84px;overflow-x:clip}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:clip}
@@ -465,7 +472,7 @@ a{color:inherit}img,svg{display:block;max-width:100%}button,input{font:inherit;c
 /* Menu: a pearl capsule that firms up once you scroll. */
 header.top{position:sticky;top:0;z-index:40;padding:10px var(--gut) 0}
 .bar{display:flex;align-items:center;gap:6px;height:58px;padding:0 8px 0 18px;border-radius:999px;width:min(1200px,100%);margin:0 auto;transition:box-shadow .4s var(--ease),background .4s var(--ease),transform .4s var(--ease)}
-.scrolled .bar{background:rgba(255,249,251,.86);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 14px 34px rgba(122,31,61,.14)}
+.scrolled .bar{background:rgba(251,250,255,.86);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 14px 34px rgba(60,32,140,.14)}
 .logo{display:inline-flex;align-items:center;gap:7px;text-decoration:none;flex:none;padding:6px 0}
 .logo b{font-weight:800;font-size:12.5px;letter-spacing:.34em}
 .logo i{width:6px;height:6px;border-radius:9px;background:var(--brand)}
@@ -474,29 +481,29 @@ header.top{position:sticky;top:0;z-index:40;padding:10px var(--gut) 0}
 .links a{position:relative;font-size:14px;font-weight:600;color:var(--soft);text-decoration:none;padding:9px 12px;border-radius:999px;transition:color .25s,background .25s}
 .links a::after{content:"";position:absolute;left:14px;right:14px;bottom:5px;height:1.5px;border-radius:2px;background:var(--rose);transform:scaleX(0);transform-origin:0 50%;transition:transform .35s var(--ease)}
 .links a:hover{color:var(--ink)}.links a:hover::after{transform:scaleX(1)}
-.links a[aria-current="page"]{color:var(--rose);background:rgba(232,62,135,.10)}
+.links a[aria-current="page"]{color:var(--rose);background:rgba(139,92,246,.10)}
 .lang{margin-inline-start:auto;font-size:13px;font-weight:700;color:var(--soft);text-decoration:none;padding:12px 10px;border-radius:999px;transition:background .25s}
-.lang:hover{background:rgba(185,43,105,.08)}
+.lang:hover{background:rgba(109,63,214,.08)}
 .bar .btn.small{display:none}
-.menu-btn{width:44px;height:44px;border-radius:22px;border:0;background:rgba(185,43,105,.09);cursor:pointer;display:grid;place-items:center;align-content:center;transition:background .25s,transform .2s var(--ease)}
+.menu-btn{width:44px;height:44px;border-radius:22px;border:0;background:rgba(109,63,214,.09);cursor:pointer;display:grid;place-items:center;align-content:center;transition:background .25s,transform .2s var(--ease)}
 .menu-btn:active{transform:scale(.92)}
 .menu-btn span{display:block;width:18px;height:2px;border-radius:2px;background:var(--ink);transition:transform .35s var(--ease)}
 .menu-btn span+span{margin-top:5px}
 .open .menu-btn span:first-child{transform:translateY(3.5px) rotate(45deg)}.open .menu-btn span:last-child{transform:translateY(-3.5px) rotate(-45deg)}
-.sheet{position:fixed;inset:0;z-index:35;background:radial-gradient(80% 60% at 80% 10%,rgba(246,197,216,.7),transparent 70%),rgba(255,246,248,.96);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);display:grid;align-content:center;gap:2px;padding:100px 28px 40px;opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s .35s}
+.sheet{position:fixed;inset:0;z-index:35;background:radial-gradient(80% 60% at 80% 10%,rgba(217,200,247,.7),transparent 70%),rgba(250,248,255,.96);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px);display:grid;align-content:center;gap:2px;padding:100px 28px 40px;opacity:0;visibility:hidden;transition:opacity .35s var(--ease),visibility 0s .35s}
 .sheet a{font:400 clamp(36px,10vw,52px)/1.15 var(--serif);text-decoration:none;justify-self:start;transform:translateY(18px);opacity:0;transition:transform .5s var(--ease),opacity .5s var(--ease)}
 .sheet a[aria-current="page"]{color:var(--rose);font-style:italic}
 .sheet a.btn{font:700 16px/1 var(--sans);margin-top:24px}
 .open+.sheet{opacity:1;visibility:visible;transition:opacity .35s var(--ease),visibility 0s}.open+.sheet a{transform:none;opacity:1}
 ${Array.from({ length: 9 }, (_, i) => `.open+.sheet a:nth-child(${i + 1}){transition-delay:${(0.05 + i * 0.045).toFixed(3)}s}`).join("")}
 /* Buttons: rose gradient, a nacre glint on hover, a press you can feel. */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;border-radius:999px;border:0;cursor:pointer;background:linear-gradient(135deg,#D63A7E,#B92B69 55%,#9E2358);color:#fff;font-weight:700;font-size:16px;text-decoration:none;box-shadow:0 14px 32px rgba(185,43,105,.28),0 1px 0 rgba(255,255,255,.35) inset;transition:transform .3s var(--ease),box-shadow .3s var(--ease);position:relative;overflow:hidden;isolation:isolate;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 26px;border-radius:999px;border:0;cursor:pointer;background:linear-gradient(135deg,#7C4DEB,#6D3FD6 55%,#5A2FC0);color:#fff;font-weight:700;font-size:16px;text-decoration:none;box-shadow:0 14px 32px rgba(109,63,214,.28),0 1px 0 rgba(255,255,255,.35) inset;transition:transform .3s var(--ease),box-shadow .3s var(--ease);position:relative;overflow:hidden;isolation:isolate;white-space:nowrap}
 .btn::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.38) 50%,transparent 70%);transform:translateX(-120%);transition:transform .9s var(--ease)}
-.btn:hover{transform:translateY(-2px);box-shadow:0 20px 40px rgba(185,43,105,.34),0 1px 0 rgba(255,255,255,.35) inset}.btn:hover::after{transform:translateX(120%)}.btn:active{transform:translateY(0) scale(.96);transition-duration:.1s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 20px 40px rgba(109,63,214,.34),0 1px 0 rgba(255,255,255,.35) inset}.btn:hover::after{transform:translateX(120%)}.btn:active{transform:translateY(0) scale(.96);transition-duration:.1s}
 .btn .ic{width:18px;height:18px;transition:transform .3s var(--ease)}.btn:hover .ic{transform:translateX(3px)}
-.btn.small{min-height:42px;padding:0 18px;font-size:14px;box-shadow:0 8px 18px rgba(185,43,105,.22)}
-.btn.ghost{background:rgba(255,255,255,.72);color:var(--rose);box-shadow:inset 0 0 0 1.5px rgba(185,43,105,.28),0 8px 22px rgba(122,31,61,.08);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
-.btn.ghost:hover{box-shadow:inset 0 0 0 1.5px rgba(185,43,105,.5),0 14px 30px rgba(122,31,61,.12)}
+.btn.small{min-height:42px;padding:0 18px;font-size:14px;box-shadow:0 8px 18px rgba(109,63,214,.22)}
+.btn.ghost{background:rgba(255,255,255,.72);color:var(--rose);box-shadow:inset 0 0 0 1.5px rgba(109,63,214,.28),0 8px 22px rgba(60,32,140,.08);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.btn.ghost:hover{box-shadow:inset 0 0 0 1.5px rgba(109,63,214,.5),0 14px 30px rgba(60,32,140,.12)}
 .tlink{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--rose);text-decoration:none;min-height:44px}
 .tlink .ic{width:18px;height:18px;transition:transform .3s var(--ease)}.tlink:hover .ic{transform:translateX(-3px)}
 /* Type */
@@ -513,21 +520,25 @@ section{position:relative;padding:72px 0;scroll-margin-top:76px}
 .label::before{content:"";flex:none;width:6px;height:6px;border-radius:6px;background:var(--rose)}
 /* ───────── Hero ───────── */
 .hero{min-height:calc(100svh - 68px);display:grid;align-items:center;padding:28px 0 48px;isolation:isolate}
-/* Hero film: Dubai at golden hour under a pearl veil, so the dark text keeps its contrast. Fades in only once it plays. */
-.hvid{position:absolute;inset:-80px 0 -40px;z-index:-2;overflow:hidden;pointer-events:none}
-.hvid video{width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease}
-.hvid video.on{opacity:1}
-.hvid::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(251,242,244,.78) 0%,rgba(251,242,244,.62) 45%,rgba(251,242,244,.9) 88%,#FBF2F4 100%)}
+/* Hero: views of Dubai in a slow crossfade with a gentle Ken Burns drift, under a pearl-lavender veil so the dark text keeps its contrast. */
+.hvid{position:absolute;inset:-80px 0 -40px;z-index:-2;overflow:hidden;pointer-events:none;background:var(--bg)}
+.hvid .sl{position:absolute;inset:0;opacity:0;transition:opacity 2.4s cubic-bezier(.65,0,.35,1)}
+.hvid .sl.on{opacity:1}
+.hvid img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;transform:scale(1.04);filter:saturate(.9)}
+.hvid .sl.kb img{animation:kb 17s linear both}
+.hvid .sl:nth-child(even).kb img{animation-name:kb-b}
+.hvid.paused img{animation-play-state:paused!important}
+.hvid::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(246,243,252,.8) 0%,rgba(246,243,252,.6) 45%,rgba(246,243,252,.9) 88%,#F6F3FC 100%)}
 .aura{position:absolute;inset:-80px 0 -40px;z-index:-1;overflow:hidden;pointer-events:none}
 .aura i{position:absolute;border-radius:50%;opacity:.9;animation:drift 18s ease-in-out infinite alternate}
-.aura i:nth-child(1){width:70vmax;height:70vmax;left:30%;top:-30vmax;background:radial-gradient(closest-side,rgba(246,197,216,.85),transparent)}
-.aura i:nth-child(2){width:55vmax;height:55vmax;left:-20vmax;top:10%;background:radial-gradient(closest-side,rgba(242,227,219,.95),transparent);animation-duration:22s;animation-direction:alternate-reverse}
-.aura i:nth-child(3){width:45vmax;height:45vmax;right:-15vmax;bottom:-10vmax;background:radial-gradient(closest-side,rgba(241,236,248,.95),transparent);animation-duration:26s}
+.aura i:nth-child(1){width:70vmax;height:70vmax;left:30%;top:-30vmax;background:radial-gradient(closest-side,rgba(217,200,247,.85),transparent)}
+.aura i:nth-child(2){width:55vmax;height:55vmax;left:-20vmax;top:10%;background:radial-gradient(closest-side,rgba(236,230,247,.95),transparent);animation-duration:22s;animation-direction:alternate-reverse}
+.aura i:nth-child(3){width:45vmax;height:45vmax;right:-15vmax;bottom:-10vmax;background:radial-gradient(closest-side,rgba(228,236,255,.9),transparent);animation-duration:26s}
 .hgrid{display:grid;gap:34px;align-items:center}
 .hcopy{min-width:0}
 .mark{display:inline-flex;align-items:center;gap:10px;padding:9px 18px 9px 16px;border-radius:999px;margin-bottom:22px}
 .mark b{font-weight:800;font-size:13px;letter-spacing:.36em;animation:rise .6s var(--ease) both}
-.mark i{width:7px;height:7px;border-radius:9px;background:var(--brand);box-shadow:0 0 0 0 rgba(232,62,135,.5);animation:pop .5s var(--spring) .15s both,pulse 2.8s ease-out 1s infinite}
+.mark i{width:7px;height:7px;border-radius:9px;background:var(--brand);box-shadow:0 0 0 0 rgba(139,92,246,.5);animation:pop .5s var(--spring) .15s both,pulse 2.8s ease-out 1s infinite}
 .mark span{font:italic 400 30px/1 var(--serif);color:var(--rose);display:inline-block;animation:rise .7s var(--ease) .2s both}
 .mark small{font-size:12px;font-weight:700;color:var(--soft);padding-inline-start:12px;margin-inline-start:4px;border-inline-start:1px solid var(--line);letter-spacing:.02em}
 h1{font:400 clamp(52px,12.5vw,112px)/.95 var(--serif);letter-spacing:-.02em;margin:0 0 20px;text-wrap:balance}
@@ -541,7 +552,7 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .hstage{position:relative;width:min(560px,100%);margin-inline:auto;aspect-ratio:560/620;container-type:inline-size;animation:rise .9s var(--ease) .1s both}
 .tilt{position:absolute;inset:0;transition:transform .8s var(--ease);transform-style:preserve-3d}
 .par{position:absolute;will-change:transform}
-.phone{position:relative;border-radius:7.4cqw;padding:1.5cqw;background:linear-gradient(150deg,#fff,#F7E6EC 60%,#fff);box-shadow:var(--shadow-lg),0 0 0 1px rgba(185,43,105,.08)}
+.phone{position:relative;border-radius:7.4cqw;padding:1.5cqw;background:linear-gradient(150deg,#fff,#ECE6F8 60%,#fff);box-shadow:var(--shadow-lg),0 0 0 1px rgba(109,63,214,.08)}
 .phone .scr{border-radius:6cqw;overflow:hidden;background:var(--blush);aspect-ratio:390/844}
 .phone img{width:100%;height:100%;object-fit:cover;object-position:top}
 .ph-main{left:27%;top:2%;width:46%;z-index:3}
@@ -566,11 +577,11 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .ticker li{font:italic 400 clamp(24px,3.4vw,38px)/1 var(--serif);color:var(--plum);padding:0 22px;display:flex;align-items:center;gap:44px;white-space:nowrap}
 .ticker li::after{content:"";width:7px;height:7px;border-radius:7px;background:var(--brand);margin-inline-start:22px}
 /* ───────── Tour: the app, scene by scene ───────── */
-.tour{background:linear-gradient(180deg,transparent,rgba(246,225,232,.55) 30%,rgba(246,225,232,.55) 70%,transparent)}
+.tour{background:linear-gradient(180deg,transparent,rgba(234,226,250,.55) 30%,rgba(234,226,250,.55) 70%,transparent)}
 .tgrid{display:grid;gap:22px;align-items:center}
 .tstage{position:relative;height:540px;display:grid;place-items:center;touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.tstage::before{content:"";position:absolute;width:min(440px,96%);aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(246,197,216,.9),rgba(246,197,216,0));z-index:-1}
-.tphone{position:relative;width:236px;aspect-ratio:390/844;border-radius:38px;padding:8px;background:linear-gradient(150deg,#fff,#F7E6EC 60%,#fff);box-shadow:var(--shadow-lg),0 0 0 1px rgba(185,43,105,.08)}
+.tstage::before{content:"";position:absolute;width:min(440px,96%);aspect-ratio:1;border-radius:50%;background:radial-gradient(closest-side,rgba(217,200,247,.9),rgba(217,200,247,0));z-index:-1}
+.tphone{position:relative;width:236px;aspect-ratio:390/844;border-radius:38px;padding:8px;background:linear-gradient(150deg,#fff,#ECE6F8 60%,#fff);box-shadow:var(--shadow-lg),0 0 0 1px rgba(109,63,214,.08)}
 .tphone .scr{position:absolute;inset:8px;border-radius:31px;overflow:hidden;background:var(--blush)}
 .tphone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;opacity:0;transform:scale(1.04);transition:opacity .7s var(--ease),transform 1.1s var(--ease)}
 .tphone img.on{opacity:1;transform:none}
@@ -582,7 +593,7 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .tb img{width:32px;height:32px;border-radius:50%;object-fit:cover;flex:none;background:var(--blush)}
 .tb small{display:block;font-size:11.5px;font-weight:700;color:var(--rose)}
 .tb.pill{border-radius:999px;padding:8px 14px}
-.tb.pink{background:linear-gradient(135deg,#D63A7E,#B92B69);color:#fff;border:0;box-shadow:0 10px 24px rgba(185,43,105,.3)}
+.tb.pink{background:linear-gradient(135deg,#7C4DEB,#6D3FD6);color:#fff;border:0;box-shadow:0 10px 24px rgba(109,63,214,.3)}
 .tb .heart{color:var(--rose);font-weight:800;white-space:nowrap}
 .p1{left:0;top:9%}.p2{right:0;top:30%}.p3{left:0;top:56%}.p4{right:0;bottom:8%}
 .tcol{position:absolute;right:0;top:12%;display:grid;gap:8px;justify-items:end}.tcol .tb{position:static;max-width:none}
@@ -595,12 +606,12 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .tslide .p{margin-inline:auto;max-width:44ch}
 .tslide .btn{margin-top:20px}
 .tctrl{display:flex;align-items:center;gap:8px;margin:24px auto 0;max-width:460px}
-.tctrl>button{flex:none;width:44px;height:44px;border-radius:22px;border:0;background:var(--surface);color:var(--ink);box-shadow:0 6px 16px rgba(122,31,61,.10);cursor:pointer;display:grid;place-items:center;transition:transform .2s var(--ease),box-shadow .2s}
+.tctrl>button{flex:none;width:44px;height:44px;border-radius:22px;border:0;background:var(--surface);color:var(--ink);box-shadow:0 6px 16px rgba(60,32,140,.10);cursor:pointer;display:grid;place-items:center;transition:transform .2s var(--ease),box-shadow .2s}
 .tctrl>button .ic{width:18px;height:18px}
-.tctrl>button:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(122,31,61,.14)}.tctrl>button:active{transform:scale(.92)}
+.tctrl>button:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(60,32,140,.14)}.tctrl>button:active{transform:scale(.92)}
 .tdots{display:flex;gap:5px;flex:1;min-width:0}
 .tdots button{flex:1;height:44px;min-width:0;border:0;background:none;padding:0;cursor:pointer;display:grid;align-items:center}
-.tdots button span{display:block;height:4px;border-radius:4px;background:rgba(185,43,105,.16);overflow:hidden}
+.tdots button span{display:block;height:4px;border-radius:4px;background:rgba(109,63,214,.16);overflow:hidden}
 .tdots button span i{display:block;height:100%;width:100%;background:var(--rose);border-radius:4px;transform:scaleX(0);transform-origin:0 50%}
 .tdots button.done span i{transform:none}
 .tdots button.on span i{transform:scaleX(var(--p,0))}
@@ -609,20 +620,20 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .circles{display:grid;gap:14px}
 .circle{position:relative;margin:0;border-radius:28px;overflow:hidden;min-height:300px;display:flex;align-items:flex-end;color:#fff;background:var(--plum);box-shadow:var(--shadow);isolation:isolate;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
 .circle img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform 1.2s var(--ease)}
-.circle::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(36,18,30,0) 30%,rgba(36,18,30,.5) 60%,rgba(36,18,30,.86))}
-.circle:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}.circle:hover img{transform:scale(1.06)}
-.circle .em{position:absolute;top:16px;left:16px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:rgba(255,249,251,.9);box-shadow:0 6px 16px rgba(36,18,30,.2);transition:transform .5s var(--spring)}
-.circle:hover .em{transform:rotate(-10deg) scale(1.08)}
-.circle .tag{position:absolute;top:22px;right:16px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;border-radius:999px;background:rgba(36,18,30,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#FFF6FA}
+.circle::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(23,15,43,0) 30%,rgba(23,15,43,.5) 60%,rgba(23,15,43,.86))}
+@media (hover:hover){.circle:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}.circle:hover img{transform:scale(1.06)}}
+.circle .em{position:absolute;top:16px;left:16px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:22px;background:rgba(251,250,255,.9);box-shadow:0 6px 16px rgba(23,15,43,.2);transition:transform .5s var(--spring)}
+@media (hover:hover){.circle:hover .em{transform:rotate(-10deg) scale(1.08)}}
+.circle .tag{position:absolute;top:22px;right:16px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:7px 11px;border-radius:999px;background:rgba(23,15,43,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#F8F5FF}
 .circle .tx{padding:22px}
-.circle h3{font-size:clamp(27px,3vw,34px);margin:0 0 6px;color:#FFF6FA}
-.circle p{margin:0;color:rgba(255,246,250,.92);font-size:15px;max-width:44ch}
+.circle h3{font-size:clamp(27px,3vw,34px);margin:0 0 6px;color:#F8F5FF}
+.circle p{margin:0;color:rgba(248,245,255,.92);font-size:15px;max-width:44ch}
 /* ───────── Uses: an editorial bento ───────── */
 .uses{display:grid;gap:14px}
 .use{position:relative;margin:0;border-radius:26px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow);display:grid;grid-template-rows:auto 1fr;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
 .use .ph{aspect-ratio:4/3;overflow:hidden;background:var(--blush)}
 .use .ph img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
-.use:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}.use:hover .ph img{transform:scale(1.06)}
+@media (hover:hover){.use:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}.use:hover .ph img{transform:scale(1.06)}}
 .use .tx{padding:16px 20px 20px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;align-content:start}
 .use h3{margin:0}
 .use p{grid-column:1/-1;margin:0;color:var(--soft);font-size:15px}
@@ -637,7 +648,7 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .pc b{display:block;font:400 22px/1.05 var(--serif)}
 .pc span{display:block;font-size:12.5px;color:var(--soft)}
 .pc .tags{display:flex;gap:4px;margin-top:4px}
-.pc .tags i{font-style:normal;font-size:11px;font-weight:700;color:var(--rose);background:rgba(232,62,135,.10);padding:3px 8px;border-radius:999px}
+.pc .tags i{font-style:normal;font-size:11px;font-weight:700;color:var(--rose);background:rgba(139,92,246,.10);padding:3px 8px;border-radius:999px}
 .people-foot{display:flex;justify-content:center;margin-top:14px}
 /* ───────── How it works ───────── */
 .how-sec{background:linear-gradient(180deg,transparent,var(--beige) 20%,var(--cream) 80%,transparent)}
@@ -646,41 +657,41 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .steps li{position:relative;display:grid;grid-template-columns:64px 1fr;gap:16px;align-items:start;padding:4px 0}
 .steps .n{position:relative;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:var(--rose);background:var(--pearl);box-shadow:0 0 0 6px var(--bg),var(--shadow)}
 .steps .n .ic{width:26px;height:26px}
-.steps .n small{position:absolute;top:-4px;right:-4px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--plum);color:#FFF6FA;font:700 12px/1 var(--sans)}
+.steps .n small{position:absolute;top:-4px;right:-4px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--plum);color:#F8F5FF;font:700 12px/1 var(--sans)}
 .steps .card{padding:18px 20px;border-radius:22px}
 .steps h3{margin:0 0 6px}
 .steps p{margin:0;color:var(--soft);font-size:15px}
 .trust{display:grid;gap:12px;margin-top:40px}
-.trust li{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:22px;background:var(--plum);color:#FFF6FA;box-shadow:0 18px 40px rgba(74,36,64,.22)}
+.trust li{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:22px;background:var(--plum);color:#F8F5FF;box-shadow:0 18px 40px rgba(46,31,79,.22)}
 .trust li .ic{color:var(--pink);margin-top:2px}
 .trust b{display:block;font:400 22px/1.15 var(--serif);margin-bottom:4px}
-.trust p{margin:0;color:rgba(255,246,250,.86);font-size:14.5px}
+.trust p{margin:0;color:rgba(248,245,255,.86);font-size:14.5px}
 .trust{list-style:none;padding:0}
 /* ───────── Dubai life ───────── */
 .dubai{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .dph{position:relative;margin:0;border-radius:24px;overflow:hidden;background:var(--blush);aspect-ratio:3/4;box-shadow:var(--shadow)}
 .dph .dpi{position:absolute;inset:-12% 0;will-change:transform}
 .dph img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
-.dph:hover img{transform:scale(1.05)}
+@media (hover:hover){.dph:hover img{transform:scale(1.05)}}
 .dph figcaption{position:absolute;left:10px;bottom:10px;right:10px;padding:8px 12px;border-radius:14px;font-size:13px;font-weight:700;line-height:1.3;width:max-content;max-width:calc(100% - 20px)}
 .dph.wide{grid-column:1/-1;aspect-ratio:16/9}
 /* ───────── IRLY Match, coming soon: the plum panel ───────── */
-.soon{position:relative;overflow:hidden;border-radius:34px;padding:44px 24px;text-align:center;background:linear-gradient(150deg,#55294A,#3A1A31 55%,#24121E);color:#FFF6FA;box-shadow:0 30px 70px rgba(74,36,64,.3);isolation:isolate}
-.soon::before{content:"";position:absolute;width:520px;height:520px;left:50%;top:-260px;margin-left:-260px;border-radius:50%;background:radial-gradient(closest-side,rgba(241,91,154,.45),transparent);z-index:-1;animation:breathe 7s ease-in-out infinite}
-.soon .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(255,246,250,.12);border:1px solid rgba(255,246,250,.25);color:#FFF6FA;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
-.soon h2{margin:18px 0 12px}.soon .p{margin-inline:auto;color:rgba(255,246,250,.86)}
+.soon{position:relative;overflow:hidden;border-radius:34px;padding:44px 24px;text-align:center;background:linear-gradient(150deg,#3D2A75,#2A1C55 55%,#170F2B);color:#F8F5FF;box-shadow:0 30px 70px rgba(46,31,79,.3);isolation:isolate}
+.soon::before{content:"";position:absolute;width:520px;height:520px;left:50%;top:-260px;margin-left:-260px;border-radius:50%;background:radial-gradient(closest-side,rgba(157,120,255,.45),transparent);z-index:-1;animation:breathe 7s ease-in-out infinite}
+.soon .badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:rgba(248,245,255,.12);border:1px solid rgba(248,245,255,.25);color:#F8F5FF;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.soon h2{margin:18px 0 12px}.soon .p{margin-inline:auto;color:rgba(248,245,255,.86)}
 /* ───────── FAQ ───────── */
 .faq details{border-bottom:1px solid var(--line)}
 .faq summary{cursor:pointer;font:400 clamp(22px,2.4vw,27px)/1.2 var(--serif);list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0;min-height:44px}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:600 20px/1 var(--sans);color:var(--rose);background:rgba(185,43,105,.08);transition:transform .35s var(--ease),background .25s}
-.faq summary:hover::after{background:rgba(185,43,105,.14)}
+.faq summary::after{content:"+";flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:600 20px/1 var(--sans);color:var(--rose);background:rgba(109,63,214,.08);transition:transform .35s var(--ease),background .25s}
+.faq summary:hover::after{background:rgba(109,63,214,.14)}
 .faq details[open] summary::after{transform:rotate(45deg)}
 .faq details p{color:var(--soft);margin:0 0 22px;max-width:64ch;animation:rise .45s var(--ease) both}
 .faq .wrap{max-width:860px}
 /* ───────── Finale ───────── */
 .end{padding:40px 0 90px}
-.endcard{position:relative;overflow:hidden;border-radius:38px;padding:56px 22px 40px;text-align:center;isolation:isolate;background:linear-gradient(160deg,#FFF9FB,#F6E1E8 55%,#F2E3DB)}
+.endcard{position:relative;overflow:hidden;border-radius:38px;padding:56px 22px 40px;text-align:center;isolation:isolate;background:linear-gradient(160deg,#FBFAFF,#EDE6FA 55%,#ECE6F7)}
 .endcard .aura{inset:0}
 .endcard .faces{display:flex;justify-content:center;margin-bottom:22px}
 .endcard .faces img{width:48px;height:48px;border-radius:50%;object-fit:cover;border:3px solid var(--pearl);margin-inline-start:-12px;background:var(--blush)}
@@ -691,19 +702,22 @@ h1 .w{display:inline-block;animation:word .7s var(--ease) both}
 .wl{margin:40px auto 0;max-width:540px;padding:24px 20px;border-radius:26px;text-align:left}
 .wl h3{font-size:clamp(24px,2.6vw,30px);margin:0 0 6px}
 .wl>p{margin:0 0 16px;color:var(--soft);font-size:15px}
-.field{display:flex;gap:8px;padding:6px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1.5px rgba(185,43,105,.18);transition:box-shadow .25s}
-.field:focus-within{box-shadow:inset 0 0 0 2px var(--rose),0 0 0 5px rgba(232,62,135,.12)}
-.field.bad{box-shadow:inset 0 0 0 2px #8E1F45;animation:shake .4s var(--ease)}
+.field{display:flex;gap:8px;padding:6px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1.5px rgba(109,63,214,.18);transition:box-shadow .25s}
+.field:focus-within{box-shadow:inset 0 0 0 2px var(--rose),0 0 0 5px rgba(139,92,246,.12)}
+.field.bad{box-shadow:inset 0 0 0 2px #B3261E;animation:shake .4s var(--ease)}
 .field input{flex:1;min-width:0;border:0;background:none;padding:0 14px;font-size:16px;outline:none;color:var(--ink)}
-.field input::placeholder{color:#8C7684}
+.field input::placeholder{color:#746B88}
 .field .btn{min-height:46px;padding:0 20px;font-size:15px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
-.msgline{min-height:22px;margin:10px 4px 0;font-size:14px;color:#8E1F45;font-weight:600}
+.msgline{min-height:22px;margin:10px 4px 0;font-size:14px;color:#B3261E;font-weight:600}
 .legal{font-size:12.5px;color:var(--soft);margin:4px 4px 0}.legal a{color:var(--rose);display:inline-block;padding:6px 0}
-.wl.loading .btn{opacity:.7;pointer-events:none}
+.wl.loading .btn{opacity:.8;pointer-events:none}
+.wl .spin{display:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
+.wl.loading .spin{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
 .done{display:none;align-items:center;gap:14px}
 .done.on{display:flex;animation:rise .5s var(--ease) both}
-.done .tick{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#D63A7E,#9E2358);color:#fff;flex:none}
+.done .tick{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#7C4DEB,#5A2FC0);color:#fff;flex:none}
 .done b{font:400 24px/1.1 var(--serif);display:block}.done p{margin:2px 0 0;color:var(--soft);font-size:14px}
 .backlink{margin-top:26px;display:flex;justify-content:center}
 footer{border-top:1px solid var(--line);padding:28px 0 40px;font-size:14px;color:var(--soft)}
@@ -715,15 +729,19 @@ img.missing{opacity:0}
 .js .reveal{opacity:0;transform:translateY(26px) scale(.985);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:var(--d,0s)}
 .js .reveal.in{opacity:1;transform:none}
 .js .reveal.zoom{transform:scale(.94)}.js .reveal.zoom.in{transform:none}
-.js .reveal.circle.in:hover,.js .reveal.use.in:hover{transform:translateY(-5px);transition-delay:0s}
+@media (hover:hover){.js .reveal.circle.in:hover,.js .reveal.use.in:hover{transform:translateY(-5px);transition-delay:0s}}
+/* Photos arrive softly instead of popping in (only those still loading when the page runs). */
+.js img.fade{opacity:0;transition:opacity .9s var(--ease),transform 1.2s var(--ease)}.js img.fade.ok{opacity:1}
 .js .steps:not(.in){--line:0}
 @keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 @keyframes word{from{opacity:0;transform:translateY(.35em) rotate(2deg)}to{opacity:1;transform:none}}
 @keyframes pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,62,135,.45)}80%,100%{box-shadow:0 0 0 10px rgba(232,62,135,0)}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(139,92,246,.45)}80%,100%{box-shadow:0 0 0 10px rgba(139,92,246,0)}}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @keyframes drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(6vmax,4vmax,0) scale(1.12)}}
 @keyframes slide{to{transform:translateX(-50%)}}
+@keyframes kb{from{transform:scale(1.04) translate3d(0,0,0)}to{transform:scale(1.14) translate3d(-1.6%,-1.2%,0)}}
+@keyframes kb-b{from{transform:scale(1.14) translate3d(1.4%,-1%,0)}to{transform:scale(1.04) translate3d(0,0,0)}}
 @keyframes breathe{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.15);opacity:1}}
 @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 .chip{animation:float-in .8s var(--spring) both,bob 7s ease-in-out infinite}
@@ -771,6 +789,12 @@ function page(lang) {
     const set = w0 === w1 ? `${img(k)} ${w1}w` : `${thumb(k)} ${w0}w, ${img(k)} ${w1}w`;
     return im(img(k), alt, cls, lazy, ` srcset="${set}" sizes="${sizes}" width="${w1}" height="${h1}"${extra}`);
   };
+  // The French page shows the app in French (site/shots/fr, site/img/girl/*-fr.jpg) when that capture exists.
+  const sh = (src) => {
+    if (lang !== "fr") return src;
+    const fr = src.startsWith("/shots/") ? src.replace("/shots/", "/shots/fr/") : src.replace(/\.jpg$/, "-fr.jpg");
+    return fs.existsSync(`site${fr}`) ? fr : src;
+  };
   const screen = (src, alt, lazy = true, extra = "") => im(src, alt, "", lazy, ` width="780" height="1688"${extra}`);
   const nav = [
     [t.nav.home, home(lang)],
@@ -807,7 +831,7 @@ function page(lang) {
   const H = t.hero;
   const sofia = byId("g-sofia");
   const heroHtml = `<section class="hero" aria-labelledby="h1">
-  <div class="hvid" aria-hidden="true"><video muted loop playsinline preload="none" disablepictureinpicture data-bg-s="/video/bg/girl-720" data-bg-l="/video/bg/girl-1080"></video></div>
+  <div class="hvid" id="heroBg" aria-hidden="true">${HERO.map((k, i) => (i ? `<picture class="sl" data-p="/img/hero/${k}-p.webp" data-set="${heroSet(k)}"></picture>` : `<picture class="sl on kb"><source media="(max-aspect-ratio: 4/5)" srcset="/img/hero/${k}-p.webp"><img src="/img/hero/${k}-1920.webp" srcset="${heroSet(k)}" sizes="100vw" width="1920" height="1200" alt="" fetchpriority="high" decoding="async"></picture>`)).join("")}</div>
   <div class="aura" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="wrap hgrid">
     <div class="hcopy">
@@ -826,9 +850,9 @@ function page(lang) {
     <div>
       <div class="hstage">
         <div class="tilt">
-          <div class="par ph-l" data-speed="-0.06" aria-hidden="true"><div class="phone"><div class="scr">${screen(shot("girl-communities"), "", false)}</div></div></div>
-          <div class="par ph-r" data-speed="-0.1" aria-hidden="true"><div class="phone"><div class="scr">${screen(shot("girl-invite"), "", false)}</div></div></div>
-          <div class="par ph-main" data-speed="0.05"><div class="phone"><div class="scr">${screen(shot("girl-home"), H.phonesAlt, false, ' fetchpriority="high"')}</div></div></div>
+          <div class="par ph-l" data-speed="-0.06" aria-hidden="true"><div class="phone"><div class="scr">${screen(sh(shot("girl-communities")), "", false)}</div></div></div>
+          <div class="par ph-r" data-speed="-0.1" aria-hidden="true"><div class="phone"><div class="scr">${screen(sh(shot("girl-invite")), "", false)}</div></div></div>
+          <div class="par ph-main" data-speed="0.05"><div class="phone"><div class="scr">${screen(sh(shot("girl-home")), H.phonesAlt, false, ' fetchpriority="high"')}</div></div></div>
           <div class="chip glass c-live" aria-hidden="true"><span class="dot"></span>${esc(H.live)}<span class="stack">${["g-ines", "g-maya", "g-amira"].map((id) => fcId(id, "", false)).join("")}</span></div>
           ${sofia ? `<div class="chip glass c-prof" aria-hidden="true">${fc(sofia, "", false)}<span>${esc(sofia.name)}<small>${esc(H.likes)}</small></span></div>` : ""}
           <div class="chip glass c-plan" aria-hidden="true">${own("brunchGirl", "", "52px", "", false)}<span>${esc(H.plan)}<small>${esc(H.planWhen)}</small></span></div>
@@ -844,7 +868,7 @@ function page(lang) {
   /* Tour: real screens with the moments they show coming alive around the phone. */
   const tt = t.tour;
   const B = tt.bubbles;
-  const scenes = tt.scenes.filter((x) => fs.existsSync(`site${x.src}`));
+  const scenes = tt.scenes.filter((x) => fs.existsSync(`site${x.src}`)).map((x) => ({ ...x, src: sh(x.src) }));
   const bub = (html, pos, i, cls = "glass") => `<div class="tb ${cls}${pos ? ` ${pos}` : ""}" style="--i:${i}">${html}</div>`;
   const who = (id, small, text) => `${fcId(id)}<span>${small ? `<small>${esc(small)}</small>` : ""}${esc(text)}</span>`;
   const layerFor = (src) => {
@@ -854,7 +878,7 @@ function page(lang) {
     if (src.endsWith("girl-post.jpg")) return B.comments.map(([id, text], i) => bub(who(id, byId(id)?.name ?? "", text), ["p1", "p2", "p3"][i], i)).join("");
     if (src.endsWith("girl-invite.jpg")) return bub(who("g-sofia", "IRLY Girl", B.invite[0]), "p1", 0) + bub(`✓ ${esc(B.invite[1])}`, "p2", 1.2, "pink pill") + bub(who("w-noor", "Yuna", B.invite[2]), "p3", 2);
     if (src.endsWith("girl-chat.jpg")) return bub(esc(B.chat[0]), "p1", 0, "glass pill") + bub(`📅 ${esc(B.chat[1])}`, "p4", 1, "pink pill");
-    if (src.endsWith("notifications.jpg")) return bub(who("w-noor", "", B.notif[0]), "p2", 0) + bub(who("g-chloe", "", B.notif[1]), "p3", 1);
+    if (src.includes("/notifications")) return bub(who("w-noor", "", B.notif[0]), "p2", 0) + bub(who("g-chloe", "", B.notif[1]), "p3", 1);
     if (src.endsWith("girl-me.jpg")) return bub(esc(B.me[0]), "p2", 0, "glass pill") + bub(`📍 ${esc(B.me[1])}`, "p3", 1, "glass pill");
     return "";
   };
@@ -897,7 +921,7 @@ function page(lang) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#FBF2F4">
+<meta name="theme-color" content="#F6F3FC">
 <meta name="color-scheme" content="light">
 <title>${esc(t.title)}</title>
 <meta name="description" content="${esc(t.description)}">
@@ -927,7 +951,9 @@ function page(lang) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="preload" as="image" href="${shot("girl-home")}" fetchpriority="high">
+<link rel="preload" as="image" href="/img/hero/${HERO[0]}-1920.webp" imagesrcset="${heroSet(HERO[0])}" imagesizes="100vw" media="(min-aspect-ratio: 4/5)" fetchpriority="high">
+<link rel="preload" as="image" href="/img/hero/${HERO[0]}-p.webp" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
+<link rel="preload" as="image" href="${sh(shot("girl-home"))}">
 <style>${CSS}</style>
 <script>document.documentElement.classList.add('js')</script>
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
@@ -1012,7 +1038,7 @@ ${tourHtml}
         <label for="wl-email" class="hp">${esc(W.label)}</label>
         <input id="wl-email" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="${esc(W.ph)}" aria-describedby="wl-msg wl-legal">
         <input class="hp" id="wl-company" type="text" name="company" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <button class="btn" type="submit">${esc(W.btn)}</button>
+        <button class="btn" type="submit">${esc(W.btn)}<span class="spin" aria-hidden="true"></span></button>
       </div>
       <p class="msgline" id="wl-msg" role="status" aria-live="polite"></p>
       <p class="legal" id="wl-legal">${esc(W.legal)} <a href="${lang === "fr" ? "/fr/privacy" : "/privacy"}">${esc(t.privacy)}</a></p>
@@ -1060,20 +1086,53 @@ ${tourHtml}
   addEventListener('resize', onScroll, { passive: true });
   onScroll();
 
-  // Hero film: light encode on phones, 1080p on large screens; never with reduced motion or Save-Data; paused off-screen.
-  const bgVid = document.querySelector('.hvid video');
-  if (bgVid && !reduce && !(navigator.connection && navigator.connection.saveData)) {
-    const base = bgVid.dataset[matchMedia('(max-aspect-ratio: 4/5)').matches ? 'bgS' : 'bgL'];
-    bgVid.innerHTML = '<source src="' + base + '.webm" type="video/webm"><source src="' + base + '.mp4" type="video/mp4">';
-    bgVid.addEventListener('playing', () => bgVid.classList.add('on'), { once: true });
-    const play = () => { const p = bgVid.play(); if (p) p.catch(() => {}); };
-    let seen = true;
-    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { seen = e.isIntersecting; seen && !document.hidden ? play() : bgVid.pause(); }).observe(bgVid);
-    document.addEventListener('visibilitychange', () => (document.hidden || !seen ? bgVid.pause() : play()));
-    bgVid.preload = 'auto';
-    bgVid.load();
-    play();
-  } else if (bgVid) bgVid.parentNode.remove();
+  // Hero: views of Dubai fading slowly into each other. The first is painted first; the next one loads
+  // after the page, one ahead. Still with reduced motion or Save-Data, paused off-screen and in a hidden tab.
+  const heroBg = document.getElementById('heroBg');
+  const slides = heroBg ? [...heroBg.querySelectorAll('.sl')] : [];
+  if (slides.length > 1 && !reduce && !(navigator.connection && navigator.connection.saveData)) {
+    const SLIDE = 7000;
+    let cur = 0, timer = null, seen = true;
+    const fill = (sl) => {
+      if (sl.dataset.set) {
+        sl.innerHTML = '<source media="(max-aspect-ratio: 4/5)" srcset="' + sl.dataset.p + '"><img srcset="' + sl.dataset.set + '" sizes="100vw" width="1920" height="1200" alt="" decoding="async">';
+        delete sl.dataset.set;
+      }
+      return sl.querySelector('img');
+    };
+    const ready = (img) => new Promise((done) => {
+      if (img.complete && img.naturalWidth) { done(); return; }
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    }).then(() => (img.decode ? img.decode().catch(() => {}) : null));
+    const show = (n) => {
+      const prev = slides[cur], next = slides[n];
+      next.classList.remove('kb');
+      void next.offsetWidth;
+      next.classList.add('kb', 'on');
+      prev.classList.remove('on');
+      setTimeout(() => { if (!prev.classList.contains('on')) prev.classList.remove('kb'); }, 2600);
+      cur = n;
+    };
+    const step = () => {
+      clearTimeout(timer);
+      if (!seen || document.hidden) return;
+      timer = setTimeout(async () => {
+        const n = (cur + 1) % slides.length;
+        const img = fill(slides[n]);
+        await ready(img);
+        if (!seen || document.hidden || !img.naturalWidth) { step(); return; }
+        show(n);
+        fill(slides[(n + 1) % slides.length]);
+        step();
+      }, SLIDE);
+    };
+    const run = () => { const on = seen && !document.hidden; heroBg.classList.toggle('paused', !on); if (on) step(); else clearTimeout(timer); };
+    if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { seen = e.isIntersecting; run(); }).observe(heroBg);
+    document.addEventListener('visibilitychange', run);
+    const start = () => { fill(slides[1]); run(); };
+    if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
+  }
 
   // Hero: the constellation leans toward a mouse pointer, very slightly.
   const stage = document.querySelector('.hstage'), tilt = document.querySelector('.tilt');
@@ -1176,6 +1235,15 @@ ${tourHtml}
       }
     });
   }
+
+  // Photos fade in as they load (only those still loading).
+  if (!reduce) document.querySelectorAll('.circle img, .use img, .dph img').forEach((img) => {
+    if (img.complete && img.naturalWidth) return;
+    img.classList.add('fade');
+    const ok = () => img.classList.add('ok');
+    img.addEventListener('load', ok, { once: true });
+    img.addEventListener('error', ok, { once: true });
+  });
 
   // Reveals: once, as each block comes into view. Steps draw their line when the list arrives.
   const els = document.querySelectorAll('.reveal');

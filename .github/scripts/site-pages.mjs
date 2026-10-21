@@ -393,7 +393,7 @@ ${guideLines}
 /* ───────── Sitemap ───────── */
 const homeAlts = INDEXED.map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${homeHref(l)}"/>`).concat(`    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}"/>`).join('\n');
 // The home page's own photos (Google Images): the hero and the Dubai pictures.
-const homeImgs = ['img/heroBurj.webp', 'img/jbr.webp', 'img/burjKhalifa.webp', 'img/dhow.webp', 'img/dubaiMarina.webp', 'img/day10Crowd.webp', 'video/hero.jpg']
+const homeImgs = ['img/hero/skyline-1920.webp', 'img/hero/marina-1920.webp', 'img/hero/burj-1920.webp', 'img/hero/arab-1920.webp', 'img/hero/creek-1920.webp', 'img/hero/desert-1920.webp', 'img/jbr.webp', 'img/burjKhalifa.webp', 'img/dhow.webp', 'img/dubaiMarina.webp', 'img/day10Crowd.webp', 'video/hero.jpg']
   .filter((f) => fs.existsSync(`site/${f}`))
   .map((f) => `    <image:image><image:loc>${SITE}${f}</image:loc></image:image>`)
   .join('\n');
