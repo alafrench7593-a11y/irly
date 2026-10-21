@@ -2,9 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://getirly.com/</loc>
-    <lastmod>2026-10-07</lastmod>
-    <xhtml:link rel="alternate" hreflang="en" href="https://getirly.com/?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://getirly.com/?lang=fr"/>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://getirly.com/?lang=ar"/>
+    <lastmod>2026-10-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getirly.com/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getirly.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getirly.com/"/>
+  </url>
+  <url>
+    <loc>https://getirly.com/fr/</loc>
+    <lastmod>2026-10-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getirly.com/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getirly.com/fr/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getirly.com/"/>
+  </url>
+  <url>
+    <loc>https://getirly.com/girl</loc>
+    <lastmod>2026-10-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getirly.com/girl"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getirly.com/fr/girl"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getirly.com/girl"/>
+  </url>
+  <url>
+    <loc>https://getirly.com/fr/girl</loc>
+    <lastmod>2026-10-21</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://getirly.com/girl"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://getirly.com/fr/girl"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://getirly.com/girl"/>
   </url>
 </urlset>

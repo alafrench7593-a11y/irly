@@ -5,7 +5,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
-import { useStore } from '@/state/store';
+import { useGirlEntry } from '@/features/profile/girlEntry';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
@@ -30,7 +30,7 @@ const DOORS: Door[] = [
 export const ExploreDoors = memo(function ExploreDoors() {
   const t = useTheme();
   const router = useRouter();
-  const woman = useStore((s) => s.profile.gender === 'woman');
+  const woman = useGirlEntry();
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {DOORS.filter((d) => !d.women || woman).map((d, i) => (

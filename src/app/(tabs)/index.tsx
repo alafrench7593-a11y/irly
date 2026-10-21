@@ -52,6 +52,7 @@ import { GirlCommunities, useGirlPeople } from '@/features/girl/GirlSections';
 import { GirlOfficialCommunities } from '@/features/girl/GirlOfficial';
 import { GirlIntro } from '@/features/girl/GirlIntro';
 import { HOME_SECTIONS, type HomeSection } from '@/features/home/sections';
+import { useGirlEntry } from '@/features/profile/girlEntry';
 
 /**
  * Home answers one question: "I just arrived. What can I do, and who can I
@@ -167,7 +168,7 @@ export default function Home() {
     [content.people, inGirl, women],
   );
   const eat = useMemo(() => content.places.filter((pl) => EAT_KINDS.has(pl.kind)), [content.places]);
-  const girl = profile.gender === 'woman';
+  const girl = useGirlEntry();
   const seeAllPeople = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
   // « IRLY Moms » (an entry of IRLY, /girl?mode=moms) lands here: IRLY Moms lives in Discover › People.
   const { girl: girlParam } = useLocalSearchParams<{ girl?: string }>();

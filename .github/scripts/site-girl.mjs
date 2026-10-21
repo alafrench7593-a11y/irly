@@ -165,11 +165,11 @@ const T = {
       ["newcomerGirl", "Welcome newcomers", "Just arrived? Ask anything, get tips, find your first friends.", "A woman photographing Downtown Dubai at dusk"],
       ["networkingGirl", "A professional network", "Founders and professionals meeting over coffee and ideas.", "A pink Dubai book next to a laptop"],
       ["tennisGirl", "Activity partners", "A tennis partner, a running buddy, a pilates class with someone.", "The shadows of two women holding tennis rackets"],
-      ["beachClubGirl", "Outings", "Beach clubs, brunches, shopping, nights out, together.", "A sunny beach club with the Burj Al Arab in the distance"],
+      ["drinksGirl", "Outings", "Beach clubs, brunches, shopping, nights out, together.", "Two friends in abayas holding matcha drinks"],
       ["restaurantGirl", "Restaurants & experiences", "New tables to try and experiences to share.", "A rooftop restaurant terrace at night in Dubai"],
       ["desertGirl", "Trips", "Desert evenings, weekends away and road trips between girls.", "Three women watching the sunset in the desert"],
       ["runGirl", "Girl Live", "See which women are out right now near you, and join them.", "A group of women running along a palm-lined beach path"],
-      ["drinksGirl", "Member chat", "Private chats, group chats and community chats, with photos.", "Two friends in abayas holding matcha drinks"],
+      ["spaGirl", "Member chat", "Private chats, group chats and community chats, with photos.", "Two friends in robes talking by a window over Dubai"],
     ],
     plansK: "Girl activities",
     plansT: "What women plan together.",
@@ -180,7 +180,7 @@ const T = {
       ["drinksGirl", "Coffee & matcha", "Weekday, 08:00"],
       ["pilatesGirl", "Pilates", "Tuesday, 19:00"],
       ["padelGirl", "Padel", "Thursday, 20:00"],
-      ["beachClubGirl", "Beach club", "Sunday, 13:00"],
+      ["golfGirl", "Golf evening", "Sunday, 19:00"],
       ["yachtGirl", "Yacht day", "Friday, 16:00"],
       ["readingGirl", "Book club", "Wednesday, 19:30"],
       ["quadGirl", "Desert quad", "Saturday, 15:00"],
@@ -325,11 +325,11 @@ const T = {
       ["newcomerGirl", "Accueillir les nouvelles", "Tu viens d’arriver ? Pose tes questions, récupère les bons plans, trouve tes premières amies.", "Une femme photographie Downtown Dubai au crépuscule"],
       ["networkingGirl", "Un réseau pro", "Entrepreneures et professionnelles autour d’un café et d’idées.", "Un livre rose sur Dubaï à côté d’un ordinateur portable"],
       ["tennisGirl", "Des partenaires d’activité", "Une partenaire de tennis, une copine de running, un cours de pilates à deux.", "Les ombres de deux femmes avec des raquettes de tennis"],
-      ["beachClubGirl", "Des sorties", "Beach clubs, brunchs, shopping, soirées, ensemble.", "Un beach club ensoleillé avec la Burj Al Arab au loin"],
+      ["drinksGirl", "Des sorties", "Beach clubs, brunchs, shopping, soirées, ensemble.", "Deux amies en abaya tiennent des boissons au matcha"],
       ["restaurantGirl", "Restos et expériences", "De nouvelles tables à tester et des expériences à partager.", "La terrasse d’un restaurant sur un toit de Dubaï la nuit"],
       ["desertGirl", "Des voyages", "Soirées dans le désert, week-ends et road trips entre filles.", "Trois femmes regardent le coucher du soleil dans le désert"],
       ["runGirl", "Girl Live", "Vois quelles femmes sortent en ce moment près de toi, et rejoins-les.", "Un groupe de femmes court sur une promenade bordée de palmiers"],
-      ["drinksGirl", "Le chat entre membres", "Discussions privées, de groupe et de communauté, avec photos.", "Deux amies en abaya tiennent des boissons au matcha"],
+      ["spaGirl", "Le chat entre membres", "Discussions privées, de groupe et de communauté, avec photos.", "Deux amies en peignoir discutent devant une baie vitrée sur Dubaï"],
     ],
     plansK: "Activités Girl",
     plansT: "Ce que les femmes organisent ensemble.",
@@ -340,7 +340,7 @@ const T = {
       ["drinksGirl", "Café & matcha", "En semaine, 8 h"],
       ["pilatesGirl", "Pilates", "Mardi, 19 h"],
       ["padelGirl", "Padel", "Jeudi, 20 h"],
-      ["beachClubGirl", "Beach club", "Dimanche, 13 h"],
+      ["golfGirl", "Soirée golf", "Dimanche, 19 h"],
       ["yachtGirl", "Journée en yacht", "Vendredi, 16 h"],
       ["readingGirl", "Club de lecture", "Mercredi, 19 h 30"],
       ["quadGirl", "Quad dans le désert", "Samedi, 15 h"],
@@ -615,6 +615,7 @@ h2{font:400 clamp(38px,4.8vw,64px)/1.02 "Instrument Serif",Georgia,serif;letter-
 /* Communities */
 .circles{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
 .circle{display:grid;grid-template-columns:150px 1fr;gap:16px;align-items:center;padding:12px;border-radius:26px}
+.circle:last-child:nth-child(odd){grid-column:1/-1}
 .circle img.cv{width:150px;height:150px;border-radius:20px;object-fit:cover;background:var(--blush)}
 .circle b{font:400 28px/1.05 "Instrument Serif",Georgia,serif}
 .circle p{color:var(--soft);font-size:14.5px;margin:6px 0 12px}

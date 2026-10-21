@@ -17,7 +17,8 @@ import { useAccount } from '@/features/auth/account';
 import { createServerCommunity } from '@/features/server/activities';
 import { haptic } from '@/motion/haptics';
 import { useAppSpace } from '@/state/appSpace';
-import { useCityId, useStore } from '@/state/store';
+import { useCityId } from '@/state/store';
+import { useGirlEntry } from '@/features/profile/girlEntry';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -32,7 +33,7 @@ export default function NewCommunity() {
   const account = useAccount();
   const cityId = useCityId();
   const city = CITIES[cityId];
-  const woman = useStore((s) => s.profile.gender === 'woman');
+  const woman = useGirlEntry();
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [description, setDescription] = useState('');
