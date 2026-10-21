@@ -306,7 +306,8 @@ export async function copyLink(t: Target): Promise<void> {
 /** Send to a chat: one message that points at the canonical item. */
 export async function shareToChat(conversationId: string, t: Target): Promise<void> {
   const { error } = await need().rpc('share_to_chat', { p_conversation: conversationId, p_type: t.type, p_id: t.id, p_title: t.title ?? '' });
-  if (error) throw new Error(error.message);
+  // Something you may not see (or no longer exists) is never shared: said in words, not as the server's code text.
+  if (error) throw new Error(/^not found$/i.test(error.message) ? 'This is no longer available' : error.message);
   track('SHARE', { type: t.type, channel: 'chat' });
 }
 

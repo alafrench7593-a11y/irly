@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState, type ReactNode } from 'react';
 import { DEMO } from '@/config/app';
 import { t as tx } from '@/i18n';
@@ -28,6 +28,7 @@ import { getCityContent } from '@/data/repo';
 import { scoreMatch } from '@/features/matching/match';
 import { blur, motion, scale, spring, staggerStep } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
+import { ActivityCardsGallery } from '@/features/community/ActivityCardsGallery';
 import { category, palettes, radius, space, status, type as typeScale, type TypeVariant } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -57,6 +58,8 @@ export default function DesignSystemRoute() {
 
 function DesignSystem() {
   const t = useTheme();
+  // ?section=activities: the activity cards of communities and chats alone (screenshots, reviews).
+  const { section } = useLocalSearchParams<{ section?: string }>();
   const cityId = useCityId();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
@@ -67,6 +70,15 @@ function DesignSystem() {
   const [sheet, setSheet] = useState(false);
   const typeVariants = Object.keys(typeScale) as TypeVariant[];
 
+  if (section === 'activities') {
+    return (
+      <Page overline="IRLY 3.0" title="Activities" subtitle="An activity in its community, shared in a chat, and at the top of its own chat: one record, read live.">
+        <Block title="Activities in communities and chats">
+          <ActivityCardsGallery girl={t.flavor === 'girl'} />
+        </Block>
+      </Page>
+    );
+  }
   return (
     <Page overline="IRLY 3.0" title="Design System" subtitle="Black and white. Colour only for categories, statuses and actions. Motion that links two states, never decoration.">
       <Block title="Brand · Common Ground" note="Two rings, two lives; the lens is where they meet. The mark has four motion states.">
@@ -288,6 +300,10 @@ function DesignSystem() {
             </Text>
           </View>
         ))}
+      </Block>
+
+      <Block title="Activities in communities and chats" note="One record, read live: the community feed, a share in a chat, the top of its own chat.">
+        <ActivityCardsGallery girl={t.flavor === 'girl'} />
       </Block>
 
       <Block title="Overlays">

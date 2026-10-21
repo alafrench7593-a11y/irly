@@ -4,7 +4,19 @@ import type { CategoryKey } from '@/data/catalog/categories';
 /** What the member is creating. Every format becomes a session with its own chat. */
 export type CreateFormat = 'activity' | 'sport' | 'event' | 'session' | 'meetup' | 'trip';
 
-export type CreatePreset = { categoryId?: CategoryKey; subId?: string; activityId?: string; format?: CreateFormat; communityId?: string; /** The community's emirate: its activities belong there. */ cityId?: string };
+export type CreatePreset = {
+  categoryId?: CategoryKey;
+  subId?: string;
+  activityId?: string;
+  format?: CreateFormat;
+  communityId?: string;
+  /** The community's emirate: its activities belong there. */
+  cityId?: string;
+  /** Opened from a community (« + Propose an activity »): its name, shown on the form as where the activity is proposed. */
+  communityName?: string;
+  /** An IRLY Girl community: the activity is women-only (the server enforces it too). */
+  girlOnly?: boolean;
+};
 
 type CreateState = {
   open: boolean;

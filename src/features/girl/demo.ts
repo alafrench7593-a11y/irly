@@ -6,6 +6,7 @@ import type { PhotoKey } from '@/data/photos';
 import { findPerson, getCityContent } from '@/data/repo';
 import type { CityId, Conversation } from '@/data/types';
 import type { ServerActivity } from '@/features/server/activities';
+import type { ActivityCard } from '@/features/server/activityCards';
 import type { Comment, Engagement, Target, TargetType } from '@/features/server/engage';
 import type { GirlPost } from './world';
 
@@ -104,6 +105,39 @@ export function planStartsAt(p: DemoPlan): number {
 }
 
 export const planGoing = (p: DemoPlan, going: Record<string, boolean>) => p.going.length + (going[p.id] && !p.joined ? 1 : 0) - (!going[p.id] && p.joined ? 1 : 0);
+
+/** A demo plan as the live activity card of the real screens (community feed, chats): same shape, example content. */
+export function demoPlanCard(p: DemoPlan, going: Record<string, boolean>): ActivityCard {
+  const n = planGoing(p, going);
+  const mine = Boolean(going[p.id]);
+  const community = p.community ? findDemoCommunity(p.community) : undefined;
+  return {
+    id: p.id,
+    title: p.title,
+    startsAt: planStartsAt(p),
+    endsAt: planStartsAt(p) + 2 * HOUR,
+    placeName: p.place,
+    areaId: p.area,
+    cityId: 'dubai',
+    categoryId: CATEGORY[p.kind] ?? 'social',
+    photo: p.cover,
+    coverUrl: null,
+    priceMinor: 0,
+    currency: 'AED',
+    capacity: p.capacity,
+    going: n,
+    state: n >= p.capacity && !mine ? 'full' : 'open',
+    girlOnly: true,
+    communityId: community?.id ?? null,
+    communityName: community?.name ?? null,
+    creatorId: p.by,
+    creatorName: findPerson(p.by)?.name ?? null,
+    myStatus: mine ? 'going' : null,
+    conversationId: null,
+    canMessageHost: true,
+    pinned: false,
+  };
+}
 
 const toActivity = (p: DemoPlan, going: Record<string, boolean>): ServerActivity => ({
   id: p.id,
