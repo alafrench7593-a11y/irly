@@ -75,14 +75,14 @@ const toRow = (c: DemoCommunity, joined: Record<string, boolean>): DemoCommunity
 });
 
 /** Same shape as useCommunitiesLike. */
-export function useDemoCommunitiesLike(_cityId: string, like: string, _girlOnly = false, _membersOnly = false) {
+export function useDemoCommunitiesLike(_cityId: string, like: string, _girlOnly = false, _membersOnly = false, _officialTopics: readonly string[] = []) {
   const joined = useDemoGirl((s) => s.joined);
   const data = useMemo(
     () =>
-      DEMO_COMMUNITIES.filter((c) => (like ? c.name.toLowerCase().includes(like.toLowerCase()) : !c.moms))
+      DEMO_COMMUNITIES.filter((c) => (like ? like.split('|').some((w) => c.name.toLowerCase().includes(w.toLowerCase())) : !c.moms))
         .map((c) => toRow(c, joined))
-        // Yours first, then the busiest.
-        .sort((a, b) => Number(b.member) - Number(a.member) || b.members - a.members),
+        // IRLY's own first, then yours, then the busiest.
+        .sort((a, b) => Number(Boolean(findDemoCommunity(b.id)?.official)) - Number(Boolean(findDemoCommunity(a.id)?.official)) || Number(b.member) - Number(a.member) || b.members - a.members),
     [like, joined],
   );
   return { data, loading: false, error: null as string | null, reload: () => {} };

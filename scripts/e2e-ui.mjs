@@ -156,15 +156,15 @@ async function main() {
   // IRLY Community, once after signing in: intro, then recommendations from the answers.
   // Nothing is joined here: a join would post "Uma just joined" in a real community chat.
   await check('IRLY Community intro', '/onboarding/communities', ['Meet people. Find your community.']);
-  await check('Your communities: newcomers recommended, join or skip', null, ['Your communities', 'IRLY Newcomers', 'Join all', 'Choose my communities', 'Skip for now'], async () => {
+  await check('Your communities: newcomers recommended (IRLY Expat), join or skip', null, ['Your communities', 'IRLY Expat', 'Join all', 'Choose my communities', 'Skip for now'], async () => {
     await click('Skip');
   });
   await check('Skip for now goes Home', null, ['Live Bali'], async () => {
     await click('Skip for now');
   });
-  await check('Communities: For you recommends IRLY Newcomers (not joined)', '/communities', ['For you', 'IRLY Newcomers', 'Join']);
-  await check('Communities: All lists the IRLY catalogue; search finds IRLY Expats (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expats'], async () => {
-    await page.getByPlaceholder('Search by name or theme').fill('expats');
+  await check('Communities: For you recommends IRLY Expat (not joined)', '/communities', ['For you', 'IRLY Expat', 'Join']);
+  await check('Communities: All lists IRLY\'s communities; search finds IRLY Expat (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expat'], async () => {
+    await page.getByPlaceholder('Search by name or theme').fill('expat');
   });
   // Match IRLY is not open yet (src/lib/features.ts): the bar button (« Soon » while it is
   // closed) must lead to its coming-soon page, which says so, not to a list of people.

@@ -482,11 +482,17 @@ export function useGirlExtras() {
 
 /** Communities of a destination matching a word (Moms, Girls…), with membership. */
 /** Communities by name; `membersOnly`: only the ones members created (no official IRLY community). */
-export function useCommunitiesLike(cityId: string, like: string, girlOnly = false, membersOnly = false) {
+/**
+ * `officialTopics`: IRLY's official communities of the space (IRLY Maman's
+ * four, whatever their name), listed first in that order; any other
+ * official community (a retired one) is left out, the members' follow.
+ */
+export function useCommunitiesLike(cityId: string, like: string, girlOnly = false, membersOnly = false, officialTopics: readonly string[] = NO_TOPICS) {
   const account = useAccount();
   const { keep } = useCityFilter(cityId as CityId);
-  const q = useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string; coverPath: string | null }[]>(
-    `comm-${cityId}-${like}-${girlOnly}-${membersOnly}-${account?.userId ?? 'anon'}`,
+  const topics = officialTopics.join(',');
+  const q = useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string; coverPath: string | null; official: boolean; topic: string | null }[]>(
+    `comm-${cityId}-${like}-${girlOnly}-${membersOnly}-${topics}-${account?.userId ?? 'anon'}`,
     async () => {
       if (!account) return [];
       // Top-level communities only (sub-groups live inside them), counted by
@@ -494,28 +500,39 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
       // not every member of every community.
       let q = sb()
         .from('communities')
-        .select('id, name, tagline, city_id, members_count, cover_path, community_members(user_id)')
+        .select('id, name, tagline, city_id, members_count, cover_path, official, topic, community_members(user_id)')
         .in('city_id', cityScope(cityId as CityId))
-        .ilike('name', `%${like}%`)
         .is('deleted_at', null)
         .is('parent_id', null)
         .eq('community_members.user_id', account.userId);
+      // The word (or words: 'Maman|Moms'), or one of the space's official topics.
+      q = topics ? q.or([...like.split('|').map((w) => `name.ilike.%${w}%`), `topic.in.(${topics})`].join(',')) : q.ilike('name', `%${like}%`);
       if (girlOnly) q = q.eq('girl_only', true);
       if (membersOnly) q = q.eq('official', false);
       const { data, error } = await q.order('name').limit(60);
       if (error) throw new Error(error.message);
       return (data ?? []).map((c) => {
         const m = (c.community_members ?? []) as { user_id: string }[];
-        return { id: c.id, name: c.name, tagline: c.tagline, member: m.length > 0, members: (c.members_count as number) ?? 0, cityId: c.city_id as string, coverPath: (c.cover_path as string | null) ?? null };
+        return { id: c.id, name: c.name, tagline: c.tagline, member: m.length > 0, members: (c.members_count as number) ?? 0, cityId: c.city_id as string, coverPath: (c.cover_path as string | null) ?? null, official: Boolean(c.official), topic: (c.topic as string | null) ?? null };
       });
     },
     [],
   );
   // Joined, left, created or deleted anywhere in the app: the list follows.
   useRefreshOn(['communities'], q.reload);
-  const data = useMemo(() => q.data.filter((c) => keep(c.cityId)), [q.data, keep]);
+  const data = useMemo(() => {
+    const kept = q.data.filter((c) => keep(c.cityId));
+    if (!topics) return kept;
+    const order = topics.split(',');
+    const rank = (c: { official: boolean; topic: string | null }) => (c.official ? order.indexOf(c.topic ?? '') : -1);
+    return kept
+      .filter((c) => !c.official || rank(c) >= 0)
+      // IRLY's own first, in their order (the member's city first); then the members', by name.
+      .sort((a, b) => Number(b.official) - Number(a.official) || (a.official ? Number(b.cityId === cityId) - Number(a.cityId === cityId) || rank(a) - rank(b) : 0));
+  }, [q.data, keep, topics, cityId]);
   return { ...q, data };
 }
+const NO_TOPICS: readonly string[] = [];
 
 // One join for the whole app: the same function as the community pages, so every list hears about it.
 export { joinCommunity } from '@/features/community/data';

@@ -17,19 +17,19 @@ type Portal = { title: string; line: string; overline: string; photo: PhotoKey; 
 
 const PORTALS: Portal[] = [
   { title: 'IRLY Girl', line: 'Meet girls who get you.', overline: 'Women only', photo: 'brunch', icon: 'sparkles', route: '/girl' },
-  { title: 'IRLY Moms', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: '/girl?mode=moms' },
+  { title: 'IRLY Maman', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: '/girl?mode=moms' },
 ];
 
-/** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Moms (Discover › People). */
+/** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Maman (Discover › People). */
 const GIRL_SPACE_PORTALS: Portal[] = [
   { title: 'IRLY Mixte', line: 'The same app, for everyone.', overline: 'Switch space', photo: 'dubaiMarina', icon: 'globe', route: 'mixte' },
-  { title: 'IRLY Moms', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: '/discover?tab=people&moms=1' },
+  { title: 'IRLY Maman', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: '/discover?tab=people&moms=1' },
 ];
 
 /**
  * Two doors side by side on their photos. In IRLY: into the women-only
  * worlds (not dating: friends, plans, and moms finding moms). In IRLY Girl,
- * at the same place: the way back to IRLY, and IRLY Moms (`onMoms` lets a
+ * at the same place: the way back to IRLY, and IRLY Maman (`onMoms` lets a
  * page open it in place).
  */
 export const GirlPortals = memo(function GirlPortals({ light, onMoms }: { light: LightId; onMoms?: () => void }) {
@@ -41,14 +41,14 @@ export const GirlPortals = memo(function GirlPortals({ light, onMoms }: { light:
     if (p.route === 'mixte') {
       setAppSpace('mixte');
       toast('Back to IRLY', 'globe', 'brand');
-    } else if (inGirl && onMoms && p.title === 'IRLY Moms') onMoms();
+    } else if (inGirl && onMoms && p.title === 'IRLY Maman') onMoms();
     else router.push(p.route as never);
   };
   return (
     <View style={styles.row}>
       {(inGirl ? GIRL_SPACE_PORTALS : PORTALS).map((p) => (
         <PressableScale key={p.title} haptic="select" scaleTo={0.97} onPress={() => open(p)} accessibilityLabel={`${p.title}. ${p.line}`}>
-          <Photo visual={{ photo: p.photo }} light={light} scrim="strong" style={[styles.card, { width: w }]} width={600} recyclingKey={`portal-${p.title}`}>
+          <Photo visual={{ photo: p.photo }} light={light} scrim="strong" style={[styles.card, { width: w }]} width={600} recyclingKey={`portal-${p.title}`} pinned>
             <View style={styles.top}>
               <Glass dark level="thin" style={styles.icon}>
                 <Icon name={p.icon} size={16} color="#FFFFFF" />

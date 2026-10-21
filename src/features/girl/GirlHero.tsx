@@ -58,7 +58,8 @@ export function GirlBackdrop({ mode, scrollY, width }: { mode: 'all' | 'moms'; s
     <View style={[StyleSheet.absoluteFill, styles.backdrop]} pointerEvents="none">
       <Animated.View style={[styles.photo, drift]}>
         <Animated.View style={[StyleSheet.absoluteFill, girls]}>
-          <Photo tint={GIRL_TINT} visual={{ photo: 'dubaiPink' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
+          {/* IRLY's own photo, the first one for IRLY Girl (friends in an infinity pool above Dubai Marina, 1125 px original; it was the 735 px Dubai sign). */}
+          <Photo tint={GIRL_TINT} visual={{ photo: 'poolGirl' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} />
         </Animated.View>
         <Animated.View style={[StyleSheet.absoluteFill, moms]}>
           <Photo tint={GIRL_TINT} visual={{ photo: 'beachClub' }} light="dubai" width={1200} style={StyleSheet.absoluteFill} pinned />
@@ -123,7 +124,7 @@ export function GirlHero({
           <GlassFill dark level="thin" radius={20} />
           <Icon name="chevronLeft" size={20} color="#FFFFFF" />
         </PressableScale>
-        <GirlHeaderMark pill onDark size={18} section={mode} word={mode === 'moms' ? 'Moms' : 'Girl'} />
+        <GirlHeaderMark pill onDark size={18} section={mode} word={mode === 'moms' ? 'Maman' : 'Girl'} />
         <View style={styles.actions}>
           <PressableScale
             haptic="select"
