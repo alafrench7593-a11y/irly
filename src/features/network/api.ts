@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { create } from 'zustand';
+import { DEMO } from '@/config/app';
 import { useAccount } from '@/features/auth/account';
 import { isAvatar } from '@/features/avatar/avatar';
 import { thumbOf } from '@/features/server/media';
@@ -7,6 +8,7 @@ import { changed, useSyncVersion } from '@/features/server/sync';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
 import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { useDemoMyPro, useDemoPro, useDemoPros } from './demo';
 import { LINK_KINDS, NO_LINKS, safeLink, type ProLinks } from './links';
 import type { ProProfile } from './match';
 import type { IndustryId, IntentId, RoleId } from './taxonomy';
@@ -103,6 +105,23 @@ const noSmall = new Set<string>();
 export function clearNetworkLinks(): void {
   signed.clear();
   noSmall.clear();
+  seen.clear();
+}
+
+// The profiles last shown on a card (with the photo the card showed), so a
+// profile page opens on them at once while its own read is on the way.
+// Memory only, this account only (cleared on log out like the links).
+const seen = new Map<string, { pro: ProProfile; photo: string | null }>();
+
+/** A card is opening this profile: its page can start from what the card showed. */
+export function rememberPro(pro: ProProfile, photo: string | null | undefined): void {
+  seen.set(pro.userId, { pro, photo: photo ?? null });
+  if (seen.size > 60) seen.delete(seen.keys().next().value as string);
+}
+
+/** What a card last showed of this profile, if anything. */
+export function seenPro(userId: string): { pro: ProProfile; photo: string | null } | null {
+  return seen.get(userId) ?? null;
 }
 /**
  * Links for profile photos, keyed by the photo's path. Cards ask for the small
@@ -144,7 +163,7 @@ export async function photoUrls(paths: string[], size: 'small' | 'full' = 'full'
 const useProVersion = create<{ v: number; bump: () => void }>((set) => ({ v: 0, bump: () => set((s) => ({ v: s.v + 1 })) }));
 
 /** Your own professional profile (null until you create it), the same on every screen. */
-export function useMyPro() {
+function useServerMyPro() {
   const uid = useAccount()?.userId;
   const version = useProVersion((s) => s.v);
   const bump = useProVersion((s) => s.bump);
@@ -242,7 +261,7 @@ export function useMyPro() {
 }
 
 /** Professionals of the country (or one city), filtered on the server; live connection states. */
-export function usePros(cityId: string, filters: ProFilters) {
+function useServerPros(cityId: string, filters: ProFilters) {
   const uid = useAccount()?.userId;
   const key = JSON.stringify(filters);
   const current = `${uid}|${cityId}|${key}`;
@@ -251,8 +270,9 @@ export function usePros(cityId: string, filters: ProFilters) {
   // What the last answer was for: loading is "the answer is for other filters".
   const [res, setRes] = useState<{ for: string; list: ProProfile[]; error: string | null }>({ for: '', list: [], error: null });
   const [photos, setPhotos] = useState<Record<string, string>>({});
-  // "Try again" after a failure asks the server once more.
+  // "Try again" after a failure asks the server once more; `answered` is the last attempt that got an answer.
   const [attempt, setAttempt] = useState(0);
+  const [answered, setAnswered] = useState(0);
 
   const load = useCallback(async () => {
     if (!uid || !supabase) return [];
@@ -275,11 +295,16 @@ export function usePros(cityId: string, filters: ProFilters) {
       load()
         .then(async (l) => {
           if (!alive || mine !== n) return;
+          setAnswered(attempt);
           setRes({ for: current, list: l, error: null });
           const urls = await photoUrls(l.map((p) => p.photoPath).filter(Boolean) as string[], 'small');
           if (alive && mine === n) setPhotos(urls);
         })
-        .catch((e) => alive && mine === n && setRes((r) => ({ for: current, list: r.list, error: e instanceof Error ? e.message : 'offline' })));
+        .catch((e) => {
+          if (!alive || mine !== n) return;
+          setAnswered(attempt);
+          setRes((r) => ({ for: current, list: r.list, error: e instanceof Error ? e.message : 'offline' }));
+        });
     };
     reload();
     // Requests sent or accepted (here or on another phone) update the buttons.
@@ -300,13 +325,18 @@ export function usePros(cityId: string, filters: ProFilters) {
 
   const on = Boolean(uid && supabase);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
-  return { list: on ? res.list : NONE, photos, loading: on && res.for !== current, error: res.error, setConnection, retry, signedIn: Boolean(uid) };
+  // A "Try again" on its way (the failure stays on screen until it answers).
+  const retrying = on && answered !== attempt;
+  return { list: on ? res.list : NONE, photos, loading: on && res.for !== current, retrying, error: res.error, setConnection, retry, signedIn: Boolean(uid) };
 }
 
 /** One professional's profile. */
-export function usePro(userId: string) {
+function useServerPro(userId: string) {
   const uid = useAccount()?.userId;
   const friendsV = useSyncVersion('friends');
+  // "Try again" after a failure reads the profile once more; `answered` is the last attempt that got an answer.
+  const [attempt, setAttempt] = useState(0);
+  const [answered, setAnswered] = useState(0);
   const [res, setRes] = useState<{ id: string; pro: ProProfile | null; failed: boolean }>({ id: '', pro: null, failed: false });
   const [photo, setPhoto] = useState<string | null>(null);
   const [links, setLinks] = useState<{ id: string; links: ProLinks }>({ id: '', links: NO_LINKS });
@@ -333,13 +363,18 @@ export function usePro(userId: string) {
         load()
           .then(async (p) => {
             if (!current()) return;
+            setAnswered(attempt);
             setRes({ id: userId, pro: p, failed: false });
             if (p?.photoPath) {
               const urls = await photoUrls([p.photoPath]);
               if (current()) setPhoto(urls[p.photoPath] ?? null);
             } else setPhoto(null); // Removed meanwhile: the old one does not stay.
           })
-          .catch(() => current() && setRes((r) => ({ id: userId, pro: r.id === userId ? r.pro : null, failed: true })));
+          .catch(() => {
+            if (!current()) return;
+            setAnswered(attempt);
+            setRes((r) => ({ id: userId, pro: r.id === userId ? r.pro : null, failed: true }));
+          });
       })();
     reload();
     const channel = liveChannel(`pro-${userId}`)
@@ -349,15 +384,21 @@ export function usePro(userId: string) {
       alive = false;
       supabase?.removeChannel(channel);
     };
-  }, [uid, userId, load, friendsV]);
+  }, [uid, userId, load, friendsV, attempt]);
 
   const setConnection = useCallback((connection: ProProfile['connection']) => setRes((r) => (r.pro ? { ...r, pro: { ...r.pro, connection } } : r)), []);
 
   const on = Boolean(uid && supabase);
   const pro = on && res.id === userId ? res.pro : null;
   const state: 'loading' | 'ready' | 'missing' | 'error' = !on ? 'missing' : res.id !== userId ? 'loading' : res.failed && !pro ? 'error' : pro ? 'ready' : 'missing';
-  return { pro, photo: res.id === userId ? photo : null, links: pro && links.id === userId ? links.links : NO_LINKS, state, setConnection };
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
+  return { pro, photo: res.id === userId ? photo : null, links: pro && links.id === userId ? links.links : NO_LINKS, state, retrying: on && answered !== attempt, setConnection, retry };
 }
+
+// The demonstration build reads illustrative profiles (demo.ts), never the server.
+export const useMyPro: typeof useServerMyPro = DEMO ? useDemoMyPro : useServerMyPro;
+export const usePros: typeof useServerPros = DEMO ? useDemoPros : useServerPros;
+export const usePro: typeof useServerPro = DEMO ? useDemoPro : useServerPro;
 
 /** Connect from Networking: sends a request, or accepts theirs. Returns 'pending' or 'accepted'. */
 export async function proConnect(userId: string): Promise<string> {

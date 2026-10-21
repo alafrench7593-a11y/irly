@@ -1,9 +1,8 @@
 import { useRouter } from 'expo-router';
 import { Fragment, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInLeft, FadeInRight, LinearTransition, useAnimatedRef, useAnimatedScrollHandler, useReducedMotion, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Page } from '@/components/layout/Page';
 import { PageHeader } from '@/components/navigation/Headers';
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { Button } from '@/components/ui/Button';
@@ -34,14 +33,15 @@ import {
   type IntentId,
 } from '@/features/network/taxonomy';
 import { t as tx, useT } from '@/i18n';
-import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { GlassLayer } from '@/components/ui/GlassLayer';
-import { useNetworkTone, NetworkScreen } from '@/features/network/tone';
+import { blockIn, LightDrift } from '@/features/network/motion';
+import { NetworkPage, NetworkTitle } from '@/features/network/page';
+import { NetworkState, Shimmer, useGlint } from '@/features/network/ui';
+import { NetworkPane, useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 const TITLE = 'Professional profile';
 const SUBTITLE = 'What you do, what you build, what you look for. Shown in Networking and used for your matches.';
@@ -93,25 +93,23 @@ export default function ProProfileEditor() {
 function ProProfileEditorPage() {
   const cityId = useCityId();
   const me = useMyPro();
-  const t = useTheme();
   // The form opens once the saved profile (if any) has loaded, already filled in.
   if (me.signedIn && me.loading)
     return (
-      <Page overline="IRLY Network" title={TITLE}>
-        <ActivityIndicator color={t.flavor === 'girl' ? t.c.brand : t.c.text} style={{ marginTop: 24 }} accessibilityLabel={tx('Loading')} />
-      </Page>
+      <NetworkPage overline="IRLY Network" title={TITLE} subtitle={SUBTITLE}>
+        <FormSkeleton />
+      </NetworkPage>
     );
   // Unread is not "no profile": an empty form saved here would replace the real one.
   if (me.signedIn && me.error && !me.pro)
     return (
-      <Page overline="IRLY Network" title={TITLE}>
-        <View style={{ paddingHorizontal: 20, gap: 12 }}>
-          <Text variant="body" tone="secondary">
-            Can’t reach IRLY right now
-          </Text>
-          <Button label="Try again" variant="secondary" onPress={me.reload} />
+      <NetworkPage overline="IRLY Network" title={TITLE}>
+        <View style={{ paddingHorizontal: space.gutter }}>
+          <NetworkState icon="satellite" error title="Can’t reach IRLY right now" body="Your profile is safe: nothing is saved until it loads.">
+            <Button label="Try again" icon="repeat" variant="secondary" size="md" onPress={me.reload} />
+          </NetworkState>
         </View>
-      </Page>
+      </NetworkPage>
     );
   const initial = me.pro ? draftOf(me.pro, me.visible) : EMPTY(cityId);
   return <Editor key={me.pro ? 'edit' : 'new'} me={me} initial={{ ...initial, links: me.pro ? me.links : NO_LINKS }} cityId={cityId} />;
@@ -229,15 +227,13 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
 
   if (!me.signedIn) {
     return (
-      <Page overline="IRLY Network" title={TITLE}>
-        <View style={[styles.box, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
-          <GlassLayer radius={radius.xl} />
-          <Text variant="body" tone="secondary">
-            Sign in to create your professional profile.
-          </Text>
-          <Button label="Sign in" icon="user" onPress={() => router.push('/account')} />
+      <NetworkPage overline="IRLY Network" title={TITLE}>
+        <View style={{ paddingHorizontal: space.gutter }}>
+          <NetworkState icon="briefcase" title="Sign in to create your professional profile." body="Networking lists real members only, so you need an IRLY account.">
+            <Button label="Sign in" icon="user" size="md" onPress={() => router.push('/account')} />
+          </NetworkState>
         </View>
-      </Page>
+      </NetworkPage>
     );
   }
 
@@ -388,8 +384,8 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
 
     // 5 · Visibility & confirm
     <Fragment key="confirm">
-      <PressableScale haptic="select" scaleTo={0.98} onPress={() => set('visible', !d.visible)} style={[styles.toggle, { borderColor: t.c.line }]} accessibilityRole="switch" accessibilityState={{ checked: d.visible }} aria-checked={d.visible} accessibilityLabel="Show me in Networking">
-        <GlassLayer radius={radius.lg} />
+      <PressableScale haptic="select" scaleTo={0.98} onPress={() => set('visible', !d.visible)} style={[styles.toggle, { boxShadow: tone.surface.shadow }]} accessibilityRole="switch" accessibilityState={{ checked: d.visible }} aria-checked={d.visible} accessibilityLabel="Show me in Networking">
+        <NetworkPane radius={radius.lg} />
         <View style={{ flex: 1, gap: 2 }}>
           <Text variant="titleS">Show me in Networking</Text>
           <Text variant="caption" tone="tertiary">
@@ -402,8 +398,8 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
       </PressableScale>
 
       <FormSection title="Summary">
-        <View style={[styles.summary, { borderColor: t.c.line }]}>
-          <GlassLayer radius={radius.xl} variant="card" />
+        <View style={[styles.summary, { boxShadow: tone.surface.shadow }]}>
+          <NetworkPane radius={radius.xl} />
           <Row label="I am" value={[tr(ROLE_LABEL[shownRole]), d.company.trim() ? `${d.jobTitle.trim()} · ${d.company.trim()}` : d.jobTitle.trim()].filter(Boolean).join(' · ')} onEdit={() => go(0)} />
           <Row label="Industries" value={d.industries.map((i) => `${INDUSTRY[i].emoji} ${tr(INDUSTRY[i].short)}`).join(', ')} onEdit={() => go(1)} />
           <Row label="Skills" value={d.skills.map((s) => tr(s)).join(', ')} onEdit={() => go(1)} />
@@ -418,6 +414,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Ambient />
+      <LightDrift scrollY={scrollY} />
       <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <Animated.ScrollView
           ref={scrollRef}
@@ -427,19 +424,9 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40 }}
         >
-          <Animated.View entering={enter.rise(0, 40)} style={styles.head}>
-            <Text variant="overline" tone="accent">
-              IRLY Network
-            </Text>
-            <Text variant="displayL" accessibilityRole="header">
-              {TITLE}
-            </Text>
-            <Text variant="body" tone="secondary">
-              {SUBTITLE}
-            </Text>
-          </Animated.View>
+          <NetworkTitle overline="IRLY Network" title={TITLE} subtitle={SUBTITLE} />
 
-          <View style={styles.form}>
+          <Animated.View entering={blockIn(0, 200)} style={styles.form}>
             <StepProgress steps={STEPS} step={step} onStep={go} />
             <Animated.View key={step} entering={entering} style={styles.step}>
               {body}
@@ -484,10 +471,30 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
                 />
               ) : null}
             </View>
-          </View>
+          </Animated.View>
         </Animated.ScrollView>
       </KeyboardAvoidingView>
       <PageHeader title={TITLE} scrollY={scrollY} />
+    </View>
+  );
+}
+
+/** The editor while your saved profile loads: its shape (steps, cards, a field), nothing filled in. */
+function FormSkeleton() {
+  const glint = useGlint();
+  return (
+    <View style={{ paddingHorizontal: space.gutter, gap: 14 }} accessibilityLabel={tx('Loading')}>
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Shimmer key={i} glint={glint} height={4} radius={2} style={{ flex: 1 }} />
+        ))}
+      </View>
+      <Shimmer glint={glint} width="55%" height={22} radius={8} />
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <Shimmer glint={glint} height={124} radius={radius.lg} style={{ flex: 1 }} />
+        <Shimmer glint={glint} height={124} radius={radius.lg} style={{ flex: 1 }} />
+      </View>
+      <Shimmer glint={glint} height={52} radius={radius.md} />
     </View>
   );
 }
@@ -531,11 +538,10 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   skill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 32, paddingHorizontal: 12, borderRadius: radius.pill },
-  box: { padding: 20, gap: 12, borderRadius: radius.xl },
-  toggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.lg, overflow: 'hidden' },
   switch: { width: 48, height: 28, borderRadius: 14, padding: 3, justifyContent: 'center' },
   knob: { width: 22, height: 22, borderRadius: 11 },
-  summary: { paddingHorizontal: 16, paddingVertical: 4, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
+  summary: { paddingHorizontal: 16, paddingVertical: 4, borderRadius: radius.xl, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   nav: { gap: 10 },
   navRow: { flexDirection: 'row', gap: 10 },
