@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
+import { useAppSpace } from '@/state/appSpace';
 import { useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
 import { offsetOf } from '@/lib/time';
@@ -43,12 +44,18 @@ const until = (when: MapWhen, cityId: string): string | null => {
   return new Date(endLocal - shift).toISOString();
 };
 
-export function useMapActivities(cityId: string, filters: MapFilters, origin: { latitude: number; longitude: number } | null) {
+export function useMapActivities(cityId: string, filters: MapFilters, origin: { latitude: number; longitude: number } | null): { list: MapActivity[]; ready: boolean } {
   const uid = useAccount()?.userId;
-  const [list, setList] = useState<MapActivity[]>([]);
-  const seq = useRef(0);
+  // Each space shows its own plans: IRLY Girl's women-only ones there, none of them in IRLY (as every other list).
+  const girl = useAppSpace() === 'girl';
   const lat = origin?.latitude ?? null;
   const lng = origin?.longitude ?? null;
+  // The list is tagged with what it was read for: another account, city or space never shows it,
+  // and a new filter keeps the markers until its answer (no empty state before the first answer).
+  const base = `${uid}|${cityId}|${girl}`;
+  const key = `${base}|${filters.when}|${filters.category}|${filters.community}|${filters.km}|${lat}|${lng}`;
+  const [state, setState] = useState<{ base: string; key: string; list: MapActivity[] }>({ base: '', key: '', list: [] });
+  const seq = useRef(0);
   const load = useCallback(() => {
     if (!uid || !supabase) return;
     const n = ++seq.current;
@@ -62,14 +69,17 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
         p_lng: filters.km && lng != null ? lng : null,
         p_km: filters.km && lat != null ? filters.km : null,
         p_limit: 300,
+        p_girl_only: girl,
       })
       .then(
         ({ data, error }) => {
-          // Server not updated yet, or offline: no activity markers (never a guess).
+          // Server not updated yet, offline, or IRLY Girl refused: no activity markers (never a guess).
           if (n !== seq.current) return;
-          if (error) return setList([]);
-          setList(
-            ((data as Record<string, unknown>[] | null) ?? []).map((r) => ({
+          if (error) return setState({ base, key, list: [] });
+          setState({
+            base,
+            key,
+            list: ((data as Record<string, unknown>[] | null) ?? []).map((r) => ({
               id: r.id as string,
               title: r.title as string,
               description: (r.description as string | null) ?? null,
@@ -86,13 +96,15 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
               capacity: r.capacity == null ? null : Number(r.capacity),
               distanceKm: r.distance_km == null ? null : Number(r.distance_km),
             })),
-          );
+          });
         },
-        () => n === seq.current && setList([]),
+        () => n === seq.current && setState({ base, key, list: [] }),
       );
-  }, [uid, cityId, filters.when, filters.category, filters.community, filters.km, lat, lng]);
+  }, [uid, cityId, girl, base, key, filters.when, filters.category, filters.community, filters.km, lat, lng]);
   useEffect(load, [load]);
   // Created, edited, cancelled or deleted anywhere: the map follows.
   useRefreshOn(['activities'], load);
-  return uid ? list : [];
+  // Signed out or without a server: nothing to wait for.
+  if (!uid || !supabase) return { list: [], ready: true };
+  return { list: state.base === base ? state.list : [], ready: state.key === key };
 }

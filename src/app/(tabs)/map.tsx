@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -23,18 +23,16 @@ import { Glass } from '@/components/ui/Glass';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
-import { getCityContent } from '@/data/repo';
 import { cityCentre } from '@/data/areas';
 import type { City, CityId, MapPoint } from '@/data/types';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
 import { MapArt } from '@/features/map/MapArt';
 import { ClusterView, MarkerView, Projected, TILT, type Camera } from '@/features/map/MapMarkers';
-import { MapButton, MapTopBar, ModeSwitch, searchMap, type Layer } from '@/features/map/MapControls';
+import { MapButton, MapEmpty, MapTopBar, ModeSwitch, searchMap, type Layer } from '@/features/map/MapControls';
 import { MapSheet, type Snap } from '@/features/map/MapSheet';
 import { hasRealMap, RealCityMap } from '@/features/map/RealMap';
-import { useLives } from '@/features/live/liveStore';
-import { buildMarkers, placeMarkers, ZOOM, type MapMarkerData } from '@/features/map/markers';
-import { useActivityLayer } from '@/features/map/useActivityLayer';
+import { placeMarkers, ZOOM, type MapMarkerData } from '@/features/map/markers';
+import { useMapLayers } from '@/features/map/useActivityLayer';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { blur, ease, motion, spring } from '@/motion/tokens';
@@ -91,7 +89,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const frame = useFrame();
   const tabSpace = useTabBarSpace();
   const city = CITIES[cityId];
-  const content = getCityContent(cityId);
+  const router = useRouter();
   const [layer, setLayer] = useState<Layer>('all');
   const [selected, setSelected] = useState<MapMarkerData | null>(null);
   const [snap, setSnap] = useState<Snap>('collapsed');
@@ -107,9 +105,8 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const sheetBottom = tabSpace - 28;
   const sheetArea = H - sheetBottom;
 
-  const lives = useLives();
-  const acts = useActivityLayer(city, null, layer);
-  const all = useMemo(() => [...buildMarkers(city, content, lives), ...acts.markers], [city, content, lives, acts.markers]);
+  // Activities, people who chose to appear, and the demo build's examples, for the space shown.
+  const { all, acts, ready } = useMapLayers(city, null, layer);
   const layerMarkers = useMemo(() => (layer === 'all' ? all : all.filter((m) => m.type === layer)), [all, layer]);
   // A chosen layer shows all its markers whatever the zoom.
   const placed = useMemo(
@@ -221,6 +218,11 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
 
   const select = (m: MapMarkerData) => {
     haptic('select');
+    // An activity opens its own page (the same record everywhere); a person, her preview.
+    if (m.type === 'activity' && m.href) {
+      router.push(m.href as never);
+      return;
+    }
     setSelected(m);
     setSnap('collapsed');
     centerOn(m.point, Math.max(cam.zoom.get(), ZOOM.neighbourhood + 0.15), 136);
@@ -307,6 +309,8 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
           </Text>
         </View>
       ) : null}
+
+      {ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} /> : null}
 
       {selected ? (
         <MapSheet

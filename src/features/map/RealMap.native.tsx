@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -10,19 +11,17 @@ import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
 import { areaCoords, cityCoords, type LatLng } from '@/data/geo';
-import { getCityContent } from '@/data/repo';
 import type { CityId } from '@/data/types';
 import { DestinationSheet } from '@/features/destination/DestinationSheet';
-import { useLives } from '@/features/live/liveStore';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { MapButton, MapTopBar, ModeSwitch, searchMap, type Layer } from './MapControls';
+import { MapButton, MapEmpty, MapTopBar, ModeSwitch, searchMap, type Layer } from './MapControls';
 import { ClusterView, MarkerView } from './MapMarkers';
 import { MapSheet, type Snap } from './MapSheet';
-import { buildMarkers, type MapMarkerData } from './markers';
-import { useActivityLayer } from './useActivityLayer';
+import type { MapMarkerData } from './markers';
+import { useMapLayers } from './useActivityLayer';
 import { placeMarkers, STREET, type Located } from './place';
 
 export const hasRealMap = true;
@@ -42,8 +41,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const tabSpace = useTabBarSpace();
   const map = useRef<MapView>(null);
   const city = CITIES[cityId];
-  const content = getCityContent(cityId);
-  const lives = useLives();
+  const router = useRouter();
   const [layer, setLayer] = useState<Layer>('all');
   const [selected, setSelected] = useState<MapMarkerData | null>(null);
   const [snap, setSnap] = useState<Snap>('collapsed');
@@ -52,16 +50,14 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const [query, setQuery] = useState('');
   // Where the member is (once they tapped locate): for the distance filter.
   const [origin, setOrigin] = useState<LatLng | null>(null);
-  const acts = useActivityLayer(city, origin, layer);
+  // Activities, people who chose to appear, and the demo build's examples, for the space shown.
+  const { all: layers, acts, ready } = useMapLayers(city, origin, layer);
   const [me, setMe] = useState(false);
 
   const sheetBottom = tabSpace - 28;
   const sheetArea = frame.height - sheetBottom;
 
-  const all = useMemo(
-    () => [...buildMarkers(city, content, lives), ...acts.markers].filter((m): m is Located => Boolean(m.coords)),
-    [city, content, lives, acts.markers],
-  );
+  const all = useMemo(() => layers.filter((m): m is Located => Boolean(m.coords)), [layers]);
 
   // Open on the requested neighbourhood, else the busiest one.
   const start = useMemo<Region>(() => {
@@ -86,6 +82,11 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
 
   const select = (m: MapMarkerData & { coords?: LatLng }) => {
     haptic('select');
+    // An activity opens its own page (the same record everywhere); a person, her preview.
+    if (m.type === 'activity' && m.href) {
+      router.push(m.href as never);
+      return;
+    }
     setSelected(m);
     setSnap('collapsed');
     if (m.coords) centerOn(m.coords, Math.min(region.latitudeDelta, STREET * 0.9), 136);
@@ -178,7 +179,8 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
                 select(p.m);
               }}
               anchor={{ x: 0.5, y: 0.5 }}
-              tracksViewChanges={Platform.OS === 'ios' || selected?.id === p.m.id}
+              // Android redraws a marker only while tracking: a member's photo arrives after the first frame.
+              tracksViewChanges={Platform.OS === 'ios' || selected?.id === p.m.id || Boolean(p.m.userId)}
               zIndex={selected?.id === p.m.id ? 20 : 1}
             >
               <View pointerEvents="none" style={styles.markerBox}>
@@ -198,7 +200,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
               }}
             >
               <View pointerEvents="none" style={styles.markerBox}>
-                <ClusterView c={{ id: p.id, point: { x: 0, y: 0 }, members: p.members, colors: p.colors }} onPress={() => undefined} />
+                <ClusterView c={{ id: p.id, point: { x: 0, y: 0 }, members: p.members, colors: p.colors, family: p.family }} onPress={() => undefined} />
               </View>
             </Marker>
           ),
@@ -233,6 +235,9 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
         <MapButton icon="plus" label="Zoom in" onPress={() => zoomBy(2)} />
         <MapButton icon="minus" label="Zoom out" onPress={() => zoomBy(0.5)} />
       </Animated.View>
+
+      {/* Nothing where the map looks: said plainly (never example content). */}
+      {ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} /> : null}
 
       {selected ? (
         <MapSheet

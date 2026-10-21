@@ -40,7 +40,7 @@ export type Spot = {
 
 /** Real meetups of the communities around the city: the server's, or the demo's plans in the demo build. */
 export function useCommunityMeetups(cityId: CityId): Meetup[] {
-  const rows = useMapActivities(cityId, NO_FILTERS, null);
+  const rows = useMapActivities(cityId, NO_FILTERS, null).list;
   return useMemo(() => {
     if (DEMO) {
       return DEMO_PLANS.flatMap((p) => {

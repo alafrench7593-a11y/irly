@@ -1,13 +1,18 @@
 import type { IconName } from '@/components/ui/Icon';
 import { t as tx } from '@/i18n';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
+import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { cityCentre } from '@/data/areas';
+import { DEMO_PLANS } from '@/data/content/girlDemo';
+import { GIRL_PEOPLE } from '@/data/content/girls';
 import { areaCoords, toLatLng, type LatLng } from '@/data/geo';
-import type { City, CityContent, MapPoint } from '@/data/types';
+import { findPerson } from '@/data/repo';
+import type { City, CityContent, CityId, MapPoint } from '@/data/types';
 import type { HeroKind } from '@/features/hero/heroStore';
 import type { Live } from '@/features/live/liveStore';
+import { planStartsAt } from '@/features/girl/demo';
 import { formatCount } from '@/lib/format';
-import { planDate, whenLabel } from '@/lib/time';
+import { cityWhen, planDate, whenLabel } from '@/lib/time';
 import { activityColor, eventColor, placeColor } from '@/theme/categories';
 import { category, status } from '@/theme/tokens';
 
@@ -28,6 +33,8 @@ export type MapMarkerData = {
   color: string;
   hero?: { kind: HeroKind; id: string };
   personId?: string;
+  /** A member account (server): her own profile photo is shown, read by id. */
+  userId?: string;
   goingIds?: string[];
   count?: number;
   live?: boolean;
@@ -40,7 +47,14 @@ export type MapMarkerData = {
   href?: string;
 };
 
-export type Cluster = { id: string; point: MapPoint; members: MapMarkerData[]; colors: string[] };
+/**
+ * People (members, their lives) and things to do (activities, events,
+ * groups, places) never share a bubble: each family clusters on its own.
+ */
+export type Family = 'people' | 'plans';
+export const familyOf = (type: MarkerType): Family => (type === 'person' || type === 'live' ? 'people' : 'plans');
+
+export type Cluster = { id: string; point: MapPoint; members: MapMarkerData[]; colors: string[]; family: Family };
 
 export type Placed = { kind: 'marker'; m: MapMarkerData } | { kind: 'cluster'; c: Cluster };
 
@@ -103,8 +117,9 @@ export function activityMarkers(city: City, rows: MapActivityRow[], whenText: (m
       coords: { latitude: r.latitude, longitude: r.longitude },
       title: r.title,
       subtitle: [r.status === 'ongoing' ? tx('Happening now') : whenText(r.startsAt), r.place ?? r.address, r.communityName ? tx(r.communityName) : null].filter(Boolean).join(' · '),
-      icon: 'calendar' as const,
-      color: category.business,
+      // The activity's own category: its icon and colour, so a plan reads at a glance (and never as a person).
+      icon: CATEGORY_BY_ID[r.categoryId as CategoryKey]?.icon ?? ('calendar' as const),
+      color: CATEGORY_BY_ID[r.categoryId as CategoryKey]?.color ?? category.business,
       count: r.going,
       live: r.status === 'ongoing',
       body: r.description ?? r.address ?? undefined,
@@ -112,13 +127,55 @@ export function activityMarkers(city: City, rows: MapActivityRow[], whenText: (m
     };
   });
 }
-export type MapActivityRow = { id: string; title: string; description: string | null; startsAt: number; place: string | null; address: string | null; latitude: number; longitude: number; communityName: string | null; status: 'upcoming' | 'ongoing'; going: number };
+export type MapActivityRow = { id: string; title: string; description: string | null; startsAt: number; place: string | null; address: string | null; latitude: number; longitude: number; categoryId: string; communityName: string | null; status: 'upcoming' | 'ongoing'; going: number };
 
-export function buildMarkers(city: City, content: CityContent, lives: Live[] = []): MapMarkerData[] {
+/** A member the server placed on the map: her neighbourhood, never finer (see map_people). */
+export type MapPersonRow = { id: string; firstName: string; username: string | null; cityId: string; areaId: string; verified: boolean };
+
+/** People colour on the map: one for every member, so a person never reads as a plan. */
+export const PERSON_COLOR = category.networking;
+
+/**
+ * Members who chose to appear, around their neighbourhood: its centre plus
+ * a fixed offset drawn from their id (the same every time, so watching the
+ * map tells nothing more than the neighbourhood).
+ */
+export function peopleMarkers(city: City, rows: MapPersonRow[]): MapMarkerData[] {
+  return rows.flatMap((r) => {
+    const base = areaCoords(r.cityId as CityId, r.areaId);
+    if (!base) return [];
+    const area = city.areas.find((a) => a.id === r.areaId);
+    const anchor = area?.point ?? cityCentre(city);
+    const point = jitter(anchor, r.id, 0.05);
+    return [
+      {
+        id: `u:${r.id}`,
+        type: 'person' as const,
+        areaId: r.areaId,
+        point,
+        coords: { latitude: base.latitude - (point.y - anchor.y) * 0.16, longitude: base.longitude + (point.x - anchor.x) * 0.16 },
+        title: r.firstName,
+        subtitle: [r.username ? `@${r.username}` : null, area?.name ?? null].filter(Boolean).join(' · '),
+        icon: 'user' as const,
+        color: PERSON_COLOR,
+        userId: r.id,
+      },
+    ];
+  });
+}
+
+/**
+ * The example content of the demonstration build (production content is
+ * empty: see data/repo). In IRLY Girl: the example women and the example
+ * IRLY Girl plans only, never the IRLY ones.
+ */
+export function buildMarkers(city: City, content: CityContent, lives: Live[] = [], girl = false): MapMarkerData[] {
   const pt = (areaId: string) => city.areas.find((a) => a.id === areaId)?.point ?? cityCentre(city);
   const list: MapMarkerData[] = [];
   lives.forEach((l) => {
-    const p = l.authorId === 'me' ? undefined : content.people.find((x) => x.id === l.authorId);
+    // The author of the live (IRLY or IRLY Girl example member), never someone else's name or photo.
+    const p = l.authorId === 'me' ? undefined : findPerson(l.authorId);
+    if (l.authorId !== 'me' && !p) return;
     list.push({
       id: l.id,
       type: 'live',
@@ -134,6 +191,11 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       live: true,
     });
   });
+  if (girl) {
+    girlDemo(city, pt).forEach((m) => list.push(m));
+    content.places.forEach((p) => list.push(placeMarker(p, pt)));
+    return list.map((m) => ({ ...m, coords: m.coords ?? toLatLng(city.id, m.areaId, pt(m.areaId), m.point) }));
+  }
   content.people.forEach((p) =>
     list.push({
       id: p.id,
@@ -201,22 +263,66 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
       count: c.members,
     }),
   );
-  content.places.forEach((p) =>
-    list.push({
-      id: p.id,
-      type: 'place',
-      areaId: p.areaId,
-      point: jitter(pt(p.areaId), p.id),
-      title: p.name,
-      subtitle: `${tx(PLACE_KINDS[p.kind].label)} · ★ ${p.rating.toFixed(1)}`,
-      icon: PLACE_KINDS[p.kind].icon,
-      color: placeColor(p.kind),
-      hero: { kind: 'place', id: p.id },
-      body: p.blurb,
-    }),
-  );
+  content.places.forEach((p) => list.push(placeMarker(p, pt)));
   return list.map((m) => ({ ...m, coords: toLatLng(city.id, m.areaId, pt(m.areaId), m.point) }));
 }
+
+function placeMarker(p: CityContent['places'][number], pt: (areaId: string) => MapPoint): MapMarkerData {
+  return {
+    id: p.id,
+    type: 'place',
+    areaId: p.areaId,
+    point: jitter(pt(p.areaId), p.id),
+    title: p.name,
+    subtitle: `${tx(PLACE_KINDS[p.kind].label)} · ★ ${p.rating.toFixed(1)}`,
+    icon: PLACE_KINDS[p.kind].icon,
+    color: placeColor(p.kind),
+    hero: { kind: 'place', id: p.id },
+    body: p.blurb,
+  };
+}
+
+const DEMO_PLAN_CATEGORY: Record<string, CategoryKey> = { padel: 'sport', yoga: 'wellness', brunch: 'food', coffee: 'food', walk: 'culture', beach: 'outdoor' } as Record<string, CategoryKey>;
+
+/** IRLY Girl in the demo build: its example women (around their neighbourhood) and its example plans (their page opens on tap). */
+function girlDemo(city: City, pt: (areaId: string) => MapPoint): MapMarkerData[] {
+  const out: MapMarkerData[] = [];
+  [...GIRL_PEOPLE.values()]
+    .filter((p) => p.cityId === city.id)
+    .forEach((p) =>
+      out.push({
+        id: p.id,
+        type: 'person',
+        areaId: p.areaId,
+        point: jitter(pt(p.areaId), p.id, 0.05),
+        title: p.name,
+        subtitle: p.headline,
+        icon: 'user',
+        color: p.online ? status.availableNow : status.availableLater,
+        personId: p.id,
+        body: p.bio,
+      }),
+    );
+  if (city.id !== 'dubai') return out;
+  DEMO_PLANS.forEach((p) => {
+    const cat = DEMO_PLAN_CATEGORY[p.kind] ? CATEGORY_BY_ID[DEMO_PLAN_CATEGORY[p.kind]] : undefined;
+    out.push({
+      id: `a:${p.id}`,
+      type: 'activity',
+      areaId: p.area,
+      point: jitter(pt(p.area), p.id),
+      title: tx(p.title),
+      subtitle: `${tx(p.place)} · ${cityWhen(planStartsAt(p), city.id)}`,
+      icon: cat?.icon ?? 'calendar',
+      color: cat?.color ?? category.activities,
+      goingIds: p.going,
+      count: p.going.length,
+      href: `/a/${p.id}`,
+    });
+  });
+  return out;
+}
+
 
 /**
  * Markers to draw at a zoom level. Grid clustering in screen space: two
@@ -234,7 +340,7 @@ export function placeMarkers(all: MapMarkerData[], zoom: number, S: number, cell
   const cell = (city ? cellPx * 1.8 : cellPx) / (S * zoom);
   const grid = new Map<string, MapMarkerData[]>();
   for (const m of shown) {
-    const key = `${Math.floor(m.point.x / cell)}:${Math.floor(m.point.y / cell)}`;
+    const key = `${familyOf(m.type)}:${Math.floor(m.point.x / cell)}:${Math.floor(m.point.y / cell)}`;
     const list = grid.get(key);
     if (list) list.push(m);
     else grid.set(key, [m]);
@@ -248,7 +354,7 @@ export function placeMarkers(all: MapMarkerData[], zoom: number, S: number, cell
     const x = members.reduce((s, m) => s + m.point.x, 0) / members.length;
     const y = members.reduce((s, m) => s + m.point.y, 0) / members.length;
     const colors = [...new Set(members.map((m) => m.color))].slice(0, 4);
-    out.push({ kind: 'cluster', c: { id: `cl-${key}-${members.length}`, point: { x, y }, members, colors } });
+    out.push({ kind: 'cluster', c: { id: `cl-${key}-${members.length}`, point: { x, y }, members, colors, family: familyOf(members[0].type) } });
   }
   // Never more than `max` things on screen: the rest stays in bubbles.
   return out.slice(0, max);

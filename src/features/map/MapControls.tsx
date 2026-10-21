@@ -1,8 +1,10 @@
+import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { t as tx, a11y } from '@/i18n';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { DestinationPill } from '@/components/navigation/Headers';
+import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -150,6 +152,39 @@ function ActivityFilters({ filters, onFilters, options }: { filters: MapFilters;
   );
 }
 
+/**
+ * Nothing on the part of the map shown: said plainly (never example
+ * content). On the People layer, how to appear and why few people show.
+ */
+export function MapEmpty({ layer, bottom }: { layer: Layer; bottom: number }) {
+  const t = useTheme();
+  const router = useRouter();
+  const people = layer === 'person';
+  return (
+    <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)} style={[styles.emptyWrap, { bottom }]} pointerEvents="box-none">
+      <Glass style={[styles.empty, { boxShadow: t.shadow.float }]} intensity={blur.strong}>
+        <Icon name={people ? 'users' : 'pin'} size={20} color={t.c.textSecondary} />
+        {people ? (
+          <View style={styles.emptyText}>
+            <Text variant="titleS">Nobody to show here</Text>
+            <Text variant="caption" tone="secondary">
+              Only members who choose to appear are on the map, around their neighbourhood.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.emptyText}>
+            <Text variant="titleS">Nothing here right now</Text>
+            <Text variant="caption" tone="secondary">
+              Zoom out or move the map to see what is happening nearby.
+            </Text>
+          </View>
+        )}
+        {people ? <Button label="Settings" size="sm" variant="secondary" onPress={() => router.push('/settings')} /> : null}
+      </Glass>
+    </Animated.View>
+  );
+}
+
 /** 2D | 3D with a sliding indicator. */
 export function ModeSwitch({ three, onChange }: { three: boolean; onChange: (three: boolean) => void }) {
   const t = useTheme();
@@ -207,4 +242,7 @@ const styles = StyleSheet.create({
   modePill: { position: 'absolute', top: 4, left: 4, width: 40, height: 40, borderRadius: 20 },
   modeItem: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   button: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  emptyWrap: { position: 'absolute', left: space.gutter - 4, right: space.gutter - 4, zIndex: 4 },
+  empty: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: radius.xl, padding: 14 },
+  emptyText: { flex: 1, gap: 2 },
 });

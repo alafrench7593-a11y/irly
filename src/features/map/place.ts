@@ -1,10 +1,10 @@
 import type { LatLng } from '@/data/geo';
 import type { Layer } from './MapControls';
-import type { MapMarkerData, MarkerType } from './markers';
+import { familyOf, type Family, type MapMarkerData, type MarkerType } from './markers';
 
 export type Region = { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number };
 export type Located = MapMarkerData & { coords: LatLng };
-export type Placed = { kind: 'marker'; m: Located } | { kind: 'cluster'; id: string; coords: LatLng; members: MapMarkerData[]; colors: string[] };
+export type Placed = { kind: 'marker'; m: Located } | { kind: 'cluster'; id: string; coords: LatLng; members: MapMarkerData[]; colors: string[]; family: Family };
 
 /** Map spans (latitude delta) for the zoom bands of the spec. */
 export const STREET = 0.045;
@@ -33,7 +33,8 @@ export function placeMarkers(all: Located[], layer: Layer, region: Region, frame
   const cellLng = (region.longitudeDelta * (region.latitudeDelta > CITY ? 110 : 58)) / frame.width;
   const grid = new Map<string, Located[]>();
   for (const m of inView) {
-    const key = `${Math.floor(m.coords.latitude / cellLat)}:${Math.floor(m.coords.longitude / cellLng)}`;
+    // People and plans never share a bubble.
+    const key = `${familyOf(m.type)}:${Math.floor(m.coords.latitude / cellLat)}:${Math.floor(m.coords.longitude / cellLng)}`;
     const list = grid.get(key);
     if (list) list.push(m);
     else grid.set(key, [m]);
@@ -46,7 +47,7 @@ export function placeMarkers(all: Located[], layer: Layer, region: Region, frame
     }
     const latitude = members.reduce((s, m) => s + m.coords.latitude, 0) / members.length;
     const longitude = members.reduce((s, m) => s + m.coords.longitude, 0) / members.length;
-    out.push({ kind: 'cluster', id: `cl-${key}-${members.length}`, coords: { latitude, longitude }, members, colors: [...new Set(members.map((m) => m.color))].slice(0, 4) });
+    out.push({ kind: 'cluster', id: `cl-${key}-${members.length}`, coords: { latitude, longitude }, members, colors: [...new Set(members.map((m) => m.color))].slice(0, 4), family: familyOf(members[0].type) });
   }
   return out.slice(0, 150);
 }

@@ -22,7 +22,7 @@ import { useStore } from '@/state/store';
 import { ease, scale as scaleTokens, spring } from '@/motion/tokens';
 import { status } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import type { Cluster, MapMarkerData } from './markers';
+import { hash, PERSON_COLOR, type Cluster, type MapMarkerData } from './markers';
 
 /** Camera state shared by the canvas and every marker, on the UI thread. */
 export type Camera = {
@@ -157,11 +157,20 @@ export const MarkerView = memo(function MarkerView({
       break;
     }
     case 'person': {
+      // A round photo with the first name under it: a person never looks like a plan (pills, tiles).
       const p = m.personId ? findPerson(m.personId) : undefined;
+      const first = (p?.name ?? m.title).split(' ')[0];
       content = (
-        <View style={[styles.person, { borderColor: skin.personEdge, boxShadow: `0px 4px 18px ${m.color}88` }]}>
-          <Avatar name={p?.name ?? m.title} hue={p?.hue ?? 0} size={36} photo={p?.photo} />
-          <View style={[styles.personStatus, { backgroundColor: m.color, borderColor: t.c.bg }]} />
+        <View style={styles.personWrap}>
+          <View style={[styles.person, { borderColor: m.userId ? m.color : skin.personEdge, backgroundColor: skin.solid, boxShadow: `0px 4px 18px ${m.color}88` }]}>
+            <Avatar name={p?.name ?? m.title} hue={p?.hue ?? hash(m.id) % 360} size={36} photo={p?.photo} userId={m.userId} />
+            {p ? <View style={[styles.personStatus, { backgroundColor: m.color, borderColor: t.c.bg }]} /> : null}
+          </View>
+          <View style={[styles.nameTag, { backgroundColor: skin.fill, borderColor: skin.edge, boxShadow: skin.shadow }]}>
+            <Text variant="caption" raw numberOfLines={1} style={styles.nameText}>
+              {first}
+            </Text>
+          </View>
         </View>
       );
       break;
@@ -259,12 +268,28 @@ function compact(n: number) {
   return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n);
 }
 
-/** Cluster bubble: total count, ring cut by the categories inside. */
+/**
+ * Cluster bubble: total count, ring cut by the categories inside. A bubble
+ * of people (never mixed with plans) is round with the people icon, in the
+ * people colour; a bubble of plans is the categories' ring.
+ */
 export const ClusterView = memo(function ClusterView({ c, onPress }: { c: Cluster; onPress: () => void }) {
   const t = useTheme();
   const skin = markerSkin(t.mode === 'night');
   const n = c.members.length;
   const size = Math.min(64, 44 + Math.log2(n) * 5);
+  if (c.family === 'people') {
+    return (
+      <PressableScale haptic="tap" scaleTo={0.9} onPress={onPress} accessibilityLabel={tx('{n} people here. Zoom in', { n })} hitSlop={6}>
+        <View style={[styles.cluster, styles.peopleCluster, { width: size, height: size, borderRadius: size / 2, backgroundColor: skin.fill, boxShadow: skin.shadow, borderColor: PERSON_COLOR }]}>
+          <Icon name="users" size={13} color={PERSON_COLOR} />
+          <Text variant="label" style={{ fontSize: n > 99 ? 11 : 13 }}>
+            {n}
+          </Text>
+        </View>
+      </PressableScale>
+    );
+  }
   const colors = c.colors.length ? c.colors : ['#FFFFFF'];
   const sides = ['Top', 'Right', 'Bottom', 'Left'] as const;
   const border: Record<string, string> = {};
@@ -287,7 +312,10 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   hit: { alignItems: 'center', justifyContent: 'center' },
   ring: { position: 'absolute', borderWidth: 2 },
+  personWrap: { alignItems: 'center', gap: 2 },
   person: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  nameTag: { maxWidth: 70, paddingHorizontal: 6, height: 16, borderRadius: 8, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  nameText: { fontSize: 10.5, lineHeight: 13 },
   personStatus: { position: 'absolute', right: -1, bottom: -1, width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   pill: {
     height: 32,
@@ -323,4 +351,5 @@ const styles = StyleSheet.create({
   place: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
   placeName: { fontSize: 10, maxWidth: 90 },
   cluster: { borderWidth: 3, alignItems: 'center', justifyContent: 'center' },
+  peopleCluster: { flexDirection: 'row', gap: 3 },
 });
