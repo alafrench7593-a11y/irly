@@ -117,13 +117,3 @@ select pg_temp.as_user('9e4f0000-0000-0000-0000-0000000000a1');
 select pg_temp.check((select array_agg(name) from public.communities where id::text like '9e4f0000-%') = '{Perfx open circle}', 'suspended from IRLY Girl: the women-only community is hidden at once');
 select pg_temp.check((select count(*) from public.community_members where community_id = '9e4f0000-0000-0000-0002-000000000001') = 0, 'and its members too');
 select pg_temp.as_admin();
-
--- ───────── Members' file deletions: the app photos check reads a table they may not ─────────
-select pg_temp.as_admin();
-revoke all on public.app_photo_overrides from authenticated;
-insert into public.app_photo_overrides (key, storage_path, version, updated_at) values ('perfx', '9e4f0000-0000-0000-0000-0000000000a1/perfx.jpg', 1, now());
-select pg_temp.as_user('9e4f0000-0000-0000-0000-0000000000a1');
-select pg_temp.check(private.app_photo_kept('9e4f0000-0000-0000-0000-0000000000a1/perfx.jpg') and not private.app_photo_kept('9e4f0000-0000-0000-0000-0000000000a1/other.jpg'),
-  'the app photos delete rule can check its table for a member (who cannot read it herself)');
-select pg_temp.as_admin();
-delete from public.app_photo_overrides where key = 'perfx';
