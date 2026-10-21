@@ -3,7 +3,7 @@ import type { AppSpace } from '@/state/appSpace';
 /**
  * What the IRLY team publishes for members (news, banners, a Home layout),
  * as the app reads it from home_feed() / news_item() (migration
- * 20261028000000_irly_admin_cms). No React and no storage here: the shapes,
+ * 20261028200000_irly_admin_cms). No React and no storage here: the shapes,
  * the labels and the checks a member's screen relies on (scripts/check-cms.mts
  * runs them).
  */

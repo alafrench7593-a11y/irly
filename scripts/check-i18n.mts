@@ -48,7 +48,7 @@ const EXCEPTIONS = new Set<string>([
   'IRLY Mixte',
   'IRLY Network',
   'Match IRLY',
-  'IRLY Gym', // the sample community in the intro
+  'IRLY Sport', // the sample community in the intro
   'IRLY 3.0', // design-system overline (version)
   'IRLY GIRL ·', // kicker in capitals, followed by a translated tagline
   '· BALI', // "IRLY GIRL · BALI" wordmark, the place name in capitals

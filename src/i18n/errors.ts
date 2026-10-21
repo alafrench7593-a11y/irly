@@ -173,7 +173,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'this photo is no longer on the Live': 'This photo is no longer on the Live',
   'this Live is only this photo: hide or delete the Live instead': 'This Live is only this photo: hide or delete the Live instead',
   'this community is already removed': 'This community is already removed',
-  // Back office editorial: news, Home layout, banners (20261028000000_irly_admin_cms).
+  // Back office editorial: news, Home layout, banners (20261028200000_irly_admin_cms).
   'invalid value': GENERIC,
   'unknown field': GENERIC,
   'unknown audience': GENERIC,

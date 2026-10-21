@@ -205,8 +205,17 @@ export const LIBRARY = [
 ] as const;
 // Keys that now have a Dubai photo (Pixabay / Pexels) are served from the library too.
 /** IRLY's own photos, taken in Dubai and used with permission; served with the website (site/img/own). */
-export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl', 'dubaiPink', 'restaurantGirl', 'gymGirl', 'runGirl', 'girlTrip', 'footballMix', 'gymMix', 'dinnerMix', 'beachMix', 'buggyMix', 'waterParkMix', 'foodMix', 'meetingMix', 'vrMix', 'wadiMix', 'runMix', 'danceMix', 'swimMix', 'tennisMix', 'palmAerial', 'padelMix', 'newcomerGirl', 'dinnerView'] as const;
+export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl', 'dubaiPink', 'restaurantGirl', 'gymGirl', 'runGirl', 'girlTrip', 'footballMix', 'gymMix', 'dinnerMix', 'beachMix', 'buggyMix', 'waterParkMix', 'foodMix', 'meetingMix', 'vrMix', 'wadiMix', 'runMix', 'danceMix', 'swimMix', 'tennisMix', 'palmAerial', 'padelMix', 'newcomerGirl', 'dinnerView', 'burjArabSunset', 'skylineGirl', 'marinaYachtGirl', 'desertSelfieGirl', 'desertSunsetGirl', 'poolGirl', 'quadsGirl', 'burjNight'] as const;
 const OWN_SET = new Set<string>(OWN);
+/** Whether a key is one of IRLY's own photos (it is then shown as it is, before any other photo of its subject). */
+export const isOwnPhoto = (key: string): boolean => OWN_SET.has(key);
+/**
+ * IRLY's own photos whose original is larger than their -1200 file (about
+ * 1080 px wide or more): <key>-hd.jpg is that whole original (the -1200 file
+ * is at most 1200 px on its long side), for full-screen backgrounds and covers on dense screens. The others
+ * are only as large as the photo IRLY sent: never enlarged.
+ */
+const OWN_HD = new Set<string>(['burjArabSunset', 'newcomerGirl', 'yachtGirl', 'padelMix', 'poolGirl', 'quadsGirl']);
 
 /**
  * Photos the IRLY team put instead of the app's own, from the back office
@@ -284,7 +293,7 @@ const pixels = (width: number) => Math.min(2400, Math.ceil((width * Math.min(3, 
 
 /** The key's first picture (the one chosen by hand). */
 function primary(key: PhotoKey, px: number): string {
-  if (OWN_SET.has(key)) return `${OWN_BASE}/${key}-${px <= 600 ? 480 : 1200}.jpg`;
+  if (OWN_SET.has(key)) return `${OWN_BASE}/${key}-${px <= 600 ? 480 : px > 1200 && OWN_HD.has(key) ? 'hd' : 1200}.jpg`;
   if (LIBRARY_SET.has(key)) return `${LIBRARY_BASE}/${key}-${px <= 600 ? 480 : 1200}.jpg`;
   return `https://images.unsplash.com/photo-${ids[key as keyof typeof ids]}?auto=format&fit=crop&w=${px}&q=80`;
 }
@@ -390,4 +399,19 @@ export function photo(key: PhotoKey, width = 900, seed?: string, pinned = false,
   if (SHARED_PRIMARY.has(key) && variants.length) return sized(variants[pick(key, variants.length, seed)], px);
   const i = pick(key, variants.length + 1, seed);
   return i === 0 ? primary(key, px) : sized(variants[i - 1], px);
+}
+
+/**
+ * The sharpest picture of a key, always the same one, for a full-screen
+ * background: the IRLY team's photo (back office) first, then IRLY's own
+ * photo (its untouched original on dense screens), else the subject's first
+ * HD photo (2400 px) rather than the 1200 px library file.
+ */
+export function bestPhoto(key: PhotoKey, width: number): string {
+  const own = overrides[key];
+  if (own) return own;
+  const px = pixels(width);
+  if (OWN_SET.has(key)) return primary(key, px);
+  const hd = VARIANTS[key];
+  return hd?.length ? sized(hd[0], px) : primary(key, px);
 }

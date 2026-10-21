@@ -109,7 +109,11 @@ export default function Home() {
   useEffect(() => {
     if (account && !communityIntroSeen) router.push('/onboarding/communities');
   }, [account, communityIntroSeen, router]);
-  const heroH = Math.round(Math.min(560, Math.max(440, frame.height * 0.6)));
+  // The question starts right under the header: safe area, header, then a small gap (no empty band above it).
+  const heroTop = insets.top + layout.headerHeight + 8 + space[4];
+  // The hero is as tall as its words (measured); until then, a close estimate.
+  const [heroMeasured, setHeroMeasured] = useState(0);
+  const heroH = heroMeasured || heroTop + 220;
 
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.set(e.contentOffset.y);
@@ -457,7 +461,7 @@ export default function Home() {
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <HomeBackdrop city={city} now={now} scrollY={scrollY} heroH={heroH + insets.top} />
+      <HomeBackdrop city={city} now={now} scrollY={scrollY} heroH={heroH} />
       <Animated.ScrollView
         key={cityId}
         onScroll={onScroll}
@@ -468,7 +472,9 @@ export default function Home() {
         <HomeHero
           city={city}
           now={now}
-          height={heroH + insets.top}
+          top={heroTop}
+          height={heroH}
+          onHeight={setHeroMeasured}
           scrollY={scrollY}
           live={lives.length}
           onDestination={() => setSheet(true)}
@@ -481,7 +487,8 @@ export default function Home() {
         ))}
       </Animated.ScrollView>
 
-      <HomeHeader scrollY={scrollY} solidAt={heroH - layout.headerHeight} />
+      {/* The words pass under the header almost at once now: it turns to glass while they fade. */}
+      <HomeHeader scrollY={scrollY} solidAt={Math.round(heroH * 0.3)} />
       <DestinationSheet visible={sheet} onClose={() => setSheet(false)} />
       {/* Crossing into IRLY Girl: the Girl mark opens over the page, once per session. */}
       {inGirl ? <GirlIntro /> : null}

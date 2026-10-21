@@ -332,6 +332,6 @@ export const INTENT_LABEL: Record<Intent, string> = {
   OPEN_SAVED: 'Open saved',
   OPEN_VISA: 'Visa & stay',
   WHERE_TO_LIVE: 'Where should I live?',
-  OPEN_MOMS: 'IRLY Moms',
+  OPEN_MOMS: 'IRLY Maman',
   FIND_RESTAURANT: 'Where to eat',
 };

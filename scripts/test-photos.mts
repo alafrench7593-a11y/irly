@@ -131,7 +131,7 @@ expect(is(communityPhoto('sport', null, 'Yoga'), ['yoga']), 'Yoga group → yoga
 expect(communityPhoto('wellness', null, 'IRLY Wellness') === 'yoga', 'IRLY Wellness (everyone) is not a photo of women at a spa', communityPhoto('wellness', null, 'IRLY Wellness'));
 expect(!/Girl$|^girl/.test(ideaPhoto('sport', 'Padel')), 'Mixte padel shows a photo that is not of women only', ideaPhoto('sport', 'Padel'));
 
-// IRLY Girl's five official communities: each its own photo, all IRLY's own photos taken in Dubai.
+// IRLY Girl's official communities (its four, Girl CEO, the retired Francophone): each its own photo, all IRLY's own photos taken in Dubai.
 {
   const src = fs.readFileSync('src/features/girl/GirlOfficial.tsx', 'utf8');
   expect(/const PHOTO: Record<GirlOfficialTopic, PhotoKey> = GIRL_OFFICIAL_PHOTO;/.test(src), 'Girl official card takes its photo from GIRL_OFFICIAL_PHOTO (official.ts)');
@@ -140,8 +140,8 @@ expect(!/Girl$|^girl/.test(ideaPhoto('sport', 'Padel')), 'Mixte padel shows a ph
   for (const [topic, name] of topics.filter(([t]) => t.startsWith('girl_'))) expect(communityPhoto(topic, null, name) === map[topic], `${name}: page photo = card photo (${map[topic]})`, communityPhoto(topic, null, name));
   for (const topic of Object.keys(map)) expect(communityPhoto(topic, 'communities', 'Padel and dinner') === map[topic], `${topic}: topic photo before name`, communityPhoto(topic, 'communities', 'Padel and dinner'));
   const own = new Set(listOf('OWN'));
-  expect(Object.keys(map).length === 5 && Object.values(map).every((k) => own.has(k)), 'Girl official communities: five photos, all IRLY\'s own', map);
-  expect(new Set(Object.values(map)).size === 5, 'Girl official communities: no photo twice', map);
+  expect(Object.keys(map).length === 6 && Object.values(map).every((k) => own.has(k)), 'Girl official communities: six photos, all IRLY\'s own', map);
+  expect(new Set(Object.values(map)).size === 6, 'Girl official communities: no photo twice', map);
 }
 // IRLY Girls' groups: IRLY's photos of women, never a mixed group.
 for (const s of subtopics.filter((g) => g.parent === 'girls')) {

@@ -13,7 +13,7 @@ import { cleanFeed, cleanNews, type HomeFeed, type NewsArticle, type NewsCard } 
 export * from './model';
 
 /**
- * What the team publishes for the Home (migration 20261028000000_irly_admin_cms),
+ * What the team publishes for the Home (migration 20261028200000_irly_admin_cms),
  * read in ONE call, home_feed(space): the published layout of the flavour,
  * its news and its banners. The server decides what a member may see
  * (an IRLY Girl item only for IRLY Girl members); this only shows it.
