@@ -486,6 +486,12 @@ function Assistant({
               <Chip key={h} size="sm" label={h} selected={draft.time === h} onPress={() => setDraft({ ...draft, time: h })} />
             ))}
           </ScrollView>
+          {/* Where: a plan needs a neighbourhood and none is picked for the member (unless she named one). */}
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {geo.areas.map((a) => (
+              <Chip key={a.id} size="sm" icon="pin" label={a.name} raw selected={draft.areaId === a.id} onPress={() => setDraft({ ...draft, areaId: draft.areaId === a.id ? undefined : a.id })} />
+            ))}
+          </ScrollView>
           <Button
             label={isMember ? 'Create it for the community' : 'Join to create it'}
             icon="plus"

@@ -127,10 +127,10 @@ async function main() {
   await check('Communities: All lists the IRLY catalogue; search finds IRLY Expats (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expats'], async () => {
     await page.getByPlaceholder('Search by name or theme').fill('expats');
   });
-  // Match IRLY is not open yet (src/lib/features.ts): the bar button must lead to its
-  // coming-soon page, which says so, not to a list of people.
+  // Match IRLY is not open yet (src/lib/features.ts): the bar button (« Soon » while it is
+  // closed) must lead to its coming-soon page, which says so, not to a list of people.
   await check('Match IRLY in the bar opens its coming-soon page', '/', ['Match IRLY is not open yet', 'Tell me when it opens'], async () => {
-    await page.getByRole('button', { name: 'Match IRLY' }).first().click();
+    await page.getByRole('button', { name: /^(Match IRLY|Soon: IRLY Match, coming soon)$/ }).first().click();
   });
   await check('Home shows Live Bali', '/', ['Live Bali']);
   await check('Discover shows Bali and restaurants doors', '/discover?tab=places', ['Discover', 'Live Bali', 'Where to eat']);
@@ -154,11 +154,25 @@ async function main() {
     await page.getByRole('button', { name: /^Create: / }).first().click();
   });
   await check('It is in the calendar', '/calendar', ['Echo Beach']);
-  await check('IRLY Girl opens for a woman', '/girl', ['IRLY', 'All girls', 'Moms']);
-  await check('Moms tab', null, ['Meet moms. Find activities. Build your circle.', 'Mom communities'], async () => {
-    await page.getByRole('tab', { name: 'Moms' }).click();
+  // IRLY Girl is the same app in another space (src/app/girl/index.tsx): /girl asks the server,
+  // switches the app to IRLY Girl and lands on its Home (Girl content, the way back to IRLY Mixte).
+  const space = () => page.evaluate(() => JSON.parse(localStorage.getItem('irly-space') ?? '{}')?.state?.space ?? 'mixte');
+  await check('IRLY Girl opens for a woman', '/girl', ['Girls moving to Bali.', 'IRLY Mixte'], async () => {
+    await page.waitForURL((u) => new URL(u).pathname === '/', { timeout: 20000 });
+    for (let i = 0; i < 20 && (await space()) !== 'girl'; i++) await page.waitForTimeout(500);
+    if ((await space()) !== 'girl') throw new Error('the app did not switch to IRLY Girl');
+  });
+  // IRLY Moms lives in IRLY Girl, under Discover › People.
+  await check('Moms tab', '/girl?mode=moms', ['Moms in Bali, plans with children', 'Mom communities'], async () => {
+    await page.waitForURL(/\/discover\?tab=people&moms=1/, { timeout: 20000 });
   });
   await check('Girls moving to Bali', '/girl/moving', ["don’t know anyone", 'Bali girl communities']);
+  // Back to IRLY Mixte (Settings › IRLY): the rest of this walk is the Mixte app.
+  await check('Settings → IRLY Mixte brings the app back to IRLY', '/preferences', [], async () => {
+    await page.getByText('IRLY Mixte', { exact: true }).filter({ visible: true }).first().click();
+    for (let i = 0; i < 20 && (await space()) !== 'mixte'; i++) await page.waitForTimeout(500);
+    if ((await space()) !== 'mixte') throw new Error('still in IRLY Girl');
+  });
   await check('Assistant routes "where should I live"', '/assistant?q=' + encodeURIComponent('Where should I live in Bali?'), ["Where you'd fit best"]);
   await check('IRL feed', '/live', ['IRL']);
   await check('Notifications', '/notifications', ['Notifications']);
@@ -200,6 +214,14 @@ async function main() {
     select gen_random_uuid(), u.id, u.id::text, 'email', jsonb_build_object('sub', u.id::text, 'email', '${EMAIL2}', 'email_verified', true), now(), now(), now()
     from u returning user_id`);
   await sql(`insert into public.profiles (id, first_name, birthdate, gender, city_id, languages) values ('${zoe}', 'Zoe', '1995-03-03', 'woman', 'bali', '{en}')`);
+  // Older unread notices on Uma's account, enough to fill more than the screen under Zoe's request:
+  // the last ones start below the fold (src/features/notifications/seen.ts: only rows seen count).
+  const EARLIER = 18;
+  await sql(`insert into public.notifications (user_id, kind, payload, created_at)
+    select '${uid}', 'ACTIVITY_UPDATED', jsonb_build_object('change', 'deleted', 'title', 'Earlier plan ' || i), now() - make_interval(hours => i)
+    from generate_series(1, ${EARLIER}) i`);
+  const earlierUnread = async () => (await sql(`select count(*)::int as n from public.notifications where user_id = '${uid}' and kind = 'ACTIVITY_UPDATED' and payload->>'title' like 'Earlier plan %' and read_at is null`))[0].n;
+  const lastUnread = async () => (await sql(`select read_at from public.notifications where user_id = '${uid}' and payload->>'title' = 'Earlier plan ${EARLIER}'`))[0];
   const zoeToken = await (async () => {
     const r = await fetch(`https://${ref}.supabase.co/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: PUBLISHABLE, 'Content-Type': 'application/json' }, body: JSON.stringify({ email: EMAIL2, password: PASSWORD }) });
     return (await r.json()).access_token;
@@ -216,20 +238,39 @@ async function main() {
   await check('Notifications lists it as unread', '/notifications', ['Zoe wants to be friends'], async () => {
     await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).first().waitFor({ timeout: 15000 });
   });
-  await verify('opening the list does not mark it read by itself', async () => {
-    await page.waitForTimeout(4000);
-    const n = await notifRow();
+  // Read means seen: a row on screen for 600 ms is read (seen.ts); a row below the fold is not.
+  await verify('seen on screen, it is read on the server without a tap', async () => {
+    let n;
+    for (let i = 0; i < 20 && !(n = await notifRow())?.read_at; i++) await page.waitForTimeout(500);
     if (!n) throw new Error('no notification on the server');
-    if (n.read_at) throw new Error('it was marked read without being opened');
+    if (!n.read_at) throw new Error('still unread after being on screen');
+  });
+  await verify('opening the list does not mark the rows below the fold read', async () => {
+    await page.waitForTimeout(3000);
+    const last = await lastUnread();
+    if (!last) throw new Error('the earlier notices are missing');
+    if (last.read_at) throw new Error('a notice never shown on screen was marked read');
+    const left = await earlierUnread();
+    if (left === 0) throw new Error('every earlier notice was marked read, none was below the fold');
+    return `${left} of ${EARLIER} still unread`;
+  });
+  await verify('scrolling down shows them: each one is read once seen', async () => {
+    await page.mouse.move(195, 420);
+    for (let i = 0; i < 30 && (await earlierUnread()) > 0; i++) {
+      await page.mouse.wheel(0, 280);
+      await page.waitForTimeout(900);
+    }
+    const left = await earlierUnread();
+    if (left) throw new Error(`${left} still unread after scrolling past them`);
   });
   await check('tapping it opens Zoe’s profile', null, ['Zoe'], async () => {
     await page.getByText('Zoe wants to be friends', { exact: true }).first().click();
     await page.waitForURL(new RegExp(`/person/${zoe}`), { timeout: 15000 });
   });
-  await verify('that notification is read on the server, and only that one', async () => {
+  await verify('that notification is still read on the server', async () => {
     let n;
     for (let i = 0; i < 10 && !(n = await notifRow())?.read_at; i++) await page.waitForTimeout(500);
-    if (!n?.read_at) throw new Error('still unread on the server');
+    if (!n?.read_at) throw new Error('unread on the server');
   });
   await check('the bell no longer counts it', '/', [], async () => {
     await page.getByRole('button', { name: 'Notifications', exact: true }).first().waitFor({ timeout: 15000 });
@@ -241,19 +282,34 @@ async function main() {
   });
 
   // ── Activity: no start time is chosen for the member; the one they pick is saved in the city's time.
-  await check('Create an activity: no start time imposed, Next waits for one', '/category/sport', ['Pick a start time'], async () => {
+  // The neighbourhood is chosen too (none is picked for the member), so only the time is missing here.
+  await check('Create an activity: no start time imposed, Next waits for one', '/category/sport', ['Pick a date and a start time (Bali time)'], async () => {
     await page.getByText('Padel', { exact: true }).first().click();
     await page.getByRole('button', { name: 'Create a Padel session' }).click();
-    await page.getByText('Tomorrow', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Choose a neighbourhood' }).click();
+    await page.getByPlaceholder('Search a neighbourhood').fill('Canggu');
+    await page.getByRole('radio', { name: /^Canggu/ }).first().click();
     const next = page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last();
+    await page.waitForTimeout(500);
     if (await next.isEnabled()) throw new Error('Next is enabled before a time is picked');
   });
-  await check('pick 20:30 under Other time, publish, land on the activity', null, ['Open chat'], async () => {
-    await page.getByText('Other time', { exact: true }).first().click();
-    await page.getByText('20:30', { exact: true }).last().click();
+  await check('pick tomorrow 20:30 in the date and time picker, publish, land on the activity', null, ['Open chat'], async () => {
+    await page.getByRole('button', { name: 'Pick a date and time' }).click();
+    await page.getByRole('button').filter({ hasText: 'Tomorrow' }).first().click();
+    await page.getByLabel('Hour', { exact: true }).getByText('20', { exact: true }).click();
+    await page.waitForTimeout(500);
+    await page.getByLabel('Minutes', { exact: true }).getByText('30', { exact: true }).click();
+    await page.waitForTimeout(500);
+    await page.getByRole('button', { name: 'Confirm', exact: true }).click();
+    await page.getByRole('button', { name: 'Tomorrow · 20:30' }).waitFor({ timeout: 10000 });
     await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
+    // Create takes the place of Next: a tap on it within 450 ms is the same tap landing twice (PressableScale), dropped.
+    await page.waitForTimeout(800);
     await page.getByRole('button', { name: /^Create (session|activity|sport session|event|meetup|trip)$/ }).last().click();
-    await page.waitForURL(/\/a\//, { timeout: 30000 });
+    await page.waitForURL(/\/a\//, { timeout: 30000 }).catch(async (e) => {
+      const why = await page.getByText(/^Not published: /).first().textContent({ timeout: 1000 }).catch(() => null);
+      throw why ? new Error(why) : e;
+    });
   });
   await verify('the activity starts tomorrow at 20:30, Bali time', async () => {
     const [a] = await sql(`select to_char(starts_at at time zone 'Asia/Makassar', 'HH24:MI') as hm, (starts_at at time zone 'Asia/Makassar')::date - (now() at time zone 'Asia/Makassar')::date as days, timezone from public.activities where creator_id = '${uid}' and title ilike '%padel%' order by created_at desc limit 1`);
@@ -268,12 +324,19 @@ async function main() {
     await page.getByLabel('Community name').fill(COMM);
     await page.getByRole('button', { name: 'Create community' }).dblclick();
   });
+  let commId = null;
   await verify('the double click made one community, its creator is the owner', async () => {
     const rows = await sql(`select c.id, m.role from public.communities c left join public.community_members m on m.community_id = c.id and m.user_id = c.created_by where c.name = '${COMM}'`);
     if (rows.length !== 1) throw new Error(`${rows.length} communities named ${COMM}`);
     if (rows[0].role !== 'owner') throw new Error(`creator role ${rows[0].role}`);
+    commId = rows[0].id;
   });
-  await check('the new community is under Communities → Mine', '/communities?tab=mine', [COMM]);
+  // Lists never show a test run stamp as part of a title (src/features/community/name.ts):
+  // the row is found by the community itself, and its title is the name without the stamp.
+  const mineRow = () => page.locator(`[data-testid="community-${commId}"]`).filter({ visible: true }).first();
+  await check('the new community is under Communities → Mine', '/communities?tab=mine', ['E2E Padel'], async () => {
+    await mineRow().waitFor({ timeout: 15000 });
+  });
 
   // ── Log out: timed, the session ends on the server, nothing private stays on this browser.
   let outMs = 0;
@@ -299,7 +362,9 @@ async function main() {
       await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(2500);
       const text = await page.evaluate(() => document.body.innerText);
-      if (text.includes(COMM) || text.includes('Playdate')) throw new Error(`${route} still shows the account's data`);
+      // The community's row too (its title is shown without the run stamp).
+      const row = await page.locator(`[data-testid="community-${commId}"]`).count();
+      if (text.includes(COMM) || text.includes('E2E Padel') || row || text.includes('Playdate')) throw new Error(`${route} still shows the account's data`);
     }
   });
   // Same browser, another account: nothing of Uma's (her notifications, her badge) shows for Zoe.
@@ -313,7 +378,8 @@ async function main() {
       await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(3000);
       const text = await page.evaluate(() => document.body.innerText);
-      if (text.includes('Zoe wants to be friends') || text.includes(COMM) || text.includes('Playdate')) throw new Error(`${route} shows Uma's data to Zoe`);
+      const row = await page.locator(`[data-testid="community-${commId}"]`).count();
+      if (text.includes('Zoe wants to be friends') || text.includes(COMM) || text.includes('E2E Padel') || row || text.includes('Playdate')) throw new Error(`${route} shows Uma's data to Zoe`);
     }
   });
   await check('Zoe logs out', '/preferences', [], async () => {
@@ -321,7 +387,9 @@ async function main() {
     await page.waitForURL(/\/welcome/, { timeout: 60000 });
   });
   await check('sign in again', null, [], signIn, 'Signed in');
-  await check('signed in again: the account data comes back', '/communities?tab=mine', [COMM]);
+  await check('signed in again: the account data comes back', '/communities?tab=mine', ['E2E Padel'], async () => {
+    await mineRow().waitFor({ timeout: 15000 });
+  });
   await check('… and her read notification is still read', '/notifications', ['Zoe wants to be friends'], async () => {
     await page.getByText('Zoe wants to be friends', { exact: true }).first().waitFor({ timeout: 15000 });
     if (await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).count()) throw new Error('unread again after signing in');

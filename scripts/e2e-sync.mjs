@@ -122,6 +122,27 @@ async function signedInPage(browser, who) {
 const visible = (page, text, timeout = 15000) => page.getByText(text, { exact: false }).filter({ visible: true }).first().waitFor({ timeout });
 const gone = (page, text, timeout = 20000) => page.getByText(text, { exact: false }).filter({ visible: true }).first().waitFor({ state: 'hidden', timeout });
 
+// IRLY Girl is a space of the same app (src/app/girl/index.tsx): /girl asks the server, switches the
+// app to IRLY Girl and lands on Home; each space lists its own plans. Settings › IRLY Mixte goes back.
+const spaceOf = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('irly-space') ?? '{}')?.state?.space ?? 'mixte');
+async function inSpace(page, want) {
+  for (let i = 0; i < 20 && (await spaceOf(page)) !== want; i++) await page.waitForTimeout(500);
+  if ((await spaceOf(page)) !== want) throw new Error(`the app did not switch to ${want === 'girl' ? 'IRLY Girl' : 'IRLY Mixte'}`);
+}
+async function enterGirl(page) {
+  await page.goto(`${BASE}/girl`);
+  await page.waitForURL((u) => new URL(u).pathname === '/', { timeout: 25000 });
+  await inSpace(page, 'girl');
+}
+async function backToMixte(page) {
+  if ((await spaceOf(page)) === 'mixte') return;
+  await page.goto(`${BASE}/preferences`);
+  await page.getByText('IRLY Mixte', { exact: true }).filter({ visible: true }).first().click({ timeout: 20000 });
+  await inSpace(page, 'mixte');
+}
+// A community's row in the lists, whatever its shown title (a run stamp is never shown: src/features/community/name.ts).
+const communityRow = (page, id) => page.locator(`[data-testid="community-${id}"]`).filter({ visible: true }).first();
+
 async function main() {
   await cleanup();
   const uma = await createWoman('Uma');
@@ -220,12 +241,14 @@ async function main() {
     return true;
   });
   await step('the same activity is on every screen: calendar', async () => (await page.goto(`${BASE}/calendar`), await visible(page, 'Playdate'), true));
-  await step('… the area page of Canggu', async () => (await page.goto(`${BASE}/bali/area/canggu`), await visible(page, 'Playdate'), true));
   await step('… the place page (who\'s going)', async () => (await page.goto(`${BASE}/place/echo-beach`), await visible(page, 'Playdate'), true));
   await step('… the messages inbox', async () => (await page.goto(`${BASE}/messages`), await visible(page, 'Playdate'), true));
+  await step('… Discover search', async () => (await page.goto(`${BASE}/discover?q=Playdate`), await visible(page, 'On IRLY now'), await visible(page, 'Playdate'), true));
+  // A playdate is a moms plan (women only): the lists of plans show it in the IRLY Girl space.
+  await step('… in IRLY Girl: the area page of Canggu', async () => (await enterGirl(page), await page.goto(`${BASE}/bali/area/canggu`), await visible(page, 'Playdate'), true));
   await step('… its category page (Family)', async () => (await page.goto(`${BASE}/category/family`), await visible(page, 'Playdate'), true));
   await step('… IRLY Girl (a moms plan)', async () => (await page.goto(`${BASE}/category/girl`), await visible(page, 'Playdate'), true));
-  await step('… Discover search', async () => (await page.goto(`${BASE}/discover?q=Playdate`), await visible(page, 'On IRLY now'), await visible(page, 'Playdate'), true));
+  await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
   await step('… and Vera\'s calendar (other member)', async () => must(await veraSb.rpc('my_calendar', {})).some((x) => x.id === actId));
   await step('Uma cancels in the app → Vera is notified and it leaves her calendar', async () => {
     await page.goto(`${BASE}/a/${actId}`);
@@ -291,7 +314,7 @@ async function main() {
     await page.goto(`${BASE}/communities?tab=all`);
     await page.waitForTimeout(2500);
     clubId = must(await veraSb.rpc('create_community', { p_name: clubName, p_city: 'bali' }));
-    await visible(page, clubName, 20000);
+    await communityRow(page, clubId).waitFor({ timeout: 20000 });
     return true;
   });
   await step('… a double tap made one community, with one chat', async () => {
@@ -307,9 +330,9 @@ async function main() {
     await page.goto(`${BASE}/messages`);
     await visible(page, clubName, 20000);
     await page.goto(`${BASE}/communities?tab=mine`);
-    await visible(page, clubName, 20000);
+    await communityRow(page, clubId).waitFor({ timeout: 20000 });
     must(await veraSb.rpc('delete_community', { p_community: clubId }));
-    await gone(page, clubName);
+    await communityRow(page, clubId).waitFor({ state: 'hidden', timeout: 20000 });
     await page.goto(`${BASE}/messages`);
     await page.waitForTimeout(2500);
     return (await page.getByText(clubName).count()) === 0;
@@ -340,16 +363,26 @@ async function main() {
     await visible(page, `Live from Vera ${run}`, 20000);
     return true;
   });
-  await step('IRLY Girl home: the women-only feed shows Vera\'s post (same post as the community page)', async () => {
-    await page.goto(`${BASE}/girl`);
-    await page.getByText('Recent posts').scrollIntoViewIfNeeded({ timeout: 30000 });
-    await visible(page, `Live from Vera ${run}`, 20000);
+  // The women-only feed (girl_feed) lives in IRLY Moms since IRLY Girl became a space of the same app
+  // (same Home as IRLY): the posts of the mom communities, the same posts as their community pages.
+  let momsId = null;
+  const momsSays = `Moms hello ${run}`;
+  await step('IRLY Moms feed: the women-only feed shows Vera\'s post (same post as the community page)', async () => {
+    momsId = must(await veraSb.rpc('create_community', { p_name: `Moms circle ${run}`, p_city: 'bali', p_category: 'family', p_girl_only: true }));
+    must(await veraSb.from('community_posts').insert({ community_id: momsId, author_id: vera.id, body: momsSays }));
+    await page.goto(`${BASE}/c/${momsId}`);
+    await visible(page, momsSays, 20000);
+    await page.goto(`${BASE}/girl?mode=moms`);
+    await page.waitForURL(/moms=1/, { timeout: 25000 });
+    await inSpace(page, 'girl');
+    await page.getByText('From the moms').filter({ visible: true }).first().scrollIntoViewIfNeeded({ timeout: 30000 });
+    await visible(page, momsSays, 20000);
     return true;
   });
-  await step('… Vera posts again → it appears live in Uma\'s open IRLY Girl feed; Uma likes it there → one like on the server', async () => {
+  await step('… Vera posts again → it appears live in Uma\'s open IRLY Moms feed; Uma likes it there → one like on the server', async () => {
     await page.waitForTimeout(1500);
     const body = `Girl feed live ${run}`;
-    const [{ id: postId }] = must(await veraSb.from('community_posts').insert({ community_id: girlsId, author_id: vera.id, body }).select('id'));
+    const [{ id: postId }] = must(await veraSb.from('community_posts').insert({ community_id: momsId, author_id: vera.id, body }).select('id'));
     await visible(page, body, 20000);
     const card = page.locator('div').filter({ hasText: body }).filter({ has: page.getByRole('button', { name: 'Like', exact: true }) }).last();
     await card.getByRole('button', { name: 'Like', exact: true }).click();
@@ -360,15 +393,19 @@ async function main() {
     }
     return false;
   });
-  await step('IRLY Girl filters: "This weekend" and "Free" never show an error, and an empty result invites to plan', async () => {
-    await page.getByText("Girls' plans coming up").scrollIntoViewIfNeeded();
+  await step('IRLY Moms plan filters: "This weekend" and "Free" never show an error, and an empty result invites to plan', async () => {
+    await page.getByText('Coming up with kids').filter({ visible: true }).first().scrollIntoViewIfNeeded();
     // The plan composer above has its own "This weekend": the filters are the last ones.
-    await page.getByRole('button', { name: 'This weekend', exact: true }).last().click();
-    await page.getByRole('button', { name: 'Free', exact: true }).last().click();
-    const plans = await page.getByText('Nothing planned here yet').count();
-    const rows = await page.getByText(/\d+(\/\d+)? going/).count();
+    await page.getByRole('button', { name: 'This weekend', exact: true }).filter({ visible: true }).last().click();
+    await page.getByRole('button', { name: 'Free', exact: true }).filter({ visible: true }).last().click();
+    await page.waitForTimeout(800);
+    if (await page.getByText("Plans couldn't load").filter({ visible: true }).count()) throw new Error('the filters show an error');
+    const plans = await page.getByText('Nothing planned here yet').filter({ visible: true }).count();
+    const rows = await page.getByText(/\d+(\/\d+)? going/).filter({ visible: true }).count();
     return plans + rows > 0;
   });
+  if (momsId) await veraSb.rpc('delete_community', { p_community: momsId });
+  await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
   // Back to the community page for the assistant steps.
   await page.goto(`${BASE}/c/${girlsId}`);
   await page.waitForTimeout(1500);
@@ -385,6 +422,9 @@ async function main() {
   await step('assistant: "Organise padel Saturday 9am" → activity created in the community, no announcement post', async () => {
     await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Organise padel Saturday 9am');
     await page.getByRole('button', { name: 'Ask', exact: true }).click();
+    // No neighbourhood is picked for her: she chooses one under the day and the time.
+    await page.getByRole('button', { name: 'Create it for the community' }).waitFor({ timeout: 15000 });
+    await page.getByRole('button', { name: 'Canggu', exact: true }).last().click();
     await page.getByRole('button', { name: 'Create it for the community' }).click();
     let acts = [];
     for (let i = 0; i < 20 && !acts.some((a) => a.title.startsWith('Padel')); i++) {
@@ -407,15 +447,26 @@ async function main() {
     return true;
   });
   await step('Uma creates her professional profile in the app', async () => {
+    // Five steps (src/app/network/profile.tsx): identity, industries & skills, project & goals, links & place, confirm.
     await page.goto(`${BASE}/network/profile`);
-    await page.getByPlaceholder('Founder & CEO, Product designer…').fill('Founder');
-    await page.getByRole('button', { name: '🤖 AI & Artificial Intelligence', exact: true }).click();
-    await page.getByRole('button', { name: '🚀 SaaS', exact: true }).click();
-    await page.getByRole('button', { name: '💰 Find investors', exact: true }).click();
-    await page.getByRole('button', { name: '🤝 Find business partners', exact: true }).click();
-    await page.getByPlaceholder('Add a skill and press enter').fill('Python');
-    await page.getByPlaceholder('Add a skill and press enter').press('Enter');
-    await page.getByPlaceholder('An AI assistant for clinics in Dubai…').fill('AI assistant for clinics');
+    const nextStep = async (to) => {
+      // One tap per step (PressableScale drops a second tap on the same button within 450 ms).
+      await page.waitForTimeout(600);
+      await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
+      await page.getByText(new RegExp(`step ${to} of 5`, 'i')).filter({ visible: true }).first().waitFor({ timeout: 10000 });
+    };
+    await page.getByLabel('Job title', { exact: true }).fill('Founder');
+    await nextStep(2);
+    await page.getByRole('checkbox', { name: 'AI & Artificial Intelligence', exact: true }).click();
+    await page.getByRole('checkbox', { name: 'SaaS', exact: true }).click();
+    await page.getByLabel('Add a skill', { exact: true }).fill('Python');
+    await page.getByLabel('Add a skill', { exact: true }).press('Enter');
+    await nextStep(3);
+    await page.getByLabel('Current project', { exact: true }).fill('AI assistant for clinics');
+    await page.getByRole('checkbox', { name: 'Find investors', exact: true }).click();
+    await page.getByRole('checkbox', { name: 'Find business partners', exact: true }).click();
+    await nextStep(4);
+    await nextStep(5);
     await page.getByRole('button', { name: 'Create my professional profile', exact: true }).click();
     for (let i = 0; i < 20; i++) {
       const rows = await sql(`select industries, intents, skills from public.pro_profiles where user_id = '${uma.id}'`);
@@ -1021,6 +1072,9 @@ async function main() {
     ...kinds.map((k) => `/activities/${k}`),
     ...places.map((p) => `/place/${p}`),
   ];
+  // Doors that land on Home by design: /girl switches the app to IRLY Girl and shows its Home
+  // (src/app/girl/index.tsx); the design system is a screen of demo and development builds only.
+  const HOME_BY_DESIGN = new Set(['/girl', '/design-system']);
   const bounced = [];
   const crashed = [];
   const blank = [];
@@ -1030,7 +1084,7 @@ async function main() {
     await page.waitForTimeout(900);
     const want = route.split('?')[0];
     const got = new URL(page.url()).pathname;
-    if (want !== '/' && got === '/') bounced.push(`${route} → ${got}`);
+    if (want !== '/' && got === '/' && !HOME_BY_DESIGN.has(route)) bounced.push(`${route} → ${got}`);
     if (page.errors.length > before) crashed.push(`${route}: ${page.errors.slice(before).join(' | ').slice(0, 160)}`);
     // A screen may show only a spinner while it loads: give it a few seconds before calling it blank.
     let text = await page.evaluate(() => document.body.innerText.trim().length);
@@ -1040,6 +1094,7 @@ async function main() {
     }
     if (text < 20) blank.push(route);
   }
+  await backToMixte(page).catch(() => undefined);
   await step(`all ${screens.length} screens open on their own path (no bounce to Home)`, async () => {
     if (bounced.length) throw new Error(bounced.join(', '));
     return true;
