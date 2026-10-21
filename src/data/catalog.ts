@@ -31,7 +31,7 @@ export const ACTIVITIES: Record<ActivityKind, Def & { photo: PhotoKey; verb: str
   kayak: { label: 'Kayak', icon: 'sailboat', photo: 'kayak', verb: 'kayaking' },
   wellness: { label: 'Wellness', icon: 'leaf', photo: 'yoga', verb: 'joining a wellness circle' },
   beach: { label: 'Beach', icon: 'palm', photo: 'beachClub', verb: 'heading to the beach' },
-  networking: { label: 'Networking', icon: 'handshake', photo: 'dinner', verb: 'meeting for coffee' },
+  networking: { label: 'Networking', icon: 'handshake', photo: 'founders', verb: 'meeting for coffee' },
 };
 
 export const USER_TYPES: Record<UserType, Def & { blurb: string }> = {

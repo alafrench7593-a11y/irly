@@ -14,6 +14,9 @@ import { ARTICLES, PHOTOS, UPDATED, APP_URL } from '../../site/guides/articles.m
 const OUT = process.argv[2] || 'dist/site';
 const SITE = 'https://getirly.com/';
 const LANGS = ['en', 'fr', 'ar'];
+// The app speaks English and French: only those two are offered to search engines and in the language switch.
+// The Arabic home stays reachable at /ar/ (older links) but is not indexed.
+const INDEXED = ['en', 'fr'];
 
 /* ───────── The page's own dictionary ───────── */
 const src = fs.readFileSync('site/index.html', 'utf8');
@@ -98,8 +101,8 @@ for (const l of ['fr', 'ar']) {
   const d = T[l];
   // What Google shows for "IRLY": the brand first, then what it is for, in each language.
   const META = {
-    fr: ['IRLY — Moins de solitude. Plus de vie. Rencontrer du monde à Dubaï', 'Se faire des amis dans une nouvelle ville ne devrait pas être si difficile. IRLY t’aide à rencontrer du monde, trouver ta communauté et faire des choses ensemble, à Dubaï et à Bali. Gratuit.'],
-    ar: ['IRLY — وحدة أقل. حياة أكثر. تعرّف على أشخاص في دبي', 'IRLY هو التطبيق للتعرّف على أشخاص في دبي وبالي: انضم إلى مجتمعات، واكتشف ما تفعله مع الآخرين، وكوّن صداقات حقيقية. التسجيل مجاني.'],
+    fr: ['IRLY — Moins de solitude. Plus de vie. Rencontrer du monde à Dubaï', 'Se faire des amis dans une nouvelle ville ne devrait pas être si difficile. IRLY t’aide à rencontrer du monde, trouver ta communauté et faire des choses ensemble, en vrai, à commencer par Dubaï. Gratuit.'],
+    ar: ['IRLY — وحدة أقل. حياة أكثر. تعرّف على أشخاص في دبي', 'IRLY هو التطبيق للتعرّف على أشخاص في دبي: انضم إلى مجتمعات، واكتشف ما تفعله مع الآخرين، وكوّن صداقات حقيقية. التسجيل مجاني.'],
   };
   const [title, desc] = META[l];
   let html = translateAttributes(translateElements(enHome, d), d);
@@ -113,7 +116,8 @@ for (const l of ['fr', 'ar']) {
     .replace(/(<meta name="twitter:description" content=")[^"]*"/, `$1${esc(desc)}"`)
     .replace(/(<meta property="og:url" content=")[^"]*"/, `$1${homeHref(l)}"`)
     .replace(/(<meta property="og:locale" content=")[^"]*"/, `$1${l === 'fr' ? 'fr_FR' : 'ar_AE'}"`)
-    .replace(/(<link rel="canonical" href=")[^"]*"/, `$1${homeHref(l)}"`)
+    .replace(/(<link rel="canonical" href=")[^"]*"/, `$1${INDEXED.includes(l) ? homeHref(l) : SITE}"`)
+    .replace('<meta charset="utf-8">', INDEXED.includes(l) ? '<meta charset="utf-8">' : '<meta charset="utf-8">\n<meta name="robots" content="noindex, follow">')
     // Guides: French ones from the French page, English ones (one level up) from the Arabic page.
     .replace(/<a href="([^"]+)" data-href-fr="([^"]+)"/g, (_m, en, fr) => {
       // Site-wide pages (/privacy, /support…) have absolute addresses: nothing to adjust.
@@ -369,9 +373,10 @@ fs.writeFileSync(
   `${OUT}/llms.txt`,
   `# IRLY
 
-> IRLY is an app to meet people who share your interests and do things together in real life: communities, activities and group chats. It starts in Dubai, covers the other emirates of the UAE, and is also available in Bali. It is not a dating app. IRLY Girl is a space reserved for women.
+> IRLY is an app to meet people who share your interests and do things together in real life: communities, activities and group chats. It starts in Dubai and covers the other emirates of the UAE; Bali is announced and coming soon. It is in English and French. It is not a dating app. IRLY Girl is a space reserved for women.
 
-- Website: ${SITE} (English), ${SITE}fr/ (French), ${SITE}ar/ (Arabic)
+- Website: ${SITE} (English), ${SITE}fr/ (French)
+- IRLY Girl (women only): ${SITE}girl (English), ${SITE}fr/girl (French)
 - Web app: ${APP_URL} (iOS and Android apps coming soon)
 - Guides: ${SITE}guides/ and ${SITE}fr/guides/
 
@@ -382,13 +387,13 @@ ${guideLines}
 );
 
 /* ───────── Sitemap ───────── */
-const homeAlts = LANGS.map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${homeHref(l)}"/>`).concat(`    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}"/>`).join('\n');
+const homeAlts = INDEXED.map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${homeHref(l)}"/>`).concat(`    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}"/>`).join('\n');
 // The home page's own photos (Google Images): the hero and the Dubai pictures.
 const homeImgs = ['img/heroBurj.webp', 'img/jbr.webp', 'img/burjKhalifa.webp', 'img/dhow.webp', 'img/dubaiMarina.webp', 'img/day10Crowd.webp', 'video/hero.jpg']
   .filter((f) => fs.existsSync(`site/${f}`))
   .map((f) => `    <image:image><image:loc>${SITE}${f}</image:loc></image:image>`)
   .join('\n');
-const urls = LANGS.map((l) => `  <url>\n    <loc>${homeHref(l)}</loc>\n    <lastmod>${UPDATED}</lastmod>\n${homeAlts}\n${homeImgs}\n  </url>`);
+const urls = INDEXED.map((l) => `  <url>\n    <loc>${homeHref(l)}</loc>\n    <lastmod>${UPDATED}</lastmod>\n${homeAlts}\n${homeImgs}\n  </url>`);
 for (const a of ARTICLES) {
   const pair = ARTICLES.filter((x) => x.pair === a.pair);
   const alts = pair.map((x) => `    <xhtml:link rel="alternate" hreflang="${x.lang}" href="${SITE + x.path}"/>`).join('\n');

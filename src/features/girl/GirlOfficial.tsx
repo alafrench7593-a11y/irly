@@ -18,13 +18,13 @@ import { radius, space } from '@/theme/tokens';
 import { girl, GIRL_TINT, girlType } from './theme';
 import { GButton, GIconWell } from './ui';
 
-/** Each official community's photo (until its hosts set one). */
+/** Each official community's photo (until its hosts set one): IRLY's own photos taken in Dubai. */
 const PHOTO: Record<GirlOfficialTopic, PhotoKey> = {
-  girl_newcomers: 'girlTravel',
-  girl_network: 'girlWork',
-  girl_francophone: 'girlCafe',
+  girl_newcomers: 'newcomerGirl',
+  girl_network: 'networkingGirl',
+  girl_francophone: 'brunchGirl',
   girl_trip: 'girlTrip',
-  girl_activity: 'girlsOut',
+  girl_activity: 'padelGirl',
 };
 
 /** The demo build has no server: the same five, with no members and nothing to join. */

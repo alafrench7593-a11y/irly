@@ -26,10 +26,10 @@ export function DemoBadge() {
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: insets.bottom + 104 }]}>
       <PressableScale onPress={openApp} scaleTo={0.95} accessibilityLabel="Demo: example content, nothing is saved. Create my account" style={styles.pill}>
-        <Text variant="label" color="#FFFFFF">
+        <Text variant="label" color="#FFFFFF" numberOfLines={1} style={styles.note}>
           Demo · nothing is saved
         </Text>
-        <Text variant="label" color="#FFFFFF" style={styles.cta}>
+        <Text variant="label" color="#FFFFFF" numberOfLines={1} style={styles.cta}>
           Create my account →
         </Text>
       </PressableScale>
@@ -38,7 +38,9 @@ export function DemoBadge() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, height: 34, borderRadius: 17, backgroundColor: 'rgba(10,10,10,0.82)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
-  cta: { textDecorationLine: 'underline' },
+  // One line on a 320 pt screen: the note gives way (ellipsis), the link stays whole.
+  wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center', paddingHorizontal: 12 },
+  pill: { maxWidth: '100%', flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, height: 34, borderRadius: 17, backgroundColor: 'rgba(10,10,10,0.82)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)' },
+  note: { flexShrink: 1 },
+  cta: { textDecorationLine: 'underline', flexShrink: 0 },
 });

@@ -164,6 +164,7 @@ function MatchCard({ person, photo, cityId, width, onSkip }: { person: PeopleMat
   const photos = photo ? [photo] : undefined;
 
   const add = () => {
+    if (busy) return;
     setBusy('friend');
     setFriend(person.id, 'add')
       .then((s) => {
@@ -174,6 +175,7 @@ function MatchCard({ person, photo, cityId, width, onSkip }: { person: PeopleMat
       .finally(() => setBusy(null));
   };
   const skip = () => {
+    if (busy) return;
     setBusy('skip');
     onSkip()
       .catch((e) => toast(e instanceof Error ? e.message : 'Could not hide', 'x', 'live'))

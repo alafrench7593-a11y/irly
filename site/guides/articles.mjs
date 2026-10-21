@@ -244,7 +244,7 @@ export const ARTICLES = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY helps you meet people around what you like and then meet in real life: join communities by topic, find or create activities (a surf session, a yoga class, a dinner) and talk in the group chat first. The app also has a guide to Bali’s areas. It is one way among others; the habits above are what turn meetings into friendships.</p>`,
+        html: `<p>IRLY helps you meet people around what you like and then meet in real life: join communities by topic, find or create activities (a surf session, a yoga class, a dinner) and talk in the group chat first. IRLY starts in Dubai; Bali is announced and coming soon. It is one way among others; the habits above are what turn meetings into friendships.</p>`,
       },
     ],
     cta: { title: 'Just arrived in Bali?', body: 'Meet people who share your interests and do things together, in real life.', label: 'Find my people' },
@@ -317,7 +317,7 @@ export const ARTICLES = [
       },
       {
         h2: 'Et IRLY dans tout ça',
-        html: `<p>IRLY t’aide à rencontrer des personnes autour de ce que tu aimes, puis à te voir en vrai : rejoins des communautés par thème, trouve ou crée une activité (une session de surf, un cours de yoga, un dîner) et discute d’abord dans le chat du groupe. L’app propose aussi un guide des quartiers de Bali. C’est une façon parmi d’autres ; ce sont les habitudes ci-dessus qui transforment les rencontres en amitiés.</p>`,
+        html: `<p>IRLY t’aide à rencontrer des personnes autour de ce que tu aimes, puis à te voir en vrai : rejoins des communautés par thème, trouve ou crée une activité (une session de surf, un cours de yoga, un dîner) et discute d’abord dans le chat du groupe. IRLY commence à Dubaï ; Bali est annoncée et arrive bientôt. C’est une façon parmi d’autres ; ce sont les habitudes ci-dessus qui transforment les rencontres en amitiés.</p>`,
       },
     ],
     cta: { title: 'Tu viens d’arriver à Bali ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
@@ -386,7 +386,7 @@ export const ARTICLES = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY helps you meet people around what you like and then meet in real life: join communities by topic, find or create activities (a surf session, a coworking lunch, a weekend trip) and talk in the group chat first. The app also has a guide to Bali’s areas. It is one way among others; a good area, a regular place to work and a few weekly habits matter more than any app.</p>`,
+        html: `<p>IRLY helps you meet people around what you like and then meet in real life: join communities by topic, find or create activities (a surf session, a coworking lunch, a weekend trip) and talk in the group chat first. IRLY starts in Dubai; Bali is announced and coming soon. It is one way among others; a good area, a regular place to work and a few weekly habits matter more than any app.</p>`,
       },
     ],
     cta: { title: 'Working remotely from Bali?', body: 'Meet people who share your interests and do things together, in real life.', label: 'Find my people' },
@@ -455,7 +455,7 @@ export const ARTICLES = [
       },
       {
         h2: 'Et IRLY dans tout ça',
-        html: `<p>IRLY t’aide à rencontrer des personnes autour de ce que tu aimes, puis à te voir en vrai : rejoins des communautés par thème, trouve ou crée une activité (une session de surf, un déjeuner entre coworkers, une sortie le week-end) et discute d’abord dans le chat du groupe. L’app propose aussi un guide des quartiers de Bali. C’est une façon parmi d’autres ; un bon quartier, un lieu de travail régulier et quelques habitudes hebdomadaires comptent plus que n’importe quelle app.</p>`,
+        html: `<p>IRLY t’aide à rencontrer des personnes autour de ce que tu aimes, puis à te voir en vrai : rejoins des communautés par thème, trouve ou crée une activité (une session de surf, un déjeuner entre coworkers, une sortie le week-end) et discute d’abord dans le chat du groupe. IRLY commence à Dubaï ; Bali est annoncée et arrive bientôt. C’est une façon parmi d’autres ; un bon quartier, un lieu de travail régulier et quelques habitudes hebdomadaires comptent plus que n’importe quelle app.</p>`,
       },
     ],
     cta: { title: 'Tu travailles à distance depuis Bali ?', body: 'Rencontre des personnes qui partagent tes centres d’intérêt et faites des choses ensemble, en vrai.', label: 'Trouver mes gens' },
@@ -1333,7 +1333,7 @@ export const ARTICLES = [
       },
       {
         h2: 'Where IRLY fits in',
-        html: `<p>IRLY is built for this exact moment: join communities around what you like, find activities near you or create your own, and talk with the group before you meet. It starts in Dubai and Bali. It is one option among others; what changes things is the regular activity and the plans you suggest. For city guides, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../bali/make-friends/">how to make friends in Bali</a>.</p>`,
+        html: `<p>IRLY is built for this exact moment: join communities around what you like, find activities near you or create your own, and talk with the group before you meet. It starts in Dubai, with Bali coming soon. It is one option among others; what changes things is the regular activity and the plans you suggest. For city guides, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../bali/make-friends/">how to make friends in Bali</a>.</p>`,
       },
     ],
     cta: { title: 'Starting over somewhere new?', body: 'Join a community around what you like and find people to do things with, in real life.', label: 'Find my people' },
@@ -1408,7 +1408,7 @@ export const ARTICLES = [
       },
       {
         h2: 'Et IRLY dans tout ça',
-        html: `<p>IRLY est pensé pour ce moment-là : rejoindre des communautés autour de ce que tu aimes, trouver des activités près de toi ou créer la tienne, et discuter avec le groupe avant de se voir. L’app commence à Dubaï et à Bali. C’est une option parmi d’autres ; ce qui change les choses, c’est l’activité régulière et les plans que tu proposes. Pour les guides par ville, lis <a href="../../dubai/se-faire-des-amis/">comment se faire des amis à Dubaï</a> et <a href="../../bali/se-faire-des-amis/">comment se faire des amis à Bali</a>.</p>`,
+        html: `<p>IRLY est pensé pour ce moment-là : rejoindre des communautés autour de ce que tu aimes, trouver des activités près de toi ou créer la tienne, et discuter avec le groupe avant de se voir. L’app commence à Dubaï, Bali arrive bientôt. C’est une option parmi d’autres ; ce qui change les choses, c’est l’activité régulière et les plans que tu proposes. Pour les guides par ville, lis <a href="../../dubai/se-faire-des-amis/">comment se faire des amis à Dubaï</a> et <a href="../../bali/se-faire-des-amis/">comment se faire des amis à Bali</a>.</p>`,
       },
     ],
     cta: { title: 'Tu repars de zéro ailleurs ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve des gens avec qui faire des choses, en vrai.', label: 'Trouver mes gens' },

@@ -85,7 +85,7 @@ const cases: [string, string, string[]][] = [
   ['sport', 'Jogging', RUN],
   ['sport', 'Gym session', GYM],
   ['sport', 'Fitness class', GYM],
-  ['sport', 'Padel', ['padelGirl', 'padel']],
+  ['sport', 'Padel', ['padelMix', 'padel']],
   ['sport', 'Tennis', ['tennisMix', 'tennis', 'tennisGirl']],
   ['sport', 'Table tennis', ['tableTennis']],
   ['sport', 'Water sports', ['surf']],
@@ -96,6 +96,15 @@ const cases: [string, string, string[]][] = [
   ['wellness', 'Pilates', ['pilatesGirl', 'yoga']],
   ['food', 'Brunch', ['brunchGirl', 'brunch']],
   ['food', 'Dinner', ['dinnerMix', 'restaurantGirl']],
+  ['food', 'Fine dining', ['dinnerView', 'fineDining']],
+  ['sport', 'Dance', ['dance']],
+  ['sport', 'Boxing', ['boxing']],
+  ['animals', 'Pet cafes', ['petCafe']],
+  ['animals', 'Desert horse ride', ['horseRiding']],
+  ['travel', 'Musandam dhow cruise', ['dhow']],
+  ['outings', 'Walks', ['nature']],
+  ['travel', 'Downtown walk', ['burjKhalifa']],
+  ['travel', 'Heart of Sharjah heritage walk', ['sharjah']],
   ['outdoor', 'Yacht day', ['yachtGirl', 'yacht']],
   ['travel', 'Desert safari', ['desertGirl', 'dunes']],
 ];
@@ -112,6 +121,20 @@ expect(communityPhoto('running', null, 'IRLY Running') !== 'gym', 'IRLY Running 
 expect(is(communityPhoto('sport', null, 'Water sports'), ['surf']), 'Water sports group → surf', communityPhoto('sport', null, 'Water sports'));
 expect(is(communityPhoto('sport', null, 'Running'), RUN), 'Running group → running', communityPhoto('sport', null, 'Running'));
 expect(is(communityPhoto('sport', null, 'Yoga'), ['yoga']), 'Yoga group → yoga', communityPhoto('sport', null, 'Yoga'));
+expect(communityPhoto('wellness', null, 'IRLY Wellness') === 'yoga', 'IRLY Wellness (everyone) is not a photo of women at a spa', communityPhoto('wellness', null, 'IRLY Wellness'));
+expect(!/Girl$|^girl/.test(ideaPhoto('sport', 'Padel')), 'Mixte padel shows a photo that is not of women only', ideaPhoto('sport', 'Padel'));
+
+// IRLY Girl's five official communities: each its own photo, all IRLY's own photos taken in Dubai.
+{
+  const src = fs.readFileSync('src/features/girl/GirlOfficial.tsx', 'utf8');
+  const map = Object.fromEntries([...src.slice(src.indexOf('const PHOTO'), src.indexOf('};', src.indexOf('const PHOTO'))).matchAll(/(girl_\w+): '(\w+)'/g)].map((m) => [m[1], m[2]]));
+  const own = new Set(listOf('OWN'));
+  expect(Object.keys(map).length === 5 && Object.values(map).every((k) => own.has(k)), 'Girl official communities: five photos, all IRLY\'s own', map);
+  expect(new Set(Object.values(map)).size === 5, 'Girl official communities: no photo twice', map);
+}
+// Every own photo exists at both sizes.
+const ownMissing = listOf('OWN').filter((k) => !['480', '1200'].every((w) => fs.existsSync(`site/img/own/${k}-${w}.jpg`)));
+expect(ownMissing.length === 0, 'every own photo has its 480 and 1200 files', ownMissing);
 
 // 4. IRLY Girl: women's plans and communities keep IRLY's photos of women, on the right subject.
 const girl: [string, string][] = [

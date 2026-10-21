@@ -43,7 +43,7 @@ export const DiscoverTabs = memo(function DiscoverTabs({ tabs, x, pageWidth, act
     >
       {seg ? <Animated.View style={[styles.pill, { width: seg, backgroundColor: t.c.brand, boxShadow: t.shadow.glow }, pill]} /> : null}
       {tabs.map((tab, i) => (
-        <TabLabel key={tab.id} label={tab.label} index={i} x={x} pageWidth={pageWidth} selected={active === i} onPress={() => onPress(i)} />
+        <TabLabel key={tab.id} label={tab.label} index={i} x={x} pageWidth={pageWidth} selected={active === i} tight={seg > 0 && seg < 92} onPress={() => onPress(i)} />
       ))}
     </View>
   );
@@ -55,6 +55,7 @@ function TabLabel({
   x,
   pageWidth,
   selected,
+  tight,
   onPress,
 }: {
   label: string;
@@ -62,6 +63,8 @@ function TabLabel({
   x: SharedValue<number>;
   pageWidth: number;
   selected: boolean;
+  /** Narrow segments (small phones, French labels): smaller type so PERSONNES / ÉVÉNEMENTS fit whole. */
+  tight: boolean;
   onPress: () => void;
 }) {
   const t = useTheme();
@@ -84,12 +87,12 @@ function TabLabel({
       accessibilityLabel={tx(label)}
     >
       <Animated.View style={off}>
-        <Text variant="label" tone="secondary" style={styles.label} numberOfLines={1}>
+        <Text variant="label" tone="secondary" style={[styles.label, tight ? styles.tight : null]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
           {label}
         </Text>
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, styles.center, on]} pointerEvents="none">
-        <Text variant="label" color={t.c.onBrand} style={styles.label} numberOfLines={1}>
+        <Text variant="label" color={t.c.onBrand} style={[styles.label, tight ? styles.tight : null]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
           {label}
         </Text>
       </Animated.View>
@@ -103,4 +106,5 @@ const styles = StyleSheet.create({
   item: { flex: 1, height: 38, alignItems: 'center', justifyContent: 'center' },
   center: { alignItems: 'center', justifyContent: 'center' },
   label: { fontSize: 11.5, letterSpacing: 0.9, textTransform: 'uppercase' },
+  tight: { fontSize: 10, letterSpacing: 0.2 },
 });
