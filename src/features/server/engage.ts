@@ -22,7 +22,18 @@ export type TargetType = 'irl_post' | 'activity' | 'community' | 'community_post
 export type Target = { type: TargetType; id: string; title?: string };
 
 /** What a member can report something for (stored with the report). */
-export type ReportCategory = 'harassment' | 'hate_speech' | 'spam' | 'scam' | 'fake_profile' | 'inappropriate' | 'threats' | 'other';
+export type ReportCategory =
+  | 'harassment'
+  | 'hate_speech'
+  | 'spam'
+  | 'scam'
+  | 'fake_profile'
+  | 'inappropriate'
+  | 'threats'
+  | 'sexual_content'
+  | 'impersonation'
+  | 'unsafe'
+  | 'other';
 
 export type Engagement = { likes: number; comments: number; saves: number; liked: boolean; saved: boolean };
 const EMPTY: Engagement = { likes: 0, comments: 0, saves: 0, liked: false, saved: false };
@@ -455,6 +466,9 @@ export function useComments(t: Target) {
         .single();
       if (error || !data) {
         setList((l) => l.filter((c) => c.id !== temp.id));
+        // No answer (network, timeout): it may have been saved. The thread shows what the server has,
+        // so a comment that landed is not typed and sent a second time.
+        if (error && !error.code) refresh();
         throw new Error(error?.message.includes('slow down') ? 'Slow down a little' : friendlyError(error?.message ?? 'Could not post'));
       }
       // The real row replaces the pending one, even if the refresh below fails.

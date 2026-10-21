@@ -77,9 +77,12 @@ export function ConnectAction({
       const r = await work();
       // They had already asked you: Connect accepted their request.
       const accepted = r === 'accepted';
+      // Accept on a request withdrawn meanwhile only sent yours: a request, never shown as a connection.
+      const onlySent = r === 'pending' && next === 'connected';
       if (accepted) onChange('connected');
+      else if (onlySent) onChange('requested');
       haptic('success');
-      toast(tr(accepted ? 'You and {name} are connected' : done, { name: pro.firstName }), 'check', 'brand');
+      toast(tr(accepted ? 'You and {name} are connected' : onlySent ? 'Request sent to {name}' : done, { name: pro.firstName }), 'check', 'brand');
     } catch (e) {
       onChange(before);
       haptic('error');

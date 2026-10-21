@@ -17,6 +17,7 @@ import {
   SIGNUP_ROUTES,
   signUpHitExisting,
   signupStep,
+  sinceFromArrival,
 } from '../src/features/auth/signup.ts';
 
 let failed = 0;
@@ -132,6 +133,8 @@ const WIPED_BY: Record<string, RegExp> = {
   'irly-girl': /useGirlStore\.getState\(\)\.reset\(\)/,
   'irly-recap-seen': /AsyncStorage\.removeItem\(RECAP_SEEN\)/,
   'irly-live-pending': /pendingJournal\.clear\(\)/,
+  // Chat messages not delivered yet (their text): cleared with the account's chats.
+  'irly-chat-pending': /m\.clearChatCache\(\)/,
   'irly-space': /\bresetAppSpace\b/,
 };
 const persisted = new Map<string, string>();
@@ -188,6 +191,23 @@ for (const f of ['src/app/account.tsx', 'src/features/settings/SettingsSections.
   const src = read(f);
   if (/await signOut\(\)/.test(src)) expect(/await signOut\(\);[\s\S]{0,200}goPublic\(\)/.test(src), `logout: ${f} leaves the private screens after signOut`);
 }
+
+// Sign-up answers restored on a new phone: "How long have you been here?" comes back from the arrival date.
+const DAY = 86_400_000;
+const NOW = Date.parse('2026-10-27T12:00:00Z');
+const ago = (days: number) => new Date(NOW - days * DAY).toISOString().slice(0, 10);
+expect(sinceFromArrival(null, NOW) === 'local', 'restore: no arrival date is "I am from here"');
+expect(sinceFromArrival(ago(0), NOW) === 'new', 'restore: just arrived stays a newcomer');
+expect(sinceFromArrival(ago(120), NOW) === 'year', 'restore: less than a year');
+expect(sinceFromArrival(ago(730), NOW) === 'years', 'restore: a few years');
+expect(sinceFromArrival('not a date', NOW) === undefined, 'restore: an unreadable date guesses nothing');
+// Every sign-up answer that shapes the app reaches the server (toRow) and comes back (readBack).
+const toRow = account.slice(account.indexOf('function toRow'), account.indexOf('/** The fields a member can change'));
+for (const col of ['first_name', 'birthdate', 'gender', 'city_id', 'country', 'languages', 'bio', 'faith', 'arrived_at', 'interests', 'activity_prefs', 'intentions', 'member_types'])
+  expect(new RegExp(`\\b${col}\\b[:,]`).test(toRow), `publish: sign-up answer ${col} is sent to the server`);
+const readBack = account.slice(account.indexOf('async function readBack'), account.indexOf('async function writeProfile'));
+for (const field of ['name', 'gender', 'age', 'country', 'languages', 'bio', 'faith', 'arrivedAt', 'since', 'types', 'interests', 'activities', 'lookingFor'])
+  expect(new RegExp(`\\b${field}:`).test(readBack), `restore: ${field} comes back from the server`);
 
 // Module caches of server data that live outside the wipe (reported to their owners, not failed here).
 const GAPS: [string, RegExp, string][] = [

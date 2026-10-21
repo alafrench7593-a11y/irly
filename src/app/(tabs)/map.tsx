@@ -106,7 +106,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
   const sheetArea = H - sheetBottom;
 
   // Activities, people who chose to appear, and the demo build's examples, for the space shown.
-  const { all, acts, ready } = useMapLayers(city, null, layer);
+  const { all, acts, ready, failed } = useMapLayers(city, null, layer);
   const layerMarkers = useMemo(() => (layer === 'all' ? all : all.filter((m) => m.type === layer)), [all, layer]);
   // A chosen layer shows all its markers whatever the zoom.
   const placed = useMemo(
@@ -310,7 +310,7 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
         </View>
       ) : null}
 
-      {ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} /> : null}
+      {ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} failed={failed} /> : null}
 
       {selected ? (
         <MapSheet

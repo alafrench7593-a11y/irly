@@ -7,7 +7,8 @@ import { thumbOf } from '@/features/server/media';
 import { changed, useSyncVersion } from '@/features/server/sync';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
-import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { useAppSpace, useSpaceStore, type AppSpace } from '@/state/appSpace';
 import { useDemoMyPro, useDemoPro, useDemoPros } from './demo';
 import { LINK_KINDS, NO_LINKS, safeLink, type ProLinks } from './links';
 import type { ProProfile } from './match';
@@ -18,7 +19,16 @@ import type { IndustryId, IntentId, RoleId } from './taxonomy';
  * profile of someone else go through pro_discover / pro_profile_of, which
  * apply blocks and profile visibility; "Connect" is a friendship, so a
  * connection opens the private chat like any other.
+ *
+ * In IRLY Girl, Network is women only: the same screens call
+ * pro_discover_girl / pro_profile_of_girl (migration 20261027100000), which
+ * list only women with IRLY Girl access and refuse anyone without it. The
+ * Mixte path is unchanged.
  */
+
+/** The server's discovery and profile functions for this space. */
+const DISCOVER: Record<AppSpace, string> = { mixte: 'pro_discover', girl: 'pro_discover_girl' };
+const PROFILE_OF: Record<AppSpace, string> = { mixte: 'pro_profile_of', girl: 'pro_profile_of_girl' };
 
 export type ProFilters = { industry?: IndustryId | null; role?: RoleId | null; intent?: IntentId | null; city?: string | null; q?: string };
 
@@ -115,13 +125,21 @@ const seen = new Map<string, { pro: ProProfile; photo: string | null }>();
 
 /** A card is opening this profile: its page can start from what the card showed. */
 export function rememberPro(pro: ProProfile, photo: string | null | undefined): void {
-  seen.set(pro.userId, { pro, photo: photo ?? null });
+  // Kept per space: a card seen in IRLY never opens a page in IRLY Girl.
+  seen.set(seenKey(pro.userId), { pro, photo: photo ?? null });
   if (seen.size > 60) seen.delete(seen.keys().next().value as string);
 }
 
 /** What a card last showed of this profile, if anything. */
 export function seenPro(userId: string): { pro: ProProfile; photo: string | null } | null {
-  return seen.get(userId) ?? null;
+  return seen.get(seenKey(userId)) ?? null;
+}
+
+const seenKey = (userId: string) => `${useSpaceStore.getState().space}|${userId}`;
+
+/** IRLY Girl access ended: what Network cards showed in IRLY Girl is forgotten. */
+export function forgetGirlNetwork(): void {
+  for (const k of [...seen.keys()]) if (k.startsWith('girl|')) seen.delete(k);
 }
 /**
  * Links for profile photos, keyed by the photo's path. Cards ask for the small
@@ -263,8 +281,9 @@ function useServerMyPro() {
 /** Professionals of the country (or one city), filtered on the server; live connection states. */
 function useServerPros(cityId: string, filters: ProFilters) {
   const uid = useAccount()?.userId;
+  const space = useAppSpace();
   const key = JSON.stringify(filters);
-  const current = `${uid}|${cityId}|${key}`;
+  const current = `${uid}|${space}|${cityId}|${key}`;
   // A friendship changed elsewhere in the app (profile, notifications): read again.
   const friendsV = useSyncVersion('friends');
   // What the last answer was for: loading is "the answer is for other filters".
@@ -277,14 +296,15 @@ function useServerPros(cityId: string, filters: ProFilters) {
   const load = useCallback(async () => {
     if (!uid || !supabase) return [];
     const f = JSON.parse(key) as ProFilters;
-    const { data, error: e } = await supabase.rpc('pro_discover', {
+    // IRLY Girl: women with IRLY Girl access only (the server refuses anyone else).
+    const { data, error: e } = await supabase.rpc(DISCOVER[space], {
       p_city: cityId,
       p_filters: { industry: f.industry ?? '', role: f.role ?? '', intent: f.intent ?? '', city: f.city ?? '', q: f.q?.trim() ?? '' },
       p_limit: 150,
     });
     if (e) throw new Error(e.message);
     return ((data as Row[]) ?? []).map(toPro);
-  }, [uid, cityId, key]);
+  }, [uid, space, cityId, key]);
 
   useEffect(() => {
     if (!uid || !supabase) return;
@@ -306,15 +326,13 @@ function useServerPros(cityId: string, filters: ProFilters) {
           setRes((r) => ({ for: current, list: r.list, error: e instanceof Error ? e.message : 'offline' }));
         });
     };
+    // Requests sent or accepted (here or on another phone) update the buttons: the app's one
+    // friendships channel (SyncBridge) moves friendsV, which reads again here, and catches up
+    // after a reconnection. A channel of its own read the list three times per request
+    // (its event, then friendsV tearing it down and joining again) and churned the socket.
     reload();
-    // Requests sent or accepted (here or on another phone) update the buttons.
-    const channel = liveChannel(`pros-${uid}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, reload)
-      // Listening: a request sent or accepted before then is in no event.
-      .subscribe(whenListening(reload));
     return () => {
       alive = false;
-      supabase?.removeChannel(channel);
     };
   }, [uid, load, current, attempt, friendsV]);
 
@@ -327,12 +345,17 @@ function useServerPros(cityId: string, filters: ProFilters) {
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
   // A "Try again" on its way (the failure stays on screen until it answers).
   const retrying = on && answered !== attempt;
-  return { list: on ? res.list : NONE, photos, loading: on && res.for !== current, retrying, error: res.error, setConnection, retry, signedIn: Boolean(uid) };
+  // The last list stays on screen while new filters load, never across accounts or spaces (no man in IRLY Girl's Network).
+  const sameSpace = res.for.startsWith(`${uid}|${space}|`);
+  return { list: on && sameSpace ? res.list : NONE, photos, loading: on && res.for !== current, retrying, error: sameSpace ? res.error : null, setConnection, retry, signedIn: Boolean(uid) };
 }
 
 /** One professional's profile. */
 function useServerPro(userId: string) {
   const uid = useAccount()?.userId;
+  const space = useAppSpace();
+  // What an answer is for: this profile, in this space (IRLY Girl reads its own function).
+  const target = `${space}|${userId}`;
   const friendsV = useSyncVersion('friends');
   // "Try again" after a failure reads the profile once more; `answered` is the last attempt that got an answer.
   const [attempt, setAttempt] = useState(0);
@@ -343,13 +366,14 @@ function useServerPro(userId: string) {
 
   const load = useCallback(async () => {
     if (!uid || !supabase) return null;
-    const [{ data, error: e }, l] = await Promise.all([supabase.rpc('pro_profile_of', { p_user: userId }), supabase.rpc('pro_links_of', { p_user: userId })]);
+    // IRLY Girl: only a woman with IRLY Girl access (or you) has a profile here.
+    const [{ data, error: e }, l] = await Promise.all([supabase.rpc(PROFILE_OF[space], { p_user: userId }), supabase.rpc('pro_links_of', { p_user: userId })]);
     if (e) throw new Error(e.message);
     const r = ((data as Row[]) ?? [])[0];
-    // Links are an extra: unreadable (or not on the server yet), the profile shows without them.
-    setLinks({ id: userId, links: l.error ? NO_LINKS : toLinks(((l.data as LinkRow[] | null) ?? [])[0]) });
+    // Links are an extra: unreadable (or not on the server yet), the profile shows without them (and never without the profile).
+    setLinks({ id: target, links: !r || l.error ? NO_LINKS : toLinks(((l.data as LinkRow[] | null) ?? [])[0]) });
     return r ? toPro(r) : null;
-  }, [uid, userId]);
+  }, [uid, space, userId, target]);
 
   useEffect(() => {
     if (!uid || !supabase) return;
@@ -364,7 +388,7 @@ function useServerPro(userId: string) {
           .then(async (p) => {
             if (!current()) return;
             setAnswered(attempt);
-            setRes({ id: userId, pro: p, failed: false });
+            setRes({ id: target, pro: p, failed: false });
             if (p?.photoPath) {
               const urls = await photoUrls([p.photoPath]);
               if (current()) setPhoto(urls[p.photoPath] ?? null);
@@ -373,26 +397,23 @@ function useServerPro(userId: string) {
           .catch(() => {
             if (!current()) return;
             setAnswered(attempt);
-            setRes((r) => ({ id: userId, pro: r.id === userId ? r.pro : null, failed: true }));
+            setRes((r) => ({ id: target, pro: r.id === target ? r.pro : null, failed: true }));
           });
       })();
+    // Friendship changes arrive through friendsV (SyncBridge), as for the list above.
     reload();
-    const channel = liveChannel(`pro-${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'friendships' }, reload)
-      .subscribe(whenListening(reload));
     return () => {
       alive = false;
-      supabase?.removeChannel(channel);
     };
-  }, [uid, userId, load, friendsV, attempt]);
+  }, [uid, userId, target, load, friendsV, attempt]);
 
   const setConnection = useCallback((connection: ProProfile['connection']) => setRes((r) => (r.pro ? { ...r, pro: { ...r.pro, connection } } : r)), []);
 
   const on = Boolean(uid && supabase);
-  const pro = on && res.id === userId ? res.pro : null;
-  const state: 'loading' | 'ready' | 'missing' | 'error' = !on ? 'missing' : res.id !== userId ? 'loading' : res.failed && !pro ? 'error' : pro ? 'ready' : 'missing';
+  const pro = on && res.id === target ? res.pro : null;
+  const state: 'loading' | 'ready' | 'missing' | 'error' = !on ? 'missing' : res.id !== target ? 'loading' : res.failed && !pro ? 'error' : pro ? 'ready' : 'missing';
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
-  return { pro, photo: res.id === userId ? photo : null, links: pro && links.id === userId ? links.links : NO_LINKS, state, retrying: on && answered !== attempt, setConnection, retry };
+  return { pro, photo: res.id === target ? photo : null, links: pro && links.id === target ? links.links : NO_LINKS, state, retrying: on && answered !== attempt, setConnection, retry };
 }
 
 // The demonstration build reads illustrative profiles (demo.ts), never the server.

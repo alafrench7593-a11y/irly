@@ -1,0 +1,52 @@
+name: Report email
+
+# Sends the "important report" emails queued by the database
+# (private.report_email_outbox) to the moderation address set in the app's
+# Back office → Settings. Logs show counts only. Safe to run as often as
+# wanted: emails are claimed with a lease and sent with an idempotency key, so
+# a crashed or overlapping run never delivers one twice.
+#
+# Needs (repository secrets; never in the app):
+#   SUPABASE_PURGE_KEY  this project's secret key (sb_secret_…), already used by
+#                       "Storage purge"; only the report_email_* functions accept it
+#   RESEND_API_KEY      the Resend API key (re_…), created at resend.com
+#   REPORT_EMAIL_FROM   (secret or variable) the sender, on a domain verified at
+#                       Resend, e.g. "IRLY Moderation <moderation@your-domain>"
+# Until RESEND_API_KEY and REPORT_EMAIL_FROM exist, runs send nothing and the
+# emails wait in the outbox. Scheduled runs happen on the default branch only.
+
+on:
+  schedule:
+    - cron: '3,13,23,33,43,53 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: report-email
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/report-email.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Send queued report emails
+        env:
+          SUPABASE_PURGE_KEY: ${{ secrets.SUPABASE_PURGE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_EMAIL_FROM: ${{ secrets.REPORT_EMAIL_FROM || vars.REPORT_EMAIL_FROM }}
+        run: |
+          # Which secrets this run has (never their values).
+          echo "SUPABASE_PURGE_KEY: $([ -n "$SUPABASE_PURGE_KEY" ] && echo set || echo missing)"
+          echo "RESEND_API_KEY: $([ -n "$RESEND_API_KEY" ] && echo set || echo missing)"
+          echo "REPORT_EMAIL_FROM: $([ -n "$REPORT_EMAIL_FROM" ] && echo set || echo missing)"
+          node scripts/report-email.mjs

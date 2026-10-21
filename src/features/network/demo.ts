@@ -4,6 +4,7 @@ import { DEMO } from '@/config/app';
 import { cityScope } from '@/data/destinations';
 import { findPerson } from '@/data/repo';
 import type { CityId } from '@/data/types';
+import { useAppSpace, type AppSpace } from '@/state/appSpace';
 import { useStore } from '@/state/store';
 import type { ProDraft, ProFilters } from './api';
 import { NO_LINKS } from './links';
@@ -21,6 +22,10 @@ import type { IndustryId, IntentId, RoleId } from './taxonomy';
  * professional profile stay in this tab's memory: nothing is sent or read
  * anywhere, and the demo says so on every screen. None of these people is
  * a member.
+ *
+ * In IRLY Girl, Network is women only (as pro_discover_girl on the server):
+ * the demo lists only the women below (`woman`), and a man's profile does
+ * not open there, not even from a link.
  */
 
 type Seed = {
@@ -36,22 +41,30 @@ type Seed = {
   intents: IntentId[];
   /** Shown with initials (no photo), as members without a photo are. */
   noPhoto?: boolean;
+  /** A woman: also listed in IRLY Girl's Network (women only). */
+  woman?: boolean;
+  /** Only in IRLY Girl's Network (a woman of the IRLY Girl demo). */
+  girlOnly?: boolean;
   connection?: ProProfile['connection'];
 };
 
 const SEEDS: Seed[] = [
   { id: 'p-omar', role: 'entrepreneur', jobTitle: 'Founder', company: 'Haul', industries: ['startups', 'mobility', 'trade'], skills: ['Operations', 'Supply chain', 'Fundraising'], project: 'Same-day freight between Jebel Ali and the city', lookingFor: 'A technical cofounder and first B2B clients in retail', canOffer: 'Intros to freight forwarders and the free zones', intents: ['cofounder', 'clients', 'investors'], connection: 'incoming' },
-  { id: 'p-layla', role: 'employee', jobTitle: 'Product designer', company: null, industries: ['fintech', 'design'], skills: ['UI/UX', 'Product', 'Branding'], project: 'Redesigning a payments app for first-time investors', lookingFor: 'Founders who care about design', canOffer: 'Design reviews and UX audits', intents: ['ideas', 'opportunities'], connection: 'requested' },
+  { id: 'p-layla', woman: true, role: 'employee', jobTitle: 'Product designer', company: null, industries: ['fintech', 'design'], skills: ['UI/UX', 'Product', 'Branding'], project: 'Redesigning a payments app for first-time investors', lookingFor: 'Founders who care about design', canOffer: 'Design reviews and UX audits', intents: ['ideas', 'opportunities'], connection: 'requested' },
   { id: 'p-arjun', role: 'investor', jobTitle: 'Investment analyst', company: null, industries: ['fintech', 'saas', 'ai'], skills: ['Finance', 'Data', 'Fundraising'], project: null, lookingFor: 'Pre-seed B2B software teams in the Gulf', canOffer: 'Feedback on pitch decks and financial models', intents: ['opportunities', 'ideas'] },
-  { id: 'p-nadia', role: 'entrepreneur', jobTitle: 'Founder', company: 'Bloom Studio', industries: ['health', 'business'], skills: ['Branding', 'Operations', 'Hiring'], project: 'A second wellness studio in Jumeirah', lookingFor: 'Partners for corporate wellness programmes', canOffer: 'Wellness sessions for teams, a community of 2,000 members', intents: ['partners', 'grow', 'suppliers'] },
+  { id: 'p-nadia', woman: true, role: 'entrepreneur', jobTitle: 'Founder', company: 'Bloom Studio', industries: ['health', 'business'], skills: ['Branding', 'Operations', 'Hiring'], project: 'A second wellness studio in Jumeirah', lookingFor: 'Partners for corporate wellness programmes', canOffer: 'Wellness sessions for teams, a community of 2,000 members', intents: ['partners', 'grow', 'suppliers'] },
   { id: 'p-lucas', role: 'freelancer', jobTitle: 'Freelance developer', company: null, industries: ['tech', 'apps', 'ai'], skills: ['React', 'Python', 'AI/ML'], project: 'AI booking assistants for restaurants', lookingFor: 'Clients who need an MVP in six weeks', canOffer: 'Web and mobile apps, AI prototypes', intents: ['clients', 'cofounder'], connection: 'connected' },
   { id: 'p-james', role: 'employee', jobTitle: 'Head of Sales', company: null, industries: ['saas', 'tech'], skills: ['Sales', 'Partnerships', 'Hiring'], project: null, lookingFor: 'Channel partners across the GCC', canOffer: 'Sales playbooks and hiring advice', intents: ['partners', 'ideas'] },
-  { id: 'p-amira', role: 'freelancer', jobTitle: 'Corporate lawyer', company: 'Haddad Legal', industries: ['legal', 'business'], skills: ['Legal', 'Fundraising'], project: null, lookingFor: 'Startups setting up in the free zones', canOffer: 'Company setup, shareholder agreements, term sheets', intents: ['clients', 'partners'] },
-  { id: 'p-sofia', role: 'freelancer', jobTitle: 'Content creator', company: null, industries: ['creator', 'media', 'marketing'], skills: ['Content', 'Video', 'Social media'], project: 'A video series on Dubai’s small brands', lookingFor: 'Brands for long-term partnerships', canOffer: 'Short videos, a 40k audience in the Emirates', intents: ['clients', 'partners'] },
+  { id: 'p-amira', woman: true, role: 'freelancer', jobTitle: 'Corporate lawyer', company: 'Haddad Legal', industries: ['legal', 'business'], skills: ['Legal', 'Fundraising'], project: null, lookingFor: 'Startups setting up in the free zones', canOffer: 'Company setup, shareholder agreements, term sheets', intents: ['clients', 'partners'] },
+  { id: 'p-sofia', woman: true, role: 'freelancer', jobTitle: 'Content creator', company: null, industries: ['creator', 'media', 'marketing'], skills: ['Content', 'Video', 'Social media'], project: 'A video series on Dubai’s small brands', lookingFor: 'Brands for long-term partnerships', canOffer: 'Short videos, a 40k audience in the Emirates', intents: ['clients', 'partners'] },
   { id: 'p-yusuf', role: 'employee', jobTitle: 'Data engineer', company: null, industries: ['ai', 'tech'], skills: ['Python', 'Data', 'AI/ML'], project: 'An open dataset of Dubai’s traffic', lookingFor: 'A cofounder for a data product', canOffer: 'Data pipelines and dashboards', intents: ['cofounder', 'ideas', 'job'], noPhoto: true },
   { id: 'p-samuel', role: 'entrepreneur', jobTitle: 'Founder', company: null, industries: ['retail', 'ecommerce', 'design'], skills: ['Branding', 'Growth', 'Paid ads'], project: 'A streetwear label made in the UAE', lookingFor: 'Investors and a local manufacturer', canOffer: 'E-commerce growth, launch playbooks', intents: ['investors', 'suppliers', 'partners'] },
   { id: 'p-khalid', role: 'employee', jobTitle: 'Real estate advisor', company: null, industries: ['realestate'], skills: ['Real estate', 'Sales'], project: null, lookingFor: 'Founders looking for office space', canOffer: 'Market insight on offices and retail units', intents: ['clients', 'investors'] },
-  { id: 'p-chloe', role: 'employee', jobTitle: 'Marketing manager', company: null, industries: ['marketing', 'food'], skills: ['Growth', 'SEO', 'Social media'], project: null, lookingFor: 'Restaurant founders opening this year', canOffer: 'Launch campaigns and local press', intents: ['opportunities', 'job'] },
+  { id: 'p-chloe', woman: true, role: 'employee', jobTitle: 'Marketing manager', company: null, industries: ['marketing', 'food'], skills: ['Growth', 'SEO', 'Social media'], project: null, lookingFor: 'Restaurant founders opening this year', canOffer: 'Launch campaigns and local press', intents: ['opportunities', 'job'] },
+  // Women of the IRLY Girl demo (content/girls.ts), in IRLY Girl's Network only.
+  { id: 'g-amira', woman: true, girlOnly: true, role: 'founder', jobTitle: 'Founder', company: 'Glow Lab', industries: ['ecommerce', 'health'], skills: ['Branding', 'Fundraising', 'Growth'], project: 'A skincare brand made for the Gulf climate', lookingFor: 'Women founders to swap retail contacts with', canOffer: 'Intros to beauty retailers and labs', intents: ['partners', 'investors', 'ideas'] },
+  { id: 'g-elena', woman: true, girlOnly: true, role: 'employee', jobTitle: 'Corporate lawyer', company: null, industries: ['legal', 'fintech'], skills: ['Legal', 'Fundraising'], project: null, lookingFor: 'Women in law and finance to meet every month', canOffer: 'Advice on company setup in DIFC', intents: ['meet', 'opportunities'] },
+  { id: 'g-hana', woman: true, girlOnly: true, role: 'employee', jobTitle: 'UX lead', company: null, industries: ['fintech', 'design'], skills: ['UI/UX', 'Product'], project: null, lookingFor: 'Women in product and design', canOffer: 'Portfolio reviews and mentoring', intents: ['ideas', 'meet'], connection: 'incoming' },
 ];
 
 const photoPath = (id: string) => `demo/${id}`;
@@ -142,6 +155,12 @@ export function useDemoMyPro() {
 
 const list = (connection: Record<string, ProProfile['connection']>) => PROS.map((p) => (connection[p.userId] ? { ...p, connection: connection[p.userId] } : p));
 
+const WOMEN = new Set(SEEDS.filter((s) => s.woman).map((s) => s.id));
+const GIRL_ONLY = new Set(SEEDS.filter((s) => s.girlOnly).map((s) => s.id));
+
+/** Who Network shows in this space: in IRLY Girl the women only, in IRLY everyone but the IRLY Girl demo's women. */
+const inSpace = (userId: string, space: AppSpace) => (space === 'girl' ? WOMEN.has(userId) : !GIRL_ONLY.has(userId));
+
 /** What pro_discover answers, on the demo profiles. */
 function discover(all: ProProfile[], cityId: string, f: ProFilters): ProProfile[] {
   const q = (f.q ?? '').trim().toLowerCase();
@@ -161,7 +180,8 @@ export function useDemoPros(cityId: string, filters: ProFilters) {
   const connection = useDemoNetwork((s) => s.connection);
   const setOne = useDemoNetwork((s) => s.setConnection);
   const [attempt, setAttempt] = useState(0);
-  const key = `${cityId}|${JSON.stringify(filters)}|${attempt}`;
+  const space = useAppSpace();
+  const key = `${space}|${cityId}|${JSON.stringify(filters)}|${attempt}`;
   const [res, setRes] = useState<{ for: string; ids: string[]; error: string | null }>({ for: '', ids: [], error: null });
   const first = useRef(true);
   useEffect(() => {
@@ -169,16 +189,20 @@ export function useDemoPros(cityId: string, filters: ProFilters) {
       () => {
         first.current = false;
         if (offline()) setRes((r) => ({ for: key, ids: r.ids, error: 'offline' }));
-        else setRes({ for: key, ids: discover(PROS, cityId, filters).map((p) => p.userId), error: null });
+        else setRes({ for: key, ids: discover(PROS.filter((p) => inSpace(p.userId, space)), cityId, filters).map((p) => p.userId), error: null });
       },
       first.current ? 900 : 420,
     );
     return () => clearTimeout(id);
-    // `key` holds the filters and the city.
+    // `key` holds the space, the filters and the city.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   const all = useMemo(() => list(connection), [connection]);
-  const shown = useMemo(() => res.ids.map((id) => all.find((p) => p.userId === id)).filter((p): p is ProProfile => Boolean(p)), [res.ids, all]);
+  // The last list stays while the next one loads, never across spaces (no man in IRLY Girl, even for a moment).
+  const shown = useMemo(
+    () => res.ids.filter((id) => inSpace(id, space)).map((id) => all.find((p) => p.userId === id)).filter((p): p is ProProfile => Boolean(p)),
+    [res.ids, all, space],
+  );
   const setConnection = useCallback((userId: string, c: ProProfile['connection']) => setOne(userId, c), [setOne]);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
   const retrying = res.for !== key && res.error != null;
@@ -191,12 +215,14 @@ export function useDemoPro(userId: string) {
   const setOne = useDemoNetwork((s) => s.setConnection);
   const [attempt, setAttempt] = useState(0);
   const [res, setRes] = useState({ for: '', failed: false });
-  const key = `${userId}|${attempt}`;
+  const space = useAppSpace();
+  const key = `${space}|${userId}|${attempt}`;
   useEffect(() => {
     const id = setTimeout(() => setRes({ for: key, failed: offline() }), 450);
     return () => clearTimeout(id);
   }, [key]);
-  const pro = useMemo(() => list(connection).find((p) => p.userId === userId) ?? null, [connection, userId]);
+  // In IRLY Girl a man's profile does not open, even from a link (as pro_profile_of_girl).
+  const pro = useMemo(() => (inSpace(userId, space) ? (list(connection).find((p) => p.userId === userId) ?? null) : null), [connection, userId, space]);
   const setConnection = useCallback((c: ProProfile['connection']) => setOne(userId, c), [setOne, userId]);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
   // As on the server: a retry keeps the failure on screen until it answers.

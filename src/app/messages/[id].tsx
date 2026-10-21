@@ -30,7 +30,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { findPerson } from '@/data/repo';
 import { toast } from '@/components/ui/Toast';
-import { isServerId, removeConversationForMe, setConversationArchived, useServerThread } from '@/features/server/chat';
+import { chatDraft, isServerId, removeConversationForMe, setConversationArchived, useServerThread } from '@/features/server/chat';
 import { leaveGroup, renameGroup } from '@/features/server/groups';
 import { sharedHref } from '@/features/server/engage';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
@@ -126,7 +126,11 @@ function ServerThreadView({ id }: { id: string }) {
       setPhotoBusy(false);
     }
   };
-  const [text, setText] = useState(typeof draft === 'string' ? draft.slice(0, 600) : '');
+  // What was being written here before leaving the chat comes back (a prepared first message wins).
+  const [text, setText] = useState(() => (typeof draft === 'string' ? draft.slice(0, 600) : chatDraft.get(id)));
+  useEffect(() => {
+    chatDraft.set(id, text);
+  }, [id, text]);
   const [earlier, setEarlier] = useState(false);
   const [menu, setMenu] = useState(false);
   const [reporting, setReporting] = useState<ReportTarget | null>(null);

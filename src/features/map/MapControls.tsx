@@ -17,6 +17,7 @@ import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { MapMarkerData, MarkerType } from './markers';
 import type { MapFilters } from './serverActivities';
+import { changed } from '@/features/server/sync';
 
 export type Layer = 'all' | MarkerType;
 
@@ -155,11 +156,30 @@ function ActivityFilters({ filters, onFilters, options }: { filters: MapFilters;
 /**
  * Nothing on the part of the map shown: said plainly (never example
  * content). On the People layer, how to appear and why few people show.
+ * `failed`: the plans could not be read (offline, server error): that is
+ * said, with a retry, never « nothing here ».
  */
-export function MapEmpty({ layer, bottom }: { layer: Layer; bottom: number }) {
+export function MapEmpty({ layer, bottom, failed = false }: { layer: Layer; bottom: number; failed?: boolean }) {
   const t = useTheme();
   const router = useRouter();
   const people = layer === 'person';
+  if (failed && !people) {
+    return (
+      <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)} style={[styles.emptyWrap, { bottom }]} pointerEvents="box-none">
+        <Glass style={[styles.empty, { boxShadow: t.shadow.float }]} intensity={blur.strong}>
+          <Icon name="repeat" size={20} color={t.c.textSecondary} />
+          <View style={styles.emptyText}>
+            <Text variant="titleS">Plans could not load</Text>
+            <Text variant="caption" tone="secondary">
+              Could not load. Check your connection.
+            </Text>
+          </View>
+          {/* Every screen showing plans reads them again (this map included). */}
+          <Button label="Try again" size="sm" variant="secondary" onPress={() => changed('activities')} />
+        </Glass>
+      </Animated.View>
+    );
+  }
   return (
     <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)} style={[styles.emptyWrap, { bottom }]} pointerEvents="box-none">
       <Glass style={[styles.empty, { boxShadow: t.shadow.float }]} intensity={blur.strong}>
