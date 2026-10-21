@@ -1,5 +1,6 @@
 // The free community assistant: plans, polls, digest, ideas, post → activity.
 import { communityAssist, digestLines, postLooksLikeAPlan } from '../src/features/community/assist.ts';
+import { networkListed } from '../src/features/network/listed.ts';
 
 const geo = { cities: [{ id: 'bali', name: 'Bali' }], areas: [{ id: 'canggu', name: 'Canggu', cityId: 'bali' }, { id: 'ubud', name: 'Ubud', cityId: 'bali' }] };
 const ctx = { communityName: 'Girls Padel Bali', categoryId: 'sport', geo };
@@ -42,6 +43,17 @@ const lines = digestLines({ postsWeek: 3, newMembersWeek: 2, members: 40, upcomi
 expect(lines.length === 4 && lines[0].startsWith('3 posts') && lines[2].includes('+1 more'), 'digest from real numbers', lines);
 const empty = digestLines({ postsWeek: 0, newMembersWeek: 0, members: 1, upcoming: 0, nextTitle: null, nextStartsAt: null, topPostBody: null, topPostLikes: 0 }, () => '');
 expect(empty[0].startsWith('No posts') && empty[2].startsWith('Nothing planned'), 'empty week is said honestly', empty);
+
+// IRLY Network's communities, per space: each space lists the ones its members can join.
+const mixed = { topic: 'network', girlOnly: false, official: true };
+const girlNetworking = { topic: 'girl_network', girlOnly: true, official: true };
+const womenClub = { categoryId: 'networking', girlOnly: true, official: false };
+const club = { categoryId: 'networking', girlOnly: false, official: false };
+expect(networkListed(mixed, false) && networkListed(club, false), 'Network (Mixte): IRLY Network and a networking community');
+expect(!networkListed(womenClub, false) && !networkListed(girlNetworking, false), 'Network (Mixte): no women-only community');
+expect(networkListed(girlNetworking, true), 'Network (Girl): IRLY Girl Networking is listed (there was nothing to join)');
+expect(networkListed(womenClub, true) && !networkListed(mixed, true) && !networkListed(club, true), 'Network (Girl): women-only networking communities only');
+expect(!networkListed({ topic: 'girls', girlOnly: true, official: true }, true) && !networkListed({ categoryId: 'sport', girlOnly: true, official: false }, true), 'Network (Girl): not a community about something else');
 
 if (failed) {
   console.error(`${failed} community check(s) failed`);

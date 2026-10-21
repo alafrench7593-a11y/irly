@@ -1,19 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DEMO } from '@/config/app';
+import { DEMO_COMMUNITIES } from '@/data/content/girlDemo';
 import type { CityId } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
 import { displayCommunityName } from '@/features/community/name';
+import { useDemoGirl } from '@/features/girl/demo';
 import { useCityFilter } from '@/features/server/scope';
 import { useRefreshOn } from '@/features/server/sync';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
 import { useAppSpace } from '@/state/appSpace';
+import { isNetworkCommunity, networkListed } from './listed';
 
 /**
  * The IRLY Network page beyond member profiles, from real data only:
  *  - networking communities: the communities of the city whose category is
  *    Networking, and IRLY's official business ones (Network, Entrepreneurs,
- *    Ecom, Tech, AI), from community_list (the server's own read rules; in
- *    IRLY Girl, IRLY Girl communities only, like every community list);
+ *    Ecom, Tech, AI; IRLY Girl Networking), from community_list (the server's
+ *    own read rules; in IRLY Girl, IRLY Girl communities only, like every
+ *    community list);
  *  - their latest posts, read from community_posts under its row level
  *    security (the community must be visible to you, blocks apply), with the
  *    same like and comment counts as everywhere else (engagement).
@@ -21,9 +26,7 @@ import { useAppSpace } from '@/state/appSpace';
  * (useNews, Business category) come from their own hooks.
  */
 
-/** Official IRLY communities about business, by topic (migration 20261008003400). */
-export const NETWORK_TOPICS = new Set(['network', 'entrepreneurs', 'ecom', 'tech', 'ai']);
-export const NETWORK_CATEGORY = 'networking';
+export { NETWORK_CATEGORY, NETWORK_TOPICS } from './listed';
 
 export type NetCommunity = {
   id: string;
@@ -36,6 +39,7 @@ export type NetCommunity = {
   official: boolean;
   girlOnly: boolean;
   cityId: string | null;
+  topic: string | null;
 };
 
 export type NetPost = {
@@ -55,9 +59,6 @@ type Row = Record<string, unknown>;
 
 const netError = (e: unknown) => (/fetch|network|failed/i.test(String(e)) ? 'Can’t reach IRLY right now' : e instanceof Error ? e.message : 'Could not load');
 
-export const isNetworkCommunity = (c: { categoryId?: string | null; category_id?: unknown; topic?: string | null }) =>
-  (c.categoryId ?? (c.category_id as string | null | undefined)) === NETWORK_CATEGORY || (c.topic != null && NETWORK_TOPICS.has(c.topic));
-
 /** Networking communities of the destination (your city first, most active next). */
 export function useNetworkCommunities(cityId: CityId) {
   const uid = useAccount()?.userId;
@@ -73,7 +74,7 @@ export function useNetworkCommunities(cityId: CityId) {
       // A failed reload keeps the list on screen and says so.
       if (error) return setState((s) => ({ ...s, for: key, error: netError(error.message) }));
       const list = ((data as Row[] | null) ?? [])
-        .filter((r) => isNetworkCommunity({ category_id: r.category_id, topic: (r.topic as string | null) ?? null }))
+        .filter((r) => isNetworkCommunity({ categoryId: (r.category_id as string | null) ?? null, topic: (r.topic as string | null) ?? null }))
         .map((r) => ({
           id: r.id as string,
           name: displayCommunityName(r as { name: string | null; topic: string | null; category_id: string | null; city_id: string | null }),
@@ -85,6 +86,7 @@ export function useNetworkCommunities(cityId: CityId) {
           official: Boolean(r.official),
           girlOnly: Boolean(r.girl_only),
           cityId: (r.city_id as string | null) ?? null,
+          topic: (r.topic as string | null) ?? null,
         }));
       setState({ for: key, list, error: null });
     });
@@ -95,14 +97,44 @@ export function useNetworkCommunities(cityId: CityId) {
   const list = useMemo(
     () =>
       state.list
-        // Same rule as every community list: in IRLY Girl, IRLY Girl communities only.
-        .filter((c) => keep(c.cityId) && (!girlSpace || c.girlOnly))
+        // Each space its own (listed.ts): in IRLY Girl, women-only communities only.
+        .filter((c) => keep(c.cityId) && networkListed(c, girlSpace))
         .sort((a, b) => Number(b.cityId === cityId) - Number(a.cityId === cityId) || b.postsWeek - a.postsWeek || b.members - a.members),
     [state.list, keep, girlSpace, cityId],
   );
   const on = Boolean(uid && supabase);
   const ready = state.for === key;
+  const demo = useDemoNetworkCommunities(girlSpace);
+  if (DEMO) return { list: demo, loading: false, error: null, retry: load };
   return { list: on ? list : (NONE as NetCommunity[]), loading: on && !ready, error: on && ready ? state.error : null, retry: load };
+}
+
+/**
+ * The demonstration build (no server, nothing saved): IRLY Girl's example
+ * business community, joined on its example page (DemoCommunityScreen). IRLY
+ * Mixte has no example community: its Network says so honestly.
+ */
+function useDemoNetworkCommunities(girlSpace: boolean): NetCommunity[] {
+  const joined = useDemoGirl((s) => s.joined);
+  return useMemo(
+    () =>
+      !DEMO || !girlSpace
+        ? (NONE as NetCommunity[])
+        : DEMO_COMMUNITIES.filter((c) => c.network).map((c) => ({
+            id: c.id,
+            name: c.name,
+            tagline: c.tagline,
+            emoji: '💼',
+            members: c.members + (joined[c.id] && !c.member ? 1 : 0) - (!joined[c.id] && c.member ? 1 : 0),
+            postsWeek: 0,
+            isMember: Boolean(joined[c.id]),
+            official: false,
+            girlOnly: true,
+            cityId: 'dubai',
+            topic: null,
+          })),
+    [girlSpace, joined],
+  );
 }
 
 /** The latest posts of these communities (newest first). */

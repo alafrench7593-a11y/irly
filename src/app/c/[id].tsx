@@ -72,7 +72,15 @@ function CommunityScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { detail: c, loading, error, refresh, signedIn } = useCommunity(id);
+  const { detail: loaded, loading, error, refresh, signedIn } = useCommunity(id);
+  // A join the server just accepted, with its chat: the page is a member's at once, while
+  // its detail reloads (it showed « Join the community » again until then, as if refused).
+  // Only over the detail read before the join: the next one from the server has the last word.
+  const [joined, setJoined] = useState<{ over: CommunityDetail; chat: string | null } | null>(null);
+  const c =
+    loaded && joined?.over === loaded && !loaded.isMember
+      ? { ...loaded, isMember: true, members: loaded.members + 1, myRole: loaded.myRole ?? 'member', conversationId: loaded.conversationId ?? joined.chat }
+      : loaded;
   const contentStaff = isContentStaff(useStaffRole());
   const auth = useAuthStatus();
   // Posts by space: General, or one of the community's categories (when it has some).
@@ -127,7 +135,8 @@ function CommunityScreen() {
     if (busy) return;
     setBusy(true);
     try {
-      await joinCommunity(c.id);
+      const chat = await joinCommunity(c.id);
+      if (loaded) setJoined({ over: loaded, chat: chat || null });
       haptic('success');
       toast(c.official ? tx('Welcome to {name} 👋', { name: c.name }) : tx('You joined {name}', { name: c.name }), 'users', 'brand');
       refresh();
@@ -229,6 +238,7 @@ function CommunityScreen() {
                       confirm('Leave this community?', () =>
                         leaveCommunity(c.id)
                           .then(() => {
+                            setJoined(null);
                             toast('You left the community', 'check', 'brand');
                             refresh();
                           })

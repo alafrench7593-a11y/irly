@@ -340,19 +340,24 @@ async function main() {
 
   // ───────── IRLY Network: join a networking community from the Network page ─────────
   // Network page › Communities › a community › Join: Uma is a member on the server,
-  // the page says so at once and the chat is in her inbox. In IRLY Mixte, then in
-  // IRLY Girl (a women-only networking community, Network in violet).
-  const netJoin = async (id, name) => {
+  // the page says so at once and the chat is in her inbox. In IRLY Mixte (a mixed
+  // networking community), then in IRLY Girl (a women-only one, Network in violet);
+  // each space lists only its own. Nia hosts them (a member creates 3 communities a day).
+  const nia = await createWoman('Nia');
+  const niaSb = createClient(URL_, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  must(await niaSb.auth.signInWithPassword({ email: nia.email, password: PASSWORD }));
+  const netTile = (id) => page.locator(`[data-testid="net-community-${id}"]`).filter({ visible: true }).first();
+  const netJoin = async (id, name, other) => {
     await page.goto(`${BASE}/network`);
-    const tile = page.locator(`[data-testid="net-community-${id}"]`).filter({ visible: true }).first();
+    const tile = netTile(id);
     await tile.waitFor({ timeout: 25000 });
+    if (other && (await netTile(other).count())) throw new Error('the other space’s networking community is listed here too');
     await tile.scrollIntoViewIfNeeded();
     await tile.click();
     await page.waitForURL((u) => new URL(u).pathname === `/c/${id}`, { timeout: 15000 });
     await page.getByRole('button', { name: 'Join the community' }).click();
-    await page.waitForTimeout(1500);
-    console.log(`   after Join: ${(await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' ').slice(0, 300)))}`);
-    await visible(page, 'Open chat', 20000);
+    // The member's actions as soon as the server accepts (not « Join » again while the page reloads).
+    await visible(page, 'Open chat', 10000);
     const [{ n }] = await sql(`select count(*)::int as n from public.community_members where community_id = '${id}' and user_id = '${uma.id}'`);
     if (n !== 1) throw new Error(`Uma is not a member on the server (${n})`);
     await page.goto(`${BASE}/messages`);
@@ -360,20 +365,19 @@ async function main() {
     return true;
   };
   const netClub = `Founders circle ${run}`;
-  let netClubId;
-  await step('IRLY Network (Mixte): a networking community → Join → member, chat in the inbox', async () => {
-    netClubId = must(await veraSb.rpc('create_community', { p_name: netClub, p_city: 'bali', p_category: 'networking' }));
-    return netJoin(netClubId, netClub);
-  });
-  if (netClubId) await veraSb.rpc('delete_community', { p_community: netClubId });
   const netGirlClub = `Women founders ${run}`;
+  let netClubId;
   let netGirlId;
-  await step('IRLY Network (Girl): a women-only networking community → Join → member, chat in the inbox', async () => {
-    netGirlId = must(await veraSb.rpc('create_community', { p_name: netGirlClub, p_city: 'bali', p_category: 'networking', p_girl_only: true }));
-    await enterGirl(page);
-    return netJoin(netGirlId, netGirlClub);
+  await step('IRLY Network (Mixte): a networking community → Join → member at once, chat in the inbox', async () => {
+    netClubId = must(await niaSb.rpc('create_community', { p_name: netClub, p_city: 'bali', p_category: 'networking' }));
+    netGirlId = must(await niaSb.rpc('create_community', { p_name: netGirlClub, p_city: 'bali', p_category: 'networking', p_girl_only: true }));
+    return netJoin(netClubId, netClub, netGirlId);
   });
-  if (netGirlId) await veraSb.rpc('delete_community', { p_community: netGirlId });
+  await step('IRLY Network (Girl): a women-only networking community → Join → member at once, chat in the inbox', async () => {
+    await enterGirl(page);
+    return netJoin(netGirlId, netGirlClub, netClubId);
+  });
+  for (const id of [netClubId, netGirlId]) if (id) await niaSb.rpc('delete_community', { p_community: id });
   await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
 
   // ───────── Community: post, live feed, assistant ─────────
