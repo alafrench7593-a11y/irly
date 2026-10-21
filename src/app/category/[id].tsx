@@ -13,6 +13,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import { CATEGORY_BY_ID, GIRL_CATEGORY, ideaPhoto, type CatalogSub, type CategoryKey } from '@/data/catalog/categories';
+import { isOwnPhoto } from '@/data/photos';
 import { INTEREST_CATEGORY, planDisplay, SESSION_CATEGORY } from '@/data/catalog/mapping';
 import { areaName, CITIES, placeLabel } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
@@ -152,7 +153,7 @@ export default function CategoryScreen() {
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
-        <Photo drift visual={{ photo: category.photo }} light={city.light} scrim="strong" style={[styles.hero, { height: HERO + insets.top }]} width={1000}>
+        <Photo drift visual={{ photo: category.photo }} light={city.light} scrim="strong" style={[styles.hero, { height: HERO + insets.top }]} width={1000} pinned={isOwnPhoto(category.photo)}>
           <Animated.View entering={enter.rise(0, 60)} style={styles.heroText}>
             <View style={[styles.bar, { backgroundColor: category.color }]} />
             <Text variant="displayXL" tone="onDark">

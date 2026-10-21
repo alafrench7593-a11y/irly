@@ -3,8 +3,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Instrument+Serif:ital@1&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
-<link rel="preload" as="image" href="img/hero/skyline-1920.webp" imagesrcset="img/hero/skyline-960.webp 960w, img/hero/skyline-1920.webp 1920w" imagesizes="100vw" media="(min-aspect-ratio: 4/5)" fetchpriority="high">
-<link rel="preload" as="image" href="img/hero/skyline-p.webp" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
+<link rel="preload" as="image" href="img/heroBurj.webp" imagesrcset="img/heroBurj-sm.webp 960w, img/heroBurj.webp 1280w, img/hero/burj-1920.webp 1920w" imagesizes="100vw" media="(min-aspect-ratio: 4/5)" fetchpriority="high">
+<link rel="preload" as="image" href="img/heroPortrait.webp" imagesrcset="img/heroPortrait.webp 720w, img/heroPortrait-lg.webp 1080w" imagesizes="100vw" media="(max-aspect-ratio: 4/5)" fetchpriority="high">
 <style>
 /* ───────────────────────── IRLY design system ─────────────────────────
    Black, white and greys, as in the app (IRLY Noir). One accent, live red,
@@ -531,10 +531,12 @@ html.js:not(.still) img.fade.ok { opacity: 1; }
   <!-- 1. Hero: the brand, the promise, the two experiences, the real availability. -->
   <section class="hero" id="top" aria-labelledby="h1">
     <div class="hero-bg" id="heroBg" aria-hidden="true">
-      <picture class="sl on kb"><source media="(max-aspect-ratio: 4/5)" srcset="img/hero/skyline-p.webp"><img src="img/hero/skyline-1920.webp" srcset="img/hero/skyline-960.webp 960w, img/hero/skyline-1920.webp 1920w" sizes="100vw" width="1920" height="1200" alt="" fetchpriority="high" decoding="async"></picture>
+      <!-- The hero's first picture is the one it had before the slideshow (restored): downtown Dubai at dusk on phones, the Burj Khalifa at night on wide screens (its 1920 px copy for large screens). -->
+      <picture class="sl on kb"><source media="(max-aspect-ratio: 4/5)" srcset="img/heroPortrait.webp 720w, img/heroPortrait-lg.webp 1080w" sizes="100vw"><img src="img/heroBurj.webp" srcset="img/heroBurj-sm.webp 960w, img/heroBurj.webp 1280w, img/hero/burj-1920.webp 1920w" sizes="100vw" width="1280" height="853" alt="" fetchpriority="high" decoding="async"></picture>
+      <!-- Then IRLY's own photo of the Burj Al Arab at sunset on phones (its 1080 × 1920 original); wide screens show the same view from the library, in HD. -->
+      <picture class="sl" data-p="img/hero/sunset-p.webp 810w, img/hero/sunset-p-lg.webp 1080w" data-set="img/hero/arab-960.webp 960w, img/hero/arab-1920.webp 1920w"></picture>
+      <picture class="sl" data-p="img/hero/skyline-p.webp" data-set="img/hero/skyline-960.webp 960w, img/hero/skyline-1920.webp 1920w"></picture>
       <picture class="sl" data-p="img/hero/marina-p.webp" data-set="img/hero/marina-960.webp 960w, img/hero/marina-1920.webp 1920w"></picture>
-      <picture class="sl" data-p="img/hero/burj-p.webp" data-set="img/hero/burj-960.webp 960w, img/hero/burj-1920.webp 1920w"></picture>
-      <picture class="sl" data-p="img/hero/arab-p.webp" data-set="img/hero/arab-960.webp 960w, img/hero/arab-1920.webp 1920w"></picture>
       <picture class="sl" data-p="img/hero/creek-p.webp" data-set="img/hero/creek-960.webp 960w, img/hero/creek-1920.webp 1920w"></picture>
       <picture class="sl" data-p="img/hero/desert-p.webp" data-set="img/hero/desert-960.webp 960w, img/hero/desert-1920.webp 1920w"></picture>
     </div>
@@ -667,7 +669,7 @@ html.js:not(.still) img.fade.ok { opacity: 1; }
         <li class="step" data-reveal style="--d:0"><span class="k" aria-hidden="true">01</span><div class="vis"><div class="phone"><div class="scr"><img src="shots/app/en/categories.jpg" width="600" height="1298" alt="Home: the activity categories" data-i-alt="aStep1" loading="lazy" decoding="async"></div></div></div><div class="txt"><h3 data-i="h1t">Discover</h3><p data-i="h1p">Open IRLY and see what’s happening around you: who’s live, plans for tonight, 20 categories.</p></div></li>
         <li class="step" data-reveal style="--d:1"><span class="k" aria-hidden="true">02</span><div class="vis"><div class="phone"><div class="scr"><img src="shots/app/en/people.jpg" width="600" height="1298" alt="People suggested for you, with the reason why" data-i-alt="aStep2" loading="lazy" decoding="async"></div></div></div><div class="txt"><h3 data-i="h2t">Find your people</h3><p data-i="h2p">IRLY suggests people who share your interests, and tells you why you’d get along.</p></div></li>
         <li class="step" data-reveal style="--d:2"><span class="k" aria-hidden="true">03</span><div class="vis"><div class="phone"><div class="scr"><img src="shots/app/en/chat.jpg" width="600" height="1298" alt="The group chat of a padel activity" data-i-alt="aStep3" loading="lazy" decoding="async"></div></div></div><div class="txt"><h3 data-i="h3t">Join in</h3><p data-i="h3p">Join an activity or a community. A group chat opens for everyone going.</p></div></li>
-        <li class="step" data-reveal style="--d:3"><span class="k" aria-hidden="true">04</span><div class="vis"><img src="img/own/padelMix-1200.jpg" srcset="img/own/padelMix-480.jpg 360w, img/own/padelMix-1200.jpg 900w" sizes="(max-width: 900px) 80vw, 25vw" width="900" height="1200" alt="Four padel rackets and balls on a blue court" data-i-alt="aStep4" loading="lazy" decoding="async"><span class="badge glass"><span class="dot" aria-hidden="true"></span><span data-i="h4b">In real life</span></span></div><div class="txt"><h3 data-i="h4t">Meet for real</h3><p data-i="h4p">Padel at 7, brunch on Sunday. The rest happens offline.</p></div></li>
+        <li class="step" data-reveal style="--d:3"><span class="k" aria-hidden="true">04</span><div class="vis"><img src="img/own/padelMix-1200.jpg" srcset="img/own/padelMix-480.jpg 360w, img/own/padelMix-1200.jpg 900w, img/own/padelMix-hd.jpg 1200w" sizes="(max-width: 900px) 80vw, 25vw" width="900" height="1200" alt="Four padel rackets and balls on a blue court" data-i-alt="aStep4" loading="lazy" decoding="async"><span class="badge glass"><span class="dot" aria-hidden="true"></span><span data-i="h4b">In real life</span></span></div><div class="txt"><h3 data-i="h4t">Meet for real</h3><p data-i="h4p">Padel at 7, brunch on Sunday. The rest happens offline.</p></div></li>
       </ol>
     </div>
   </section>
