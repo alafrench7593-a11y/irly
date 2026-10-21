@@ -134,7 +134,7 @@ export function CommunityEmpty({ c, cityName }: { c: CommunityDetail; cityName: 
       {c.isMember ? (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
           {introduce ? <Button label="Introduce myself" icon="message" variant="secondary" onPress={introduce} /> : null}
-          <Button label="Suggest an activity" icon="plus" variant="secondary" onPress={() => openCreate(null, { communityId: c.id, cityId: c.cityId })} />
+          <Button label="Suggest an activity" icon="plus" variant="secondary" onPress={() => openCreate(null, { communityId: c.id, cityId: c.cityId, communityName: c.official ? tx(c.name) : c.name, girlOnly: c.girlOnly || undefined })} />
         </View>
       ) : null}
     </View>
