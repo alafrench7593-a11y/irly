@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CityId } from '@/data/types';
+import { cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
@@ -159,7 +160,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
   );
   const refresh = useCallback(() => reload(), [reload]);
 
-  const version = useIrlVersion((s) => s.n);
+  // Your own post or removal (bumpIrl), or the app back in front / back online (sync 'irl'): reload.
+  const version = useIrlVersion((s) => s.n) + useSyncVersion('irl');
   useEffect(() => {
     if (version) refresh();
   }, [version, refresh]);
@@ -185,7 +187,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
       }, 400);
     };
     const channel = liveChannel(`irl-${cityId}-${uid}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=eq.${cityId}` }, (payload) => {
+      // The feed covers the whole destination (the seven emirates): so do its events.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=in.(${cityScope(cityId as CityId).join(',')})` }, (payload) => {
         // My own post, already confirmed and shown, and its feed reload already asked: not twice.
         const id = (payload.new as { id?: string } | null)?.id;
         if (payload.eventType === 'INSERT' && id && confirmedHere.has(id)) return;
@@ -644,7 +647,7 @@ export async function addFriend(userId: string): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data, error } = await supabase.rpc('add_friend', { p_user: userId });
   if (error) throw new Error(friendlyError(error.message));
-  changed('friends', 'notifs');
+  changed('friends', 'notifs', 'inbox');
   return data as string;
 }
 
@@ -652,7 +655,7 @@ export async function removeFriend(userId: string): Promise<void> {
   if (!supabase) return;
   const { error } = await supabase.rpc('remove_friend', { p_user: userId });
   if (error) throw new Error(friendlyError(error.message));
-  changed('friends', 'notifs');
+  changed('friends', 'notifs', 'inbox');
 }
 
 /* ───────────────────────── Notifications ───────────────────────── */

@@ -3,7 +3,7 @@ import { memo, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { isAvatar } from '@/features/avatar/avatar';
 import { cardPhoto, shownPhoto } from '@/features/server/faceRule';
-import { useAccountFace } from '@/features/server/faces';
+import { renewFace, useAccountFace } from '@/features/server/faces';
 import { forgetLink, fullOfThumb, useSignedLinks } from '@/features/server/media';
 import { PressableScale } from '@/motion/PressableScale';
 import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
@@ -75,7 +75,15 @@ export const Avatar = memo(function Avatar({ name, hue, size = 44, online, verif
             <IrlyAvatar config={photo} size={size - ringW * 2} />
           </View>
         ) : photo ? (
-          <Image source={{ uri: photo, cacheKey }} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory-disk" transition={120} />
+          <Image
+            source={{ uri: photo, cacheKey }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            transition={120}
+            // An expired link (signed hours ago): signed again once, never initials for good.
+            onError={cacheKey ? () => renewFace(userId, photo) : undefined}
+          />
         ) : null}
       </View>
       {online ? (
@@ -231,7 +239,10 @@ export const FacePhoto = memo(function FacePhoto({ name, hue, userId, photos, st
           cachePolicy="memory-disk"
           transition={200}
           recyclingKey={userId ?? undefined}
-          onError={() => setFailed((f) => ({ ...f, [lowOk]: true }))}
+          onError={() => {
+            if (fromFace) renewFace(userId, lowOk);
+            setFailed((f) => ({ ...f, [lowOk]: true }));
+          }}
           accessibilityIgnoresInvertColors
         />
       ) : null}

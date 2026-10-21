@@ -44,6 +44,15 @@ export async function signedLinks(bucket: Bucket, paths: (string | null | undefi
 }
 
 /**
+ * Until when the link signedLinks() gives for this path stays usable (epoch
+ * ms), or undefined when none is cached. A link can come from the cache, signed
+ * hours ago for another screen: whoever keeps it must not keep it longer.
+ */
+export function linkUntil(bucket: Bucket, path: string | null | undefined): number | undefined {
+  return path ? cache.get(key(bucket, path))?.until : undefined;
+}
+
+/**
  * A file this phone just uploaded, shown from the copy already on the phone:
  * the next signedLinks() for that path answers with the local file, so the
  * feed's reload neither downloads it again nor blanks the picture while it

@@ -314,8 +314,10 @@ type MessageRow = { id: string; sender_id: string | null; kind: string; body: st
 
 const PAGE = 50;
 const COLS = 'id, sender_id, kind, body, created_at, ref_type, ref_id, media_path';
-// Oldest first; equal times keep a stable order.
+// Oldest first; equal times (one transaction) keep a stable order, the same as the server's pages (created_at, id).
 const byTime = (a: MessageRow, b: MessageRow) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id);
+/** The messages before this one in that order: a page boundary inside equal times leaves no gap and no repeat. */
+const olderThan = (m: MessageRow) => `created_at.lt."${m.created_at}",and(created_at.eq."${m.created_at}",id.lt.${m.id})`;
 /** Adds rows (new or refetched) without duplicates, in time order. */
 function merge(list: MessageRow[], more: MessageRow[]): MessageRow[] {
   if (!more.length) return list;
@@ -323,6 +325,15 @@ function merge(list: MessageRow[], more: MessageRow[]): MessageRow[] {
   for (const m of more) seen.set(m.id, m);
   return [...seen.values()].sort(byTime);
 }
+
+/**
+ * Your messages the server has not confirmed yet, by chat (`uid|conversation`):
+ * kept when you leave the chat, so one still sending or failed (Retry) is there
+ * when you come back. A confirmed one keeps its server row until the thread has it.
+ */
+type Pending = Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null; sent?: MessageRow }>;
+const usePendingStore = create<Record<string, Pending>>(() => ({}));
+const NO_PENDING: Pending = {};
 
 type Channel = ReturnType<NonNullable<typeof supabase>['channel']>;
 /**
@@ -435,14 +446,22 @@ export function useServerThread(conversationId: string): ServerThread {
   const [hasEarlier, setHasEarlier] = useState(seen?.hasEarlier ?? false);
   const [archived, setArchived] = useState(seen?.archived ?? Boolean(listed?.archived));
   // Your messages not confirmed by the server yet: shown at once, marked "sending" or "failed".
-  const [pending, setPending] = useState<Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null }>>({});
+  const pendingKey = `${uid ?? ''}|${conversationId}`;
+  const pending = usePendingStore((s) => s[pendingKey] ?? NO_PENDING);
+  const setPending = useCallback(
+    (next: (p: Pending) => Pending) => usePendingStore.setState((s) => ({ [pendingKey]: next(s[pendingKey] ?? NO_PENDING) })),
+    [pendingKey],
+  );
+  // Removed from the chat (left a group, community or activity elsewhere): its channels close.
+  const [gone, setGone] = useState(false);
   const [typing, setTypingNames] = useState<Record<string, number>>({});
   const channelRef = useRef<Channel | null>(null);
   const lastTyping = useRef(0);
   // What is on screen, for the catch-up to see a gap without a stale closure.
   const rowsRef = useRef(rows);
-  // Messages heard live or sent from here while the first page loads: the page never drops them.
-  const arrivedRef = useRef(new Set<string>());
+  // Messages heard live or sent from here, by when (a count): a page asked before one arrived never drops it.
+  const arrivedRef = useRef(new Map<string, number>());
+  const arrivals = useRef(0);
   useEffect(() => {
     rowsRef.current = rows;
   }, [rows]);
@@ -484,7 +503,7 @@ export function useServerThread(conversationId: string): ServerThread {
   );
 
   useEffect(() => {
-    if (!supabase || !uid) return;
+    if (!supabase || !uid || gone) return;
     let alive = true;
     // The newest page, merged into what is on screen (first load, and after a gap).
     const latest = async () => {
@@ -494,6 +513,7 @@ export function useServerThread(conversationId: string): ServerThread {
         .eq('conversation_id', conversationId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .limit(PAGE);
       if (e) throw new Error(e.message);
       return (data as MessageRow[]) ?? [];
@@ -577,21 +597,25 @@ export function useServerThread(conversationId: string): ServerThread {
     // missed. After the first page only, which would otherwise replace what this brought.
     const catchUp = () =>
       initial
-        .then(() => (alive ? latest() : []))
-        .then((msgs) => {
+        .then(async () => {
           if (!alive) return;
+          // Heard live or sent after this moment: the page asked now cannot have it yet, so it stays.
+          const asked = arrivals.current;
+          const msgs = await latest();
+          if (!alive) return;
+          const keep = (x: MessageRow) => (arrived.get(x.id) ?? 0) > asked;
           const shown = new Set(rowsRef.current.map((x) => x.id));
           const fromOthers = msgs.some((x) => x.sender_id !== uid && !shown.has(x.id));
-          const newest = rowsRef.current[rowsRef.current.length - 1]?.created_at ?? '';
-          if (msgs.length === PAGE && msgs[msgs.length - 1].created_at > newest) {
+          const newest = rowsRef.current[rowsRef.current.length - 1];
+          const oldest = msgs.length === PAGE ? msgs[msgs.length - 1] : null;
+          if (oldest && (!newest || byTime(oldest, newest) > 0)) {
             // More than a page missed: merging would leave a hole between the two.
             // The newest page is the chat now; older ones load on demand.
-            setRows((list) => merge(list.filter((x) => x.created_at > msgs[0].created_at), msgs));
+            setRows((list) => merge(list.filter((x) => keep(x) || byTime(x, msgs[0]) > 0), msgs));
             setHasEarlier(true);
           } else {
-            // The newest page replaces its own time span: messages deleted meanwhile go too.
-            const from = msgs.length === PAGE ? msgs[msgs.length - 1].created_at : '';
-            setRows((list) => merge(list.filter((x) => x.created_at < from), msgs));
+            // The newest page replaces its own span: messages deleted meanwhile go too.
+            setRows((list) => merge(list.filter((x) => keep(x) || (oldest !== null && byTime(x, oldest) < 0)), msgs));
           }
           // Nothing new from the others: nothing to mark read (and no request).
           if (fromOthers || owedRead.current) {
@@ -620,7 +644,7 @@ export function useServerThread(conversationId: string): ServerThread {
     const channel = liveChannel(`thread-${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
         const m = payload.new as MessageRow;
-        arrived.add(m.id);
+        arrived.set(m.id, ++arrivals.current);
         setRows((list) => merge(list, [m]));
         if (m.sender_id) setTypingNames((t) => (m.sender_id! in t ? Object.fromEntries(Object.entries(t).filter(([k]) => k !== m.sender_id)) : t));
         // My own message (sent from here or another phone) leaves nothing unread.
@@ -639,11 +663,11 @@ export function useServerThread(conversationId: string): ServerThread {
     // Its own channel, so a problem with it can never stop new messages from arriving.
     const removals = liveChannel(`thread-removals-${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
-        const gone = (payload.new as { message_id?: string }).message_id;
-        if (!gone) return;
+        const removed = (payload.new as { message_id?: string }).message_id;
+        if (!removed) return;
         // A message heard live while the first page loads must not come back with it.
-        arrived.delete(gone);
-        setRows((list) => (list.some((x) => x.id === gone) ? list.filter((x) => x.id !== gone) : list));
+        arrived.delete(removed);
+        setRows((list) => (list.some((x) => x.id === removed) ? list.filter((x) => x.id !== removed) : list));
         // The preview: the inbox hears this removal itself (listenInbox); only its list, not every inbox screen.
         if (inboxLive?.uid !== uid) refreshInbox(uid);
       })
@@ -661,7 +685,7 @@ export function useServerThread(conversationId: string): ServerThread {
       supabase?.removeChannel(removals);
       typingChannel.leave();
     };
-  }, [conversationId, uid, markRead]);
+  }, [conversationId, uid, markRead, gone]);
 
   // "Typing…" fades 4 seconds after the last signal.
   const typingCount = Object.keys(typing).length;
@@ -684,8 +708,9 @@ export function useServerThread(conversationId: string): ServerThread {
       .select(COLS)
       .eq('conversation_id', conversationId)
       .is('deleted_at', null)
-      .lt('created_at', rows[0].created_at)
+      .or(olderThan(rows[0]))
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
       .limit(PAGE);
     if (e) throw new Error(e.message);
     const older = (data as MessageRow[]) ?? [];
@@ -704,8 +729,10 @@ export function useServerThread(conversationId: string): ServerThread {
       const row: Record<string, string> = { id, conversation_id: conversationId, sender_id: uid, body: text };
       if (media) Object.assign(row, { kind: 'photo', media_path: media });
       const { data, error: e } = await supabase.from('messages').insert(row).select(COLS).single();
-      // Already there (a retry after a lost answer): that is a success.
-      if (e && e.code !== '23505') {
+      let sent = (data as MessageRow | null) ?? null;
+      // Already there (a retry after a lost answer): that is a success, read back so it stays on screen.
+      if (e?.code === '23505') sent = ((await supabase.from('messages').select(COLS).eq('id', id).maybeSingle()).data as MessageRow | null) ?? null;
+      else if (e) {
         setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], failed: true } } : p));
         throw new Error(
           /row-level|policy|blocked|not accept/i.test(e.message)
@@ -718,18 +745,20 @@ export function useServerThread(conversationId: string): ServerThread {
               : e.message,
         );
       }
-      if (data) {
-        arrivedRef.current.add((data as MessageRow).id);
-        setRows((list) => merge(list, [data as MessageRow]));
+      if (sent) {
+        const done = sent;
+        arrivedRef.current.set(done.id, ++arrivals.current);
+        setRows((list) => merge(list, [done]));
       }
       // First message written: replies are worth a notification.
       void askPushInContext();
+      // Shown from its server row until the thread has it (this screen, or the chat opened again meanwhile).
       setPending((p) => {
-        const { [id]: _done, ...rest } = p;
-        return rest;
+        const { [id]: mine, ...rest } = p;
+        return mine && sent ? { ...rest, [id]: { ...mine, failed: false, sent } } : rest;
       });
     },
-    [conversationId, uid, kind],
+    [conversationId, uid, kind, setPending],
   );
   const send = useCallback(
     async (text: string) => {
@@ -737,7 +766,7 @@ export function useServerThread(conversationId: string): ServerThread {
       setPending((p) => ({ ...p, [id]: { body: text, at: new Date().toISOString(), failed: false } }));
       await deliver(id, text);
     },
-    [deliver],
+    [deliver, setPending],
   );
   // A photo: uploaded under the message's own id (a retry re-uses the same file), then sent.
   const deliverPhoto = useCallback(
@@ -752,7 +781,7 @@ export function useServerThread(conversationId: string): ServerThread {
       setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], media: path } } : p));
       await deliver(id, 'Photo', path);
     },
-    [deliver],
+    [deliver, setPending],
   );
   const sendPhotos = useCallback(
     async (uris: string[]) => {
@@ -763,7 +792,7 @@ export function useServerThread(conversationId: string): ServerThread {
       const failed = results.find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined;
       if (failed) throw failed.reason instanceof Error ? failed.reason : new Error('Photo not sent');
     },
-    [deliverPhoto],
+    [deliverPhoto, setPending],
   );
   const retry = useCallback(
     async (id: string) => {
@@ -773,7 +802,7 @@ export function useServerThread(conversationId: string): ServerThread {
       if (m.local && !m.media) await deliverPhoto(id, m.local);
       else await deliver(id, m.body, m.media ?? undefined);
     },
-    [deliver, deliverPhoto, pending],
+    [deliver, deliverPhoto, pending, setPending],
   );
 
   // A message that never reached the server (failed, shows Retry) is only on this phone: it goes from here.
@@ -786,7 +815,7 @@ export function useServerThread(conversationId: string): ServerThread {
       });
       return true;
     },
-    [pending, rows],
+    [pending, rows, setPending],
   );
   const remove = useCallback(async (messageId: string) => {
     if (!supabase || discardUnsent(messageId)) return;
@@ -815,13 +844,20 @@ export function useServerThread(conversationId: string): ServerThread {
   const blocked = useBlocked();
   useRefreshOn(['people'], blocked.refresh);
   const blockedIds = useMemo(() => new Set(blocked.list.map((b) => b.userId)), [blocked.list]);
+  // Confirmed and now in the thread: nothing left to keep for them.
+  useEffect(() => {
+    const done = Object.keys(pending).filter((id) => pending[id].sent && rows.some((r) => r.id === id));
+    if (!done.length) return;
+    setPending((p) => Object.fromEntries(Object.entries(p).filter(([id]) => !done.includes(id))));
+  }, [pending, rows, setPending]);
   const messages = useMemo(
     () =>
       [
-        ...rows.filter((r) => !r.sender_id || !blockedIds.has(r.sender_id)),
+        // Sent from here and confirmed, but not in the thread yet (sent before this screen opened): their server rows.
+        ...merge(rows, Object.values(pending).flatMap((p) => (p.sent ? [p.sent] : []))).filter((r) => !r.sender_id || !blockedIds.has(r.sender_id)),
         // Pending ones, until the server confirms them (then they are in rows with the same id).
         ...Object.entries(pending)
-          .filter(([id]) => !rows.some((r) => r.id === id))
+          .filter(([id, p]) => !p.sent && !rows.some((r) => r.id === id))
           .map(([id, p]): MessageRow & { local?: string } => ({ id, sender_id: uid ?? null, kind: p.local ? 'photo' : 'text', body: p.body, created_at: p.at, media_path: p.media ?? null, local: p.local })),
       ].map(
         (r: MessageRow & { local?: string }): ServerMessage => ({
@@ -835,7 +871,7 @@ export function useServerThread(conversationId: string): ServerThread {
           // A share of something removed since (a deleted Live or post) says so and opens nothing.
           share: r.kind === 'share' && r.ref_type && r.body !== GONE_SHARE ? { type: r.ref_type, id: r.ref_id ?? null } : undefined,
           media: r.kind === 'photo' && (r.media_path || r.local) ? { path: r.media_path ?? null, local: r.local ?? (r.id in pending ? (pending[r.id].local ?? null) : null) } : undefined,
-          status: pending[r.id] ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
+          status: pending[r.id] && !pending[r.id].sent ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
         }),
       ),
     [rows, names, uid, pending, blockedIds],
@@ -850,7 +886,7 @@ export function useServerThread(conversationId: string): ServerThread {
   const membersAsked = useRef('');
   const membersAt = useRef(0);
   useEffect(() => {
-    if (!supabase || !uid || loading) return;
+    if (!supabase || !uid || loading || gone) return;
     // The first load brought the members already; asked again when someone new writes or a profile changes.
     const ask = `${conversationId}|${unknown}|${peopleV}|${inboxV}`;
     const first = !membersAsked.current;
@@ -868,8 +904,15 @@ export function useServerThread(conversationId: string): ServerThread {
     Promise.all([
       sb.from('conversations').select('title').eq('id', conversationId).maybeSingle(),
       sb.rpc('chat_members', { p_conversation: conversationId }),
-    ]).then(([{ data: conv }, { data: members }]) => {
+    ]).then(([{ data: conv, error: convError }, { data: members }]) => {
       if (!alive) return;
+      // The chat answered, but not to me: I left it or was removed (elsewhere). Its channels close.
+      if (!convError && !conv) {
+        threadCache.delete(`${uid}|${conversationId}`);
+        setError('You are no longer in this chat');
+        setGone(true);
+        return;
+      }
       const map: Record<string, string> = {};
       const full: Record<string, { name: string; photo: string | null; admin: boolean }> = {};
       ((members as MemberRow[] | null) ?? []).forEach((m) => {
@@ -886,7 +929,7 @@ export function useServerThread(conversationId: string): ServerThread {
       alive = false;
       clearTimeout(timer);
     };
-  }, [conversationId, uid, loading, unknown, peopleV, inboxV]);
+  }, [conversationId, uid, loading, gone, unknown, peopleV, inboxV]);
   // Kept for the next opening of this chat.
   useEffect(() => {
     if (!uid || loading || error) return;
@@ -942,6 +985,7 @@ export function clearChatCache(): void {
   threadCache.clear();
   heads.clear();
   readHere.clear();
+  usePendingStore.setState({}, true);
   inboxRead = null;
   inboxReadAt = -Infinity;
   resetSyncEchoes();

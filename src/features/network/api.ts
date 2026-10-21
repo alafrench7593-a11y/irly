@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { useAccount } from '@/features/auth/account';
 import { isAvatar } from '@/features/avatar/avatar';
 import { thumbOf } from '@/features/server/media';
+import { changed, useSyncVersion } from '@/features/server/sync';
 import { track } from '@/lib/analytics';
 import { NONE } from '@/lib/none';
 import { liveChannel, supabase, whenListening } from '@/lib/supabase';
@@ -245,6 +246,8 @@ export function usePros(cityId: string, filters: ProFilters) {
   const uid = useAccount()?.userId;
   const key = JSON.stringify(filters);
   const current = `${uid}|${cityId}|${key}`;
+  // A friendship changed elsewhere in the app (profile, notifications): read again.
+  const friendsV = useSyncVersion('friends');
   // What the last answer was for: loading is "the answer is for other filters".
   const [res, setRes] = useState<{ for: string; list: ProProfile[]; error: string | null }>({ for: '', list: [], error: null });
   const [photos, setPhotos] = useState<Record<string, string>>({});
@@ -288,7 +291,7 @@ export function usePros(cityId: string, filters: ProFilters) {
       alive = false;
       supabase?.removeChannel(channel);
     };
-  }, [uid, load, current, attempt]);
+  }, [uid, load, current, attempt, friendsV]);
 
   /** Optimistic connection state for one card, while the server answers. */
   const setConnection = useCallback((userId: string, connection: ProProfile['connection']) => {
@@ -303,6 +306,7 @@ export function usePros(cityId: string, filters: ProFilters) {
 /** One professional's profile. */
 export function usePro(userId: string) {
   const uid = useAccount()?.userId;
+  const friendsV = useSyncVersion('friends');
   const [res, setRes] = useState<{ id: string; pro: ProProfile | null; failed: boolean }>({ id: '', pro: null, failed: false });
   const [photo, setPhoto] = useState<string | null>(null);
   const [links, setLinks] = useState<{ id: string; links: ProLinks }>({ id: '', links: NO_LINKS });
@@ -345,7 +349,7 @@ export function usePro(userId: string) {
       alive = false;
       supabase?.removeChannel(channel);
     };
-  }, [uid, userId, load]);
+  }, [uid, userId, load, friendsV]);
 
   const setConnection = useCallback((connection: ProProfile['connection']) => setRes((r) => (r.pro ? { ...r, pro: { ...r.pro, connection } } : r)), []);
 
@@ -359,5 +363,6 @@ export function usePro(userId: string) {
 export async function proConnect(userId: string): Promise<string> {
   const { data, error: e } = await need().rpc('pro_connect', { p_user: userId });
   if (e) throw new Error(/many requests/i.test(e.message) ? 'You sent many requests today. Try again tomorrow.' : /not available/i.test(e.message) ? 'This member is not available' : e.message);
+  changed('friends', 'notifs', 'inbox');
   return data as string;
 }

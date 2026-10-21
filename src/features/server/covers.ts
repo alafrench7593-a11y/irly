@@ -153,11 +153,14 @@ export function useActivityThumbs(ids: string[]): Record<string, ActivityThumb> 
 /**
  * A community's own photo path, for lists that only know its id. All the
  * thumbnails shown at the same moment are asked for in one request; the
- * answer is kept for the session and dropped when a community changes.
+ * answer is kept for the session and asked again when a community changes.
  */
 const coverCache = new Map<string, string | null>();
+// Moves on every clearCoverCache(): an answer read for the account that left is dropped.
+let coverEpoch = 0;
 /** Signed out or account deleted: the previous member's community covers are forgotten on this phone. */
 export function clearCoverCache(): void {
+  coverEpoch += 1;
   coverCache.clear();
 }
 let coverWanted = new Set<string>();
@@ -175,11 +178,14 @@ function askCovers(id: string, done: () => void) {
     coverWaiters = [];
     coverTimer = null;
     if (!supabase) return;
+    const asked = coverEpoch;
     supabase
       .from('communities')
       .select('id, cover_path')
       .in('id', ids)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        // Not read (offline): the covers known stay, never replaced by "no photo".
+        if (asked !== coverEpoch || error) return;
         for (const i of ids) coverCache.set(i, null);
         for (const c of (data ?? []) as { id: string; cover_path: string | null }[]) coverCache.set(c.id, c.cover_path);
         waiters.forEach((w) => w());
@@ -192,7 +198,7 @@ export function useCommunityCover(id: string | undefined, known?: string | null)
   const [, render] = useState(0);
   useEffect(() => {
     if (!id || known !== undefined) return;
-    coverCache.delete(id);
+    // Asked again on every community change; the photo known meanwhile stays (no flash of the app's photo).
     let alive = true;
     askCovers(id, () => alive && render((n) => n + 1));
     return () => {
@@ -227,7 +233,9 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
   // A new chat or community photo, set by anyone, shows at once.
   const inboxV = useSyncVersion('inbox');
   const communitiesV = useSyncVersion('communities');
-  const [state, setState] = useState<Omit<ChatPhoto, 'refresh'>>({ path: null, fallback: 'meeting', hasPhoto: false, canEdit: false, communityId: null });
+  // Tagged with the chat (and account) it was read for: another chat never shows this one's photo meanwhile.
+  const [state, setState] = useState<Omit<ChatPhoto, 'refresh'> & { for: string }>({ for: '', ...NO_CHAT_PHOTO });
+  const current = `${uid}|${conversationId}`;
   const [n, setN] = useState(0);
   const refresh = useCallback(() => setN((x) => x + 1), []);
   useEffect(() => {
@@ -255,14 +263,17 @@ export function useChatPhoto(conversationId: string): ChatPhoto {
       const path = conv.community_id ? (com?.cover_path ?? (conv.photo_path as string | null) ?? null) : ((conv.photo_path as string | null) ?? act?.cover_path ?? null);
       // Same seed as the community's page and the activity's page: the same picture of the subject.
       const seed = conv.community_id ? `community-${conv.community_id}-app` : conv.activity_id ? `a-${conv.activity_id}` : undefined;
-      if (alive) setState({ path, fallback, seed, hasPhoto, canEdit: hasPhoto && canEdit, communityId: (conv.community_id as string | null) ?? null });
+      if (alive) setState({ for: `${uid}|${conversationId}`, path, fallback, seed, hasPhoto, canEdit: hasPhoto && canEdit, communityId: (conv.community_id as string | null) ?? null });
     })().catch(() => undefined);
     return () => {
       alive = false;
     };
   }, [conversationId, uid, n, inboxV, communitiesV]);
-  return { ...state, refresh };
+  const { for: readFor, ...shown } = state;
+  return { ...(readFor === current ? shown : NO_CHAT_PHOTO), refresh };
 }
+
+const NO_CHAT_PHOTO: Omit<ChatPhoto, 'refresh'> = { path: null, fallback: 'meeting', hasPhoto: false, canEdit: false, communityId: null };
 
 /**
  * The app's picture for each community (by id) that has no photo of its own:
