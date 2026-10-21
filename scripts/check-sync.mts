@@ -4,7 +4,9 @@
 // Supabase client, on a virtual clock, with realtime echoes delivered the way
 // the server sends them (same transaction = same commit_timestamp; the server's
 // clock is NOT the phone's). Other screens are stand-ins that read the server
-// once per sync bump of their kinds, as their hooks do (useRefreshOn).
+// once per sync bump of their kinds, as their hooks do (useRefreshOn). Chat scenarios
+// also check what is shown: no message lost, doubled or out of order (paging, catch-up,
+// retry, leaving the chat), and a chat you were removed from stops listening.
 //
 //   npm run test:sync                         checks the expected counts
 //   npm run test:sync -- --before <dir>       same scenarios with sync.ts + chat.ts from <dir>
@@ -281,7 +283,16 @@ function commit(changes: Change[]) {
       }
 }
 // The server's state that matters here.
-const server = { slow: 0, unread: 0, messages: [] as Record<string, unknown>[], rpcs: {} as Record<string, (args: Record<string, unknown>) => unknown> };
+const server = {
+  slow: 0,
+  unread: 0,
+  messages: [] as Record<string, unknown>[],
+  rpcs: {} as Record<string, (args: Record<string, unknown>) => unknown>,
+  // Still a member of CONV (RLS: a former member reads neither the chat nor its messages).
+  member: true,
+  // The next message inserts: 'offline' never reach the server; 'lost' are saved but the answer and the echo are lost (connection dropped).
+  insertMode: null as null | 'offline' | 'lost',
+};
 const RTT = 140;
 function answer<T>(name: string, value: () => T, onServer?: () => void): Promise<T> {
   requests.push(name);
@@ -293,29 +304,63 @@ function answer<T>(name: string, value: () => T, onServer?: () => void): Promise
 }
 const rows: Record<string, () => unknown> = {
   my_conversations: () => [{ conversation_id: CONV, kind: 'group', title: 'Padel', other_user_id: null, other_name: null, last_body: 'hi', last_sender: BOB, last_at: new RealDate(EPOCH).toISOString(), unread: server.unread, ref_id: null, other_photo: null, photo_path: null, members: 2, last_kind: 'text', last_sender_name: 'Bob', archived: false }],
-  chat_members: () => [
-    { user_id: ME, first_name: 'Me', photo_path: null, role: 'member' },
-    { user_id: BOB, first_name: 'Bob', photo_path: null, role: 'admin' },
-  ],
+  chat_members: () =>
+    server.member
+      ? [
+          { user_id: ME, first_name: 'Me', photo_path: null, role: 'member' },
+          { user_id: BOB, first_name: 'Bob', photo_path: null, role: 'admin' },
+        ]
+      : [],
 };
+type Filter = (row: Record<string, unknown>) => boolean;
+/** created_at, then id: the order of a timestamptz and a uuid in Postgres (same-format strings here). */
+const cmp = (a: Record<string, unknown>, b: Record<string, unknown>, col: string) => String(a[col]).localeCompare(String(b[col]));
+/** PostgREST's or=(…) as chat.ts writes it: created_at.lt."t",and(created_at.eq."t",id.lt.x). */
+function orFilter(expr: string): Filter {
+  const m = /^created_at\.lt\."([^"]+)",and\(created_at\.eq\."([^"]+)",id\.lt\.([^)]+)\)$/.exec(expr);
+  if (!m) throw new Error(`fake supabase: unsupported or(${expr})`);
+  return (r) => String(r.created_at) < m[1] || (String(r.created_at) === m[2] && String(r.id) < m[3]);
+}
 function query(table: string) {
   let op = 'select';
   let single = false;
   let insertRow: Record<string, unknown> | null = null;
+  const filters: Filter[] = [];
+  const orders: { col: string; asc: boolean }[] = [];
+  let limit = Infinity;
   const q: Record<string, unknown> = {};
   const chain = (...names: string[]) => names.forEach((n) => (q[n] = () => q));
-  chain('select', 'eq', 'is', 'order', 'limit', 'lt', 'gte', 'in', 'neq');
+  chain('select', 'is', 'gte', 'in', 'neq');
+  q.eq = (col: string, v: unknown) => (filters.push((r) => String(r[col]) === String(v)), q);
+  q.lt = (col: string, v: unknown) => (filters.push((r) => String(r[col]) < String(v)), q);
+  q.or = (expr: string) => (filters.push(orFilter(expr)), q);
+  q.order = (col: string, o?: { ascending?: boolean }) => (orders.push({ col, asc: o?.ascending ?? true }), q);
+  q.limit = (n: number) => ((limit = n), q);
   q.insert = (r: Record<string, unknown>) => ((op = 'insert'), (insertRow = r), q);
   q.update = () => ((op = 'update'), q);
   q.upsert = () => ((op = 'upsert'), q);
   q.single = () => ((single = true), q);
   q.maybeSingle = () => ((single = true), q);
   q.then = (ok: (v: unknown) => unknown, ko?: (e: unknown) => unknown) => {
-    const onServer = table === 'messages' && op === 'insert' ? () => sendMessage(insertRow!) : undefined;
+    // What the server answers is read when the request reaches it (half the round trip), not when the answer arrives.
+    let answered: { data: unknown; error: unknown } | null = null;
+    const onServer =
+      table === 'messages' && op === 'insert'
+        ? () => (answered = insertMessage(insertRow!))
+        : table === 'messages'
+          ? () => {
+              // Equal sort keys come back in no particular order (here: as stored), as in Postgres.
+              const found = (server.member ? server.messages : [])
+                .filter((r) => filters.every((f) => f(r)))
+                .sort((a, b) => orders.reduce((d, o) => d || (o.asc ? 1 : -1) * cmp(a, b, o.col), 0))
+                .slice(0, limit);
+              answered = { data: single ? (found[0] ?? null) : found, error: null };
+            }
+          : undefined;
     const value = () => {
-      if (table === 'messages' && op === 'insert') return { data: { ...insertRow, kind: 'text', created_at: new RealDate(EPOCH + now).toISOString() }, error: null };
-      if (table === 'messages') return { data: server.messages.slice().reverse(), error: null };
-      if (table === 'conversations') return { data: single ? { id: CONV, kind: 'group', title: 'Padel', community_id: null, activity_id: null, photo_path: null, activities: null, communities: null } : [], error: null };
+      if (table === 'messages') return answered!;
+      if (table === 'conversations')
+        return { data: single ? (server.member ? { id: CONV, kind: 'group', title: 'Padel', community_id: null, activity_id: null, photo_path: null, activities: null, communities: null } : null) : [], error: null };
       if (table === 'conversation_members') return { data: single ? { archived_at: null, role: 'member' } : [], error: null };
       return { data: single ? null : [], error: null };
     };
@@ -323,9 +368,18 @@ function query(table: string) {
   };
   return q;
 }
-function sendMessage(row: Record<string, unknown>) {
-  const m = { ...row, kind: 'text', created_at: new RealDate(EPOCH + now + SERVER_SKEW).toISOString() };
+/** An insert from the app: refused when its id is there already (a retry), as the primary key does. */
+function insertMessage(row: Record<string, unknown>): { data: unknown; error: unknown } {
+  const offline = { data: null, error: { message: 'TypeError: Network request failed' } };
+  if (server.insertMode === 'offline') return offline;
+  if (server.messages.some((m) => m.id === row.id)) return { data: null, error: { code: '23505', message: 'duplicate key value violates unique constraint "messages_pkey"' } };
+  const m = sendMessage(row, server.insertMode === 'lost');
+  return server.insertMode === 'lost' ? offline : { data: m, error: null };
+}
+function sendMessage(row: Record<string, unknown>, quiet = false) {
+  const m = { kind: 'text', ...row, created_at: new RealDate(EPOCH + now + SERVER_SKEW).toISOString() };
   server.messages.push(m);
+  if (quiet) return m;
   const changes: Change[] = [
     { table: 'messages', event: 'INSERT', row: m },
     { table: 'conversations', event: 'UPDATE', row: { id: row.conversation_id, kind: 'group', title: 'Padel', last_message_at: m.created_at } },
@@ -335,6 +389,7 @@ function sendMessage(row: Record<string, unknown>) {
     changes.push({ table: 'notifications', event: 'INSERT', row: { id: rand(1, 1e9), user_id: ME, kind: 'MESSAGE_CREATED' } });
   }
   commit(changes);
+  return m;
 }
 const supabase = {
   rpc: (name: string, args: Record<string, unknown> = {}) => {
@@ -445,6 +500,8 @@ async function scenario(label: string, setup: (() => Promise<void>) | null, act:
   // A fresh app: the root (SyncBridge, unread badge, bell), the tabs' lists, and what the scenario opens.
   sync.resetSyncEchoes?.();
   server.unread = 0;
+  server.member = true;
+  server.insertMode = null;
   server.messages = [{ id: 'm0', conversation_id: CONV, sender_id: BOB, kind: 'text', body: 'hi', created_at: new RealDate(EPOCH).toISOString() }];
   const mounted = [
     mount(() => sync.SyncBridge()),
@@ -539,6 +596,98 @@ await scenario(
     await sleep(30_000);
     const shown = threadNow().messages.some((m) => m.id === 'm-bob');
     return [`shown: ${shown}`, `badge after: ${chat.useServerUnread.getState().n}`];
+  },
+  { thread: true },
+);
+// Messaging: nothing shown is ever lost, doubled or out of order.
+const msgId = (i: number) => `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`;
+await scenario(
+  'history with equal times (3 per second): every page',
+  async () => {
+    // 120 messages, three per transaction time: a page boundary falls inside equal times.
+    server.messages = Array.from({ length: 120 }, (_, i) => ({ id: msgId(i), conversation_id: CONV, sender_id: BOB, kind: 'text', body: `m${i}`, created_at: new RealDate(EPOCH - 3_600_000 + Math.floor(i / 3) * 1_000).toISOString() }));
+  },
+  async () => {
+    for (let i = 0; i < 10 && threadNow().hasEarlier; i++) {
+      await threadNow().loadEarlier();
+      await sleep(1_000);
+    }
+    const ids = threadNow().messages.map((m) => m.id);
+    const all = server.messages.map((m) => String(m.id));
+    return [`shown: ${new Set(ids).size}/${all.length}`, `doubles: ${ids.length - new Set(ids).size}`, `in order: ${ids.join() === all.join()}`];
+  },
+  { thread: true },
+);
+await scenario(
+  "Bob's message lands while the chat catches up",
+  null,
+  async () => {
+    // Back to the app on a slow network: the catch-up page is read on the server first,
+    // Bob's message is saved just after and heard live before that page's (late) answer.
+    server.slow = 1_600;
+    appListeners.forEach((fn) => fn('active'));
+    await sleep(100);
+    server.slow = 0;
+    sendMessage({ id: 'm-late', conversation_id: CONV, sender_id: BOB, body: 'on my way' });
+    await sleep(30_000);
+    return [`shown: ${threadNow().messages.some((m) => m.id === 'm-late')}`];
+  },
+  { thread: true },
+);
+await scenario(
+  'retry after a lost answer',
+  null,
+  async () => {
+    // Saved on the server, but the answer and its echo are lost (the connection dropped): the bubble shows Retry.
+    server.insertMode = 'lost';
+    await threadNow().send('are you coming?').catch(() => undefined);
+    server.insertMode = null;
+    await sleep(1_000);
+    const id = threadNow().messages.find((m) => m.status === 'failed')?.id ?? '';
+    await threadNow().retry(id).catch(() => undefined);
+    await sleep(30_000);
+    const shown = threadNow().messages.filter((m) => m.id === id);
+    return [`failed first: ${Boolean(id)}`, `after retry: ${shown.length === 1 && !shown[0].status ? 'sent' : shown.length ? shown[0].status : 'missing'}`, `saved: ${server.messages.filter((m) => m.id === id).length}`];
+  },
+  { thread: true },
+);
+await scenario('a failed message after leaving the chat and coming back', null, async () => {
+  const open = () => {
+    const box: { t: ReturnType<typeof chat.useServerThread> | null } = { t: null };
+    return { box, m: mount(() => void (box.t = chat.useServerThread(CONV))) };
+  };
+  const first = open();
+  await sleep(5_000);
+  server.insertMode = 'offline';
+  await first.box.t!.send('see you at 8').catch(() => undefined);
+  server.insertMode = null;
+  await sleep(500);
+  const id = first.box.t!.messages.find((m) => m.status === 'failed')?.id ?? '';
+  first.m.unmount();
+  await sleep(10_000);
+  const again = open();
+  await sleep(5_000);
+  const back = again.box.t!.messages.find((m) => m.id === id);
+  const notes = [`failed first: ${Boolean(id)}`, `back: ${back ? back.status : 'missing'}`];
+  if (back) {
+    await again.box.t!.retry(id).catch(() => undefined);
+    await sleep(5_000);
+    const sent = again.box.t!.messages.filter((m) => m.id === id);
+    notes.push(`after retry: ${sent.length === 1 && !sent[0].status ? 'sent' : 'not sent'}`, `saved: ${server.messages.filter((m) => m.id === id).length}`);
+  }
+  again.m.unmount();
+  return notes;
+});
+await scenario(
+  'removed from the chat elsewhere',
+  null,
+  async () => {
+    // Taken out of the group (or left its community / activity on another phone): the server says so through a signal.
+    server.member = false;
+    commit([{ table: 'sync_signals', event: 'INSERT', row: { user_id: ME, kind: 'inbox' } }]);
+    await sleep(30_000);
+    const open = channels.filter((c) => c.topic.includes(`thread-${CONV}`) || c.topic.includes(`thread-removals-${CONV}`)).length;
+    return [`error: ${threadNow().error}`, `thread channels: ${open}`];
   },
   { thread: true },
 );
@@ -659,6 +808,15 @@ expect(n('send message in open chat', 'conversations.select') === 0 && n('send m
 expect(get("someone else's message in open chat").notes.includes('shown: true'), "someone else's message: shown live");
 expect(n("someone else's message in open chat", 'my_conversations') >= 1, "someone else's message: the inbox reloads");
 expect(get("someone else's message in open chat").notes.includes('badge after: 0'), "someone else's message in the open chat: read at once");
+const notes = (label: string) => get(label).notes;
+expect(notes('history with equal times (3 per second): every page').join() === 'shown: 120/120,doubles: 0,in order: true', 'history: older pages leave no gap and no double, in server order (equal times too)');
+expect(notes("Bob's message lands while the chat catches up").includes('shown: true'), 'a message heard live while a catch-up page is on its way stays on screen');
+expect(notes('retry after a lost answer').join() === 'failed first: true,after retry: sent,saved: 1', 'retry after a lost answer: shown as sent, saved once (same id)');
+expect(
+  notes('a failed message after leaving the chat and coming back').join() === 'failed first: true,back: failed,after retry: sent,saved: 1',
+  'a failed message is still there (Retry) after leaving the chat, and sends once',
+);
+expect(notes('removed from the chat elsewhere').join() === 'error: You are no longer in this chat,thread channels: 0', 'removed from a chat: the thread says so and closes its channels');
 expect(n('follow', 'public_profile') === 1, 'follow: the profile reloads once');
 expect(n('friend request', 'public_profile') === 1 && n('friend request', 'friends') === 1, 'friend request: profile and friends reload once');
 expect(n('follow, then Bob follows back 0.5 s later', 'public_profile') === 2, 'a real change right after my own action still reloads');

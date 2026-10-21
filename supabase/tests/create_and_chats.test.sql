@@ -137,11 +137,15 @@ select pg_temp.as_user('c9900000-0000-0000-0000-0000000000a3');
 select pg_temp.check(pg_temp.fails($$select public.create_community('c99 Sam girls', 'dubai', null, null, null, true)$$) = '42501', 'a man cannot create a girls-only community');
 select pg_temp.check(pg_temp.fails($$select public.join_community((select v from ids where k = 'gclub'))$$) = '42501', 'a man cannot join a girls-only community');
 select pg_temp.check(not exists (select 1 from public.communities where id = (select v from ids where k = 'gclub')), 'a man does not see a girls-only community');
--- Over REST, around the RPC (no owner, no chat, no dedupe before the fix): refused.
+-- Created over REST (around the RPC): still its creator as owner, one chat, counted.
 select pg_temp.as_user('c9900000-0000-0000-0000-0000000000a2');
-select pg_temp.check(pg_temp.fails($$insert into public.communities (id, city_id, name, created_by) values ('c9900000-0000-0000-0000-0000000000e1', 'dubai', 'c99 Rest Club', auth.uid())$$) = '42501', 'a community cannot be inserted directly (only create_community, which adds owner and chat)');
+insert into public.communities (id, city_id, name, created_by) values ('c9900000-0000-0000-0000-0000000000e1', 'dubai', 'c99 Rest Club', auth.uid());
+select pg_temp.check((select my_role = 'owner' and is_member and conversation_id is not null from public.community_detail('c9900000-0000-0000-0000-0000000000e1')), 'a community inserted directly: its creator is owner, in its chat');
 select pg_temp.as_admin();
-select pg_temp.check(not exists (select 1 from public.communities where id = 'c9900000-0000-0000-0000-0000000000e1'), 'no ownerless, chatless community left');
+select pg_temp.check((select count(*) from public.conversations where community_id = 'c9900000-0000-0000-0000-0000000000e1') = 1, 'a community inserted directly: exactly one chat');
+select pg_temp.check((select members_count from public.communities where id = 'c9900000-0000-0000-0000-0000000000e1') = 1, 'a community inserted directly: members_count 1');
+select pg_temp.check((select count(*) from public.community_members where community_id = (select v from ids where k = 'club')) = 2
+  and (select members_count from public.communities where id = (select v from ids where k = 'club')) = 2, 'create_community: owner added once (count matches the rows)');
 
 -- IRLY Girl's five official communities: five, once each, same ids after a re-run.
 select pg_temp.as_admin();
@@ -288,3 +292,5 @@ select pg_temp.as_user('c9900000-0000-0000-0000-0000000000a2');
 select pg_temp.check(not exists (select 1 from public.activity_detail('c9900000-0000-0000-0000-0000000000b2')), 'deleted: its page says it no longer exists');
 
 select pg_temp.as_admin();
+-- Its plans leave the shared database (later files rank the first 50 of a city).
+delete from public.activities where creator_id::text like 'c9900000%';
