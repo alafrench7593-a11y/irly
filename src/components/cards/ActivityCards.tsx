@@ -221,10 +221,10 @@ export const ActivityChatBanner = memo(function ActivityChatBanner({ card, onOpe
       </View>
       <View style={{ flex: 1, gap: 1 }}>
         <Text variant="caption" tone="secondary" numberOfLines={1} raw>
-          {`${cardWhen(card)} · ${cardPlace(card)}`}
+          {cardWhen(card)}
         </Text>
-        <Text variant="caption" tone="tertiary" numberOfLines={1}>
-          {`${cardGoing(card)} · ${tx('See the activity')}`}
+        <Text variant="caption" tone="tertiary" numberOfLines={1} raw>
+          {`${cardPlace(card)} · ${cardGoing(card)}`}
         </Text>
       </View>
       <StatePill state={card.state} />
