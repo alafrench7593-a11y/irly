@@ -26,6 +26,7 @@ import { Glass } from '@/components/ui/Glass';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
 import { enter } from '@/motion/enter';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { findPerson } from '@/data/repo';
@@ -141,6 +142,8 @@ function ServerThreadView({ id }: { id: string }) {
   const [reporting, setReporting] = useState<ReportTarget | null>(null);
   const [reportName, setReportName] = useState<string | undefined>();
   const scrollRef = useRef<ScrollView>(null);
+  // Keyboard up: the composer sits on it, without the home-indicator gap below.
+  const keyboard = useKeyboardHeight();
   // Keep the view at the bottom, except right after loading older messages.
   const stick = useRef(true);
   // Only messages that arrive while the chat is open slide in; the history appears at once
@@ -252,6 +255,11 @@ function ServerThreadView({ id }: { id: string }) {
           onContentSizeChange={() => {
             if (stick.current) scrollRef.current?.scrollToEnd({ animated: false });
           }}
+          // The keyboard shrinks the list from the bottom: without this the last
+          // messages went behind the composer when you tapped the field.
+          onLayout={() => {
+            if (stick.current) scrollRef.current?.scrollToEnd({ animated: false });
+          }}
           onScroll={(e) => {
             const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
             stick.current = contentOffset.y + layoutMeasurement.height > contentSize.height - 120;
@@ -315,7 +323,7 @@ function ServerThreadView({ id }: { id: string }) {
             </View>
           ) : null}
         </ScrollView>
-        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: keyboard ? 12 : Math.max(insets.bottom, 12) }]} intensity={60}>
           <PressableScale haptic="select" onPress={() => setAttach(true)} scaleTo={0.88} style={styles.attach} accessibilityLabel="Send a photo">
             <GlassLayer radius={21} level="thin" />
             <Icon name="image" size={19} color={t.c.text} />
@@ -333,6 +341,9 @@ function ServerThreadView({ id }: { id: string }) {
               style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
               onSubmitEditing={send}
               returnKeyType="send"
+              // Send from the keyboard keeps it open for the next message (blurOnSubmit: the web ignores submitBehavior).
+              submitBehavior="submit"
+              blurOnSubmit={false}
               maxLength={4000}
               accessibilityLabel={a11y('Message')}
             />
@@ -901,6 +912,7 @@ function Thread() {
   const [text, setText] = useState('');
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const keyboard = useKeyboardHeight();
 
   const conversationId = conversation?.id;
   useEffect(() => {
@@ -938,6 +950,7 @@ function Thread() {
           ref={scrollRef}
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+          onLayout={() => scrollRef.current?.scrollToEnd({ animated: false })}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="interactive"
@@ -991,7 +1004,7 @@ function Thread() {
           {typing ? <Typing /> : null}
         </ScrollView>
 
-        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: keyboard ? 12 : Math.max(insets.bottom, 12) }]} intensity={60}>
           <View style={styles.inputWrap}>
             <GlassLayer radius={radius.pill} level="thin" />
             <TextInput
@@ -1002,6 +1015,8 @@ function Thread() {
               style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
               onSubmitEditing={send}
               returnKeyType="send"
+              submitBehavior="submit"
+              blurOnSubmit={false}
               accessibilityLabel={a11y('Message')}
             />
           </View>

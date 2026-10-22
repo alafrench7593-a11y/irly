@@ -51,7 +51,7 @@ export default function NewsScreen() {
           <View style={[styles.search, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
             <GlassLayer radius={radius.lg} />
             <Icon name="search" size={18} color={t.c.textTertiary} />
-            <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search the news')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} accessibilityLabel={a11y('Search the news')} />
+            <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search the news')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} accessibilityLabel={a11y('Search the news')} returnKeyType="search" autoCorrect={false} />
           </View>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>

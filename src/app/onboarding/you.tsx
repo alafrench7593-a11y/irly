@@ -53,6 +53,8 @@ export default function WhoAreYou() {
           onChangeText={(name) => updateProfile({ name })}
           autoCapitalize="words"
           autoCorrect={false}
+          autoComplete="given-name"
+          textContentType="givenName"
           returnKeyType="done"
           maxLength={24}
           accessibilityLabel="First name"

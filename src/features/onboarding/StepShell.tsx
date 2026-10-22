@@ -12,6 +12,7 @@ import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
 import type { PhotoKey } from '@/data/photos';
 import { enter } from '@/motion/enter';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { spring } from '@/motion/tokens';
 import { useCityId } from '@/state/store';
 import { space } from '@/theme/tokens';
@@ -45,6 +46,7 @@ function Dot({ active, done }: { active: boolean; done: boolean }) {
 export function StepShell({ step, total, overline, title, subtitle, cta, canContinue, onContinue, children, photo }: Props) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const keyboard = useKeyboardHeight();
   const city = CITIES[useCityId()];
   const key = city.destinationId === 'emirates' ? (photo ?? STEP_PHOTOS[step % STEP_PHOTOS.length]) : city.photo;
   return (
@@ -64,7 +66,7 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
           </View>
           <View style={{ width: 40 }} />
         </View>
-        <ScrollView contentContainerStyle={{ paddingBottom: 140 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingBottom: space[8] + space[5] }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Animated.View entering={enter.rise(0, 60)} style={styles.head}>
             <Text variant="overline" color="rgba(255,255,255,0.7)">
               {overline}
@@ -78,7 +80,10 @@ export function StepShell({ step, total, overline, title, subtitle, cta, canCont
           </Animated.View>
           {children}
         </ScrollView>
-        <View style={[styles.footer, { paddingBottom: insets.bottom + space[4] }]}>
+        {/* In the flow, not floating over the list: the field being typed in (bio,
+            first name) scrolled to the bottom of the list, which was under the
+            Continue button once the keyboard was up. Only the fade overlaps. */}
+        <View style={[styles.footer, { paddingBottom: (keyboard ? 0 : insets.bottom) + space[4] }]}>
           <LinearGradient colors={['rgba(5,5,6,0)', 'rgba(5,5,6,0.92)']} locations={[0, 0.45]} style={StyleSheet.absoluteFill} pointerEvents="none" />
           <Button label={cta} onPress={onContinue} disabled={!canContinue} full iconRight="arrowRight" haptic="press" />
         </View>
@@ -94,5 +99,5 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   dot: { height: 8, borderRadius: 4 },
   head: { paddingHorizontal: space.gutter, paddingTop: space[9], gap: 8, marginBottom: space[7] },
-  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.gutter, paddingTop: space[8] },
+  footer: { marginTop: -space[8], paddingHorizontal: space.gutter, paddingTop: space[8] },
 });

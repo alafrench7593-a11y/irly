@@ -25,6 +25,7 @@ import { hueOf } from '@/lib/format';
 import { timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -53,6 +54,8 @@ function CommentsScreen() {
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Keyboard up: the composer sits on it, without the home-indicator gap below.
+  const keyboard = useKeyboardHeight();
   const params = useLocalSearchParams<{ type: TargetType; id: string; title?: string }>();
   const target = { type: params.type, id: params.id, title: params.title };
   const { comments, loading, failed, add, remove, refresh, signedIn } = useThread(target);
@@ -170,7 +173,7 @@ function CommentsScreen() {
           )}
         </ScrollView>
         {signedIn ? (
-          <Glass lifted level="thick" style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+          <Glass lifted level="thick" style={[styles.composer, { paddingBottom: keyboard ? 12 : Math.max(insets.bottom, 12) }]} intensity={60}>
             {replyTo ? (
               <View style={styles.replying}>
                 <Text variant="caption" tone="secondary" style={{ flex: 1 }} numberOfLines={1}>
@@ -192,6 +195,9 @@ function CommentsScreen() {
                   style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
                   onSubmitEditing={send}
                   returnKeyType="send"
+                  // Send from the keyboard keeps it open (a reply often follows).
+                  submitBehavior="submit"
+                  blurOnSubmit={false}
                   maxLength={500}
                   accessibilityLabel={a11y('Comment')}
                 />
