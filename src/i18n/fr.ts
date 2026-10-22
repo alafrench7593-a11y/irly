@@ -13,6 +13,7 @@ export const fr: Record<string, string> = {
   'Hi, {name}': 'Coucou {name}',
   'Mark all as read': 'Tout marquer comme lu',
   'Could not mark it as read. Check your connection.': 'Impossible de la marquer comme lue. Vérifie ta connexion.',
+  'Could not remove it. Check your connection.': 'Impossible de la supprimer. Vérifie ta connexion.',
   // Notifications: read when seen, "New" then "Earlier", every kind opens its own page.
   'Could not mark these notifications as read. Check your connection.': 'Impossible de marquer ces notifications comme lues. Vérifie ta connexion.',
   'Could not mark everything as read. Check your connection.': 'Impossible de tout marquer comme lu. Vérifie ta connexion.',

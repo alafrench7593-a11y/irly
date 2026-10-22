@@ -750,6 +750,33 @@ export async function markNotificationsRead(ids: string[]): Promise<boolean> {
 /** Marks one notification read (opened from the list or from a phone notification). */
 export const markNotificationRead = (id: string): Promise<boolean> => markNotificationsRead([id]);
 
+/** Notifications removed on this phone and not yet gone on the server: hidden at once, back if the server refuses. */
+const useGoneHere = create<{ ids: Record<string, true> }>(() => ({ ids: {} }));
+
+/**
+ * Removes notifications from the bell (opened from the list): off the screen
+ * at once, then deleted on the server (the member's own rows only: RLS),
+ * which clears them on the member's other phones too. Resolves false when
+ * the server refused or could not be reached: they come back.
+ */
+export async function dismissNotifications(ids: string[]): Promise<boolean> {
+  const todo = [...new Set(ids)];
+  if (!supabase || !todo.length) return true;
+  useGoneHere.setState((s) => ({ ids: { ...s.ids, ...Object.fromEntries(todo.map((id) => [id, true as const])) } }));
+  todo.forEach((id) => expectEcho('notifications', (row) => row.id === id));
+  const { error } = await supabase.from('notifications').delete().in('id', todo);
+  if (error) {
+    useGoneHere.setState((s) => {
+      const next = { ...s.ids };
+      todo.forEach((id) => delete next[id]);
+      return { ids: next };
+    });
+    return false;
+  }
+  useNotifVersion.setState((s) => ({ n: s.n + 1 }));
+  return true;
+}
+
 export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => Promise<boolean>; status: 'loading' | 'ok' | 'failed'; reload: () => void } {
   const account = useAccount();
   const uid = account?.userId;
@@ -831,7 +858,11 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     return true;
   }, [uid, items]);
   const readHere = useReadHere((s) => s.ids);
-  const list = useMemo(() => (uid ? items.map((n) => (n.readAt || !readHere[n.id] ? n : { ...n, readAt: readHere[n.id] })) : NONE), [uid, items, readHere]);
+  const goneHere = useGoneHere((s) => s.ids);
+  const list = useMemo(
+    () => (uid ? items.filter((n) => !goneHere[n.id]).map((n) => (n.readAt || !readHere[n.id] ? n : { ...n, readAt: readHere[n.id] })) : NONE),
+    [uid, items, readHere, goneHere],
+  );
   // Messages have their own badge (the chat icon): the bell never counts them twice.
   const reload = useCallback(() => {
     setStatus('loading');
