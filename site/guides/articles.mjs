@@ -187,7 +187,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
-    updated: '2026-10-12',
+    updated: '2026-10-22',
     title: 'How to Make Friends in Bali: Travellers, Nomads and Newcomers | IRLY',
     description: 'Arriving in Bali alone? How friendships work on an island where people come and go, and practical ways to meet people in Canggu, Ubud and beyond.',
     h1: 'How to make friends in Bali',
@@ -235,6 +235,17 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'Your first month: a simple plan',
+        html: `<p>If you arrive alone and don’t know where to start, this is enough for the first four weeks.</p>
+<ol>
+<li><strong>Week 1: settle in one area.</strong> Stay where your interests are, walk around at different times of day, and note two or three classes, groups or spaces that meet regularly.</li>
+<li><strong>Week 2: try them once.</strong> A surf lesson, a yoga class, a coworking day pass, a community event. Arrive a little early, when it is easier to talk, and ask people how long they are staying.</li>
+<li><strong>Week 3: pick your regulars.</strong> Go back to the one or two you liked most, at the same time each week. Learn first names and use them.</li>
+<li><strong>Week 4: suggest something small.</strong> A sunset after class, breakfast after the session, a day trip at the weekend with two or three people you have met.</li>
+</ol>
+<p>If you work remotely, a regular place to work does a lot of this for you: see <a href="../digital-nomads/">Bali for digital nomads</a>. And if the comings and goings start to weigh on you, <a href="../../guides/social-life-after-moving-abroad/">rebuilding your social life after moving abroad</a> is written for that moment.</p>`,
+      },
+      {
         h2: 'Practical tips for your first weeks',
         html: `<ul>
 <li>Most people get around by scooter. Only ride with the right licence, a helmet and insurance, and if you are not confident, use ride-hailing apps instead.</li>
@@ -251,6 +262,7 @@ export const ARTICLES = [
     related: [
       { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
       { label: 'Bali for digital nomads', path: 'bali/digital-nomads/' },
+      { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' },
     ],
   },
   {
@@ -260,7 +272,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
-    updated: '2026-10-12',
+    updated: '2026-10-22',
     title: 'Se faire des amis à Bali : voyageurs, nomades et nouveaux arrivants | IRLY',
     description: 'Tu arrives seul à Bali ? Comment fonctionnent les amitiés sur une île où les gens vont et viennent, et des façons concrètes de rencontrer du monde à Canggu, Ubud et ailleurs.',
     h1: 'Comment se faire des amis à Bali',
@@ -308,6 +320,17 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'Ton premier mois : un plan simple',
+        html: `<p>Si tu arrives seul et que tu ne sais pas par où commencer, voici de quoi remplir les quatre premières semaines.</p>
+<ol>
+<li><strong>Semaine 1 : installe-toi dans un quartier.</strong> Loge là où sont tes centres d’intérêt, promène-toi à différents moments de la journée et repère deux ou trois cours, groupes ou lieux qui se retrouvent régulièrement.</li>
+<li><strong>Semaine 2 : essaie-les une fois.</strong> Un cours de surf, un cours de yoga, un pass journée dans un coworking, un événement de quartier. Arrive un peu en avance, quand il est plus facile de parler, et demande aux gens combien de temps ils restent.</li>
+<li><strong>Semaine 3 : choisis tes habitudes.</strong> Retourne à celui ou ceux que tu as préférés, à la même heure chaque semaine. Retiens les prénoms et utilise-les.</li>
+<li><strong>Semaine 4 : propose quelque chose de simple.</strong> Un coucher de soleil après le cours, un petit-déjeuner après la séance, une excursion le week-end avec deux ou trois personnes rencontrées.</li>
+</ol>
+<p>Si tu travailles à distance, un lieu de travail régulier fait une bonne partie de ce travail pour toi : lis <a href="../digital-nomads/">Bali pour les digital nomads</a>. Et si les départs à répétition commencent à te peser, <a href="../../guides/vie-sociale-expatriation/">reconstruire sa vie sociale après une expatriation</a> est écrit pour ce moment-là.</p>`,
+      },
+      {
         h2: 'Conseils pratiques pour tes premières semaines',
         html: `<ul>
 <li>La plupart des gens se déplacent en scooter. Ne conduis qu’avec le bon permis, un casque et une assurance ; si tu n’es pas à l’aise, utilise les applications de VTC.</li>
@@ -324,6 +347,7 @@ export const ARTICLES = [
     related: [
       { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
       { label: 'Bali pour les digital nomads', path: 'fr/bali/digital-nomads/' },
+      { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' },
     ],
   },
   {
