@@ -366,6 +366,9 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
         // A Live lasts 4 hours (a deleted one takes its notice with it): an ended one neither quotes nor opens it.
         if (!destinationOf(n, now)) return { icon: 'zap', title: tx('{name} was live', { name: name(p.from) }), body: tx('This Live has ended') };
         return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? tx('See what they are doing') };
+      case 'IRLY_NEWS':
+        // The team's words, as written.
+        return { icon: 'megaphone', title: p.girl === 'true' || (p.girl as unknown) === true ? 'IRLY Girl news' : 'IRLY news', body: p.title ?? '' };
       case 'PROFILE_UPDATED':
         if (p.type === 'friend_request') {
           const pending = friends.find((f) => f.userId === p.from && f.incoming);

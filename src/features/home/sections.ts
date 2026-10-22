@@ -8,11 +8,19 @@ import type { AppSpace } from '@/state/appSpace';
  * communities, events open to everyone). A section with nothing to show
  * is left out in either space, never replaced by another block.
  * scripts/test-parity.mts checks the list and the Home's use of it.
+ *
+ * « news » and « banners » are what the IRLY team publishes (features/cms):
+ * shown only when there is something published. This is also the order the
+ * Home falls back to when the team's layout (back office › Home layout,
+ * features/cms/layout) is missing or cannot be used; the team's layout may
+ * order and word these sections per flavour, never add one that is not here.
  */
 export const HOME_SECTIONS = [
   'search',
   'today',
+  'news',
   'categories',
+  'banners',
   'featured',
   'create',
   'bali',

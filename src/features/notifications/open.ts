@@ -92,6 +92,9 @@ export function destinationOf(n: NotificationLike, now = Date.now()): Destinatio
     case 'IRLY_POST_CREATED':
       // A Live lasts 4 hours: an ended one has nothing to open.
       return now - n.createdAt >= LIVE_TTL_MIN * 60_000 ? null : { href: '/live' };
+    case 'IRLY_NEWS':
+      // The page itself asks the server whether this news item is still for you.
+      return isId(p.news_id) ? { href: `/actu/${p.news_id}`, fallback: '/notifications' } : null;
     case 'PROFILE_UPDATED':
       if (p.type === 'friend_request' || p.type === 'friend_accepted') return person(p.from);
       if (p.type === 'verified') return { href: FEATURES.matchIrly ? '/match' : '/verify' };

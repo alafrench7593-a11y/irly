@@ -209,9 +209,11 @@ type SectionHeaderProps = {
   onAction?: () => void;
   style?: StyleProp<ViewStyle>;
   live?: boolean;
+  /** Parts written by the IRLY team (back office): shown as written, never translated. */
+  rawParts?: readonly ('title' | 'overline' | 'action')[];
 };
 
-export const SectionHeader = memo(function SectionHeader({ title, overline, action, onAction, style, live }: SectionHeaderProps) {
+export const SectionHeader = memo(function SectionHeader({ title, overline, action, onAction, style, live, rawParts }: SectionHeaderProps) {
   const t = useTheme();
   return (
     <View style={[styles.sectionHeader, style]}>
@@ -219,18 +221,18 @@ export const SectionHeader = memo(function SectionHeader({ title, overline, acti
         {overline ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             {live ? <LiveDot size={6} /> : null}
-            <Text variant="overline" tone={live ? 'live' : 'tertiary'}>
+            <Text variant="overline" tone={live ? 'live' : 'tertiary'} raw={rawParts?.includes('overline')}>
               {overline}
             </Text>
           </View>
         ) : null}
-        <Text variant="titleM" accessibilityRole="header">
+        <Text variant="titleM" accessibilityRole="header" raw={rawParts?.includes('title')}>
           {title}
         </Text>
       </View>
       {action ? (
         <PressableScale onPress={onAction} haptic="select" scaleTo={0.94} hitSlop={10} style={styles.action}>
-          <Text variant="label" tone="secondary">
+          <Text variant="label" tone="secondary" raw={rawParts?.includes('action')}>
             {action}
           </Text>
           <Icon name="chevronRight" size={15} color={t.c.textTertiary} />

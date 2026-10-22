@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { HOME_SECTIONS, homeSections } from '../src/features/home/sections.ts';
+import { checkLayout } from '../src/features/cms/layout.ts';
 
 const fails: string[] = [];
 const check = (ok: boolean, what: string) => (ok ? console.log(`  ✓ ${what}`) : (console.log(`  ✗ ${what}`), fails.push(what)));
@@ -31,7 +32,15 @@ console.log(`  order: ${HOME_SECTIONS.join(' › ')}`);
 
 // 2. The Home renders that list, every section has its case, and no Girl-only block is left.
 const home = read('src/app/(tabs)/index.tsx');
-check(/HOME_SECTIONS\.map\(/.test(home), 'Home renders HOME_SECTIONS.map(…)');
+// The order comes from the team's published layout (features/cms/layout), which falls back to HOME_SECTIONS.
+check(/useHomeLayout\(/.test(home) && /entries\.filter\(\(e\) => e\.enabled\)\.map\(/.test(home), 'Home renders the layout\'s sections (useHomeLayout → entries.map(…))');
+const keys = (raw: unknown) => checkLayout(raw).map((e) => e.key);
+check((() => { try { assert.deepEqual(keys([]), [...HOME_SECTIONS]); assert.deepEqual(keys(null), [...HOME_SECTIONS]); assert.deepEqual(keys('broken'), [...HOME_SECTIONS]); return true; } catch { return false; } })(),
+  'no layout, an empty or a broken one: the Home is HOME_SECTIONS, in order');
+check((() => { try { assert.deepEqual(keys([{ key: 'casino' }, { key: 'eat' }]).filter((k) => k !== 'eat'), [...HOME_SECTIONS].filter((k) => k !== 'eat')); return true; } catch { return false; } })(),
+  'an unknown section is ignored, every known one stays');
+check(checkLayout(HOME_SECTIONS.map((key) => ({ key, enabled: false }))).every((e) => e.enabled), 'a layout hiding everything falls back to the whole Home');
+check((() => { const l = keys([{ key: 'footer' }, { key: 'news' }, { key: 'search' }]); return l[0] === 'search' && l.at(-1) === 'footer'; })(), 'whatever the layout says, search stays first and the footer last');
 for (const id of HOME_SECTIONS) check(home.includes(`case '${id}':`), `Home renders section '${id}'`);
 const gone = ['MomsView', 'GirlMessages', 'GirlModes', 'MatchCard', 'GirlMovingCard', 'GirlFeed', 'GirlPlans', 'KindRail'];
 for (const name of gone) check(!new RegExp(`\\b${name}\\b`).test(home), `Home has no Girl-only block ${name}`);
