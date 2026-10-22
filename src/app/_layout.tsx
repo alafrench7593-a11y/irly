@@ -42,6 +42,10 @@ import { useStore } from '@/state/store';
 import { Flavor } from '@/theme/flavor';
 import { useTheme } from '@/theme/useTheme';
 import { watchWebUpdates } from '@/lib/webUpdate';
+import { guardNavigation } from '@/lib/navGuard';
+
+// A double tap on Back pops one page; a link tapped twice opens its page once.
+guardNavigation();
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ duration: 250, fade: true });

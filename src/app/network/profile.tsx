@@ -39,6 +39,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { useBusy } from '@/lib/useBusy';
 import { blockIn, LightDrift } from '@/features/network/motion';
 import { NetworkPage, NetworkTitle } from '@/features/network/page';
 import { NetworkState, Shimmer, useGlint } from '@/features/network/ui';
@@ -138,6 +139,8 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
   const [d, setD] = useState<ProDraft>(initial);
   const [skill, setSkill] = useState('');
   const [busy, setBusy] = useState(false);
+  // Delete waits for the server: a second tap deleted again (an error toast) and went back twice.
+  const removing = useBusy<'delete'>();
   const [step, setStep] = useState(0);
   // Which way the last move went (the next step slides in from that side).
   const [dir, setDir] = useState(1);
@@ -457,16 +460,20 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
                   variant="ghost"
                   full
                   disabled={busy}
+                  loading={removing.busy === 'delete'}
                   onPress={() =>
+                    removing.isRunning() ||
                     confirm('Delete your professional profile? You leave Networking; your connections stay.', () =>
-                      me
-                        .remove()
-                        .then(() => {
-                          toast(tr('Professional profile deleted'), 'check', 'brand');
-                          if (router.canGoBack()) router.back();
-                          else router.replace('/network');
-                        })
-                        .catch(() => toast(tr('Could not delete'), 'x', 'live')),
+                      void removing.run('delete', () =>
+                        me
+                          .remove()
+                          .then(() => {
+                            toast(tr('Professional profile deleted'), 'check', 'brand');
+                            if (router.canGoBack()) router.back();
+                            else router.replace('/network');
+                          })
+                          .catch(() => toast(tr('Could not delete'), 'x', 'live')),
+                      ),
                     )
                   }
                 />
