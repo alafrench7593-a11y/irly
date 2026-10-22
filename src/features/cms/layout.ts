@@ -8,7 +8,7 @@ import { isDestination } from './destinations';
  * l'accueil »): the sections of features/home/sections in an order, each on
  * or off, with only the changes its component really supports. The server
  * checks the same rules (private.home_section_spec / home_layout_clean in
- * migration 20261028300000_irly_admin_cms; scripts/check-cms.mts compares).
+ * migration 20261028500000_irly_admin_cms; scripts/check-cms.mts compares).
  *
  * A layout only orders and words the Home: every section still loads its
  * own data through its own calls and rules (IRLY Girl sections through the

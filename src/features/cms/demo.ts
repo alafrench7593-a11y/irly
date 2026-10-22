@@ -3,7 +3,7 @@ import { isDestination } from './destinations';
 
 /**
  * The editorial back office in the demo build only (EXPO_PUBLIC_DEMO=1, no
- * server): the same calls and rules as migration 20261028300000_irly_admin_cms,
+ * server): the same calls and rules as migration 20261028500000_irly_admin_cms,
  * kept in this browser (localStorage) so the screens and the journeys
  * (scripts/e2e-demo-cms.mjs) can be walked without any real data. Never used
  * when a server is configured. The demo is the owner, as in the rest of the

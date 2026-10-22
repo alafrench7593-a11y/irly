@@ -254,7 +254,7 @@ try {
   const code = ['src/features/cms', 'src/app/admin/actu', 'src/app/actu'].flatMap((d) => fs.readdirSync(path.join(ROOT, d)).map((f) => fs.readFileSync(path.join(ROOT, d, f), 'utf8')));
   code.push(...['src/app/admin/home-layout.tsx', 'src/app/admin/banners.tsx'].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')));
   check(code.every((c) => !/\.remove\(|storage\.from\([^)]*\)\.(remove|delete|move|update)\(/.test(c)), 'D: the editorial code never removes, moves or overwrites a stored file');
-  const sql = fs.readFileSync(path.join(ROOT, 'supabase/migrations/20261028300000_irly_admin_cms.sql'), 'utf8');
+  const sql = fs.readFileSync(path.join(ROOT, 'supabase/migrations/20261028500000_irly_admin_cms.sql'), 'utf8');
   check(!/delete\s+from\s+storage\.objects|for delete to|for update to/i.test(sql), 'D: the migration gives no rule to delete or change a stored file');
   check(m.errors.length === 0, `no page error through the journeys${m.errors.length ? ` (${m.errors[0]})` : ''}`);
   await m.ctx.close();

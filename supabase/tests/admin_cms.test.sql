@@ -1,4 +1,4 @@
--- Back office editorial (migration 20261028300000_irly_admin_cms): the
+-- Back office editorial (migration 20261028500000_irly_admin_cms): the
 -- team's news, the Home layout per flavour and the Home banners. Who may
 -- write (content staff only, every other caller refused), what members read
 -- (published, visible now, not deleted; IRLY Girl items only for accounts
