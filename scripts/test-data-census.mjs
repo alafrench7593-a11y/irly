@@ -65,3 +65,27 @@ const acts = await sql(`
   order by a.created_at`);
 console.log(`\nactivities whose title looks like a test: ${acts.length}`);
 for (const a of acts) console.log([a.created, a.by_test_account ? 'test account' : 'other account', a.title.slice(0, 80)].join(' | '));
+
+// Member communities whose creator account no longer exists (deleted test
+// accounts leave them behind: created_by is set null on delete).
+const orphanCommunities = await sql(`
+  select c.name, c.city_id, c.girl_only, to_char(c.created_at, 'YYYY-MM-DD') as created,
+    (select count(*) from public.community_members m where m.community_id = c.id)::int as members,
+    (select count(*) from public.community_members m join auth.users u on u.id = m.user_id
+      where m.community_id = c.id and not ${TEST})::int as non_test_members,
+    (select count(*) from public.community_posts x where x.community_id = c.id)::int as posts
+  from public.communities c
+  where c.created_by is null and not c.official and c.deleted_at is null
+  order by c.created_at`);
+console.log(`\nmember communities without a creator: ${orphanCommunities.length}`);
+console.log('created | city | girl only | members | members not matching a test pattern | posts | name');
+for (const c of orphanCommunities) console.log([c.created, c.city_id, c.girl_only ? 'yes' : 'no', c.members, c.non_test_members, c.posts, c.name.slice(0, 60)].join(' | '));
+
+// Conversations nobody belongs to any more, by kind.
+const emptyConvs = await sql(`
+  select v.kind, count(*)::int as conversations,
+    sum((select count(*) from public.messages m where m.conversation_id = v.id))::int as messages
+  from public.conversations v
+  where not exists (select 1 from public.conversation_members cm where cm.conversation_id = v.id)
+  group by v.kind order by v.kind`);
+console.log('\nconversations with no member left:', JSON.stringify(emptyConvs));
