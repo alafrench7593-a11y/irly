@@ -77,7 +77,7 @@ export const DoorTile = memo(function DoorTile({ door, width, height = 150, ligh
             <Icon name={door.icon} size={17} color="#FFFFFF" />
           </Glass>
           <View>
-            <Text variant="titleM" tone="onDark" numberOfLines={1}>
+            <Text variant="titleM" tone="onDark" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
               {door.label}
             </Text>
             <Text variant="caption" color="rgba(255,255,255,0.74)" numberOfLines={1}>
@@ -169,7 +169,8 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
               >
                 <GlassLayer radius={radius.lg} />
                 <Icon name={it.icon} size={20} color={t.c.text} />
-                <Text variant="titleS" numberOfLines={1}>
+                {/* Two tiles a row on a 375 pt phone: « Des gens comme moi » shrinks a little instead of losing its end. */}
+                <Text variant="titleS" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
                   {it.label}
                 </Text>
                 <Text variant="caption" tone="tertiary" numberOfLines={2}>

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { useServerBell } from '@/features/server/social';
-import { memo, type ReactNode } from 'react';
+import { memo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFrame } from '@/components/layout/AppFrame';
 import Animated, {
@@ -73,7 +73,7 @@ export const DestinationPill = memo(function DestinationPill({ onPress, onDark, 
   );
   if (!solid) {
     return (
-      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityLabel={tx('Destination: {city}. Change destination', { city: city.name })}>
+      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} hitSlop={{ top: 3, bottom: 3 }} accessibilityLabel={tx('Destination: {city}. Change destination', { city: city.name })}>
         <Glass dark={onDark} style={styles.pill} intensity={40}>
           {content(onDark ? '#FFFFFF' : t.c.text)}
         </Glass>
@@ -81,7 +81,7 @@ export const DestinationPill = memo(function DestinationPill({ onPress, onDark, 
     );
   }
   return (
-    <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityLabel={tx('Destination: {city}. Change destination', { city: city.name })}>
+    <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} hitSlop={{ top: 3, bottom: 3 }} accessibilityLabel={tx('Destination: {city}. Change destination', { city: city.name })}>
       <View style={styles.pillShell}>
         <Animated.View style={[StyleSheet.absoluteFill, solidStyle]}>
           <Glass style={[StyleSheet.absoluteFill, styles.round]} intensity={40} />
@@ -200,6 +200,7 @@ function CommunitiesButton() {
     <PressableScale
       haptic="select"
       scaleTo={0.95}
+      hitSlop={{ top: 3, bottom: 3 }}
       onPress={() => router.push('/communities')}
       accessibilityRole="button"
       accessibilityLabel={tx('Communities')}
@@ -319,6 +320,10 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
   const bg = useAnimatedStyle(() => ({
     opacity: scrollY ? interpolate(scrollY.value, [10, 70], [0, 1], Extrapolation.CLAMP) : 1,
   }));
+  // The compact title stays centred between the two sides: a wide right side (Network: messages, bell,
+  // settings) pushes both its edges in, so the title ends in « … » instead of running under the buttons.
+  const [rightW, setRightW] = useState(0);
+  const titleInset = Math.max(80, space.gutter + rightW + 8);
   const titleStyle = useAnimatedStyle(() => ({
     opacity: scrollY ? interpolate(scrollY.value, [40, 90], [0, 1], Extrapolation.CLAMP) : 1,
     transform: [{ translateY: scrollY ? interpolate(scrollY.value, [40, 90], [8, 0], Extrapolation.CLAMP) : 0 }],
@@ -339,12 +344,14 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
         ) : (
           <ProfileButton />
         )}
-        <Animated.View style={[styles.title, titleStyle]} pointerEvents="none">
+        <Animated.View style={[styles.title, { left: titleInset, right: titleInset }, titleStyle]} pointerEvents="none">
           <Text variant="titleS" numberOfLines={1}>
             {title}
           </Text>
         </Animated.View>
-        <View style={{ minWidth: 40, alignItems: 'flex-end' }}>{right}</View>
+        <View style={{ minWidth: 40, alignItems: 'flex-end' }} onLayout={(e) => setRightW(e.nativeEvent.layout.width)}>
+          {right}
+        </View>
       </View>
     </View>
   );

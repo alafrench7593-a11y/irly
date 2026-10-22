@@ -331,7 +331,8 @@ export function SettingLink({ icon, label, value, onPress, danger, busy }: { ico
       accessibilityLabel={value ? `${label}, ${value}` : label}
     >
       <Icon name={icon} size={18} color={danger ? t.c.critical : t.c.text} />
-      <Text variant="titleS" color={danger ? t.c.critical : undefined} style={{ flex: 1 }}>
+      {/* A long label (« Se connecter ou créer un compte » next to its hint) takes two lines and the row grows, never past its edges. */}
+      <Text variant="titleS" color={danger ? t.c.critical : undefined} numberOfLines={2} style={styles.label}>
         {label}
       </Text>
       {value ? (
@@ -352,9 +353,11 @@ export function SettingLink({ icon, label, value, onPress, danger, busy }: { ico
 }
 
 const styles = StyleSheet.create({
-  value: { maxWidth: '48%', textAlign: 'right' },
+  // Both start from their natural width; when the row is short of room the hint gives way twice as fast as the label.
+  label: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
+  value: { maxWidth: '42%', flexShrink: 2, minWidth: 0, textAlign: 'right' },
   section: { marginBottom: space[8] },
   group: { marginHorizontal: space.gutter, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
   warning: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
-  settingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, height: 56 },
+  settingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 8, minHeight: 56 },
 });
