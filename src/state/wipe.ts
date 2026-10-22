@@ -75,6 +75,7 @@ export function wipeLocal(): void {
   import('@/features/server/covers').then((m) => m.clearCoverCache()).catch(() => undefined);
   import('@/features/live/liveMedia').then((m) => m.clearLiveCache()).catch(() => undefined);
   import('@/features/girl/api').then((m) => m.clearMatchLinks()).catch(() => undefined);
+  import('@/features/girl/access').then((m) => m.clearGirlAccess()).catch(() => undefined);
   import('@/features/network/api').then((m) => m.clearNetworkLinks()).catch(() => undefined);
   // Photos already seen are cached on the phone by their stored file (chats, profiles, posts):
   // the next person on this phone never gets the previous account's private pictures from it.

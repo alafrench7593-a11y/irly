@@ -3234,6 +3234,7 @@ export const fr: Record<string, string> = {
   'Create a session': 'Créer une activité',
   // ───── Audit: missing translations
   'Your profile, photos, professional and IRLY Girl profiles, messages, posts, comments, connections, matches and notifications are deleted from IRLY’s servers, and you are signed out on this phone. Communities you own pass to another member. Content already reported to moderators is kept for review.': 'Ton profil, tes photos, tes profils pro et IRLY Girl, tes messages, publications, commentaires, connexions, matchs et notifications sont supprimés des serveurs d’IRLY, et tu es déconnecté·e sur ce téléphone. Les communautés que tu as créées passent à un autre membre. Les contenus déjà signalés aux modérateurs sont conservés pour examen.',
+  'Plans you created are deleted too: people going to an upcoming one are told.': 'Les activités que tu as créées sont aussi supprimées : les personnes inscrites à une activité à venir sont prévenues.',
   'Open the reset link from your email on this device first.': 'Ouvre d’abord le lien de réinitialisation reçu par e-mail sur cet appareil.',
   'Phone number': 'Numéro de téléphone',
   'Can’t reach IRLY right now.': 'Impossible de joindre IRLY pour le moment.',
@@ -4901,6 +4902,7 @@ export const fr: Record<string, string> = {
   'This chat has no photo of its own': 'Cette conversation n’a pas de photo à elle',
   'This community is reserved for IRLY Girl': 'Cette communauté est réservée à IRLY Girl',
   'This community no longer exists': 'Cette communauté n’existe plus',
+  'This name is reserved for an IRLY community. Choose another one': 'Ce nom est réservé à une communauté IRLY. Choisis-en un autre',
   'This email address is not valid': 'Cette adresse e-mail n’est pas valide',
   'This file is too large': 'Ce fichier est trop volumineux',
   'This has already been decided': 'C’est déjà décidé',

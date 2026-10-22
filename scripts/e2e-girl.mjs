@@ -155,6 +155,8 @@ async function main() {
   const lea = await createMember('Lea', 'woman');
   const mia = await createMember('Mia', 'woman');
   const max = await createMember('Max', 'man');
+  // When the run started (database clock): IRLY Maman must never make a community by itself.
+  const [{ started }] = await sql('select now() as started');
   const browser = await chromium.launch();
   page = await signIn(browser, lea);
 
@@ -357,6 +359,28 @@ async function main() {
       await page.waitForTimeout(500);
     }
     return false;
+  });
+
+  await step('Maman: a child is an age group only (« Toddler » saved, no name, no birthday)', async () => {
+    await page.getByRole('button', { name: 'Toddler', exact: true }).first().click({ timeout: 25000 });
+    for (let i = 0; i < 20; i++) {
+      const [p] = await sql(`select kids_age_groups from public.irly_match_profiles where user_id = '${lea.id}'`);
+      if (p?.kids_age_groups?.includes('toddler')) return p.kids_age_groups.every((k) => ['baby', 'toddler', 'kid', 'teen'].includes(k));
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
+  await step('Maman: the official community is « IRLY Maman », once, and opening Maman created no community', async () => {
+    await page.getByText('Mom communities', { exact: true }).first().waitFor({ timeout: 25000 });
+    await page.getByRole('button', { name: 'Open IRLY Maman', exact: true }).first().waitFor({ timeout: 25000 });
+    const official = await sql(`select name from public.communities where official and topic = 'moms' and city_id = 'dubai' and parent_id is null and deleted_at is null`);
+    const [{ made }] = await sql(`select count(*)::int as made from public.communities
+      where created_at >= '${started}' and (official or created_by in ('${lea.id}', '${mia.id}', '${max.id}'))`);
+    return official.length === 1 && official[0].name === 'IRLY Maman' && made === 0;
+  });
+  await step('Maman: Max (a man) gets no mom from the server, and so no child age group', async () => {
+    const r = await max.sb.rpc('girl_circle', { p_destination: 'dubai', p_moms: true });
+    return Boolean(r.error) || !(r.data ?? []).some((m) => m.user_id === lea.id || (m.kids_age_groups ?? []).length > 0);
   });
 
   // ───────── Changing account on the same browser ─────────
