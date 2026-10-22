@@ -243,7 +243,7 @@ function MatchButton({ width, onPress }: { width: number; onPress: () => void })
           haptic={false}
           scaleTo={reduced ? 1 : 0.9}
           accessibilityRole="button"
-          accessibilityLabel={open ? 'Match IRLY' : tx('Soon: IRLY Match, coming soon')}
+          accessibilityLabel={open ? 'Match IRLY' : tx('Match IRLY is coming soon')}
           accessibilityHint={open ? tx('Opens people to meet, matched on what you share') : tx('Shows what Match IRLY will be')}
           style={[styles.irl, styles.match, { backgroundColor: t.c.brand, boxShadow: night ? '0px 10px 30px rgba(255,255,255,0.22), 0px 4px 12px rgba(0,0,0,0.5)' : t.shadow.float }]}
         >

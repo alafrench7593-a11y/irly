@@ -417,7 +417,7 @@ function AccountScreen() {
           <Text variant="caption" style={{ textDecorationLine: 'underline' }} onPress={() => router.push('/legal/privacy')} accessibilityRole="link">
             Privacy Policy
           </Text>
-          {tx('. You can delete your account anytime in Profile.')}
+          {tx('. You can delete your account anytime in Settings.')}
         </Text>
       </Animated.View>
     </Page>

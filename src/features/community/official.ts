@@ -216,7 +216,7 @@ export const WELCOME_CHARTER = [
   'Introduce yourself: the name you like to be called, what you enjoy, what you are looking for.',
   'Post questions, tips, recommendations, photos and plans that fit the community.',
   'Meet members: reply to their posts, join their activities, say hello in the chat.',
-  'Suggest an activity: tap « Create an activity », pick a place and a time, and members join you.',
+  'Suggest an activity: tap “Create an activity”, pick a place and a time, and members join you.',
 ];
 
 /**

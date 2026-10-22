@@ -343,7 +343,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
                 valid={valid && !missingMoms}
                 placeholder={
                   moms
-                    ? tx("{city} Moms", { city: city.name })
+                    ? tx("{city} Mamans", { city: city.name })
                     : tx("Sunrise runners {city}", { city: city.name })
                 }
                 maxLength={NAME_MAX}
@@ -362,7 +362,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
               {missingMoms ? (
                 <Text variant="caption" color={girl.bordeaux}>
                   {tx(
-                    "Add “Maman” or “Moms” to the name so mothers find it in IRLY Maman.",
+                    "Add “Maman” to the name so mothers find it in IRLY Maman.",
                   )}
                 </Text>
               ) : null}
