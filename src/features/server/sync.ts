@@ -107,24 +107,41 @@ export const commitBound = (payload: Payload): number => bound(heardAt(payload))
 export function echoGate(reload: () => void, wait: number, lastStart: () => number) {
   // The latest commit heard in this burst (server clock); NaN once one had no time.
   let latest = -Infinity;
+  // The latest moment the channel started listening in this burst (syncNow clock).
+  let since = -Infinity;
   let timer: ReturnType<typeof setTimeout> | null = null;
   const cancel = () => {
     if (timer) clearTimeout(timer);
     timer = null;
     latest = -Infinity;
+    since = -Infinity;
+  };
+  const arm = () => {
+    if (timer) return;
+    timer = setTimeout(() => {
+      timer = null;
+      const b = Math.max(latest === -Infinity ? -Infinity : bound(latest), since);
+      latest = -Infinity;
+      since = -Infinity;
+      if (lastStart() >= b) return;
+      reload();
+    }, wait);
   };
   return {
     heard: (payload?: Payload) => {
       const at = heardAt(payload);
       latest = Number.isFinite(at) && !Number.isNaN(latest) ? Math.max(latest, at) : NaN;
-      if (timer) return;
-      timer = setTimeout(() => {
-        timer = null;
-        const b = bound(latest);
-        latest = -Infinity;
-        if (lastStart() >= b) return;
-        reload();
-      }, wait);
+      arm();
+    },
+    /**
+     * The channel listens from now on (whenListening): a change committed
+     * before now was sent to nobody, but a load started from now on reads
+     * it. One reload, unless such a load started meanwhile (the app's sync
+     * catch-up usually reloads the same data a moment later).
+     */
+    listening: () => {
+      since = Math.max(since, syncNow());
+      arm();
     },
     cancel,
   };
