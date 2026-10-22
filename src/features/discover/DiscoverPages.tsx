@@ -230,7 +230,8 @@ export function ActivitiesPage({ cityId, scrollY, top, bottom }: PageProps) {
   const content = getCityContent(cityId);
   const doorW = (frame.width - space.gutter * 2 - 12) / 2;
   const inGirl = useAppSpace() === 'girl';
-  const girlPlans = useGirlPlans(cityId, { girlOnly: true });
+  // Shown in IRLY Girl only: not asked for in IRLY.
+  const girlPlans = useGirlPlans(cityId, { girlOnly: true, skip: !inGirl });
   const soon = useMemo(
     () => (inGirl ? [] : [...content.sessions].sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time)).slice(0, 4)),
     [content.sessions, inGirl],

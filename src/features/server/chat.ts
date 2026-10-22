@@ -178,15 +178,16 @@ function listenInbox(uid: string): () => void {
         heardMessage(payload);
         gate.heard(payload);
       })
-      // Listening: a message sent before then is in no event (one coalesced inbox read).
-      .subscribe(whenListening(() => gate.heard()));
+      // Listening: a message sent before then is in no event (one coalesced inbox read,
+      // none when the app's sync catch-up already read the inbox after this moment).
+      .subscribe(whenListening(gate.listening));
     // "Delete for everyone" elsewhere: the deleted message is hidden from you, so its
     // UPDATE never reaches you; the removal row does (members only), and the preview updates.
     // Its own channel: Realtime refuses a whole channel when one of its tables is missing,
     // and new messages must keep arriving whatever happens to this one.
     const removals = liveChannel(`inbox-removals-${uid}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_removals' }, gate.heard)
-      .subscribe(whenListening(() => gate.heard()));
+      .subscribe(whenListening(gate.listening));
     inboxLive = {
       uid,
       users: 0,

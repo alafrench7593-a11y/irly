@@ -4,6 +4,7 @@ import { cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
 import { create } from 'zustand';
 import { NONE } from '@/lib/none';
+import { together } from '@/lib/together';
 import { useAccount } from '@/features/auth/account';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, expectEcho, useRefreshOn, useSyncVersion } from './sync';
@@ -119,7 +120,9 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
 
   const load = useCallback(async (): Promise<ServerIrlPost[]> => {
     if (!supabase || !uid) return [];
-    const { data, error } = await supabase.rpc(girlSpace ? 'irl_feed_girl' : 'irl_feed', { p_city: cityId });
+    const sb = supabase;
+    // Home's live faces and its Live strip read the same feed as they open: one read.
+    const { data, error } = await together(`irl:${uid}:${cityId}:${girlSpace ? 'girl' : 'mixte'}`, () => sb.rpc(girlSpace ? 'irl_feed_girl' : 'irl_feed', { p_city: cityId }));
     if (error) throw new Error(error.message);
     const rows = (data as FeedRow[]) ?? [];
     const links = await signedAll(rows.flatMap((r) => [r.media_path, r.thumb_path ?? null]));
@@ -186,26 +189,24 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         reload(isAlive);
       }, 400);
     };
-    const channel = liveChannel(`irl-${cityId}-${uid}`)
-      // The feed covers the whole destination (the seven emirates): so do its events.
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=in.(${cityScope(cityId as CityId).join(',')})` }, (payload) => {
+    const stop = listenIrl(cityId, uid, {
+      changed: (payload) => {
         // My own post, already confirmed and shown, and its feed reload already asked: not twice.
         const id = (payload.new as { id?: string } | null)?.id;
         if (payload.eventType === 'INSERT' && id && confirmedHere.has(id)) return;
         later();
-      })
-      // Realtime cannot filter DELETE events (the old row only has its id): heard for every
-      // Live app-wide, so only a removal of a post on this screen reloads the feed.
-      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, (payload) => {
-        const id = (payload.old as { id?: string } | null)?.id;
+      },
+      // Only a removal of a post on this screen reloads the feed.
+      deleted: (id) => {
         if (!id || shownIds.current.has(id)) later();
-      })
+      },
       // Listening: a Live posted before then is in no event.
-      .subscribe(whenListening(later));
+      listening: later,
+    });
     return () => {
       alive = false;
       if (timer) clearTimeout(timer);
-      supabase?.removeChannel(channel);
+      stop();
     };
   }, [cityId, uid, reload]);
 
@@ -224,6 +225,48 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     return [...fresh, ...posts.filter((p) => keep(p.cityId) && live(p))];
   }, [posts, mine, keep, cityId, now, girlSpace]);
   return { posts: uid ? shown : NONE, refresh };
+}
+
+type IrlListener = {
+  changed: (payload: { eventType: string; new: unknown }) => void;
+  deleted: (id: string | undefined) => void;
+  listening: () => void;
+};
+/**
+ * The Live feed's realtime channel, ONE per destination and account however
+ * many screens show the feed (Home's live faces and its strip, the Live tab):
+ * each used to open its own and reload on every event.
+ */
+const irlLive = new Map<string, { users: Set<IrlListener>; stop: () => void }>();
+function listenIrl(cityId: string, uid: string, l: IrlListener): () => void {
+  const key = `${uid}:${cityId}`;
+  let live = irlLive.get(key);
+  if (!live && supabase) {
+    const sb = supabase;
+    const users = new Set<IrlListener>();
+    const channel = liveChannel(`irl-${cityId}-${uid}`)
+      // The feed covers the whole destination (the seven emirates): so do its events.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'irl_posts', filter: `city_id=in.(${cityScope(cityId as CityId).join(',')})` }, (payload) =>
+        users.forEach((u) => u.changed(payload)),
+      )
+      // Realtime cannot filter DELETE events (the old row only has its id): heard for every Live app-wide.
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'irl_posts' }, (payload) => {
+        const id = (payload.old as { id?: string } | null)?.id;
+        users.forEach((u) => u.deleted(id));
+      })
+      .subscribe(whenListening(() => users.forEach((u) => u.listening())));
+    live = { users, stop: () => void sb.removeChannel(channel) };
+    irlLive.set(key, live);
+  }
+  if (!live) return () => undefined;
+  const mine = live;
+  mine.users.add(l);
+  return () => {
+    mine.users.delete(l);
+    if (mine.users.size || irlLive.get(key) !== mine) return;
+    mine.stop();
+    irlLive.delete(key);
+  };
 }
 
 /** Posts confirmed on this phone (their own feed reload is already asked by bumpIrl): their realtime echo is skipped. */
@@ -720,12 +763,11 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     if (!supabase || !uid) return [];
     // One MESSAGE_CREATED row per chat message pushed friend requests out of
     // the latest 50 (and the bell to 0): messages have their own badge.
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('id, kind, payload, read_at, created_at')
-      .neq('kind', 'MESSAGE_CREATED')
-      .order('created_at', { ascending: false })
-      .limit(50);
+    const sb = supabase;
+    // The bell (always mounted) and the Notifications page read the same list in the same moment: one read.
+    const { data, error } = await together(`notifs:${uid}`, () =>
+      sb.from('notifications').select('id, kind, payload, read_at, created_at').neq('kind', 'MESSAGE_CREATED').order('created_at', { ascending: false }).limit(50),
+    );
     if (error) throw new Error(error.message);
     return (data ?? []).map((n) => ({
       id: n.id,

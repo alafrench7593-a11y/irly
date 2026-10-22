@@ -160,7 +160,7 @@ const toActivity = (p: DemoPlan, going: Record<string, boolean>): ServerActivity
 });
 
 /** Same shape as useServerActivities. */
-export function useDemoActivities(_cityId: CityId, _only: { categoryId?: string; girlOnly?: boolean } = {}) {
+export function useDemoActivities(_cityId: CityId, _only: { categoryId?: string; girlOnly?: boolean; skip?: boolean } = {}) {
   const going = useDemoGirl((s) => s.going);
   const activities = useMemo(
     // Every example plan is an IRLY Girl one (girls and moms).

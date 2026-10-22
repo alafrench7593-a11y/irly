@@ -45,6 +45,10 @@ let passed = 0;
 let failed = 0;
 const failures = [];
 const errors = [];
+const apiRequests = [];
+const timings = [];
+// Home's first content, loaded cold in a real browser against the live backend (a slow CI runner included).
+const HOME_FIRST_CONTENT_MS = 12_000;
 
 async function main() {
   await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`);
@@ -69,6 +73,10 @@ async function main() {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'en-US' });
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+  // Every request to the IRLY backend (REST, RPC, storage, auth), for the per-step counts.
+  page.on('request', (r) => {
+    if (r.url().includes('.supabase.co/')) apiRequests.push(r.url().replace(/^https:\/\/[^/]+/, '').split('?')[0]);
+  });
   page.on('console', (m) => {
     if (m.type() === 'error' && !/favicon|Failed to load resource|images\.unsplash/.test(m.text())) errors.push(`console: ${m.text().slice(0, 200)}`);
   });
@@ -86,12 +94,16 @@ async function main() {
   });
 
   const check = async (label, route, texts, act, exact) => {
+    // Timing and backend requests of each step (logged in the job output, see the table at the end).
+    const t0 = Date.now();
+    const r0 = apiRequests.length;
     try {
       if (route) await page.goto(BASE + route, { waitUntil: 'domcontentloaded' });
       if (act) await act();
       for (const t of texts) await page.getByText(t, { exact: false }).filter({ visible: true }).first().waitFor({ timeout: 15000 });
       if (exact) await page.getByText(exact, { exact: true }).first().waitFor({ timeout: 15000 });
       passed++;
+      timings.push({ label, ms: Date.now() - t0, requests: apiRequests.length - r0, cold: Boolean(route) });
       console.log(`✓ ${label}`);
     } catch (e) {
       failed++;
@@ -103,6 +115,33 @@ async function main() {
     await page.screenshot({ path: path.join(SHOTS, `${String(passed + failed).padStart(2, '0')}-${label.replace(/[^a-z0-9]+/gi, '-').slice(0, 40)}.png`) });
   };
   const click = (text) => page.getByText(text, { exact: true }).first().click();
+  // Home, loaded cold (a full page load, signed in): its first content within HOME_FIRST_CONTENT_MS,
+  // and what it asks the backend as it opens and in the next 5 s (logged).
+  const verifyHomeSpeed = async () => {
+    const label = `Home first content in under ${HOME_FIRST_CONTENT_MS / 1000} s (cold load)`;
+    try {
+      const r0 = apiRequests.length;
+      const t0 = Date.now();
+      await page.goto(BASE + '/', { waitUntil: 'commit' });
+      await page.getByText('Live Bali', { exact: false }).filter({ visible: true }).first().waitFor({ timeout: 30000 });
+      const ms = Date.now() - t0;
+      const atContent = apiRequests.length - r0;
+      await page.waitForTimeout(5000);
+      const asked = apiRequests.slice(r0);
+      const by = {};
+      for (const u of asked) by[u] = (by[u] ?? 0) + 1;
+      console.log(`   home: first content ${ms} ms, ${atContent} backend requests by then, ${asked.length} within 5 s more`);
+      for (const [u, n] of Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 12)) console.log(`     ${n}× ${u}`);
+      timings.push({ label: 'Home cold load (first content)', ms, requests: asked.length, cold: true });
+      if (ms > HOME_FIRST_CONTENT_MS) throw new Error(`first content after ${ms} ms`);
+      passed++;
+      console.log(`✓ ${label} (${ms} ms)`);
+    } catch (e) {
+      failed++;
+      failures.push(label);
+      console.log(`✗ ${label}: ${(e instanceof Error ? e.message : String(e)).split('\n')[0]}`);
+    }
+  };
 
   await check('sign in through the app (email + password)', '/account', [], async () => {
     // Email and password are on the first screen.
@@ -133,6 +172,8 @@ async function main() {
     await page.getByRole('button', { name: /^(Match IRLY|Soon: IRLY Match, coming soon)$/ }).first().click();
   });
   await check('Home shows Live Bali', '/', ['Live Bali']);
+  // Speed: Home's first content, from a full page load (the bundle, the session, the first reads).
+  await verifyHomeSpeed();
   await check('Discover shows Bali and restaurants doors', '/discover?tab=places', ['Discover', 'Live Bali', 'Where to eat']);
   await check('Bali hub', '/bali', ["Don't just visit", 'Where should I live?', 'Areas, explained']);
   await check('Area page Canggu (guide + IRLY data)', '/bali/area/canggu', ['Canggu', 'IRLY Guide', 'Happening in Canggu']);
@@ -465,6 +506,14 @@ try {
 }
 
 const real = errors.filter((e) => !/supabase\.co\/storage|ResizeObserver/.test(e));
+// Speed: time to the step's content and requests to the backend, per step (a page load when the step opens a route).
+console.log('\n── Timings (ms to content · backend requests) ──');
+for (const x of timings) console.log(`${String(x.ms).padStart(6)} ms ${String(x.requests).padStart(4)} req  ${x.cold ? 'load ' : 'in-app'}  ${x.label}`);
+const loads = timings.filter((x) => x.cold);
+if (loads.length) {
+  const sorted = loads.map((x) => x.ms).sort((a, b) => a - b);
+  console.log(`page loads: ${loads.length}, median ${sorted[Math.floor(sorted.length / 2)]} ms, slowest ${sorted[sorted.length - 1]} ms; requests per load: median ${loads.map((x) => x.requests).sort((a, b) => a - b)[Math.floor(loads.length / 2)]}`);
+}
 console.log(`\nBrowser errors: ${real.length}`);
 for (const e of [...new Set(real)].slice(0, 15)) console.log('  ' + e);
 console.log(`\n${passed} passed, ${failed} failed`);
