@@ -394,20 +394,19 @@ try {
     return a.some((x) => x.id === momAct) && !c.some((x) => x.id === momAct);
   });
   await step('Carl cannot join the moms playdate', () => denied(C.sb.rpc('join_activity', { p_activity: momAct, p_status: 'going' })));
-  await step('Bali mom and girl communities: visible to women, hidden from men', async () => {
-    const w = must(await A.sb.from('communities').select('name').eq('city_id', 'bali').ilike('name', '%Moms%'));
-    const m = must(await C.sb.from('communities').select('name').eq('city_id', 'bali').ilike('name', '%Moms%'));
-    return w.length >= 1 && m.length === 0;
+  // The test makes its own women-only community in Bali (deleted with its accounts at the end)
+  // rather than relying on a community that happens to exist in production.
+  let girlsId;
+  await step('a women-only community in Bali: visible to women, hidden from men', async () => {
+    girlsId = must(await A.sb.rpc('create_community', { p_name: `E2E Bali Girls ${run}`, p_city: 'bali', p_tagline: null, p_description: null, p_category: 'sport', p_girl_only: true }));
+    const w = must(await B.sb.from('communities').select('id').eq('id', girlsId));
+    const m = must(await C.sb.from('communities').select('id').eq('id', girlsId));
+    return w.length === 1 && m.length === 0;
   });
-  await step('Alice joins Bali Girls → lands in its chat', async () => {
-    const c = must(await A.sb.from('communities').select('id').eq('city_id', 'bali').eq('name', 'Bali Girls').single());
-    return Boolean(must(await A.sb.rpc('join_community', { p_community: c.id })));
-  });
+  await step('Alice joins it → lands in its chat', async () => Boolean(must(await A.sb.rpc('join_community', { p_community: girlsId }))));
 
   // ───── Community posts ─────
-  let girlsId;
-  await step('Alice posts in Bali Girls; Bea joins and sees it with its author', async () => {
-    girlsId = must(await A.sb.from('communities').select('id').eq('city_id', 'bali').eq('name', 'Bali Girls').single()).id;
+  await step('Alice posts in it; Bea joins and sees it with its author', async () => {
     must(await A.sb.from('community_posts').insert({ community_id: girlsId, author_id: A.id, body: `E2E brunch sunday, who's in? ${run}` }));
     must(await B.sb.rpc('join_community', { p_community: girlsId }));
     const feed = must(await B.sb.rpc('community_feed', { p_community: girlsId, p_limit: 50 }));
