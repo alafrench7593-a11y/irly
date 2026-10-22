@@ -414,7 +414,7 @@ export async function joinServerActivity(activityId: string): Promise<string | '
 /** What the member reads when the server refuses a community (never its code text). */
 function communityError(m: string): string {
   if (/up to 3 communities a day/i.test(m)) return 'You can create up to 3 communities a day. Try again tomorrow.';
-  if (/girls-only/i.test(m)) return 'Only IRLY Girl members can create a girls-only community';
+  if (/girls-only/i.test(m)) return 'Only IRLY Girl members can create a women-only community';
   if (/communities_name_check/i.test(m)) return 'The name needs 3 to 60 characters';
   if (/sign in required|jwt/i.test(m)) return 'Your session has ended. Sign in again';
   return friendlyError(m);

@@ -124,7 +124,7 @@ export function SettingsSections() {
             <Divider inset={16} />
             <SettingLink icon="file" label="Download my data" value={exporting ? 'Preparing…' : 'A copy of what IRLY stores'} onPress={downloadData} />
             <Divider inset={16} />
-            <SettingLink icon="arrowLeft" label="Log out" value={signingOut ? 'Signing out…' : undefined} busy={signingOut} onPress={logOut} />
+            <SettingLink icon="arrowLeft" label="Sign out" value={signingOut ? 'Signing out…' : undefined} busy={signingOut} onPress={logOut} />
             <Divider inset={16} />
             <SettingLink icon="x" label="Delete account" danger onPress={() => setConfirmDelete(true)} />
           </>

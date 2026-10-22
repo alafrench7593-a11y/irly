@@ -375,9 +375,9 @@ function Act({ cmd, cityId, busy, onCreate, onSwitch }: { cmd: Command; cityId: 
   if (cmd.intent === 'OPEN_MOMS') {
     return (
       <View style={styles.pad}>
-        <Button label="Open IRLY Maman" icon="baby" full onPress={() => router.push('/girl')} />
+        <Button label="Open IRLY Maman" icon="baby" full onPress={() => router.push('/girl?mode=moms')} />
         <Text variant="caption" tone="tertiary" style={{ marginTop: 8 }}>
-          IRLY Maman is inside IRLY Girl: tap Moms at the top.
+          IRLY Maman is part of IRLY Girl: women only.
         </Text>
       </View>
     );
