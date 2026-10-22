@@ -393,6 +393,8 @@ export function CommunityTile({ c, index }: { c: NetCommunity; index: number }) 
         onPressIn={onPressIn}
         onPressOut={onPressOut}
         accessibilityLabel={c.name}
+        // The tile of this community, whatever its shown title (end-to-end tests).
+        testID={`net-community-${c.id}`}
         style={[styles.community, { boxShadow: tone.surface.shadow }]}
       >
         <NetworkPane radius={radius.lg} press={press} />
