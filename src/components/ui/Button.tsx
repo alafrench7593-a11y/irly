@@ -104,6 +104,8 @@ export const Button = memo(function Button({
         onPress={onPress}
         disabled={disabled || loading}
         haptic={haptic}
+        // The small pill (34 pt) still answers on 44 pt.
+        hitSlop={h < 44 ? { top: (44 - h) / 2, bottom: (44 - h) / 2 } : undefined}
         accessibilityLabel={label}
         accessibilityHint={accessibilityHint}
         accessibilityState={{ disabled: disabled || loading, busy: loading }}
@@ -136,7 +138,8 @@ export const Button = memo(function Button({
           <View style={styles.row}>
             {leading ? leading(p.fg) : null}
             {icon ? <Icon name={icon} size={size === 'sm' ? 15 : 18} color={p.fg} strokeWidth={2.2} /> : null}
-            <Text variant={size === 'sm' ? 'label' : 'titleS'} color={p.fg} numberOfLines={1} raw={raw}>
+            {/* A long label (French, a big text size) shrinks a little, then ends in « … »: it never runs past the pill's edge. */}
+            <Text variant={size === 'sm' ? 'label' : 'titleS'} color={p.fg} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85} style={styles.label} raw={raw}>
               {label}
             </Text>
             {iconRight ? <Icon name={iconRight} size={size === 'sm' ? 15 : 18} color={p.fg} strokeWidth={2.2} /> : null}
@@ -152,7 +155,8 @@ const GIRL_GRADIENT = ['#D63A7E', '#B92B69', '#9E2358'] as const;
 
 const styles = StyleSheet.create({
   base: { alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%', minWidth: 0 },
+  label: { flexShrink: 1 },
   full: { alignSelf: 'stretch' },
   girlRim: { borderWidth: 1, borderColor: 'rgba(255,214,232,0.45)', borderBottomColor: 'rgba(122,31,61,0.35)' },
 });

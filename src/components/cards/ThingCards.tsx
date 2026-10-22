@@ -43,11 +43,13 @@ export const ActivityTile = memo(function ActivityTile({
           <Glass dark style={styles.tileIcon}>
             <Icon name={a.icon} size={16} color="#FFFFFF" />
           </Glass>
-          <View>
-            <Text variant="titleS" tone="onDark">
+          {/* Three tiles a row on a 375 pt phone leave ~80 pt of text: the name may take two lines but never
+              breaks inside a word (« Networkin/g »): its size comes down until its longest word fits; the count keeps one line. */}
+          <View style={styles.tileText}>
+            <Text variant="titleS" tone="onDark" numberOfLines={2} style={fitWord(tx(a.label), size - 24)}>
               {a.label}
             </Text>
-            <Text variant="caption" color="rgba(255,255,255,0.75)">
+            <Text variant="caption" color="rgba(255,255,255,0.75)" numberOfLines={1}>
               {count ? tx(count === 1 ? '{n} plan this week' : '{n} plans this week', { n: count }) : tx('Start the first plan')}
             </Text>
           </View>
@@ -56,6 +58,13 @@ export const ActivityTile = memo(function ActivityTile({
     </PressableScale>
   );
 });
+
+/** Title size for a narrow tile: 16 pt, smaller only when the longest word would not fit the width (~0.62 em a letter). */
+function fitWord(label: string, width: number) {
+  const longest = Math.max(...label.split(/\s+/).map((w) => w.length), 1);
+  const size = Math.max(12, Math.min(16, Math.floor(width / (longest * 0.62))));
+  return size < 16 ? { fontSize: size, lineHeight: size + 4 } : undefined;
+}
 
 /* ───────── Session card ───────── */
 
@@ -256,6 +265,7 @@ export const EditorialCard = memo(function EditorialCard({ editorial, width = 30
 const styles = StyleSheet.create({
   tile: { borderRadius: radius.lg, justifyContent: 'flex-end' },
   tileInner: { flex: 1, padding: 12, justifyContent: 'space-between' },
+  tileText: { minWidth: 0 },
   tileIcon: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   session: { padding: 16, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, gap: 8 },
   sessionTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 2 },

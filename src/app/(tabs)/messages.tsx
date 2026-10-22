@@ -2,7 +2,9 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Page } from '@/components/layout/Page';
+import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Glass } from '@/components/ui/Glass';
@@ -75,6 +77,10 @@ export default function MessagesRoute() {
 
 function Messages() {
   const t = useTheme();
+  // Messages lives in the tabs: the floating tab bar stays over it, so the last chat must scroll clear of it
+  // (Page already adds the bottom safe area, the bar's own space is the rest).
+  const insets = useSafeAreaInsets();
+  const tabBarSpace = useTabBarSpace();
   const router = useRouter();
   const cityId = useCityId();
   const city = CITIES[cityId];
@@ -159,7 +165,7 @@ function Messages() {
   };
 
   return (
-    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined} onBack={back}>
+    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined} onBack={back} bottomInset={tabBarSpace - insets.bottom}>
       <View style={styles.pad}>
         <View style={styles.search}>
           <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />

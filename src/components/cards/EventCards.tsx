@@ -112,7 +112,7 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
           </Text>
         </View>
       </Photo>
-      <View style={{ flex: 1, gap: 3 }}>
+      <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
         <Text variant="overline" tone="accent" style={{ fontSize: 10 }}>
           {EVENT_CATEGORIES[event.category].label}
         </Text>
@@ -123,9 +123,10 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
           {whenLabel(event.when, city)} · {areaName(city, event.areaId)}
         </Text>
         <View style={[styles.row, { marginTop: 6, justifyContent: 'space-between' }]}>
-          <View style={styles.row}>
+          {/* The count gives way (« … ») so the join button keeps its place inside the card on a 375 pt phone. */}
+          <View style={[styles.row, styles.shrink]}>
             <AvatarStack people={people} size={22} max={3} />
-            <Text variant="caption" tone="secondary">
+            <Text variant="caption" tone="secondary" numberOfLines={1} style={styles.shrink}>
               {goingCount(event, joined)} going · {formatPrice(event.price, city.currency)}
             </Text>
           </View>
@@ -137,6 +138,7 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
               haptic(on ? 'success' : 'tap');
               if (on) toast("You're in", 'check');
             }}
+            hitSlop={6}
             style={[styles.joinMini, { backgroundColor: joined ? t.c.positiveSoft : t.c.brand }]}
             accessibilityLabel={joined ? 'Leave' : 'Join'}
           >
@@ -165,5 +167,6 @@ const styles = StyleSheet.create({
   },
   thumb: { width: 92, height: 108, borderRadius: radius.md, justifyContent: 'flex-end' },
   thumbDate: { padding: 8 },
-  joinMini: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginLeft: space[2] },
+  joinMini: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginLeft: space[2], flexShrink: 0 },
+  shrink: { flexShrink: 1, minWidth: 0 },
 });

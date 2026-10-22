@@ -130,7 +130,8 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
   );
   return (
     <Animated.View style={outer}>
-      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityRole="button" accessibilityState={{ selected }}>
+      {/* The pill stays 34/40 pt tall; its touch area reaches the 44 pt minimum above and below. */}
+      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} hitSlop={{ top: (44 - h) / 2, bottom: (44 - h) / 2 }} accessibilityRole="button" accessibilityState={{ selected }}>
         <SelectionLayers
           p={p}
           sweep={sweep}
