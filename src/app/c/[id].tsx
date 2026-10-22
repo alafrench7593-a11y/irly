@@ -49,6 +49,7 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
 import { SpaceFlavor } from '@/theme/space';
 import { enter } from '@/motion/enter';
+import { useBusy } from '@/lib/useBusy';
 
 type Tab = 'posts' | 'activities' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
@@ -96,6 +97,8 @@ function CommunityScreen() {
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
   const [tab, setTab] = useState<Tab>('posts');
   const [busy, setBusy] = useState(false);
+  // Leave / Delete wait for the server: one at a time, a spinner meanwhile (a second tap asked again, then failed).
+  const owner = useBusy<'leave' | 'delete'>();
   const reduced = useReducedMotion();
   // An assistant idea tapped goes into the post composer (n remounts it).
   const [idea, setIdea] = useState({ text: '', n: 0 });
@@ -230,15 +233,20 @@ function CommunityScreen() {
                     <Button
                       label="Delete"
                       variant="danger"
+                      loading={owner.busy === 'delete'}
+                      disabled={owner.busy !== null}
                       onPress={() =>
+                        owner.isRunning() ||
                         confirm('Delete this community? It disappears for everyone, and its chat leaves every inbox.', () =>
-                          deleteCommunity(c.id)
-                            .then(() => {
-                              toast('Community deleted', 'check', 'brand');
-                              if (router.canGoBack()) router.back();
-                              else router.replace('/communities');
-                            })
-                            .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')),
+                          void owner.run('delete', () =>
+                            deleteCommunity(c.id)
+                              .then(() => {
+                                toast('Community deleted', 'check', 'brand');
+                                if (router.canGoBack()) router.back();
+                                else router.replace('/communities');
+                              })
+                              .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')),
+                          ),
                         )
                       }
                     />
@@ -247,15 +255,20 @@ function CommunityScreen() {
                   <Button
                     label="Leave"
                     variant="secondary"
+                    loading={owner.busy === 'leave'}
+                    disabled={owner.busy !== null}
                     onPress={() =>
+                      owner.isRunning() ||
                       confirm('Leave this community?', () =>
-                        leaveCommunity(c.id)
-                          .then(() => {
-                            setJoined(null);
-                            toast('You left the community', 'check', 'brand');
-                            refresh();
-                          })
-                          .catch(() => toast('Could not leave', 'x', 'live')),
+                        void owner.run('leave', () =>
+                          leaveCommunity(c.id)
+                            .then(() => {
+                              setJoined(null);
+                              toast('You left the community', 'check', 'brand');
+                              refresh();
+                            })
+                            .catch(() => toast('Could not leave', 'x', 'live')),
+                        ),
                       )
                     }
                   />
@@ -872,6 +885,8 @@ function Loading() {
 function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName: string; onMuted: () => void }) {
   const t = useTheme();
   const [rules, setRules] = useState(!c.isMember);
+  // Mute flips what the page last read: a second tap before the answer sent the same flip again.
+  const muting = useBusy<'mute'>();
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       <WelcomeCharter c={c} />
@@ -899,13 +914,16 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
             label={c.muted ? 'Unmute chat' : 'Mute chat'}
             icon={c.muted ? 'bell' : 'bellOff'}
             variant="ghost"
+            loading={muting.busy === 'mute'}
             onPress={() =>
-              setCommunityMuted(c.conversationId!, !c.muted)
-                .then(() => {
-                  toast(c.muted ? 'Chat notifications on' : 'Chat muted', 'check', 'brand');
-                  onMuted();
-                })
-                .catch(() => toast('Could not change it', 'x', 'live'))
+              void muting.run('mute', () =>
+                setCommunityMuted(c.conversationId!, !c.muted)
+                  .then(() => {
+                    toast(c.muted ? 'Chat notifications on' : 'Chat muted', 'check', 'brand');
+                    onMuted();
+                  })
+                  .catch(() => toast('Could not change it', 'x', 'live')),
+              )
             }
           />
           <Button label="Report" icon="flag" variant="ghost" onPress={() => openReport({ kind: 'community', id: c.id })} />

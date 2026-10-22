@@ -176,7 +176,7 @@ function SettingsScreen() {
     if (!supabase || !uid || notReady() || !mapVis) return;
     if (on) {
       if (safetyNow.current.location_precision !== 'area') {
-        toast('Choose « Neighbourhood » for your location to appear on the map', 'pin', 'brand');
+        toast('Choose “Neighbourhood” for your location to appear on the map', 'pin', 'brand');
         return;
       }
       const perm = await Location.requestForegroundPermissionsAsync().catch(() => null);

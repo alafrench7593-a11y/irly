@@ -1,0 +1,21 @@
+name: Test data census
+
+# Read-only: lists accounts that look like test or development accounts and
+# what each one owns, before any clean-up. Deletes nothing.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/apple-audit]
+    paths: ['scripts/test-data-census.mjs', '.github/workflows/test-data-census.yml']
+
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/test-data-census.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

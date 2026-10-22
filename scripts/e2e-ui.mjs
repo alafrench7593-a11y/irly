@@ -51,7 +51,8 @@ const timings = [];
 const HOME_FIRST_CONTENT_MS = 12_000;
 
 async function main() {
-  await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`);
+  await sql(`delete from public.communities where created_by in (select id from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours'));
+    delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`);
   const [{ user_id: uid }] = await sql(`
     with u as (
       insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
@@ -169,7 +170,7 @@ async function main() {
   // Match IRLY is not open yet (src/lib/features.ts): the bar button (« Soon » while it is
   // closed) must lead to its coming-soon page, which says so, not to a list of people.
   await check('Match IRLY in the bar opens its coming-soon page', '/', ['Match IRLY is not open yet', 'Tell me when it opens'], async () => {
-    await page.getByRole('button', { name: /^(Match IRLY|Soon: IRLY Match, coming soon)$/ }).first().click();
+    await page.getByRole('button', { name: /^(Match IRLY|Match IRLY is coming soon|Soon: IRLY Match, coming soon)$/ }).first().click();
   });
   await check('Home shows Live Bali', '/', ['Live Bali']);
   // Speed: Home's first content, from a full page load (the bundle, the session, the first reads).
@@ -382,9 +383,9 @@ async function main() {
   // ── Log out: timed, the session ends on the server, nothing private stays on this browser.
   let outMs = 0;
   await check('Log out goes to Welcome', '/preferences', [], async () => {
-    await page.getByText('Log out', { exact: true }).first().waitFor({ timeout: 15000 });
+    await page.getByText('Sign out', { exact: true }).first().waitFor({ timeout: 15000 });
     const t0 = Date.now();
-    await page.getByText('Log out', { exact: true }).first().click();
+    await page.getByText('Sign out', { exact: true }).first().click();
     await page.waitForURL(/\/welcome/, { timeout: 60000 });
     outMs = Date.now() - t0;
   });
@@ -424,7 +425,7 @@ async function main() {
     }
   });
   await check('Zoe logs out', '/preferences', [], async () => {
-    await page.getByText('Log out', { exact: true }).first().click();
+    await page.getByText('Sign out', { exact: true }).first().click();
     await page.waitForURL(/\/welcome/, { timeout: 60000 });
   });
   await check('sign in again', null, [], signIn, 'Signed in');
@@ -501,7 +502,8 @@ try {
     failed++;
     failures.push(`profiles_id_fkey check: ${e instanceof Error ? e.message : e}`);
   });
-  await sql(`delete from auth.users where email in ('${EMAIL}', 'e2e-ui2-${run}@irly.test') or ((email like 'e2e-ui-%@irly.test' or email like 'e2e-ui2-%@irly.test') and created_at < now() - interval '2 hours')`).catch(() => undefined);
+  await sql(`delete from public.communities where created_by in (select id from auth.users where email in ('${EMAIL}', 'e2e-ui2-${run}@irly.test') or ((email like 'e2e-ui-%@irly.test' or email like 'e2e-ui2-%@irly.test') and created_at < now() - interval '2 hours'));
+    delete from auth.users where email in ('${EMAIL}', 'e2e-ui2-${run}@irly.test') or ((email like 'e2e-ui-%@irly.test' or email like 'e2e-ui2-%@irly.test') and created_at < now() - interval '2 hours')`).catch(() => undefined);
   server.close();
 }
 

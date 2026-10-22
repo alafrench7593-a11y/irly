@@ -124,7 +124,7 @@ export function SettingsSections() {
             <Divider inset={16} />
             <SettingLink icon="file" label="Download my data" value={exporting ? 'Preparing…' : 'A copy of what IRLY stores'} onPress={downloadData} />
             <Divider inset={16} />
-            <SettingLink icon="arrowLeft" label="Log out" value={signingOut ? 'Signing out…' : undefined} busy={signingOut} onPress={logOut} />
+            <SettingLink icon="arrowLeft" label="Sign out" value={signingOut ? 'Signing out…' : undefined} busy={signingOut} onPress={logOut} />
             <Divider inset={16} />
             <SettingLink icon="x" label="Delete account" danger onPress={() => setConfirmDelete(true)} />
           </>
@@ -291,6 +291,9 @@ export function SettingsSections() {
             Your profile, photos, professional and IRLY Girl profiles, messages, posts, comments, connections, matches and notifications are deleted from IRLY’s
             servers, and you are signed out on this phone. Communities you own pass to another member. Content already reported to moderators is kept for review.
           </Text>
+          <Text variant="body" tone="secondary">
+            Plans you created are deleted too: people going to an upcoming one are told.
+          </Text>
           <Text variant="caption" tone="tertiary">
             Want a copy first? Use “Download my data”.
           </Text>
@@ -331,7 +334,8 @@ export function SettingLink({ icon, label, value, onPress, danger, busy }: { ico
       accessibilityLabel={value ? `${label}, ${value}` : label}
     >
       <Icon name={icon} size={18} color={danger ? t.c.critical : t.c.text} />
-      <Text variant="titleS" color={danger ? t.c.critical : undefined} style={{ flex: 1 }}>
+      {/* A long label (« Se connecter ou créer un compte » next to its hint) takes two lines and the row grows, never past its edges. */}
+      <Text variant="titleS" color={danger ? t.c.critical : undefined} numberOfLines={2} style={styles.label}>
         {label}
       </Text>
       {value ? (
@@ -352,9 +356,11 @@ export function SettingLink({ icon, label, value, onPress, danger, busy }: { ico
 }
 
 const styles = StyleSheet.create({
-  value: { maxWidth: '48%', textAlign: 'right' },
+  // Both start from their natural width; when the row is short of room the hint gives way twice as fast as the label.
+  label: { flexGrow: 1, flexShrink: 1, minWidth: 0 },
+  value: { maxWidth: '42%', flexShrink: 2, minWidth: 0, textAlign: 'right' },
   section: { marginBottom: space[8] },
   group: { marginHorizontal: space.gutter, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
   warning: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', alignSelf: 'center' },
-  settingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, height: 56 },
+  settingRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 8, minHeight: 56 },
 });

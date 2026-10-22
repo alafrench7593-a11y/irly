@@ -131,10 +131,31 @@ function AccountScreen() {
   };
 
   const input = [styles.input, { color: t.c.text, backgroundColor: t.c.glass, borderColor: t.c.line }];
+  // Return on the email goes to the password; Return on the password signs in.
+  const passwordRef = useRef<TextInput>(null);
   const validEmail = isValidEmail(email);
   // Said under the field once something is typed, instead of a button that stays grey without a reason.
   const emailHint = email.trim().length > 3 && !validEmail ? MESSAGES.invalidEmail : null;
   const passwordHint = creating && password.length > 0 && password.length < PASSWORD_MIN ? MESSAGES.passwordTooShort : null;
+  const canSubmitPassword = validEmail && password.length >= (creating ? 8 : 1);
+  const submitPassword = () => {
+    if (!canSubmitPassword) return;
+    act(async () => {
+      if (creating) {
+        const confirm = await signUpWithPassword(email, password);
+        if (confirm) {
+          track('SIGNUP', { method: 'password' });
+          toast('Check your inbox to confirm your email', 'send', 'brand');
+          setMode('code');
+          return;
+        }
+        done('password');
+      } else {
+        await signInWithPassword(email, password);
+        done('password');
+      }
+    });
+  };
 
   if (!hasBackend) {
     return (
@@ -145,25 +166,20 @@ function AccountScreen() {
   }
 
   if (account && mode === 'reset') {
+    const savePassword = () => {
+      if (password.length < 8) return;
+      act(async () => {
+        await updatePassword(password);
+        toast('Password updated', 'check', 'positive');
+        setMode('choose');
+        setPassword('');
+      });
+    };
     return (
       <Page overline="IRLY account" title="New password" subtitle="Choose a new password for your account.">
         <View style={styles.body}>
-          <TextInput value={password} onChangeText={setPassword} placeholder={tx('New password (8+ characters)')} placeholderTextColor={t.c.textTertiary} secureTextEntry autoComplete="new-password" textContentType="newPassword" style={input} accessibilityLabel={a11y('New password')} />
-          <Button
-            label="Save password"
-            icon="check"
-            full
-            loading={busy}
-            disabled={password.length < 8}
-            onPress={() =>
-              act(async () => {
-                await updatePassword(password);
-                toast('Password updated', 'check', 'positive');
-                setMode('choose');
-                setPassword('');
-              })
-            }
-          />
+          <TextInput value={password} onChangeText={setPassword} placeholder={tx('New password (8+ characters)')} placeholderTextColor={t.c.textTertiary} secureTextEntry autoComplete="new-password" textContentType="newPassword" returnKeyType="done" onSubmitEditing={savePassword} style={input} accessibilityLabel={a11y('New password')} />
+          <Button label="Save password" icon="check" full loading={busy} disabled={password.length < 8} onPress={savePassword} />
         </View>
       </Page>
     );
@@ -265,13 +281,30 @@ function AccountScreen() {
         {/* Email and password, right on the first screen. */}
         {mode === 'choose' || mode === 'email' ? (
           <>
-            <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel={a11y('Email')} />
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder={tx('you@email.com')}
+              placeholderTextColor={t.c.textTertiary}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="next"
+              submitBehavior="submit"
+              blurOnSubmit={false}
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              style={input}
+              accessibilityLabel={a11y('Email')}
+            />
             {emailHint ? (
               <Text variant="caption" tone="critical" accessibilityLiveRegion="polite">
                 {emailHint}
               </Text>
             ) : null}
             <TextInput
+              ref={passwordRef}
               value={password}
               onChangeText={setPassword}
               placeholder={tx(creating ? 'Password (8+ characters)' : 'Password')}
@@ -279,7 +312,8 @@ function AccountScreen() {
               secureTextEntry
               autoComplete={creating ? 'new-password' : 'current-password'}
               textContentType={creating ? 'newPassword' : 'password'}
-              onSubmitEditing={() => undefined}
+              returnKeyType="go"
+              onSubmitEditing={submitPassword}
               style={input}
               accessibilityLabel={a11y('Password')}
             />
@@ -293,24 +327,8 @@ function AccountScreen() {
               icon="check"
               full
               loading={busy}
-              disabled={!validEmail || password.length < (creating ? 8 : 1)}
-              onPress={() =>
-                act(async () => {
-                  if (creating) {
-                    const confirm = await signUpWithPassword(email, password);
-                    if (confirm) {
-                      track('SIGNUP', { method: 'password' });
-                      toast('Check your inbox to confirm your email', 'send', 'brand');
-                      setMode('code');
-                      return;
-                    }
-                    done('password');
-                  } else {
-                    await signInWithPassword(email, password);
-                    done('password');
-                  }
-                })
-              }
+              disabled={!canSubmitPassword}
+              onPress={submitPassword}
             />
             <Button label={creating ? 'I already have an account' : 'Create an account'} variant="ghost" onPress={() => setCreating(!creating)} />
             {!creating ? <Button label="Forgot password?" variant="ghost" onPress={() => setMode('forgot')} /> : null}
@@ -320,7 +338,7 @@ function AccountScreen() {
 
         {mode === 'link' || mode === 'forgot' ? (
           <>
-            <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" style={input} accessibilityLabel={a11y('Email')} />
+            <TextInput value={email} onChangeText={setEmail} placeholder={tx('you@email.com')} placeholderTextColor={t.c.textTertiary} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" textContentType="emailAddress" returnKeyType="done" style={input} accessibilityLabel={a11y('Email')} />
             {emailHint ? (
               <Text variant="caption" tone="critical" accessibilityLiveRegion="polite">
                 {emailHint}
@@ -399,7 +417,7 @@ function AccountScreen() {
           <Text variant="caption" style={{ textDecorationLine: 'underline' }} onPress={() => router.push('/legal/privacy')} accessibilityRole="link">
             Privacy Policy
           </Text>
-          {tx('. You can delete your account anytime in Profile.')}
+          {tx('. You can delete your account anytime in Settings.')}
         </Text>
       </Animated.View>
     </Page>

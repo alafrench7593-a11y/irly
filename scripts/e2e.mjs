@@ -90,7 +90,9 @@ async function cleanup() {
   // Own run, or accounts this script left behind more than 2 hours ago. Never the
   // browser tests' accounts (e2e-sync-*, e2e-ui-*): they may be in use by a run
   // happening at the same time.
-  await sql(`delete from auth.users where email like 'e2e-${run}-%@irly.test'
+  await sql(`delete from public.communities where created_by in (select id from auth.users where email like 'e2e-${run}-%@irly.test'
+    or (email like 'e2e-%@irly.test' and email not like 'e2e-sync-%' and email not like 'e2e-ui-%' and created_at < now() - interval '2 hours'));
+    delete from auth.users where email like 'e2e-${run}-%@irly.test'
     or (email like 'e2e-%@irly.test' and email not like 'e2e-sync-%' and email not like 'e2e-ui-%' and created_at < now() - interval '2 hours')`)
     .catch((e) => console.log('cleanup:', e.message));
 }
@@ -112,7 +114,8 @@ try {
     if (up.error) throw new Error(up.error.message);
     if (!up.data.session) {
       // Email confirmation is on: the account exists but needs the link. Remove it and say so.
-      await sql(`delete from auth.users where email = '${email}'`);
+      await sql(`delete from public.communities where created_by in (select id from auth.users where email = '${email}');
+    delete from auth.users where email = '${email}'`);
       console.log('   (email confirmation required: the sign-in part needs the emailed link, not testable here)');
       return true;
     }
@@ -391,20 +394,19 @@ try {
     return a.some((x) => x.id === momAct) && !c.some((x) => x.id === momAct);
   });
   await step('Carl cannot join the moms playdate', () => denied(C.sb.rpc('join_activity', { p_activity: momAct, p_status: 'going' })));
-  await step('Bali mom and girl communities: visible to women, hidden from men', async () => {
-    const w = must(await A.sb.from('communities').select('name').eq('city_id', 'bali').ilike('name', '%Moms%'));
-    const m = must(await C.sb.from('communities').select('name').eq('city_id', 'bali').ilike('name', '%Moms%'));
-    return w.length >= 1 && m.length === 0;
+  // The test makes its own women-only community in Bali (deleted with its accounts at the end)
+  // rather than relying on a community that happens to exist in production.
+  let girlsId;
+  await step('a women-only community in Bali: visible to women, hidden from men', async () => {
+    girlsId = must(await A.sb.rpc('create_community', { p_name: `E2E Bali Girls ${run}`, p_city: 'bali', p_tagline: null, p_description: null, p_category: 'sport', p_girl_only: true }));
+    const w = must(await B.sb.from('communities').select('id').eq('id', girlsId));
+    const m = must(await C.sb.from('communities').select('id').eq('id', girlsId));
+    return w.length === 1 && m.length === 0;
   });
-  await step('Alice joins Bali Girls → lands in its chat', async () => {
-    const c = must(await A.sb.from('communities').select('id').eq('city_id', 'bali').eq('name', 'Bali Girls').single());
-    return Boolean(must(await A.sb.rpc('join_community', { p_community: c.id })));
-  });
+  await step('Alice joins it → lands in its chat', async () => Boolean(must(await A.sb.rpc('join_community', { p_community: girlsId }))));
 
   // ───── Community posts ─────
-  let girlsId;
-  await step('Alice posts in Bali Girls; Bea joins and sees it with its author', async () => {
-    girlsId = must(await A.sb.from('communities').select('id').eq('city_id', 'bali').eq('name', 'Bali Girls').single()).id;
+  await step('Alice posts in it; Bea joins and sees it with its author', async () => {
     must(await A.sb.from('community_posts').insert({ community_id: girlsId, author_id: A.id, body: `E2E brunch sunday, who's in? ${run}` }));
     must(await B.sb.rpc('join_community', { p_community: girlsId }));
     const feed = must(await B.sb.rpc('community_feed', { p_community: girlsId, p_limit: 50 }));

@@ -28,6 +28,7 @@ import { useT } from '@/i18n';
 import { ease, spring } from '@/motion/tokens';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { useBusy } from '@/lib/useBusy';
 import { AccentFill, layered, NetworkPane, useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 /** A professional's profile: who they are, what they build, why you fit. */
@@ -55,6 +56,8 @@ function ProProfileScreenPage() {
   const ready = state === 'ready';
   const me = useMyPro();
   const [safety, setSafety] = useState(false);
+  // Block waits for the server: a second tap asked again, then went back twice.
+  const blocking = useBusy<'block'>();
   const [reporting, setReporting] = useState(false);
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -229,18 +232,22 @@ function ProProfileScreenPage() {
               icon="shield"
               variant="danger"
               full
+              loading={blocking.busy === 'block'}
               onPress={() =>
+                blocking.isRunning() ||
                 confirm(
                   tr('Block {name}? You will no longer see each other, and any connection or request ends.', { name: pro.firstName }),
                   () =>
-                    blockUser(pro.userId)
-                      .then(() => {
-                        setSafety(false);
-                        toast(tr('{name} is blocked', { name: pro.firstName }), 'shield', 'brand');
-                        if (router.canGoBack()) router.back();
-                        else router.replace('/network');
-                      })
-                      .catch((e) => toast(e instanceof Error ? e.message : tr('Could not block'), 'x', 'live')),
+                    void blocking.run('block', () =>
+                      blockUser(pro.userId)
+                        .then(() => {
+                          setSafety(false);
+                          toast(tr('{name} is blocked', { name: pro.firstName }), 'shield', 'brand');
+                          if (router.canGoBack()) router.back();
+                          else router.replace('/network');
+                        })
+                        .catch((e) => toast(e instanceof Error ? e.message : tr('Could not block'), 'x', 'live')),
+                    ),
                   'Block',
                 )
               }

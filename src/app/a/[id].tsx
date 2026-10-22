@@ -41,6 +41,7 @@ import { addToPhoneCalendar } from '@/lib/phoneCalendar';
 import { useNow } from '@/lib/useNow';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { useBusy } from '@/lib/useBusy';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
 import { enter } from '@/motion/enter';
@@ -384,6 +385,8 @@ function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visi
   // Set once a time is confirmed in the picker: other edits never move the activity.
   const [timeChanged, setTimeChanged] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Cancel / Delete wait for the server: one at a time, a spinner meanwhile (a second tap asked again, then failed).
+  const ending = useBusy<'cancel' | 'delete'>();
   const save = async () => {
     if (saving || title.trim().length < 3) return;
     const moved = instants(when, city.utcOffset);
@@ -454,14 +457,19 @@ function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visi
             icon="x"
             variant="secondary"
             full
+            loading={ending.busy === 'cancel'}
+            disabled={ending.busy !== null}
             onPress={() =>
+              ending.isRunning() ||
               confirm('Cancel this activity? Participants will be notified.', () =>
-                cancelServerActivity(a.id)
-                  .then(() => {
-                    onClose();
-                    onCancelled();
-                  })
-                  .catch((e: unknown) => toast(e instanceof Error ? e.message : 'Could not cancel', 'x', 'live')),
+                void ending.run('cancel', () =>
+                  cancelServerActivity(a.id)
+                    .then(() => {
+                      onClose();
+                      onCancelled();
+                    })
+                    .catch((e: unknown) => toast(e instanceof Error ? e.message : 'Could not cancel', 'x', 'live')),
+                ),
               'Cancel activity')
             }
           />
@@ -471,14 +479,19 @@ function HostSheet({ visible, onClose, a, over, onCancelled, onDeleted }: { visi
           icon="x"
           variant="danger"
           full
+          loading={ending.busy === 'delete'}
+          disabled={ending.busy !== null}
           onPress={() =>
+            ending.isRunning() ||
             confirm('Delete this activity? It disappears for everyone, with its chat.', () =>
-              deleteServerActivity(a.id)
-                .then(() => {
-                  onClose();
-                  onDeleted();
-                })
-                .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')),
+              void ending.run('delete', () =>
+                deleteServerActivity(a.id)
+                  .then(() => {
+                    onClose();
+                    onDeleted();
+                  })
+                  .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')),
+              ),
             )
           }
         />

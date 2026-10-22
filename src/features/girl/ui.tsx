@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { memo, useState, type ReactNode } from 'react';
+import { memo, useState, type ReactNode, type Ref } from 'react';
 import { StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 import Animated, { LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
@@ -124,7 +124,7 @@ export function GButton({
  * Girl field frame (field glass, nacre focus ring, bordeaux shake when
  * `invalid`, a tick when `valid`) around a plain TextInput.
  */
-export function GField({ invalid, valid, style, onFocus, onBlur, multiline, containerStyle, ...rest }: TextInputProps & { invalid?: boolean; valid?: boolean; containerStyle?: StyleProp<ViewStyle> }) {
+export function GField({ invalid, valid, style, onFocus, onBlur, multiline, containerStyle, ...rest }: TextInputProps & { invalid?: boolean; valid?: boolean; containerStyle?: StyleProp<ViewStyle>; ref?: Ref<TextInput> }) {
   const [focused, setFocused] = useState(false);
   return (
     <GirlFieldFrame focused={focused} invalid={invalid} valid={valid} multiline={multiline} style={containerStyle}>

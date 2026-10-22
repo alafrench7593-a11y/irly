@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { enter } from '@/motion/enter';
 import Animated from 'react-native-reanimated';
+import { useFrame } from '@/components/layout/AppFrame';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -36,6 +37,8 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
  */
 export default function HelpScreen() {
   const t = useTheme();
+  // Side by side the two actions keep ~90 pt of label each on phones up to 420 pt: « Poser une question » lost its end. There they stack.
+  const stacked = useFrame().width < 420;
   const router = useRouter();
   const account = useAccount();
   const cityId = useCityId();
@@ -84,11 +87,11 @@ export default function HelpScreen() {
   return (
     <Page overline={city.name} title="Help & Questions" subtitle="Ask, answer and recommend. Answers come from members' own experience.">
       <View style={{ gap: space[4] }}>
-        <View style={[styles.pad, styles.row]}>
-          <View style={{ flex: 1 }}>
+        <View style={[styles.pad, stacked ? styles.stack : styles.row]}>
+          <View style={stacked ? null : { flex: 1 }}>
             <Button label="Ask a question" icon="question" full onPress={() => start('question')} />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={stacked ? null : { flex: 1 }}>
             <Button label="Recommend" icon="star" variant="secondary" full onPress={() => start('recommendation')} />
           </View>
         </View>
@@ -96,7 +99,7 @@ export default function HelpScreen() {
           <View style={[styles.search, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
             <GlassLayer radius={radius.lg} />
             <Icon name="search" size={18} color={t.c.textTertiary} />
-            <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search: Emirates ID, nursery, Marina…')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} returnKeyType="search" accessibilityLabel={a11y('Search questions')} />
+            <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search: Emirates ID, nursery, Marina…')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} returnKeyType="search" autoCorrect={false} accessibilityLabel={a11y('Search questions')} />
           </View>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>
@@ -256,6 +259,7 @@ function HelpCard({ p, onSaved }: { p: HelpPost; onSaved: () => void }) {
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  stack: { gap: 10 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 48, borderRadius: radius.lg, borderWidth: 1, paddingHorizontal: 14 },
   searchInput: { flex: 1, fontFamily: font.medium, fontSize: 16 },

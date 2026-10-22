@@ -21,6 +21,7 @@ import { EMPTY_DRAFT, type MatchProfileDraft } from '@/features/girl/types';
 import { GButton, GChip, GSection, Wrap } from '@/features/girl/ui';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { spring } from '@/motion/tokens';
 import { PressableScale } from '@/motion/PressableScale';
 import { friendlyError } from '@/lib/supabase';
@@ -70,6 +71,7 @@ function GirlProfileScreen() {
 function GirlProfile() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const keyboard = useKeyboardHeight();
   const cityId = useCityId();
   const city = CITIES[cityId];
   const signup = useStore((s) => s.profile);
@@ -223,7 +225,7 @@ function GirlProfile() {
 
       {/* The bio field and the Continue button stay above the keyboard. */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
-      <ScrollView contentContainerStyle={{ padding: space.gutter, paddingBottom: 140, gap: space[6] }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: space.gutter, paddingBottom: space[8], gap: space[6] }} keyboardShouldPersistTaps="handled">
         <Animated.View
           key={step}
           entering={(dir > 0 ? FadeInRight : FadeInLeft).springify(520).dampingRatio(0.92)}
@@ -455,7 +457,9 @@ function GirlProfile() {
         </Animated.View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+      {/* In the flow under the list, not floating over it: the bio being typed
+          scrolled to the bottom of the list, under this bar once the keyboard was up. */}
+      <View style={[styles.footer, { paddingBottom: (keyboard ? 0 : insets.bottom) + 16 }]}>
         <GlassLayer radius={0} level="thick" />
         {!valid && hint ? (
           <Animated.View key={hint} entering={FadeIn.duration(200)} exiting={FadeOut.duration(120)}>
@@ -570,7 +574,7 @@ const styles = StyleSheet.create({
   segFill: { backgroundColor: girl.rose, borderRadius: radius.md },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   note: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: radius.lg, backgroundColor: girl.blush },
-  footer: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space.gutter, paddingTop: 12, gap: 8, overflow: 'hidden' },
+  footer: { paddingHorizontal: space.gutter, paddingTop: 12, gap: 8, overflow: 'hidden' },
 });
 
 /** IRLY Girl: the shared components of IRLY, rendered in the Girl flavor (palette, glass, ambient light). */

@@ -130,7 +130,8 @@ export const Chip = memo(function Chip({ label, icon, dot, selected, onPress, si
   );
   return (
     <Animated.View style={outer}>
-      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} accessibilityRole="button" accessibilityState={{ selected }}>
+      {/* The pill stays 34/40 pt tall; its touch area reaches the 44 pt minimum above and below. */}
+      <PressableScale onPress={onPress} haptic="select" scaleTo={0.95} hitSlop={{ top: (44 - h) / 2, bottom: (44 - h) / 2 }} accessibilityRole="button" accessibilityState={{ selected }}>
         <SelectionLayers
           p={p}
           sweep={sweep}
@@ -342,7 +343,10 @@ export const Field = memo(function Field(props: FieldProps) {
   return t.flavor === 'girl' ? <GirlField {...props} /> : <MixteField {...props} />;
 });
 
-const MixteField = memo(function MixteField({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, accessibilityLabel, invalid: _invalid, valid: _valid, ...rest }: FieldProps) {
+/** A search field (search icon) neither autocorrects nor capitalises what is typed ("padel" stayed "padel", not "Pedal"); a field can still say otherwise. */
+const searchDefaults = (icon?: IconName): TextInputProps => (icon === 'search' ? { autoCorrect: false, autoCapitalize: 'none', returnKeyType: 'search' } : {});
+
+const MixteField = memo(function MixteField({ icon, trailing, containerStyle, style, onFocus, onBlur, placeholder, accessibilityLabel, invalid: _invalid, valid: _valid, multiline, ...rest }: FieldProps) {
   const t = useTheme();
   const tr = useT();
   const focus = useSharedValue(0);
@@ -351,14 +355,18 @@ const MixteField = memo(function MixteField({ icon, trailing, containerStyle, st
   }));
   return (
     <Animated.View
-      style={[styles.field, { backgroundColor: 'transparent', overflow: 'hidden' }, animated, containerStyle]}
+      // Multiline (bio, support message, report details): the 52 pt single-line box
+      // held only one visible line, the rest scrolled inside it while typing.
+      style={[styles.field, multiline ? styles.fieldMulti : null, { backgroundColor: 'transparent', overflow: 'hidden' }, animated, containerStyle]}
     >
       <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
       {icon ? <Icon name={icon} size={18} color={t.c.textTertiary} /> : null}
       <TextInput
+        {...searchDefaults(icon)}
         placeholder={placeholder ? tr(placeholder) : undefined}
         placeholderTextColor={t.c.textTertiary}
         selectionColor={t.c.brand}
+        multiline={multiline}
         onFocus={(e) => {
           // No haptic here: on iPhone and Mac the web haptic took the focus from the field.
           focus.set(withTiming(1, { duration: 160 }));
@@ -370,7 +378,7 @@ const MixteField = memo(function MixteField({ icon, trailing, containerStyle, st
         }}
         // minWidth 0: on the web an input is ~200 px wide by default and overflowed
         // narrow fields (Age), putting the next field's icon over it on iPhone.
-        style={[{ flex: 1, minWidth: 0, width: '100%', color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }, style]}
+        style={[{ flex: 1, minWidth: 0, width: '100%', color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }, multiline ? styles.mixteMulti : null, style]}
         {...rest}
         accessibilityLabel={accessibilityLabel ? tr(accessibilityLabel) : undefined}
       />
@@ -387,6 +395,7 @@ const GirlField = memo(function GirlField({ icon, trailing, containerStyle, styl
     <GirlFieldFrame focused={focused} invalid={invalid} valid={valid} multiline={multiline} style={containerStyle}>
       {icon ? <Icon name={icon} size={18} color={focused ? t.c.brand : t.c.textSecondary} /> : null}
       <TextInput
+        {...searchDefaults(icon)}
         placeholder={placeholder ? tr(placeholder) : undefined}
         placeholderTextColor={t.c.textTertiary}
         selectionColor={t.c.brand}
@@ -544,6 +553,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth * 2,
   },
+  fieldMulti: { height: 'auto', minHeight: 52, alignItems: 'flex-start', paddingVertical: 14 },
+  mixteMulti: { minHeight: 92, maxHeight: 220, textAlignVertical: 'top' },
   girlShell: { borderRadius: radius.md },
   girlRing: { position: 'absolute', top: -4, left: -4, right: -4, bottom: -4, borderRadius: radius.md + 4, borderWidth: 3 },
   girlField: {

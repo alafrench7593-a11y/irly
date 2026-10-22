@@ -57,7 +57,9 @@ async function createWoman(name) {
 
 // Own run, or accounts left behind more than 2 hours ago: never another run's live accounts.
 const cleanup = () =>
-  sql(`delete from auth.users where email like 'e2e-sync-${run}-%@irly.test'
+  sql(`delete from public.communities where created_by in (select id from auth.users where email like 'e2e-sync-${run}-%@irly.test'
+    or (email like 'e2e-sync-%@irly.test' and created_at < now() - interval '2 hours'));
+    delete from auth.users where email like 'e2e-sync-${run}-%@irly.test'
     or (email like 'e2e-sync-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ttf': 'font/ttf', '.ico': 'image/x-icon' };
@@ -381,8 +383,11 @@ async function main() {
   await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
 
   // ───────── Community: post, live feed, assistant ─────────
-  const girlsId = (await sql(`select id from public.communities where city_id = 'bali' and name = 'Bali Girls'`))[0].id;
-  await step('Uma joins Bali Girls from its page', async () => {
+  // Nia makes the women-only community the test uses (deleted with the test accounts at the end),
+  // rather than relying on one that happens to exist in production.
+  const girlsName = `Bali Girls ${run}`;
+  const girlsId = must(await niaSb.rpc('create_community', { p_name: girlsName, p_city: 'bali', p_category: 'sport', p_girl_only: true }));
+  await step('Uma joins a women-only community from its page', async () => {
     await page.goto(`${BASE}/c/${girlsId}`);
     await page.getByRole('button', { name: 'Join the community' }).click();
     await visible(page, 'Open chat');
@@ -865,9 +870,9 @@ async function main() {
     else await visible(page, 'You have not joined an activity yet', 15000);
     return true;
   });
-  await step('Communities tab: Bali Girls is listed under Joined', async () => {
+  await step('Communities tab: the community is listed under Joined', async () => {
     await page.getByRole('tab', { name: 'Communities', exact: true }).first().click();
-    await visible(page, 'Bali Girls', 15000);
+    await visible(page, girlsName, 15000);
     return true;
   });
   await step('Lives tab: an honest empty state when Uma has no live post', async () => {

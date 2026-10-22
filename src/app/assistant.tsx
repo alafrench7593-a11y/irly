@@ -30,6 +30,7 @@ import { track } from '@/lib/analytics';
 import { FEATURES } from '@/lib/features';
 import { supabase } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
@@ -74,6 +75,8 @@ export default function Assistant() {
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Keyboard up: the composer sits on it, without the home-indicator gap below.
+  const keyboard = useKeyboardHeight();
   const lang = useLang();
   const account = useAccount();
   const params = useLocalSearchParams<{ q?: string }>();
@@ -229,7 +232,7 @@ export default function Assistant() {
           )}
         </ScrollView>
 
-        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: Math.max(insets.bottom, 12) }]} intensity={60}>
+        <Glass lifted level="thick" style={[styles.composer, { paddingBottom: keyboard ? 12 : Math.max(insets.bottom, 12) }]} intensity={60}>
           {voice.listening ? (
             <Text variant="bodyS" tone="secondary" numberOfLines={2} style={{ paddingHorizontal: 4 }}>
               {voice.partial || tx('Listening…')}
@@ -375,9 +378,9 @@ function Act({ cmd, cityId, busy, onCreate, onSwitch }: { cmd: Command; cityId: 
   if (cmd.intent === 'OPEN_MOMS') {
     return (
       <View style={styles.pad}>
-        <Button label="Open IRLY Maman" icon="baby" full onPress={() => router.push('/girl')} />
+        <Button label="Open IRLY Maman" icon="baby" full onPress={() => router.push('/girl?mode=moms')} />
         <Text variant="caption" tone="tertiary" style={{ marginTop: 8 }}>
-          IRLY Maman is inside IRLY Girl: tap Moms at the top.
+          IRLY Maman is part of IRLY Girl: women only.
         </Text>
       </View>
     );

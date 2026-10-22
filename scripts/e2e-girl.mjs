@@ -51,7 +51,9 @@ async function createMember(name, gender) {
 }
 
 const cleanup = () =>
-  sql(`delete from auth.users where email like 'e2e-girl-${run}-%@irly.test'
+  sql(`delete from public.communities where created_by in (select id from auth.users where email like 'e2e-girl-${run}-%@irly.test'
+    or (email like 'e2e-girl-%@irly.test' and created_at < now() - interval '2 hours'));
+    delete from auth.users where email like 'e2e-girl-${run}-%@irly.test'
     or (email like 'e2e-girl-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ttf': 'font/ttf', '.ico': 'image/x-icon' };
@@ -347,6 +349,9 @@ async function main() {
   });
 
   // ───────── Moms ─────────
+  // From here on (database clock), opening Maman must not make any community by itself; the
+  // communities this test created earlier on purpose (Girls Padel, Book & Matcha) are before it.
+  const [{ momsFrom }] = await sql('select now() as "momsFrom"');
   await step('Moms: a new member can turn Mom mode on (her IRLY Girl profile is created for it, and she can be found)', async () => {
     await page.goto(`${BASE}/girl?mode=moms`);
     await page.getByText('Mom mode', { exact: true }).first().waitFor({ timeout: 25000 });
@@ -357,6 +362,28 @@ async function main() {
       await page.waitForTimeout(500);
     }
     return false;
+  });
+
+  await step('Maman: a child is an age group only (« Toddler » saved, no name, no birthday)', async () => {
+    await page.getByRole('button', { name: 'Toddler', exact: true }).first().click({ timeout: 25000 });
+    for (let i = 0; i < 20; i++) {
+      const [p] = await sql(`select kids_age_groups from public.irly_match_profiles where user_id = '${lea.id}'`);
+      if (p?.kids_age_groups?.includes('toddler')) return p.kids_age_groups.every((k) => ['baby', 'toddler', 'kid', 'teen'].includes(k));
+      await page.waitForTimeout(500);
+    }
+    return false;
+  });
+  await step('Maman: the official community is « IRLY Maman », once, and opening Maman created no community', async () => {
+    await page.getByText('Mom communities', { exact: true }).first().waitFor({ timeout: 25000 });
+    await page.getByRole('button', { name: 'Open IRLY Maman', exact: true }).first().waitFor({ timeout: 25000 });
+    const official = await sql(`select name from public.communities where official and topic = 'moms' and city_id = 'dubai' and parent_id is null and deleted_at is null`);
+    const [{ made }] = await sql(`select count(*)::int as made from public.communities
+      where created_at >= '${momsFrom}' and (official or created_by in ('${lea.id}', '${mia.id}', '${max.id}'))`);
+    return official.length === 1 && official[0].name === 'IRLY Maman' && made === 0;
+  });
+  await step('Maman: Max (a man) gets no mom from the server, and so no child age group', async () => {
+    const r = await max.sb.rpc('girl_circle', { p_destination: 'dubai', p_moms: true });
+    return Boolean(r.error) || !(r.data ?? []).some((m) => m.user_id === lea.id || (m.kids_age_groups ?? []).length > 0);
   });
 
   // ───────── Changing account on the same browser ─────────

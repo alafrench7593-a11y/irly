@@ -82,7 +82,8 @@ async function createUser(p) {
 }
 
 // Only this run's accounts: the other suites sweep abandoned e2e-* accounts themselves.
-const cleanup = () => sql(`delete from auth.users where email like 'e2e-${run}-act-%@irly.test'`).catch((e) => console.log('cleanup:', e.message));
+const cleanup = () => sql(`delete from public.communities where created_by in (select id from auth.users where email like 'e2e-${run}-act-%@irly.test');
+    delete from auth.users where email like 'e2e-${run}-act-%@irly.test'`).catch((e) => console.log('cleanup:', e.message));
 
 const { alice: A, bea: B, carl: C } = people;
 const inDays = (d, h = 14) => {

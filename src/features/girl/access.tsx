@@ -118,6 +118,11 @@ export function forgetGirlData(): void {
   changed('inbox', 'activities', 'communities', 'notifs', 'irl');
 }
 
+/** Log out, Delete account, another account on this phone: the next person never reuses this answer. */
+export function clearGirlAccess(): void {
+  last = null;
+}
+
 /** The cached answer for this account, if any (to open a page without a spinner). */
 const cachedAccess = (uid: string | null): Answer | null => (last && last.uid === uid ? last.access : null);
 

@@ -7,6 +7,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type TextInput,
 } from "react-native";
 import Animated, {
   FadeIn,
@@ -80,6 +81,9 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
   const [photo, setPhoto] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [tagline, setTagline] = useState("");
+  // Return on the name goes to the one-liner, then to About.
+  const taglineRef = useRef<TextInput>(null);
+  const aboutRef = useRef<TextInput>(null);
   const [about, setAbout] = useState("");
   const [category, setCategory] = useState<string | undefined>();
   const [cityId, setCityId] = useState<CityId>(here);
@@ -339,11 +343,14 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
                 valid={valid && !missingMoms}
                 placeholder={
                   moms
-                    ? tx("{city} Moms", { city: city.name })
+                    ? tx("{city} Mamans", { city: city.name })
                     : tx("Sunrise runners {city}", { city: city.name })
                 }
                 maxLength={NAME_MAX}
                 returnKeyType="next"
+                submitBehavior="submit"
+                blurOnSubmit={false}
+                onSubmitEditing={() => taglineRef.current?.focus()}
                 accessibilityLabel={a11y("Community name")}
               />
               <CharCount
@@ -355,7 +362,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
               {missingMoms ? (
                 <Text variant="caption" color={girl.bordeaux}>
                   {tx(
-                    "Add “Maman” or “Moms” to the name so mothers find it in IRLY Maman.",
+                    "Add “Maman” to the name so mothers find it in IRLY Maman.",
                   )}
                 </Text>
               ) : null}
@@ -363,16 +370,22 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
 
             <Field n="2" label={tx("In one line")}>
               <GField
+                ref={taglineRef}
                 value={tagline}
                 onChangeText={(v) => setTagline(v.slice(0, 80))}
                 placeholder={tx("Easy 5 km, then coffee")}
                 maxLength={80}
+                returnKeyType="next"
+                submitBehavior="submit"
+                blurOnSubmit={false}
+                onSubmitEditing={() => aboutRef.current?.focus()}
                 accessibilityLabel={a11y("Tagline")}
               />
             </Field>
 
             <Field n="3" label={tx("About")}>
               <GField
+                ref={aboutRef}
                 value={about}
                 onChangeText={(v) => setAbout(v.slice(0, 600))}
                 placeholder={tx("Who it's for, how often you meet, the vibe.")}
