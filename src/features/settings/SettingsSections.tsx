@@ -291,6 +291,9 @@ export function SettingsSections() {
             Your profile, photos, professional and IRLY Girl profiles, messages, posts, comments, connections, matches and notifications are deleted from IRLY’s
             servers, and you are signed out on this phone. Communities you own pass to another member. Content already reported to moderators is kept for review.
           </Text>
+          <Text variant="body" tone="secondary">
+            Plans you created are deleted too: people going to an upcoming one are told.
+          </Text>
           <Text variant="caption" tone="tertiary">
             Want a copy first? Use “Download my data”.
           </Text>

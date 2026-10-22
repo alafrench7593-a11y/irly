@@ -121,6 +121,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'this chat has no photo of its own': 'This chat has no photo of its own',
   'this community is reserved for IRLY Girl': 'This community is reserved for IRLY Girl',
   'this community no longer exists': 'This community no longer exists',
+  'this name is reserved for an IRLY community': 'This name is reserved for an IRLY community. Choose another one',
   'this member does not accept new messages from you': 'This member does not accept new messages from you',
   'this member is not available': 'This member is not available',
   'this notification token belongs to another app install': GENERIC,
