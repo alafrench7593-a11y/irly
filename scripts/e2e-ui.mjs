@@ -170,7 +170,7 @@ async function main() {
   // Match IRLY is not open yet (src/lib/features.ts): the bar button (« Soon » while it is
   // closed) must lead to its coming-soon page, which says so, not to a list of people.
   await check('Match IRLY in the bar opens its coming-soon page', '/', ['Match IRLY is not open yet', 'Tell me when it opens'], async () => {
-    await page.getByRole('button', { name: /^(Match IRLY|Soon: IRLY Match, coming soon)$/ }).first().click();
+    await page.getByRole('button', { name: /^(Match IRLY|Match IRLY is coming soon|Soon: IRLY Match, coming soon)$/ }).first().click();
   });
   await check('Home shows Live Bali', '/', ['Live Bali']);
   // Speed: Home's first content, from a full page load (the bundle, the session, the first reads).
@@ -383,9 +383,9 @@ async function main() {
   // ── Log out: timed, the session ends on the server, nothing private stays on this browser.
   let outMs = 0;
   await check('Log out goes to Welcome', '/preferences', [], async () => {
-    await page.getByText('Log out', { exact: true }).first().waitFor({ timeout: 15000 });
+    await page.getByText('Sign out', { exact: true }).first().waitFor({ timeout: 15000 });
     const t0 = Date.now();
-    await page.getByText('Log out', { exact: true }).first().click();
+    await page.getByText('Sign out', { exact: true }).first().click();
     await page.waitForURL(/\/welcome/, { timeout: 60000 });
     outMs = Date.now() - t0;
   });
@@ -425,7 +425,7 @@ async function main() {
     }
   });
   await check('Zoe logs out', '/preferences', [], async () => {
-    await page.getByText('Log out', { exact: true }).first().click();
+    await page.getByText('Sign out', { exact: true }).first().click();
     await page.waitForURL(/\/welcome/, { timeout: 60000 });
   });
   await check('sign in again', null, [], signIn, 'Signed in');
