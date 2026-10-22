@@ -1,8 +1,9 @@
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Platform } from 'react-native';
 import { prepareImage } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
-import { mediaRatio, rememberRatio } from './liveRatio';
+import { mediaKey, mediaRatio, rememberRatio } from './liveRatio';
 
 /**
  * Photos and videos for the Live. A video is checked before anything is sent
@@ -163,4 +164,37 @@ export async function uploadLiveFile(path: string, uri: string, type: string, on
 /** Signed out or account deleted: photos prepared for a Live are forgotten. */
 export function clearLiveCache(): void {
   prepared.clear();
+  warmed.clear();
+}
+
+const warmed = new Set<string>();
+const WARM_MAX = 8;
+const WARM_AT_ONCE = 2;
+
+/**
+ * Starts downloading the feed's photos and video posters into the image disk
+ * cache as soon as the feed is known (Home reads it for its Live strip), under
+ * the key LivePhoto and LiveVideo show them with (mediaKey): opening Live then
+ * shows them from the phone instead of starting every download only when the
+ * cards appear. Phones only; the newest few, two at a time; each picture is
+ * released once stored. Best effort: a failure leaves it to the card.
+ */
+export function warmLiveImages(urls: (string | null | undefined)[]): void {
+  if (Platform.OS === 'web') return;
+  const todo = urls.filter((u): u is string => typeof u === 'string' && /^https?:/i.test(u) && !warmed.has(mediaKey(u))).slice(0, WARM_MAX);
+  if (!todo.length) return;
+  for (const u of todo) warmed.add(mediaKey(u));
+  if (warmed.size > 300) warmed.clear();
+  const next = async (): Promise<void> => {
+    const url = todo.shift();
+    if (!url) return;
+    try {
+      const ref = await Image.loadAsync({ uri: url, cacheKey: mediaKey(url) });
+      ref.release();
+    } catch {
+      warmed.delete(mediaKey(url));
+    }
+    return next();
+  };
+  for (let i = 0; i < WARM_AT_ONCE; i++) void next();
 }

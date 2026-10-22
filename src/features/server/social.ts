@@ -10,7 +10,7 @@ import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supab
 import { changed, expectEcho, useRefreshOn, useSyncVersion } from './sync';
 import { seedLink, signedLinks } from './media';
 import { uuid } from '@/lib/uuid';
-import { prepareLiveMedia, uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
+import { prepareLiveMedia, uploadLiveFile, warmLiveImages, type LiveMedia } from '@/features/live/liveMedia';
 import { isAnswer, isMissingFunction, LivePublishError, runPublish, settlePending, type AbandonAnswer, type Settled } from '@/features/live/livePublish';
 import { pendingJournal, usePendingLives } from '@/features/live/pendingLive';
 import { activityColumns, cancelServerActivity, createServerActivity, deleteServerActivity } from './activities';
@@ -126,6 +126,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     if (error) throw new Error(error.message);
     const rows = (data as FeedRow[]) ?? [];
     const links = await signedAll(rows.flatMap((r) => [r.media_path, r.thumb_path ?? null]));
+    // The pictures start downloading now (photos, video posters; never the videos), not when the cards appear.
+    warmLiveImages(rows.map((r) => (r.media_kind === 'video' ? (r.thumb_path ? links[r.thumb_path] : null) : r.media_path ? links[r.media_path] : null)));
     return rows.map((r) => ({
         id: r.id,
         authorId: r.author_id,

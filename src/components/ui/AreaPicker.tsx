@@ -12,7 +12,7 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Chip, Field } from './Controls';
 import { Icon } from './Icon';
-import { Sheet } from './Sheet';
+import { Sheet, SheetScrollView } from './Sheet';
 import { Text } from './Text';
 
 type Palette = { ink: string; soft: string; surface: string; accent: string; line: string };
@@ -60,7 +60,8 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
 
   // Best name matches first, then the rest of a zone named that way; no
   // search: the active zone alphabetically, never the raw data order.
-  const list = rankAreas(city, q, zones.length ? activeZone : null);
+  // Only while the list is open: the row alone is re-rendered on every keystroke of the form around it.
+  const list = open ? rankAreas(city, q, zones.length ? activeZone : null) : [];
 
   const summary = chosen.length
     ? chosen.length === 1
@@ -142,7 +143,7 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
         ) : (
           <View style={{ height: space[3] }} />
         )}
-        <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
+        <SheetScrollView style={{ flexShrink: 1 }} contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
           {list.map((a, i) => {
             const on = chosen.includes(a.id);
             const z = q.trim() ? zoneOf(cityId, a.id) : null;
@@ -176,7 +177,7 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
               {tr('No neighbourhood called “{q}” in {city}.', { q: q.trim(), city: city.name })}
             </Text>
           ) : null}
-        </ScrollView>
+        </SheetScrollView>
         {multiple ? (
           <View style={{ paddingHorizontal: space.gutter, paddingTop: space[3] }}>
             <PressableScale haptic="tap" scaleTo={0.97} onPress={() => setOpen(false)} style={[styles.done, { backgroundColor: t.c.brand }]} accessibilityRole="button">

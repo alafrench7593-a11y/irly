@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Platform, StyleSheet, View } from 'react-native';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -82,16 +82,30 @@ function Menu({ origin, p, onClosed }: { origin: { x: number; y: number }; p: Sh
     p.set(reduced ? withTiming(1, { duration: motion.fast }) : withSpring(1, spring.medium));
   }, [p, reduced]);
 
+  // Once only, whichever comes first: the end of the fold or the safety timer.
+  const ended = useRef(false);
+  const end = useCallback(
+    (after?: () => void) => {
+      if (ended.current) return;
+      ended.current = true;
+      onClosed();
+      // The menu's Modal leaves first; a screen it opens (Go live and its own sheet) comes next,
+      // never presented while this Modal is still being dismissed (iOS refuses or strands one).
+      if (after) setTimeout(after, Platform.OS === 'ios' ? 120 : 0);
+    },
+    [onClosed],
+  );
+
   const close = (after?: () => void) => {
     if (closing) return;
     setClosing(true);
     p.set(
-      withTiming(0, { duration: motion.normal }, (fin) => {
-        if (!fin) return;
-        scheduleOnRN(onClosed);
-        if (after) scheduleOnRN(after);
+      withTiming(0, { duration: motion.normal }, () => {
+        scheduleOnRN(end, after);
       }),
     );
+    // Safety net: a fold cut short never leaves the (invisible) menu over the app.
+    setTimeout(() => end(after), motion.normal + 450);
   };
 
   const choose = (o: Option) => {
