@@ -10,7 +10,7 @@ import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supab
 import { changed, expectEcho, useRefreshOn, useSyncVersion } from './sync';
 import { seedLink, signedLinks } from './media';
 import { uuid } from '@/lib/uuid';
-import { prepareLiveMedia, uploadLiveFile, type LiveMedia } from '@/features/live/liveMedia';
+import { prepareLiveMedia, uploadLiveFile, warmLiveImages, type LiveMedia } from '@/features/live/liveMedia';
 import { isAnswer, isMissingFunction, LivePublishError, runPublish, settlePending, type AbandonAnswer, type Settled } from '@/features/live/livePublish';
 import { pendingJournal, usePendingLives } from '@/features/live/pendingLive';
 import { activityColumns, cancelServerActivity, createServerActivity, deleteServerActivity } from './activities';
@@ -126,6 +126,8 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     if (error) throw new Error(error.message);
     const rows = (data as FeedRow[]) ?? [];
     const links = await signedAll(rows.flatMap((r) => [r.media_path, r.thumb_path ?? null]));
+    // The pictures start downloading now (photos, video posters; never the videos), not when the cards appear.
+    warmLiveImages(rows.map((r) => (r.media_kind === 'video' ? (r.thumb_path ? links[r.thumb_path] : null) : r.media_path ? links[r.media_path] : null)));
     return rows.map((r) => ({
         id: r.id,
         authorId: r.author_id,
@@ -750,6 +752,33 @@ export async function markNotificationsRead(ids: string[]): Promise<boolean> {
 /** Marks one notification read (opened from the list or from a phone notification). */
 export const markNotificationRead = (id: string): Promise<boolean> => markNotificationsRead([id]);
 
+/** Notifications removed on this phone and not yet gone on the server: hidden at once, back if the server refuses. */
+const useGoneHere = create<{ ids: Record<string, true> }>(() => ({ ids: {} }));
+
+/**
+ * Removes notifications from the bell (opened from the list): off the screen
+ * at once, then deleted on the server (the member's own rows only: RLS),
+ * which clears them on the member's other phones too. Resolves false when
+ * the server refused or could not be reached: they come back.
+ */
+export async function dismissNotifications(ids: string[]): Promise<boolean> {
+  const todo = [...new Set(ids)];
+  if (!supabase || !todo.length) return true;
+  useGoneHere.setState((s) => ({ ids: { ...s.ids, ...Object.fromEntries(todo.map((id) => [id, true as const])) } }));
+  todo.forEach((id) => expectEcho('notifications', (row) => row.id === id));
+  const { error } = await supabase.from('notifications').delete().in('id', todo);
+  if (error) {
+    useGoneHere.setState((s) => {
+      const next = { ...s.ids };
+      todo.forEach((id) => delete next[id]);
+      return { ids: next };
+    });
+    return false;
+  }
+  useNotifVersion.setState((s) => ({ n: s.n + 1 }));
+  return true;
+}
+
 export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => Promise<boolean>; status: 'loading' | 'ok' | 'failed'; reload: () => void } {
   const account = useAccount();
   const uid = account?.userId;
@@ -831,7 +860,11 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     return true;
   }, [uid, items]);
   const readHere = useReadHere((s) => s.ids);
-  const list = useMemo(() => (uid ? items.map((n) => (n.readAt || !readHere[n.id] ? n : { ...n, readAt: readHere[n.id] })) : NONE), [uid, items, readHere]);
+  const goneHere = useGoneHere((s) => s.ids);
+  const list = useMemo(
+    () => (uid ? items.filter((n) => !goneHere[n.id]).map((n) => (n.readAt || !readHere[n.id] ? n : { ...n, readAt: readHere[n.id] })) : NONE),
+    [uid, items, readHere, goneHere],
+  );
   // Messages have their own badge (the chat icon): the bell never counts them twice.
   const reload = useCallback(() => {
     setStatus('loading');

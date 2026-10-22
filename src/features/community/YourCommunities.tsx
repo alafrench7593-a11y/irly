@@ -10,11 +10,11 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { CITIES } from '@/data/destinations';
 import { CommunityThumb } from './CommunityThumb';
-import { useCommunityList } from './data';
+import { useCommunityList, useMyCommunities } from './data';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
- * Home: the communities you are in (up to 5), the main communities ranked
+ * Home: the communities you are in (up to 5, both spaces), the main communities ranked
  * by their real number of members (groups stay inside their community), and
  * an always-visible way to discover IRLY Communities.
  */
@@ -22,10 +22,10 @@ export function YourCommunities({ cityId }: { cityId: string }) {
   const router = useRouter();
   const reduced = useReducedMotion();
   const signedIn = Boolean(useAccount());
-  const all = useCommunityList(cityId);
   // The server's order: main communities only, most members first.
-  const mine = all.filter((c) => c.isMember).slice(0, 5);
-  const ranked = all.slice(0, 10);
+  // Yours from both spaces (an IRLY Girl member still sees the IRLY ones she joined); the ranking stays this space's.
+  const mine = useMyCommunities(cityId).slice(0, 5);
+  const ranked = useCommunityList(cityId).slice(0, 10);
 
   return (
     <View style={{ gap: 12 }}>

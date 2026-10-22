@@ -1,3 +1,5 @@
+import type { Agree } from '@/i18n';
+
 /**
  * IRLY Networking, professional side: the domains people work in, what they
  * are (founder, freelancer…) and what they came for. Ids are stored on the
@@ -47,6 +49,15 @@ export const ROLES: { id: RoleId; label: string }[] = [
 ];
 
 export const ROLE_LABEL: Record<RoleId, string> = Object.fromEntries(ROLES.map((r) => [r.id, r.label])) as Record<RoleId, string>;
+
+/**
+ * Whom French words about a professional agree with (roles, job
+ * suggestions, "you both…"): her or his declared gender. Everyone in IRLY
+ * Girl's Network is a woman, so its filters and lists say « Fondatrice »;
+ * unknown, the inclusive form (« Fondateur·rice », as « Ami·e » elsewhere).
+ * Shown through useTg (src/i18n), never on what a member typed.
+ */
+export const agreeOf = (pro: { gender?: Agree | null } | null | undefined, girl: boolean): Agree => (girl ? 'woman' : (pro?.gender ?? 'other'));
 
 /**
  * The four choices of the profile editor. 'founder' is an older id, still

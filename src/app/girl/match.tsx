@@ -1,5 +1,5 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { t as tx, useT } from '@/i18n';
+import { t as tx, tgx, useT } from '@/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeOut, LinearTransition, useAnimatedScrollHandler, useReducedMotion, useSharedValue } from 'react-native-reanimated';
@@ -438,7 +438,7 @@ function GirlMatchInner() {
           setDeck((list) => list.filter((x) => x.userId !== c.userId));
           try {
             await apiRef.current!.block(c.userId);
-            toast(tx('{name} is blocked', { name: c.firstName }), 'shield', 'brand');
+            toast(tgx('{name} is blocked', 'woman', { name: c.firstName }), 'shield', 'brand');
             loadMatches();
           } catch (e) {
             toast(friendlyError(e instanceof Error ? e.message : 'Could not block'), 'x', 'live');

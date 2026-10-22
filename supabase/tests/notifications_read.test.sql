@@ -131,15 +131,15 @@ begin
     'all: another member''s notifications are untouched');
 end $$;
 
--- 6. Read is not deleted: the history stays, and a member cannot delete it from the app.
+-- 6. Read is not deleted: marking read keeps the notification. Removing one is
+--    a separate, explicit action of its owner (owner's decision of 2026-10-22:
+--    opening it from the bell clears it; notifications_dismiss.test.sql checks
+--    that only the owner can).
 do $$
-declare n integer;
 begin
   perform pg_temp.as_user('f2502000-0000-0000-0000-0000000000a1');
-  delete from public.notifications where id = 'f2502000-0000-0000-0000-0000000000b1';
-  get diagnostics n = row_count;
-  perform pg_temp.check(n = 0 and exists (select 1 from public.notifications where id = 'f2502000-0000-0000-0000-0000000000b1'),
-    'history: a read notification is still listed (no delete)');
+  perform pg_temp.check(exists (select 1 from public.notifications where id = 'f2502000-0000-0000-0000-0000000000b1' and read_at is not null),
+    'history: a read notification is still listed (marking read deletes nothing)');
   perform pg_temp.as_admin();
 end $$;
 

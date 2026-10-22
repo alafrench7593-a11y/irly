@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Keyboard, Platform } from 'react-native';
+import { Dimensions, Keyboard, Platform } from 'react-native';
 
 /**
  * Current keyboard height in px (0 on web, where the browser resizes the
@@ -16,9 +16,19 @@ export function useKeyboardHeight(enabled = true): number {
     const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
     const show = Keyboard.addListener(showEvt, (e) => setHeight(e.endCoordinates.height));
     const hide = Keyboard.addListener(hideEvt, () => setHeight(0));
+    // iOS: the keyboard also changes height while it is up (predictive bar, emoji, another language,
+    // autofill bar) without a new show event; follow every frame change, a frame below the screen is hidden.
+    const change =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillChangeFrame', (e) => {
+            const { height: h, screenY } = e.endCoordinates;
+            setHeight(screenY >= Dimensions.get('screen').height ? 0 : h);
+          })
+        : null;
     return () => {
       show.remove();
       hide.remove();
+      change?.remove();
       setHeight(0);
     };
   }, [enabled]);

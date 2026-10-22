@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { proConnect } from '@/features/network/api';
 import { setFriend } from '@/features/profile/member';
-import { markNotificationsRead, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
+import { dismissNotifications, markNotificationsRead, removeFriend, useFriends, useServerNotifications, type ServerNotification } from '@/features/server/social';
 import { useOnline } from '@/features/server/sync';
 import { destinationOf, openNotification } from '@/features/notifications/open';
 import { useSeen, useSplit, useViewport, type Viewport } from '@/features/notifications/seen';
@@ -43,7 +43,8 @@ type Item = { id: string; icon: IconName; title: string; body: string; ago: stri
  * Read means seen: a notification that has really been on screen (see
  * features/notifications/seen), or opened, is read here, in the bell and on
  * the member's other phones. Unread ones come first under "New"; the rest stay
- * listed under "Earlier" (nothing is deleted).
+ * listed under "Earlier". Opening one from this list removes it (a friend
+ * request waits for its answer first).
  */
 export default function NotificationsRoute() {
   // Opened from IRLY Girl, the list wears the Girl look (cosmetic only, see theme/space).
@@ -384,13 +385,21 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
   };
   const row = (n: ServerNotification, i: number) => {
     const d = describe(n);
-    // Nothing to open (a match ended, a deleted plan): a tap only marks it read.
+    // A tap opens it (when there is something to open) and clears it from the bell. A friend request
+    // still waiting for an answer stays until it is answered (its buttons live on this row).
     const opens = destinationOf(n, now) !== null;
+    const tap = () => {
+      if (opens) void openNotification(n, 'list');
+      if (d.accept) return void markNotificationsRead([n.id]);
+      void dismissNotifications([n.id]).then((ok) => {
+        if (!ok) toast('Could not remove it. Check your connection.', 'x', 'live');
+      });
+    };
     return (
       <Animated.View key={n.id} entering={enter.rise(Math.min(i, 8), 60)}>
         <View ref={seenRef(n.id)} collapsable={false}>
           <PressableScale
-            onPress={() => (opens ? void openNotification(n, 'list') : void markNotificationsRead([n.id]))}
+            onPress={tap}
             haptic="select"
             scaleTo={0.98}
             accessibilityRole="button"

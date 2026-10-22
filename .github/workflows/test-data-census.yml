@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     branches: [claude/apple-audit]
-    paths: ['scripts/test-data-census.mjs', '.github/workflows/test-data-census.yml']
+    paths: ['scripts/test-data-census.mjs', 'scripts/content-census.mjs', '.github/workflows/test-data-census.yml']
 
 jobs:
   census:
@@ -17,5 +17,8 @@ jobs:
         with:
           node-version: 22
       - run: node scripts/test-data-census.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      - run: node scripts/content-census.mjs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

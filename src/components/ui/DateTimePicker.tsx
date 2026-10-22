@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Platform, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 // The gesture handler's ScrollView: inside a Sheet (itself a pan gesture) the wheels keep their own vertical scroll.
 import { ScrollView } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
@@ -18,7 +18,8 @@ import { Sheet } from './Sheet';
 import { Text } from './Text';
 
 const ROW = 44;
-const VISIBLE = 5;
+/** Rows shown by a wheel: 5, or 3 on short phones (iPhone SE, mini) so the whole sheet, Confirm included, fits on screen. */
+const useVisibleRows = () => (useWindowDimensions().height < 740 ? 3 : 5);
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -116,6 +117,8 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
   const shown = useRef(index);
   const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clamp = (i: number) => Math.max(0, Math.min(values.length - 1, i));
+  const visible = useVisibleRows();
+  const above = ROW * ((visible - 1) / 2);
 
   useEffect(() => () => {
     if (settle.current) clearTimeout(settle.current);
@@ -149,7 +152,7 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
 
   return (
     <View
-      style={styles.wheel}
+      style={[styles.wheel, { height: ROW * visible }]}
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={a11y(label)}
@@ -157,7 +160,7 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => go(index + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}
     >
-      <View pointerEvents="none" style={[styles.band, t.flavor === 'girl' ? { backgroundColor: t.c.brandSoft, borderColor: t.c.lineStrong } : { backgroundColor: t.c.overlay, borderColor: t.c.line }]} />
+      <View pointerEvents="none" style={[styles.band, { top: above }, t.flavor === 'girl' ? { backgroundColor: t.c.brandSoft, borderColor: t.c.lineStrong } : { backgroundColor: t.c.overlay, borderColor: t.c.line }]} />
       <ScrollView
         ref={ref}
         showsVerticalScrollIndicator={false}
@@ -166,8 +169,12 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
         scrollEventThrottle={16}
         onScroll={onScroll}
         nestedScrollEnabled
-        onLayout={() => ref.current?.scrollTo({ y: index * ROW, animated: false })}
-        contentContainerStyle={{ paddingVertical: ROW * ((VISIBLE - 1) / 2) }}
+        // Opens on the value: contentOffset for the first frame (iOS), then once the rows are measured
+        // (a scrollTo before that is lost and the wheel showed 00 under the band).
+        contentOffset={{ x: 0, y: index * ROW }}
+        onLayout={() => ref.current?.scrollTo({ y: shown.current * ROW, animated: false })}
+        onContentSizeChange={() => ref.current?.scrollTo({ y: shown.current * ROW, animated: false })}
+        contentContainerStyle={{ paddingVertical: above }}
       >
         {values.map((v, i) => {
           const d = Math.abs(i - index);
@@ -423,8 +430,8 @@ const styles = StyleSheet.create({
   tabs: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter },
   tab: { borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 8, gap: 2, minHeight: 56, justifyContent: 'center', overflow: 'hidden' },
   wheels: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.gutter },
-  wheel: { width: 96, height: ROW * VISIBLE },
-  band: { position: 'absolute', left: 0, right: 0, top: ROW * ((VISIBLE - 1) / 2), height: ROW, borderRadius: radius.sm, borderWidth: StyleSheet.hairlineWidth * 2 },
+  wheel: { width: 96 },
+  band: { position: 'absolute', left: 0, right: 0, height: ROW, borderRadius: radius.sm, borderWidth: StyleSheet.hairlineWidth * 2 },
   row: { height: ROW, alignItems: 'center', justifyContent: 'center' },
   message: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: space.gutter, padding: 12, borderRadius: radius.sm },
   actions: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter },

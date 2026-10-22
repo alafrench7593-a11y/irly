@@ -5,7 +5,7 @@
 //
 // Static: reads the source with the TypeScript parser, never runs the app.
 // A string is "translated" when it reaches the dictionary as a literal:
-//   - first argument of t() / tx() / tr() / a11y() / toast(), or the text of
+//   - first argument of t() / tx() / tr() / tg() / tgx() / a11y() / toast(), or the text of
 //     translate(lang, …) / localizeLabel(lang, …);
 //   - a literal child of the shared <Text> (unless `raw`);
 //   - a literal prop of a component that sends that prop to one of the above
@@ -217,7 +217,8 @@ function resolveExport(file: string, name: string, depth = 0): string | undefine
 }
 
 // Sinks that are the dictionary itself.
-const TR_ARG0 = new Set(['t', 'tx', 'tr', 'a11y']);
+// tg / tgx (useTg, src/i18n) translate words about a person: the plain entry is needed, the gendered forms are extra.
+const TR_ARG0 = new Set(['t', 'tx', 'tr', 'tg', 'tgx', 'a11y']);
 const TR_ARG1 = new Set(['translate', 'localizeLabel']);
 const LABEL_FNS = new Set(['a11y', 'localizeLabel']);
 const TEXT_ID = `${path.relative(ROOT, TEXT)}#Text`;
@@ -556,6 +557,10 @@ for (const [k, v] of fr) {
   if (holes(k) !== holes(v)) mismatches.push(`${JSON.stringify(k)} {${holes(k)}} → ${JSON.stringify(v)} {${holes(v)}}`);
 }
 
+// A gendered form ("Founder (woman)", see translateAs) stands next to its plain entry.
+const GENDERED = / \((woman|man|other)\)$/;
+const orphans = [...fr.keys()].filter((k) => GENDERED.test(k) && !fr.has(k.replace(GENDERED, ''))).map((k) => JSON.stringify(k));
+
 const list = (title: string, rows: string[]) => {
   if (!rows.length) return;
   console.log(`\n${title} (${rows.length})`);
@@ -566,6 +571,7 @@ list(
   [...missing].sort(([a], [b]) => a.localeCompare(b)).map(([k, at]) => `${JSON.stringify(k)}  ← ${at[0]}${at.length > 1 ? ` (+${at.length - 1})` : ''}`),
 );
 list('Placeholders differ', mismatches);
+list('Gendered forms without their plain entry', orphans);
 list('Member content sent to the dictionary (show it with <Text raw>, keep it out of t())', userContent);
 list('UI text in a <Text raw>, never translated (use t() or drop raw)', rawLiterals);
 list('Server refusals with no sentence in src/i18n/errors.ts', unmapped);
@@ -620,4 +626,4 @@ if (process.argv.includes('--audit')) {
     visit(sf);
   }
 }
-process.exit(missing.size + mismatches.length + empties.length + duplicates.length + unmapped.length + userContent.length + rawLiterals.length ? 1 : 0);
+process.exit(missing.size + mismatches.length + orphans.length + empties.length + duplicates.length + unmapped.length + userContent.length + rawLiterals.length ? 1 : 0);

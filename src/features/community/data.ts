@@ -419,10 +419,32 @@ const GIRL_OFFICIAL = new Set(['girl_trip', 'girl_newcomers', 'girl_activity', '
 const isGirlOfficial = (topic: string | null) => Boolean(topic && GIRL_OFFICIAL.has(topic));
 
 export function useCommunityList(cityId: string) {
+  // Each space lists its own: IRLY Girl, its communities (of IRLY's official ones, only its four); IRLY, none of them.
+  // IRLY Network's own community (and Girl CEO) live in the IRLY Network section, never as a second tile here.
+  const girlSpace = useAppSpace() === 'girl';
+  const list = useCommunityRows(cityId);
+  return useMemo(
+    () => list.filter((c) => (girlSpace ? c.girlOnly && (!c.official || isGirlOfficial(c.topic)) : !c.girlOnly && !(c.official && c.topic === 'network'))),
+    [list, girlSpace],
+  );
+}
+
+/**
+ * The communities this member is in, whichever space they belong to: « Your
+ * communities » is about the member, so IRLY Girl also shows the IRLY ones
+ * they joined (and IRLY the IRLY Girl ones). The server only returns rows
+ * this account may see.
+ */
+export function useMyCommunities(cityId: string) {
+  const list = useCommunityRows(cityId);
+  return useMemo(() => list.filter((c) => c.isMember && !(c.official && c.topic === 'network')), [list]);
+}
+
+/** Every community the server lists for this city (kept by the city filter), both spaces. */
+function useCommunityRows(cityId: string) {
   const account = useAccount();
   const uid = account?.userId;
-  // In IRLY Girl the lists show IRLY Girl communities (the server returns them to eligible women only).
-  const girlSpace = useAppSpace() === 'girl';
+  // IRLY Girl communities come back to eligible women only.
   const [list, setList] = useState<CommunitySummary[]>([]);
   const version = useCommunitiesVersion();
   useEffect(() => {
@@ -456,12 +478,7 @@ export function useCommunityList(cityId: string) {
     };
   }, [cityId, uid, version]);
   const { keep } = useCityFilter(cityId as CityId);
-  // Each space lists its own: IRLY Girl, its communities (of IRLY's official ones, only its four); IRLY, none of them.
-  // IRLY Network's own community (and Girl CEO) live in the IRLY Network section, never as a second tile here.
-  const shown = useMemo(
-    () => list.filter((c) => keep(c.cityId) && (girlSpace ? c.girlOnly && (!c.official || isGirlOfficial(c.topic)) : !c.girlOnly && !(c.official && c.topic === 'network'))),
-    [list, keep, girlSpace],
-  );
+  const shown = useMemo(() => list.filter((c) => keep(c.cityId)), [list, keep]);
   return uid ? shown : NONE;
 }
 

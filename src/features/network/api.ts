@@ -6,9 +6,11 @@ import { isAvatar } from '@/features/avatar/avatar';
 import { thumbOf } from '@/features/server/media';
 import { changed, useSyncVersion } from '@/features/server/sync';
 import { track } from '@/lib/analytics';
+import type { Agree } from '@/i18n';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
 import { useAppSpace, useSpaceStore, type AppSpace } from '@/state/appSpace';
+import { useStore } from '@/state/store';
 import { useDemoMyPro, useDemoPro, useDemoPros } from './demo';
 import { LINK_KINDS, NO_LINKS, safeLink, type ProLinks } from './links';
 import type { ProProfile } from './match';
@@ -79,6 +81,29 @@ type Row = {
 };
 
 const num = (v: number | string | null) => (v == null ? null : Number(v));
+
+const AGREE = new Set<string>(['woman', 'man', 'other']);
+
+/**
+ * The declared gender of these professionals, only so French words about them
+ * agree (« Fondatrice »). In IRLY Girl everyone listed is a woman (the server
+ * lists no one else); in IRLY, pro_genders_of (migration 20261029500000)
+ * answers where the professional profile is readable. Unreadable (or not on
+ * the server yet): unknown, and the words take their inclusive form.
+ */
+async function gendersOf(ids: string[], space: AppSpace): Promise<Map<string, Agree>> {
+  if (space === 'girl') return new Map(ids.map((id) => [id, 'woman' as const]));
+  if (!ids.length || !supabase) return new Map();
+  const { data, error: e } = await supabase.rpc('pro_genders_of', { p_users: ids });
+  if (e) return new Map();
+  return new Map(((data as { user_id: string; gender: string }[] | null) ?? []).filter((r) => AGREE.has(r.gender)).map((r) => [r.user_id, r.gender as Agree]));
+}
+
+/** Professionals with their gender (see gendersOf). */
+async function withGenders(list: ProProfile[], space: AppSpace): Promise<ProProfile[]> {
+  const g = await gendersOf(list.map((p) => p.userId), space);
+  return list.map((p) => ({ ...p, gender: g.get(p.userId) ?? null }));
+}
 
 const toPro = (r: Row): ProProfile => ({
   userId: r.user_id,
@@ -183,6 +208,7 @@ const useProVersion = create<{ v: number; bump: () => void }>((set) => ({ v: 0, 
 /** Your own professional profile (null until you create it), the same on every screen. */
 function useServerMyPro() {
   const uid = useAccount()?.userId;
+  const myGender = useStore((s) => s.profile.gender) ?? null;
   const version = useProVersion((s) => s.v);
   const bump = useProVersion((s) => s.bump);
   const current = `${uid}|${version}`;
@@ -210,8 +236,9 @@ function useServerMyPro() {
     const linksOn = !noLinkColumns(mine.error);
     if (mine.error && linksOn) throw new Error(mine.error.message);
     const r = ((data as Row[]) ?? [])[0];
-    return { pro: r ? toPro(r) : null, visible: (own.data as { visible?: boolean } | null)?.visible ?? true, links: linksOn ? toLinks(mine.data as LinkRow | null) : NO_LINKS, linksOn };
-  }, [uid]);
+    // Your own gender comes from your IRLY profile (it is yours to read).
+    return { pro: r ? { ...toPro(r), gender: myGender } : null, visible: (own.data as { visible?: boolean } | null)?.visible ?? true, links: linksOn ? toLinks(mine.data as LinkRow | null) : NO_LINKS, linksOn };
+  }, [uid, myGender]);
 
   useEffect(() => {
     if (!uid || !supabase) return;
@@ -303,7 +330,7 @@ function useServerPros(cityId: string, filters: ProFilters) {
       p_limit: 150,
     });
     if (e) throw new Error(e.message);
-    return ((data as Row[]) ?? []).map(toPro);
+    return withGenders(((data as Row[]) ?? []).map(toPro), space);
   }, [uid, space, cityId, key]);
 
   useEffect(() => {
@@ -372,7 +399,7 @@ function useServerPro(userId: string) {
     const r = ((data as Row[]) ?? [])[0];
     // Links are an extra: unreadable (or not on the server yet), the profile shows without them (and never without the profile).
     setLinks({ id: target, links: !r || l.error ? NO_LINKS : toLinks(((l.data as LinkRow[] | null) ?? [])[0]) });
-    return r ? toPro(r) : null;
+    return r ? (await withGenders([toPro(r)], space))[0] : null;
   }, [uid, space, userId, target]);
 
   useEffect(() => {

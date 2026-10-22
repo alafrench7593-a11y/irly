@@ -36,8 +36,9 @@ export function GirlLogo({
         IRLY
       </Text>
       <View style={[styles.stop, { width: size * 0.18, height: size * 0.18, borderRadius: size, backgroundColor: accent, marginHorizontal: size * 0.16 }]} />
-      {/* The italic leans past its advance: room inside the text box (so native never clips it), none outside. */}
-      <Text raw style={{ fontFamily: serif.italic, fontSize: size * 1.15, lineHeight: size * 1.25, color: accent, fontWeight: 'normal', paddingRight: size * 0.12, marginRight: -size * 0.12 }}>
+      {/* The italic leans past its advance: room inside the text box (so native never clips it), none outside.
+          The line is as tall as the face itself (ascent + descent = 1.3 em): a shorter line cuts the top of « Girl » on iOS. */}
+      <Text raw style={{ fontFamily: serif.italic, fontSize: size * 1.15, lineHeight: Math.ceil(size * 1.5), color: accent, fontWeight: 'normal', paddingRight: size * 0.12, marginRight: -size * 0.12 }}>
         {word}
       </Text>
     </View>

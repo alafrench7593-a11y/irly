@@ -26,7 +26,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { Chip, LiveDot } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
-import { Sheet } from '@/components/ui/Sheet';
+import { Sheet, SheetScrollView } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
@@ -790,8 +790,9 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           : 'What are you doing right now? Only your area is shown, never your address.'
       }
     >
-      {/* Scrolls when the keyboard is up, so the field and Post live stay reachable. */}
-      <ScrollView
+      {/* Scrolls when the keyboard is up, so the field and Post live stay reachable; it shares
+          the drag with the sheet, which follows the finger only from the top of the content. */}
+      <SheetScrollView
         style={{ flexShrink: 1 }}
         contentContainerStyle={{ paddingHorizontal: space.gutter, gap: space[5], paddingBottom: space[2] }}
         keyboardShouldPersistTaps="handled"
@@ -874,7 +875,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
           </View>
         ) : null}
         <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim() && !media} onPress={submit} />
-      </ScrollView>
+      </SheetScrollView>
     </Sheet>
   );
 }

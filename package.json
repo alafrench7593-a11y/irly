@@ -82,7 +82,8 @@
     "test:facecache": "node --experimental-strip-types --no-warnings scripts/test-face-cache.mts",
     "test:photos": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/test-photos.mts",
     "test:photo-files": "node scripts/check-photo-files.mjs",
-    "test:cms": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-cms.mts"
+    "test:cms": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-cms.mts",
+    "test:network": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-network-gender.mts"
   },
   "private": true,
   "engines": {
