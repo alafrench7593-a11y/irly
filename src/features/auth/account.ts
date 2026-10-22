@@ -338,6 +338,13 @@ async function readBack(uid: string, force = false, strict = false): Promise<boo
   const city = r.city_id && r.city_id in CITIES ? (r.city_id as keyof typeof CITIES) : 'dubai';
   st.setDestination(CITIES[city].destinationId, city);
   st.completeOnboarding();
+  // An account that already exists (a new phone, another browser, after signing out) skips the intros it went through at sign-up.
+  st.markCommunityIntroSeen();
+  void import('@/features/onboarding/IrlyStory')
+    .then((m) => {
+      if (stillSignedIn(uid) && useStore.getState().storySeen < m.STORY_VERSION) useStore.getState().markStorySeen(m.STORY_VERSION);
+    })
+    .catch(() => undefined);
   return true;
 }
 
