@@ -17,11 +17,12 @@ import { useServerActivities } from '@/features/server/activities';
 import { scorePro } from '@/features/network/match';
 import { blockIn, cardIn, cardOut, reflow, UpdatingLine, useBump } from '@/features/network/motion';
 import { NetworkPage } from '@/features/network/page';
-import { INDUSTRIES, INDUSTRY, LOOKING_FILTERS, ROLE_LABEL, ROLES, type IndustryId, type IntentId, type RoleId } from '@/features/network/taxonomy';
+import { agreeOf, INDUSTRIES, INDUSTRY, LOOKING_FILTERS, ROLE_LABEL, ROLES, type IndustryId, type IntentId, type RoleId } from '@/features/network/taxonomy';
 import { FilterChip, NetworkState, ProCard, ProCardSkeleton } from '@/features/network/ui';
-import { useT } from '@/i18n';
+import { useT, useTg, type Agree } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { duration } from '@/motion/tokens';
+import { useAppSpace } from '@/state/appSpace';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -56,6 +57,13 @@ function NetworkDiscoverPage() {
   const city = CITIES[cityId];
   const me = useMyPro();
   const myName = useStore((s) => s.profile?.name ?? '');
+  // French agreement: IRLY Girl's Network lists women only (« Fondatrice », « 3 professionnelles »);
+  // IRLY's filters take the inclusive form (« Fondateur·rice »); "be one of the first" agrees with you.
+  const tg = useTg();
+  const girl = useAppSpace() === 'girl';
+  const filterWho = agreeOf(null, girl);
+  const crowd: Agree = girl ? 'woman' : 'man';
+  const meWho = agreeOf({ gender: useStore((s) => s.profile?.gender) }, girl);
 
   const [industry, setIndustry] = useState<IndustryId | null>(null);
   const [role, setRole] = useState<RoleId | null>(null);
@@ -114,7 +122,7 @@ function NetworkDiscoverPage() {
   // Each removable pill of what is filtered, so every active filter is visible (those of the sheet too).
   const active: { key: string; label: string; clear: () => void }[] = [
     industry ? { key: 'industry', label: `${INDUSTRY[industry].emoji} ${tr(INDUSTRY[industry].short)}`, clear: () => setIndustry(null) } : null,
-    role ? { key: 'role', label: tr(ROLE_LABEL[role]), clear: () => setRole(null) } : null,
+    role ? { key: 'role', label: tg(ROLE_LABEL[role], filterWho), clear: () => setRole(null) } : null,
     intent ? { key: 'intent', label: tr(LOOKING_FILTERS.find((l) => l.id === intent)?.label ?? ''), clear: () => setIntent(null) } : null,
     onlyCity ? { key: 'city', label: CITIES[onlyCity as keyof typeof CITIES]?.name ?? onlyCity, clear: () => setOnlyCity(null) } : null,
     q ? { key: 'q', label: `“${q}”`, clear: () => setTyped('') } : null,
@@ -139,8 +147,8 @@ function NetworkDiscoverPage() {
         <View style={styles.proHead}>
           <View style={{ flex: 1, gap: 3 }}>
             <View style={styles.row}>
-              <Text variant="titleL" accessibilityRole="header">
-                Professionals
+              <Text variant="titleL" accessibilityRole="header" raw>
+                {tg('Professionals', crowd)}
               </Text>
               {state === 'list' ? (
                 <Animated.View style={[styles.count, { backgroundColor: tone.soft, borderColor: tone.softLine }, countBump]}>
@@ -150,8 +158,8 @@ function NetworkDiscoverPage() {
                 </Animated.View>
               ) : null}
             </View>
-            <Text variant="caption" tone="tertiary">
-              Founders, freelancers, investors and builders. Connect, then meet IRL.
+            <Text variant="caption" tone="tertiary" raw>
+              {tg('Founders, freelancers, investors and builders. Connect, then meet IRL.', crowd)}
             </Text>
           </View>
         </View>
@@ -246,7 +254,12 @@ function NetworkDiscoverPage() {
               <Button label="Edit filters" icon="sliders" variant="secondary" size="md" onPress={() => setOpen(true)} />
             </NetworkState>
           ) : (
-            <NetworkState key="nobody" icon="users" title="No professionals here yet" body="Be one of the first: your profile shows to everyone who opens Networking.">
+            <NetworkState
+              key="nobody"
+              icon="users"
+              title={tg('No professionals here yet', crowd)}
+              body={tg('Be one of the first: your profile shows to everyone who opens Networking.', meWho)}
+            >
               {!me.pro ? <Button label="Create my profile" icon="briefcase" size="md" onPress={() => router.push('/network/profile')} /> : null}
             </NetworkState>
           )
@@ -263,7 +276,7 @@ function NetworkDiscoverPage() {
               </Animated.View>
             ) : null}
             <Text variant="caption" tone="tertiary">
-              {tr(ranked.length === 1 ? '1 professional' : '{n} professionals', { n: ranked.length })}
+              {tg(ranked.length === 1 ? '1 professional' : '{n} professionals', crowd, { n: ranked.length })}
               {me.pro ? ` · ${tr('best match first')}` : ''}
             </Text>
             {ranked.slice(0, limit).map(({ p, m }, i) => (
@@ -370,7 +383,7 @@ function NetworkDiscoverPage() {
           </Group>
           <Group title="Profile">
             {ROLES.map((r) => (
-              <FilterChip key={r.id} label={r.label} selected={role === r.id} onPress={() => setRole(role === r.id ? null : r.id)} />
+              <FilterChip key={r.id} label={tg(r.label, filterWho)} raw selected={role === r.id} onPress={() => setRole(role === r.id ? null : r.id)} />
             ))}
           </Group>
           <Group title="Looking for">

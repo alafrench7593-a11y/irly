@@ -93,6 +93,7 @@ const PROS: ProProfile[] = DEMO
           lat: null,
           lng: null,
           connection: s.connection ?? 'none',
+          gender: s.woman ? 'woman' : 'man',
         },
       ];
     })
@@ -135,7 +136,8 @@ export function useDemoMyPro() {
   const visible = useDemoNetwork((s) => s.visible);
   const setMe = useDemoNetwork((s) => s.setMe);
   const name = useStore((s) => s.profile?.name);
-  const pro = useMemo(() => (me ? { ...me, firstName: name || me.firstName } : null), [me, name]);
+  const gender = useStore((s) => s.profile?.gender) ?? null;
+  const pro = useMemo(() => (me ? { ...me, firstName: name || me.firstName, gender } : null), [me, name, gender]);
   const save = useCallback(
     async (d: ProDraft) => {
       await wait(500);

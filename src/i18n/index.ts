@@ -143,6 +143,24 @@ export function translate(lang: Lang, rawText: string, vars?: Record<string, str
   return base.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? place(lang, String(vars[k])) : m));
 }
 
+/**
+ * Who a sentence speaks about, for French agreement: the declared gender of
+ * that person ('other' also stands for a gender we do not know). English has
+ * one form.
+ */
+export type Agree = 'woman' | 'man' | 'other';
+
+/**
+ * Like translate, agreeing in French with the person the words are about
+ * (« Fondatrice », « Fondateur », « Fondateur·rice »): fr.ts holds a form per
+ * gender under the English key followed by ` (woman)`, ` (man)` or
+ * ` (other)`, and the plain entry for any gender it has no form for.
+ */
+export function translateAs(lang: Lang, text: string, who: Agree | null | undefined, vars?: Record<string, string | number>): string {
+  const form = lang === 'fr' ? `${text} (${who ?? 'other'})` : '';
+  return translate(lang, form && fr[form] ? form : text, vars);
+}
+
 /** City names that French spells differently ("Dubaï"); neighbourhoods such as "Dubai Marina" keep their name. */
 const PLACES_FR: Record<string, string> = { Dubai: 'Dubaï' };
 const place = (lang: Lang, v: string) => (lang === 'fr' ? (PLACES_FR[v] ?? v) : v);
@@ -206,6 +224,19 @@ export function useLang(): Lang {
 export function useT(): T {
   const lang = useLang();
   return useCallback((text: string, vars?: Record<string, string | number>) => translate(lang, text, vars), [lang]);
+}
+
+export type TAs = (text: string, who: Agree | null | undefined, vars?: Record<string, string | number>) => string;
+
+/** useT for words about a person: tg('Founder', 'woman') → « Fondatrice » (see translateAs). */
+export function useTg(): TAs {
+  const lang = useLang();
+  return useCallback((text: string, who: Agree | null | undefined, vars?: Record<string, string | number>) => translateAs(lang, text, who, vars), [lang]);
+}
+
+/** Same, outside React. */
+export function tgx(text: string, who: Agree | null | undefined, vars?: Record<string, string | number>): string {
+  return translateAs(resolveLang(useLangStore.getState().setting), text, who, vars);
 }
 
 /** Outside React (toasts fired from handlers, stores). */

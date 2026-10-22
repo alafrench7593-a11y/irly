@@ -1,3 +1,4 @@
+import type { Agree, TAs } from '@/i18n';
 import { INDUSTRY, INTENT, type IndustryId, type IntentId, type RoleId } from './taxonomy';
 
 /** A professional profile, as the app reads it (yours or someone else's). */
@@ -19,10 +20,18 @@ export type ProProfile = {
   lat: number | null;
   lng: number | null;
   connection: 'none' | 'requested' | 'incoming' | 'connected';
+  /** Declared gender, only for French words about this person (« Fondatrice »); null when unknown. */
+  gender?: Agree | null;
 };
 
-/** One reason two people should meet, already phrased (English, translated on display). */
-export type Reason = { kind: 'industry' | 'complement' | 'goal' | 'skills' | 'near' | 'project'; text: string; vars?: Record<string, string | number> };
+/**
+ * One reason two people should meet, already phrased (English, translated on
+ * display), with whom its French words agree when they speak of someone.
+ */
+export type Reason = { kind: 'industry' | 'complement' | 'goal' | 'skills' | 'near' | 'project'; text: string; vars?: Record<string, string | number>; who?: Agree };
+
+/** "You both…" agrees with the two of you: « toutes les deux » only when both are women. */
+const both = (me: ProProfile, other: ProProfile): Agree => (me.gender === 'woman' && other.gender === 'woman' ? 'woman' : 'man');
 
 export type ProMatch = { percent: number; reasons: Reason[]; distanceKm: number | null };
 
@@ -68,7 +77,7 @@ function complement(me: ProProfile, other: ProProfile): { points: number; reason
   if (want(other, 'freelancers') && (me.role === 'freelancer' || want(me, 'clients'))) options.push({ points: 16, reason: { kind: 'complement', text: '{name} needs freelancers and you are looking for clients', vars: { name } } });
   if (want(me, 'clients') && want(other, 'suppliers')) options.push({ points: 14, reason: { kind: 'complement', text: '{name} is looking for suppliers and you for clients', vars: { name } } });
   if (want(me, 'suppliers') && (want(other, 'clients') || other.industries.some((i) => i === 'trade' || i === 'retail' || i === 'food' || i === 'ecommerce')))
-    options.push({ points: 12, reason: { kind: 'complement', text: '{name} could supply you', vars: { name } } });
+    options.push({ points: 12, reason: { kind: 'complement', text: '{name} could supply you', vars: { name }, who: other.gender ?? 'other' } });
   if (want(me, 'job') && (other.role === 'founder' || other.role === 'entrepreneur') && (want(other, 'freelancers') || want(other, 'grow')))
     options.push({ points: 12, reason: { kind: 'complement', text: '{name} is growing a team and you are looking for a job', vars: { name } } });
   if (want(other, 'job') && (me.role === 'founder' || me.role === 'entrepreneur'))
@@ -76,7 +85,7 @@ function complement(me: ProProfile, other: ProProfile): { points: number; reason
   if (want(me, 'cofounder') && want(other, 'cofounder')) {
     const mine = new Set(me.skills.map(lower));
     const differ = other.skills.filter((s) => !mine.has(lower(s)));
-    if (differ.length >= 2) options.push({ points: 18, reason: { kind: 'complement', text: 'you are both looking for a cofounder, and {name} brings {skills}', vars: { name, skills: differ.slice(0, 2).join(', ') } } });
+    if (differ.length >= 2) options.push({ points: 18, reason: { kind: 'complement', text: 'you are both looking for a cofounder, and {name} brings {skills}', vars: { name, skills: differ.slice(0, 2).join(', ') }, who: both(me, other) } });
   }
   // What I wrote I'm looking for, met by their skills or what they offer.
   const wish = words(me.lookingFor);
@@ -100,13 +109,13 @@ export function scorePro(me: ProProfile, other: ProProfile): ProMatch {
   const km = distanceKm(me, other);
   const near = km == null ? (me.cityId === other.cityId ? 10 : 5) : km <= 3 ? 15 : km <= 8 ? 12 : km <= 20 ? 9 : km <= 60 ? 6 : 3;
   raw += near;
-  if (km != null && km <= 8) reasons.push({ points: near - 6, reason: { kind: 'near', text: 'you are {km} apart', vars: { km: roundDistance(km) } } });
+  if (km != null && km <= 8) reasons.push({ points: near - 6, reason: { kind: 'near', text: 'you are {km} apart', vars: { km: roundDistance(km) }, who: both(me, other) } });
 
   const industries = other.industries.filter((i) => me.industries.includes(i));
   if (industries.length) {
     const p = industries.length >= 2 ? 25 : 18;
     raw += p;
-    reasons.push({ points: p, reason: { kind: 'industry', text: 'you both work in {what}', vars: { what: joinShort(industries) } } });
+    reasons.push({ points: p, reason: { kind: 'industry', text: 'you both work in {what}', vars: { what: joinShort(industries) }, who: both(me, other) } });
   }
 
   const mine = new Set(me.skills.map(lower));
@@ -124,7 +133,10 @@ export function scorePro(me: ProProfile, other: ProProfile): ProMatch {
     const top = goals.find((g) => g !== 'meet') ?? goals[0];
     reasons.push({
       points: p + 1,
-      reason: top === 'meet' ? { kind: 'goal', text: 'you both want to meet people' } : { kind: 'goal', text: 'you are both looking for {what}', vars: { what: INTENT[top].both } },
+      reason:
+        top === 'meet'
+          ? { kind: 'goal', text: 'you both want to meet people', who: both(me, other) }
+          : { kind: 'goal', text: 'you are both looking for {what}', vars: { what: INTENT[top].both }, who: both(me, other) },
     });
   }
 
@@ -151,16 +163,16 @@ export function scorePro(me: ProProfile, other: ProProfile): ProMatch {
 
 type Tr = (s: string, vars?: Record<string, string | number>) => string;
 
-/** One reason in the reader's language ("AI & SaaS" → "IA & SaaS"). */
-export function reasonText(r: Reason, tr: Tr): string {
+/** One reason in the reader's language ("AI & SaaS" → "IA & SaaS"), agreeing with whom it speaks of. */
+export function reasonText(r: Reason, tr: Tr, tg: TAs): string {
   const vars = r.vars && Object.fromEntries(Object.entries(r.vars).map(([k, v]) => [k, typeof v === 'string' && k === 'what' ? v.split(' & ').map((x) => tr(x)).join(' & ') : v]));
-  return tr(r.text, vars);
+  return r.who ? tg(r.text, r.who, vars) : tr(r.text, vars);
 }
 
-/** "92% match — You both work in AI & SaaS and you're both looking for business partners." */
-export function matchSentence(m: ProMatch, tr: Tr): string {
-  const parts = m.reasons.slice(0, 2).map((r) => reasonText(r, tr));
-  if (!parts.length) return tr('New on IRLY Networking');
+/** "92% match — You both work in AI & SaaS and you're both looking for business partners." (`who`: the other person's gender) */
+export function matchSentence(m: ProMatch, tr: Tr, tg: TAs, who: Agree | null | undefined): string {
+  const parts = m.reasons.slice(0, 2).map((r) => reasonText(r, tr, tg));
+  if (!parts.length) return tg('New on IRLY Networking', who);
   const s = parts.join(tr(' and '));
   return `${s.charAt(0).toUpperCase()}${s.slice(1)}.`;
 }

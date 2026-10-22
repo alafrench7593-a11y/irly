@@ -82,7 +82,22 @@ export function useColumns(min = 150, gap = 8) {
 }
 
 /** One large "I am" card: icon, name and a short line. A radio among four. */
-export function RoleCard({ label, hint, icon, selected, width, onPress }: { label: string; hint: string; icon: IconName; selected: boolean; width: number; onPress: () => void }) {
+export function RoleCard({
+  label,
+  hint,
+  icon,
+  selected,
+  width,
+  onPress,
+}: {
+  /** Already in the reader's language, agreeing with you (« Entrepreneuse »). */
+  label: string;
+  hint: string;
+  icon: IconName;
+  selected: boolean;
+  width: number;
+  onPress: () => void;
+}) {
   const t = useTheme();
   const tone = useNetworkTone();
   const { p, sweep, outer } = useSelection(selected);
@@ -96,7 +111,7 @@ export function RoleCard({ label, hint, icon, selected, width, onPress }: { labe
         <View style={[styles.radio, { borderColor: on ? fg : t.c.lineStrong }]}>{on ? <View style={[styles.radioDot, { backgroundColor: fg }]} /> : null}</View>
       </View>
       <View style={{ gap: 2 }}>
-        <Text variant="titleS" color={fg} numberOfLines={1}>
+        <Text variant="titleS" color={fg} numberOfLines={1} raw>
           {label}
         </Text>
         <Text variant="caption" color={soft} numberOfLines={2}>

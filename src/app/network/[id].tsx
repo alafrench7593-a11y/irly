@@ -21,10 +21,11 @@ import { Ambient } from '@/components/visual/Ambient';
 import { seenPro, useMyPro, usePro } from '@/features/network/api';
 import { reasonText, roundDistance, scorePro } from '@/features/network/match';
 import { blockIn, LightDrift } from '@/features/network/motion';
-import { INDUSTRY, INTENT, ROLE_LABEL, skillLabel } from '@/features/network/taxonomy';
+import { agreeOf, INDUSTRY, INTENT, ROLE_LABEL, skillLabel } from '@/features/network/taxonomy';
 import { ConnectAction, MatchPill, NetworkState, placeOf, Portrait, Shimmer, useGlint } from '@/features/network/ui';
 import { ProLinkButtons } from '@/features/network/sections';
-import { useT } from '@/i18n';
+import { useT, useTg } from '@/i18n';
+import { useAppSpace } from '@/state/appSpace';
 import { ease, spring } from '@/motion/tokens';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -45,6 +46,8 @@ function ProProfileScreenPage() {
   const t = useTheme();
   const tone = useNetworkTone();
   const tr = useT();
+  const tg = useTg();
+  const girl = useAppSpace() === 'girl';
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const frame = useFrame();
@@ -83,6 +86,8 @@ function ProProfileScreenPage() {
   if (!pro) return <NotFound title="This professional profile is not available" />;
 
   const mine = me.pro?.userId === pro.userId;
+  // French words about her or him agree (« Fondatrice »), never what she or he typed.
+  const who = agreeOf(pro, girl);
   const match = me.pro && !mine ? scorePro(me.pro, pro) : null;
   const where = [placeOf(pro), match?.distanceKm != null ? roundDistance(match.distanceKm) : null].filter(Boolean).join(' · ');
   const blocks: { icon: IconName; title: string; body: string | null }[] = [
@@ -111,7 +116,7 @@ function ProProfileScreenPage() {
             </View>
             {match.reasons.length ? (
               match.reasons.slice(0, 4).map((r) => {
-                const s = reasonText(r, tr);
+                const s = reasonText(r, tr, tg);
                 return (
                   <View key={r.kind + s} style={styles.reason}>
                     <View style={[styles.dot, { backgroundColor: tone.isGirl ? '#C9B6FF' : tone.onPanel }]} />
@@ -242,7 +247,7 @@ function ProProfileScreenPage() {
                       blockUser(pro.userId)
                         .then(() => {
                           setSafety(false);
-                          toast(tr('{name} is blocked', { name: pro.firstName }), 'shield', 'brand');
+                          toast(tg('{name} is blocked', who, { name: pro.firstName }), 'shield', 'brand');
                           if (router.canGoBack()) router.back();
                           else router.replace('/network');
                         })
@@ -305,6 +310,8 @@ function Hero({
   matchPercent: number | null;
 }) {
   const tone = useNetworkTone();
+  const tg = useTg();
+  const who = agreeOf(pro, useAppSpace() === 'girl');
   const reduced = useReducedMotion();
   const open = useSharedValue(reduced ? 1 : 0);
   useEffect(() => {
@@ -339,8 +346,8 @@ function Hero({
       ) : null}
       <Animated.View style={[styles.heroText, textStyle]}>
         <View style={styles.roleChip}>
-          <Text variant="overline" color="#FFFFFF">
-            {ROLE_LABEL[pro.role]}
+          <Text variant="overline" color="#FFFFFF" raw>
+            {tg(ROLE_LABEL[pro.role], who)}
           </Text>
         </View>
         <Text variant="displayL" color="#FFFFFF" raw numberOfLines={2}>
