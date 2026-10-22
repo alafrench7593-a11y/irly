@@ -1,8 +1,6 @@
 // The editorial back office against the LIVE IRLY Supabase project, through
 // the public API and the rules the app uses (publishable key, real sign-in).
-// NEEDS migration 20261028500000_irly_admin_cms DEPLOYED first; until then
-// every step fails at its first call. Not part of .github/workflows/e2e.yml:
-// run it by hand once the migration is live.
+// Run by .github/workflows/e2e.yml (api job), after the other live journeys.
 //
 // Three throwaway accounts (deleted at the end): Cora (content staff, role
 // given and removed through the Management API), Wren (a woman: IRLY Girl)
@@ -107,6 +105,12 @@ try {
   // What must be the same at the end.
   layouts = await sql(`select flavour, draft, published, version, draft_updated_at, draft_updated_by, published_at, published_by from public.home_layouts`);
   files = (await sql(`select count(*)::int as n from storage.objects where bucket_id in ('cms-media', 'app-photos', 'activity-photos')`))[0].n;
+
+  // Read only: is the minute job that puts scheduled news live there? Without
+  // it, a scheduled item goes live when the team next opens the news list.
+  const cronExt = (await sql(`select count(*)::int as n from pg_extension where extname = 'pg_cron'`))[0].n > 0;
+  const cronJob = cronExt && (await sql(`select count(*)::int as n from cron.job where jobname = 'irly-news-live'`).catch(() => [{ n: 0 }]))[0].n > 0;
+  console.log(`ℹ pg_cron ${cronExt ? 'installed' : 'not installed'}, job irly-news-live ${cronJob ? 'scheduled' : 'missing'}`);
 
   // ───────── A ─────────
   let both;

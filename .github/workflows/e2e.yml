@@ -14,6 +14,7 @@ on:
       - 'scripts/e2e-sync.mjs'
       - 'scripts/e2e-girl.mjs'
       - 'scripts/e2e-activities.mjs'
+      - 'scripts/e2e-cms.mjs'
       - 'scripts/check-routes.mjs'
       - 'src/**'
       - '.github/workflows/e2e.yml'
@@ -95,6 +96,14 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/e2e-activities.mjs
+      - name: Editorial back office (news, Home layout, banners; IRLY and IRLY Girl)
+        if: always()
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          node scripts/e2e-cms.mjs 2>&1 | tee cms.log; a=${PIPESTATUS[0]}
+          grep -E '^ℹ pg_cron' cms.log | while IFS= read -r l; do echo "::notice title=pg_cron::$l"; done
+          exit $a
 
   ui:
     needs: [wait-db, api]
