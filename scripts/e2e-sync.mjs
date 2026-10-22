@@ -284,7 +284,7 @@ async function main() {
   await step('… and in search', async () => (await page.goto(`${BASE}/discover?q=${encodeURIComponent(liveTitle)}`), await visible(page, liveTitle), true));
   await step('Uma joins it → the plan\'s chat is in her inbox, the count says 2 going', async () => {
     await page.goto(`${BASE}/a/${veraAct}`);
-    await page.getByRole('button', { name: 'Join', exact: true }).click();
+    await page.getByRole('button', { name: 'Join the activity', exact: true }).click();
     await visible(page, '2 going', 20000);
     await page.goto(`${BASE}/messages`);
     await visible(page, liveTitle, 20000);
@@ -337,6 +337,48 @@ async function main() {
     await page.waitForTimeout(2500);
     return (await page.getByText(clubName).count()) === 0;
   });
+
+  // ───────── IRLY Network: join a networking community from the Network page ─────────
+  // Network page › Communities › a community › Join: Uma is a member on the server,
+  // the page says so at once and the chat is in her inbox. In IRLY Mixte (a mixed
+  // networking community), then in IRLY Girl (a women-only one, Network in violet);
+  // each space lists only its own. Nia hosts them (a member creates 3 communities a day).
+  const nia = await createWoman('Nia');
+  const niaSb = createClient(URL_, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  must(await niaSb.auth.signInWithPassword({ email: nia.email, password: PASSWORD }));
+  const netTile = (id) => page.locator(`[data-testid="net-community-${id}"]`).filter({ visible: true }).first();
+  const netJoin = async (id, name, other) => {
+    await page.goto(`${BASE}/network`);
+    const tile = netTile(id);
+    await tile.waitFor({ timeout: 25000 });
+    if (other && (await netTile(other).count())) throw new Error('the other space’s networking community is listed here too');
+    await tile.scrollIntoViewIfNeeded();
+    await tile.click();
+    await page.waitForURL((u) => new URL(u).pathname === `/c/${id}`, { timeout: 15000 });
+    await page.getByRole('button', { name: 'Join the community' }).click();
+    // The member's actions as soon as the server accepts (not « Join » again while the page reloads).
+    await visible(page, 'Open chat', 10000);
+    const [{ n }] = await sql(`select count(*)::int as n from public.community_members where community_id = '${id}' and user_id = '${uma.id}'`);
+    if (n !== 1) throw new Error(`Uma is not a member on the server (${n})`);
+    await page.goto(`${BASE}/messages`);
+    await visible(page, name, 20000);
+    return true;
+  };
+  const netClub = `Founders circle ${run}`;
+  const netGirlClub = `Women founders ${run}`;
+  let netClubId;
+  let netGirlId;
+  await step('IRLY Network (Mixte): a networking community → Join → member at once, chat in the inbox', async () => {
+    netClubId = must(await niaSb.rpc('create_community', { p_name: netClub, p_city: 'bali', p_category: 'networking' }));
+    netGirlId = must(await niaSb.rpc('create_community', { p_name: netGirlClub, p_city: 'bali', p_category: 'networking', p_girl_only: true }));
+    return netJoin(netClubId, netClub, netGirlId);
+  });
+  await step('IRLY Network (Girl): a women-only networking community → Join → member at once, chat in the inbox', async () => {
+    await enterGirl(page);
+    return netJoin(netGirlId, netGirlClub, netClubId);
+  });
+  for (const id of [netClubId, netGirlId]) if (id) await niaSb.rpc('delete_community', { p_community: id });
+  await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
 
   // ───────── Community: post, live feed, assistant ─────────
   const girlsId = (await sql(`select id from public.communities where city_id = 'bali' and name = 'Bali Girls'`))[0].id;
