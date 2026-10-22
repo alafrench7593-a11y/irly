@@ -51,7 +51,9 @@ async function createMember(name, gender) {
 }
 
 const cleanup = () =>
-  sql(`delete from auth.users where email like 'e2e-girl-${run}-%@irly.test'
+  sql(`delete from public.communities where created_by in (select id from auth.users where email like 'e2e-girl-${run}-%@irly.test'
+    or (email like 'e2e-girl-%@irly.test' and created_at < now() - interval '2 hours'));
+    delete from auth.users where email like 'e2e-girl-${run}-%@irly.test'
     or (email like 'e2e-girl-%@irly.test' and created_at < now() - interval '2 hours')`).catch(() => undefined);
 
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.ttf': 'font/ttf', '.ico': 'image/x-icon' };

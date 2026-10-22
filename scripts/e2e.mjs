@@ -90,7 +90,9 @@ async function cleanup() {
   // Own run, or accounts this script left behind more than 2 hours ago. Never the
   // browser tests' accounts (e2e-sync-*, e2e-ui-*): they may be in use by a run
   // happening at the same time.
-  await sql(`delete from auth.users where email like 'e2e-${run}-%@irly.test'
+  await sql(`delete from public.communities where created_by in (select id from auth.users where email like 'e2e-${run}-%@irly.test'
+    or (email like 'e2e-%@irly.test' and email not like 'e2e-sync-%' and email not like 'e2e-ui-%' and created_at < now() - interval '2 hours'));
+    delete from auth.users where email like 'e2e-${run}-%@irly.test'
     or (email like 'e2e-%@irly.test' and email not like 'e2e-sync-%' and email not like 'e2e-ui-%' and created_at < now() - interval '2 hours')`)
     .catch((e) => console.log('cleanup:', e.message));
 }
@@ -112,7 +114,8 @@ try {
     if (up.error) throw new Error(up.error.message);
     if (!up.data.session) {
       // Email confirmation is on: the account exists but needs the link. Remove it and say so.
-      await sql(`delete from auth.users where email = '${email}'`);
+      await sql(`delete from public.communities where created_by in (select id from auth.users where email = '${email}');
+    delete from auth.users where email = '${email}'`);
       console.log('   (email confirmation required: the sign-in part needs the emailed link, not testable here)');
       return true;
     }

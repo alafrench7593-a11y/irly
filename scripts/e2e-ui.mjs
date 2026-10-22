@@ -51,7 +51,8 @@ const timings = [];
 const HOME_FIRST_CONTENT_MS = 12_000;
 
 async function main() {
-  await sql(`delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`);
+  await sql(`delete from public.communities where created_by in (select id from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours'));
+    delete from auth.users where email = '${EMAIL}' or (email like 'e2e-ui-%@irly.test' and created_at < now() - interval '2 hours')`);
   const [{ user_id: uid }] = await sql(`
     with u as (
       insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
@@ -501,7 +502,8 @@ try {
     failed++;
     failures.push(`profiles_id_fkey check: ${e instanceof Error ? e.message : e}`);
   });
-  await sql(`delete from auth.users where email in ('${EMAIL}', 'e2e-ui2-${run}@irly.test') or ((email like 'e2e-ui-%@irly.test' or email like 'e2e-ui2-%@irly.test') and created_at < now() - interval '2 hours')`).catch(() => undefined);
+  await sql(`delete from public.communities where created_by in (select id from auth.users where email in ('${EMAIL}', 'e2e-ui2-${run}@irly.test') or ((email like 'e2e-ui-%@irly.test' or email like 'e2e-ui2-%@irly.test') and created_at < now() - interval '2 hours'));
+    delete from auth.users where email in ('${EMAIL}', 'e2e-ui2-${run}@irly.test') or ((email like 'e2e-ui-%@irly.test' or email like 'e2e-ui2-%@irly.test') and created_at < now() - interval '2 hours')`).catch(() => undefined);
   server.close();
 }
 
