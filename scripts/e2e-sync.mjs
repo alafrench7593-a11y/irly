@@ -383,10 +383,10 @@ async function main() {
   await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
 
   // ───────── Community: post, live feed, assistant ─────────
-  // Vera makes the women-only community the test uses (deleted with the test accounts at the end),
+  // Nia makes the women-only community the test uses (deleted with the test accounts at the end),
   // rather than relying on one that happens to exist in production.
   const girlsName = `Bali Girls ${run}`;
-  const girlsId = must(await veraSb.rpc('create_community', { p_name: girlsName, p_city: 'bali', p_category: 'sport', p_girl_only: true }));
+  const girlsId = must(await niaSb.rpc('create_community', { p_name: girlsName, p_city: 'bali', p_category: 'sport', p_girl_only: true }));
   await step('Uma joins a women-only community from its page', async () => {
     await page.goto(`${BASE}/c/${girlsId}`);
     await page.getByRole('button', { name: 'Join the community' }).click();
