@@ -15,7 +15,7 @@ import { isAvatar } from '@/features/avatar/avatar';
 import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
 import { removeFriend } from '@/features/server/social';
 import { openDirect } from '@/features/server/engage';
-import { useT } from '@/i18n';
+import { useT, useTg } from '@/i18n';
 import { initials } from '@/lib/format';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -24,11 +24,13 @@ import { ease } from '@/motion/tokens';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { NetworkScope } from '@/theme/flavor';
+import { useAppSpace } from '@/state/appSpace';
+import { useStore } from '@/state/store';
 import { proConnect, rememberPro } from './api';
 import { demoConnect, demoDisconnect } from './demo';
 import { matchSentence, roundDistance, type ProMatch, type ProProfile } from './match';
 import { stateIn, usePressLight, useScreenFocused } from './motion';
-import { INDUSTRY, ROLE_LABEL, skillLabel } from './taxonomy';
+import { agreeOf, INDUSTRY, ROLE_LABEL, skillLabel } from './taxonomy';
 import { AccentFill, layered, NetworkPane, useNetworkTone } from './tone';
 
 export const hueOf = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 7);
@@ -56,13 +58,18 @@ export function ConnectAction({
   size = 'sm',
   full,
 }: {
-  pro: Pick<ProProfile, 'userId' | 'firstName' | 'connection'>;
+  pro: Pick<ProProfile, 'userId' | 'firstName' | 'connection' | 'gender'>;
   onChange: (c: ProProfile['connection']) => void;
   size?: 'sm' | 'md' | 'lg';
   full?: boolean;
 }) {
   const router = useRouter();
   const tr = useT();
+  const tg = useTg();
+  // « {name} et toi êtes connectées » when you are both women.
+  const girl = useAppSpace() === 'girl';
+  const iAmWoman = useStore((s) => s.profile.gender === 'woman');
+  const both = iAmWoman && agreeOf(pro, girl) === 'woman' ? 'woman' : 'man';
   const reduced = useReducedMotion();
   const [busy, setBusy] = useState(false);
   // State lags a fast double tap; the ref does not, so each action (and each chat push) runs once.
@@ -82,7 +89,7 @@ export function ConnectAction({
       if (accepted) onChange('connected');
       else if (onlySent) onChange('requested');
       haptic('success');
-      toast(tr(accepted ? 'You and {name} are connected' : onlySent ? 'Request sent to {name}' : done, { name: pro.firstName }), 'check', 'brand');
+      toast(tg(accepted ? 'You and {name} are connected' : onlySent ? 'Request sent to {name}' : done, both, { name: pro.firstName }), 'check', 'brand');
     } catch (e) {
       onChange(before);
       haptic('error');
@@ -296,6 +303,8 @@ export const ProCard = memo(function ProCard({
   const t = useTheme();
   const tone = useNetworkTone();
   const tr = useT();
+  const tg = useTg();
+  const who = agreeOf(pro, useAppSpace() === 'girl');
   const router = useRouter();
   const { press, onPressIn, onPressOut } = usePressLight();
   const where = [placeOf(pro), match?.distanceKm != null ? roundDistance(match.distanceKm) : null].filter(Boolean).join(' · ');
@@ -328,8 +337,8 @@ export const ProCard = memo(function ProCard({
           ) : null}
         </View>
         <View style={styles.who}>
-          <Text variant="overline" color={tone.isGirl ? tone.accent : t.c.textSecondary} numberOfLines={1}>
-            {ROLE_LABEL[pro.role]}
+          <Text variant="overline" color={tone.isGirl ? tone.accent : t.c.textSecondary} numberOfLines={1} raw>
+            {tg(ROLE_LABEL[pro.role], who)}
           </Text>
           <Text variant="titleM" numberOfLines={1} raw>
             {pro.firstName}
@@ -377,7 +386,7 @@ export const ProCard = memo(function ProCard({
             <Text variant="caption" style={{ fontFamily: font.heavy }} raw color={tone.isGirl ? tone.accent : t.c.text}>
               {tr('{n}% match', { n: match.percent })}
             </Text>
-            {` — ${matchSentence(match, tr)}`}
+            {` — ${matchSentence(match, tr, tg, who)}`}
           </Text>
         </View>
       ) : null}
@@ -491,14 +500,27 @@ export const ProCardSkeleton = memo(function ProCardSkeleton() {
  * hold many), flooded with the accent when chosen (violet in IRLY Girl, ink
  * in IRLY), with the shared selection moment.
  */
-export const FilterChip = memo(function FilterChip({ label, selected, onPress, icon }: { label: string; selected: boolean; onPress: () => void; icon?: IconName }) {
+export const FilterChip = memo(function FilterChip({
+  label,
+  selected,
+  onPress,
+  icon,
+  raw,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  icon?: IconName;
+  /** The label is already in the reader's language (a word agreeing with someone): shown as is. */
+  raw?: boolean;
+}) {
   const t = useTheme();
   const tone = useNetworkTone();
   const { p, sweep, outer } = useSelection(selected);
   const content = (fg: string) => (
     <>
       {icon ? <Icon name={icon} size={14} color={fg} strokeWidth={2.2} /> : null}
-      <Text variant="label" color={fg} numberOfLines={1}>
+      <Text variant="label" color={fg} numberOfLines={1} raw={raw}>
         {label}
       </Text>
     </>

@@ -25,6 +25,7 @@ import {
   JOB_SUGGESTIONS,
   MAX_INDUSTRIES,
   MAX_SKILLS,
+  agreeOf,
   ROLE_CHOICES,
   ROLE_LABEL,
   roleChoice,
@@ -33,10 +34,11 @@ import {
   type IndustryId,
   type IntentId,
 } from '@/features/network/taxonomy';
-import { t as tx, useT } from '@/i18n';
+import { t as tx, useT, useTg } from '@/i18n';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
-import { useCityId } from '@/state/store';
+import { useAppSpace } from '@/state/appSpace';
+import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { useBusy } from '@/lib/useBusy';
@@ -123,6 +125,10 @@ function ProProfileEditorPage() {
  * all and opens the first step that needs a fix.
  */
 function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; initial: ProDraft; cityId: CityId }) {
+  // Your role and the job suggestions agree with you in French (« Entrepreneuse », « Fondatrice »).
+  const tg = useTg();
+  const myGender = useStore((s) => s.profile.gender) ?? null;
+  const who = agreeOf({ gender: myGender }, useAppSpace() === 'girl');
   const t = useTheme();
   const tone = useNetworkTone();
   const tr = useT();
@@ -253,17 +259,18 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
       <FormSection title="I am">
         <View style={[styles.grid, { gap: grid.gap }]} onLayout={grid.onLayout} accessibilityRole="radiogroup">
           {ROLE_CHOICES.map((r) => (
-            <RoleCard key={r.id} label={r.label} hint={r.hint} icon={r.icon} width={grid.cols >= 4 ? grid.tile : Math.floor((grid.width - grid.gap) / 2)} selected={shownRole === r.id} onPress={() => set('role', r.id)} />
+            <RoleCard key={r.id} label={tg(r.label, who)} hint={r.hint} icon={r.icon} width={grid.cols >= 4 ? grid.tile : Math.floor((grid.width - grid.gap) / 2)} selected={shownRole === r.id} onPress={() => set('role', r.id)} />
           ))}
         </View>
       </FormSection>
 
       <FormSection title="Job title" error={shows(0) ? jobError : null}>
-        <Field icon="briefcase" placeholder="Founder, CEO, Product Manager…" value={d.jobTitle} onChangeText={(v) => set('jobTitle', v)} maxLength={60} autoCapitalize="words" invalid={shows(0) && Boolean(jobError)} accessibilityLabel="Job title" />
+        <Field icon="briefcase" placeholder={tg('Founder, CEO, Product Manager…', who)} value={d.jobTitle} onChangeText={(v) => set('jobTitle', v)} maxLength={60} autoCapitalize="words" invalid={shows(0) && Boolean(jobError)} accessibilityLabel="Job title" />
         <View style={styles.wrap}>
           {JOB_SUGGESTIONS.map((s) => {
-            const label = tr(s);
-            return <Chip key={s} size="sm" label={s} selected={d.jobTitle.trim().toLowerCase() === label.toLowerCase()} onPress={() => set('jobTitle', label)} />;
+            // What a tap writes is yours from then on (free text): « Fondatrice » for a woman, never changed afterwards.
+            const label = tg(s, who);
+            return <Chip key={s} size="sm" label={label} raw selected={d.jobTitle.trim().toLowerCase() === label.toLowerCase()} onPress={() => set('jobTitle', label)} />;
           })}
         </View>
       </FormSection>
@@ -404,7 +411,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
       <FormSection title="Summary">
         <View style={[styles.summary, { boxShadow: tone.surface.shadow }]}>
           <NetworkPane radius={radius.xl} />
-          <Row label="I am" value={[tr(ROLE_LABEL[shownRole]), d.company.trim() ? `${d.jobTitle.trim()} · ${d.company.trim()}` : d.jobTitle.trim()].filter(Boolean).join(' · ')} onEdit={() => go(0)} />
+          <Row label="I am" value={[tg(ROLE_LABEL[shownRole], who), d.company.trim() ? `${d.jobTitle.trim()} · ${d.company.trim()}` : d.jobTitle.trim()].filter(Boolean).join(' · ')} onEdit={() => go(0)} />
           <Row label="Industries" value={d.industries.map((i) => `${INDUSTRY[i].emoji} ${tr(INDUSTRY[i].short)}`).join(', ')} onEdit={() => go(1)} />
           <Row label="Skills" value={d.skills.map((s) => skillLabel(s, tr)).join(', ')} onEdit={() => go(1)} />
           <Row label="Goals" value={GOALS.filter((g) => d.intents.includes(g.id)).map((g) => `${g.emoji} ${tr(g.label)}`).join(', ')} onEdit={() => go(2)} />
