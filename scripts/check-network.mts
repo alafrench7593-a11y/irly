@@ -28,7 +28,8 @@ const m2 = scorePro(me, far);
 check(m1.percent > m2.percent && m1.percent >= 85, 'same domains, goals, skills, nearby: high match', m1.percent);
 check(m2.percent < 60, 'nothing in common: low match', m2.percent);
 check(m1.percent <= 99 && m2.percent >= 40, 'percent stays between 40 and 99');
-const s1 = matchSentence(m1, fill);
+// No gender here: the English sentence, as the app shows it (agreement is checked in check-network-gender.mts).
+const s1 = matchSentence(m1, fill, (s, _who, vars) => fill(s, vars), null);
 check(s1 === "You both work in AI & SaaS and you are both looking for business partners.", 'the card sentence', s1);
 
 const investor = base({ userId: 'c', firstName: 'Sam', role: 'investor', industries: ['fintech'] });
