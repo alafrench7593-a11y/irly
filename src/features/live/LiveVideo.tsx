@@ -21,10 +21,17 @@ import { feedRatio, knownRatio, mediaKey, mediaRatio, rememberRatio } from './li
  * other; it pauses itself when its screen is left or the app goes to the
  * background (the member starts it again from the controls).
  *
+ * Never an endless black box: without a poster (none was made, or it cannot
+ * be loaded) the frame is a plain tile that says it is a video; the poster
+ * shows a spinner while it loads; a video that never becomes ready says so
+ * after PLAY_TIMEOUT_MS, with a retry.
+ *
  * `fit` (opt-in, the Live feed and composer): the frame follows the video's
  * own shape (`ratio`, else its poster's), between 4:5 and 1.91:1, instead of
  * the size given by `style`. Left out, the frame is exactly `style`, as before.
  */
+const PLAY_TIMEOUT_MS = 30_000;
+
 export function LiveVideo({
   url,
   poster,
@@ -47,6 +54,11 @@ export function LiveVideo({
   const [on, setOn] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [posterRatio, setPosterRatio] = useState<{ poster: string; ratio: number } | null>(null);
+  // The poster on screen, or the one that could not be loaded (the tile shows instead).
+  const [posterShown, setPosterShown] = useState<string | null>(null);
+  const [posterFailed, setPosterFailed] = useState<string | null>(null);
+  const hasPoster = Boolean(poster) && posterFailed !== poster;
+  const posterLoading = hasPoster && posterShown !== poster;
   const own = fit ? (ratio ?? knownRatio(poster) ?? knownRatio(url) ?? (posterRatio && poster && posterRatio.poster === poster ? posterRatio.ratio : null)) : null;
   return (
     <View style={[styles.box, style, fit ? { width: '100%', aspectRatio: feedRatio(own) } : null]}>
@@ -63,24 +75,37 @@ export function LiveVideo({
         />
       ) : (
         <PressableScale haptic="select" scaleTo={0.98} onPress={() => setOn(true)} style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel={a11y('Play the video')}>
-          {poster ? (
+          {poster && hasPoster ? (
             <Image
               source={fit ? { uri: poster, cacheKey: mediaKey(poster) } : { uri: poster }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
+              cachePolicy="memory-disk"
+              priority="high"
               transition={200}
-              onLoad={
-                fit
-                  ? (e) => {
-                      const r = mediaRatio(e.source.width, e.source.height);
-                      if (!r) return;
-                      rememberRatio(poster, r);
-                      rememberRatio(url, r);
-                      if (!ratio) setPosterRatio({ poster, ratio: r });
-                    }
-                  : undefined
-              }
+              onLoad={(e) => {
+                setPosterShown(poster);
+                if (!fit) return;
+                const r = mediaRatio(e.source.width, e.source.height);
+                if (!r) return;
+                rememberRatio(poster, r);
+                rememberRatio(url, r);
+                if (!ratio) setPosterRatio({ poster, ratio: r });
+              }}
+              // A poster that cannot be shown leaves the tile below, never a black frame (the video itself may be fine).
+              onError={() => setPosterFailed(poster)}
             />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.tile]}>
+              <Text variant="caption" color="rgba(255,255,255,0.85)">
+                Video
+              </Text>
+            </View>
+          )}
+          {posterLoading ? (
+            <View style={[styles.center, styles.posterSpinner]} pointerEvents="none">
+              <ActivityIndicator color="rgba(255,255,255,0.85)" />
+            </View>
           ) : null}
           <View style={styles.center}>
             <View style={styles.play}>
@@ -109,6 +134,13 @@ function Player({ url, onRetry }: { url: string; onRetry: () => void }) {
     p.play();
   });
   useEventListener(player, 'statusChange', ({ status }) => setState(status === 'error' ? 'error' : status === 'readyToPlay' ? 'ready' : 'loading'));
+  // A video that never gets ready (stalled download, a link that hangs) says so with a retry
+  // instead of a black frame with a spinner forever; if it gets ready after all, it plays.
+  useEffect(() => {
+    if (state !== 'loading') return;
+    const id = setTimeout(() => setState((s) => (s === 'loading' ? 'error' : s)), PLAY_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [state, player]);
   const [id] = useState(playbackId);
   // Playing takes the floor (any other video pauses); paused or ended, the floor is free again.
   useEventListener(player, 'playingChange', ({ isPlaying }) => {
@@ -173,5 +205,8 @@ const styles = StyleSheet.create({
   box: { overflow: 'hidden', backgroundColor: '#000' },
   center: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   play: { width: 58, height: 58, borderRadius: 29, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', paddingLeft: 3 },
+  // Under the play button (58 px, centred).
+  tile: { alignItems: 'center', justifyContent: 'center', paddingTop: 96, backgroundColor: '#2A2A2E' },
+  posterSpinner: { alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 18 },
   length: { position: 'absolute', right: 10, bottom: 10, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.6)' },
 });

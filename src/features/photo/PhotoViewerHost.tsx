@@ -73,13 +73,19 @@ export function PhotoViewerHost() {
       p.set(reduced ? withTiming(1, { duration: motion.fast }) : withSpring(1, spring.soft));
       haptic('tap');
     } else if (usePhotoViewer.getState().shown) {
-      const done = () => finish();
+      // Still closed when it ends (not opened again meanwhile): the photo leaves the screen.
+      const done = () => {
+        if (!usePhotoViewer.getState().photo) finish();
+      };
       const end = (fin?: boolean) => {
         'worklet';
         if (fin) scheduleOnRN(done);
       };
       dragY.set(reduced ? 0 : withSpring(0, CLOSE_SPRING));
       p.set(reduced ? withTiming(0, { duration: motion.fast }, end) : withSpring(0, CLOSE_SPRING, end));
+      // Safety net: a closing animation cut short never leaves the photo (invisible) on screen.
+      const safety = setTimeout(done, 1200);
+      return () => clearTimeout(safety);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photo, key]);
@@ -136,7 +142,9 @@ export function PhotoViewerHost() {
   const chrome = useAnimatedStyle(() => ({ opacity: interpolate(p.value, [0.6, 1], [0, 1], 'clamp') * (dragY.value === 0 ? 1 : 0.4) }));
 
   return (
-    <View ref={hostRef} onLayout={onLayout} pointerEvents={shown ? 'auto' : 'none'} style={StyleSheet.absoluteFill}>
+    // Takes touches only while a photo is open: while it slides home (and if that animation is ever
+    // cut short) the page underneath answers at once, never an invisible layer over the app.
+    <View ref={hostRef} onLayout={onLayout} pointerEvents={photo ? 'auto' : 'none'} style={StyleSheet.absoluteFill}>
       {shown ? (
         <>
           <Animated.View style={[StyleSheet.absoluteFill, styles.dim, dim]}>

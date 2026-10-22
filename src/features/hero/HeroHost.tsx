@@ -109,6 +109,11 @@ export function HeroHost() {
       p.set(withSpring(0, CLOSE_SPRING, (fin) => {
         if (fin) scheduleOnRN(done);
       }));
+      // Safety net: a closing animation cut short never leaves the card (half shrunk) on screen.
+      const safety = setTimeout(() => {
+        if (!useHeroStore.getState().item) done();
+      }, 1500);
+      return () => clearTimeout(safety);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item]);
