@@ -370,6 +370,8 @@ function PeopleSheet({ visible, communityId, onClose }: { visible: boolean; comm
           }}
           onFocus={() => people === null && load('')}
           placeholder={tx('Search a member')}
+          autoCorrect={false}
+          returnKeyType="search"
           placeholderTextColor={t.c.textTertiary}
           style={[styles.line, { color: t.c.text, backgroundColor: t.c.overlay }]}
           accessibilityLabel={a11y('Search a member')}

@@ -154,7 +154,7 @@ export default function EditProfile() {
         </Section>
 
         <Section title="First name" error={tried ? errors.name : null}>
-          <Field value={name} onChangeText={setName} maxLength={40} autoCapitalize="words" accessibilityLabel={tr('First name')} />
+          <Field value={name} onChangeText={setName} maxLength={40} autoCapitalize="words" autoCorrect={false} autoComplete="given-name" textContentType="givenName" returnKeyType="done" accessibilityLabel={tr('First name')} />
         </Section>
 
         {account ? (
@@ -165,6 +165,8 @@ export default function EditProfile() {
               maxLength={24}
               autoCapitalize="none"
               autoCorrect={false}
+              autoComplete="off"
+              returnKeyType="done"
               placeholder="yourname"
               icon="user"
               accessibilityLabel={tr('Username')}

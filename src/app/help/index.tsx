@@ -96,7 +96,7 @@ export default function HelpScreen() {
           <View style={[styles.search, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
             <GlassLayer radius={radius.lg} />
             <Icon name="search" size={18} color={t.c.textTertiary} />
-            <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search: Emirates ID, nursery, Marina…')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} returnKeyType="search" accessibilityLabel={a11y('Search questions')} />
+            <TextInput value={query} onChangeText={setQuery} placeholder={tx('Search: Emirates ID, nursery, Marina…')} placeholderTextColor={t.c.textTertiary} style={[styles.searchInput, { color: t.c.text }]} returnKeyType="search" autoCorrect={false} accessibilityLabel={a11y('Search questions')} />
           </View>
         </View>
         <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}>

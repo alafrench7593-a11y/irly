@@ -93,6 +93,7 @@ export function MapTopBar({
             style={[styles.searchInput, { color: t.c.text }]}
             accessibilityLabel={a11y('Search the map')}
             returnKeyType="search"
+            autoCorrect={false}
           />
           {query ? (
             <PressableScale haptic="select" onPress={() => onQuery('')} accessibilityLabel="Clear search" hitSlop={8}>
