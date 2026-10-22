@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from '@/components/ui/Toast';
 import { t as tx } from '@/i18n';
 import { NONE } from '@/lib/none';
+import { uuid } from '@/lib/uuid';
 import * as Clipboard from 'expo-clipboard';
 import { Platform, Share } from 'react-native';
 import { useAccount } from '@/features/auth/account';
@@ -452,19 +453,30 @@ export function useComments(t: Target) {
 
   const refresh = useCallback(() => read(false), [read]);
 
-  /** Optimistic: shows at once, marked pending, replaced by the server row. */
+  /**
+   * Optimistic: shows at once, marked pending, replaced by the server row.
+   * `id` is made by the composer and kept while the comment is the same, so
+   * sending it again after an answer that never came is the same comment,
+   * never a second one.
+   */
   const add = useCallback(
-    async (body: string, parentId?: string | null) => {
+    async (body: string, parentId?: string | null, id: string = uuid()) => {
       if (!supabase || !uid) throw new Error('Sign in to comment');
       const text = body.trim();
       if (!text) return;
-      const temp: Comment = { id: `tmp-${Date.now()}`, parentId: parentId ?? null, authorId: uid, firstName: 'You', body: text, createdAt: Date.now(), deleted: false, likes: 0, liked: false, mine: true };
-      setList((l) => [...l, temp]);
+      const temp: Comment = { id: `tmp-${id}`, parentId: parentId ?? null, authorId: uid, firstName: 'You', body: text, createdAt: Date.now(), deleted: false, likes: 0, liked: false, mine: true };
+      setList((l) => [...l.filter((c) => c.id !== temp.id), temp]);
       const { data, error } = await supabase
         .from('comments')
-        .insert({ target_type: t.type, target_id: t.id, author_id: uid, body: text, parent_id: parentId ?? null })
+        .insert({ id, target_type: t.type, target_id: t.id, author_id: uid, body: text, parent_id: parentId ?? null })
         .select('id, created_at')
         .single();
+      // Already there: an earlier try landed (its answer was lost). That comment is this one.
+      if (error?.code === '23505') {
+        setList((l) => l.filter((c) => c.id !== temp.id));
+        refresh();
+        return;
+      }
       if (error || !data) {
         setList((l) => l.filter((c) => c.id !== temp.id));
         // No answer (network, timeout): it may have been saved. The thread shows what the server has,

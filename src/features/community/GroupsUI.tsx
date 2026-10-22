@@ -36,6 +36,7 @@ import {
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import Animated from 'react-native-reanimated';
 import { enter } from '@/motion/enter';
+import { useBusy } from '@/lib/useBusy';
 
 /** "← IRLY Sport" on a group's page. */
 export function ParentLink({ parent }: { parent: Parent }) {
@@ -201,19 +202,24 @@ export function HostTools({
   const t = useTheme();
   const router = useRouter();
   const [sheet, setSheet] = useState<'announce' | 'group' | 'people' | null>(null);
+  // Delete waits for the server: a second tap deleted again (an error toast) and navigated twice.
+  const removing = useBusy<'delete'>();
   if (!rights.canModerate) return null;
   // A group (not a top community) can be deleted by its moderators; IRLY's own groups only by an IRLY admin.
   const canDelete = !isTop && (!official || rights.isAdmin);
   const remove = () =>
+    removing.isRunning() ||
     confirm(tx('Delete this group? It disappears for everyone, and its chat leaves every inbox.'), () =>
-      deleteCommunity(communityId)
-        .then(() => {
-          toast(tx('Group deleted'), 'check', 'brand');
-          if (parentId) router.replace(`/c/${parentId}`);
-          else if (router.canGoBack()) router.back();
-          else router.replace('/communities');
-        })
-        .catch((e) => toast(e instanceof Error ? e.message : tx('Could not delete'), 'x', 'live')),
+      void removing.run('delete', () =>
+        deleteCommunity(communityId)
+          .then(() => {
+            toast(tx('Group deleted'), 'check', 'brand');
+            if (parentId) router.replace(`/c/${parentId}`);
+            else if (router.canGoBack()) router.back();
+            else router.replace('/communities');
+          })
+          .catch((e) => toast(e instanceof Error ? e.message : tx('Could not delete'), 'x', 'live')),
+      ),
     );
   return (
     <View style={[styles.pad, styles.tools, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
@@ -228,7 +234,7 @@ export function HostTools({
         <Chip size="sm" icon="megaphone" label={tx('Notify all members')} onPress={() => setSheet('announce')} />
         {isTop ? <Chip size="sm" icon="plus" label={tx('Add a group')} onPress={() => setSheet('group')} /> : null}
         {rights.isOwner ? <Chip size="sm" icon="users" label={tx('Moderators')} onPress={() => setSheet('people')} /> : null}
-        {canDelete ? <Chip size="sm" icon="x" label={tx('Delete this group')} onPress={remove} /> : null}
+        {canDelete ? <Chip size="sm" icon="x" label={removing.busy ? tx('One moment…') : tx('Delete this group')} onPress={remove} /> : null}
       </View>
       <AnnounceSheet visible={sheet === 'announce'} communityId={communityId} name={name} rights={rights} onClose={() => setSheet(null)} onSent={onChanged} />
       <NewGroupSheet visible={sheet === 'group'} parentId={communityId} onClose={() => setSheet(null)} onMade={onChanged} />

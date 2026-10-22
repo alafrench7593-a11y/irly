@@ -51,6 +51,7 @@ import { useCityId, useStore } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { SpaceFlavor } from '@/theme/space';
+import { useBusy } from '@/lib/useBusy';
 
 // Opened from IRLY Girl, the chat wears the Girl look (cosmetic only, see theme/space).
 export default function ThreadRoute() {
@@ -135,6 +136,8 @@ function ServerThreadView({ id }: { id: string }) {
   }, [id, text]);
   const [earlier, setEarlier] = useState(false);
   const [menu, setMenu] = useState(false);
+  // Block waits for the server: a second tap asked again, then went back twice.
+  const blocking = useBusy<'block'>();
   const [reporting, setReporting] = useState<ReportTarget | null>(null);
   const [reportName, setReportName] = useState<string | undefined>();
   const scrollRef = useRef<ScrollView>(null);
@@ -409,18 +412,22 @@ function ServerThreadView({ id }: { id: string }) {
               icon="shield"
               variant="danger"
               full
+              loading={blocking.busy === 'block'}
               onPress={() =>
+                blocking.isRunning() ||
                 confirm(
                   tx('Block {name}? You will no longer see each other, and this chat closes.', { name: thread.title }),
                   () =>
-                    blockUser(other)
-                      .then(() => {
-                        setMenu(false);
-                        toast(tx('{name} is blocked', { name: thread.title }), 'shield', 'brand');
-                        if (router.canGoBack()) router.back();
-                        else router.replace('/messages');
-                      })
-                      .catch((e) => toast(e instanceof Error ? e.message : 'Could not block', 'x', 'live')),
+                    void blocking.run('block', () =>
+                      blockUser(other)
+                        .then(() => {
+                          setMenu(false);
+                          toast(tx('{name} is blocked', { name: thread.title }), 'shield', 'brand');
+                          if (router.canGoBack()) router.back();
+                          else router.replace('/messages');
+                        })
+                        .catch((e) => toast(e instanceof Error ? e.message : 'Could not block', 'x', 'live')),
+                    ),
                   'Block',
                 )
               }
@@ -797,6 +804,8 @@ function ChatInfo({
   const me = useAccount()?.userId;
   const [name, setName] = useState(title);
   const [busy, setBusy] = useState(false);
+  // Leave waits for the server: a second tap left again (an error toast) and replaced the page twice.
+  const leaving = useBusy<'leave'>();
   const list = Object.entries(members);
   const isAdmin = Boolean(me && members[me]?.admin);
   const go = (path: string) => {
@@ -856,15 +865,19 @@ function ChatInfo({
             icon="x"
             variant="danger"
             full
+            loading={leaving.busy === 'leave'}
             onPress={() =>
+              leaving.isRunning() ||
               confirm(tx('Leave {title}? You will no longer receive its messages.', { title }), () =>
-                leaveGroup(id)
-                  .then(() => {
-                    onClose();
-                    toast('You left the group', 'check', 'brand');
-                    router.replace('/messages');
-                  })
-                  .catch((e) => toast(e instanceof Error ? e.message : 'Could not leave', 'x', 'live')),
+                void leaving.run('leave', () =>
+                  leaveGroup(id)
+                    .then(() => {
+                      onClose();
+                      toast('You left the group', 'check', 'brand');
+                      router.replace('/messages');
+                    })
+                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not leave', 'x', 'live')),
+                ),
               )
             }
           />

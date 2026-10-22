@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { confirm } from '@/lib/confirm';
+import { uuid } from '@/lib/uuid';
 import { t as tx, a11y } from '@/i18n';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -59,20 +60,29 @@ function CommentsScreen() {
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [sending, setSending] = useState(false);
+  // A ref, not the state: two taps in the same frame both see sending === false.
+  const inFlight = useRef(false);
+  // The comment's id, kept while its text and its thread stay the same: a retry is the same comment.
+  const commentId = useRef<{ sig: string; id: string } | null>(null);
 
   const roots = useMemo(() => comments.filter((c) => !c.parentId), [comments]);
 
   const send = async () => {
-    if (!text.trim() || sending) return;
+    if (!text.trim() || inFlight.current) return;
+    inFlight.current = true;
     setSending(true);
+    const sig = JSON.stringify([text.trim(), replyTo?.id ?? null]);
+    if (commentId.current?.sig !== sig) commentId.current = { sig, id: uuid() };
     try {
-      await add(text, replyTo?.id ?? null);
+      await add(text, replyTo?.id ?? null, commentId.current.id);
+      commentId.current = null;
       haptic('success');
       setText('');
       setReplyTo(null);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
     } finally {
+      inFlight.current = false;
       setSending(false);
     }
   };
@@ -186,8 +196,8 @@ function CommentsScreen() {
                   accessibilityLabel={a11y('Comment')}
                 />
               </View>
-              <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, opacity: text.trim() ? 1 : 0.4 }]} accessibilityLabel="Post comment">
-                <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />
+              <PressableScale haptic={false} onPress={send} scaleTo={0.85} style={[styles.send, { backgroundColor: t.c.brand, opacity: text.trim() ? 1 : 0.4 }]} accessibilityLabel="Post comment" accessibilityState={{ busy: sending }}>
+                {sending ? <ActivityIndicator color={t.c.onBrand} /> : <Icon name="send" size={18} color={t.c.onBrand} strokeWidth={2.3} />}
               </PressableScale>
             </View>
           </Glass>
