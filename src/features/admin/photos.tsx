@@ -103,11 +103,19 @@ export function editorialGroups(): EditorialGroup[] {
   return groups;
 }
 
+/** A use in the member's language: each part on its own (« Restaurants · New restaurant »), « (card) » kept after the name. */
+export function labelOfUse(use: string): string {
+  return use
+    .split(' · ')
+    .map((x) => (x.endsWith(' (card)') ? tx('{name} (card)', { name: tx(x.slice(0, -' (card)'.length)) }) : tx(x)))
+    .join(' · ');
+}
+
 /** Everywhere a key shows (all groups but the plain list of keys). */
 export function usesOf(key: string): string[] {
   return editorialGroups()
     .filter((g) => g.id !== 'all')
-    .flatMap((g) => (g.items.find((i) => i.key === key)?.uses ?? []).map((u) => `${tx(g.label)} · ${u.split(' · ').map((x) => tx(x)).join(' · ')}`));
+    .flatMap((g) => (g.items.find((i) => i.key === key)?.uses ?? []).map((u) => `${tx(g.label)} · ${labelOfUse(u)}`));
 }
 
 export const isPhotoKey = (key: string): key is PhotoKey => editorialGroups().some((g) => g.id === 'all' && g.items.some((i) => i.key === key));

@@ -43,7 +43,7 @@ export default function Members() {
                   <StatePill state={m.deleted ? 'deleted' : m.sanction === 'ban' ? 'banned' : m.sanction === 'suspension' ? 'suspended' : 'active'} />
                 </View>
                 <Text variant="bodyS" tone="secondary" raw>
-                  {[m.email, tx('joined {d}', { d: day(m.created_at) }), tx('{n} reports', { n: m.reports }), m.role ? tx(m.role[0].toUpperCase() + m.role.slice(1)) : null]
+                  {[m.email, tx('joined {d}', { d: day(m.created_at) }), m.reports === 1 ? tx('1 report') : tx('{n} reports', { n: m.reports }), m.role ? tx(m.role[0].toUpperCase() + m.role.slice(1)) : null]
                     .filter(Boolean)
                     .join(' · ')}
                 </Text>
