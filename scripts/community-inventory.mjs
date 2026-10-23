@@ -25,13 +25,24 @@ const rows = await sql(`
     left(c.name, 50) as name
   from public.communities c where c.deleted_at is null
   order by 2, c.official desc, c.parent_id nulls first, c.name`);
-for (const r of rows) console.log([r.space, r.official ? 'OFFICIAL' : 'member', r.topic, r.city_id, r.is_group ? 'group' : 'main', r.retired ? 'retired' : '', r.members_count, r.posts, r.activities, r.creator, r.name, r.id].join(' | '));
+for (const r of rows.filter((x) => !x.official || x.retired || x.members_count || x.posts || x.activities)) console.log([r.space, r.official ? 'OFFICIAL' : 'member', r.topic, r.city_id, r.is_group ? 'group' : 'main', r.retired ? 'retired' : '', r.members_count, r.posts, r.activities, r.creator, r.name, r.id].join(' | '));
 const sum = {};
 for (const r of rows) {
   const k = `${r.space}/${r.official ? 'official' : 'member'}${r.is_group ? '/group' : ''}${r.retired ? '/retired' : ''}`;
   sum[k] = (sum[k] ?? 0) + 1;
 }
 console.log('totals:', sum);
+const agg = {};
+for (const r of rows) {
+  const k = `${r.space}/${r.official ? 'official' : 'member'}${r.is_group ? '/group' : ''}${r.retired ? '/retired' : ''}`;
+  agg[k] ??= { members: 0, posts: 0, activities: 0 };
+  agg[k].members += r.members_count; agg[k].posts += r.posts; agg[k].activities += r.activities;
+}
+console.log('members / posts / activities per kind:', agg);
+console.log('memberships of retired or member communities:', await sql(`select count(*)::int as n, count(distinct m.user_id)::int as people from public.community_members m join public.communities c on c.id = m.community_id
+  where c.deleted_at is null and (c.retired_at is not null or not c.official)`));
+console.log('messages in their chats:', await sql(`select count(*)::int as n from public.messages x join public.conversations v on v.id = x.conversation_id
+  join public.communities c on v.kind = 'community' and v.ref_id = c.id where c.deleted_at is null and (c.retired_at is not null or not c.official) and x.kind <> 'system'`).catch((e) => e.message.slice(0, 200)));
 
 console.log('\n--- IRLY Girl and IRLY Maman member content ---');
 console.log(await sql(`
