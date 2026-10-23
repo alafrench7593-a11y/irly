@@ -31,3 +31,13 @@ console.log(await sql(`select ${cols} ${from} where s.user_id is not null order 
 
 console.log('\n--- every account ---');
 console.log(await sql(`select ${cols} ${from} order by u.created_at`));
+
+console.log('\n--- global admin (migration 20261029700000) ---');
+console.log(await sql(`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and p.proname in ('staff_badges', 'staff_transfer_owner', 'i_am_last_owner', 'admin_official_topics',
+    'admin_official_reorder', 'admin_official_texts', 'admin_item_spaces', 'admin_space_overview', 'admin_overview_more') order by 1`));
+console.log('last-owner trigger:', await sql(`select tgname from pg_trigger where tgname = 'staff_roles_keep_an_owner'`));
+console.log('owners:', await sql(`select count(*)::int as n from public.staff_roles s join public.profiles p on p.id = s.user_id and p.deleted_at is null where s.role = 'owner'`));
+console.log('official order:', await sql(`select topic, sort, girl_only from public.community_topics where active order by girl_only, sort`));
+console.log('space overview (as the server):', await sql(`select private.community_space(c.id) as space, count(*)::int from public.communities c
+  where c.deleted_at is null and c.parent_id is null and c.retired_at is null group by 1 order by 1`));
