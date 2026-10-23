@@ -227,7 +227,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
           <Icon name="chevronLeft" size={20} color={girl.ink} />
         </PressableScale>
         <Text variant="label" color={girl.inkSoft}>
-          {moms ? "IRLY Maman" : "IRLY Girl"}
+          {moms ? "IRLY Mom Community" : "IRLY Girl"}
         </Text>
         <View style={styles.round} />
       </View>
@@ -306,7 +306,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
             </View>
             <View style={styles.previewText}>
               <Text variant="caption" color="rgba(255,255,255,0.9)">
-                {womenOnly ? (moms ? "IRLY Maman" : "IRLY Girl") : "IRLY"} ·{" "}
+                {womenOnly ? (moms ? "IRLY Mom Community" : "IRLY Girl") : "IRLY"} ·{" "}
                 {city.name}
               </Text>
               <Text
@@ -362,7 +362,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
               {missingMoms ? (
                 <Text variant="caption" color={girl.bordeaux}>
                   {tx(
-                    "Add “Maman” to the name so mothers find it in IRLY Maman.",
+                    "Add “Moms” to the name so mothers find it in IRLY Mom Community.",
                   )}
                 </Text>
               ) : null}

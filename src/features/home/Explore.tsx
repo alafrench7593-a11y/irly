@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/Text';
 import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { useGirlEntry } from '@/features/profile/girlEntry';
+import { GIRL_DOOR, MOM_DOOR } from '@/features/girl/doors';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
@@ -18,14 +19,16 @@ const DOORS: Door[] = [
   { title: 'Help & Questions', line: 'Ask, answer, recommend', icon: 'question', route: '/help' },
   { title: 'Dubai News & Life', line: 'What’s happening, from the sources', icon: 'news', route: '/news' },
   { title: 'IRLY Family', line: 'Outings, schools, families nearby', icon: 'home', route: '/space/families' },
-  { title: 'IRLY Maman', line: 'Moms meeting moms', icon: 'baby', route: '/space/moms', women: true },
-  { title: 'IRLY Girl', line: 'Plans and a network between women', icon: 'sparkles', route: '/space/girls', women: true },
+  { title: 'IRLY Mom Community', line: 'Moms meeting moms', icon: 'baby', route: MOM_DOOR, women: true },
+  { title: 'IRLY Girl', line: 'Plans and a network between women', icon: 'sparkles', route: GIRL_DOOR, women: true },
 ];
 
 /**
  * Doors to IRLY's spaces: help between members, the city's news, and the
  * family, mum and women-only spaces (the last two shown to women only, as
- * the server only lets women in).
+ * the server only lets women in). IRLY Mom Community and IRLY Girl are the same
+ * doors as everywhere (features/girl/doors), never the retired « girls »
+ * space page.
  */
 export const ExploreDoors = memo(function ExploreDoors() {
   const t = useTheme();
@@ -40,7 +43,8 @@ export const ExploreDoors = memo(function ExploreDoors() {
           <View style={[styles.icon, { backgroundColor: t.c.overlay }]}>
             <Icon name={d.icon} size={18} color={t.c.text} />
           </View>
-          <Text variant="titleS" numberOfLines={1}>
+          {/* Two lines: « IRLY Mom Community » and « Help & Questions » are wider than the door. */}
+          <Text variant="titleS" numberOfLines={2}>
             {d.title}
           </Text>
           <Text variant="caption" tone="secondary" numberOfLines={2}>

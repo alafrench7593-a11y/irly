@@ -342,13 +342,13 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
         return {
           icon: 'network',
           title: tx('{name} wants to connect', { name: name(p.from) }),
-          body: tx('Networking · see their professional profile'),
+          body: tx('IRLY Network · see their professional profile'),
           accept: pending ? p.from : undefined,
           pro: true,
         };
       }
       case 'PRO_CONNECT_ACCEPTED':
-        return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: tx('Networking · say hi') };
+        return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: tx('IRLY Network · say hi') };
       case 'NEW_FOLLOWER':
         return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: tx('See their profile') };
       case 'GROUP_ADDED':

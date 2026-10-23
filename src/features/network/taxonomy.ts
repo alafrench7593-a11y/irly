@@ -1,7 +1,7 @@
 import type { Agree } from '@/i18n';
 
 /**
- * IRLY Networking, professional side: the domains people work in, what they
+ * IRLY Network, professional side: the domains people work in, what they
  * are (founder, freelancer…) and what they came for. Ids are stored on the
  * server (pro_profiles), so they never change; labels can.
  */

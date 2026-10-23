@@ -18,7 +18,7 @@ const SPACES: { value: Space | null; label: string }[] = [
   { value: null, label: 'Every space' },
   { value: 'mixte', label: 'IRLY Mixte' },
   { value: 'girl', label: 'IRLY Girl' },
-  { value: 'mom', label: 'IRLY Maman' },
+  { value: 'mom', label: 'IRLY Mom Community' },
 ];
 type Row = ContentRow & { space: Space | null };
 

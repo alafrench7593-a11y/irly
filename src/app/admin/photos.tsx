@@ -30,7 +30,7 @@ const KINDS: { value: PhotoKind; label: string }[] = [
 
 /**
  * Every photo the app shows, for the team: IRLY's own photos (categories,
- * catalogue, official communities, Home, IRLY Girl and IRLY Moms), which
+ * catalogue, official communities, Home, IRLY Girl and IRLY Mom Community), which
  * content staff replace for everyone without a new app version, and the
  * photos members put on their communities, activities, posts, Lives and
  * profiles, each opening the sheet where it can be replaced or removed.

@@ -643,7 +643,7 @@ function NetworkDoorCard({ style }: { style?: object }) {
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="overline" color={fg} style={{ opacity: 0.7 }}>
-          Networking
+          IRLY Network
         </Text>
         <Text variant="titleM" color={fg}>
           Professionals

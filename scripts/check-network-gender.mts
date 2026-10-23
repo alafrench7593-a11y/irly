@@ -61,7 +61,7 @@ const unknown = say(pro('a', 'woman'), pro('b', null));
 expect(!unknown.some((s) => s.includes('toutes')), 'gender unknown: never assumed feminine', unknown);
 const supplier = scorePro(pro('a', 'man', { intents: ['suppliers'] }), pro('b', 'woman', { intents: [], industries: ['trade'] })).reasons.find((r) => r.text === '{name} could supply you');
 expect(supplier?.who === 'woman' && fr_(supplier.text, 'woman').includes('ta fournisseuse'), '« pourrait être ta fournisseuse »', supplier);
-expect(fr_('New on IRLY Networking', 'woman') === 'Nouvelle sur IRLY Networking', '« Nouvelle sur IRLY Networking »');
+expect(fr_('New on IRLY Network', 'woman') === 'Nouvelle sur IRLY Network', '« Nouvelle sur IRLY Network »');
 
 // 5. Every gendered form has its plain entry and the same placeholders.
 const holes = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');

@@ -126,7 +126,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               return (
                 <TabItem
                   key={slot}
-                  label={tx('Network')}
+                  label={tx('IRLY Network')}
                   icon="network"
                   badge={0}
                   focused={false}

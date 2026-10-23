@@ -14,7 +14,7 @@ import { displayCommunityName } from './name';
  * IRLY Community: the official communities IRLY runs in each city (IRLY
  * Expat, IRLY Sport, IRLY Network, IRLY Activité; in IRLY Girl: Girl Trip,
  * Girl Expat, Girl Activité, Girl Sport, and Girl CEO inside IRLY Network;
- * IRLY Maman); every other community is created by members. Which ones
+ * IRLY Mom Community); every other community is created by members. Which ones
  * exist, and what they match, is configured on the server
  * (community_topics, migration 20261028100000_irly_official_communities_four);
  * the app only sends the member's own onboarding answers as tags and shows
@@ -267,8 +267,9 @@ export const GIRL_OFFICIAL_TOPICS = ['girl_trip', 'girl_newcomers', 'girl_activi
 export type GirlOfficialTopic = (typeof GIRL_OFFICIAL_TOPICS)[number];
 
 /**
- * IRLY Maman's official community: IRLY Maman (topic moms, the former IRLY
- * Moms). Women only; listed first among the mom communities.
+ * IRLY Mom Community's official community: IRLY Mom Community (topic moms,
+ * the former IRLY Moms, then IRLY Maman). Women only; listed first among the
+ * mom communities.
  */
 export const MAMAN_OFFICIAL_TOPICS = ['moms'] as const;
 

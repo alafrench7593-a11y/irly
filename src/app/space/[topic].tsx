@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { enter } from '@/motion/enter';
@@ -17,7 +17,8 @@ import { useCommunityExtras } from '@/features/community/groups';
 import { SubgroupList } from '@/features/community/GroupsUI';
 import { useRefreshOn } from '@/features/server/sync';
 import { t as tx } from '@/i18n';
-import { readGirlAccess, type GirlAccess } from '@/features/girl/access';
+import { ACCESS_LIMIT, readGirlAccess, withLimit, type GirlAccess } from '@/features/girl/access';
+import { GIRL_DOOR, MOM_DOOR } from '@/features/girl/doors';
 import { friendlyError, supabase } from '@/lib/supabase';
 import { haptic } from '@/motion/haptics';
 import { useCityId } from '@/state/store';
@@ -25,12 +26,12 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
-type SpaceId = 'moms' | 'families' | 'girls';
+type SpaceId = 'moms' | 'families';
 type Space = { title: string; line: string; womenOnly: boolean; rules: { icon: IconName; text: string }[]; help?: string };
 
 const SPACES: Record<SpaceId, Space> = {
   moms: {
-    title: 'IRLY Maman',
+    title: 'IRLY Mom Community',
     line: 'Moms meeting moms in the city: coffees, playdates, advice and recommendations.',
     womenOnly: true,
     help: 'schools',
@@ -53,33 +54,24 @@ const SPACES: Record<SpaceId, Space> = {
       { icon: 'flag', text: 'Report anything inappropriate or misleading.' },
     ],
   },
-  girls: {
-    title: 'IRLY Girl',
-    line: 'Women meeting women: brunches, padel, wellness, nights out, trips and a network that helps.',
-    womenOnly: true,
-    rules: [
-      { icon: 'shield', text: 'Women only: checked by the server on every screen, post and group.' },
-      { icon: 'pin', text: 'First meetups in public places; tell a friend where you go.' },
-      { icon: 'lock', text: 'What is shared here stays here: no screenshots or reposts elsewhere.' },
-      { icon: 'flag', text: 'Report or block anyone who makes you uncomfortable; hosts and IRLY act on every report.' },
-    ],
-  },
 };
 
 type Row = { id: string; name: string; tagline: string | null; members: number; isMember: boolean };
 
-const isSpace = (x: string | undefined): x is SpaceId => x === 'moms' || x === 'families' || x === 'girls';
+const isSpace = (x: string | undefined): x is SpaceId => x === 'moms' || x === 'families';
 
 /** Past this, the screen offers Try again instead of a spinner. */
-const LOAD_LIMIT = 25_000;
+const LOAD_LIMIT = ACCESS_LIMIT;
 
 /**
- * A space (IRLY Maman, IRLY Family, IRLY Only Girls): its rules, its groups
+ * A space (IRLY Mom Community, IRLY Family): its rules, its groups
  * and its official community, where members post text, photos and videos.
  * Same communities, groups, pins, announcements and reports as everywhere.
  */
 export default function SpaceRoute() {
   const { topic } = useLocalSearchParams<{ topic: string }>();
+  // The « girls » space page showed a retired official community: its old links open IRLY Girl itself.
+  if (topic === 'girls') return <Redirect href={GIRL_DOOR} />;
   // An old or wrong link says so (it used to open IRLY Family silently).
   if (!isSpace(topic)) return <NotFound title="This space does not exist" />;
   return <SpaceScreen id={topic} />;
@@ -111,7 +103,7 @@ function SpaceScreen({ id }: { id: SpaceId }) {
         const r = ((data as Record<string, unknown>[] | null) ?? [])[0];
         if (!r && s.womenOnly) {
           // Unknown is not « reserved »: without the answer, the first load failed (Try again).
-          const why = await readGirlAccess().catch(() => null);
+          const why = await withLimit(readGirlAccess(), ACCESS_LIMIT).catch(() => null);
           if (!why) return fail();
           setAccess(why);
         }
@@ -227,8 +219,8 @@ function SpaceSkeleton() {
 }
 
 /**
- * The space has no community to show. Women-only spaces (IRLY Maman, IRLY
- * Only Girls) say why: not open in this destination yet, IRLY Girl paused
+ * The space has no community to show. The women-only space (IRLY Mom Community)
+ * says why: not open in this destination yet, IRLY Girl paused
  * for this account, or reserved for women, with IRLY Family as the open
  * alternative for parents. IRLY Family is open to everyone: only « not
  * open here yet » applies.
@@ -250,7 +242,7 @@ function ClosedSpace({ id, access, cityName }: { id: SpaceId; access: GirlAccess
             ? tx('{name} is part of IRLY Girl, which is paused for your account. The rest of IRLY works as usual.', { name: s.title })
             : tx('{name} is reserved for women with an IRLY Girl account.', { name: s.title })}
       </Text>
-      {notOpen && s.womenOnly ? <Button label="Open IRLY Girl" variant="secondary" onPress={() => router.push(id === 'moms' ? '/girl?mode=moms' : '/girl')} /> : null}
+      {notOpen && s.womenOnly ? <Button label="Open IRLY Girl" variant="secondary" onPress={() => router.push(MOM_DOOR)} /> : null}
       {paused ? <Button label="Contact support" variant="secondary" onPress={() => router.push('/support')} /> : null}
       {!notOpen && !paused && id === 'moms' ? <Button label="Explore IRLY Family" icon="home" variant="secondary" onPress={() => router.replace('/space/families')} /> : null}
     </View>

@@ -204,9 +204,9 @@ async function main() {
     for (let i = 0; i < 20 && (await space()) !== 'girl'; i++) await page.waitForTimeout(500);
     if ((await space()) !== 'girl') throw new Error('the app did not switch to IRLY Girl');
   });
-  // IRLY Moms lives in IRLY Girl, under Discover › People.
+  // IRLY Mom Community lives in IRLY Girl, under Discover › People.
   await check('Moms tab', '/girl?mode=moms', ['Moms in Bali, plans with children', 'Mom communities'], async () => {
-    await page.waitForURL(/\/discover\?tab=people&moms=1/, { timeout: 20000 });
+    await page.waitForURL(/\/girl\/moms/, { timeout: 20000 });
   });
   await check('Girls moving to Bali', '/girl/moving', ["don’t know anyone", 'Bali girl communities']);
   // Back to IRLY Mixte (Settings › IRLY): the rest of this walk is the Mixte app.

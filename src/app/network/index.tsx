@@ -131,7 +131,7 @@ function NetworkDiscoverPage() {
   const state = !signedIn ? 'signedOut' : error && !list.length ? 'error' : loading && !list.length ? 'loading' : !ranked.length ? 'empty' : 'list';
 
   return (
-    <NetworkPage overline={city.name} title="IRLY Network" subtitle="Meet the people building something around you." right={<InboxButtons />}>
+    <NetworkPage overline={city.name} title="IRLY Network" subtitle={tone.isGirl ? 'Women only: meet the women building something around you.' : 'Open to everyone: meet the people building something around you.'} right={<InboxButtons />}>
       <NetworkIntro
         signedIn={signedIn}
         pro={me.pro}
@@ -232,7 +232,7 @@ function NetworkDiscoverPage() {
       <View style={styles.list}>
         <UpdatingLine active={updating} />
         {state === 'signedOut' ? (
-          <NetworkState key="signedOut" icon="network" title="Sign in to meet professionals" body="Networking lists real members only, so you need an IRLY account.">
+          <NetworkState key="signedOut" icon="network" title="Sign in to meet professionals" body="IRLY Network lists real members only, so you need an IRLY account.">
             <Button label="Sign in" icon="user" size="md" onPress={() => router.push('/account')} />
           </NetworkState>
         ) : state === 'error' ? (
@@ -258,7 +258,7 @@ function NetworkDiscoverPage() {
               key="nobody"
               icon="users"
               title={tg('No professionals here yet', crowd)}
-              body={tg('Be one of the first: your profile shows to everyone who opens Networking.', meWho)}
+              body={tg('Be one of the first: your profile shows to everyone who opens IRLY Network.', meWho)}
             >
               {!me.pro ? <Button label="Create my profile" icon="briefcase" size="md" onPress={() => router.push('/network/profile')} /> : null}
             </NetworkState>

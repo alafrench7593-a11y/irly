@@ -93,7 +93,7 @@ const ids = {
 export const LIBRARY = [
   // Provided by IRLY
   'marathon',
-  // IRLY Girl and IRLY Moms
+  // IRLY Girl and IRLY Mom Community
   'girlFriends',
   'girlSunset',
   'girlShopping',

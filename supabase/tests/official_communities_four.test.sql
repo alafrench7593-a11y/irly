@@ -63,7 +63,7 @@ select pg_temp.check(not exists (select 1 from featured where not girl_only grou
   and (select count(distinct city_id) from featured where not girl_only) = 8, 'IRLY: the same four in each of its eight cities (Bali too)');
 select pg_temp.check((select array_agg(name order by name collate "C") from featured where girl_only and topic like 'girl\_%')
   = array['Girl Activité', 'Girl CEO', 'Girl Expat', 'Girl Sport', 'Girl Trip'], 'IRLY Girl: Girl Trip, Expat, Activité, Sport, and Girl CEO (Dubai)');
-select pg_temp.check((select array_agg(distinct name) from featured where topic = 'moms') = array['IRLY Maman'], 'IRLY Maman: one community, named IRLY Maman in every city');
+select pg_temp.check((select array_agg(distinct name) from featured where topic = 'moms') = array['IRLY Mom Community'], 'IRLY Mom Community: one community, named IRLY Mom Community in every city');
 select pg_temp.check(not exists (select 1 from featured where topic = 'moms' group by city_id having count(*) <> 1)
   and (select bool_and(girl_only) from featured where topic = 'moms'), 'IRLY Maman: one per city, women only');
 select pg_temp.check(not exists (select 1 from public.communities where name ~* 'IRLY (Moms|Mama)\M' and official and deleted_at is null and retired_at is null),
@@ -81,8 +81,8 @@ select pg_temp.check(exists (select 1 from public.communities c join public.conv
   'IRLY Expat is the former IRLY Expats (its first chat message), chat renamed');
 select pg_temp.check(exists (select 1 from public.communities c join public.conversations v on v.community_id = c.id
   join public.messages m on m.conversation_id = v.id
-  where c.official and c.topic = 'moms' and c.city_id = 'dubai' and c.name = 'IRLY Maman' and v.title = 'IRLY Maman' and m.body like 'Welcome to IRLY Moms %'),
-  'IRLY Maman is the former IRLY Moms');
+  where c.official and c.topic = 'moms' and c.city_id = 'dubai' and c.name = 'IRLY Mom Community' and v.title = 'IRLY Mom Community' and m.body like 'Welcome to IRLY Moms %'),
+  'IRLY Mom Community is the former IRLY Moms (then IRLY Maman), chat renamed');
 select pg_temp.check(exists (select 1 from public.communities c
   where c.official and c.topic = 'moms' and c.city_id = 'dubai' and exists (select 1 from public.communities g where g.parent_id = c.id and g.subtopic = 'toddlers')),
   '… with its groups');

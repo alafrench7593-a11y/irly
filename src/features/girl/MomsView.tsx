@@ -46,7 +46,7 @@ const AGES = [
 const ageLabel = (id: string) => AGES.find((a) => a.id === id)?.label ?? null;
 
 /**
- * IRLY Maman, inside IRLY Girl (same account, same women-only rule). Mom
+ * IRLY Mom Community, inside IRLY Girl (same account, same women-only rule). Mom
  * mode is optional: turn it on to appear to other moms and see them. Then:
  * moms near you, mom communities, plans with children (playdates, beach,
  * park, kids sports…) and family-friendly places. Dubai and Bali alike,
@@ -74,7 +74,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
     });
   };
   const moms = useGirlCircle(cityId, { moms: true });
-  // IRLY Maman first (IRLY's official one), then the mom communities members created.
+  // IRLY Mom Community first (IRLY's official one), then the mom communities members created.
   const communities = useMomCommunities(cityId, 'Maman|Moms', true, false, MAMAN_OFFICIAL_TOPICS);
   const { activities, loading: plansLoading, error: plansError, refresh: refreshPlans } = useMomPlans(cityId);
   const family = usePlaces(cityId, { kids: true });
