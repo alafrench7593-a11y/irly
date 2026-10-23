@@ -1,0 +1,21 @@
+name: Email check
+
+# Read-only: SMTP sender, email texts, DNS (SPF, DKIM, DMARC) and recent
+# email errors. Changes nothing (scripts/check-email.mjs).
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/check-email]
+    paths: ['scripts/check-email.mjs', '.github/workflows/check-email.yml']
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/check-email.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
