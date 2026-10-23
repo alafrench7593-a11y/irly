@@ -94,10 +94,14 @@ export function NetworkIntro({
               Used for your matches
             </Text>
           </View>
+          <View style={styles.editSpace} />
+        </PressableScale>
+        {/* Edit sits over the strip, beside it in the tree (never a button inside a button). */}
+        <View style={styles.editSlot}>
           <PressableScale haptic="select" scaleTo={0.9} onPress={onProfile} hitSlop={6} accessibilityLabel="Edit my profile" style={[styles.editMine, { backgroundColor: tone.soft, borderColor: tone.softLine }]}>
             <Icon name="edit" size={16} color={tone.isGirl ? tone.accent : t.c.text} />
           </PressableScale>
-        </PressableScale>
+        </View>
       </Animated.View>
     );
   const points: { icon: IconName; text: string }[] = [
@@ -531,6 +535,8 @@ const styles = StyleSheet.create({
   stripWrap: { marginHorizontal: space.gutter },
   strip: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, paddingRight: 12, borderRadius: radius.xl, overflow: 'hidden' },
   mine: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  editSpace: { width: 40, height: 40 },
+  editSlot: { position: 'absolute', top: 0, bottom: 0, right: 12, justifyContent: 'center', pointerEvents: 'box-none' },
   editMine: { width: 40, height: 40, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
   head: { flexDirection: 'row', alignItems: 'flex-end', gap: 12, paddingHorizontal: space.gutter, marginTop: space[9], marginBottom: space[4] },
   headRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
