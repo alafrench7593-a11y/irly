@@ -206,7 +206,7 @@ async function main() {
   });
   // IRLY Mom Community lives in IRLY Girl, under Discover › People.
   await check('Moms tab', '/girl?mode=moms', ['Moms in Bali, plans with children', 'Mom communities'], async () => {
-    await page.waitForURL(/\/discover\?tab=people&moms=1/, { timeout: 20000 });
+    await page.waitForURL(/\/girl\/moms/, { timeout: 20000 });
   });
   await check('Girls moving to Bali', '/girl/moving', ["don’t know anyone", 'Bali girl communities']);
   // Back to IRLY Mixte (Settings › IRLY): the rest of this walk is the Mixte app.

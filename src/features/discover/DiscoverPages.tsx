@@ -1,6 +1,6 @@
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
-import { memo, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, type SharedValue } from 'react-native-reanimated';
 import { Rail } from '@/components/cards/Blocks';
@@ -24,8 +24,6 @@ import type { CityId, Intent } from '@/data/types';
 import type { LightId } from '@/theme/lights';
 import { GirlPortals } from '@/features/home/Portals';
 import { GirlCommunities, GirlPlanRows, useGirlPeople, useGirlPlans } from '@/features/girl/GirlSections';
-import { MomsView } from '@/features/girl/MomsView';
-import { asksMoms } from '@/features/girl/doors';
 import { useAppSpace } from '@/state/appSpace';
 import { rankMatches } from '@/features/matching/match';
 import { isWeekend } from '@/lib/time';
@@ -116,26 +114,6 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
   // Match IRLY, or IRLY Match in IRLY Girl (each says « coming soon » itself while closed).
   const matchOpen = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
   const matchHref = (intent: Intent) => (inGirl ? '/girl/match' : `/match?intent=${intent}`);
-  // IRLY Mom Community opens in place here. The page stays mounted, so it closes whenever the app changes space:
-  // entering IRLY Girl (the IRLY Girl door) never lands on IRLY Mom Community left open by an earlier visit.
-  const [moms, setMoms] = useState(false);
-  const [momsSpace, setMomsSpace] = useState(inGirl);
-  if (momsSpace !== inGirl) {
-    setMomsSpace(inGirl);
-    setMoms(false);
-  }
-  // The IRLY Mom Community door (features/girl/doors) arrives with ?moms=1: opened, then the param is cleared, so it never
-  // fires again on back or refresh, and the next IRLY Mom Community door is a new request even if this one was closed.
-  const { moms: momsParam } = useLocalSearchParams<{ moms?: string }>();
-  const [seenMoms, setSeenMoms] = useState<string | undefined>(undefined);
-  if (momsParam !== seenMoms) {
-    setSeenMoms(momsParam);
-    if (asksMoms(momsParam)) setMoms(true);
-  }
-  const navigation = useNavigation();
-  useEffect(() => {
-    if (asksMoms(momsParam)) navigation.setParams({ moms: undefined } as never);
-  }, [momsParam, navigation]);
   return (
     <PageScroll scrollY={scrollY} top={top} bottom={bottom}>
       <ScrollReveal scrollY={scrollY} style={styles.first}>
@@ -213,8 +191,7 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
       {inGirl || profile.gender === 'woman' ? (
         <ScrollReveal scrollY={scrollY} style={styles.section}>
           <SectionHeader overline="Women only · Not dating" title={inGirl ? 'Your spaces' : 'IRLY Girl'} />
-          <GirlPortals light={city.light} onMoms={() => setMoms((m) => !m)} />
-          {inGirl && moms ? <MomsView cityId={cityId} /> : null}
+          <GirlPortals light={city.light} />
         </ScrollReveal>
       ) : null}
 

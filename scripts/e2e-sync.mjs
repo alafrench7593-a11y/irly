@@ -420,8 +420,8 @@ async function main() {
     await page.goto(`${BASE}/c/${momsId}`);
     await visible(page, momsSays, 20000);
     await page.goto(`${BASE}/girl?mode=moms`);
-    // Discover consumes ?moms=1 and clears it (features/girl/doors): wait for the page, not the param.
-    await page.waitForURL(/\/discover/, { timeout: 25000 });
+    // IRLY Mom Community is a page of IRLY Girl (features/girl/doors): the gate switches space, then opens it.
+    await page.waitForURL(/\/girl\/moms/, { timeout: 25000 });
     await inSpace(page, 'girl');
     await page.getByText('From the moms').filter({ visible: true }).first().scrollIntoViewIfNeeded({ timeout: 30000 });
     await visible(page, momsSays, 20000);

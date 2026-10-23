@@ -11,7 +11,7 @@ import type { LightId } from '@/theme/lights';
 import { toast } from '@/components/ui/Toast';
 import { PressableScale } from '@/motion/PressableScale';
 import { setAppSpace, useAppSpace } from '@/state/appSpace';
-import { GIRL_DOOR, MOM_DOOR, MOM_PAGE } from '@/features/girl/doors';
+import { GIRL_DOOR, GIRL_HOME, MOM_DOOR, MOM_PAGE } from '@/features/girl/doors';
 import { radius, space } from '@/theme/tokens';
 
 type Portal = { title: string; line: string; overline: string; photo: PhotoKey; icon: IconName; route: string };
@@ -21,33 +21,41 @@ const PORTALS: Portal[] = [
   { title: 'IRLY Mom Community', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: MOM_DOOR },
 ];
 
-/** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Mom Community (Discover › People). */
+/** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Mom Community (its page in IRLY Girl). */
 const GIRL_SPACE_PORTALS: Portal[] = [
   { title: 'IRLY Mixte', line: 'The same app, for everyone.', overline: 'Switch space', photo: 'dubaiMarina', icon: 'globe', route: 'mixte' },
   { title: 'IRLY Mom Community', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: MOM_PAGE },
 ];
 
+/** On IRLY Mom Community's page: back to IRLY Girl, or to IRLY. */
+const MOM_SPACE_PORTALS: Portal[] = [
+  { title: 'IRLY Girl', line: 'Back to IRLY Girl.', overline: 'Your space', photo: 'brunch', icon: 'sparkles', route: GIRL_HOME },
+  { title: 'IRLY Mixte', line: 'The same app, for everyone.', overline: 'Switch space', photo: 'dubaiMarina', icon: 'globe', route: 'mixte' },
+];
+
 /**
  * Two doors side by side on their photos. In IRLY: into the women-only
  * worlds (not dating: friends, plans, and moms finding moms). In IRLY Girl,
- * at the same place: the way back to IRLY, and IRLY Mom Community (`onMoms` lets a
- * page open it in place).
+ * at the same place: the way back to IRLY, and IRLY Mom Community, which only
+ * opens from inside IRLY Girl.
  */
-export const GirlPortals = memo(function GirlPortals({ light, onMoms }: { light: LightId; onMoms?: () => void }) {
+export const GirlPortals = memo(function GirlPortals({ light, onMomPage }: { light: LightId; onMomPage?: boolean }) {
   const router = useRouter();
   const frame = useFrame();
   const inGirl = useAppSpace() === 'girl';
   const w = (frame.width - space.gutter * 2 - 12) / 2;
   const open = (p: Portal) => {
     if (p.route === 'mixte') {
+      // From IRLY Mom Community's page (a page of IRLY Girl), back to the tabs first.
+      if (onMomPage) router.dismissTo(GIRL_HOME);
       setAppSpace('mixte');
       toast('Back to IRLY', 'globe', 'brand');
-    } else if (inGirl && onMoms && p.route === MOM_PAGE) onMoms();
+    } else if (p.route === GIRL_HOME) router.dismissTo(GIRL_HOME);
     else router.push(p.route as never);
   };
   return (
     <View style={styles.row}>
-      {(inGirl ? GIRL_SPACE_PORTALS : PORTALS).map((p) => (
+      {(onMomPage ? MOM_SPACE_PORTALS : inGirl ? GIRL_SPACE_PORTALS : PORTALS).map((p) => (
         <PressableScale key={p.title} haptic="select" scaleTo={0.97} onPress={() => open(p)} accessibilityLabel={`${p.title}. ${p.line}`}>
           <Photo visual={{ photo: p.photo }} light={light} scrim="strong" style={[styles.card, { width: w }]} width={600} recyclingKey={`portal-${p.title}`} pinned>
             <View style={styles.top}>
