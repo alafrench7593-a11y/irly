@@ -203,7 +203,8 @@ function Messages() {
               style={styles.tab}
             >
               {on ? (
-                <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[StyleSheet.absoluteFill, styles.tabFill, { backgroundColor: t.c.brand, boxShadow: t.shadow.glow }]} />
+                // Under the icon (web: an <svg> drawn after a positioned fill disappears under it), in the tab's own layer.
+                <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[StyleSheet.absoluteFill, styles.tabFill, styles.under, { backgroundColor: t.c.brand, boxShadow: t.shadow.glow }]} />
               ) : (
                 <Glass level="thin" style={[StyleSheet.absoluteFill, styles.tabFill]} />
               )}
@@ -412,8 +413,9 @@ const styles = StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, paddingHorizontal: 14, borderRadius: radius.pill, overflow: 'hidden' },
   input: { flex: 1, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 },
   tabs: { paddingHorizontal: space.gutter, gap: 8, paddingVertical: space[4] },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: 19 },
+  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: 19, zIndex: 0 },
   tabFill: { borderRadius: 19 },
+  under: { zIndex: -1 },
   actions: { flexDirection: 'row', gap: 8, marginBottom: space[4] },
   action: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 18, overflow: 'hidden' },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg, overflow: 'hidden' },

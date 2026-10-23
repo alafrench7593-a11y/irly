@@ -943,6 +943,7 @@ export const fr: Record<string, string> = {
   'Food': 'Cuisine',
   'Free cancellation up to 24 hours before. Your contact details stay private until you confirm.': 'Annulation gratuite jusqu’à 24 h avant. Tes coordonnées restent privées jusqu’à ta confirmation.',
   'From': 'À partir de',
+  'From {place}': 'Originaire de {place}',
   'From licence to first hire: guides kept current, people already vetted.': 'De la licence au premier recrutement : guides à jour, personnes déjà vérifiées.',
   'How IRLY verifies': 'Comment IRLY vérifie',
   'IRLY · Find someone to do something with.': 'IRLY · Trouve quelqu’un avec qui faire quelque chose.',
