@@ -1,0 +1,24 @@
+name: Grant owner by id
+
+# One-off, owner-approved: makes the account below the back-office owner
+# (scripts/grant-owner-id.mjs), then lists the roles to confirm.
+on:
+  push:
+    branches: [claude/check-email]
+    paths: ['scripts/grant-owner-id.mjs', '.github/workflows/grant-owner-id.yml']
+
+jobs:
+  owner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/grant-owner-id.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          OWNER_ID: '45070c29-dcea-44e6-8dff-7a2709e5398b'
+      - run: node scripts/check-accounts.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
