@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
   push:
     branches: [claude/check-email]
-    paths: ['scripts/check-email.mjs', 'scripts/check-accounts.mjs', '.github/workflows/check-email.yml']
+    paths: ['scripts/check-email.mjs', 'scripts/check-accounts.mjs', 'scripts/community-inventory.mjs', '.github/workflows/check-email.yml']
 
 jobs:
   check:
@@ -20,5 +20,8 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       - run: node scripts/check-accounts.mjs
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      - run: node scripts/community-inventory.mjs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
