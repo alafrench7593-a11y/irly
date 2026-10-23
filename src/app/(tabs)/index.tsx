@@ -420,7 +420,7 @@ export default function Home() {
             <Rail itemWidth={210}>
               {sec.items.map((h) => (
                 <View key={h.id} style={{ width: 210 }}>
-                  <HighlightCard h={h} height={260} compact />
+                  <HighlightCard h={h} height={260} compact stacked />
                 </View>
               ))}
               {sec.ideas.map((idea) => (
