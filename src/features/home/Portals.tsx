@@ -11,19 +11,20 @@ import type { LightId } from '@/theme/lights';
 import { toast } from '@/components/ui/Toast';
 import { PressableScale } from '@/motion/PressableScale';
 import { setAppSpace, useAppSpace } from '@/state/appSpace';
+import { GIRL_DOOR, MOM_DOOR, MOM_PAGE } from '@/features/girl/doors';
 import { radius, space } from '@/theme/tokens';
 
 type Portal = { title: string; line: string; overline: string; photo: PhotoKey; icon: IconName; route: string };
 
 const PORTALS: Portal[] = [
-  { title: 'IRLY Girl', line: 'Meet girls who get you.', overline: 'Women only', photo: 'brunch', icon: 'sparkles', route: '/girl' },
-  { title: 'IRLY Maman', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: '/girl?mode=moms' },
+  { title: 'IRLY Girl', line: 'Meet girls who get you.', overline: 'Women only', photo: 'brunch', icon: 'sparkles', route: GIRL_DOOR },
+  { title: 'IRLY Maman', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: MOM_DOOR },
 ];
 
 /** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Maman (Discover › People). */
 const GIRL_SPACE_PORTALS: Portal[] = [
   { title: 'IRLY Mixte', line: 'The same app, for everyone.', overline: 'Switch space', photo: 'dubaiMarina', icon: 'globe', route: 'mixte' },
-  { title: 'IRLY Maman', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: '/discover?tab=people&moms=1' },
+  { title: 'IRLY Maman', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: MOM_PAGE },
 ];
 
 /**
@@ -41,7 +42,7 @@ export const GirlPortals = memo(function GirlPortals({ light, onMoms }: { light:
     if (p.route === 'mixte') {
       setAppSpace('mixte');
       toast('Back to IRLY', 'globe', 'brand');
-    } else if (inGirl && onMoms && p.title === 'IRLY Maman') onMoms();
+    } else if (inGirl && onMoms && p.route === MOM_PAGE) onMoms();
     else router.push(p.route as never);
   };
   return (

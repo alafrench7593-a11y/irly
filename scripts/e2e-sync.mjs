@@ -420,7 +420,8 @@ async function main() {
     await page.goto(`${BASE}/c/${momsId}`);
     await visible(page, momsSays, 20000);
     await page.goto(`${BASE}/girl?mode=moms`);
-    await page.waitForURL(/moms=1/, { timeout: 25000 });
+    // Discover consumes ?moms=1 and clears it (features/girl/doors): wait for the page, not the param.
+    await page.waitForURL(/\/discover/, { timeout: 25000 });
     await inSpace(page, 'girl');
     await page.getByText('From the moms').filter({ visible: true }).first().scrollIntoViewIfNeeded({ timeout: 30000 });
     await visible(page, momsSays, 20000);

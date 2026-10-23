@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -70,6 +70,7 @@ export default function Discover() {
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
   const params = useLocalSearchParams<{ q?: string; tab?: string }>();
+  const navigation = useNavigation();
   const [q, setQ] = useState(params.q ?? '');
   // The tab stays mounted: a new /search?q=… must replace the old query.
   const [seenParam, setSeenParam] = useState(params.q);
@@ -167,7 +168,8 @@ export default function Discover() {
   // IRLY Girl: the same four pages, section for section; People and Activities show women, girls' plans and IRLY Girl communities.
   const pages = [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
 
-  // The tab stays mounted: a new /discover?tab=… (IRLY Moms from the Home) turns to that page.
+  // The tab stays mounted: a new /discover?tab=… (the IRLY Maman door) turns to that page. The param is then
+  // cleared, so the same link opened again (after a swipe to another page) turns to it again.
   const [seenTab, setSeenTab] = useState(params.tab);
   if (params.tab !== seenTab) {
     setSeenTab(params.tab);
@@ -180,6 +182,7 @@ export default function Discover() {
   useEffect(() => {
     const i = TABS.findIndex((tab) => tab.id === seenTab);
     if (i >= 0) pager.current?.scrollTo({ x: i * W, animated: false });
+    if (seenTab !== undefined) navigation.setParams({ tab: undefined } as never);
     // Only a new link turns the page, never a resize.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seenTab]);

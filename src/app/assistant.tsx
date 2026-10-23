@@ -24,6 +24,7 @@ import type { CityId } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
 import { dateFor, INTENT_LABEL, parseCommand, planDay, type Command, type GeoIndex } from '@/features/ai/intent';
 import { useVoice } from '@/features/ai/voice';
+import { GIRL_DOOR, MOM_DOOR } from '@/features/girl/doors';
 import { ServerResults } from '@/features/search/ServerResults';
 import { createServerActivity, useRecommendations } from '@/features/server/activities';
 import { track } from '@/lib/analytics';
@@ -371,14 +372,14 @@ function Act({ cmd, cityId, busy, onCreate, onSwitch }: { cmd: Command; cityId: 
   if (cmd.intent === 'FIND_MATCH') {
     return (
       <View style={styles.pad}>
-        <Button label="Open IRLY Girl" icon="heartHandshake" full onPress={() => router.push('/girl')} />
+        <Button label="Open IRLY Girl" icon="heartHandshake" full onPress={() => router.push(GIRL_DOOR)} />
       </View>
     );
   }
   if (cmd.intent === 'OPEN_MOMS') {
     return (
       <View style={styles.pad}>
-        <Button label="Open IRLY Maman" icon="baby" full onPress={() => router.push('/girl?mode=moms')} />
+        <Button label="Open IRLY Maman" icon="baby" full onPress={() => router.push(MOM_DOOR)} />
         <Text variant="caption" tone="tertiary" style={{ marginTop: 8 }}>
           IRLY Maman is part of IRLY Girl: women only.
         </Text>

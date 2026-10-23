@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { YourCommunities } from '@/features/community/YourCommunities';
 import { useAccount } from '@/features/auth/account';
 import { t as tx, useLang } from '@/i18n';
@@ -204,13 +204,6 @@ export default function Home() {
   const [baliCover] = useCmsVisuals(useMemo(() => [{ path: baliEntry?.cover_path, key: baliEntry?.cover_key, fallback: 'bali' }], [baliEntry]));
   const girl = useGirlEntry();
   const seeAllPeople = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
-  // « IRLY Moms » (an entry of IRLY, /girl?mode=moms) lands here: IRLY Moms lives in Discover › People.
-  const { girl: girlParam } = useLocalSearchParams<{ girl?: string }>();
-  useEffect(() => {
-    if (girlParam !== 'moms') return;
-    router.setParams({ girl: undefined });
-    router.push('/discover?tab=people&moms=1');
-  }, [girlParam, router]);
 
   const section = (id: HomeSection): ReactNode => {
     switch (id) {

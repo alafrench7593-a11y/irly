@@ -38,7 +38,7 @@ export type GirlAccess = 'checking' | 'open' | 'signed_out' | 'not_eligible' | '
 export type GirlClosedReason = Exclude<GirlAccess, 'checking' | 'open'>;
 
 /** Past this, the screen offers Try again instead of a spinner. */
-export const ACCESS_LIMIT = 25_000;
+export const ACCESS_LIMIT = 15_000;
 
 /** The promise, or a rejection once `ms` have passed without an answer. */
 export function withLimit<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -164,6 +164,14 @@ export function useGirlAccess(): { access: GirlAccess; retry: () => void } {
   );
   // Back to the app after a while, or the profile changed: ask again.
   useRefreshOn(['people'], check);
+
+  // Never a spinner for good: still checking past the limit (an answer that never came, a check that
+  // never started because the screen was not focused), the screen offers Try again.
+  useEffect(() => {
+    if (access !== 'checking') return;
+    const timer = setTimeout(() => setAccess((a) => (a === 'checking' ? 'error' : a)), ACCESS_LIMIT + 1_000);
+    return () => clearTimeout(timer);
+  }, [access]);
 
   const retry = useCallback(() => {
     known.current.ok = false;
