@@ -44,13 +44,15 @@ for (const k of ['confirmation', 'recovery', 'magic_link', 'email_change', 'invi
 }
 
 console.log('\n--- DNS of the sender domain ---');
-const domain = String(c.smtp_admin_email || '').split('@')[1] || 'getirly.com';
+const domain = 'getirly.com';
+console.log(`sender domain: ${String(c.smtp_admin_email || '').split('@')[1] || '(none)'}; records below are for ${domain}`);
 const dns = async (name, type) => {
   const r = await fetch(`https://dns.google/resolve?name=${name}&type=${type}`).then((x) => x.json()).catch(() => ({}));
   return (r.Answer ?? []).map((a) => a.data);
 };
 const spfHost = `send.${domain}`;
 for (const [label, name, type] of [
+  ['NS (who hosts the DNS)', domain, 'NS'],
   ['MX (root)', domain, 'MX'],
   ['TXT (root, SPF)', domain, 'TXT'],
   ['MX (send.)', spfHost, 'MX'],
@@ -69,7 +71,7 @@ const sql = `select timestamp, event_message from auth_logs
   where regexp_contains(lower(event_message), 'mail|smtp|recover|otp|magiclink|error')
   order by timestamp desc limit 40`;
 const logs = await api(
-  `/analytics/endpoints/logs.all?sql=${encodeURIComponent(sql)}&iso_timestamp_start=${start.toISOString()}&iso_timestamp_end=${end.toISOString()}`,
+  `/analytics/endpoints/logs?sql=${encodeURIComponent(sql)}&iso_timestamp_start=${start.toISOString()}&iso_timestamp_end=${end.toISOString()}`,
 ).catch((e) => ({ error: e.message }));
 if (logs.error) console.log('logs unavailable:', hide(logs.error));
 const rows = logs.result ?? [];
