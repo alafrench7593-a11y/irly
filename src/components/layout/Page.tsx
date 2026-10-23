@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedScrollHandler, useSharedValue, type AnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { PageHeader } from '@/components/navigation/Headers';
@@ -26,10 +26,12 @@ type Props = {
   onBack?: () => void;
   /** Told (on the JS thread, every few dozen points) when the page scrolls: what is on screen changed. */
   onScrolled?: () => void;
+  /** The page's scroll view, for a page that brings one of its sections into view. */
+  scrollRef?: AnimatedRef<Animated.ScrollView>;
 };
 
 /** Standard stack page: large editorial title that hands over to a compact header on scroll. */
-export function Page({ title, overline, subtitle, right, children, overlay, contentStyle, bottomInset = 40, back = true, onBack, onScrolled }: Props) {
+export function Page({ title, overline, subtitle, right, children, overlay, contentStyle, bottomInset = 40, back = true, onBack, onScrolled, scrollRef }: Props) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const scrollY = useSharedValue(0);
@@ -52,6 +54,7 @@ export function Page({ title, overline, subtitle, right, children, overlay, cont
       {/* Forms on pages (sign-in, profile, create) stay above the keyboard. */}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <Animated.ScrollView
+          ref={scrollRef}
           onScroll={onScroll}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
