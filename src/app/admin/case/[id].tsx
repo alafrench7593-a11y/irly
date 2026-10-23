@@ -135,7 +135,7 @@ export default function CaseScreen() {
           <Text variant="bodyS" tone="secondary" raw>
             {tx('Reported: {name}', { name: target?.name ?? '—' })}
             {target?.deleted ? ` · ${tx('account deleted')}` : ''}
-            {c.others ? ` · ${tx('{n} other reports on this member', { n: c.others })}` : ''}
+            {c.others ? ` · ${c.others === 1 ? tx('1 other report on this member') : tx('{n} other reports on this member', { n: c.others })}` : ''}
           </Text>
           {r.details ? (
             <Text variant="body" raw>

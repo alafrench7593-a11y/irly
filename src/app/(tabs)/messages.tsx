@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   tabs: { paddingHorizontal: space.gutter, gap: 8, paddingVertical: space[4] },
   tab: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: 19 },
   tabFill: { borderRadius: 19 },
-  actions: { flexDirection: 'row', gap: 8, marginBottom: space[4] },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: space[4] },
   action: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 18, overflow: 'hidden' },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 10, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, borderColor: 'transparent', overflow: 'hidden' },

@@ -90,7 +90,7 @@ export default function AdminContent() {
                   </Text>
                 ) : null}
                 <Text variant="caption" tone="secondary" raw>
-                  {[c.author_name, ago(c.created_at), c.context, c.space ? tx(SPACE_LABEL[c.space]) : c.girl_only ? 'IRLY Girl' : null, c.reports ? tx('{n} reports', { n: c.reports }) : null].filter(Boolean).join(' · ')}
+                  {[c.author_name, ago(c.created_at), c.context, c.space ? tx(SPACE_LABEL[c.space]) : c.girl_only ? 'IRLY Girl' : null, c.reports ? (c.reports === 1 ? tx('1 report') : tx('{n} reports', { n: c.reports })) : null].filter(Boolean).join(' · ')}
                 </Text>
               </Card>
             ))
