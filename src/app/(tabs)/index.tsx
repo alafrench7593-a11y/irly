@@ -5,7 +5,7 @@ import { t as tx, useLang } from '@/i18n';
 import { planDayLabel, upcomingPlans } from '@/features/plans/when';
 import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
@@ -134,6 +134,11 @@ export default function Home() {
   // (The back office's preview may draw the Home in the other flavour: features/cms/feed.)
   const homeSpace = useHomeSpace(useAppSpace());
   const inGirl = homeSpace === 'girl';
+  // Another space is another Home: it opens at its top, not where the space's door was tapped.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [homeSpace, scrollRef]);
   // The team's layout for this flavour (order, on/off, words, numbers), else the app's own.
   const { entries, feed } = useHomeLayout(homeSpace);
   const lang = useLang();
@@ -456,6 +461,7 @@ export default function Home() {
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <HomeBackdrop city={city} now={now} scrollY={scrollY} heroH={heroH} />
       <Animated.ScrollView
+        ref={scrollRef}
         key={cityId}
         onScroll={onScroll}
         scrollEventThrottle={16}
