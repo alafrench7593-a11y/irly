@@ -18,19 +18,19 @@ type Portal = { title: string; line: string; overline: string; photo: PhotoKey; 
 
 const PORTALS: Portal[] = [
   { title: 'IRLY Girl', line: 'Meet girls who get you.', overline: 'Women only', photo: 'brunch', icon: 'sparkles', route: GIRL_DOOR },
-  { title: 'IRLY Maman', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: MOM_DOOR },
+  { title: 'IRLY Mom Community', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: MOM_DOOR },
 ];
 
-/** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Maman (Discover › People). */
+/** The same two doors in IRLY Girl: back to IRLY (the space switch), and IRLY Mom Community (Discover › People). */
 const GIRL_SPACE_PORTALS: Portal[] = [
   { title: 'IRLY Mixte', line: 'The same app, for everyone.', overline: 'Switch space', photo: 'dubaiMarina', icon: 'globe', route: 'mixte' },
-  { title: 'IRLY Maman', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: MOM_PAGE },
+  { title: 'IRLY Mom Community', line: 'With kids or without.', overline: 'Women only', photo: 'strollerMom', icon: 'heart', route: MOM_PAGE },
 ];
 
 /**
  * Two doors side by side on their photos. In IRLY: into the women-only
  * worlds (not dating: friends, plans, and moms finding moms). In IRLY Girl,
- * at the same place: the way back to IRLY, and IRLY Maman (`onMoms` lets a
+ * at the same place: the way back to IRLY, and IRLY Mom Community (`onMoms` lets a
  * page open it in place).
  */
 export const GirlPortals = memo(function GirlPortals({ light, onMoms }: { light: LightId; onMoms?: () => void }) {
@@ -59,7 +59,8 @@ export const GirlPortals = memo(function GirlPortals({ light, onMoms }: { light:
               <Text variant="overline" color="rgba(255,255,255,0.75)">
                 {p.overline}
               </Text>
-              <Text variant="titleL" tone="onDark" numberOfLines={1}>
+              {/* « IRLY Mom Community » on a half-width card: two lines, scaled down if a word still does not fit, never cut. */}
+              <Text variant="titleL" tone="onDark" numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.75}>
                 {p.title}
               </Text>
               <Text variant="bodyS" color="rgba(255,255,255,0.82)" numberOfLines={2}>

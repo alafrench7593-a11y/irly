@@ -124,7 +124,8 @@ export function GirlHero({
           <GlassFill dark level="thin" radius={20} />
           <Icon name="chevronLeft" size={20} color="#FFFFFF" />
         </PressableScale>
-        <GirlHeaderMark pill onDark size={18} section={mode} word={mode === 'moms' ? 'Maman' : 'Girl'} />
+        {/* « IRLY Mom Community » is long: a smaller mark, and it scales down rather than overlap the buttons on a narrow iPhone. */}
+        <GirlHeaderMark pill onDark size={mode === 'moms' ? 14 : 18} section={mode} word={mode === 'moms' ? 'Mom Community' : 'Girl'} style={styles.mark} />
         <View style={styles.actions}>
           <PressableScale
             haptic="select"
@@ -197,6 +198,7 @@ const styles = StyleSheet.create({
   veil: { backgroundColor: 'rgba(255,245,248,0.7)' },
   bar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: space.gutter },
   actions: { flexDirection: 'row', gap: 8 },
+  mark: { marginHorizontal: 6 },
   badge: { position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: girl.rose, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FFFFFF' },
   badgeText: { fontSize: 10, lineHeight: 12, fontWeight: '700' },
   round: { width: 40, height: 40, borderRadius: 20, zIndex: 0, alignItems: 'center', justifyContent: 'center' },

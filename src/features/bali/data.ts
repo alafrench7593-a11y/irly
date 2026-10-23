@@ -483,7 +483,7 @@ export function useGirlExtras() {
 /** Communities of a destination matching a word (Moms, Girls…), with membership. */
 /** Communities by name; `membersOnly`: only the ones members created (no official IRLY community). */
 /**
- * `officialTopics`: IRLY's official communities of the space (IRLY Maman's
+ * `officialTopics`: IRLY's official communities of the space (IRLY Mom Community's
  * four, whatever their name), listed first in that order; any other
  * official community (a retired one) is left out, the members' follow.
  */

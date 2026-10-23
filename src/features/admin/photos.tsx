@@ -34,7 +34,7 @@ export const EDITORIAL_LABEL: Record<EditorialGroupId, string> = {
   catalogue: 'Activities catalogue',
   official: 'Official communities',
   home: 'Home and destinations',
-  girl: 'IRLY Girl and IRLY Maman',
+  girl: 'IRLY Girl and IRLY Mom Community',
   all: 'All IRLY photos',
 };
 
@@ -51,7 +51,7 @@ let groups: EditorialGroup[] | null = null;
  * Every photo key the app shows, grouped by where it shows: the categories,
  * the photo of each activity of the catalogue, the default photos of IRLY's
  * official communities, Home (destinations, cities, by day and by night),
- * IRLY Girl and IRLY Maman, and every key of the library. Built once.
+ * IRLY Girl and IRLY Mom Community, and every key of the library. Built once.
  */
 export function editorialGroups(): EditorialGroup[] {
   if (groups) return groups;
@@ -73,7 +73,7 @@ export function editorialGroups(): EditorialGroup[] {
   for (const [i, k] of (['poolGirl', 'padelGirl', 'drinksGirl', 'yachtGirl', 'spaGirl'] as const).entries()) collect(intro, k, `IRLY Girl intro · slide ${i + 1}`);
   for (const d of Object.values(DESTINATIONS)) collect(intro, d.photo, `Welcome · ${d.name}`);
   const official = new Map<string, EditorialItem>();
-  for (const [topic, key] of Object.entries(TOPIC_PHOTO)) collect(official, key, `IRLY ${topic[0].toUpperCase()}${topic.slice(1)}`);
+  for (const [topic, key] of Object.entries(TOPIC_PHOTO)) collect(official, key, topic === 'moms' ? 'IRLY Mom Community' : `IRLY ${topic[0].toUpperCase()}${topic.slice(1)}`);
   for (const [topic, key] of Object.entries(GIRL_OFFICIAL_PHOTO)) collect(official, key, `IRLY Girl · ${topic.replace(/^girl_/, '')}`);
   const home = new Map<string, EditorialItem>();
   for (const d of Object.values(DESTINATIONS)) collect(home, d.photo, d.name);
@@ -87,7 +87,7 @@ export function editorialGroups(): EditorialGroup[] {
   collect(home, 'poolGirl', 'Home background · IRLY Girl (phones)');
   const girl = new Map<string, EditorialItem>();
   for (const k of GIRL_KINDS) collect(girl, k.photo, `IRLY Girl · ${k.label}`);
-  for (const k of MOM_KINDS) collect(girl, k.photo, `IRLY Maman · ${k.label}`);
+  for (const k of MOM_KINDS) collect(girl, k.photo, `IRLY Mom Community · ${k.label}`);
   const all = new Map<string, EditorialItem>();
   for (const key of [...Object.keys(PHOTO_IDS), ...LIBRARY, ...OWN, ...DUBAI_KEYS]) collect(all, key, key);
   groups = [

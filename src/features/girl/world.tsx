@@ -74,7 +74,7 @@ export const GIRL_KINDS: Kind[] = [
   { id: 'create', label: 'Book club & workshops', icon: 'palette', photo: 'readingGirl', match: /book|workshop|atelier|art|paint|pottery|craft/i },
 ];
 
-/** IRLY Moms: plans with (or around) the children, on family photos only (never IRLY Girl's). */
+/** IRLY Mom Community: plans with (or around) the children, on family photos only (never IRLY Girl's). */
 export const MOM_KINDS: Kind[] = [
   { id: 'zoo', label: 'Zoo & safari', icon: 'pawPrint', photo: 'safariPark', match: /\bzoo\b|safari park|wildlife/i },
   { id: 'globalvillage', label: 'Global Village', icon: 'globe', photo: 'globalVillage', match: /global village/i },

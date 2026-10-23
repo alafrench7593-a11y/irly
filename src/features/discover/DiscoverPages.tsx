@@ -98,7 +98,7 @@ const INTENT_ORDER: Intent[] = ['friends', 'activities', 'sports', 'business', '
 /**
  * In IRLY Girl the same page, section for section: « Find someone » and the
  * intents open IRLY Match, the people are women, the IRLY Girl doors become
- * the way back to IRLY and IRLY Moms (opened here, under the doors), and the
+ * the way back to IRLY and IRLY Mom Community (opened here, under the doors), and the
  * communities are IRLY Girl's.
  */
 export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
@@ -116,16 +116,16 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
   // Match IRLY, or IRLY Match in IRLY Girl (each says « coming soon » itself while closed).
   const matchOpen = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
   const matchHref = (intent: Intent) => (inGirl ? '/girl/match' : `/match?intent=${intent}`);
-  // IRLY Maman opens in place here. The page stays mounted, so it closes whenever the app changes space:
-  // entering IRLY Girl (the IRLY Girl door) never lands on IRLY Maman left open by an earlier visit.
+  // IRLY Mom Community opens in place here. The page stays mounted, so it closes whenever the app changes space:
+  // entering IRLY Girl (the IRLY Girl door) never lands on IRLY Mom Community left open by an earlier visit.
   const [moms, setMoms] = useState(false);
   const [momsSpace, setMomsSpace] = useState(inGirl);
   if (momsSpace !== inGirl) {
     setMomsSpace(inGirl);
     setMoms(false);
   }
-  // The IRLY Maman door (features/girl/doors) arrives with ?moms=1: opened, then the param is cleared, so it never
-  // fires again on back or refresh, and the next IRLY Maman door is a new request even if this one was closed.
+  // The IRLY Mom Community door (features/girl/doors) arrives with ?moms=1: opened, then the param is cleared, so it never
+  // fires again on back or refresh, and the next IRLY Mom Community door is a new request even if this one was closed.
   const { moms: momsParam } = useLocalSearchParams<{ moms?: string }>();
   const [seenMoms, setSeenMoms] = useState<string | undefined>(undefined);
   if (momsParam !== seenMoms) {

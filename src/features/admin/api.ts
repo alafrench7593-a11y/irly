@@ -441,7 +441,7 @@ export async function replaceAppPhoto(key: string, uri: string | null, reason: s
 
 // ───── Global administration (migration 20261029700000_irly_admin_global) ─────
 export type Space = 'mixte' | 'girl' | 'mom';
-export const SPACE_LABEL: Record<Space, string> = { mixte: 'IRLY Mixte', girl: 'IRLY Girl', mom: 'IRLY Maman' };
+export const SPACE_LABEL: Record<Space, string> = { mixte: 'IRLY Mixte', girl: 'IRLY Girl', mom: 'IRLY Mom Community' };
 export type SpaceRow = { space: Space; communities: number; activities_upcoming: number; reports_open: number; reports_review: number };
 export type OverviewMore = {
   reports_closed_7d: number;

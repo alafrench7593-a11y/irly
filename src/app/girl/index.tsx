@@ -10,13 +10,13 @@ import { Flavor } from '@/theme/flavor';
 const LEAVE_LIMIT = 4_000;
 
 /**
- * The door into IRLY Girl (every « IRLY Girl » and « IRLY Maman » entry,
+ * The door into IRLY Girl (every « IRLY Girl » and « IRLY Mom Community » entry,
  * and links to /girl). IRLY Girl is not another app: it is the same IRLY
  * (same tabs, same pages, same flows) in the Girl look, with Girl content.
  * This page only asks the server whether IRLY Girl is open for this
  * account (features/girl/access), then:
  * - open: the app switches to IRLY Girl (state/appSpace) and lands on
- *   IRLY Girl's Home, or straight on IRLY Maman for the Maman door
+ *   IRLY Girl's Home, or straight on IRLY Mom Community for the Mom door
  *   (features/girl/doors: one place decides, nothing relayed through Home);
  * - refused (not a woman's account, paused, signed out): the app stays in
  *   IRLY and this page says why, with a way forward.

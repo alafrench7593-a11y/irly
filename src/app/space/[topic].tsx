@@ -31,7 +31,7 @@ type Space = { title: string; line: string; womenOnly: boolean; rules: { icon: I
 
 const SPACES: Record<SpaceId, Space> = {
   moms: {
-    title: 'IRLY Maman',
+    title: 'IRLY Mom Community',
     line: 'Moms meeting moms in the city: coffees, playdates, advice and recommendations.',
     womenOnly: true,
     help: 'schools',
@@ -64,7 +64,7 @@ const isSpace = (x: string | undefined): x is SpaceId => x === 'moms' || x === '
 const LOAD_LIMIT = ACCESS_LIMIT;
 
 /**
- * A space (IRLY Maman, IRLY Family): its rules, its groups
+ * A space (IRLY Mom Community, IRLY Family): its rules, its groups
  * and its official community, where members post text, photos and videos.
  * Same communities, groups, pins, announcements and reports as everywhere.
  */
@@ -219,7 +219,7 @@ function SpaceSkeleton() {
 }
 
 /**
- * The space has no community to show. The women-only space (IRLY Maman)
+ * The space has no community to show. The women-only space (IRLY Mom Community)
  * says why: not open in this destination yet, IRLY Girl paused
  * for this account, or reserved for women, with IRLY Family as the open
  * alternative for parents. IRLY Family is open to everyone: only « not

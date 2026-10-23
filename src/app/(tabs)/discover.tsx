@@ -168,7 +168,7 @@ export default function Discover() {
   // IRLY Girl: the same four pages, section for section; People and Activities show women, girls' plans and IRLY Girl communities.
   const pages = [PeoplePage, ActivitiesPage, PlacesPage, EventsPage];
 
-  // The tab stays mounted: a new /discover?tab=… (the IRLY Maman door) turns to that page. The param is then
+  // The tab stays mounted: a new /discover?tab=… (the IRLY Mom Community door) turns to that page. The param is then
   // cleared, so the same link opened again (after a swipe to another page) turns to it again.
   const [seenTab, setSeenTab] = useState(params.tab);
   if (params.tab !== seenTab) {

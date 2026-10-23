@@ -22,7 +22,7 @@ import { GirlLoader } from './GirlMark';
 import { useGirlStore } from './girlStore';
 
 /**
- * Who may enter IRLY Girl (and IRLY Moms, which lives inside it), as seen
+ * Who may enter IRLY Girl (and IRLY Mom Community, which lives inside it), as seen
  * by the app. The server is the authority: every IRLY Girl read and write
  * is refused there for an account that is not a woman's, or whose IRLY Girl
  * access was withdrawn (private.is_girl_eligible). This only decides which
@@ -277,7 +277,7 @@ export function GirlClosed({ reason, onRetry, moms }: { reason: GirlClosedReason
         {reason === 'error' && onRetry ? <GButton label="Try again" onPress={onRetry} /> : null}
         {reason === 'signed_out' ? <GButton label="Sign in" icon="user" onPress={() => router.push('/account')} /> : null}
         {reason === 'suspended' ? <GButton label="Contact support" onPress={() => router.push('/support')} /> : null}
-        {/* IRLY Family is open to every parent: the way in for a dad who tapped « IRLY Moms ». */}
+        {/* IRLY Family is open to every parent: the way in for a dad who tapped « IRLY Mom Community ». */}
         {reason === 'not_eligible' && moms ? <GButton label="Explore IRLY Family" icon="home" variant="secondary" onPress={() => router.replace('/space/families')} /> : null}
         <GButton label="Back to IRLY" variant={reason === 'not_eligible' && !moms ? 'primary' : 'ghost'} onPress={() => safeBack(router, '/')} />
       </View>

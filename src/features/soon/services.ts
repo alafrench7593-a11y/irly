@@ -47,8 +47,8 @@ export const SOON: Record<SoonId, SoonService> = {
       { icon: 'calendar', title: 'Business meetups', body: 'Founder breakfasts, talks and afterworks to meet in person.' },
       { icon: 'badgeCheck', title: 'Checked professional profiles', body: 'A clear sign when someone’s business has been checked.' },
     ],
-    liveNow: { label: 'Networking', caption: 'Professionals near you, available today', icon: 'network', href: '/network' },
-    notice: 'No jobs, companies or missions are listed yet. Networking already works today.',
+    liveNow: { label: 'IRLY Network', caption: 'Professionals near you, available today', icon: 'network', href: '/network' },
+    notice: 'No jobs, companies or missions are listed yet. IRLY Network already works today.',
   },
   bonplan: {
     id: 'bonplan',

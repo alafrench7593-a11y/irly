@@ -48,7 +48,7 @@ import { NetworkState, Shimmer, useGlint } from '@/features/network/ui';
 import { NetworkPane, useNetworkTone, NetworkScreen } from '@/features/network/tone';
 
 const TITLE = 'Professional profile';
-const SUBTITLE = 'What you do, what you build, what you look for. Shown in Networking and used for your matches.';
+const SUBTITLE = 'What you do, what you build, what you look for. Shown in IRLY Network and used for your matches.';
 
 const STEPS = ['Professional identity', 'Industries & skills', 'Project & goals', 'Links & location', 'Visibility & confirm'];
 
@@ -239,7 +239,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
     return (
       <NetworkPage overline="IRLY Network" title={TITLE}>
         <View style={{ paddingHorizontal: space.gutter }}>
-          <NetworkState icon="briefcase" title="Sign in to create your professional profile." body="Networking lists real members only, so you need an IRLY account.">
+          <NetworkState icon="briefcase" title="Sign in to create your professional profile." body="IRLY Network lists real members only, so you need an IRLY account.">
             <Button label="Sign in" icon="user" size="md" onPress={() => router.push('/account')} />
           </NetworkState>
         </View>
@@ -395,12 +395,12 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
 
     // 5 · Visibility & confirm
     <Fragment key="confirm">
-      <PressableScale haptic="select" scaleTo={0.98} onPress={() => set('visible', !d.visible)} style={[styles.toggle, { boxShadow: tone.surface.shadow }]} accessibilityRole="switch" accessibilityState={{ checked: d.visible }} aria-checked={d.visible} accessibilityLabel="Show me in Networking">
+      <PressableScale haptic="select" scaleTo={0.98} onPress={() => set('visible', !d.visible)} style={[styles.toggle, { boxShadow: tone.surface.shadow }]} accessibilityRole="switch" accessibilityState={{ checked: d.visible }} aria-checked={d.visible} accessibilityLabel="Show me in IRLY Network">
         <NetworkPane radius={radius.lg} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text variant="titleS">Show me in Networking</Text>
+          <Text variant="titleS">Show me in IRLY Network</Text>
           <Text variant="caption" tone="tertiary">
-            {d.visible ? 'Professionals across the country can find you.' : 'Hidden from Networking'}
+            {d.visible ? 'Professionals across the country can find you.' : 'Hidden from IRLY Network'}
           </Text>
         </View>
         <View style={[styles.switch, { backgroundColor: d.visible ? tone.accent : t.c.line }]}>
@@ -470,7 +470,7 @@ function Editor({ me, initial, cityId }: { me: ReturnType<typeof useMyPro>; init
                   loading={removing.busy === 'delete'}
                   onPress={() =>
                     removing.isRunning() ||
-                    confirm('Delete your professional profile? You leave Networking; your connections stay.', () =>
+                    confirm('Delete your professional profile? You leave IRLY Network; your connections stay.', () =>
                       void removing.run('delete', () =>
                         me
                           .remove()

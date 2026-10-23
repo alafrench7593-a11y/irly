@@ -335,7 +335,7 @@ export default function Home() {
           </ScrollReveal>
         );
       case 'portals':
-        // IRLY: the doors into IRLY Girl and IRLY Moms (women). IRLY Girl, same doors: back to IRLY, and IRLY Moms.
+        // IRLY: the doors into IRLY Girl and IRLY Mom Community (women). IRLY Girl, same doors: back to IRLY, and IRLY Mom Community.
         return inGirl || girl ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             <SectionHeader {...head('portals', 'Find your people', 'Women only · Not dating')} />

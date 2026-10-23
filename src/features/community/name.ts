@@ -63,7 +63,7 @@ const TOPIC_LABEL: Record<string, string> = {
   tech: 'Tech',
   ai: 'AI',
   girls: 'IRLY Girl',
-  moms: 'IRLY Maman',
+  moms: 'IRLY Mom Community',
   families: 'IRLY Family',
   newcomers: 'Newcomers',
   lifestyle: 'Lifestyle',

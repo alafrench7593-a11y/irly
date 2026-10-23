@@ -373,13 +373,13 @@ async function main() {
     }
     return false;
   });
-  await step('Maman: the official community is « IRLY Maman », once, and opening Maman created no community', async () => {
+  await step('Maman: the official community is « IRLY Mom Community », once, and opening Maman created no community', async () => {
     await page.getByText('Mom communities', { exact: true }).first().waitFor({ timeout: 25000 });
-    await page.getByRole('button', { name: 'Open IRLY Maman', exact: true }).first().waitFor({ timeout: 25000 });
+    await page.getByRole('button', { name: 'Open IRLY Mom Community', exact: true }).first().waitFor({ timeout: 25000 });
     const official = await sql(`select name from public.communities where official and topic = 'moms' and city_id = 'dubai' and parent_id is null and deleted_at is null`);
     const [{ made }] = await sql(`select count(*)::int as made from public.communities
       where created_at >= '${momsFrom}' and (official or created_by in ('${lea.id}', '${mia.id}', '${max.id}'))`);
-    return official.length === 1 && official[0].name === 'IRLY Maman' && made === 0;
+    return official.length === 1 && official[0].name === 'IRLY Mom Community' && made === 0;
   });
   await step('Maman: Max (a man) gets no mom from the server, and so no child age group', async () => {
     const r = await max.sb.rpc('girl_circle', { p_destination: 'dubai', p_moms: true });
