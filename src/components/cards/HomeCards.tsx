@@ -70,7 +70,18 @@ function photoOf(h: Happening) {
  * The day's highlight. Tapping it grows the card into the activity page
  * (shared element: same photo, same title, same place, same people).
  */
-export const HighlightCard = memo(function HighlightCard({ h, height = 236, compact }: { h: Happening; height?: number; compact?: boolean }) {
+export const HighlightCard = memo(function HighlightCard({
+  h,
+  height = 236,
+  compact,
+  stacked,
+}: {
+  h: Happening;
+  height?: number;
+  compact?: boolean;
+  /** A narrow card (a rail): who is going sits under the title, which keeps the full width (no word cut in two). */
+  stacked?: boolean;
+}) {
   const city = CITIES[h.item.cityId];
   const { ref, onPress, hidden } = useHeroCard(h.type, h.id);
   const joined = useStore((s) => Boolean(s.joined[h.id]));
@@ -92,8 +103,8 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236, comp
             </Text>
           </Glass>
         </View>
-        <View style={styles.highlightBottom}>
-          <View style={{ flex: 1, gap: 4 }}>
+        <View style={[styles.highlightBottom, stacked && styles.highlightStacked]}>
+          <View style={stacked ? { gap: 4 } : { flex: 1, gap: 4 }}>
             <Text variant="overline" color={h.color}>
               {h.label}
             </Text>
@@ -104,7 +115,7 @@ export const HighlightCard = memo(function HighlightCard({ h, height = 236, comp
               {h.item.venue} · {areaName(city, h.item.areaId)}
             </Text>
           </View>
-          <View style={{ alignItems: 'flex-end', gap: 6 }}>
+          <View style={stacked ? styles.highlightGoingRow : { alignItems: 'flex-end', gap: 6 }}>
             <AvatarStack people={peopleByIds(h.item.goingIds)} size={28} max={2} extra={h.item.extraGoing} />
             <Text variant="caption" tone="onDark">
               {goingCount(h.item, joined)} going
@@ -337,6 +348,8 @@ const styles = StyleSheet.create({
   highlightTop: { flexDirection: 'row', padding: 16 },
   timePill: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 28, paddingHorizontal: 10, borderRadius: radius.pill },
   highlightBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+  highlightStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 10 },
+  highlightGoingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

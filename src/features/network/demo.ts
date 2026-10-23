@@ -238,7 +238,8 @@ export async function demoConnect(userId: string): Promise<string> {
   await wait(650);
   if (offline()) throw new Error('No connection. Check your network and try again');
   const now = useDemoNetwork.getState().connection[userId] ?? PROS.find((p) => p.userId === userId)?.connection;
-  const accepted = now === 'incoming';
+  // Accept shows « connected » at once (optimistic, same store): that is still their request, accepted.
+  const accepted = now === 'incoming' || now === 'connected';
   useDemoNetwork.getState().setConnection(userId, accepted ? 'connected' : 'requested');
   return accepted ? 'accepted' : 'pending';
 }

@@ -67,13 +67,15 @@ export const PersonCard = memo(function PersonCard({ match, width }: { match: Ma
   const p = match.person;
   const city = CITIES[p.cityId];
   const face = useRef<View>(null);
+  // The card's body opens the person; Connect sits beside it (never a button inside a button).
   return (
-    <PressableScale
-      onPress={() => flyFrom(face.current, p, () => router.push(`/person/${p.id}`))}
-      style={[styles.person, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
-      accessibilityLabel={`${p.name}, ${p.headline}`}
-    >
+    <View style={[styles.person, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
       <GlassLayer radius={radius.xl} />
+      <PressableScale
+        onPress={() => flyFrom(face.current, p, () => router.push(`/person/${p.id}`))}
+        style={styles.personBody}
+        accessibilityLabel={`${p.name}, ${p.headline}`}
+      >
       <View style={styles.personTop}>
         <View ref={face} collapsable={false}>
           <Avatar name={p.name} hue={p.hue} size={56} online={p.online} verified={p.verified} photo={p.photo} />
@@ -119,8 +121,9 @@ export const PersonCard = memo(function PersonCard({ match, width }: { match: Ma
           </View>
         ))}
       </View>
+      </PressableScale>
       <ConnectButton person={p} size="md" full />
-    </PressableScale>
+    </View>
   );
 });
 
@@ -157,12 +160,11 @@ export const PlanCard = memo(function PlanCard({ plan }: { plan: FeedPlan }) {
   const ref = plan.ref.type === 'session' ? findSession(plan.ref.id) : findEvent(plan.ref.id);
   const people = ref ? peopleByIds(ref.goingIds) : [];
   const soon = ref ? ref.when.dayOffset === 0 : false;
+  // The card opens the plan; Count me in sits beside it (never a button inside a button).
   return (
-    <PressableScale
-      onPress={() => openHero({ kind: plan.ref.type, id: plan.ref.id })}
-      style={[styles.plan, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
-    >
+    <View style={[styles.plan, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
       <GlassLayer radius={radius.xl} />
+      <PressableScale onPress={() => openHero({ kind: plan.ref.type, id: plan.ref.id })}>
       <View style={styles.row}>
         <View style={[styles.planIcon, { backgroundColor: t.light.accentSoft }]}>
           <Icon name={plan.icon} size={18} color={t.accent} />
@@ -187,6 +189,7 @@ export const PlanCard = memo(function PlanCard({ plan }: { plan: FeedPlan }) {
           {plan.note}
         </Text>
       ) : null}
+      </PressableScale>
       <View style={[styles.row, { justifyContent: 'space-between', marginTop: space[5] }]}>
         <AvatarStack people={people} size={30} max={4} extra={ref ? ref.extraGoing + (joined ? 1 : 0) : 0} />
         <Button
@@ -202,13 +205,14 @@ export const PlanCard = memo(function PlanCard({ plan }: { plan: FeedPlan }) {
           }}
         />
       </View>
-    </PressableScale>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   person: { padding: 16, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2, gap: 14 },
+  personBody: { gap: 14 },
   personTop: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   strength: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 10, height: 24, borderRadius: 12 },
   reasonDot: { width: 6, height: 6, borderRadius: 3 },
