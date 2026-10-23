@@ -5487,4 +5487,7 @@ export const fr: Record<string, string> = {
   'Unknown official community': 'Communauté officielle inconnue',
   'A tagline has at most 140 characters': 'Une accroche compte au plus 140 caractères',
   'The names of IRLY’s official communities stay as they are': 'Les noms des communautés officielles d’IRLY ne changent pas',
+  'End time': 'Heure de fin',
+  'Date and time': 'Date et heure',
+  'The picker of activities, plans and edits.': 'Le sélecteur des activités, des plans et des modifications.',
 };
