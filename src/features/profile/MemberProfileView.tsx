@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { AdminBadge } from '@/features/admin/StaffBadge';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Share, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
@@ -211,6 +212,7 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
             <Text variant="displayL" align="center" raw>
               {p.firstName}
             </Text>
+            <AdminBadge userId={p.id} size="md" />
             <BadgesRow userId={p.id} />
             {verified ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>

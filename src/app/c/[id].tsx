@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { AdminBadge } from '@/features/admin/StaffBadge';
 import { useAuthStatus } from '@/features/auth/account';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoCommunityScreen } from '@/features/girl/DemoScreens';
@@ -732,7 +733,10 @@ function PostCard({
       <View style={styles.row}>
         <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
         <View style={{ flex: 1 }}>
-          <Text variant="titleS" raw>{p.mine ? tx('You') : p.firstName}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text variant="titleS" raw style={{ flexShrink: 1 }} numberOfLines={1}>{p.mine ? tx('You') : p.firstName}</Text>
+            <AdminBadge userId={p.authorId} />
+          </View>
           <Text variant="caption" tone="tertiary">
             {p.pending ? tx('Sending…') : timeAgo(Math.max(0, Math.round((now - p.createdAt) / 60000)))}
           </Text>

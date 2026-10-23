@@ -1652,11 +1652,15 @@ select public.create_community('Count Club', 'dubai') as count_club \gset
 select pg_temp.check((select members_count from public.communities where id = :'count_club') = 1, 'ranking: a new community counts its owner');
 select pg_temp.expect_denied(format('update public.communities set members_count = 99999 where id = %L', :'count_club'), 'ranking: nobody writes a member count by hand, owners included');
 select pg_temp.as_admin();
--- Since 20261028100000: IRLY's official ones first, then the members', each most members first.
-select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (partition by official order by n), true)
+-- Since 20261028100000: IRLY's official ones first, then the members', most members first.
+-- Since 20261029700000: the official ones in the order the team sets (community_topics.sort).
+select pg_temp.check((select bool_and(ok) from (select
+    coalesce(official or members >= lead(members) over (partition by official order by n), true)
+    and coalesce(not official or sort <= lead(sort) over (partition by official order by n), true)
     and coalesce(official >= lead(official) over (order by n), true) as ok
-  from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
-  where city_id = 'dubai') x), 'ranking: main communities come official first, then most members first');
+  from (select l.*, t.sort from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
+    left join public.community_topics t on t.topic = l.topic) l
+  where city_id = 'dubai') x), 'ranking: main communities come official first (in the team''s order), then most members first');
 select pg_temp.check(not exists (select 1 from public.community_list('dubai') l join public.communities c on c.id = l.id where c.parent_id is not null), 'ranking: no group among main communities');
 select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (), true) as ok from (select members from public.community_subgroups(:'sport_id')) l) x), 'ranking: groups come most members first');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
