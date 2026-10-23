@@ -115,21 +115,24 @@ function FeaturedCard({ city, onPick }: { city: City; onPick: (c: City, ref: Ref
         </Text>
       </View>
       <View style={{ padding: 18, gap: 14 }}>
-        <View>
-          <Text variant="displayXL" tone="onDark">
-            {city.name}
-          </Text>
-          <Text variant="body" color="rgba(255,255,255,0.78)">
-            {city.tagline}
-          </Text>
+        {/* The arrow sits beside the name: in the stats row it left « communautés » too little room, cut mid-word. */}
+        <View style={styles.title}>
+          <View style={{ flex: 1 }}>
+            <Text variant="displayXL" tone="onDark">
+              {city.name}
+            </Text>
+            <Text variant="body" color="rgba(255,255,255,0.78)">
+              {city.tagline}
+            </Text>
+          </View>
+          <View style={styles.go}>
+            <Icon name="arrowRight" size={20} color="#000000" strokeWidth={2.4} />
+          </View>
         </View>
         <Glass dark style={styles.stats}>
           <Stat value={city.stats.communities} label={tx('communities')} />
           <Stat value={city.stats.activities} label={tx('activities')} />
           <Stat value={city.stats.events} label="events this week" />
-          <View style={styles.go}>
-            <Icon name="arrowRight" size={20} color="#000000" strokeWidth={2.4} />
-          </View>
         </Glass>
       </View>
     </PressableScale>
@@ -161,6 +164,7 @@ const styles = StyleSheet.create({
   head: { paddingHorizontal: space.gutter, gap: 8, marginBottom: space[7] },
   featured: { height: 330, borderRadius: radius.xl, overflow: 'hidden', justifyContent: 'space-between' },
   featuredTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
+  title: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
   stats: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: radius.lg, gap: 8 },
   go: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   grid: {
