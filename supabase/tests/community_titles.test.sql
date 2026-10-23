@@ -54,7 +54,8 @@ select pg_temp.check(not exists (
 ), 'no IRLY or orphaned community has a code in its title');
 
 -- The seeded names with numbers stay as they are.
-create temp table seeded_digits as select id, name from public.communities where deleted_at is null and name ~ '[0-9]';
+-- Since 20261029900000 IRLY Mom Community's groups (the seeded names with numbers) are removed, kept as rows: still checked.
+create temp table seeded_digits as select id, name from public.communities where official and parent_id is not null and name ~ '[0-9]';
 select pg_temp.check((select count(*) from seeded_digits) > 0, 'seeded names with numbers exist (Bump & babies (0–1)…)');
 
 -- 2. Leftovers as the live server has them: created by a test account since deleted.
