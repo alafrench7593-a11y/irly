@@ -21,18 +21,18 @@ import { useTheme } from '@/theme/useTheme';
 const TABS: Record<string, { label: string; icon: IconName }> = {
   index: { label: 'Home', icon: 'home' },
   discover: { label: 'Discover', icon: 'compass' },
-  map: { label: 'Map', icon: 'map' },
+  profile: { label: 'Profile', icon: 'user' },
 };
 
 /**
  * Slot order in the bar, every slot the same width. `match` is the Match
  * IRLY disc (people to meet); `live` just left of it is the live feed, spelled
  * out so nobody has to guess where it is; `network` (IRLY Network, the
- * professional side) sits right next to the Map. Your profile is at the top
+ * professional side) sits right next to your Profile. The Map is at the top
  * left of every tab root, Settings at its top right.
  * Creating (activity, event, post, live, community) starts from Create on Home.
  */
-const SLOTS = ['index', 'discover', 'live', 'match', 'network', 'map'] as const;
+const SLOTS = ['index', 'discover', 'live', 'match', 'network', 'profile'] as const;
 const MATCH_AT = SLOTS.indexOf('match');
 
 /** Where each slot sits: the same width for every slot, so the icons are evenly spaced. */

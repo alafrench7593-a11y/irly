@@ -15,7 +15,6 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Avatar } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
@@ -123,7 +122,7 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
       </Animated.View>
       <View style={styles.row}>
         <View style={styles.lead}>
-          <ProfileButton />
+          <MapButton />
           <SpaceLogo />
           <CommunitiesButton />
         </View>
@@ -134,18 +133,15 @@ export function HomeHeader({ scrollY, solidAt = 24 }: HomeHeaderProps) {
 }
 
 /**
- * Top left of every tab root, at the very edge: your profile (your face,
- * or your initials), lit while you are on it. The same door in both spaces.
+ * Top left of every tab root, at the very edge: the Map (your profile is in
+ * the tab bar, where the Map was), lit while you are on it. The same door in both spaces.
  */
-export function ProfileButton() {
+export function MapButton() {
   const t = useTheme();
   const router = useRouter();
   const pathname = usePathname();
-  const name = useStore((s) => s.profile.name);
-  const photo = useStore((s) => s.profile.photoUri);
-  const account = useAccount();
   const narrow = useFrame().width < 420;
-  const here = pathname === '/profile';
+  const here = pathname === '/map';
   const size = narrow ? 36 : 40;
   return (
     <PressableScale
@@ -153,14 +149,15 @@ export function ProfileButton() {
       scaleTo={0.92}
       hitSlop={6}
       onPress={() => {
-        if (!here) router.push('/profile');
+        if (!here) router.navigate('/map');
       }}
       accessibilityRole="button"
-      accessibilityLabel={here ? tx('Profile, current section') : tx('Profile')}
+      accessibilityLabel={here ? tx('Map, current section') : tx('Map')}
       accessibilityState={here ? { selected: true } : undefined}
-      style={[styles.profile, { width: size, height: size, borderRadius: size / 2, borderColor: here ? (t.flavor === 'girl' ? t.c.brand : t.c.text) : 'transparent' }]}
+      style={[styles.profile, { width: size, height: size, borderRadius: size / 2, overflow: 'hidden', borderColor: here ? (t.flavor === 'girl' ? t.c.brand : t.c.text) : 'transparent' }]}
     >
-      <Avatar name={name || tx('You')} hue={0} size={size - 6} photo={photo ?? undefined} userId={account?.userId} />
+      <GlassLayer radius={size / 2} level="thin" />
+      <Icon name="map" size={narrow ? 17 : 18} color={t.c.text} />
     </PressableScale>
   );
 }
@@ -345,7 +342,7 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
             onPress={onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))}
           />
         ) : (
-          <ProfileButton />
+          <MapButton />
         )}
         <Animated.View style={[styles.title, { left: titleLeft, right: titleRight }, titleStyle]} pointerEvents="none">
           <Text variant="titleS" numberOfLines={1}>
