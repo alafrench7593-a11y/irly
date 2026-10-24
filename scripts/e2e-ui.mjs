@@ -154,12 +154,10 @@ async function main() {
   }, 'Signed in');
   // The session must survive a full reload (stored by the app).
   await check('session persists after reload', '/account', [], null, 'Signed in');
-  // IRLY Community, once after signing in: intro, then recommendations from the answers.
+  // IRLY Community after signing in: an account that already exists has seen the intro (9bfa033),
+  // so the recommendations from the answers come first.
   // Nothing is joined here: a join would post "Uma just joined" in a real community chat.
-  await check('IRLY Community intro', '/onboarding/communities', ['Meet people. Find your community.']);
-  await check('Your communities: newcomers recommended (IRLY Expat), join or skip', null, ['Your communities', 'IRLY Expat', 'Join all', 'Choose my communities', 'Skip for now'], async () => {
-    await click('Skip');
-  });
+  await check('Your communities: newcomers recommended (IRLY Expat), join or skip', '/onboarding/communities', ['Your communities', 'IRLY Expat', 'Join all', 'Choose my communities', 'Skip for now']);
   await check('Skip for now goes Home', null, ['Live Bali'], async () => {
     await click('Skip for now');
   });
