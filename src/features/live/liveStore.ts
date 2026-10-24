@@ -10,7 +10,7 @@ import type { CityId } from '@/data/types';
 import { useCityId } from '@/state/store';
 
 /** How long a live post stays up. IRL is "right now", not a feed archive. */
-export const LIVE_TTL_MIN = 240;
+export const LIVE_TTL_MIN = 24 * 60;
 
 export type Live = {
   id: string;

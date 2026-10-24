@@ -226,7 +226,7 @@ select pg_temp.check((select first_name from public.irl_feed('dubai') limit 1) =
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
 select pg_temp.check((select count(*) from public.irl_feed('dubai')) = 0, 'non-friend does not');
 select pg_temp.expect_denied($$select private.are_friends('00000000-0000-0000-0000-00000000000c', '00000000-0000-0000-0000-00000000000d')$$, 'cannot probe other people''s friendships');
-select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id, area_id, body, expires_at) values (auth.uid(), 'dubai', 'marina', 'forever', now() + interval '3 days')$$, 'IRL posts cannot outlive 4 hours');
+select pg_temp.expect_denied($$insert into public.irl_posts (author_id, city_id, area_id, body, expires_at) values (auth.uid(), 'dubai', 'marina', 'forever', now() + interval '3 days')$$, 'IRL posts cannot outlive 24 hours');
 -- Live with photos and videos
 insert into public.irl_posts (author_id, city_id, area_id, body, media_path, media_kind, thumb_path, media_seconds) values (auth.uid(), 'dubai', 'marina', '', auth.uid()::text || '/clip.mp4', 'video', auth.uid()::text || '/clip.jpg', 12);
 select pg_temp.check(exists (select 1 from public.irl_posts where media_kind = 'video' and body = ''), 'a video can be posted without text');

@@ -21,9 +21,9 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
       <Tabs.Screen name="live" options={{ title: 'IRL' }} />
-      <Tabs.Screen name="map" options={{ title: 'Map' }} />
-      {/* Profile: opened from the top left of every tab root, not from the bar. */}
-      <Tabs.Screen name="profile" options={{ title: 'Profile', href: null }} />
+      {/* Map: opened from the top left of every tab root, not from the bar. */}
+      <Tabs.Screen name="map" options={{ title: 'Map', href: null }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
       {/* Messages: opened from the header of every tab root, not a tab. */}
       <Tabs.Screen name="messages" options={{ title: 'Messages', href: null }} />
       {/* Real-life plans: reached from Home and Discover, no longer a tab. */}

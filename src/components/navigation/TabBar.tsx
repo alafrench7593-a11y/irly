@@ -6,33 +6,35 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
+import { Avatar } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { IRL_DISC, IRL_LIFT } from '@/features/irl/IrlDisc';
+import { useAccount } from '@/features/auth/account';
 import { useLiveCount } from '@/features/live/liveStore';
 import { FEATURES } from '@/lib/features';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { scale, spring } from '@/motion/tokens';
 import { font, layout, radius } from '@/theme/tokens';
+import { useStore } from '@/state/store';
 import { useTheme } from '@/theme/useTheme';
 
 const TABS: Record<string, { label: string; icon: IconName }> = {
   index: { label: 'Home', icon: 'home' },
   discover: { label: 'Discover', icon: 'compass' },
-  map: { label: 'Map', icon: 'map' },
 };
 
 /**
  * Slot order in the bar, every slot the same width. `match` is the Match
  * IRLY disc (people to meet); `live` just left of it is the live feed, spelled
  * out so nobody has to guess where it is; `network` (IRLY Network, the
- * professional side) sits right next to the Map. Your profile is at the top
+ * professional side) sits right next to your Profile. The Map is at the top
  * left of every tab root, Settings at its top right.
  * Creating (activity, event, post, live, community) starts from Create on Home.
  */
-const SLOTS = ['index', 'discover', 'live', 'match', 'network', 'map'] as const;
+const SLOTS = ['index', 'discover', 'live', 'match', 'network', 'profile'] as const;
 const MATCH_AT = SLOTS.indexOf('match');
 
 /** Where each slot sits: the same width for every slot, so the icons are evenly spaced. */
@@ -147,6 +149,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 navigation.navigate(route.name, route.params);
               }
             };
+            if (slot === 'profile') return <ProfileTab key={route.key} focused={focused} width={itemW} onPress={onPress} />;
             const meta = TABS[slot];
             return (
               <TabItem
@@ -218,6 +221,36 @@ const TabItem = memo(function TabItem({
             </Text>
           </View>
         ) : null}
+      </Animated.View>
+    </PressableScale>
+  );
+});
+
+/** Your profile in the bar: your face (or your initials), ringed while you are on it. */
+const ProfileTab = memo(function ProfileTab({ focused, width, onPress }: { focused: boolean; width: number; onPress: () => void }) {
+  const t = useTheme();
+  const reduced = useReducedMotion();
+  const name = useStore((s) => s.profile.name);
+  const photo = useStore((s) => s.profile.photoUri);
+  const account = useAccount();
+  const pop = useSharedValue(focused ? scale.selected : 1);
+  useEffect(() => {
+    if (reduced) pop.set(focused ? scale.selected : 1);
+    else pop.set(focused ? withSequence(withTiming(scale.selected + 0.06, { duration: 110 }), withSpring(scale.selected, spring.strong)) : withSpring(1, spring.medium));
+  }, [focused, pop, reduced]);
+  const faceStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+  return (
+    <PressableScale
+      onPress={onPress}
+      haptic={false}
+      scaleTo={reduced ? 1 : 0.9}
+      style={[styles.item, { width }]}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: focused }}
+      accessibilityLabel={tx('Profile')}
+    >
+      <Animated.View style={[styles.face, { borderColor: focused ? (t.flavor === 'girl' ? t.c.brand : t.c.text) : 'transparent' }, faceStyle]}>
+        <Avatar name={name || tx('You')} hue={0} size={26} photo={photo ?? undefined} userId={account?.userId} />
       </Animated.View>
     </PressableScale>
   );
@@ -307,6 +340,7 @@ const styles = StyleSheet.create({
   matchWord: { fontSize: 10, lineHeight: 12, letterSpacing: 0.6, fontFamily: font.heavy, marginTop: 1 },
   matchIrly: { fontSize: 8, lineHeight: 10, letterSpacing: 1.2, fontFamily: font.heavy, opacity: 0.75 },
   soonWord: { fontSize: 11, lineHeight: 13, letterSpacing: 0.8, fontFamily: font.heavy, textTransform: 'uppercase', marginTop: 2, maxWidth: IRL_DISC - 12 },
+  face: { width: 32, height: 32, borderRadius: 16, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   liveDot: { width: 8, height: 8, borderRadius: 4, marginBottom: 3 },
   liveText: { fontSize: 10, lineHeight: 12, letterSpacing: 0.8, fontFamily: font.heavy },
 });

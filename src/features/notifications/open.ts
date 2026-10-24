@@ -90,7 +90,7 @@ export function destinationOf(n: NotificationLike, now = Date.now()): Destinatio
     case 'COMMUNITY_INVITATION':
       return community(p.community_id);
     case 'IRLY_POST_CREATED':
-      // A Live lasts 4 hours: an ended one has nothing to open.
+      // A Live lasts 24 hours: an ended one has nothing to open.
       return now - n.createdAt >= LIVE_TTL_MIN * 60_000 ? null : { href: '/live' };
     case 'IRLY_NEWS':
       // The page itself asks the server whether this news item is still for you.

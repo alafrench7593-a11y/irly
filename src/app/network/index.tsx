@@ -58,12 +58,12 @@ function NetworkDiscoverPage() {
   const me = useMyPro();
   const myName = useStore((s) => s.profile?.name ?? '');
   // French agreement: IRLY Girl's Network lists women only (« Fondatrice », « 3 professionnelles »);
-  // IRLY's filters take the inclusive form (« Fondateur·rice »); "be one of the first" agrees with you.
+  // in IRLY the page agrees with you: feminine for a woman, masculine for a man, inclusive when not given.
   const tg = useTg();
   const girl = useAppSpace() === 'girl';
-  const filterWho = agreeOf(null, girl);
-  const crowd: Agree = girl ? 'woman' : 'man';
   const meWho = agreeOf({ gender: useStore((s) => s.profile?.gender) }, girl);
+  const filterWho = meWho;
+  const crowd: Agree = meWho === 'woman' ? 'woman' : 'man';
 
   const [industry, setIndustry] = useState<IndustryId | null>(null);
   const [role, setRole] = useState<RoleId | null>(null);
@@ -316,7 +316,7 @@ function NetworkDiscoverPage() {
             </Rail>
           )}
 
-          <SectionHead title="Communities" caption="Business, founders, tech and more" action={tr('All communities')} onAction={() => router.push('/communities')} index={2} />
+          <SectionHead title="Communities" caption={tg('Business, founders, tech and more', crowd)} action={tr('All communities')} onAction={() => router.push('/communities')} index={2} />
           {communities.loading ? (
             <SectionState kind="loading" skeleton={{ width: 204, height: 156 }} />
           ) : communities.error && !communities.list.length ? (
