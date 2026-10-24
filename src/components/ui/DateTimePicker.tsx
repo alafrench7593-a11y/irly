@@ -194,8 +194,10 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
           const d = Math.abs(i - index);
           return (
             <PressableScale key={v} onPress={() => go(i)} haptic={false} scaleTo={0.94} style={styles.row} accessible={false}>
+              {/* Rows are a fixed 44 pt: larger text would spill out of them. */}
               <Text
                 raw
+                maxFontSizeMultiplier={1}
                 style={{ fontFamily: d === 0 ? font.bold : font.medium, fontSize: d === 0 ? 26 : 20, fontVariant: ['tabular-nums'], opacity: d === 0 ? 1 : d === 1 ? 0.55 : 0.28 }}
                 color={t.c.text}
               >
@@ -395,7 +397,7 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
           {/* key: switching Start/End rebuilds the wheels on that value. */}
           <View key={editing} style={styles.wheels}>
             <Wheel label="Hour" values={HOURS} index={clock.h} onIndex={(i) => setClock({ h: HOURS[i] })} />
-            <Text raw style={[styles.colon, { fontFamily: font.bold, fontSize: 26, textAlign: 'center' }]} color={t.c.text}>
+            <Text raw maxFontSizeMultiplier={1} style={[styles.colon, { fontFamily: font.bold, fontSize: 26, textAlign: 'center' }]} color={t.c.text}>
               :
             </Text>
             <Wheel label="Minutes" values={MINUTES} index={minuteIndex(clock.m)} onIndex={(i) => setClock({ m: MINUTES[i] })} />
@@ -453,7 +455,7 @@ const DayPill = memo(function DayPill({ on, width, top, day, label, onPress }: {
         >
           {top}
         </Text>
-        <Text raw style={{ fontFamily: font.bold, fontSize: 22 }} color={on ? t.c.onBrand : t.c.text}>
+        <Text raw maxFontSizeMultiplier={1} style={{ fontFamily: font.bold, fontSize: 22 }} color={on ? t.c.onBrand : t.c.text}>
           {day}
         </Text>
       </Animated.View>

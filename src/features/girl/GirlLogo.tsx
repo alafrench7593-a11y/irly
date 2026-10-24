@@ -33,7 +33,8 @@ export function GirlLogo({
     : ({ accessible: true, accessibilityRole: 'header', accessibilityLabel: `IRLY ${word}` } as const);
   return (
     <View style={styles.row} {...a11y}>
-      <Text raw style={{ fontFamily: 'Manrope_800ExtraBold', fontSize: size * 0.62, letterSpacing: size * 0.18, color: ink }}>
+      {/* Never squeezed: in a narrow row the italic word scales down, IRLY stays whole. */}
+      <Text raw style={{ flexShrink: 0, fontFamily: 'Manrope_800ExtraBold', fontSize: size * 0.62, letterSpacing: size * 0.18, color: ink }}>
         IRLY
       </Text>
       <View style={[styles.stop, { width: size * 0.18, height: size * 0.18, borderRadius: size, backgroundColor: accent, marginHorizontal: size * 0.16 }]} />
