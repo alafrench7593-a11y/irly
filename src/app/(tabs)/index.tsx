@@ -1,9 +1,9 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { YourCommunities } from '@/features/community/YourCommunities';
 import { useAccount } from '@/features/auth/account';
 import { t as tx, useLang } from '@/i18n';
 import { planDayLabel, upcomingPlans } from '@/features/plans/when';
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -139,6 +139,16 @@ export default function Home() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [homeSpace, scrollRef]);
+  // Entering IRLY Girl through its door switches the space while Home is covered (hidden on the
+  // web, where that scroll is lost): Home goes to its top again when it shows a new space.
+  const shownSpace = useRef(homeSpace);
+  useFocusEffect(
+    useCallback(() => {
+      if (shownSpace.current === homeSpace) return;
+      shownSpace.current = homeSpace;
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [homeSpace, scrollRef]),
+  );
   // The team's layout for this flavour (order, on/off, words, numbers), else the app's own.
   const { entries, feed } = useHomeLayout(homeSpace);
   const lang = useLang();

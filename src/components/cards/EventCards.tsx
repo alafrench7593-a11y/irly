@@ -104,7 +104,8 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
   const toggleJoin = useStore((s) => s.toggleJoin);
   const people = peopleByIds(event.goingIds);
   const chip = dayChip(event.when, city);
-  // The row opens the event; Join sits beside it (never a button inside a button).
+  // The row opens the event; Join sits over its bottom right corner, beside it in the tree
+  // (never a button inside a button), so the title and the date keep the card's whole width.
   return (
     <View style={[styles.rowCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}>
       <GlassLayer radius={radius.lg} />
@@ -130,7 +131,7 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
           {whenLabel(event.when, city)} · {areaName(city, event.areaId)}
         </Text>
         {/* The count gives way (« … ») so the join button keeps its place inside the card on a 375 pt phone. */}
-        <View style={[styles.row, styles.shrink, { marginTop: 6 }]}>
+        <View style={[styles.row, styles.shrink, { marginTop: 6, paddingRight: 42 }]}>
           <AvatarStack people={people} size={22} max={3} />
           <Text variant="caption" tone="secondary" numberOfLines={1} style={styles.shrink}>
             {goingCount(event, joined)} going · {formatPrice(event.price, city.currency)}
@@ -175,6 +176,6 @@ const styles = StyleSheet.create({
   thumb: { width: 92, height: 108, borderRadius: radius.md, justifyContent: 'flex-end' },
   thumbDate: { padding: 8 },
   rowBody: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  joinMini: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end', flexShrink: 0 },
+  joinMini: { position: 'absolute', right: 10, bottom: 10, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   shrink: { flexShrink: 1, minWidth: 0 },
 });
