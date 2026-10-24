@@ -20,7 +20,7 @@ IRLY helps adults make friends in real life. Members join communities around sha
 **3. Setup and demo account**
 
 - Demo account: `appreview@getirly.com`. Password: in the App Review Information fields.
-- Sign in: open the app, choose the Emirates as destination, then tap "Already have an account? Sign in" (or Profile tab → Sign in) and enter the email and password.
+- Sign in: open the app; on the first screen ("Where are you going?"), tap "Already have an account? Sign in" below the destination cards, then enter the email and password.
 - The demo account is set in Dubai, hidden from other members, and holds no personal data.
 - Report: the "…" menu on a member profile or a post, "Report" under a comment, or a long press on a message. Block: the "…" menu on a member profile → Block.
 - Delete account: gear icon → Settings → My account → Delete account. This deletes the account for real; we recreate the demo account afterwards.
@@ -59,7 +59,7 @@ Apple refuse les simulations : capture réelle, sur ton iPhone, avec la dernièr
 4. **Signaler** : sur une publication, « … » → Report → un motif → Envoyer ; montre la confirmation.
 5. **Bloquer** : profil d'un membre → « … » → Block → confirme.
 6. **Supprimer le compte** : roue → Settings → My account → Delete account → confirme ; montre le retour à l'écran de départ.
-7. **Connexion** : Sign in avec `appreview@getirly.com` et son mot de passe ; montre l'accueil.
+7. **Connexion** : sur le premier écran (« Where are you going? »), touche « Already have an account? Sign in » sous les cartes, puis `appreview@getirly.com` et son mot de passe ; montre l'accueil.
 8. Arrête l'enregistrement. La vidéo est dans Photos.
 
 Le compte créé à l'étape 2 est supprimé à l'étape 6 : le compte de démo d'Apple reste intact. Si le compte de démo est supprimé un jour, le recréer : GitHub → Actions → Review account → Run workflow.

@@ -113,7 +113,7 @@ function SeedProfile() {
             <Text variant="titleS" align="center">
               {person.headline}
             </Text>
-            {/* Where they come from, not a price's « From »: one sentence, so French reads « Originaire de ». */}
+            {/* Where they come from, not a price's « From »: one sentence, so French reads « Origine : ». */}
             <Text variant="caption" tone="tertiary" align="center" style={{ marginTop: 2 }} raw>
               {tx('From {place}', { place: tx(person.origin) })} · {tx(person.since)}
             </Text>

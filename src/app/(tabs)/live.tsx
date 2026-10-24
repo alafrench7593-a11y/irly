@@ -115,7 +115,8 @@ function LiveCard({ live }: { live: Live }) {
   const hasPhoto = Boolean(live.photo || live.photoUri);
   // A Live posted here names only its neighbourhood: said once, not « Dubai Marina · Dubai Marina ».
   const area = areaName(city, live.areaId);
-  const where = live.place && live.place !== area ? `${live.place} · ${area}` : area;
+  // One string, so the place goes through the dictionary itself (« the beach » → « la plage »).
+  const where = live.place && live.place !== area ? `${tx(live.place)} · ${area}` : area;
   return (
     <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}>
       <GlassLayer radius={radius.xl} />

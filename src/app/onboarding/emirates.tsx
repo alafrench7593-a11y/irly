@@ -96,7 +96,8 @@ function Stat({ value, label }: { value: number; label: string }) {
       <Text variant="number" tone="onDark">
         {formatCount(value)}
       </Text>
-      <Text variant="caption" color="rgba(255,255,255,0.6)">
+      {/* No larger iOS text size here: « communautés » fills its column, a bigger one broke it mid-word. */}
+      <Text variant="caption" color="rgba(255,255,255,0.6)" maxFontSizeMultiplier={1}>
         {label}
       </Text>
     </View>

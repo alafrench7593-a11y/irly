@@ -92,6 +92,8 @@ function useWebFit(on: boolean, size: number, minScale = 0.5, ...deps: unknown[]
     fitNow();
     const watch = new ResizeObserver(fitNow);
     watch.observe(el);
+    // Its parent too: once shrunk, the label's own box no longer grows with more room (a wider window).
+    if (el.parentElement) watch.observe(el.parentElement);
     return () => watch.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on, size, minScale, ...deps]);
