@@ -56,14 +56,18 @@ export const Text = memo(function Text({
   void italic;
   const fontFamily = base.fontFamily;
   const fitOn = Platform.OS === 'web' && Boolean(rest.adjustsFontSizeToFit) && rest.numberOfLines === 1;
-  const fit = useWebFit(fitOn, fitOn ? (StyleSheet.flatten(style)?.fontSize ?? base.fontSize) : 0, rest.minimumFontScale, lang, children);
+  const flat = StyleSheet.flatten(style);
+  const fit = useWebFit(fitOn, fitOn ? (flat?.fontSize ?? base.fontSize) : 0, rest.minimumFontScale, lang, children);
+  // A larger size set in `style` (wheel digits, the IRLY of the Girl logo) kept the variant's line:
+  // iOS cuts the glyphs to that line (the web does not), so the line grows with the size.
+  const line = flat?.fontSize && flat.lineHeight == null && base.lineHeight ? Math.ceil((flat.fontSize * base.lineHeight) / base.fontSize) : 0;
   return (
     <RNText
       allowFontScaling
       maxFontSizeMultiplier={1.3}
       {...rest}
       {...(fitOn ? { ref: fit } : null)}
-      style={[base, { fontFamily, color: color ?? tones[tone], textAlign: align }, style]}
+      style={[base, { fontFamily, color: color ?? tones[tone], textAlign: align }, line > (base.lineHeight ?? 0) ? { lineHeight: line } : null, style]}
     >
       {lang === 'en' || raw ? children : localize(children, lang)}
     </RNText>
