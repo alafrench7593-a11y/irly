@@ -18,4 +18,5 @@ jobs:
       - run: node scripts/cleanup-content.mjs
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          APPLY: '1'
+          # Applied once on 2026-10-24 (run 40132572697); a dry run since.
+          APPLY: '0'
