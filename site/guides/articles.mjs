@@ -357,7 +357,7 @@ export const ARTICLES = [
     cover: 'surf',
     figure: { photo: 'volleyball', after: 1 },
     city: 'Bali',
-    updated: '2026-10-12',
+    updated: '2026-10-24',
     title: 'Bali for Digital Nomads: Finding Community and Coworking | IRLY',
     description: 'Working remotely from Bali? How to find a community, choose an area and a coworking space, and build a routine that keeps you social without losing your workdays.',
     h1: 'Bali for digital nomads: community and coworking',
@@ -405,6 +405,17 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'When remote work starts to feel lonely',
+        html: `<p>Working alone from a laptop can feel isolating even in a place full of people, especially after the first weeks, when the novelty fades and friends you met early start to leave. That is common, and it usually means your week needs more repeated contact, not more one-off parties.</p>
+<ul>
+<li><strong>Notice the signs early:</strong> whole days without a real conversation, staying in your room to work, or scrolling instead of going to things you planned.</li>
+<li><strong>Work next to people on purpose:</strong> a coworking space or the same café at the same hours, so small talk can turn into lunch.</li>
+<li><strong>Turn one acquaintance into a plan:</strong> suggest something specific (a sunset, a class, a meal) for a set day, rather than “let’s meet up sometime”.</li>
+<li><strong>Keep in touch with home:</strong> a regular call with a friend or family member does not replace local friends, but it helps on quieter weeks.</li>
+</ul>
+<p>For more on building friendships from scratch, see <a href="../make-friends/">how to make friends in Bali</a> and <a href="../../guides/social-life-after-moving-abroad/">rebuilding your social life after moving abroad</a>. If low mood lasts or gets worse, talk to a doctor or a mental health professional.</p>`,
+      },
+      {
         h2: 'Check the rules before you work from Bali',
         html: `<p>Entry and stay rules for Indonesia change, and what applies to you depends on your nationality, how long you stay and what kind of work you do. Before you travel, check the current visa options on the official Indonesian immigration website, <a href="https://www.imigrasi.go.id" rel="noopener">imigrasi.go.id</a>, and ask a qualified adviser if your situation is not clear. Do not rely on what other travellers tell you, and check your health and travel insurance too.</p>`,
       },
@@ -426,7 +437,7 @@ export const ARTICLES = [
     cover: 'surf',
     figure: { photo: 'volleyball', after: 1 },
     city: 'Bali',
-    updated: '2026-10-12',
+    updated: '2026-10-24',
     title: 'Bali pour les digital nomads : communauté et coworking | IRLY',
     description: 'Tu travailles à distance depuis Bali ? Comment trouver une communauté, choisir un quartier et un coworking, et garder une vie sociale sans sacrifier tes journées de travail.',
     h1: 'Bali pour les digital nomads : communauté et coworking',
@@ -472,6 +483,17 @@ export const ARTICLES = [
 <li><strong>Garde une ou deux activités fixes par semaine</strong> plutôt que beaucoup de sorties ponctuelles. Les habitués deviennent des amis.</li>
 <li><strong>Prévois les au revoir :</strong> les gens partent souvent. Quelques amitiés avec des personnes qui restent aussi longtemps que toi changent tout.</li>
 </ol>`,
+      },
+      {
+        h2: 'Quand le travail à distance devient isolant',
+        html: `<p>Travailler seul devant un ordinateur peut isoler, même dans un endroit plein de monde, surtout après les premières semaines, quand la nouveauté s’estompe et que les personnes rencontrées au début commencent à partir. C’est courant, et cela veut souvent dire que ta semaine a besoin de plus de contacts réguliers, pas de plus de soirées ponctuelles.</p>
+<ul>
+<li><strong>Repère les signes tôt :</strong> des journées entières sans vraie conversation, travailler depuis ta chambre, ou scroller au lieu d’aller aux sorties prévues.</li>
+<li><strong>Travaille à côté d’autres personnes, exprès :</strong> un coworking ou le même café aux mêmes heures, pour que les petites discussions deviennent un déjeuner.</li>
+<li><strong>Transforme une connaissance en projet :</strong> propose quelque chose de précis (un coucher de soleil, un cours, un repas) à un jour donné, plutôt qu’un « on se voit un de ces jours ».</li>
+<li><strong>Garde le lien avec chez toi :</strong> un appel régulier avec un ami ou un proche ne remplace pas les amis sur place, mais aide pendant les semaines plus calmes.</li>
+</ul>
+<p>Pour aller plus loin, lis <a href="../se-faire-des-amis/">se faire des amis à Bali</a> et <a href="../../guides/vie-sociale-expatriation/">reconstruire sa vie sociale après une expatriation</a>. Si le moral reste bas ou se dégrade, parles-en à un médecin ou à un professionnel de santé mentale.</p>`,
       },
       {
         h2: 'Vérifie les règles avant de travailler depuis Bali',
