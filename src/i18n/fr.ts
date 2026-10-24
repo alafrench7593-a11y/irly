@@ -3149,6 +3149,12 @@ export const fr: Record<string, string> = {
   'Professionals (woman)': 'Professionnelles',
   'Founders, freelancers, investors and builders. Connect, then meet IRL. (woman)': 'Fondatrices, freelances, investisseuses et bâtisseuses. Fais connaissance, puis rencontre-les en vrai.',
   'Be one of the first: your profile shows to everyone who opens IRLY Network. (woman)': 'Sois parmi les premières : ton profil s’affiche pour tous ceux qui ouvrent IRLY Network.',
+  // IRLY Network in IRLY: the page agrees with you (« fondatrices » for a woman).
+  'Your match with founders, freelancers and investors (woman)': 'Tes affinités avec fondatrices, freelances et investisseuses',
+  'For founders, freelancers, employees and investors who want to meet in real life: find the right people, join business meetups and communities, then connect and talk. (woman)': 'Pour les fondatrices, freelances, salariées et investisseuses qui veulent se rencontrer en vrai : trouve les bonnes personnes, rejoins des rencontres et communautés business, puis fais connaissance et discute.',
+  'Founders, freelancers, investors. See your match, connect, meet IRL. (woman)': 'Fondatrices, freelances, investisseuses. Vois ton match, entre en contact, rencontrez-vous IRL.',
+  'Business, founders, tech and more (woman)': 'Business, fondatrices, tech et plus encore',
+  'Professionals: meet founders, freelancers and investors (woman)': 'Professionnelles : rencontre fondatrices, freelances et investisseuses',
   'Be one of the first: your profile shows to everyone who opens IRLY Network. (other)': 'Sois parmi les premier·es : ton profil s’affiche pour tous ceux qui ouvrent IRLY Network.',
   // Pre-launch audit
   'Yesterday': 'Hier',

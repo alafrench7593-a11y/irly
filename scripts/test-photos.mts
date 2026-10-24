@@ -204,6 +204,10 @@ const sha = (file: string) => createHash('sha1').update(fs.readFileSync(file)).d
 
 const unknownKeys = Object.entries(lib.KIND_KEYS).flatMap(([kind, keys]) => (keys as string[]).filter((k) => !KNOWN.has(k)).map((k) => `${kind}/${k}`));
 expect(unknownKeys.length === 0, 'every library key is a known photo key', unknownKeys);
+// Every photo IRLY sent is offered in the IRLY library (under at least one type of activity).
+const inLibrary = new Set(Object.values(lib.KIND_KEYS).flat() as string[]);
+const ownNotInLibrary = listOf('OWN').filter((k) => !inLibrary.has(k));
+expect(!ownNotInLibrary.length, 'every IRLY own photo is in the IRLY library', ownNotInLibrary);
 const kinds = [...Object.keys(lib.KIND_KEYS), ...CATEGORIES.map((c) => c.id)];
 let total = new Set<string>();
 const counts: string[] = [];
