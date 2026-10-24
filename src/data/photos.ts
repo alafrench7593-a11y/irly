@@ -204,8 +204,11 @@ export const LIBRARY = [
   'writing',
 ] as const;
 // Keys that now have a Dubai photo (Pixabay / Pexels) are served from the library too.
-/** IRLY's own photos, taken in Dubai and used with permission; served with the website (site/img/own). */
-export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl', 'dubaiPink', 'restaurantGirl', 'gymGirl', 'runGirl', 'girlTrip', 'footballMix', 'gymMix', 'dinnerMix', 'beachMix', 'buggyMix', 'waterParkMix', 'foodMix', 'meetingMix', 'vrMix', 'wadiMix', 'runMix', 'danceMix', 'swimMix', 'tennisMix', 'palmAerial', 'padelMix', 'newcomerGirl', 'dinnerView', 'burjArabSunset', 'skylineGirl', 'marinaYachtGirl', 'desertSelfieGirl', 'desertSunsetGirl', 'poolGirl', 'quadsGirl', 'burjNight'] as const;
+/**
+ * IRLY's own photos, taken in Dubai and used with permission; served with the website (site/img/own).
+ * The last seven come from IRLY's TikTok slideshows (marketing/tiktok/01_LA_SOLITUDE): the part of each slide below its caption.
+ */
+export const OWN = ['globalVillage', 'safariPark', 'quadGirl', 'networkingGirl', 'dogWalk', 'girlsOut', 'pilatesGirl', 'desertGirl', 'drinksGirl', 'golfGirl', 'yachtGirl', 'padelGirl', 'tennisGirl', 'spaGirl', 'nightDinner', 'brunchGirl', 'strollerMom', 'mosqueGirl', 'readingGirl', 'beachClubGirl', 'kiteBeach', 'bikeGirl', 'dubaiPink', 'restaurantGirl', 'gymGirl', 'runGirl', 'girlTrip', 'footballMix', 'gymMix', 'dinnerMix', 'beachMix', 'buggyMix', 'waterParkMix', 'foodMix', 'meetingMix', 'vrMix', 'wadiMix', 'runMix', 'danceMix', 'swimMix', 'tennisMix', 'palmAerial', 'padelMix', 'newcomerGirl', 'dinnerView', 'burjArabSunset', 'skylineGirl', 'marinaYachtGirl', 'desertSelfieGirl', 'desertSunsetGirl', 'poolGirl', 'quadsGirl', 'burjNight', 'burjPortraitGirl', 'eveningGirl', 'burjNightGirl', 'promenadeGirl', 'waterfrontGirl', 'terraceCat', 'camelDesert'] as const;
 const OWN_SET = new Set<string>(OWN);
 /** Whether a key is one of IRLY's own photos (it is then shown as it is, before any other photo of its subject). */
 export const isOwnPhoto = (key: string): boolean => OWN_SET.has(key);

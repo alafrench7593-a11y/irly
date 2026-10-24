@@ -605,6 +605,12 @@ const styles = StyleSheet.create({
   stateActions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 6 },
 });
 
+/** French agreement with you: feminine in IRLY Girl or for a woman, masculine for a man, inclusive when not given. */
+export function useMeAgree() {
+  const girl = useAppSpace() === 'girl';
+  return agreeOf({ gender: useStore((s) => s.profile.gender) }, girl);
+}
+
 /** The way into professional networking, from the Networking category, Business and your profile. */
 /** The door to IRLY Network: already in Network's colours (violet in IRLY Girl, silver in IRLY). */
 export function NetworkDoor({ style }: { style?: object }) {
@@ -617,7 +623,8 @@ export function NetworkDoor({ style }: { style?: object }) {
 
 function NetworkDoorCard({ style }: { style?: object }) {
   const tone = useNetworkTone();
-  const tr = useT();
+  const tg = useTg();
+  const me = useMeAgree();
   const router = useRouter();
   const { press, onPressIn, onPressOut } = usePressLight();
   const arrow = useAnimatedStyle(() => ({ transform: [{ translateX: press.value * 4 }] }));
@@ -632,7 +639,7 @@ function NetworkDoorCard({ style }: { style?: object }) {
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       accessibilityRole="button"
-      accessibilityLabel={tr('Professionals: meet founders, freelancers and investors')}
+      accessibilityLabel={tg('Professionals: meet founders, freelancers and investors', me)}
       style={[doorStyles.door, layered, { overflow: 'hidden', boxShadow: tone.isGirl ? tone.glow : tone.surface.shadow }, style]}
     >
       <AccentFill colors={tone.panel} />
@@ -649,11 +656,11 @@ function NetworkDoorCard({ style }: { style?: object }) {
         <Text variant="overline" color={fg} style={{ opacity: 0.7 }}>
           IRLY Network
         </Text>
-        <Text variant="titleM" color={fg}>
-          Professionals
+        <Text variant="titleM" color={fg} raw>
+          {tg('Professionals', me === 'woman' ? 'woman' : 'man')}
         </Text>
-        <Text variant="bodyS" color={fg} style={{ opacity: 0.78 }} numberOfLines={2}>
-          Founders, freelancers, investors. See your match, connect, meet IRL.
+        <Text variant="bodyS" color={fg} style={{ opacity: 0.78 }} numberOfLines={2} raw>
+          {tg('Founders, freelancers, investors. See your match, connect, meet IRL.', me)}
         </Text>
       </View>
       <Animated.View style={arrow}>

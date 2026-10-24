@@ -13,7 +13,7 @@ import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import type { NewsItem } from '@/features/news/news';
 import type { ServerActivity } from '@/features/server/activities';
-import { t as tx, useT } from '@/i18n';
+import { t as tx, useT, useTg } from '@/i18n';
 import { initials } from '@/lib/format';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
@@ -25,7 +25,7 @@ import { LINK_KINDS, linkLabel, safeLink, type ProLinks } from './links';
 import type { ProProfile } from './match';
 import { blockIn, REVEAL_BATCH, stateIn, useBump, usePressLight } from './motion';
 import { AccentFill, layered, NetworkPane, useNetworkTone } from './tone';
-import { Shimmer, useGlint } from './ui';
+import { Shimmer, useGlint, useMeAgree } from './ui';
 
 /**
  * The parts of the IRLY Network page: the intro, section heads, rails of
@@ -62,6 +62,8 @@ export function NetworkIntro({
 }) {
   const t = useTheme();
   const tone = useNetworkTone();
+  const tg = useTg();
+  const me = useMeAgree();
   const { press, onPressIn, onPressOut } = usePressLight();
   if (signedIn && loading) return <StripSkeleton index={index} />;
   if (signedIn && pro)
@@ -106,7 +108,7 @@ export function NetworkIntro({
     );
   const points: { icon: IconName; text: string }[] = [
     { icon: 'briefcase', text: 'A professional profile next to your IRLY profile' },
-    { icon: 'sparkles', text: 'Your match with founders, freelancers and investors' },
+    { icon: 'sparkles', text: tg('Your match with founders, freelancers and investors', me) },
     { icon: 'calendar', text: 'Meetups, communities and posts about business' },
   ];
   return (
@@ -124,8 +126,8 @@ export function NetworkIntro({
           <Text variant="titleM">Meet people building something</Text>
         </View>
       </View>
-      <Text variant="bodyS" tone="secondary">
-        For founders, freelancers, employees and investors who want to meet in real life: find the right people, join business meetups and communities, then connect and talk.
+      <Text variant="bodyS" tone="secondary" raw>
+        {tg('For founders, freelancers, employees and investors who want to meet in real life: find the right people, join business meetups and communities, then connect and talk.', me)}
       </Text>
       <View style={{ gap: 10 }}>
         {points.map((p, i) => (
