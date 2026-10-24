@@ -582,7 +582,8 @@ const ThreadMessages = memo(function ThreadMessages({
       if (m.from === 'irly') {
         // "Sara just joined 👋 Say hello!" in a community: one tap to welcome them.
         const joined = /^(.+) just joined 👋/.exec(m.text)?.[1];
-        const recent = now - m.at < 3 * 86_400_000;
+        // A greeting lasts 5 minutes (the server removes it then too): only the day label may stay.
+        if (joined && now - m.at >= 5 * 60_000) return day ? <View key={m.id}>{day}</View> : null;
         return (
           <View key={m.id}>
             {day}
@@ -591,7 +592,7 @@ const ThreadMessages = memo(function ThreadMessages({
               <Text variant="bodyS" tone="secondary" align="center">
                 {m.text}
               </Text>
-              {joined && recent ? (
+              {joined ? (
                 <PressableScale
                   haptic="select"
                   onPress={() => onHello(tx('Welcome {name}! 👋', { name: joined }))}
