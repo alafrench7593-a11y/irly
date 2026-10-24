@@ -6,8 +6,9 @@
 //   delete_my_account() (« Delete account » in Settings), with what they own;
 // - every private and group chat, and every match and activity chat;
 // - every message of the official community chats (the chats themselves stay);
-// - every post, comment and Live, every activity, and member-made
-//   communities left by a deleted account;
+// - every post, comment and Live, every activity, and active member-made
+//   communities whose creator is a test or deleted account (sub-groups and
+//   communities already deleted in the app are left as they are);
 // - every notification (they point at the content above).
 // Without APPLY=1 it only counts. Files go with the Storage purge job.
 const token = (process.env.SUPABASE_ACCESS_TOKEN || '').match(/sbp_[^\s"'`]+/)?.[0];
@@ -41,7 +42,8 @@ const count = async () =>
   (select count(*) from public.comments)::int as comments,
   (select count(*) from public.irl_posts)::int as lives,
   (select count(*) from public.activities)::int as activities,
-  (select count(*) from public.communities where not official)::int as member_communities,
+  (select count(*) from public.communities where not official and deleted_at is null and parent_id is null)::int as member_communities,
+  (select count(*) from public.communities where not official and (deleted_at is not null or parent_id is not null))::int as kept_deleted_or_subgroups,
   (select count(*) from public.communities where official)::int as official_communities,
   (select count(*) from public.notifications)::int as notifications`)
   )[0];
@@ -74,7 +76,7 @@ const [done] = await sql(`with
   a as (delete from public.activities returning 1),
   v as (delete from public.conversations where kind in ('direct', 'group', 'match', 'activity') returning 1),
   m as (delete from public.messages where conversation_id in (select id from public.conversations where kind = 'community') returning 1),
-  k as (delete from public.communities x where not x.official
+  k as (delete from public.communities x where not x.official and x.deleted_at is null and x.parent_id is null
         and not exists (select 1 from auth.users u where u.id = x.created_by and not (u.${TEST})) returning 1),
   n as (delete from public.notifications returning 1)
   select (select count(*) from l)::int as lives, (select count(*) from c)::int as comments, (select count(*) from p)::int as posts,
