@@ -438,3 +438,40 @@ export async function replaceAppPhoto(key: string, uri: string | null, reason: s
   await refreshPhotoOverrides(true);
   changed('communities', 'activities');
 }
+
+// ───── Global administration (migration 20261029700000_irly_admin_global) ─────
+export type Space = 'mixte' | 'girl' | 'mom';
+export const SPACE_LABEL: Record<Space, string> = { mixte: 'IRLY Mixte', girl: 'IRLY Girl', mom: 'IRLY Mom Community' };
+export type SpaceRow = { space: Space; communities: number; activities_upcoming: number; reports_open: number; reports_review: number };
+export type OverviewMore = {
+  reports_closed_7d: number;
+  reports_dismissed_7d: number;
+  errors_7d: number;
+  errors_top: { code: string; place: string; n: number }[];
+};
+export type OfficialTopic = {
+  topic: string;
+  name: string;
+  space: Space;
+  sort: number;
+  tagline: string | null;
+  description: string | null;
+  emoji: string | null;
+  communities: number;
+  members: number;
+  in_network: boolean;
+};
+
+export const loadSpaces = () => call<SpaceRow[]>('admin_space_overview');
+export const loadOverviewMore = () => call<OverviewMore>('admin_overview_more');
+export const loadOfficial = () => call<OfficialTopic[]>('admin_official_topics');
+export const reorderOfficial = (space: Space, topics: string[], reason: string) =>
+  call<void>('admin_official_reorder', { p_space: space, p_topics: topics, p_reason: reason });
+export const saveOfficialTexts = (topic: string, tagline: string, description: string, reason: string) =>
+  call<void>('admin_official_texts', { p_topic: topic, p_tagline: tagline || null, p_description: description, p_reason: reason });
+export const transferOwner = (user: string, keep: boolean, confirm: string, reason: string) =>
+  call<void>('staff_transfer_owner', { p_user: user, p_keep: keep, p_confirm: confirm, p_reason: reason });
+export const amILastOwner = () => call<boolean>('i_am_last_owner');
+/** The space of each item (null: not tied to one). */
+export const itemSpaces = (kind: string, ids: string[]) =>
+  ids.length ? call<{ id: string; space: Space | null }[]>('admin_item_spaces', { p_kind: kind, p_ids: ids }) : Promise.resolve([]);

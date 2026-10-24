@@ -1,6 +1,6 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
-import { memo, useMemo, useState, type ReactNode } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, type SharedValue } from 'react-native-reanimated';
 import { Rail } from '@/components/cards/Blocks';
@@ -24,7 +24,6 @@ import type { CityId, Intent } from '@/data/types';
 import type { LightId } from '@/theme/lights';
 import { GirlPortals } from '@/features/home/Portals';
 import { GirlCommunities, GirlPlanRows, useGirlPeople, useGirlPlans } from '@/features/girl/GirlSections';
-import { MomsView } from '@/features/girl/MomsView';
 import { useAppSpace } from '@/state/appSpace';
 import { rankMatches } from '@/features/matching/match';
 import { isWeekend } from '@/lib/time';
@@ -97,7 +96,7 @@ const INTENT_ORDER: Intent[] = ['friends', 'activities', 'sports', 'business', '
 /**
  * In IRLY Girl the same page, section for section: « Find someone » and the
  * intents open IRLY Match, the people are women, the IRLY Girl doors become
- * the way back to IRLY and IRLY Moms (opened here, under the doors), and the
+ * the way back to IRLY and IRLY Mom Community (opened here, under the doors), and the
  * communities are IRLY Girl's.
  */
 export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
@@ -115,14 +114,6 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
   // Match IRLY, or IRLY Match in IRLY Girl (each says « coming soon » itself while closed).
   const matchOpen = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
   const matchHref = (intent: Intent) => (inGirl ? '/girl/match' : `/match?intent=${intent}`);
-  // IRLY Moms opens in place; « IRLY Moms » from the Home arrives with ?moms=1.
-  const { moms: momsParam } = useLocalSearchParams<{ moms?: string }>();
-  const [moms, setMoms] = useState(momsParam === '1');
-  const [seenMoms, setSeenMoms] = useState(momsParam);
-  if (momsParam !== seenMoms) {
-    setSeenMoms(momsParam);
-    if (momsParam === '1') setMoms(true);
-  }
   return (
     <PageScroll scrollY={scrollY} top={top} bottom={bottom}>
       <ScrollReveal scrollY={scrollY} style={styles.first}>
@@ -200,8 +191,7 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
       {inGirl || profile.gender === 'woman' ? (
         <ScrollReveal scrollY={scrollY} style={styles.section}>
           <SectionHeader overline="Women only · Not dating" title={inGirl ? 'Your spaces' : 'IRLY Girl'} />
-          <GirlPortals light={city.light} onMoms={() => setMoms((m) => !m)} />
-          {inGirl && moms ? <MomsView cityId={cityId} /> : null}
+          <GirlPortals light={city.light} />
         </ScrollReveal>
       ) : null}
 

@@ -18,6 +18,7 @@ import { Glass } from '@/components/ui/Glass';
 import { JoinButton } from '@/components/ui/JoinButton';
 import { HappeningRowSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Icon } from '@/components/ui/Icon';
+import { DateTimePicker, WhenField } from '@/components/ui/DateTimePicker';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -30,7 +31,9 @@ import { blur, motion, scale, spring, staggerStep } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
 import { ActivityCardsGallery } from '@/features/community/ActivityCardsGallery';
 import { category, palettes, radius, space, status, type as typeScale, type TypeVariant } from '@/theme/tokens';
+import { Flavor } from '@/theme/flavor';
 import { useTheme } from '@/theme/useTheme';
+import type { When } from '@/features/create/when';
 
 const PHOTO_KEYS = Object.keys(PHOTO_IDS) as PhotoKey[];
 
@@ -59,7 +62,7 @@ export default function DesignSystemRoute() {
 function DesignSystem() {
   const t = useTheme();
   // ?section=activities: the activity cards of communities and chats alone (screenshots, reviews).
-  const { section } = useLocalSearchParams<{ section?: string }>();
+  const { section, flavor } = useLocalSearchParams<{ section?: string; flavor?: string }>();
   const cityId = useCityId();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
@@ -70,6 +73,14 @@ function DesignSystem() {
   const [sheet, setSheet] = useState(false);
   const typeVariants = Object.keys(typeScale) as TypeVariant[];
 
+  if (section === 'picker') {
+    // ?section=picker&flavor=girl: the date and time picker opened at once (screenshots of every screen size).
+    return (
+      <Flavor value={flavor === 'girl' ? 'girl' : t.flavor}>
+        <PickerDemo cityName={city.name} utcOffset={city.utcOffset ?? 4} />
+      </Flavor>
+    );
+  }
   if (section === 'activities') {
     return (
       <Page overline="IRLY 3.0" title="Activities" subtitle="An activity in its community, shared in a chat, and at the top of its own chat: one record, read live.">
@@ -321,6 +332,17 @@ function DesignSystem() {
           <Button label="Close" onPress={() => setSheet(false)} full />
         </View>
       </Sheet>
+    </Page>
+  );
+}
+
+function PickerDemo({ cityName, utcOffset }: { cityName: string; utcOffset: number }) {
+  const [open, setOpen] = useState(true);
+  const [when, setWhen] = useState<When | null>(null);
+  return (
+    <Page overline="IRLY 3.0" title="Date and time" subtitle="The picker of activities, plans and edits.">
+      <WhenField value={when} utcOffset={utcOffset} onPress={() => setOpen(true)} />
+      <DateTimePicker visible={open} onClose={() => setOpen(false)} value={when} onConfirm={setWhen} utcOffset={utcOffset} cityName={cityName} />
     </Page>
   );
 }

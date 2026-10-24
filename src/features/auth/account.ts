@@ -808,6 +808,11 @@ export async function deleteServerAccount(): Promise<{ filesQueued: number }> {
     if (sessionError || useAuthStore.getState().account) throw new Error(SESSION_ENDED);
     return { filesQueued: 0 };
   }
+  // The only owner of the back office hands it over first (Back office → Team): checked before
+  // anything is removed, so a refused deletion never costs the account its photos.
+  const LAST_OWNER = 'You are the only owner of the IRLY back office. Hand ownership over in Back office → Team, then delete your account.';
+  const { data: lastOwner } = await within(sb.rpc('i_am_last_owner'), SERVER_MS).catch(() => ({ data: null }));
+  if (lastOwner === true) throw new Error(LAST_OWNER);
   ending = true;
   try {
     const left = await removeMyFiles(data.session.user.id);
@@ -820,6 +825,7 @@ export async function deleteServerAccount(): Promise<{ filesQueued: number }> {
     const confirmed = await accountGone();
     const gone = confirmed ?? !error;
     if (!gone) {
+      if (error && /last owner/i.test(error.message)) throw new Error(LAST_OWNER);
       // The session ended while deleting (revoked, signed out on another phone): nothing confirmed it.
       if (confirmed === null && error && sessionRefused(error.message)) throw new Error(SESSION_ENDED);
       throw new Error(

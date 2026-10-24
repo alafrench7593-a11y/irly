@@ -22,7 +22,7 @@ import { GirlLoader } from './GirlMark';
 import { useGirlStore } from './girlStore';
 
 /**
- * Who may enter IRLY Girl (and IRLY Moms, which lives inside it), as seen
+ * Who may enter IRLY Girl (and IRLY Mom Community, which lives inside it), as seen
  * by the app. The server is the authority: every IRLY Girl read and write
  * is refused there for an account that is not a woman's, or whose IRLY Girl
  * access was withdrawn (private.is_girl_eligible). This only decides which
@@ -38,7 +38,7 @@ export type GirlAccess = 'checking' | 'open' | 'signed_out' | 'not_eligible' | '
 export type GirlClosedReason = Exclude<GirlAccess, 'checking' | 'open'>;
 
 /** Past this, the screen offers Try again instead of a spinner. */
-export const ACCESS_LIMIT = 25_000;
+export const ACCESS_LIMIT = 15_000;
 
 /** The promise, or a rejection once `ms` have passed without an answer. */
 export function withLimit<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -165,6 +165,14 @@ export function useGirlAccess(): { access: GirlAccess; retry: () => void } {
   // Back to the app after a while, or the profile changed: ask again.
   useRefreshOn(['people'], check);
 
+  // Never a spinner for good: still checking past the limit (an answer that never came, a check that
+  // never started because the screen was not focused), the screen offers Try again.
+  useEffect(() => {
+    if (access !== 'checking') return;
+    const timer = setTimeout(() => setAccess((a) => (a === 'checking' ? 'error' : a)), ACCESS_LIMIT + 1_000);
+    return () => clearTimeout(timer);
+  }, [access]);
+
   const retry = useCallback(() => {
     known.current.ok = false;
     check();
@@ -269,7 +277,7 @@ export function GirlClosed({ reason, onRetry, moms }: { reason: GirlClosedReason
         {reason === 'error' && onRetry ? <GButton label="Try again" onPress={onRetry} /> : null}
         {reason === 'signed_out' ? <GButton label="Sign in" icon="user" onPress={() => router.push('/account')} /> : null}
         {reason === 'suspended' ? <GButton label="Contact support" onPress={() => router.push('/support')} /> : null}
-        {/* IRLY Family is open to every parent: the way in for a dad who tapped « IRLY Moms ». */}
+        {/* IRLY Family is open to every parent: the way in for a dad who tapped « IRLY Mom Community ». */}
         {reason === 'not_eligible' && moms ? <GButton label="Explore IRLY Family" icon="home" variant="secondary" onPress={() => router.replace('/space/families')} /> : null}
         <GButton label="Back to IRLY" variant={reason === 'not_eligible' && !moms ? 'primary' : 'ghost'} onPress={() => safeBack(router, '/')} />
       </View>

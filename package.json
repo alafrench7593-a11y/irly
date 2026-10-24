@@ -83,7 +83,8 @@
     "test:photos": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/test-photos.mts",
     "test:photo-files": "node scripts/check-photo-files.mjs",
     "test:cms": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-cms.mts",
-    "test:network": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-network-gender.mts"
+    "test:network": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-network-gender.mts",
+    "test:doors": "node --experimental-strip-types --no-warnings scripts/check-doors.mts"
   },
   "private": true,
   "engines": {

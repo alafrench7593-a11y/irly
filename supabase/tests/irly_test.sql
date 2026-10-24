@@ -1523,14 +1523,19 @@ select pg_temp.check((select count(*) from public.space_community('moms', 'dubai
 select pg_temp.check((select count(*) from public.space_community('families', 'dubai')) = 1, 'spaces: IRLY Family is open to all');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
 select id as moms_id from public.space_community('moms', 'dubai') \gset
-select pg_temp.check((select count(*) from public.community_subgroups(:'moms_id')) = 8, 'spaces: IRLY Mom has its groups');
-select id as bump_id from public.community_subgroups(:'moms_id') where name like 'Bump%' \gset
-select public.join_community(:'bump_id');
-insert into public.community_posts (community_id, author_id, body) values (:'bump_id', auth.uid(), 'Any good prenatal yoga in Marina?') returning id as mom_post \gset
-select pg_temp.check(exists (select 1 from public.girl_feed('dubai', true) where id = :'mom_post'), 'spaces: IRLY Mom posts show in the Moms feed');
+-- Since 20261029900000 (owner decision): IRLY Mom Community is the only thing the Mom space offers, no groups.
+select pg_temp.check((select count(*) from public.community_subgroups(:'moms_id')) = 0, 'spaces: IRLY Mom Community has no groups');
+select public.join_community(:'moms_id');
+insert into public.community_posts (community_id, author_id, body) values (:'moms_id', auth.uid(), 'Any good prenatal yoga in Marina?') returning id as mom_post \gset
+select pg_temp.check(exists (select 1 from public.girl_feed('dubai', true) where id = :'mom_post'), 'spaces: IRLY Mom Community posts show in the Moms feed');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
-select pg_temp.expect_denied(format('select public.join_community(%L)', :'bump_id'), 'spaces: men cannot join a mums group');
+select pg_temp.expect_denied(format('select public.join_community(%L)', :'moms_id'), 'spaces: men cannot join IRLY Mom Community');
 select pg_temp.as_admin();
+select private.ensure_official_subgroups();
+select private.ensure_official_communities();
+select pg_temp.check((select count(*) from public.communities where parent_id = :'moms_id' and deleted_at is null) = 0
+  and (select count(*) from public.communities where official and topic = 'moms' and city_id = 'dubai' and parent_id is null and deleted_at is null) = 1,
+  'spaces: the official sync makes neither IRLY Mom Community''s old groups nor a second IRLY Mom Community');
 
 -- ───── Verified profiles for Match ─────
 insert into auth.users (id) values ('00000000-0000-0000-0000-000000000018');
@@ -1652,11 +1657,15 @@ select public.create_community('Count Club', 'dubai') as count_club \gset
 select pg_temp.check((select members_count from public.communities where id = :'count_club') = 1, 'ranking: a new community counts its owner');
 select pg_temp.expect_denied(format('update public.communities set members_count = 99999 where id = %L', :'count_club'), 'ranking: nobody writes a member count by hand, owners included');
 select pg_temp.as_admin();
--- Since 20261028100000: IRLY's official ones first, then the members', each most members first.
-select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (partition by official order by n), true)
+-- Since 20261028100000: IRLY's official ones first, then the members', most members first.
+-- Since 20261029700000: the official ones in the order the team sets (community_topics.sort).
+select pg_temp.check((select bool_and(ok) from (select
+    coalesce(official or members >= lead(members) over (partition by official order by n), true)
+    and coalesce(not official or sort <= lead(sort) over (partition by official order by n), true)
     and coalesce(official >= lead(official) over (order by n), true) as ok
-  from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
-  where city_id = 'dubai') x), 'ranking: main communities come official first, then most members first');
+  from (select l.*, t.sort from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
+    left join public.community_topics t on t.topic = l.topic) l
+  where city_id = 'dubai') x), 'ranking: main communities come official first (in the team''s order), then most members first');
 select pg_temp.check(not exists (select 1 from public.community_list('dubai') l join public.communities c on c.id = l.id where c.parent_id is not null), 'ranking: no group among main communities');
 select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (), true) as ok from (select members from public.community_subgroups(:'sport_id')) l) x), 'ranking: groups come most members first');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');

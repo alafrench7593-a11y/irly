@@ -41,7 +41,7 @@ const GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Activities and events', kinds: ['ACTIVITY_JOINED', 'ACTIVITY_UPDATED', 'ACTIVITY_INVITATION', 'ACTIVITY_REMINDER'] },
   { label: 'Communities', kinds: ['COMMUNITY_JOINED', 'COMMUNITY_INVITATION', 'COMMUNITY_POST', 'COMMUNITY_ANNOUNCEMENT'] },
   { label: 'IRLY Girl matches', kinds: ['MATCH_CREATED', 'MATCH_SUGGESTION', 'MATCH_REMOVED'] },
-  { label: 'Networking', kinds: ['PRO_CONNECT_REQUEST', 'PRO_CONNECT_ACCEPTED'] },
+  { label: 'IRLY Network', kinds: ['PRO_CONNECT_REQUEST', 'PRO_CONNECT_ACCEPTED'] },
   { label: 'IRLY news', kinds: ['IRLY_NEWS'] },
 ];
 

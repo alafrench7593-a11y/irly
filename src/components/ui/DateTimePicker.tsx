@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Keyboard, Platform, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 // The gesture handler's ScrollView: inside a Sheet (itself a pan gesture) the wheels keep their own vertical scroll.
 import { ScrollView } from 'react-native-gesture-handler';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
@@ -14,11 +14,13 @@ import { useTheme } from '@/theme/useTheme';
 import { Button } from './Button';
 import { Glass } from './Glass';
 import { Icon } from './Icon';
-import { Sheet } from './Sheet';
+import { Sheet, SheetScrollView } from './Sheet';
 import { Text } from './Text';
 
 const ROW = 44;
-/** Rows shown by a wheel: 5, or 3 on short phones (iPhone SE, mini) so the whole sheet, Confirm included, fits on screen. */
+/** Width of a day of the strip: « Aujourd’hui » fits on one line. */
+const PILL = 84;
+/** Rows shown by a wheel: 5, or 3 on short screens (iPhone SE, Safari with its bars) so the sheet rarely needs to scroll. */
 const useVisibleRows = () => (useWindowDimensions().height < 740 ? 3 : 5);
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
@@ -74,7 +76,18 @@ export const WhenField = memo(function WhenField({ value, utcOffset, onPress, pl
   }, [label, pop]);
   const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
   return (
-    <PressableScale onPress={onPress} haptic="select" scaleTo={0.98} accessibilityRole="button" accessibilityLabel={a11y(label ?? placeholder)} accessibilityHint={a11y('Opens the date and time picker')}>
+    <PressableScale
+      onPress={() => {
+        // A field of the form may still have the keyboard up: it would cover the wheels and Confirm.
+        Keyboard.dismiss();
+        onPress();
+      }}
+      haptic="select"
+      scaleTo={0.98}
+      accessibilityRole="button"
+      accessibilityLabel={a11y(label ?? placeholder)}
+      accessibilityHint={a11y('Opens the date and time picker')}
+    >
       <Animated.View style={[styles.field, { borderColor: invalid ? t.c.critical : girl ? t.c.lineStrong : t.c.line }, girl ? { boxShadow: t.shadow.card } : null, popStyle]}>
         <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
         {girl ? (
@@ -163,6 +176,7 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
       <View pointerEvents="none" style={[styles.band, { top: above }, t.flavor === 'girl' ? { backgroundColor: t.c.brandSoft, borderColor: t.c.lineStrong } : { backgroundColor: t.c.overlay, borderColor: t.c.line }]} />
       <ScrollView
         ref={ref}
+        style={web.contain}
         showsVerticalScrollIndicator={false}
         snapToInterval={ROW}
         decelerationRate="fast"
@@ -222,6 +236,11 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
   const [editing, setEditing] = useState<'start' | 'end'>('start');
   const strip = useRef<ScrollView>(null);
 
+  // The picker has no text input: a keyboard left up by the form would hide the wheels and Confirm.
+  useEffect(() => {
+    if (visible) Keyboard.dismiss();
+  }, [visible]);
+
   // Each opening starts from the field's value (Cancel leaves it untouched).
   const [shown, setShown] = useState(visible);
   if (visible !== shown) {
@@ -270,11 +289,12 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
   };
 
   const selected = Math.max(0, days.indexOf(draft.day));
-  const PILL = 64;
 
   return (
     <Sheet visible={visible} onClose={onClose} title={title} subtitle={tx('{city} time', { city: cityName })} maxHeight={0.94}>
-      <View style={{ gap: space[4], paddingBottom: space[2] }}>
+      {/* The title stays above and Cancel / Confirm below; only the middle scrolls when the screen is too short
+          (iPhone SE, Safari with its bars, larger text), so neither is ever pushed off screen. */}
+      <SheetScrollView style={styles.body} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Animated.View key={whenText(draft, utcOffset, now)} entering={FadeIn.duration(160)} style={{ paddingHorizontal: space.gutter }}>
           <Text variant="titleM" raw accessibilityLiveRegion="polite">
             {whenText(draft, utcOffset, now)}
@@ -284,8 +304,10 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
         <ScrollView
           ref={strip}
           horizontal
+          style={styles.stripView}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 8 }}
+          // Room above and below: the chosen day springs up and glows, and the strip would cut it.
+          contentContainerStyle={styles.strip}
           onLayout={(e) => strip.current?.scrollTo({ x: Math.max(0, selected * (PILL + 8) - e.nativeEvent.layout.width / 2 + PILL / 2), animated: false })}
         >
           {days.map((d, i) => {
@@ -295,7 +317,7 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
             const top = d === today ? tx('Today') : d === addDays(today, 1) ? tx('Tomorrow') : fmt(d, { weekday: 'short' });
             return (
               <View key={d} style={{ width: PILL, gap: 4 }}>
-                <Text variant="caption" tone="tertiary" raw numberOfLines={1} style={{ height: 16, textTransform: 'capitalize' }}>
+                <Text variant="caption" tone="tertiary" raw numberOfLines={1} style={styles.month}>
                   {head}
                 </Text>
                 <DayPill
@@ -348,24 +370,40 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
                   <Text variant="caption" tone="secondary">
                     Optional
                   </Text>
-                  <Text variant="titleS" tone="brand">
-                    Add an end time
-                  </Text>
+                  <View style={styles.addEnd}>
+                    <Icon name="plus" size={16} color={t.c.brand} />
+                    <Text variant="titleS" tone="brand" numberOfLines={1} style={{ flexShrink: 1 }}>
+                      End time
+                    </Text>
+                  </View>
                 </View>
               </PressableScale>
             )}
           </View>
         ) : null}
 
-        {/* key: switching Start/End rebuilds the wheels on that value. */}
-        <View key={editing} style={styles.wheels}>
-          <Wheel label="Hour" values={HOURS} index={clock.h} onIndex={(i) => setClock({ h: HOURS[i] })} />
-          <Text raw style={{ fontFamily: font.bold, fontSize: 26 }} color={t.c.text}>
-            :
-          </Text>
-          <Wheel label="Minutes" values={MINUTES} index={minuteIndex(clock.m)} onIndex={(i) => setClock({ m: MINUTES[i] })} />
+        <View>
+          <View style={styles.wheelTitles} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+            <Text variant="overline" tone="tertiary" align="center" style={styles.wheelTitle}>
+              Hour
+            </Text>
+            <View style={styles.colon} />
+            <Text variant="overline" tone="tertiary" align="center" style={styles.wheelTitle}>
+              Minutes
+            </Text>
+          </View>
+          {/* key: switching Start/End rebuilds the wheels on that value. */}
+          <View key={editing} style={styles.wheels}>
+            <Wheel label="Hour" values={HOURS} index={clock.h} onIndex={(i) => setClock({ h: HOURS[i] })} />
+            <Text raw style={[styles.colon, { fontFamily: font.bold, fontSize: 26, textAlign: 'center' }]} color={t.c.text}>
+              :
+            </Text>
+            <Wheel label="Minutes" values={MINUTES} index={minuteIndex(clock.m)} onIndex={(i) => setClock({ m: MINUTES[i] })} />
+          </View>
         </View>
+      </SheetScrollView>
 
+      <View style={styles.footer}>
         {message ? (
           <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={[styles.message, { backgroundColor: t.c.liveSoft }]}>
             <Icon name="clock" size={16} color={t.c.critical} />
@@ -403,7 +441,16 @@ const DayPill = memo(function DayPill({ on, width, top, day, label, onPress }: {
         ]}
       >
         {on ? null : <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />}
-        <Text variant="caption" raw numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} color={on ? t.c.onBrand : t.c.textSecondary}>
+        {/* A long word (« Aujourd’hui ») a size smaller: the web has no adjustsFontSizeToFit and cut it. */}
+        <Text
+          variant="caption"
+          raw
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+          color={on ? t.c.onBrand : t.c.textSecondary}
+          style={top.length > 9 ? styles.longTop : undefined}
+        >
           {top}
         </Text>
         <Text raw style={{ fontFamily: font.bold, fontSize: 22 }} color={on ? t.c.onBrand : t.c.text}>
@@ -414,7 +461,22 @@ const DayPill = memo(function DayPill({ on, width, top, day, label, onPress }: {
   );
 });
 
+/** Web: a wheel scrolled to its end does not hand the scroll to the sheet or the page. */
+const web = { contain: Platform.OS === 'web' ? ({ overscrollBehavior: 'contain' } as object) : undefined };
+
 const styles = StyleSheet.create({
+  body: { flexShrink: 1 },
+  content: { gap: space[4], paddingBottom: space[3] },
+  strip: { paddingHorizontal: space.gutter, paddingTop: 4, paddingBottom: 24, gap: 8 },
+  // The glow's room below the strip overlaps the tabs instead of pushing them down.
+  stripView: { marginBottom: -16 },
+  month: { height: 16, textTransform: 'capitalize' },
+  longTop: { fontSize: 11, letterSpacing: -0.2 },
+  addEnd: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  wheelTitles: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingHorizontal: space.gutter, marginBottom: 4 },
+  wheelTitle: { width: 96 },
+  colon: { width: 10 },
+  footer: { gap: space[3], paddingTop: space[3] },
   fieldIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginLeft: -4 },
   field: {
     flexDirection: 'row',
@@ -426,7 +488,7 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth * 2,
     overflow: 'hidden',
   },
-  pill: { height: 64, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', gap: 2, overflow: 'hidden' },
+  pill: { height: 64, paddingHorizontal: 4, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', gap: 2, overflow: 'hidden' },
   tabs: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter },
   tab: { borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 8, gap: 2, minHeight: 56, justifyContent: 'center', overflow: 'hidden' },
   wheels: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.gutter },

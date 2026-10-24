@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { AdminBadge } from '@/features/admin/StaffBadge';
 import { useAuthStatus } from '@/features/auth/account';
 import { confirm } from '@/lib/confirm';
 import { uuid } from '@/lib/uuid';
@@ -258,12 +259,15 @@ function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () =>
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={styles.row}>
       <Avatar name={c.firstName} hue={hueOf(c.authorId)} size={32} userId={c.authorId} photo={demoPhoto(c.authorId)} />
       <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="label" raw>
-          {c.firstName}{' '}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <Text variant="label" raw>
+            {c.firstName}
+          </Text>
+          <AdminBadge userId={c.authorId} />
           <Text variant="caption" tone="tertiary">
             {c.id.startsWith('tmp-') ? 'Sending…' : timeAgo(Math.max(0, Math.round((now - c.createdAt) / 60000)))}
           </Text>
-        </Text>
+        </View>
         <Text variant="body" raw={!c.deleted} tone={c.deleted ? 'tertiary' : undefined}>
           {c.deleted ? 'Comment deleted' : c.body}
         </Text>

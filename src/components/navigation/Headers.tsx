@@ -320,10 +320,13 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
   const bg = useAnimatedStyle(() => ({
     opacity: scrollY ? interpolate(scrollY.value, [10, 70], [0, 1], Extrapolation.CLAMP) : 1,
   }));
-  // The compact title stays centred between the two sides: a wide right side (Network: messages, bell,
-  // settings) pushes both its edges in, so the title ends in « … » instead of running under the buttons.
+  // The compact title stays centred between the two sides. A wide right side (Network: messages, bell,
+  // settings) only pushes the right edge in: the title takes the room after the back button, so a name
+  // such as « IRLY Network » shows whole on a 375 pt iPhone instead of ending in « … » (and never runs
+  // under the buttons).
   const [rightW, setRightW] = useState(0);
-  const titleInset = Math.max(80, space.gutter + rightW + 8);
+  const titleRight = Math.max(80, space.gutter + rightW + 8);
+  const titleLeft = titleRight > 80 ? space.gutter + 48 : 80;
   const titleStyle = useAnimatedStyle(() => ({
     opacity: scrollY ? interpolate(scrollY.value, [40, 90], [0, 1], Extrapolation.CLAMP) : 1,
     transform: [{ translateY: scrollY ? interpolate(scrollY.value, [40, 90], [8, 0], Extrapolation.CLAMP) : 0 }],
@@ -344,7 +347,7 @@ export function PageHeader({ title, scrollY, right, back = true, onBack }: PageH
         ) : (
           <ProfileButton />
         )}
-        <Animated.View style={[styles.title, { left: titleInset, right: titleInset }, titleStyle]} pointerEvents="none">
+        <Animated.View style={[styles.title, { left: titleLeft, right: titleRight }, titleStyle]} pointerEvents="none">
           <Text variant="titleS" numberOfLines={1}>
             {title}
           </Text>

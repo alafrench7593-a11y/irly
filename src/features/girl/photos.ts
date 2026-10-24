@@ -1,7 +1,7 @@
 import type { PhotoKey } from '@/data/photos';
 
 /**
- * IRLY Girl and IRLY Moms photos (public domain / CC0, see
+ * IRLY Girl and IRLY Mom Community photos (public domain / CC0, see
  * public-photos/CREDITS.md): one per kind of plan or community, chosen from
  * the words in its name.
  */
@@ -47,7 +47,7 @@ export function girlPhotoFor(text: string, fallback: PhotoKey = 'girlsOut'): Pho
   return fallback;
 }
 
-/** IRLY Girl and IRLY Moms communities: always a photo taken in Dubai, matched on the words in the name. */
+/** IRLY Girl and IRLY Mom Community communities: always a photo taken in Dubai, matched on the words in the name. */
 const COMMUNITY_RULES: [RegExp, PhotoKey][] = [
   [/\b(baby|babies|bébé|stroller|poussette)\b/i, 'strollerMom'],
   [/\b(moms?|mums?|mamans?|mother|playdates?|kids?|children|enfants?)\b/i, 'kids'],

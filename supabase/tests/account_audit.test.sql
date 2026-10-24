@@ -198,13 +198,13 @@ select pg_temp.check(pg_temp.fails($$insert into public.profiles (id, first_name
 select pg_temp.check(pg_temp.fails($$select * from public.girl_circle('dubai')$$) is not null, 'old session: IRLY Girl is closed');
 select pg_temp.as_admin();
 
--- ───── IRLY Maman: the only « IRLY Maman » is IRLY's own ─────
-select pg_temp.check((select array_agg(distinct name) from public.communities where official and topic = 'moms' and parent_id is null) = array['IRLY Maman'],
-  'IRLY Maman: the official community is named exactly « IRLY Maman »');
+-- ───── IRLY Mom Community: the only « IRLY Mom Community » is IRLY's own ─────
+select pg_temp.check((select array_agg(distinct name) from public.communities where official and topic = 'moms' and parent_id is null) = array['IRLY Mom Community'],
+  'IRLY Mom Community: the official community is named exactly « IRLY Mom Community »');
 select pg_temp.as_user('af000000-0000-0000-0000-0000000000a3');
-select pg_temp.check(pg_temp.refusal($$select public.create_community('IRLY Maman', 'dubai', null, null, null, true)$$) = 'this name is reserved for an IRLY community',
-  'a member cannot create another « IRLY Maman »');
-select pg_temp.check(pg_temp.refusal($$select public.create_community('  irly   MAMAN ', 'dubai', null, null, null, true)$$) = 'this name is reserved for an IRLY community',
+select pg_temp.check(pg_temp.refusal($$select public.create_community('IRLY Mom Community', 'dubai', null, null, null, true)$$) = 'this name is reserved for an IRLY community',
+  'a member cannot create another « IRLY Mom Community »');
+select pg_temp.check(pg_temp.refusal($$select public.create_community('  irly   mom  COMMUNITY ', 'dubai', null, null, null, true)$$) = 'this name is reserved for an IRLY community',
   'not with other capitals or spaces either');
 select pg_temp.check(pg_temp.refusal($$update public.communities set name = 'IRLY Sport' where id = 'af000000-0000-0000-0000-0000000000f1'$$) = 'this name is reserved for an IRLY community',
   'nor rename hers to an official name');
@@ -214,6 +214,6 @@ select pg_temp.check(pg_temp.fails($$update public.communities set tagline = 'St
   'editing a community without touching its name works as before');
 select pg_temp.as_admin();
 select pg_temp.check((select count(*) from public.communities where official and topic = 'moms' and city_id = 'dubai' and parent_id is null) = 1,
-  'IRLY Maman: still one in Dubai (nothing made by itself)');
-select pg_temp.check((select count(*) from public.communities where private.community_name_key(name) = 'irly maman' and not official) = 0,
-  'no member community is called « IRLY Maman »');
+  'IRLY Mom Community: still one in Dubai (nothing made by itself)');
+select pg_temp.check((select count(*) from public.communities where private.community_name_key(name) = 'irly mom community' and not official) = 0,
+  'no member community is called « IRLY Mom Community »');

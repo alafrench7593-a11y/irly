@@ -172,7 +172,7 @@ export function reasonText(r: Reason, tr: Tr, tg: TAs): string {
 /** "92% match — You both work in AI & SaaS and you're both looking for business partners." (`who`: the other person's gender) */
 export function matchSentence(m: ProMatch, tr: Tr, tg: TAs, who: Agree | null | undefined): string {
   const parts = m.reasons.slice(0, 2).map((r) => reasonText(r, tr, tg));
-  if (!parts.length) return tg('New on IRLY Networking', who);
+  if (!parts.length) return tg('New on IRLY Network', who);
   const s = parts.join(tr(' and '));
   return `${s.charAt(0).toUpperCase()}${s.slice(1)}.`;
 }

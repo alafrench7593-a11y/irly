@@ -1,74 +1,76 @@
 # IRLY — Réponses à App Review (à copier dans App Store Connect)
 
-Tout ce qui suit est vérifié dans le code (`src/content/legal.ts`, `app.json`, `package.json`, migrations).
+Réponse à « Guideline 2.1 - Information Needed - New App Submission » (2026-10-23).
+Tout ce qui suit est vérifié dans le code (`src/content/legal.ts`, `app.json`, `package.json`, `src/features/map/RealMap.native.tsx`, migrations).
 Les lignes marquées **[À CONFIRMER]** dépendent d'un choix qui t'appartient : relis-les avant d'envoyer.
+Le mot de passe du compte de démo n'est jamais écrit ici : il se tape seulement dans App Store Connect.
 
 ---
 
-## Texte anglais (à coller dans la réponse à Apple)
+## Texte anglais (à coller dans la réponse à Apple et dans le champ Notes)
 
-**1. Purpose and target audience**
+**1. Screen recording**
 
-IRLY helps adults make friends in real life. Members join communities around shared interests (sport, food, outings, networking, newcomers), find or create small group activities (a run, a padel game, a brunch), chat with the group before meeting, and connect as friends. It is aimed at residents and newcomers in Dubai and the other emirates of the UAE, aged 18 and over. IRLY Girl is an optional space within the app for members who registered as women, with women-only communities and activities.
+A screen recording captured on a physical iPhone running the latest iOS is attached. It starts by launching the app and shows account registration, sign-in with the demo account, the typical flow (Home, communities, an activity and its group chat, member profiles, messages), reporting content, blocking a member, and account deletion.
 
-**2. Demo account**
+**2. Purpose and target audience**
 
-- Email: `appreview@getirly.com`
-- Password: provided in the App Review Information fields.
-- Sign in: open the app, choose the Emirates as destination, go through the short welcome, then Profile tab → "Sign in" → email and password.
-- The demo account is set in Dubai and is hidden from other members. It contains no personal data.
-- To try reporting and blocking: the "…" menu on a member profile or a post (Report, Block), "Report" under any comment, or a long press on a message in a chat.
-- To try account deletion: Settings (gear) → My account section → Delete account. This deletes the demo account for real; we can recreate it on request.
+IRLY helps adults make friends in real life. Members join communities around shared interests (sport, food, outings, networking, newcomers), find or create small group activities (a run, a padel game, a brunch), chat with the group before meeting, and connect as friends. It solves isolation for newcomers and residents who want to meet people offline. It is aimed at adults (18+) living in or moving to the United Arab Emirates. IRLY Girl is an optional space inside the app with women-only communities and activities, for members who registered as women; IRLY Mom Community is part of IRLY Girl.
 
-**3. External services**
+**3. Setup and demo account**
 
-- Supabase (database, authentication, file storage, realtime), hosted in the European Union (Ireland) on Amazon Web Services.
-- Expo push notification service, with Apple Push Notification service, to deliver notifications.
+- Demo account: `appreview@getirly.com`. Password: in the App Review Information fields.
+- Sign in: open the app; on the first screen ("Where are you going?"), tap "Already have an account? Sign in" below the destination cards, then enter the email and password.
+- The demo account is set in Dubai, hidden from other members, and holds no personal data.
+- Report: the "…" menu on a member profile or a post, "Report" under a comment, or a long press on a message. Block: the "…" menu on a member profile → Block.
+- Delete account: gear icon → Settings → My account → Delete account. This deletes the account for real; we recreate the demo account afterwards.
+- IRLY Girl and IRLY Mom Community are reserved for members who declared "woman" at sign-up (checked by the server, never bypassed). The demo account declares "other", so it sees the screen explaining this rule. Every other feature is available to it.
+- There is no paid content, subscription or in-app purchase.
+
+**4. External services**
+
+- Supabase: database, authentication, file storage, realtime (hosted on Amazon Web Services in the European Union).
 - Sign in with Apple and Google sign-in, only if the member chooses them.
-- Apple Maps for map tiles on iPhone.
-- Images and videos shown in the app are loaded from image hosts (Unsplash, GitHub Pages and getirly.com).
-- No analytics or advertising SDK, no tracking, no in-app purchases.
+- Expo push notification service with Apple Push Notification service.
+- Apple Maps for the map on iPhone.
+- Images loaded from GitHub Pages, getirly.com and Unsplash.
+- No AI service, no analytics or advertising SDK, no tracking, no payment processor.
 
-**4. Regional differences**
+**5. Regional differences**
 
-The app is available for the United Arab Emirates (Dubai and the other emirates). Bali is shown as "coming soon" and cannot be used yet. Features do not otherwise differ by region. The interface is available in English and French, following the device language or the member's choice in Settings.
+The app is built for the United Arab Emirates (Dubai and the other emirates). Bali is shown as "coming soon" and cannot be used yet. Features do not otherwise differ by region. The interface is in English and French. **[À CONFIRMER : pays de disponibilité choisis dans App Store Connect]**
 
-**5. Regulated content and third-party rights**
+**6. Regulated industry / third-party material**
 
-IRLY does not offer gambling, medical, financial or other regulated services, and has no in-app purchases. All member content is user-generated and moderated: every profile, post, comment and message can be reported, and any member can be blocked; reports are reviewed by the IRLY team and the community guidelines, accepted at sign-up, allow no tolerance for abusive content. Stock photos come from free libraries whose licence allows this use. **[À CONFIRMER]** A "Dubai News & Life" section can show headlines with a link to the original publisher; a source is only switched on after its terms of use have been checked, and none is active by default.
-
-**6. Screen recording**
-
-A screen recording made on a physical iPhone is attached. It shows: launch, sign-in with the demo account, Home and communities, an activity and its group chat, reporting a post, blocking a member, and deleting the account.
+IRLY offers no gambling, medical, financial or other regulated service and no in-app purchases. Content is user-generated and moderated: profiles, posts, comments and messages can be reported, members can be blocked, reports are reviewed by the IRLY team, and the community guidelines are accepted at sign-up. Stock photos come from free libraries whose licence allows this use. **[À CONFIRMER]** The "Dubai News & Life" section shows headlines with a link to the original publisher; a source is only switched on after its terms of use have been checked.
 
 ---
 
-## Vidéo sur iPhone (à faire par toi, environ 4 min)
+## Vidéo sur iPhone (à faire par toi, environ 5 min)
 
-Apple refuse les simulations : la vidéo doit être une capture réelle, faite sur ton iPhone avec la build TestFlight.
+Apple refuse les simulations : capture réelle, sur ton iPhone, avec la dernière build TestFlight, iOS à jour.
 
-**Avant :** installe la dernière build TestFlight. Coupe les notifications (Concentration → Ne pas déranger). Ajoute « Enregistrement de l'écran » dans le Centre de contrôle (Réglages → Centre de contrôle).
+**Avant :** installe la build TestFlight qui contient les derniers correctifs. Active Ne pas déranger. Ajoute « Enregistrement de l'écran » dans le Centre de contrôle.
 
-**Pendant** (ouvre le Centre de contrôle, touche ⏺, attends 3 s) :
-1. Lance IRLY depuis l'écran d'accueil (5 s sur le lancement).
-2. Destination Émirats, accueil, onglet Profil → « Sign in » → `appreview@getirly.com` + le mot de passe.
-3. Home : fais défiler, ouvre une catégorie, reviens.
-4. Communautés : ouvre « For you », puis une communauté.
-5. Ouvre une activité, puis son chat de groupe.
-6. **Signaler :** sur une publication, menu « … » → Report → choisis un motif → Envoyer. Montre la confirmation.
-7. **Bloquer :** ouvre le profil d'un membre → « … » → Block → confirme.
-8. **Supprimer le compte :** Réglages (roue) → My account → Delete account → confirme. Montre le retour à l'écran de départ.
-9. Arrête l'enregistrement. La vidéo est dans Photos.
+**Pendant** (Centre de contrôle → ⏺, attends 3 s) :
+1. Lance IRLY depuis l'écran d'accueil de l'iPhone.
+2. **Inscription** : crée un nouveau compte avec Sign in with Apple (« Masquer mon adresse e-mail »), fais l'onboarding (photo, prénom, centres d'intérêt).
+3. Accueil, une communauté, une activité et son chat de groupe.
+4. **Signaler** : sur une publication, « … » → Report → un motif → Envoyer ; montre la confirmation.
+5. **Bloquer** : profil d'un membre → « … » → Block → confirme.
+6. **Supprimer le compte** : roue → Settings → My account → Delete account → confirme ; montre le retour à l'écran de départ.
+7. **Connexion** : sur le premier écran (« Where are you going? »), touche « Already have an account? Sign in » sous les cartes, puis `appreview@getirly.com` et son mot de passe ; montre l'accueil.
+8. Arrête l'enregistrement. La vidéo est dans Photos.
 
-**Après :** recrée le compte de démo (GitHub → Actions → Review account → Run workflow), puisque l'étape 8 l'a supprimé.
+Le compte créé à l'étape 2 est supprimé à l'étape 6 : le compte de démo d'Apple reste intact. Si le compte de démo est supprimé un jour, le recréer : GitHub → Actions → Review account → Run workflow.
 
 ---
 
 ## Checklist App Store Connect
 
 - [ ] App Review Information → « Sign-in required » coché, `appreview@getirly.com` et le mot de passe.
-- [ ] Notes : le texte des sections 1 à 5 ci-dessus.
-- [ ] Pièce jointe : la vidéo de l'iPhone.
+- [ ] Notes : le texte des sections 2 à 6 ci-dessus.
+- [ ] Réponse à Apple : le texte des sections 1 à 6, avec la vidéo de l'iPhone en pièce jointe.
 - [ ] App Privacy : étiquettes selon `docs/APP-STORE.md` § 6.
 - [ ] Age Rating : 18+.
 - [ ] Contact info : ton nom, ton téléphone, ton e-mail.

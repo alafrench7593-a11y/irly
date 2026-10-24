@@ -4,11 +4,24 @@ import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Divider } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
-import { isAdmin, isContentStaff, isModerator, loadDashboard, loadOverview, type Dashboard, type Overview } from '@/features/admin/api';
+import {
+  isAdmin,
+  isContentStaff,
+  isModerator,
+  loadDashboard,
+  loadOverview,
+  loadOverviewMore,
+  loadSpaces,
+  SPACE_LABEL,
+  type Dashboard,
+  type Overview,
+  type OverviewMore,
+  type SpaceRow,
+} from '@/features/admin/api';
 import { ACTION_LABEL } from '@/features/admin/labels';
 import { adminStyles, ago, Card, NoAccess, Stat, useAdminRole, useLoad } from '@/features/admin/ui';
 import { t as tx } from '@/i18n';
-import { space } from '@/theme/tokens';
+import { girlPalette, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
@@ -32,6 +45,7 @@ export default function AdminHome() {
         ) : (
           <>
             {admin ? <AdminOverview /> : isModerator(role) ? <ModeratorCounts /> : null}
+            <SpacesOverview />
             <Text variant="label" style={{ marginTop: space[2] }}>
               Sections
             </Text>
@@ -41,6 +55,7 @@ export default function AdminHome() {
               <Button label="Activities and posts" icon="layers" variant="secondary" full onPress={() => router.push('/admin/content')} />
               <Button label="Photos" icon="image" variant="secondary" full onPress={() => router.push('/admin/photos')} />
               {isContentStaff(role) ? <Button label="IRLY news" icon="megaphone" variant="secondary" full onPress={() => router.push('/admin/actu')} /> : null}
+              {isContentStaff(role) ? <Button label="Official communities" icon="star" variant="secondary" full onPress={() => router.push('/admin/official')} /> : null}
               {isContentStaff(role) ? <Button label="Home layout" icon="layers" variant="secondary" full onPress={() => router.push('/admin/home-layout')} /> : null}
               {isContentStaff(role) ? <Button label="Banners & visuals" icon="image" variant="secondary" full onPress={() => router.push('/admin/banners')} /> : null}
               {isModerator(role) ? <Button label="Reports" icon="flag" variant="secondary" full onPress={() => router.push('/admin/reports')} /> : null}
@@ -104,6 +119,7 @@ function AdminOverview() {
         <Stat index={6} icon="layers" label="Hidden by the team" value={o.hidden} onPress={() => router.push('/admin/content?filter=hidden')} />
         {o.email_failed ? <Stat index={7} icon="send" label="Report emails failed" value={o.email_failed} alert onPress={() => router.push('/admin/settings')} /> : null}
       </View>
+      <MoreCounts />
       <Card>
         <Text variant="label">Recent moderation actions</Text>
         {o.recent.length ? (
@@ -129,6 +145,62 @@ function AdminOverview() {
     </>
   );
 }
+
+/** Handled reports and the errors members saw, 7 days (admins). */
+function MoreCounts() {
+  const { data: m } = useLoad<OverviewMore>(loadOverviewMore, 'overview_more');
+  if (!m) return null;
+  return (
+    <>
+      <View style={adminStyles.row}>
+        <Stat index={0} icon="check" label="Reports handled, 7 days" value={m.reports_closed_7d} onPress={() => router.push('/admin/reports?status=actioned')} />
+        <Stat index={1} icon="x" label="Rejected, 7 days" value={m.reports_dismissed_7d} onPress={() => router.push('/admin/reports?status=dismissed')} />
+        <Stat index={2} icon="flame" label="Errors members saw, 7 days" value={m.errors_7d} alert={m.errors_7d > 0} />
+      </View>
+      {m.errors_top.length ? (
+        <Card>
+          <Text variant="label">Most frequent errors (7 days)</Text>
+          {m.errors_top.map((e, i) => (
+            <Text key={i} variant="caption" tone="secondary" raw>
+              {e.code}
+              {e.place ? ` · ${e.place}` : ''} · {e.n}
+            </Text>
+          ))}
+        </Card>
+      ) : null}
+    </>
+  );
+}
+
+/** Each space at a glance: communities, upcoming activities, reports waiting (whole team). */
+function SpacesOverview() {
+  const t = useTheme();
+  const { data, error, reload } = useLoad<SpaceRow[]>(loadSpaces, 'spaces');
+  if (error) return <Failed error={error} retry={reload} />;
+  if (!data) return null;
+  return (
+    <>
+      <Text variant="label" style={{ marginTop: space[2] }}>
+        By space
+      </Text>
+      {data.map((r, i) => (
+        <Card key={r.space} index={i} onPress={() => router.push(`/admin/content?space=${r.space}`)} accessibilityLabel={tx(SPACE_LABEL[r.space])}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: SPACE_DOT[r.space] ?? t.c.text }} />
+            <Text variant="titleS">{SPACE_LABEL[r.space]}</Text>
+          </View>
+          <Text variant="caption" tone="secondary" raw>
+            {tx('{n} communities', { n: r.communities })} · {tx('{n} upcoming activities', { n: r.activities_upcoming })} ·{' '}
+            {tx('{n} new reports', { n: r.reports_open })} · {tx('{n} in review', { n: r.reports_review })}
+          </Text>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+// A dot so the space being managed is never in doubt: Mixte grey, Girl its rose, Maman peach (no global colour changes).
+const SPACE_DOT: Record<string, string> = { mixte: '#8E8E93', girl: girlPalette.brand, mom: '#E7A07A' };
 
 function ModeratorCounts() {
   const t = useTheme();

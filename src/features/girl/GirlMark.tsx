@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router';
-import { memo, useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { memo, useCallback, useEffect, useId, useRef, type ReactNode } from 'react';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -29,10 +29,11 @@ import { GlassFill } from './ui';
  *
  * Variants
  * - `launch`: a rose and nacre halo opens behind the mark, the mark fades in
- *   while it settles from 0.92 to 1, one pearl-rose shimmer crosses the
- *   letters, then `onDone` fires so the parent can move on. `glint` (off by
- *   default) adds a slow glint every 12 s, for the launch screen only.
- * - `intro`: fade and a small rise, one shimmer, then `onDone`.
+ *   while it settles from 0.92 to 1, then `onDone` fires so the parent can
+ *   move on.
+ * - `intro`: fade and a small rise, then `onDone`.
+ * No sweep crosses the letters: a pale copy laid over them in strips read as
+ * a cut « IRLY » while the mark was loading, so the letters are always whole.
  * - `header`: fades in on mount and again (softly) when its screen regains
  *   focus; a tiny pulse when `section` changes. Needs to sit inside a screen
  *   (it uses expo-router's useFocusEffect); the other variants work anywhere.
@@ -265,30 +266,27 @@ type MarkProps = {
   variant?: GirlMarkVariant;
   size?: number;
   onDark?: boolean;
-  word?: 'Girl' | 'Maman';
+  word?: 'Girl' | 'Mom Community';
   /** Header: the current section; the mark pulses softly when it changes. */
   section?: string;
   /** Launch and intro: wait this long before starting. */
   delay?: number;
-  /** Launch only: a slow glint every 12 s while mounted. Off by default. */
-  glint?: boolean;
-  /** Launch and intro: called once the mark has fully arrived and shimmered. */
+  /** Launch and intro: called once the mark has fully arrived. */
   onDone?: () => void;
   style?: StyleProp<ViewStyle>;
 };
 
 /** Timeline of launch and intro, from the start (after `delay`). */
 const TIMELINE = {
-  launch: { halo: 0, appear: 120, shimmer: 720, done: 1640 },
-  intro: { halo: 0, appear: 0, shimmer: 460, done: 1380 },
+  launch: { halo: 0, appear: 120, done: 1640 },
+  intro: { halo: 0, appear: 0, done: 1380 },
 } as const;
 
-export function GirlMark({ variant = 'inline', size = 20, onDark = false, word = 'Girl', section, delay = 0, glint = false, onDone, style }: MarkProps) {
+export function GirlMark({ variant = 'inline', size = 20, onDark = false, word = 'Girl', section, delay = 0, onDone, style }: MarkProps) {
   const reduced = useReducedMotion();
   const animated = variant !== 'inline';
   const staged = variant === 'launch' || variant === 'intro';
   const times = variant === 'launch' ? TIMELINE.launch : TIMELINE.intro;
-  const [box, setBox] = useState({ width: 0, height: 0 });
 
   const appear = useAppear({
     reduced: reduced || !animated,
@@ -299,11 +297,9 @@ export function GirlMark({ variant = 'inline', size = 20, onDark = false, word =
     rise: variant === 'intro' ? markMotion.rise : variant === 'header' ? 4 : 0,
   });
   const halo = useAppear({ reduced: reduced || variant !== 'launch', auto: variant === 'launch', delay: delay + times.halo, duration: markMotion.halo.duration });
-  const shimmer = useShimmer({ reduced, enabled: staged, delay: delay + times.shimmer });
   const pulse = useStateTransition(variant === 'header' ? section : undefined, reduced);
 
-
-  // Launch and intro hand over once the shimmer has crossed (at once with Reduce Motion).
+  // Launch and intro hand over once the mark has arrived (at once with Reduce Motion).
   const done = useRef(onDone);
   useEffect(() => {
     done.current = onDone;
@@ -314,22 +310,8 @@ export function GirlMark({ variant = 'inline', size = 20, onDark = false, word =
     return () => clearTimeout(t);
   }, [staged, reduced, delay, times.done]);
 
-  // The optional launch glint: one sweep every 12 s while the launch screen is up.
-  const replay = shimmer.play;
-  useEffect(() => {
-    if (variant !== 'launch' || !glint || reduced) return;
-    const h = setInterval(() => replay(), markMotion.glintEvery);
-    return () => clearInterval(h);
-  }, [variant, glint, reduced, replay]);
-
-  const onLayout = useCallback((e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout;
-    setBox((b) => (Math.abs(b.width - width) < 0.5 && Math.abs(b.height - height) < 0.5 ? b : { width, height }));
-  }, []);
-
   // Room around the letters: the italic word leans past its box, the halo needs air.
   const pad = staged ? { paddingHorizontal: size * 0.3, paddingVertical: size * 0.18 } : { paddingHorizontal: size * 0.08 };
-  const sheen = onDark ? '#FFD9E8' : '#F9C6DB';
 
   if (!animated) {
     return (
@@ -343,17 +325,10 @@ export function GirlMark({ variant = 'inline', size = 20, onDark = false, word =
       {variant === 'header' ? <OnFocus play={appear.play} /> : null}
       {variant === 'launch' ? <Halo progress={halo.progress} width={size * 10} height={size * 5.6} onDark={onDark} /> : null}
       <Animated.View style={appear.style}>
-        <Animated.View style={pulse} onLayout={onLayout}>
+        <Animated.View style={pulse}>
           <View style={pad}>
             <GirlLogo size={size} onDark={onDark} word={word} />
           </View>
-          {staged ? (
-            <ShimmerSweep progress={shimmer.progress} width={box.width} height={box.height}>
-              <View style={pad}>
-                <GirlLogo size={size} onDark={onDark} word={word} tint={sheen} decorative />
-              </View>
-            </ShimmerSweep>
-          ) : null}
         </Animated.View>
       </Animated.View>
     </View>
@@ -385,7 +360,7 @@ export function GirlHeaderMark({
   style,
 }: {
   section?: string;
-  word?: 'Girl' | 'Maman';
+  word?: 'Girl' | 'Mom Community';
   onDark?: boolean;
   size?: number;
   pill?: boolean;
@@ -404,7 +379,7 @@ export function GirlHeaderMark({
  * Loading state: the mark fades in over a halo that breathes slowly a fixed
  * number of times, then stays lit. With Reduce Motion, a still halo.
  */
-export function GirlLoader({ size = 26, word = 'Girl', label, onDark = false, style }: { size?: number; word?: 'Girl' | 'Maman'; label?: string; onDark?: boolean; style?: StyleProp<ViewStyle> }) {
+export function GirlLoader({ size = 26, word = 'Girl', label, onDark = false, style }: { size?: number; word?: 'Girl' | 'Mom Community'; label?: string; onDark?: boolean; style?: StyleProp<ViewStyle> }) {
   const reduced = useReducedMotion();
   const breath = useSharedValue(reduced ? 1 : 0);
   useEffect(() => {
@@ -429,10 +404,10 @@ export function GirlLoader({ size = 26, word = 'Girl', label, onDark = false, st
 }
 
 const styles = StyleSheet.create({
-  mark: { alignItems: 'center', justifyContent: 'center' },
+  mark: { alignItems: 'center', justifyContent: 'center', flexShrink: 1 },
   strip: { position: 'absolute', left: 0, top: 0, overflow: 'hidden' },
   copy: { position: 'absolute', left: 0, top: 0 },
   halo: { position: 'absolute', left: '50%', top: '50%' },
-  pill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 36, borderRadius: 18, zIndex: 0 },
+  pill: { flexDirection: 'row', alignItems: 'center', flexShrink: 1, paddingHorizontal: 14, height: 36, borderRadius: 18, zIndex: 0 },
   loader: { alignItems: 'center', justifyContent: 'center', gap: 18 },
 });

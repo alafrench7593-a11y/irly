@@ -78,7 +78,7 @@ export const GIRL_PLANS: PlanType[] = [
 /** Girl trips: travel together to get to know each other. */
 export const TRIP_PLACES = ['Oman', 'Abu Dhabi', 'Bali', 'Qatar', 'Desert', 'Safari', 'Malaysia', 'Thailand', 'Saudi Arabia'];
 
-/** IRLY Maman: activities with children (always IRLY Girl plans). */
+/** IRLY Mom Community: activities with children (always IRLY Girl plans). */
 export const MOM_PLANS: PlanType[] = [
   { id: 'PLAYDATE', label: 'Playdate', icon: 'baby', audience: 'moms', category: 'family', title: (w) => `${tx('Playdate')} · ${w}` },
   { id: 'BEACH_WITH_KIDS', label: 'Beach with kids', icon: 'sun', audience: 'moms', category: 'family', title: (w) => `${tx('Beach with kids')} · ${w}` },
@@ -239,7 +239,7 @@ export function QuickPlan({
         <AreaPicker cityId={city.id} value={area} onChange={setArea} label={isTrip ? 'Meeting point' : undefined} palette={G ? GIRL_PICKER : undefined} />
       ) : null}
       <Text variant="caption" color={ink} tone={G ? undefined : 'tertiary'}>
-        {type.audience === 'moms' ? 'Visible to IRLY Maman and IRLY Girl members.' : type.audience === 'girls' ? 'Visible to IRLY Girl members only.' : 'Anyone on IRLY can join.'} {tx('It gets its own chat and lands in your calendar.')}
+        {type.audience === 'moms' ? 'Visible to IRLY Mom Community and IRLY Girl members.' : type.audience === 'girls' ? 'Visible to IRLY Girl members only.' : 'Anyone on IRLY can join.'} {tx('It gets its own chat and lands in your calendar.')}
       </Text>
       {G ? (
         <GButton label={tx('Create: {title}', { title: type.title(where) })} icon="plus" loading={busy} onPress={create} />
