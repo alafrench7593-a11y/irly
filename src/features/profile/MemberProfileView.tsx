@@ -548,7 +548,7 @@ function LivesTab({ userId, own, name, cityId }: { userId: string; own: boolean;
       <Empty
         icon="zap"
         title={own ? 'You are not live' : tx('{name} is not live right now', { name })}
-        body={own ? 'Share what you are doing: it stays live for 4 hours.' : 'When they go live in your circle, it shows here.'}
+        body={own ? 'Share what you are doing: it stays live for 24 hours.' : 'When they go live in your circle, it shows here.'}
         cta={own ? { label: 'Go live', go: () => router.push('/live?compose=1' as never) } : undefined}
       />
     );

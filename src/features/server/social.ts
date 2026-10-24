@@ -214,7 +214,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
 
   const { keep } = useCityFilter(cityId as CityId);
   const mine = useIrlMine((s) => s.posts);
-  // The server ends a Live at expires_at (created_at + 4h by default) but
+  // The server ends a Live at expires_at (created_at + 24h by default) but
   // irl_feed does not return it and sends no event when it passes: drop
   // expired posts here too, so nobody likes or comments a gone Live.
   const now = useNow();
@@ -461,7 +461,7 @@ export async function postServerIrl(input: {
   useIrlMine.setState((st) => ({
     posts: [
       confirmed,
-      // Live posts last 4 hours: older ones are dropped here.
+      // Live posts last 24 hours: older ones are dropped here.
       ...st.posts.filter((p) => p.id !== confirmed.id && p.createdAt > Date.now() - LIVE_TTL_MIN * 60_000),
     ].slice(0, 20),
   }));

@@ -51,7 +51,7 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
  * IRL: what people around you are doing right now. Photo or text, tied to
- * a venue or a neighbourhood (never an address), gone after 4 hours. Every
+ * a venue, a neighbourhood or only the city (never an address), gone after 24 hours. Every
  * post is an invitation: message the person or go there.
  */
 // Who sees a moment, as stored (a private one is not "Everyone").
@@ -537,7 +537,9 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   // No neighbourhood is chosen for the member: they say where they are.
   const [picked, setArea] = useState<string | null>(null);
   // Switching destination keeps the composer mounted: never post a Dubai area in Bali.
+  // The neighbourhood is optional: without one the Live shows the city (area_id = the city, as the server's precision rule does).
   const area = startArea(city, picked);
+  const where = area ?? city.id;
   const [media, setMedia] = useState<LiveMedia | undefined>();
   const uri = media?.uri;
   // The picked photo (or the video's poster) is prepared while the member writes: Post then only uploads.
@@ -625,7 +627,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     settleLive(a.id)
       .then((r) => {
         if (r !== 'published') return;
-        toast("You're live for 4 hours", 'zap', 'live');
+        toast("You're live for 24 hours", 'zap', 'live');
         published();
       })
       .catch(() => undefined);
@@ -679,14 +681,10 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
 
   const submit = async () => {
     if ((!text.trim() && !media) || sending.current) return;
-    if (!area) {
-      toast('Choose a neighbourhood', 'pin', 'brand');
-      return;
-    }
     if (!account) {
-      post({ cityId, kind: media?.kind === 'photo' ? 'photo' : 'text', text: text.trim(), photoUri: media?.kind === 'photo' ? uri : undefined, place: areaName(city, area), areaId: area });
+      post({ cityId, kind: media?.kind === 'photo' ? 'photo' : 'text', text: text.trim(), photoUri: media?.kind === 'photo' ? uri : undefined, place: areaName(city, where), areaId: where });
       haptic('success');
-      toast("You're live for 4 hours", 'zap', 'live');
+      toast("You're live for 24 hours", 'zap', 'live');
       published();
       onClose();
       return;
@@ -725,8 +723,8 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
             plan: {
               cityId,
               title: text.trim().slice(0, 80).padEnd(3, '.'),
-              place: areaName(city, area),
-              areaId: area,
+              place: areaName(city, where),
+              areaId: where,
               day: 'Today',
               time,
               spots: 0,
@@ -741,8 +739,8 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         id: a.id,
         prior: a.unknown,
         cityId,
-        areaId: area,
-        placeName: areaName(city, area),
+        areaId: where,
+        placeName: areaName(city, where),
         body: text.trim(),
         media,
         onProgress: media ? (p) => mounted.current && setProgress(p) : undefined,
@@ -778,7 +776,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     }
     sending.current = false;
     haptic('success');
-    toast("You're live for 4 hours", 'zap', 'live');
+    toast("You're live for 24 hours", 'zap', 'live');
     published();
     onClose();
   };
@@ -862,9 +860,9 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         )}
         <View style={{ gap: 8 }}>
           <Text variant="overline" tone="tertiary">
-            Where
+            Where (optional)
           </Text>
-          <AreaPicker cityId={city.id} value={area} onChange={setArea} />
+          <AreaPicker cityId={city.id} value={area} onChange={(id) => setArea(area === id ? null : id)} />
         </View>
         {account ? (
           <View style={{ gap: 8 }}>

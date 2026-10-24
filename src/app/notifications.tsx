@@ -364,7 +364,7 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
       case 'COMMUNITY_POST':
         return { icon: 'message', title: tx('{name} posted in {community}', { name: name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : '' }), body: p.body ?? '' };
       case 'IRLY_POST_CREATED':
-        // A Live lasts 4 hours (a deleted one takes its notice with it): an ended one neither quotes nor opens it.
+        // A Live lasts 24 hours (a deleted one takes its notice with it): an ended one neither quotes nor opens it.
         if (!destinationOf(n, now)) return { icon: 'zap', title: tx('{name} was live', { name: name(p.from) }), body: tx('This Live has ended') };
         return { icon: 'zap', title: tx('{name} is live', { name: name(p.from) }), body: p.body ?? tx('See what they are doing') };
       case 'IRLY_NEWS':

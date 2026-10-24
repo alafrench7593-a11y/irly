@@ -75,7 +75,7 @@ ACTIVITÉS
 Trouve des activités près de toi, vois qui y va et rejoins-les en un geste. Crée ton propre plan, un run, un padel, un brunch : choisis le lieu, l'heure et le nombre de places, et un chat de groupe s'ouvre pour tous les participants.
 
 LIVE
-Vois qui sort en ce moment près de toi : une photo ou quelques mots, ton quartier seulement, disparu après 4 heures. Rejoins-les ou dis bonjour.
+Vois qui sort en ce moment près de toi : une photo ou quelques mots, ton quartier seulement, disparu après 24 heures. Rejoins-les ou dis bonjour.
 
 MESSAGES
 Discussions privées avec tes amis, chats de groupe et chats de communauté, avec photos.

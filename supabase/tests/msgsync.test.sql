@@ -215,13 +215,16 @@ select pg_temp.as_admin();
 select pg_temp.check((select body = 'msgsync my first post' and author_id = 'd2740000-0000-0000-0000-0000000000a1' and deleted_at is null
   from public.community_posts where id = 'd2740000-0000-0000-0000-0000000000b1'), 'her post is unchanged');
 
--- ───────── 7. Lives: up for 4 hours, then only its author keeps it ─────────
+-- ───────── 7. Lives: up for 24 hours, then only its author keeps it ─────────
 select pg_temp.as_user('d2740000-0000-0000-0000-0000000000a1');
 insert into public.irl_posts (id, author_id, city_id, area_id, body, visibility)
 values ('d2740000-0000-0000-0000-0000000000c1', 'd2740000-0000-0000-0000-0000000000a1', 'dubai', 'marina', 'msgsync coffee at the marina?', 'everyone');
 select pg_temp.check(pg_temp.fails($$insert into public.irl_posts (author_id, city_id, area_id, body, visibility, expires_at)
   values ('d2740000-0000-0000-0000-0000000000a1', 'dubai', 'marina', 'msgsync forever', 'everyone', now() + interval '2 days')$$) is not null,
-  'a Live cannot be made to last more than 4 hours');
+  'a Live cannot be made to last more than 24 hours');
+select pg_temp.check(pg_temp.fails($$insert into public.irl_posts (author_id, city_id, area_id, body, visibility, expires_at)
+  values ('d2740000-0000-0000-0000-0000000000a1', 'dubai', 'dubai', 'msgsync all day, no neighbourhood', 'everyone', now() + interval '20 hours')$$) is null,
+  'a Live can last 20 hours, with the city instead of a neighbourhood');
 select pg_temp.as_user('d2740000-0000-0000-0000-0000000000a2');
 select pg_temp.check(pg_temp.rows($$select 1 from public.irl_posts where id = 'd2740000-0000-0000-0000-0000000000c1'$$) = 1, 'Noah sees Mia''s Live while it is up');
 select pg_temp.as_admin();
