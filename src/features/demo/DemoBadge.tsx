@@ -2,6 +2,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui/Text';
 import { DEMO } from '@/config/app';
+import { useCreateStore } from '@/features/create/createStore';
 import { PressableScale } from '@/motion/PressableScale';
 
 const APP_URL = 'https://getirly.com/app/';
@@ -13,7 +14,9 @@ const APP_URL = 'https://getirly.com/app/';
  */
 export function DemoBadge() {
   const insets = useSafeAreaInsets();
-  if (!DEMO || Platform.OS !== 'web') return null;
+  // The Create form keeps its Next / Create button just where the badge sits: a tap on it left the demo.
+  const creating = useCreateStore((s) => s.open);
+  if (!DEMO || Platform.OS !== 'web' || creating) return null;
   const openApp = () => {
     const w = globalThis as { top?: { location: { href: string } }; location?: { href: string } };
     try {

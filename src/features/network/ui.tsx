@@ -316,17 +316,19 @@ export const ProCard = memo(function ProCard({
   };
   const change = useCallback((c: ProProfile['connection']) => onConnection(pro.userId, c), [onConnection, pro.userId]);
   const profile = <SoftButton label="View profile" onPress={open} />;
+  // The card's body opens the profile; Connect and View profile sit beside it (never a button inside a button).
   return (
-    <PressableScale
-      haptic="select"
-      scaleTo={0.975}
-      onPress={open}
-      onPressIn={onPressIn}
-      onPressOut={onPressOut}
-      accessibilityLabel={[pro.firstName, pro.jobTitle, pro.company].filter(Boolean).join(', ')}
-      style={[styles.card, { boxShadow: tone.surface.shadow }]}
-    >
+    <View style={[styles.card, { boxShadow: tone.surface.shadow }]}>
       <NetworkPane radius={radius.xl} press={press} />
+      <PressableScale
+        haptic="select"
+        scaleTo={0.975}
+        onPress={open}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        accessibilityLabel={[pro.firstName, pro.jobTitle, pro.company].filter(Boolean).join(', ')}
+        style={styles.cardBody}
+      >
       <View style={styles.head}>
         <View>
           <Portrait name={pro.firstName} uri={photo} width={PORTRAIT_W} height={PORTRAIT_H} radius={radius.lg} />
@@ -390,6 +392,7 @@ export const ProCard = memo(function ProCard({
           </Text>
         </View>
       ) : null}
+      </PressableScale>
       {pro.connection === 'incoming' ? (
         // Accept and Decline need the width: the profile goes underneath.
         <View style={{ gap: 8, marginTop: space[1] }}>
@@ -410,7 +413,7 @@ export const ProCard = memo(function ProCard({
           {profile}
         </View>
       )}
-    </PressableScale>
+    </View>
   );
 });
 
@@ -580,6 +583,7 @@ const styles = StyleSheet.create({
   soft: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, height: 34, paddingLeft: 14, paddingRight: 10, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2 },
   under: { zIndex: -1 },
   card: { padding: 16, gap: 12, borderRadius: radius.xl, overflow: 'hidden' },
+  cardBody: { gap: 12 },
   head: { flexDirection: 'row', gap: 14 },
   who: { flex: 1, gap: 3, minHeight: PORTRAIT_H },
   pillOnPhoto: { position: 'absolute', left: 6, bottom: 6 },

@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { FEATURES } from '@/lib/features';
 import { t as tx, formatNumber } from '@/i18n';
 import { Image } from 'expo-image';
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, type RefObject } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { Film } from '@/components/visual/Film';
@@ -89,6 +89,14 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
     return out;
   }, [plans]);
   const mark = (name: string) => (e: LayoutChangeEvent) => onSection?.(name, e.nativeEvent.layout.y);
+  // « Plan it » and « See communities »: their section's y in this view, measured when tapped
+  // (what is above has loaded since it was laid out).
+  const root = useRef<View>(null);
+  const planRef = useRef<View>(null);
+  const communitiesRef = useRef<View>(null);
+  const go = (name: string, target: RefObject<View | null>) => {
+    if (root.current) target.current?.measureLayout(root.current, (_x, y) => onSection?.(name, y), () => undefined);
+  };
 
   const toggleMom = (on: boolean) => {
     if (momBusy) return;
@@ -124,7 +132,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
   };
 
   return (
-    <View style={{ gap: space[7], paddingTop: space[5] }}>
+    <View ref={root} style={{ gap: space[7], paddingTop: space[5] }}>
       <Animated.View entering={motion.rise(0)} style={[styles.pad, { gap: 12 }]}>
         <Text variant="body" color={girl.inkSoft}>
           {tx('Moms in {city}, plans with children and family-friendly places.', { city: city.name })}
@@ -251,7 +259,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
         </Text>
       ) : null}
 
-      <View style={[styles.pad]} onLayout={mark('momsPlan')}>
+      <View ref={planRef} style={[styles.pad]} onLayout={mark('momsPlan')}>
         <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
           <GlassLayer radius={radius.xl} />
           <View style={{ height: 110 }}>
@@ -270,10 +278,10 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
         <Text variant="titleM" color={girl.ink} style={[girlType.section, styles.pad]}>
           Coming up with kids
         </Text>
-        <Upcoming activities={plans} kinds={MOM_KINDS} kind={kind} onKind={setKind} onPlan={() => onSection?.('goPlan', 0)} emptyTitle="What if you organised the first playdate?" loading={plansLoading} error={plansError} onRetry={refreshPlans} />
+        <Upcoming activities={plans} kinds={MOM_KINDS} kind={kind} onKind={setKind} onPlan={() => go('goPlan', planRef)} emptyTitle="What if you organised the first playdate?" loading={plansLoading} error={plansError} onRetry={refreshPlans} />
       </View>
 
-      <View style={[styles.pad, { gap: 10 }]} onLayout={mark('momsCommunities')}>
+      <View ref={communitiesRef} style={[styles.pad, { gap: 10 }]} onLayout={mark('momsCommunities')}>
         <Text variant="titleM" color={girl.ink} style={girlType.section}>
           Mom communities
         </Text>
@@ -320,7 +328,7 @@ export function MomsView({ cityId, onSection }: { cityId: CityId; onSection?: (n
             Tips, questions and plans shared in the mom communities.
           </Text>
         </View>
-        <GirlFeed cityId={cityId} moms onCommunities={() => onSection?.('goCommunities', 0)} />
+        <GirlFeed cityId={cityId} moms onCommunities={() => go('goCommunities', communitiesRef)} />
       </View>
 
       {family.data.length ? (

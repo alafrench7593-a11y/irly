@@ -814,6 +814,13 @@ function ChatInfo({
   const router = useRouter();
   const me = useAccount()?.userId;
   const [name, setName] = useState(title);
+  // Each opening starts from the chat's current name: the sheet is mounted before the title has
+  // loaded (a new group, a chat opened from a notification), and a member may rename it meanwhile.
+  const [openFor, setOpenFor] = useState(visible);
+  if (visible !== openFor) {
+    setOpenFor(visible);
+    if (visible) setName(title);
+  }
   const [busy, setBusy] = useState(false);
   // Leave waits for the server: a second tap left again (an error toast) and replaced the page twice.
   const leaving = useBusy<'leave'>();

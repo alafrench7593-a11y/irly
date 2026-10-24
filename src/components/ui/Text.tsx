@@ -1,6 +1,6 @@
-import { Children, memo, type ReactNode } from 'react';
+import { Children, memo, useLayoutEffect, useRef, type ReactNode } from 'react';
 import { translate, useLang, type Lang } from '@/i18n';
-import { Text as RNText, type TextProps, type TextStyle } from 'react-native';
+import { Platform, Text as RNText, StyleSheet, type TextProps, type TextStyle } from 'react-native';
 import { type TypeVariant, type } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -55,17 +55,50 @@ export const Text = memo(function Text({
   // v3 has no italic serif: `italic` is accepted for older call sites and ignored.
   void italic;
   const fontFamily = base.fontFamily;
+  const fitOn = Platform.OS === 'web' && Boolean(rest.adjustsFontSizeToFit) && rest.numberOfLines === 1;
+  const fit = useWebFit(fitOn, fitOn ? (StyleSheet.flatten(style)?.fontSize ?? base.fontSize) : 0, rest.minimumFontScale, lang, children);
   return (
     <RNText
       allowFontScaling
       maxFontSizeMultiplier={1.3}
       {...rest}
+      {...(fitOn ? { ref: fit } : null)}
       style={[base, { fontFamily, color: color ?? tones[tone], textAlign: align }, style]}
     >
       {lang === 'en' || raw ? children : localize(children, lang)}
     </RNText>
   );
 });
+
+/**
+ * The web has no adjustsFontSizeToFit: a one-line label longer than its
+ * room (« Cette semaine » in a segmented control) was cut with an ellipsis.
+ * On the web, a size smaller instead, as iOS does, down to minimumFontScale.
+ */
+function useWebFit(on: boolean, size: number, minScale = 0.5, ...deps: unknown[]) {
+  const ref = useRef<RNText>(null);
+  useLayoutEffect(() => {
+    const el = ref.current as unknown as HTMLElement | null;
+    if (!on || !el?.style || typeof ResizeObserver === 'undefined') return;
+    const fitNow = () => {
+      // Letter spacing does not scale with the size: a few passes, a hair under the room so no ellipsis is left.
+      let s = size;
+      el.style.fontSize = `${s}px`;
+      for (let i = 0; i < 4 && el.scrollWidth > el.clientWidth && s > size * minScale; i++) {
+        s = Math.max(size * minScale, (s * el.clientWidth * 0.98) / el.scrollWidth);
+        el.style.fontSize = `${s}px`;
+      }
+    };
+    fitNow();
+    const watch = new ResizeObserver(fitNow);
+    watch.observe(el);
+    // Its parent too: once shrunk, the label's own box no longer grows with more room (a wider window).
+    if (el.parentElement) watch.observe(el.parentElement);
+    return () => watch.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [on, size, minScale, ...deps]);
+  return ref;
+}
 
 /**
  * Every literal string rendered by <Text> goes through the dictionary, so

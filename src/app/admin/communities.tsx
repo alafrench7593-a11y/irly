@@ -55,7 +55,7 @@ export default function AdminCommunities() {
                     c.girl_only ? 'IRLY Girl' : null,
                     c.official ? tx('Official') : null,
                     c.parent_id ? tx('Group') : null,
-                    c.reports ? tx('{n} reports', { n: c.reports }) : null,
+                    c.reports ? (c.reports === 1 ? tx('1 report') : tx('{n} reports', { n: c.reports })) : null,
                   ]
                     .filter(Boolean)
                     .join(' · ')}

@@ -45,19 +45,19 @@ the professional profile (IRLY Network), Settings, Download my data, Report
 (the « … » menu of a profile or post, « Report » under a comment, long press
 on a message), Block, Log out and Delete account.
 
-**IRLY Girl and IRLY Maman — closed to this account, by design.** IRLY Girl is
-a women-only space inside the same app; IRLY Maman (moms meeting moms, Mom
-mode, children's age groups only) lives inside IRLY Girl. Access is decided on
+**IRLY Girl and IRLY Mom Community — closed to this account, by design.** IRLY Girl is
+a women-only space inside the same app; IRLY Mom Community (moms meeting moms, Mom
+mode) lives inside IRLY Girl. Access is decided on
 the server by one rule, `private.girl_eligible_unchecked`: the member's
 **declared** gender is « woman » and IRLY Girl was not withdrawn by the
 moderators. The review account declares `other`, so tapping IRLY Girl or IRLY
-Maman shows the « IRLY Girl is reserved for women » screen, which explains the rule. This is
+Mom Community shows the « IRLY Girl is reserved for women » screen, which explains the rule. This is
 the expected behaviour and is never bypassed (no special case for the review
 account in the app or on the server).
 
 Suggested sentence for the Notes field:
 
-> IRLY Girl (and IRLY Maman inside it) is an optional women-only space. Access
+> IRLY Girl (and IRLY Mom Community inside it) is an optional women-only space. Access
 > is based on the gender the member declares at sign-up; the demo account
 > declares « other », so it sees the explanation screen of that space. Every
 > other feature of the app is available to the demo account.

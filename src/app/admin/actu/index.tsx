@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
+import { PressableScale } from '@/motion/PressableScale';
 import { isContentStaff } from '@/features/admin/api';
 import { adminStyles, Card, Loadable, NoAccess, useAdminRole, useLoad } from '@/features/admin/ui';
 import { loadAdminNews, reorderNews, type AdminNews } from '@/features/cms/api';
@@ -75,21 +76,24 @@ function Row({ n, index, busy, onUp, onDown }: { n: AdminNews; index: number; bu
   const t = useTheme();
   const [visual] = useCmsVisuals([{ path: n.cover_path, key: n.cover_key, fallback: NEWS_PHOTO[n.category] }]);
   return (
-    <Card index={index} onPress={() => router.push(`/admin/actu/${n.id}`)} accessibilityLabel={n.title}>
+    <Card index={index}>
       <View style={styles.row} testID="admin-news-row">
-        <Photo visual={visual} light="dubai" width={240} pinned style={styles.thumb} />
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text variant="titleS" numberOfLines={2} raw>
-            {n.title}
-          </Text>
-          <View style={adminStyles.row}>
-            <NewsStatePill state={n.state} at={n.publish_at} />
-            <Text variant="caption" tone="secondary">
-              {`${tx(AUDIENCE_LABEL[n.audience])} · ${tx(NEWS_CATEGORY_LABEL[n.category])}`}
+        {/* The item opens from its photo and texts; the move buttons sit beside, not inside (no button in a button on the web). */}
+        <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(`/admin/actu/${n.id}`)} accessibilityRole="button" accessibilityLabel={n.title} style={styles.open}>
+          <Photo visual={visual} light="dubai" width={240} pinned style={styles.thumb} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text variant="titleS" numberOfLines={2} raw>
+              {n.title}
             </Text>
-            {n.notify ? <Icon name="bell" size={14} color={n.notified_at ? t.c.textTertiary : t.c.brand} /> : null}
+            <View style={adminStyles.row}>
+              <NewsStatePill state={n.state} at={n.publish_at} />
+              <Text variant="caption" tone="secondary">
+                {`${tx(AUDIENCE_LABEL[n.audience])} · ${tx(NEWS_CATEGORY_LABEL[n.category])}`}
+              </Text>
+              {n.notify ? <Icon name="bell" size={14} color={n.notified_at ? t.c.textTertiary : t.c.brand} /> : null}
+            </View>
           </View>
-        </View>
+        </PressableScale>
         <MoveButtons label={n.title} onUp={onUp} onDown={onDown} disabled={busy} />
       </View>
     </Card>
@@ -98,5 +102,6 @@ function Row({ n, index, busy, onUp, onDown }: { n: AdminNews; index: number; bu
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  open: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   thumb: { width: 64, height: 64, borderRadius: radius.lg, overflow: 'hidden' },
 });

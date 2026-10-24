@@ -9,7 +9,7 @@ import { Text } from '@/components/ui/Text';
 import { Photo } from '@/components/visual/Photo';
 import type { PhotoKey } from '@/data/photos';
 import { isModerator, loadPhotos, type PhotoKind, type PhotoRow } from '@/features/admin/api';
-import { editorialGroups, EDITORIAL_LABEL, PhotoGrid, type EditorialGroupId } from '@/features/admin/photos';
+import { editorialGroups, EDITORIAL_LABEL, labelOfUse, PhotoGrid, type EditorialGroupId } from '@/features/admin/photos';
 import { adminStyles, ago, Loadable, NoAccess, useAdminRole, useLoad } from '@/features/admin/ui';
 import { usePhotoOverrideRows } from '@/features/photo/overrides';
 import { useSignedLinks } from '@/features/server/media';
@@ -113,7 +113,7 @@ function AppPhotos({ q, initial }: { q: string; initial: EditorialGroupId }) {
         <PhotoGrid>
           {(w) =>
             items.slice(0, 120).map((i) => (
-              <PressableScale key={i.key} onPress={() => router.push({ pathname: '/admin/photo', params: { key: i.key } })} haptic="select" scaleTo={0.97} style={{ width: w, gap: 6 }} accessibilityLabel={tx('Photo: {name}', { name: i.label })}>
+              <PressableScale key={i.key} onPress={() => router.push({ pathname: '/admin/photo', params: { key: i.key } })} haptic="select" scaleTo={0.97} style={{ width: w, gap: 6 }} accessibilityLabel={tx('Photo: {name}', { name: labelOfUse(i.label) })}>
                 <Photo visual={{ photo: i.key as PhotoKey }} light="dubai" width={w} pinned style={[styles.tile, { width: w }]} recyclingKey={`admin-${i.key}`}>
                   {changed.has(i.key) ? (
                     <View style={styles.flag}>
@@ -124,7 +124,7 @@ function AppPhotos({ q, initial }: { q: string; initial: EditorialGroupId }) {
                   ) : null}
                 </Photo>
                 <Text variant="caption" numberOfLines={1} raw>
-                  {tx(i.label)}
+                  {labelOfUse(i.label)}
                 </Text>
                 {i.uses.length > 1 ? (
                   <Text variant="caption" tone="tertiary" numberOfLines={1} raw>

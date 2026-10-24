@@ -1,11 +1,11 @@
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { YourCommunities } from '@/features/community/YourCommunities';
 import { useAccount } from '@/features/auth/account';
 import { t as tx, useLang } from '@/i18n';
 import { planDayLabel, upcomingPlans } from '@/features/plans/when';
-import { Fragment, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
+import Animated, { useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
@@ -134,6 +134,21 @@ export default function Home() {
   // (The back office's preview may draw the Home in the other flavour: features/cms/feed.)
   const homeSpace = useHomeSpace(useAppSpace());
   const inGirl = homeSpace === 'girl';
+  // Another space is another Home: it opens at its top, not where the space's door was tapped.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [homeSpace, scrollRef]);
+  // Entering IRLY Girl through its door switches the space while Home is covered (hidden on the
+  // web, where that scroll is lost): Home goes to its top again when it shows a new space.
+  const shownSpace = useRef(homeSpace);
+  useFocusEffect(
+    useCallback(() => {
+      if (shownSpace.current === homeSpace) return;
+      shownSpace.current = homeSpace;
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [homeSpace, scrollRef]),
+  );
   // The team's layout for this flavour (order, on/off, words, numbers), else the app's own.
   const { entries, feed } = useHomeLayout(homeSpace);
   const lang = useLang();
@@ -420,7 +435,7 @@ export default function Home() {
             <Rail itemWidth={210}>
               {sec.items.map((h) => (
                 <View key={h.id} style={{ width: 210 }}>
-                  <HighlightCard h={h} height={260} compact />
+                  <HighlightCard h={h} height={260} compact stacked />
                 </View>
               ))}
               {sec.ideas.map((idea) => (
@@ -456,6 +471,7 @@ export default function Home() {
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <HomeBackdrop city={city} now={now} scrollY={scrollY} heroH={heroH} />
       <Animated.ScrollView
+        ref={scrollRef}
         key={cityId}
         onScroll={onScroll}
         scrollEventThrottle={16}

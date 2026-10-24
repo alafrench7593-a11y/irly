@@ -10,7 +10,7 @@ import { dayChip, whenLabel } from '@/lib/time';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useStore } from '@/state/store';
-import { radius, space } from '@/theme/tokens';
+import { radius } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { toast } from '../ui/Toast';
 import { AvatarStack } from '../ui/Avatar';
@@ -32,8 +32,10 @@ export const EventCard = memo(function EventCard({ event, width = 286, height = 
   const chip = dayChip(event.when, city);
   const people = peopleByIds(event.goingIds);
   const cat = EVENT_CATEGORIES[event.category];
+  // Save sits over the card, beside it in the tree (never a button inside a button).
   return (
-    <PressableScale ref={ref} onPress={onPress} style={{ width, height, opacity: hidden ? 0 : 1 }} accessibilityLabel={`${event.title}, ${whenLabel(event.when, city)}`}>
+    <View style={{ width, height, opacity: hidden ? 0 : 1 }}>
+    <PressableScale ref={ref} onPress={onPress} style={{ width, height }} accessibilityLabel={`${event.title}, ${whenLabel(event.when, city)}`}>
       <Photo visual={event.visual} light={city.light} scrim="strong" style={[styles.fill, { borderRadius: radius.lg, boxShadow: t.shadow.card }]} recyclingKey={event.id} width={700}>
         <View style={styles.top}>
           <Glass dark style={styles.dateChip}>
@@ -44,17 +46,6 @@ export const EventCard = memo(function EventCard({ event, width = 286, height = 
               {chip.day}
             </Text>
           </Glass>
-          <IconButton
-            icon="bookmark"
-            label={saved ? 'Remove from saved' : 'Save'}
-            variant="glass"
-            size={38}
-            active={saved}
-            onPress={() => {
-              const on = toggleSave(event.id);
-              if (on) toast('Saved', 'bookmark', 'brand');
-            }}
-          />
         </View>
         <View style={styles.bottom}>
           <View style={styles.row}>
@@ -87,6 +78,20 @@ export const EventCard = memo(function EventCard({ event, width = 286, height = 
         </View>
       </Photo>
     </PressableScale>
+      <View style={styles.save}>
+        <IconButton
+          icon="bookmark"
+          label={saved ? 'Remove from saved' : 'Save'}
+          variant="glass"
+          size={38}
+          active={saved}
+          onPress={() => {
+            const on = toggleSave(event.id);
+            if (on) toast('Saved', 'bookmark', 'brand');
+          }}
+        />
+      </View>
+    </View>
   );
 });
 
@@ -99,9 +104,12 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
   const toggleJoin = useStore((s) => s.toggleJoin);
   const people = peopleByIds(event.goingIds);
   const chip = dayChip(event.when, city);
+  // The row opens the event; Join sits over its bottom right corner, beside it in the tree
+  // (never a button inside a button), so the title and the date keep the card's whole width.
   return (
-    <PressableScale ref={ref} onPress={onPress} style={[styles.rowCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}>
+    <View style={[styles.rowCard, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}>
       <GlassLayer radius={radius.lg} />
+      <PressableScale ref={ref} onPress={onPress} style={styles.rowBody}>
       <Photo visual={event.visual} light={city.light} scrim="soft" style={styles.thumb} recyclingKey={event.id} width={300}>
         <View style={styles.thumbDate}>
           <Text variant="overline" tone="onDark" style={{ fontSize: 9 }}>
@@ -122,36 +130,36 @@ export const EventRow = memo(function EventRow({ event }: { event: IrlEvent }) {
         <Text variant="bodyS" tone="secondary" numberOfLines={1}>
           {whenLabel(event.when, city)} · {areaName(city, event.areaId)}
         </Text>
-        <View style={[styles.row, { marginTop: 6, justifyContent: 'space-between' }]}>
-          {/* The count gives way (« … ») so the join button keeps its place inside the card on a 375 pt phone. */}
-          <View style={[styles.row, styles.shrink]}>
-            <AvatarStack people={people} size={22} max={3} />
-            <Text variant="caption" tone="secondary" numberOfLines={1} style={styles.shrink}>
-              {goingCount(event, joined)} going · {formatPrice(event.price, city.currency)}
-            </Text>
-          </View>
-          <PressableScale
-            haptic={false}
-            scaleTo={0.9}
-            onPress={() => {
-              const on = toggleJoin(event.id);
-              haptic(on ? 'success' : 'tap');
-              if (on) toast("You're in", 'check');
-            }}
-            hitSlop={6}
-            style={[styles.joinMini, { backgroundColor: joined ? t.c.positiveSoft : t.c.brand }]}
-            accessibilityLabel={joined ? 'Leave' : 'Join'}
-          >
-            <Icon name={joined ? 'check' : 'plus'} size={16} color={joined ? t.c.positive : t.c.onBrand} strokeWidth={2.6} />
-          </PressableScale>
+        {/* The count gives way (« … ») so the join button keeps its place inside the card on a 375 pt phone. */}
+        <View style={[styles.row, styles.shrink, { marginTop: 6, paddingRight: 42 }]}>
+          <AvatarStack people={people} size={22} max={3} />
+          <Text variant="caption" tone="secondary" numberOfLines={1} style={styles.shrink}>
+            {goingCount(event, joined)} going · {formatPrice(event.price, city.currency)}
+          </Text>
         </View>
       </View>
-    </PressableScale>
+      </PressableScale>
+      <PressableScale
+        haptic={false}
+        scaleTo={0.9}
+        onPress={() => {
+          const on = toggleJoin(event.id);
+          haptic(on ? 'success' : 'tap');
+          if (on) toast("You're in", 'check');
+        }}
+        hitSlop={6}
+        style={[styles.joinMini, { backgroundColor: joined ? t.c.positiveSoft : t.c.brand }]}
+        accessibilityLabel={joined ? 'Leave' : 'Join'}
+      >
+        <Icon name={joined ? 'check' : 'plus'} size={16} color={joined ? t.c.positive : t.c.onBrand} strokeWidth={2.6} />
+      </PressableScale>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
   fill: { flex: 1, justifyContent: 'space-between' },
+  save: { position: 'absolute', top: 12, right: 12 },
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', padding: 12 },
   dateChip: { width: 52, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   bottom: { padding: 16, gap: 6 },
@@ -167,6 +175,7 @@ const styles = StyleSheet.create({
   },
   thumb: { width: 92, height: 108, borderRadius: radius.md, justifyContent: 'flex-end' },
   thumbDate: { padding: 8 },
-  joinMini: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginLeft: space[2], flexShrink: 0 },
+  rowBody: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  joinMini: { position: 'absolute', right: 10, bottom: 10, width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   shrink: { flexShrink: 1, minWidth: 0 },
 });
