@@ -637,7 +637,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'volleyball', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-13',
+    updated: '2026-10-25',
     title: 'Going Out Alone in Dubai Without Feeling Awkward | IRLY',
     description: 'How to go out alone in Dubai and enjoy it: plans that work solo, how to start a conversation without forcing it, and simple safety habits.',
     h1: 'Going out alone in Dubai without feeling awkward',
@@ -682,12 +682,22 @@ export const ARTICLES = [
 <p>In an emergency in the UAE, call <strong>999</strong> (police) or <strong>998</strong> (ambulance).</p>`,
       },
       {
+        h2: 'Your first solo outing, step by step',
+        html: `<ol>
+<li><strong>Pick one plan this week.</strong> Choose a class, a sports session or a community event with a set start time, not an open-ended night out.</li>
+<li><strong>Check it is open to newcomers.</strong> Read the description or message the organiser: “Can I come on my own for the first time?” The answer is almost always yes.</li>
+<li><strong>Decide how long you will stay.</strong> One hour is enough for a first time. If it goes well, stay longer.</li>
+<li><strong>Prepare one opening line.</strong> A simple question about the activity is enough; you do not need more.</li>
+<li><strong>Plan the next one before you leave.</strong> If you liked it, note the next date right away. Going back is what turns strangers into familiar faces.</li>
+</ol>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY helps you find plans that are made for joining alone: activities this week with people who want to meet, communities around what you like, and a group chat to say hello before you arrive. IRLY Girl offers spaces for women only. It is one option among others; what matters is going, and going back.</p>`,
       },
     ],
     cta: { title: 'Going out on your own?', body: 'Find an activity this week where joining alone is the norm.', label: 'Find an activity' },
-    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Activities for women in Dubai', path: 'dubai/activities-for-women/' }],
+    related: [{ label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Activities for women in Dubai', path: 'dubai/activities-for-women/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }],
   },
   {
     lang: 'fr',
@@ -696,7 +706,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'volleyball', after: 2 },
     city: 'Dubaï',
-    updated: '2026-10-13',
+    updated: '2026-10-25',
     title: 'Sortir seul à Dubaï sans être mal à l’aise | IRLY',
     description: 'Comment sortir seul à Dubaï et en profiter : les sorties qui marchent en solo, lancer une conversation sans forcer, et quelques réflexes de sécurité simples.',
     h1: 'Sortir seul à Dubaï sans être mal à l’aise',
@@ -741,12 +751,22 @@ export const ARTICLES = [
 <p>En cas d’urgence aux Émirats, appelle le <strong>999</strong> (police) ou le <strong>998</strong> (ambulance).</p>`,
       },
       {
+        h2: 'Ta première sortie en solo, étape par étape',
+        html: `<ol>
+<li><strong>Choisis une seule sortie cette semaine.</strong> Un cours, une séance de sport ou un événement de communauté avec une heure de début fixe, plutôt qu’une soirée sans programme.</li>
+<li><strong>Vérifie qu’elle est ouverte aux nouveaux.</strong> Lis la description ou écris à l’organisateur : « Je peux venir seul la première fois ? ». La réponse est presque toujours oui.</li>
+<li><strong>Décide combien de temps tu restes.</strong> Une heure suffit pour une première fois. Si ça se passe bien, reste plus longtemps.</li>
+<li><strong>Prépare une phrase d’accroche.</strong> Une question simple sur l’activité suffit ; pas besoin de plus.</li>
+<li><strong>Prévois la suivante avant de partir.</strong> Si tu as aimé, note la prochaine date tout de suite. C’est en revenant que des inconnus deviennent des visages familiers.</li>
+</ol>`,
+      },
+      {
         h2: 'La place d’IRLY',
         html: `<p>IRLY t’aide à trouver des sorties faites pour venir seul : des activités cette semaine avec des gens qui veulent rencontrer du monde, des communautés autour de ce que tu aimes, et un chat de groupe pour dire bonjour avant d’arriver. IRLY Girl propose des espaces réservés aux femmes. C’est une option parmi d’autres ; ce qui compte, c’est d’y aller, et d’y retourner.</p>`,
       },
     ],
     cta: { title: 'Tu sors seul ?', body: 'Trouve une activité cette semaine où venir seul est la norme.', label: 'Trouver une activité' },
-    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }],
+    related: [{ label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Activités entre femmes à Dubaï', path: 'fr/dubai/activites-entre-femmes/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }],
   },
   {
     lang: 'en',
