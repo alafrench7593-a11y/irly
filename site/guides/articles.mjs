@@ -1359,7 +1359,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'brunch', after: 2 },
     city: 'Life abroad',
-    updated: '2026-10-16',
+    updated: '2026-10-26',
     title: 'Rebuilding Your Social Life After Moving Abroad | IRLY',
     description: 'Moved abroad and starting from zero socially? Why it feels harder than expected, a simple plan for the first three months, and how to turn new faces into real friends.',
     h1: 'Rebuilding your social life after moving abroad',
@@ -1407,6 +1407,17 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'If small talk drains you',
+        html: `<p>Meeting new people every week is tiring, especially if you are more of an introvert or you are speaking a language that is not your own. You do not have to change who you are; you can choose formats that suit you.</p>
+<ul>
+<li><strong>Choose activities with a task.</strong> A class, a sport, a volunteering shift or a game night gives everyone something to do, so conversation comes naturally instead of being the whole point.</li>
+<li><strong>Prefer small groups.</strong> Four to six people are easier to get to know than a crowded party.</li>
+<li><strong>Go back to the same place.</strong> With familiar faces, each visit is a little less tiring than the one before.</li>
+<li><strong>Plan time to recharge.</strong> A quiet evening after a social one is part of the plan, not a step back.</li>
+<li><strong>Prepare two or three questions</strong> you can ask anyone: what brought them here, what they do at weekends, what they would recommend nearby.</li>
+</ul>`,
+      },
+      {
         h2: 'When friends leave',
         html: `<p>In cities with many newcomers, people also leave often, for a new job or back home. It hurts, and it is part of life abroad.</p>
 <ul>
@@ -1425,7 +1436,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Starting over somewhere new?', body: 'Join a community around what you like and find people to do things with, in real life.', label: 'Find my people' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'How to make friends in Bali', path: 'bali/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Bali for digital nomads', path: 'bali/digital-nomads/' }],
   },
   {
     lang: 'fr',
@@ -1434,7 +1445,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'brunch', after: 2 },
     city: 'Vie à l’étranger',
-    updated: '2026-10-16',
+    updated: '2026-10-26',
     title: 'Reconstruire sa vie sociale après une expatriation | IRLY',
     description: 'Tu t’es expatrié et tu repars de zéro côté amis ? Pourquoi c’est plus dur que prévu, un plan simple pour les trois premiers mois, et comment transformer des connaissances en vrais amis.',
     h1: 'Reconstruire sa vie sociale après une expatriation',
@@ -1482,6 +1493,17 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'Si les conversations de surface t’épuisent',
+        html: `<p>Rencontrer de nouvelles personnes chaque semaine fatigue, surtout si tu es plutôt introverti ou si tu parles une langue qui n’est pas la tienne. Pas besoin de changer qui tu es : tu peux choisir des formats qui te conviennent.</p>
+<ul>
+<li><strong>Choisis des activités avec une tâche.</strong> Un cours, un sport, du bénévolat ou une soirée jeux donnent à chacun quelque chose à faire : la conversation vient naturellement au lieu d’être le seul objectif.</li>
+<li><strong>Préfère les petits groupes.</strong> Quatre à six personnes, c’est plus facile à connaître qu’une soirée bondée.</li>
+<li><strong>Retourne au même endroit.</strong> Avec des visages familiers, chaque visite fatigue un peu moins que la précédente.</li>
+<li><strong>Prévois du temps pour souffler.</strong> Une soirée calme après une soirée sociale fait partie du plan, ce n’est pas un recul.</li>
+<li><strong>Prépare deux ou trois questions</strong> à poser à n’importe qui : ce qui l’a amené ici, ce qu’il fait le week-end, ce qu’il recommande dans le coin.</li>
+</ul>`,
+      },
+      {
         h2: 'Quand des amis partent',
         html: `<p>Dans les villes où arrivent beaucoup de nouveaux, les gens repartent souvent aussi, pour un nouveau poste ou pour rentrer. Ça fait mal, et ça fait partie de la vie à l’étranger.</p>
 <ul>
@@ -1500,7 +1522,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu repars de zéro ailleurs ?', body: 'Rejoins une communauté autour de ce que tu aimes et trouve des gens avec qui faire des choses, en vrai.', label: 'Trouver mes gens' },
-    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }],
+    related: [{ label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se faire des amis à Bali', path: 'fr/bali/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Bali pour les digital nomads', path: 'fr/bali/digital-nomads/' }],
   },
 ];
 
