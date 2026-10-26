@@ -88,9 +88,11 @@ select pg_temp.check(pg_temp.fails($$insert into public.crm_contacts (first_name
   'nor of a moderator');
 select pg_temp.check(pg_temp.fails($$insert into public.crm_stage_history (contact_id, to_stage) values ('a0f00000-0000-0000-0000-0000000000c1', 'lost')$$) = '42501',
   'the history cannot be written by the app');
-select pg_temp.check(pg_temp.fails($$delete from public.crm_contacts where id = 'a0f00000-0000-0000-0000-0000000000c1'$$) = '42501',
-  'contacts are archived, never deleted');
-select pg_temp.check(pg_temp.fails($$delete from public.crm_organizations$$) = '42501', 'organisations are never deleted');
+-- Refused outright where the grant is missing, a no-op under RLS where a broad grant exists (as on Supabase).
+select pg_temp.fails($$delete from public.crm_contacts where id = 'a0f00000-0000-0000-0000-0000000000c1'$$);
+select pg_temp.fails($$delete from public.crm_organizations$$);
+select pg_temp.check((select count(*) from public.crm_contacts where id = 'a0f00000-0000-0000-0000-0000000000c1') = 1, 'contacts are archived, never deleted');
+select pg_temp.check((select count(*) from public.crm_organizations where id = 'a0f00000-0000-0000-0000-0000000000b1') = 1, 'organisations are never deleted');
 
 insert into public.crm_partnerships (id, title, kind, status, organization_id, starts_on, ends_on, budget)
 values ('a0f00000-0000-0000-0000-0000000000d1', 'Launch run series', 'event_organizer', 'negotiating', 'a0f00000-0000-0000-0000-0000000000b1', current_date, current_date + 30, 1500);
@@ -144,7 +146,7 @@ select pg_temp.check((select stage from public.crm_contacts where id = 'a0f00000
   'their updates change nothing');
 
 select pg_temp.as_anon();
-select pg_temp.check(pg_temp.fails($$select count(*) from public.crm_contacts$$) = '42501', 'signed out: no access at all');
+select pg_temp.check(coalesce(pg_temp.fails($$select 1 / (select count(*)::int from public.crm_contacts)$$), '') in ('42501', '22012'), 'signed out: no access at all');
 select pg_temp.as_admin();
 
 -- Leave the shared test database as it was.
