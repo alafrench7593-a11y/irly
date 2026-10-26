@@ -50,6 +50,7 @@ export default function AdminHome() {
               Sections
             </Text>
             <View style={{ gap: 8 }}>
+              {admin ? <Button label="CRM" icon="briefcase" full onPress={() => router.push('/admin/crm')} /> : null}
               <Button label="Users" icon="users" variant="secondary" full onPress={() => router.push('/admin/members')} />
               <Button label="Communities" icon="network" variant="secondary" full onPress={() => router.push('/admin/communities')} />
               <Button label="Activities and posts" icon="layers" variant="secondary" full onPress={() => router.push('/admin/content')} />
