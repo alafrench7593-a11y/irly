@@ -18,6 +18,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'IRLY moderators only': 'IRLY moderators only',
   'last owner: hand over ownership in Back office → Team before deleting this account': 'You are the only owner of the IRLY back office. Hand ownership over in Back office → Team, then delete your account.',
   'choose another member': 'Choose another member',
+  'the person in charge must be an admin of the back office': 'The person in charge must be an owner or admin of the back office',
   'type OWNER to confirm': 'Type OWNER to confirm',
   'this member is suspended': 'This member is suspended',
   'unknown space': 'Unknown space',
