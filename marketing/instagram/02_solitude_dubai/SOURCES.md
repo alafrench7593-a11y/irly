@@ -31,3 +31,7 @@ Elles montrent le bandeau « Démo · rien n'est enregistré » et des profils d
 
 ## Logo
 Logo IRLY en points, dessiné par le script (mêmes lettres que `src/brand/dots.ts`).
+
+## Version TikTok texte sur photo (`TIKTOK_TEXTE/`)
+Une photo par slide, déjà listées plus haut : newcomerGirl-hd (1), dubaiMarina-1 (2), apartment-1 (3), girlWork-2 (4), photography-1 (5), girlChill-1 (6), runMix (7), footballMix (8), dubaiNight-1 (9), dubaiNight-2 (10), en version 2400 px pour la banque Pixabay.
+Captures de l'app : people (7), activities et categories (8), home Mixte et home Girl (9). Police : TikTok Sans (licence OFL, `marketing/tiktok/_tools/fonts`).

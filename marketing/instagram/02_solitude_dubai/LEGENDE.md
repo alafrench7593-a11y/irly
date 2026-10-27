@@ -3,8 +3,9 @@
 10 slides, 3 images par slide.
 - Instagram : `FR/01.png` … `FR/10.png` (1080 × 1350)
 - TikTok : `TIKTOK/01.png` … `TIKTOK/10.png` (1080 × 1920, marges pour les onglets et la légende)
-- Aperçu : `apercu.png`
-- Rendu : `node marketing/instagram/02_solitude_dubai/render.mjs` (Playwright). Le script échoue si une slide n'a pas 3 images ou si un texte déborde.
+- TikTok texte sur photo : `TIKTOK_TEXTE/01.png` … `TIKTOK_TEXTE/10.png` (1080 × 1920, une photo plein écran, titre en bandeaux blancs façon TikTok, captures de l'app sur les slides 7 à 10)
+- Aperçus : `apercu.png` (Instagram), `apercu-tiktok-texte.png`
+- Rendu : `node marketing/instagram/02_solitude_dubai/render.mjs` (Playwright). Le script échoue si une slide n'a pas 3 images ou si un texte déborde. Version texte sur photo : `node marketing/instagram/02_solitude_dubai/render-tiktok.mjs` (échoue si un texte sort de la zone sûre TikTok).
 
 IRLY n'est pas encore public (TestFlight) : aucun texte ne promet un téléchargement immédiat.
 
@@ -26,7 +27,7 @@ Bientôt disponible. Suis @irlyofficial pour ne pas rater le lancement 🤍
 
 ## Version TikTok
 
-Format : diaporama photo, les 10 images de `TIKTOK/`. Son : une musique calme et tendance de la bibliothèque TikTok, à choisir dans l'app au moment de publier.
+Format : diaporama photo, les 10 images de `TIKTOK_TEXTE/` (recommandé, texte sur photo) ou de `TIKTOK/`. Son : une musique calme et tendance de la bibliothèque TikTok, à choisir dans l'app au moment de publier.
 
 Accroche à mettre en texte sur la 1re image si besoin : « POV : tu vis à Dubaï mais tu n'as personne à appeler un vendredi soir »
 
