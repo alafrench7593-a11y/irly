@@ -85,11 +85,19 @@ const OWN_BG = [
   ['newcomerGirl', '50% 40%', 'hd', 0.85], ['nightDinner', '50% 50%'], ['promenadeGirl', '40% 50%', '1200', 1.25], ['poolGirl', '50% 50%'], ['runGirl', '50% 40%'],
   ['readingGirl', '50% 50%'], ['runMix', '50% 50%'], ['footballMix', '50% 50%'], ['dinnerMix', '50% 50%'], ['yachtGirl', '50% 50%'],
 ];
+// --envoyees : les 5 photos envoyées le 2026-10-27 (_src/), complétées par 5 photos IRLY.
+const SENT = process.argv.includes('--envoyees');
+const sent = (f) => img(`marketing/instagram/02_solitude_dubai/_src/${f}`);
+const SENT_BG = [
+  [sent('creek-arche.webp'), '50% 60%'], [sent('creek-foule.webp'), '50% 70%'], [sent('burj-nuit.webp'), '50% 50%'], [own('poolGirl'), '50% 50%'], [sent('creek-passerelle.webp'), '60% 50%'],
+  [own('readingGirl'), '50% 50%'], [own('runMix'), '50% 50%'], [own('footballMix'), '50% 50%'], [own('dinnerMix'), '50% 50%'], [sent('creek-amies.webp'), '55% 50%'],
+];
+if (SENT) SLIDES.forEach((s, i) => Object.assign(s, { bg: SENT_BG[i][0], pos: SENT_BG[i][1], bri: 0.9 }));
 // --sans-captures : aucune capture de l'app, seulement les photos.
 const NO_SHOTS = process.argv.includes('--sans-captures');
 if (NO_SHOTS) SLIDES.forEach((s) => delete s.phones);
 if (OWN) SLIDES.forEach((s, i) => Object.assign(s, { bg: own(OWN_BG[i][0], OWN_BG[i][2]), pos: OWN_BG[i][1], bri: OWN_BG[i][3] }));
-const out = path.join(dir, OWN ? (NO_SHOTS ? 'TIKTOK_PHOTOS_IRLY_SEULES' : 'TIKTOK_PHOTOS_IRLY') : 'TIKTOK_TEXTE');
+const out = path.join(dir, SENT ? 'TIKTOK_PHOTOS_ENVOYEES' : OWN ? (NO_SHOTS ? 'TIKTOK_PHOTOS_IRLY_SEULES' : 'TIKTOK_PHOTOS_IRLY') : 'TIKTOK_TEXTE');
 fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });

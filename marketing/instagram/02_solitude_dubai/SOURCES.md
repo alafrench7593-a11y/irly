@@ -41,3 +41,9 @@ Uniquement des photos fournies par l'équipe IRLY (`site/img/own/`) : newcomerGi
 Plus les captures réelles de l'app sur les slides 7 à 9. Les photos IRLY font 675 à 1080 px de large : agrandies pour 1080 × 1920, elles restent un peu moins nettes que les photos de banque en 2400 px.
 
 `TIKTOK_PHOTOS_IRLY_SEULES/` : les mêmes 10 photos IRLY, sans capture de l'app.
+
+## Version TikTok photos envoyées (`TIKTOK_PHOTOS_ENVOYEES/`)
+Cinq photos envoyées par la personne qui gère IRLY le 2026-10-27, copiées sans retouche dans `_src/` :
+creek-arche (1), creek-foule (2), burj-nuit (3), creek-passerelle (5), creek-amies (10).
+Complétées par des photos IRLY de `site/img/own/` : poolGirl (4), readingGirl (6), runMix (7), footballMix (8), dinnerMix (9).
+Avant publication : confirmer les droits sur ces cinq photos (auteur et personnes visibles), certaines ressemblent à des photos professionnelles publiées en ligne.
