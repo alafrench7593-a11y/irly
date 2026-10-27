@@ -1,7 +1,7 @@
 /**
  * « Seul à Dubaï ? » version TikTok, texte sur photo : 10 slides 1080×1920.
  *   node marketing/instagram/02_solitude_dubai/render-tiktok.mjs
- * Écrit TIKTOK_TEXTE/01.png … 10.png. Une photo plein écran par slide, le
+ * Écrit TIKTOK_TEXTE/01.png … 10.png ; avec --own, TIKTOK_PHOTOS_IRLY/ (photos IRLY seulement). Une photo plein écran par slide, le
  * titre en bandeaux blancs (l'outil texte de TikTok), le texte dessous.
  * Les slides 7 à 10 gardent les captures réelles de l'app dans un téléphone.
  * Le texte reste dans la zone sûre (onglets en haut, icônes à droite,
@@ -76,10 +76,17 @@ function html(s) {
     extra.push(`<div class="note" data-zone style="top:calc(var(--py) + var(--ph) + 18px)">${NOTE}</div>`);
   }
   if (s.ctas) extra.push(`<div class="ctas" data-zone style="top:var(--py)">${s.ctas.map((c, k) => `<div class="cta${k ? '' : ' main'}"><span>${fr(c)}</span></div>`).join('')}</div>`);
-  return `<div class="s"><div class="bg" style="background-image:url(${s.bg});--pos:${s.pos}"></div><div class="shade"></div><div class="bot"></div>${text}${extra.join('')}</div>`;
+  return `<div class="s"><div class="bg" style="background-image:url(${s.bg});--pos:${s.pos}${s.bri ? `;--b:${s.bri}` : ''}"></div><div class="shade"></div><div class="bot"></div>${text}${extra.join('')}</div>`;
 }
 
-const out = path.join(dir, 'TIKTOK_TEXTE');
+// --own : uniquement les photos fournies par l'équipe IRLY (site/img/own).
+const OWN = process.argv.includes('--own');
+const OWN_BG = [
+  ['newcomerGirl', '50% 40%', 'hd', 0.85], ['nightDinner', '50% 50%'], ['promenadeGirl', '40% 50%', '1200', 1.25], ['poolGirl', '50% 50%'], ['runGirl', '50% 40%'],
+  ['readingGirl', '50% 50%'], ['runMix', '50% 50%'], ['footballMix', '50% 50%'], ['dinnerMix', '50% 50%'], ['yachtGirl', '50% 50%'],
+];
+if (OWN) SLIDES.forEach((s, i) => Object.assign(s, { bg: own(OWN_BG[i][0], OWN_BG[i][2]), pos: OWN_BG[i][1], bri: OWN_BG[i][3] }));
+const out = path.join(dir, OWN ? 'TIKTOK_PHOTOS_IRLY' : 'TIKTOK_TEXTE');
 fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });

@@ -35,3 +35,7 @@ Logo IRLY en points, dessiné par le script (mêmes lettres que `src/brand/dots.
 ## Version TikTok texte sur photo (`TIKTOK_TEXTE/`)
 Une photo par slide, déjà listées plus haut : newcomerGirl-hd (1), dubaiMarina-1 (2), apartment-1 (3), girlWork-2 (4), photography-1 (5), girlChill-1 (6), runMix (7), footballMix (8), dubaiNight-1 (9), dubaiNight-2 (10), en version 2400 px pour la banque Pixabay.
 Captures de l'app : people (7), activities et categories (8), home Mixte et home Girl (9). Police : TikTok Sans (licence OFL, `marketing/tiktok/_tools/fonts`).
+
+## Version TikTok photos IRLY (`TIKTOK_PHOTOS_IRLY/`)
+Uniquement des photos fournies par l'équipe IRLY (`site/img/own/`) : newcomerGirl-hd (1), nightDinner (2), promenadeGirl (3), poolGirl (4), runGirl (5), readingGirl (6), runMix (7), footballMix (8), dinnerMix (9), yachtGirl (10).
+Plus les captures réelles de l'app sur les slides 7 à 9. Les photos IRLY font 675 à 1080 px de large : agrandies pour 1080 × 1920, elles restent un peu moins nettes que les photos de banque en 2400 px.
