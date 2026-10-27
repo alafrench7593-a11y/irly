@@ -5,6 +5,7 @@
 - TikTok : `TIKTOK/01.png` … `TIKTOK/10.png` (1080 × 1920, marges pour les onglets et la légende)
 - TikTok texte sur photo : `TIKTOK_TEXTE/01.png` … `TIKTOK_TEXTE/10.png` (1080 × 1920, une photo plein écran, titre en bandeaux blancs façon TikTok, captures de l'app sur les slides 7 à 10)
 - TikTok texte sur photo, uniquement avec les photos IRLY : `TIKTOK_PHOTOS_IRLY/01.png` … `10.png` (rendu : `render-tiktok.mjs --own`)
+- TikTok, 10 photos IRLY sans aucune capture de l'app : `TIKTOK_PHOTOS_IRLY_SEULES/01.png` … `10.png` (rendu : `render-tiktok.mjs --own --sans-captures`, aperçu `apercu-tiktok-photos-seules.png`)
 - Aperçus : `apercu.png` (Instagram), `apercu-tiktok-texte.png`, `apercu-tiktok-photos-irly.png`
 - Rendu : `node marketing/instagram/02_solitude_dubai/render.mjs` (Playwright). Le script échoue si une slide n'a pas 3 images ou si un texte déborde. Version texte sur photo : `node marketing/instagram/02_solitude_dubai/render-tiktok.mjs` (échoue si un texte sort de la zone sûre TikTok).
 

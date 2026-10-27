@@ -39,3 +39,5 @@ Captures de l'app : people (7), activities et categories (8), home Mixte et home
 ## Version TikTok photos IRLY (`TIKTOK_PHOTOS_IRLY/`)
 Uniquement des photos fournies par l'équipe IRLY (`site/img/own/`) : newcomerGirl-hd (1), nightDinner (2), promenadeGirl (3), poolGirl (4), runGirl (5), readingGirl (6), runMix (7), footballMix (8), dinnerMix (9), yachtGirl (10).
 Plus les captures réelles de l'app sur les slides 7 à 9. Les photos IRLY font 675 à 1080 px de large : agrandies pour 1080 × 1920, elles restent un peu moins nettes que les photos de banque en 2400 px.
+
+`TIKTOK_PHOTOS_IRLY_SEULES/` : les mêmes 10 photos IRLY, sans capture de l'app.

@@ -85,8 +85,11 @@ const OWN_BG = [
   ['newcomerGirl', '50% 40%', 'hd', 0.85], ['nightDinner', '50% 50%'], ['promenadeGirl', '40% 50%', '1200', 1.25], ['poolGirl', '50% 50%'], ['runGirl', '50% 40%'],
   ['readingGirl', '50% 50%'], ['runMix', '50% 50%'], ['footballMix', '50% 50%'], ['dinnerMix', '50% 50%'], ['yachtGirl', '50% 50%'],
 ];
+// --sans-captures : aucune capture de l'app, seulement les photos.
+const NO_SHOTS = process.argv.includes('--sans-captures');
+if (NO_SHOTS) SLIDES.forEach((s) => delete s.phones);
 if (OWN) SLIDES.forEach((s, i) => Object.assign(s, { bg: own(OWN_BG[i][0], OWN_BG[i][2]), pos: OWN_BG[i][1], bri: OWN_BG[i][3] }));
-const out = path.join(dir, OWN ? 'TIKTOK_PHOTOS_IRLY' : 'TIKTOK_TEXTE');
+const out = path.join(dir, OWN ? (NO_SHOTS ? 'TIKTOK_PHOTOS_IRLY_SEULES' : 'TIKTOK_PHOTOS_IRLY') : 'TIKTOK_TEXTE');
 fs.mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROME || '/opt/pw-browsers/chromium' });
 const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
