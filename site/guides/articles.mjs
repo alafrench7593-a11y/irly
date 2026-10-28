@@ -1101,7 +1101,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'running', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-18',
+    updated: '2026-10-27',
     title: 'Activities for Women in Dubai: Where to Meet Other Women | IRLY',
     description: 'Activities for women in Dubai to meet other women: classes, sport, culture and communities, women-only options, and simple habits to feel at ease.',
     h1: 'Activities for women in Dubai: where to meet other women',
@@ -1140,6 +1140,16 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'Can’t find the group you want? Start a small one',
+        html: `<p>If no group matches what you like, starting one is often simpler than it sounds, and other women are usually glad someone took the first step.</p>
+<ol>
+<li><strong>Pick one simple activity.</strong> A weekly walk, a coffee after a class, a book to read together. Simple plans are easier to join.</li>
+<li><strong>Choose a fixed time and a public place.</strong> The same day and time each week makes it easy to come back without new messages every time.</li>
+<li><strong>Start with two or three people.</strong> A colleague, a neighbour, someone from your class. A small group grows when each person brings a friend.</li>
+<li><strong>Keep it going even when few come.</strong> A quiet week is normal; regularity is what turns a plan into a group.</li>
+</ol>`,
+      },
+      {
         h2: 'Simple habits to feel safe and at ease',
         html: `<ul>
 <li><strong>Meet in public places first.</strong> A studio, a café or a busy park is the right setting for the first meetings.</li>
@@ -1155,7 +1165,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Looking for other women to go out with?', body: 'Discover IRLY Girl: activities and communities reserved for women.', label: 'Discover IRLY Girl', href: '/girl' },
-    related: [{ label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }],
+    related: [{ label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' }, { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Moving to Dubai: a checklist for your first months', path: 'dubai/moving-to-dubai/' }],
   },
   {
     lang: 'fr',
@@ -1164,7 +1174,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'running', after: 1 },
     city: 'Dubaï',
-    updated: '2026-10-18',
+    updated: '2026-10-27',
     title: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes | IRLY',
     description: 'Des activités entre femmes à Dubaï pour rencontrer d’autres femmes : cours, sport, culture et communautés, options réservées aux femmes, et réflexes simples pour être à l’aise.',
     h1: 'Activités entre femmes à Dubaï : où rencontrer d’autres femmes',
@@ -1203,6 +1213,16 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'Tu ne trouves pas le groupe qu’il te faut ? Lance-en un petit',
+        html: `<p>Si aucun groupe ne correspond à ce que tu aimes, en lancer un est souvent plus simple qu’on ne le pense, et les autres femmes sont généralement contentes que quelqu’un fasse le premier pas.</p>
+<ol>
+<li><strong>Choisis une activité simple.</strong> Une balade chaque semaine, un café après un cours, un livre à lire ensemble. Un plan simple est plus facile à rejoindre.</li>
+<li><strong>Fixe un horaire et un lieu public.</strong> Le même jour à la même heure chaque semaine permet de revenir sans avoir à tout réorganiser.</li>
+<li><strong>Commence à deux ou trois.</strong> Une collègue, une voisine, quelqu’un de ton cours. Un petit groupe grandit quand chacune amène une amie.</li>
+<li><strong>Continue même quand peu de monde vient.</strong> Une semaine calme, c’est normal ; c’est la régularité qui transforme un plan en groupe.</li>
+</ol>`,
+      },
+      {
         h2: 'Des réflexes simples pour être à l’aise et en sécurité',
         html: `<ul>
 <li><strong>Retrouvez-vous d’abord dans des lieux publics.</strong> Un studio, un café ou un parc fréquenté conviennent aux premières rencontres.</li>
@@ -1218,7 +1238,7 @@ export const ARTICLES = [
       },
     ],
     cta: { title: 'Tu cherches d’autres femmes avec qui sortir ?', body: 'Découvre IRLY Girl : des activités et des communautés réservées aux femmes.', label: 'Découvrir IRLY Girl', href: '/fr/girl' },
-    related: [{ label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }],
+    related: [{ label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' }, { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' }, { label: 'S’installer à Dubaï : la checklist des premiers mois', path: 'fr/dubai/s-installer/' }],
   },
   {
     lang: 'en',
