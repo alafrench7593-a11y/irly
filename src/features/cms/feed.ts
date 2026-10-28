@@ -8,7 +8,7 @@ import { useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
 import type { AppSpace } from '@/state/appSpace';
 import { checkLayout, type LayoutEntry } from './layout';
-import { cleanFeed, cleanNews, type HomeFeed, type NewsArticle, type NewsCard } from './model';
+import { cleanFeed, cleanNews, cleanPoll, type HomeFeed, type NewsArticle, type NewsCard, type NewsPoll } from './model';
 
 export * from './model';
 
@@ -181,4 +181,17 @@ export function useKnownNews(id: string | undefined): NewsCard | undefined {
     }
     return undefined;
   });
+}
+
+/**
+ * Votes on a news item's poll, or changes the vote (news_poll_vote): the
+ * server checks that this account may read the item now and answers with
+ * the poll's new counts.
+ */
+export async function voteNewsPoll(id: string, option: number): Promise<NewsPoll | undefined> {
+  if (DEMO && !supabase) return cleanPoll((await import('./demo')).demoCms('news_poll_vote', { p_id: id, p_option: option }));
+  if (!supabase) throw new Error('Not connected');
+  const { data, error } = await supabase.rpc('news_poll_vote', { p_id: id, p_option: option });
+  if (error) throw new Error(error.message);
+  return cleanPoll(data);
 }

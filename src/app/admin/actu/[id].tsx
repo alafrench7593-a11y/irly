@@ -89,6 +89,9 @@ type Form = {
   cta_label: string;
   cta_url: string;
   notify: boolean;
+  pollOn: boolean;
+  question: string;
+  options: string[];
 };
 
 const formOf = (n: AdminNews | null): Form => ({
@@ -104,9 +107,27 @@ const formOf = (n: AdminNews | null): Form => ({
   cta_label: n?.cta_label ?? '',
   cta_url: n?.cta_url ?? '',
   notify: n?.notify ?? false,
+  pollOn: Boolean(n?.poll),
+  question: n?.poll?.question ?? '',
+  options: n?.poll?.options ?? ['', ''],
 });
 
-const draftOf = (f: Form): NewsDraft => ({
+/** The poll as written: a question and its non-empty answers (trimmed). */
+const pollOf = (f: Form) => ({ question: f.question.trim(), options: f.options.map((o) => o.trim()).filter(Boolean) });
+
+/** What is wrong with the poll as written, or null when the server will take it. */
+function pollProblem(f: Form): string | null {
+  if (!f.pollOn) return null;
+  const p = pollOf(f);
+  if (p.question.length < 3) return 'Write the poll question (3 to 140 characters)';
+  if (p.options.length < 2) return 'A poll needs 2 to 6 different answers';
+  if (new Set(p.options.map((o) => o.toLowerCase())).size !== p.options.length) return 'A poll needs 2 to 6 different answers';
+  return null;
+}
+
+// A poll people voted on is never sent: the server keeps it as it is.
+const draftOf = (f: Form, pollFixed: boolean): NewsDraft => ({
+  ...(pollFixed ? {} : { poll: f.pollOn ? pollOf(f) : null }),
   title: f.title.trim(),
   subtitle: f.subtitle.trim() || null,
   body: f.body.trim(),
@@ -132,7 +153,9 @@ function Editor({ n, reload }: { n: AdminNews | null; reload: () => void }) {
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
   const state = n?.state ?? 'draft';
   const live = Boolean(n?.went_live_at || n?.notified_at);
-  const valid = f.title.trim().length >= 3 && isDestination(f.cta_url.trim()) && (!f.cta_url.trim() || f.cta_label.trim().length > 0);
+  const pollFixed = (n?.poll?.total ?? 0) > 0;
+  const pollIssue = pollFixed ? null : pollProblem(f);
+  const valid = f.title.trim().length >= 3 && isDestination(f.cta_url.trim()) && (!f.cta_url.trim() || f.cta_label.trim().length > 0) && !pollIssue;
   const at = parseLocal(when);
 
   // Saves first (a new item becomes a draft), then the action: nothing is published from a form that did not save.
@@ -140,7 +163,7 @@ function Editor({ n, reload }: { n: AdminNews | null; reload: () => void }) {
     setBusy(key);
     setError(null);
     try {
-      const saved = await saveNews(id, draftOf(f));
+      const saved = await saveNews(id, draftOf(f, pollFixed));
       setId(saved);
       if (action) await action(saved);
       toast(done, 'check', 'brand');
@@ -205,6 +228,12 @@ function Editor({ n, reload }: { n: AdminNews | null; reload: () => void }) {
     video: Boolean(f.video_path),
     gallery_paths: f.gallery_paths,
     video_path: f.video_path ?? undefined,
+    has_poll: pollFixed || f.pollOn,
+    poll: pollFixed && n?.poll
+      ? { ...n.poll, myVote: null }
+      : f.pollOn && !pollIssue
+        ? { ...pollOf(f), counts: pollOf(f).options.map(() => 0), total: 0, myVote: null }
+        : undefined,
   };
 
   return (
@@ -217,7 +246,7 @@ function Editor({ n, reload }: { n: AdminNews | null; reload: () => void }) {
 
         {preview ? (
           <View style={styles.preview} testID="news-preview">
-            <NewsArticleView item={article} />
+            <NewsArticleView item={article} preview />
           </View>
         ) : (
           <>
@@ -260,6 +289,51 @@ function Editor({ n, reload }: { n: AdminNews | null; reload: () => void }) {
                   <Button size="sm" variant="secondary" icon="video" label="Add a video (25 MB at most)" loading={videoStep !== null} onPress={() => void addVideo()} />
                 )}
               </View>
+            </Card>
+
+            <Card>
+              <Text variant="label">Poll (optional)</Text>
+              {pollFixed && n?.poll ? (
+                <View style={{ gap: 6 }} testID="news-poll-fixed">
+                  <Text variant="bodyS" raw>
+                    {n.poll.question}
+                  </Text>
+                  {n.poll.options.map((o, i) => (
+                    <Text key={`${i}-${o}`} variant="bodyS" tone="secondary" raw>
+                      {`• ${o} · ${n.poll?.counts[i] ?? 0}`}
+                    </Text>
+                  ))}
+                  <Text variant="caption" tone="tertiary">
+                    {tx('{n} votes: the poll can no longer change.', { n: n.poll.total })}
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Toggle label="Add a poll to this news item" value={f.pollOn} onChange={(v) => set('pollOn', v)} />
+                  {f.pollOn ? (
+                    <>
+                      <AdminInput value={f.question} onChange={(v) => set('question', v)} placeholder="Question (3 to 140 characters)" label="Poll question" max={140} />
+                      {f.options.map((o, i) => (
+                        <View key={i} style={adminStyles.row}>
+                          <View style={{ flex: 1 }}>
+                            <AdminInput value={o} onChange={(v) => set('options', f.options.map((x, j) => (j === i ? v : x)))} placeholder="Answer" label="Poll answer" max={60} />
+                          </View>
+                          {f.options.length > 2 ? <Button size="sm" variant="ghost" icon="x" label="Remove" onPress={() => set('options', f.options.filter((_, j) => j !== i))} /> : null}
+                        </View>
+                      ))}
+                      {f.options.length < 6 ? <Button size="sm" variant="secondary" icon="plus" label="Add an answer" onPress={() => set('options', [...f.options, ''])} /> : null}
+                      {pollIssue ? (
+                        <Text variant="caption" tone="live">
+                          {pollIssue}
+                        </Text>
+                      ) : null}
+                      <Text variant="caption" tone="tertiary">
+                        Members who can see the item vote once and can change their answer. Once someone voted, the poll can no longer change.
+                      </Text>
+                    </>
+                  ) : null}
+                </>
+              )}
             </Card>
 
             <Card>
