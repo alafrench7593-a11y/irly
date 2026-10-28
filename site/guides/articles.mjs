@@ -1247,7 +1247,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'running', after: 4 },
     city: 'Dubai',
-    updated: '2026-10-15',
+    updated: '2026-10-28',
     title: 'Moving to Dubai: A Checklist for Your First Months | IRLY',
     description: 'Moving to Dubai? A practical checklist for your first months: what to sort first, finding a home, getting around, health insurance and a social life from week one.',
     h1: 'Moving to Dubai: a checklist for your first months',
@@ -1299,12 +1299,23 @@ export const ARTICLES = [
 <p>For more ideas, read <a href="../make-friends/">how to make friends in Dubai</a> and <a href="../group-activities/">15 group activities to meet people</a>.</p>`,
       },
       {
+        h2: 'When the excitement wears off',
+        html: `<p>Many people find the first weeks busy and exciting, then feel a dip once the paperwork is done and the novelty fades. If that happens to you, it does not mean the move was a mistake. It usually means the practical side is settled and the social side has not caught up yet.</p>
+<ul>
+<li><strong>Keep the routine you started,</strong> even on weeks when you don’t feel like going. Familiar faces come from showing up again.</li>
+<li><strong>Turn one acquaintance into a plan:</strong> suggest a coffee or a walk to someone you have already met twice.</li>
+<li><strong>Stay in touch with home,</strong> but not instead of going out: a call before an evening plan works better than a call instead of it.</li>
+<li><strong>Talk to someone</strong> if the low feeling lasts or gets heavier. Your doctor or your health insurer can point you to support.</li>
+</ul>
+<p>For more on this stage, read <a href="../lonely/">lonely in Dubai: what actually helps</a> and <a href="../../guides/social-life-after-moving-abroad/">rebuilding your social life after moving abroad</a>.</p>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY helps with the social side of moving: join communities around what you like, find activities near you and meet people in real life. IRLY VISA, a service to help with paperwork, is coming soon; you can ask to be told when it opens. IRLY is one option among others; for any procedure, the official sources above are the ones to follow.</p>`,
       },
     ],
     cta: { title: 'Just moved to Dubai?', body: 'Meet people from your first week, and ask to be told when IRLY VISA opens.', label: 'Get notified' },
-    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }],
+    related: [{ label: 'How to make friends in Dubai', path: 'dubai/make-friends/' }, { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' }, { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' }, { label: 'Rebuilding your social life after moving abroad', path: 'guides/social-life-after-moving-abroad/' }],
   },
   {
     lang: 'fr',
@@ -1313,7 +1324,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'running', after: 4 },
     city: 'Dubaï',
-    updated: '2026-10-15',
+    updated: '2026-10-28',
     title: 'S’installer à Dubaï : la checklist des premiers mois | IRLY',
     description: 'Tu t’installes à Dubaï ? Une checklist concrète pour les premiers mois : ce qu’il faut régler d’abord, le logement, les déplacements, l’assurance santé et la vie sociale dès la première semaine.',
     h1: 'S’installer à Dubaï : la checklist des premiers mois',
@@ -1365,12 +1376,23 @@ export const ARTICLES = [
 <p>Pour d’autres idées, lis <a href="../se-faire-des-amis/">comment se faire des amis à Dubaï</a> et <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde</a>.</p>`,
       },
       {
+        h2: 'Quand l’enthousiasme retombe',
+        html: `<p>Beaucoup de gens vivent des premières semaines chargées et enthousiasmantes, puis sentent un creux une fois les démarches terminées et la nouveauté passée. Si ça t’arrive, ça ne veut pas dire que ton installation est une erreur. Le plus souvent, le côté pratique est réglé et le côté social n’a pas encore rattrapé.</p>
+<ul>
+<li><strong>Garde la routine que tu as commencée,</strong> même les semaines où tu n’as pas envie d’y aller. Les visages familiers viennent du fait de revenir.</li>
+<li><strong>Transforme une connaissance en projet :</strong> propose un café ou une balade à quelqu’un que tu as déjà croisé deux fois.</li>
+<li><strong>Garde le lien avec chez toi,</strong> mais pas à la place des sorties : un appel avant une soirée marche mieux qu’un appel à la place.</li>
+<li><strong>Parles-en à quelqu’un</strong> si ce coup de mou dure ou s’alourdit. Ton médecin ou ton assurance santé peut t’orienter vers un soutien.</li>
+</ul>
+<p>Pour aller plus loin sur cette étape, lis <a href="../solitude/">se sentir seul à Dubaï : ce qui aide vraiment</a> et <a href="../../guides/vie-sociale-expatriation/">reconstruire sa vie sociale après une expatriation</a>.</p>`,
+      },
+      {
         h2: 'Où IRLY trouve sa place',
         html: `<p>IRLY t’aide pour le côté social de l’installation : rejoindre des communautés autour de ce que tu aimes, trouver des activités près de chez toi et rencontrer des gens en vrai. IRLY VISA, un service pour t’aider dans les démarches, arrive bientôt ; tu peux demander à être prévenu à son ouverture. IRLY est une option parmi d’autres ; pour toute démarche, ce sont les sources officielles ci-dessus qui font foi.</p>`,
       },
     ],
     cta: { title: 'Tu viens d’arriver à Dubaï ?', body: 'Rencontre du monde dès la première semaine, et demande à être prévenu à l’ouverture d’IRLY VISA.', label: 'Préviens-moi' },
-    related: [{ label: 'Comment se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï : ce qui aide vraiment', path: 'fr/dubai/solitude/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }],
+    related: [{ label: 'Comment se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' }, { label: 'Se sentir seul à Dubaï : ce qui aide vraiment', path: 'fr/dubai/solitude/' }, { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' }, { label: 'Reconstruire sa vie sociale après une expatriation', path: 'fr/guides/vie-sociale-expatriation/' }],
   },
   {
     lang: 'en',
