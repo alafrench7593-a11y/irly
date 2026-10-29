@@ -935,7 +935,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'brunch', after: 3 },
     city: 'Dubai',
-    updated: '2026-10-20',
+    updated: '2026-10-29',
     title: 'Networking in Dubai: Where to Meet Entrepreneurs | IRLY',
     description: 'Where to meet entrepreneurs and professionals in Dubai, from meetups and coworking events to business groups, and how to turn a first conversation into a real contact.',
     h1: 'Networking in Dubai: where to meet entrepreneurs',
@@ -964,6 +964,16 @@ export const ARTICLES = [
 <p>Dubai hosts large events across many sectors throughout the year. Use them to understand a market and meet a few people, then continue the conversation at smaller events.</p>
 <h3>Alumni and professional associations</h3>
 <p>University alumni groups and professional associations bring together people who already share something with you, which makes the first conversation easier.</p>`,
+      },
+      {
+        h2: 'How to find these events',
+        html: `<ul>
+<li><strong>Event platforms.</strong> Meetup and Eventbrite both list events in Dubai. Search by your sector, filter by date, and check how often a group meets before you rely on it.</li>
+<li><strong>LinkedIn.</strong> Follow the organisers, coworking spaces and business groups in your field: many announce their events there first.</li>
+<li><strong>Coworking newsletters and community channels.</strong> Sign up even if you are not a member; open events are often shared there.</li>
+<li><strong>Ask at every event.</strong> "Which other events are worth going to?" Organisers and regulars know the good recurring ones.</li>
+<li><strong>Check before you go.</strong> Date, venue, price and whether you need to register can change, so confirm on the organiser’s own page.</li>
+</ul>`,
       },
       {
         h2: 'How to make a first conversation count',
@@ -1018,7 +1028,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'brunch', after: 3 },
     city: 'Dubai',
-    updated: '2026-10-20',
+    updated: '2026-10-29',
     title: 'Networking à Dubaï : où rencontrer des entrepreneurs | IRLY',
     description: 'Où rencontrer des entrepreneurs et des professionnels à Dubaï, des meetups aux événements de coworking et aux groupes d’affaires, et comment transformer une première conversation en vrai contact.',
     h1: 'Networking à Dubaï : où rencontrer des entrepreneurs',
@@ -1047,6 +1057,16 @@ export const ARTICLES = [
 <p>Dubaï accueille de grands événements dans de nombreux secteurs tout au long de l’année. Sers-t’en pour comprendre un marché et rencontrer quelques personnes, puis poursuis la conversation lors d’événements plus petits.</p>
 <h3>Les associations d’anciens élèves et professionnelles</h3>
 <p>Les réseaux d’anciens élèves et les associations professionnelles réunissent des gens qui partagent déjà quelque chose avec toi, ce qui facilite la première conversation.</p>`,
+      },
+      {
+        h2: 'Comment trouver ces événements',
+        html: `<ul>
+<li><strong>Les plateformes d’événements.</strong> Meetup et Eventbrite listent des événements à Dubaï. Cherche par secteur, filtre par date, et regarde à quelle fréquence un groupe se réunit avant de compter dessus.</li>
+<li><strong>LinkedIn.</strong> Suis les organisateurs, les espaces de coworking et les groupes d’affaires de ton domaine : beaucoup y annoncent leurs événements en premier.</li>
+<li><strong>Les newsletters et canaux des coworkings.</strong> Inscris-toi même sans être membre ; les événements ouverts y sont souvent partagés.</li>
+<li><strong>Demande à chaque événement.</strong> « Quels autres événements valent le déplacement ? » Les organisateurs et les habitués connaissent les bons rendez-vous récurrents.</li>
+<li><strong>Vérifie avant d’y aller.</strong> La date, le lieu, le prix et l’inscription peuvent changer : confirme sur la page de l’organisateur.</li>
+</ul>`,
       },
       {
         h2: 'Comment réussir une première conversation',
