@@ -33,7 +33,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-19',
+    updated: '2026-10-30',
     title: 'How to Make Friends in Dubai: A Practical Guide for Newcomers | IRLY',
     description: 'New to Dubai and don’t know anyone yet? Why it can feel hard to make friends here, and practical ways to meet people who share your interests.',
     h1: 'How to make friends in Dubai',
@@ -96,6 +96,17 @@ export const ARTICLES = [
         html: `<p>It helps to have people who share your language and culture, especially at the start. Look for national and language communities, cultural associations and their events. Then make sure you also join mixed groups: Dubai is international, and that mix is one of the best things about living here.</p>`,
       },
       {
+        h2: 'Meeting new people safely',
+        html: `<ul>
+<li><strong>Meet in public places first.</strong> A café, a class or a busy park is the right setting while you get to know someone.</li>
+<li><strong>Tell someone you trust where you are going,</strong> and plan how you will get home, for example with a registered taxi or a ride-hailing app.</li>
+<li><strong>Choose groups with a track record.</strong> A group that meets regularly, with a clear page and an organiser you can contact, is a good sign.</li>
+<li><strong>Take your time with personal details.</strong> Your address, workplace and finances can wait until you know someone better.</li>
+<li><strong>Trust your instincts.</strong> If something feels off, you can leave. Good groups never pressure anyone.</li>
+</ul>
+<p>In an emergency in the UAE, call <strong>999</strong> (police) or <strong>998</strong> (ambulance).</p>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY is an app built for exactly this: meeting people around shared interests, then meeting in real life. You can join communities by topic, find or create activities like a run, a padel game or a brunch, and talk in the group chat before you meet. IRLY Girl offers spaces for women only. It is one option among others; whatever you use, the advice above is what makes the difference.</p>`,
       },
@@ -110,7 +121,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubaï',
-    updated: '2026-10-19',
+    updated: '2026-10-30',
     title: 'Se faire des amis à Dubaï : le guide pour les nouveaux arrivants | IRLY',
     description: 'Tu viens d’arriver à Dubaï et tu ne connais personne ? Pourquoi c’est parfois difficile de se faire des amis ici, et des façons concrètes de rencontrer du monde.',
     h1: 'Comment se faire des amis à Dubaï',
@@ -171,6 +182,17 @@ export const ARTICLES = [
       {
         h2: 'Rencontrer des francophones',
         html: `<p>Au début, ça aide d’avoir des personnes qui partagent ta langue et ta culture. Cherche les associations et communautés francophones et leurs événements. Puis rejoins aussi des groupes mixtes : Dubaï est internationale, et ce mélange fait partie de ce qu’il y a de mieux ici.</p>`,
+      },
+      {
+        h2: 'Rencontrer de nouvelles personnes en sécurité',
+        html: `<ul>
+<li><strong>Donne d’abord rendez-vous dans un lieu public.</strong> Un café, un cours ou un parc fréquenté, le temps de faire connaissance.</li>
+<li><strong>Dis à une personne de confiance où tu vas,</strong> et prévois comment rentrer, par exemple en taxi officiel ou avec une application de VTC.</li>
+<li><strong>Choisis des groupes qui ont fait leurs preuves.</strong> Un groupe qui se retrouve régulièrement, avec une page claire et un organisateur joignable, c’est bon signe.</li>
+<li><strong>Prends ton temps avant de partager tes informations personnelles.</strong> Ton adresse, ton lieu de travail et tes finances peuvent attendre que tu connaisses mieux la personne.</li>
+<li><strong>Écoute ton instinct.</strong> Si quelque chose te met mal à l’aise, tu peux partir. Un bon groupe ne met jamais la pression.</li>
+</ul>
+<p>En cas d’urgence aux Émirats, appelle le <strong>999</strong> (police) ou le <strong>998</strong> (ambulance).</p>`,
       },
       {
         h2: 'Et IRLY dans tout ça',
