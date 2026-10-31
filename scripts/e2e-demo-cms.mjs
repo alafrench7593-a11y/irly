@@ -6,6 +6,7 @@
 //   B  Home layout: move two sections, rename one, hide one, save the draft
 //      (Home unchanged) → publish (new order) → reload (kept)
 //   C  IRLY vs IRLY Girl vs both
+//   E  a poll: written in the editor, published, voted, the vote changed, the poll fixed
 //   D  a missing photo, an empty layout, the network failing (last feed kept),
 //      an interrupted publish (draft kept, nothing published), no repeated
 //      requests, no stored file removed by the code
@@ -256,6 +257,55 @@ try {
   check(code.every((c) => !/\.remove\(|storage\.from\([^)]*\)\.(remove|delete|move|update)\(/.test(c)), 'D: the editorial code never removes, moves or overwrites a stored file');
   const sql = fs.readFileSync(path.join(ROOT, 'supabase/migrations/20261028500000_irly_admin_cms.sql'), 'utf8');
   check(!/delete\s+from\s+storage\.objects|for delete to|for update to/i.test(sql), 'D: the migration gives no rule to delete or change a stored file');
+  // ───────── E. A poll on a news item ─────────
+  await go(m.page, '/admin/actu/new');
+  await m.page.getByLabel('Title', { exact: true }).fill('Which evening for the next IRLY night?');
+  await m.page.getByLabel('Text', { exact: true }).fill('Tell us which evening suits you best.');
+  await m.page.getByLabel('Add a poll to this news item').first().click();
+  await m.page.waitForTimeout(400);
+  await m.page.getByLabel('Poll question', { exact: true }).fill('Which evening suits you?');
+  const answers = m.page.getByLabel('Poll answer', { exact: true });
+  await answers.nth(0).fill('Friday');
+  await answers.nth(1).fill('Friday');
+  await m.page.waitForTimeout(300);
+  check(await m.page.getByRole('button', { name: 'Publish now' }).isDisabled(), 'E: the same answer twice: nothing can be published yet');
+  await answers.nth(1).fill('Saturday');
+  await m.page.getByRole('button', { name: 'Add an answer' }).click();
+  await m.page.getByLabel('Poll answer', { exact: true }).nth(2).fill('Sunday');
+  await m.page.getByRole('button', { name: 'Publish now' }).click();
+  await m.page.waitForURL(/\/admin\/actu\/d0c5/, { timeout: 10000 }).catch(() => undefined);
+  await m.page.waitForTimeout(1500);
+  const pid = m.page.url().split('/').pop();
+  check(await m.page.locator('[data-testid="news-state-published"]').first().isVisible(), 'E: the item with its poll is published');
+  await go(m.page, '/');
+  check((await newsTitles(m.page)).includes('Which evening for the next IRLY night?'), 'E: it is on the Home');
+  await go(m.page, `/actu/${pid}`);
+  const options = m.page.locator('[data-testid="news-poll-option"]');
+  check((await options.count()) === 3 && (await m.page.getByText('Which evening suits you?').first().isVisible()), 'E: the article shows the question and its 3 answers');
+  await options.nth(1).click();
+  await m.page.waitForTimeout(1200);
+  check((await options.nth(1).innerText()).includes('100%') && (await m.page.getByText('1 votes').count()) + (await m.page.getByText('1 vote').count()) > 0, 'E: a vote counts at once (Saturday 100%)');
+  await options.nth(2).click();
+  await m.page.waitForTimeout(1200);
+  check((await options.nth(2).innerText()).includes('100%') && (await options.nth(1).innerText()).includes('0%'), 'E: changing the answer moves the vote');
+  await go(m.page, `/actu/${pid}`);
+  check((await m.page.locator('[data-testid="news-poll-option"]').nth(2).innerText()).includes('100%'), 'E: the vote is kept after a reload');
+  await m.page.screenshot({ path: `${shots}/e-poll.png` });
+  await go(m.page, `/admin/actu/${pid}`);
+  check(await m.page.locator('[data-testid="news-poll-fixed"]').first().isVisible(), 'E: once voted, the editor shows the poll as fixed');
+  const refusedPoll = await m.page.evaluate((id) => {
+    try {
+      globalThis.__irlyCmsDemo('admin_news_save', { p_id: id, p_news: { poll: { question: 'Which evening suits you?', options: ['Friday', 'Saturday'] } } });
+      return null;
+    } catch (e) {
+      return String(e.message);
+    }
+  }, pid);
+  check(refusedPoll === 'a poll cannot change once people voted', 'E: once voted, the poll cannot change');
+  await m.page.getByLabel('Title', { exact: true }).fill('Which evening for our next IRLY night?');
+  await m.page.getByRole('button', { name: 'Save the draft' }).click();
+  await m.page.waitForTimeout(1500);
+  check(!(await m.page.locator('[data-testid="cms-error"]').count()), 'E: the rest of a voted item can still be edited');
   check(m.errors.length === 0, `no page error through the journeys${m.errors.length ? ` (${m.errors[0]})` : ''}`);
   await m.ctx.close();
 } finally {

@@ -21,8 +21,12 @@ export type NewsCard = {
   cta_label?: string;
   cta_url?: string;
   video?: boolean;
+  /** The item carries a poll (its answers and counts come with the article). */
+  has_poll?: boolean;
 };
-export type NewsArticle = NewsCard & { body: string; gallery_paths: string[]; video_path?: string };
+/** A poll the team attached to a news item, as a reader sees it: counts per answer, the total and the reader's own answer. */
+export type NewsPoll = { question: string; options: string[]; counts: number[]; total: number; myVote: number | null };
+export type NewsArticle = NewsCard & { body: string; gallery_paths: string[]; video_path?: string; poll?: NewsPoll };
 export type Banner = {
   id: string;
   title: string;
@@ -59,6 +63,42 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const str = (v: unknown): string | undefined => (typeof v === 'string' && v ? v : undefined);
 
+/** A poll from the server, or undefined when it is not one a screen can draw (2 to 6 answers, a count per answer). */
+export function cleanPoll(r: unknown): NewsPoll | undefined {
+  if (!r || typeof r !== 'object') return undefined;
+  const x = r as Record<string, unknown>;
+  const question = str(x.question);
+  const options = Array.isArray(x.options) ? x.options.filter((o): o is string => typeof o === 'string' && o.length > 0) : [];
+  if (!question || options.length < 2 || options.length > 6 || options.length !== (x.options as unknown[]).length) return undefined;
+  const raw = Array.isArray(x.counts) ? x.counts : [];
+  const counts = options.map((_, i) => {
+    const n = Number(raw[i]);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+  });
+  const sum = counts.reduce((a, b) => a + b, 0);
+  const total = Number(x.total);
+  const vote = Number(x.my_vote);
+  return {
+    question,
+    options,
+    counts,
+    total: Number.isFinite(total) && total >= sum ? Math.floor(total) : sum,
+    myVote: x.my_vote !== null && x.my_vote !== undefined && Number.isInteger(vote) && vote >= 0 && vote < options.length ? vote : null,
+  };
+}
+
+/** The poll after the reader picks an answer, before the server confirms it: their vote moves, the total counts them once. */
+export function pollAfterVote(p: NewsPoll, option: number): NewsPoll {
+  if (option < 0 || option >= p.options.length || p.myVote === option) return p;
+  const counts = [...p.counts];
+  if (p.myVote !== null) counts[p.myVote] = Math.max(0, counts[p.myVote] - 1);
+  counts[option] += 1;
+  return { ...p, counts, total: p.myVote === null ? p.total + 1 : p.total, myVote: option };
+}
+
+/** Each answer's share of the votes, in whole percents (0 when nobody voted). */
+export const pollShares = (p: NewsPoll): number[] => p.counts.map((n) => (p.total ? Math.round((n / p.total) * 100) : 0));
+
 /** A news card from the server, or null when it lacks what a card needs (never shown half-made). */
 export function cleanNews(r: unknown): NewsArticle | null {
   if (!r || typeof r !== 'object') return null;
@@ -83,6 +123,8 @@ export function cleanNews(r: unknown): NewsArticle | null {
     body: typeof x.body === 'string' ? x.body : '',
     gallery_paths: Array.isArray(x.gallery_paths) ? x.gallery_paths.filter((p): p is string => typeof p === 'string') : [],
     video_path: str(x.video_path),
+    has_poll: x.has_poll === true || Boolean(x.poll),
+    poll: cleanPoll(x.poll),
   };
 }
 

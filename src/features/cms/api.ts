@@ -37,8 +37,14 @@ export type AdminNews = {
   notified_at: string | null;
   went_live_at: string | null;
   updated_at: string;
+  /** The poll with its counts (migration 20261101000000_irly_news_polls), null when there is none. */
+  poll: { question: string; options: string[]; counts: number[]; total: number } | null;
 };
-export type NewsDraft = Partial<Pick<AdminNews, 'title' | 'subtitle' | 'body' | 'cover_path' | 'cover_key' | 'gallery_paths' | 'video_path' | 'category' | 'audience' | 'cta_label' | 'cta_url' | 'notify'>>;
+/** A poll as the team writes it: a question and 2 to 6 answers (null removes it; fixed once someone voted). */
+export type NewsPollDraft = { question: string; options: string[] };
+export type NewsDraft = Partial<Pick<AdminNews, 'title' | 'subtitle' | 'body' | 'cover_path' | 'cover_key' | 'gallery_paths' | 'video_path' | 'category' | 'audience' | 'cta_label' | 'cta_url' | 'notify'>> & {
+  poll?: NewsPollDraft | null;
+};
 
 export type AdminBanner = {
   id: string;

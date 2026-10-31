@@ -33,7 +33,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-19',
+    updated: '2026-10-30',
     title: 'How to Make Friends in Dubai: A Practical Guide for Newcomers | IRLY',
     description: 'New to Dubai and don’t know anyone yet? Why it can feel hard to make friends here, and practical ways to meet people who share your interests.',
     h1: 'How to make friends in Dubai',
@@ -96,6 +96,17 @@ export const ARTICLES = [
         html: `<p>It helps to have people who share your language and culture, especially at the start. Look for national and language communities, cultural associations and their events. Then make sure you also join mixed groups: Dubai is international, and that mix is one of the best things about living here.</p>`,
       },
       {
+        h2: 'Meeting new people safely',
+        html: `<ul>
+<li><strong>Meet in public places first.</strong> A café, a class or a busy park is the right setting while you get to know someone.</li>
+<li><strong>Tell someone you trust where you are going,</strong> and plan how you will get home, for example with a registered taxi or a ride-hailing app.</li>
+<li><strong>Choose groups with a track record.</strong> A group that meets regularly, with a clear page and an organiser you can contact, is a good sign.</li>
+<li><strong>Take your time with personal details.</strong> Your address, workplace and finances can wait until you know someone better.</li>
+<li><strong>Trust your instincts.</strong> If something feels off, you can leave. Good groups never pressure anyone.</li>
+</ul>
+<p>In an emergency in the UAE, call <strong>999</strong> (police) or <strong>998</strong> (ambulance).</p>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY is an app built for exactly this: meeting people around shared interests, then meeting in real life. You can join communities by topic, find or create activities like a run, a padel game or a brunch, and talk in the group chat before you meet. IRLY Girl offers spaces for women only. It is one option among others; whatever you use, the advice above is what makes the difference.</p>`,
       },
@@ -110,7 +121,7 @@ export const ARTICLES = [
     cover: 'brunch',
     figure: { photo: 'dubaiMarina', after: 1 },
     city: 'Dubaï',
-    updated: '2026-10-19',
+    updated: '2026-10-30',
     title: 'Se faire des amis à Dubaï : le guide pour les nouveaux arrivants | IRLY',
     description: 'Tu viens d’arriver à Dubaï et tu ne connais personne ? Pourquoi c’est parfois difficile de se faire des amis ici, et des façons concrètes de rencontrer du monde.',
     h1: 'Comment se faire des amis à Dubaï',
@@ -171,6 +182,17 @@ export const ARTICLES = [
       {
         h2: 'Rencontrer des francophones',
         html: `<p>Au début, ça aide d’avoir des personnes qui partagent ta langue et ta culture. Cherche les associations et communautés francophones et leurs événements. Puis rejoins aussi des groupes mixtes : Dubaï est internationale, et ce mélange fait partie de ce qu’il y a de mieux ici.</p>`,
+      },
+      {
+        h2: 'Rencontrer de nouvelles personnes en sécurité',
+        html: `<ul>
+<li><strong>Donne d’abord rendez-vous dans un lieu public.</strong> Un café, un cours ou un parc fréquenté, le temps de faire connaissance.</li>
+<li><strong>Dis à une personne de confiance où tu vas,</strong> et prévois comment rentrer, par exemple en taxi officiel ou avec une application de VTC.</li>
+<li><strong>Choisis des groupes qui ont fait leurs preuves.</strong> Un groupe qui se retrouve régulièrement, avec une page claire et un organisateur joignable, c’est bon signe.</li>
+<li><strong>Prends ton temps avant de partager tes informations personnelles.</strong> Ton adresse, ton lieu de travail et tes finances peuvent attendre que tu connaisses mieux la personne.</li>
+<li><strong>Écoute ton instinct.</strong> Si quelque chose te met mal à l’aise, tu peux partir. Un bon groupe ne met jamais la pression.</li>
+</ul>
+<p>En cas d’urgence aux Émirats, appelle le <strong>999</strong> (police) ou le <strong>998</strong> (ambulance).</p>`,
       },
       {
         h2: 'Et IRLY dans tout ça',
@@ -775,7 +797,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-21',
+    updated: '2026-10-31',
     title: '15 Group Activities to Meet People in Dubai | IRLY',
     description: 'Fifteen group activities that make it easy to meet people in Dubai, from run clubs and padel to classes and volunteering, and how to pick the right ones for you.',
     h1: '15 group activities to meet people in Dubai',
@@ -841,6 +863,17 @@ export const ARTICLES = [
 <p>If going alone is what holds you back, <a href="../going-out-alone/">going out alone in Dubai</a> has simple habits to feel at ease. Women who prefer women-only groups will find ideas in <a href="../activities-for-women/">activities for women in Dubai</a>, and <a href="../make-friends/">how to make friends in Dubai</a> has a four-week plan to go from a first session to real friendships.</p>`,
       },
       {
+        h2: 'No group that fits? Start a small one',
+        html: `<p>If you cannot find a group for what you enjoy, at a time that suits you, starting one is often easier than it sounds. It does not need to be big or formal.</p>
+<ul>
+<li><strong>Choose a simple format you can repeat.</strong> A weekly walk, a book club in a café, a casual game of football: something that works with three people as well as ten.</li>
+<li><strong>Fix the same day, time and place.</strong> Regularity is what lets people come back without having to organise anything.</li>
+<li><strong>Start with the people you already know.</strong> Colleagues, neighbours and the group chats you are in are enough for a first session.</li>
+<li><strong>Meet in a public place and keep costs low.</strong> If a venue needs a booking, such as a court or a room, check its rules for groups beforehand.</li>
+<li><strong>Keep going even when few people come.</strong> A small group that meets every week grows more surely than a big event that happens once.</li>
+</ul>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY lets you find group activities by interest, join the communities that run them, or create your own plan, a run, a padel game, a brunch, and invite people who like the same thing. IRLY Girl offers spaces for women only. It is one option among others; going back every week is what turns an activity into friends.</p>`,
       },
@@ -855,7 +888,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-21',
+    updated: '2026-10-31',
     title: '15 activités de groupe pour rencontrer du monde à Dubaï | IRLY',
     description: 'Quinze activités de groupe qui facilitent les rencontres à Dubaï, des clubs de course au padel en passant par les cours et le bénévolat, et comment choisir les tiennes.',
     h1: '15 activités de groupe pour rencontrer du monde à Dubaï',
@@ -921,6 +954,17 @@ export const ARTICLES = [
 <p>Si c’est le fait d’y aller seul qui te retient, <a href="../sortir-seul/">sortir seul à Dubaï</a> donne des réflexes simples pour être à l’aise. Les femmes qui préfèrent des groupes entre femmes trouveront des idées dans <a href="../activites-entre-femmes/">activités entre femmes à Dubaï</a>, et <a href="../se-faire-des-amis/">se faire des amis à Dubaï</a> propose un plan sur quatre semaines pour passer d’une première séance à de vraies amitiés.</p>`,
       },
       {
+        h2: 'Aucun groupe ne te convient ? Lance le tien',
+        html: `<p>Si tu ne trouves pas de groupe pour ce que tu aimes, à un horaire qui te va, en lancer un est souvent plus simple qu’il n’y paraît. Pas besoin que ce soit grand ni officiel.</p>
+<ul>
+<li><strong>Choisis un format simple à répéter.</strong> Une marche chaque semaine, un club de lecture dans un café, un match de foot entre amis : quelque chose qui marche à trois comme à dix.</li>
+<li><strong>Fixe le même jour, la même heure et le même lieu.</strong> C’est la régularité qui permet aux gens de revenir sans rien avoir à organiser.</li>
+<li><strong>Commence avec les personnes que tu connais déjà.</strong> Collègues, voisins et groupes de discussion dont tu fais partie suffisent pour une première séance.</li>
+<li><strong>Choisis un lieu public et limite les frais.</strong> Si un lieu demande une réservation, comme un terrain ou une salle, vérifie à l’avance ses règles pour les groupes.</li>
+<li><strong>Continue même quand peu de monde vient.</strong> Un petit groupe qui se retrouve chaque semaine grandit plus sûrement qu’un gros événement unique.</li>
+</ul>`,
+      },
+      {
         h2: 'La place d’IRLY',
         html: `<p>IRLY permet de trouver des activités de groupe par centre d’intérêt, de rejoindre les communautés qui les organisent, ou de créer ton propre plan, une course, un match de padel, un brunch, et d’inviter des gens qui aiment la même chose. IRLY Girl propose des espaces réservés aux femmes. C’est une option parmi d’autres ; c’est en revenant chaque semaine qu’une activité devient des amis.</p>`,
       },
@@ -935,7 +979,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'brunch', after: 3 },
     city: 'Dubai',
-    updated: '2026-10-20',
+    updated: '2026-10-29',
     title: 'Networking in Dubai: Where to Meet Entrepreneurs | IRLY',
     description: 'Where to meet entrepreneurs and professionals in Dubai, from meetups and coworking events to business groups, and how to turn a first conversation into a real contact.',
     h1: 'Networking in Dubai: where to meet entrepreneurs',
@@ -964,6 +1008,16 @@ export const ARTICLES = [
 <p>Dubai hosts large events across many sectors throughout the year. Use them to understand a market and meet a few people, then continue the conversation at smaller events.</p>
 <h3>Alumni and professional associations</h3>
 <p>University alumni groups and professional associations bring together people who already share something with you, which makes the first conversation easier.</p>`,
+      },
+      {
+        h2: 'How to find these events',
+        html: `<ul>
+<li><strong>Event platforms.</strong> Meetup and Eventbrite both list events in Dubai. Search by your sector, filter by date, and check how often a group meets before you rely on it.</li>
+<li><strong>LinkedIn.</strong> Follow the organisers, coworking spaces and business groups in your field: many announce their events there first.</li>
+<li><strong>Coworking newsletters and community channels.</strong> Sign up even if you are not a member; open events are often shared there.</li>
+<li><strong>Ask at every event.</strong> "Which other events are worth going to?" Organisers and regulars know the good recurring ones.</li>
+<li><strong>Check before you go.</strong> Date, venue, price and whether you need to register can change, so confirm on the organiser’s own page.</li>
+</ul>`,
       },
       {
         h2: 'How to make a first conversation count',
@@ -1018,7 +1072,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'brunch', after: 3 },
     city: 'Dubai',
-    updated: '2026-10-20',
+    updated: '2026-10-29',
     title: 'Networking à Dubaï : où rencontrer des entrepreneurs | IRLY',
     description: 'Où rencontrer des entrepreneurs et des professionnels à Dubaï, des meetups aux événements de coworking et aux groupes d’affaires, et comment transformer une première conversation en vrai contact.',
     h1: 'Networking à Dubaï : où rencontrer des entrepreneurs',
@@ -1047,6 +1101,16 @@ export const ARTICLES = [
 <p>Dubaï accueille de grands événements dans de nombreux secteurs tout au long de l’année. Sers-t’en pour comprendre un marché et rencontrer quelques personnes, puis poursuis la conversation lors d’événements plus petits.</p>
 <h3>Les associations d’anciens élèves et professionnelles</h3>
 <p>Les réseaux d’anciens élèves et les associations professionnelles réunissent des gens qui partagent déjà quelque chose avec toi, ce qui facilite la première conversation.</p>`,
+      },
+      {
+        h2: 'Comment trouver ces événements',
+        html: `<ul>
+<li><strong>Les plateformes d’événements.</strong> Meetup et Eventbrite listent des événements à Dubaï. Cherche par secteur, filtre par date, et regarde à quelle fréquence un groupe se réunit avant de compter dessus.</li>
+<li><strong>LinkedIn.</strong> Suis les organisateurs, les espaces de coworking et les groupes d’affaires de ton domaine : beaucoup y annoncent leurs événements en premier.</li>
+<li><strong>Les newsletters et canaux des coworkings.</strong> Inscris-toi même sans être membre ; les événements ouverts y sont souvent partagés.</li>
+<li><strong>Demande à chaque événement.</strong> « Quels autres événements valent le déplacement ? » Les organisateurs et les habitués connaissent les bons rendez-vous récurrents.</li>
+<li><strong>Vérifie avant d’y aller.</strong> La date, le lieu, le prix et l’inscription peuvent changer : confirme sur la page de l’organisateur.</li>
+</ul>`,
       },
       {
         h2: 'Comment réussir une première conversation',

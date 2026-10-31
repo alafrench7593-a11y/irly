@@ -35,6 +35,10 @@ type News = {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+  /** The poll (migration 20261101000000_irly_news_polls); the demo keeps one voter, the visitor. Absent in content saved before polls. */
+  poll?: { question: string; options: string[] } | null;
+  poll_counts?: number[];
+  my_vote?: number | null;
 };
 type BannerRow = {
   id: string;
@@ -94,6 +98,9 @@ function seed(): State {
         position: 0,
         cta_label: 'Discover plans',
         cta_url: '/discover',
+        poll: { question: 'What would you like to see here next?', options: ['New places', 'Plans this weekend', 'App tips'] },
+        poll_counts: [0, 0, 0],
+        my_vote: null,
         went_live_at: ago(1),
         created_at: ago(2),
         updated_at: ago(1),
@@ -203,13 +210,43 @@ function save(s: State) {
 const visible = (n: News) => n.status === 'published' && !!n.publish_at && n.publish_at <= now() && !n.deleted_at;
 const bannerOn = (b: BannerRow) => b.active && !b.deleted_at && (!b.starts_at || b.starts_at <= now()) && (!b.ends_at || b.ends_at > now());
 const state = (n: News) => (n.deleted_at ? 'deleted' : n.status === 'published' && n.publish_at && n.publish_at > now() ? 'scheduled' : n.status);
-const adminNews = (n: News) => ({ ...n, state: state(n) });
+/** A poll as the server sends it: counts, total and the visitor's answer. */
+const pollJson = (n: News) => {
+  if (!n.poll) return null;
+  const counts = n.poll.options.map((_, i) => n.poll_counts?.[i] ?? 0);
+  return { question: n.poll.question, options: n.poll.options, counts, total: counts.reduce((a, b) => a + b, 0), my_vote: n.my_vote ?? null };
+};
+const adminNews = (n: News) => {
+  const { poll_counts: _c, my_vote: _m, ...rest } = n;
+  return { ...rest, state: state(n), poll: pollJson(n) };
+};
+
+/** The same checks as private.news_poll_clean: a question of 3 to 140 characters, 2 to 6 different answers of 60 at most. */
+function cleanPoll(v: unknown): { question: string; options: string[] } | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v !== 'object' || Array.isArray(v)) refuse('invalid value');
+  const x = v as Record<string, unknown>;
+  if (typeof x.question !== 'string' || !Array.isArray(x.options) || Object.keys(x).some((k) => k !== 'question' && k !== 'options')) refuse('invalid value');
+  const question = x.question.trim();
+  if (question.length < 3 || question.length > 140) refuse('a poll needs a question of 3 to 140 characters');
+  const options: string[] = [];
+  for (const o of x.options) {
+    if (typeof o !== 'string') refuse('invalid value');
+    const t = o.trim();
+    if (!t) continue;
+    if (t.length > 60) refuse('an answer is at most 60 characters');
+    if (options.some((y) => y.toLowerCase() === t.toLowerCase())) refuse('a poll needs 2 to 6 different answers');
+    options.push(t);
+  }
+  if (options.length < 2 || options.length > 6) refuse('a poll needs 2 to 6 different answers');
+  return { question, options };
+}
 const card = (n: News, full: boolean) => {
   const out: Record<string, unknown> = {
     id: n.id, title: n.title, subtitle: n.subtitle, cover_path: n.cover_path, cover_key: n.cover_key, category: n.category,
-    publish_at: n.publish_at, audience: n.audience, cta_label: n.cta_label, cta_url: n.cta_url, video: Boolean(n.video_path),
+    publish_at: n.publish_at, audience: n.audience, cta_label: n.cta_label, cta_url: n.cta_url, video: Boolean(n.video_path), has_poll: Boolean(n.poll),
   };
-  if (full) Object.assign(out, { body: n.body, gallery_paths: n.gallery_paths, video_path: n.video_path });
+  if (full) Object.assign(out, { body: n.body, gallery_paths: n.gallery_paths, video_path: n.video_path, poll: pollJson(n) });
   return out;
 };
 const order = <T extends { position: number; created_at: string }>(a: T, b: T) => a.position - b.position || b.created_at.localeCompare(a.created_at);
@@ -221,7 +258,7 @@ const text = (v: unknown, max: number, label: string): string | null => {
   if (s.length > max) refuse(`${label} is at most ${max} characters`);
   return s || null;
 };
-const NEWS_FIELDS = ['title', 'subtitle', 'body', 'cover_path', 'cover_key', 'gallery_paths', 'video_path', 'category', 'audience', 'cta_label', 'cta_url', 'notify', 'position'];
+const NEWS_FIELDS = ['title', 'subtitle', 'body', 'cover_path', 'cover_key', 'gallery_paths', 'video_path', 'category', 'audience', 'cta_label', 'cta_url', 'notify', 'position', 'poll'];
 const BANNER_FIELDS = ['title', 'body', 'image_path', 'image_key', 'cta_label', 'cta_url', 'audience', 'placement', 'position', 'active', 'starts_at', 'ends_at'];
 
 function goLive(s: State) {
@@ -284,6 +321,16 @@ function saveNews(s: State, id: string | null, p: Record<string, unknown>): stri
   if ('position' in p) {
     if (typeof p.position !== 'number') refuse('invalid value');
     next.position = Math.round(p.position);
+  }
+  if ('poll' in p) {
+    const poll = cleanPoll(p.poll);
+    const voted = (next.poll_counts ?? []).some((c) => c > 0);
+    if (voted && JSON.stringify(poll) !== JSON.stringify(next.poll ?? null)) refuse('a poll cannot change once people voted');
+    if (!voted) {
+      next.poll = poll;
+      next.poll_counts = poll ? poll.options.map(() => 0) : [];
+      next.my_vote = null;
+    }
   }
   next.updated_at = now();
   s.news = s.news.some((x) => x.id === next.id) ? s.news.map((x) => (x.id === next.id ? next : x)) : [...s.news, next];
@@ -373,6 +420,20 @@ export function demoCms(fn: string, args: Record<string, unknown> = {}): unknown
     case 'news_item': {
       const n = s.news.find((x) => x.id === args.p_id && visible(x));
       return n ? card(n, true) : null;
+    }
+    case 'news_poll_vote': {
+      const n = s.news.find((x) => x.id === args.p_id && visible(x));
+      if (!n) refuse('this news item is no longer available');
+      if (!n.poll) refuse('this news item has no poll');
+      const i = Number(args.p_option);
+      if (!Number.isInteger(i) || i < 0 || i >= n.poll.options.length) refuse('unknown answer');
+      const counts = n.poll.options.map((_, j) => n.poll_counts?.[j] ?? 0);
+      if (n.my_vote !== null && n.my_vote !== undefined) counts[n.my_vote] = Math.max(0, counts[n.my_vote] - 1);
+      counts[i] += 1;
+      n.poll_counts = counts;
+      n.my_vote = i;
+      save(s);
+      return pollJson(n);
     }
     case 'admin_news_list':
       goLive(s);
