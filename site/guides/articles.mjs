@@ -797,7 +797,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-21',
+    updated: '2026-10-31',
     title: '15 Group Activities to Meet People in Dubai | IRLY',
     description: 'Fifteen group activities that make it easy to meet people in Dubai, from run clubs and padel to classes and volunteering, and how to pick the right ones for you.',
     h1: '15 group activities to meet people in Dubai',
@@ -863,6 +863,17 @@ export const ARTICLES = [
 <p>If going alone is what holds you back, <a href="../going-out-alone/">going out alone in Dubai</a> has simple habits to feel at ease. Women who prefer women-only groups will find ideas in <a href="../activities-for-women/">activities for women in Dubai</a>, and <a href="../make-friends/">how to make friends in Dubai</a> has a four-week plan to go from a first session to real friendships.</p>`,
       },
       {
+        h2: 'No group that fits? Start a small one',
+        html: `<p>If you cannot find a group for what you enjoy, at a time that suits you, starting one is often easier than it sounds. It does not need to be big or formal.</p>
+<ul>
+<li><strong>Choose a simple format you can repeat.</strong> A weekly walk, a book club in a café, a casual game of football: something that works with three people as well as ten.</li>
+<li><strong>Fix the same day, time and place.</strong> Regularity is what lets people come back without having to organise anything.</li>
+<li><strong>Start with the people you already know.</strong> Colleagues, neighbours and the group chats you are in are enough for a first session.</li>
+<li><strong>Meet in a public place and keep costs low.</strong> If a venue needs a booking, such as a court or a room, check its rules for groups beforehand.</li>
+<li><strong>Keep going even when few people come.</strong> A small group that meets every week grows more surely than a big event that happens once.</li>
+</ul>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY lets you find group activities by interest, join the communities that run them, or create your own plan, a run, a padel game, a brunch, and invite people who like the same thing. IRLY Girl offers spaces for women only. It is one option among others; going back every week is what turns an activity into friends.</p>`,
       },
@@ -877,7 +888,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'running', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-21',
+    updated: '2026-10-31',
     title: '15 activités de groupe pour rencontrer du monde à Dubaï | IRLY',
     description: 'Quinze activités de groupe qui facilitent les rencontres à Dubaï, des clubs de course au padel en passant par les cours et le bénévolat, et comment choisir les tiennes.',
     h1: '15 activités de groupe pour rencontrer du monde à Dubaï',
@@ -941,6 +952,17 @@ export const ARTICLES = [
 <li><strong>Juge le groupe à ta deuxième venue, pas à la première.</strong> La première fois, tu es nouveau pour tout le monde. La deuxième, quelqu’un se souvient en général de ton prénom.</li>
 </ul>
 <p>Si c’est le fait d’y aller seul qui te retient, <a href="../sortir-seul/">sortir seul à Dubaï</a> donne des réflexes simples pour être à l’aise. Les femmes qui préfèrent des groupes entre femmes trouveront des idées dans <a href="../activites-entre-femmes/">activités entre femmes à Dubaï</a>, et <a href="../se-faire-des-amis/">se faire des amis à Dubaï</a> propose un plan sur quatre semaines pour passer d’une première séance à de vraies amitiés.</p>`,
+      },
+      {
+        h2: 'Aucun groupe ne te convient ? Lance le tien',
+        html: `<p>Si tu ne trouves pas de groupe pour ce que tu aimes, à un horaire qui te va, en lancer un est souvent plus simple qu’il n’y paraît. Pas besoin que ce soit grand ni officiel.</p>
+<ul>
+<li><strong>Choisis un format simple à répéter.</strong> Une marche chaque semaine, un club de lecture dans un café, un match de foot entre amis : quelque chose qui marche à trois comme à dix.</li>
+<li><strong>Fixe le même jour, la même heure et le même lieu.</strong> C’est la régularité qui permet aux gens de revenir sans rien avoir à organiser.</li>
+<li><strong>Commence avec les personnes que tu connais déjà.</strong> Collègues, voisins et groupes de discussion dont tu fais partie suffisent pour une première séance.</li>
+<li><strong>Choisis un lieu public et limite les frais.</strong> Si un lieu demande une réservation, comme un terrain ou une salle, vérifie à l’avance ses règles pour les groupes.</li>
+<li><strong>Continue même quand peu de monde vient.</strong> Un petit groupe qui se retrouve chaque semaine grandit plus sûrement qu’un gros événement unique.</li>
+</ul>`,
       },
       {
         h2: 'La place d’IRLY',
