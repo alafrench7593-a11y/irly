@@ -209,7 +209,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
-    updated: '2026-10-22',
+    updated: '2026-11-01',
     title: 'How to Make Friends in Bali: Travellers, Nomads and Newcomers | IRLY',
     description: 'Arriving in Bali alone? How friendships work on an island where people come and go, and practical ways to meet people in Canggu, Ubud and beyond.',
     h1: 'How to make friends in Bali',
@@ -276,6 +276,17 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'Meeting new people safely',
+        html: `<p>Bali is a friendly place to meet people, and a few habits keep it that way, especially when everyone is new to everyone.</p>
+<ul>
+<li><strong>Meet in public places first.</strong> A café, a class or a busy beach is the right setting while you get to know someone.</li>
+<li><strong>Tell someone you trust where you are going,</strong> and plan how you will get back before the evening starts.</li>
+<li><strong>Keep your drink and your belongings in sight</strong> at parties and busy bars.</li>
+<li><strong>Take your time with personal details.</strong> Where you are staying, your travel plans and your finances can wait until you know someone better.</li>
+<li><strong>Trust your instincts.</strong> If something feels off, you can leave. Good groups never pressure anyone.</li>
+</ul>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY helps you meet people around what you like and then meet in real life: join communities by topic, find or create activities (a surf session, a yoga class, a dinner) and talk in the group chat first. IRLY starts in Dubai; Bali is announced and coming soon. It is one way among others; the habits above are what turn meetings into friendships.</p>`,
       },
@@ -294,7 +305,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'surf', after: 1 },
     city: 'Bali',
-    updated: '2026-10-22',
+    updated: '2026-11-01',
     title: 'Se faire des amis à Bali : voyageurs, nomades et nouveaux arrivants | IRLY',
     description: 'Tu arrives seul à Bali ? Comment fonctionnent les amitiés sur une île où les gens vont et viennent, et des façons concrètes de rencontrer du monde à Canggu, Ubud et ailleurs.',
     h1: 'Comment se faire des amis à Bali',
@@ -358,6 +369,17 @@ export const ARTICLES = [
 <li>La plupart des gens se déplacent en scooter. Ne conduis qu’avec le bon permis, un casque et une assurance ; si tu n’es pas à l’aise, utilise les applications de VTC.</li>
 <li>La saison des pluies va en général d’environ novembre à mars : prévois des plans en intérieur.</li>
 <li>Respecte les cérémonies et les temples : ils font partie de la vie quotidienne, pas du décor.</li>
+</ul>`,
+      },
+      {
+        h2: 'Rencontrer de nouvelles personnes en sécurité',
+        html: `<p>Bali est un endroit accueillant pour rencontrer du monde, et quelques réflexes aident à ce que ça le reste, surtout quand tout le monde est nouveau pour tout le monde.</p>
+<ul>
+<li><strong>Donne d’abord rendez-vous dans un lieu public.</strong> Un café, un cours ou une plage fréquentée, le temps de faire connaissance.</li>
+<li><strong>Dis à une personne de confiance où tu vas,</strong> et prévois comment rentrer avant que la soirée commence.</li>
+<li><strong>Garde ton verre et tes affaires à l’œil</strong> en soirée et dans les bars bondés.</li>
+<li><strong>Prends ton temps avant de partager tes informations personnelles.</strong> L’endroit où tu loges, tes projets de voyage et tes finances peuvent attendre que tu connaisses mieux la personne.</li>
+<li><strong>Écoute ton instinct.</strong> Si quelque chose te met mal à l’aise, tu peux partir. Un bon groupe ne met jamais la pression.</li>
 </ul>`,
       },
       {
