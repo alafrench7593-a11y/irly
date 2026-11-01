@@ -1177,12 +1177,12 @@ async function main() {
     return true;
   });
   await step('a refused like rolls back (heart off again) with a message', async () => {
-    await page.route(/rest\/v1\/rpc\/toggle_like/, (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"server down"}' }));
+    await page.route(/rest\/v1\/rpc\/(set_like|toggle_like)/, (r) => r.fulfill({ status: 500, contentType: 'application/json', body: '{"message":"server down"}' }));
     await page.goto(`${BASE}/a/${actId}`);
     await page.getByRole('button', { name: 'Like' }).first().click();
     await visible(page, 'server down', 10000);
     await page.getByRole('button', { name: 'Like' }).first().waitFor({ timeout: 5000 });
-    await page.unroute(/rest\/v1\/rpc\/toggle_like/);
+    await page.unroute(/rest\/v1\/rpc\/(set_like|toggle_like)/);
     return true;
   });
   // ───────── Phone notifications, server side, on the real backend ─────────
