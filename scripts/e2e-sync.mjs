@@ -51,7 +51,8 @@ async function createWoman(name) {
   await sql(`
     insert into public.profiles (id, first_name, birthdate, gender, city_id, languages) values ('${id}', '${name}', '1993-03-03', 'woman', 'bali', '{en}');
     insert into public.irly_match_onboarding (user_id) values ('${id}');
-    insert into public.irly_match_profiles (user_id, goals, interests, areas, destination) values ('${id}', '{new_friends}', '{brunch}', '{canggu}', 'bali');`);
+    insert into public.irly_match_profiles (user_id, goals, interests, areas, destination) values ('${id}', '{new_friends}', '{brunch}', '{canggu}', 'bali');
+    insert into public.verification_requests (user_id, gesture, status, submitted_at, decided_at) values ('${id}', 'peace', 'approved', now(), now());`);
   return { id, email, name };
 }
 

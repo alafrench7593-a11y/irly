@@ -112,7 +112,7 @@ jobs:
   ui:
     needs: [wait-db, api]
     if: always() && needs.wait-db.result == 'success' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # Playwright 1.56 has no Chromium for ubuntu-latest (26.04) yet
     timeout-minutes: 60
     # Same group as api: no two E2E jobs run at once, across runs (their test
     # accounts and cleanups must never overlap another run's).

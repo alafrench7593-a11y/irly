@@ -29,6 +29,11 @@ async function sql(query) {
   return text ? JSON.parse(text) : [];
 }
 
+// IRLY Girl needs an identity verified by IRLY (20261102000000): a test woman gets an
+// approved selfie review, as a real member does once IRLY has checked her selfie.
+const verifyWoman = (id) => sql(`insert into public.verification_requests (user_id, gesture, status, submitted_at, decided_at)
+  values ('${id}', 'peace', 'approved', now(), now())`);
+
 async function createMember(name, gender) {
   const email = `e2e-girl-${run}-${name.toLowerCase()}@irly.test`;
   const [{ user_id: id }] = await sql(`
@@ -44,6 +49,7 @@ async function createMember(name, gender) {
     from u returning user_id`);
   // Only the IRLY profile a new member has after signing up: no IRLY Match onboarding, no Match profile.
   await sql(`insert into public.profiles (id, first_name, birthdate, gender, city_id, languages) values ('${id}', '${name}', '1995-04-04', '${gender}', 'dubai', '{en,fr}')`);
+  if (gender === 'woman') await verifyWoman(id);
   const sb = createClient(URL_, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
   const { error } = await sb.auth.signInWithPassword({ email, password: PASSWORD });
   if (error) throw new Error(`sign in ${name}: ${error.message}`);

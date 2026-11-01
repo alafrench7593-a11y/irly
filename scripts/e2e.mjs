@@ -69,6 +69,11 @@ const denied = async (p) => {
   return true;
 };
 
+// IRLY Girl needs an identity verified by IRLY (20261102000000): a test woman gets an
+// approved selfie review, as a real member does once IRLY has checked her selfie.
+const verifyWoman = (id) => sql(`insert into public.verification_requests (user_id, gesture, status, submitted_at, decided_at)
+  values ('${id}', 'peace', 'approved', now(), now())`);
+
 async function createUser(p) {
   const rows = await sql(`
     with u as (
@@ -140,6 +145,7 @@ try {
   await step('signup profiles are written (RLS: own row only)', async () => {
     for (const p of Object.values(people)) {
       must(await p.sb.from('profiles').insert({ id: p.id, first_name: p.name, birthdate: '1995-01-01', gender: p.gender, city_id: 'bali', languages: ['en', 'fr'], interests: ['sport', 'food'] }));
+      if (p.gender === 'woman') await verifyWoman(p.id);
     }
     return true;
   });
