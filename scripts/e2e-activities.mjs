@@ -63,6 +63,11 @@ const must = (r) => {
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// IRLY Girl needs an identity verified by IRLY (20261102000000): a test woman gets an
+// approved selfie review, as a real member does once IRLY has checked her selfie.
+const verifyWoman = (id) => sql(`insert into public.verification_requests (user_id, gesture, status, submitted_at, decided_at)
+  values ('${id}', 'peace', 'approved', now(), now())`);
+
 async function createUser(p) {
   const rows = await sql(`
     with u as (
@@ -79,6 +84,7 @@ async function createUser(p) {
   p.sb = createClient(URL, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
   must(await p.sb.auth.signInWithPassword({ email: p.email, password: PASSWORD }));
   must(await p.sb.from('profiles').insert({ id: p.id, first_name: p.name, birthdate: '1994-01-01', gender: p.gender, city_id: 'dubai', languages: ['en'], interests: ['sport', 'food'] }));
+  if (p.gender === 'woman') await verifyWoman(p.id);
 }
 
 // Only this run's accounts: the other suites sweep abandoned e2e-* accounts themselves.

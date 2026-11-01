@@ -88,6 +88,8 @@ async function createUser(p) {
   // The profile as onboarding writes it.
   await sql(`insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('${p.id}', '${p.name}', '1993-03-03', '${p.gender}', 'dubai')
     on conflict (id) do update set first_name = excluded.first_name, gender = excluded.gender`);
+  // IRLY Girl needs an identity verified by IRLY (20261102000000): test women get an approved selfie review.
+  if (p.gender === 'woman') await sql(`insert into public.verification_requests (user_id, gesture, status, submitted_at, decided_at) values ('${p.id}', 'peace', 'approved', now(), now())`);
 }
 
 const { cora: C, wren: W, milo: M } = people;

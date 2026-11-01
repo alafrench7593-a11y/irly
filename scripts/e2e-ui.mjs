@@ -69,7 +69,8 @@ async function main() {
     insert into public.profiles (id, first_name, birthdate, gender, city_id, languages) values ('${uid}', 'Uma', '1994-05-05', 'woman', 'bali', '{en,fr}');
     insert into public.irly_match_onboarding (user_id) values ('${uid}');
     insert into public.irly_match_profiles (user_id, goals, interests, sports, areas, destination, destination_status, mom_mode, kids_age_groups)
-    values ('${uid}', '{new_friends}', '{brunch}', '{surf}', '{canggu}', 'bali', 'just_arrived', true, '{kid}');`);
+    values ('${uid}', '{new_friends}', '{brunch}', '{surf}', '{canggu}', 'bali', 'just_arrived', true, '{kid}');
+    insert into public.verification_requests (user_id, gesture, status, submitted_at, decided_at) values ('${uid}', 'peace', 'approved', now(), now());`);
 
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, locale: 'en-US' });
@@ -253,7 +254,8 @@ async function main() {
     insert into auth.identities (id, user_id, provider_id, provider, identity_data, last_sign_in_at, created_at, updated_at)
     select gen_random_uuid(), u.id, u.id::text, 'email', jsonb_build_object('sub', u.id::text, 'email', '${EMAIL2}', 'email_verified', true), now(), now(), now()
     from u returning user_id`);
-  await sql(`insert into public.profiles (id, first_name, birthdate, gender, city_id, languages) values ('${zoe}', 'Zoe', '1995-03-03', 'woman', 'bali', '{en}')`);
+  await sql(`insert into public.profiles (id, first_name, birthdate, gender, city_id, languages) values ('${zoe}', 'Zoe', '1995-03-03', 'woman', 'bali', '{en}');
+    insert into public.verification_requests (user_id, gesture, status, submitted_at, decided_at) values ('${zoe}', 'peace', 'approved', now(), now());`);
   // Older unread notices on Uma's account, enough to fill more than the screen under Zoe's request:
   // the last ones start below the fold (src/features/notifications/seen.ts: only rows seen count).
   const EARLIER = 18;
