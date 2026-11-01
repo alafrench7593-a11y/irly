@@ -129,6 +129,11 @@ begin
 end $$;
 
 -- ───────── 1. profiles_public is read-only (any member could rename or delete anyone) ─────────
+-- Ada's profile is visible to nobody (set above): since
+-- 20261102000000_irly_security_hardening a stranger no longer reads her name
+-- at all, so the write checks below would touch no row. She is visible to
+-- everyone for this block (restored after it).
+update public.safety_settings set profile_visibility = 'everyone' where user_id = 'e9000000-0000-0000-0000-0000000000a1';
 do $$
 begin
   perform pg_temp.as_user('e9000000-0000-0000-0000-0000000000a3');
@@ -148,6 +153,7 @@ begin
     'profiles_public_read_only: anon cannot list members');
   perform pg_temp.as_admin();
 end $$;
+update public.safety_settings set profile_visibility = 'nobody' where user_id = 'e9000000-0000-0000-0000-0000000000a1';
 
 -- ───────── 2. IRLY Girl eligibility cannot be self-granted (verified safe) ─────────
 do $$
@@ -306,10 +312,12 @@ begin
     'photo_rules: the small copy is found next to the photo');
 
   perform pg_temp.as_user('e9000000-0000-0000-0000-0000000000a3');
-  perform pg_temp.check(private.can_read_profile_photo('e9000000-0000-0000-0000-0000000000a1/face.jpg'),
-    'photo_rules: a member sees the face of a private profile (as everywhere in the app)');
-  perform pg_temp.check(private.can_read_profile_photo('e9000000-0000-0000-0000-0000000000a1/face-s.jpg'),
-    'photo_rules: and its small copy');
+  -- Since 20261102000000_irly_security_hardening the face follows the profile
+  -- visibility too: a stranger (nothing shared with Ada) no longer reads it.
+  perform pg_temp.check(not private.can_read_profile_photo('e9000000-0000-0000-0000-0000000000a1/face.jpg'),
+    'photo_rules: a stranger does not see the face of a private profile');
+  perform pg_temp.check(not private.can_read_profile_photo('e9000000-0000-0000-0000-0000000000a1/face-s.jpg'),
+    'photo_rules: nor its small copy');
   perform pg_temp.check(not private.can_read_profile_photo('e9000000-0000-0000-0000-0000000000a1/beach.jpg'),
     'photo_rules: not the other photos of a private profile');
   perform pg_temp.check(not private.can_read_profile_photo('e9000000-0000-0000-0000-0000000000a1/old-removed.jpg'),

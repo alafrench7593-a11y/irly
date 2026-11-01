@@ -386,7 +386,7 @@ function joinTyping(typingTopic: string, onTyping: (who: string) => void): { cha
       .forEach((c) => sb.removeChannel(c));
     const listeners = new Set<(who: string) => void>();
     const channel = sb
-      .channel(typingTopic, { config: { broadcast: { self: false } } })
+      .channel(typingTopic, { config: { broadcast: { self: false }, private: true } })
       .on('broadcast', { event: 'typing' }, ({ payload }) => {
         const who = (payload as { uid?: string })?.uid;
         if (who) listeners.forEach((l) => l(who));
