@@ -88,6 +88,7 @@
     "test:crm": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-crm.mts"
   },
   "private": true,
+  "license": "UNLICENSED",
   "engines": {
     "node": "^20.19.4 || ^22.13.0 || >=24.3.0"
   }
