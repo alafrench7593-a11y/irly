@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
 import { AdminBadge } from '@/features/admin/StaffBadge';
 import { useAuthStatus } from '@/features/auth/account';
 import { isDemoId } from '@/features/girl/demo';
@@ -51,11 +51,17 @@ import { Ambient } from '@/components/visual/Ambient';
 import { SpaceFlavor } from '@/theme/space';
 import { enter } from '@/motion/enter';
 import { useBusy } from '@/lib/useBusy';
+import { ErrorScreen } from '@/components/layout/ErrorScreen';
 
 type Tab = 'posts' | 'activities' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
 // Upcoming needs no label; the others say what they are.
 const STATUS_LABEL: Partial<Record<ActivityStatus, string>> = { ongoing: 'Happening now', finished: 'Finished', cancelled: 'Cancelled' };
+
+/** A crash here shows Try again and a way home, not a blank screen (components/layout/ErrorScreen). */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return <ErrorScreen error={error} retry={retry} where="community" />;
+}
 
 /**
  * A community: posts (text, polls, plans) with likes and comments, its chat,

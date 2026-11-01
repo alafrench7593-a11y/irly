@@ -3859,6 +3859,8 @@ export const fr: Record<string, string> = {
   'Only for you: the others keep the conversation.': 'Pour toi seulement : les autres gardent la conversation.',
   'Could not archive': 'Impossible d’archiver',
   'Something went wrong': 'Un problème est survenu',
+  // A screen that crashed (components/layout/ErrorScreen).
+  'This page hit a problem. Try again, or go back to Home.': 'Cette page a rencontré un problème. Réessaie ou reviens à l’accueil.',
   'Pick at least 3 interests': 'Choisis au moins 3 centres d’intérêt',
   'Pick at least 3 interests and IRLY can start introducing you to people and plans.': 'Choisis au moins 3 centres d’intérêt et IRLY pourra te présenter des personnes et des plans.',
   'Create your account to meet people, join activities and discover your city.': 'Crée ton compte pour rencontrer des personnes, rejoindre des activités et découvrir ta ville.',
@@ -4046,6 +4048,10 @@ export const fr: Record<string, string> = {
   'Allow the camera in your settings to take the selfie': 'Autorise l’appareil photo dans tes réglages pour prendre le selfie',
   'The selfie could not be sent. Try again.': 'Le selfie n’a pas pu être envoyé. Réessaie.',
   'Verify my profile': 'Vérifier mon profil',
+  // IRLY Girl for a woman whose identity IRLY has not verified yet (my_girl_status: needs_verification).
+  'Verify your profile to enter IRLY Girl': 'Vérifie ton profil pour entrer dans IRLY Girl',
+  'IRLY Girl is a space for women only. To keep it that way, our team reviews 3 photos of you and a quick selfie once before letting you in. The selfie is never shown on your profile.': 'IRLY Girl est un espace réservé aux femmes. Pour qu’il le reste, notre équipe vérifie une fois 3 photos de toi et un selfie rapide avant de t’ouvrir l’accès. Le selfie n’apparaît jamais sur ton profil.',
+  '{name} is part of IRLY Girl. Verify your profile to enter.': '{name} fait partie d’IRLY Girl. Vérifie ton profil pour y entrer.',
   'Needed for Match. A person at IRLY compares a selfie with your photos: no automatic face recognition.': 'Nécessaire pour Match. Une personne d’IRLY compare un selfie avec tes photos : aucune reconnaissance faciale automatique.',
   'Could not add photos': 'Impossible d’ajouter les photos',
   'Selfie sent: a person at IRLY will review it': 'Selfie envoyé : une personne d’IRLY va le vérifier',

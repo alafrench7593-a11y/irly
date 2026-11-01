@@ -1,7 +1,7 @@
 import { DEMO, storageName } from '@/config/app';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { safeStorage } from '@/lib/safeStorage';
 import { DESTINATIONS, cityOpen, destinationOpen } from '@/data/destinations';
 import type {
   ActivityKind,
@@ -173,37 +173,12 @@ type Actions = {
 
 export const emptyProfile: Profile = { name: '', types: [], interests: [], activities: [], languages: [], lookingFor: [] };
 
-/**
- * Storage that never throws: private browsing, sandboxed web views and
- * quota errors degrade to in-memory state instead of breaking the app.
- */
-const memory = new Map<string, string>();
-const safeStorage: StateStorage = {
-  getItem: async (name) => {
-    try {
-      const v = await AsyncStorage.getItem(name);
-      return v ?? memory.get(name) ?? null;
-    } catch {
-      return memory.get(name) ?? null;
-    }
-  },
-  setItem: async (name, value) => {
-    memory.set(name, value);
-    try {
-      await AsyncStorage.setItem(name, value);
-    } catch {
-      // keep the in-memory copy
-    }
-  },
-  removeItem: async (name) => {
-    memory.delete(name);
-    try {
-      await AsyncStorage.removeItem(name);
-    } catch {
-      // ignore
-    }
-  },
-};
+/** A saved state with every profile field present (the empty profile's defaults under what was saved). */
+function withProfileDefaults(saved: unknown): Partial<State> {
+  const state = (saved && typeof saved === 'object' ? saved : {}) as Partial<State>;
+  const profile = state.profile && typeof state.profile === 'object' ? state.profile : undefined;
+  return profile ? { ...state, profile: { ...emptyProfile, ...profile } } : state;
+}
 
 function toggle(flags: Flags, id: string): [Flags, boolean] {
   const next = { ...flags };
@@ -348,7 +323,10 @@ export const useStore = create<State & Actions>()(
       version: 1,
       // A saved state from another version is kept (missing fields take their defaults), never thrown away:
       // without this, a version change would send every member back to the welcome screen.
-      migrate: (saved) => saved as never,
+      // The profile is merged field by field: one saved before a field existed (lookingFor, languages…)
+      // gets that field's default instead of undefined.
+      migrate: (saved) => withProfileDefaults(saved) as never,
+      merge: (saved, current) => ({ ...current, ...withProfileDefaults(saved) }),
       storage: createJSONStorage(() => safeStorage),
       partialize: ({ hydrated: _h, ...rest }) => rest,
       onRehydrateStorage: () => (state) => {

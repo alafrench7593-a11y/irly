@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, type ErrorBoundaryProps } from 'expo-router';
 import { useRef } from 'react';
 import { useAvatarFlight, useFlyingTo } from '@/features/flight/avatarFlight';
 import { t as tx } from '@/i18n';
@@ -30,6 +30,12 @@ import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
 import { SpaceFlavor } from '@/theme/space';
+import { ErrorScreen } from '@/components/layout/ErrorScreen';
+
+/** A crash here shows Try again and a way home, not a blank screen (components/layout/ErrorScreen). */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return <ErrorScreen error={error} retry={retry} where="person" />;
+}
 
 /** Example people (demo) have their page here; a real member (UUID) gets their server profile. */
 export default function PersonProfile() {

@@ -8,6 +8,7 @@ import { haptic } from '@/motion/haptics';
 import { useTheme } from '@/theme/useTheme';
 import { MapError, MapFrame, MapNotice, MapSkeleton, noticeFor, pinLabel, SpotPin, SpotSheet, useCommunityMapModel, type CommunityMapProps } from './CommunityMapParts';
 import { spotBounds, type MapSpan } from './mapSpots';
+import { nativeMapAvailable } from '@/features/map/nativeMaps';
 
 /**
  * Phones: the communities of the list on the same real map as the Map tab
@@ -15,6 +16,8 @@ import { spotBounds, type MapSpan } from './mapSpots';
  * a compact map to see where communities meet, not to explore.
  */
 export function CommunityMap(props: CommunityMapProps) {
+  // Android without a Google Maps key (see features/map/nativeMaps): the list below the map is enough.
+  if (!nativeMapAvailable) return null;
   if (props.status === 'loading') return <MapSkeleton />;
   if (props.status === 'error') return <MapError onRetry={() => props.onRetry?.()} />;
   return <Engine {...props} />;

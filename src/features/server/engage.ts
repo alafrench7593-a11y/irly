@@ -10,6 +10,7 @@ import { useAccount } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, echoGate, syncNow, useRefreshOn, willReload } from './sync';
+import { isMissingFunction } from '@/features/live/livePublish';
 
 /**
  * One interaction system for the whole app. Anything that can be liked,
@@ -190,7 +191,8 @@ export function useEngagement(type: TargetType, ids: string[]) {
       }
       patch(id, { liked: !cur.liked, likes: Math.max(0, cur.likes + (cur.liked ? -1 : 1)) });
       try {
-        const liked = await toggleLike({ type, id });
+        // The state wanted, not a toggle: a retried request can no longer undo itself.
+        const liked = await setLike({ type, id }, !cur.liked);
         // The count follows what the server did, not what was guessed: liked on
         // another phone meanwhile, the toggle unliked; the true numbers are read again.
         patch(id, { liked, likes: Math.max(0, cur.likes + (liked === cur.liked ? 0 : liked ? 1 : -1)) });
@@ -214,7 +216,7 @@ export function useEngagement(type: TargetType, ids: string[]) {
       const cur = mapRef.current[id] ?? EMPTY;
       patch(id, { saved: !cur.saved, saves: Math.max(0, cur.saves + (cur.saved ? -1 : 1)) });
       try {
-        await toggleSave({ type, id });
+        await setSave({ type, id }, !cur.saved);
       } catch (e) {
         patch(id, { saved: cur.saved, saves: cur.saves });
         throw e;
@@ -242,6 +244,26 @@ export async function toggleLike(t: Target): Promise<boolean> {
 
 export async function toggleSave(t: Target): Promise<boolean> {
   const { data, error } = await need().rpc('toggle_save', { p_type: t.type, p_id: t.id });
+  if (error) throw new Error(friendlyError(error.message));
+  changed('saved');
+  return Boolean(data);
+}
+
+/**
+ * Likes or unlikes (set_like, migration 20261102000000): the same answer however many times it is
+ * sent. A server without it yet toggles, as before.
+ */
+export async function setLike(t: Target, liked: boolean): Promise<boolean> {
+  const { data, error } = await need().rpc('set_like', { p_type: t.type, p_id: t.id, p_liked: liked });
+  if (error && isMissingFunction(error)) return toggleLike(t);
+  if (error) throw new Error(friendlyError(error.message));
+  return Boolean(data);
+}
+
+/** Saves or unsaves (set_save), idempotent; falls back to the toggle on an older server. */
+export async function setSave(t: Target, saved: boolean): Promise<boolean> {
+  const { data, error } = await need().rpc('set_save', { p_type: t.type, p_id: t.id, p_saved: saved });
+  if (error && isMissingFunction(error)) return toggleSave(t);
   if (error) throw new Error(friendlyError(error.message));
   changed('saved');
   return Boolean(data);

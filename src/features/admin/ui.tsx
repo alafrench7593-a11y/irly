@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -113,21 +113,26 @@ export function useAdminRole(): StaffRole | null | undefined {
 
 /** Loads once and on demand: data (null while loading), error, reload. */
 export function useLoad<T>(fn: () => Promise<T>, key: string) {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // What was loaded is kept with its key: another key shows nothing (loading) instead of the previous one's data.
+  const [state, setState] = useState<{ key: string; data: T | null; error: string | null }>({ key, data: null, error: null });
+  // Only the latest load lands: a slow answer for an earlier key (or an earlier reload) is dropped.
+  const seq = useRef(0);
   const load = useCallback(() => {
+    const n = ++seq.current;
     fn().then(
       (x) => {
-        setData(x);
-        setError(null);
+        if (n === seq.current) setState({ key, data: x, error: null });
       },
-      (e) => setError(e instanceof Error ? e.message : 'Could not load'),
+      (e) => {
+        if (n === seq.current) setState((s) => ({ key, data: s.key === key ? s.data : null, error: e instanceof Error ? e.message : 'Could not load' }));
+      },
     );
     // The key names what is loaded: a new key loads again (fn is a new closure each render).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
   useEffect(load, [load]);
-  return { data, error, reload: load };
+  const current = state.key === key;
+  return { data: current ? state.data : null, error: current ? state.error : null, reload: load };
 }
 
 /** A one-line (or multi-line) text box in the back office style. */

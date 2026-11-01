@@ -8,6 +8,7 @@ import { DEFAULT_WEIGHTS, matchScore, normalizeReasons, type MatchProfile, type 
 import { useGirlStore } from './girlStore';
 import type { Candidate, Filters, MatchAction, MatchProfileDraft, MatchResult, MatchState, MatchSummary, ReportCategory } from './types';
 import { cleanImage } from '@/lib/media';
+import { blockUser } from '@/features/moderation/moderation';
 
 // Example members exist only in the demo build; real members come from the server.
 const GIRLS = DEMO ? EXAMPLE_GIRLS : [];
@@ -236,7 +237,8 @@ const serverApi: MatchApi = {
     );
   },
   unmatch: (matchId) => rpc('irly_unmatch', { p_match: matchId }),
-  block: (userId) => rpc('block_user', { p_target: userId }),
+  // The shared block: the chat, people, activity and community lists drop the member at once too.
+  block: (userId) => blockUser(userId),
   async report(userId, category, details) {
     await rpc('report', { p_kind: 'profile', p_target_user: userId, p_target_id: null, p_category: category, p_details: details ?? null });
   },

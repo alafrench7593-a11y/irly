@@ -1,6 +1,6 @@
 import { storageName } from '@/config/app';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getLocales } from 'expo-localization';
+import { safeStorage } from '@/lib/safeStorage';
 import { useCallback, useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -54,7 +54,8 @@ type LangState = { setting: LangSetting; set: (s: LangSetting) => void };
 export const useLangStore = create<LangState>()(
   persist((set) => ({ setting: 'auto', set: (setting) => set({ setting }) }), {
     name: storageName('irly-lang'),
-    storage: createJSONStorage(() => AsyncStorage),
+    // Never throws: a storage error must not keep the app waiting on the language (app/_layout).
+    storage: createJSONStorage(() => safeStorage),
   }),
 );
 

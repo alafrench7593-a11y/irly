@@ -37,7 +37,7 @@ import { enter } from '@/motion/enter';
 
 const BOOT_LIMIT = 25_000;
 /** What the screen shows: the Match flow, or why IRLY Girl is closed for this account. */
-type Screen = MatchState | 'loading' | 'error' | 'suspended' | 'signed_out';
+type Screen = MatchState | 'loading' | 'error' | 'suspended' | 'needs_verification' | 'signed_out';
 
 const SECTIONS: { id: Section; label: (city: string) => string; icon: IconName }[] = [
   { id: 'for_you', label: () => 'For you', icon: 'sparkles' },
@@ -147,7 +147,7 @@ function GirlMatchInner() {
           // server), never for a Match onboarding or profile, and loads no Match data.
           if (!FEATURES.girlMatch) {
             const a = await readGirlAccess();
-            return a === 'open' ? 'ready' : a === 'suspended' ? 'suspended' : a === 'signed_out' ? 'signed_out' : 'ineligible';
+            return a === 'open' ? 'ready' : a === 'suspended' || a === 'needs_verification' || a === 'signed_out' ? a : 'ineligible';
           }
           const api = await matchApi();
           apiRef.current = api;
@@ -155,7 +155,10 @@ function GirlMatchInner() {
           if (supabase && api.mode === 'device') return 'signed_out';
           const st = await api.state();
           // Closed: say why (paused after reports, or not a woman's account) before showing anything.
-          if (st === 'ineligible' && api.mode === 'server') return (await readGirlAccess().catch(() => 'not_eligible')) === 'suspended' ? 'suspended' : 'ineligible';
+          if (st === 'ineligible' && api.mode === 'server') {
+            const why = await readGirlAccess().catch(() => 'not_eligible');
+            return why === 'suspended' || why === 'needs_verification' ? why : 'ineligible';
+          }
           return st;
         })(),
         BOOT_LIMIT,
@@ -266,6 +269,7 @@ function GirlMatchInner() {
   if (state === 'error') return <GirlClosed reason="error" onRetry={boot} />;
   if (state === 'signed_out') return <GirlClosed reason="signed_out" />;
   if (state === 'suspended') return <GirlClosed reason="suspended" />;
+  if (state === 'needs_verification') return <GirlClosed reason="needs_verification" />;
   if (state === 'ineligible') return <GirlClosed reason="not_eligible" />;
 
   return (

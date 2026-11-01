@@ -65,7 +65,8 @@ export function AreaPicker({ cityId, value, onChange, multiple, max, placeholder
 
   const summary = chosen.length
     ? chosen.length === 1
-      ? city.areas.find((a) => a.id === chosen[0])!.name
+      ? // A neighbourhood no longer in the city (renamed, or another city's) reads as nothing picked.
+        (city.areas.find((a) => a.id === chosen[0])?.name ?? tr(placeholder))
       : tr('{n} neighbourhoods', { n: chosen.length })
     : tr(placeholder);
 

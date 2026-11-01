@@ -1,5 +1,5 @@
 import { webLink } from '@/config/app';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoPlanScreen } from '@/features/girl/DemoScreens';
 import { cityWhen } from '@/lib/time';
@@ -46,9 +46,15 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
 import { enter } from '@/motion/enter';
 import { SpaceFlavor } from '@/theme/space';
+import { ErrorScreen } from '@/components/layout/ErrorScreen';
 
 // The activity's own city time, wherever the phone is.
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
+/** A crash here shows Try again and a way home, not a blank screen (components/layout/ErrorScreen). */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return <ErrorScreen error={error} retry={retry} where="activity" />;
+}
 
 /**
  * The canonical page of a member activity or event (one id, linked from

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, type ErrorBoundaryProps } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
@@ -23,6 +23,12 @@ import { adminStyles, ago, Card, NoAccess, Stat, useAdminRole, useLoad } from '@
 import { t as tx } from '@/i18n';
 import { girlPalette, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { ErrorScreen } from '@/components/layout/ErrorScreen';
+
+/** A crash here shows Try again and a way home, not a blank screen (components/layout/ErrorScreen). */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return <ErrorScreen error={error} retry={retry} where="admin" />;
+}
 
 /**
  * Back office home: real counts from the server (admins see the whole

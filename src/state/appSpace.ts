@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { storageName } from '@/config/app';
+import { safeStorage } from '@/lib/safeStorage';
 
 /**
  * Which IRLY the member is using: the whole app (tabs, every page, every
@@ -23,7 +23,7 @@ export const useSpaceStore = create<SpaceState>()(
       space: 'mixte',
       setSpace: (space) => set({ space }),
     }),
-    { name: storageName('irly-space'), storage: createJSONStorage(() => AsyncStorage), version: 1 },
+    { name: storageName('irly-space'), storage: createJSONStorage(() => safeStorage), version: 1 },
   ),
 );
 
