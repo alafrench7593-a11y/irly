@@ -1,7 +1,9 @@
 name: Apple build status
 
 # Reads where the latest iOS builds stand at Apple (processing, TestFlight).
-# Read only. Uses the App Store Connect key already in the secrets.
+# Read only unless an input asks for a change (testers, team invitations,
+# routing coverage). Uses the App Store Connect key already in the secrets.
+# From main only, through the `production` environment.
 
 on:
   workflow_dispatch:
@@ -23,15 +25,23 @@ on:
         type: boolean
         default: false
 
+permissions:
+  contents: read
+
 jobs:
   status:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: printf '%s' "${{ secrets.ASC_KEY_P8 }}" > asc-api-key.p8
+      - name: App Store Connect key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: umask 077 && printf '%s' "$ASC_KEY_P8" > asc-api-key.p8
       - run: node .github/scripts/asc-builds.mjs
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}

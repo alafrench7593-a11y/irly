@@ -231,6 +231,8 @@ function ClosedSpace({ id, access, cityName }: { id: SpaceId; access: GirlAccess
   const s = SPACES[id];
   const notOpen = !s.womenOnly || access === 'open';
   const paused = s.womenOnly && access === 'suspended';
+  // A woman whose profile IRLY has not verified yet: the way in is the verification.
+  const unverified = s.womenOnly && access === 'needs_verification';
   return (
     <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
       <GlassLayer radius={radius.xl} />
@@ -240,11 +242,14 @@ function ClosedSpace({ id, access, cityName }: { id: SpaceId; access: GirlAccess
           ? tx('{name} is not open in {city} yet.', { name: s.title, city: cityName })
           : paused
             ? tx('{name} is part of IRLY Girl, which is paused for your account. The rest of IRLY works as usual.', { name: s.title })
-            : tx('{name} is reserved for women with an IRLY Girl account.', { name: s.title })}
+            : unverified
+              ? tx('{name} is part of IRLY Girl. Verify your profile to enter.', { name: s.title })
+              : tx('{name} is reserved for women with an IRLY Girl account.', { name: s.title })}
       </Text>
       {notOpen && s.womenOnly ? <Button label="Open IRLY Girl" variant="secondary" onPress={() => router.push(MOM_DOOR)} /> : null}
       {paused ? <Button label="Contact support" variant="secondary" onPress={() => router.push('/support')} /> : null}
-      {!notOpen && !paused && id === 'moms' ? <Button label="Explore IRLY Family" icon="home" variant="secondary" onPress={() => router.replace('/space/families')} /> : null}
+      {unverified ? <Button label="Verify my profile" icon="badgeCheck" variant="secondary" onPress={() => router.push('/verify')} /> : null}
+      {!notOpen && !paused && !unverified && id === 'moms' ? <Button label="Explore IRLY Family" icon="home" variant="secondary" onPress={() => router.replace('/space/families')} /> : null}
     </View>
   );
 }

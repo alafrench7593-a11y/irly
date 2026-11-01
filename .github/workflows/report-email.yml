@@ -29,6 +29,8 @@ concurrency:
 
 jobs:
   send:
+    # Production: scheduled runs, or manual runs from main.
+    if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

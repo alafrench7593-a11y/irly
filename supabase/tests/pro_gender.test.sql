@@ -56,7 +56,17 @@ insert into public.pro_profiles (user_id, role, job_title, industries, city_id) 
   ('6e400000-0000-0000-0000-0000000000a3', 'employee', 'Designer', '{design}', 'dubai');
 -- a4 (Lina) has no professional profile.
 
--- 1. Each professional's declared gender; none for someone without a professional profile.
+-- 0. Since 20261102000000_irly_security_hardening: only for professionals you
+--    are connected with (or yourself). A stranger's card reads nothing.
+select pg_temp.as_user('6e400000-0000-0000-0000-0000000000a2');
+select pg_temp.check(pg_temp.seen(array['6e400000-0000-0000-0000-0000000000a1', '6e400000-0000-0000-0000-0000000000a2',
+  '6e400000-0000-0000-0000-0000000000a3']::uuid[]) = 'a2:man', 'not connected: only your own gender');
+select pg_temp.as_admin();
+insert into public.friendships (user_a, user_b, requested_by, status, accepted_at) values
+  ('6e400000-0000-0000-0000-0000000000a1', '6e400000-0000-0000-0000-0000000000a2', '6e400000-0000-0000-0000-0000000000a1', 'accepted', now()),
+  ('6e400000-0000-0000-0000-0000000000a2', '6e400000-0000-0000-0000-0000000000a3', '6e400000-0000-0000-0000-0000000000a3', 'accepted', now());
+
+-- 1. Each connected professional's declared gender; none for someone without a professional profile.
 select pg_temp.as_user('6e400000-0000-0000-0000-0000000000a2');
 select pg_temp.check(pg_temp.seen(array['6e400000-0000-0000-0000-0000000000a1', '6e400000-0000-0000-0000-0000000000a2',
   '6e400000-0000-0000-0000-0000000000a3', '6e400000-0000-0000-0000-0000000000a4']::uuid[]) = 'a1:woman,a2:man,a3:other',
@@ -98,4 +108,5 @@ select pg_temp.check(pg_temp.fails($$select gender from public.profiles where id
 
 select pg_temp.as_admin();
 delete from public.safety_settings where user_id = '6e400000-0000-0000-0000-0000000000a3';
+delete from public.friendships where user_a::text like '6e400000-%';
 delete from public.pro_profiles where user_id::text like '6e400000-%';

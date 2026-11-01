@@ -29,12 +29,14 @@ import { useGirlStore } from './girlStore';
  * screen to show, so nobody lands on a half-empty page that the server
  * then refuses piece by piece.
  *
- * - With the IRLY server: `my_girl_status()` → open, suspended, not_eligible.
+ * - With the IRLY server: `my_girl_status()` → open, suspended, needs_verification
+ *   (a woman's account whose identity IRLY has not verified yet, migration
+ *   20261102000000), not_eligible.
  *   Signed out → sign in first (no local stand-in for a real account).
  * - Without a server (development, demo build): the gender of the local
  *   profile, the same rule the on-device Match uses.
  */
-export type GirlAccess = 'checking' | 'open' | 'signed_out' | 'not_eligible' | 'suspended' | 'error';
+export type GirlAccess = 'checking' | 'open' | 'signed_out' | 'not_eligible' | 'needs_verification' | 'suspended' | 'error';
 export type GirlClosedReason = Exclude<GirlAccess, 'checking' | 'open'>;
 
 /** Past this, the screen offers Try again instead of a spinner. */
@@ -71,7 +73,7 @@ export async function readGirlAccess(): Promise<Exclude<GirlAccess, 'checking' |
   if (!(await hasSession())) return 'signed_out';
   const { data, error } = await supabase.rpc('my_girl_status');
   if (error) throw new Error(error.message);
-  return data === 'open' ? 'open' : data === 'suspended' ? 'suspended' : 'not_eligible';
+  return data === 'open' ? 'open' : data === 'suspended' ? 'suspended' : data === 'needs_verification' ? 'needs_verification' : 'not_eligible';
 }
 
 type Answer = Exclude<GirlAccess, 'checking' | 'error'>;
@@ -235,6 +237,11 @@ const CLOSED: Record<GirlClosedReason, { icon: IconName; title: string; body: st
     title: 'IRLY Girl is reserved for women',
     body: 'A space where women meet other women: brunches, padel, travel, wellness. Access follows the gender on your IRLY account and is checked by our servers. The rest of IRLY is open to you.',
   },
+  needs_verification: {
+    icon: 'badgeCheck',
+    title: 'Verify your profile to enter IRLY Girl',
+    body: 'IRLY Girl is a space for women only. To keep it that way, our team reviews 3 photos of you and a quick selfie once before letting you in. The selfie is never shown on your profile.',
+  },
   suspended: {
     icon: 'shield',
     title: 'IRLY Girl is paused for your account',
@@ -277,6 +284,7 @@ export function GirlClosed({ reason, onRetry, moms }: { reason: GirlClosedReason
         {reason === 'error' && onRetry ? <GButton label="Try again" onPress={onRetry} /> : null}
         {reason === 'signed_out' ? <GButton label="Sign in" icon="user" onPress={() => router.push('/account')} /> : null}
         {reason === 'suspended' ? <GButton label="Contact support" onPress={() => router.push('/support')} /> : null}
+        {reason === 'needs_verification' ? <GButton label="Verify my profile" icon="badgeCheck" onPress={() => router.push('/verify')} /> : null}
         {/* IRLY Family is open to every parent: the way in for a dad who tapped « IRLY Mom Community ». */}
         {reason === 'not_eligible' && moms ? <GButton label="Explore IRLY Family" icon="home" variant="secondary" onPress={() => router.replace('/space/families')} /> : null}
         <GButton label="Back to IRLY" variant={reason === 'not_eligible' && !moms ? 'primary' : 'ghost'} onPress={() => safeBack(router, '/')} />

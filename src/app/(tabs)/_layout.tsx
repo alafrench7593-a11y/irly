@@ -1,6 +1,13 @@
+import type { ErrorBoundaryProps } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 import { TabBar } from '@/components/navigation/TabBar';
 import { useTheme } from '@/theme/useTheme';
+import { ErrorScreen } from '@/components/layout/ErrorScreen';
+
+/** A crash here shows Try again and a way home, not a blank screen (components/layout/ErrorScreen). */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return <ErrorScreen error={error} retry={retry} where="tabs" />;
+}
 
 /**
  * The same tabs in IRLY and in IRLY Girl: the bar and every tab wear

@@ -91,10 +91,44 @@ export async function registerPush(lang: Lang, ask = true): Promise<PushState> {
   if (status !== 'granted') return 'denied';
   const id = projectId();
   if (!id) return 'not-configured';
+  // The session this registration is for: checked again right before the token is sent.
+  const gen = generation;
+  const uid = await sessionUser();
   const token = (await bounded(Notifications.getExpoPushTokenAsync({ projectId: id }), 'Push token')).data;
-  await serial(() => sendToken(token, lang));
-  registered = token;
+  await serial(async () => {
+    // Signed out, or another account signed in, while the phone was asked for its token (outside
+    // this queue): the token is not bound to whoever holds the session now.
+    if (gen !== generation || leaving || (await sessionUser()) !== uid) return;
+    await sendToken(token, lang);
+    registered = token;
+  });
   return 'on';
+}
+
+/**
+ * Bumped when a sign-out starts (unregisterPush): a registration started before it never sends
+ * its token for the account that leaves. Another account signing in is caught by the session check.
+ */
+let generation = 0;
+/** True while unregisterPush runs (a sign-out in progress). */
+let leaving = false;
+
+/** Who holds the session on this phone right now (undefined: no one, or it could not be read). */
+async function sessionUser(): Promise<string | undefined> {
+  if (!supabase) return undefined;
+  const read = await bounded(supabase.auth.getSession(), 'Session').catch(() => null);
+  return read?.data.session?.user.id;
+}
+
+/**
+ * The account on this phone is gone (signed out, deleted, or another one signed in): the
+ * notifications it left in the phone's tray, with the badge, are cleared so the next person
+ * never sees them. Called by wipeLocal.
+ */
+export function clearPushTray(): void {
+  if (!native) return;
+  Notifications.dismissAllNotificationsAsync().catch(() => undefined);
+  Notifications.setBadgeCountAsync(0).catch(() => undefined);
 }
 
 /** Token work on this phone, one call at a time (a release never races a new registration). */
@@ -217,6 +251,17 @@ async function sendToken(token: string, lang: Lang): Promise<void> {
 /** Signing out: this phone stops receiving the account's notifications. */
 export async function unregisterPush(): Promise<void> {
   if (!native || !supabase) return;
+  // A registration still waiting for the phone's token is not sent for the account that leaves.
+  generation++;
+  leaving = true;
+  try {
+    await unregister(supabase);
+  } finally {
+    leaving = false;
+  }
+}
+
+async function unregister(sb: NonNullable<typeof supabase>): Promise<void> {
   // Signed out before registration finished: ask the phone for its token (no prompt) so it is still removed.
   let token = registered;
   if (!token && Device.isDevice) {
@@ -226,7 +271,6 @@ export async function unregisterPush(): Promise<void> {
   }
   registered = null;
   if (!token) return;
-  const sb = supabase;
   await serial(async () => {
     // Kept first: if the calls below never answer (offline), the next launch releases it.
     await keepToRelease(token);
@@ -366,6 +410,8 @@ export function usePush() {
   useEffect(() => {
     if (!taps || auth === 'unknown') return;
     const next = waiting.current.splice(0).pop();
+    // Signed out: a tap on a notification of the account that left opens nothing (its pages are private).
+    if (auth !== 'in') return;
     if (next) void openTapped(next, uid).catch(() => router.push((next.url ?? '/notifications') as never));
   }, [taps, auth, uid]);
 }

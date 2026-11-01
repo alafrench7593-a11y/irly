@@ -25,9 +25,11 @@ jobs:
         env:
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
       - name: Push the sheets to photo-candidates
+        env:
+          GH_PUSH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd photo-candidates
           git init -q -b photo-candidates
           git add -A
           git -c user.name=irly-bot -c user.email=bot@irly.app commit -qm "Photo candidates"
-          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" photo-candidates
+          git push -f "https://x-access-token:${GH_PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" photo-candidates

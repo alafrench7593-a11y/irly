@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { CATEGORIES } from '../src/data/catalog/categories.ts';
 import { DESTINATION_PATTERNS, isDestination, SCREEN_ROUTES } from '../src/features/cms/destinations.ts';
-import { cleanFeed, NEWS_CATEGORIES } from '../src/features/cms/model.ts';
+import { cleanFeed, cleanNews, cleanPoll, NEWS_CATEGORIES, pollAfterVote, pollShares } from '../src/features/cms/model.ts';
 import { checkLayout, defaultLayout, entryCount, SECTION_SPEC } from '../src/features/cms/layout.ts';
 import { HOME_SECTIONS } from '../src/features/home/sections.ts';
 
@@ -128,6 +128,26 @@ check(girlAsked !== null && girlAsked.news.length === 0 && girlAsked.banners.len
 const mixed = cleanFeed({ space: 'mixte', layout: null, news: [row, { id: 'nope', title: 'x' }, { ...row, id: '0b6f1a2c-1111-4222-8333-444455556667', title: '' }, null], banners: [{ title: 'no id' }] }, 'mixte');
 check(mixed !== null && mixed.news.length === 1 && mixed.banners.length === 0, 'rows without what a card needs are left out');
 check(cleanFeed(null, 'mixte') === null && cleanFeed('x', 'mixte') === null, 'an unreadable answer is not a feed (the last good one stays)');
+
+console.log('Polls');
+const pollSql = fs.readFileSync(path.join(root, 'supabase/migrations/20261101000000_irly_news_polls.sql'), 'utf8');
+check(/cardinality\(opts\) < 2 or cardinality\(opts\) > 6/.test(pollSql) && /option between 0 and 5/.test(pollSql), 'server: 2 to 6 answers, votes on answers 0 to 5');
+const poll = cleanPoll({ question: 'Which evening?', options: ['Fri', 'Sat', 'Sun'], counts: [2, 1, 0], total: 3, my_vote: 1 });
+check(same(poll, { question: 'Which evening?', options: ['Fri', 'Sat', 'Sun'], counts: [2, 1, 0], total: 3, myVote: 1 }), 'a poll from the server is read as sent');
+check(cleanPoll({ question: 'Q?', options: ['Only one'] }) === undefined && cleanPoll({ question: 'Q?', options: ['a', 2] }) === undefined && cleanPoll(null) === undefined,
+  'a poll a screen cannot draw is left out (the article still shows)');
+check(same(cleanPoll({ question: 'Q?', options: ['a', 'b'], counts: [-3, 'x'], my_vote: 7 }), { question: 'Q?', options: ['a', 'b'], counts: [0, 0], total: 0, myVote: null }),
+  'bad counts read as 0, an answer that does not exist as no answer');
+if (poll) {
+  const moved = pollAfterVote(poll, 0);
+  check(same(moved.counts, [3, 0, 0]) && moved.total === 3 && moved.myVote === 0, 'changing one\'s answer moves the vote, the total stays');
+  const first = pollAfterVote({ ...poll, myVote: null }, 2);
+  check(same(first.counts, [2, 1, 1]) && first.total === 4 && first.myVote === 2, 'a first vote adds one to the total');
+  check(pollAfterVote(poll, 1) === poll && pollAfterVote(poll, 9) === poll, 'the same answer again, or one that does not exist: nothing changes');
+  check(same(pollShares(poll), [67, 33, 0]) && same(pollShares({ ...poll, counts: [0, 0, 0], total: 0 }), [0, 0, 0]), 'shares in whole percents, 0 when nobody voted');
+}
+const card = cleanNews({ ...row, has_poll: true });
+check(card !== null && card.has_poll === true && card.poll === undefined, 'a Home card knows there is a poll, without the votes');
 
 console.log(`\n${passed} passed, ${fails.length} failed`);
 if (fails.length) {

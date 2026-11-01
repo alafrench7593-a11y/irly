@@ -7,6 +7,10 @@
 const token = (process.env.SUPABASE_ACCESS_TOKEN || '').match(/sbp_[^\s"'`]+/)?.[0];
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 if (!token) throw new Error('SUPABASE_ACCESS_TOKEN is missing');
+// Identities and titles (community and chat names, first names, ids, masked
+// emails) are printed only on a local run that asks for them, never in CI:
+// GitHub Actions logs of this public repository are public. In CI: counts only.
+const details = process.env.IRLY_LOCAL_DETAILS === '1' && !process.env.CI;
 
 async function sql(query) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
@@ -44,8 +48,12 @@ const rows = await sql(`
 
 const mask = (e) => (e ? `${e[0]}***@${e.split('@')[1] || '?'}` : '(no email)');
 console.log(`accounts: ${rows.length}, matching a test pattern: ${rows.filter((r) => r.test_pattern).length}, staff: ${rows.filter((r) => r.staff).length}`);
-console.log('\nemail | test pattern | staff | provider | created | last sign-in | name | activities | joins | posts | comments | messages | communities | memberships | irl | notifs');
-for (const r of rows) {
+const sum = (key, list = rows) => list.reduce((n, r) => n + (r[key] || 0), 0);
+const testRows = rows.filter((r) => r.test_pattern);
+console.log(`owned by test-pattern accounts: activities ${sum('activities', testRows)}, posts ${sum('posts', testRows)}, messages ${sum('messages', testRows)}, communities ${sum('communities', testRows)}`);
+console.log(`App Review account present: ${rows.some((r) => r.email === 'appreview@getirly.com') ? 'yes' : 'no'}`);
+if (details) console.log('\nemail | test pattern | staff | provider | created | last sign-in | name | activities | joins | posts | comments | messages | communities | memberships | irl | notifs');
+if (details) for (const r of rows) {
   const email = r.test_pattern || r.email === 'appreview@getirly.com' ? r.email : mask(r.email);
   const name = r.test_pattern ? r.first_name : (r.first_name ? `${r.first_name[0]}.` : '');
   console.log([email, r.test_pattern ? 'yes' : 'no', r.staff ? 'yes' : 'no', r.provider, r.created, r.last_sign_in || '-', name,
@@ -63,8 +71,8 @@ const acts = await sql(`
   from public.activities a join auth.users u on u.id = a.creator_id
   where a.title ~* '(\\[e2e\\]|e2e|test|demo|lorem|asdf|xxx)'
   order by a.created_at`);
-console.log(`\nactivities whose title looks like a test: ${acts.length}`);
-for (const a of acts) console.log([a.created, a.by_test_account ? 'test account' : 'other account', a.title.slice(0, 80)].join(' | '));
+console.log(`\nactivities whose title looks like a test: ${acts.length} (by test accounts: ${acts.filter((a) => a.by_test_account).length})`);
+if (details) for (const a of acts) console.log([a.created, a.by_test_account ? 'test account' : 'other account', a.title.slice(0, 80)].join(' | '));
 
 // Member communities whose creator account no longer exists (deleted test
 // accounts leave them behind: created_by is set null on delete).
@@ -78,8 +86,9 @@ const orphanCommunities = await sql(`
   where c.created_by is null and not c.official and c.deleted_at is null
   order by c.created_at`);
 console.log(`\nmember communities without a creator: ${orphanCommunities.length}`);
-console.log('created | city | girl only | members | members not matching a test pattern | posts | name');
-for (const c of orphanCommunities) console.log([c.created, c.city_id, c.girl_only ? 'yes' : 'no', c.members, c.non_test_members, c.posts, c.name.slice(0, 60)].join(' | '));
+console.log(`  with members not matching a test pattern: ${orphanCommunities.filter((c) => c.non_test_members > 0).length}, with posts: ${orphanCommunities.filter((c) => c.posts > 0).length}`);
+if (details) console.log('created | city | girl only | members | members not matching a test pattern | posts | name');
+if (details) for (const c of orphanCommunities) console.log([c.created, c.city_id, c.girl_only ? 'yes' : 'no', c.members, c.non_test_members, c.posts, c.name.slice(0, 60)].join(' | '));
 
 // Conversations nobody belongs to any more, by kind.
 const emptyConvs = await sql(`

@@ -7,16 +7,17 @@ import {
 } from '@expo-google-fonts/manrope';
 import { InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppFrame } from '@/components/layout/AppFrame';
+import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { ToastHost } from '@/components/ui/Toast';
 import { CreateHost } from '@/features/create/CreateHost';
 import { girl } from '@/features/girl/theme';
@@ -64,6 +65,21 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   document.head.appendChild(css);
 }
 
+/** The longest the splash waits for fonts and stored settings: past it, the app opens with what it has. */
+const SPLASH_MAX_MS = 6000;
+
+/** A crash of the whole app shows Try again and a way home, never a frozen or blank screen. */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => undefined);
+  }, []);
+  return (
+    <SafeAreaProvider>
+      <ErrorScreen error={error} retry={retry} where="root" />
+    </SafeAreaProvider>
+  );
+}
+
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Manrope_400Regular,
@@ -78,7 +94,13 @@ export default function RootLayout() {
   const hydrated = useStore((s) => s.hydrated);
   const spaceHydrated = useSpaceHydrated();
   const langHydrated = useLangHydrated();
-  const ready = (fontsLoaded || Boolean(fontError)) && hydrated && spaceHydrated && langHydrated;
+  // A store that never finishes reading (storage error) or fonts that never load keep no one on the splash.
+  const [late, setLate] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setLate(true), SPLASH_MAX_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  const ready = late || ((fontsLoaded || Boolean(fontError)) && hydrated && spaceHydrated && langHydrated);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => undefined);

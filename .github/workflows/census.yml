@@ -2,14 +2,16 @@ name: Community census
 
 # Read-only: lists communities, their parent and real member counts (no
 # member identities), so changes to the hierarchy start from the facts.
+# Manual runs from main only. Logs of this public repository are public.
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/confident-ride-1o2o3x]
-    paths: ['scripts/community-census.mjs', '.github/workflows/census.yml']
+
+permissions:
+  contents: read
 
 jobs:
   census:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

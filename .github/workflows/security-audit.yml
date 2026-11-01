@@ -4,16 +4,16 @@ name: Security audit
 # functions, Realtime, sign-in settings). Writes nothing, prints no secret.
 # Needs SUPABASE_ACCESS_TOKEN.
 
+# Manual runs from main only.
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/confident-ride-1o2o3x]
-    paths:
-      - 'scripts/security-audit.mjs'
-      - '.github/workflows/security-audit.yml'
+
+permissions:
+  contents: read
 
 jobs:
   audit:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

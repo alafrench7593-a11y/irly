@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CityId } from '@/data/types';
 import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
+import { uuid } from '@/lib/uuid';
 import { together } from '@/lib/together';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
@@ -234,6 +235,8 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
   const queued = useRef(new Map<string, number>());
   // Temporary id → real id, for a tap that lands just as the post arrives.
   const sent = useRef(new Map<string, string>());
+  // The id given to a post that got no answer: sending the same post again reuses it, so it lands once.
+  const unsent = useRef<{ key: string; id: string } | null>(null);
 
   // When the last feed read was sent: realtime events committed before it are in it.
   const sentAt = useRef(-Infinity);
@@ -346,14 +349,22 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
         poll, pollCounts: poll ? poll.options.map(() => 0) : [], myVote: null, likes: 0, comments: 0, liked: false, createdAt: Date.now(), mine: true, pending: true,
       };
       setPosts((p) => [temp, ...p]);
+      // The id is made here: a retry after a lost answer is the same post, not a second one.
+      const key = JSON.stringify([communityId, body, poll, input.activityId ?? null, input.category ?? null]);
+      const postId = unsent.current?.key === key ? unsent.current.id : uuid();
+      unsent.current = { key, id: postId };
       const { data, error: e } = await sb()
         .from('community_posts')
-        .insert({ community_id: communityId, author_id: uid, body, poll, activity_id: input.activityId ?? null, ...(input.category ? { category: input.category } : {}) })
+        .insert({ id: postId, community_id: communityId, author_id: uid, body, poll, activity_id: input.activityId ?? null, ...(input.category ? { category: input.category } : {}) })
         .select('id')
         .single();
       const vote = queued.current.get(temp.id);
       queued.current.delete(temp.id);
-      if (e || !data) {
+      // Already there (a retry after a lost answer): that is a success.
+      const landed = e?.code === '23505';
+      // Refused for good (not a lost answer): the next attempt is a new post.
+      if (e?.code && !landed) unsent.current = null;
+      if (!landed && (e || !data)) {
         setPosts((p) => p.filter((x) => x.id !== temp.id));
         // No answer (network, timeout): it may have been saved. The feed shows what the server has,
         // so a post that landed is not written and sent a second time.
@@ -361,7 +372,8 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
         const msg = e?.message ?? 'Could not post';
         throw new Error(/row-level|policy/i.test(msg) ? 'Join the community to post' : /slow down/i.test(msg) ? 'Slow down a little' : friendlyError(msg));
       }
-      const id = (data as { id: string }).id;
+      const id = landed ? postId : (data as { id: string }).id;
+      unsent.current = null;
       sent.current.set(temp.id, id);
       // Same card, real id: the server copy will replace it, not sit beside it.
       setPosts((p) => p.filter((x) => x.id !== id).map((x) => (x.id === temp.id ? { ...x, id, pending: false } : x)));

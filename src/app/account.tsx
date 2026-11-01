@@ -96,11 +96,13 @@ function AccountScreen() {
       toast(failed, 'x', 'live');
       return;
     }
-    if (url && url.includes('access_token')) {
+    // A ?code= (PKCE) or an older #access_token= link: completeFromUrl only follows one this
+    // device asked for, and says nothing about a link it ignores.
+    if (/[?&]code=|[#&]access_token=/.test(url)) {
       completeFromUrl(url)
-        .then((ok) => {
-          if (!ok) return;
-          if (url.includes('type=recovery') || url.includes('reset=1')) setMode('reset');
+        .then((how) => {
+          if (!how) return;
+          if (how === 'recovery') setMode('reset');
           else toast("You're signed in", 'check', 'positive');
         })
         .catch((e) => toast(authMessage(e), 'x', 'live'));

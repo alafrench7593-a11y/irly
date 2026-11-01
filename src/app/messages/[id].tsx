@@ -1,7 +1,8 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
 import { NotFound } from '@/components/layout/NotFound';
+import { DEMO } from '@/config/app';
 import { dateLocale, t as tx, a11y } from '@/i18n';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, {
   FadeInDown,
@@ -53,6 +54,12 @@ import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { SpaceFlavor } from '@/theme/space';
 import { useBusy } from '@/lib/useBusy';
+import { ErrorScreen } from '@/components/layout/ErrorScreen';
+
+/** A crash here shows Try again and a way home, not a blank screen (components/layout/ErrorScreen). */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return <ErrorScreen error={error} retry={retry} where="thread" />;
+}
 
 // Opened from IRLY Girl, the chat wears the Girl look (cosmetic only, see theme/space).
 export default function ThreadRoute() {
@@ -68,7 +75,9 @@ function ThreadScreen() {
   const status = useAuthStatus();
   // Server conversations (signed in) have UUIDs; the rest live on the device.
   if (isServerId(id) && status === 'out') return <SignedOut />;
-  return isServerId(id) ? <ServerThreadView id={id} /> : <Thread />;
+  if (isServerId(id)) return <ServerThreadView id={id} />;
+  // The on-device example chats (with their canned replies) belong to the demonstration build only.
+  return DEMO ? <Thread /> : <NotFound title="This conversation is not available" />;
 }
 
 /** A chat link opened while signed out: say so instead of loading forever. */
@@ -97,6 +106,15 @@ function dayLabel(at: number): string {
   return d.toLocaleDateString(dateLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
 }
 const clock = (at: number) => new Date(at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
+
+/**
+ * At most this many messages are drawn at once (the latest ones): a chat left open for hours, or
+ * read far back, no longer grows the screen without end. Load earlier shows RENDER_STEP more
+ * of what is already on the phone before asking the server for older ones.
+ */
+const RENDER_CAP = 150;
+const RENDER_STEP = 100;
+const ALL = '*';
 
 /** A live conversation from the IRLY server: realtime in, optimistic out. */
 function ServerThreadView({ id }: { id: string }) {
@@ -136,6 +154,18 @@ function ServerThreadView({ id }: { id: string }) {
     chatDraft.set(id, text);
   }, [id, text]);
   const [earlier, setEarlier] = useState(false);
+  // The oldest message drawn: null, the latest RENDER_CAP; ALL, every message (older ones were
+  // asked for). Anchored to a message while you read further up, so one arriving meanwhile never
+  // pushes the one you read out of the list.
+  const [from, setFrom] = useState<string | null>(null);
+  const all = thread.messages;
+  // Memoised: the message list re-renders on new messages, not on each key typed.
+  const visible = useMemo(() => {
+    if (from === ALL) return all;
+    const i = from ? all.findIndex((m) => m.id === from) : -1;
+    return i >= 0 ? all.slice(i) : all.length > RENDER_CAP ? all.slice(-RENDER_CAP) : all;
+  }, [all, from]);
+  const hidden = all.length - visible.length;
   const [menu, setMenu] = useState(false);
   // Block waits for the server: a second tap asked again, then went back twice.
   const blocking = useBusy<'block'>();
@@ -205,7 +235,7 @@ function ServerThreadView({ id }: { id: string }) {
   const [info, setInfo] = useState(false);
   const media = useSignedLinks(
     'chat-media',
-    thread.messages.map((m) => m.media?.path),
+    visible.map((m) => m.media?.path),
   );
   // Stable: the message list only re-renders when its messages change (not on each key typed).
   const threadRetry = thread.retry;
@@ -263,6 +293,9 @@ function ServerThreadView({ id }: { id: string }) {
           onScroll={(e) => {
             const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
             stick.current = contentOffset.y + layoutMeasurement.height > contentSize.height - 120;
+            // Reading further up: what is drawn stays put. Back at the bottom of a long chat: the latest RENDER_CAP only.
+            if (!stick.current && from === null && hidden > 0) setFrom(visible[0].id);
+            else if (stick.current && from !== null && visible.length > RENDER_CAP + RENDER_STEP) setFrom(null);
           }}
           scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
@@ -275,13 +308,20 @@ function ServerThreadView({ id }: { id: string }) {
               {thread.error}
             </Text>
           ) : null}
-          {thread.hasEarlier ? (
+          {thread.hasEarlier || hidden > 0 ? (
             <PressableScale
               haptic="select"
               onPress={async () => {
                 if (earlier) return;
-                setEarlier(true);
                 stick.current = false;
+                // Older messages already on the phone: drawn first, no server call.
+                if (hidden > 0) {
+                  setFrom(all[Math.max(0, hidden - RENDER_STEP)].id);
+                  return;
+                }
+                setEarlier(true);
+                // The older messages the server gives are drawn too (they were asked for).
+                setFrom(ALL);
                 try {
                   await thread.loadEarlier();
                 } catch {
@@ -303,7 +343,7 @@ function ServerThreadView({ id }: { id: string }) {
             </Text>
           ) : null}
           <ThreadMessages
-            messages={thread.messages}
+            messages={visible}
             media={media}
             group={group}
             now={now}
@@ -921,6 +961,12 @@ function Thread() {
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const keyboard = useKeyboardHeight();
+  // The example reply's timers: none of them fires once the chat is closed.
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const later = (fn: () => void, ms: number) => {
+    timers.current.push(setTimeout(fn, ms));
+  };
 
   const conversationId = conversation?.id;
   useEffect(() => {
@@ -937,15 +983,15 @@ function Thread() {
     haptic('tap');
     sendMessage(conversation.id, body);
     setText('');
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
+    later(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     const replier = conversation.personIds[0];
     if (replier && findPerson(replier)) {
-      setTimeout(() => setTyping(true), 700);
-      setTimeout(() => {
+      later(() => setTyping(true), 700);
+      later(() => {
         setTyping(false);
         receiveMessage(conversation.id, replier, cannedReply(messages.length));
         haptic('select');
-        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
+        later(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
       }, 2300);
     }
   };

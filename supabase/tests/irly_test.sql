@@ -45,6 +45,26 @@ begin
   where verified_at is null and deleted_at is null;
 end $$;
 
+-- IRLY Girl needs an identity verified by IRLY (migration
+-- 20261102000000_irly_security_hardening). Test fixture, for every test file
+-- that runs on this database after this one: a woman's profile created in a
+-- test gets an approved selfie review, as a real member's would after
+-- decide_verification. A session that sets irly_test.unverified = 'on'
+-- (security_hardening.test.sql) creates unverified women instead.
+create schema if not exists irly_test;
+create or replace function irly_test.verified_woman() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if new.gender = 'woman' and coalesce(current_setting('irly_test.unverified', true), '') <> 'on' then
+    insert into public.verification_requests (user_id, gesture, status, submitted_at, decided_at, created_at)
+    values (new.id, 'peace', 'approved', now(), now(), now() - interval '1 year');
+  end if;
+  return new;
+end $$;
+drop trigger if exists zz_irly_test_verified_woman on public.profiles;
+create trigger zz_irly_test_verified_woman after insert on public.profiles
+for each row execute function irly_test.verified_woman();
+
 -- People: three women, one man.
 insert into auth.users (id) values
   ('00000000-0000-0000-0000-00000000000a'), ('00000000-0000-0000-0000-00000000000b'),
@@ -1409,8 +1429,12 @@ select pg_temp.check(exists (select 1 from public.community_members m join publi
 
 -- ───── Faces: one source for members' photos ─────
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
-select pg_temp.check((select count(*) from public.profile_faces(array['00000000-0000-0000-0000-00000000000e', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000012']::uuid[])) = 3, 'faces: members see each other''s photo path');
+-- Hana (…11) made her profile visible to nobody above: a stranger no longer
+-- gets her face (migration 20261102000000_irly_security_hardening); her friend Ivo does.
+select pg_temp.check((select count(*) from public.profile_faces(array['00000000-0000-0000-0000-00000000000e', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000012']::uuid[])) = 2
+  and not exists (select 1 from public.profile_faces(array['00000000-0000-0000-0000-000000000011']::uuid[])), 'faces: members see each other''s photo path, not a hidden profile''s');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
+select pg_temp.check((select count(*) from public.profile_faces(array['00000000-0000-0000-0000-000000000011']::uuid[])) = 1, 'faces: a friend still sees the face of a hidden profile');
 select public.block_user('00000000-0000-0000-0000-000000000011');
 select pg_temp.check((select count(*) from public.profile_faces(array['00000000-0000-0000-0000-000000000011']::uuid[])) = 0, 'faces: nothing across a block');
 select public.unblock_user('00000000-0000-0000-0000-000000000011');

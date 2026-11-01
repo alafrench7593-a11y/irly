@@ -23,12 +23,14 @@ import { MapSheet, type Snap } from './MapSheet';
 import type { MapMarkerData } from './markers';
 import { useMapLayers } from './useActivityLayer';
 import { placeMarkers, STREET, type Located } from './place';
+import { nativeMapAvailable } from './nativeMaps';
 
-export const hasRealMap = true;
+// Android without a Google Maps key: the IRLY map instead (see ./nativeMaps).
+export const hasRealMap = nativeMapAvailable;
 
 /**
- * Real map: Apple Maps on iPhone, Google Maps on Android (both available in
- * Expo Go, no key needed). IRLY's own layer sits on top: the same markers,
+ * Real map: Apple Maps on iPhone, Google Maps on Android (only with a key
+ * built into the app, see ./nativeMaps). IRLY's own layer sits on top: the same markers,
  * clusters, sheet and 2D / 3D switch as the IRLY map, now on real streets
  * and real 3D buildings. People and lives are only ever placed around
  * their neighbourhood, never at an address.

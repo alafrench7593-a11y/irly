@@ -3,11 +3,13 @@ name: E2E
 # Walks every user journey against the live IRLY Supabase project with
 # throwaway accounts (deleted at the end), then loads the web app in a real
 # browser signed in as a test member. Needs SUPABASE_ACCESS_TOKEN.
+# Runs against production only from main (push, manual run, or after main's
+# Database deploy); a manual run on another branch does nothing.
 
 on:
   workflow_dispatch:
   push:
-    branches: [claude/confident-ride-1o2o3x]
+    branches: [main]
     paths:
       - 'scripts/e2e.mjs'
       - 'scripts/e2e-ui.mjs'
@@ -21,7 +23,7 @@ on:
   workflow_run:
     workflows: [Database]
     types: [completed]
-    branches: [claude/confident-ride-1o2o3x]
+    branches: [main]
 
 permissions:
   contents: read
@@ -32,6 +34,8 @@ jobs:
   # are deployed (it once tested the old schema and passed). Holds no
   # concurrency slot, so it can wait for the Database run without deadlock.
   wait-db:
+    # workflow_run is already limited to main's Database runs (its github.ref is the default branch).
+    if: github.event_name == 'workflow_run' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

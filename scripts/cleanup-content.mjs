@@ -14,6 +14,14 @@
 const token = (process.env.SUPABASE_ACCESS_TOKEN || '').match(/sbp_[^\s"'`]+/)?.[0];
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 const apply = process.env.APPLY === '1';
+// Deleting production data needs two switches: APPLY=1 and this exact phrase.
+// See docs/OPERATIONS.md (« Running a production clean-up »).
+if (apply && process.env.CONFIRM_PROD_DELETE !== 'yes-i-am-sure') {
+  throw new Error('APPLY=1 also needs CONFIRM_PROD_DELETE=yes-i-am-sure: nothing deleted');
+}
+// Identities (emails, names, ids) are printed only on a local run that asks for
+// them, never in CI: GitHub Actions logs of this public repository are public.
+const details = process.env.IRLY_LOCAL_DETAILS === '1' && !process.env.CI;
 if (!token) throw new Error('SUPABASE_ACCESS_TOKEN is missing');
 
 async function sql(query) {
@@ -51,10 +59,11 @@ const count = async () =>
 console.log('before:', JSON.stringify(await count()));
 const tests = await sql(`select id, email from auth.users where ${TEST} order by created_at`);
 if (tests.some((u) => u.email === KEEP)) throw new Error('the App Review account matches the test pattern: stopping');
-console.log(`test accounts: ${tests.map((u) => u.email).join(', ') || 'none'}`);
+console.log(`test accounts: ${tests.length}`);
+if (details) console.log(tests.map((u) => u.email).join(', ') || 'none');
 
 if (!apply) {
-  console.log('\nDry run: nothing deleted. Set APPLY=1 to delete.');
+  console.log('\nDry run: nothing deleted. Set APPLY=1 and CONFIRM_PROD_DELETE to delete.');
   process.exit(0);
 }
 
@@ -66,8 +75,8 @@ for (const u of tests) {
     perform set_config('request.jwt.claim.sub', '', false);
     perform set_config('request.jwt.claims', '', false);
   end $$`);
-  console.log(`deleted account ${u.email}`);
 }
+console.log(`deleted accounts: ${tests.length}`);
 
 const [done] = await sql(`with
   l as (delete from public.irl_posts returning 1),

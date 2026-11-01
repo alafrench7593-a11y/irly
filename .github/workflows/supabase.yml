@@ -3,10 +3,30 @@ name: Database
 # Tests the database rules on a throwaway PostgreSQL, then applies new
 # migrations to the IRLY Supabase project. Deploying needs one repository
 # secret: SUPABASE_ACCESS_TOKEN (Settings → Secrets and variables → Actions).
+# Production is deployed from main only, through the `production` environment
+# (Settings → Environments: add required reviewers there). Pull requests and
+# manual runs on other branches only run the tests.
 
 on:
   push:
-    branches: [main, claude/confident-ride-1o2o3x]
+    branches: [main]
+    paths:
+      - 'supabase/**'
+      - 'scripts/deploy-db.mjs'
+      - 'scripts/test-db.sh'
+      - 'scripts/check-intent.mts'
+      - 'scripts/check-network.mts'
+      - 'src/features/network/**'
+      - 'src/features/ai/**'
+      - 'src/features/bali/fit.ts'
+      - 'scripts/check-bali.mts'
+      - 'scripts/check-community.mts'
+      - 'src/features/community/**'
+      - 'scripts/place-tags.mjs'
+      - 'scripts/check-areas.mts'
+      - 'src/data/destinations.ts'
+      - '.github/workflows/supabase.yml'
+  pull_request:
     paths:
       - 'supabase/**'
       - 'scripts/deploy-db.mjs'
@@ -25,11 +45,8 @@ on:
       - '.github/workflows/supabase.yml'
   workflow_dispatch:
 
-concurrency:
-  # Own group: an E2E run can no longer cancel a pending deploy (one group for
-  # main and the branch: both deploy the same project).
-  group: irly-db-deploy
-  cancel-in-progress: false
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -68,7 +85,15 @@ jobs:
 
   deploy:
     needs: test
+    # Only main deploys (a manual run on another branch only tests).
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    environment: production
+    # Own group: two deploys never overlap, and an E2E run can never cancel a
+    # pending deploy. On the job, so pull-request test runs never queue behind it.
+    concurrency:
+      group: irly-db-deploy
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

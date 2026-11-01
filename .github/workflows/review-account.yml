@@ -8,9 +8,15 @@ name: Review account
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   account:
+    # Changes production accounts: from main only, through the `production` environment.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

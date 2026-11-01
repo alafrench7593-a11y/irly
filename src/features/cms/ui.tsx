@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Rail } from '@/components/cards/Blocks';
 import { useFrame } from '@/components/layout/AppFrame';
@@ -8,20 +8,24 @@ import { SectionHeader } from '@/components/ui/Controls';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
 import type { PhotoKey } from '@/data/photos';
 import type { Visual } from '@/data/types';
+import { DEMO } from '@/config/app';
 import { CITIES } from '@/data/destinations';
+import { useAccount } from '@/features/auth/account';
 import { LiveVideo } from '@/features/live/LiveVideo';
 import { useSignedLinks } from '@/features/server/media';
 import { dateLocale, t as tx, useLang } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
+import { supabase } from '@/lib/supabase';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import type { LightId } from '@/theme/lights';
 import { useTheme } from '@/theme/useTheme';
 import { openDestination } from './go';
-import { BANNER_PHOTO, NEWS_CATEGORY_LABEL, NEWS_PHOTO, type Banner, type NewsArticle, type NewsCard } from './feed';
+import { BANNER_PHOTO, NEWS_CATEGORY_LABEL, NEWS_PHOTO, pollAfterVote, pollShares, voteNewsPoll, type Banner, type NewsArticle, type NewsCard, type NewsPoll } from './feed';
 import { entryCount, entryText, type LayoutEntry } from './layout';
 
 /**
@@ -47,8 +51,8 @@ const NewsTile = memo(function NewsTile({ item, visual, width, light }: { item: 
       <Photo visual={visual} light={light} scrim="strong" width={700} pinned style={[styles.tile, { width }]}>
         <View style={styles.tileText}>
           <View style={styles.tileTop}>
-            <Text variant="overline" color="rgba(255,255,255,0.9)">
-              {NEWS_CATEGORY_LABEL[item.category]}
+            <Text variant="overline" color="rgba(255,255,255,0.9)" raw>
+              {item.has_poll ? `${tx(NEWS_CATEGORY_LABEL[item.category])} · ${tx('Poll')}` : tx(NEWS_CATEGORY_LABEL[item.category])}
             </Text>
             {item.video ? <Icon name="play" size={14} color="#FFFFFF" /> : null}
           </View>
@@ -75,7 +79,7 @@ const NewsRow = memo(function NewsRow({ item, visual, light }: { item: NewsCard;
       <Photo visual={visual} light={light} width={240} pinned style={styles.thumb} />
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="caption" tone="brand">
-          {`${tx(NEWS_CATEGORY_LABEL[item.category])} · ${newsDate(item.publish_at)}`}
+          {[tx(NEWS_CATEGORY_LABEL[item.category]), item.has_poll ? tx('Poll') : null, newsDate(item.publish_at)].filter(Boolean).join(' · ')}
         </Text>
         <Text variant="titleS" numberOfLines={2} raw>
           {item.title}
@@ -198,8 +202,81 @@ export function BannerSection({ entry, banners, width: given, pad = space.gutter
   );
 }
 
-/** A news item's page (also the back office's preview): photo, words, gallery, video, button. */
-export function NewsArticleView({ item }: { item: NewsArticle }) {
+/**
+ * A news item's poll: tap an answer to vote, tap another to change it. The
+ * shares show for everyone; the vote counts at once and is put back if the
+ * server refuses it. Signed out, or in the back office's preview, it is
+ * read-only.
+ */
+export function NewsPollView({ id, poll, preview = false }: { id: string; poll: NewsPoll; preview?: boolean }) {
+  const t = useTheme();
+  const account = useAccount();
+  // The demo build has no accounts: its visitor votes (kept in this browser only).
+  const signedIn = Boolean(account?.userId) || (DEMO && !supabase);
+  // The reader's own change, over what the server last said (the page reads the item again when it comes back).
+  const [mine, setMine] = useState<NewsPoll | null>(null);
+  const [busy, setBusy] = useState(false);
+  const p = mine ?? poll;
+  const shares = pollShares(p);
+  const canVote = signedIn && !preview;
+  const vote = (i: number) => {
+    if (!canVote || busy || p.myVote === i) return;
+    const before = mine;
+    setMine(pollAfterVote(p, i));
+    setBusy(true);
+    voteNewsPoll(id, i)
+      .then((fresh) => {
+        if (fresh) setMine(fresh);
+      })
+      .catch((e) => {
+        setMine(before);
+        toast(tx(e instanceof Error ? e.message : 'Could not save'), 'x', 'live');
+      })
+      .finally(() => setBusy(false));
+  };
+  return (
+    <View style={[styles.pad, { gap: 8 }]} testID="news-poll">
+      <Text variant="overline" tone="brand">
+        Poll
+      </Text>
+      <Text variant="titleS" raw>
+        {p.question}
+      </Text>
+      {p.options.map((o, i) => {
+        const chosen = p.myVote === i;
+        return (
+          <PressableScale
+            key={`${i}-${o}`}
+            onPress={() => vote(i)}
+            disabled={!canVote}
+            haptic="select"
+            scaleTo={0.98}
+            style={[styles.pollRow, { borderColor: chosen ? t.c.text : t.c.line }]}
+            accessibilityRole="button"
+            accessibilityState={{ selected: chosen, disabled: !canVote }}
+            accessibilityLabel={tx('Vote: {option}', { option: o })}
+            testID="news-poll-option"
+          >
+            <View style={[StyleSheet.absoluteFill, { width: `${shares[i]}%`, backgroundColor: t.c.overlay, borderRadius: radius.md }]} />
+            {chosen ? <Icon name="check" size={14} color={t.c.text} /> : null}
+            <Text variant="label" raw style={{ flex: 1 }}>
+              {o}
+            </Text>
+            <Text variant="caption" tone="secondary" raw>
+              {`${shares[i]}%`}
+            </Text>
+          </PressableScale>
+        );
+      })}
+      <Text variant="caption" tone="tertiary">
+        {preview ? tx('Members vote here once the item is published') : signedIn ? tx('{n} votes', { n: p.total }) : tx('{n} votes · sign in to vote', { n: p.total })}
+      </Text>
+    </View>
+  );
+}
+
+/** A news item's page (also the back office's preview): photo, words, poll, gallery, video, button. */
+export function NewsArticleView({ item, preview = false }: { item: NewsArticle; preview?: boolean }) {
   const t = useTheme();
   const frame = useFrame();
   const light = CITIES[useCityId()].light;
@@ -236,6 +313,7 @@ export function NewsArticleView({ item }: { item: NewsArticle }) {
           ))}
         </View>
       ) : null}
+      {item.poll ? <NewsPollView key={item.id} id={item.id} poll={item.poll} preview={preview} /> : null}
       {item.video_path ? (
         <View style={styles.pad}>
           {videoUrl ? (
@@ -276,4 +354,5 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter, gap: 6 },
   video: { width: '100%', aspectRatio: 16 / 9, borderRadius: radius.xl, overflow: 'hidden' },
   gallery: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  pollRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 11, borderRadius: radius.md, borderWidth: 1, overflow: 'hidden' },
 });

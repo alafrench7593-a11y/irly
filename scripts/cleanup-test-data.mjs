@@ -13,6 +13,14 @@
 const token = (process.env.SUPABASE_ACCESS_TOKEN || '').match(/sbp_[^\s"'`]+/)?.[0];
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 const apply = process.env.APPLY === '1';
+// Deleting production data needs two switches: APPLY=1 and this exact phrase.
+// See docs/OPERATIONS.md (« Running a production clean-up »).
+if (apply && process.env.CONFIRM_PROD_DELETE !== 'yes-i-am-sure') {
+  throw new Error('APPLY=1 also needs CONFIRM_PROD_DELETE=yes-i-am-sure: nothing deleted');
+}
+// Identities (emails, names, ids) are printed only on a local run that asks for
+// them, never in CI: GitHub Actions logs of this public repository are public.
+const details = process.env.IRLY_LOCAL_DETAILS === '1' && !process.env.CI;
 if (!token) throw new Error('SUPABASE_ACCESS_TOKEN is missing');
 
 async function sql(query) {
@@ -46,16 +54,17 @@ const [counts] = await sql(`select
   (select count(*) from public.communities c where ${e2eCommunities})::int as e2e_communities,
   (select count(*) from public.communities c where ${seededCommunities})::int as seeded_communities,
   (select count(*) from public.conversations v where ${emptyConversations})::int as empty_conversations`);
-console.log(`test account test@gmail.com: ${ghost ? `found (${ghost.name}, created ${ghost.created})` : 'not found'}`);
+console.log(`approved test account: ${ghost ? 'found' : 'not found'}`);
+if (details && ghost) console.log(`  ${ghost.name}, created ${ghost.created}`);
 console.log(`E2E communities: ${counts.e2e_communities} (expected 62)`);
 console.log(`seeded empty communities: ${counts.seeded_communities} (expected 23)`);
 console.log(`direct/group conversations with no member: ${counts.empty_conversations} (expected 284)`);
 
 // Only the exact account the owner approved: created on 2026-10-11, named Ghost.
 const ghostOk = ghost && ghost.name === 'Ghost' && ghost.created === '2026-10-11';
-if (ghost && !ghostOk) console.log('test@gmail.com does not match the approved account (name/date): left alone');
+if (ghost && !ghostOk) console.log('the test account does not match the approved account (name/date): left alone');
 if (!apply) {
-  console.log('\nDry run: nothing deleted. Set APPLY=1 to delete.');
+  console.log('\nDry run: nothing deleted. Set APPLY=1 and CONFIRM_PROD_DELETE to delete.');
   process.exit(0);
 }
 

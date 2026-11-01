@@ -11,9 +11,15 @@ on:
         description: Email of the IRLY account to make owner (it must already exist)
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   owner:
+    # Changes production accounts: from main only, through the `production` environment.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Hide the email in the logs
         run: echo "::add-mask::$OWNER_EMAIL"

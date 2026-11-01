@@ -8,7 +8,7 @@ import { useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
 import type { AppSpace } from '@/state/appSpace';
 import { checkLayout, type LayoutEntry } from './layout';
-import { cleanFeed, cleanNews, type HomeFeed, type NewsArticle, type NewsCard } from './model';
+import { cleanFeed, cleanNews, cleanPoll, type HomeFeed, type NewsArticle, type NewsCard, type NewsPoll } from './model';
 
 export * from './model';
 
@@ -65,6 +65,8 @@ function persist() {
 }
 
 const inflight = new Map<AppSpace, Promise<void>>();
+/** Counts the wipes (clearHomeFeed): an answer read before the last one is dropped. */
+let wiped = 0;
 
 /**
  * Reads the flavour's feed from the server unless it was read less than a
@@ -77,16 +79,18 @@ export function refreshHomeFeed(space: AppSpace, force = false): Promise<void> {
   const at = useFeeds.getState().feeds[space]?.at ?? 0;
   if (!force && Date.now() - at < STALE_MS) return Promise.resolve();
   const p = (async () => {
+    const round = wiped;
     try {
       await hydrate();
       const feed = cleanFeed(await fetchFeed(space), space);
-      if (!feed) return;
+      if (!feed || round !== wiped) return;
       useFeeds.setState((s) => ({ feeds: { ...s.feeds, [space]: { feed, at: Date.now() } } }));
       persist();
     } catch {
       // Offline, server unreachable: the last good feed stays on screen.
     } finally {
-      inflight.delete(space);
+      // After a wipe, the map may already hold the next account's request.
+      if (round === wiped) inflight.delete(space);
     }
   })();
   inflight.set(space, p);
@@ -96,6 +100,18 @@ export function refreshHomeFeed(space: AppSpace, force = false): Promise<void> {
 /** After the team changed something here: every flavour is read again on its next look. */
 export function staleHomeFeeds() {
   useFeeds.setState((s) => ({ feeds: Object.fromEntries(Object.entries(s.feeds).map(([k, v]) => [k, v ? { ...v, at: 0 } : v])) }));
+}
+
+/**
+ * Logging out (state/wipe): the feed the account that left was shown (IRLY Girl items) is
+ * forgotten, on screen and on the phone; an answer still on its way for it is not kept.
+ */
+export function clearHomeFeed() {
+  wiped++;
+  inflight.clear();
+  hydrated = Promise.resolve();
+  useFeeds.setState({ feeds: {} });
+  AsyncStorage.removeItem(STORE).catch(() => undefined);
 }
 
 let lastUid: string | null | undefined;
@@ -181,4 +197,17 @@ export function useKnownNews(id: string | undefined): NewsCard | undefined {
     }
     return undefined;
   });
+}
+
+/**
+ * Votes on a news item's poll, or changes the vote (news_poll_vote): the
+ * server checks that this account may read the item now and answers with
+ * the poll's new counts.
+ */
+export async function voteNewsPoll(id: string, option: number): Promise<NewsPoll | undefined> {
+  if (DEMO && !supabase) return cleanPoll((await import('./demo')).demoCms('news_poll_vote', { p_id: id, p_option: option }));
+  if (!supabase) throw new Error('Not connected');
+  const { data, error } = await supabase.rpc('news_poll_vote', { p_id: id, p_option: option });
+  if (error) throw new Error(error.message);
+  return cleanPoll(data);
 }
