@@ -1,7 +1,7 @@
 /**
  * Sign-in setup on the IRLY Supabase project, through the Management API.
- * Always: allows the app's redirect URLs (Expo Go, the app scheme, the
- * browser preview). When their secrets exist: switches on Google and Apple.
+ * Always: sets the app's redirect URLs to exactly the list below (the
+ * app scheme, the websites, local dev), removing any other. When their secrets exist: switches on Google and Apple.
  * Secrets are read from the environment and never printed.
  */
 const token = process.env.SUPABASE_ACCESS_TOKEN;
@@ -14,12 +14,34 @@ const res = await fetch(api, { headers });
 if (!res.ok) throw new Error(`Reading the auth config failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
 const current = await res.json();
 
-const wanted = ['exp://**', 'irly://**', 'https://*.trycloudflare.com/**', 'http://localhost:8081/**', 'https://alafrench7593-a11y.github.io/irly/**', 'https://getirly.com/**', 'https://www.getirly.com/**', 'https://*-link-a664.vercel.app/**'];
-const allow = new Set((current.uri_allow_list ?? '').split(',').map((s) => s.trim()).filter(Boolean));
-wanted.forEach((u) => allow.add(u));
+// Set, never merged: a host anyone can register (*.vercel.app, a tunnel, any
+// exp:// address) must never receive a sign-in code. Same list in deploy-db.mjs.
+// IRLY_DEV_REDIRECTS adds one exact dev URL for this run only (a fixed host, at
+// most a trailing /**), e.g. exp://192.168.1.20:8081/**.
+const REDIRECTS = ['https://getirly.com/**', 'https://www.getirly.com/**', 'https://alafrench7593-a11y.github.io/irly/**', 'irly://**', 'http://localhost:8081/**', 'http://localhost:19006/**'];
+function devRedirect(value) {
+  const v = (value ?? '').trim();
+  if (!v) return null;
+  const bare = v.replace(/\/\*\*$/, '');
+  let u = null;
+  try {
+    u = new URL(bare);
+  } catch {
+    u = null;
+  }
+  if (v.includes(',') || bare.includes('*') || !u || !u.hostname || !/^(https?|exp):$/.test(u.protocol)) {
+    throw new Error('IRLY_DEV_REDIRECTS must be one exact URL (http, https or exp, a fixed host, at most a trailing /**), never a wildcard host');
+  }
+  return v;
+}
+const dev = devRedirect(process.env.IRLY_DEV_REDIRECTS);
+const allow = dev ? [...REDIRECTS, dev] : REDIRECTS;
+if (dev) console.log(`! IRLY_DEV_REDIRECTS: ${dev} is allowed on the LIVE project until the next run without it`);
+const dropped = String(current.uri_allow_list ?? '').split(',').map((s) => s.trim()).filter((u) => u && !allow.includes(u));
+if (dropped.length) console.log(`Redirect URLs removed: ${dropped.join(', ')}`);
 
 // Passwords: 8 characters at least, as the app already asks (the server allowed 6).
-const patch = { uri_allow_list: [...allow].join(','), password_min_length: Math.max(8, current.password_min_length ?? 0) };
+const patch = { uri_allow_list: allow.join(','), password_min_length: Math.max(8, current.password_min_length ?? 0) };
 const env = process.env;
 // Pasted values often carry spaces, quotes or line breaks.
 const clean = (v) => (v ?? '').trim().replace(/^["']|["']$/g, '').trim();
@@ -88,8 +110,14 @@ if (smtpHost && smtpUser && smtpPass) {
     mailer_autoconfirm: false,
   });
   console.log(`Own email sender configured (${smtpHost}); email confirmation required for new accounts`);
+} else if (current.mailer_autoconfirm) {
+  // Left as it is (switching it off without a sender would block every sign-up), but said loudly.
+  console.warn(
+    '!!! WARNING: no own email sender (SMTP_HOST, SMTP_USER, SMTP_PASS): new accounts are confirmed WITHOUT proving they own their email.\n' +
+      '!!! Anyone can sign up with someone else\'s address. Add the SMTP secrets to require confirmation (2 emails an hour until then).',
+  );
 } else {
-  console.log('No own email sender (SMTP_HOST, SMTP_USER, SMTP_PASS): email confirmation stays off, 2 emails an hour');
+  console.log('No own email sender (SMTP_HOST, SMTP_USER, SMTP_PASS): email confirmation unchanged (on), 2 emails an hour');
 }
 
 const put = await fetch(api, { method: 'PATCH', headers, body: JSON.stringify(patch) });

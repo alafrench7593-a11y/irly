@@ -218,5 +218,93 @@ const GAPS: [string, RegExp, string][] = [
 ];
 for (const [f, re, what] of GAPS) if (fs.existsSync(f) && !re.test(read(f))) console.log(`! known gap: ${f} keeps ${what} after log out (no clear function to call)`);
 
+/* ───────── Sign-in links: PKCE, exact redirect URLs, no session from a link this device never asked for ───────── */
+const supa = read('src/lib/supabase.ts');
+expect(/flowType: 'pkce'/.test(supa), 'links: the Supabase client uses the PKCE flow');
+expect(!/flowType: 'implicit'/.test(supa), 'links: the implicit flow (#access_token= links) is gone');
+expect(/detectSessionInUrl: Platform\.OS === 'web'/.test(supa), 'links: only the web reads the session from its own URL');
+// Both scripts that configure the live project: an exact list, set (never merged with the live one), without a wildcard host.
+const WANTED_REDIRECTS = ['https://getirly.com/**', 'https://www.getirly.com/**', 'https://alafrench7593-a11y.github.io/irly/**', 'irly://**', 'http://localhost:8081/**', 'http://localhost:19006/**'];
+for (const f of ['scripts/deploy-db.mjs', 'scripts/auth-config.mjs']) {
+  const src = read(f);
+  const list = src.match(/const REDIRECTS = \[([^\]]*)\]/);
+  const urls = list ? [...list[1].matchAll(/'([^']+)'/g)].map((m) => m[1]) : [];
+  expect(urls.length > 0, `redirects: ${f} declares its redirect list`);
+  is(JSON.stringify(urls), JSON.stringify(WANTED_REDIRECTS), `redirects: ${f} allows exactly the IRLY URLs`);
+  for (const u of urls) expect(!/\*/.test(u.replace(/\/\*\*$/, '')), `redirects: ${f} has no wildcard host or scheme (${u})`, u);
+  const code = src.replace(/^\s*(\/\/|\*|\/\*).*$/gm, '');
+  expect(!/\*\.vercel\.app|trycloudflare|'exp:\/\/\*\*'/.test(code), `redirects: ${f} never allows *.vercel.app, a tunnel or exp://** (outside comments)`);
+  expect(!/new Set\(\[?\.\.\.String\(current\.uri_allow_list|wanted\.forEach|allow\.add\(/.test(src), `redirects: ${f} sets the list, never merges it with the live one`);
+  expect(/uri_allow_list: allow\.join\(','\)/.test(src), `redirects: ${f} sends exactly its list`);
+  expect(/IRLY_DEV_REDIRECTS/.test(src) && /bare\.includes\('\*'\)/.test(src), `redirects: ${f} accepts a dev URL only on request, never with a wildcard`);
+}
+const deploy = read('scripts/deploy-db.mjs');
+expect(/mailer_autoconfirm: !ownSmtp/.test(deploy) && /ownSmtp === null \? \{\}/.test(deploy), 'email confirmation: auto-confirm only without a custom SMTP, untouched when the config is unreadable');
+expect(/WARNING: no custom SMTP/.test(deploy), 'email confirmation: auto-confirm is announced loudly');
+expect(!/mailer_autoconfirm: true/.test(read('scripts/auth-config.mjs')), 'email confirmation: auth-config never switches auto-confirm on');
+expect(/password_min_length: Math\.max\(8,/.test(read('scripts/auth-config.mjs')), 'passwords: 8 characters at least on the server');
+// The app side: every sign-in that ends on a link marks this device first; completeFromUrl checks it before any session.
+const fnBody = (name: string) => {
+  const start = account.indexOf(`function ${name}(`);
+  return start < 0 ? '' : account.slice(start, account.indexOf('\n}\n', start));
+};
+for (const [fn, kind] of [['sendCode', 'magiclink'], ['signUpWithPassword', 'signup'], ['sendPasswordReset', 'recovery'], ['signInWithProvider', 'oauth']]) {
+  const body = fnBody(fn);
+  const mark = body.indexOf(`markPending('${kind}')`);
+  const call = body.search(/auth\.(signInWithOtp|signUp|resetPasswordForEmail|signInWithOAuth)\(/);
+  expect(mark > 0 && call > mark, `links: ${fn} marks a pending ${kind} sign-in before asking the server`);
+}
+const complete = fnBody('completeFromUrl');
+const guard = complete.indexOf('if (!(await readPending())) return false;');
+expect(guard > 0, 'links: completeFromUrl refuses a link when this device started no sign-in');
+for (const call of ['exchangeCodeForSession(', 'setSession(', 'getSession(']) {
+  const at = complete.indexOf(call);
+  expect(guard > 0 && at > guard, `links: completeFromUrl checks the pending sign-in before ${call.slice(0, -1)}`);
+}
+expect(/exchangeCodeForSession\(link\.code, link\.flowId \? \{ flowId: link\.flowId \}/.test(complete), 'links: a ?code= is exchanged with its flow id (PKCE)');
+expect(/if \(Platform\.OS === 'web'\) return false;\s*const \{ error \} = await supabase\.auth\.setSession/.test(complete), 'links: the web never sets a session from #access_token=');
+expect(/await clearPending\(\);\s*return recovery/.test(complete), 'links: the pending sign-in is used once');
+expect(/event === 'PASSWORD_RECOVERY'/.test(account), 'links: a password reset session restores the profile like a sign-in');
+expect(/signInWithIdToken\(\{ provider: 'apple', token: cred\.identityToken, nonce: raw \}\)/.test(account), 'links: Apple on iPhone still signs in with its token, no link');
+const screen = read('src/app/account.tsx');
+expect(/how === 'recovery'\) setMode\('reset'\)/.test(screen), 'links: a password reset link opens the new-password form');
+expect(!/url\.includes\('access_token'\)/.test(screen), 'links: the Account screen no longer waits for #access_token= only');
+// The pure rules, run here (taken from account.ts as written, its types removed).
+const { stripTypeScriptTypes } = await import('node:module');
+const pure = ['export const PENDING_MS', 'export function pendingFresh(', 'export function readAuthLink(']
+  .map((head) => {
+    const start = account.indexOf(head);
+    if (start < 0) return '';
+    return account.slice(start, head.includes('const') ? account.indexOf(';\n', start) + 2 : account.indexOf('\n}\n', start) + 3);
+  })
+  .join('\n')
+  .replace(/^export /gm, '');
+let made: unknown = null;
+try {
+  made = new Function(`${(stripTypeScriptTypes as (code: string) => string)(pure)}\nreturn { PENDING_MS, pendingFresh, readAuthLink };`)();
+} catch (e) {
+  expect(false, 'pending: the link rules of account.ts can be read and run', String(e));
+}
+const fallback = { PENDING_MS: 0, pendingFresh: () => true, readAuthLink: () => ({ code: 'x', flowId: null, accessToken: 'x', refreshToken: 'x', recovery: true }) };
+const rules = (made ?? fallback) as {
+  PENDING_MS: number;
+  pendingFresh: (at: unknown, now: number) => boolean;
+  readAuthLink: (url: string) => { code: string | null; flowId: string | null; accessToken: string | null; refreshToken: string | null; recovery: boolean };
+};
+is(rules.PENDING_MS, 3_600_000, 'pending: a sign-in waits for its link one hour');
+is(rules.pendingFresh(null, NOW), false, 'pending: no sign-in started here → the link is refused');
+is(rules.pendingFresh(undefined, NOW), false, 'pending: nothing stored → refused');
+is(rules.pendingFresh('1700000000000', NOW), false, 'pending: a stored value that is not a time → refused');
+is(rules.pendingFresh(NOW - 5 * 60_000, NOW), true, 'pending: started 5 minutes ago → accepted');
+is(rules.pendingFresh(NOW - 3_600_000, NOW), false, 'pending: started an hour ago → refused');
+is(rules.pendingFresh(NOW + 60_000, NOW), false, 'pending: started "in the future" (a tampered value) → refused');
+const pkce = rules.readAuthLink('irly://account?reset=1&sb_flow_id=abcdef0123456789&code=4f2c-11');
+expect(pkce.code === '4f2c-11' && pkce.flowId === 'abcdef0123456789' && pkce.recovery && !pkce.accessToken, 'link: a PKCE reset link gives its code, flow id and "recovery"', pkce);
+const legacy = rules.readAuthLink('irly://account#access_token=AT&refresh_token=RT&type=recovery');
+expect(legacy.accessToken === 'AT' && legacy.refreshToken === 'RT' && legacy.recovery && !legacy.code, 'link: an older fragment link is read, for the pending check to decide', legacy);
+const inQuery = rules.readAuthLink('irly://account?access_token=AT&refresh_token=RT');
+expect(!inQuery.accessToken && !inQuery.refreshToken, 'link: tokens in the query are never taken for a session', inQuery);
+expect(!rules.readAuthLink('irly://account').code && !rules.readAuthLink('irly://account?code=x').recovery, 'link: no code without one, no reset without reset=1');
+
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

@@ -6,6 +6,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { create } from 'zustand';
 import { Platform } from 'react-native';
 import { friendlyError, supabase } from '@/lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureSessionStorage } from '@/lib/secureSession';
 import * as Crypto from 'expo-crypto';
 import { useStore, type Profile } from '@/state/store';
 import { cleanImage } from '@/lib/media';
@@ -92,8 +94,9 @@ if (supabase) {
       }
     }
     // Signed in: a returning member gets their profile back on this device;
-    // a new one publishes the signup profile once.
-    if (event === 'SIGNED_IN' && session?.user) {
+    // a new one publishes the signup profile once. A password reset link opens
+    // a session too (PASSWORD_RECOVERY with PKCE), on a new device as well.
+    if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session?.user) {
       const uid = session.user.id;
       restoreProfile(uid)
         .then((restored) => (restored ? undefined : syncProfile(uid)))
@@ -125,6 +128,7 @@ function redirectTo(): string {
  */
 export async function sendCode(email: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
+  await markPending('magiclink');
   const { error } = await supabase.auth.signInWithOtp({
     email: email.trim().toLowerCase(),
     options: { shouldCreateUser: true, emailRedirectTo: redirectTo() },
@@ -132,17 +136,106 @@ export async function sendCode(email: string): Promise<void> {
   if (error) throw new Error(authMessage(error));
 }
 
-/** Native: the email link opens irly://account#access_token=… ; finish sign-in. */
-export async function completeFromUrl(url: string): Promise<boolean> {
+/* ───────── Sign-in return links: only for a sign-in started here ───────── */
+
+/**
+ * A link that opens a session is only followed when this device asked for
+ * one (an email link, Apple / Google, a sign-up confirmation, a password
+ * reset) in the last hour. Otherwise anyone could send a member a link to
+ * the attacker's account (irly://account#access_token=…) and have them use
+ * it unknowingly. With PKCE the ?code= is useless without this device's
+ * verifier anyway; the check also covers older #access_token= links.
+ */
+export const PENDING_MS = 60 * 60 * 1000;
+const PENDING_KEY = 'irly-auth-pending';
+type PendingKind = 'magiclink' | 'oauth' | 'signup' | 'recovery';
+type Pending = { kind: PendingKind; at: number };
+// Kept in memory and in the Keychain / Keystore (the browser on the web): an email link can relaunch the app.
+let pending: Pending | null = null;
+const pendingStore = () => (Platform.OS === 'web' ? AsyncStorage : secureSessionStorage);
+
+/** True while a sign-in started at `at` may still be finished by its link. */
+export function pendingFresh(at: unknown, now: number): boolean {
+  return typeof at === 'number' && Number.isFinite(at) && now >= at && now - at < PENDING_MS;
+}
+
+/** What a sign-in return link carries: a PKCE code (query) or, from older links, tokens (fragment only). */
+export function readAuthLink(url: string): { code: string | null; flowId: string | null; accessToken: string | null; refreshToken: string | null; recovery: boolean } {
+  const query = new URLSearchParams(url.split('#')[0].split('?')[1] ?? '');
+  const fragment = new URLSearchParams(url.split('#')[1] ?? '');
+  return {
+    code: query.get('code'),
+    flowId: query.get('sb_flow_id'),
+    accessToken: fragment.get('access_token'),
+    refreshToken: fragment.get('refresh_token'),
+    // reset=1 is set by sendPasswordReset; type=recovery came with the older links.
+    recovery: query.get('reset') === '1' || query.get('type') === 'recovery' || fragment.get('type') === 'recovery',
+  };
+}
+
+async function markPending(kind: PendingKind): Promise<void> {
+  pending = { kind, at: Date.now() };
+  await pendingStore()
+    .setItem(PENDING_KEY, JSON.stringify(pending))
+    .catch(() => undefined);
+}
+
+async function readPending(): Promise<Pending | null> {
+  let p = pending;
+  if (!p) {
+    try {
+      const raw = await pendingStore().getItem(PENDING_KEY);
+      p = raw ? (JSON.parse(raw) as Pending) : null;
+    } catch {
+      p = null;
+    }
+  }
+  return p && pendingFresh(p.at, Date.now()) ? p : null;
+}
+
+async function clearPending(): Promise<void> {
+  pending = null;
+  await pendingStore()
+    .removeItem(PENDING_KEY)
+    .catch(() => undefined);
+}
+
+/**
+ * Finishes a sign-in from its return link (irly://account?code=… in the app,
+ * …/account?code=… on the web). Returns 'recovery' for a password reset link
+ * (the new-password form opens), 'signedIn' for any other, and false when
+ * nothing was applied: no sign-in in the link, or one this device never
+ * started (ignored without a word).
+ */
+export async function completeFromUrl(url: string): Promise<'signedIn' | 'recovery' | false> {
   if (!supabase) return false;
-  const hash = url.split('#')[1] ?? url.split('?')[1] ?? '';
-  const params = new URLSearchParams(hash);
-  const access_token = params.get('access_token');
-  const refresh_token = params.get('refresh_token');
-  if (!access_token || !refresh_token) return false;
-  const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-  if (error) throw new Error(error.message);
-  return true;
+  const link = readAuthLink(url);
+  if (!link.code && !(link.accessToken && link.refreshToken)) return false;
+  if (!(await readPending())) return false;
+  let recovery = link.recovery;
+  if (link.code) {
+    if (Platform.OS === 'web') {
+      // The browser already exchanged it when the page loaded (detectSessionInUrl, with its own verifier).
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) throw new Error(MESSAGES.badLink);
+    } else {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(link.code, link.flowId ? { flowId: link.flowId } : undefined);
+      if (error || !data.session) {
+        // No verifier here (opened on another device), a code already used, an expired one: our own words only.
+        const said = authMessage(error ?? new Error(MESSAGES.badLink));
+        throw new Error((Object.values(MESSAGES) as string[]).includes(said) ? said : MESSAGES.badLink);
+      }
+      // supabase-js returns how the flow started (a reset stores its verifier as recovery); its types omit it.
+      if ((data as { redirectType?: string | null }).redirectType === 'recovery') recovery = true;
+    }
+  } else {
+    // An older #access_token= link: never on the web (a pkce client refuses it there).
+    if (Platform.OS === 'web') return false;
+    const { error } = await supabase.auth.setSession({ access_token: link.accessToken!, refresh_token: link.refreshToken! });
+    if (error) throw new Error(authMessage(error));
+  }
+  await clearPending();
+  return recovery ? 'recovery' : 'signedIn';
 }
 
 /** Step 2: check the code, then publish the signup profile server-side. */
@@ -902,6 +995,8 @@ export async function signInWithPassword(email: string, password: string): Promi
 export async function signUpWithPassword(email: string, password: string): Promise<boolean> {
   const weak = passwordProblem(password);
   if (weak) throw new Error(weak);
+  // The confirmation email links back here.
+  await markPending('signup');
   const { data, error } = await client().auth.signUp({ email: email.trim().toLowerCase(), password, options: { emailRedirectTo: redirectTo() } });
   if (error) throw new Error(authMessage(error));
   // An email that already has an account: Supabase answers "success" without sending anything.
@@ -916,6 +1011,7 @@ export async function signUpWithPassword(email: string, password: string): Promi
 
 export async function sendPasswordReset(email: string): Promise<void> {
   const base = redirectTo();
+  await markPending('recovery');
   const { error } = await client().auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${base}${base.includes('?') ? '&' : '?'}reset=1` });
   if (error) throw new Error(authMessage(error));
 }
@@ -929,7 +1025,7 @@ export async function updatePassword(password: string): Promise<void> {
 
 /**
  * Apple / Google. The web redirects; the app opens the provider in the
- * browser and comes back on irly://account#access_token=… (completeFromUrl).
+ * browser and comes back on irly://account?code=… (completeFromUrl).
  * The provider must be switched on in Supabase (Authentication → Providers).
  */
 /** Sign-in return links already used: the same link can also reach the Account screen (Android), never twice. */
@@ -939,6 +1035,8 @@ export async function signInWithProvider(provider: 'google' | 'apple'): Promise<
   // iPhone: Apple's own sheet (Face ID), no browser.
   if (provider === 'apple' && Platform.OS === 'ios' && (await signInWithAppleNative())) return;
   const web = Platform.OS === 'web';
+  // Before the call: on the web it leaves the page for the provider at once.
+  await markPending('oauth');
   const { data, error } = await client().auth.signInWithOAuth({ provider, options: { redirectTo: redirectTo(), skipBrowserRedirect: !web } });
   if (error) throw new Error(authMessage(error));
   if (!web && data.url) {

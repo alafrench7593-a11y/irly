@@ -84,23 +84,60 @@ for (const file of files) {
   console.log(`+ ${file}`);
 }
 
-// Where sign-in links and Google send people back: getirly.com first (the
-// default), then the other places the app runs. Merged with the list already
-// on the project, never replaced.
+// Where sign-in links and Google may send people back: exactly this list,
+// set on every deploy (never merged with what the project has), so an entry
+// added by hand or a host anyone can register (*.vercel.app, a tunnel, any
+// exp:// address) never receives a sign-in code. Same list in auth-config.mjs.
+// IRLY_DEV_REDIRECTS adds one exact dev URL for this deploy only (a fixed host,
+// at most a trailing /**), e.g. exp://192.168.1.20:8081/**; the next deploy
+// without it removes it.
 const SITE = 'https://getirly.com/app';
-const WANTED = ['https://getirly.com/**', 'https://www.getirly.com/**', 'https://alafrench7593-a11y.github.io/irly/**', 'https://*.vercel.app/**', 'https://*-link-a664.vercel.app/**', 'http://localhost:8081/**', 'http://localhost:19006/**', 'irly://**', 'exp://**'];
-const current = await fetch(`${api}/config/auth`, { headers }).then((r) => (r.ok ? r.json() : {}));
-const allow = new Set([...String(current.uri_allow_list ?? '').split(','), ...WANTED].map((u) => u.trim()).filter(Boolean));
+const REDIRECTS = ['https://getirly.com/**', 'https://www.getirly.com/**', 'https://alafrench7593-a11y.github.io/irly/**', 'irly://**', 'http://localhost:8081/**', 'http://localhost:19006/**'];
+function devRedirect(value) {
+  const v = (value ?? '').trim();
+  if (!v) return null;
+  const bare = v.replace(/\/\*\*$/, '');
+  let u = null;
+  try {
+    u = new URL(bare);
+  } catch {
+    u = null;
+  }
+  if (v.includes(',') || bare.includes('*') || !u || !u.hostname || !/^(https?|exp):$/.test(u.protocol)) {
+    throw new Error('IRLY_DEV_REDIRECTS must be one exact URL (http, https or exp, a fixed host, at most a trailing /**), never a wildcard host');
+  }
+  return v;
+}
+const dev = devRedirect(process.env.IRLY_DEV_REDIRECTS);
+const allow = dev ? [...REDIRECTS, dev] : REDIRECTS;
+if (dev) console.log(`! IRLY_DEV_REDIRECTS: ${dev} is allowed on the LIVE project until the next deploy without it`);
+const currentRes = await fetch(`${api}/config/auth`, { headers });
+const current = currentRes.ok ? await currentRes.json() : null;
+const dropped = current ? String(current.uri_allow_list ?? '').split(',').map((u) => u.trim()).filter((u) => u && !allow.includes(u)) : [];
+if (dropped.length) console.log(`• redirect URLs removed: ${dropped.join(', ')}`);
 // Without a custom SMTP, Supabase's default email only reaches the project's
 // own team: confirmation emails would never arrive, so new accounts are
-// confirmed right away until one is set (Authentication → SMTP).
-const ownSmtp = Boolean(current.smtp_host);
+// confirmed right away until one is set (Authentication → SMTP). With one,
+// confirmation is switched back on. Unknown (config unreadable): left as is.
+const ownSmtp = current ? Boolean(current.smtp_host) : null;
+const confirm = ownSmtp === null ? {} : { mailer_autoconfirm: !ownSmtp };
+if (ownSmtp === false) {
+  console.warn(
+    '!!! WARNING: no custom SMTP, so new accounts are confirmed WITHOUT proving they own their email (mailer_autoconfirm on).\n' +
+      '!!! Anyone can sign up with someone else\'s address. Set a custom SMTP (Authentication → SMTP) to require confirmation.',
+  );
+}
+if (ownSmtp === null) console.warn(`! auth config unreadable (${currentRes.status}): email confirmation left as it is`);
 const urls = await fetch(`${api}/config/auth`, {
   method: 'PATCH',
   headers,
-  body: JSON.stringify({ site_url: SITE, uri_allow_list: [...allow].join(','), ...(ownSmtp ? {} : { mailer_autoconfirm: true }) }),
+  body: JSON.stringify({ site_url: SITE, uri_allow_list: allow.join(','), ...confirm }),
 });
-console.log(urls.ok ? `✓ sign-in: back to ${SITE}; ${ownSmtp ? 'emails confirmed by link' : 'accounts confirmed right away (no custom SMTP yet)'}` : `! redirect URLs not configured (${urls.status}): ${(await urls.text()).slice(0, 300)}`);
+console.log(
+  urls.ok
+    ? `✓ sign-in: back to ${SITE}; redirect URLs set to ${allow.join(', ')}; ${ownSmtp === null ? 'email confirmation unchanged' : ownSmtp ? 'emails confirmed by link' : 'accounts confirmed right away (no custom SMTP yet)'}`
+    : `! redirect URLs not configured (${urls.status}): ${(await urls.text()).slice(0, 300)}`,
+);
 
 // Sign-in email with a 6-digit code (needs a custom SMTP on the free plan;
 // without it Supabase sends its default email with a sign-in link).

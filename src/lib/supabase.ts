@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import * as Crypto from 'expo-crypto';
 import { DEMO } from '@/config/app';
 import { t } from '@/i18n';
 import { serverError } from '@/i18n/errors';
@@ -55,12 +56,33 @@ const timedFetch: typeof fetch = (input, init) => {
     .finally(() => clearTimeout(timer));
 };
 
+// PKCE (below) needs a random verifier and its SHA-256 (WebCrypto). Where the
+// phone's JavaScript engine has neither, supabase-js would fall back to
+// Math.random and a "plain" challenge: expo-crypto fills in the system's.
+if (Platform.OS !== 'web') {
+  try {
+    type Digest = (algorithm: unknown, data: BufferSource) => Promise<ArrayBuffer>;
+    const g = globalThis as unknown as { crypto?: { getRandomValues?: unknown; subtle?: { digest?: Digest } } };
+    if (!g.crypto) g.crypto = {};
+    const c = g.crypto;
+    if (typeof c.getRandomValues !== 'function') c.getRandomValues = (a: Uint32Array) => Crypto.getRandomValues(a);
+    if (typeof c.subtle?.digest !== 'function') c.subtle = { ...c.subtle, digest: (_algorithm, data) => Crypto.digest(Crypto.CryptoDigestAlgorithm.SHA256, data) };
+  } catch {
+    // A read-only global: supabase-js keeps its own fallback.
+  }
+}
+
 export const supabase: SupabaseClient | null =
   // The demo never talks to the server: nothing a visitor does is saved.
   !DEMO && url && anonKey.length > 20
     ? createClient(url, anonKey, {
         // Phones keep the session in the Keychain / Keystore; the web keeps it in the browser.
-        auth: { storage: Platform.OS === 'web' ? AsyncStorage : secureSessionStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: Platform.OS === 'web', flowType: 'implicit' },
+        // PKCE everywhere: a sign-in link carries a one-time ?code= that only opens a session
+        // with the verifier this device kept when it asked for the link, never the session
+        // itself (the implicit flow's #access_token= could be sent to anyone and set as theirs).
+        // On the web, detectSessionInUrl exchanges the code when the page loads, and refuses
+        // #access_token= links (an implicit link does not match a pkce client).
+        auth: { storage: Platform.OS === 'web' ? AsyncStorage : secureSessionStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: Platform.OS === 'web', flowType: 'pkce' },
         global: { fetch: timedFetch },
       })
     : null;
