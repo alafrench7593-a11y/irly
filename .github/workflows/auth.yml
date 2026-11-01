@@ -5,19 +5,30 @@ name: Sign-in setup
 # Actions): GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and for Apple
 # APPLE_SERVICES_ID, APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY (the .p8
 # file's content). Runs monthly so Apple's client secret (6 months max) is
-# always renewed. Re-run it after adding them.
+# always renewed. Re-run it after adding them. Changes production sign-in:
+# runs from main only, through the `production` environment.
 
 on:
   push:
-    branches: [main, claude/confident-ride-1o2o3x]
+    branches: [main]
     paths: ['scripts/auth-config.mjs', '.github/workflows/auth.yml']
   workflow_dispatch:
   schedule:
     - cron: '17 6 1 * *'
 
+permissions:
+  contents: read
+
+concurrency:
+  group: auth-config
+  cancel-in-progress: false
+
 jobs:
   configure:
+    # Scheduled runs use the default branch's copy of this file.
+    if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

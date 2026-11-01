@@ -9,6 +9,14 @@
 const token = (process.env.SUPABASE_ACCESS_TOKEN || '').match(/sbp_[^\s"'`]+/)?.[0];
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 const apply = process.env.APPLY === '1';
+// Deleting production data needs two switches: APPLY=1 and this exact phrase.
+// See docs/OPERATIONS.md (« Running a production clean-up »).
+if (apply && process.env.CONFIRM_PROD_DELETE !== 'yes-i-am-sure') {
+  throw new Error('APPLY=1 also needs CONFIRM_PROD_DELETE=yes-i-am-sure: nothing deleted');
+}
+// Identities (emails, names, ids) are printed only on a local run that asks for
+// them, never in CI: GitHub Actions logs of this public repository are public.
+const details = process.env.IRLY_LOCAL_DETAILS === '1' && !process.env.CI;
 if (!token) throw new Error('SUPABASE_ACCESS_TOKEN is missing');
 
 async function sql(query) {
@@ -34,17 +42,19 @@ const mask = (e) => (e ? `${e[0]}***@${e.split('@')[1] || '?'}` : '(no email)');
 const users = await sql(`select u.id, u.email, to_char(u.created_at, 'YYYY-MM-DD') as created, coalesce(p.first_name, '') as name
   from auth.users u left join public.profiles p on p.id = u.id order by u.created_at`);
 console.log(`accounts now: ${users.length}`);
-for (const u of users) console.log([u.id, u.email === KEEP ? u.email : mask(u.email), u.created, u.name ? `${u.name[0]}.` : '', u.email === KEEP ? 'KEEP' : ACCOUNTS.includes(u.id) ? 'delete' : 'not listed: left alone'].join(' | '));
+if (details) for (const u of users) console.log([u.id, u.email === KEEP ? u.email : mask(u.email), u.created, u.name ? `${u.name[0]}.` : '', u.email === KEEP ? 'KEEP' : ACCOUNTS.includes(u.id) ? 'delete' : 'not listed: left alone'].join(' | '));
 const targets = users.filter((u) => u.email !== KEEP && ACCOUNTS.includes(u.id));
+console.log(`accounts listed for deletion: ${targets.length}, App Review account present: ${users.some((u) => u.email === KEEP) ? 'yes' : 'no'}`);
 const comms = await sql(`select id, name, official from public.communities where id in (${ids(COMMUNITIES)})`);
-console.log(`\ncommunities to delete: ${comms.filter((c) => !c.official).map((c) => c.name).join(', ')}`);
+console.log(`\ncommunities to delete: ${comms.filter((c) => !c.official).length}`);
+if (details) console.log(comms.filter((c) => !c.official).map((c) => c.name).join(', '));
 const chats = await sql(`select v.id, v.kind from public.conversations v where v.id in (${ids(CHATS)})
   and v.kind in ('direct', 'group') and not exists (select 1 from public.conversation_members cm where cm.conversation_id = v.id)`);
 console.log(`empty chats to delete: ${chats.length}`);
 if (users.some((u) => u.email === KEEP && ACCOUNTS.includes(u.id))) throw new Error('the App Review account is in the list: stopping');
 
 if (!apply) {
-  console.log(`\nDry run: nothing deleted (${targets.length} accounts would be). Set APPLY=1 and ACCOUNT_IDS to delete.`);
+  console.log(`\nDry run: nothing deleted (${targets.length} accounts would be). Set APPLY=1, CONFIRM_PROD_DELETE and ACCOUNT_IDS to delete.`);
   process.exit(0);
 }
 
@@ -56,8 +66,8 @@ for (const u of targets) {
     perform set_config('request.jwt.claim.sub', '', false);
     perform set_config('request.jwt.claims', '', false);
   end $$`);
-  console.log(`deleted account ${u.id}`);
 }
+console.log(`deleted accounts: ${targets.length}`);
 const [done] = await sql(`with
   c as (delete from public.communities where id in (${ids(COMMUNITIES)}) and not official returning 1),
   v as (delete from public.conversations x where x.kind in ('direct', 'group')

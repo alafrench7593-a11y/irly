@@ -8,6 +8,9 @@ on:
     paths: ['.github/scripts/ios-input.mjs', '.github/workflows/ios-input.yml', 'src/components/ui/Controls.tsx', 'src/app/onboarding/**', 'src/app/account.tsx', 'src/features/onboarding/**']
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest

@@ -16,6 +16,9 @@ on:
     branches: [claude/confident-ride-1o2o3x]
     paths: ['.github/testflight.txt']
 
+permissions:
+  contents: read
+
 concurrency:
   group: testflight
   cancel-in-progress: false
@@ -47,11 +50,12 @@ jobs:
           if [ -n "$missing" ]; then echo "Missing secrets:$missing"; exit 1; fi
           echo "All secrets present"
       - name: App Store Connect key
-        run: printf '%s' "${{ secrets.ASC_KEY_P8 }}" > asc-api-key.p8
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: umask 077 && printf '%s' "$ASC_KEY_P8" > asc-api-key.p8
       # The Expo project (@alafre/irly) is pinned in app.json (extra.eas.projectId).
-      # Signing and the push key live on Expo (uploaded once from the
-      # "iOS credentials for Expo" workflow): builds reuse them, nothing is
-      # revoked or made here.
+      # Signing and the push key live on Expo (uploaded once in expo.dev →
+      # Credentials): builds reuse them, nothing is revoked or made here.
       - run: npm i -g eas-cli@latest
       - name: Build and send to TestFlight
         env:

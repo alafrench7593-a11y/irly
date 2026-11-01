@@ -7,6 +7,10 @@
 const token = (process.env.SUPABASE_ACCESS_TOKEN || '').match(/sbp_[^\s"'`]+/)?.[0];
 const ref = process.env.SUPABASE_PROJECT_REF || 'yqutcmgslwxcmnsqmhvy';
 if (!token) throw new Error('SUPABASE_ACCESS_TOKEN is missing');
+// Identities and titles (community and chat names, first names, ids, masked
+// emails) are printed only on a local run that asks for them, never in CI:
+// GitHub Actions logs of this public repository are public. In CI: counts only.
+const details = process.env.IRLY_LOCAL_DETAILS === '1' && !process.env.CI;
 
 async function api(path, init = {}) {
   const res = await fetch(`https://api.supabase.com/v1${path}`, { ...init, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
@@ -26,8 +30,10 @@ const communities = await sql(`
   where not c.official and c.deleted_at is null
   order by c.created_at`);
 console.log(`member-made communities: ${communities.length}`);
-console.log('id | created | city | girl only | creator | members | posts | name');
-for (const c of communities) console.log([c.id, c.created, c.city_id, c.girl_only ? 'yes' : 'no', c.creator, c.members, c.posts, c.name.slice(0, 60)].join(' | '));
+const staffMade = (rows, key) => rows.filter((r) => String(r[key]).endsWith(' [staff]')).length;
+console.log(`  by staff: ${staffMade(communities, 'creator')}, by deleted accounts: ${communities.filter((c) => c.creator.startsWith('(deleted)')).length}, girl only: ${communities.filter((c) => c.girl_only).length}, with posts: ${communities.filter((c) => c.posts > 0).length}`);
+if (details) console.log('id | created | city | girl only | creator | members | posts | name');
+if (details) for (const c of communities) console.log([c.id, c.created, c.city_id, c.girl_only ? 'yes' : 'no', c.creator, c.members, c.posts, c.name.slice(0, 60)].join(' | '));
 
 const chats = await sql(`
   select v.id, v.kind, coalesce(v.title, '') as title, to_char(v.created_at, 'YYYY-MM-DD') as created,
@@ -38,8 +44,12 @@ const chats = await sql(`
   where v.kind in ('direct', 'group')
   order by v.kind, v.created_at`);
 console.log(`\ndirect and group chats: ${chats.length}`);
-console.log('id | kind | created | members | messages | title');
-for (const v of chats) console.log([v.id, v.kind, v.created, v.members ?? '(none)', v.messages, v.title.slice(0, 40)].join(' | '));
+for (const kind of ['direct', 'group']) {
+  const k = chats.filter((v) => v.kind === kind);
+  console.log(`  ${kind}: ${k.length}, with no member: ${k.filter((v) => !v.members).length}, with messages: ${k.filter((v) => v.messages > 0).length}`);
+}
+if (details) console.log('id | kind | created | members | messages | title');
+if (details) for (const v of chats) console.log([v.id, v.kind, v.created, v.members ?? '(none)', v.messages, v.title.slice(0, 40)].join(' | '));
 
 const acts = await sql(`
   select a.id, a.title, a.city_id, to_char(a.created_at, 'YYYY-MM-DD') as created, to_char(a.starts_at, 'YYYY-MM-DD') as starts, ${who('a.creator_id')} as creator,
@@ -47,8 +57,9 @@ const acts = await sql(`
   from public.activities a
   order by a.created_at`);
 console.log(`\nactivities: ${acts.length}`);
-console.log('id | created | starts | city | creator | people | title');
-for (const a of acts) console.log([a.id, a.created, a.starts, a.city_id, a.creator, a.people, (a.title || '').slice(0, 60)].join(' | '));
+console.log(`  by staff: ${staffMade(acts, 'creator')}, by deleted accounts: ${acts.filter((a) => a.creator.startsWith('(deleted)')).length}`);
+if (details) console.log('id | created | starts | city | creator | people | title');
+if (details) for (const a of acts) console.log([a.id, a.created, a.starts, a.city_id, a.creator, a.people, (a.title || '').slice(0, 60)].join(' | '));
 
 const lives = await sql(`
   select count(*)::int as total, count(*) filter (where p.expires_at > now())::int as live_now from public.irl_posts p`).catch((e) => [{ error: e.message }]);
@@ -67,8 +78,9 @@ console.log('cache hit %:', cache.cache_hit_pct);
 const slow = await sql(`select calls, round(mean_exec_time::numeric, 1) as mean_ms, round(max_exec_time::numeric, 0) as max_ms, round(total_exec_time::numeric / 1000, 1) as total_s,
     regexp_replace(left(query, 110), '\\s+', ' ', 'g') as query
   from pg_stat_statements where query not ilike '%pg_stat%' and calls > 20 order by mean_exec_time desc limit 15`).catch((e) => [{ query: `pg_stat_statements unavailable: ${e.message.slice(0, 80)}` }]);
-console.log('\nslowest queries on average (called more than 20 times):');
-for (const q of slow) console.log([q.calls, `${q.mean_ms} ms avg`, `${q.max_ms} ms max`, `${q.total_s} s total`, q.query].join(' | '));
+// Query texts can carry literal values (emails, names): local only.
+console.log(`\nslow queries (called more than 20 times, mean above 100 ms): ${slow.filter((q) => Number(q.mean_ms) > 100).length}`);
+if (details) for (const q of slow) console.log([q.calls, `${q.mean_ms} ms avg`, `${q.max_ms} ms max`, `${q.total_s} s total`, q.query].join(' | '));
 const project = await api(`/projects/${ref}`).catch((e) => ({ error: e.message }));
 console.log('\nproject:', JSON.stringify({ region: project.region, status: project.status, database: project.database?.version, error: project.error }));
 const addons = await api(`/projects/${ref}/billing/addons`).catch((e) => ({ error: e.message.slice(0, 120) }));

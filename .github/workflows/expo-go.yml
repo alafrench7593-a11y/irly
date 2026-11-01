@@ -35,7 +35,9 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Start a Cloudflare tunnel (Expo's ngrok tunnel is broken)
         run: |
-          curl -sL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          # Pinned release (bump deliberately, never "latest").
+          CLOUDFLARED_VERSION=2024.12.2
+          curl -fsSL -o cloudflared "https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/cloudflared-linux-amd64"
           chmod +x cloudflared
           nohup ./cloudflared tunnel --url http://localhost:8082 --no-autoupdate > cf.log 2>&1 &
           for i in $(seq 1 60); do

@@ -31,8 +31,11 @@ jobs:
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           QUERY: ${{ inputs.query || 'burj khalifa' }}
       - name: Commit
+        # The query is user input: passed as data through env, never pasted into the script.
+        env:
+          QUERY: ${{ inputs.query || 'burj khalifa' }}
         run: |
           git config user.name irly-bot
           git config user.email bot@irly.app
           git add photo-candidates
-          git diff --cached --quiet || (git commit -m "Photo candidates: ${{ inputs.query || 'burj khalifa' }}" && for i in 1 2 3 4 5; do git pull --rebase && git push && break; sleep $((i * 10)); done)
+          git diff --cached --quiet || (git commit -m "Photo candidates: ${QUERY}" && for i in 1 2 3 4 5; do git pull --rebase && git push && break; sleep $((i * 10)); done)
