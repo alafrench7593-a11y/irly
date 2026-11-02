@@ -554,11 +554,10 @@ begin
   end loop;
 end $$;
 
--- people_match: the same candidates, score and order. The cheap filters run
--- first (an overlap of interests, activities or goals: a superset of the
--- "something in common" rule below, which still decides), and blocks,
--- friendships and skips are anti-joins, so the per-member checks only run on
--- the few that remain.
+-- people_match: the same candidates, score and order. Blocks, friendships
+-- and skips are anti-joins, the score is computed and sorted first, and the
+-- two per-member checks (match_ready, profile visibility) then run on the
+-- sorted list only until the page is full; a filter does not change the order.
 create or replace function public.people_match(p_city text, p_limit integer default 20, p_offset integer default 0)
 returns table (id uuid, first_name text, photo_path text, username text, city_id text, score integer,
   shared_interests text[], shared_activities text[], shared_goals text[], shared_languages text[],
@@ -569,7 +568,7 @@ language sql stable security definer set search_path = public as $$
     from public.profiles p where p.id = auth.uid() and p.deleted_at is null and private.assert_match_ready()
   ),
   cand as (
-    select o.id, o.first_name, o.photo_paths[1] as photo_path, o.username, o.city_id,
+    select o.id, o.first_name, o.photo_paths[1] as photo_path, o.username, o.city_id, me.id as me_id,
       array(select unnest(o.interests) intersect select unnest(me.interests)) as si,
       array(select unnest(o.activity_prefs || o.sports) intersect select unnest(me.acts)) as sa,
       array(select unnest(o.intentions) intersect select unnest(me.intentions)) as sg,
@@ -578,29 +577,31 @@ language sql stable security definer set search_path = public as $$
     from public.profiles o, me
     where o.id <> me.id and o.deleted_at is null
       and o.city_id = any (private.city_scope(p_city))
-      -- Superset of cardinality(si) + cardinality(sa) + cardinality(sg) > 0
-      -- (a shared null element is the only way to share without overlapping).
-      and (o.interests && me.interests or (o.activity_prefs || o.sports) && me.acts or o.intentions && me.intentions
-        or array_position(o.interests, null) is not null or array_position(o.activity_prefs || o.sports, null) is not null
-        or array_position(o.intentions, null) is not null)
-      and private.match_ready(o.id)
       -- = not private.blocked_unchecked(me.id, o.id)
       and not exists (select 1 from public.blocks b
         where (b.blocker_id = me.id and b.blocked_id = o.id) or (b.blocker_id = o.id and b.blocked_id = me.id))
-      and private.visible_to(me.id, o.id, (select s.profile_visibility from public.safety_settings s where s.user_id = o.id))
       -- = not private.friends_unchecked(me.id, o.id)
       and not exists (select 1 from public.friendships f
         where f.user_a = least(me.id, o.id) and f.user_b = greatest(me.id, o.id) and f.status = 'accepted')
       and not exists (select 1 from public.people_match_skips k where k.user_id = me.id and k.other_id = o.id and k.until > now())
+  ),
+  ranked as (
+    select c.*,
+      (3 * cardinality(c.si) + 2 * cardinality(c.sa) + 2 * cardinality(c.sg) + cardinality(c.sl) + case when c.same_city then 2 else 0 end)::int as score,
+      md5(c.id::text || auth.uid()::text || current_date::text) as tie
+    from cand c
+    where cardinality(c.si) + cardinality(c.sa) + cardinality(c.sg) > 0
+    order by score desc, tie
+    offset 0
   )
-  select c.id, c.first_name, c.photo_path, c.username, c.city_id,
-    (3 * cardinality(c.si) + 2 * cardinality(c.sa) + 2 * cardinality(c.sg) + cardinality(c.sl) + case when c.same_city then 2 else 0 end)::int,
-    c.si, c.sa, c.sg, c.sl,
-    private.friend_status(auth.uid(), c.id),
-    exists (select 1 from public.follows f where f.follower_id = auth.uid() and f.followee_id = c.id)
-  from cand c
-  where cardinality(c.si) + cardinality(c.sa) + cardinality(c.sg) > 0
-  order by 6 desc, md5(c.id::text || auth.uid()::text || current_date::text)
+  select r.id, r.first_name, r.photo_path, r.username, r.city_id, r.score,
+    r.si, r.sa, r.sg, r.sl,
+    private.friend_status(auth.uid(), r.id),
+    exists (select 1 from public.follows f where f.follower_id = auth.uid() and f.followee_id = r.id)
+  from ranked r
+  where private.match_ready(r.id)
+    and private.visible_to(r.me_id, r.id, (select s.profile_visibility from public.safety_settings s where s.user_id = r.id))
+  order by r.score desc, r.tie
   limit least(greatest(coalesce(p_limit, 20), 1), 50) offset greatest(coalesce(p_offset, 0), 0)
 $$;
 
