@@ -81,6 +81,8 @@ if (supabase) {
     // the private screens (Log out and Delete account do that themselves).
     if (event === 'SIGNED_OUT') {
       wipeLocal();
+      // Signed out elsewhere: a sign-in started before is not followed by its link any more.
+      if (wasIn) void clearPending();
       if (!ending && wasIn) {
         void closeRealtime();
         // This phone stops getting the account's notifications (released without a session, see push.ts).
@@ -141,10 +143,12 @@ export async function sendCode(email: string): Promise<void> {
 /**
  * A link that opens a session is only followed when this device asked for
  * one (an email link, Apple / Google, a sign-up confirmation, a password
- * reset) in the last hour. Otherwise anyone could send a member a link to
- * the attacker's account (irly://account#access_token=…) and have them use
- * it unknowingly. With PKCE the ?code= is useless without this device's
- * verifier anyway; the check also covers older #access_token= links.
+ * reset) in the last hour, and only until that sign-in ends (finished,
+ * cancelled, or Log out). Only PKCE links (?code=) are followed: the code is
+ * useless without this device's verifier. Tokens in a link
+ * (irly://account#access_token=…, the implicit flow this project no longer
+ * uses) are never applied: anyone could send a member a link to the
+ * attacker's account and have them use it unknowingly.
  */
 export const PENDING_MS = 60 * 60 * 1000;
 const PENDING_KEY = 'irly-auth-pending';
@@ -171,6 +175,15 @@ export function readAuthLink(url: string): { code: string | null; flowId: string
     // reset=1 is set by sendPasswordReset; type=recovery came with the older links.
     recovery: query.get('reset') === '1' || query.get('type') === 'recovery' || fragment.get('type') === 'recovery',
   };
+}
+
+/** Clocks of the phone and the server differ a little: a sign-in this long before the start still counts. */
+const CLOCK_SKEW_MS = 10 * 60 * 1000;
+
+/** True when the session's last sign-in (server time) happened after the sign-in started at `startedAt` (this device). */
+export function signedInSince(lastSignInAt: string | null | undefined, startedAt: number): boolean {
+  const at = Date.parse(lastSignInAt ?? '');
+  return Number.isFinite(at) && at >= startedAt - CLOCK_SKEW_MS;
 }
 
 async function markPending(kind: PendingKind): Promise<void> {
@@ -210,29 +223,28 @@ async function clearPending(): Promise<void> {
 export async function completeFromUrl(url: string): Promise<'signedIn' | 'recovery' | false> {
   if (!supabase) return false;
   const link = readAuthLink(url);
-  if (!link.code && !(link.accessToken && link.refreshToken)) return false;
-  if (!(await readPending())) return false;
+  // PKCE only: a link carrying tokens (#access_token=) is never a session of this device's.
+  if (!link.code) return false;
+  const started = await readPending();
+  if (!started) return false;
   let recovery = link.recovery;
-  if (link.code) {
-    if (Platform.OS === 'web') {
-      // The browser already exchanged it when the page loaded (detectSessionInUrl, with its own verifier).
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) throw new Error(MESSAGES.badLink);
-    } else {
-      const { data, error } = await supabase.auth.exchangeCodeForSession(link.code, link.flowId ? { flowId: link.flowId } : undefined);
-      if (error || !data.session) {
-        // No verifier here (opened on another device), a code already used, an expired one: our own words only.
-        const said = authMessage(error ?? new Error(MESSAGES.badLink));
-        throw new Error((Object.values(MESSAGES) as string[]).includes(said) ? said : MESSAGES.badLink);
-      }
-      // supabase-js returns how the flow started (a reset stores its verifier as recovery); its types omit it.
-      if ((data as { redirectType?: string | null }).redirectType === 'recovery') recovery = true;
-    }
+  if (Platform.OS === 'web') {
+    // The browser already exchanged it when the page loaded (detectSessionInUrl, with its own
+    // verifier). Its answer, not just "a session exists": a failed (or skipped) exchange keeps an
+    // older session, which must not be reported as this sign-in.
+    const { error: fromUrl } = await supabase.auth.initialize();
+    if (fromUrl) throw new Error(MESSAGES.badLink);
+    const { data } = await supabase.auth.getSession();
+    if (!data.session || !signedInSince(data.session.user.last_sign_in_at, started.at)) throw new Error(MESSAGES.badLink);
   } else {
-    // An older #access_token= link: never on the web (a pkce client refuses it there).
-    if (Platform.OS === 'web') return false;
-    const { error } = await supabase.auth.setSession({ access_token: link.accessToken!, refresh_token: link.refreshToken! });
-    if (error) throw new Error(authMessage(error));
+    const { data, error } = await supabase.auth.exchangeCodeForSession(link.code, link.flowId ? { flowId: link.flowId } : undefined);
+    if (error || !data.session) {
+      // No verifier here (opened on another device), a code already used, an expired one: our own words only.
+      const said = authMessage(error ?? new Error(MESSAGES.badLink));
+      throw new Error((Object.values(MESSAGES) as string[]).includes(said) ? said : MESSAGES.badLink);
+    }
+    // supabase-js returns how the flow started (a reset stores its verifier as recovery); its types omit it.
+    if ((data as { redirectType?: string | null }).redirectType === 'recovery') recovery = true;
   }
   await clearPending();
   return recovery ? 'recovery' : 'signedIn';
@@ -243,6 +255,8 @@ export async function verifyCode(email: string, code: string): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data, error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'email' });
   if (error) throw new Error(authMessage(error));
+  // Signed in with the code: the emailed link of the same sign-in is no longer followed.
+  await clearPending();
   const uid = data.user?.id;
   // Signed in already: a profile that fails to publish now is published at the next launch.
   if (uid) await syncProfile(uid).catch(() => undefined);
@@ -497,19 +511,32 @@ function skipped(onboarded: boolean, why: string): false {
   return false;
 }
 
+/** Control, bidi and zero-width characters (ZWJ / ZWNJ stay: Persian and Indic scripts need them); the server refuses them too. */
+const INVISIBLE = /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b\u200e\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g;
+
+/** The first `max` characters as the server counts them (code points): an emoji is never cut in half. */
+export function clip(text: string, max: number): string {
+  return Array.from(text).slice(0, max).join('');
+}
+
+/** A first name as stored: invisible characters removed, trimmed, 40 characters at most. */
+export function cleanName(name: string): string {
+  return clip(name.replace(INVISIBLE, '').trim(), 40).trim();
+}
+
 function toRow(uid: string, p: Profile, cityId: string) {
   const age = p.age ?? 25;
   // Only the age was asked at signup: store 1 January of that birth year.
   const birthdate = `${new Date().getFullYear() - age}-01-01`;
   return {
     id: uid,
-    first_name: (p.name?.trim() || 'IRLY member').slice(0, 40),
+    first_name: cleanName(p.name ?? '') || 'IRLY member',
     birthdate,
     gender: p.gender ?? 'other',
     city_id: cityId,
     country: p.country ?? null,
     languages: (p.languages ?? []).map((l) => LANG[l] ?? l),
-    bio: p.bio?.slice(0, 300) ?? null,
+    bio: p.bio == null ? null : clip(p.bio, 300),
     faith: p.faith ?? null,
     faith_visible: Boolean(p.faithVisible),
     arrived_at: p.arrivedAt ? new Date(p.arrivedAt).toISOString().slice(0, 10) : null,
@@ -539,12 +566,12 @@ export type ProfilePatch = Partial<Pick<Profile, 'name' | 'bio' | 'country' | 'l
 export async function updateMyProfile(patch: ProfilePatch): Promise<void> {
   const st = useStore.getState();
   const uid = useAuthStore.getState().account?.userId;
-  if (patch.name !== undefined && !patch.name.trim()) throw new Error('Add your first name');
+  if (patch.name !== undefined && !cleanName(patch.name)) throw new Error('Add your first name');
   let photoUri: string | undefined;
   if (supabase && uid) {
     const row: Record<string, unknown> = {};
-    if (patch.name !== undefined) row.first_name = patch.name.trim().slice(0, 40);
-    if (patch.bio !== undefined) row.bio = patch.bio.trim().slice(0, 300) || null;
+    if (patch.name !== undefined) row.first_name = cleanName(patch.name);
+    if (patch.bio !== undefined) row.bio = clip(patch.bio.trim(), 300) || null;
     if (patch.country !== undefined) row.country = patch.country || null;
     if (patch.languages !== undefined) row.languages = patch.languages.map((l) => LANG[l] ?? l);
     if (patch.interests !== undefined) row.interests = patch.interests.map(String);
@@ -618,6 +645,7 @@ async function saveProfileRow(uid: string, row: Record<string, unknown>): Promis
 function profileError(m: string): string {
   if (/profiles_username_key|duplicate key/i.test(m)) return 'This username is taken';
   if (/username is reserved/i.test(m)) return 'This username is reserved';
+  if (/choose another first name/i.test(m)) return 'Choose another first name';
   if (/profiles_username_format/i.test(m)) return 'Usernames: 3 to 24 characters, letters, numbers, dots and underscores';
   if (/fetch|network/i.test(m)) return 'No connection: try again';
   if (/check constraint/i.test(m)) return 'Some fields are not valid';
@@ -749,6 +777,8 @@ async function endSession(): Promise<{ serverEnded: boolean }> {
   ]);
   // Whatever the answer, nothing of the session may stay on this phone.
   if (!(await forgetSessionHere())) throw new Error('Could not sign you out on this phone. Try again.');
+  // A sign-in started before Log out is never finished by its link afterwards.
+  await clearPending();
   setSession(null);
   wipeLocal();
   return { serverEnded };
@@ -910,6 +940,9 @@ export async function deleteServerAccount(): Promise<{ filesQueued: number }> {
   try {
     const left = await removeMyFiles(data.session.user.id);
     if (left) track('SERVER_ERROR', { code: 'storage_leftover', where: 'delete_account' });
+    // Sign in with Apple: its token is revoked (Apple's rule). Never a reason to keep the account:
+    // a token the function could not reach is queued by the server when the account goes.
+    if (usesApple(data.session.user)) await settled(sb.functions.invoke('apple-revoke', { body: { action: 'revoke' } }), SERVER_MS);
     const { error } = await within(sb.rpc('delete_my_account'), SERVER_MS).catch((e: unknown) => ({
       error: { message: e instanceof Error ? e.message : String(e) },
     }));
@@ -988,6 +1021,7 @@ export async function signInWithPassword(email: string, password: string): Promi
   if (!password) throw new Error(MESSAGES.wrongCredentials);
   const { data, error } = await client().auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
   if (error) throw new Error(authMessage(error));
+  await clearPending();
   if (data.user) await syncProfile(data.user.id).catch(() => undefined);
 }
 
@@ -1003,6 +1037,8 @@ export async function signUpWithPassword(email: string, password: string): Promi
   if (signUpHitExisting(data.user)) throw new Error(MESSAGES.existingAccount);
   if (!data.user) throw new Error(MESSAGES.serverDown);
   if (data.session && data.user) {
+    // Signed in at once (no confirmation e-mail): nothing to wait for.
+    await clearPending();
     await syncProfile(data.user.id).catch(() => undefined);
     return false;
   }
@@ -1042,7 +1078,11 @@ export async function signInWithProvider(provider: 'google' | 'apple'): Promise<
   if (!web && data.url) {
     // In-app auth session: closes itself and hands back the redirect URL.
     const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo());
-    if (res.type !== 'success' || !res.url) return;
+    if (res.type !== 'success' || !res.url) {
+      // Closed by the member: this sign-in is over, no later link may finish it.
+      await clearPending();
+      return;
+    }
     // The provider's own text is never shown as is.
     const failed = returnLinkError(res.url);
     if (failed) throw new Error(failed);
@@ -1080,7 +1120,26 @@ async function signInWithAppleNative(): Promise<boolean> {
   if (given && !useStore.getState().profile.name.trim()) useStore.getState().updateProfile({ name: given });
   const { error } = await client().auth.signInWithIdToken({ provider: 'apple', token: cred.identityToken, nonce: raw });
   if (error) throw new Error(authMessage(error));
+  await clearPending();
+  // Kept server-side so the Apple token can be revoked when the account is deleted (never waited for).
+  if (cred.authorizationCode) void keepAppleToken(cred.authorizationCode);
   return true;
+}
+
+/**
+ * Sign in with Apple tokens are revoked when the account is deleted (Apple's
+ * rule). The Edge Function apple-revoke exchanges this one-time code for
+ * Apple's refresh token and keeps it on the server (never on the phone).
+ * Without the function or its Apple key (not deployed yet), nothing happens.
+ */
+async function keepAppleToken(code: string): Promise<void> {
+  await settled(client().functions.invoke('apple-revoke', { body: { action: 'store', code } }), SERVER_MS);
+}
+
+/** True when this account can sign in with Apple. */
+function usesApple(user: { app_metadata?: { provider?: string; providers?: unknown }; identities?: { provider: string }[] }): boolean {
+  const providers = Array.isArray(user.app_metadata?.providers) ? (user.app_metadata.providers as unknown[]) : [];
+  return user.app_metadata?.provider === 'apple' || providers.includes('apple') || Boolean(user.identities?.some((i) => i.provider === 'apple'));
 }
 
 export async function sendPhoneCode(phone: string): Promise<void> {
@@ -1091,6 +1150,7 @@ export async function sendPhoneCode(phone: string): Promise<void> {
 export async function verifyPhoneCode(phone: string, code: string): Promise<void> {
   const { data, error } = await client().auth.verifyOtp({ phone: phone.replace(/[^\d+]/g, ''), token: code.trim(), type: 'sms' });
   if (error) throw new Error(authMessage(error));
+  await clearPending();
   if (data.user) await syncProfile(data.user.id).catch(() => undefined);
 }
 

@@ -3200,6 +3200,8 @@ export const fr: Record<string, string> = {
   'Country of origin': 'Pays d’origine',
   'Your age is set at signup (IRLY is for adults only). To correct it, contact support.': 'Ton âge est défini à l’inscription (IRLY est réservé aux adultes). Pour le corriger, contacte le support.',
   'Add your first name': 'Ajoute ton prénom',
+  'Choose another first name': 'Choisis un autre prénom',
+  'Give an e-mail address or a phone number': 'Indique une adresse e-mail ou un numéro de téléphone',
   'IRLY is for people aged 18 and over': 'IRLY est réservé aux personnes de 18 ans et plus',
   'Profile saved': 'Profil enregistré',
   'Could not upload the photo. Try again.': 'Envoi de la photo impossible. Réessaie.',
