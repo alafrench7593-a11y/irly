@@ -107,7 +107,7 @@ language sql stable set search_path = public as $$
       when s.liked_before then 'you_liked_similar' when s.starts_at < now() + interval '2 days' then 'soon' else 'popular' end,
     s.city_id
   from scored s
-  order by 9 desc, s.starts_at
+  order by 9 desc, s.starts_at, s.id -- the same tie-breaker as the live function (20261103300000)
   limit least(greatest(p_limit, 1), 50)
 $$;
 
