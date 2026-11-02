@@ -13,16 +13,36 @@ type Storage = {
  * Every persisted store the first frame waits for uses it (state/store,
  * state/appSpace, i18n): a storage that throws would leave the store
  * unhydrated and the splash screen up for good.
+ *
+ * Those stores all keep JSON: a value that no longer parses (cut short by a
+ * crash, edited by hand) is dropped and removed here, so the store starts
+ * from its defaults instead of failing to hydrate on every launch.
  */
 const memory = new Map<string, string>();
+const parses = (v: string): boolean => {
+  try {
+    JSON.parse(v);
+    return true;
+  } catch {
+    return false;
+  }
+};
 export const safeStorage: Storage = {
   getItem: async (name) => {
+    let v: string | null;
     try {
-      const v = await AsyncStorage.getItem(name);
-      return v ?? memory.get(name) ?? null;
+      v = (await AsyncStorage.getItem(name)) ?? memory.get(name) ?? null;
     } catch {
-      return memory.get(name) ?? null;
+      v = memory.get(name) ?? null;
     }
+    if (v === null || parses(v)) return v;
+    memory.delete(name);
+    try {
+      await AsyncStorage.removeItem(name);
+    } catch {
+      // ignore: the bad value is skipped either way
+    }
+    return null;
   },
   setItem: async (name, value) => {
     memory.set(name, value);

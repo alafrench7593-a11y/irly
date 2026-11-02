@@ -145,8 +145,15 @@ select pg_temp.check(not exists (select 1 from public.conversation_members cm jo
   where c.community_id = (select v from ids where k = 'club') and cm.user_id = 'c0aa0000-0000-0000-0000-0000000000a2'), 'Karim left: out of the chat');
 select pg_temp.check(exists (select 1 from public.sync_signals where user_id = 'c0aa0000-0000-0000-0000-0000000000a2'), 'Karim left: his other sessions get a sync signal');
 select pg_temp.as_user('c0aa0000-0000-0000-0000-0000000000a1');
--- The owner is never offered « Leave » (the app shows Delete); a direct call leaves her owner.
-select public.leave_community((select v from ids where k = 'club'));
+-- The owner is never offered « Leave » (the app shows Delete); a direct call is refused
+-- (20261103100000: it used to say yes and do nothing) and leaves her owner.
+do $$
+begin
+  perform public.leave_community((select v from ids where k = 'club'));
+  raise exception 'owner: leave_community should be refused';
+exception when sqlstate '22023' then
+  null;
+end $$;
 select pg_temp.check((select my_role from public.community_detail((select v from ids where k = 'club'))) = 'owner', 'owner: leave_community leaves her owner (nobody to run it otherwise)');
 
 -- ───────── IRLY Girl communities ─────────

@@ -47,6 +47,19 @@ export default function AdminItem() {
     }
   };
 
+  // Posts, comments and lives are for moderators: the content team gets a clear answer, not the server's refusal (42501).
+  if (role === 'content' && kind !== 'activity') {
+    return (
+      <Page title={ITEM_LABEL[kind]}>
+        <View style={adminStyles.body}>
+          <Text variant="body" tone="secondary">
+            Moderators only
+          </Text>
+        </View>
+      </Page>
+    );
+  }
+
   if (error || !c) {
     return (
       <Page title={ITEM_LABEL[kind]}>

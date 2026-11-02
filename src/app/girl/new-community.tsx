@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { hasBackend } from "@/lib/supabase";
 import { Image } from "expo-image";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -240,6 +241,16 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         >
+          {!hasBackend ? (
+            // The demo has no accounts: said before anything is typed, never only after Create.
+            <View style={styles.demoNote}>
+              <GlassLayer radius={radius.lg} />
+              <Icon name="user" size={18} color={girl.ink} />
+              <Text variant="bodyS" color={girl.ink} style={{ flex: 1 }}>
+                Creating a community needs an IRLY account. Accounts are not available in the demo.
+              </Text>
+            </View>
+          ) : null}
           <Animated.View
             entering={
               reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.9)
@@ -562,6 +573,16 @@ function Choice({
 }
 
 const styles = StyleSheet.create({
+  demoNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: space.gutter,
+    marginTop: 8,
+    padding: 14,
+    borderRadius: radius.lg,
+    overflow: "hidden",
+  },
   root: { flex: 1, backgroundColor: girl.bg },
   center: { alignItems: "center", justifyContent: "center", gap: 18 },
   bar: {

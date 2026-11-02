@@ -158,5 +158,5 @@ Mise en forme conseillée : fond noir IRLY, titre en blanc (Manrope, gras), capt
 | Classification d'âge | ⏳ À remplir : 18+ (l'inscription exige 18 ans, chat entre membres et rencontres en personne) |
 
 **Étiquettes de confidentialité (App Privacy)** — données liées à l'utilisateur, utilisées pour le fonctionnement de l'app, non utilisées pour le suivi (tracking) :
-Contact (e-mail uniquement : pas de connexion par téléphone) · Contenu utilisateur (photos, messages, publications) · Identifiants (ID utilisateur) · Localisation approximative (quartier choisi ; la position exacte n'est pas envoyée) · Données d'utilisation (interactions dans l'app) · Diagnostic si un outil de crash est ajouté plus tard.
-À confirmer ligne à ligne avec la politique de confidentialité avant l'envoi.
+Contact (e-mail, nom ; numéro de téléphone si la connexion par téléphone est activée dans Supabase) · Contenu utilisateur (photos, messages, publications) · Identifiants (ID utilisateur) · Localisation approximative (quartier choisi ; la position exacte n'est pas envoyée) · Données d'utilisation (interactions dans l'app) · Diagnostic si un outil de crash est ajouté plus tard.
+Le manifeste `PrivacyInfo` (`app.json` → `ios.privacyManifests.NSPrivacyCollectedDataTypes`) déclare les mêmes types : e-mail, nom, téléphone, photos/vidéos, autre contenu utilisateur, ID utilisateur, localisation approximative, interactions produit ; liés à l'utilisateur, sans suivi. À confirmer ligne à ligne avec la politique de confidentialité avant l'envoi, et à garder identique dans App Store Connect.

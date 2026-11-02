@@ -1,4 +1,5 @@
 import { useLocalSearchParams, type ErrorBoundaryProps } from 'expo-router';
+import { DEMO } from '@/config/app';
 import { useRef } from 'react';
 import { useAvatarFlight, useFlyingTo } from '@/features/flight/avatarFlight';
 import { t as tx } from '@/i18n';
@@ -145,7 +146,8 @@ function SeedProfile() {
           <Text variant="overline" tone="tertiary">
             About
           </Text>
-          <Text variant="bodyL" tone="secondary" raw>
+          {/* The demo's example people: their bio is built-in text, translated. Anything else stays as written. */}
+          <Text variant="bodyL" tone="secondary" raw={!DEMO}>
             {person.bio}
           </Text>
         </Animated.View>

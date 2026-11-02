@@ -24,6 +24,7 @@ import { blockIn, LightDrift } from '@/features/network/motion';
 import { agreeOf, INDUSTRY, INTENT, ROLE_LABEL, skillLabel } from '@/features/network/taxonomy';
 import { ConnectAction, MatchPill, NetworkState, placeOf, Portrait, Shimmer, useGlint } from '@/features/network/ui';
 import { ProLinkButtons } from '@/features/network/sections';
+import { jobLine } from '@/features/network/demo';
 import { useT, useTg } from '@/i18n';
 import { useAppSpace } from '@/state/appSpace';
 import { ease, spring } from '@/motion/tokens';
@@ -354,7 +355,7 @@ function Hero({
           {pro.firstName}
         </Text>
         <Text variant="bodyL" color="rgba(255,255,255,0.92)" raw numberOfLines={2}>
-          {pro.company ? `${pro.jobTitle} · ${pro.company}` : pro.jobTitle}
+          {jobLine(pro)}
         </Text>
         <View style={styles.heroWhere}>
           <Icon name="pin" size={13} color="rgba(255,255,255,0.78)" />

@@ -29,6 +29,13 @@ import { BANNER_PHOTO, NEWS_CATEGORY_LABEL, NEWS_PHOTO, pollAfterVote, pollShare
 import { entryCount, entryText, type LayoutEntry } from './layout';
 
 /**
+ * The team's news and banners are shown as written. The demo build has no
+ * team: its example news, banners and poll (features/cms/demo) are built-in
+ * text, translated like the rest of the app.
+ */
+const KEEP_AS_WRITTEN = !DEMO;
+
+/**
  * How the team's content looks in the app: news cards (a rail of photo cards
  * or a list), banners (a carousel or a stack) and the article page. Text the
  * team wrote is shown as written (never translated); the look follows the
@@ -51,16 +58,16 @@ const NewsTile = memo(function NewsTile({ item, visual, width, light }: { item: 
       <Photo visual={visual} light={light} scrim="strong" width={700} pinned style={[styles.tile, { width }]}>
         <View style={styles.tileText}>
           <View style={styles.tileTop}>
-            <Text variant="overline" color="rgba(255,255,255,0.9)" raw>
+            <Text variant="overline" color="rgba(255,255,255,0.9)" raw={KEEP_AS_WRITTEN}>
               {item.has_poll ? `${tx(NEWS_CATEGORY_LABEL[item.category])} · ${tx('Poll')}` : tx(NEWS_CATEGORY_LABEL[item.category])}
             </Text>
             {item.video ? <Icon name="play" size={14} color="#FFFFFF" /> : null}
           </View>
-          <Text variant="titleM" color="#FFFFFF" numberOfLines={2} raw>
+          <Text variant="titleM" color="#FFFFFF" numberOfLines={2} raw={KEEP_AS_WRITTEN}>
             {item.title}
           </Text>
           {item.subtitle ? (
-            <Text variant="caption" color="rgba(255,255,255,0.85)" numberOfLines={2} raw>
+            <Text variant="caption" color="rgba(255,255,255,0.85)" numberOfLines={2} raw={KEEP_AS_WRITTEN}>
               {item.subtitle}
             </Text>
           ) : null}
@@ -81,11 +88,11 @@ const NewsRow = memo(function NewsRow({ item, visual, light }: { item: NewsCard;
         <Text variant="caption" tone="brand">
           {[tx(NEWS_CATEGORY_LABEL[item.category]), item.has_poll ? tx('Poll') : null, newsDate(item.publish_at)].filter(Boolean).join(' · ')}
         </Text>
-        <Text variant="titleS" numberOfLines={2} raw>
+        <Text variant="titleS" numberOfLines={2} raw={KEEP_AS_WRITTEN}>
           {item.title}
         </Text>
         {item.subtitle ? (
-          <Text variant="bodyS" tone="secondary" numberOfLines={1} raw>
+          <Text variant="bodyS" tone="secondary" numberOfLines={1} raw={KEEP_AS_WRITTEN}>
             {item.subtitle}
           </Text>
         ) : null}
@@ -138,17 +145,17 @@ const BannerCard = memo(function BannerCard({ b, visual, width, light }: { b: Ba
   const body = (
     <Photo visual={visual} light={light} scrim="strong" width={900} pinned style={[styles.banner, { width }]}>
       <View style={styles.bannerText}>
-        <Text variant="titleL" color="#FFFFFF" numberOfLines={2} raw>
+        <Text variant="titleL" color="#FFFFFF" numberOfLines={2} raw={KEEP_AS_WRITTEN}>
           {b.title}
         </Text>
         {b.body ? (
-          <Text variant="bodyS" color="rgba(255,255,255,0.88)" numberOfLines={2} raw>
+          <Text variant="bodyS" color="rgba(255,255,255,0.88)" numberOfLines={2} raw={KEEP_AS_WRITTEN}>
             {b.body}
           </Text>
         ) : null}
         {b.cta_label && opens ? (
           <View style={styles.bannerCta}>
-            <Text variant="label" color="#FFFFFF" raw>
+            <Text variant="label" color="#FFFFFF" raw={KEEP_AS_WRITTEN}>
               {b.cta_label}
             </Text>
             <Icon name="arrowRight" size={14} color="#FFFFFF" />
@@ -239,7 +246,7 @@ export function NewsPollView({ id, poll, preview = false }: { id: string; poll: 
       <Text variant="overline" tone="brand">
         Poll
       </Text>
-      <Text variant="titleS" raw>
+      <Text variant="titleS" raw={KEEP_AS_WRITTEN}>
         {p.question}
       </Text>
       {p.options.map((o, i) => {
@@ -253,13 +260,15 @@ export function NewsPollView({ id, poll, preview = false }: { id: string; poll: 
             scaleTo={0.98}
             style={[styles.pollRow, { borderColor: chosen ? t.c.text : t.c.line }]}
             accessibilityRole="button"
-            accessibilityState={{ selected: chosen, disabled: !canVote }}
+            // Your answer (tapping it again does nothing) and every answer while a vote is saving are announced as unavailable;
+            // another answer stays open, since a vote can be changed (news_poll_vote).
+            accessibilityState={{ selected: chosen, disabled: !canVote || busy || chosen }}
             accessibilityLabel={tx('Vote: {option}', { option: o })}
             testID="news-poll-option"
           >
             <View style={[StyleSheet.absoluteFill, { width: `${shares[i]}%`, backgroundColor: t.c.overlay, borderRadius: radius.md }]} />
             {chosen ? <Icon name="check" size={14} color={t.c.text} /> : null}
-            <Text variant="label" raw style={{ flex: 1 }}>
+            <Text variant="label" raw={KEEP_AS_WRITTEN} style={{ flex: 1 }}>
               {o}
             </Text>
             <Text variant="caption" tone="secondary" raw>
@@ -295,11 +304,11 @@ export function NewsArticleView({ item, preview = false }: { item: NewsArticle; 
         <Text variant="caption" tone="brand">
           {`${tx(NEWS_CATEGORY_LABEL[item.category])} · ${newsDate(item.publish_at)}`}
         </Text>
-        <Text variant="titleL" raw accessibilityRole="header">
+        <Text variant="titleL" raw={KEEP_AS_WRITTEN} accessibilityRole="header">
           {item.title}
         </Text>
         {item.subtitle ? (
-          <Text variant="bodyL" tone="secondary" raw>
+          <Text variant="bodyL" tone="secondary" raw={KEEP_AS_WRITTEN}>
             {item.subtitle}
           </Text>
         ) : null}
@@ -307,7 +316,7 @@ export function NewsArticleView({ item, preview = false }: { item: NewsArticle; 
       {item.body ? (
         <View style={styles.pad}>
           {item.body.split(/\n{2,}/).map((para, i) => (
-            <Text key={i} variant="body" raw style={{ marginBottom: space[3] }}>
+            <Text key={i} variant="body" raw={KEEP_AS_WRITTEN} style={{ marginBottom: space[3] }}>
               {para}
             </Text>
           ))}
@@ -332,7 +341,7 @@ export function NewsArticleView({ item, preview = false }: { item: NewsArticle; 
       ) : null}
       {item.cta_label && item.cta_url ? (
         <View style={styles.pad}>
-          <Button label={item.cta_label} raw icon="arrowRight" full onPress={() => openDestination(item.cta_url)} />
+          <Button label={item.cta_label} raw={KEEP_AS_WRITTEN} icon="arrowRight" full onPress={() => openDestination(item.cta_url)} />
         </View>
       ) : null}
     </View>

@@ -128,7 +128,8 @@ select pg_temp.as_admin();
 select pg_temp.check((select count(*) from public.conversations where community_id = (select v from ids where k = 'club')) = 1, 'still exactly one community chat');
 -- The owner cannot leave (her community would have nobody to run it).
 select pg_temp.as_user('c9900000-0000-0000-0000-0000000000a1');
-select public.leave_community((select v from ids where k = 'club'));
+-- Refused with a clear error since 20261103100000 (it used to say yes and do nothing).
+select pg_temp.check(pg_temp.fails($$select public.leave_community((select v from ids where k = 'club'))$$) = '22023', 'the owner is told she cannot leave');
 select pg_temp.check((select my_role from public.community_detail((select v from ids where k = 'club'))) = 'owner', 'the owner stays in her community');
 
 -- Girls-only: Mia may create one; Sam may not, nor join, nor read it.

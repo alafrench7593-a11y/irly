@@ -63,7 +63,8 @@ export function IrlyStory({ onDone, scene: startAt = 0, hold = false }: { onDone
   const insets = useSafeAreaInsets();
   const frame = useFrame();
   const reduced = useReducedMotion();
-  const [index, setIndex] = useState(Math.max(0, Math.min(SCENES.length - 1, startAt)));
+  // A scene from a link that is not a number (?scene=zz) starts at the first one.
+  const [index, setIndex] = useState(Number.isFinite(startAt) ? Math.max(0, Math.min(SCENES.length - 1, Math.trunc(startAt))) : 0);
   const last = index === SCENES.length - 1;
   const scene = SCENES[index];
   // The scene fills everything between the bars and the words.

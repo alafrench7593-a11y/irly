@@ -157,12 +157,15 @@ function ServerThreadView({ id }: { id: string }) {
   // The oldest message drawn: null, the latest RENDER_CAP; ALL, every message (older ones were
   // asked for). Anchored to a message while you read further up, so one arriving meanwhile never
   // pushes the one you read out of the list.
-  const [from, setFrom] = useState<string | null>(null);
+  const [from, setFrom] = useState<null | typeof ALL | { id: string; at: number }>(null);
   const all = thread.messages;
   // Memoised: the message list re-renders on new messages, not on each key typed.
   const visible = useMemo(() => {
     if (from === ALL) return all;
-    const i = from ? all.findIndex((m) => m.id === from) : -1;
+    let i = from ? all.findIndex((m) => m.id === from.id) : -1;
+    // The anchor itself was removed (deleted for everyone, hidden): the next message takes its place,
+    // so the view does not jump to the bottom while you read further up.
+    if (i < 0 && from) i = all.findIndex((m) => m.at >= from.at);
     return i >= 0 ? all.slice(i) : all.length > RENDER_CAP ? all.slice(-RENDER_CAP) : all;
   }, [all, from]);
   const hidden = all.length - visible.length;
@@ -294,7 +297,7 @@ function ServerThreadView({ id }: { id: string }) {
             const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
             stick.current = contentOffset.y + layoutMeasurement.height > contentSize.height - 120;
             // Reading further up: what is drawn stays put. Back at the bottom of a long chat: the latest RENDER_CAP only.
-            if (!stick.current && from === null && hidden > 0) setFrom(visible[0].id);
+            if (!stick.current && from === null && hidden > 0) setFrom({ id: visible[0].id, at: visible[0].at });
             else if (stick.current && from !== null && visible.length > RENDER_CAP + RENDER_STEP) setFrom(null);
           }}
           scrollEventThrottle={64}
@@ -316,7 +319,8 @@ function ServerThreadView({ id }: { id: string }) {
                 stick.current = false;
                 // Older messages already on the phone: drawn first, no server call.
                 if (hidden > 0) {
-                  setFrom(all[Math.max(0, hidden - RENDER_STEP)].id);
+                  const first = all[Math.max(0, hidden - RENDER_STEP)];
+                  setFrom({ id: first.id, at: first.at });
                   return;
                 }
                 setEarlier(true);

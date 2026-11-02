@@ -323,7 +323,8 @@ function tapped(response: Notifications.NotificationResponse | null): Tapped | n
   if (handled.has(key)) return null;
   handled.add(key);
   const data = response.notification.request.content.data as { url?: unknown; notification_id?: unknown } | undefined;
-  const url = typeof data?.url === 'string' && data.url.startsWith('/') ? data.url : null;
+  // A screen of the app only: '//host/…' (or '/\host') would be opened as a web page by the router.
+  const url = typeof data?.url === 'string' && /^\/(?![/\\])/.test(data.url) ? data.url : null;
   const id = typeof data?.notification_id === 'string' && /^[0-9a-f-]{36}$/i.test(data.notification_id) ? data.notification_id : null;
   return url || id ? { url, id } : null;
 }

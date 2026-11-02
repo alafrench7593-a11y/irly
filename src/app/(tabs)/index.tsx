@@ -35,6 +35,7 @@ import { ExploreDoors } from '@/features/home/Explore';
 import { DiscoverCategories } from '@/features/home/HomeActivities';
 import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
 import { LiveStrip, useLiveFaces } from '@/features/live/LiveStrip';
+import { hasBackend } from '@/lib/supabase';
 import { isHappeningNow } from '@/lib/time';
 import { FEATURES } from '@/lib/features';
 import { useNow } from '@/lib/useNow';
@@ -385,7 +386,7 @@ export default function Home() {
       case 'eat':
         return eat.length ? (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
-            <SectionHeader {...head('eat', 'Find someone to eat with', 'Restaurants & cafés', 'All', () => router.push('/eat'))} />
+            <SectionHeader {...head('eat', 'Find someone to eat with', 'Restaurants & cafés', hasBackend ? 'All' : undefined, hasBackend ? () => router.push('/eat') : undefined)} />
             <Rail itemWidth={220}>
               {eat.map((pl) => (
                 <PlaceCard key={pl.id} place={pl} width={220} />

@@ -255,14 +255,21 @@ for (const [fn, kind] of [['sendCode', 'magiclink'], ['signUpWithPassword', 'sig
   expect(mark > 0 && call > mark, `links: ${fn} marks a pending ${kind} sign-in before asking the server`);
 }
 const complete = fnBody('completeFromUrl');
-const guard = complete.indexOf('if (!(await readPending())) return false;');
+const readsPending = complete.indexOf('const started = await readPending();');
+const guard = readsPending < 0 ? -1 : complete.indexOf('if (!started) return false;', readsPending);
 expect(guard > 0, 'links: completeFromUrl refuses a link when this device started no sign-in');
-for (const call of ['exchangeCodeForSession(', 'setSession(', 'getSession(']) {
+for (const call of ['exchangeCodeForSession(', 'getSession(']) {
   const at = complete.indexOf(call);
   expect(guard > 0 && at > guard, `links: completeFromUrl checks the pending sign-in before ${call.slice(0, -1)}`);
 }
 expect(/exchangeCodeForSession\(link\.code, link\.flowId \? \{ flowId: link\.flowId \}/.test(complete), 'links: a ?code= is exchanged with its flow id (PKCE)');
-expect(/if \(Platform\.OS === 'web'\) return false;\s*const \{ error \} = await supabase\.auth\.setSession/.test(complete), 'links: the web never sets a session from #access_token=');
+expect(!/setSession\(/.test(complete) && /if \(!link\.code\) return false;/.test(complete), 'links: a session is never set from #access_token= (PKCE codes only, web and phones)');
+expect(/auth\.initialize\(\)/.test(complete) && /signedInSince\(data\.session\.user\.last_sign_in_at, started\.at\)/.test(complete), 'links (web): a failed exchange with an older session is not reported as signed in');
+// The pending sign-in ends with the sign-in: finished another way, cancelled, or logged out.
+for (const fn of ['verifyCode', 'signInWithPassword', 'verifyPhoneCode', 'signInWithAppleNative', 'endSession'])
+  expect(/await clearPending\(\);/.test(fnBody(fn)), `links: ${fn} ends the pending sign-in`);
+expect(/res\.type !== 'success' \|\| !res\.url\) \{[^}]*await clearPending\(\);/.test(fnBody('signInWithProvider')), 'links: closing the Apple / Google sheet ends the pending sign-in');
+expect(/event === 'SIGNED_OUT'\) \{[^}]*clearPending\(\)/.test(account), 'links: signed out elsewhere ends the pending sign-in');
 expect(/await clearPending\(\);\s*return recovery/.test(complete), 'links: the pending sign-in is used once');
 expect(/event === 'PASSWORD_RECOVERY'/.test(account), 'links: a password reset session restores the profile like a sign-in');
 expect(/signInWithIdToken\(\{ provider: 'apple', token: cred\.identityToken, nonce: raw \}\)/.test(account), 'links: Apple on iPhone still signs in with its token, no link');
@@ -271,7 +278,7 @@ expect(/how === 'recovery'\) setMode\('reset'\)/.test(screen), 'links: a passwor
 expect(!/url\.includes\('access_token'\)/.test(screen), 'links: the Account screen no longer waits for #access_token= only');
 // The pure rules, run here (taken from account.ts as written, its types removed).
 const { stripTypeScriptTypes } = await import('node:module');
-const pure = ['export const PENDING_MS', 'export function pendingFresh(', 'export function readAuthLink(']
+const pure = ['export const PENDING_MS', 'export function pendingFresh(', 'export function readAuthLink(', 'const CLOCK_SKEW_MS', 'export function signedInSince(', 'const INVISIBLE', 'export function clip(', 'export function cleanName(']
   .map((head) => {
     const start = account.indexOf(head);
     if (start < 0) return '';
@@ -281,15 +288,25 @@ const pure = ['export const PENDING_MS', 'export function pendingFresh(', 'expor
   .replace(/^export /gm, '');
 let made: unknown = null;
 try {
-  made = new Function(`${(stripTypeScriptTypes as (code: string) => string)(pure)}\nreturn { PENDING_MS, pendingFresh, readAuthLink };`)();
+  made = new Function(`${(stripTypeScriptTypes as (code: string) => string)(pure)}\nreturn { PENDING_MS, pendingFresh, readAuthLink, signedInSince, clip, cleanName };`)();
 } catch (e) {
   expect(false, 'pending: the link rules of account.ts can be read and run', String(e));
 }
-const fallback = { PENDING_MS: 0, pendingFresh: () => true, readAuthLink: () => ({ code: 'x', flowId: null, accessToken: 'x', refreshToken: 'x', recovery: true }) };
+const fallback = {
+  PENDING_MS: 0,
+  pendingFresh: () => true,
+  readAuthLink: () => ({ code: 'x', flowId: null, accessToken: 'x', refreshToken: 'x', recovery: true }),
+  signedInSince: () => true,
+  clip: (s: string) => s,
+  cleanName: (s: string) => s,
+};
 const rules = (made ?? fallback) as {
   PENDING_MS: number;
   pendingFresh: (at: unknown, now: number) => boolean;
   readAuthLink: (url: string) => { code: string | null; flowId: string | null; accessToken: string | null; refreshToken: string | null; recovery: boolean };
+  signedInSince: (lastSignInAt: string | null | undefined, startedAt: number) => boolean;
+  clip: (text: string, max: number) => string;
+  cleanName: (name: string) => string;
 };
 is(rules.PENDING_MS, 3_600_000, 'pending: a sign-in waits for its link one hour');
 is(rules.pendingFresh(null, NOW), false, 'pending: no sign-in started here → the link is refused');
@@ -305,6 +322,39 @@ expect(legacy.accessToken === 'AT' && legacy.refreshToken === 'RT' && legacy.rec
 const inQuery = rules.readAuthLink('irly://account?access_token=AT&refresh_token=RT');
 expect(!inQuery.accessToken && !inQuery.refreshToken, 'link: tokens in the query are never taken for a session', inQuery);
 expect(!rules.readAuthLink('irly://account').code && !rules.readAuthLink('irly://account?code=x').recovery, 'link: no code without one, no reset without reset=1');
+is(rules.signedInSince(new Date(NOW + 1000).toISOString(), NOW), true, 'web link: a sign-in after the start is this one');
+is(rules.signedInSince(new Date(NOW - 5 * 60_000).toISOString(), NOW), true, 'web link: a few minutes of clock difference are allowed');
+is(rules.signedInSince(new Date(NOW - 2 * 86_400_000).toISOString(), NOW), false, 'web link: an older session is not this sign-in');
+is(rules.signedInSince(undefined, NOW), false, 'web link: no sign-in time → not this sign-in');
+
+/* ───────── Names and bios: cut as the server counts, no invisible characters ───────── */
+const emoji = 'A' + '\u{1F600}'.repeat(45);
+is(Array.from(rules.cleanName(emoji)).length, 40, 'names: 40 characters as the server counts them (emoji whole)');
+expect(!/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/.test(rules.cleanName('A' + '\u{1F600}'.repeat(30))), 'names: never a half emoji at the end');
+is(rules.clip('\u{1F600}'.repeat(301), 300), '\u{1F600}'.repeat(300), 'bios: 300 emoji kept whole');
+is(rules.cleanName('\u202Eevil\u202C'), 'evil', 'names: bidi overrides removed');
+is(rules.cleanName(' Wen\nAdmin\u200B '), 'WenAdmin', 'names: line breaks and zero-width spaces removed');
+is(rules.cleanName('\u0645\u0647\u0631\u200C\u0646\u0627\u0632'), '\u0645\u0647\u0631\u200C\u0646\u0627\u0632', 'names: a ZWNJ inside a Persian name stays');
+is(rules.cleanName('\u200B \u200B'), '', 'names: invisible only → empty (refused as "Add your first name")');
+for (const slice of ['.slice(0, 40)', '.slice(0, 300)']) expect(!account.includes(slice), `names: no UTF-16 ${slice} left in account.ts`);
+
+/* ───────── Push taps open app screens only ───────── */
+const push = read('src/features/push/push.ts');
+const pushRule = push.match(/data\?\.url === 'string' && (\/.+?\/)\.test\(data\.url\)/);
+expect(Boolean(pushRule), 'push: the tapped url is checked with one rule');
+if (pushRule) {
+  const re = new Function(`return ${pushRule[1]}`)() as RegExp;
+  for (const ok of ['/a/123', '/notifications', '/c/abc?x=1']) expect(re.test(ok), `push: ${ok} opens in the app`);
+  for (const bad of ['//evil.example/x', '/\\evil.example', 'https://evil.example', 'evil']) expect(!re.test(bad), `push: ${bad} is refused`);
+}
+
+/* ───────── Sign in with Apple: token revoked at deletion (IOS-01) ───────── */
+expect(/keepAppleToken\(cred\.authorizationCode\)/.test(account), 'apple: the authorization code goes to the server after a native sign-in');
+const del = account.slice(account.indexOf('export async function deleteServerAccount'), account.indexOf('/** Download my data'));
+expect(del.indexOf("invoke('apple-revoke'") > 0 && del.indexOf("invoke('apple-revoke'") < del.indexOf("rpc('delete_my_account')"), 'apple: the token is revoked before the account is deleted');
+const fn = read('supabase/functions/apple-revoke/index.ts');
+expect(/Deno\.env\.get/.test(fn) && !/BEGIN PRIVATE KEY-----[A-Za-z0-9+/]/.test(fn), 'apple: the Apple key comes from the function environment only');
+expect(!/service_role|SERVICE_ROLE/i.test(account), 'apple: no service role in the app');
 
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed) process.exit(1);

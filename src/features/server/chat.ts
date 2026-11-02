@@ -319,7 +319,15 @@ type MessageRow = { id: string; sender_id: string | null; kind: string; body: st
 const PAGE = 50;
 const COLS = 'id, sender_id, kind, body, created_at, ref_type, ref_id, media_path';
 // Oldest first; equal times (one transaction) keep a stable order, the same as the server's pages (created_at, id).
-const byTime = (a: MessageRow, b: MessageRow) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id);
+// Compared as times, not as text: the server drops trailing zeros ("…:36+00:00" for "…:36.000000"),
+// and as text that exact second sorted after "…:36.5+00:00".
+/** The microseconds below the millisecond (Date.parse stops at the millisecond). */
+const subMs = (at: string) => {
+  const f = /\.(\d+)/.exec(at);
+  return f ? Number(f[1].padEnd(6, '0').slice(3, 6)) : 0;
+};
+const byTime = (a: MessageRow, b: MessageRow) =>
+  Date.parse(a.created_at) - Date.parse(b.created_at) || subMs(a.created_at) - subMs(b.created_at) || a.id.localeCompare(b.id);
 /** The messages before this one in that order: a page boundary inside equal times leaves no gap and no repeat. */
 const olderThan = (m: MessageRow) => `created_at.lt."${m.created_at}",and(created_at.eq."${m.created_at}",id.lt.${m.id})`;
 /** Adds rows (new or refetched) without duplicates, in time order. */

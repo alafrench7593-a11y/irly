@@ -40,6 +40,7 @@ import { useTheme } from '@/theme/useTheme';
 import { Ambient } from '@/components/visual/Ambient';
 import { useAppSpace } from '@/state/appSpace';
 import { useGirlPeople } from '@/features/girl/GirlSections';
+import { firstParam } from '@/lib/params';
 
 const TABS = [
   { id: 'people', label: 'People' },
@@ -69,7 +70,8 @@ export default function Discover() {
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
-  const params = useLocalSearchParams<{ q?: string; tab?: string }>();
+  const linkParams = useLocalSearchParams<{ q?: string | string[]; tab?: string | string[] }>();
+  const params = { q: firstParam(linkParams.q), tab: firstParam(linkParams.tab) };
   const navigation = useNavigation();
   const [q, setQ] = useState(params.q ?? '');
   // The tab stays mounted: a new /search?q=… must replace the old query.

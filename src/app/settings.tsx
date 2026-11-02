@@ -1,4 +1,3 @@
-import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, Switch, View } from 'react-native';
@@ -168,22 +167,17 @@ function SettingsScreen() {
   };
 
   /**
-   * Appear on the map, at neighbourhood level only. Turning it on needs the
-   * location allowed on this device and « Neighbourhood » above (the server
-   * shows nobody whose location is « City only » or « Hidden »).
+   * Appear on the map, at neighbourhood level only: the neighbourhood the
+   * member chose, never this phone's position, so the location permission is
+   * not asked here (its purpose string only covers « My location » on the
+   * map). Turning it on needs « Neighbourhood » above (the server shows nobody
+   * whose location is « City only » or « Hidden »).
    */
   const toggleMap = async (key: keyof MapVisibility, on: boolean) => {
     if (!supabase || !uid || notReady() || !mapVis) return;
-    if (on) {
-      if (safetyNow.current.location_precision !== 'area') {
-        toast('Choose “Neighbourhood” for your location to appear on the map', 'pin', 'brand');
-        return;
-      }
-      const perm = await Location.requestForegroundPermissionsAsync().catch(() => null);
-      if (perm?.status !== 'granted') {
-        toast('Allow location for IRLY to appear on the map', 'pin', 'brand');
-        return;
-      }
+    if (on && safetyNow.current.location_precision !== 'area') {
+      toast('Choose “Neighbourhood” for your location to appear on the map', 'pin', 'brand');
+      return;
     }
     setMapVis((v) => (v ? { ...v, [key]: on } : v));
     enqueue(async () => {

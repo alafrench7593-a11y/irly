@@ -160,6 +160,25 @@ function ActivityFilters({ filters, onFilters, options }: { filters: MapFilters;
  * `failed`: the plans could not be read (offline, server error): that is
  * said, with a retry, never « nothing here ».
  */
+/** The map itself could not load (its code or style unreachable): said plainly, with a retry. */
+export function MapLoadError({ bottom, onRetry }: { bottom: number; onRetry: () => void }) {
+  const t = useTheme();
+  return (
+    <Animated.View entering={FadeIn.duration(motion.normal)} exiting={FadeOut.duration(motion.fast)} style={[styles.emptyWrap, { bottom }]} pointerEvents="box-none">
+      <Glass style={[styles.empty, { boxShadow: t.shadow.float }]} intensity={blur.strong}>
+        <Icon name="map" size={20} color={t.c.textSecondary} />
+        <View style={styles.emptyText}>
+          <Text variant="titleS">Can’t load the map right now</Text>
+          <Text variant="caption" tone="secondary">
+            Check your connection, then try again.
+          </Text>
+        </View>
+        <Button label="Try again" size="sm" variant="secondary" onPress={onRetry} />
+      </Glass>
+    </Animated.View>
+  );
+}
+
 export function MapEmpty({ layer, bottom, failed = false }: { layer: Layer; bottom: number; failed?: boolean }) {
   const t = useTheme();
   const router = useRouter();
