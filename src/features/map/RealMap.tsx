@@ -18,7 +18,7 @@ import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { MapButton, MapEmpty, MapTopBar, ModeSwitch, searchMap, type Layer } from './MapControls';
+import { MapButton, MapEmpty, MapLoadError, MapTopBar, ModeSwitch, searchMap, type Layer } from './MapControls';
 import { ClusterView, MarkerView } from './MapMarkers';
 import { MapSheet, type Snap } from './MapSheet';
 import type { MapMarkerData } from './markers';
@@ -64,6 +64,13 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const { all: layers, acts, ready, failed } = useMapLayers(city, origin, layer);
   // Bumped on every camera frame so the IRLY layer follows the map.
   const [, setFrameTick] = useState(0);
+  // The map's code or style could not load (offline): an error card, and a new attempt on retry or when back online.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const retryLoad = () => {
+    setLoadFailed(false);
+    setAttempt((n) => n + 1);
+  };
 
   const sheetBottom = tabSpace - 28;
   const sheetArea = frame.height - sheetBottom;
@@ -85,7 +92,14 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
     let alive = true;
     let created: MapLibre | null = null;
     (async () => {
-      const { Map: MapCtor, AttributionControl } = await import('maplibre-gl');
+      let lib: typeof import('maplibre-gl');
+      try {
+        lib = await import('maplibre-gl');
+      } catch {
+        if (alive) setLoadFailed(true);
+        return;
+      }
+      const { Map: MapCtor, AttributionControl } = lib;
       const el = host.current as unknown as HTMLElement | null;
       if (!alive || !el) return;
       created = new MapCtor({
@@ -97,11 +111,18 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
         maxPitch: 70,
       });
       created.addControl(new AttributionControl({ compact: true }), 'bottom-left');
-      // If the night style is unavailable, fall back to the light one.
+      // If the night style is unavailable, fall back to the light one; the light one unavailable too: the error card.
+      let loaded = false;
+      created.on('load', () => {
+        loaded = true;
+      });
       const onError = (e: { error?: { url?: string } }) => {
-        if (!e.error?.url?.startsWith(STYLE.night)) return;
-        created?.off('error', onError);
-        created?.setStyle(STYLE.day);
+        const url = e.error?.url ?? '';
+        if (url.startsWith(STYLE.night)) {
+          created?.setStyle(STYLE.day);
+          return;
+        }
+        if (!loaded && url.startsWith(STYLE.day) && alive) setLoadFailed(true);
       };
       created.on('error', onError);
       const sync = () => {
@@ -120,9 +141,20 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
       created?.remove();
       setMap(null);
     };
-    // The map is created once per city (the screen keys it); theme changes swap the style below.
+    // The map is created once per city (the screen keys it) and again on a retry; theme changes swap the style below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [attempt]);
+
+  // Back online after a failed load: try again by itself.
+  useEffect(() => {
+    if (!loadFailed || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+    const onOnline = () => {
+      setLoadFailed(false);
+      setAttempt((n) => n + 1);
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [loadFailed]);
 
   // Theme changes swap the map style (the first one is set at creation).
   const styleShown = useRef(night ? STYLE.night : STYLE.day);
@@ -267,7 +299,8 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
       </Animated.View>
 
       {/* Nothing where the map looks: said plainly (never example content). */}
-      {ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} failed={failed} /> : null}
+      {loadFailed ? <MapLoadError bottom={tabSpace + 48} onRetry={retryLoad} /> : null}
+      {!loadFailed && ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} failed={failed} /> : null}
 
       {selected ? (
         <MapSheet

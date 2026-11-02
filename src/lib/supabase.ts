@@ -145,6 +145,8 @@ export const whenListening = (catchUp: () => void) => (status: string) => {
  * Apple / Google when they actually work.
  */
 export async function enabledProviders(): Promise<{ apple: boolean; google: boolean; phone: boolean }> {
+  // No backend (the demo, or no keys): nothing to ask, and no request leaves the device.
+  if (!supabase) return { apple: false, google: false, phone: false };
   try {
     const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: anonKey } });
     const j = (await res.json()) as { external?: Record<string, boolean> };

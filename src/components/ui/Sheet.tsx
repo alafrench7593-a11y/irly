@@ -88,8 +88,8 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
   const frame = useFrame();
   const [mounted, setMounted] = useState(visible);
   // While the sheet slides away it takes no more taps: a second tap on the
-  // backdrop or on a button of the leaving sheet would act twice, and on web
-  // the tap goes straight to the page underneath instead of being lost.
+  // backdrop or on a button of the leaving sheet would act twice, and a tap
+  // let through would land on the page underneath. A clear layer catches them.
   const [closing, setClosing] = useState(false);
   const closingRef = useRef(false);
   const y = useSharedValue(screenH);
@@ -230,7 +230,7 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
 
   return (
     <Modal transparent visible animationType="none" statusBarTranslucent navigationBarTranslucent onRequestClose={dismiss}>
-      <GestureHandlerRootView style={styles.flex} pointerEvents={closing ? 'none' : 'auto'}>
+      <GestureHandlerRootView style={styles.flex}>
         <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.scrim }, backdropStyle]}>
           {girl && Platform.OS !== 'android' ? <BlurView intensity={14} tint="dark" style={StyleSheet.absoluteFill} pointerEvents="none" /> : null}
           <Pressable style={styles.flex} onPress={dismiss} accessibilityLabel={a11y('Close')} />
@@ -282,6 +282,10 @@ export const Sheet = memo(function Sheet({ visible, onClose, title, subtitle, ch
             </SheetScrollContext.Provider>
           </Animated.View>
         </GestureDetector>
+        {/* Sliding away: one clear layer over everything swallows the extra taps of a double tap, so they
+            neither act on the leaving sheet nor land on the page underneath (a tab, a row). It goes with
+            the Modal when the run ends (animation end or the safety timer), so it never stays. */}
+        {closing ? <View style={StyleSheet.absoluteFill} accessible={false} /> : null}
       </GestureHandlerRootView>
     </Modal>
   );

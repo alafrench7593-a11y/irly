@@ -1,7 +1,7 @@
 import { CountryPicker } from '@/components/ui/CountryPicker';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, BackHandler, Platform, StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { CharCount } from '@/components/ui/CharCount';
@@ -21,6 +21,9 @@ import { haptic } from '@/motion/haptics';
 import { useCityId, useStore, type LookingFor } from '@/state/store';
 import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+
+/** How long Save stays on screen after the tap, at least: longer than a double or triple tap. */
+const SETTLE_MS = 450;
 
 /**
  * Edit profile: appearance (photo or IRLY avatar), first name, age, bio, where you live, languages and
@@ -96,6 +99,44 @@ export default function EditProfile() {
   };
   const valid = !errors.name && !errors.languages && !errors.interests && !errors.username && handle !== 'checking';
 
+  // Something typed or picked that Save has not kept yet: leaving asks first.
+  const dirty =
+    (nameEdit !== undefined && nameEdit.trim() !== (server?.first_name ?? profile.name)) ||
+    (bioEdit !== undefined && bioEdit.trim() !== (server ? (server.bio ?? '') : (profile.bio ?? ''))) ||
+    (countryEdit !== undefined && countryEdit !== (server?.country ?? profile.country ?? '')) ||
+    changedHandle ||
+    edited(languages, initLangs) ||
+    edited(interests, initInterests) ||
+    edited(lookingFor, initLooking) ||
+    cityId !== currentCity ||
+    Boolean(photo);
+  const saved = useRef(false);
+  const leave = useCallback(() => (router.canGoBack() ? router.back() : router.replace('/profile')), [router]);
+  const askLeave = useCallback(() => {
+    if (!dirty || saved.current) {
+      leave();
+      return;
+    }
+    const q = tr('Leave without saving your changes?');
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm?.(q)) leave();
+      return;
+    }
+    Alert.alert(q, undefined, [
+      { text: tr('Keep editing'), style: 'cancel' },
+      { text: tr('Discard changes'), style: 'destructive', onPress: leave },
+    ]);
+  }, [dirty, leave, tr]);
+  // Android's back button asks too.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!dirty || saved.current) return false;
+      askLeave();
+      return true;
+    });
+    return () => sub.remove();
+  }, [dirty, askLeave]);
+
   const save = async () => {
     setTried(true);
     if (!valid || busy) {
@@ -106,6 +147,7 @@ export default function EditProfile() {
       return;
     }
     setBusy(true);
+    const tappedAt = Date.now();
     try {
       await updateMyProfile({
         ...(nameEdit !== undefined ? { name: name.trim() } : {}),
@@ -120,6 +162,11 @@ export default function EditProfile() {
       });
       haptic('success');
       toast(tr('Profile saved'), 'check', 'positive');
+      saved.current = true;
+      // A quick save (this phone, a fast answer) still leaves after the tap has settled: the extra taps of
+      // a double tap land on this busy Save, never on the screen underneath (Settings' rows).
+      const settle = SETTLE_MS - (Date.now() - tappedAt);
+      if (settle > 0) await new Promise((r) => setTimeout(r, settle));
       if (router.canGoBack()) router.back();
       else router.replace('/profile');
     } catch (e) {
@@ -132,7 +179,7 @@ export default function EditProfile() {
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
   return (
-    <Page overline="Profile" title="Edit profile" subtitle={account ? tr('What other members see.') : tr('Saved on this phone. Sign in to share it with other members.')}>
+    <Page overline="Profile" title="Edit profile" onBack={askLeave} subtitle={account ? tr('What other members see.') : tr('Saved on this phone. Sign in to share it with other members.')}>
       <View style={styles.form}>
         <Section title="Appearance">
           <AppearanceChoice

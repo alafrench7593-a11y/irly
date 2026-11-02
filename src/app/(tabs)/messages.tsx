@@ -379,7 +379,8 @@ const Row = memo(function Row({ c, lit, unread, picture, appPhoto, onLong }: { c
       )}
       <View style={{ flex: 1, gap: 3 }}>
         <View style={styles.top}>
-          <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }} raw>
+          {/* A member's chat keeps its name as written; a built-in (example) chat's name is translated. */}
+          <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }} raw={isServerId(c.id)}>
             {c.title}
           </Text>
           <Text variant="caption" tone={unread ? 'primary' : 'tertiary'}>

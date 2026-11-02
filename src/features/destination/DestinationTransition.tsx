@@ -99,36 +99,40 @@ function Portal({ target }: { target: CityId }) {
   const dest = DESTINATIONS[city.destinationId];
 
   return (
-    <Animated.View style={[StyleSheet.absoluteFill, rootStyle]} pointerEvents={leaving ? 'none' : 'auto'}>
-      <Animated.View
-        style={[
-          styles.circle,
-          { width: D, height: D, borderRadius: D / 2, left: cx - D / 2, top: cy - D / 2 },
-          circle,
-        ]}
-      >
-        <View style={{ position: 'absolute', left: D / 2 - cx, top: D / 2 - cy, width: W, height: H }}>
-          <Photo visual={{ photo: city.photo }} light={city.light} width={1400} style={StyleSheet.absoluteFill} />
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.42)' }]} />
-        </View>
+    // Clipped to the screen: the growing circle (and the slight zoom as it fades) never make the page scroll sideways.
+    <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents="box-none">
+      <Animated.View style={[StyleSheet.absoluteFill, styles.clip, rootStyle]} pointerEvents={leaving ? 'none' : 'auto'}>
+        <Animated.View
+          style={[
+            styles.circle,
+            { width: D, height: D, borderRadius: D / 2, left: cx - D / 2, top: cy - D / 2 },
+            circle,
+          ]}
+        >
+          <View style={{ position: 'absolute', left: D / 2 - cx, top: D / 2 - cy, width: W, height: H }}>
+            <Photo visual={{ photo: city.photo }} light={city.light} width={1400} style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.42)' }]} />
+          </View>
+        </Animated.View>
+        <Animated.View style={[styles.center, contentStyle]} pointerEvents="none">
+          <IrlyMark size={64} state={mark} lensColor="#FFFFFF" />
+          <Text variant="overline" tone="onDark" style={{ marginTop: 28, opacity: 0.8 }}>
+            {dest.flag}  {dest.name}
+          </Text>
+          <Text variant="displayXL" tone="onDark" italic align="center" style={{ marginTop: 8 }}>
+            {city.name}
+          </Text>
+          <Text variant="body" color="rgba(255,255,255,0.75)" align="center" style={{ marginTop: 6 }}>
+            {city.tagline}
+          </Text>
+        </Animated.View>
       </Animated.View>
-      <Animated.View style={[styles.center, contentStyle]} pointerEvents="none">
-        <IrlyMark size={64} state={mark} lensColor="#FFFFFF" />
-        <Text variant="overline" tone="onDark" style={{ marginTop: 28, opacity: 0.8 }}>
-          {dest.flag}  {dest.name}
-        </Text>
-        <Text variant="displayXL" tone="onDark" italic align="center" style={{ marginTop: 8 }}>
-          {city.name}
-        </Text>
-        <Text variant="body" color="rgba(255,255,255,0.75)" align="center" style={{ marginTop: 6 }}>
-          {city.tagline}
-        </Text>
-      </Animated.View>
-    </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  clip: { overflow: 'hidden' },
   circle: { position: 'absolute', overflow: 'hidden' },
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
 });

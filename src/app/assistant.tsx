@@ -36,6 +36,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { firstParam } from '@/lib/params';
 
 const GEO: GeoIndex = {
   cities: Object.values(CITIES).map((c) => ({ id: c.id, name: c.name })),
@@ -80,7 +81,7 @@ export default function Assistant() {
   const keyboard = useKeyboardHeight();
   const lang = useLang();
   const account = useAccount();
-  const params = useLocalSearchParams<{ q?: string }>();
+  const params = { q: firstParam(useLocalSearchParams<{ q?: string | string[] }>().q) };
   const cityId = useCityId();
   const setCity = useStore((s) => s.setCity);
   const postPlan = useStore((s) => s.postPlan);

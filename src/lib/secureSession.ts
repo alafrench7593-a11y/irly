@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
 /**
@@ -84,8 +85,40 @@ const stored = {
   },
 };
 
+/**
+ * iOS keeps Keychain items when the app is deleted, while the app's own
+ * storage goes with it: without this, deleting and reinstalling IRLY came
+ * back signed in to the previous account (onboarding restarted under it).
+ * A marker is kept in both places. Found in the Keychain but not in the
+ * app's storage: this is a reinstall, and what the Keychain still holds
+ * from the previous install is cleared as it is read. Installs from before
+ * the marker existed (no Keychain marker yet) are never signed out by it.
+ */
+const INSTALL_MARK = 'irly.install';
+let reinstall: Promise<boolean> | null = null;
+function isReinstall(): Promise<boolean> {
+  if (Platform.OS !== 'ios') return Promise.resolve(false);
+  reinstall ??= (async () => {
+    try {
+      const [here, kept] = await Promise.all([AsyncStorage.getItem(INSTALL_MARK), SecureStore.getItemAsync(INSTALL_MARK, OPTS)]);
+      if (here) return false;
+      await AsyncStorage.setItem(INSTALL_MARK, '1');
+      if (kept) return true;
+      await SecureStore.setItemAsync(INSTALL_MARK, '1', OPTS);
+      return false;
+    } catch {
+      // Unreadable: keep the session (never sign someone out on a storage hiccup).
+      return false;
+    }
+  })();
+  return reinstall;
+}
+
 export const secureSessionStorage = {
   async getItem(key: string): Promise<string | null> {
+    if (memory.has(key)) return memory.get(key)!;
+    // A reinstall: what the Keychain kept from the previous install is not this install's (read once per key, before any write).
+    if (await isReinstall()) await queue(() => clearSecure(key)).catch(() => undefined);
     if (memory.has(key)) return memory.get(key)!;
     const v = await queue(() => stored.getItem(key));
     memory.set(key, v);

@@ -5,12 +5,15 @@ import { DotField } from '@/brand/DotField';
 import { Ambient } from '@/components/visual/Ambient';
 import { IrlyStory, STORY_VERSION } from '@/features/onboarding/IrlyStory';
 import { useStore } from '@/state/store';
+import { firstParam } from '@/lib/params';
 
 /** « What is IRLY? » from Profile: the onboarding story, replayed. */
 export default function Story() {
   const router = useRouter();
   // ?scene=2&hold=1 opens one scene and stays (the website's screenshots).
-  const { scene, hold } = useLocalSearchParams<{ scene?: string; hold?: string }>();
+  const params = useLocalSearchParams<{ scene?: string; hold?: string }>();
+  const scene = firstParam(params.scene);
+  const hold = firstParam(params.hold);
   const markStorySeen = useStore((st) => st.markStorySeen);
   useEffect(() => {
     if (hold !== '1') markStorySeen(STORY_VERSION);

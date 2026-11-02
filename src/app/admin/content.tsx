@@ -5,7 +5,7 @@ import { Page } from '@/components/layout/Page';
 import { Chip, Field } from '@/components/ui/Controls';
 import { Text } from '@/components/ui/Text';
 import { itemSpaces, loadContent, SPACE_LABEL, type ContentKind, type ContentRow, type Space } from '@/features/admin/api';
-import { adminStyles, ago, Card, Loadable, StatePill, useLoad } from '@/features/admin/ui';
+import { adminStyles, ago, Card, Loadable, StatePill, useAdminRole, useLoad } from '@/features/admin/ui';
 import { t as tx } from '@/i18n';
 
 const KINDS: { value: ContentKind; label: string }[] = [
@@ -39,7 +39,11 @@ const FILTERS: { value: string | null; label: string }[] = [
 export default function AdminContent() {
   const p = useLocalSearchParams<{ kind?: string; filter?: string; space?: string }>();
   const [where, setWhere] = useState<Space | null>(SPACES.some((x) => x.value === p.space) ? (p.space as Space) : null);
-  const [kind, setKind] = useState<ContentKind>(KINDS.some((k) => k.value === p.kind) ? (p.kind as ContentKind) : 'activity');
+  // The content team handles activities; posts, comments and lives are for moderators (admin_content refuses them, 42501).
+  const contentOnly = useAdminRole() === 'content';
+  const kinds = contentOnly ? KINDS.filter((k) => k.value === 'activity') : KINDS;
+  const [picked, setKind] = useState<ContentKind>(KINDS.some((k) => k.value === p.kind) ? (p.kind as ContentKind) : 'activity');
+  const kind: ContentKind = kinds.some((k) => k.value === picked) ? picked : 'activity';
   const [filter, setFilter] = useState<string | null>(p.filter === 'hidden' || p.filter === 'reported' ? p.filter : null);
   const [search, setSearch] = useState('');
   const [q, setQ] = useState('');
@@ -54,7 +58,7 @@ export default function AdminContent() {
     <Page title="Activities and posts" subtitle="Newest first. What the team hides disappears from lists, search and the map, and can be restored.">
       <View style={adminStyles.body}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-          {KINDS.map((k) => (
+          {kinds.map((k) => (
             <Chip key={k.value} size="sm" label={k.label} selected={kind === k.value} onPress={() => setKind(k.value)} />
           ))}
         </ScrollView>

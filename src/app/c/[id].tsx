@@ -274,7 +274,7 @@ function CommunityScreen() {
                               toast('You left the community', 'check', 'brand');
                               refresh();
                             })
-                            .catch(() => toast('Could not leave', 'x', 'live')),
+                            .catch((e) => toast(e instanceof Error ? e.message : 'Could not leave', 'x', 'live')),
                         ),
                       )
                     }

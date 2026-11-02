@@ -7,11 +7,12 @@ import { Text } from '@/components/ui/Text';
 import { searchMembers, type MemberRow } from '@/features/admin/api';
 import { adminStyles, Card, day, Loadable, StatePill } from '@/features/admin/ui';
 import { t as tx } from '@/i18n';
+import { firstParam } from '@/lib/params';
 
 /** Users: search by name, username, id (or email, for admins: the server decides). Open one for the full sheet. */
 export default function Members() {
-  const q = useLocalSearchParams<{ q?: string }>();
-  const [search, setSearch] = useState(q.q ?? '');
+  const q = firstParam(useLocalSearchParams<{ q?: string | string[] }>().q);
+  const [search, setSearch] = useState(q ?? '');
   const [rows, setRows] = useState<MemberRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 

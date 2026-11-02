@@ -339,6 +339,17 @@ export const useStore = create<State & Actions>()(
   ),
 );
 
+// Web: two tabs share one saved state. Each tab writes its whole state on
+// every change, so a tab left open with old data would overwrite what the
+// other tab just saved (a profile edit, a sent message). When another tab
+// saves, this one reloads the saved state first.
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function' && typeof document !== 'undefined') {
+  const key = storageName('irly-v2');
+  window.addEventListener('storage', (e) => {
+    if (e.key === key && e.newValue !== null) void useStore.persist.rehydrate();
+  });
+}
+
 /** Selected city id, guaranteed once onboarding is done. */
 export function useCityId(): CityId {
   return useStore((s) => s.cityId) ?? 'dubai';

@@ -306,7 +306,7 @@ function NewGroupSheet({ visible, parentId, onClose, onMade }: { visible: boolea
   const [tagline, setTagline] = useState('');
   const [busy, setBusy] = useState(false);
   const make = async () => {
-    if (busy || name.trim().length < 2) return;
+    if (busy || name.trim().length < 3) return;
     setBusy(true);
     try {
       const id = await createSubgroup(parentId, name.trim(), tagline.trim());
@@ -342,7 +342,7 @@ function NewGroupSheet({ visible, parentId, onClose, onMade }: { visible: boolea
           style={input}
           accessibilityLabel={a11y('Tagline')}
         />
-        <Button label="Create the group" icon="plus" full loading={busy} disabled={name.trim().length < 2} onPress={make} />
+        <Button label="Create the group" icon="plus" full loading={busy} disabled={name.trim().length < 3} onPress={make} />
       </View>
     </Sheet>
   );

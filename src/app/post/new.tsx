@@ -1,4 +1,6 @@
 import { Image } from 'expo-image';
+import { NotFound } from '@/components/layout/NotFound';
+import { hasBackend } from '@/lib/supabase';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, BackHandler, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -29,6 +31,12 @@ import { useTheme } from '@/theme/useTheme';
  * draft (found again next time) or discard it. Also edits one's own post.
  */
 export default function NewPost() {
+  // The demo has no accounts: said before anything is typed, never after Post.
+  if (!hasBackend) return <NotFound title="Posting needs an IRLY account. Accounts are not available in the demo." />;
+  return <NewPostForm />;
+}
+
+function NewPostForm() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();

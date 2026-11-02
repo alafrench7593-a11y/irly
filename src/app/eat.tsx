@@ -13,6 +13,7 @@ import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { isOpenNow } from '@/features/bali/fit';
 import { useDestAreas, usePlaces, type PlaceHit } from '@/features/bali/data';
+import { hasBackend } from '@/lib/supabase';
 import { useNow } from '@/lib/useNow';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
@@ -96,7 +97,16 @@ export default function Eat() {
           ))}
         </Filters>
 
-        {loading ? (
+        {!hasBackend ? (
+          // The demo has no server: said plainly, never a connection error while online.
+          <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+            <GlassLayer radius={radius.xl} />
+            <Icon name="utensils" size={22} color={t.c.textSecondary} />
+            <Text variant="body" tone="secondary" align="center">
+              Restaurants come from the IRLY server. They are not available in the demo.
+            </Text>
+          </View>
+        ) : loading ? (
           <ActivityIndicator color={t.c.text} />
         ) : error ? (
           <Text variant="body" tone="secondary">

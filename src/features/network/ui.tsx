@@ -27,7 +27,7 @@ import { NetworkScope } from '@/theme/flavor';
 import { useAppSpace } from '@/state/appSpace';
 import { useStore } from '@/state/store';
 import { proConnect, rememberPro } from './api';
-import { demoConnect, demoDisconnect } from './demo';
+import { demoConnect, demoDisconnect, jobLine } from './demo';
 import { matchSentence, roundDistance, type ProMatch, type ProProfile } from './match';
 import { stateIn, usePressLight, useScreenFocused } from './motion';
 import { agreeOf, INDUSTRY, ROLE_LABEL, skillLabel } from './taxonomy';
@@ -346,7 +346,7 @@ export const ProCard = memo(function ProCard({
             {pro.firstName}
           </Text>
           <Text variant="bodyS" numberOfLines={2} raw style={{ color: t.c.text }}>
-            {pro.company ? `${pro.jobTitle} · ${pro.company}` : pro.jobTitle}
+            {jobLine(pro)}
           </Text>
           <View style={[styles.whereRow, { marginTop: 'auto' }]}>
             <Icon name="pin" size={12} color={t.c.textTertiary} />

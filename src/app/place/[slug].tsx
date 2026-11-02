@@ -19,6 +19,7 @@ import { isOpenNow } from '@/features/bali/fit';
 import { usePlace, usePlaceActivities } from '@/features/bali/data';
 import { FOOD_PLANS, MOM_PLANS, QuickPlan } from '@/features/plans/QuickPlan';
 import { useEngagement } from '@/features/server/engage';
+import { hasBackend } from '@/lib/supabase';
 import { useNow } from '@/lib/useNow';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
@@ -54,7 +55,7 @@ function PlaceScreen() {
   const eng = useEngagement('place', p ? [p.slug] : []);
   const now = useNow();
 
-  if (loading) {
+  if (loading && hasBackend) {
     // Never a bare spinner: on a slow answer the page still says what it is and
     // can be left (a spinner alone reads as a blank, stuck screen).
     return (
@@ -72,7 +73,9 @@ function PlaceScreen() {
   if (!p) {
     return (
       <View style={[styles.center, { backgroundColor: t.c.bg, gap: 12 }]}>
-        <Text variant="titleM">{error ? 'Could not load this place' : 'Place not found'}</Text>
+        <Text variant="titleM" align="center">
+          {!hasBackend ? 'Places are not available in the demo' : error ? 'Could not load this place' : 'Place not found'}
+        </Text>
         <Button label="Back" variant="secondary" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
       </View>
     );

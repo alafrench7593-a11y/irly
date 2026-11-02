@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { create } from 'zustand';
 import { DEMO } from '@/config/app';
+import { t as tx } from '@/i18n';
 import { cityScope } from '@/data/destinations';
 import { findPerson } from '@/data/repo';
 import type { CityId } from '@/data/types';
@@ -69,6 +70,17 @@ const SEEDS: Seed[] = [
 
 const photoPath = (id: string) => `demo/${id}`;
 
+const SEED_IDS = new Set(SEEDS.map((s) => s.id));
+
+/**
+ * The job line of a card or a profile (« Founder · Haul »). A member's job
+ * title stays as they typed it; a demo example's (built-in) is translated.
+ */
+export function jobLine(pro: Pick<ProProfile, 'userId' | 'jobTitle' | 'company'>): string {
+  const job = DEMO && SEED_IDS.has(pro.userId) ? tx(pro.jobTitle) : pro.jobTitle;
+  return pro.company ? `${job} · ${pro.company}` : job;
+}
+
 /** The illustrative profiles, built from the demo people (name, area, portrait). */
 const PROS: ProProfile[] = DEMO
   ? SEEDS.flatMap((s) => {
@@ -130,14 +142,20 @@ function offline(): boolean {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** The visitor's own demo profile, with the name and gender of their IRLY profile. */
+function useDemoMe(): ProProfile | null {
+  const me = useDemoNetwork((s) => s.me);
+  const name = useStore((s) => s.profile?.name);
+  const gender = useStore((s) => s.profile?.gender) ?? null;
+  return useMemo(() => (me ? { ...me, firstName: name || me.firstName, gender } : null), [me, name, gender]);
+}
+
 /** Same shape as useMyPro. */
 export function useDemoMyPro() {
-  const me = useDemoNetwork((s) => s.me);
   const visible = useDemoNetwork((s) => s.visible);
   const setMe = useDemoNetwork((s) => s.setMe);
   const name = useStore((s) => s.profile?.name);
-  const gender = useStore((s) => s.profile?.gender) ?? null;
-  const pro = useMemo(() => (me ? { ...me, firstName: name || me.firstName, gender } : null), [me, name, gender]);
+  const pro = useDemoMe();
   const save = useCallback(
     async (d: ProDraft) => {
       await wait(500);
@@ -223,8 +241,13 @@ export function useDemoPro(userId: string) {
     const id = setTimeout(() => setRes({ for: key, failed: offline() }), 450);
     return () => clearTimeout(id);
   }, [key]);
+  const me = useDemoMe();
+  // Your own profile always opens (from the list, a link or a reload).
   // In IRLY Girl a man's profile does not open, even from a link (as pro_profile_of_girl).
-  const pro = useMemo(() => (inSpace(userId, space) ? (list(connection).find((p) => p.userId === userId) ?? null) : null), [connection, userId, space]);
+  const pro = useMemo(
+    () => (me && userId === me.userId ? me : inSpace(userId, space) ? (list(connection).find((p) => p.userId === userId) ?? null) : null),
+    [connection, userId, space, me],
+  );
   const setConnection = useCallback((c: ProProfile['connection']) => setOne(userId, c), [setOne, userId]);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
   // As on the server: a retry keeps the failure on screen until it answers.

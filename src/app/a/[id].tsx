@@ -1,4 +1,6 @@
 import { webLink } from '@/config/app';
+import { NotFound } from '@/components/layout/NotFound';
+import { hasBackend } from '@/lib/supabase';
 import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoPlanScreen } from '@/features/girl/DemoScreens';
@@ -65,7 +67,8 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 export default function ActivityRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
-  return <SpaceFlavor>{isDemoId(id) ? <DemoPlanScreen id={id} /> : <ActivityPage />}</SpaceFlavor>;
+  // The demo has no server: any other activity link is gone (never a sign-in wall that leads nowhere).
+  return <SpaceFlavor>{isDemoId(id) ? <DemoPlanScreen id={id} /> : hasBackend ? <ActivityPage /> : <NotFound title="This activity is no longer available" />}</SpaceFlavor>;
 }
 
 function ActivityPage() {

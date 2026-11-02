@@ -30,18 +30,25 @@ import { enter } from '@/motion/enter';
 import { useCityId, useStore } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { NotFound } from '@/components/layout/NotFound';
 
 const HERO = 300;
 
 export default function ActivityKindScreen() {
+  const { kind } = useLocalSearchParams<{ kind: ActivityKind }>();
+  // An unknown kind (an old or mistyped link) says so, never another activity's page.
+  if (typeof kind !== 'string' || !Object.prototype.hasOwnProperty.call(ACTIVITIES, kind)) return <NotFound title="This activity is no longer available" />;
+  return <KindPage kind={kind} />;
+}
+
+function KindPage({ kind }: { kind: ActivityKind }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const { kind } = useLocalSearchParams<{ kind: ActivityKind }>();
   const cityId = useCityId();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
-  const a = ACTIVITIES[kind] ?? ACTIVITIES.running;
+  const a = ACTIVITIES[kind];
   const sessions = content.sessions.filter((s) => s.kind === kind);
   const players = rankMatches(
     { ...profile, activities: [...profile.activities, kind] },

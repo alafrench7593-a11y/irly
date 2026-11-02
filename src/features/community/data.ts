@@ -7,6 +7,7 @@ import { together } from '@/lib/together';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { t as tx } from '@/i18n';
 import { changed, echoGate, syncNow, useRefreshOn, useSyncVersion } from '@/features/server/sync';
 import { askPushInContext } from '@/features/push/push';
 import { toast } from '@/components/ui/Toast';
@@ -630,6 +631,8 @@ export async function joinCommunity(id: string): Promise<string> {
 
 export async function leaveCommunity(id: string): Promise<void> {
   const { error } = await sb().rpc('leave_community', { p_community: id });
+  // The owner cannot just leave (22023 « hand it over or delete it first »): said in the app's words, never lost.
+  if (error?.code === '22023' && /hand it over|delete it first/i.test(error.message)) throw new Error(tx('You own this community. Hand it over to another member or delete it first.'));
   if (error) throw new Error(friendlyError(error.message));
   communitiesChanged();
 }
