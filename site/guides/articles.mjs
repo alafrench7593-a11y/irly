@@ -561,7 +561,7 @@ export const ARTICLES = [
     cover: 'dubaiCreek',
     figure: { photo: 'running', after: 1 },
     city: 'Dubai',
-    updated: '2026-10-23',
+    updated: '2026-11-02',
     title: 'Lonely in Dubai? What Actually Helps | IRLY',
     description: 'Feeling lonely in Dubai is common, especially in the first months. Why it happens here, small steps that help this week, and when to talk to a professional.',
     h1: 'Lonely in Dubai: what actually helps',
@@ -602,6 +602,16 @@ export const ARTICLES = [
 <p>For concrete ideas in each of these settings, see <a href="../group-activities/">15 group activities to meet people in Dubai</a>. If you will be going on your own, <a href="../going-out-alone/">going out alone in Dubai</a> covers how to make the first visit easier. If you would rather start with women-only settings, see <a href="../activities-for-women/">activities for women in Dubai</a>.</p>`,
       },
       {
+        h2: 'When friends move away',
+        html: `<p>In a city where many people stay a few years, a close friend leaving is part of life here, and it can bring the loneliness back. A few habits soften it:</p>
+<ul>
+<li><strong>Do not rely on one person.</strong> Keep two or three circles going (an activity, colleagues, neighbours or a community), so one departure does not empty your week.</li>
+<li><strong>Keep the routine you shared.</strong> If you ran or played together, keep going: the group stays, and new people join it.</li>
+<li><strong>Say goodbye properly, then stay in touch.</strong> A last plan together, then an occasional message or call. Friendships made abroad often last at a distance.</li>
+<li><strong>Welcome the next newcomers.</strong> Someone has just arrived and knows no one; inviting them is often how the next friendship starts.</li>
+</ul>`,
+      },
+      {
         h2: 'When to talk to someone',
         html: `<p>Loneliness can weigh on your mood, sleep and energy. If it lasts, if you feel low most days, or if daily life becomes hard, talk to a doctor or a mental health professional: it is a normal step, and many clinics in Dubai offer consultations in several languages. Your employer’s health insurance may cover part of it; check your policy.</p>
 <p>If you are in danger or think about harming yourself, call the emergency services: <strong>999</strong> (police) or <strong>998</strong> (ambulance) in the UAE.</p>`,
@@ -621,7 +631,7 @@ export const ARTICLES = [
     cover: 'dubaiCreek',
     figure: { photo: 'running', after: 1 },
     city: 'Dubaï',
-    updated: '2026-10-23',
+    updated: '2026-11-02',
     title: 'Se sentir seul à Dubaï : ce qui aide vraiment | IRLY',
     description: 'Se sentir seul à Dubaï est fréquent, surtout les premiers mois. Pourquoi ça arrive ici, les petits pas qui aident cette semaine, et quand en parler à un professionnel.',
     h1: 'Se sentir seul à Dubaï : ce qui aide vraiment',
@@ -660,6 +670,16 @@ export const ARTICLES = [
 <li><strong>Les espaces de coworking et rencontres professionnelles :</strong> si tu travailles seul, ils donnent des collègues à ta semaine.</li>
 </ul>
 <p>Pour des idées concrètes dans chacun de ces cadres, vois <a href="../activites-de-groupe/">15 activités de groupe pour rencontrer du monde à Dubaï</a>. Si tu y vas seul, <a href="../sortir-seul/">sortir seul à Dubaï</a> explique comment rendre la première fois plus simple. Si tu préfères commencer par des cadres réservés aux femmes, vois <a href="../activites-entre-femmes/">les activités entre femmes à Dubaï</a>.</p>`,
+      },
+      {
+        h2: 'Quand des amis quittent Dubaï',
+        html: `<p>Dans une ville où beaucoup restent quelques années, voir partir un ami proche fait partie de la vie ici, et ça peut ramener la solitude. Quelques habitudes adoucissent le choc :</p>
+<ul>
+<li><strong>Ne repose pas tout sur une seule personne.</strong> Entretiens deux ou trois cercles (une activité, des collègues, des voisins ou une communauté), pour qu’un départ ne vide pas ta semaine.</li>
+<li><strong>Garde la routine que vous partagiez.</strong> Si vous couriez ou jouiez ensemble, continue : le groupe reste, et de nouvelles personnes le rejoignent.</li>
+<li><strong>Dis vraiment au revoir, puis garde le contact.</strong> Un dernier plan ensemble, puis un message ou un appel de temps en temps. Les amitiés nées à l’étranger durent souvent à distance.</li>
+<li><strong>Accueille les prochains arrivants.</strong> Quelqu’un vient d’arriver et ne connaît personne ; l’inviter, c’est souvent le début de la prochaine amitié.</li>
+</ul>`,
       },
       {
         h2: 'Quand en parler à quelqu’un',
