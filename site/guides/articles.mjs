@@ -401,7 +401,7 @@ export const ARTICLES = [
     cover: 'surf',
     figure: { photo: 'volleyball', after: 1 },
     city: 'Bali',
-    updated: '2026-10-24',
+    updated: '2026-11-03',
     title: 'Bali for Digital Nomads: Finding Community and Coworking | IRLY',
     description: 'Working remotely from Bali? How to find a community, choose an area and a coworking space, and build a routine that keeps you social without losing your workdays.',
     h1: 'Bali for digital nomads: community and coworking',
@@ -428,6 +428,17 @@ export const ARTICLES = [
 <li><strong>Your time zone:</strong> if you work evenings for clients in Europe or the Americas, check the opening hours.</li>
 </ul>
 <p>Cafés work for some days, but a fixed place to work makes it easier to see the same faces and keep a routine.</p>`,
+      },
+      {
+        h2: 'Your first week: a simple plan',
+        html: `<p>The first days set your rhythm. A plan this light is enough to leave the week with a routine and a few names:</p>
+<ol>
+<li><strong>Day 1–2:</strong> settle in, walk your area at the hours you will actually be out, and find where you can buy what you need without a long ride.</li>
+<li><strong>Day 2–3:</strong> try one or two coworking spaces on a day pass, at the time you usually work.</li>
+<li><strong>Day 3–4:</strong> go to one event at the space you liked, or one class (yoga, surf, a gym session) you could repeat every week.</li>
+<li><strong>Day 5:</strong> suggest one simple plan to someone you met: lunch after work, a sunset, a short trip at the weekend.</li>
+<li><strong>End of the week:</strong> keep what worked, drop what did not, and only then commit to a longer stay or a monthly membership.</li>
+</ol>`,
       },
       {
         h2: 'Where remote workers meet each other',
@@ -481,7 +492,7 @@ export const ARTICLES = [
     cover: 'surf',
     figure: { photo: 'volleyball', after: 1 },
     city: 'Bali',
-    updated: '2026-10-24',
+    updated: '2026-11-03',
     title: 'Bali pour les digital nomads : communauté et coworking | IRLY',
     description: 'Tu travailles à distance depuis Bali ? Comment trouver une communauté, choisir un quartier et un coworking, et garder une vie sociale sans sacrifier tes journées de travail.',
     h1: 'Bali pour les digital nomads : communauté et coworking',
@@ -508,6 +519,17 @@ export const ARTICLES = [
 <li><strong>Ton fuseau horaire :</strong> si tu travailles le soir pour des clients en Europe ou en Amérique, vérifie les horaires d’ouverture.</li>
 </ul>
 <p>Les cafés conviennent certains jours, mais un lieu de travail fixe aide à revoir les mêmes visages et à garder une routine.</p>`,
+      },
+      {
+        h2: 'Ta première semaine : un plan simple',
+        html: `<p>Les premiers jours donnent le rythme. Un plan aussi léger suffit pour finir la semaine avec une routine et quelques prénoms :</p>
+<ol>
+<li><strong>Jours 1–2 :</strong> installe-toi, marche dans ton quartier aux heures où tu sortiras vraiment, et repère où acheter l’essentiel sans long trajet.</li>
+<li><strong>Jours 2–3 :</strong> teste un ou deux coworkings avec un pass à la journée, aux heures où tu travailles d’habitude.</li>
+<li><strong>Jours 3–4 :</strong> va à un événement dans le coworking qui t’a plu, ou à un cours (yoga, surf, salle de sport) que tu pourrais refaire chaque semaine.</li>
+<li><strong>Jour 5 :</strong> propose un plan simple à quelqu’un que tu as rencontré : un déjeuner après le travail, un coucher de soleil, une sortie le week-end.</li>
+<li><strong>Fin de semaine :</strong> garde ce qui a marché, laisse le reste, et seulement ensuite engage-toi sur un séjour plus long ou un abonnement au mois.</li>
+</ol>`,
       },
       {
         h2: 'Où les travailleurs à distance se rencontrent',
