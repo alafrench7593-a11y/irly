@@ -34,7 +34,7 @@ export const RAIL_SPACE = RAIL_WIDTH + 24;
 export const WIDE_ROUTES = new Set<string>(['(tabs)', 'index']);
 
 /** Tabs that draw their own wide layout (same rule, inside the tabs). */
-export const WIDE_TABS = new Set<string>(['map']);
+export const WIDE_TABS = new Set<string>(['map', 'messages']);
 
 /** Width of the list pane in a list + detail screen. */
 export const LIST_PANE = 360;

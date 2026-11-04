@@ -3662,6 +3662,8 @@ export const fr: Record<string, string> = {
   "Join an activity: its group chat appears here until the day.": "Rejoins une activité : sa discussion de groupe apparaît ici jusqu’au jour J.",
   "No conversation matches": "Aucune conversation ne correspond",
   "Nothing here yet": "Rien ici pour l’instant",
+  "Choose a conversation": "Choisis une conversation",
+  "Pick a chat in the list to read it here.": "Choisis une discussion dans la liste pour la lire ici.",
   "Nothing called “{q}” in your conversations.": "Rien qui s’appelle « {q} » dans tes conversations.",
   "Say hello to the group": "Dis bonjour au groupe",
   "Photo": "Photo",
