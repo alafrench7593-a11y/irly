@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Text } from '@/components/ui/Text';
@@ -7,32 +7,34 @@ import { CITIES } from '@/data/destinations';
 import { useStore } from '@/state/store';
 import { font } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { FrameContext, type Frame } from '@/components/layout/frame';
+import { LayoutContext, sizeClassFor, type Layout } from '@/components/layout/responsive';
 
-type Frame = { width: number; height: number; framed: boolean };
-
-const FrameContext = createContext<Frame>({ width: 390, height: 844, framed: false });
-
-/** Size of the app surface. Use instead of the window size. */
-export function useFrame(): Frame {
-  return useContext(FrameContext);
-}
+export { FrameContext, useFrame, type Frame } from '@/components/layout/frame';
 
 const PHONE_WIDTH = 430;
-const TABLET_BREAKPOINT = 700;
+/** Desktop web keeps the phone preview from this width (marketing preview). */
+const WEB_FRAME_MIN = 1200;
+
+/** Web only: `?frame=0` turns the phone preview off, to see the adaptive layouts at any width. */
+const webFrameOff = Platform.OS === 'web' && typeof window !== 'undefined' && /[?&]frame=0\b/.test(window.location?.search ?? '');
 
 /**
  * Responsive shell.
- * - Phones (and narrow browser windows): the app fills the screen.
- * - Tablets and desktop web: the app keeps its phone proportions in a
- *   centred column, the destination's light fills the rest of the screen.
- *   IRLY is designed mobile-first; wider layouts reuse the same screens.
+ * - On iOS and Android the app always fills its window, whatever its size:
+ *   a small iPhone, a Pro Max, the outer or inner screen of a folding
+ *   phone. The size class (components/layout/responsive) then picks the
+ *   layout: phone layout under 700 pt, side rail and two panes above.
+ * - On the web, tablets and narrow windows get the same adaptive app.
+ *   Desktop browsers (1200 px and more) keep the phone preview in a centred
+ *   column with the destination's light around it, unless `?frame=0`.
  */
 export function AppFrame({ children }: { children: ReactNode }) {
   const { width, height } = useWindowDimensions();
   const t = useTheme();
   const cityId = useStore((s) => s.cityId);
   const city = cityId ? CITIES[cityId] : null;
-  const framed = width >= TABLET_BREAKPOINT;
+  const framed = Platform.OS === 'web' && width >= WEB_FRAME_MIN && !webFrameOff;
   const night = t.mode === 'night';
   const ink = night ? '#FFFFFF' : '#0A0A0A';
   const frame = useMemo<Frame>(
@@ -40,15 +42,24 @@ export function AppFrame({ children }: { children: ReactNode }) {
     [framed, width, height],
   );
 
+  const surfaceW = framed ? PHONE_WIDTH : width;
+  const layoutValue = useMemo<Layout>(() => {
+    const sizeClass = sizeClassFor(surfaceW);
+    return { windowWidth: surfaceW, windowHeight: height, sizeClass, landscape: width > height, rail: sizeClass === 'expanded' };
+  }, [surfaceW, height, width]);
+
   if (!framed) {
     return (
-      <FrameContext.Provider value={frame}>
-        <View style={[styles.fill, { backgroundColor: t.c.bg }]}>{children}</View>
-      </FrameContext.Provider>
+      <LayoutContext.Provider value={layoutValue}>
+        <FrameContext.Provider value={frame}>
+          <View style={[styles.fill, { backgroundColor: t.c.bg }]}>{children}</View>
+        </FrameContext.Provider>
+      </LayoutContext.Provider>
     );
   }
 
   return (
+    <LayoutContext.Provider value={layoutValue}>
     <FrameContext.Provider value={frame}>
       <View style={[styles.fill, styles.row]}>
         <Photo visual={{ photo: city?.photo ?? 'emirates' }} light={city?.light ?? 'dubai'} blur={28} width={1600} style={StyleSheet.absoluteFill} />
@@ -78,6 +89,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
         </View>
       </View>
     </FrameContext.Provider>
+    </LayoutContext.Provider>
   );
 }
 

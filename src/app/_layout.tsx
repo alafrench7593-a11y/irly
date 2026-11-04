@@ -17,6 +17,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReducedMotionConfig, ReduceMotion } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppFrame } from '@/components/layout/AppFrame';
+import { ScreenColumn, WIDE_ROUTES } from '@/components/layout/responsive';
 import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { ToastHost } from '@/components/ui/Toast';
 import { CreateHost } from '@/features/create/CreateHost';
@@ -147,6 +148,7 @@ function App() {
     <AppFrame>
       <StatusBar style={t.isDay ? 'dark' : 'light'} />
       <Stack
+        screenLayout={({ children, route }) => <ScreenColumn wide={WIDE_ROUTES.has(route.name)}>{children}</ScreenColumn>}
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: t.c.bg },
