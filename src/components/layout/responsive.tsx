@@ -46,7 +46,7 @@ export const WIDE_ROUTES = new Set<string>([
 ]);
 
 /** Tabs that draw their own wide layout (same rule, inside the tabs). */
-export const WIDE_TABS = new Set<string>(['map', 'messages', 'profile', 'discover']);
+export const WIDE_TABS = new Set<string>(['map', 'messages', 'profile', 'discover', 'index', 'live']);
 
 /** Width of the list pane in a list + detail screen. */
 export const LIST_PANE = 360;

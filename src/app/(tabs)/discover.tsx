@@ -16,6 +16,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FrameContext, useFrame } from '@/components/layout/AppFrame';
 import { COLUMN_MAX, useLayout } from '@/components/layout/responsive';
+import { contentWidth, WIDE_MIN } from '@/components/layout/wide';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Field } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
@@ -98,11 +99,14 @@ export default function Discover() {
   const total = results ? Object.values(results).reduce((n, list) => n + list.length, 0) : 0;
   const [kind, setKind] = useState<ResultKind>('all');
 
-  // Wide (the tab has the whole width): the four pages keep a readable column;
-  // a search spreads out, filters in a side column and results in grids.
+  // Wide (the tab has the whole width): from WIDE_MIN the four pages take it all and lay
+  // their content out in grids, capped and centred (components/layout/wide); search and
+  // tabs share one row. Just under it, a readable column. A search spreads out, filters
+  // in a side column and results in grids.
   // Same tree in every size: the query, the page and the pager stay put on a resize.
   const wideSearch = Boolean(results) && full.width >= SEARCH_WIDE;
-  const W = sizeClass === 'expanded' && !wideSearch ? Math.min(full.width, COLUMN_MAX) : full.width;
+  const widePages = !results && full.width >= WIDE_MIN;
+  const W = sizeClass === 'expanded' && !wideSearch && !widePages ? Math.min(full.width, COLUMN_MAX) : full.width;
   const frame = useMemo(() => ({ ...full, width: W }), [full, W]);
   const resultsW = wideSearch ? W - FILTER_COLUMN : W;
   const narrowHead = W < 360;
@@ -241,7 +245,7 @@ export default function Discover() {
           <Animated.View style={[styles.header, headerStyle]} onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
             <Glass level="thick" border={false} highlight={false} style={StyleSheet.absoluteFill} />
             <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
-            <View style={{ paddingTop: insets.top + space[3] }}>
+            <View style={[styles.headInner, { paddingTop: insets.top + space[3] }, widePages ? { width: contentWidth(W) } : null]}>
               <Animated.View style={[styles.head, titleStyle]}>
                 <View style={styles.headRow}>
                   <MapButton />
@@ -264,24 +268,30 @@ export default function Discover() {
                   </Text>
                 ) : null}
               </Animated.View>
-              <View style={{ paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[4] }}>
-                <Field
-                  icon="search"
-                  placeholder={tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
-                  value={q}
-                  onChangeText={setQ}
-                  returnKeyType="search"
-                  autoCorrect={false}
-                  accessibilityLabel="Search"
-                  trailing={
-                    q ? (
-                      <PressableScale onPress={() => setQ('')} haptic="select" accessibilityLabel="Clear search">
-                        <Icon name="x" size={18} color={t.c.textTertiary} />
-                      </PressableScale>
-                    ) : null
-                  }
-                />
-                {!results ? <DiscoverTabs tabs={TABS} x={x} pageWidth={W} active={active} onPress={goTo} /> : null}
+              <View style={[styles.tools, widePages ? styles.toolsWide : null]}>
+                <View style={widePages ? styles.flex : null}>
+                  <Field
+                    icon="search"
+                    placeholder={tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
+                    value={q}
+                    onChangeText={setQ}
+                    returnKeyType="search"
+                    autoCorrect={false}
+                    accessibilityLabel="Search"
+                    trailing={
+                      q ? (
+                        <PressableScale onPress={() => setQ('')} haptic="select" accessibilityLabel="Clear search">
+                          <Icon name="x" size={18} color={t.c.textTertiary} />
+                        </PressableScale>
+                      ) : null
+                    }
+                  />
+                </View>
+                {!results ? (
+                  <View style={widePages ? styles.tabsWide : null}>
+                    <DiscoverTabs tabs={TABS} x={x} pageWidth={W} active={active} onPress={goTo} />
+                  </View>
+                ) : null}
               </View>
             </View>
           </Animated.View>
@@ -312,6 +322,12 @@ const styles = StyleSheet.create({
   column: { flex: 1, alignSelf: 'center', maxWidth: '100%' },
   filters: { position: 'absolute', left: space.gutter, top: 0, width: FILTER_COLUMN - space.gutter },
   head: { paddingHorizontal: space.gutter, marginBottom: space[5], gap: 2 },
+  headInner: { alignSelf: 'center', width: '100%', maxWidth: '100%' },
+  flex: { flex: 1 },
+  tools: { paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[4] },
+  // Wide pages: the search and the four tabs on one row.
+  toolsWide: { flexDirection: 'row', alignItems: 'center' },
+  tabsWide: { width: 460 },
   doors: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: space.gutter, marginBottom: space[9] },
   door: { height: 150, borderRadius: radius.lg },
   doorInner: { flex: 1, padding: 14, justifyContent: 'space-between' },
