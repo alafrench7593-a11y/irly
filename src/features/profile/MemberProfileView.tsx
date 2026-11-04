@@ -2,8 +2,9 @@ import { useRouter } from 'expo-router';
 import { AdminBadge } from '@/features/admin/StaffBadge';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, Share, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useAnimatedScrollHandler, useReducedMotion, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ProfileColumns, useProfileSplit } from '@/components/layout/ProfileColumns';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -34,7 +35,7 @@ import { useNow } from '@/lib/useNow';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
-import { radius, space } from '@/theme/tokens';
+import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { SpaceSwitchCard } from '@/features/girl/GirlSections';
@@ -79,6 +80,12 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
   const [menu, setMenu] = useState(false);
   const inGirl = useAppSpace() === 'girl';
   const woman = useStore((st) => st.profile.gender) === 'woman';
+  // Wide page: who they are and the buttons on the left (they stay in view), what they do on the right.
+  const wide = useProfileSplit();
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.set(e.contentOffset.y);
+  });
   const back = () => (router.canGoBack() ? router.back() : router.replace('/messages'));
   const onBack = own ? undefined : back;
 
@@ -198,143 +205,164 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
   const lists = (which: 'followers' | 'following' | 'friends') => (p.visible ? () => router.push(`/follows/${p.id}?which=${which}`) : undefined);
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
-      <Animated.ScrollView contentContainerStyle={{ paddingBottom: (own ? tabSpace : insets.bottom) + 48 }} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: (own ? tabSpace : insets.bottom) + 48 }} showsVerticalScrollIndicator={false}>
         <View style={[styles.cover, { height: insets.top + 150 }]}>
           <Photo visual={{ photo: city?.photo ?? 'dubai' }} light={city?.light ?? 'dubai'} scrim="full" width={1000} style={StyleSheet.absoluteFill} />
         </View>
 
-        {/* Identity */}
-        <View style={styles.identity}>
-          <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-            <Avatar name={p.firstName} hue={hueOf(p.id)} size={96} photo={photo} userId={p.id} verified={verified} />
-          </Animated.View>
-          <Animated.View entering={reduced ? undefined : enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
-            <Text variant="displayL" align="center" raw>
-              {p.firstName}
-            </Text>
-            <AdminBadge userId={p.id} size="md" />
-            <BadgesRow userId={p.id} />
-            {verified ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Icon name="shield" size={14} color={t.c.text} />
-                <Text variant="caption" tone="secondary">
-                  {tr('Verified profile')}
+        <ProfileColumns
+          scrollY={scrollY}
+          top={insets.top + layout.headerHeight + 16}
+          bottom={(own ? tabSpace : insets.bottom) + 16}
+          lift={52}
+          side={
+            <View style={styles.identity}>
+              <Animated.View entering={reduced ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
+                <Avatar name={p.firstName} hue={hueOf(p.id)} size={96} photo={photo} userId={p.id} verified={verified} />
+              </Animated.View>
+              <Animated.View entering={reduced ? undefined : enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
+                <Text variant="displayL" align="center" raw>
+                  {p.firstName}
                 </Text>
-              </View>
-            ) : own ? (
-              <PressableScale onPress={() => router.push('/verify')} accessibilityRole="button">
-                <Text variant="caption" tone="tertiary">
-                  {tr('Verify my profile')}
+                <AdminBadge userId={p.id} size="md" />
+                <BadgesRow userId={p.id} />
+                {verified ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Icon name="shield" size={14} color={t.c.text} />
+                    <Text variant="caption" tone="secondary">
+                      {tr('Verified profile')}
+                    </Text>
+                  </View>
+                ) : own ? (
+                  <PressableScale onPress={() => router.push('/verify')} accessibilityRole="button">
+                    <Text variant="caption" tone="tertiary">
+                      {tr('Verify my profile')}
+                    </Text>
+                  </PressableScale>
+                ) : null}
+                {p.username ? (
+                  <Text variant="body" tone="secondary" raw>
+                    @{p.username}
+                  </Text>
+                ) : own ? (
+                  <PressableScale onPress={() => router.push('/edit-profile')} accessibilityRole="button" style={styles.chooseHandle}>
+                    <Text variant="caption" tone="tertiary">
+                      Choose your @username
+                    </Text>
+                  </PressableScale>
+                ) : null}
+                {p.followsMe && !p.isMe ? (
+                  <Text variant="caption" tone="tertiary">
+                    Follows you
+                  </Text>
+                ) : null}
+              </Animated.View>
+              {p.visible && p.bio ? (
+                <Text variant="body" align="center" style={styles.bio} raw>
+                  {p.bio}
                 </Text>
-              </PressableScale>
-            ) : null}
-            {p.username ? (
-              <Text variant="body" tone="secondary" raw>
-                @{p.username}
-              </Text>
-            ) : own ? (
-              <PressableScale onPress={() => router.push('/edit-profile')} accessibilityRole="button" style={styles.chooseHandle}>
-                <Text variant="caption" tone="tertiary">
-                  Choose your @username
-                </Text>
-              </PressableScale>
-            ) : null}
-            {p.followsMe && !p.isMe ? (
-              <Text variant="caption" tone="tertiary">
-                Follows you
-              </Text>
-            ) : null}
-          </Animated.View>
-          {p.visible && p.bio ? (
-            <Text variant="body" align="center" style={styles.bio} raw>
-              {p.bio}
-            </Text>
-          ) : null}
-          {p.visible && city ? (
-            <View style={styles.place}>
-              <Icon name="pin" size={14} color={t.c.textSecondary} />
-              <Text variant="caption" tone="secondary">
-                {tr(city.name)}
-              </Text>
-            </View>
-          ) : null}
-
-          <Animated.View entering={reduced ? undefined : enter.rise(2)} style={[styles.counts, { borderColor: t.c.line }]}>
-            <Count n={p.followers} label="Followers" onPress={lists('followers')} />
-            <View style={[styles.sep, { backgroundColor: t.c.line }]} />
-            <Count n={p.following} label="Following" onPress={lists('following')} />
-            <View style={[styles.sep, { backgroundColor: t.c.line }]} />
-            <Count n={p.friends} label="Friends" onPress={lists('friends')} />
-          </Animated.View>
-
-          {p.isMe ? (
-            <View style={styles.buttons}>
-              <View style={{ flex: 1 }}>
-                <Button label="Edit profile" icon="user" variant="secondary" full onPress={() => router.push('/edit-profile')} />
-              </View>
-              {/* Icon only: two long labels side by side were cut off on small phones (and in French). */}
-              <IconButton icon="share" label="Share profile" size={52} onPress={share} />
-            </View>
-          ) : (
-            <Actions p={p} busy={busy} onFriend={friend} onFollow={follow} onMessage={message} />
-          )}
-        </View>
-
-        {p.visible && p.interests.length ? (
-          <View style={styles.interests}>
-            {p.interests.slice(0, 8).map((i) => {
-              const it = INTERESTS[i as keyof typeof INTERESTS];
-              return (
-                <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
-                  <GlassLayer radius={14} />
-                  {it ? <Icon name={it.icon} size={13} color={t.c.textSecondary} /> : null}
-                  <Text variant="caption">{it?.label ?? i}</Text>
+              ) : null}
+              {p.visible && city ? (
+                <View style={styles.place}>
+                  <Icon name="pin" size={14} color={t.c.textSecondary} />
+                  <Text variant="caption" tone="secondary">
+                    {tr(city.name)}
+                  </Text>
                 </View>
-              );
-            })}
-          </View>
-        ) : null}
+              ) : null}
 
-        {/* Your profile: IRLY or IRLY Girl, the same switch as on the Home (IRLY Girl is offered to women, as there). */}
-        {own && (inGirl || woman) ? (
-          <Animated.View entering={reduced ? undefined : FadeIn} style={styles.spaceSwitch}>
-            <SpaceSwitchCard compact />
-          </Animated.View>
-        ) : null}
+              <Animated.View entering={reduced ? undefined : enter.rise(2)} style={[styles.counts, { borderColor: t.c.line }]}>
+                <Count n={p.followers} label="Followers" onPress={lists('followers')} />
+                <View style={[styles.sep, { backgroundColor: t.c.line }]} />
+                <Count n={p.following} label="Following" onPress={lists('following')} />
+                <View style={[styles.sep, { backgroundColor: t.c.line }]} />
+                <Count n={p.friends} label="Friends" onPress={lists('friends')} />
+              </Animated.View>
 
-        {!p.visible ? (
-          <Animated.View entering={FadeIn} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
-            <GlassLayer radius={radius.lg} />
-            <Icon name="lock" size={18} color={t.c.textSecondary} />
-            <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
-              {tx('{name} keeps their profile private. You see their name and photo only.', { name: p.firstName })}
-            </Text>
-          </Animated.View>
-        ) : (
-          <>
-            <View style={styles.tabs}>
-              <Segmented<Tab>
-                options={[
-                  { value: 'posts', label: tr('Posts') },
-                  { value: 'lives', label: tr('Lives') },
-                  { value: 'activities', label: tr('Activities') },
-                  { value: 'communities', label: tr('Communities') },
-                ]}
-                value={tab}
-                onChange={(v) => {
-                  haptic('select');
-                  setTab(v);
-                }}
-              />
+              {p.isMe ? (
+                <View style={styles.buttons}>
+                  <View style={{ flex: 1 }}>
+                    <Button label="Edit profile" icon="user" variant="secondary" full onPress={() => router.push('/edit-profile')} />
+                  </View>
+                  {/* Icon only: two long labels side by side were cut off on small phones (and in French). */}
+                  <IconButton icon="share" label="Share profile" size={52} onPress={share} />
+                </View>
+              ) : (
+                <Actions p={p} busy={busy} onFriend={friend} onFollow={follow} onMessage={message} />
+              )}
+              {/* Wide: share and report in sight too (they stay in the "…" menu, with block). */}
+              {wide && !p.isMe ? (
+                <View style={styles.buttons}>
+                  <View style={{ flex: 1 }}>
+                    <Button label="Share profile" icon="share" variant="ghost" size="sm" full onPress={share} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Button label="Report" icon="flag" variant="ghost" size="sm" full onPress={() => openReport({ kind: 'profile', userId: p.id }, p.firstName)} />
+                  </View>
+                </View>
+              ) : null}
             </View>
-            <Animated.View key={tab} entering={reduced ? undefined : FadeInDown.duration(220)}>
-              {tab === 'posts' ? <PostsTab userId={p.id} own={p.isMe} name={p.firstName} /> : null}
-              {tab === 'lives' ? <LivesTab userId={p.id} own={p.isMe} name={p.firstName} cityId={p.cityId} /> : null}
-              {tab === 'activities' ? <ActivitiesTab userId={p.id} own={p.isMe} name={p.firstName} /> : null}
-              {tab === 'communities' ? <CommunitiesTab list={communities} own={p.isMe} name={p.firstName} /> : null}
-            </Animated.View>
-          </>
-        )}
+          }
+          main={
+            <>
+              {p.visible && p.interests.length ? (
+                <View style={[styles.interests, wide ? styles.interestsWide : null]}>
+                  {p.interests.slice(0, 8).map((i) => {
+                    const it = INTERESTS[i as keyof typeof INTERESTS];
+                    return (
+                      <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+                        <GlassLayer radius={14} />
+                        {it ? <Icon name={it.icon} size={13} color={t.c.textSecondary} /> : null}
+                        <Text variant="caption">{it?.label ?? i}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : null}
+
+              {/* Your profile: IRLY or IRLY Girl, the same switch as on the Home (IRLY Girl is offered to women, as there). */}
+              {own && (inGirl || woman) ? (
+                <Animated.View entering={reduced ? undefined : FadeIn} style={styles.spaceSwitch}>
+                  <SpaceSwitchCard compact />
+                </Animated.View>
+              ) : null}
+
+              {!p.visible ? (
+                <Animated.View entering={FadeIn} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                  <GlassLayer radius={radius.lg} />
+                  <Icon name="lock" size={18} color={t.c.textSecondary} />
+                  <Text variant="bodyS" tone="secondary" style={{ flex: 1 }}>
+                    {tx('{name} keeps their profile private. You see their name and photo only.', { name: p.firstName })}
+                  </Text>
+                </Animated.View>
+              ) : (
+                <>
+                  <View style={styles.tabs}>
+                    <Segmented<Tab>
+                      options={[
+                        { value: 'posts', label: tr('Posts') },
+                        { value: 'lives', label: tr('Lives') },
+                        { value: 'activities', label: tr('Activities') },
+                        { value: 'communities', label: tr('Communities') },
+                      ]}
+                      value={tab}
+                      onChange={(v) => {
+                        haptic('select');
+                        setTab(v);
+                      }}
+                    />
+                  </View>
+                  <Animated.View key={tab} entering={reduced ? undefined : FadeInDown.duration(220)}>
+                    {tab === 'posts' ? <PostsTab userId={p.id} own={p.isMe} name={p.firstName} /> : null}
+                    {tab === 'lives' ? <LivesTab userId={p.id} own={p.isMe} name={p.firstName} cityId={p.cityId} /> : null}
+                    {tab === 'activities' ? <ActivitiesTab userId={p.id} own={p.isMe} name={p.firstName} /> : null}
+                    {tab === 'communities' ? <CommunitiesTab list={communities} own={p.isMe} name={p.firstName} /> : null}
+                  </Animated.View>
+                </>
+              )}
+            </>
+          }
+        />
       </Animated.ScrollView>
 
       <View style={[styles.topBar, { top: insets.top + 10 }]} pointerEvents="box-none">
@@ -809,6 +837,7 @@ const styles = StyleSheet.create({
   link: { alignSelf: 'center', paddingVertical: 6, paddingHorizontal: 12 },
   buttons: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', marginTop: 4 },
   interests: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'center', paddingHorizontal: space.gutter, marginTop: space[4] },
+  interestsWide: { justifyContent: 'flex-start', marginTop: 0 },
   tag: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, height: 28, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth * 2 },
   card: { flexDirection: 'row', gap: 10, alignItems: 'center', margin: space.gutter, marginTop: space[6], padding: 14, borderRadius: radius.lg },
   tabs: { paddingHorizontal: space.gutter, marginTop: space[6], marginBottom: space[3] },

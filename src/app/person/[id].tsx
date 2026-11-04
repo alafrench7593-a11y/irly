@@ -4,6 +4,8 @@ import { useRef } from 'react';
 import { useAvatarFlight, useFlyingTo } from '@/features/flight/avatarFlight';
 import { t as tx } from '@/i18n';
 import { NotFound } from '@/components/layout/NotFound';
+import { ProfileColumns, useProfileSplit } from '@/components/layout/ProfileColumns';
+import { COLUMN_MAX } from '@/components/layout/responsive';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +28,7 @@ import { MemberProfileView } from '@/features/profile/MemberProfileView';
 import { scoreMatch } from '@/features/matching/match';
 import { enter } from '@/motion/enter';
 import { useStore } from '@/state/store';
-import { radius, space } from '@/theme/tokens';
+import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
@@ -58,6 +60,8 @@ function SeedProfile() {
   });
   const face = useRef<View>(null);
   const flying = useFlyingTo(id);
+  // Wide page: who they are and Connect on the left (they stay in view), what they do on the right.
+  const wide = useProfileSplit();
   if (!person) return <NotFound title="This person is no longer on IRLY" />;
 
   const city = CITIES[person.cityId];
@@ -80,142 +84,163 @@ function SeedProfile() {
           scrollY={scrollY}
           scrim="top"
         />
-        <View style={[styles.identity, { marginTop: -56 }]}>
-          <Animated.View entering={flying ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-            {/* The face flying in from the bubble lands exactly here. */}
-            <View
-              ref={face}
-              collapsable={false}
-              style={{ opacity: flying ? 0 : 1 }}
-              onLayout={() => {
-                requestAnimationFrame(() =>
-                  face.current?.measureInWindow?.((x, y, width, height) => {
-                    const { hostOffset, land } = useAvatarFlight.getState();
-                    if (width > 0) land(person.id, { x: x - hostOffset.x, y: y - hostOffset.y, width, height });
-                  }),
-                );
-              }}
-            >
-              <Avatar name={person.name} hue={person.hue} size={104} online={person.online} photo={person.photo} />
-            </View>
-          </Animated.View>
-          <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-              <Text variant="displayL" raw numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1 }}>{person.name}</Text>
-              <Text variant="titleM" tone="tertiary">
-                {person.age}
-              </Text>
-            </View>
-            <Text variant="body" tone="secondary">
-              {areaName(city, person.areaId)} · {city.name} {city.destinationId === 'bali' ? '🌴' : dest.flag}
-            </Text>
-          </Animated.View>
-          <Animated.View entering={enter.rise(2)} style={styles.badges}>
-            {person.verified ? <Badge kind="verified" /> : null}
-            {person.types.map((x) => (
-              <Badge key={x} kind="accent" label={USER_TYPES[x].label} />
-            ))}
-          </Animated.View>
-          <Animated.View entering={enter.rise(3)}>
-            <Text variant="titleS" align="center">
-              {person.headline}
-            </Text>
-            {/* Where they come from, not a price's « From »: one sentence, so French reads « Origine : ». */}
-            <Text variant="caption" tone="tertiary" align="center" style={{ marginTop: 2 }} raw>
-              {tx('From {place}', { place: tx(person.origin) })} · {tx(person.since)}
-            </Text>
-          </Animated.View>
-        </View>
-
-        <Animated.View entering={enter.rise(4)} style={[styles.card, { backgroundColor: t.c.brandSoft, borderColor: t.c.brand }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Icon name="sparkles" size={16} color={t.c.brand} />
-            <Text variant="label" tone="brand">
-              {match.strength} · why you would get along
-            </Text>
-          </View>
-          {match.reasons.map((r) => (
-            <View key={r} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={[styles.dot, { backgroundColor: t.c.brand }]} />
-              <Text variant="body">{r}</Text>
-            </View>
-          ))}
-        </Animated.View>
-
-        <Animated.View entering={enter.rise(5)} style={styles.section}>
-          <Text variant="overline" tone="tertiary">
-            About
-          </Text>
-          {/* The demo's example people: their bio is built-in text, translated. Anything else stays as written. */}
-          <Text variant="bodyL" tone="secondary" raw={!DEMO}>
-            {person.bio}
-          </Text>
-        </Animated.View>
-
-        <Animated.View entering={enter.rise(6)} style={styles.section}>
-          <Text variant="overline" tone="tertiary">
-            Into
-          </Text>
-          <View style={styles.wrap}>
-            {person.interests.map((i) => (
-              <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]}>
-                <GlassLayer radius={radius.pill} />
-                <Icon name={INTERESTS[i].icon} size={14} color={t.c.textSecondary} />
-                <Text variant="label">{INTERESTS[i].label}</Text>
+        <ProfileColumns
+          scrollY={scrollY}
+          top={insets.top + layout.headerHeight + 16}
+          bottom={insets.bottom + 24}
+          lift={56}
+          side={
+            <>
+              <View style={[styles.identity, { marginTop: -56 }]}>
+                <Animated.View entering={flying ? undefined : enter.pop(0)} style={[styles.ring, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
+                  {/* The face flying in from the bubble lands exactly here. */}
+                  <View
+                    ref={face}
+                    collapsable={false}
+                    style={{ opacity: flying ? 0 : 1 }}
+                    onLayout={() => {
+                      requestAnimationFrame(() =>
+                        face.current?.measureInWindow?.((x, y, width, height) => {
+                          const { hostOffset, land } = useAvatarFlight.getState();
+                          if (width > 0) land(person.id, { x: x - hostOffset.x, y: y - hostOffset.y, width, height });
+                        }),
+                      );
+                    }}
+                  >
+                    <Avatar name={person.name} hue={person.hue} size={104} online={person.online} photo={person.photo} />
+                  </View>
+                </Animated.View>
+                <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 2 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+                    <Text variant="displayL" raw numberOfLines={1} adjustsFontSizeToFit style={{ flexShrink: 1 }}>{person.name}</Text>
+                    <Text variant="titleM" tone="tertiary">
+                      {person.age}
+                    </Text>
+                  </View>
+                  <Text variant="body" tone="secondary">
+                    {areaName(city, person.areaId)} · {city.name} {city.destinationId === 'bali' ? '🌴' : dest.flag}
+                  </Text>
+                </Animated.View>
+                <Animated.View entering={enter.rise(2)} style={styles.badges}>
+                  {person.verified ? <Badge kind="verified" /> : null}
+                  {person.types.map((x) => (
+                    <Badge key={x} kind="accent" label={USER_TYPES[x].label} />
+                  ))}
+                </Animated.View>
+                <Animated.View entering={enter.rise(3)}>
+                  <Text variant="titleS" align="center">
+                    {person.headline}
+                  </Text>
+                  {/* Where they come from, not a price's « From »: one sentence, so French reads « Origine : ». */}
+                  <Text variant="caption" tone="tertiary" align="center" style={{ marginTop: 2 }} raw>
+                    {tx('From {place}', { place: tx(person.origin) })} · {tx(person.since)}
+                  </Text>
+                </Animated.View>
               </View>
-            ))}
-            {person.activities.map((a) => (
-              <View key={a} style={[styles.tag, { backgroundColor: t.light.accentSoft, borderColor: 'transparent' }]}>
-                <Icon name={ACTIVITIES[a].icon} size={14} color={t.accent} />
-                <Text variant="label" tone="accent">
-                  {ACTIVITIES[a].label}
+
+              <Animated.View entering={enter.rise(4)} style={[styles.card, { backgroundColor: t.c.brandSoft, borderColor: t.c.brand }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Icon name="sparkles" size={16} color={t.c.brand} />
+                  <Text variant="label" tone="brand">
+                    {match.strength} · why you would get along
+                  </Text>
+                </View>
+                {match.reasons.map((r) => (
+                  <View key={r} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <View style={[styles.dot, { backgroundColor: t.c.brand }]} />
+                    <Text variant="body">{r}</Text>
+                  </View>
+                ))}
+              </Animated.View>
+
+              <Animated.View entering={enter.rise(5)} style={styles.section}>
+                <Text variant="overline" tone="tertiary">
+                  About
                 </Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
+                {/* The demo's example people: their bio is built-in text, translated. Anything else stays as written. */}
+                <Text variant="bodyL" tone="secondary" raw={!DEMO}>
+                  {person.bio}
+                </Text>
+              </Animated.View>
+              {/* Wide: Connect sits under the profile instead of floating over the page. */}
+              {wide ? (
+                <View style={styles.connect}>
+                  <ConnectButton person={person} size="lg" full />
+                </View>
+              ) : null}
+            </>
+          }
+          main={
+            <>
+              <Animated.View entering={enter.rise(6)} style={styles.section}>
+                <Text variant="overline" tone="tertiary">
+                  Into
+                </Text>
+                <View style={styles.wrap}>
+                  {person.interests.map((i) => (
+                    <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: t.c.line }]}>
+                      <GlassLayer radius={radius.pill} />
+                      <Icon name={INTERESTS[i].icon} size={14} color={t.c.textSecondary} />
+                      <Text variant="label">{INTERESTS[i].label}</Text>
+                    </View>
+                  ))}
+                  {person.activities.map((a) => (
+                    <View key={a} style={[styles.tag, { backgroundColor: t.light.accentSoft, borderColor: 'transparent' }]}>
+                      <Icon name={ACTIVITIES[a].icon} size={14} color={t.accent} />
+                      <Text variant="label" tone="accent">
+                        {ACTIVITIES[a].label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </Animated.View>
 
-        <Animated.View entering={enter.rise(7)} style={[styles.section, styles.facts]}>
-          <Fact icon="clock" label={tx('Usually free')} value={person.availability.map((a, i) => (i ? tx(AVAILABILITY[a]).toLocaleLowerCase() : tx(AVAILABILITY[a]))).join(', ')} />
-          <Fact icon="languages" label="Speaks" value={person.languages.map((l) => tx(l)).join(', ')} />
-        </Animated.View>
+              <Animated.View entering={enter.rise(7)} style={[styles.section, styles.facts]}>
+                <Fact icon="clock" label={tx('Usually free')} value={person.availability.map((a, i) => (i ? tx(AVAILABILITY[a]).toLocaleLowerCase() : tx(AVAILABILITY[a]))).join(', ')} />
+                <Fact icon="languages" label="Speaks" value={person.languages.map((l) => tx(l)).join(', ')} />
+              </Animated.View>
 
-        {sessions.length || events.length ? (
-          <Animated.View entering={enter.rise(8)} style={styles.section}>
-            <Text variant="overline" tone="tertiary">
-              {person.name} is going to
-            </Text>
-            <View style={{ gap: 10 }}>
-              {sessions.map((s) => (
-                <SessionCard key={s.id} session={s} />
-              ))}
-              {events.map((e) => (
-                <EventRow key={e.id} event={e} />
-              ))}
-            </View>
-          </Animated.View>
-        ) : null}
+              {sessions.length || events.length ? (
+                <Animated.View entering={enter.rise(8)} style={styles.section}>
+                  <Text variant="overline" tone="tertiary">
+                    {person.name} is going to
+                  </Text>
+                  <View style={{ gap: 10 }}>
+                    {sessions.map((s) => (
+                      <SessionCard key={s.id} session={s} />
+                    ))}
+                    {events.map((e) => (
+                      <EventRow key={e.id} event={e} />
+                    ))}
+                  </View>
+                </Animated.View>
+              ) : null}
 
-        {communities.length ? (
-          <View style={{ marginTop: space[6] }}>
-            <Text variant="overline" tone="tertiary" style={{ paddingHorizontal: space.gutter, marginBottom: space[4] }}>
-              Communities
-            </Text>
-            <Rail itemWidth={250}>
-              {communities.map((c) => (
-                <CommunityCard key={c.id} community={c} />
-              ))}
-            </Rail>
-          </View>
-        ) : null}
+              {communities.length ? (
+                <View style={{ marginTop: space[6] }}>
+                  <Text variant="overline" tone="tertiary" style={{ paddingHorizontal: space.gutter, marginBottom: space[4] }}>
+                    Communities
+                  </Text>
+                  <Rail itemWidth={250}>
+                    {communities.map((c) => (
+                      <CommunityCard key={c.id} community={c} />
+                    ))}
+                  </Rail>
+                </View>
+              ) : null}
+            </>
+          }
+        />
       </Animated.ScrollView>
 
       <PageHeader title={person.name} scrollY={scrollY} />
-      <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 14) }]}>
-        <Glass style={styles.ctaGlass} intensity={60}>
-          <ConnectButton person={person} size="lg" full />
-        </Glass>
-      </View>
+      {wide ? null : (
+        <View style={[styles.cta, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+          <Glass style={styles.ctaGlass} intensity={60}>
+            <ConnectButton person={person} size="lg" full />
+          </Glass>
+        </View>
+      )}
     </View>
   );
 }
@@ -254,6 +279,7 @@ const styles = StyleSheet.create({
   },
   facts: { flexDirection: 'row', gap: 10 },
   fact: { flex: 1, padding: 14, gap: 4, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2 },
-  cta: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12 },
-  ctaGlass: { padding: 10, borderRadius: radius.xl },
+  cta: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 12, alignItems: 'center' },
+  ctaGlass: { padding: 10, borderRadius: radius.xl, width: '100%', maxWidth: COLUMN_MAX },
+  connect: { paddingHorizontal: space.gutter, marginTop: space[7] },
 });

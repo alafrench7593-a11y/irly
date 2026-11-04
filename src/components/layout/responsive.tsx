@@ -31,10 +31,16 @@ export const RAIL_SPACE = RAIL_WIDTH + 24;
  * Routes of the root stack that draw their own wide layout (two panes, a
  * grid, a rail). Every other page keeps a readable column on wide screens.
  */
-export const WIDE_ROUTES = new Set<string>(['(tabs)', 'index']);
+export const WIDE_ROUTES = new Set<string>([
+  '(tabs)',
+  'index',
+  // Profiles: two columns from 760 pt (components/layout/ProfileColumns).
+  'person/[id]',
+  'network/[id]',
+]);
 
 /** Tabs that draw their own wide layout (same rule, inside the tabs). */
-export const WIDE_TABS = new Set<string>(['map', 'messages']);
+export const WIDE_TABS = new Set<string>(['map', 'messages', 'profile']);
 
 /** Width of the list pane in a list + detail screen. */
 export const LIST_PANE = 360;
