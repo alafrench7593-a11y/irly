@@ -2,13 +2,11 @@ import { useMemo, type ReactNode } from 'react';
 import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Text } from '@/components/ui/Text';
-import { Photo } from '@/components/visual/Photo';
-import { CITIES } from '@/data/destinations';
-import { useStore } from '@/state/store';
 import { font } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { FrameContext, type Frame } from '@/components/layout/frame';
 import { LayoutContext, sizeClassFor, type Layout } from '@/components/layout/responsive';
+import { AmbientBackdrop } from '@/components/layout/AmbientBackdrop';
 
 export { FrameContext, useFrame, type Frame } from '@/components/layout/frame';
 
@@ -32,8 +30,6 @@ const webFrameOff = Platform.OS === 'web' && typeof window !== 'undefined' && /[
 export function AppFrame({ children }: { children: ReactNode }) {
   const { width, height } = useWindowDimensions();
   const t = useTheme();
-  const cityId = useStore((s) => s.cityId);
-  const city = cityId ? CITIES[cityId] : null;
   const framed = Platform.OS === 'web' && width >= WEB_FRAME_MIN && !webFrameOff;
   const night = t.mode === 'night';
   const ink = night ? '#FFFFFF' : '#0A0A0A';
@@ -62,8 +58,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
     <LayoutContext.Provider value={layoutValue}>
     <FrameContext.Provider value={frame}>
       <View style={[styles.fill, styles.row]}>
-        <Photo visual={{ photo: city?.photo ?? 'emirates' }} light={city?.light ?? 'dubai'} blur={28} width={1600} style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: night ? 'rgba(5,5,6,0.72)' : t.flavor === 'girl' ? 'rgba(251,242,244,0.72)' : 'rgba(246,246,244,0.7)' }]} />
+        <AmbientBackdrop />
         {width > 1100 ? (
           <View style={styles.aside} pointerEvents="none">
             <IrlyMark size={64} state="idle" lensColor={t.c.brand} />

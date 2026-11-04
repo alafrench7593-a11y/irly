@@ -1,6 +1,8 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FrameContext, useFrame } from '@/components/layout/frame';
+import { useTheme } from '@/theme/useTheme';
+import { AmbientBackdrop } from '@/components/layout/AmbientBackdrop';
 
 /**
  * Size classes for the whole app, picked from the width IRLY really has,
@@ -88,9 +90,25 @@ export function ScreenColumn({ wide = false, inset = 0, children }: { wide?: boo
   const capped = !wide && sizeClass === 'expanded';
   const width = capped ? Math.min(available, COLUMN_MAX) : available;
   const frame = useMemo(() => ({ ...parent, width }), [parent, width]);
+  const t = useTheme();
+  const night = t.mode === 'night';
+  // The backdrop slot is always there (null when unused): the page keeps its place in the tree.
   return (
     <View style={styles.outer}>
-      <View style={[styles.inner, { width: capped ? width : '100%' }]}>
+      {capped ? <AmbientBackdrop /> : null}
+      <View
+        style={[
+          styles.inner,
+          { width: capped ? width : '100%' },
+          capped && {
+            backgroundColor: t.c.bg,
+            borderLeftWidth: StyleSheet.hairlineWidth * 2,
+            borderRightWidth: StyleSheet.hairlineWidth * 2,
+            borderColor: night ? 'rgba(255,255,255,0.08)' : 'rgba(10,10,10,0.08)',
+            boxShadow: night ? '0px 30px 90px rgba(0,0,0,0.7)' : '0px 30px 80px rgba(10,10,10,0.18)',
+          },
+        ]}
+      >
         <FrameContext.Provider value={frame}>{children}</FrameContext.Provider>
       </View>
     </View>
@@ -99,5 +117,5 @@ export function ScreenColumn({ wide = false, inset = 0, children }: { wide?: boo
 
 const styles = StyleSheet.create({
   outer: { flex: 1, alignItems: 'center' },
-  inner: { flex: 1, maxWidth: '100%' },
+  inner: { flex: 1, maxWidth: '100%', overflow: 'hidden' },
 });
