@@ -14,11 +14,8 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Rail } from '@/components/cards/Blocks';
-import { EventRow } from '@/components/cards/EventCards';
-import { PersonCard } from '@/components/cards/PeopleCards';
-import { CommunityCard, PlaceCard, ServiceCard, SessionCard } from '@/components/cards/ThingCards';
-import { useFrame } from '@/components/layout/AppFrame';
+import { FrameContext, useFrame } from '@/components/layout/AppFrame';
+import { COLUMN_MAX, useLayout } from '@/components/layout/responsive';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Field } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
@@ -28,13 +25,12 @@ import { Text } from '@/components/ui/Text';
 import { ACTIVITIES, SERVICE_CATEGORIES } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
-import { scoreMatch } from '@/features/matching/match';
-import { ServerResults } from '@/features/search/ServerResults';
+import { FILTER_COLUMN, SEARCH_WIDE, SearchFilters, SearchResults, type ResultKind } from '@/features/search/SearchResults';
 import { DiscoverTabs } from '@/features/discover/DiscoverTabs';
 import { ActivitiesPage, EventsPage, PeoplePage, PlacesPage } from '@/features/discover/DiscoverPages';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
-import { useCityId, useStore } from '@/state/store';
+import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Ambient } from '@/components/visual/Ambient';
@@ -64,12 +60,12 @@ const FOLD = 58;
 export default function Discover() {
   const t = useTheme();
   const insets = useSafeAreaInsets();
-  const frame = useFrame();
+  const full = useFrame();
+  const { sizeClass } = useLayout();
   const bottom = useTabBarSpace();
   const cityId = useCityId();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
-  const profile = useStore((s) => s.profile);
   const linkParams = useLocalSearchParams<{ q?: string | string[]; tab?: string | string[] }>();
   const params = { q: firstParam(linkParams.q), tab: firstParam(linkParams.tab) };
   const navigation = useNavigation();
@@ -81,7 +77,34 @@ export default function Discover() {
     setQ(params.q ?? '');
   }
 
-  const W = frame.width;
+  const inGirl = useAppSpace() === 'girl';
+  const girlPeople = useGirlPeople(cityId);
+  const results = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (term.length < 2) return null;
+    const has = (...fields: string[]) => fields.some((f) => f.toLowerCase().includes(term));
+    // IRLY Girl space: the guide's people, sessions and communities are open to
+    // everyone (they do not say who is a woman). People found are the women of
+    // IRLY Girl; women-only plans and communities come from the server search.
+    return {
+      events: content.events.filter((e) => has(e.title, e.venue, e.description, e.category)),
+      sessions: inGirl ? [] : content.sessions.filter((s) => has(s.title, s.venue, ACTIVITIES[s.kind].label)),
+      places: content.places.filter((p) => has(p.name, p.blurb, ...p.tags)),
+      communities: inGirl ? [] : content.communities.filter((c) => has(c.name, c.tagline, c.description)),
+      services: content.services.filter((s) => has(s.name, s.tagline, SERVICE_CATEGORIES[s.category].label)),
+      people: (inGirl ? girlPeople : content.people).filter((p) => has(p.name, p.headline, p.bio)),
+    };
+  }, [q, content, inGirl, girlPeople]);
+  const total = results ? Object.values(results).reduce((n, list) => n + list.length, 0) : 0;
+  const [kind, setKind] = useState<ResultKind>('all');
+
+  // Wide (the tab has the whole width): the four pages keep a readable column;
+  // a search spreads out, filters in a side column and results in grids.
+  // Same tree in every size: the query, the page and the pager stay put on a resize.
+  const wideSearch = Boolean(results) && full.width >= SEARCH_WIDE;
+  const W = sizeClass === 'expanded' && !wideSearch ? Math.min(full.width, COLUMN_MAX) : full.width;
+  const frame = useMemo(() => ({ ...full, width: W }), [full, W]);
+  const resultsW = wideSearch ? W - FILTER_COLUMN : W;
   const narrowHead = W < 360;
   const initial = Math.max(0, TABS.findIndex((x) => x.id === (params.tab as TabId)));
   const [active, setActive] = useState(initial);
@@ -126,26 +149,6 @@ export default function Discover() {
     setActive(i);
     pager.current?.scrollTo({ x: i * W, animated: true });
   };
-
-  const inGirl = useAppSpace() === 'girl';
-  const girlPeople = useGirlPeople(cityId);
-  const results = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    if (term.length < 2) return null;
-    const has = (...fields: string[]) => fields.some((f) => f.toLowerCase().includes(term));
-    // IRLY Girl space: the guide's people, sessions and communities are open to
-    // everyone (they do not say who is a woman). People found are the women of
-    // IRLY Girl; women-only plans and communities come from the server search.
-    return {
-      events: content.events.filter((e) => has(e.title, e.venue, e.description, e.category)),
-      sessions: inGirl ? [] : content.sessions.filter((s) => has(s.title, s.venue, ACTIVITIES[s.kind].label)),
-      places: content.places.filter((p) => has(p.name, p.blurb, ...p.tags)),
-      communities: inGirl ? [] : content.communities.filter((c) => has(c.name, c.tagline, c.description)),
-      services: content.services.filter((s) => has(s.name, s.tagline, SERVICE_CATEGORIES[s.category].label)),
-      people: (inGirl ? girlPeople : content.people).filter((p) => has(p.name, p.headline, p.bio)),
-    };
-  }, [q, content, inGirl, girlPeople]);
-  const total = results ? Object.values(results).reduce((n, list) => n + list.length, 0) : 0;
 
   // The header folds with the page under it, blended across a swipe.
   const fold = useDerivedValue(() => {
@@ -192,159 +195,98 @@ export default function Discover() {
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Ambient />
-      {results ? (
-        <Animated.ScrollView
-          onScroll={onResults}
-          scrollEventThrottle={16}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingTop: headerH + space[5], paddingBottom: bottom }}
-        >
-          <View style={{ gap: space[7] }}>
-            <ServerResults q={q} cityId={cityId} />
-            <Text variant="bodyS" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
-              {total ? tx('{n} results for “{q}” in the city guide', { n: total, q: q.trim() }) : tx('Nothing in the city guide for “{q}”. Try “run”, “dinner” or “visa”.', { q: q.trim() })}
-            </Text>
-            {results.events.length ? (
-              <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
-                <Text variant="overline" tone="tertiary">
-                  Events
-                </Text>
-                {results.events.map((e) => (
-                  <EventRow key={e.id} event={e} />
-                ))}
-              </View>
-            ) : null}
-            {results.sessions.length ? (
-              <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
-                <Text variant="overline" tone="tertiary">
-                  Activities
-                </Text>
-                {results.sessions.map((s) => (
-                  <SessionCard key={s.id} session={s} />
-                ))}
-              </View>
-            ) : null}
-            {results.people.length ? (
-              <View style={{ gap: 10 }}>
-                <Text variant="overline" tone="tertiary" style={{ paddingHorizontal: space.gutter }}>
-                  People
-                </Text>
-                <Rail itemWidth={290}>
-                  {results.people.map((p) => (
-                    <PersonCard key={p.id} width={290} match={scoreMatch(profile, p, 'friends', (id) => city.areas.find((a) => a.id === id)?.name ?? city.name)} />
-                  ))}
-                </Rail>
-              </View>
-            ) : null}
-            {results.places.length ? (
-              <View style={{ gap: 10 }}>
-                <Text variant="overline" tone="tertiary" style={{ paddingHorizontal: space.gutter }}>
-                  Places
-                </Text>
-                <Rail itemWidth={200}>
-                  {results.places.map((p) => (
-                    <PlaceCard key={p.id} place={p} width={200} />
-                  ))}
-                </Rail>
-              </View>
-            ) : null}
-            {results.communities.length ? (
-              <View style={{ gap: 10 }}>
-                <Text variant="overline" tone="tertiary" style={{ paddingHorizontal: space.gutter }}>
-                  Communities
-                </Text>
-                <Rail itemWidth={250}>
-                  {results.communities.map((c) => (
-                    <CommunityCard key={c.id} community={c} />
-                  ))}
-                </Rail>
-              </View>
-            ) : null}
-            {results.services.length ? (
-              <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
-                <Text variant="overline" tone="tertiary">
-                  Services
-                </Text>
-                {results.services.map((s) => (
-                  <ServiceCard key={s.id} service={s} />
-                ))}
-              </View>
-            ) : null}
-          </View>
-        </Animated.ScrollView>
-      ) : (
-        <Animated.ScrollView keyboardShouldPersistTaps="handled"
-          ref={pager}
-          horizontal
-          pagingEnabled
-          bounces={false}
-          showsHorizontalScrollIndicator={false}
-          onScroll={onPager}
-          scrollEventThrottle={16}
-          contentOffset={{ x: initial * W, y: 0 }}
-          onMomentumScrollEnd={(e) => settle(e.nativeEvent.contentOffset.x)}
-          onScrollEndDrag={(e) => {
-            // Web has no momentum events: settle on the snapped page.
-            if (Platform.OS === 'web') settle(e.nativeEvent.contentOffset.x);
-          }}
-          style={StyleSheet.absoluteFill}
-        >
-          {pages.map((PageView, i) => (
-            <PagerPage key={TABS[i].id} index={i} x={x} width={W}>
-              {mounted.has(i) ? <PageView cityId={cityId} scrollY={pageScroll[i]} top={headerH + space[2]} bottom={bottom} /> : null}
-            </PagerPage>
-          ))}
-        </Animated.ScrollView>
-      )}
+      <View style={[styles.column, { width: W }]}>
+        <FrameContext.Provider value={frame}>
+          {results ? (
+            <Animated.ScrollView
+              onScroll={onResults}
+              scrollEventThrottle={16}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingTop: headerH + space[5], paddingBottom: bottom, paddingLeft: wideSearch ? FILTER_COLUMN : 0 }}
+            >
+              <SearchResults q={q} cityId={cityId} results={results} total={total} width={wideSearch ? resultsW : undefined} kind={wideSearch ? kind : 'all'} />
+            </Animated.ScrollView>
+          ) : (
+            <Animated.ScrollView keyboardShouldPersistTaps="handled"
+              ref={pager}
+              horizontal
+              pagingEnabled
+              bounces={false}
+              showsHorizontalScrollIndicator={false}
+              onScroll={onPager}
+              scrollEventThrottle={16}
+              contentOffset={{ x: initial * W, y: 0 }}
+              onMomentumScrollEnd={(e) => settle(e.nativeEvent.contentOffset.x)}
+              onScrollEndDrag={(e) => {
+                // Web has no momentum events: settle on the snapped page.
+                if (Platform.OS === 'web') settle(e.nativeEvent.contentOffset.x);
+              }}
+              style={StyleSheet.absoluteFill}
+            >
+              {pages.map((PageView, i) => (
+                <PagerPage key={TABS[i].id} index={i} x={x} width={W}>
+                  {mounted.has(i) ? <PageView cityId={cityId} scrollY={pageScroll[i]} top={headerH + space[2]} bottom={bottom} /> : null}
+                </PagerPage>
+              ))}
+            </Animated.ScrollView>
+          )}
+          {/* Wide search: what to show, beside the results (it folds up with the header). */}
+          {results && wideSearch ? (
+            <Animated.View style={[styles.filters, { paddingTop: headerH + space[5] }, headerStyle]}>
+              <SearchFilters results={results} total={total} kind={kind} onKind={setKind} onTry={setQ} />
+            </Animated.View>
+          ) : null}
 
-      <Animated.View style={[styles.header, headerStyle]} onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
-        <Glass level="thick" border={false} highlight={false} style={StyleSheet.absoluteFill} />
-        <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
-        <View style={{ paddingTop: insets.top + space[3] }}>
-          <Animated.View style={[styles.head, titleStyle]}>
-            <View style={styles.headRow}>
-              <MapButton />
-              <View style={{ flex: 1 }}>
-                <Text variant="overline" tone="secondary">
-                  {city.name}
-                </Text>
-                {narrowHead ? null : (
-                  <Text variant="displayM" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          <Animated.View style={[styles.header, headerStyle]} onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>
+            <Glass level="thick" border={false} highlight={false} style={StyleSheet.absoluteFill} />
+            <View style={[styles.hairline, { backgroundColor: t.c.line }]} />
+            <View style={{ paddingTop: insets.top + space[3] }}>
+              <Animated.View style={[styles.head, titleStyle]}>
+                <View style={styles.headRow}>
+                  <MapButton />
+                  <View style={{ flex: 1 }}>
+                    <Text variant="overline" tone="secondary">
+                      {city.name}
+                    </Text>
+                    {narrowHead ? null : (
+                      <Text variant="displayM" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+                        Discover
+                      </Text>
+                    )}
+                  </View>
+                  <InboxButtons />
+                </View>
+                {/* Below 360 pt the inbox buttons leave ~95 pt beside the avatar: "Découvrir" broke mid-word, so it gets its own line. */}
+                {narrowHead ? (
+                  <Text variant="displayM" numberOfLines={1}>
                     Discover
                   </Text>
-                )}
+                ) : null}
+              </Animated.View>
+              <View style={{ paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[4] }}>
+                <Field
+                  icon="search"
+                  placeholder={tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
+                  value={q}
+                  onChangeText={setQ}
+                  returnKeyType="search"
+                  autoCorrect={false}
+                  accessibilityLabel="Search"
+                  trailing={
+                    q ? (
+                      <PressableScale onPress={() => setQ('')} haptic="select" accessibilityLabel="Clear search">
+                        <Icon name="x" size={18} color={t.c.textTertiary} />
+                      </PressableScale>
+                    ) : null
+                  }
+                />
+                {!results ? <DiscoverTabs tabs={TABS} x={x} pageWidth={W} active={active} onPress={goTo} /> : null}
               </View>
-              <InboxButtons />
             </View>
-            {/* Below 360 pt the inbox buttons leave ~95 pt beside the avatar: "Découvrir" broke mid-word, so it gets its own line. */}
-            {narrowHead ? (
-              <Text variant="displayM" numberOfLines={1}>
-                Discover
-              </Text>
-            ) : null}
           </Animated.View>
-          <View style={{ paddingHorizontal: space.gutter, gap: space[4], paddingBottom: space[4] }}>
-            <Field
-              icon="search"
-              placeholder={tx('Search {city}: padel, rooftop, visa…', { city: city.name })}
-              value={q}
-              onChangeText={setQ}
-              returnKeyType="search"
-              autoCorrect={false}
-              accessibilityLabel="Search"
-              trailing={
-                q ? (
-                  <PressableScale onPress={() => setQ('')} haptic="select" accessibilityLabel="Clear search">
-                    <Icon name="x" size={18} color={t.c.textTertiary} />
-                  </PressableScale>
-                ) : null
-              }
-            />
-            {!results ? <DiscoverTabs tabs={TABS} x={x} pageWidth={W} active={active} onPress={goTo} /> : null}
-          </View>
-        </View>
-      </Animated.View>
+        </FrameContext.Provider>
+      </View>
     </View>
   );
 }
@@ -367,6 +309,8 @@ const styles = StyleSheet.create({
   people: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 24 },
   peopleIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
   root: { flex: 1 },
+  column: { flex: 1, alignSelf: 'center', maxWidth: '100%' },
+  filters: { position: 'absolute', left: space.gutter, top: 0, width: FILTER_COLUMN - space.gutter },
   head: { paddingHorizontal: space.gutter, marginBottom: space[5], gap: 2 },
   doors: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: space.gutter, marginBottom: space[9] },
   door: { height: 150, borderRadius: radius.lg },

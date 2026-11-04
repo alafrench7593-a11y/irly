@@ -25,6 +25,7 @@ import { GirlPostCard } from './world';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { ActivityFeedCard, ProposeActivityButton } from '@/components/cards/ActivityCards';
 import { openCreate } from '@/features/create/createStore';
+import { COMMUNITY_SIDE, communitySplit, useCommunitySplit } from '@/features/community/layout';
 
 /**
  * The IRLY Girl community and plan pages of the demonstration build. They
@@ -70,6 +71,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
   const chat = DEMO_CHATS.find((x) => x.kind === 'group' && x.title === c?.name);
   const goingMap = useDemoGirl((s) => s.going);
   const { y, onScroll, photo } = useHero();
+  const split = useCommunitySplit();
   if (!c) return <Missing />;
   const members = c.members + (joined && !c.member ? 1 : 0) - (!joined && c.member ? 1 : 0);
 
@@ -105,78 +107,85 @@ export function DemoCommunityScreen({ id }: { id: string }) {
           </View>
         </View>
 
-        <Animated.View entering={reduced ? undefined : enter.rise(3)} style={styles.card}>
-          <GlassFill level="thick" radius={radius.xl} />
-          <View style={styles.row}>
-            <AvatarStack people={people(c.faces)} size={30} max={5} />
-            <Text variant="label" color={girl.ink} style={{ flex: 1 }}>
-              {tx('{n} members', { n: members })}
-            </Text>
-          </View>
-          <View style={styles.row}>
-            <GButton label={joined ? 'Joined' : 'Join'} icon={joined ? 'check' : 'plus'} variant={joined ? 'secondary' : 'primary'} onPress={join} style={{ flex: 1 }} />
-            <GButton
-              label="Chat"
-              icon="message"
-              variant="secondary"
-              onPress={() => (joined && chat ? router.push(`/messages/${chat.id}`) : toast(joined ? tx('The group chat opens here') : tx('Join to chat with the group'), 'message', 'brand'))}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </Animated.View>
-
-        {/* « + Propose an activity », as in every real community: the Create form, attached to this one. */}
-        <View style={{ paddingHorizontal: space.gutter, marginTop: 12 }}>
-          <ProposeActivityButton
-            communityName={c.name}
-            onPress={() => (joined ? openCreate(null, { communityId: c.id, communityName: c.name, cityId: 'dubai', girlOnly: true }) : toast('Join the community first', 'users', 'brand'))}
-          />
-        </View>
-
-        <View style={styles.tabs}>
-          {(['posts', 'plans', 'about'] as const).map((k) => (
-            <Tab key={k} label={k === 'posts' ? tx('Posts') : k === 'plans' ? tx('Plans') : tx('About')} on={tab === k} onPress={() => setTab(k)} />
-          ))}
-        </View>
-
-        <Animated.View layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)} style={{ gap: 12, paddingHorizontal: space.gutter }}>
-          {/* Its activities in the feed: the same card as the real community page. */}
-          {tab === 'posts'
-            ? plans.slice(0, 2).map((p) => (
-                <ActivityFeedCard
-                  key={`card-${p.id}`}
-                  card={demoPlanCard(p, goingMap)}
-                  onOpen={() => router.push(`/a/${p.id}`)}
-                  onJoin={() => {
-                    haptic('success');
-                    toggle('going', p.id);
-                    toast(tx('You’re going! The group chat is in Messages'), 'sparkles', 'brand');
-                  }}
+        {/* Wide: members, Join and Chat in a column on the left, under the cover; the posts and plans on the right. */}
+        <View style={split ? communitySplit.split : null}>
+          <View style={split ? styles.side : null}>
+            <Animated.View entering={reduced ? undefined : enter.rise(3)} style={styles.card}>
+              <GlassFill level="thick" radius={radius.xl} />
+              <View style={styles.row}>
+                <AvatarStack people={people(c.faces)} size={30} max={5} />
+                <Text variant="label" color={girl.ink} style={{ flex: 1 }}>
+                  {tx('{n} members', { n: members })}
+                </Text>
+              </View>
+              <View style={styles.row}>
+                <GButton label={joined ? 'Joined' : 'Join'} icon={joined ? 'check' : 'plus'} variant={joined ? 'secondary' : 'primary'} onPress={join} style={{ flex: 1 }} />
+                <GButton
+                  label="Chat"
+                  icon="message"
+                  variant="secondary"
+                  onPress={() => (joined && chat ? router.push(`/messages/${chat.id}`) : toast(joined ? tx('The group chat opens here') : tx('Join to chat with the group'), 'message', 'brand'))}
+                  style={{ flex: 1 }}
                 />
-              ))
-            : null}
-          {tab === 'posts'
-            ? posts.map((p, i) => (
-                <Animated.View key={p.id} entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
-                  <GirlPostCard p={p} eng={eng} cityId="dubai" />
-                </Animated.View>
-              ))
-            : null}
-          {tab === 'posts' && !posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the group." /> : null}
-          {tab === 'plans' ? plans.map((p, i) => <PlanCard key={p.id} id={p.id} i={i} />) : null}
-          {tab === 'plans' && !plans.length ? <GNotice icon="calendar" body="No plans yet. Propose the first one." /> : null}
-          {tab === 'about' ? (
-            <Animated.View entering={reduced ? undefined : FadeIn} style={[styles.post, { gap: 10 }]}>
-              <GlassLayer radius={radius.xl} />
-              <Text variant="body" color={girl.ink} raw>
-                {c.about}
-              </Text>
-              <Fact icon="shield" text={tx('Women only: every member is checked by IRLY Girl.')} />
-              <Fact icon="message" text={tx('Members are in the group chat as soon as they join.')} />
-              <Fact icon="flag" text={tx('Anything off? Report a post or a person in one tap.')} />
+              </View>
             </Animated.View>
-          ) : null}
-        </Animated.View>
+
+            {/* « + Propose an activity », as in every real community: the Create form, attached to this one. */}
+            <View style={{ paddingHorizontal: space.gutter, marginTop: 12 }}>
+              <ProposeActivityButton
+                communityName={c.name}
+                onPress={() => (joined ? openCreate(null, { communityId: c.id, communityName: c.name, cityId: 'dubai', girlOnly: true }) : toast('Join the community first', 'users', 'brand'))}
+              />
+            </View>
+          </View>
+
+          <View style={split ? communitySplit.right : null}>
+            <View style={styles.tabs}>
+              {(['posts', 'plans', 'about'] as const).map((k) => (
+                <Tab key={k} label={k === 'posts' ? tx('Posts') : k === 'plans' ? tx('Plans') : tx('About')} on={tab === k} onPress={() => setTab(k)} />
+              ))}
+            </View>
+
+            <Animated.View layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)} style={{ gap: 12, paddingHorizontal: space.gutter }}>
+              {/* Its activities in the feed: the same card as the real community page. */}
+              {tab === 'posts'
+                ? plans.slice(0, 2).map((p) => (
+                    <ActivityFeedCard
+                      key={`card-${p.id}`}
+                      card={demoPlanCard(p, goingMap)}
+                      onOpen={() => router.push(`/a/${p.id}`)}
+                      onJoin={() => {
+                        haptic('success');
+                        toggle('going', p.id);
+                        toast(tx('You’re going! The group chat is in Messages'), 'sparkles', 'brand');
+                      }}
+                    />
+                  ))
+                : null}
+              {tab === 'posts'
+                ? posts.map((p, i) => (
+                    <Animated.View key={p.id} entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
+                      <GirlPostCard p={p} eng={eng} cityId="dubai" />
+                    </Animated.View>
+                  ))
+                : null}
+              {tab === 'posts' && !posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the group." /> : null}
+              {tab === 'plans' ? plans.map((p, i) => <PlanCard key={p.id} id={p.id} i={i} />) : null}
+              {tab === 'plans' && !plans.length ? <GNotice icon="calendar" body="No plans yet. Propose the first one." /> : null}
+              {tab === 'about' ? (
+                <Animated.View entering={reduced ? undefined : FadeIn} style={[styles.post, { gap: 10 }]}>
+                  <GlassLayer radius={radius.xl} />
+                  <Text variant="body" color={girl.ink} raw>
+                    {c.about}
+                  </Text>
+                  <Fact icon="shield" text={tx('Women only: every member is checked by IRLY Girl.')} />
+                  <Fact icon="message" text={tx('Members are in the group chat as soon as they join.')} />
+                  <Fact icon="flag" text={tx('Anything off? Report a post or a person in one tap.')} />
+                </Animated.View>
+              ) : null}
+            </Animated.View>
+          </View>
+        </View>
       </Animated.ScrollView>
       <PageHeader title={c.name} scrollY={y} />
     </View>
@@ -356,6 +365,7 @@ const styles = StyleSheet.create({
   kicker: { letterSpacing: 1.6, fontWeight: '700' },
   card: { marginHorizontal: space.gutter, marginTop: -22, padding: 16, gap: 12, borderRadius: radius.xl, zIndex: 0, boxShadow: girl.shadowSoft },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  side: { width: COMMUNITY_SIDE },
   tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, marginTop: space[6], marginBottom: space[4] },
   tab: { height: 38, paddingHorizontal: 16, borderRadius: 19, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: girl.shadowSoft },
   post: { padding: 16, borderRadius: radius.xl, boxShadow: girl.shadowSoft },

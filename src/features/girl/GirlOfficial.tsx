@@ -33,9 +33,10 @@ const DEMO_FOUR: GirlOfficialCommunity[] = [
  * IRLY Girl's four official communities, as cards: photo, name, what it is
  * for, its real member count and a Join button that answers at once (the
  * count follows the server). Joining twice or leaving twice is never sent:
- * a card waits for its answer.
+ * a card waits for its answer. `cell`: on a wide screen the cards form a
+ * grid of cells this wide.
  */
-export function GirlOfficialCommunities() {
+export function GirlOfficialCommunities({ cell }: { cell?: number } = {}) {
   const router = useRouter();
   const server = useGirlOfficialCommunities();
   const list = DEMO ? DEMO_FOUR : server.list;
@@ -60,15 +61,15 @@ export function GirlOfficialCommunities() {
     );
   }
   return (
-    <View style={styles.list}>
+    <View style={[styles.list, cell ? styles.grid : null]}>
       {(list ?? []).map((c, i) => (
-        <OfficialCard key={c.id} c={c} index={i} onOpen={() => (DEMO ? toast(tx('Sign in to join IRLY Girl communities'), 'users') : router.push(`/c/${c.id}`))} />
+        <OfficialCard key={c.id} c={c} index={i} width={cell} onOpen={() => (DEMO ? toast(tx('Sign in to join IRLY Girl communities'), 'users') : router.push(`/c/${c.id}`))} />
       ))}
     </View>
   );
 }
 
-function OfficialCard({ c, index, onOpen }: { c: GirlOfficialCommunity; index: number; onOpen: () => void }) {
+function OfficialCard({ c, index, width, onOpen }: { c: GirlOfficialCommunity; index: number; width?: number; onOpen: () => void }) {
   const reduced = useReducedMotion();
   const uri = usePhotoLink(c.coverPath);
   // The answer shown at once; the server's list (refreshed by the join) takes over.
@@ -103,7 +104,7 @@ function OfficialCard({ c, index, onOpen }: { c: GirlOfficialCommunity; index: n
   };
 
   return (
-    <Animated.View entering={reduced ? undefined : enter.rise(index)} layout={reduced ? undefined : LinearTransition.springify().damping(18)}>
+    <Animated.View entering={reduced ? undefined : enter.rise(index)} layout={reduced ? undefined : LinearTransition.springify().damping(18)} style={width ? { width } : undefined}>
       <PressableScale haptic="select" scaleTo={0.98} onPress={onOpen} style={styles.card} accessibilityRole="link" accessibilityLabel={tx('{name}, {n} members', { name: c.name, n: members })}>
         <Photo pinned tint={GIRL_TINT} visual={{ photo: PHOTO[c.topic] ?? 'girlsOut', uri: uri ?? undefined }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={700} recyclingKey={`gof-${c.id}-${c.coverPath ?? 'app'}`} />
         <View style={styles.inner}>
@@ -150,6 +151,7 @@ function OfficialCard({ c, index, onOpen }: { c: GirlOfficialCommunity; index: n
 
 const styles = StyleSheet.create({
   list: { paddingHorizontal: space.gutter, gap: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
   error: { alignItems: 'flex-start', gap: 8 },
   card: { height: 148, borderRadius: radius.xl, overflow: 'hidden', boxShadow: girl.shadowSoft },
   inner: { flex: 1, padding: 14, justifyContent: 'space-between' },

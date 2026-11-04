@@ -40,10 +40,13 @@ export const WIDE_ROUTES = new Set<string>([
   // Activities: list and detail side by side (components/layout/SplitView).
   'activities/index',
   'activities/[kind]',
+  // Communities and a community page cap themselves to a readable column under their own wide layouts.
+  'communities',
+  'c/[id]',
 ]);
 
 /** Tabs that draw their own wide layout (same rule, inside the tabs). */
-export const WIDE_TABS = new Set<string>(['map', 'messages', 'profile']);
+export const WIDE_TABS = new Set<string>(['map', 'messages', 'profile', 'discover']);
 
 /** Width of the list pane in a list + detail screen. */
 export const LIST_PANE = 360;
