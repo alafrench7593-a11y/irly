@@ -723,7 +723,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'volleyball', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-25',
+    updated: '2026-11-04',
     title: 'Going Out Alone in Dubai Without Feeling Awkward | IRLY',
     description: 'How to go out alone in Dubai and enjoy it: plans that work solo, how to start a conversation without forcing it, and simple safety habits.',
     h1: 'Going out alone in Dubai without feeling awkward',
@@ -778,6 +778,16 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'If it does not go as planned',
+        html: `<p>Some outings will be quiet, and that is normal. A few ways to handle it:</p>
+<ul>
+<li><strong>Nobody talked to you.</strong> It happens, especially the first time. Go back to the same class or club once more before judging it: the second visit is usually where people recognise you.</li>
+<li><strong>You feel uncomfortable.</strong> You can leave. A short “Thanks, I have to go” is enough, and nobody expects more from someone they just met.</li>
+<li><strong>The format does not suit you.</strong> If loud bars or large events drain you, try smaller formats with a shared task: a workshop, a walk or a sports session. Our list of <a href="../group-activities/">group activities in Dubai</a> has ideas.</li>
+<li><strong>It keeps feeling heavy.</strong> If going out alone starts to feel lonely rather than free, read <a href="../lonely/">what actually helps when you feel lonely in Dubai</a>.</li>
+</ul>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY helps you find plans that are made for joining alone: activities this week with people who want to meet, communities around what you like, and a group chat to say hello before you arrive. IRLY Girl offers spaces for women only. It is one option among others; what matters is going, and going back.</p>`,
       },
@@ -792,7 +802,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'volleyball', after: 2 },
     city: 'Dubaï',
-    updated: '2026-10-25',
+    updated: '2026-11-04',
     title: 'Sortir seul à Dubaï sans être mal à l’aise | IRLY',
     description: 'Comment sortir seul à Dubaï et en profiter : les sorties qui marchent en solo, lancer une conversation sans forcer, et quelques réflexes de sécurité simples.',
     h1: 'Sortir seul à Dubaï sans être mal à l’aise',
@@ -845,6 +855,16 @@ export const ARTICLES = [
 <li><strong>Prépare une phrase d’accroche.</strong> Une question simple sur l’activité suffit ; pas besoin de plus.</li>
 <li><strong>Prévois la suivante avant de partir.</strong> Si tu as aimé, note la prochaine date tout de suite. C’est en revenant que des inconnus deviennent des visages familiers.</li>
 </ol>`,
+      },
+      {
+        h2: 'Si ça ne se passe pas comme prévu',
+        html: `<p>Certaines sorties seront calmes, et c’est normal. Quelques façons d’y réagir :</p>
+<ul>
+<li><strong>Personne ne t’a parlé.</strong> Ça arrive, surtout la première fois. Retourne une fois de plus au même cours ou au même club avant de juger : c’est souvent à la deuxième visite qu’on te reconnaît.</li>
+<li><strong>Tu ne te sens pas à l’aise.</strong> Tu peux partir. Un simple « Merci, je dois y aller » suffit, et personne n’attend plus de quelqu’un qu’il vient de rencontrer.</li>
+<li><strong>Le format ne te convient pas.</strong> Si les bars bruyants ou les grands événements te fatiguent, essaie des formats plus petits autour d’une activité commune : un atelier, une balade ou une séance de sport. Notre liste d’<a href="../activites-de-groupe/">activités de groupe à Dubaï</a> donne des idées.</li>
+<li><strong>Ça reste pesant.</strong> Si sortir seul commence à ressembler à de la solitude plutôt qu’à de la liberté, lis <a href="../solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</li>
+</ul>`,
       },
       {
         h2: 'La place d’IRLY',
