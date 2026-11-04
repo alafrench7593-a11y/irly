@@ -2009,6 +2009,10 @@ export const fr: Record<string, string> = {
   '{title} saved on this phone. Sign in to share it': '{title} est enregistré sur ce téléphone. Connecte-toi pour le partager',
   'This category no longer exists': 'Cette catégorie n’existe plus',
   'Start a {what} plan': 'Lancer une activité {what}',
+  // Activities on a wide screen: the kinds as filters, the session picked beside the list.
+  'All activities': 'Toutes les activités',
+  'All about {what}': 'Tout sur {what}',
+  'Nothing planned yet': 'Rien de prévu pour l’instant',
   'Delete this comment?': 'Supprimer ce commentaire ?',
   'Could not delete the comment': 'Impossible de supprimer le commentaire',
   'Now showing Bali. Switch back anytime from the destination menu': 'Tu vois maintenant Bali. Reviens quand tu veux depuis le menu des destinations',

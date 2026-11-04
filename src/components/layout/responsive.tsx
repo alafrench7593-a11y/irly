@@ -37,6 +37,9 @@ export const WIDE_ROUTES = new Set<string>([
   // Profiles: two columns from 760 pt (components/layout/ProfileColumns).
   'person/[id]',
   'network/[id]',
+  // Activities: list and detail side by side (components/layout/SplitView).
+  'activities/index',
+  'activities/[kind]',
 ]);
 
 /** Tabs that draw their own wide layout (same rule, inside the tabs). */
