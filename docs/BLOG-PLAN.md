@@ -1,6 +1,6 @@
 # Blog plan: loneliness and making friends in Dubai
 
-The blog posts are short (400 to 600 words), in English and French, in `site/guides/blog.mjs`. The daily routine publishes one post per day by taking the first topic below that is not yet ticked, then ticks it.
+The blog posts are short (400 to 600 words), in English and French, in `site/guides/blog.mjs`. The daily routine publishes two posts per day by taking the first topics below that are not yet ticked, then ticks them. When fewer than 6 remain, it adds 10 new distinct questions at the end.
 
 ## Rules for each post
 - **One precise question per post** (a long-tail search). Never re-cover a topic that a guide or an earlier post already answers: that would compete with our own pages in Google.
@@ -17,7 +17,7 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
 
 ## Topics (in order)
 - [x] Lonely on weekends in Dubai: one plan before it starts
-- [ ] Making friends in Dubai as an introvert
+- [x] Making friends in Dubai as an introvert
 - [ ] Making friends at work in Dubai without making it awkward
 - [ ] Lonely after a breakup in a new city
 - [ ] How to turn a gym or class acquaintance into a friend
