@@ -1549,7 +1549,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'brunch', after: 2 },
     city: 'Life abroad',
-    updated: '2026-10-26',
+    updated: '2026-11-05',
     title: 'Rebuilding Your Social Life After Moving Abroad | IRLY',
     description: 'Moved abroad and starting from zero socially? Why it feels harder than expected, a simple plan for the first three months, and how to turn new faces into real friends.',
     h1: 'Rebuilding your social life after moving abroad',
@@ -1617,6 +1617,16 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'Staying close to friends back home',
+        html: `<p>Old friendships are a real support in the first months, as long as they do not replace the effort to build new ones here.</p>
+<ul>
+<li><strong>Pick a regular moment.</strong> A call at the same time every week or two holds better than “let’s talk soon”, especially across time zones.</li>
+<li><strong>Share small things, not only news.</strong> A photo of your street or a voice note about your day keeps people close to your new life.</li>
+<li><strong>Watch the balance.</strong> If evenings on the phone with home leave no room for plans where you live, move one call to the weekend and keep one evening free to go out.</li>
+<li><strong>Accept that some friendships change.</strong> Distance shows which ones last; that is not a failure on either side.</li>
+</ul>`,
+      },
+      {
         h2: 'When to ask for more help',
         html: `<p>Feeling alone for a while after a move is common. If it lasts, if you feel low most days, or if daily life becomes hard, talk to a doctor or a mental health professional where you live: it is a normal step. In an emergency, call the local emergency number.</p>`,
       },
@@ -1635,7 +1645,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'brunch', after: 2 },
     city: 'Vie à l’étranger',
-    updated: '2026-10-26',
+    updated: '2026-11-05',
     title: 'Reconstruire sa vie sociale après une expatriation | IRLY',
     description: 'Tu t’es expatrié et tu repars de zéro côté amis ? Pourquoi c’est plus dur que prévu, un plan simple pour les trois premiers mois, et comment transformer des connaissances en vrais amis.',
     h1: 'Reconstruire sa vie sociale après une expatriation',
@@ -1700,6 +1710,16 @@ export const ARTICLES = [
 <li><strong>Garde plus d’un cercle,</strong> pour qu’un départ ne vide pas ta semaine.</li>
 <li><strong>Continue d’accueillir les nouveaux :</strong> les arrivants de ce mois sont les amis de demain, et tu sais ce qu’ils ressentent.</li>
 <li><strong>Reste en contact avec ceux qui partent.</strong> Une amitié peut continuer à distance, avec un appel ou une visite.</li>
+</ul>`,
+      },
+      {
+        h2: 'Garder le lien avec les amis restés au pays',
+        html: `<p>Les amitiés d’avant sont un vrai soutien les premiers mois, tant qu’elles ne remplacent pas l’effort d’en créer de nouvelles sur place.</p>
+<ul>
+<li><strong>Choisis un moment régulier.</strong> Un appel à la même heure toutes les une ou deux semaines tient mieux qu’un « on s’appelle bientôt », surtout avec le décalage horaire.</li>
+<li><strong>Partage des petites choses, pas seulement les nouvelles.</strong> Une photo de ta rue ou un message vocal sur ta journée garde tes proches près de ta nouvelle vie.</li>
+<li><strong>Surveille l’équilibre.</strong> Si les soirées au téléphone avec chez toi ne laissent plus de place aux sorties sur place, déplace un appel au week-end et garde une soirée libre pour sortir.</li>
+<li><strong>Accepte que certaines amitiés changent.</strong> La distance montre celles qui durent ; ce n’est un échec pour personne.</li>
 </ul>`,
       },
       {
