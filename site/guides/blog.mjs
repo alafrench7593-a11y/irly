@@ -101,4 +101,96 @@ export const POSTS = [
       { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-introvert-friends-dubai',
+    path: 'blog/introvert-make-friends-dubai/',
+    city: 'Dubai',
+    published: '2026-11-05',
+    title: 'Making Friends in Dubai as an Introvert: A Quieter Way In | IRLY',
+    description: 'You do not need big parties to make friends in Dubai. As an introvert, small groups, shared activities and repeated meetings work better, and cost less energy.',
+    h1: 'Making friends in Dubai as an introvert: a quieter way in',
+    lead: 'If crowded events drain you, you can still build real friendships in Dubai. The quieter way in is small groups, a shared activity that does the talking for you, and seeing the same people again and again rather than meeting many people once.',
+    sections: [
+      {
+        h2: 'Pick small, structured settings',
+        html: `<p>Large mixers reward people who enjoy talking to strangers for hours. Introverts usually do better where there is a task and a small group:</p>
+<ul>
+<li><strong>A class or workshop</strong> with the same people every week: a language, cooking, drawing, a craft.</li>
+<li><strong>A sport in small numbers:</strong> a doubles game, a climbing session, a running group that splits by pace.</li>
+<li><strong>A book club or a board game night,</strong> where the conversation has a topic from the start.</li>
+</ul>
+<p>Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has more ideas.</p>`,
+      },
+      {
+        h2: 'Let repetition do the work',
+        html: `<p>Friendship grows from seeing the same faces regularly, not from one long conversation. Go back to the same session three or four times before deciding if it works. By then people know your name, small talk is easier, and a coffee after feels natural instead of forced.</p>`,
+      },
+      {
+        h2: 'Protect your energy',
+        html: `<ul>
+<li><strong>One social plan or two a week is enough.</strong> Regular beats intense.</li>
+<li><strong>Give yourself an exit.</strong> Decide in advance how long you stay; leaving after an hour is fine.</li>
+<li><strong>Prefer one-to-one follow-ups.</strong> A coffee with one person from the group often builds more than another big evening.</li>
+<li><strong>Plan quiet time after.</strong> Recharging is part of the plan, not a failure.</li>
+</ul>`,
+      },
+      {
+        h2: 'Make the first step small',
+        html: `<p>You do not need a great opening line. A question about the activity is enough: “Is this your first time?” or “How long have you been coming?”. If you prefer, message the group before the first session so you already know one name when you arrive. For more, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../dubai/going-out-alone/">going out alone in Dubai</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Prefer small groups?', body: 'Find an activity this week with a few people who share your interests, in real life.', label: 'Find my people' },
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
+      { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-introvert-friends-dubai',
+    path: 'fr/blog/introverti-se-faire-des-amis-dubai/',
+    city: 'Dubaï',
+    published: '2026-11-05',
+    title: 'Se faire des amis à Dubaï quand on est introverti : une approche plus calme | IRLY',
+    description: 'Pas besoin de grandes soirées pour se faire des amis à Dubaï. Quand on est introverti, les petits groupes, les activités partagées et les rencontres répétées marchent mieux, et fatiguent moins.',
+    h1: 'Se faire des amis à Dubaï quand on est introverti : une approche plus calme',
+    lead: 'Si les soirées bondées t’épuisent, tu peux quand même construire de vraies amitiés à Dubaï. L’approche plus calme : des petits groupes, une activité qui parle à ta place, et revoir les mêmes personnes plutôt que d’en rencontrer beaucoup une seule fois.',
+    sections: [
+      {
+        h2: 'Choisis des cadres petits et structurés',
+        html: `<p>Les grandes soirées de networking avantagent ceux qui aiment parler à des inconnus pendant des heures. Les introvertis sont souvent plus à l’aise avec une activité et un petit groupe :</p>
+<ul>
+<li><strong>Un cours ou un atelier</strong> avec les mêmes personnes chaque semaine : une langue, la cuisine, le dessin, un loisir créatif.</li>
+<li><strong>Un sport en petit nombre :</strong> un match en double, une séance d’escalade, un groupe de course réparti par allure.</li>
+<li><strong>Un club de lecture ou une soirée jeux de société,</strong> où la conversation a un sujet dès le départ.</li>
+</ul>
+<p>Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne d’autres idées.</p>`,
+      },
+      {
+        h2: 'Laisse la répétition faire le travail',
+        html: `<p>L’amitié naît du fait de revoir régulièrement les mêmes visages, pas d’une seule longue conversation. Retourne trois ou quatre fois à la même séance avant de juger. À ce moment-là, on connaît ton prénom, les échanges sont plus simples, et un café après devient naturel au lieu d’être forcé.</p>`,
+      },
+      {
+        h2: 'Protège ton énergie',
+        html: `<ul>
+<li><strong>Un ou deux plans par semaine suffisent.</strong> La régularité vaut mieux que l’intensité.</li>
+<li><strong>Prévois une sortie.</strong> Décide à l’avance combien de temps tu restes ; partir au bout d’une heure, c’est bien.</li>
+<li><strong>Privilégie les suites en tête-à-tête.</strong> Un café avec une personne du groupe construit souvent plus qu’une nouvelle grande soirée.</li>
+<li><strong>Garde du calme après.</strong> Recharger fait partie du plan, ce n’est pas un échec.</li>
+</ul>`,
+      },
+      {
+        h2: 'Fais un premier pas tout petit',
+        html: `<p>Pas besoin d’une phrase d’accroche brillante. Une question sur l’activité suffit : « C’est ta première fois ? » ou « Tu viens depuis longtemps ? ». Si tu préfères, écris au groupe avant la première séance pour connaître déjà un prénom en arrivant. Pour aller plus loin, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Tu préfères les petits groupes ?', body: 'Trouve une activité cette semaine avec quelques personnes qui partagent tes centres d’intérêt, en vrai.', label: 'Trouver mes gens' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' },
+    ],
+  },
 ];
