@@ -4,12 +4,18 @@
  *  - the home page in French (/fr/) and Arabic (/ar/), translated from the
  *    page's own dictionary (no second copy of the texts to keep in sync);
  *  - the guides (site/guides/articles.mjs), in English and French;
+ *  - the blog (site/guides/blog.mjs): short articles, newest first, at /blog/ and /fr/blog/;
  *  - sitemap.xml listing every page with its language versions.
  * Usage: node .github/scripts/site-pages.mjs <out dir>  (after site-build)
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { ARTICLES, PHOTOS, UPDATED, APP_URL } from '../../site/guides/articles.mjs';
+import { POSTS } from '../../site/guides/blog.mjs';
+
+// Guides and blog posts share one page template; posts are marked `blog` and listed newest first.
+const BLOG = POSTS.map((p) => ({ ...p, blog: true })).sort((a, b) => (b.published ?? '').localeCompare(a.published ?? ''));
+const PAGES = [...ARTICLES, ...BLOG];
 
 const OUT = process.argv[2] || 'dist/site';
 const SITE = 'https://getirly.com/';
@@ -164,15 +170,27 @@ const L = {
     hubTitle: 'Guides: making friends and settling in, in Dubai and Bali | IRLY',
     hubDesc: 'Practical guides for newcomers to Dubai and Bali: how to meet people, make friends and build a social life in a new city.',
     hubLead: 'Practical guides for newcomers: how to meet people, make friends and feel at home in a new city. No statistics, no sponsored lists: advice that works.',
-    readGuide: 'Read the guide' },
+    readGuide: 'Read the guide',
+    blog: 'Blog', blogTitle: 'Blog: loneliness, friendship and social life in Dubai | IRLY',
+    blogDesc: 'Short articles on feeling lonely, making friends and building a social life in Dubai: one idea you can use this week.',
+    blogLead: 'Short articles on loneliness, friendship and social life in Dubai. One idea per article, something you can try this week.',
+    readPost: 'Read' },
   fr: { home: 'Accueil', guides: 'Guides', updated: 'Mis à jour le', by: 'Par l’équipe IRLY', read: 'À lire aussi', other: 'English', locale: 'fr_FR',
     hubTitle: 'Guides : se faire des amis et s’installer à Dubaï et à Bali | IRLY',
     hubDesc: 'Des guides pratiques pour les nouveaux arrivants à Dubaï et à Bali : rencontrer du monde, se faire des amis et construire sa vie sociale dans une nouvelle ville.',
     hubLead: 'Des guides pratiques pour les nouveaux arrivants : rencontrer du monde, se faire des amis et se sentir chez soi dans une nouvelle ville. Pas de statistiques, pas de listes sponsorisées : des conseils qui marchent.',
-    readGuide: 'Lire le guide' },
+    readGuide: 'Lire le guide',
+    blog: 'Blog', blogTitle: 'Blog : solitude, amitié et vie sociale à Dubaï | IRLY',
+    blogDesc: 'De courts articles sur la solitude, se faire des amis et construire sa vie sociale à Dubaï : une idée à essayer cette semaine.',
+    blogLead: 'De courts articles sur la solitude, l’amitié et la vie sociale à Dubaï. Une idée par article, à essayer cette semaine.',
+    readPost: 'Lire' },
 };
 /** The guides index of each language: /guides/ and /fr/guides/. */
 const hubPath = (l) => (l === 'fr' ? 'fr/guides/' : 'guides/');
+/** The blog index of each language: /blog/ and /fr/blog/. */
+const blogPath = (l) => (l === 'fr' ? 'fr/blog/' : 'blog/');
+/** Where a page belongs: its index path and name. */
+const parentOf = (a) => (a.blog ? { path: blogPath(a.lang), name: L[a.lang].blog } : { path: hubPath(a.lang), name: L[a.lang].guides });
 const dateFmt = (l, d = UPDATED) => new Date(`${d}T12:00:00Z`).toLocaleDateString(l === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
 /** A guide photo: WebP for browsers that take it, the 1200x630 JPEG otherwise (also the share card). */
@@ -184,21 +202,22 @@ function figure(key, lang, up, first) {
 }
 const imageLd = (key, lang) => ({ '@type': 'ImageObject', url: photoUrl(key), contentUrl: photoUrl(key), width: 1200, height: 630, caption: PHOTOS[key][lang], creditText: PHOTOS[key].by });
 
-for (const a of ARTICLES) {
+for (const a of PAGES) {
   // Each guide carries its own date when it has one (only the guides really changed move).
   const updated = a.updated ?? UPDATED;
   const depth = a.path.split('/').filter(Boolean).length;
   const up = '../'.repeat(depth);
   const url = SITE + a.path;
-  const twin = ARTICLES.find((x) => x.pair === a.pair && x.lang !== a.lang);
+  const twin = PAGES.find((x) => x.pair === a.pair && x.lang !== a.lang);
   const t = L[a.lang];
+  const parent = parentOf(a);
   const homeRel = up + (a.lang === 'fr' ? 'fr/' : '');
   const homeAbs = SITE + (a.lang === 'fr' ? 'fr/' : '');
   const ld = {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Article',
+        '@type': a.blog ? 'BlogPosting' : 'Article',
         headline: a.h1,
         description: a.description,
         inLanguage: a.lang,
@@ -213,7 +232,7 @@ for (const a of ARTICLES) {
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: t.home, item: homeAbs },
-          { '@type': 'ListItem', position: 2, name: t.guides, item: SITE + hubPath(a.lang) },
+          { '@type': 'ListItem', position: 2, name: parent.name, item: SITE + parent.path },
           { '@type': 'ListItem', position: 3, name: a.h1, item: url },
         ],
       },
@@ -263,7 +282,7 @@ ${a.cover ? `<link rel="preload" as="image" href="${up}img/guides/${a.cover}-800
   ${twin ? `<a class="lang" href="${up + twin.path}" hreflang="${twin.lang}" lang="${twin.lang}">${t.other}</a>` : ''}
 </header>
 <main>
-  <nav class="crumbs" aria-label="${a.lang === 'fr' ? 'Fil d’Ariane' : 'Breadcrumb'}"><a href="${homeRel}">${t.home}</a> › <a href="${up + hubPath(a.lang)}">${t.guides}</a> › ${a.city}</nav>
+  <nav class="crumbs" aria-label="${a.lang === 'fr' ? 'Fil d’Ariane' : 'Breadcrumb'}"><a href="${homeRel}">${t.home}</a> › <a href="${up + parent.path}">${parent.name}</a> › ${a.city}</nav>
   <h1>${a.h1}</h1>
   <p class="meta">${t.by} · ${t.updated} <time datetime="${updated}">${dateFmt(a.lang, updated)}</time></p>
   <p class="lead">${a.lead}</p>
@@ -284,10 +303,17 @@ ${body}
   fs.writeFileSync(path.join(OUT, a.path, 'index.html'), html);
 }
 
-/* ───────── Guides index, one per language ───────── */
-for (const l of ['en', 'fr']) {
-  const t = L[l];
-  const list = ARTICLES.filter((a) => a.lang === l);
+/* ───────── Guides index and blog index, one per language ───────── */
+const HUBS = [
+  { pages: ARTICLES, at: hubPath, name: (t) => t.guides, title: (t) => t.hubTitle, desc: (t) => t.hubDesc, lead: (t) => t.hubLead, read: (t) => t.readGuide },
+  { pages: BLOG, at: blogPath, name: (t) => t.blog, title: (t) => t.blogTitle, desc: (t) => t.blogDesc, lead: (t) => t.blogLead, read: (t) => t.readPost },
+];
+for (const hub of HUBS) for (const l of ['en', 'fr']) {
+  const hubPath = hub.at;
+  const L0 = L[l];
+  const t = { ...L0, guides: hub.name(L0), hubTitle: hub.title(L0), hubDesc: hub.desc(L0), hubLead: hub.lead(L0), readGuide: hub.read(L0) };
+  const list = hub.pages.filter((a) => a.lang === l);
+  if (!list.length) continue;
   const url = SITE + hubPath(l);
   const up = '../'.repeat(hubPath(l).split('/').filter(Boolean).length);
   const other = l === 'fr' ? 'en' : 'fr';
@@ -372,7 +398,7 @@ for (const l of LANGS) {
 }
 
 /* ───────── llms.txt: what IRLY is and where to read more, for AI assistants ───────── */
-const guideLines = ARTICLES.map((a) => `- [${a.h1}](${SITE + a.path}) (${a.lang}): ${a.description}`).join('\n');
+const guideLines = PAGES.map((a) => `- [${a.h1}](${SITE + a.path}) (${a.lang}): ${a.description}`).join('\n');
 fs.writeFileSync(
   `${OUT}/llms.txt`,
   `# IRLY
@@ -383,6 +409,7 @@ fs.writeFileSync(
 - IRLY Girl (women only): ${SITE}girl (English), ${SITE}fr/girl (French)
 - Web app: ${APP_URL} (iOS and Android apps coming soon)
 - Guides: ${SITE}guides/ and ${SITE}fr/guides/
+- Blog: ${SITE}blog/ and ${SITE}fr/blog/
 
 ## Guides
 
@@ -398,13 +425,17 @@ const homeImgs = ['img/heroBurj.webp', 'img/heroPortrait-lg.webp', 'img/hero/sun
   .map((f) => `    <image:image><image:loc>${SITE}${f}</image:loc></image:image>`)
   .join('\n');
 const urls = INDEXED.map((l) => `  <url>\n    <loc>${homeHref(l)}</loc>\n    <lastmod>${UPDATED}</lastmod>\n${homeAlts}\n${homeImgs}\n  </url>`);
-for (const a of ARTICLES) {
-  const pair = ARTICLES.filter((x) => x.pair === a.pair);
+for (const a of PAGES) {
+  const pair = PAGES.filter((x) => x.pair === a.pair);
   const alts = pair.map((x) => `    <xhtml:link rel="alternate" hreflang="${x.lang}" href="${SITE + x.path}"/>`).join('\n');
   const imgs = [a.cover, a.figure?.photo].filter(Boolean).map((k) => `    <image:image><image:loc>${photoUrl(k)}</image:loc></image:image>`).join('\n');
   urls.push(`  <url>\n    <loc>${SITE + a.path}</loc>\n    <lastmod>${a.updated ?? UPDATED}</lastmod>\n${alts}${imgs ? `\n${imgs}` : ''}\n  </url>`);
 }
 const hubAlts = ['en', 'fr'].map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE + hubPath(l)}"/>`).join('\n');
 for (const l of ['en', 'fr']) urls.push(`  <url>\n    <loc>${SITE + hubPath(l)}</loc>\n    <lastmod>${ARTICLES.map((a) => a.updated ?? UPDATED).sort().at(-1)}</lastmod>\n${hubAlts}\n  </url>`);
+if (BLOG.length) {
+  const blogAlts = ['en', 'fr'].map((l) => `    <xhtml:link rel="alternate" hreflang="${l}" href="${SITE + blogPath(l)}"/>`).join('\n');
+  for (const l of ['en', 'fr']) urls.push(`  <url>\n    <loc>${SITE + blogPath(l)}</loc>\n    <lastmod>${BLOG.map((a) => a.updated ?? a.published).sort().at(-1)}</lastmod>\n${blogAlts}\n  </url>`);
+}
 fs.writeFileSync(`${OUT}/sitemap.xml`, `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls.join('\n')}\n</urlset>\n`);
-console.log('site pages: fr, ar,', ARTICLES.map((a) => a.path).join(', '), '+ guides index, FAQ data, llms.txt, sitemap');
+console.log('site pages: fr, ar,', PAGES.map((a) => a.path).join(', '), '+ guides index, FAQ data, llms.txt, sitemap');
