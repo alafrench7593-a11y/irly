@@ -64,6 +64,8 @@ function NewPostForm() {
   // In Help & Questions: a question or a recommendation.
   const [kind, setKind] = useState<'question' | 'recommendation' | null>(params.kind === 'question' || params.kind === 'recommendation' ? params.kind : null);
   const [original, setOriginal] = useState<{ body: string; media: string }>({ body: '', media: 'null' });
+  // « Also in the Live »: the same post shows in the Live of its community's universe for 24 hours (one record). Off by default here.
+  const [inLive, setInLive] = useState(false);
   // @mentions of the community's members (a profile post has none).
   const typeBody = useCallback((v: string) => setBody(v.slice(0, 2000)), []);
   const mention = useMentionComposer({ text: body, setText: typeBody, communityId, me: account?.userId });
@@ -205,9 +207,9 @@ function NewPostForm() {
       if (editing) await updatePost(editing, { body, media, before, mentions, onProgress });
       else {
         const category = communityId === params.community ? (params.category ?? null) : null;
-        const sig = JSON.stringify([communityId, body.trim(), kind ?? 'post', category, media?.kind ?? null, media?.files.map((f) => f.path ?? f.uri) ?? []]);
+        const sig = JSON.stringify([communityId, body.trim(), kind ?? 'post', category, media?.kind ?? null, media?.files.map((f) => f.path ?? f.uri) ?? [], inLive]);
         if (postId.current?.sig !== sig) postId.current = { sig, id: uuid() };
-        await createPost({ id: postId.current.id, communityId, body, media, mentions: asIrly ? [] : mentions, onProgress, kind: asIrly ? 'post' : (kind ?? 'post'), category, asIrly });
+        await createPost({ id: postId.current.id, communityId, body, media, mentions: asIrly ? [] : mentions, onProgress, kind: asIrly ? 'post' : (kind ?? 'post'), category, asIrly, inLive: Boolean(communityId) && !asIrly && inLive });
       }
       if (!editing) saveDraft(key, null);
       haptic('success');
@@ -278,6 +280,9 @@ function NewPostForm() {
         <Text variant="caption" tone="tertiary">
           {tx('Photos and video are optional: up to {n} photos, or one video of 60 seconds.', { n: MAX_PHOTOS })}
         </Text>
+        {communityId && !editing && !asIrly ? (
+          <Chip size="sm" icon="zap" label={tx('Also show in the Live')} selected={inLive} onPress={() => !busy && setInLive((x) => !x)} />
+        ) : null}
         <Button label={editing ? 'Save' : 'Post'} icon={editing ? 'check' : 'send'} full loading={busy} disabled={!canSend} onPress={send} />
       </View>
     </Page>

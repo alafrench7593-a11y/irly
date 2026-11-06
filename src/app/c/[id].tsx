@@ -1,5 +1,4 @@
 import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
-import { AdminBadge } from '@/features/admin/StaffBadge';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoCommunityScreen } from '@/features/girl/DemoScreens';
@@ -9,9 +8,6 @@ import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, ScrollView
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
-import { ActionBar } from '@/components/social/ActionBar';
-import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
-import { RichText } from '@/components/ui/RichText';
 import { Button } from '@/components/ui/Button';
 import { Chip, IconButton, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
@@ -46,10 +42,10 @@ import { prefetchMembers, warmPostImages } from '@/features/community/prefetch';
 import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { track } from '@/lib/analytics';
-import { hueOf } from '@/lib/format';
-import { cityWhen, timeAgo } from '@/lib/time';
-import { useNow } from '@/lib/useNow';
+import { cityWhen } from '@/lib/time';
 import { PostMedia } from '@/features/posts/PostMedia';
+import { PostCard as PostCardView, PostCardSkeleton, type PostOption } from '@/features/posts/PostCard';
+import { createActivityFromPost, useActivityFromPost } from '@/features/posts/activityFromPost';
 import { useChannels, useCommunityExtras } from '@/features/community/groups';
 import { CommunityActivityFeed, ProposeActivity } from '@/features/community/CommunityActivitiesSlot';
 import { HostTools, NotifyPrefs, SpaceChips } from '@/features/community/GroupsUI';
@@ -66,7 +62,7 @@ import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { ScreenColumn } from '@/components/layout/responsive';
 import { communitySplit, useCommunitySplit } from '@/features/community/layout';
 import { irlyPinPost } from '@/features/community/irly';
-import { IrlyBadge, IrlyTools } from '@/features/community/IrlyTools';
+import { IrlyTools } from '@/features/community/IrlyTools';
 
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
 // Upcoming needs no label; the others say what they are.
@@ -449,7 +445,7 @@ function CommunityScreen() {
         onEndReachedThreshold={0.6}
         onScroll={onFeedScroll}
         scrollEventThrottle={100}
-        renderItem={({ item: p }) => <PostCard cityId={city.id} p={p} eng={eng} canModerate={canModerate} canPin={canModerate || my.canIrly} isMember={c.isMember} geo={geo} actions={postActions} />}
+        renderItem={({ item: p }) => <PostCard cityId={city.id} p={p} eng={eng} canModerate={canModerate} canPin={canModerate || my.canIrly} isMember={c.isMember} geo={geo} actions={postActions} community={c} />}
         ListEmptyComponent={
           feed.loading ? (
             <PostSkeletons />
@@ -633,19 +629,7 @@ function PostSkeletons() {
   return (
     <View style={{ gap: space[5] }}>
       {[0, 1].map((i) => (
-        <View key={i} style={[styles.card, { marginHorizontal: space.gutter, overflow: 'hidden' }]}>
-          <GlassLayer radius={radius.xl} />
-          <View style={styles.row}>
-            <Skeleton width={36} height={36} radius={18} />
-            <View style={{ flex: 1, gap: 6 }}>
-              <Skeleton width="40%" height={12} />
-              <Skeleton width="25%" height={10} />
-            </View>
-          </View>
-          <Skeleton height={14} />
-          <Skeleton height={14} width="80%" />
-          <Skeleton height={160} radius={radius.lg} />
-        </View>
+        <PostCardSkeleton key={i} style={{ marginHorizontal: space.gutter }} />
       ))}
     </View>
   );
@@ -745,6 +729,7 @@ const PostCard = memo(function PostCard({
   geo,
   actions,
   cityId,
+  community,
 }: {
   p: CommunityPost;
   eng: ReturnType<typeof useEngagement>;
@@ -756,86 +741,58 @@ const PostCard = memo(function PostCard({
   geo: GeoIndex;
   actions: PostActions;
   cityId: string;
+  /** The community the post is in: « Create an activity » publishes there. */
+  community: Pick<CommunityDetail, 'id' | 'name' | 'cityId' | 'girlOnly'>;
 }) {
   const t = useTheme();
   const router = useRouter();
-  const now = useNow();
   const total = p.pollCounts.reduce((n, x) => n + x, 0);
   const areas = geo.areas;
   // A post that reads like a plan offers « Make it an activity » (members only).
   const plan = useMemo(() => (!p.activityId && isMember ? postLooksLikeAPlan(p.body, geo, tx) : null), [p.activityId, p.body, isMember, geo]);
   const onVote = (o: number) => actions.vote(p, o);
-  const onRemove = () => actions.remove(p);
   const onPlan = (d: PlanDraft) => actions.plan(d);
-  const onPin = (on: boolean) => actions.pin(p, on);
   // "Make it an activity" from a post that names no neighbourhood: the member picks one (none preselected).
   const [where, setWhere] = useState<{ open: boolean; areaId?: string }>({ open: false });
+  // The activity created from this post (« Create an activity »), when there is one.
+  const fromPost = useActivityFromPost(p.pending ? null : p.id);
+  const linked = p.activityId
+    ? { id: p.activityId, title: p.activityTitle ?? tx('Activity'), when: p.activityStartsAt ? when(p.activityStartsAt, cityId) : null }
+    : fromPost
+      ? { id: fromPost.id, title: fromPost.title, when: fromPost.startsAt ? when(fromPost.startsAt, cityId) : null, cta: tx('Open') }
+      : null;
+  const options = useMemo<PostOption[]>(() => {
+    const o: PostOption[] = [];
+    if (isMember && !p.activityId && !fromPost)
+      o.push({ key: 'activity', label: 'Create an activity', icon: 'calendar', onPress: () => createActivityFromPost({ id: p.id, body: p.body, community, girlSpace: community.girlOnly }) });
+    if (canPin) o.push({ key: 'pin', label: p.pinnedAt ? 'Unpin' : 'Pin at the top', icon: 'pinPost', onPress: () => actions.pin(p, !p.pinnedAt) });
+    if (p.mine) o.push({ key: 'edit', label: 'Edit post', icon: 'edit', onPress: () => router.push({ pathname: '/post/new', params: { edit: p.id } }) });
+    if (p.mine || canModerate) o.push({ key: 'remove', label: 'Remove post', icon: 'x', destructive: true, onPress: () => actions.remove(p) });
+    else o.push({ key: 'report', label: 'Report post', icon: 'flag', onPress: () => openReport({ kind: 'community_post', id: p.id, userId: p.authorId }, p.firstName) });
+    return o;
+  }, [isMember, p, fromPost, community, canPin, canModerate, actions, router]);
+  const label = p.pinnedAt || (p.kind && p.kind !== 'post')
+    ? {
+        text: [p.pinnedAt ? tx('Pinned') : null, p.kind === 'announcement' ? tx('Announcement') : p.kind === 'question' ? tx('Question') : p.kind === 'recommendation' ? tx('Recommendation') : null].filter(Boolean).join(' · '),
+        icon: p.pinnedAt ? ('pinPost' as const) : undefined,
+      }
+    : null;
   return (
-    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter, marginBottom: space[5] }]}>
-      <GlassLayer radius={radius.xl} />
-      <View style={styles.row}>
-        {p.asIrly ? <IrlyBadge size={36} /> : <ProfileAvatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />}
-        <View style={{ flex: 1 }}>
-          {p.asIrly ? (
-            // Signed IRLY: the official name and badge, never the person who wrote it.
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text variant="titleS">IRLY</Text>
-              <Icon name="badgeCheck" size={14} color={t.c.text} />
-              <Text variant="caption" tone="tertiary">
-                The IRLY team
-              </Text>
-            </View>
-          ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text variant="titleS" raw style={{ flexShrink: 1 }} numberOfLines={1}>{p.mine ? tx('You') : p.firstName}</Text>
-              <AdminBadge userId={p.authorId} />
-            </View>
-          )}
-          <Text variant="caption" tone="tertiary">
-            {p.pending ? tx('Sending…') : timeAgo(Math.max(0, Math.round((now - p.createdAt) / 60000)))}
-          </Text>
-        </View>
-        {canPin && !p.pending ? (
-          <PressableScale onPress={() => onPin(!p.pinnedAt)} haptic="select" hitSlop={8} accessibilityLabel={p.pinnedAt ? 'Unpin' : 'Pin at the top'}>
-            <Icon name="pinPost" size={16} color={p.pinnedAt ? t.c.text : t.c.textTertiary} />
-          </PressableScale>
-        ) : null}
-        {p.mine && !p.pending ? (
-          <PressableScale onPress={() => router.push({ pathname: '/post/new', params: { edit: p.id } })} haptic="select" hitSlop={8} accessibilityLabel="Edit post">
-            <Icon name="edit" size={16} color={t.c.textTertiary} />
-          </PressableScale>
-        ) : null}
-        {p.mine || canModerate ? (
-          <PressableScale onPress={onRemove} haptic="select" hitSlop={8} accessibilityLabel="Remove post">
-            <Icon name="x" size={18} color={t.c.textTertiary} />
-          </PressableScale>
-        ) : (
-          <PressableScale
-            onPress={() => openReport({ kind: 'community_post', id: p.id, userId: p.authorId }, p.firstName)}
-            haptic="select"
-            hitSlop={8}
-            accessibilityLabel="Report post"
-          >
-            <Icon name="flag" size={16} color={t.c.textTertiary} />
-          </PressableScale>
-        )}
-      </View>
-      {p.pinnedAt || (p.kind && p.kind !== 'post') ? (
-        <View style={[styles.row, { gap: 6 }]}>
-          {p.pinnedAt ? <Icon name="pinPost" size={13} color={t.c.textSecondary} /> : null}
-          <Text variant="overline" tone="secondary">
-            {[p.pinnedAt ? tx('Pinned') : null, p.kind === 'announcement' ? tx('Announcement') : p.kind === 'question' ? tx('Question') : p.kind === 'recommendation' ? tx('Recommendation') : null].filter(Boolean).join(' · ')}
-          </Text>
-        </View>
-      ) : null}
-      {p.body ? <RichText text={p.body} postId={p.pending ? null : p.id} /> : null}
-      {p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} /> : null}
-      {p.edited ? (
-        <Text variant="caption" tone="tertiary">
-          {tx('Edited')}
-        </Text>
-      ) : null}
-
+    <PostCardView
+      style={{ marginHorizontal: space.gutter, marginBottom: space[5] }}
+      author={{ id: p.authorId, name: p.firstName, mine: p.mine, asIrly: p.asIrly }}
+      createdAt={p.createdAt}
+      pending={p.pending}
+      edited={p.edited}
+      label={label}
+      body={p.body}
+      richId={p.pending ? null : p.id}
+      media={p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} liked={eng.get(p.id).liked} onLike={() => eng.signedIn && void eng.like(p.id).catch(() => undefined)} /> : null}
+      link={linked}
+      target={p.pending ? null : { type: 'community_post', id: p.id, title: p.body.slice(0, 60) }}
+      eng={eng}
+      options={options}
+    >
       {p.poll ? (
         <View style={{ gap: 6 }}>
           {p.poll.options.map((o, i) => {
@@ -860,22 +817,7 @@ const PostCard = memo(function PostCard({
         </View>
       ) : null}
 
-      {p.activityId ? (
-        <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={p.activityTitle ? tx('Open {title}', { title: p.activityTitle }) : tx('Open the activity')}>
-          <Icon name="calendar" size={18} color={t.c.text} />
-          <View style={{ flex: 1 }}>
-            <Text variant="titleS" numberOfLines={1}>
-              {p.activityTitle ?? tx('Activity')}
-            </Text>
-            {p.activityStartsAt ? (
-              <Text variant="caption" tone="tertiary">
-                {when(p.activityStartsAt, cityId)}
-              </Text>
-            ) : null}
-          </View>
-          <Text variant="label">{tx('Join')}</Text>
-        </PressableScale>
-      ) : plan ? (
+      {!linked && plan ? (
         <View style={{ gap: 8 }}>
           <Button
             label={tx('Make it an activity: {title}', { title: plan.title })}
@@ -899,9 +841,7 @@ const PostCard = memo(function PostCard({
           ) : null}
         </View>
       ) : null}
-
-      {!p.pending ? <ActionBar target={{ type: 'community_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} /> : null}
-    </Animated.View>
+    </PostCardView>
   );
 });
 

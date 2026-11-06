@@ -53,6 +53,16 @@ export type ServerIrlPost = {
   cityId: string | null;
   /** The space it was posted in (your own posts on this phone): IRLY or IRLY Girl. */
   scope?: LiveScope;
+  /**
+   * 'irl': a Live (irl_posts). 'community': a community post published to the
+   * Live: the SAME record as in its community (likes, comments, removal and
+   * moderation are the community post's), shown here for 24 hours.
+   */
+  source?: 'irl' | 'community';
+  /** A community post: its community, its photos (post-media paths, several) and IRLY's signature. */
+  community?: { id: string; name: string; coverPath: string | null; topic: string | null; categoryId: string | null } | null;
+  mediaPaths?: string[];
+  asIrly?: boolean;
 };
 
 /** The space a Live belongs to: IRLY's Live and IRLY Girl's never show each other's posts (irl_posts.app_scope). */
@@ -75,6 +85,14 @@ type FeedRow = {
   thumb_path?: string | null;
   media_seconds?: number | null;
   media_ratio?: number | null;
+  source?: 'irl' | 'community';
+  media_paths?: string[] | null;
+  community_id?: string | null;
+  community_name?: string | null;
+  community_cover_path?: string | null;
+  community_topic?: string | null;
+  community_category_id?: string | null;
+  as_irly?: boolean | null;
 };
 
 /**
@@ -95,7 +113,7 @@ const useIrlMine = create<{ posts: ServerIrlPost[] }>(() => ({ posts: [] }));
 /** Last feed loaded per city: coming back to the tab shows it at once, never an empty screen. */
 const irlCache = new Map<string, ServerIrlPost[]>();
 
-export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh: () => void } {
+export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh: () => void; loaded: boolean } {
   const account = useAccount();
   const uid = account?.userId;
   // In the IRLY Girl space the feed is women's posts only (irl_feed_girl, checked by the server).
@@ -122,13 +140,19 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     if (!supabase || !uid) return [];
     const sb = supabase;
     // Home's live faces and its Live strip read the same feed as they open: one read.
-    const { data, error } = await together(`irl:${uid}:${cityId}:${girlSpace ? 'girl' : 'mixte'}`, () => sb.rpc(girlSpace ? 'irl_feed_girl' : 'irl_feed', { p_city: cityId }));
+    // live_feed: the space's Lives and the community posts published to it, one list (one record each).
+    // A server without it yet (not migrated): the space's Lives only, as before.
+    const { data, error } = await together(`irl:${uid}:${cityId}:${girlSpace ? 'girl' : 'mixte'}`, async () => {
+      const res = await sb.rpc('live_feed', { p_city: cityId, p_space: girlSpace ? 'girl' : 'irly' });
+      return isMissingFunction(res.error) ? sb.rpc(girlSpace ? 'irl_feed_girl' : 'irl_feed', { p_city: cityId }) : res;
+    });
     if (error) throw new Error(error.message);
     const rows = (data as FeedRow[]) ?? [];
-    const links = await signedAll(rows.flatMap((r) => [r.media_path, r.thumb_path ?? null]));
+    // Community posts' files are in post-media (signed by the card itself, PostMedia); Lives' in irl-media.
+    const links = await signedAll(rows.filter((r) => r.source !== 'community').flatMap((r) => [r.media_path, r.thumb_path ?? null]));
     // The pictures start downloading now (photos, video posters; never the videos), not when the cards appear.
     warmLiveImages(rows.map((r) => (r.media_kind === 'video' ? (r.thumb_path ? links[r.thumb_path] : null) : r.media_path ? links[r.media_path] : null)));
-    return rows.map((r) => ({
+    return rows.map((r) => r.source === 'community' ? fromCommunityRow(r, uid) : ({
         id: r.id,
         authorId: r.author_id,
         firstName: r.first_name,
@@ -148,6 +172,7 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         // Stored with the post: the card has its size before the image arrives.
         mediaRatio: r.media_ratio ?? null,
         cityId: (r as { city_id?: string }).city_id ?? null,
+        source: 'irl' as const,
       }));
   }, [cityId, uid, girlSpace]);
 
@@ -159,9 +184,12 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
         .then((p) => {
           if (alive() && n === seq.current) setPosts(p);
         })
-        .catch(() => undefined);
+        // A first load that fails shows the feed empty (as before), never placeholders for ever.
+        .catch(() => {
+          if (alive() && n === seq.current && !irlCache.has(key)) setPosts([]);
+        });
     },
-    [load, setPosts],
+    [load, setPosts, key],
   );
   const refresh = useCallback(() => reload(), [reload]);
 
@@ -226,7 +254,37 @@ export function useServerIrl(cityId: string): { posts: ServerIrlPost[]; refresh:
     const fresh = mine.filter((p) => !ids.has(p.id) && (p.scope ?? 'irly') === space && (p.cityId === cityId || keep(p.cityId)) && live(p));
     return [...fresh, ...posts.filter((p) => keep(p.cityId) && live(p))];
   }, [posts, mine, keep, cityId, now, girlSpace]);
-  return { posts: uid ? shown : NONE, refresh };
+  // Loaded once for this account, city and space (the cache keeps it): until then a feed shows placeholders.
+  return { posts: uid ? shown : NONE, refresh, loaded: !uid || irlCache.has(key) };
+}
+
+/** A community post published to the Live, as the Live card shows it (its files stay paths: post-media). */
+function fromCommunityRow(r: FeedRow, uid: string): ServerIrlPost {
+  const paths = r.media_paths ?? [];
+  return {
+    id: r.id,
+    authorId: r.author_id,
+    firstName: r.first_name,
+    areaId: '',
+    placeName: null,
+    body: r.body,
+    mediaUrl: null,
+    visibility: 'everyone',
+    createdAt: Date.parse(r.created_at),
+    friend: r.friend,
+    mine: r.author_id === uid,
+    activityId: r.activity_id ?? null,
+    activityTitle: r.activity_title ?? null,
+    mediaKind: paths.length ? (r.media_kind === 'video' ? 'video' : 'photo') : undefined,
+    posterUrl: null,
+    seconds: r.media_seconds ?? null,
+    mediaRatio: null,
+    cityId: (r as { city_id?: string }).city_id ?? null,
+    source: 'community',
+    community: r.community_id ? { id: r.community_id, name: r.community_name ?? '', coverPath: r.community_cover_path ?? null, topic: r.community_topic ?? null, categoryId: r.community_category_id ?? null } : null,
+    mediaPaths: paths,
+    asIrly: Boolean(r.as_irly),
+  };
 }
 
 type IrlListener = {
@@ -256,6 +314,8 @@ function listenIrl(cityId: string, uid: string, l: IrlListener): () => void {
         const id = (payload.old as { id?: string } | null)?.id;
         users.forEach((u) => u.deleted(id));
       })
+      // Community posts published to the Live (one record with the community): new ones, edits and removals.
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: 'in_live=eq.true' }, (payload) => users.forEach((u) => u.changed(payload)))
       .subscribe(whenListening(() => users.forEach((u) => u.listening())));
     live = { users, stop: () => void sb.removeChannel(channel) };
     irlLive.set(key, live);

@@ -12,6 +12,9 @@
 const GENERIC = 'Something went wrong. Try again';
 
 export const SERVER_ERRORS: Record<string, string> = {
+  // The Live and community posts, one record (20261110400000_irly_live_community_posts).
+  'a post joins the Live only when it is published': 'A post can only join the Live when it is published',
+  'sign in to see the Live': 'Sign in to see the Live',
   // IRLY publishing in its official communities (20261109100000_irly_admin_publish).
   'only IRLY publishes as IRLY': 'Only the IRLY team publishes as IRLY',
   'IRLY speaks only in its official communities': 'IRLY publishes only in its official communities',

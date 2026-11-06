@@ -97,7 +97,19 @@ const friendly = (msg: string) =>
  * one. Files already sent are removed only when the server really refused
  * the post: without an answer it may have been saved with them.
  */
-export async function createPost(input: { id: string; communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; mentions?: string[]; onProgress?: (p: number) => void; asIrly?: boolean }): Promise<string> {
+export async function createPost(input: {
+  id: string;
+  communityId: string | null;
+  body: string;
+  media: DraftMedia | null;
+  kind?: 'post' | 'question' | 'recommendation';
+  category?: string | null;
+  mentions?: string[];
+  onProgress?: (p: number) => void;
+  asIrly?: boolean;
+  /** Published from the Live: the same post also shows in the Live of its community's universe for 24 hours (community_posts.in_live). */
+  inLive?: boolean;
+}): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const sb = supabase;
   const { data: auth } = await sb.auth.getSession();
@@ -107,7 +119,16 @@ export async function createPost(input: { id: string; communityId: string | null
   if (!body && !input.media?.files.length) throw new Error('Write something or add a photo');
   const { row, fresh } = await store(uid, input.media, input.onProgress);
   const dropFresh = () => (fresh.length ? sb.storage.from('post-media').remove(fresh).then(() => undefined, () => undefined) : Promise.resolve());
-  const fields = { id: input.id, community_id: input.communityId, author_id: uid, body, kind: input.kind ?? 'post', ...(input.communityId && input.category ? { category: input.category } : {}), ...row };
+  const fields = {
+    id: input.id,
+    community_id: input.communityId,
+    author_id: uid,
+    body,
+    kind: input.kind ?? 'post',
+    ...(input.communityId && input.category ? { category: input.category } : {}),
+    ...(input.communityId && input.inLive ? { in_live: true } : {}),
+    ...row,
+  };
   const mentions = input.communityId ? (input.mentions ?? []).slice(0, MAX_MENTIONS) : [];
   const insert = (withMentions: boolean) => {
     const values: Record<string, unknown> = withMentions && mentions.length ? { ...fields, mentions } : fields;
@@ -120,6 +141,11 @@ export async function createPost(input: { id: string; communityId: string | null
   let { error } = irly ?? (await insert(true));
   // A server without community_posts.mentions yet: the post goes out without them.
   if (!irly && missingColumn(error, 'mentions')) ({ error } = await insert(false));
+  // A server without community_posts.in_live yet: refused (never posted without its Live silently).
+  if (!irly && missingColumn(error, 'in_live')) {
+    await dropFresh();
+    throw new Error('Posting to the Live with a community is not available yet');
+  }
   if (irly && !error) markIrlyPost(input.id);
   if (error) {
     // Already there: an earlier try landed (its answer was lost). That post, with its own files, is the one.
