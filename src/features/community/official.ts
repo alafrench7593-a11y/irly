@@ -11,12 +11,12 @@ import type { Profile } from '@/state/store';
 import { displayCommunityName } from './name';
 
 /**
- * IRLY Community: the official communities IRLY runs in each city (IRLY
- * Expat, IRLY Sport, IRLY Network, IRLY Activité; in IRLY Girl: Girl Trip,
- * Girl Expat, Girl Activité, Girl Sport, and Girl CEO inside IRLY Network;
- * IRLY Mom Community); every other community is created by members. Which ones
+ * IRLY Community: the official communities IRLY runs, in Dubai only (IRLY
+ * Expat, IRLY Activité, IRLY Sport, IRLY Running Club, IRLY Padel Club, IRLY
+ * Trip, IRLY Network, Les Français à Dubaï; IRLY Girl, and Girl CEO inside
+ * IRLY Network); every other community is created by members. Which ones
  * exist, and what they match, is configured on the server
- * (community_topics, migration 20261028100000_irly_official_communities_four);
+ * (community_topics, migration 20261108200000_irly_official_communities_dubai);
  * the app only sends the member's own onboarding answers as tags and shows
  * what comes back. Joining is always the member's choice.
  */
@@ -116,14 +116,14 @@ export async function joinCommunities(ids: string[]): Promise<number> {
 
 /** Discover groups for the official topics (filters on the Communities page). */
 export const TOPIC_GROUPS: Record<string, string[]> = {
-  sports: ['sport', 'football', 'running', 'beach'],
+  sports: ['sport', 'padel', 'football', 'running', 'beach'],
   fitness: ['gym', 'running', 'wellness'],
   networking: ['network', 'entrepreneurs', 'tech', 'ai', 'ecom'],
   business: ['entrepreneurs', 'ecom', 'network'],
   travel: ['trip', 'beach'],
   food: ['food', 'nights'],
   culture: ['culture', 'nights'],
-  lifestyle: ['newcomers', 'expats', 'lifestyle', 'girls', 'moms', 'families', 'food', 'beach', 'shopping', 'nights'],
+  lifestyle: ['newcomers', 'expats', 'francais', 'lifestyle', 'girls', 'moms', 'families', 'food', 'beach', 'shopping', 'nights'],
 };
 
 /** The photo of each IRLY community: always a photo taken in Dubai (the library's Dubai photos, DUBAI_KEYS). */
@@ -134,7 +134,10 @@ export const TOPIC_PHOTO = {
   sport: 'crossfit',
   football: 'football',
   running: 'running',
+  padel: 'padelMix',
   trip: 'roadtrip',
+  // Les Français à Dubaï: a table shared with friends.
+  francais: 'dinnerMix',
   beach: 'beachClub',
   food: 'brunch',
   network: 'founders',
