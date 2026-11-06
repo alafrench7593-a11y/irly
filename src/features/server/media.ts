@@ -34,14 +34,41 @@ export async function signedLinks(bucket: Bucket, paths: (string | null | undefi
     }
   }
   if (missing.length && supabase) {
-    const { data } = await supabase.storage.from(bucket).createSignedUrls(missing, TTL);
-    for (const d of data ?? []) {
-      if (!d.path || !d.signedUrl) continue;
-      cache.set(key(bucket, d.path), { url: d.signedUrl, until: now + (TTL - 600) * 1000 });
-      out[d.path] = d.signedUrl;
+    await signTogether(bucket, missing);
+    for (const p of missing) {
+      const hit = cache.get(key(bucket, p));
+      if (hit && hit.until > now) out[p] = hit.url;
     }
   }
   return out;
+}
+
+/**
+ * The links asked for in the same moment share ONE signing request per bucket:
+ * a feed's cards each ask for their own files as they mount, and each used to
+ * send its own request (twenty posts, twenty requests).
+ */
+const batches = new Map<Bucket, { paths: Set<string>; done: Promise<void> }>();
+function signTogether(bucket: Bucket, paths: string[]): Promise<void> {
+  let batch = batches.get(bucket);
+  if (!batch) {
+    const set = new Set<string>();
+    const done = new Promise<void>((go) => setTimeout(go, 0)).then(async () => {
+      // Sent now: a caller from here on starts the next batch.
+      batches.delete(bucket);
+      if (!supabase) return;
+      const now = Date.now();
+      const { data } = await supabase.storage.from(bucket).createSignedUrls([...set], TTL);
+      for (const d of data ?? []) {
+        if (!d.path || !d.signedUrl) continue;
+        cache.set(key(bucket, d.path), { url: d.signedUrl, until: now + (TTL - 600) * 1000 });
+      }
+    });
+    batch = { paths: set, done };
+    batches.set(bucket, batch);
+  }
+  for (const p of paths) batch.paths.add(p);
+  return batch.done;
 }
 
 /**

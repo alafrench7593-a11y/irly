@@ -4,6 +4,7 @@ import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { isMissingFunction } from '@/features/live/livePublish';
 import { friendlyError, supabase } from '@/lib/supabase';
+import { cacheKey, load as loadCached, peek } from './cache';
 
 /**
  * A community's governance on the client: what the signed-in member may do
@@ -273,7 +274,7 @@ export async function moderateActivity(activityId: string, reason: string): Prom
  * One server read kept fresh: reloaded when communities change, the last
  * request wins, and a failure is kept apart from « nothing ».
  */
-function useServerRead<T>(key: string, empty: T, read: () => Promise<T>) {
+function useServerRead<T>(key: string, empty: T, read: () => Promise<T>, kind?: string) {
   const uid = useAccount()?.userId;
   const [state, setState] = useState<{ key: string; value: T; error: string | null }>({ key: '', value: empty, error: null });
   const seq = useRef(0);
@@ -283,31 +284,38 @@ function useServerRead<T>(key: string, empty: T, read: () => Promise<T>) {
     readRef.current = read;
   });
   const full = `${uid ?? ''}|${key}`;
-  const load = useCallback(() => {
-    if (!uid || !supabase || !key) return;
-    const n = ++seq.current;
-    readRef
-      .current()
-      .then((value) => n === seq.current && setState({ key: full, value, error: null }))
-      .catch((e: unknown) => n === seq.current && setState((s) => ({ key: full, value: s.key === full ? s.value : empty, error: e instanceof Error ? e.message : 'Can’t reach IRLY right now' })));
+  // With a kind: the last known answer (community cache) shows at once, and one request
+  // per key is shared by every screen and the prefetch asking at the same time.
+  const ck = kind && uid && key ? cacheKey(uid, kind, key) : '';
+  const load = useCallback(
+    (join = false) => {
+      if (!uid || !supabase || !key) return;
+      const n = ++seq.current;
+      (ck ? loadCached(ck, () => readRef.current(), join) : readRef.current())
+        .then((value) => n === seq.current && setState({ key: full, value, error: null }))
+        .catch((e: unknown) => n === seq.current && setState((s) => ({ key: full, value: s.key === full ? s.value : (peek<T>(ck) ?? empty), error: e instanceof Error ? e.message : 'Can’t reach IRLY right now' })));
+    },
     // `empty` is a constant per call site.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uid, key, full]);
-  useEffect(load, [load]);
-  useRefreshOn(['communities'], load);
+    [uid, key, full, ck],
+  );
+  const reload = useCallback(() => load(false), [load]);
+  useEffect(() => load(true), [load]);
+  useRefreshOn(['communities'], reload);
   const ready = state.key === full;
+  const known = peek<T>(ck);
   // No server (demo) or no account: nothing to wait for.
   const idle = !uid || !supabase || !key;
-  return { value: ready ? state.value : empty, loading: !idle && !ready, error: ready ? state.error : null, reload: load };
+  return { value: ready ? state.value : (known ?? empty), loading: !idle && !ready && known === undefined, error: ready ? state.error : null, reload };
 }
 
 export function useMyRights(communityId: string) {
-  const r = useServerRead(communityId, NO_RIGHTS, () => fetchMyRights(communityId));
+  const r = useServerRead(communityId, NO_RIGHTS, () => fetchMyRights(communityId), 'rights');
   return { rights: r.value, loading: r.loading, error: r.error, reload: r.reload };
 }
 
 export function useCommunityHeader(communityId: string) {
-  const r = useServerRead<CommunityHeader | null>(communityId, null, () => fetchHeader(communityId));
+  const r = useServerRead<CommunityHeader | null>(communityId, null, () => fetchHeader(communityId), 'header');
   return { header: r.value, loading: r.loading, reload: r.reload };
 }
 
@@ -319,7 +327,7 @@ export function useMembersList(communityId: string, search: string) {
     const id = setTimeout(() => setQ(search.trim()), 250);
     return () => clearTimeout(id);
   }, [search]);
-  const r = useServerRead(communityId ? `${communityId}|${q}` : '', NO_MEMBERS, () => fetchMembers(communityId, q || null));
+  const r = useServerRead(communityId ? `${communityId}|${q}` : '', NO_MEMBERS, () => fetchMembers(communityId, q || null), 'members');
   return { members: r.value, loading: r.loading, error: r.error, reload: r.reload };
 }
 

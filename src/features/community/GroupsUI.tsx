@@ -9,6 +9,7 @@ import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { deleteCommunity, joinCommunity } from '@/features/community/data';
+import { prefetchCommunity } from '@/features/community/prefetch';
 import { a11y, t as tx } from '@/i18n';
 import { confirm } from '@/lib/confirm';
 import { hueOf } from '@/lib/format';
@@ -44,7 +45,7 @@ export function ParentLink({ parent }: { parent: Parent }) {
   const t = useTheme();
   if (!parent) return null;
   return (
-    <PressableScale haptic="select" onPress={() => router.push(`/c/${parent.id}`)} style={styles.parent} accessibilityRole="link" accessibilityLabel={tx('Part of {name}', { name: parent.name })}>
+    <PressableScale haptic="select" onPressIn={() => prefetchCommunity(parent.id)} onPress={() => router.push(`/c/${parent.id}`)} style={styles.parent} accessibilityRole="link" accessibilityLabel={tx('Part of {name}', { name: parent.name })}>
       <Icon name="layers" size={14} color={t.c.textSecondary} />
       <Text variant="caption" tone="secondary" raw>
         {tx('Group of {name}', { name: parent.name })}
@@ -74,6 +75,7 @@ export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChan
             <PressableScale
               haptic="select"
               scaleTo={0.97}
+              onPressIn={() => prefetchCommunity(g.id)}
               onPress={() => router.push(`/c/${g.id}`)}
               style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
               accessibilityLabel={g.name}

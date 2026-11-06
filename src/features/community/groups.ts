@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
+import { cacheKey, load as loadCached, peek } from './cache';
 import { displayCommunityName } from './name';
 
 /**
@@ -24,10 +25,12 @@ export type Person = { userId: string; firstName: string; photo: string | null; 
 
 const NO_RIGHTS: Rights = { isAdmin: false, canModerate: false, isOwner: false, announcementsToday: 0, nextAnnouncementAt: null };
 
+type Extras = { groups: Subgroup[]; rights: Rights; parent: Parent; prefs: CommunityPrefs };
+
 /** Groups, rights, parent and my notification choice for one community, kept fresh. */
 export function useCommunityExtras(id: string) {
   const uid = useAccount()?.userId;
-  const [state, setState] = useState<{ for: string; groups: Subgroup[]; rights: Rights; parent: Parent; prefs: CommunityPrefs }>({
+  const [state, setState] = useState<{ for: string } & Extras>({
     for: '',
     groups: [],
     rights: NO_RIGHTS,
@@ -35,52 +38,65 @@ export function useCommunityExtras(id: string) {
     prefs: { posts: true, announcements: true, activities: true },
   });
   const seq = useRef(0);
-  const load = useCallback(() => {
-    if (!uid || !supabase || !id) return;
-    const n = ++seq.current;
-    Promise.all([
-      sb().rpc('community_subgroups', { p_parent: id }),
-      sb().rpc('community_rights', { p_community: id }),
-      // The parent in the same round trip (no second, sequential read).
-      sb().from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', id).maybeSingle(),
-      sb().from('community_notification_prefs').select('*').eq('community_id', id).eq('user_id', uid).maybeSingle(),
-    ])
-      .then(([g, r, me, pr]) => {
-        const row = me.data as { parent_id: string | null; parent: Parent | Parent[] | null } | null;
-        const embedded = Array.isArray(row?.parent) ? (row?.parent[0] ?? null) : (row?.parent ?? null);
-        const parent = row?.parent_id && embedded ? { ...embedded, name: displayCommunityName(embedded) } : null;
-        if (n !== seq.current) return;
-        const rr = ((r.data as Record<string, unknown>[] | null) ?? [])[0];
-        setState({
-          for: `${uid}|${id}`,
-          groups: ((g.data as Record<string, unknown>[] | null) ?? []).map((x) => ({
-            id: x.id as string,
-            name: displayCommunityName({ name: x.name as string | null }),
-            tagline: (x.tagline as string | null) ?? null,
-            emoji: (x.emoji as string | null) ?? null,
-            members: Number(x.members ?? 0),
-            isMember: Boolean(x.is_member),
-            postsWeek: Number(x.posts_week ?? 0),
-          })),
-          rights: rr
-            ? {
-                isAdmin: Boolean(rr.is_admin),
-                canModerate: Boolean(rr.can_moderate),
-                isOwner: Boolean(rr.is_owner),
-                announcementsToday: Number(rr.announcements_today ?? 0),
-                nextAnnouncementAt: rr.next_announcement_at ? Date.parse(rr.next_announcement_at as string) : null,
-              }
-            : NO_RIGHTS,
-          parent,
-          prefs: { posts: true, announcements: true, activities: true, ...((pr.data as Partial<CommunityPrefs> | null) ?? {}) },
-        });
-      })
-      .catch(() => undefined);
-  }, [uid, id]);
-  useEffect(load, [load]);
-  useRefreshOn(['communities'], load);
+  // The last known extras show at once (the page's tools and groups do not pop in later).
+  const ck = uid && id ? cacheKey(uid, 'extras', id) : '';
+  const load = useCallback(
+    (join = false) => {
+      if (!uid || !supabase || !id) return;
+      const n = ++seq.current;
+      loadCached(ck, () => fetchExtras(uid, id), join)
+        .then((x) => n === seq.current && setState({ for: `${uid}|${id}`, ...x }))
+        .catch(() => undefined);
+    },
+    [uid, id, ck],
+  );
+  const reload = useCallback(() => load(false), [load]);
+  useEffect(() => load(true), [load]);
+  useRefreshOn(['communities'], reload);
   const ready = state.for === `${uid}|${id}`;
-  return { groups: ready ? state.groups : [], rights: ready ? state.rights : NO_RIGHTS, parent: ready ? state.parent : null, prefs: state.prefs, reload: load };
+  const known = ready ? state : peek<Extras>(ck);
+  return { groups: known?.groups ?? NO_GROUPS, rights: known?.rights ?? NO_RIGHTS, parent: known?.parent ?? null, prefs: known?.prefs ?? state.prefs, reload };
+}
+
+const NO_GROUPS: Subgroup[] = [];
+
+/** Groups, my rights, the parent and my notification choice: four reads side by side. */
+export async function fetchExtras(uid: string, id: string): Promise<Extras> {
+  return Promise.all([
+    sb().rpc('community_subgroups', { p_parent: id }),
+    sb().rpc('community_rights', { p_community: id }),
+    // The parent in the same round trip (no second, sequential read).
+    sb().from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', id).maybeSingle(),
+    sb().from('community_notification_prefs').select('*').eq('community_id', id).eq('user_id', uid).maybeSingle(),
+  ])
+    .then(([g, r, me, pr]): Extras => {
+      const row = me.data as { parent_id: string | null; parent: Parent | Parent[] | null } | null;
+      const embedded = Array.isArray(row?.parent) ? (row?.parent[0] ?? null) : (row?.parent ?? null);
+      const parent = row?.parent_id && embedded ? { ...embedded, name: displayCommunityName(embedded) } : null;
+      const rr = ((r.data as Record<string, unknown>[] | null) ?? [])[0];
+      return {
+        groups: ((g.data as Record<string, unknown>[] | null) ?? []).map((x) => ({
+          id: x.id as string,
+          name: displayCommunityName({ name: x.name as string | null }),
+          tagline: (x.tagline as string | null) ?? null,
+          emoji: (x.emoji as string | null) ?? null,
+          members: Number(x.members ?? 0),
+          isMember: Boolean(x.is_member),
+          postsWeek: Number(x.posts_week ?? 0),
+        })),
+        rights: rr
+          ? {
+              isAdmin: Boolean(rr.is_admin),
+              canModerate: Boolean(rr.can_moderate),
+              isOwner: Boolean(rr.is_owner),
+              announcementsToday: Number(rr.announcements_today ?? 0),
+              nextAnnouncementAt: rr.next_announcement_at ? Date.parse(rr.next_announcement_at as string) : null,
+            }
+          : NO_RIGHTS,
+        parent,
+        prefs: { posts: true, announcements: true, activities: true, ...((pr.data as Partial<CommunityPrefs> | null) ?? {}) },
+      };
+    });
 }
 
 export async function pinPost(postId: string, on: boolean): Promise<void> {
@@ -141,23 +157,33 @@ export function useChannels(communityId: string | undefined) {
   const [state, setState] = useState<{ for: string; list: Channel[] }>({ for: '', list: [] });
   const seq = useRef(0);
   const key = `${uid}|${communityId}`;
-  const load = useCallback(() => {
-    if (!uid || !supabase || !communityId) return;
-    const n = ++seq.current;
-    sb()
-      .from('community_channels')
-      .select('id, slug, name')
-      .eq('community_id', communityId)
-      .order('sort')
-      .order('created_at')
-      .then(
-        ({ data }) => n === seq.current && setState({ for: key, list: ((data as Channel[] | null) ?? []).map((c) => ({ id: c.id, slug: c.slug, name: c.name })) }),
+  // The last known categories show at once: the feed then asks for the right space first
+  // (General) instead of every post, then General once the categories arrive.
+  const ck = uid && communityId ? cacheKey(uid, 'channels', communityId) : '';
+  const load = useCallback(
+    (join = false) => {
+      if (!uid || !supabase || !communityId) return;
+      const n = ++seq.current;
+      loadCached(ck, () => fetchChannels(communityId), join).then(
+        (list) => n === seq.current && setState({ for: key, list }),
         () => n === seq.current && setState({ for: key, list: [] }),
       );
-  }, [uid, communityId, key]);
-  useEffect(load, [load]);
-  useRefreshOn(['communities'], load);
-  return { channels: state.for === key ? state.list : [], reload: load };
+    },
+    [uid, communityId, key, ck],
+  );
+  const reload = useCallback(() => load(false), [load]);
+  useEffect(() => load(true), [load]);
+  useRefreshOn(['communities'], reload);
+  return { channels: state.for === key ? state.list : (peek<Channel[]>(ck) ?? NO_CHANNELS), reload };
+}
+
+const NO_CHANNELS: Channel[] = [];
+
+/** A community's categories, in their order. */
+export async function fetchChannels(communityId: string): Promise<Channel[]> {
+  const { data, error } = await sb().from('community_channels').select('id, slug, name').eq('community_id', communityId).order('sort').order('created_at');
+  if (error) throw new Error(friendly(error.message));
+  return ((data as Channel[] | null) ?? []).map((c) => ({ id: c.id, slug: c.slug, name: c.name }));
 }
 
 /** "Good deals" → "good_deals" (the category's stable id inside its community). */

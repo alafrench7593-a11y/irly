@@ -1,10 +1,10 @@
 import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
 import { AdminBadge } from '@/features/admin/StaffBadge';
-import { useAuthStatus } from '@/features/auth/account';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoCommunityScreen } from '@/features/girl/DemoScreens';
 import { t as tx, a11y } from '@/i18n';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,7 +43,8 @@ import { NewPostsPill, PublishButton } from '@/features/community/FeedOverlays';
 import { MediaEmpty, MediaGrid, type GalleryItem } from '@/features/community/MediaGallery';
 import { PinnedStrip } from '@/features/community/PinnedStrip';
 import { SpaceTabs, TabPanel, TABS_HEIGHT, type SpaceTab } from '@/features/community/SpaceTabs';
-import { PIN_FOR, pinPostFor, useCommunityMedia, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
+import { PIN_FOR, pinPostFor, prefetchMedia, useCommunityMedia, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
+import { prefetchMembers, warmPostImages } from '@/features/community/prefetch';
 import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { track } from '@/lib/analytics';
@@ -147,6 +148,18 @@ function CommunityScreen() {
   // An assistant idea tapped goes into the post composer (n remounts it).
   const [idea, setIdea] = useState({ text: '', n: 0 });
   const list = useRef<FlatList<CommunityPost>>(null);
+  // The cards' actions, the same functions on every render (the cards are memoized): each
+  // call runs the handler of the latest render, kept below once the community is known.
+  const handlers = useRef<PostActions | null>(null);
+  const postActions = useMemo<PostActions>(
+    () => ({
+      pin: (p, on) => handlers.current?.pin(p, on),
+      vote: (p, o) => handlers.current?.vote(p, o),
+      remove: (p) => handlers.current?.remove(p),
+      plan: (d) => handlers.current?.plan(d),
+    }),
+    [],
+  );
   // Reading further down: posts new from others wait behind « New posts » instead of moving the list.
   const down = useRef(false);
   const onFeedScroll = useCallback(
@@ -166,7 +179,72 @@ function CommunityScreen() {
     () => acts.activities.filter((a) => a.status !== 'cancelled').map((a) => ({ id: a.id, title: a.title, startsAt: a.startsAt, going: a.going, pinned: Boolean(a.pinnedAt), subtitle: a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : a.status === 'ongoing' ? tx('Happening now') : null })),
     [acts.activities],
   );
+  // The feed's files are signed in one request and its first photos fetched ahead; once
+  // the page has settled, the gallery's first page and thumbnails too (Media opens filled).
+  const uid = useAccount()?.userId;
+  useEffect(() => warmPostImages(feed.posts), [feed.posts]);
+  const settled = !feed.loading && Boolean(loaded);
+  useEffect(() => {
+    if (!settled || !uid || mediaOn) return;
+    const timer = setTimeout(() => (prefetchMedia(uid, id), prefetchMembers(id)), 1200);
+    return () => clearTimeout(timer);
+  }, [settled, uid, id, mediaOn]);
   const gallery = useMemo<GalleryItem[]>(() => media.items.map((m) => ({ key: m.key, kind: m.kind, path: m.path, thumbPath: m.thumbPath, seconds: m.seconds, postId: m.postId })), [media.items]);
+
+  /** A plan from the assistant or a post: a real activity of this community, in its Activities space. */
+  const createPlan = async (d: PlanDraft): Promise<boolean> => {
+    if (!c) return false;
+    if (!c.isMember) {
+      toast('Join the community first', 'users', 'brand');
+      return false;
+    }
+    // A plan says where it happens: no neighbourhood is picked for the member.
+    const area = d.areaId && city.areas.some((a) => a.id === d.areaId) ? d.areaId : null;
+    if (!area) {
+      toast('Choose a neighbourhood', 'pin', 'brand');
+      return false;
+    }
+    const areaLabel = city.areas.find((a) => a.id === area)?.name ?? city.name;
+    try {
+      const actId = await createServerActivity(
+        { cityId: city.id, categoryId: (d.category ?? c.categoryId ?? undefined) as never, activityId: d.activity, title: d.title, place: areaLabel, privacy: 'community', day: planDay(d.day), time: d.time, spots: 0, areaId: area, format: 'meetup', price: 0, currency: city.currency },
+        dateFor(d.day, d.time, new Date(), city.utcOffset),
+        { communityId: c.id, girlOnly: c.girlOnly },
+      );
+      // No id: nothing was created (the session ended). Never a success then: the draft stays.
+      if (!actId) {
+        toast(tx('Your session has ended. Sign in again'), 'x', 'live');
+        return false;
+      }
+      haptic('success');
+      track('ACTIVITY_CREATE', { via: 'community' });
+      acts.refresh();
+      // The activity is its own record, shown in Activities (no copy in the posts).
+      toast(tx('{title} is live. Chat created', { title: d.title }), 'send', 'brand');
+      return true;
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not create', 'x', 'live');
+      return false;
+    }
+  };
+
+  const pin = (p: CommunityPost, on: boolean, f: PinFor = 'none') =>
+    pinPostFor(p.id, on, f)
+      .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
+      .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'));
+  // This render's handlers behind the cards' stable actions (`postActions`).
+  useEffect(() => {
+    handlers.current = {
+      pin: (p, on) => (on ? setPinning(p) : void pin(p, false)),
+      vote: (p, o) => void feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live')),
+      remove: (p) =>
+        void feed
+          .remove(p)
+          .then(() => toast('Post removed', 'check', 'brand'))
+          .catch(() => toast('Could not remove', 'x', 'live')),
+      plan: (d) => void createPlan({ ...d, title: `${d.title} · ${c?.name ?? ''}`.slice(0, 80) }),
+    };
+  });
 
   // The page frame (title, back) and a line of text right away: the stored
   // session read and then the community query can take seconds on a slow
@@ -225,47 +303,7 @@ function CommunityScreen() {
     }
   };
 
-  /** A plan from the assistant or a post: a real activity of this community, in its Activities space. */
-  const createPlan = async (d: PlanDraft): Promise<boolean> => {
-    if (!c.isMember) {
-      toast('Join the community first', 'users', 'brand');
-      return false;
-    }
-    // A plan says where it happens: no neighbourhood is picked for the member.
-    const area = d.areaId && city.areas.some((a) => a.id === d.areaId) ? d.areaId : null;
-    if (!area) {
-      toast('Choose a neighbourhood', 'pin', 'brand');
-      return false;
-    }
-    const areaLabel = city.areas.find((a) => a.id === area)?.name ?? city.name;
-    try {
-      const actId = await createServerActivity(
-        { cityId: city.id, categoryId: (d.category ?? c.categoryId ?? undefined) as never, activityId: d.activity, title: d.title, place: areaLabel, privacy: 'community', day: planDay(d.day), time: d.time, spots: 0, areaId: area, format: 'meetup', price: 0, currency: city.currency },
-        dateFor(d.day, d.time, new Date(), city.utcOffset),
-        { communityId: c.id, girlOnly: c.girlOnly },
-      );
-      // No id: nothing was created (the session ended). Never a success then: the draft stays.
-      if (!actId) {
-        toast(tx('Your session has ended. Sign in again'), 'x', 'live');
-        return false;
-      }
-      haptic('success');
-      track('ACTIVITY_CREATE', { via: 'community' });
-      acts.refresh();
-      // The activity is its own record, shown in Activities (no copy in the posts).
-      toast(tx('{title} is live. Chat created', { title: d.title }), 'send', 'brand');
-      return true;
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not create', 'x', 'live');
-      return false;
-    }
-  };
-
   const canModerate = c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate;
-  const pin = (p: CommunityPost, on: boolean, f: PinFor = 'none') =>
-    pinPostFor(p.id, on, f)
-      .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
-      .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'));
   const openComposer = (body = '') => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body, ...(channels.length && postSpace !== null ? { category: postSpace } : {}) } });
 
   // Under the page header and the tabs: where each space's content starts.
@@ -407,7 +445,7 @@ function CommunityScreen() {
       <FlatList
         ref={list}
         data={feed.posts}
-        keyExtractor={(p) => p.id}
+        keyExtractor={postKeyOf}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: top + 12, paddingBottom: insets.bottom + 120 }}
@@ -419,23 +457,7 @@ function CommunityScreen() {
         onEndReachedThreshold={0.6}
         onScroll={onFeedScroll}
         scrollEventThrottle={100}
-        renderItem={({ item: p }) => (
-          <View style={{ marginBottom: space[5] }}>
-            <PostCard
-              cityId={city.id}
-              p={p}
-              eng={eng}
-              canModerate={canModerate}
-              onPin={(on) => (on ? setPinning(p) : void pin(p, false))}
-              isMember={c.isMember}
-              plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo, tx) : null}
-              areas={geo.areas}
-              onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
-              onRemove={() => feed.remove(p).then(() => toast('Post removed', 'check', 'brand')).catch(() => toast('Could not remove', 'x', 'live'))}
-              onPlan={(d) => createPlan({ ...d, title: `${d.title} · ${c.name}`.slice(0, 80) })}
-            />
-          </View>
-        )}
+        renderItem={({ item: p }) => <PostCard cityId={city.id} p={p} eng={eng} canModerate={canModerate} isMember={c.isMember} geo={geo} actions={postActions} />}
         ListEmptyComponent={
           feed.loading ? (
             <PostSkeletons />
@@ -904,40 +926,53 @@ function Composer({ initial = '', onPost, onMedia }: { initial?: string; onPost:
 
 /* ───────── Post ───────── */
 
-function PostCard({
+/** What a post card can do: the same functions on every render (see `handlers`). */
+type PostActions = {
+  pin: (p: CommunityPost, on: boolean) => void;
+  vote: (p: CommunityPost, option: number) => void;
+  remove: (p: CommunityPost) => void;
+  plan: (d: PlanDraft) => void;
+};
+const postKeyOf = (p: CommunityPost) => p.id;
+
+/**
+ * One post of the feed. Memoized: a card renders again only when its post,
+ * its engagement, the member's rights or the city change, not on every
+ * render of the page (a scroll past « New posts », a tab, a sheet).
+ */
+const PostCard = memo(function PostCard({
   p,
   eng,
   canModerate,
   isMember,
-  plan,
-  onVote,
-  onRemove,
-  onPlan,
-  onPin,
+  geo,
+  actions,
   cityId,
-  areas,
 }: {
   p: CommunityPost;
   eng: ReturnType<typeof useEngagement>;
   canModerate: boolean;
   isMember: boolean;
-  plan: PlanDraft | null;
-  onVote: (o: number) => void;
-  onRemove: () => void;
-  onPlan: (d: PlanDraft) => void;
-  onPin: (on: boolean) => void;
+  /** The community city and its neighbourhoods: a plan needs one, and a post rarely names it. */
+  geo: GeoIndex;
+  actions: PostActions;
   cityId: string;
-  /** The community city's neighbourhoods: a plan needs one, and a post rarely names it. */
-  areas: GeoIndex['areas'];
 }) {
   const t = useTheme();
   const router = useRouter();
   const now = useNow();
   const total = p.pollCounts.reduce((n, x) => n + x, 0);
+  const areas = geo.areas;
+  // A post that reads like a plan offers « Make it an activity » (members only).
+  const plan = useMemo(() => (!p.activityId && isMember ? postLooksLikeAPlan(p.body, geo, tx) : null), [p.activityId, p.body, isMember, geo]);
+  const onVote = (o: number) => actions.vote(p, o);
+  const onRemove = () => actions.remove(p);
+  const onPlan = (d: PlanDraft) => actions.plan(d);
+  const onPin = (on: boolean) => actions.pin(p, on);
   // "Make it an activity" from a post that names no neighbourhood: the member picks one (none preselected).
   const [where, setWhere] = useState<{ open: boolean; areaId?: string }>({ open: false });
   return (
-    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
+    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter, marginBottom: space[5] }]}>
       <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
         <ProfileAvatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
@@ -1058,7 +1093,7 @@ function PostCard({
       {!p.pending ? <ActionBar target={{ type: 'community_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} /> : null}
     </Animated.View>
   );
-}
+});
 
 function Centered({ children }: { children: React.ReactNode }) {
   const t = useTheme();

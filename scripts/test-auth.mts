@@ -136,6 +136,8 @@ const WIPED_BY: Record<string, RegExp> = {
   // Chat messages not delivered yet (their text): cleared with the account's chats.
   'irly-chat-pending': /m\.clearChatCache\(\)/,
   'irly-space': /\bresetAppSpace\b/,
+  // The community pages kept on the phone (posts, rights, header): cleared with the community cache.
+  'irly-community-cache': /m\.clearCommunityCache\(\)/,
 };
 const persisted = new Map<string, string>();
 for (const f of files) for (const m of read(f).matchAll(/storageName\('([\w-]+)'\)/g)) if (f !== path.join('src', 'state', 'wipe.ts')) persisted.set(m[1], f);

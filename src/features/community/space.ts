@@ -4,6 +4,8 @@ import { useAccount } from '@/features/auth/account';
 import { isMissingFunction } from '@/features/live/livePublish';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { friendlyError, supabase } from '@/lib/supabase';
+import { signedLinks } from '@/features/server/media';
+import { cacheKey, load as loadCached, peek, warm, warmImages } from './cache';
 import { fetchMembers } from './governance';
 import { pinPost } from './groups';
 
@@ -202,6 +204,28 @@ export async function fetchMedia(communityId: string, before: number | null = nu
   return { items, available: true };
 }
 
+type MediaPage = { items: MediaItem[]; available: boolean };
+const mediaKey = (uid: string, communityId: string) => cacheKey(uid, 'media', communityId);
+
+/** What the gallery's first thumbnails show: a photo's file, a video's poster frame. */
+const shownPath = (m: MediaItem) => (m.kind === 'video' ? m.thumbPath : m.path);
+
+/**
+ * Reads the gallery's first page ahead (the page is open, Media is not yet),
+ * signs its first thumbnails in one request and fetches them into the image
+ * cache: Media then opens filled. Once per half minute at most.
+ */
+export function prefetchMedia(uid: string, communityId: string, thumbs = 12): void {
+  if (!supabase || !uid || !communityId) return;
+  void warm(mediaKey(uid, communityId), () => fetchMedia(communityId)).then(async (page) => {
+    const first = (page?.items ?? []).slice(0, thumbs);
+    const paths = first.map(shownPath).filter((p): p is string => Boolean(p));
+    if (!paths.length) return;
+    const links = await signedLinks('post-media', paths);
+    warmImages(paths.filter((p) => links[p]).map((p) => ({ uri: links[p], cacheKey: p })), thumbs);
+  });
+}
+
 /** The gallery, paged by date: `more()` asks for the next files when the grid nears its end. */
 export function useCommunityMedia(communityId: string, enabled = true) {
   const account = useAccount();
@@ -213,27 +237,37 @@ export function useCommunityMedia(communityId: string, enabled = true) {
   const [loadingMore, setLoadingMore] = useState(false);
   const seq = useRef(0);
   const live = Boolean(uid && supabase && enabled && communityId);
+  const ck = uid && communityId ? mediaKey(uid, communityId) : '';
 
-  const reload = useCallback(() => {
-    if (!live) return;
-    const n = ++seq.current;
-    fetchMedia(communityId)
-      .then(({ items: next, available }) => {
-        if (n !== seq.current) return;
-        setItems(next);
-        setEnd(!available || next.length < MEDIA_PAGE);
-        setError(null);
-      })
-      .catch((e: unknown) => n === seq.current && setError(e instanceof Error ? e.message : 'Can’t reach IRLY right now'))
-      .finally(() => n === seq.current && setLoading(false));
-  }, [communityId, live]);
+  // Which gallery the state holds; until it holds this one, the first page read ahead
+  // (page open, prefetchMedia) shows at once.
+  const [loadedFor, setLoadedFor] = useState('');
+  const read = useCallback(
+    (join: boolean) => {
+      if (!live) return;
+      const n = ++seq.current;
+      loadCached(ck, () => fetchMedia(communityId), join)
+        .then(({ items: next, available }) => {
+          if (n !== seq.current) return;
+          setItems(next);
+          setEnd(!available || next.length < MEDIA_PAGE);
+          setError(null);
+          setLoadedFor(ck);
+        })
+        .catch((e: unknown) => n === seq.current && setError(e instanceof Error ? e.message : 'Can’t reach IRLY right now'))
+        .finally(() => n === seq.current && setLoading(false));
+    },
+    [communityId, live, ck],
+  );
+  const ahead = loadedFor === ck ? undefined : peek<MediaPage>(ck);
+  const reload = useCallback(() => read(false), [read]);
 
   useEffect(() => {
-    reload();
+    read(true);
     return () => {
       seq.current += 1;
     };
-  }, [reload]);
+  }, [read]);
   useRefreshOn(['communities'], reload);
 
   const more = useCallback(() => {
@@ -253,6 +287,7 @@ export function useCommunityMedia(communityId: string, enabled = true) {
       .finally(() => setLoadingMore(false));
   }, [communityId, live, end, loadingMore, items]);
 
+  if (ahead) return { items: live ? ahead.items : [], loading: false, error: null, loadingMore, end: live ? !ahead.available || ahead.items.length < MEDIA_PAGE : true, more, reload };
   return { items: live ? items : [], loading: live ? loading : false, error: live ? error : null, loadingMore, end: live ? end : true, more, reload };
 }
 
@@ -299,17 +334,24 @@ export function useCommunityRules(communityId: string) {
   const uid = account?.userId;
   const [state, setState] = useState<{ key: string; rules: string | null }>({ key: '', rules: null });
   const key = `${uid ?? ''}|${communityId}`;
-  const load = useCallback(() => {
-    if (!uid || !communityId) return;
-    let alive = true;
-    fetchRules(communityId).then((rules) => alive && setState({ key, rules }));
-    return () => {
-      alive = false;
-    };
-  }, [uid, communityId, key]);
-  useEffect(load, [load]);
+  // The last known rules show at once (About opens filled).
+  const ck = uid && communityId ? cacheKey(uid, 'rules', communityId) : '';
+  const read = useCallback(
+    (join: boolean) => {
+      if (!uid || !communityId) return;
+      let alive = true;
+      loadCached(ck, () => fetchRules(communityId), join).then((rules) => alive && setState({ key, rules }));
+      return () => {
+        alive = false;
+      };
+    },
+    [uid, communityId, key, ck],
+  );
+  const load = useCallback(() => read(false), [read]);
+  useEffect(() => read(true), [read]);
   useRefreshOn(['communities'], load);
-  return { rules: state.key === key ? state.rules : null, loading: Boolean(uid && communityId) && state.key !== key, reload: load };
+  const known = peek<string | null>(ck);
+  return { rules: state.key === key ? state.rules : (known ?? null), loading: Boolean(uid && communityId) && state.key !== key && known === undefined, reload: load };
 }
 
 export type CommunityInfo = { name?: string; tagline?: string | null; description?: string | null; rules?: string | null };

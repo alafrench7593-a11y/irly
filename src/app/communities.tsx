@@ -28,6 +28,7 @@ import { FavoriteStar } from '@/features/community/discovery/FavoriteStar';
 import { SortBar } from '@/features/community/discovery/SortBar';
 import { useCityFilter } from '@/features/server/scope';
 import { profileTags, TOPIC_GROUPS, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
+import { prefetchCommunity } from '@/features/community/prefetch';
 import { isDemoId, useDemoCommunitiesLike, useDemoGirl } from '@/features/girl/demo';
 import { GirlOfficialCommunities } from '@/features/girl/GirlOfficial';
 import { useMemberProfile, type MemberCommunity } from '@/features/profile/member';
@@ -618,7 +619,7 @@ function Row({
   if (card) {
     return (
       <Animated.View entering={enter.rise(Math.min(index, 8))} layout={LinearTransition.springify().dampingRatio(0.9)} style={{ width: card }}>
-        <PressableScale onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name} testID={`community-${id}`}>
+        <PressableScale onPressIn={() => prefetchCommunity(id)} onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name} testID={`community-${id}`}>
           <GlassLayer radius={radius.xl} />
           <CommunityThumb id={id} name={name} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size="100%" height={128} member={isMember} />
           <View style={styles.cardBody}>
@@ -650,7 +651,7 @@ function Row({
   return (
     <Animated.View entering={enter.rise(Math.min(index, 8))} layout={LinearTransition.springify().dampingRatio(0.9)}>
       {/* testID: the row of this community, whatever its shown title (end-to-end tests). */}
-      <PressableScale onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name} testID={`community-${id}`}>
+      <PressableScale onPressIn={() => prefetchCommunity(id)} onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name} testID={`community-${id}`}>
         <GlassLayer radius={radius.lg} />
         <CommunityThumb id={id} name={name} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size={44} member={isMember} />
         <View style={styles.rowBody}>

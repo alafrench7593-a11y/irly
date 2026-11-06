@@ -107,6 +107,9 @@ if (supabase) {
   });
 }
 
+/** The signed-in member's id right now, outside React (a prefetch on press); null while unknown or signed out. */
+export const currentUserId = (): string | null => useAuthStore.getState().account?.userId ?? null;
+
 /** The signed-in member, kept in sync with Supabase Auth (null while unknown or signed out). */
 export function useAccount(): Account {
   return useAuthStore((st) => st.account);
