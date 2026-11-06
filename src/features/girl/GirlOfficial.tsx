@@ -9,7 +9,7 @@ import { Photo } from '@/components/visual/Photo';
 import { DEMO } from '@/config/app';
 import type { PhotoKey } from '@/data/photos';
 import { joinCommunity, leaveCommunity } from '@/features/community/data';
-import { GIRL_OFFICIAL_PHOTO, useGirlOfficialCommunities, type GirlOfficialCommunity, type GirlOfficialTopic } from '@/features/community/official';
+import { communityPhoto, GIRL_OFFICIAL_PHOTO, useGirlOfficialCommunities, type GirlOfficialCommunity, type GirlOfficialTopic } from '@/features/community/official';
 import { usePhotoLink } from '@/features/server/covers';
 import { t as tx } from '@/i18n';
 import { enter } from '@/motion/enter';
@@ -21,16 +21,13 @@ import { GButton, GIconWell } from './ui';
 /** Each official community's photo (until its hosts set one): the same as on its page (official.ts). */
 const PHOTO: Record<GirlOfficialTopic, PhotoKey> = GIRL_OFFICIAL_PHOTO;
 
-/** The demo build has no server: the same four, with no members and nothing to join. */
-const DEMO_FOUR: GirlOfficialCommunity[] = [
-  { id: 'demo-girl_trip', topic: 'girl_trip', name: 'Girl Trip', tagline: 'Trips, excursions, getaways and road trips between girls.', emoji: '✈️', members: 0, isMember: false, coverPath: null },
-  { id: 'demo-girl_newcomers', topic: 'girl_newcomers', name: 'Girl Expat', tagline: 'Just arrived in Dubai? Ask anything, get tips and meet other newcomers.', emoji: '👋', members: 0, isMember: false, coverPath: null },
-  { id: 'demo-girl_activity', topic: 'girl_activity', name: 'Girl Activité', tagline: 'Outings between women: restaurants, cafés, beach clubs, shopping, nights out and more.', emoji: '✨', members: 0, isMember: false, coverPath: null },
-  { id: 'demo-girl_sport', topic: 'girl_sport', name: 'Girl Sport', tagline: 'Find sports partners and train together, between women.', emoji: '🎾', members: 0, isMember: false, coverPath: null },
+/** The demo build has no server: the same one (IRLY Girl, since 2026-11-06), with no members and nothing to join. */
+const DEMO_OFFICIAL: GirlOfficialCommunity[] = [
+  { id: 'demo-girls', topic: 'girls', name: 'IRLY Girl', tagline: 'Women meeting women in Dubai: plans, advice and friendship.', emoji: '💗', members: 0, isMember: false, coverPath: null },
 ];
 
 /**
- * IRLY Girl's four official communities, as cards: photo, name, what it is
+ * IRLY Girl's official communities (IRLY Girl since 2026-11-06), as cards: photo, name, what it is
  * for, its real member count and a Join button that answers at once (the
  * count follows the server). Joining twice or leaving twice is never sent:
  * a card waits for its answer. `cell`: on a wide screen the cards form a
@@ -39,7 +36,7 @@ const DEMO_FOUR: GirlOfficialCommunity[] = [
 export function GirlOfficialCommunities({ cell }: { cell?: number } = {}) {
   const router = useRouter();
   const server = useGirlOfficialCommunities();
-  const list = DEMO ? DEMO_FOUR : server.list;
+  const list = DEMO ? DEMO_OFFICIAL : server.list;
   if (!DEMO && server.loading) {
     return (
       <View style={styles.list}>
@@ -106,7 +103,7 @@ function OfficialCard({ c, index, width, onOpen }: { c: GirlOfficialCommunity; i
   return (
     <Animated.View entering={reduced ? undefined : enter.rise(index)} layout={reduced ? undefined : LinearTransition.springify().damping(18)} style={width ? { width } : undefined}>
       <PressableScale haptic="select" scaleTo={0.98} onPress={onOpen} style={styles.card} accessibilityRole="link" accessibilityLabel={tx('{name}, {n} members', { name: c.name, n: members })}>
-        <Photo pinned tint={GIRL_TINT} visual={{ photo: PHOTO[c.topic] ?? 'girlsOut', uri: uri ?? undefined }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={700} recyclingKey={`gof-${c.id}-${c.coverPath ?? 'app'}`} />
+        <Photo pinned tint={GIRL_TINT} visual={{ photo: PHOTO[c.topic] ?? communityPhoto(c.topic, null, c.name), uri: uri ?? undefined }} light="dubai" scrim="strong" style={StyleSheet.absoluteFill} width={700} recyclingKey={`gof-${c.id}-${c.coverPath ?? 'app'}`} />
         <View style={styles.inner}>
           <View style={styles.top}>
             <View style={styles.badge}>

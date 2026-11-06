@@ -491,7 +491,7 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
   const account = useAccount();
   const { keep } = useCityFilter(cityId as CityId);
   const topics = officialTopics.join(',');
-  const q = useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string; coverPath: string | null; official: boolean; topic: string | null }[]>(
+  const q = useQuery<{ id: string; name: string; tagline: string | null; member: boolean; members: number; cityId: string; coverPath: string | null; official: boolean; topic: string | null; retired: boolean }[]>(
     `comm-${cityId}-${like}-${girlOnly}-${membersOnly}-${topics}-${account?.userId ?? 'anon'}`,
     async () => {
       if (!account) return [];
@@ -500,7 +500,7 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
       // not every member of every community.
       let q = sb()
         .from('communities')
-        .select('id, name, tagline, city_id, members_count, cover_path, official, topic, community_members(user_id)')
+        .select('id, name, tagline, city_id, members_count, cover_path, official, topic, retired_at, community_members(user_id)')
         .in('city_id', cityScope(cityId as CityId))
         .is('deleted_at', null)
         .is('parent_id', null)
@@ -513,7 +513,7 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
       if (error) throw new Error(error.message);
       return (data ?? []).map((c) => {
         const m = (c.community_members ?? []) as { user_id: string }[];
-        return { id: c.id, name: c.name, tagline: c.tagline, member: m.length > 0, members: (c.members_count as number) ?? 0, cityId: c.city_id as string, coverPath: (c.cover_path as string | null) ?? null, official: Boolean(c.official), topic: (c.topic as string | null) ?? null };
+        return { id: c.id, name: c.name, tagline: c.tagline, member: m.length > 0, members: (c.members_count as number) ?? 0, cityId: c.city_id as string, coverPath: (c.cover_path as string | null) ?? null, official: Boolean(c.official), topic: (c.topic as string | null) ?? null, retired: c.retired_at != null };
       });
     },
     [],
@@ -521,7 +521,8 @@ export function useCommunitiesLike(cityId: string, like: string, girlOnly = fals
   // Joined, left, created or deleted anywhere in the app: the list follows.
   useRefreshOn(['communities'], q.reload);
   const data = useMemo(() => {
-    const kept = q.data.filter((c) => keep(c.cityId));
+    // A retired official community (IRLY Mom Community since 2026-11-06) stays listed for its members only.
+    const kept = q.data.filter((c) => keep(c.cityId) && (!c.retired || c.member));
     if (!topics) return kept;
     const order = topics.split(',');
     const rank = (c: { official: boolean; topic: string | null }) => (c.official ? order.indexOf(c.topic ?? '') : -1);

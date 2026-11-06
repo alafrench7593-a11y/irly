@@ -195,15 +195,16 @@ declare mixte text[]; rev text[]; got text[]; first_official text;
 begin
   perform pg_temp.as_user('d0a00000-0000-0000-0000-000000000004');
   select array_agg(topic order by sort, topic) into mixte from public.admin_official_topics() where space = 'mixte';
-  perform pg_temp.check(mixte = array['expats', 'sport', 'network', 'lifestyle'], 'E: IRLY''s four, in the owner''s order');
+  -- The owner's list of 2026-11-06 (20261108200000).
+  perform pg_temp.check(mixte = array['expats', 'lifestyle', 'sport', 'running', 'padel', 'trip', 'network', 'francais'], 'E: IRLY''s eight, in the owner''s order');
   perform pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'girl')
-    = array['girl_trip', 'girl_newcomers', 'girl_activity', 'girl_sport', 'girl_network'], 'E: IRLY Girl''s, Girl CEO last (inside IRLY Network)');
-  perform pg_temp.check((select array_agg(topic) from public.admin_official_topics() where space = 'mom') = array['moms'], 'E: IRLY Maman');
-  rev := array['lifestyle', 'network', 'sport', 'expats'];
+    = array['girls', 'girl_network'], 'E: IRLY Girl, Girl CEO last (inside IRLY Network)');
+  perform pg_temp.check(not exists (select 1 from public.admin_official_topics() where space = 'mom'), 'E: IRLY Maman is retired');
+  rev := array['lifestyle', 'francais', 'network', 'trip', 'padel', 'running', 'sport', 'expats'];
   perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['lifestyle', 'lifestyle', 'sport', 'expats'], 'New order')$q$) = '22023', 'E: a duplicate is refused');
   perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['lifestyle', 'sport', 'expats'], 'New order')$q$) = '22023', 'E: a missing community is refused');
   perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['lifestyle', 'network', 'sport', 'expats', 'ghost'], 'New order')$q$) = '22023', 'E: an unknown one is refused');
-  perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['lifestyle', 'network', 'sport', 'girl_trip'], 'New order')$q$) = '22023', 'E: one from another space is refused');
+  perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['lifestyle', 'francais', 'network', 'trip', 'padel', 'running', 'sport', 'girls'], 'New order')$q$) = '22023', 'E: one from another space is refused');
   perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('everything', array['expats'], 'New order')$q$) = '22023', 'E: an unknown space is refused');
   perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['lifestyle', 'network', 'sport', 'expats'], '')$q$) = '22023', 'E: a reason is required');
   perform public.admin_official_reorder('mixte', rev, 'Activities first for the summer');

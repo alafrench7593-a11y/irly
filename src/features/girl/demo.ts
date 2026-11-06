@@ -258,7 +258,8 @@ export function useDemoComments(t: Target) {
   const uncomment = useDemoGirl((s) => s.uncomment);
   const comments = useMemo(() => [...demoThread(t.id, liked), ...(mine ?? [])], [t.id, liked, mine]);
   const add = useCallback(
-    async (body: string, parentId: string | null, id?: string) => {
+    // Mentions (4th argument) are the server's to send: the demo keeps none.
+    async (body: string, parentId: string | null, id?: string, _mentions?: string[]) => {
       const text = body.trim();
       if (!text) return;
       comment(t.id, { id: id ? `local-${id}` : `local-${Date.now()}`, parentId, authorId: ME, firstName: 'You', body: text, createdAt: Date.now(), deleted: false, likes: 0, liked: false, mine: true });

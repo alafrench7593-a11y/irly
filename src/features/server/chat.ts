@@ -8,7 +8,7 @@ import { storageName } from '@/config/app';
 import { NONE } from '@/lib/none';
 import type { Conversation, Message } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
-import { liveChannel, supabase, whenListening } from '@/lib/supabase';
+import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, echoGate, expectEcho, heardMessage, resetSyncEchoes, syncNow, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
 import { uploadChatPhoto } from './media';
@@ -619,7 +619,7 @@ export function useServerThread(conversationId: string): ServerThread {
         const [{ conv, error: e1 }, msgs] = await Promise.all([head, page]);
         if (!alive) return;
         if (e1 || !conv) {
-          setError(e1 ?? 'This conversation is not available');
+          setError(e1 ? friendlyError(e1) : 'This conversation is not available');
           setLoading(false);
           return;
         }
@@ -635,7 +635,8 @@ export function useServerThread(conversationId: string): ServerThread {
         markRead();
       } catch (e) {
         if (!alive) return;
-        setError(e instanceof Error ? e.message : 'Can’t reach IRLY right now');
+        // In the member's words (« No connection: try again »), never the raw « TypeError: Failed to fetch ».
+        setError(e instanceof Error ? friendlyError(e.message) : 'Can’t reach IRLY right now');
         setLoading(false);
       }
     })();

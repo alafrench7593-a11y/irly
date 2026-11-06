@@ -1755,10 +1755,15 @@ select pg_temp.check(exists (select 1 from public.communities c join public.comm
 select pg_temp.check(not exists (select 1 from public.communities where official and topic = 'nights' and city_id = 'sharjah'), 'emirates: no IRLY Nights in Sharjah');
 select pg_temp.check((select count(*) from public.communities where official and topic = 'sport' and city_id = 'sharjah' and parent_id is null and deleted_at is null) = 1, 'emirates: created once (running it again adds nothing)');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
-select pg_temp.check((select city_id from public.community_recommend('sharjah', array['goal:sport'], 6) where topic = 'sport') = 'sharjah', 'emirates: a Sharjah member who looks for sport gets IRLY Sport in Sharjah');
-select pg_temp.check(exists (select 1 from public.community_recommend('ajman', array['goal:wellness'], 6) where topic = 'sport' and city_id = 'ajman'), 'emirates: wellness leads to IRLY Sport in Ajman');
+-- Since 20261108200000 (owner's list of 2026-11-06) IRLY's official communities run in Dubai only:
+-- the other emirates' rows above are kept but retired, so a member there is recommended Dubai's
+-- (20261108300000), never their emirate's retired one.
+select pg_temp.check((select city_id from public.community_recommend('sharjah', array['goal:sport'], 6) where topic = 'sport') = 'dubai', 'emirates: a Sharjah member who looks for sport gets IRLY Sport (Dubai), not the retired one of Sharjah');
+select pg_temp.check(exists (select 1 from public.community_recommend('ajman', array['goal:wellness'], 6) where topic = 'sport' and city_id = 'dubai'), 'emirates: wellness leads to IRLY Sport (Dubai) from Ajman');
 select pg_temp.check(exists (select 1 from public.community_recommend('sharjah', array['goal:nightlife'], 6) where topic = 'lifestyle'), 'emirates: nightlife finds IRLY Activité from Sharjah');
-select pg_temp.check(exists (select 1 from public.community_recommend('rak', array['goal:help'], 6) where topic = 'expats' and city_id = 'rak'), 'emirates: help & tips leads to IRLY Expat in Ras Al Khaimah');
+select pg_temp.check(exists (select 1 from public.community_recommend('rak', array['goal:help'], 6) where topic = 'expats' and city_id = 'dubai'), 'emirates: help & tips leads to IRLY Expat (Dubai) from Ras Al Khaimah');
+select pg_temp.check(not exists (select 1 from public.community_recommend('sharjah', array['goal:sport', 'goal:nightlife', 'goal:help', 'goal:wellness'], 20) r
+  join public.communities c on c.id = r.id where c.retired_at is not null), 'emirates: a retired community is never recommended');
 select pg_temp.check(exists (select 1 from public.community_recommend('fujairah', array['goal:dogwalk'], 6)), 'emirates: every answer leads somewhere (dog walk)');
 
 -- ===== Pre-launch audit =====

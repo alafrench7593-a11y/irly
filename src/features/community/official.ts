@@ -11,12 +11,12 @@ import type { Profile } from '@/state/store';
 import { displayCommunityName } from './name';
 
 /**
- * IRLY Community: the official communities IRLY runs in each city (IRLY
- * Expat, IRLY Sport, IRLY Network, IRLY Activité; in IRLY Girl: Girl Trip,
- * Girl Expat, Girl Activité, Girl Sport, and Girl CEO inside IRLY Network;
- * IRLY Mom Community); every other community is created by members. Which ones
+ * IRLY Community: the official communities IRLY runs, in Dubai only (IRLY
+ * Expat, IRLY Activité, IRLY Sport, IRLY Running Club, IRLY Padel Club, IRLY
+ * Trip, IRLY Network, Les Français à Dubaï; IRLY Girl, and Girl CEO inside
+ * IRLY Network); every other community is created by members. Which ones
  * exist, and what they match, is configured on the server
- * (community_topics, migration 20261028100000_irly_official_communities_four);
+ * (community_topics, migration 20261108200000_irly_official_communities_dubai);
  * the app only sends the member's own onboarding answers as tags and shows
  * what comes back. Joining is always the member's choice.
  */
@@ -48,6 +48,8 @@ export function profileTags(p: Profile): string[] {
   // Every answer to "What are you looking for?" is a goal the server can match.
   (p.lookingFor ?? []).forEach((x) => tags.add(`goal:${x}`));
   if (p.since === 'new' || p.since === 'year') tags.add('newcomer');
+  // Languages they speak (native names at signup, or codes): Les Français à Dubaï for French speakers.
+  if ((p.languages ?? []).some((l) => l === 'fr' || l === 'Français' || l.toLowerCase() === 'french')) tags.add('lang:fr');
   return [...tags];
 }
 
@@ -116,14 +118,14 @@ export async function joinCommunities(ids: string[]): Promise<number> {
 
 /** Discover groups for the official topics (filters on the Communities page). */
 export const TOPIC_GROUPS: Record<string, string[]> = {
-  sports: ['sport', 'football', 'running', 'beach'],
+  sports: ['sport', 'padel', 'football', 'running', 'beach'],
   fitness: ['gym', 'running', 'wellness'],
   networking: ['network', 'entrepreneurs', 'tech', 'ai', 'ecom'],
   business: ['entrepreneurs', 'ecom', 'network'],
   travel: ['trip', 'beach'],
   food: ['food', 'nights'],
   culture: ['culture', 'nights'],
-  lifestyle: ['newcomers', 'expats', 'lifestyle', 'girls', 'moms', 'families', 'food', 'beach', 'shopping', 'nights'],
+  lifestyle: ['newcomers', 'expats', 'francais', 'lifestyle', 'girls', 'moms', 'families', 'food', 'beach', 'shopping', 'nights'],
 };
 
 /** The photo of each IRLY community: always a photo taken in Dubai (the library's Dubai photos, DUBAI_KEYS). */
@@ -134,7 +136,10 @@ export const TOPIC_PHOTO = {
   sport: 'crossfit',
   football: 'football',
   running: 'running',
+  padel: 'padelMix',
   trip: 'roadtrip',
+  // Les Français à Dubaï: a table shared with friends.
+  francais: 'dinnerMix',
   beach: 'beachClub',
   food: 'brunch',
   network: 'founders',
@@ -256,20 +261,20 @@ export function introDraft(p: Profile, cityName: string, interestLabels: string[
 }
 
 /**
- * IRLY Girl's official communities: the four IRLY runs for it, in its order
- * (girl_official_communities on the server): Girl Trip, Girl Expat (topic
- * girl_newcomers, the former IRLY Nouvelle Arrivante), Girl Activité, Girl
- * Sport. Every page that features IRLY Girl's communities shows these and
- * no other official one (Girl CEO is in IRLY Network); the communities
- * members create stay listed as theirs.
+ * IRLY Girl's official community since 2026-11-06 (girl_official_communities
+ * on the server, migration 20261108200000): IRLY Girl, in Dubai. Every page
+ * that features IRLY Girl's communities shows it and no other official one
+ * (Girl CEO is in IRLY Network; Girl Trip, Girl Expat, Girl Activité and
+ * Girl Sport are retired, still open to their members from « Mine »); the
+ * communities members create stay listed as theirs.
  */
-export const GIRL_OFFICIAL_TOPICS = ['girl_trip', 'girl_newcomers', 'girl_activity', 'girl_sport'] as const;
+export const GIRL_OFFICIAL_TOPICS = ['girls'] as const;
 export type GirlOfficialTopic = (typeof GIRL_OFFICIAL_TOPICS)[number];
 
 /**
  * IRLY Mom Community's official community: IRLY Mom Community (topic moms,
- * the former IRLY Moms, then IRLY Maman). Women only; listed first among the
- * mom communities.
+ * the former IRLY Moms, then IRLY Maman). Women only. Retired since
+ * 2026-11-06: listed first among the mom communities only for its members.
  */
 export const MAMAN_OFFICIAL_TOPICS = ['moms'] as const;
 

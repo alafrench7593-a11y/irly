@@ -41,12 +41,12 @@ export default function CommunitiesWelcome() {
   const introSeen = useStore((s) => s.communityIntroSeen);
   const markIntro = useStore((s) => s.markCommunityIntroSeen);
   const tags = useMemo(() => profileTags(profile), [profile]);
-  // IRLY Girl: its five official communities; IRLY: the ones matching the answers.
+  // IRLY Girl: its official community (IRLY Girl); IRLY: the ones matching the answers.
   const inGirl = useAppSpace() === 'girl';
   const rec = useRecommendedCommunities(cityId, tags, 6);
   const five = useGirlOfficialCommunities(inGirl);
   const girlList = useMemo<OfficialCommunity[] | null>(
-    () => five.list?.map((c) => ({ id: c.id, topic: c.topic, name: c.name, tagline: c.tagline, emoji: c.emoji, girlOnly: true, introFirst: c.topic === 'girl_newcomers', members: c.members, isMember: c.isMember, score: 0, cityId: 'dubai' })) ?? null,
+    () => five.list?.map((c) => ({ id: c.id, topic: c.topic, name: c.name, tagline: c.tagline, emoji: c.emoji, girlOnly: true, introFirst: false, members: c.members, isMember: c.isMember, score: 0, cityId: 'dubai' })) ?? null,
     [five.list],
   );
   const { list, loading, error, signedIn } = inGirl ? { list: girlList, loading: five.loading, error: five.error, signedIn: five.signedIn } : rec;

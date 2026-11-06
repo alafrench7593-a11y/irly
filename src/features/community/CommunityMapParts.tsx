@@ -18,6 +18,7 @@ import { useTheme } from '@/theme/useTheme';
 import { CommunityThumb } from './CommunityThumb';
 import { buildSpots, clusterSpots, useCommunityMeetups, type MapCommunity, type MapSpan, type Spot } from './mapSpots';
 import { displayCommunityName } from './name';
+import { prefetchCommunity } from './prefetch';
 
 /** Compact: the list under it stays on screen. */
 export const MAP_HEIGHT = 260;
@@ -177,7 +178,7 @@ export function SpotSheet({ spot, cityId, onClose }: { spot: Spot; cityId: CityI
             ? tx('Next meetup · {when}', { when: cityWhen(next.startsAt, c.cityId ?? cityId) })
             : [c.cityId ? tx('Based in {city}', { city: CITIES[c.cityId as CityId]?.name ?? '' }) : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ');
           return (
-            <PressableScale key={c.id} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={styles.sheetRow} accessibilityLabel={name}>
+            <PressableScale key={c.id} onPressIn={() => prefetchCommunity(c.id)} onPress={() => router.push(`/c/${c.id}`)} haptic="select" scaleTo={0.98} style={styles.sheetRow} accessibilityLabel={name}>
               <CommunityThumb id={c.id} name={name} topic={c.topic} categoryId={c.categoryId} light={light} size={32} member={c.isMember} />
               <View style={{ flex: 1 }}>
                 <Text variant="label" numberOfLines={1} raw>

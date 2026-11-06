@@ -1,16 +1,17 @@
 import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
 import { AdminBadge } from '@/features/admin/StaffBadge';
-import { useAuthStatus } from '@/features/auth/account';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoCommunityScreen } from '@/features/girl/DemoScreens';
 import { t as tx, a11y } from '@/i18n';
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
 import { ActionBar } from '@/components/social/ActionBar';
-import { Avatar } from '@/components/ui/Avatar';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { RichText } from '@/components/ui/RichText';
 import { Button } from '@/components/ui/Button';
 import { Chip, IconButton, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
@@ -34,13 +35,24 @@ import { Photo } from '@/components/visual/Photo';
 import { openReport } from '@/features/moderation/reportStore';
 import { shareNative, useEngagement } from '@/features/server/engage';
 import { isManager, useCommunityHeader, useMyRights } from '@/features/community/governance';
-import { ChatEntry, CommunityFacts, MemberList } from '@/features/community/CommunityPageParts';
+import { CommunityFacts, MemberList } from '@/features/community/CommunityPageParts';
+import { AboutSheet } from '@/features/community/AboutSheet';
+import { Agenda, type AgendaItem } from '@/features/community/Agenda';
+import { ChatInvite, ChatPane } from '@/features/community/ChatPane';
+import { NewPostsPill, PublishButton } from '@/features/community/FeedOverlays';
+import { MediaEmpty, MediaGrid, type GalleryItem } from '@/features/community/MediaGallery';
+import { PinnedStrip } from '@/features/community/PinnedStrip';
+import { SpaceTabs, TabPanel, TABS_HEIGHT, type SpaceTab } from '@/features/community/SpaceTabs';
+import { PIN_FOR, pinPostFor, prefetchMedia, useCommunityMedia, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
+import { prefetchMembers, warmPostImages } from '@/features/community/prefetch';
+import { Sheet } from '@/components/ui/Sheet';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { track } from '@/lib/analytics';
 import { hueOf } from '@/lib/format';
 import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { PostMedia } from '@/features/posts/PostMedia';
-import { pinPost, useChannels, useCommunityExtras } from '@/features/community/groups';
+import { useChannels, useCommunityExtras } from '@/features/community/groups';
 import { CommunityActivityFeed, ProposeActivity } from '@/features/community/CommunityActivitiesSlot';
 import { HostTools, NotifyPrefs, ParentLink, SpaceChips, SubgroupList } from '@/features/community/GroupsUI';
 import { haptic } from '@/motion/haptics';
@@ -56,7 +68,6 @@ import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { ScreenColumn } from '@/components/layout/responsive';
 import { communitySplit, useCommunitySplit } from '@/features/community/layout';
 
-type Tab = 'discussion' | 'activities' | 'members' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
 // Upcoming needs no label; the others say what they are.
 const STATUS_LABEL: Partial<Record<ActivityStatus, string>> = { ongoing: 'Happening now', finished: 'Finished', cancelled: 'Cancelled' };
@@ -67,10 +78,12 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 /**
- * A community: posts (text, polls, plans) with likes and comments, its chat,
- * its activities, and a free assistant that plans an activity for the
- * group, drafts a poll, summarises the week or suggests what to post.
- * Join = you are in the chat too.
+ * A community in five spaces: Posts (text, photos, polls, plans, pinned
+ * first, Recent or Popular, paged), its Chat (in the page, for members),
+ * Activities (an agenda by week or month), Media (every photo and video)
+ * and Members. About (with the rules) and Search sit in the header. A free
+ * assistant plans an activity for the group, drafts a poll, summarises the
+ * week or suggests what to post. Join = you are in the chat too.
  */
 // The demonstration build's IRLY Girl communities (example content, nothing saved).
 export default function CommunityRoute() {
@@ -105,14 +118,26 @@ function CommunityScreen() {
   // Posts by space: General, or one of the community's categories (when it has some).
   const { channels } = useChannels(id);
   const [postSpace, setPostSpace] = useState<string | null>(null);
-  const feed = useCommunityFeed(id, channels.length ? postSpace : undefined);
+  // Recent (pinned first, then newest) or Popular; pages load as the list nears its end.
+  const [sort, setSort] = useState<FeedSort>('recent');
+  const feed = useCommunityFeed(id, channels.length ? postSpace : undefined, { sort });
   const [past, setPast] = useState(false);
   const acts = useCommunityActivities(id, past);
   // Each activity's photo: its own, else the app's photo of its subject (the same as on its page).
   const actThumbs = useActivityThumbs(acts.activities.map((a) => a.id));
   const extras = useCommunityExtras(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
-  const [tab, setTab] = useState<Tab>('discussion');
+  // The five spaces; each keeps its state (scroll, search, agenda) while another shows.
+  const [tab, setTab] = useState<SpaceTab>('posts');
+  const [actView, setActView] = useState<'agenda' | 'list'>('agenda');
+  // The gallery loads the first time Media opens, then stays.
+  const [mediaOn, setMediaOn] = useState(false);
+  if (tab === 'media' && !mediaOn) setMediaOn(true);
+  const media = useCommunityMedia(id, mediaOn);
+  const [about, setAbout] = useState(false);
+  const { rules, loading: rulesLoading } = useCommunityRules(id);
+  // A post a moderator pins: for how long (24 h, 7 days, no end).
+  const [pinning, setPinning] = useState<CommunityPost | null>(null);
   // What I may do here (community_my_rights) and the header's real numbers (community_header).
   const { rights: my } = useMyRights(id);
   const { header } = useCommunityHeader(id);
@@ -122,9 +147,104 @@ function CommunityScreen() {
   const reduced = useReducedMotion();
   // An assistant idea tapped goes into the post composer (n remounts it).
   const [idea, setIdea] = useState({ text: '', n: 0 });
+  const list = useRef<FlatList<CommunityPost>>(null);
+  // The cards' actions, the same functions on every render (the cards are memoized): each
+  // call runs the handler of the latest render, kept below once the community is known.
+  const handlers = useRef<PostActions | null>(null);
+  const postActions = useMemo<PostActions>(
+    () => ({
+      pin: (p, on) => handlers.current?.pin(p, on),
+      vote: (p, o) => handlers.current?.vote(p, o),
+      remove: (p) => handlers.current?.remove(p),
+      plan: (d) => handlers.current?.plan(d),
+    }),
+    [],
+  );
+  // Reading further down: posts new from others wait behind « New posts » instead of moving the list.
+  const down = useRef(false);
+  const onFeedScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const deep = e.nativeEvent.contentOffset.y > 700;
+      if (deep === down.current) return;
+      down.current = deep;
+      feed.setHold(deep);
+      if (!deep && feed.incoming.length) feed.showIncoming();
+    },
+    [feed],
+  );
 
   const city = c ? (CITIES[c.cityId as CityId] ?? CITIES.dubai) : CITIES.dubai;
   const geo: GeoIndex = useMemo(() => ({ cities: [{ id: city.id, name: city.name }], areas: city.areas.map((a) => ({ id: a.id, name: a.name, cityId: city.id })) }), [city]);
+  const agenda = useMemo<AgendaItem[]>(
+    () => acts.activities.filter((a) => a.status !== 'cancelled').map((a) => ({ id: a.id, title: a.title, startsAt: a.startsAt, going: a.going, pinned: Boolean(a.pinnedAt), subtitle: a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : a.status === 'ongoing' ? tx('Happening now') : null })),
+    [acts.activities],
+  );
+  // The feed's files are signed in one request and its first photos fetched ahead; once
+  // the page has settled, the gallery's first page and thumbnails too (Media opens filled).
+  const uid = useAccount()?.userId;
+  useEffect(() => warmPostImages(feed.posts), [feed.posts]);
+  const settled = !feed.loading && Boolean(loaded);
+  useEffect(() => {
+    if (!settled || !uid || mediaOn) return;
+    const timer = setTimeout(() => (prefetchMedia(uid, id), prefetchMembers(id)), 1200);
+    return () => clearTimeout(timer);
+  }, [settled, uid, id, mediaOn]);
+  const gallery = useMemo<GalleryItem[]>(() => media.items.map((m) => ({ key: m.key, kind: m.kind, path: m.path, thumbPath: m.thumbPath, seconds: m.seconds, postId: m.postId })), [media.items]);
+
+  /** A plan from the assistant or a post: a real activity of this community, in its Activities space. */
+  const createPlan = async (d: PlanDraft): Promise<boolean> => {
+    if (!c) return false;
+    if (!c.isMember) {
+      toast('Join the community first', 'users', 'brand');
+      return false;
+    }
+    // A plan says where it happens: no neighbourhood is picked for the member.
+    const area = d.areaId && city.areas.some((a) => a.id === d.areaId) ? d.areaId : null;
+    if (!area) {
+      toast('Choose a neighbourhood', 'pin', 'brand');
+      return false;
+    }
+    const areaLabel = city.areas.find((a) => a.id === area)?.name ?? city.name;
+    try {
+      const actId = await createServerActivity(
+        { cityId: city.id, categoryId: (d.category ?? c.categoryId ?? undefined) as never, activityId: d.activity, title: d.title, place: areaLabel, privacy: 'community', day: planDay(d.day), time: d.time, spots: 0, areaId: area, format: 'meetup', price: 0, currency: city.currency },
+        dateFor(d.day, d.time, new Date(), city.utcOffset),
+        { communityId: c.id, girlOnly: c.girlOnly },
+      );
+      // No id: nothing was created (the session ended). Never a success then: the draft stays.
+      if (!actId) {
+        toast(tx('Your session has ended. Sign in again'), 'x', 'live');
+        return false;
+      }
+      haptic('success');
+      track('ACTIVITY_CREATE', { via: 'community' });
+      acts.refresh();
+      // The activity is its own record, shown in Activities (no copy in the posts).
+      toast(tx('{title} is live. Chat created', { title: d.title }), 'send', 'brand');
+      return true;
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not create', 'x', 'live');
+      return false;
+    }
+  };
+
+  const pin = (p: CommunityPost, on: boolean, f: PinFor = 'none') =>
+    pinPostFor(p.id, on, f)
+      .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
+      .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'));
+  // This render's handlers behind the cards' stable actions (`postActions`).
+  useEffect(() => {
+    handlers.current = {
+      pin: (p, on) => (on ? setPinning(p) : void pin(p, false)),
+      vote: (p, o) => void feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live')),
+      remove: (p) =>
+        void feed
+          .remove(p)
+          .then(() => toast('Post removed', 'check', 'brand'))
+          .catch(() => toast('Could not remove', 'x', 'live')),
+      plan: (d) => void createPlan({ ...d, title: `${d.title} · ${c?.name ?? ''}`.slice(0, 80) }),
+    };
+  });
 
   // The page frame (title, back) and a line of text right away: the stored
   // session read and then the community query can take seconds on a slow
@@ -183,298 +303,371 @@ function CommunityScreen() {
     }
   };
 
-  /** A plan from the assistant or a post: a real activity of this community, in its Activities space. */
-  const createPlan = async (d: PlanDraft): Promise<boolean> => {
-    if (!c.isMember) {
-      toast('Join the community first', 'users', 'brand');
-      return false;
-    }
-    // A plan says where it happens: no neighbourhood is picked for the member.
-    const area = d.areaId && city.areas.some((a) => a.id === d.areaId) ? d.areaId : null;
-    if (!area) {
-      toast('Choose a neighbourhood', 'pin', 'brand');
-      return false;
-    }
-    const areaLabel = city.areas.find((a) => a.id === area)?.name ?? city.name;
-    try {
-      const actId = await createServerActivity(
-        { cityId: city.id, categoryId: (d.category ?? c.categoryId ?? undefined) as never, activityId: d.activity, title: d.title, place: areaLabel, privacy: 'community', day: planDay(d.day), time: d.time, spots: 0, areaId: area, format: 'meetup', price: 0, currency: city.currency },
-        dateFor(d.day, d.time, new Date(), city.utcOffset),
-        { communityId: c.id, girlOnly: c.girlOnly },
-      );
-      // No id: nothing was created (the session ended). Never a success then: the draft stays.
-      if (!actId) {
-        toast(tx('Your session has ended. Sign in again'), 'x', 'live');
-        return false;
-      }
-      haptic('success');
-      track('ACTIVITY_CREATE', { via: 'community' });
-      acts.refresh();
-      // The activity is its own record, shown in Activities (no copy in the posts).
-      toast(tx('{title} is live. Chat created', { title: d.title }), 'send', 'brand');
-      return true;
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not create', 'x', 'live');
-      return false;
-    }
-  };
+  const canModerate = c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate;
+  const openComposer = (body = '') => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body, ...(channels.length && postSpace !== null ? { category: postSpace } : {}) } });
+
+  // Under the page header and the tabs: where each space's content starts.
+  const headerH = insets.top + layout.headerHeight + 8;
+  const top = headerH + TABS_HEIGHT;
+
+  /* Who the community is: cover, name, facts, Join or the member's actions, the team's tools. */
+  const hero = (
+    <View style={{ gap: space[5] }}>
+      <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator' || my.canSettings} staff={contentStaff} onChanged={refresh} />
+      <View style={[styles.pad, { gap: 6 }]}>
+        <ParentLink parent={extras.parent} />
+        <Text variant="overline" tone="accent">
+          {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
+        </Text>
+        <Text variant="displayM" raw={!c.official}>{c.name}</Text>
+        {c.tagline ? (
+          <Text variant="body" tone="secondary" raw={!c.official}>
+            {c.tagline}
+          </Text>
+        ) : null}
+        <CommunityFacts header={header} fallbackMembers={c.members} official={c.official} />
+      </View>
+
+      {/* Joining swaps Join for the chat: the new actions rise in. */}
+      <Animated.View key={c.isMember ? 'member' : 'visitor'} entering={reduced ? undefined : enter.rise(0)} style={[styles.pad, styles.row]}>
+        {c.isMember ? (
+          <>
+            <View style={{ flex: 1 }}>
+              <Button label="Open chat" icon="message" full onPress={() => (c.conversationId ? setTab('chat') : join())} />
+            </View>
+            {c.myRole === 'owner' ? (
+              c.official ? null : (
+                <Button
+                  label="Delete"
+                  variant="danger"
+                  loading={owner.busy === 'delete'}
+                  disabled={owner.busy !== null}
+                  onPress={() =>
+                    owner.isRunning() ||
+                    confirm('Delete this community? It disappears for everyone, and its chat leaves every inbox.', () =>
+                      void owner.run('delete', () =>
+                        deleteCommunity(c.id)
+                          .then(() => {
+                            toast('Community deleted', 'check', 'brand');
+                            if (router.canGoBack()) router.back();
+                            else router.replace('/communities');
+                          })
+                          .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')),
+                      ),
+                    )
+                  }
+                />
+              )
+            ) : (
+              <Button
+                label="Leave"
+                variant="secondary"
+                loading={owner.busy === 'leave'}
+                disabled={owner.busy !== null}
+                onPress={() =>
+                  owner.isRunning() ||
+                  confirm('Leave this community?', () =>
+                    void owner.run('leave', () =>
+                      leaveCommunity(c.id)
+                        .then(() => {
+                          setJoined(null);
+                          toast('You left the community', 'check', 'brand');
+                          refresh();
+                        })
+                        .catch((e) => toast(e instanceof Error ? e.message : 'Could not leave', 'x', 'live')),
+                    ),
+                  )
+                }
+              />
+            )}
+          </>
+        ) : (
+          <View style={{ flex: 1 }}>
+            <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
+          </View>
+        )}
+        <IconButton icon="share" label={tx('Share')} onPress={() => void shareNative({ type: 'community', id: c.id, title: c.name }).catch(() => undefined)} />
+      </Animated.View>
+
+      {/* The team's tools: only for those whose rights allow something there. */}
+      {isManager(my) ? (
+        <View style={styles.pad}>
+          <Button label="Manage the community" icon="settings" variant="secondary" full onPress={() => router.push(`/community/manage/${c.id}`)} />
+        </View>
+      ) : null}
+
+      {c.isMember ? (
+        <View style={[styles.pad, styles.row]}>
+          <NotifyPrefs communityId={c.id} prefs={extras.prefs} onChanged={extras.reload} />
+        </View>
+      ) : null}
+      <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} official={c.official} parentId={extras.parent?.id ?? null} onChanged={() => (extras.reload(), feed.refresh())} />
+      {!extras.parent ? <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), refresh())} /> : null}
+
+      {/* IRLY's own: the welcome, the introduction and the rules; a member's community: the introduction. */}
+      {c.official ? (
+        <OfficialBlock c={c} cityName={city.name} onMuted={refresh} />
+      ) : c.isMember ? (
+        <View style={styles.pad}>
+          <IntroCard c={c} cityName={city.name} />
+        </View>
+      ) : null}
+    </View>
+  );
+
+  /* Posts: the pinned strip, the activities coming up, the assistant, the composer, the sort. */
+  const postsHeader = (
+    <View style={{ gap: space[5], paddingBottom: space[5] }}>
+      {split ? null : hero}
+      <PinnedStrip posts={feed.posts} />
+      <CommunityActivityFeed communityId={c.id} onSeeAll={() => setTab('activities')} />
+      <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
+      <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={canModerate} communityId={c.id} />
+      {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })} onMedia={(body) => openComposer(body)} /> : null}
+      <View style={styles.pad}>
+        <Segmented
+          options={[
+            { value: 'recent', label: tx('Recent') },
+            { value: 'popular', label: tx('Most popular') },
+          ]}
+          value={sort}
+          onChange={(s) => {
+            setSort(s);
+            list.current?.scrollToOffset({ offset: 0, animated: false });
+          }}
+        />
+      </View>
+    </View>
+  );
+
+  const posts = (
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
+      <FlatList
+        ref={list}
+        data={feed.posts}
+        keyExtractor={postKeyOf}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: top + 12, paddingBottom: insets.bottom + 120 }}
+        ListHeaderComponent={postsHeader}
+        initialNumToRender={5}
+        maxToRenderPerBatch={6}
+        windowSize={9}
+        onEndReached={() => void feed.loadMore()}
+        onEndReachedThreshold={0.6}
+        onScroll={onFeedScroll}
+        scrollEventThrottle={100}
+        renderItem={({ item: p }) => <PostCard cityId={city.id} p={p} eng={eng} canModerate={canModerate} isMember={c.isMember} geo={geo} actions={postActions} />}
+        ListEmptyComponent={
+          feed.loading ? (
+            <PostSkeletons />
+          ) : feed.error ? (
+            <Text variant="body" tone="secondary" style={styles.pad}>
+              Can’t reach IRLY right now. Check your connection.
+            </Text>
+          ) : (
+            <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+              <GlassLayer radius={radius.xl} />
+              <CommunityEmpty c={c} cityName={city.name} />
+            </View>
+          )
+        }
+        ListFooterComponent={feed.loadingMore ? <ActivityIndicator color={t.c.textSecondary} style={{ marginBottom: 20 }} /> : null}
+      />
+    </KeyboardAvoidingView>
+  );
+
+  const activities = (
+    <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: top + 16, paddingBottom: insets.bottom + 60, gap: space[5] }}>
+      {/* « + Propose an activity »: for every member (a visitor joins first, in one tap). */}
+      <ProposeActivity c={c} join={joinFirst} />
+      <View style={[styles.pad, styles.row, { flexWrap: 'wrap' }]}>
+        <Chip size="sm" icon="calendar" label={tx('Agenda')} selected={actView === 'agenda'} onPress={() => (setActView('agenda'), setPast(false))} />
+        <Chip size="sm" label={tx('Coming up')} selected={actView === 'list' && !past} onPress={() => (setActView('list'), setPast(false))} />
+        <Chip size="sm" label={tx('Past')} selected={actView === 'list' && past} onPress={() => (setActView('list'), setPast(true))} />
+      </View>
+      {actView === 'agenda' ? (
+        <Agenda items={agenda} cityId={city.id} loading={acts.loading} onOpen={(a) => router.push(`/a/${a}`)} />
+      ) : (
+        <View style={[styles.pad, { gap: 10 }]}>
+          {acts.activities.length ? (
+            acts.activities.map((a, i) => (
+              <Animated.View key={`${past ? 'past' : 'next'}-${a.id}`} entering={reduced ? undefined : enter.rise(Math.min(i, 8))}>
+                <PressableScale onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
+                  <GlassLayer radius={radius.xl} />
+                  {actThumbs[a.id] ? (
+                    <Photo visual={{ photo: actThumbs[a.id].photo, uri: actThumbs[a.id].uri ?? undefined }} light={city.light} width={120} style={styles.actThumb} recyclingKey={`srv-${a.id}`} />
+                  ) : (
+                    <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.titleRow}>
+                      {actThumbs[a.id] && a.pinnedAt ? <Icon name="pinPost" size={14} color={t.c.text} /> : null}
+                      <Text variant="titleS" numberOfLines={1} raw style={{ flexShrink: 1 }}>
+                        {a.title}
+                      </Text>
+                    </View>
+                    <Text variant="caption" tone="tertiary" raw>
+                      {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`, a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : null]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </Text>
+                  </View>
+                  {canModerate && a.status !== 'finished' && a.status !== 'cancelled' ? (
+                    <Chip
+                      size="sm"
+                      icon="pinPost"
+                      label={a.pinnedAt ? tx('Unpin') : tx('Pin')}
+                      onPress={() =>
+                        pinActivity(c.id, a.id, !a.pinnedAt)
+                          .then(() => toast(a.pinnedAt ? 'Unpinned' : 'Pinned at the top', 'pinPost', 'brand'))
+                          .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
+                      }
+                    />
+                  ) : null}
+                </PressableScale>
+              </Animated.View>
+            ))
+          ) : acts.loading ? (
+            <View style={{ gap: 10 }}>
+              <Skeleton height={84} radius={radius.xl} />
+              <Skeleton height={84} radius={radius.xl} />
+            </View>
+          ) : (
+            <Text variant="body" tone="secondary">
+              {acts.error ? 'Can’t reach IRLY right now' : past ? 'No past activities yet.' : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
+            </Text>
+          )}
+        </View>
+      )}
+    </ScrollView>
+  );
+
+  const chat =
+    c.isMember && c.conversationId ? (
+      <ChatPane conversationId={c.conversationId} top={top} />
+    ) : (
+      <ChatInvite
+        top={top}
+        title={c.isMember ? 'The community chat' : 'Join to chat'}
+        body={c.isMember ? 'Talk with the members in the community chat' : 'Members talk here every day. Join the community to read the chat and say hello.'}
+        action={c.isMember ? 'Open chat' : 'Join the community'}
+        busy={busy}
+        onPress={join}
+      />
+    );
+
+  const panels = (
+    <View style={{ flex: 1 }}>
+      <TabPanel active={tab === 'posts'}>{posts}</TabPanel>
+      <TabPanel active={tab === 'chat'}>{chat}</TabPanel>
+      <TabPanel active={tab === 'activities'}>{activities}</TabPanel>
+      <TabPanel active={tab === 'media'}>
+        <MediaGrid
+          items={gallery}
+          loading={media.loading}
+          loadingMore={media.loadingMore}
+          error={media.error}
+          onEnd={media.more}
+          topInset={top + 16}
+          bottomInset={insets.bottom}
+          onOpenPost={(postId) => router.push({ pathname: '/comments', params: { type: 'community_post', id: postId } })}
+          empty={<MediaEmpty title="No photos yet" body="Photos and videos posted in the community show up here." />}
+        />
+      </TabPanel>
+      <TabPanel active={tab === 'members'}>
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: top + 16, paddingBottom: insets.bottom + 60 }}>
+          <MemberList communityId={c.id} />
+        </ScrollView>
+      </TabPanel>
+      <View style={[styles.tabs, { top: headerH }]}>
+        <SpaceTabs value={tab} onChange={setTab} />
+      </View>
+      {tab === 'posts' ? <NewPostsPill count={feed.incoming.length} top={top + 10} onPress={() => (list.current?.scrollToOffset({ offset: 0, animated: !reduced }), feed.showIncoming())} /> : null}
+      {tab === 'posts' && c.isMember ? <PublishButton bottom={insets.bottom + 20} onPress={() => openComposer()} /> : null}
+    </View>
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Ambient />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 12, paddingBottom: insets.bottom + 40 }} showsVerticalScrollIndicator={false}>
-          {/* Wide: who the community is and Join on the left, its posts and activities on the right (same tree in every size). */}
-          <View style={split ? communitySplit.split : communitySplit.stack}>
-            <View style={split ? communitySplit.left : communitySplit.stack}>
-              <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator' || my.canSettings} staff={contentStaff} onChanged={refresh} />
-              <View style={[styles.pad, { gap: 6 }]}>
-                <ParentLink parent={extras.parent} />
-                <Text variant="overline" tone="accent">
-                  {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
-                </Text>
-                <Text variant="displayM" raw={!c.official}>{c.name}</Text>
-                {c.tagline ? (
-                  <Text variant="body" tone="secondary">
-                    {c.tagline}
-                  </Text>
-                ) : null}
-                <CommunityFacts header={header} fallbackMembers={c.members} official={c.official} />
-              </View>
+      {/* Wide: who the community is and Join on the left, its five spaces on the right (same tree in every size). */}
+      {split ? (
+        <View style={[communitySplit.split, { flex: 1 }]}>
+          <ScrollView style={[communitySplit.left, { alignSelf: 'stretch' }]} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: headerH + 12, paddingBottom: insets.bottom + 40 }}>
+            {hero}
+          </ScrollView>
+          <View style={[communitySplit.right, { alignSelf: 'stretch' }]}>{panels}</View>
+        </View>
+      ) : (
+        panels
+      )}
+      <PageHeader
+        title={c.name}
+        right={
+          <View style={styles.row}>
+            <IconButton icon="search" label={tx('Search in the community')} onPress={() => router.push({ pathname: '/community/search/[id]', params: { id: c.id, name: c.name } })} />
+            <IconButton icon="book" label={tx('About')} onPress={() => setAbout(true)} />
+          </View>
+        }
+      />
+      <AboutSheet
+        visible={about}
+        onClose={() => setAbout(false)}
+        name={c.name}
+        about={c.description ?? c.tagline}
+        aboutRaw={!c.official}
+        rules={rules}
+        rulesLoading={rulesLoading}
+        guidelines={c.official ? GUIDELINES : undefined}
+        facts={[
+          { icon: 'users', text: c.members === 1 ? tx('1 member') : tx('{n} members', { n: header?.members ?? c.members }) },
+          { icon: 'pin', text: city.name },
+          ...(c.girlOnly ? [{ icon: 'shield' as const, text: tx('Women only: every member is checked by IRLY Girl.') }] : []),
+          { icon: 'message', text: tx('Members post, plan activities and talk in the community chat.') },
+        ]}
+        onReport={() => (setAbout(false), openReport({ kind: 'community', id: c.id }))}
+      />
+      <Sheet visible={pinning !== null} onClose={() => setPinning(null)} title={tx('Pin this post')} subtitle={tx('It stays at the top of Posts until then.')}>
+        <View style={{ gap: 10, paddingHorizontal: space.gutter + 4 }}>
+          {PIN_FOR.map((f) => (
+            <Button
+              key={f.key}
+              label={f.label}
+              variant={f.key === 'none' ? 'primary' : 'secondary'}
+              full
+              onPress={() => {
+                const p = pinning;
+                setPinning(null);
+                if (p) void pin(p, true, f.key);
+              }}
+            />
+          ))}
+        </View>
+      </Sheet>
+    </View>
+  );
+}
 
-              {/* Joining swaps Join for the chat: the new actions rise in. */}
-              <Animated.View key={c.isMember ? 'member' : 'visitor'} entering={reduced ? undefined : enter.rise(0)} style={[styles.pad, styles.row]}>
-                {c.isMember ? (
-                  <>
-                    <View style={{ flex: 1 }}>
-                      <Button label="Open chat" icon="message" full onPress={() => (c.conversationId ? router.push(`/messages/${c.conversationId}`) : join())} />
-                    </View>
-                    {c.myRole === 'owner' ? (
-                      c.official ? null : (
-                        <Button
-                          label="Delete"
-                          variant="danger"
-                          loading={owner.busy === 'delete'}
-                          disabled={owner.busy !== null}
-                          onPress={() =>
-                            owner.isRunning() ||
-                            confirm('Delete this community? It disappears for everyone, and its chat leaves every inbox.', () =>
-                              void owner.run('delete', () =>
-                                deleteCommunity(c.id)
-                                  .then(() => {
-                                    toast('Community deleted', 'check', 'brand');
-                                    if (router.canGoBack()) router.back();
-                                    else router.replace('/communities');
-                                  })
-                                  .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live')),
-                              ),
-                            )
-                          }
-                        />
-                      )
-                    ) : (
-                      <Button
-                        label="Leave"
-                        variant="secondary"
-                        loading={owner.busy === 'leave'}
-                        disabled={owner.busy !== null}
-                        onPress={() =>
-                          owner.isRunning() ||
-                          confirm('Leave this community?', () =>
-                            void owner.run('leave', () =>
-                              leaveCommunity(c.id)
-                                .then(() => {
-                                  setJoined(null);
-                                  toast('You left the community', 'check', 'brand');
-                                  refresh();
-                                })
-                                .catch((e) => toast(e instanceof Error ? e.message : 'Could not leave', 'x', 'live')),
-                            ),
-                          )
-                        }
-                      />
-                    )}
-                  </>
-                ) : (
-                  <View style={{ flex: 1 }}>
-                    <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
-                  </View>
-                )}
-                <IconButton icon="share" label={tx('Share')} onPress={() => void shareNative({ type: 'community', id: c.id, title: c.name }).catch(() => undefined)} />
-              </Animated.View>
-
-              {/* The team's tools: only for those whose rights allow something there. */}
-              {isManager(my) ? (
-                <View style={styles.pad}>
-                  <Button label="Manage the community" icon="settings" variant="secondary" full onPress={() => router.push(`/community/manage/${c.id}`)} />
-                </View>
-              ) : null}
-
-              {c.isMember ? (
-                <View style={[styles.pad, styles.row]}>
-                  <NotifyPrefs communityId={c.id} prefs={extras.prefs} onChanged={extras.reload} />
-                </View>
-              ) : null}
-              <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} official={c.official} parentId={extras.parent?.id ?? null} onChanged={() => (extras.reload(), feed.refresh())} />
-              {!extras.parent ? <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), refresh())} /> : null}
-
-              {/* IRLY's own: the welcome, the introduction and the rules; a member's community: the introduction. */}
-              {c.official ? (
-                <OfficialBlock c={c} cityName={city.name} onMuted={refresh} />
-              ) : c.isMember ? (
-                <View style={styles.pad}>
-                  <IntroCard c={c} cityName={city.name} />
-                </View>
-              ) : null}
-            </View>
-
-            <View style={split ? communitySplit.right : communitySplit.stack}>
-              <View style={styles.pad}>
-                <Segmented
-                  options={[
-                    { value: 'discussion', label: tx('Discussion') },
-                    { value: 'activities', label: tx('Activities') },
-                    { value: 'members', label: tx('Members') },
-                    { value: 'about', label: tx('About') },
-                  ]}
-                  value={tab}
-                  onChange={setTab}
-                />
-              </View>
-
-              {/* Switching Discussion / Activities / Members / About cross-fades the panel. */}
-              <Animated.View key={tab} entering={reduced ? undefined : FadeIn.duration(180)} style={{ gap: space[5] }}>
-                {tab === 'discussion' ? (
-                  <>
-                    {/* The chat and « + Propose an activity », one tap away for every member. */}
-                    <ChatEntry isMember={c.isMember} onOpen={() => (c.isMember && c.conversationId ? router.push(`/messages/${c.conversationId}`) : join())} />
-                    <ProposeActivity c={c} join={joinFirst} />
-                    <CommunityActivityFeed communityId={c.id} onSeeAll={() => setTab('activities')} />
-                    <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
-                    <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate} communityId={c.id} />
-                    {c.isMember ? (
-                      <Composer
-                        key={idea.n}
-                        initial={idea.text}
-                        onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })}
-                        onMedia={(body) => router.push({ pathname: '/post/new', params: { community: c.id, name: c.name, body, ...(channels.length && postSpace !== null ? { category: postSpace } : {}) } })}
-                      />
-                    ) : null}
-                    {feed.error && !feed.posts.length ? (
-                      <Text variant="body" tone="secondary" style={styles.pad}>
-                        Can’t reach IRLY right now. Check your connection.
-                      </Text>
-                    ) : !feed.loading && !feed.posts.length ? (
-                      <View style={[styles.empty, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
-                        <GlassLayer radius={radius.xl} />
-                        <CommunityEmpty c={c} cityName={city.name} />
-                      </View>
-                    ) : (
-                      feed.posts.map((p) => (
-                        <PostCard
-                          cityId={city.id}
-                          key={p.id}
-                          p={p}
-                          eng={eng}
-                          canModerate={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate}
-                          onPin={(on) =>
-                            pinPost(p.id, on)
-                              .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
-                              .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
-                          }
-                          isMember={c.isMember}
-                          plan={!p.activityId && c.isMember ? postLooksLikeAPlan(p.body, geo, tx) : null}
-                          areas={geo.areas}
-                          onVote={(o) => feed.vote(p, o).catch((e) => toast(e instanceof Error ? e.message : 'Could not vote', 'x', 'live'))}
-                          onRemove={() => feed.remove(p).then(() => toast('Post removed', 'check', 'brand')).catch(() => toast('Could not remove', 'x', 'live'))}
-                          onPlan={(d) => createPlan({ ...d, title: `${d.title} · ${c.name}`.slice(0, 80) })}
-                        />
-                      ))
-                    )}
-                  </>
-                ) : null}
-
-                {tab === 'activities' ? <ProposeActivity c={c} join={joinFirst} /> : null}
-                {tab === 'activities' ? (
-                  <View style={[styles.pad, { gap: 10 }]}>
-                    <View style={[styles.row, { flexWrap: 'wrap' }]}>
-                      <Chip size="sm" label={tx('Coming up')} selected={!past} onPress={() => setPast(false)} />
-                      <Chip size="sm" label={tx('Past')} selected={past} onPress={() => setPast(true)} />
-                    </View>
-                    {acts.activities.length ? (
-                      acts.activities.map((a, i) => (
-                        <Animated.View key={`${past ? 'past' : 'next'}-${a.id}`} entering={reduced ? undefined : enter.rise(Math.min(i, 8))}>
-                          <PressableScale onPress={() => router.push(`/a/${a.id}`)} haptic="select" scaleTo={0.98} style={[styles.card, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={a.title}>
-                            <GlassLayer radius={radius.xl} />
-                            {actThumbs[a.id] ? (
-                              <Photo visual={{ photo: actThumbs[a.id].photo, uri: actThumbs[a.id].uri ?? undefined }} light={city.light} width={120} style={styles.actThumb} recyclingKey={`srv-${a.id}`} />
-                            ) : (
-                              <Icon name={a.pinnedAt ? 'pinPost' : 'calendar'} size={18} color={t.c.text} />
-                            )}
-                            <View style={{ flex: 1 }}>
-                              <View style={styles.titleRow}>
-                                {actThumbs[a.id] && a.pinnedAt ? <Icon name="pinPost" size={14} color={t.c.text} /> : null}
-                                <Text variant="titleS" numberOfLines={1} raw style={{ flexShrink: 1 }}>
-                                  {a.title}
-                                </Text>
-                              </View>
-                              <Text variant="caption" tone="tertiary" raw>
-                                {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`, a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : null]
-                                  .filter(Boolean)
-                                  .join(' · ')}
-                              </Text>
-                            </View>
-                            {(c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate) && a.status !== 'finished' && a.status !== 'cancelled' ? (
-                              <Chip
-                                size="sm"
-                                icon="pinPost"
-                                label={a.pinnedAt ? tx('Unpin') : tx('Pin')}
-                                onPress={() =>
-                                  pinActivity(c.id, a.id, !a.pinnedAt)
-                                    .then(() => toast(a.pinnedAt ? 'Unpinned' : 'Pinned at the top', 'pinPost', 'brand'))
-                                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'))
-                                }
-                              />
-                            ) : null}
-                          </PressableScale>
-                        </Animated.View>
-                      ))
-                    ) : (
-                      <Text variant="body" tone="secondary">
-                        {acts.loading
-                          ? 'Loading…'
-                          : acts.error
-                            ? 'Can’t reach IRLY right now'
-                            : past
-                              ? 'No past activities yet.'
-                              : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
-                      </Text>
-                    )}
-                  </View>
-                ) : null}
-
-                {tab === 'members' ? <MemberList communityId={c.id} /> : null}
-
-                {tab === 'about' ? (
-                  <View style={[styles.pad, { gap: 10 }]}>
-                    <Text variant="body" raw={!c.official}>{c.description ?? c.tagline ?? tx('A community on IRLY.')}</Text>
-                    <Text variant="caption" tone="tertiary">
-                      Members post, plan activities and talk in the community chat. Be kind: posts can be reported and removed by the community’s hosts.
-                    </Text>
-                    <Button
-                      label="Report this community"
-                      icon="flag"
-                      variant="ghost"
-                      onPress={() => openReport({ kind: 'community', id: c.id })}
-                    />
-                  </View>
-                ) : null}
-              </Animated.View>
+/** Two post-shaped placeholders while the first page loads (same paddings as a post). */
+function PostSkeletons() {
+  return (
+    <View style={{ gap: space[5] }}>
+      {[0, 1].map((i) => (
+        <View key={i} style={[styles.card, { marginHorizontal: space.gutter, overflow: 'hidden' }]}>
+          <GlassLayer radius={radius.xl} />
+          <View style={styles.row}>
+            <Skeleton width={36} height={36} radius={18} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton width="40%" height={12} />
+              <Skeleton width="25%" height={10} />
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-      <PageHeader title={c.name} />
+          <Skeleton height={14} />
+          <Skeleton height={14} width="80%" />
+          <Skeleton height={160} radius={radius.lg} />
+        </View>
+      ))}
     </View>
   );
 }
@@ -733,43 +926,56 @@ function Composer({ initial = '', onPost, onMedia }: { initial?: string; onPost:
 
 /* ───────── Post ───────── */
 
-function PostCard({
+/** What a post card can do: the same functions on every render (see `handlers`). */
+type PostActions = {
+  pin: (p: CommunityPost, on: boolean) => void;
+  vote: (p: CommunityPost, option: number) => void;
+  remove: (p: CommunityPost) => void;
+  plan: (d: PlanDraft) => void;
+};
+const postKeyOf = (p: CommunityPost) => p.id;
+
+/**
+ * One post of the feed. Memoized: a card renders again only when its post,
+ * its engagement, the member's rights or the city change, not on every
+ * render of the page (a scroll past « New posts », a tab, a sheet).
+ */
+const PostCard = memo(function PostCard({
   p,
   eng,
   canModerate,
   isMember,
-  plan,
-  onVote,
-  onRemove,
-  onPlan,
-  onPin,
+  geo,
+  actions,
   cityId,
-  areas,
 }: {
   p: CommunityPost;
   eng: ReturnType<typeof useEngagement>;
   canModerate: boolean;
   isMember: boolean;
-  plan: PlanDraft | null;
-  onVote: (o: number) => void;
-  onRemove: () => void;
-  onPlan: (d: PlanDraft) => void;
-  onPin: (on: boolean) => void;
+  /** The community city and its neighbourhoods: a plan needs one, and a post rarely names it. */
+  geo: GeoIndex;
+  actions: PostActions;
   cityId: string;
-  /** The community city's neighbourhoods: a plan needs one, and a post rarely names it. */
-  areas: GeoIndex['areas'];
 }) {
   const t = useTheme();
   const router = useRouter();
   const now = useNow();
   const total = p.pollCounts.reduce((n, x) => n + x, 0);
+  const areas = geo.areas;
+  // A post that reads like a plan offers « Make it an activity » (members only).
+  const plan = useMemo(() => (!p.activityId && isMember ? postLooksLikeAPlan(p.body, geo, tx) : null), [p.activityId, p.body, isMember, geo]);
+  const onVote = (o: number) => actions.vote(p, o);
+  const onRemove = () => actions.remove(p);
+  const onPlan = (d: PlanDraft) => actions.plan(d);
+  const onPin = (on: boolean) => actions.pin(p, on);
   // "Make it an activity" from a post that names no neighbourhood: the member picks one (none preselected).
   const [where, setWhere] = useState<{ open: boolean; areaId?: string }>({ open: false });
   return (
-    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
+    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter, marginBottom: space[5] }]}>
       <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
-        <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
+        <ProfileAvatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text variant="titleS" raw style={{ flexShrink: 1 }} numberOfLines={1}>{p.mine ? tx('You') : p.firstName}</Text>
@@ -812,11 +1018,7 @@ function PostCard({
           </Text>
         </View>
       ) : null}
-      {p.body ? (
-        <Text variant="body" raw>
-          {p.body}
-        </Text>
-      ) : null}
+      {p.body ? <RichText text={p.body} postId={p.pending ? null : p.id} /> : null}
       {p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} /> : null}
       {p.edited ? (
         <Text variant="caption" tone="tertiary">
@@ -891,7 +1093,7 @@ function PostCard({
       {!p.pending ? <ActionBar target={{ type: 'community_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} /> : null}
     </Animated.View>
   );
-}
+});
 
 function Centered({ children }: { children: React.ReactNode }) {
   const t = useTheme();
@@ -1005,4 +1207,5 @@ const styles = StyleSheet.create({
   pollRow: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: radius.md, borderWidth: 1, overflow: 'hidden' },
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg },
   empty: { marginHorizontal: space.gutter, alignItems: 'center', gap: 10, padding: 24, borderRadius: radius.xl },
+  tabs: { position: 'absolute', left: 0, right: 0 },
 });

@@ -11,6 +11,7 @@ import { radius, space } from '@/theme/tokens';
 import { CITIES } from '@/data/destinations';
 import { CommunityThumb } from './CommunityThumb';
 import { useCommunityList, useMyCommunities } from './data';
+import { prefetchCommunity } from './prefetch';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
@@ -43,7 +44,7 @@ export function YourCommunities({ cityId }: { cityId: string }) {
         <Rail itemWidth={200}>
           {mine.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(i * 60)}>
-              <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
+              <PressableScale haptic="select" scaleTo={0.97} onPressIn={() => prefetchCommunity(c.id)} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
                 <GlassLayer radius={radius.xl} />
                 <CommunityThumb id={c.id} name={c.name} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member />
                 <Text variant="titleS" numberOfLines={1}>
@@ -69,7 +70,7 @@ export function YourCommunities({ cityId }: { cityId: string }) {
           </View>
           <Rail itemWidth={200}>
             {ranked.map((c) => (
-              <PressableScale key={c.id} haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
+              <PressableScale key={c.id} haptic="select" scaleTo={0.97} onPressIn={() => prefetchCommunity(c.id)} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
                 <GlassLayer radius={radius.xl} />
                 <CommunityThumb id={c.id} name={c.name} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member={c.isMember} />
                 <Text variant="titleS" numberOfLines={1}>

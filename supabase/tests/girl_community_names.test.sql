@@ -44,8 +44,10 @@ select pg_temp.check(not exists (select 1 from public.communities where deleted_
   ('IRLY Girls', 'IRLY Families', 'Girls Surf Bali', 'Girls Padel Bali', 'French Girls Bali', 'Women Entrepreneurs Bali', 'Girls Moving To Bali', 'New Moms Dubai')),
   'no community keeps an old name');
 select pg_temp.check(not exists (select 1 from public.communities where deleted_at is null and (tagline ilike '%mums%')), 'no community tagline says Mums');
-select pg_temp.check((select count(*) from public.communities where official and topic = 'girls' and parent_id is null and deleted_at is null and name = 'IRLY Girl')
-  = (select cardinality(cities) from public.community_topics where topic = 'girls'), 'every city has its IRLY Girl community');
+select pg_temp.check((select count(*) from public.communities where official and topic = 'girls' and parent_id is null and deleted_at is null and retired_at is null and name = 'IRLY Girl')
+  = (select cardinality(cities) from public.community_topics where topic = 'girls'), 'every city of the topic has its IRLY Girl community');
+select pg_temp.check(not exists (select 1 from public.communities where official and topic = 'girls' and parent_id is null and deleted_at is null and name <> 'IRLY Girl'),
+  'every IRLY Girl row, retired or not, is named IRLY Girl');
 select pg_temp.check(exists (select 1 from public.communities where city_id = 'bali' and name = 'Bali Surf Girls' and girl_only), 'Bali Surf Girls exists, women only');
 select pg_temp.check(exists (select 1 from public.communities where city_id = 'dubai' and name = 'Dubai New Moms' and girl_only), 'Dubai New Moms exists and keeps "Moms"');
 select pg_temp.check(exists (select 1 from public.communities where city_id = 'bali' and name = 'Girls Moving to Bali'), 'Girls Moving to Bali is spelled with a lowercase "to"');

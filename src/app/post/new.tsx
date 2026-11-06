@@ -15,6 +15,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { LiveVideo } from '@/features/live/LiveVideo';
+import { MentionSuggestions, useMentionComposer } from '@/features/posts/Mentions';
 import { createPost, draftKey, loadPost, MAX_PHOTOS, pickPhotos, pickVideo, updatePost, useDrafts, type DraftMedia } from '@/features/posts/posts';
 import { useSignedLinks } from '@/features/server/media';
 import { a11y, t as tx } from '@/i18n';
@@ -61,6 +62,9 @@ function NewPostForm() {
   // In Help & Questions: a question or a recommendation.
   const [kind, setKind] = useState<'question' | 'recommendation' | null>(params.kind === 'question' || params.kind === 'recommendation' ? params.kind : null);
   const [original, setOriginal] = useState<{ body: string; media: string }>({ body: '', media: 'null' });
+  // @mentions of the community's members (a profile post has none).
+  const typeBody = useCallback((v: string) => setBody(v.slice(0, 2000)), []);
+  const mention = useMentionComposer({ text: body, setText: typeBody, communityId, me: account?.userId });
 
   // A draft kept on the phone comes back (it may load just after the screen opens).
   const adopted = useRef(Boolean(saved));
@@ -195,12 +199,13 @@ function NewPostForm() {
     setBusy(true);
     try {
       const onProgress = media?.kind === 'video' || files.length > 1 ? setProgress : undefined;
-      if (editing) await updatePost(editing, { body, media, before, onProgress });
+      const mentions = communityId ? mention.mentions(body) : [];
+      if (editing) await updatePost(editing, { body, media, before, mentions, onProgress });
       else {
         const category = communityId === params.community ? (params.category ?? null) : null;
         const sig = JSON.stringify([communityId, body.trim(), kind ?? 'post', category, media?.kind ?? null, media?.files.map((f) => f.path ?? f.uri) ?? []]);
         if (postId.current?.sig !== sig) postId.current = { sig, id: uuid() };
-        await createPost({ id: postId.current.id, communityId, body, media, onProgress, kind: kind ?? 'post', category });
+        await createPost({ id: postId.current.id, communityId, body, media, mentions, onProgress, kind: kind ?? 'post', category });
       }
       if (!editing) saveDraft(key, null);
       haptic('success');
@@ -231,7 +236,8 @@ function NewPostForm() {
         <GlassLayer radius={radius.lg} />
         <TextInput
           value={body}
-          onChangeText={(v) => setBody(v.slice(0, 2000))}
+          onChangeText={typeBody}
+          onSelectionChange={mention.onSelectionChange}
           placeholder={kind === 'question' ? tx('Your question, with the details that help people answer') : kind === 'recommendation' ? tx('The place or professional, where, and why you recommend them') : tx('What do you want to share?')}
           placeholderTextColor={t.c.textTertiary}
           multiline
@@ -241,6 +247,7 @@ function NewPostForm() {
           accessibilityLabel={a11y('Write your post')}
         />
         </Animated.View>
+        <MentionSuggestions query={mention.query} suggestions={mention.suggestions} loading={mention.loading} onPick={mention.pick} />
         {files.length ? <Picked media={media!} onRemove={removeFile} disabled={busy} /> : null}
         {progress !== null ? (
           <View style={{ gap: 6 }}>

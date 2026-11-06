@@ -479,10 +479,11 @@ export function useComments(t: Target) {
    * Optimistic: shows at once, marked pending, replaced by the server row.
    * `id` is made by the composer and kept while the comment is the same, so
    * sending it again after an answer that never came is the same comment,
-   * never a second one.
+   * never a second one. `mentions`: the ids of the members @mentioned (the
+   * server tells them, when they may see the comment).
    */
   const add = useCallback(
-    async (body: string, parentId?: string | null, id: string = uuid()) => {
+    async (body: string, parentId?: string | null, id: string = uuid(), mentions: string[] = []) => {
       if (!supabase || !uid) throw new Error('Sign in to comment');
       const text = body.trim();
       if (!text) return;
@@ -490,7 +491,7 @@ export function useComments(t: Target) {
       setList((l) => [...l.filter((c) => c.id !== temp.id), temp]);
       const { data, error } = await supabase
         .from('comments')
-        .insert({ id, target_type: t.type, target_id: t.id, author_id: uid, body: text, parent_id: parentId ?? null })
+        .insert({ id, target_type: t.type, target_id: t.id, author_id: uid, body: text, parent_id: parentId ?? null, ...(mentions.length ? { mentions: mentions.slice(0, 10) } : {}) })
         .select('id, created_at')
         .single();
       // Already there: an earlier try landed (its answer was lost). That comment is this one.

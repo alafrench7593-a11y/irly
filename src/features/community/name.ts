@@ -54,6 +54,8 @@ const TOPIC_LABEL: Record<string, string> = {
   sport: 'Sport',
   football: 'Football',
   running: 'Running',
+  padel: 'Padel',
+  francais: 'Les Français à Dubaï',
   trip: 'Trips',
   beach: 'Beach',
   food: 'Food',

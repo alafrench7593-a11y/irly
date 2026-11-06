@@ -420,7 +420,7 @@ export default function Home() {
         // IRLY: the guide's communities. IRLY Girl, same place: the IRLY Girl communities (women only, with their own chat).
         return inGirl ? (
           <>
-            {/* IRLY Girl's five official communities, then the ones members created. */}
+            {/* IRLY Girl's official community (IRLY Girl), then the ones members created. */}
             <ScrollReveal scrollY={scrollY} style={styles.section}>
               <SectionHeader {...head('communities', 'IRLY Girl communities', 'By IRLY · Women only', 'All', () => router.push('/communities'))} />
               <GirlOfficialCommunities />

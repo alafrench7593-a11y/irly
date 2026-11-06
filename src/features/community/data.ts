@@ -13,7 +13,9 @@ import { askPushInContext } from '@/features/push/push';
 import { toast } from '@/components/ui/Toast';
 import { realtimeIdsFilter } from '@/features/server/engage';
 import { useAppSpace } from '@/state/appSpace';
+import { cacheKey, hydrateCommunityCache, load as loadCached, peek } from './cache';
 import { displayCommunityName } from './name';
+import { FEED_PAGE, fetchFeedFallback, fetchPostsPage, popularScore, type FeedSort } from './space';
 
 /** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
 export const communitiesChanged = () => changed('communities', 'inbox');
@@ -122,72 +124,82 @@ export async function setCommunityMuted(conversationId: string, muted: boolean):
   if (!data?.length) throw new Error('Could not change this chat. Try again.');
 }
 
+/** A community's page: detail, cover and my mute setting for its chat, in one round trip (three reads side by side). */
+export async function fetchCommunityDetail(uid: string, id: string): Promise<CommunityDetail | null> {
+  const [{ data, error: e }, { data: cover }, { data: mine }] = await Promise.all([
+    sb().rpc('community_detail', { p_id: id }),
+    sb().from('communities').select('cover_path, official, topic, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
+    sb().from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', uid).eq('conversations.community_id', id).limit(1),
+  ]);
+  if (e) throw new Error(e.message);
+  const r = ((data as Row[]) ?? [])[0];
+  if (!r) return null;
+  return {
+    id: r.id as string,
+    // Never an id or a test code as its title (name.ts).
+    name: displayCommunityName({ name: r.name as string | null, topic: (cover?.topic as string | null) ?? null, category_id: r.category_id as string | null, city_id: r.city_id as string | null }),
+    tagline: (r.tagline as string) ?? null,
+    description: (r.description as string) ?? null,
+    categoryId: (r.category_id as string) ?? null,
+    cityId: r.city_id as string,
+    girlOnly: Boolean(r.girl_only),
+    members: Number(r.members ?? 0),
+    isMember: Boolean(r.is_member),
+    myRole: (r.my_role as string) ?? null,
+    conversationId: (r.conversation_id as string) ?? null,
+    coverPath: (cover?.cover_path as string | null) ?? null,
+    official: Boolean(cover?.official),
+    topic: (cover?.topic as string | null) ?? null,
+    emoji: topicOf(cover)?.emoji ?? null,
+    introFirst: Boolean(topicOf(cover)?.intro_first),
+    muted: Boolean(r.conversation_id && (mine as { muted: boolean }[] | null)?.[0]?.muted),
+  };
+}
+
 export function useCommunity(id: string) {
   const account = useAccount();
   const uid = account?.userId;
-  const [detail, setDetail] = useState<CommunityDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  // The last known page (this session, or kept on the phone) shows at once; the server is read behind it.
+  const ck = uid && id ? cacheKey(uid, 'detail', id) : '';
+  const [state, setState] = useState<{ key: string; detail: CommunityDetail | null } | null>(null);
+  const [loadedKey, setLoadedKey] = useState('');
   const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async (): Promise<CommunityDetail | null> => {
-    if (!uid) return null;
-    // One round trip: detail, cover and my mute setting for its chat, side by side.
-    const [{ data, error: e }, { data: cover }, { data: mine }] = await Promise.all([
-      sb().rpc('community_detail', { p_id: id }),
-      sb().from('communities').select('cover_path, official, topic, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
-      sb().from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', uid).eq('conversations.community_id', id).limit(1),
-    ]);
-    if (e) throw new Error(e.message);
-    const r = ((data as Row[]) ?? [])[0];
-    if (!r) return null;
-    return {
-      id: r.id as string,
-      // Never an id or a test code as its title (name.ts).
-      name: displayCommunityName({ name: r.name as string | null, topic: (cover?.topic as string | null) ?? null, category_id: r.category_id as string | null, city_id: r.city_id as string | null }),
-      tagline: (r.tagline as string) ?? null,
-      description: (r.description as string) ?? null,
-      categoryId: (r.category_id as string) ?? null,
-      cityId: r.city_id as string,
-      girlOnly: Boolean(r.girl_only),
-      members: Number(r.members ?? 0),
-      isMember: Boolean(r.is_member),
-      myRole: (r.my_role as string) ?? null,
-      conversationId: (r.conversation_id as string) ?? null,
-      coverPath: (cover?.cover_path as string | null) ?? null,
-      official: Boolean(cover?.official),
-      topic: (cover?.topic as string | null) ?? null,
-      emoji: topicOf(cover)?.emoji ?? null,
-      introFirst: Boolean(topicOf(cover)?.intro_first),
-      muted: Boolean(r.conversation_id && (mine as { muted: boolean }[] | null)?.[0]?.muted),
-    };
-  }, [id, uid]);
 
   // Loads can overlap (a sync bump while the first one is on its way): only the
   // newest one started lands, and none after the screen is gone.
   const seq = useRef(0);
-  const refresh = useCallback(() => {
-    const n = ++seq.current;
-    load()
-      .then((d) => {
-        if (n !== seq.current) return;
-        setDetail(d);
-        setError(null);
-      })
-      .catch((e) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'))
-      .finally(() => n === seq.current && setLoading(false));
-  }, [load]);
+  const read = useCallback(
+    (join: boolean) => {
+      if (!uid || !ck) return;
+      const n = ++seq.current;
+      // The first read shares a prefetch already on its way (pressed in the list); a reload after a change does not.
+      loadCached(ck, () => fetchCommunityDetail(uid, id), join)
+        .then((d) => {
+          if (n !== seq.current) return;
+          setState({ key: ck, detail: d });
+          setError(null);
+        })
+        .catch((e) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'))
+        .finally(() => n === seq.current && setLoadedKey(ck));
+    },
+    [uid, id, ck],
+  );
+  const refresh = useCallback(() => read(false), [read]);
 
   useEffect(() => {
     if (!uid) return;
-    refresh();
+    read(true);
     return () => {
       seq.current += 1;
     };
-  }, [uid, refresh]);
+  }, [uid, read]);
   // Members, name, photo and status change from anywhere: same detail everywhere.
   useRefreshOn(['communities'], refresh);
 
-  return { detail: uid ? detail : null, loading: uid ? loading : false, error, refresh, signedIn: Boolean(uid) };
+  const known = peek<CommunityDetail | null>(ck);
+  const detail = state?.key === ck ? state.detail : (known ?? null);
+  const loading = loadedKey !== ck && known === undefined;
+  return { detail: uid ? detail : null, loading: uid ? loading : false, error: loadedKey === ck ? error : null, refresh, signedIn: Boolean(uid) };
 }
 
 function toPost(r: Row, uid: string | undefined): CommunityPost {
@@ -218,17 +230,58 @@ function toPost(r: Row, uid: string | undefined): CommunityPost {
   };
 }
 
+/** A first page of posts, as read (and kept by the community cache): `sentAt` is when it was asked for. */
+export type FirstPage = { posts: CommunityPost[]; paged: boolean; full: boolean; sentAt: number };
+
+/** The cache key of a feed's first page: every post (`*`), General or a category, and the sort. */
+export const feedKey = (uid: string, communityId: string, space: string | null | undefined, sort: FeedSort) =>
+  cacheKey(uid, 'feed', communityId, space === undefined ? '*' : (space ?? '~general'), sort);
+
+/**
+ * The first page of a community's posts. `space` undefined: every post
+ * (paged by the server); null: General; a slug: that category (latest 50).
+ * A server without pages: the latest 50, as before.
+ */
+export async function fetchFeedFirst(uid: string, communityId: string, space: string | null | undefined, sort: FeedSort): Promise<FirstPage> {
+  const sentAt = syncNow();
+  const byScore = (list: CommunityPost[]) => (sort === 'popular' ? [...list].sort((a, b) => popularScore(b) - popularScore(a)) : list);
+  if (space !== undefined) {
+    const { data, error: e } = await sb().rpc('community_space_feed', { p_community: communityId, p_category: space, p_limit: 50 });
+    if (e) throw new Error(e.message);
+    return { posts: byScore(((data as Row[]) ?? []).map((r) => toPost(r, uid))), paged: false, full: false, sentAt };
+  }
+  const page = await fetchPostsPage(communityId, sort, { limit: FEED_PAGE });
+  const rows = page ?? (await fetchFeedFallback(communityId, 50));
+  const list = rows.map((r) => toPost(r, uid));
+  return { posts: page ? list : byScore(list), paged: page !== null, full: page !== null && page.length >= FEED_PAGE, sentAt };
+}
+
 /** The feed, live: new posts, votes, likes and comments from anyone appear without refreshing. */
 /**
  * A community's posts. `space` undefined: every post (communities without
  * categories); null: General (posts without a category); a slug: that category.
  */
-export function useCommunityFeed(communityId: string, space?: string | null) {
+export function useCommunityFeed(communityId: string, space?: string | null, opts: { sort?: FeedSort } = {}) {
   const account = useAccount();
   const uid = account?.userId;
+  const sort: FeedSort = opts.sort ?? 'recent';
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Pages (community_posts_page): whether the server has them, whether more are left, how many
+  // posts were added below the first page (a reload keeps them under the fresh first page).
+  const paged = useRef(false);
+  const pageFull = useRef(false);
+  const extra = useRef(0);
+  const [more, setMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // Reading further down: new posts from others wait above (« New posts ») instead of pushing the list.
+  const hold = useRef(false);
+  const [incoming, setIncoming] = useState<CommunityPost[]>([]);
+  const postsRef = useRef<CommunityPost[]>([]);
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
 
   // Loads can finish out of order (a realtime burst); only the newest one lands.
   const seq = useRef(0);
@@ -241,19 +294,49 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
 
   // When the last feed read was sent: realtime events committed before it are in it.
   const sentAt = useRef(-Infinity);
-  const load = useCallback(async (): Promise<CommunityPost[]> => {
-    if (!uid) return [];
-    sentAt.current = syncNow();
-    const { data, error: e } =
-      space === undefined
-        ? await sb().rpc('community_feed', { p_community: communityId, p_limit: 50 })
-        : await sb().rpc('community_space_feed', { p_community: communityId, p_category: space, p_limit: 50 });
-    if (e) throw new Error(e.message);
-    return ((data as Row[]) ?? []).map((r) => toPost(r, uid));
-  }, [communityId, uid, space]);
+  const fk = uid ? feedKey(uid, communityId, space, sort) : '';
+  /** The first page; `join`: share a read already on its way (the prefetch, a first load). */
+  const load = useCallback(
+    async (join = false): Promise<CommunityPost[]> => {
+      if (!uid) return [];
+      const first = await loadCached(fk, () => fetchFeedFirst(uid, communityId, space, sort), join);
+      sentAt.current = Math.max(sentAt.current, first.sentAt);
+      paged.current = first.paged;
+      pageFull.current = first.full;
+      return first.posts;
+    },
+    [communityId, uid, space, sort, fk],
+  );
 
-  /** The server list, plus our posts still on their way (they are not in it yet). */
-  const land = useCallback((server: CommunityPost[]) => setPosts((prev) => [...prev.filter((x) => x.pending), ...server]), []);
+  /**
+   * The server list, plus our posts still on their way (they are not in it yet), plus the pages
+   * loaded below the first one. While the member reads further down, posts new from others wait
+   * in `incoming` (the « New posts » pill) instead of moving what she reads.
+   */
+  const land = useCallback(
+    (server: CommunityPost[]) => {
+      const prev = postsRef.current;
+      const known = new Set(prev.map((x) => x.id));
+      const shown = prev.filter((x) => !x.pending);
+      const newest = shown.reduce((m, x) => Math.max(m, x.createdAt), 0);
+      const fresh = hold.current && shown.length && sort === 'recent' ? server.filter((x) => !known.has(x.id) && !x.mine && x.createdAt > newest) : [];
+      const freshIds = new Set(fresh.map((x) => x.id));
+      const head = fresh.length ? server.filter((x) => !freshIds.has(x.id)) : server;
+      const ids = new Set(server.map((x) => x.id));
+      let tail: CommunityPost[] = [];
+      if (extra.current > 0) {
+        const dated = head.filter((x) => !x.pinnedAt);
+        const oldest = dated.length ? Math.min(...dated.map((x) => x.createdAt)) : Infinity;
+        tail = shown.filter((x) => !ids.has(x.id) && (sort === 'popular' || x.createdAt < oldest));
+      }
+      const next = [...prev.filter((x) => x.pending), ...head, ...tail];
+      postsRef.current = next;
+      setPosts(next);
+      if (fresh.length) setIncoming((was) => [...fresh, ...was.filter((x) => !freshIds.has(x.id))]);
+      setMore(paged.current && (extra.current > 0 ? true : pageFull.current));
+    },
+    [sort],
+  );
 
   const refresh = useCallback(() => {
     const n = ++seq.current;
@@ -266,34 +349,52 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
       .catch((e) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'));
   }, [load, land]);
 
+  // Every live change of this feed (posts, pins, likes, comments, votes) and the catch-up
+  // after a channel starts listening go through ONE gate: a burst is one reload (the two
+  // channels' first catch-ups used to be two more reloads of the first page), and none
+  // for a change a read sent after it has already (your own post, its refresh).
+  const gate = useRef<ReturnType<typeof echoGate> | null>(null);
+  const heard = useCallback((payload?: Parameters<ReturnType<typeof echoGate>['heard']>[0]) => gate.current?.heard(payload), []);
+
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
-    const reload = () => {
+    // Another sort, space or community: a new list from its first page; the last one known
+    // shows at once (read again just below).
+    const known = peek<FirstPage>(fk);
+    extra.current = 0;
+    hold.current = false;
+    paged.current = known?.paged ?? false;
+    pageFull.current = known?.full ?? false;
+    postsRef.current = [...postsRef.current.filter((x) => x.pending), ...(known?.posts ?? [])];
+    setPosts(postsRef.current);
+    setIncoming([]);
+    setMore(Boolean(known?.paged && known.full));
+    setLoading(!known);
+    const reload = (join: boolean) => {
       const n = ++seq.current;
-      load()
+      load(join)
         .then((p) => alive && n === seq.current && (land(p), setError(null)))
         .catch((e) => alive && n === seq.current && setError(e instanceof Error ? e.message : 'offline'))
         .finally(() => alive && setLoading(false));
     };
-    reload();
-    // New and edited posts: a burst is one reload, and none for your own post (its
-    // refresh, sent after it was saved, has it already).
-    const posts = echoGate(reload, 250, () => sentAt.current);
-    // Pins are rare: any pin or unpin reloads (an unpin carries no community to filter on).
-    const pins = echoGate(reload, 800, () => sentAt.current);
+    // The first read joins a prefetch already on its way (pressed in the list).
+    reload(true);
+    const g = echoGate(() => reload(false), 300, () => sentAt.current);
+    gate.current = g;
     const channel = liveChannel(`community-${communityId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, posts.heard)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins' }, pins.heard)
+      // New and edited posts; pins (an unpin carries no community to filter on).
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts', filter: `community_id=eq.${communityId}` }, g.heard)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'community_pins' }, g.heard)
       // Listening: a post made before then is in no event (one coalesced reload).
-      .subscribe(whenListening(() => posts.heard()));
+      .subscribe(whenListening(() => g.heard()));
     return () => {
       alive = false;
-      posts.cancel();
-      pins.cancel();
+      g.cancel();
+      if (gate.current === g) gate.current = null;
       supabase?.removeChannel(channel);
     };
-  }, [communityId, uid, load, land]);
+  }, [communityId, uid, load, land, fk]);
 
   // Likes, comments and votes: only those on the posts on screen (every
   // community's used to reload this feed), re-subscribed when that set changes.
@@ -305,26 +406,59 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
         .join(','),
     [posts],
   );
+  // The channel listening now. A new set of posts (a page loaded below, a new post) opens a
+  // new channel and keeps the old one until the new one listens: no moment hears nothing,
+  // so only the first channel needs a catch-up reload (each new page used to reload the feed).
+  const engLive = useRef<{ for: string; channel: ReturnType<typeof liveChannel> } | null>(null);
   useEffect(() => {
     if (!uid || !supabase || !postKey) return;
+    const db = supabase;
     const ids = postKey.split(',');
-    // Likes, comments and votes on the posts shown: a burst is one reload (none when a newer read has them).
-    const gate = echoGate(refresh, 800, () => sentAt.current);
-    const later = gate.heard;
+    const scope = `${uid}|${communityId}`;
+    const prev = engLive.current?.for === scope ? engLive.current.channel : null;
+    if (engLive.current && !prev) {
+      db.removeChannel(engLive.current.channel);
+      engLive.current = null;
+    }
+    // The old channel is gone (replaced once this one listens, or dropped before that).
+    let prevGone = !prev;
     const channel = liveChannel(`community-eng-${communityId}`)
       // Votes and likes: new and changed ones only. Their deletes carry no key
       // (Realtime cannot check them against RLS, so the server strips it):
       // a withdrawn vote or like shows on the next load.
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, later)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, later)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, later)
-      .subscribe(whenListening(() => later()));
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, heard)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'community_poll_votes', filter: realtimeIdsFilter(ids, 'post_id') ?? undefined }, heard)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'likes', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, heard)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments', filter: realtimeIdsFilter(ids) ?? 'target_type=eq.community_post' }, heard)
+      .subscribe((status: string) => {
+        if (status !== 'SUBSCRIBED') return;
+        if (prev && !prevGone) {
+          // Listening while the old channel still was: it goes now, nothing was missed.
+          prevGone = true;
+          db.removeChannel(prev);
+          return;
+        }
+        // The first channel, a reconnection, or the old one went before this one listened:
+        // a change made meanwhile was sent to nobody (one coalesced reload).
+        heard();
+      });
+    engLive.current = { for: scope, channel };
     return () => {
-      gate.cancel();
-      supabase?.removeChannel(channel);
+      // Replaced before it listened: the channel before it goes now (the next one catches up).
+      if (prev && !prevGone) {
+        prevGone = true;
+        db.removeChannel(prev);
+      }
     };
-  }, [communityId, uid, postKey, refresh]);
+  }, [communityId, uid, postKey, heard]);
+  // Leaving the page: the channel listening goes too.
+  useEffect(
+    () => () => {
+      if (engLive.current) supabase?.removeChannel(engLive.current.channel);
+      engLive.current = null;
+    },
+    [],
+  );
 
   const sendVote = useCallback(
     async (postId: string, option: number) => {
@@ -424,15 +558,54 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
     [refresh],
   );
 
-  return { posts: uid ? posts : NONE, loading: uid ? loading : false, error, refresh, post, vote, remove };
+  /** The next page, when the list nears its end: a cursor for Recent, an offset for Popular. */
+  const loadingMoreRef = useRef(false);
+  const loadMore = useCallback(async () => {
+    if (!uid || space !== undefined || !paged.current || !more || loadingMoreRef.current) return;
+    const list = postsRef.current.filter((x) => !x.pending);
+    if (!list.length) return;
+    const dated = list.filter((x) => !x.pinnedAt);
+    const before = (dated.length ? dated : list).reduce((m, x) => Math.min(m, x.createdAt), Infinity);
+    const n = seq.current;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const rows = await fetchPostsPage(communityId, sort, sort === 'recent' ? { before } : { offset: list.length });
+      if (n !== seq.current || !rows) return;
+      const seen = new Set(postsRef.current.map((x) => x.id));
+      const added = rows.map((r) => toPost(r, uid)).filter((x) => !seen.has(x.id));
+      extra.current += added.length;
+      postsRef.current = [...postsRef.current, ...added];
+      setPosts(postsRef.current);
+      setMore(rows.length >= FEED_PAGE && added.length > 0);
+    } catch {
+      // Offline for a moment: the next scroll to the end asks again.
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [uid, space, more, communityId, sort]);
+
+  /** Reading further down (true) or back at the top (false). */
+  const setHold = useCallback((on: boolean) => {
+    hold.current = on;
+  }, []);
+  /** « New posts » tapped: they join the list (from the server, in order). */
+  const showIncoming = useCallback(() => {
+    hold.current = false;
+    setIncoming([]);
+    refresh();
+  }, [refresh]);
+
+  return { posts: uid ? posts : NONE, loading: uid ? loading : false, error, refresh, post, vote, remove, more: Boolean(uid) && more, loadingMore, loadMore, incoming: uid ? incoming : NONE, setHold, showIncoming };
 }
 
-const GIRL_OFFICIAL = new Set(['girl_trip', 'girl_newcomers', 'girl_activity', 'girl_sport']);
-/** One of IRLY Girl's four official communities (official.ts, GIRL_OFFICIAL_TOPICS). */
+const GIRL_OFFICIAL = new Set(['girls']);
+/** IRLY Girl's official community, IRLY Girl (official.ts, GIRL_OFFICIAL_TOPICS). */
 const isGirlOfficial = (topic: string | null) => Boolean(topic && GIRL_OFFICIAL.has(topic));
 
 export function useCommunityList(cityId: string) {
-  // Each space lists its own: IRLY Girl, its communities (of IRLY's official ones, only its four); IRLY, none of them.
+  // Each space lists its own: IRLY Girl, its communities (of IRLY's official ones, only IRLY Girl); IRLY, none of them.
   // IRLY Network's own community (and Girl CEO) live in the IRLY Network section, never as a second tile here.
   const girlSpace = useAppSpace() === 'girl';
   const list = useCommunityRows(cityId);
@@ -464,6 +637,8 @@ function useCommunityRows(cityId: string) {
     if (!uid || !supabase) return;
     let alive = true;
     const sb = supabase;
+    // The pages kept on the phone are read now, before one of these communities is opened.
+    void hydrateCommunityCache();
     // Home, Profile and Communities list the same communities (tabs stay mounted, a sync bump reaches them all): one read.
     together(`community_list:${uid}:${cityId}`, () => sb.rpc('community_list', { p_city: cityId })).then(({ data, error }) => {
       // A failed load keeps the list already on screen.
@@ -578,11 +753,13 @@ export function useCommunityActivities(communityId: string, past = false) {
       onMap: false,
     }));
   }, [communityId, uid, past]);
+  // The last known list (this session) shows at once while it is read again.
+  const ck = uid && communityId ? cacheKey(uid, 'activities', communityId, past ? 'past' : 'next') : '';
   // Only the newest load started lands (a sync bump during the first one), never after unmount.
   const seq = useRef(0);
   useEffect(() => {
     const n = ++seq.current;
-    load()
+    (ck ? loadCached(ck, load, true) : load())
       .then((l) => {
         if (n !== seq.current) return;
         setList(l);
@@ -593,10 +770,10 @@ export function useCommunityActivities(communityId: string, past = false) {
     return () => {
       seq.current += 1;
     };
-  }, [load, key]);
+  }, [load, key, ck]);
   const refresh = useCallback(() => {
     const n = ++seq.current;
-    load()
+    (ck ? loadCached(ck, load) : load())
       .then((l) => {
         if (n !== seq.current) return;
         setList(l);
@@ -605,9 +782,11 @@ export function useCommunityActivities(communityId: string, past = false) {
       .catch((e: unknown) => n === seq.current && setError(e instanceof Error ? e.message : 'offline'))
       // It may have replaced the first load: never a spinner left behind.
       .finally(() => n === seq.current && setLoadedKey(key));
-  }, [load, key]);
+  }, [load, key, ck]);
   useRefreshOn(['activities'], refresh);
-  return { activities: uid ? list : NONE, loading: Boolean(uid) && loading && !list.length, error, refresh };
+  const known = loading ? peek<CommunityActivity[]>(ck) : undefined;
+  const shown = known ?? list;
+  return { activities: uid ? shown : NONE, loading: Boolean(uid) && loading && !shown.length && !known, error, refresh };
 }
 
 /** Hosts pin (or unpin) an activity of their community or of one of its groups. */

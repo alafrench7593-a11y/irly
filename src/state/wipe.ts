@@ -81,6 +81,8 @@ export function wipeLocal(): void {
   import('@/features/push/push').then((m) => m.clearPushTray()).catch(() => undefined);
   // The Home feed kept on the phone (irly.homeFeed.v1): it may hold IRLY Girl items of the account that left.
   import('@/features/cms/feed').then((m) => m.clearHomeFeed()).catch(() => undefined);
+  // The community pages read for the account that left (in memory and kept on the phone: posts, members, rights).
+  import('@/features/community/cache').then((m) => m.clearCommunityCache()).catch(() => undefined);
   // Photos already seen are cached on the phone by their stored file (chats, profiles, posts):
   // the next person on this phone never gets the previous account's private pictures from it.
   import('expo-image')
