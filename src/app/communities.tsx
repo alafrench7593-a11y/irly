@@ -151,7 +151,7 @@ function Communities() {
     () =>
       demoGirl
         ? {
-            communities: demoAll.filter((c) => c.isMember).map((c): MemberCommunity => ({ id: c.id, name: c.name, cityId: c.cityId ?? cityId, cover: null, members: c.members, tagline: c.tagline, role: 'joined' })),
+            communities: demoAll.filter((c) => c.isMember).map((c): MemberCommunity => ({ id: c.id, name: c.name, cityId: c.cityId ?? cityId, cover: null, members: c.members, tagline: c.tagline, role: 'joined', official: false, topic: null, categoryId: null, retired: false })),
             loading: false,
             error: null as string | null,
             reload: (): void => undefined,

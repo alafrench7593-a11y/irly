@@ -235,6 +235,21 @@ export function useTg(): TAs {
   return useCallback((text: string, who: Agree | null | undefined, vars?: Record<string, string | number>) => translateAs(lang, text, who, vars), [lang]);
 }
 
+/** English singular of the words shown under a count. */
+const ONE_WORD: Record<string, string> = { Followers: 'Follower', Following: 'Following', Friends: 'Friend' };
+
+/**
+ * The word under a count, in the right number: "1 Follower", « 0 Abonné·e »
+ * (French uses the singular for 0 and 1). fr.ts holds the French singular
+ * under the plural key followed by ` (one)`.
+ */
+export function countWord(lang: Lang, n: number, plural: string): string {
+  const singular = lang === 'fr' ? Math.abs(n) < 2 : n === 1;
+  if (!singular) return translate(lang, plural);
+  if (lang === 'fr') return fr[`${plural} (one)`] ?? translate(lang, plural);
+  return ONE_WORD[plural] ?? plural;
+}
+
 /** Same, outside React. */
 export function tgx(text: string, who: Agree | null | undefined, vars?: Record<string, string | number>): string {
   return translateAs(resolveLang(useLangStore.getState().setting), text, who, vars);

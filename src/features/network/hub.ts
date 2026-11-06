@@ -1,3 +1,4 @@
+import type { PhotoKey } from '@/data/photos';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEMO } from '@/config/app';
 import { DEMO_COMMUNITIES } from '@/data/content/girlDemo';
@@ -41,6 +42,10 @@ export type NetCommunity = {
   cityId: string | null;
   topic: string | null;
   categoryId: string | null;
+  /** Its photo when the app already knows it (the demo's example communities); otherwise looked up by id. */
+  photo?: PhotoKey;
+  /** Stored photo path, when known (null: none, IRLY's photo of its subject). Undefined: looked up by id. */
+  coverPath?: string | null;
 };
 
 export type NetPost = {
@@ -136,6 +141,8 @@ function useDemoNetworkCommunities(girlSpace: boolean): NetCommunity[] {
             cityId: 'dubai',
             topic: null,
             categoryId: 'networking',
+            photo: c.cover,
+            coverPath: null,
           })),
     [girlSpace, joined],
   );

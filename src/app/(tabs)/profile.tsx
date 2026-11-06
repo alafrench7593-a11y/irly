@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { t as tx } from '@/i18n';
+import { countWord, t as tx, tgx, useLang } from '@/i18n';
+import { languageList } from '@/data/languages';
+import { CommunityThumb } from '@/features/community/CommunityThumb';
 import { useAccount } from '@/features/auth/account';
 import { MemberProfileView } from '@/features/profile/MemberProfileView';
 import { useCalendar } from '@/features/server/activities';
@@ -126,7 +128,7 @@ function LocalProfile() {
                 {profile.arrivedAt ? (
                   <View style={[styles.newHere, { backgroundColor: t.c.brand }]}>
                     <Text variant="overline" color={t.c.onBrand}>
-                      {tx(days === 1 ? 'New in {city} · {n} day' : 'New in {city} · {n} days', { city: city.name, n: days })}
+                      {tgx(days === 1 ? 'New in {city} · {n} day' : 'New in {city} · {n} days', profile.gender === 'woman' || profile.gender === 'man' ? profile.gender : null, { city: city.name, n: days })}
                     </Text>
                   </View>
                 ) : null}
@@ -136,8 +138,8 @@ function LocalProfile() {
                   </Text>
                 ) : null}
                 {profile.languages?.length ? (
-                  <Text variant="caption" tone="secondary">
-                    {tx('Speaks {langs}', { langs: profile.languages.map((l) => tx(l)).join(', ') })}
+                  <Text variant="caption" tone="secondary" raw>
+                    {tx('Speaks {langs}', { langs: languageList(profile.languages, true) })}
                   </Text>
                 ) : null}
                 {profile.faith && profile.faithVisible && profile.faith !== 'Prefer not to say' ? (
@@ -148,7 +150,7 @@ function LocalProfile() {
               </Animated.View>
               <Animated.View entering={enter.rise(2)} style={styles.badges}>
                 {profile.types.map((x) => (
-                  <Badge key={x} kind="accent" label={USER_TYPES[x].label} />
+                  <Badge key={x} kind="accent" label={tgx(USER_TYPES[x].label, profile.gender === 'woman' || profile.gender === 'man' ? profile.gender : null)} />
                 ))}
 
               </Animated.View>
@@ -225,7 +227,14 @@ function LocalProfile() {
                   <SectionHeader title="Your communities" />
                   <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
                     {myServerCommunities.map((c) => (
-                      <Row key={c.id} icon="users" title={c.name} meta={[c.official ? 'IRLY' : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} onPress={() => router.push(`/c/${c.id}`)} />
+                      <Row
+                        key={c.id}
+                        icon="users"
+                        thumb={<CommunityThumb id={c.id} name={c.name} topic={c.topic} categoryId={c.categoryId} light={city.light} size={40} />}
+                        title={c.name}
+                        meta={[c.official ? 'IRLY' : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')}
+                        onPress={() => router.push(`/c/${c.id}`)}
+                      />
                     ))}
                   </View>
                 </Animated.View>
@@ -273,25 +282,30 @@ function LocalProfile() {
   );
 }
 
-function Stat({ value, label, onPress }: { value: number; label: string; onPress?: () => void }) {
+function Stat({ value, label, onPress }: { value: number; label: 'Followers' | 'Following' | 'Friends'; onPress?: () => void }) {
+  // « 0 Abonné·e »: the word agrees with the number, in the app language.
+  const word = countWord(useLang(), value, label);
   return (
-    <PressableScale haptic="select" onPress={onPress} disabled={!onPress} accessibilityRole="button" accessibilityLabel={`${value} ${tx(label)}`} style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+    <PressableScale haptic="select" onPress={onPress} disabled={!onPress} accessibilityRole="button" accessibilityLabel={`${value} ${word}`} style={{ flex: 1, alignItems: 'center', gap: 2 }}>
       <CountUp value={value} />
-      <Text variant="caption" tone="tertiary">
-        {label}
+      <Text variant="caption" tone="tertiary" raw>
+        {word}
       </Text>
     </PressableScale>
   );
 }
 
-function Row({ icon, title, meta, onPress }: { icon: IconName; title: string; meta: string; onPress: () => void }) {
+function Row({ icon, thumb, title, meta, onPress }: { icon: IconName; thumb?: React.ReactNode; title: string; meta: string; onPress: () => void }) {
   const t = useTheme();
   return (
     <PressableScale onPress={onPress} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
       <GlassLayer radius={radius.lg} />
-      <View style={[styles.rowIcon, { backgroundColor: t.light.accentSoft }]}>
-        <Icon name={icon} size={18} color={t.accent} />
-      </View>
+      {/* A community shows its photo; a plan, its icon. */}
+      {thumb ?? (
+        <View style={[styles.rowIcon, { backgroundColor: t.light.accentSoft }]}>
+          <Icon name={icon} size={18} color={t.accent} />
+        </View>
+      )}
       <View style={{ flex: 1 }}>
         <Text variant="titleS" numberOfLines={1}>
           {title}

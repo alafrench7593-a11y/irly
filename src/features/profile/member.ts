@@ -40,7 +40,37 @@ export type FriendStatus = 'none' | 'outgoing' | 'incoming' | 'friends';
 
 /** A post on a profile: in a community, or on the profile itself (communityId null). */
 export type MemberPost = { id: string; body: string; at: number; communityId: string | null; communityName: string };
-export type MemberCommunity = { id: string; name: string; cityId: string; cover: string | null; members: number; tagline: string | null; role: 'created' | 'joined' };
+/**
+ * A community on a profile (member_communities: only those the viewer may
+ * see). `topic` and `categoryId` pick IRLY's photo when it has none of its
+ * own; `retired`: no longer in the lists (shown on your own profile only).
+ */
+export type MemberCommunity = {
+  id: string;
+  name: string;
+  cityId: string;
+  cover: string | null;
+  members: number;
+  tagline: string | null;
+  role: 'created' | 'joined';
+  official: boolean;
+  topic: string | null;
+  categoryId: string | null;
+  retired: boolean;
+};
+type CommunityRow = {
+  id: string;
+  name: string;
+  city_id: string;
+  cover_path: string | null;
+  members: number;
+  tagline: string | null;
+  role: 'created' | 'joined' | null;
+  official?: boolean | null;
+  topic?: string | null;
+  category_id?: string | null;
+  retired?: boolean | null;
+};
 export type FollowPerson = { id: string; firstName: string; photo: string | null; iFollow: boolean };
 
 function sb() {
@@ -109,14 +139,18 @@ export function useMemberProfile(userId: string) {
                 friends: r.friends ?? 0,
               }
             : null,
-          communities: ((c.data as { id: string; name: string; city_id: string; cover_path: string | null; members: number; tagline: string | null; role: 'created' | 'joined' | null }[] | null) ?? []).map((x) => ({
+          communities: ((c.data as CommunityRow[] | null) ?? []).map((x) => ({
             id: x.id,
-            name: x.name,
+            name: displayCommunityName({ name: x.name, topic: x.topic ?? null, category_id: x.category_id ?? null, city_id: x.city_id }),
             cityId: x.city_id,
             cover: x.cover_path,
             members: x.members,
             tagline: x.tagline ?? null,
             role: x.role === 'created' ? 'created' : 'joined',
+            official: Boolean(x.official),
+            topic: x.topic ?? null,
+            categoryId: x.category_id ?? null,
+            retired: Boolean(x.retired),
           })),
         });
       })

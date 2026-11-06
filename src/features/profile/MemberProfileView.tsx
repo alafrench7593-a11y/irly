@@ -28,7 +28,7 @@ import { BadgesRow } from '@/features/engage/EngageUI';
 import { removePost } from '@/features/posts/posts';
 import { confirm } from '@/lib/confirm';
 import { changed } from '@/features/server/sync';
-import { t as tx, useT } from '@/i18n';
+import { countWord, t as tx, useLang, useT } from '@/i18n';
 import { hueOf } from '@/lib/format';
 import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
@@ -40,6 +40,10 @@ import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { SpaceSwitchCard } from '@/features/girl/GirlSections';
 import { useAppSpace } from '@/state/appSpace';
+import { Rail } from '@/components/cards/Blocks';
+import { CommunityThumb } from '@/features/community/CommunityThumb';
+import { languageList } from '@/data/languages';
+import { labelOf } from '@/features/girl/taxonomy';
 import { useStore } from '@/state/store';
 import {
   openDirect,
@@ -54,12 +58,13 @@ import {
   type ProfileActivity,
 } from './member';
 
-type Tab = 'posts' | 'lives' | 'activities' | 'communities';
+type Tab = 'posts' | 'lives' | 'activities';
 
 /**
  * A member's profile, yours included (the Profile tab shows it with `own`):
- * identity, followers / following / friends, then four tabs (Posts, Lives,
- * Activities, Communities). Everything comes from the server as the viewer
+ * identity, followers / following / friends, the communities they joined
+ * (with their photos), then three tabs (Posts, Lives, Activities).
+ * Everything comes from the server as the viewer
  * may see it; counts and buttons follow the server after every action.
  * Settings live behind the gear (your profile); the "…" menu holds share,
  * report and block (someone else's).
@@ -270,6 +275,11 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
                   </Text>
                 </View>
               ) : null}
+              {p.visible && p.languages.length ? (
+                <Text variant="caption" tone="secondary" align="center" raw>
+                  {tr('Speaks {langs}', { langs: languageList(p.languages, true) })}
+                </Text>
+              ) : null}
 
               <Animated.View entering={reduced ? undefined : enter.rise(2)} style={[styles.counts, { borderColor: t.c.line }]}>
                 <Count n={p.followers} label="Followers" onPress={lists('followers')} />
@@ -313,12 +323,15 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
                       <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
                         <GlassLayer radius={14} />
                         {it ? <Icon name={it.icon} size={13} color={t.c.textSecondary} /> : null}
-                        <Text variant="caption">{it?.label ?? i}</Text>
+                        {/* IRLY's interests, or IRLY Girl's (by their label), never an id. */}
+                        <Text variant="caption">{it?.label ?? labelOf(i)}</Text>
                       </View>
                     );
                   })}
                 </View>
               ) : null}
+
+              {p.visible ? <CommunitiesSection list={communities} own={p.isMe} /> : null}
 
               {/* Your profile: IRLY or IRLY Girl, the same switch as on the Home (IRLY Girl is offered to women, as there). */}
               {own && (inGirl || woman) ? (
@@ -343,7 +356,6 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
                         { value: 'posts', label: tr('Posts') },
                         { value: 'lives', label: tr('Lives') },
                         { value: 'activities', label: tr('Activities') },
-                        { value: 'communities', label: tr('Communities') },
                       ]}
                       value={tab}
                       onChange={(v) => {
@@ -356,7 +368,6 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
                     {tab === 'posts' ? <PostsTab userId={p.id} own={p.isMe} name={p.firstName} /> : null}
                     {tab === 'lives' ? <LivesTab userId={p.id} own={p.isMe} name={p.firstName} cityId={p.cityId} /> : null}
                     {tab === 'activities' ? <ActivitiesTab userId={p.id} own={p.isMe} name={p.firstName} /> : null}
-                    {tab === 'communities' ? <CommunitiesTab list={communities} own={p.isMe} name={p.firstName} /> : null}
                   </Animated.View>
                 </>
               )}
@@ -631,8 +642,8 @@ function ActivitiesTab({ userId, own, name }: { userId: string; own: boolean; na
     <View style={styles.list}>
       <Segmented
         options={[
-          { value: 'created', label: `${tr('Created')} · ${created}` },
-          { value: 'joined', label: `${tr('Joined')} · ${joined}` },
+          { value: 'created', label: tr('Created · {n}', { n: created }) },
+          { value: 'joined', label: tr('Joined · {n}', { n: joined }) },
         ]}
         value={which}
         onChange={(v) => setWhich(v as 'created' | 'joined')}
@@ -674,7 +685,7 @@ function ActivityRow({ a, cover, onPress, border }: { a: ProfileActivity; cover?
           {cityWhen(a.startsAt, a.cityId)} · {a.placeName ?? (city ? areaName(city, a.areaId) : a.areaId)}
         </Text>
         <Text variant="caption" color={badge[a.state].color}>
-          {tx(badge[a.state].label)} · {tx('{n} going', { n: a.going })}
+          {tx(badge[a.state].label)} · {tx(a.going === 1 ? '1 going' : '{n} going', { n: a.going })}
         </Text>
       </View>
       <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
@@ -682,65 +693,93 @@ function ActivityRow({ a, cover, onPress, border }: { a: ProfileActivity; cover?
   );
 }
 
-function CommunitiesTab({ list, own, name }: { list: MemberCommunity[]; own: boolean; name: string }) {
+/**
+ * The communities a member joined, as cards with each community's photo (its
+ * own, or IRLY's photo of its subject: the same as on its page); each opens
+ * the community. Only those the viewer may see (member_communities): never
+ * a women-only one to someone without IRLY Girl access, none when the
+ * profile is hidden from them. Your own profile also shows the retired ones.
+ */
+function CommunitiesSection({ list, own }: { list: MemberCommunity[]; own: boolean }) {
   const t = useTheme();
+  const tr = useT();
   const router = useRouter();
-  const covers = useSignedLinks('activity-photos', list.map((c) => c.cover));
-  if (!list.length)
-    return (
-      <Empty
-        icon="heartHandshake"
-        title={own ? 'No community yet' : tx('{name} is not in a community you can see', { name })}
-        body="Communities bring together people who like the same things, in your city."
-        cta={own ? { label: 'Explore communities', go: () => router.push('/communities') } : undefined}
-      />
-    );
-  const created = list.filter((c) => c.role === 'created');
-  const joined = list.filter((c) => c.role === 'joined');
-  const card = (c: MemberCommunity) => (
-    <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${c.id}`)} style={[styles.row, { borderColor: t.c.line }]} accessibilityLabel={c.name}>
-      <View style={[styles.thumb, { backgroundColor: t.c.overlay }]}>
-        {c.cover && covers[c.cover] ? <Photo visual={{ photo: 'meeting', uri: covers[c.cover] }} light="dubai" width={160} style={StyleSheet.absoluteFill} /> : <Icon name="heartHandshake" size={18} color={t.c.textSecondary} />}
-      </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="titleS" numberOfLines={1} raw>
-          {c.name}
+  if (!list.length && !own) return null;
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHead}>
+        <Text variant="titleM" style={{ flex: 1 }}>
+          Communities
         </Text>
-        {c.tagline ? (
-          <Text variant="caption" tone="secondary" numberOfLines={1} raw>
-            {c.tagline}
+        {list.length ? (
+          <Text variant="caption" tone="tertiary">
+            {tr('{n} communities', { n: list.length })}
           </Text>
         ) : null}
-        <Text variant="caption" tone="tertiary">
-          {tx('{n} members', { n: c.members })}
-        </Text>
       </View>
-      <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
-    </PressableScale>
-  );
-  return (
-    <View style={styles.list}>
-      {created.length ? <Label text="Created" /> : null}
-      {created.map(card)}
-      {joined.length ? <Label text="Joined" /> : null}
-      {joined.map(card)}
+      {list.length ? (
+        <Rail itemWidth={COMMUNITY_CARD}>
+          {list.map((c) => {
+            const city = CITIES[c.cityId as keyof typeof CITIES];
+            const members = tr('{n} members', { n: c.members });
+            return (
+              <PressableScale
+                key={c.id}
+                haptic="select"
+                scaleTo={0.97}
+                onPress={() => router.push(`/c/${c.id}`)}
+                accessibilityRole="link"
+                accessibilityLabel={`${c.name}, ${members}`}
+                style={[styles.community, { borderColor: t.c.line }]}
+              >
+                <GlassLayer radius={radius.lg} />
+                <CommunityThumb id={c.id} name={c.name} coverPath={c.cover} topic={c.topic} categoryId={c.categoryId} light={city?.light ?? 'dubai'} size="100%" height={104} />
+                <View style={styles.communityText}>
+                  <Text variant="titleS" numberOfLines={1} raw>
+                    {c.name}
+                  </Text>
+                  <Text variant="caption" tone="secondary" numberOfLines={1} raw>
+                    {city ? `${tr(city.name)} · ${members}` : members}
+                  </Text>
+                  {own && (c.role === 'created' || c.retired) ? (
+                    <Text variant="caption" tone="tertiary" numberOfLines={1}>
+                      {c.retired ? 'No longer listed' : 'You created it'}
+                    </Text>
+                  ) : null}
+                </View>
+              </PressableScale>
+            );
+          })}
+        </Rail>
+      ) : (
+        <Empty
+          icon="heartHandshake"
+          title="No community yet"
+          body="Join a community to meet people who like the same things, in your city."
+          cta={{ label: 'Explore communities', go: () => router.push('/communities') }}
+        />
+      )}
     </View>
   );
 }
 
+const COMMUNITY_CARD = 220;
+
 /* ───────── Small parts ───────── */
 
-function Count({ n, label, onPress }: { n: number; label: string; onPress?: () => void }) {
+function Count({ n, label, onPress }: { n: number; label: 'Followers' | 'Following' | 'Friends'; onPress?: () => void }) {
+  // « 1 Abonné·e », « 0 Ami·e »: the word agrees with the number, in the app language.
+  const word = countWord(useLang(), n, label);
   return (
-    <PressableScale haptic={onPress ? 'select' : false} disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : 'text'} accessibilityLabel={`${n} ${tx(label)}`} style={styles.count}>
+    <PressableScale haptic={onPress ? 'select' : false} disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : 'text'} accessibilityLabel={`${n} ${word}`} style={styles.count}>
       {/* A new count fades in: the number on screen is always the server's. */}
       <Animated.View key={n} entering={FadeIn.duration(220)}>
         <Text variant="titleL" align="center">
           {n}
         </Text>
       </Animated.View>
-      <Text variant="caption" tone="secondary">
-        {label}
+      <Text variant="caption" tone="secondary" raw>
+        {word}
       </Text>
     </PressableScale>
   );
@@ -850,6 +889,10 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth * 2 },
   thumb: { width: 52, height: 52, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   label: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 8 },
+  section: { marginTop: space[6] },
+  sectionHead: { flexDirection: 'row', alignItems: 'baseline', gap: 8, paddingHorizontal: space.gutter, marginBottom: space[3] },
+  community: { width: COMMUNITY_CARD, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
+  communityText: { padding: 12, gap: 2 },
   empty: { alignItems: 'center', gap: 8, paddingHorizontal: space.gutter * 1.5, paddingVertical: space[6] },
   emptyIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 54 },

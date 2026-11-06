@@ -22,6 +22,7 @@ import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { CommunityThumb } from '@/features/community/CommunityThumb';
 import type { NetCommunity, NetPost } from './hub';
 import { LINK_KINDS, linkLabel, safeLink, type ProLinks } from './links';
 import type { ProProfile } from './match';
@@ -371,8 +372,10 @@ export function PostRow({ p, index, now }: { p: NetPost; index: number; now: num
         style={[styles.post, { boxShadow: tone.surface.shadow }]}
       >
         <NetworkPane radius={radius.lg} press={press} light={false} />
-        <PressableScale onPress={() => router.push(`/c/${p.communityId}`)} accessibilityRole="link" accessibilityLabel={p.communityName} hitSlop={6}>
-          <Text variant="caption" tone="tertiary" numberOfLines={1} raw>
+        <PressableScale onPress={() => router.push(`/c/${p.communityId}`)} accessibilityRole="link" accessibilityLabel={p.communityName} hitSlop={6} style={styles.row}>
+          {/* The community it was posted in, by its photo. */}
+          <CommunityThumb id={p.communityId} name={p.communityName} light="dubai" size={22} />
+          <Text variant="caption" tone="tertiary" numberOfLines={1} raw style={{ flexShrink: 1 }}>
             {[p.communityName, p.authorName, ago].filter(Boolean).join(' · ')}
           </Text>
         </PressableScale>
@@ -415,18 +418,21 @@ export function CommunityTile({ c, index }: { c: NetCommunity; index: number }) 
         style={[styles.community, { boxShadow: tone.surface.shadow }]}
       >
         <NetworkPane radius={radius.lg} press={press} />
-        <View style={styles.row}>
-          <View style={[styles.emoji, { borderColor: tone.softLine, backgroundColor: tone.soft }]}>
-            {c.emoji ? (
-              <Text variant="titleS" raw>
-                {c.emoji}
-              </Text>
-            ) : (
-              <Icon name="users" size={16} color={tone.accent} />
-            )}
-          </View>
+        {/* Its photo (its own, or IRLY's for its subject: IRLY Network, Girl CEO, Mom CEO…), never an icon. */}
+        <View style={styles.cover}>
+          <CommunityThumb
+            id={c.id}
+            name={c.name}
+            coverPath={c.coverPath}
+            topic={c.topic}
+            categoryId={c.categoryId}
+            photo={c.photo}
+            light={c.cityId && c.cityId in CITIES ? CITIES[c.cityId as CityId].light : 'dubai'}
+            size="100%"
+            height={COVER}
+          />
           {c.isMember ? (
-            <View style={[styles.badge, { backgroundColor: tone.accent, marginLeft: 'auto' }]}>
+            <View style={[styles.badge, styles.coverBadge, { backgroundColor: tone.accent }]}>
               <Text variant="caption" color={tone.onAccent}>
                 Member
               </Text>
@@ -539,6 +545,9 @@ export function ProLinkButtons({ links, index = 0 }: { links: ProLinks; index?: 
   );
 }
 
+/** Height of a community tile's photo. */
+const COVER = 96;
+
 const styles = StyleSheet.create({
   intro: { marginHorizontal: space.gutter, padding: 20, gap: 16, borderRadius: radius.xl, overflow: 'hidden' },
   introHead: { flexDirection: 'row', alignItems: 'center', gap: 14 },
@@ -561,9 +570,10 @@ const styles = StyleSheet.create({
   badge: { height: 20, paddingHorizontal: 8, borderRadius: radius.pill, justifyContent: 'center' },
   meetup: { width: 248, minHeight: 148, padding: 16, gap: 8, borderRadius: radius.lg, overflow: 'hidden' },
   post: { marginHorizontal: space.gutter, padding: 16, gap: 8, borderRadius: radius.lg, overflow: 'hidden' },
-  community: { width: 204, minHeight: 156, padding: 16, gap: 8, borderRadius: radius.lg, overflow: 'hidden' },
+  community: { width: 204, minHeight: 156, padding: 16, paddingTop: 0, gap: 8, borderRadius: radius.lg, overflow: 'hidden' },
+  cover: { height: COVER, marginHorizontal: -16, marginBottom: 4 },
+  coverBadge: { position: 'absolute', top: 10, right: 10 },
   well: { width: 32, height: 32, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
-  emoji: { width: 36, height: 36, borderRadius: 18, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center' },
   links: { paddingHorizontal: space.gutter, marginTop: space[6], gap: 10 },
   linkWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   link: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48, paddingHorizontal: 14, paddingVertical: 6, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden', maxWidth: '100%' },

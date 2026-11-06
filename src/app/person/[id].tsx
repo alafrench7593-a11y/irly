@@ -3,6 +3,7 @@ import { DEMO } from '@/config/app';
 import { useRef } from 'react';
 import { useAvatarFlight, useFlyingTo } from '@/features/flight/avatarFlight';
 import { t as tx } from '@/i18n';
+import { languageList } from '@/data/languages';
 import { NotFound } from '@/components/layout/NotFound';
 import { ProfileColumns, useProfileSplit } from '@/components/layout/ProfileColumns';
 import { COLUMN_MAX } from '@/components/layout/responsive';
@@ -197,7 +198,7 @@ function SeedProfile() {
 
               <Animated.View entering={enter.rise(7)} style={[styles.section, styles.facts]}>
                 <Fact icon="clock" label={tx('Usually free')} value={person.availability.map((a, i) => (i ? tx(AVAILABILITY[a]).toLocaleLowerCase() : tx(AVAILABILITY[a]))).join(', ')} />
-                <Fact icon="languages" label="Speaks" value={person.languages.map((l) => tx(l)).join(', ')} />
+                <Fact icon="languages" label="Speaks" value={languageList(person.languages)} />
               </Animated.View>
 
               {sessions.length || events.length ? (
