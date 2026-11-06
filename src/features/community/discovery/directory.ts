@@ -8,6 +8,8 @@ import { displayCommunityName } from '@/features/community/name';
 import { GIRL_OFFICIAL_TOPICS, NETWORK_OFFICIAL_TOPICS } from '@/features/community/official';
 import { isDemoId } from '@/features/girl/demo';
 import { belongsToSpace } from '@/features/universe/universe';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
+import { useAppSpace, type AppSpace } from '@/state/appSpace';
 import { t as tx } from '@/i18n';
 import { friendlyError, supabase } from '@/lib/supabase';
 
@@ -123,10 +125,11 @@ export const fromSummary = (c: CommunitySummary): DirectoryCommunity => ({
 /** The demo's own communities: their upcoming count is the demo's plans linked to each (example content). */
 export const fromDemo = (c: CommunitySummary): DirectoryCommunity => ({ ...fromSummary(c), upcoming: DEMO_PLANS.filter((p) => p.community === c.id).length });
 
-export async function fetchDirectory(cityId: string, sort: DirectorySort, search: string | null, limit = 200): Promise<DirectoryCommunity[]> {
+export async function fetchDirectory(cityId: string, sort: DirectorySort, search: string | null, space: AppSpace, limit = 200): Promise<DirectoryCommunity[]> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const args: DirectoryArgs = { p_city: cityId, p_sort: sort, p_search: search, p_limit: limit };
-  const { data, error } = await supabase.rpc('community_directory', args);
+  // This app space only, on the server (20261110700000): the other space's communities never come back.
+  const { data, error } = await rpcInSpace(supabase, 'community_directory', args, space);
   if (error) throw new Error(friendlyError(error.message));
   return ((data as DirectoryRow[] | null) ?? []).map(fromRow);
 }
@@ -166,7 +169,8 @@ export function sortLocally(list: DirectoryCommunity[], sort: DirectorySort): Di
 export function useDirectory(cityId: string, sort: DirectorySort, search: string | null, enabled = true) {
   const uid = useAccount()?.userId;
   const version = useCommunitiesVersion();
-  const key = `${cityId}|${sort}|${search ?? ''}`;
+  const space = useAppSpace();
+  const key = `${cityId}|${sort}|${search ?? ''}|${space}`;
   const [state, setState] = useState<{ key: string; list: DirectoryCommunity[] | null; error: string | null }>({ key: '', list: null, error: null });
   const [n, setN] = useState(0);
   const refresh = useCallback(() => setN((x) => x + 1), []);
@@ -174,14 +178,14 @@ export function useDirectory(cityId: string, sort: DirectorySort, search: string
   useEffect(() => {
     if (!on) return;
     let alive = true;
-    fetchDirectory(cityId, sort, search).then(
+    fetchDirectory(cityId, sort, search, space).then(
       (list) => alive && setState({ key, list, error: null }),
       (e: unknown) => alive && setState((s) => ({ key, list: s.key === key ? s.list : null, error: e instanceof Error ? e.message : 'offline' })),
     );
     return () => {
       alive = false;
     };
-  }, [on, key, cityId, sort, search, version, n]);
+  }, [on, key, cityId, sort, search, space, version, n]);
   const mine = state.key === key;
   return { list: on && mine ? state.list : null, error: on && mine ? state.error : null, loading: on && (!mine || (state.list === null && state.error === null)), refresh };
 }

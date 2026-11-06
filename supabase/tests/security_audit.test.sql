@@ -361,11 +361,11 @@ end $$;
 do $$
 begin
   perform pg_temp.check(not has_function_privilege('anon', 'public.toggle_like(text, text)', 'execute')
-      and not has_function_privilege('anon', 'public.search_all(text, text, integer)', 'execute')
+      and not has_function_privilege('anon', 'public.search_all(text, text, integer, text)', 'execute')
       and not has_function_privilege('anon', 'public.comment_thread(text, text)', 'execute'),
     'anon_execute: anon cannot call signed-in functions');
   perform pg_temp.check(has_function_privilege('authenticated', 'public.toggle_like(text, text)', 'execute')
-      and has_function_privilege('authenticated', 'public.search_all(text, text, integer)', 'execute'),
+      and has_function_privilege('authenticated', 'public.search_all(text, text, integer, text)', 'execute'),
     'anon_execute: members still can');
   perform pg_temp.check(has_function_privilege('anon', 'public.join_waitlist(text, text, text)', 'execute')
       and has_function_privilege('anon', 'public.places_search(text, text, text, text, numeric, integer, text[], boolean, text, integer)', 'execute'),

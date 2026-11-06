@@ -52,7 +52,7 @@ end $$;
 
 -- ───────── The migration is in place ─────────
 select pg_temp.as_admin();
-select pg_temp.check(position($b$a.starts_at >= now() - interval '2 hours' or a.ends_at >= now()$b$ in pg_get_functiondef('public.search_all(text,text,integer)'::regprocedure)) > 0, 'search_all bounds its activities by plain columns');
+select pg_temp.check(position($b$a.starts_at >= now() - interval '2 hours' or a.ends_at >= now()$b$ in pg_get_functiondef('public.search_all(text,text,integer,text)'::regprocedure)) > 0, 'search_all bounds its activities by plain columns');
 select pg_temp.check(position($b$a.starts_at >= now() - interval '2 hours' or a.ends_at >= now()$b$ in pg_get_functiondef('public.search_all_girl(text,text,integer)'::regprocedure)) > 0, 'search_all_girl bounds its activities by plain columns');
 select pg_temp.check(position('or a.ends_at > greatest(now(), coalesce(p_from, now())))' in pg_get_functiondef(to_regprocedure('public.map_activities(text,timestamp with time zone,timestamp with time zone,text,uuid,double precision,double precision,double precision,integer,boolean)'))) > 0, 'map_activities bounds its activities by plain columns');
 select pg_temp.check((select count(*) from pg_policy where polname = 'community_members_read' and pg_get_expr(polqual, polrelid) ~ 'SELECT private\.is_girl_eligible\(\)' and pg_get_expr(polqual, polrelid) !~ '(^|[^T] |[^ ])private\.is_girl_eligible\(\)') = 1, 'community members: IRLY Girl access asked once per query');

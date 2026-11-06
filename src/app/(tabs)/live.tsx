@@ -16,13 +16,14 @@ import { uuid } from '@/lib/uuid';
 import { LiveVideo } from '@/features/live/LiveVideo';
 import { LivePhoto } from '@/features/live/LivePhoto';
 import { useAccount } from '@/features/auth/account';
-import { addFriend, bumpIrl, deleteServerIrl, editServerIrl, postServerIrl, settleLive, useFriends, useServerIrl, type ServerIrlPost } from '@/features/server/social';
+import { bumpIrl, deleteServerIrl, editServerIrl, postServerIrl, settleLive, useFriends, useServerIrl, type ServerIrlPost } from '@/features/server/social';
 import { outcomeOf, type LivePhase } from '@/features/live/livePublish';
 import { createPost, MAX_PHOTOS, pickPhotos, removePost, useDrafts, type DraftMedia } from '@/features/posts/posts';
 import { PostCard, PostCardSkeleton, type PostOption } from '@/features/posts/PostCard';
 import { PostMedia } from '@/features/posts/PostMedia';
 import { createActivityFromPost, useActivityFromPost } from '@/features/posts/activityFromPost';
 import { useMyCommunities } from '@/features/community/data';
+import { setFollow } from '@/features/profile/member';
 import { belongsToSpace } from '@/features/universe/universe';
 import { Image } from 'expo-image';
 import { openReport } from '@/features/moderation/reportStore';
@@ -68,7 +69,7 @@ const POST_MIN = 300;
 const clock = () => Date.now();
 
 // Who sees a moment, as stored (a private one is not "Everyone").
-const VISIBILITY_LABEL: Record<string, string> = { everyone: 'Everyone', friends: 'Friends', close_friends: 'Close friends', community: 'Communities', private: 'Only me' };
+const VISIBILITY_LABEL: Record<string, string> = { everyone: 'Everyone', friends: 'Mutual follows', close_friends: 'Close friends', community: 'Communities', private: 'Only me' };
 
 export default function LiveScreen() {
   const cityId = useCityId();
@@ -521,7 +522,7 @@ const LiveFeedCard = memo(function LiveFeedCard({
       target={{ type, id: p.id, title: p.body.slice(0, 60) }}
       eng={eng}
       options={options}
-      footer={status === 'none' || status === 'incoming' || status === 'sent' ? <FriendButton status={status} name={p.firstName} authorId={p.authorId} onDone={onFriend} /> : null}
+      footer={status === 'none' || status === 'incoming' || status === 'sent' ? <FollowButton name={p.firstName} authorId={p.authorId} onDone={onFriend} /> : null}
     />
   );
 });
@@ -568,27 +569,30 @@ function EditLive({ value, onClose }: { value: { id: string; body: string } | nu
 }
 
 /**
- * Add friend → (sending) → Request sent; Accept friend → (sending) → Friends.
+ * Follow → (sending) → You follow. Friends are members who follow each other
+ * (no friend request any more): following back makes two members friends.
  * The button only changes once the server has answered: a failure leaves it
  * as it was, and a double tap never sends twice.
  */
-function FriendButton({ status, name, authorId, onDone }: { status: 'incoming' | 'sent' | 'none'; name: string; authorId: string; onDone: () => void }) {
+function FollowButton({ name, authorId, onDone }: { name: string; authorId: string; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
   return (
     <Button
-      label={status === 'incoming' ? 'Accept friend' : status === 'sent' ? 'Request sent' : 'Add friend'}
+      label={done ? 'You follow' : 'Follow'}
       size="sm"
-      variant={status === 'sent' ? 'secondary' : 'primary'}
-      icon={status === 'sent' ? 'check' : 'plus'}
-      disabled={status === 'sent'}
+      variant={done ? 'secondary' : 'primary'}
+      icon={done ? 'check' : 'plus'}
+      disabled={done}
       loading={busy}
       onPress={() => {
-        if (busy) return;
+        if (busy || done) return;
         setBusy(true);
-        addFriend(authorId)
-          .then((r) => {
+        setFollow(authorId, true)
+          .then(() => {
             haptic('success');
-            toast(r === 'accepted' ? tx('You and {name} are friends', { name }) : tx('Request sent to {name}', { name }), 'user', 'brand');
+            setDone(true);
+            toast(tx('You follow {name}', { name }), 'user', 'brand');
             onDone();
           })
           .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
@@ -1057,7 +1061,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
               Who sees it
             </Text>
             <View style={styles.wrap}>
-              <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => setChosen('friends')} />
+              <Chip size="sm" label="Mutual follows" icon="users" selected={visibility === 'friends'} onPress={() => setChosen('friends')} />
               <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => setChosen('everyone')} />
             </View>
             <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => !busy && setOpenUp(!openUp)} />

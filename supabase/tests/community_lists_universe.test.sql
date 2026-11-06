@@ -69,12 +69,12 @@ select pg_temp.check((select count(*) from pg_proc p where p.pronamespace = 'pub
     and p.proname in ('community_list', 'community_directory', 'community_recommend', 'member_communities',
       'girl_official_communities', 'mom_official_communities')) = 6,
   'the six community list RPCs exist, once each');
-select pg_temp.check(not has_function_privilege('anon', 'public.community_list(text)', 'execute')
-    and not has_function_privilege('anon', 'public.community_directory(text, text, text, integer)', 'execute')
-    and not has_function_privilege('anon', 'public.community_recommend(text, text[], integer)', 'execute')
-    and has_function_privilege('authenticated', 'public.community_list(text)', 'execute')
-    and has_function_privilege('authenticated', 'public.community_directory(text, text, text, integer)', 'execute')
-    and has_function_privilege('authenticated', 'public.community_recommend(text, text[], integer)', 'execute'),
+select pg_temp.check(not has_function_privilege('anon', 'public.community_list(text, text)', 'execute')
+    and not has_function_privilege('anon', 'public.community_directory(text, text, text, integer, text)', 'execute')
+    and not has_function_privilege('anon', 'public.community_recommend(text, text[], integer, text)', 'execute')
+    and has_function_privilege('authenticated', 'public.community_list(text, text)', 'execute')
+    and has_function_privilege('authenticated', 'public.community_directory(text, text, text, integer, text)', 'execute')
+    and has_function_privilege('authenticated', 'public.community_recommend(text, text[], integer, text)', 'execute'),
   'same grants as before: signed-in members only');
 
 -- ───────── Accounts and communities (server role) ─────────

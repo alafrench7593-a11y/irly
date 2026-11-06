@@ -36,7 +36,7 @@ const GROUPS: { label: string; kinds: string[] }[] = [
   { label: 'Messages', kinds: ['MESSAGE_CREATED'] },
   { label: 'Likes', kinds: ['LIKE'] },
   { label: 'Comments and replies', kinds: ['COMMENT', 'COMMENT_REPLY', 'MENTION'] },
-  { label: 'Friends and followers', kinds: ['FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'IRLY_POST_CREATED', 'NEW_FOLLOWER'] },
+  { label: 'Followers', kinds: ['FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'IRLY_POST_CREATED', 'NEW_FOLLOWER'] },
   { label: 'Activities and events', kinds: ['ACTIVITY_JOINED', 'ACTIVITY_UPDATED', 'ACTIVITY_INVITATION', 'ACTIVITY_REMINDER'] },
   { label: 'Communities', kinds: ['COMMUNITY_JOINED', 'COMMUNITY_INVITATION', 'COMMUNITY_POST', 'COMMUNITY_ANNOUNCEMENT'] },
   { label: 'IRLY Girl matches', kinds: ['MATCH_CREATED', 'MATCH_SUGGESTION', 'MATCH_REMOVED'] },
@@ -46,7 +46,7 @@ const GROUPS: { label: string; kinds: string[] }[] = [
 
 const AUDIENCE = [
   { id: 'everyone', label: 'Everyone' },
-  { id: 'friends', label: 'Friends' },
+  { id: 'friends', label: 'Mutual follows' },
   { id: 'communities', label: 'My communities' },
   { id: 'nobody', label: 'Nobody' },
 ] as const;

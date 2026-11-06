@@ -223,7 +223,7 @@ function MatchCard({ person, photo, cityId, width, onSkip }: { person: PeopleMat
       <View style={styles.actions}>
         {status === 'none' ? <Button label="Follow" icon="userPlus" size="sm" loading={busy === 'follow'} onPress={follow} style={{ flex: 1 }} /> : null}
         {status === 'following' ? <Button label="You follow" icon="check" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
-        {status === 'friends' ? <Button label="Friends" icon="userCheck" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
+        {status === 'friends' ? <Button label="You follow each other" icon="userCheck" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
         <PressableScale haptic="tap" scaleTo={0.9} onPress={skip} disabled={busy === 'skip'} accessibilityRole="button" accessibilityLabel={tx('Not now')} style={[styles.skip, { backgroundColor: t.c.overlay, opacity: busy === 'skip' ? 0.5 : 1 }]}>
           <Icon name="x" size={16} color={t.c.text} />
         </PressableScale>

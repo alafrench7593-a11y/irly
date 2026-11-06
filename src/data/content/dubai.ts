@@ -496,9 +496,9 @@ export const dubai: CityContent = {
     }),
     community(C, {
       id: 'c-d6',
-      name: 'Women in Business UAE',
+      name: 'Business Leaders UAE',
       tagline: 'Breakfasts that open doors',
-      description: 'A private circle for women founders and executives: monthly breakfasts, mentoring pairs, a referral board.',
+      description: 'A private circle for founders and executives: monthly breakfasts, mentoring pairs, a referral board.',
       members: 980,
       memberIds: ['p-amira', 'p-nadia', 'p-layla'],
       kind: 'professional',

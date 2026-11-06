@@ -291,7 +291,7 @@ select pg_temp.check(not public.my_girl_access() and public.my_girl_status() = '
 select pg_temp.check(pg_temp.fails($q$select gender from public.profiles where id = 'ca000000-0000-0000-0000-0000000000a1'$q$) = '42501', 'man: cannot read a member''s gender');
 select pg_temp.check(not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'profiles_public' and column_name = 'gender'), 'profiles_public has no gender');
 select pg_temp.check(pg_get_function_result('public.public_profile(uuid)'::regprocedure) not like '%gender%'
-  and pg_get_function_result('public.search_all(text, text, integer)'::regprocedure) not like '%gender%'
+  and pg_get_function_result('public.search_all(text, text, integer, text)'::regprocedure) not like '%gender%'
   and pg_get_function_result('public.chat_members(uuid)'::regprocedure) not like '%gender%',
   'public_profile, search_all and chat_members return no gender');
 select pg_temp.check(pg_temp.fails($q$update public.profiles set gender = 'woman' where id = 'ca000000-0000-0000-0000-0000000000a3'$q$) = '42501', 'man: cannot declare himself a woman');

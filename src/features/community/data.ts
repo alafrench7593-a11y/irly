@@ -14,6 +14,7 @@ import { toast } from '@/components/ui/Toast';
 import { realtimeIdsFilter } from '@/features/server/engage';
 import { useAppSpace } from '@/state/appSpace';
 import { belongsToSpace } from '@/features/universe/universe';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
 import { cacheKey, hydrateCommunityCache, load as loadCached, peek } from './cache';
 import { displayCommunityName } from './name';
 import { FEED_PAGE, fetchFeedFallback, fetchPostsPage, popularScore, type FeedSort } from './space';
@@ -649,6 +650,8 @@ export function useMyCommunities(cityId: string) {
 function useCommunityRows(cityId: string) {
   const account = useAccount();
   const uid = account?.userId;
+  // Asked for this app space only: the server leaves out the other space's communities (20261110700000).
+  const space = useAppSpace();
   // IRLY Girl communities come back to eligible women only.
   const [list, setList] = useState<CommunitySummary[]>([]);
   const version = useCommunitiesVersion();
@@ -660,7 +663,7 @@ function useCommunityRows(cityId: string) {
     void hydrateCommunityCache();
     // Home, Profile and Communities list the same communities (tabs stay mounted, a sync bump reaches them all): one read,
     // and a screen opened within 20 s of another takes its answer (a change bumps `version`, read again then).
-    togetherRecent(`community_list:${uid}:${cityId}:${version}`, 20_000, () => sb.rpc('community_list', { p_city: cityId })).then(({ data, error }) => {
+    togetherRecent(`community_list:${uid}:${cityId}:${space}:${version}`, 20_000, () => rpcInSpace(sb, 'community_list', { p_city: cityId }, space)).then(({ data, error }) => {
       // A failed load keeps the list already on screen.
       if (!alive || error) return;
       setList(
@@ -686,7 +689,7 @@ function useCommunityRows(cityId: string) {
     return () => {
       alive = false;
     };
-  }, [cityId, uid, version]);
+  }, [cityId, uid, version, space]);
   const { keep } = useCityFilter(cityId as CityId);
   const shown = useMemo(() => list.filter((c) => keep(c.cityId)), [list, keep]);
   return uid ? shown : NONE;

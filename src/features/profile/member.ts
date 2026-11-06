@@ -1,4 +1,5 @@
 import { useAppSpace } from '@/state/appSpace';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
@@ -109,12 +110,14 @@ export function useMemberProfile(userId: string) {
   const uid = useAccount()?.userId;
   const [state, setState] = useState<{ for: string; profile: MemberProfile | null; communities: MemberCommunity[]; posts: MemberPost[]; error: string | null }>({ for: '', profile: null, communities: [], posts: [], error: null });
   const seq = useRef(0);
-  const key = `${uid}|${userId}`;
+  // Her communities in this app space only, on the server (20261110700000): her Girl and Mom ones never show in Mixte.
+  const space = useAppSpace();
+  const key = `${uid}|${userId}|${space}`;
 
   const load = useCallback(() => {
     if (!supabase || !uid) return;
     const n = ++seq.current;
-    Promise.all([sb().rpc('public_profile', { p_user: userId }), sb().rpc('member_communities', { p_user: userId })])
+    Promise.all([sb().rpc('public_profile', { p_user: userId }), rpcInSpace(sb(), 'member_communities', { p_user: userId }, space)])
       .then(([p, c]) => {
         if (n !== seq.current) return;
         if (p.error) throw new Error(p.error.message);
@@ -163,7 +166,7 @@ export function useMemberProfile(userId: string) {
         });
       })
       .catch((e) => n === seq.current && setState((s) => ({ ...s, for: key, error: /fetch|network/i.test(String(e)) ? 'Can’t reach IRLY right now' : e instanceof Error ? e.message : 'Could not load' })));
-  }, [uid, userId, key]);
+  }, [uid, userId, key, space]);
 
   useEffect(() => {
     load();

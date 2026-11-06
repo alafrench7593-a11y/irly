@@ -44,7 +44,7 @@ import { clockLabel, instants, localPlanDay, problemOf, type When } from './when
 
 const PRIVACY: { id: NonNullable<MyPlan['privacy']>; label: string }[] = [
   { id: 'public', label: 'Public' },
-  { id: 'connections', label: 'Friends' },
+  { id: 'connections', label: 'Mutual follows' },
   { id: 'community', label: 'Community' },
   { id: 'invite', label: 'Invite only' },
 ];

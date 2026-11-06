@@ -10,6 +10,8 @@ import { addDays, cityParts, type When } from '@/features/create/when';
 import { coverLinks } from '@/features/server/activities';
 import { useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
+import { useAppSpace } from '@/state/appSpace';
 
 /**
  * « Y aller ensemble »: activities members create around an IRLY event.
@@ -107,10 +109,12 @@ type Row = {
  */
 export function useEventActivities(eventId: string): { items: EventActivity[]; loading: boolean; error: string | null; refresh: () => void } {
   const uid = useAccount()?.userId;
+  // This app space's plans only (20261110700000): never a women-only plan in Mixte.
+  const space = useAppSpace();
   const key = isEventKey(eventId) ? eventId : null;
   const enabled = Boolean(supabase && uid && key);
   // Which question the list answers: until its first answer arrives, it is loading.
-  const asked = `${uid ?? ''}|${key ?? ''}`;
+  const asked = `${uid ?? ''}|${key ?? ''}|${space}`;
   const [result, setResult] = useState<{ for: string; items: EventActivity[]; error: string | null }>({ for: '', items: [], error: null });
   const seq = useRef(0);
 
@@ -119,7 +123,7 @@ export function useEventActivities(eventId: string): { items: EventActivity[]; l
     const mine = ++seq.current;
     const sb = supabase;
     (async () => {
-      const { data, error: e } = await sb.rpc('event_activities', { p_event: key, p_limit: 50 });
+      const { data, error: e } = await rpcInSpace(sb, 'event_activities', { p_event: key, p_limit: 50 }, space);
       if (e) throw new Error(e.message);
       const rows = (data as Row[] | null) ?? [];
       const links = await coverLinks(rows.map((r) => r.cover_url)).catch(() => ({}) as Record<string, string>);
@@ -145,13 +149,13 @@ export function useEventActivities(eventId: string): { items: EventActivity[]; l
         }),
       );
     })().then(
-      (list) => mine === seq.current && setResult({ for: `${uid}|${key}`, items: list, error: null }),
+      (list) => mine === seq.current && setResult({ for: `${uid}|${key}|${space}`, items: list, error: null }),
       // A failure keeps what is shown and says so.
       (e: unknown) =>
         mine === seq.current &&
-        setResult((prev) => ({ for: `${uid}|${key}`, items: prev.for === `${uid}|${key}` ? prev.items : [], error: e instanceof Error ? e.message : 'offline' })),
+        setResult((prev) => ({ for: `${uid}|${key}|${space}`, items: prev.for === `${uid}|${key}|${space}` ? prev.items : [], error: e instanceof Error ? e.message : 'offline' })),
     );
-  }, [uid, key]);
+  }, [uid, key, space]);
 
   useEffect(load, [load]);
   // Created, joined, left, cancelled anywhere in the app: the list follows.

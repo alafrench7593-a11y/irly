@@ -335,13 +335,25 @@ async function main() {
     await page.waitForTimeout(500);
     if (await next.isEnabled()) throw new Error('Next is enabled before a time is picked');
   });
+  // Turns a wheel of the date and time picker to a value, one step at a time, and checks it shows it.
+  const turnWheel = async (testId, target) => {
+    const wheel = page.getByTestId(testId).first();
+    await wheel.waitFor({ timeout: 10000 });
+    await wheel.focus();
+    for (let i = 0; i < 30; i++) {
+      const now = Number(await wheel.getAttribute('aria-valuenow'));
+      if (now === target) return;
+      await wheel.press(now < target ? 'ArrowDown' : 'ArrowUp');
+      await page.waitForTimeout(120);
+    }
+    throw new Error(`${testId} did not reach ${target} (shows ${await wheel.getAttribute('aria-valuenow')})`);
+  };
   await check('pick tomorrow 20:30 in the date and time picker, publish, land on the activity', null, ['Open chat'], async () => {
     await page.getByRole('button', { name: 'Pick a date and time' }).click();
     await page.getByRole('button').filter({ hasText: 'Tomorrow' }).first().click();
-    await page.getByLabel('Hour', { exact: true }).getByText('20', { exact: true }).click();
-    await page.waitForTimeout(500);
-    await page.getByLabel('Minutes', { exact: true }).getByText('30', { exact: true }).click();
-    await page.waitForTimeout(500);
+    // The picker's wheels (2026-11-06): each one turns with the arrow keys on the web and says its value (aria-valuenow).
+    await turnWheel('wheel-hour', 20);
+    await turnWheel('wheel-minute', 30);
     await page.getByRole('button', { name: 'Confirm', exact: true }).click();
     await page.getByRole('button', { name: 'Tomorrow · 20:30' }).waitFor({ timeout: 10000 });
     await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();

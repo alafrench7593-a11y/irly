@@ -51,6 +51,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'The end has passed: pick a later one': 'The end has passed: pick a later one',
   'The host is always going: cancel the plan instead': 'The host is always going: cancel the plan instead',
   'sort: members, active, recent or activities': GENERIC,
+  'space: mixte or girl': GENERIC,
   'IRLY Girl content stays in IRLY Girl': 'IRLY Girl content stays in IRLY Girl',
   'IRLY Girl is paused for you: you can only cancel this plan': 'IRLY Girl is paused for you: you can only cancel this plan',
   'IRLY admins only': 'IRLY admins only',

@@ -23,6 +23,7 @@ import { displayCommunityName } from '@/features/community/name';
 import { CommunityThumb } from '@/features/community/CommunityThumb';
 import { useCommunityFacts } from '@/features/community/facts';
 import { belongsToSpace } from '@/features/universe/universe';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
 
 export type SearchHit = { kind: 'activity' | 'community' | 'person' | 'place' | 'area' | 'city' | 'category'; id: string; title: string; subtitle: string | null; cityId: string | null; areaId: string | null; startsAt: number | null };
 
@@ -34,7 +35,10 @@ export type SearchHit = { kind: 'activity' | 'community' | 'person' | 'place' | 
  */
 export async function searchServer(q: string, cityId: string | null, limit = 30, girl = false): Promise<SearchHit[]> {
   if (!supabase || q.trim().length < 1) return [];
-  const { data, error } = await supabase.rpc(girl ? 'search_all_girl' : 'search_all', { p_q: q.trim(), p_city: cityId, p_limit: limit });
+  // Mixte: search_all for the Mixte space only (20261110700000): no IRLY Girl, Mom or women-only Network community or plan.
+  const { data, error } = girl
+    ? await supabase.rpc('search_all_girl', { p_q: q.trim(), p_city: cityId, p_limit: limit })
+    : await rpcInSpace(supabase, 'search_all', { p_q: q.trim(), p_city: cityId, p_limit: limit }, 'mixte');
   if (error) {
     if (girl) return [];
     // Unreachable is not "nothing found".

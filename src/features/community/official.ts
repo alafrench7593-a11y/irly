@@ -4,6 +4,8 @@ import { useAccount, withProfile } from '@/features/auth/account';
 import { communitiesChanged, useCommunitiesVersion } from './data';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
+import { useAppSpace } from '@/state/appSpace';
 import { CATEGORY_BY_ID, photoForText, type CategoryKey } from '@/data/catalog/categories';
 import type { PhotoKey } from '@/data/photos';
 import { girlPhotoFor } from '@/features/girl/photos';
@@ -75,6 +77,8 @@ const toCommunity = (r: Row): OfficialCommunity => ({
 /** Communities recommended for these answers in this city, best first. */
 export function useRecommendedCommunities(cityId: string, tags: string[], limit = 6) {
   const uid = useAccount()?.userId;
+  // This app space's communities only, on the server (20261110700000): never a Girl or Mom one in Mixte.
+  const space = useAppSpace();
   const [list, setList] = useState<OfficialCommunity[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const key = tags.slice().sort().join(',');
@@ -84,7 +88,7 @@ export function useRecommendedCommunities(cityId: string, tags: string[], limit 
   useEffect(() => {
     if (!supabase || !uid) return;
     let alive = true;
-    supabase.rpc('community_recommend', { p_city: cityId, p_tags: key ? key.split(',') : [], p_limit: limit }).then(({ data, error: e }) => {
+    rpcInSpace(supabase, 'community_recommend', { p_city: cityId, p_tags: key ? key.split(',') : [], p_limit: limit }, space).then(({ data, error: e }) => {
       if (!alive) return;
       if (e) {
         setError(e.message);
@@ -103,7 +107,7 @@ export function useRecommendedCommunities(cityId: string, tags: string[], limit 
     return () => {
       alive = false;
     };
-  }, [cityId, key, limit, uid, version, n]);
+  }, [cityId, key, limit, uid, version, n, space]);
   return { list: uid ? list : NONE, loading: Boolean(uid) && list === null, error, refresh, signedIn: Boolean(uid) };
 }
 

@@ -5,6 +5,8 @@
  */
 export const fr: Record<string, string> = {
   'Choose a neighbourhood': 'Choisis un quartier',
+  // Friends are mutual follows (2026-11-06): the audience « Friends » reads so.
+  'Mutual follows': 'Abonnements mutuels',
   // Communities: the page (tabs, members, share) and « Manage the community » (features/community).
   'Discussion': 'Discussion',
   '{n} activities coming up': '{n} activités à venir',
@@ -2459,7 +2461,7 @@ export const fr: Record<string, string> = {
   'Artists, designers and architects sharing studio visits, crits and late dinners.': 'Des artistes, designers et architectes qui partagent visites d’ateliers, critiques et dîners tardifs.',
   'Studio visits · monthly': 'Visites d’ateliers · chaque mois',
   'Breakfasts that open doors': 'Des petits-déj qui ouvrent des portes',
-  'A private circle for women founders and executives: monthly breakfasts, mentoring pairs, a referral board.': 'Un cercle privé pour les fondatrices et dirigeantes : petits-déj mensuels, binômes de mentorat, un tableau de recommandations.',
+  'A private circle for founders and executives: monthly breakfasts, mentoring pairs, a referral board.': 'Un cercle privé pour fondateurs et dirigeants : petits-déj mensuels, binômes de mentorat, un tableau de recommandations.',
   'Breakfast talks · monthly': 'Petits-déj rencontres · chaque mois',
   'Know the people on your lake': 'Fais connaissance avec tes voisins du lac',
   'Park clean-ups, potlucks and a group chat that finds you a plumber in ten minutes.': 'Nettoyages du parc, repas partagés et un chat de groupe qui te trouve un plombier en dix minutes.',

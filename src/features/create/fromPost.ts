@@ -4,6 +4,8 @@ import type { EventActivity } from '@/features/events/goTogether';
 import { coverLinks } from '@/features/server/activities';
 import { useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
+import { useAppSpace, type AppSpace } from '@/state/appSpace';
 
 /**
  * « Create an activity » from a post: the post card opens the composer with
@@ -40,9 +42,10 @@ type Row = {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The rows of `post_activities` as the app reads them (cover links signed). */
-export async function fetchPostActivities(postId: string, limit = 5): Promise<PostActivity[]> {
+export async function fetchPostActivities(postId: string, space: AppSpace, limit = 5): Promise<PostActivity[]> {
   if (!supabase || !UUID.test(postId)) return [];
-  const { data, error } = await supabase.rpc('post_activities', { p_post: postId, p_limit: limit });
+  // This app space's plans only (20261110700000): never a women-only plan in Mixte.
+  const { data, error } = await rpcInSpace(supabase, 'post_activities', { p_post: postId, p_limit: limit }, space);
   if (error) throw new Error(error.message);
   const rows = (data as Row[] | null) ?? [];
   const links = await coverLinks(rows.map((r) => r.cover_url)).catch(() => ({}) as Record<string, string>);
@@ -74,22 +77,23 @@ export async function fetchPostActivities(postId: string, limit = 5): Promise<Po
  */
 export function usePostActivities(postId: string | null | undefined, limit = 5): { items: PostActivity[]; loading: boolean; error: string | null; refresh: () => void } {
   const uid = useAccount()?.userId;
+  const space = useAppSpace();
   const key = postId && UUID.test(postId) ? postId : null;
   const enabled = Boolean(supabase && uid && key);
-  const asked = `${uid ?? ''}|${key ?? ''}`;
+  const asked = `${uid ?? ''}|${key ?? ''}|${space}`;
   const [result, setResult] = useState<{ for: string; items: PostActivity[]; error: string | null }>({ for: '', items: [], error: null });
   const seq = useRef(0);
 
   const load = useCallback(() => {
     if (!supabase || !uid || !key) return;
     const mine = ++seq.current;
-    const at = `${uid}|${key}`;
-    fetchPostActivities(key, limit).then(
+    const at = `${uid}|${key}|${space}`;
+    fetchPostActivities(key, space, limit).then(
       (items) => mine === seq.current && setResult({ for: at, items, error: null }),
       // A failure keeps what is shown and says so.
       (e: unknown) => mine === seq.current && setResult((prev) => ({ for: at, items: prev.for === at ? prev.items : [], error: e instanceof Error ? e.message : 'offline' })),
     );
-  }, [uid, key, limit]);
+  }, [uid, key, limit, space]);
 
   useEffect(load, [load]);
   // Created, joined, left, cancelled anywhere in the app: the list follows.
