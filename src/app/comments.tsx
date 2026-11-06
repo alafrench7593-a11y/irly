@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AdminBadge } from '@/features/admin/StaffBadge';
-import { useAuthStatus } from '@/features/auth/account';
+import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { confirm } from '@/lib/confirm';
 import { uuid } from '@/lib/uuid';
 import { t as tx, a11y } from '@/i18n';
@@ -9,7 +9,8 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
-import { Avatar } from '@/components/ui/Avatar';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { RichText } from '@/components/ui/RichText';
 import { Button } from '@/components/ui/Button';
 import { Glass } from '@/components/ui/Glass';
 import { GlassLayer } from '@/components/ui/GlassLayer';
@@ -19,6 +20,9 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { openReport } from '@/features/moderation/reportStore';
+import { useCommunityRights } from '@/features/messages/communityChat';
+import { usePostCommunity, type Mentionable } from '@/features/messages/communitySpace';
+import { MentionSuggestions, useMentionComposer } from '@/features/posts/Mentions';
 import { toggleLike, useComments, type Comment, type TargetType } from '@/features/server/engage';
 import { DEMO } from '@/config/app';
 import { demoPhoto, demoToggleLike, useDemoComments } from '@/features/girl/demo';
@@ -71,6 +75,21 @@ function CommentsScreen() {
 
   const roots = useMemo(() => comments.filter((c) => !c.parentId), [comments]);
 
+  // A community post: its members can be @mentioned, and its moderators (co-admins with
+  // « moderation », the owner) may remove anyone's comment. Both read once for the screen.
+  const me = useAccount()?.userId ?? null;
+  const communityId = usePostCommunity(params.type === 'community_post' ? params.id : null);
+  const rights = useCommunityRights(communityId);
+  const canModerate = Boolean(communityId && rights?.can_moderate);
+  // The people of the thread: their @Name opens their profile; in the demo, the ones offered to mention.
+  const people = useMemo(() => {
+    const seen = new Map<string, Mentionable>();
+    for (const c of comments) if (!c.mine && c.firstName && !seen.has(c.authorId)) seen.set(c.authorId, { id: c.authorId, name: c.firstName });
+    return [...seen.values()];
+  }, [comments]);
+  const mention = useMentionComposer({ text, setText, communityId, local: DEMO ? people : undefined, me });
+  const known = useMemo(() => [...people, ...mention.picked], [people, mention.picked]);
+
   const send = async () => {
     if (!text.trim() || inFlight.current) return;
     inFlight.current = true;
@@ -78,10 +97,11 @@ function CommentsScreen() {
     const sig = JSON.stringify([text.trim(), replyTo?.id ?? null]);
     if (commentId.current?.sig !== sig) commentId.current = { sig, id: uuid() };
     try {
-      await add(text, replyTo?.id ?? null, commentId.current.id);
+      await add(text, replyTo?.id ?? null, commentId.current.id, mention.mentions(text));
       commentId.current = null;
       haptic('success');
       setText('');
+      mention.reset();
       setReplyTo(null);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
@@ -104,6 +124,16 @@ function CommentsScreen() {
         openReport({ kind: 'comment', id: c.id, userId: c.authorId }, c.firstName);
       }
     },
+    [remove],
+  );
+  // A moderator removes someone else's comment (the server allows it on community posts only).
+  const onModerate = useCallback(
+    (c: Comment) =>
+      confirm('Remove this comment for everyone? (moderation)', () =>
+        remove(c.id)
+          .then(() => toast('Comment removed', 'shield', 'brand'))
+          .catch((e) => toast(e instanceof Error ? e.message : 'Could not delete the comment', 'x', 'live')),
+      'Remove'),
     [remove],
   );
 
@@ -170,7 +200,7 @@ function CommentsScreen() {
               </Text>
             </Animated.View>
           ) : (
-            <CommentList comments={comments} onReply={setReplyTo} onMore={onMore} onLike={onLike} />
+            <CommentList comments={comments} onReply={setReplyTo} onMore={onMore} onLike={onLike} onModerate={canModerate ? onModerate : undefined} people={known} communityId={communityId} />
           )}
         </ScrollView>
         {signedIn ? (
@@ -185,12 +215,14 @@ function CommentsScreen() {
                 </PressableScale>
               </View>
             ) : null}
+            <MentionSuggestions query={mention.query} suggestions={mention.suggestions} loading={mention.loading} onPick={mention.pick} />
             <View style={styles.composerRow}>
               <View style={styles.inputWrap}>
                 <GlassLayer radius={23} level="thin" />
                 <TextInput
                   value={text}
                   onChangeText={setText}
+                  onSelectionChange={mention.onSelectionChange}
                   placeholder={tx('Add a comment')}
                   placeholderTextColor={t.c.textTertiary}
                   style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 16, paddingVertical: 0 }}
@@ -224,11 +256,19 @@ const CommentList = memo(function CommentList({
   onReply,
   onMore,
   onLike,
+  onModerate,
+  people,
+  communityId,
 }: {
   comments: Comment[];
   onReply: (c: Comment) => void;
   onMore: (c: Comment) => void;
   onLike: (c: Comment) => void;
+  /** Moderators of the post's community: remove someone else's comment. */
+  onModerate?: (c: Comment) => void;
+  /** Who an @Name may be (thread authors, people picked): a tap opens their profile. */
+  people: readonly Mentionable[];
+  communityId: string | null;
 }) {
   // Replies grouped once (each root used to scan the whole thread for its replies).
   const { roots, replies } = useMemo(() => {
@@ -240,10 +280,10 @@ const CommentList = memo(function CommentList({
     <>
       {roots.map((c) => (
         <View key={c.id} style={{ gap: 12 }}>
-          <CommentRow c={c} onReply={() => onReply(c)} onMore={() => onMore(c)} onLike={() => onLike(c)} />
+          <CommentRow c={c} onReply={() => onReply(c)} onMore={() => onMore(c)} onLike={() => onLike(c)} onModerate={onModerate && !c.mine ? () => onModerate(c) : undefined} people={people} communityId={communityId} />
           {(replies.get(c.id) ?? []).map((r) => (
             <View key={r.id} style={{ paddingLeft: 44 }}>
-              <CommentRow c={r} onReply={() => onReply(c)} onMore={() => onMore(r)} onLike={() => onLike(r)} />
+              <CommentRow c={r} onReply={() => onReply(c)} onMore={() => onMore(r)} onLike={() => onLike(r)} onModerate={onModerate && !r.mine ? () => onModerate(r) : undefined} people={people} communityId={communityId} />
             </View>
           ))}
         </View>
@@ -252,25 +292,49 @@ const CommentList = memo(function CommentList({
   );
 });
 
-function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () => void; onMore: () => void; onLike: () => void }) {
+function CommentRow({
+  c,
+  onReply,
+  onMore,
+  onLike,
+  onModerate,
+  people,
+  communityId,
+}: {
+  c: Comment;
+  onReply: () => void;
+  onMore: () => void;
+  onLike: () => void;
+  onModerate?: () => void;
+  people: readonly Mentionable[];
+  communityId: string | null;
+}) {
   const t = useTheme();
+  const router = useRouter();
   const now = useNow();
+  const real = Boolean(c.authorId);
   return (
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={styles.row}>
-      <Avatar name={c.firstName} hue={hueOf(c.authorId)} size={32} userId={c.authorId} photo={demoPhoto(c.authorId)} />
+      <ProfileAvatar name={c.firstName} hue={hueOf(c.authorId)} size={32} userId={c.authorId} photo={demoPhoto(c.authorId)} />
       <View style={{ flex: 1, gap: 2 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-          <Text variant="label" raw>
-            {c.firstName}
-          </Text>
+          <PressableScale onPress={real ? () => router.push(`/person/${c.authorId}`) : undefined} disabled={!real} haptic="select" hitSlop={6} accessibilityLabel={tx('Open {name}’s profile', { name: c.firstName })}>
+            <Text variant="label" raw>
+              {c.firstName}
+            </Text>
+          </PressableScale>
           <AdminBadge userId={c.authorId} />
           <Text variant="caption" tone="tertiary">
             {c.id.startsWith('tmp-') ? 'Sending…' : timeAgo(Math.max(0, Math.round((now - c.createdAt) / 60000)))}
           </Text>
         </View>
-        <Text variant="body" raw={!c.deleted} tone={c.deleted ? 'tertiary' : undefined}>
-          {c.deleted ? 'Comment deleted' : c.body}
-        </Text>
+        {c.deleted ? (
+          <Text variant="body" tone="tertiary">
+            Comment deleted
+          </Text>
+        ) : (
+          <RichText text={c.body} people={people} communityId={communityId} selectable />
+        )}
         {!c.deleted && !c.id.startsWith('tmp-') ? (
           <View style={styles.meta}>
             <PressableScale onPress={onReply} haptic="select" hitSlop={8} accessibilityLabel="Reply">
@@ -283,6 +347,14 @@ function CommentRow({ c, onReply, onMore, onLike }: { c: Comment; onReply: () =>
                 {c.mine ? 'Delete' : 'Report'}
               </Text>
             </PressableScale>
+            {onModerate ? (
+              <PressableScale onPress={onModerate} haptic="select" hitSlop={8} accessibilityLabel="Remove (moderation)" style={styles.modAction}>
+                <Icon name="shield" size={12} color={t.c.critical} strokeWidth={2.2} />
+                <Text variant="caption" color={t.c.critical}>
+                  Remove
+                </Text>
+              </PressableScale>
+            ) : null}
           </View>
         ) : null}
       </View>
@@ -304,6 +376,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   row: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   meta: { flexDirection: 'row', gap: 16, marginTop: 4 },
+  modAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   like: { alignItems: 'center', gap: 2, paddingTop: 4, minWidth: 28 },
   empty: { alignItems: 'center', gap: 12, padding: 24, borderRadius: radius.xl, overflow: 'hidden' },
   loading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 24 },

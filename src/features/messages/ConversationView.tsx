@@ -57,7 +57,9 @@ import { useBusy } from '@/lib/useBusy';
 import { forgetConversation } from '@/features/messages/paneStore';
 import { communityDeleteMessage, useCommunityRights, useCommunityRoles, type CommunityRole } from '@/features/messages/communityChat';
 import { useQuotedOutside, useReactions, type ReactionChip, type ReactionsByMessage } from '@/features/messages/reactions';
-import { ContextMenuArea, MessageMenu, ModerationSheet, QuoteInBubble, ReactionChips, ReplyBar, RoleBadge, quoteText } from '@/features/messages/ChatBits';
+import { ContextMenuArea, MessageMenu, ModerationSheet, PinSheet, PinnedBanner, QuoteInBubble, ReactionChips, ReplyBar, RoleBadge, quoteText, type PinnedLine } from '@/features/messages/ChatBits';
+import { pinMessage, pinUntil, rememberPeople, useChatPins, type Mentionable, type PinLength } from '@/features/messages/communitySpace';
+import { RichText } from '@/components/ui/RichText';
 import { chatCommunity, openActivityFromMessage } from '@/features/messages/toActivity';
 
 /**
@@ -373,6 +375,9 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
     },
     [visible, all, reveal],
   );
+  // Pins of a community chat: read once when it opens; moderators pin and unpin from the menu.
+  const { pins, supported: pinsSupported, refresh: refreshPins } = useChatPins(id, Boolean(communityChat));
+  const pinnedIds = useMemo(() => new Set(pins.map((p) => p.messageId)), [pins]);
   const [moderating, setModerating] = useState<ThreadMessage | null>(null);
   const [modBusy, setModBusy] = useState(false);
   const moderate = async (m: ThreadMessage, reason: string) => {
@@ -380,6 +385,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
     try {
       await communityDeleteMessage(m.id, reason);
       setRemoved((r) => new Set(r).add(m.id));
+      if (pinnedIds.has(m.id)) refreshPins();
       haptic('success');
       toast(tx('Message removed'), 'shield', 'brand');
       setModerating(null);
@@ -389,6 +395,37 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
       setModBusy(false);
     }
   };
+  const pinLines = useMemo<PinnedLine[]>(
+    () =>
+      pins.map((p) => ({
+        id: p.messageId,
+        name: p.senderId && p.senderId === me ? tx('You') : (p.senderName ?? (p.senderId ? members[p.senderId]?.name : null) ?? tx('Member')),
+        text: p.body.trim() || tx('Message'),
+      })),
+    [pins, me, members],
+  );
+  const [pinning, setPinning] = useState<ThreadMessage | null>(null);
+  const [pinBusy, setPinBusy] = useState<PinLength | 'off' | null>(null);
+  const setPin = async (m: ThreadMessage, length: PinLength | 'off') => {
+    if (pinBusy) return;
+    setPinBusy(length);
+    try {
+      await pinMessage(m.id, length !== 'off', length === 'off' ? null : pinUntil(length));
+      haptic('success');
+      toast(length === 'off' ? tx('Message unpinned') : tx('Message pinned'), 'pinPost', 'brand');
+      setPinning(null);
+      setMsgMenu(null);
+      refreshPins();
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live');
+    } finally {
+      setPinBusy(null);
+    }
+  };
+  const canPin = Boolean(communityChat && rights?.can_moderate && pinsSupported);
+  // The members' names: an @Name in a message opens their profile.
+  const people = useMemo<Mentionable[]>(() => Object.entries(members).map(([uid, x]) => ({ id: uid, name: x.name })), [members]);
+  useEffect(() => rememberPeople(people), [people]);
   const [toActivity, setToActivity] = useState(false);
   const turnIntoActivity = async (m: ThreadMessage) => {
     if (!communityChat || toActivity) return;
@@ -411,6 +448,8 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
   const activityCards = useActivityCards([...thread.messages.map((m) => (m.share?.type === 'activity' ? m.share.id : null)), thread.kind === 'activity' ? thread.activityId : null]);
   const ownActivity = thread.kind === 'activity' && thread.activityId ? activityCards.get(thread.activityId) : undefined;
   const BANNER = 52;
+  const PIN_BANNER = 56;
+  const pinsShown = pinLines.length > 0;
   const group = thread.kind !== null && thread.kind !== 'direct' && thread.kind !== 'match';
   const other = thread.otherId;
   return (
@@ -419,7 +458,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24 + (ownActivity ? BANNER : 0), paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
+          contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24 + (ownActivity ? BANNER : 0) + (pinsShown ? PIN_BANNER : 0), paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
           onContentSizeChange={() => {
             if (stick.current) scrollRef.current?.scrollToEnd({ animated: false });
           }}
@@ -499,6 +538,8 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
             onQuote={onQuote}
             onPlace={onPlace}
             flash={flash}
+            people={people}
+            communityId={communityChat}
           />
           {thread.typing.length ? (
             <View style={{ gap: 2 }}>
@@ -578,6 +619,11 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
           // An activity's chat: the activity itself, live, one tap away.
           <View style={styles.banner}>
             <ActivityChatBanner card={ownActivity} onOpen={() => router.push(`/a/${thread.activityId}`)} />
+          </View>
+        ) : null}
+        {pinsShown ? (
+          <View style={styles.banner}>
+            <PinnedBanner pins={pinLines} onOpen={onQuote} />
           </View>
         ) : null}
       </View>
@@ -695,6 +741,23 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
             }}
           />
         ) : null}
+        {canPin && menuSettled && msgMenu ? (
+          pinnedIds.has(msgMenu.id) ? (
+            <Button label="Unpin" icon="pinPost" variant="secondary" full loading={pinBusy === 'off'} onPress={() => msgMenu && setPin(msgMenu, 'off')} />
+          ) : (
+            <Button
+              label="Pin"
+              icon="pinPost"
+              variant="secondary"
+              full
+              onPress={() => {
+                const m = msgMenu;
+                setMsgMenu(null);
+                setPinning(m);
+              }}
+            />
+          )
+        ) : null}
         {menuMine && communityChat && menuText && menuSettled ? (
           <Button label="Turn into an activity" icon="calendar" variant="secondary" full loading={toActivity} onPress={() => msgMenu && turnIntoActivity(msgMenu)} />
         ) : null}
@@ -749,6 +812,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
           </>
         ) : null}
       </MessageMenu>
+      <PinSheet visible={pinning !== null} busy={pinBusy === 'off' ? null : pinBusy} onClose={() => setPinning(null)} onPick={(length) => pinning && setPin(pinning, length)} />
       <ModerationSheet visible={moderating !== null} name={moderating?.name} busy={modBusy} onClose={() => setModerating(null)} onConfirm={(reason) => moderating && moderate(moderating, reason)} />
       <ReportSheet target={reporting} name={reportName} onClose={() => setReporting(null)} onBlocked={leave} />
       <Sheet visible={photoMenu} onClose={() => setPhotoMenu(false)} title="Chat photo" subtitle={tx('Everyone in the chat sees it')}>
@@ -769,6 +833,8 @@ type ThreadMessage = ReturnType<typeof useServerThread>['messages'][number];
 /** The message a bubble answers, as drawn in it; `loaded`: in the chat on the phone, so a tap can go to it. */
 type Quote = { id: string; name: string; text: string; loaded: boolean };
 const NO_ROLES: Record<string, CommunityRole> = {};
+/** A demo message with a link or a mention is drawn as written (the others are translated examples). */
+const RICH = /https?:\/\/|www\.|(^|\s)@/;
 const NO_CHIPS: ReactionChip[] = [];
 /**
  * The messages of an open chat. Its own memoised component: typing in the
@@ -794,6 +860,8 @@ const ThreadMessages = memo(function ThreadMessages({
   onQuote,
   onPlace,
   flash,
+  people,
+  communityId,
 }: {
   messages: ThreadMessage[];
   media: Record<string, string>;
@@ -816,6 +884,10 @@ const ThreadMessages = memo(function ThreadMessages({
   onPlace: (messageId: string, y: number) => void;
   /** The message just reached from a quote: outlined a moment. */
   flash: string | null;
+  /** The chat's members: an @Name in a message opens their profile. */
+  people: readonly Mentionable[];
+  /** A community chat: an unknown @Name is looked up among its members on tap. */
+  communityId: string | null;
 }) {
   const t = useTheme();
   const router = useRouter();
@@ -956,9 +1028,7 @@ const ThreadMessages = memo(function ThreadMessages({
                   <Icon name="chevronRight" size={16} color={mine ? t.c.onBrand : t.c.text} />
                 </View>
               ) : (
-                <Text variant="body" raw color={mine ? t.c.onBrand : t.c.text} selectable>
-                  {m.text}
-                </Text>
+                <RichText text={m.text} color={mine ? t.c.onBrand : t.c.text} onBrand={mine} people={people} communityId={communityId} selectable />
               )}
             </PressableScale>
               )}
@@ -1336,9 +1406,13 @@ function Thread({ id }: { id: string }) {
                   >
                     {own ? null : <GlassLayer radius={20} />}
                     {quoted ? <QuoteInBubble name={nameOf(quoted)} text={quoted.text} mine={own} onPress={() => goTo(quoted.id)} /> : null}
-                    <Text variant="body" raw={own} color={own ? t.c.onBrand : t.c.text}>
-                      {m.text}
-                    </Text>
+                    {own || RICH.test(m.text) ? (
+                      <RichText text={m.text} color={own ? t.c.onBrand : t.c.text} onBrand={own} />
+                    ) : (
+                      <Text variant="body" color={t.c.text}>
+                        {m.text}
+                      </Text>
+                    )}
                   </PressableScale>
                 </ContextMenuArea>
                 <ReactionChips chips={chips} mine={own} onToggle={(emoji) => toggle(m.id, emoji)} />

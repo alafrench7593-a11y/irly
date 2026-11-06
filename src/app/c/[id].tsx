@@ -10,7 +10,8 @@ import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
 import { ActionBar } from '@/components/social/ActionBar';
-import { Avatar } from '@/components/ui/Avatar';
+import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
+import { RichText } from '@/components/ui/RichText';
 import { Button } from '@/components/ui/Button';
 import { Chip, IconButton, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
@@ -769,7 +770,7 @@ function PostCard({
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter }]}>
       <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
-        <Avatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
+        <ProfileAvatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text variant="titleS" raw style={{ flexShrink: 1 }} numberOfLines={1}>{p.mine ? tx('You') : p.firstName}</Text>
@@ -812,11 +813,7 @@ function PostCard({
           </Text>
         </View>
       ) : null}
-      {p.body ? (
-        <Text variant="body" raw>
-          {p.body}
-        </Text>
-      ) : null}
+      {p.body ? <RichText text={p.body} postId={p.pending ? null : p.id} /> : null}
       {p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} /> : null}
       {p.edited ? (
         <Text variant="caption" tone="tertiary">

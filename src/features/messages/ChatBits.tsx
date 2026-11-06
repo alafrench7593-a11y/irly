@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
-import Animated, { FadeInDown, FadeOut, LinearTransition, ZoomIn, useReducedMotion } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, ZoomIn, useReducedMotion } from 'react-native-reanimated';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Controls';
 import { GlassLayer } from '@/components/ui/GlassLayer';
@@ -13,6 +13,7 @@ import { duration, spring } from '@/motion/tokens';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { CommunityRole } from './communityChat';
+import type { PinLength } from './communitySpace';
 import { QUICK_REACTIONS, type ReactionChip } from './reactions';
 
 /** The words of a community role on a badge; members have none. */
@@ -212,6 +213,71 @@ export function ModerationSheet({ visible, name, busy, onClose, onConfirm }: { v
   );
 }
 
+/** A pinned message as the banner shows it. */
+export type PinnedLine = { id: string; name: string; text: string };
+
+/** How long one pin stays in the banner before the next one (several pins). */
+const PIN_CYCLE_MS = 6000;
+
+/**
+ * The pinned messages at the top of a community chat: one at a time, the
+ * next every few seconds; a tap goes to the message shown, then shows the
+ * next one (as the member reads them in turn).
+ */
+export function PinnedBanner({ pins, onOpen }: { pins: PinnedLine[]; onOpen: (messageId: string) => void }) {
+  const t = useTheme();
+  const reduced = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  const count = pins.length;
+  useEffect(() => {
+    if (count < 2) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % count), PIN_CYCLE_MS);
+    return () => clearInterval(timer);
+  }, [count]);
+  if (!count) return null;
+  const at = index % count;
+  const pin = pins[at];
+  return (
+    <PressableScale
+      haptic="select"
+      scaleTo={0.98}
+      onPress={() => {
+        onOpen(pin.id);
+        if (count > 1) setIndex((at + 1) % count);
+      }}
+      style={[styles.pinned, { borderLeftColor: t.flavor === 'girl' ? t.c.brand : t.c.steel }]}
+      accessibilityRole="button"
+      accessibilityLabel={tx('Pinned message from {name}: go to it', { name: pin.name })}
+    >
+      <GlassLayer radius={radius.md} level="thin" />
+      <Icon name="pinPost" size={16} color={t.flavor === 'girl' ? t.c.brand : t.c.steel} strokeWidth={2.2} />
+      <Animated.View key={pin.id} entering={reduced ? undefined : FadeIn.duration(duration.fast)} style={{ flex: 1, minWidth: 0 }}>
+        <Text variant="caption" tone="secondary" numberOfLines={1}>
+          {count > 1 ? tx('Pinned · {n}/{total}', { n: at + 1, total: count }) : tx('Pinned message')}
+        </Text>
+        <Text variant="bodyS" numberOfLines={1} raw>
+          {`${pin.name}: ${pin.text}`}
+        </Text>
+      </Animated.View>
+      <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
+    </PressableScale>
+  );
+}
+
+/** A moderator pins a message: for a day, a week, or until unpinned. */
+export function PinSheet({ visible, busy, onClose, onPick }: { visible: boolean; busy: PinLength | null; onClose: () => void; onPick: (length: PinLength) => void }) {
+  return (
+    <Sheet visible={visible} onClose={onClose} title="Pin the message" subtitle={tx('Shown at the top of the chat for everyone')}>
+      <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+        <Button label="For 24 hours" icon="clock" full loading={busy === '24h'} disabled={busy !== null} onPress={() => onPick('24h')} />
+        <Button label="For 7 days" icon="calendar" variant="secondary" full loading={busy === '7d'} disabled={busy !== null} onPress={() => onPick('7d')} />
+        <Button label="Until I unpin it" icon="pinPost" variant="secondary" full loading={busy === 'none'} disabled={busy !== null} onPress={() => onPick('none')} />
+        <Button label="Cancel" variant="ghost" full onPress={onClose} />
+      </View>
+    </Sheet>
+  );
+}
+
 /**
  * Web: a right click opens the same menu as a long press (and not the
  * browser's). Phones: renders its children as they are.
@@ -250,5 +316,6 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4, paddingHorizontal: 4 },
   chip: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 26, paddingHorizontal: 8, borderRadius: radius.pill, borderWidth: StyleSheet.hairlineWidth * 2, overflow: 'hidden' },
   reactRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6, marginBottom: 4 },
+  pinned: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 48, paddingHorizontal: 12, borderRadius: radius.md, borderLeftWidth: 3, overflow: 'hidden' },
   react: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, overflow: 'hidden' },
 });

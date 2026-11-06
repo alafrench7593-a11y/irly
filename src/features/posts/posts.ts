@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { storageName } from '@/config/app';
 import { pickLiveMedia, uploadLiveFile } from '@/features/live/liveMedia';
+import { MAX_MENTIONS, missingColumn } from '@/features/messages/communitySpace';
 import { changed } from '@/features/server/sync';
 import { cleanImage } from '@/lib/media';
 import { friendlyError, supabase } from '@/lib/supabase';
@@ -95,7 +96,7 @@ const friendly = (msg: string) =>
  * one. Files already sent are removed only when the server really refused
  * the post: without an answer it may have been saved with them.
  */
-export async function createPost(input: { id: string; communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; onProgress?: (p: number) => void }): Promise<string> {
+export async function createPost(input: { id: string; communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; mentions?: string[]; onProgress?: (p: number) => void }): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const sb = supabase;
   const { data: auth } = await sb.auth.getSession();
@@ -105,11 +106,15 @@ export async function createPost(input: { id: string; communityId: string | null
   if (!body && !input.media?.files.length) throw new Error('Write something or add a photo');
   const { row, fresh } = await store(uid, input.media, input.onProgress);
   const dropFresh = () => (fresh.length ? sb.storage.from('post-media').remove(fresh).then(() => undefined, () => undefined) : Promise.resolve());
-  const { error } = await sb
-    .from('community_posts')
-    .insert({ id: input.id, community_id: input.communityId, author_id: uid, body, kind: input.kind ?? 'post', ...(input.communityId && input.category ? { category: input.category } : {}), ...row })
-    .select('id')
-    .single();
+  const fields = { id: input.id, community_id: input.communityId, author_id: uid, body, kind: input.kind ?? 'post', ...(input.communityId && input.category ? { category: input.category } : {}), ...row };
+  const mentions = input.communityId ? (input.mentions ?? []).slice(0, MAX_MENTIONS) : [];
+  const insert = (withMentions: boolean) => {
+    const values: Record<string, unknown> = withMentions && mentions.length ? { ...fields, mentions } : fields;
+    return sb.from('community_posts').insert(values).select('id').single();
+  };
+  let { error } = await insert(true);
+  // A server without community_posts.mentions yet: the post goes out without them.
+  if (missingColumn(error, 'mentions')) ({ error } = await insert(false));
   if (error) {
     // Already there: an earlier try landed (its answer was lost). That post, with its own files, is the one.
     if (error.code === '23505') {
@@ -135,7 +140,7 @@ export async function createPost(input: { id: string; communityId: string | null
 }
 
 /** Saves the author's changes (text and media); files no longer used are removed. */
-export async function updatePost(id: string, input: { body: string; media: DraftMedia | null; before: string[]; onProgress?: (p: number) => void }): Promise<void> {
+export async function updatePost(id: string, input: { body: string; media: DraftMedia | null; before: string[]; mentions?: string[]; onProgress?: (p: number) => void }): Promise<void> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const { data: auth } = await supabase.auth.getSession();
   const uid = auth.session?.user.id;
@@ -143,7 +148,14 @@ export async function updatePost(id: string, input: { body: string; media: Draft
   const body = input.body.trim();
   if (!body && !input.media?.files.length) throw new Error('Write something or add a photo');
   const { row, fresh } = await store(uid, input.media, input.onProgress);
-  const { data: saved, error } = await supabase.from('community_posts').update({ body, ...row }).eq('id', id).eq('author_id', uid).select('id');
+  const sb = supabase;
+  const mentions = (input.mentions ?? []).slice(0, MAX_MENTIONS);
+  const update = (withMentions: boolean) => {
+    const values: Record<string, unknown> = withMentions && mentions.length ? { body, ...row, mentions } : { body, ...row };
+    return sb.from('community_posts').update(values).eq('id', id).eq('author_id', uid).select('id');
+  };
+  let { data: saved, error } = await update(true);
+  if (missingColumn(error, 'mentions')) ({ data: saved, error } = await update(false));
   // No row changed (not yours any more, removed meanwhile): not saved, and the old files are still in use.
   if (error || !saved?.length) {
     if (fresh.length) await supabase.storage.from('post-media').remove(fresh);
