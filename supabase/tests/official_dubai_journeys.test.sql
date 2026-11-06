@@ -1,9 +1,10 @@
 -- Journeys through IRLY's official communities, Dubai only (owner's list of
 -- 2026-11-06, migration 20261108200000_irly_official_communities_dubai,
--- fix 20261108300000_irly_official_dubai_fixes): each persona plays its
+-- fix 20261108300000_irly_official_dubai_fixes; IRLY Girl and IRLY Mom
+-- Community mirror IRLY since 20261109000000): each persona plays its
 -- screens end to end on the server.
 --   a1 Marc   man, Dubai            a4 Rita  woman, Dubai, member of the retired
---   a2 Sami   man, Sharjah                   Girl Trip and IRLY Mom Community
+--   a2 Sami   man, Sharjah                   IRLY Girl and IRLY Mom Community
 --   a3 Lina   woman, Dubai          a5 Nour  woman, Sharjah, creates a community
 --   a6 Cleo   content staff
 -- TEST accounts only, ids prefixed d0b10000-…. Everything is rolled back.
@@ -59,11 +60,11 @@ update public.profiles set verified_at = now() where id in
 -- The rows the journeys use.
 select id as padel_id from public.communities where official and topic = 'padel' and city_id = 'dubai' and parent_id is null and retired_at is null \gset
 select id as fr_id from public.communities where official and topic = 'francais' and city_id = 'dubai' and parent_id is null and retired_at is null \gset
-select id as girl_id from public.communities where official and topic = 'girls' and city_id = 'dubai' and parent_id is null and retired_at is null \gset
-select id as trip_girl_id from public.communities where official and topic = 'girl_trip' and city_id = 'dubai' and parent_id is null \gset
+select id as girl_id from public.communities where official and topic = 'girl_newcomers' and city_id = 'dubai' and parent_id is null and retired_at is null \gset
+select id as trip_girl_id from public.communities where official and topic = 'girls' and city_id = 'dubai' and parent_id is null \gset
 select id as maman_id from public.communities where official and topic = 'moms' and city_id = 'dubai' and parent_id is null \gset
 
--- Rita joined Girl Trip and IRLY Mom Community before they were retired.
+-- Rita joined IRLY Girl and IRLY Mom Community before they were retired.
 insert into public.community_members (community_id, user_id) values
   (:'trip_girl_id', 'd0b10000-0000-0000-0000-0000000000a4'), (:'maman_id', 'd0b10000-0000-0000-0000-0000000000a4');
 select pg_temp.check((select count(*) from public.conversation_members m join public.conversations v on v.id = m.conversation_id
@@ -103,7 +104,7 @@ select pg_temp.check(pg_temp.fails('select * from public.community_directory(''d
 select pg_temp.check(pg_temp.fails('select * from public.girl_official_communities()') = '42501', 'Marc: girl_official_communities refused');
 select pg_temp.check(pg_temp.fails('select * from public.girl_feed(''dubai'')') = '42501', 'Marc: girl_feed refused');
 select pg_temp.check(not exists (select 1 from public.space_community('moms', 'dubai')), 'Marc: no IRLY Mom Community');
-select pg_temp.check(pg_temp.fails(format('select public.join_community(%L)', :'girl_id')) is not null, 'Marc: cannot join IRLY Girl');
+select pg_temp.check(pg_temp.fails(format('select public.join_community(%L)', :'girl_id')) is not null, 'Marc: cannot join Girl Expat');
 
 -- Joins IRLY Padel Club and Les Français à Dubaï, posts, chats.
 select public.join_community(:'padel_id') as padel_chat \gset
@@ -140,36 +141,36 @@ select pg_temp.check(pg_temp.fails('select * from public.girl_official_communiti
 -- ───────── Lina, a woman in Dubai ─────────
 select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a3');
 select pg_temp.check((select array_agg(name order by ord) from public.girl_official_communities() with ordinality g(id, topic, name, tagline, emoji, members, is_member, city_id, cover_path, ord))
-  = array['IRLY Girl'], 'Lina: IRLY Girl''s official list is IRLY Girl');
-select pg_temp.check((select city_id from public.girl_official_communities()) = 'dubai', '… in Dubai');
+  = array['Girl Expat', 'Girl Activité', 'Girl Sport', 'Girl Running Club', 'Girl Padel Club', 'Girl Trip', 'Les Françaises à Dubaï'], 'Lina: IRLY Girl''s official list mirrors IRLY''s');
+select pg_temp.check((select bool_and(city_id = 'dubai') from public.girl_official_communities()), '… in Dubai');
 select pg_temp.check(exists (select 1 from public.community_list('dubai') where topic = 'girl_network' and name = 'Girl CEO' and official and girl_only),
   'Lina: Girl CEO is reached as before (IRLY Network reads community_list)');
-select pg_temp.check(exists (select 1 from public.community_list('dubai') where id = :'girl_id'), 'Lina: IRLY Girl is in community_list');
-select pg_temp.check(exists (select 1 from public.community_directory('dubai') where id = :'girl_id'), 'Lina: IRLY Girl is in the directory');
-select pg_temp.check(not exists (select 1 from public.community_list('dubai') where topic in ('girl_trip', 'girl_newcomers', 'girl_activity', 'girl_sport', 'moms')),
-  'Lina: the retired Girl Trip/Expat/Activité/Sport and IRLY Mom Community are not listed');
+select pg_temp.check(exists (select 1 from public.community_list('dubai') where id = :'girl_id'), 'Lina: Girl Expat is in community_list');
+select pg_temp.check(exists (select 1 from public.community_directory('dubai') where id = :'girl_id'), 'Lina: Girl Expat is in the directory');
+select pg_temp.check(not exists (select 1 from public.community_list('dubai') where topic in ('girls', 'moms')),
+  'Lina: the retired IRLY Girl and IRLY Mom Community are not listed');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer,type:expat,interest:family,goal:irlygirl,activity:padel}', 20) r
     join public.communities c on c.id = r.id where c.retired_at is not null), 'Lina: no retired community recommended');
 select public.join_community(:'girl_id') as girl_chat \gset
-select pg_temp.check((select is_member from public.girl_official_communities()), 'Lina: joins IRLY Girl');
+select pg_temp.check((select is_member from public.girl_official_communities() where topic = 'girl_newcomers'), 'Lina: joins Girl Expat');
 insert into public.community_posts (community_id, author_id, body) values (:'girl_id', auth.uid(), 'd0b brunch Friday girls?');
-select pg_temp.check(exists (select 1 from public.community_feed(:'girl_id') where body = 'd0b brunch Friday girls?'), 'Lina: posts in IRLY Girl');
+select pg_temp.check(exists (select 1 from public.community_feed(:'girl_id') where body = 'd0b brunch Friday girls?'), 'Lina: posts in Girl Expat');
 select pg_temp.check(exists (select 1 from public.girl_feed('dubai') where body = 'd0b brunch Friday girls?'), 'Lina: her post is in the IRLY Girl feed');
 insert into public.messages (conversation_id, sender_id, kind, body) values (:'girl_chat', auth.uid(), 'text', 'd0b hi all');
-select pg_temp.check(exists (select 1 from public.messages where conversation_id = :'girl_chat' and body = 'd0b hi all'), 'Lina: writes in IRLY Girl''s chat');
+select pg_temp.check(exists (select 1 from public.messages where conversation_id = :'girl_chat' and body = 'd0b hi all'), 'Lina: writes in Girl Expat''s chat');
 select public.leave_community(:'girl_id');
-select pg_temp.check(not (select is_member from public.girl_official_communities()), 'Lina: leaves IRLY Girl');
+select pg_temp.check(not (select is_member from public.girl_official_communities() where topic = 'girl_newcomers'), 'Lina: leaves Girl Expat');
 
--- ───────── Rita, a member of the retired Girl Trip and IRLY Mom Community ─────────
+-- ───────── Rita, a member of the retired IRLY Girl and IRLY Mom Community ─────────
 select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a4');
 select pg_temp.check((select count(*) from public.member_communities(auth.uid()) where id in (:'trip_girl_id', :'maman_id')) = 2, 'Rita: both retired communities in « Mine »');
-select pg_temp.check(not exists (select 1 from public.girl_official_communities() where topic = 'girl_trip'), 'Rita: Girl Trip is no longer an official tile');
-select pg_temp.check((public.community_header(:'trip_girl_id') ->> 'members')::int >= 1, 'Rita: Girl Trip''s page header loads');
+select pg_temp.check(not exists (select 1 from public.girl_official_communities() where topic = 'girls'), 'Rita: IRLY Girl is no longer an official tile');
+select pg_temp.check((public.community_header(:'trip_girl_id') ->> 'members')::int >= 1, 'Rita: IRLY Girl''s page header loads');
 insert into public.community_posts (community_id, author_id, body) values (:'trip_girl_id', auth.uid(), 'd0b Musandam in March?');
-select pg_temp.check(exists (select 1 from public.community_feed(:'trip_girl_id') where body = 'd0b Musandam in March?'), 'Rita: posts and reads Girl Trip');
+select pg_temp.check(exists (select 1 from public.community_feed(:'trip_girl_id') where body = 'd0b Musandam in March?'), 'Rita: posts and reads IRLY Girl');
 insert into public.messages (conversation_id, sender_id, kind, body)
   values ((select id from public.conversations where community_id = :'trip_girl_id'), auth.uid(), 'text', 'd0b still here');
-select pg_temp.check(exists (select 1 from public.messages where body = 'd0b still here'), 'Rita: writes in Girl Trip''s chat');
+select pg_temp.check(exists (select 1 from public.messages where body = 'd0b still here'), 'Rita: writes in IRLY Girl''s chat');
 insert into public.community_posts (community_id, author_id, body) values (:'maman_id', auth.uid(), 'd0b playdate at Safa Park');
 select pg_temp.check(exists (select 1 from public.girl_feed('dubai', true) where body = 'd0b playdate at Safa Park'), 'Rita: her IRLY Mom Community post is in the Maman feed');
 select pg_temp.check((select is_member from public.space_community('moms', 'dubai')) and (select id from public.space_community('moms', 'dubai')) = :'maman_id',
@@ -184,22 +185,32 @@ select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a5');
 select pg_temp.check(exists (select 1 from public.community_list('sharjah') where id = :'walk_id' and not official and is_member), 'Nour: her Sharjah community is listed, hers');
 select pg_temp.check(exists (select 1 from public.community_directory('sharjah') where id = :'walk_id'), 'Nour: … and in the directory');
 select pg_temp.check((select array_agg(name order by ord) from public.girl_official_communities() with ordinality g(id, topic, name, tagline, emoji, members, is_member, city_id, cover_path, ord))
-  = array['IRLY Girl'], 'Nour: from Sharjah, IRLY Girl (Dubai)');
+  = array['Girl Expat', 'Girl Activité', 'Girl Sport', 'Girl Running Club', 'Girl Padel Club', 'Girl Trip', 'Les Françaises à Dubaï'], 'Nour: from Sharjah, IRLY Girl''s seven (Dubai)');
 
 -- ───────── Cleo, content staff: the official order per space ─────────
 select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a6');
 select pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'mixte')
   = array['expats', 'lifestyle', 'sport', 'running', 'padel', 'trip', 'network', 'francais'], 'Cleo: IRLY Mixte, the eight in order');
-select pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'girl') = array['girls', 'girl_network'],
-  'Cleo: IRLY Girl, IRLY Girl then Girl CEO');
-select pg_temp.check(not exists (select 1 from public.admin_official_topics() where space = 'mom'), 'Cleo: IRLY Mom Community space is empty');
-select pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mom', '{}', 'Nothing to order')$q$) is null, 'Cleo: the empty Mom space saves without an error');
+select pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'girl')
+  = array['girl_newcomers', 'girl_activity', 'girl_sport', 'girl_running', 'girl_padel', 'girl_trip', 'girl_network', 'girl_francaise'],
+  'Cleo: IRLY Girl, the mirror of IRLY in order (Girl CEO where IRLY Network is)');
+select pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'mom')
+  = array['mom_expat', 'mom_activity', 'mom_sport', 'mom_running', 'mom_padel', 'mom_trip', 'mom_network', 'mom_francaise'],
+  'Cleo: IRLY Mom Community, the mirror of IRLY in order (Mom CEO where IRLY Network is)');
+select pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mom', '{}', 'Nothing to order')$q$) = '22023', 'Cleo: the Mom space needs all its communities');
+select public.admin_official_reorder('mom', array['mom_activity', 'mom_expat', 'mom_sport', 'mom_running', 'mom_padel', 'mom_trip', 'mom_network', 'mom_francaise'], 'Outings first');
+select pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'mom')
+  = array['mom_activity', 'mom_expat', 'mom_sport', 'mom_running', 'mom_padel', 'mom_trip', 'mom_network', 'mom_francaise'], 'Cleo: IRLY Mom Community''s order saves');
+select pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('girl', array['mom_expat', 'girl_newcomers', 'girl_activity', 'girl_sport', 'girl_running', 'girl_padel', 'girl_trip', 'girl_network', 'girl_francaise'], 'Mix')$q$) = '22023',
+  'Cleo: a Mom community cannot be ordered in IRLY Girl');
 select public.admin_official_reorder('mixte', array['francais', 'padel', 'running', 'expats', 'lifestyle', 'sport', 'trip', 'network'], 'French first this week');
 select pg_temp.check((select topic from public.community_list('dubai') where official and not girl_only limit 1) = 'francais', 'Cleo: the list follows the new order');
-select public.admin_official_reorder('girl', array['girl_network', 'girls'], 'Swap');
-select pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'girl') = array['girl_network', 'girls'], 'Cleo: IRLY Girl''s order saves');
+select public.admin_official_reorder('girl', array['girl_network', 'girl_newcomers', 'girl_activity', 'girl_sport', 'girl_running', 'girl_padel', 'girl_trip', 'girl_francaise'], 'CEO first');
+select pg_temp.check((select topic from public.admin_official_topics() where space = 'girl' order by sort limit 1) = 'girl_network', 'Cleo: IRLY Girl''s order saves');
 select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a3');
-select pg_temp.check((select array_agg(name) from public.girl_official_communities()) = array['IRLY Girl'], 'Lina: Girl CEO stays out of IRLY Girl''s official list whatever the order');
+select pg_temp.check((select array_agg(name) from public.girl_official_communities()) = array['Girl Expat', 'Girl Activité', 'Girl Sport', 'Girl Running Club', 'Girl Padel Club', 'Girl Trip', 'Les Françaises à Dubaï'], 'Lina: Girl CEO stays out of IRLY Girl''s official list whatever the order');
+select pg_temp.check((select array_agg(topic) from public.mom_official_communities())
+  = array['mom_activity', 'mom_expat', 'mom_sport', 'mom_running', 'mom_padel', 'mom_trip', 'mom_francaise'], 'Lina: the Mom list follows its order, never Mom CEO');
 select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a6');
 select pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['francais', 'padel', 'running', 'expats', 'lifestyle', 'sport', 'trip', 'network', 'moms'], 'Bring back')$q$) = '22023',
   'Cleo: a retired one cannot be put back in the order');
@@ -226,7 +237,9 @@ from (values ('expats', 'newcomer'), ('expats', 'goal:friends'), ('expats', 'int
   ('francais', 'lang:fr')) as x(topic, tag);
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{goal:irlygirl,goal:friends}', 20) where girl_only), 'Marc (a man) is never recommended IRLY Girl');
 select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a3');
-select pg_temp.check(exists (select 1 from public.community_recommend('dubai', '{goal:irlygirl}', 20) where topic = 'girls'), 'Lina chose IRLY Girl at signup: IRLY Girl is recommended');
+select pg_temp.check(exists (select 1 from public.community_recommend('dubai', '{activity:running}', 20) where topic = 'girl_running'), 'Lina runs: Girl Running Club is recommended');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{activity:running}', 20) where topic like 'mom\_%'), 'Lina, no « Family & kids »: no Mom community');
+select pg_temp.check(exists (select 1 from public.community_recommend('dubai', '{goal:family,activity:padel}', 20) where topic = 'mom_padel'), 'Lina, a mom who plays padel: Mom Padel Club is recommended');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer,interest:sports,interest:business,interest:travel,goal:irlygirl,lang:fr}', 20) c
     join public.communities x on x.id = c.id where x.retired_at is not null or x.city_id <> 'dubai'), 'Lina: only listed Dubai communities, whatever she chose');
 

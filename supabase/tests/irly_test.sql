@@ -889,10 +889,11 @@ select pg_temp.check((select topic from public.community_recommend('dubai', '{ne
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer}') where topic = 'sport'), 'nothing recommended without a matching answer');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer,activity:gym,activity:football,interest:food}') where topic in ('newcomers', 'help', 'gym', 'football', 'food')), 'retired official communities are never recommended');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{}')), 'no answers, no recommendations');
-select pg_temp.check((select count(*) from public.community_recommend('sharjah', '{activity:gym}')) = 1, 'a city without its own gets the nearest one, once');
--- Newcomers: IRLY Expat; gym: IRLY Sport (20261028100000: four official communities).
-select pg_temp.check(public.join_communities(array(select id from public.community_recommend('dubai', '{newcomer,activity:gym}'))) = 2, 'join all');
-select pg_temp.check((select count(*) from public.community_recommend('dubai', '{newcomer,activity:gym}') where is_member) = 2, 'joined communities show as joined');
+select pg_temp.check((select count(*) from public.community_recommend('sharjah', '{activity:gym}') where topic = 'sport') = 1, 'a city without its own gets the nearest one, once');
+-- Newcomers: IRLY Expat; gym: IRLY Sport (20261028100000: four official communities); Bea is a woman:
+-- Girl Expat and Girl Sport too (20261109000000, IRLY Girl mirrors IRLY).
+select pg_temp.check(public.join_communities(array(select id from public.community_recommend('dubai', '{newcomer,activity:gym}'))) = 4, 'join all');
+select pg_temp.check((select count(*) from public.community_recommend('dubai', '{newcomer,activity:gym}') where is_member) = 4, 'joined communities show as joined');
 select pg_temp.check(exists (select 1 from public.messages m join public.conversations v on v.id = m.conversation_id join public.communities c on c.id = v.community_id where c.topic = 'sport' and c.city_id = 'dubai' and m.kind = 'system' and m.body like '% just joined 👋%'), 'a new member is announced in the chat');
 select pg_temp.expect_denied($$insert into public.communities (city_id, name, official, topic, created_by) values ('dubai', 'Fake IRLY Gym', true, 'gym', '00000000-0000-0000-0000-00000000000b')$$, 'members cannot create official communities');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
@@ -1057,48 +1058,36 @@ select pg_temp.check(exists (select 1 from public.public_profile('00000000-0000-
 select public.follow_user('00000000-0000-0000-0000-00000000000c');
 select public.unfollow_user('00000000-0000-0000-0000-00000000000c');
 select pg_temp.check(not exists (select 1 from public.follows where follower_id = auth.uid() and followee_id = '00000000-0000-0000-0000-00000000000c'), 'unfollow removes the follow');
--- Groups
+-- Group chats were removed on 2026-11-06 (20261109050000): none is made, joined, renamed or left.
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
-select pg_temp.check(exists (select 1 from public.group_candidates() where id = '00000000-0000-0000-0000-00000000000b') and not exists (select 1 from public.group_candidates() where id = '00000000-0000-0000-0000-00000000000c'), 'group candidates: a friend yes, a stranger no');
-select pg_temp.expect_denied($$select public.create_group('Strangers', array['00000000-0000-0000-0000-00000000000c']::uuid[])$$, 'a group only adds people who accept your messages');
-create temp table g as select public.create_group('Padel crew', array['00000000-0000-0000-0000-00000000000b']::uuid[]) as id;
-grant select on g to authenticated;
-select pg_temp.check((select role from public.conversation_members where conversation_id = (select id from g) and user_id = auth.uid()) = 'admin', 'the creator is the group admin');
-select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
-select pg_temp.check(exists (select 1 from public.my_conversations() where conversation_id = (select id from g) and kind = 'group' and title = 'Padel crew' and members = 2), 'the group is in the member''s inbox, as a group, with its member count');
-select pg_temp.expect_denied($$select public.rename_group((select id from g), 'Mine now')$$, 'only the admin renames a group');
-insert into public.messages (conversation_id, sender_id, kind, body, media_path) values ((select id from g), auth.uid(), 'photo', 'Photo', '00000000-0000-0000-0000-00000000000b/court.jpg');
-select pg_temp.check(exists (select 1 from public.messages where conversation_id = (select id from g) and media_path is not null), 'a photo message keeps its stored path');
-select pg_temp.expect_denied($$insert into public.messages (conversation_id, sender_id, kind, body, media_path) values ((select id from g), auth.uid(), 'photo', 'Photo', '00000000-0000-0000-0000-00000000000a/hers.jpg')$$, 'a photo message only points at your own upload');
-select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
-select pg_temp.check(not exists (select 1 from public.messages where conversation_id = (select id from g)), 'outsiders cannot read the group');
-select pg_temp.check(not exists (select 1 from public.chat_members((select id from g))), 'nor its member list');
-select pg_temp.expect_denied($$select public.add_group_members((select id from g), array['00000000-0000-0000-0000-00000000000c']::uuid[])$$, 'outsiders cannot add themselves');
-select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
-select public.rename_group((select id from g), 'Padel crew Dubai');
-select pg_temp.check((select title from public.my_conversations() where conversation_id = (select id from g)) = 'Padel crew Dubai', 'a renamed group shows its new name');
-select public.leave_group((select id from g));
+select pg_temp.check(pg_temp.error_of($$select public.create_group('Padel crew', array['00000000-0000-0000-0000-00000000000b']::uuid[])$$) like '%no longer available%', 'no group chat can be created');
+select pg_temp.expect_denied($$insert into public.conversations (kind, title) values ('group', 'Sneaky crew')$$, 'nor inserted directly');
 select pg_temp.as_admin();
-select pg_temp.check((select role from public.conversation_members where conversation_id = (select id from g) and user_id = '00000000-0000-0000-0000-00000000000b') = 'admin', 'when the admin leaves, the oldest member becomes admin');
+-- A group chat from before: kept, listed as removed.
+insert into public.conversations (kind, title) values ('group', 'Old padel crew') returning id as og_id \gset
+insert into public.conversation_members (conversation_id, user_id, role) values (:'og_id', '00000000-0000-0000-0000-00000000000a', 'admin'), (:'og_id', '00000000-0000-0000-0000-00000000000b', 'member');
+insert into public.messages (conversation_id, sender_id, body) values (:'og_id', '00000000-0000-0000-0000-00000000000a', 'See you Saturday');
+insert into private.removed_group_chats (conversation_id) values (:'og_id');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
-select public.leave_group((select id from g));
+select pg_temp.check(not exists (select 1 from public.my_conversations() where conversation_id = :'og_id'), 'a removed group chat leaves the inbox (and its unread count)');
+select pg_temp.check(not exists (select 1 from public.conversations where id = :'og_id') and not exists (select 1 from public.messages where conversation_id = :'og_id')
+  and not exists (select 1 from public.conversation_members where conversation_id = :'og_id'), 'an old link to it finds nothing');
+select pg_temp.expect_denied(format('insert into public.messages (conversation_id, sender_id, body) values (%L, auth.uid(), %L)', :'og_id', 'Anyone?'), 'it takes no new message');
+select pg_temp.expect_denied(format('select public.add_group_members(%L, %L::uuid[])', :'og_id', '{00000000-0000-0000-0000-00000000000c}'), 'nobody is added to it');
+select pg_temp.expect_denied(format('select public.rename_group(%L, %L)', :'og_id', 'Mine now'), 'it cannot be renamed');
+select pg_temp.expect_denied(format('select public.leave_group(%L)', :'og_id'), 'nor left (it is not reachable)');
 select pg_temp.as_admin();
-select pg_temp.check(not exists (select 1 from public.conversations where id = (select id from g)), 'the last one out deletes the group: no orphan chat');
+select pg_temp.check((select count(*) from public.conversation_members where conversation_id = :'og_id') = 2
+  and exists (select 1 from public.messages where conversation_id = :'og_id' and body = 'See you Saturday'), 'its members and history are kept');
 
 -- ───── Audit fixes: groups, follows, covers, leftovers ─────
--- A member who is not an app admin can leave a group they run (the role passes on).
-select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
-create temp table g2 as select public.create_group('Beach crew', array['00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a', '00000000-0000-0000-0000-00000000000a']::uuid[]) as id;
+-- Members still cannot promote themselves (a chat made by the server, the way IRLY's own are).
 select pg_temp.as_admin();
-select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-00000000000a' and kind = 'GROUP_ADDED' and payload ->> 'conversation_id' = (select id from g2)::text) = 1, 'a person listed three times is added and told once');
-select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
-select public.leave_group((select id from g2));
-select pg_temp.as_admin();
-select pg_temp.check((select role from public.conversation_members where conversation_id = (select id from g2) and user_id = '00000000-0000-0000-0000-00000000000a') = 'admin', 'a non-admin member running a group can leave it: the other member takes over');
-select pg_temp.check(not exists (select 1 from public.conversation_members where conversation_id = (select id from g2) and user_id = '00000000-0000-0000-0000-00000000000b'), 'and the leaver is out');
--- Members still cannot promote themselves.
-select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
-select public.add_group_members((select id from g2), array['00000000-0000-0000-0000-00000000000b']::uuid[]);
+insert into public.conversations (id, kind, title) values ('00000000-0000-0000-0000-0000000006c2', 'group', 'Beach crew');
+create temp table g2 as select '00000000-0000-0000-0000-0000000006c2'::uuid as id;
+grant select on g2 to authenticated;
+insert into public.conversation_members (conversation_id, user_id, role) select id, '00000000-0000-0000-0000-00000000000a', 'admin' from g2;
+insert into public.conversation_members (conversation_id, user_id, role) select id, '00000000-0000-0000-0000-00000000000b', 'member' from g2;
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select pg_temp.expect_denied($$update public.conversation_members set role = 'admin' where conversation_id = (select id from g2) and user_id = auth.uid()$$, 'a member cannot make themselves admin');
 -- Follow, unfollow, follow again: one notification.
@@ -1470,9 +1459,10 @@ select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
 select pg_temp.expect_denied(format('select public.edit_live_post(%L, %L)', :'live_id', 'hacked'), 'Live: nobody else edits it');
 select pg_temp.as_admin();
 
--- ───── Communities v2: groups, roles, pins, announcements ─────
+-- ───── Communities v2: roles, pins, announcements (groups removed since 20261109000000) ─────
 select pg_temp.as_admin();
-select pg_temp.check((select count(*) from public.communities c join public.communities p on p.id = c.parent_id where p.topic = 'sport' and c.subtopic = 'padel' and c.city_id = 'dubai') = 1, 'groups: IRLY Sport Dubai has its Padel group');
+select pg_temp.check((select count(*) from public.communities c join public.communities p on p.id = c.parent_id where p.topic = 'sport' and c.subtopic = 'padel' and c.city_id = 'dubai' and c.deleted_at is not null) = 1,
+  'groups: IRLY Sport Dubai''s former Padel group is kept, removed');
 select pg_temp.check(exists (select 1 from public.communities where official and topic = 'lifestyle' and city_id = 'dubai'), 'groups: IRLY Lifestyle exists');
 select id as sport_id from public.communities where official and topic = 'sport' and city_id = 'dubai' and parent_id is null \gset
 select id as padel_id from public.communities where parent_id = :'sport_id' and subtopic = 'padel' \gset
@@ -1481,65 +1471,62 @@ update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-0
 alter table public.profiles enable trigger profiles_guard;
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
 select pg_temp.check(not exists (select 1 from public.community_list('dubai') where id = :'padel_id'), 'groups: top lists do not show groups');
-select pg_temp.check(exists (select 1 from public.community_subgroups(:'sport_id') where id = :'padel_id'), 'groups: a community lists its groups');
-select public.join_community(:'padel_id');
-select pg_temp.check(private.i_belong(:'sport_id'), 'groups: joining a group joins its community');
-select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'padel_id', 'Hello everyone'), 'announce: members cannot notify everyone');
+select pg_temp.check(not exists (select 1 from public.community_subgroups(:'sport_id')), 'groups: a community lists no group any more');
+select pg_temp.expect_denied(format('select public.join_community(%L)', :'padel_id'), 'groups: a removed group cannot be joined');
+select public.join_community(:'sport_id');
+select pg_temp.check(private.i_belong(:'sport_id') and not private.i_belong(:'padel_id'), 'groups: joining the community joins no group');
+select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'sport_id', 'Hello everyone'), 'announce: members cannot notify everyone');
 select pg_temp.expect_denied(format('select public.set_community_role(%L, %L, %L)', :'sport_id', '00000000-0000-0000-0000-000000000011', 'moderator'), 'roles: a member cannot name themself moderator');
-select pg_temp.expect_denied(format('insert into public.community_posts (community_id, author_id, body, kind) values (%L, auth.uid(), %L, %L)', :'padel_id', 'Fake announcement', 'announcement'), 'announce: no announcement posts from members');
-insert into public.community_posts (community_id, author_id, body) values (:'padel_id', auth.uid(), 'Who plays Saturday?') returning id as padel_post \gset
+select pg_temp.expect_denied(format('insert into public.community_posts (community_id, author_id, body, kind) values (%L, auth.uid(), %L, %L)', :'sport_id', 'Fake announcement', 'announcement'), 'announce: no announcement posts from members');
+select pg_temp.expect_denied(format('insert into public.community_posts (community_id, author_id, body) values (%L, auth.uid(), %L)', :'padel_id', 'In a removed group'), 'groups: no post in a removed group');
+insert into public.community_posts (community_id, author_id, body) values (:'sport_id', auth.uid(), 'Who plays Saturday?') returning id as padel_post \gset
 select pg_temp.expect_denied(format('select public.pin_post(%L)', :'padel_post'), 'pins: members cannot pin');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
-select public.join_community(:'padel_id');
+select public.join_community(:'sport_id');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
 select pg_temp.check(public.am_i_admin(), 'roles: IRLY admin is known to the app');
 select public.set_community_role(:'sport_id', '00000000-0000-0000-0000-000000000011', 'moderator');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
-select pg_temp.check((select can_moderate from public.community_rights(:'padel_id')), 'roles: a community moderator moderates its groups');
+select pg_temp.check((select can_moderate from public.community_rights(:'sport_id')), 'roles: a community moderator moderates it');
 select pg_temp.check(public.pin_post(:'padel_post'), 'pins: a moderator pins');
-insert into public.community_posts (community_id, author_id, body) values (:'padel_id', auth.uid(), 'Newer post') ;
-select pg_temp.check((select id from public.community_feed(:'padel_id') limit 1) = :'padel_post'::uuid, 'pins: the pinned post comes first');
-select pg_temp.check(public.announce(:'padel_id', 'Courts booked Saturday 9am at Padel Pro') >= 1, 'announce: a moderator notifies the group');
+insert into public.community_posts (community_id, author_id, body) values (:'sport_id', auth.uid(), 'Newer post') ;
+select pg_temp.check((select id from public.community_feed(:'sport_id') limit 1) = :'padel_post'::uuid, 'pins: the pinned post comes first');
+select pg_temp.check(public.announce(:'sport_id', 'Courts booked Saturday 9am at Padel Pro') >= 1, 'announce: a moderator notifies the community');
 select pg_temp.as_admin();
 select pg_temp.check(exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000012' and kind = 'COMMUNITY_ANNOUNCEMENT'), 'announce: members receive it');
 select pg_temp.check((select count(*) from public.notifications where user_id = '00000000-0000-0000-0000-000000000012' and kind = 'COMMUNITY_POST' and payload ->> 'body' like 'Courts booked%') = 0, 'announce: never twice (no extra post notification)');
 select pg_temp.check((select title from private.push_text((select n from public.notifications n where user_id = '00000000-0000-0000-0000-000000000012' and kind = 'COMMUNITY_ANNOUNCEMENT' limit 1), 'en')) like '📣%', 'announce: push text');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
-select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'padel_id', 'Another one'), 'announce: one per hour');
+select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'sport_id', 'Another one'), 'announce: one per hour');
 select pg_temp.as_admin();
-update public.community_broadcasts set created_at = now() - interval '2 hours' where community_id = :'padel_id';
+update public.community_broadcasts set created_at = now() - interval '2 hours' where community_id = :'sport_id';
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
-select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'padel_id', 'Courts booked Saturday 9am at Padel Pro'), 'announce: never the same text twice in a week');
+select pg_temp.expect_denied(format('select public.announce(%L, %L)', :'sport_id', 'Courts booked Saturday 9am at Padel Pro'), 'announce: never the same text twice in a week');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
-insert into public.community_notification_prefs (user_id, community_id, announcements) values (auth.uid(), :'padel_id', false);
+insert into public.community_notification_prefs (user_id, community_id, announcements) values (auth.uid(), :'sport_id', false)
+  on conflict (user_id, community_id) do update set announcements = false;
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
-select public.announce(:'padel_id', 'Tournament registration is open');
+select public.announce(:'sport_id', 'Tournament registration is open');
 select pg_temp.as_admin();
 select pg_temp.check(not exists (select 1 from public.notifications where user_id = '00000000-0000-0000-0000-000000000012' and payload ->> 'body' = 'Tournament registration is open'), 'announce: a member who turned it off is not notified');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
-select pg_temp.check(public.create_subgroup(:'sport_id', 'Tennis') is not null, 'groups: a moderator adds a group');
+select pg_temp.expect_denied(format('select public.create_subgroup(%L, %L)', :'sport_id', 'Tennis'), 'groups: not even a moderator adds a group (removed)');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
 select pg_temp.expect_denied(format('select public.create_subgroup(%L, %L)', :'sport_id', 'Spam group'), 'groups: members cannot add groups');
 select pg_temp.expect_denied(format('select public.community_people(%L)', :'sport_id'), 'roles: member lists are for moderators');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
 select public.leave_community(:'sport_id');
-select pg_temp.check(not private.i_belong(:'padel_id'), 'groups: leaving a community leaves its groups');
+select pg_temp.check(not private.i_belong(:'sport_id'), 'leaving a community works');
 select pg_temp.as_admin();
 
 -- ───── Help & Questions ─────
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
-select pg_temp.check((select count(*) from public.help_groups('dubai')) = 8, 'help: eight groups in Dubai');
-select id as visa_id from public.help_groups('dubai') where category = 'visa' \gset
-select public.join_community(:'visa_id');
-insert into public.community_posts (community_id, author_id, body, kind) values (:'visa_id', auth.uid(), 'How long does the Emirates ID renewal take?', 'question') returning id as q_id \gset
-insert into public.comments (target_type, target_id, author_id, body) values ('community_post', :'q_id', auth.uid(), 'About two weeks for me');
-select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
-select pg_temp.check((select count(*) from public.help_feed('dubai', 'visa', 'emirates renewal')) = 1, 'help: search by category and every keyword');
-select pg_temp.check((select count(*) from public.help_feed('dubai', 'schools', 'emirates')) = 0, 'help: another category does not match');
-select pg_temp.check((select answers from public.help_feed('dubai', null, 'renewal') limit 1) = 1, 'help: answers are counted');
-select public.toggle_save('community_post', :'q_id');
-select pg_temp.check((select saved from public.help_feed('dubai', 'visa') where id = :'q_id'), 'help: a question with its answers can be saved');
+-- Its groups (Visa & paperwork…) were removed with every group (20261109000000): kept, never listed.
+select pg_temp.check(not exists (select 1 from public.help_groups('dubai')), 'help: no group listed any more');
+select pg_temp.check(not exists (select 1 from public.help_feed('dubai', 'visa', null)), 'help: nothing to read');
 select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from public.communities g join public.communities h on h.id = g.parent_id
+  where h.topic = 'help' and h.city_id = 'dubai' and g.subtopic = 'visa' and g.deleted_at is not null), 'help: Visa & paperwork is kept, removed');
 
 -- ───── Spaces: IRLY Mom, Family, Only Girls ─────
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
@@ -1652,15 +1639,14 @@ select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
 select pg_temp.check(exists (select 1 from public.community_posts where id = :'hidden_post'), 'posts: the author still sees it');
 update public.safety_settings set profile_visibility = 'everyone' where user_id = auth.uid();
 select public.create_community('Hana Club', 'dubai') as club_id \gset
-select public.create_subgroup(:'club_id', 'Hana Padel') as club_group \gset
-select public.delete_community(:'club_group');
-select pg_temp.check(not exists (select 1 from public.communities where id = :'club_group'), 'groups: the community''s owner deletes a group');
+select pg_temp.expect_denied(format('select public.create_subgroup(%L, %L)', :'club_id', 'Hana Padel'), 'groups: the community''s owner cannot add a group (removed)');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
-select public.create_subgroup(:'club_id', 'Hana Yoga') as club_group2 \gset
+select pg_temp.expect_denied(format('select public.create_subgroup(%L, %L)', :'club_id', 'Hana Yoga'), 'groups: nor an IRLY admin');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000011');
 select public.delete_community(:'club_id');
 select pg_temp.as_admin();
-select pg_temp.check((select deleted_at is not null from public.communities where id = :'club_group2'), 'groups: deleting a community deletes its groups');
+select pg_temp.check((select deleted_at is not null from public.communities where id = :'club_id')
+  and not exists (select 1 from public.communities where parent_id = :'club_id'), 'groups: the owner deletes the community, no group was made');
 select pg_temp.check(private.news_ingest('50000000-0000-0000-0000-000000000001', format($x$<rss><channel><item><title>
 <![CDATA[Dubai Marina walk reopens]]>
 </title><link>https://example.ae/cdata</link><description>
@@ -1691,11 +1677,10 @@ select pg_temp.check((select bool_and(ok) from (select
     left join public.community_topics t on t.topic = l.topic) l
   where city_id = 'dubai') x), 'ranking: main communities come official first (in the team''s order), then most members first');
 select pg_temp.check(not exists (select 1 from public.community_list('dubai') l join public.communities c on c.id = l.id where c.parent_id is not null), 'ranking: no group among main communities');
-select pg_temp.check((select bool_and(ok) from (select coalesce(members >= lead(members) over (), true) as ok from (select members from public.community_subgroups(:'sport_id')) l) x), 'ranking: groups come most members first');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
-select public.join_community(:'padel_id');
+select pg_temp.expect_denied(format('select public.join_community(%L)', :'padel_id'), 'groups: a removed group cannot be joined');
 select pg_temp.check(not exists (select 1 from public.member_communities(auth.uid()) m join public.communities c on c.id = m.id where c.parent_id is not null), 'mine: groups are not listed as main communities');
-select pg_temp.check(exists (select 1 from public.search_all('Padel', 'dubai') where kind = 'community' and subtitle like 'Group of %'), 'search: a group says which community it belongs to');
+select pg_temp.check(not exists (select 1 from public.search_all('Padel', 'dubai') where kind = 'community' and subtitle like 'Group of %'), 'search: no group is found any more');
 select pg_temp.expect_denied(format($q$insert into public.community_channels (community_id, slug, name) values (%L, 'deals', 'Good deals')$q$, :'sport_id'), 'spaces: members cannot add categories');
 select pg_temp.expect_denied(format($q$insert into public.community_posts (community_id, author_id, body, category) values (%L, auth.uid(), 'x', 'nowhere')$q$, :'sport_id'), 'spaces: no post in a category that does not exist');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
@@ -1714,7 +1699,7 @@ select pg_temp.check(public.activity_status(now() + interval '1 hour', null, nul
 insert into public.places (id, slug, city_id, area_id, name, kind, lat, lng) values ('60000000-0000-0000-0000-000000000001', 'test-padel-court', 'dubai', 'marina', 'Test Padel Court', 'court', 25.08, 55.14) on conflict (id) do nothing;
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
 insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, community_id, privacy, place_id)
-values (auth.uid(), 'PSG night', 'sport', 'dubai', 'marina', now() + interval '1 day', :'padel_id', 'community', '60000000-0000-0000-0000-000000000001') returning id as group_act \gset
+values (auth.uid(), 'PSG night', 'sport', 'dubai', 'marina', now() + interval '1 day', :'sport_id', 'community', '60000000-0000-0000-0000-000000000001') returning id as group_act \gset
 insert into public.activities (creator_id, title, category_id, city_id, area_id, starts_at, address)
 values (auth.uid(), 'Beach walk', 'outdoor', 'dubai', 'marina', now() + interval '1 day', 'Somewhere on the beach') returning id as free_act \gset
 select pg_temp.check((select lat = 25.08 and geo_source = 'place' from public.activities where id = :'group_act'), 'map: a listed place gives its coordinates');
@@ -1732,26 +1717,26 @@ select pg_temp.check((select lat = 25.2 from public.activities where id = :'free
 update public.activities set address = 'Another place' where id = :'free_act';
 select pg_temp.check((select lat is null from public.activities where id = :'free_act'), 'map: a new address drops the old position until it is matched again');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
-select pg_temp.check(exists (select 1 from public.community_activities(:'sport_id') where id = :'group_act') and exists (select 1 from public.community_activities(:'padel_id') where id = :'group_act'), 'activities: a group activity shows in the group and its community (one row)');
+select pg_temp.check((select count(*) from public.community_activities(:'sport_id') where id = :'group_act') = 1, 'activities: a community activity shows in its community (one row)');
 select pg_temp.check((select count(*) from public.activities where title = 'PSG night') = 1, 'activities: never copied');
 select pg_temp.expect_denied(format('select public.pin_activity(%L, %L)', :'sport_id', :'group_act'), 'activities: members cannot pin');
 select pg_temp.check(exists (select 1 from public.map_activities('dubai') where id = :'group_act'), 'map: a located activity is on the map');
 select pg_temp.check(not exists (select 1 from public.map_activities('dubai') where id = :'free_act'), 'map: an activity without a reliable position is not');
-select pg_temp.check(exists (select 1 from public.map_activities('dubai', p_community => :'sport_id') where id = :'group_act'), 'map: filtering by a community includes its groups');
+select pg_temp.check(exists (select 1 from public.map_activities('dubai', p_community => :'sport_id') where id = :'group_act'), 'map: filtering by a community includes its activities');
 select pg_temp.check(exists (select 1 from public.map_activities('dubai', p_lat => 25.08, p_lng => 55.14, p_km => 1) where id = :'group_act')
   and not exists (select 1 from public.map_activities('dubai', p_lat => 25.30, p_lng => 55.40, p_km => 1) where id = :'group_act'), 'map: distance filter');
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000e');
 select public.pin_activity(:'sport_id', :'group_act');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');
-select pg_temp.check((select pinned_at is not null from public.community_activities(:'sport_id') where id = :'group_act'), 'activities: a host pins a group activity in the community');
+select pg_temp.check((select pinned_at is not null from public.community_activities(:'sport_id') where id = :'group_act'), 'activities: a host pins an activity in the community');
 update public.activities set cancelled_at = now() where id = :'group_act';
 select pg_temp.check(not exists (select 1 from public.map_activities('dubai') where id = :'group_act'), 'map: a cancelled activity leaves the map');
-select pg_temp.check((select status from public.community_activities(:'padel_id') where id = :'group_act') = 'cancelled', 'activities: its community shows it as cancelled');
+select pg_temp.check((select status from public.community_activities(:'sport_id') where id = :'group_act') = 'cancelled', 'activities: its community shows it as cancelled');
 
 -- ===== Every emirate has its IRLY communities, matched to what you look for =====
 select pg_temp.as_admin();
 select pg_temp.check((select count(distinct city_id) from public.communities where official and topic = 'sport' and parent_id is null and deleted_at is null and city_id in ('dubai','abudhabi','sharjah','ajman','rak','fujairah','uaq')) = 7, 'emirates: IRLY Sport in all seven emirates');
-select pg_temp.check(exists (select 1 from public.communities c join public.communities p on p.id = c.parent_id where p.city_id = 'sharjah' and p.topic = 'sport' and c.subtopic is not null), 'emirates: Sharjah communities have their groups');
+select pg_temp.check(exists (select 1 from public.communities c join public.communities p on p.id = c.parent_id where p.city_id = 'sharjah' and p.topic = 'sport' and c.subtopic is not null and c.deleted_at is not null), 'emirates: Sharjah communities'' former groups are kept, removed');
 select pg_temp.check(not exists (select 1 from public.communities where official and topic = 'nights' and city_id = 'sharjah'), 'emirates: no IRLY Nights in Sharjah');
 select pg_temp.check((select count(*) from public.communities where official and topic = 'sport' and city_id = 'sharjah' and parent_id is null and deleted_at is null) = 1, 'emirates: created once (running it again adds nothing)');
 select pg_temp.as_user('00000000-0000-0000-0000-000000000012');

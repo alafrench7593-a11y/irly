@@ -157,8 +157,9 @@ select pg_temp.check((select count(*) from public.communities c join five f usin
   and not exists (select 1 from five f where not exists (select 1 from public.communities c where c.id = f.id and c.deleted_at is null)), 're-seeding keeps their ids and adds none');
 select pg_temp.check((select count(*) from public.conversations v join five f on f.id = v.community_id) = 5, 'one chat each');
 select pg_temp.as_user('c9900000-0000-0000-0000-0000000000a1');
--- Since 20261108200000 IRLY Girl lists IRLY Girl only (Girl CEO lives in IRLY Network; the others are retired, all kept above).
-select pg_temp.check((select array_agg(topic) from public.girl_official_communities()) = array['girls'], 'IRLY Girl lists IRLY Girl');
+-- Since 20261109000000 IRLY Girl mirrors IRLY's list (Girl CEO lives in IRLY Network).
+select pg_temp.check((select array_agg(topic) from public.girl_official_communities())
+  = array['girl_newcomers', 'girl_activity', 'girl_sport', 'girl_running', 'girl_padel', 'girl_trip', 'girl_francaise'], 'IRLY Girl lists its seven');
 select pg_temp.as_user('c9900000-0000-0000-0000-0000000000a3');
 select pg_temp.check(pg_temp.fails('select * from public.girl_official_communities()') = '42501', 'a man cannot list them');
 

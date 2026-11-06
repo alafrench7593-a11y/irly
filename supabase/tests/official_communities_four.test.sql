@@ -58,13 +58,16 @@ create temp view featured as
 -- eight open to all, IRLY Girl, and Girl CEO inside IRLY Network; IRLY
 -- Girl's former four and IRLY Maman are retired (kept, see below).
 select pg_temp.check((select array_agg(distinct topic collate "C" order by topic collate "C") from featured)
-  = array['expats', 'francais', 'girl_network', 'girls', 'lifestyle', 'network', 'padel', 'running', 'sport', 'trip'],
-  'ten official topics in all: IRLY 8, IRLY Girl, Girl CEO');
+  = array['expats', 'francais', 'girl_activity', 'girl_francaise', 'girl_network', 'girl_newcomers', 'girl_padel', 'girl_running', 'girl_sport', 'girl_trip',
+    'lifestyle', 'mom_activity', 'mom_expat', 'mom_francaise', 'mom_network', 'mom_padel', 'mom_running', 'mom_sport', 'mom_trip', 'network', 'padel', 'running', 'sport', 'trip'],
+  'official topics (20261109000000): IRLY 8, IRLY Girl 8 (Girl CEO included), IRLY Mom Community 8 (Mom CEO included)');
 select pg_temp.check((select array_agg(name order by name collate "C") from featured where city_id = 'dubai' and not girl_only)
   = array['IRLY Activité', 'IRLY Expat', 'IRLY Network', 'IRLY Padel Club', 'IRLY Running Club', 'IRLY Sport', 'IRLY Trip', 'Les Français à Dubaï'], 'IRLY Dubai: the owner''s eight');
 select pg_temp.check(not exists (select 1 from featured where city_id <> 'dubai'), 'IRLY: Dubai only');
 select pg_temp.check((select array_agg(name order by name collate "C") from featured where girl_only)
-  = array['Girl CEO', 'IRLY Girl'], 'IRLY Girl: IRLY Girl, and Girl CEO (Dubai)');
+  = array['Girl Activité', 'Girl CEO', 'Girl Expat', 'Girl Padel Club', 'Girl Running Club', 'Girl Sport', 'Girl Trip', 'Les Françaises à Dubaï',
+    'Les Mamans françaises à Dubaï', 'Mom Activité', 'Mom CEO', 'Mom Expat', 'Mom Padel Club', 'Mom Running Club', 'Mom Sport', 'Mom Trip'],
+  'women only: IRLY Girl''s eight and IRLY Mom Community''s eight (Dubai)');
 select pg_temp.check(not exists (select 1 from featured where topic = 'moms')
   and (select count(*) from public.communities where official and topic = 'moms' and parent_id is null and deleted_at is null and name = 'IRLY Mom Community')
     = (select count(distinct city_id) from public.communities where official and topic = 'moms' and parent_id is null),
@@ -108,9 +111,9 @@ select pg_temp.check((select count(*) from public.communities where official and
   = (select cardinality(cities) from public.community_topics where topic = 'gym'), 'retired IRLY Gym: every row still there (no delete)');
 select pg_temp.check(not exists (select 1 from public.communities where official and parent_id is null and deleted_at is null and retired_at is null
   and topic in ('newcomers', 'help', 'gym', 'football', 'wellness', 'beach', 'food', 'culture', 'nights', 'shopping',
-      'entrepreneurs', 'ecom', 'tech', 'ai', 'families', 'girl_francophone', 'girl_trip', 'girl_newcomers', 'girl_activity', 'girl_sport', 'moms')), 'every other official community is retired');
+      'entrepreneurs', 'ecom', 'tech', 'ai', 'families', 'girl_francophone', 'girls', 'moms')), 'every other official community is retired');
 select pg_temp.check((select bool_and(official) from public.communities where retired_at is not null), 'retired ones stay official (only IRLY runs them)');
-select pg_temp.check(not exists (select 1 from public.community_topics where active and topic in ('newcomers', 'help', 'gym', 'girl_francophone', 'families', 'girl_trip', 'moms')),
+select pg_temp.check(not exists (select 1 from public.community_topics where active and topic in ('newcomers', 'help', 'gym', 'girl_francophone', 'families', 'girls', 'moms')),
   'their topics are no longer active');
 select pg_temp.check(not exists (select 1 from public.communities where retired_at is not null and parent_id is not null), 'groups are left as they are');
 
@@ -142,8 +145,8 @@ select pg_temp.check((select max(n) from public.community_list('dubai') with ord
 select pg_temp.check(pg_temp.fails(format('update public.communities set retired_at = now() where id = %L', :'club_id')) = '42501', 'an owner cannot retire (hide) a community');
 
 -- Women-only official ones: invisible to Tom whatever the road.
-select pg_temp.check(not exists (select 1 from public.communities where topic in ('girl_trip', 'girl_newcomers', 'girl_sport', 'girl_network', 'girl_activity', 'moms', 'girls')),
-  'Tom: no IRLY Girl or IRLY Maman official community on a direct read (Girl CEO and IRLY Girl included)');
+select pg_temp.check(not exists (select 1 from public.communities where topic in ('moms', 'girls') or topic like 'girl\_%' or topic like 'mom\_%'),
+  'Tom: no IRLY Girl or IRLY Mom Community official community on a direct read (Girl CEO, Mom CEO and IRLY Girl included)');
 select pg_temp.check(pg_temp.fails('select * from public.girl_official_communities()') = '42501', 'Tom: girl_official_communities refused');
 
 -- ───────── 5. A retired community's members keep everything ─────────
@@ -160,7 +163,7 @@ select pg_temp.check(exists (select 1 from public.messages where conversation_id
 
 -- IRLY Girl and IRLY Maman for Ana.
 select pg_temp.check((select array_agg(topic order by ord) from public.girl_official_communities() with ordinality g(id, topic, name, tagline, emoji, members, is_member, city_id, cover_path, ord))
-  = array['girls'], 'Ana: IRLY Girl lists IRLY Girl (20261108200000), never Girl CEO');
+  = array['girl_newcomers', 'girl_activity', 'girl_sport', 'girl_running', 'girl_padel', 'girl_trip', 'girl_francaise'], 'Ana: IRLY Girl lists its seven (20261109000000), never Girl CEO');
 select pg_temp.check(exists (select 1 from public.community_list('dubai') where topic = 'girl_network' and name = 'Girl CEO' and official and girl_only),
   'Ana: Girl CEO is still read by IRLY Network (community_list), women only');
 select pg_temp.check((select count(*) from public.communities where official and parent_id is null and city_id = 'dubai'

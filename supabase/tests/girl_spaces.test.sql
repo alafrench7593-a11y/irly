@@ -130,13 +130,13 @@ select pg_temp.check((select count(*) from public.communities where official and
 
 select pg_temp.as_user('c9300000-0000-0000-0000-0000000000a1');
 select pg_temp.check((select array_agg(name order by ord) from public.girl_official_communities() with ordinality as g(id, topic, name, tagline, emoji, members, is_member, city_id, cover_path, ord))
-  = array['IRLY Girl'], 'Mia sees IRLY Girl (20261108200000)');
-create temp table mia_before as select members from public.girl_official_communities() where topic = 'girls';
-select public.join_community((select id from public.girl_official_communities() where topic = 'girls'));
-select public.join_community((select id from public.girl_official_communities() where topic = 'girls'));
-select pg_temp.check((select is_member and members = (select members from mia_before) + 1 from public.girl_official_communities() where topic = 'girls'), 'joining (twice) makes her a member once, count +1');
-select public.leave_community((select id from public.girl_official_communities() where topic = 'girls'));
-select pg_temp.check((select not is_member and members = (select members from mia_before) from public.girl_official_communities() where topic = 'girls'), 'leaving: not a member, count back');
+  = array['Girl Expat', 'Girl Activité', 'Girl Sport', 'Girl Running Club', 'Girl Padel Club', 'Girl Trip', 'Les Françaises à Dubaï'], 'Mia sees IRLY Girl''s seven (20261109000000)');
+create temp table mia_before as select members from public.girl_official_communities() where topic = 'girl_newcomers';
+select public.join_community((select id from public.girl_official_communities() where topic = 'girl_newcomers'));
+select public.join_community((select id from public.girl_official_communities() where topic = 'girl_newcomers'));
+select pg_temp.check((select is_member and members = (select members from mia_before) + 1 from public.girl_official_communities() where topic = 'girl_newcomers'), 'joining (twice) makes her a member once, count +1');
+select public.leave_community((select id from public.girl_official_communities() where topic = 'girl_newcomers'));
+select pg_temp.check((select not is_member and members = (select members from mia_before) from public.girl_official_communities() where topic = 'girl_newcomers'), 'leaving: not a member, count back');
 
 select pg_temp.as_user('c9300000-0000-0000-0000-0000000000a2');
 select pg_temp.check(pg_temp.fails($$select * from public.girl_official_communities()$$) = '42501', 'Sam: the four are refused');

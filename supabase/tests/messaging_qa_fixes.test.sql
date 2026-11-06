@@ -204,8 +204,15 @@ begin
     raise exception 'FAIL msg qa: setup, Zoe should have unread message notifications in the group';
   end if;
   perform pg_temp.as_user(zoe);
-  perform public.leave_group('7f100000-0000-0000-0000-0000000000c1');
+  -- Group chats were removed (20261109050000): leave_group refuses; a group chat is still left
+  -- when an account is deleted, and that path must take its notifications too.
+  begin
+    perform public.leave_group('7f100000-0000-0000-0000-0000000000c1');
+    raise exception 'FAIL msg qa: a group chat can still be left from the app';
+  exception when insufficient_privilege then null;
+  end;
   perform pg_temp.as_admin();
+  perform private.leave_group_as(zoe, '7f100000-0000-0000-0000-0000000000c1');
   if exists (select 1 from public.notifications where user_id = zoe and kind = 'MESSAGE_CREATED'
              and payload ->> 'conversation_id' = '7f100000-0000-0000-0000-0000000000c1') then
     raise exception 'FAIL msg qa: a group left kept its message notifications';

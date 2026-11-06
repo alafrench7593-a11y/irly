@@ -114,8 +114,10 @@ insert into public.community_posts (id, community_id, author_id, body) values
 -- Bea leaves the club: she shares nothing with Viv any more.
 delete from public.community_members where community_id = 'd7e50000-0000-0000-0001-000000000001' and user_id = 'd7e50000-0000-0000-0000-0000000000a3';
 -- Help: questions in the Dubai visa group.
+-- Groups were removed (20261109000000): the visa group is brought back for this test only (removed again below), to time help_feed.
 select g.id as help_group from public.communities g join public.communities h on h.id = g.parent_id
-where h.official and h.topic = 'help' and h.city_id = 'dubai' and h.deleted_at is null and g.subtopic = 'visa' and g.deleted_at is null limit 1 \gset
+where h.official and h.topic = 'help' and h.city_id = 'dubai' and h.deleted_at is null and g.subtopic = 'visa' limit 1 \gset
+update public.communities set deleted_at = null where id = :'help_group';
 insert into public.community_posts (id, community_id, author_id, body)
 select ('d7e50000-0000-0000-0002-00000000002' || k)::uuid, :'help_group', ('d7e50000-0000-0000-0000-0000000000a' || k)::uuid, 'd7e5help question ' || k
 from unnest(array[2, 3, 4, 5]) k;
@@ -212,6 +214,8 @@ select pg_temp.check(pg_temp.calls_of('private.i_participate', $q$select count(*
   'activities: no participation lookup per plan');
 select pg_temp.as_admin();
 rollback;
+-- The visa group goes back to removed (20261109000000).
+update public.communities set deleted_at = now() where id = :'help_group';
 
 -- ───────── 2. Joins do not wait for the chat (PERF-02) ─────────
 select pg_temp.as_admin();

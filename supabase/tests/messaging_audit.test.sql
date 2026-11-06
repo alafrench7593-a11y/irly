@@ -191,9 +191,10 @@ select pg_temp.as_user('c9700000-0000-0000-0000-0000000000a1');
 select pg_temp.check(exists (select 1 from public.messages where id = 'c9700000-0000-0000-0000-0000000000e2'), '… Ana still has it');
 select pg_temp.check(pg_temp.fails($$select public.set_conversation_archived('$$ || :'ben_conv' || $$', true)$$) = 'P0002', 'Ana cannot archive a chat she is not in');
 
--- ───────── 5. Left a group, community or activity: nothing new reaches you ─────────
+-- ───────── 5. Left a community or activity: nothing new reaches you ─────────
+-- (Group chats were removed on 2026-11-06, 20261109050000: no group to leave any more.)
 select pg_temp.as_user('c9700000-0000-0000-0000-0000000000a1');
-select public.create_group('c97 group', array['c9700000-0000-0000-0000-0000000000a2'::uuid]) as g_id \gset
+select pg_temp.check(pg_temp.fails($$select public.create_group('c97 group', array['c9700000-0000-0000-0000-0000000000a2'::uuid])$$) = '42501', 'Ana cannot create a group chat (removed)');
 select pg_temp.as_admin();
 insert into public.communities (id, city_id, name) values ('c9700000-0000-0000-0000-0000000000f1', 'dubai', 'c97 club');
 insert into public.community_members (community_id, user_id, role) values
@@ -206,22 +207,19 @@ insert into public.activity_participants (activity_id, user_id, status) values (
 select id as k_id from public.conversations where community_id = 'c9700000-0000-0000-0000-0000000000f1' \gset
 select id as act_id from public.conversations where activity_id = 'c9700000-0000-0000-0000-0000000000b1' \gset
 select pg_temp.as_user('c9700000-0000-0000-0000-0000000000a2');
-select pg_temp.check((select count(*) from public.my_conversations() where conversation_id in (:'g_id', :'k_id', :'act_id')) = 3, 'Ben is in the group, the community chat and the activity chat');
-select public.leave_group(:'g_id');
+select pg_temp.check((select count(*) from public.my_conversations() where conversation_id in (:'k_id', :'act_id')) = 2, 'Ben is in the community chat and the activity chat');
 select public.leave_community('c9700000-0000-0000-0000-0000000000f1');
 select public.leave_activity('c9700000-0000-0000-0000-0000000000b1');
 select pg_temp.as_user('c9700000-0000-0000-0000-0000000000a1');
 insert into public.messages (conversation_id, sender_id, body) values
-  (:'g_id', 'c9700000-0000-0000-0000-0000000000a1', 'c97 group news'),
   (:'k_id', 'c9700000-0000-0000-0000-0000000000a1', 'c97 club news'),
   (:'act_id', 'c9700000-0000-0000-0000-0000000000a1', 'c97 padel news');
 select pg_temp.as_user('c9700000-0000-0000-0000-0000000000a2');
-select pg_temp.check(not exists (select 1 from public.messages where conversation_id in (:'g_id', :'k_id', :'act_id')),
+select pg_temp.check(not exists (select 1 from public.messages where conversation_id in (:'k_id', :'act_id')),
   'Ben left: he reads no message there (Realtime uses the same read rule, so none is pushed to him)');
-select pg_temp.check(not exists (select 1 from public.conversations where id in (:'g_id', :'k_id', :'act_id')), '… nor the chats themselves (the app sees it is out)');
-select pg_temp.check(not exists (select 1 from public.my_conversations() where conversation_id in (:'g_id', :'k_id', :'act_id')), '… and they leave his inbox');
-select pg_temp.check(pg_temp.fails($$insert into public.messages (conversation_id, sender_id, body) values ('$$ || :'g_id' || $$', 'c9700000-0000-0000-0000-0000000000a2', 'c97 back?')$$) = '42501'
-  and pg_temp.fails($$insert into public.messages (conversation_id, sender_id, body) values ('$$ || :'k_id' || $$', 'c9700000-0000-0000-0000-0000000000a2', 'c97 back?')$$) = '42501', '… and cannot write there');
+select pg_temp.check(not exists (select 1 from public.conversations where id in (:'k_id', :'act_id')), '… nor the chats themselves (the app sees it is out)');
+select pg_temp.check(not exists (select 1 from public.my_conversations() where conversation_id in (:'k_id', :'act_id')), '… and they leave his inbox');
+select pg_temp.check(pg_temp.fails($$insert into public.messages (conversation_id, sender_id, body) values ('$$ || :'k_id' || $$', 'c9700000-0000-0000-0000-0000000000a2', 'c97 back?')$$) = '42501', '… and cannot write there');
 
 -- ───────── 6. A chat's context matches its kind ─────────
 select pg_temp.as_admin();
