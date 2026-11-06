@@ -150,10 +150,16 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const format: CreateFormat = preset?.format ?? 'session';
   const presetCategory = preset?.categoryId ? CATEGORY_BY_ID[preset.categoryId] : undefined;
   const presetSub = presetCategory?.subs.find((x) => x.id === preset?.subId);
+  // From a chat message: its words are the activity's name (a custom one), the member goes on to the date and place.
+  const presetTitle = preset?.title?.trim().slice(0, 80);
   const [pick, setPick] = useState<Pick | null>(
-    presetCategory ? { categoryId: presetCategory.id, sub: presetSub, activity: presetSub?.activities?.find((x) => x.id === preset?.activityId) } : null,
+    presetTitle && presetTitle.length >= 3
+      ? { categoryId: presetCategory?.id ?? guessCategory(presetTitle), custom: presetTitle }
+      : presetCategory
+        ? { categoryId: presetCategory.id, sub: presetSub, activity: presetSub?.activities?.find((x) => x.id === preset?.activityId) }
+        : null,
   );
-  const [step, setStep] = useState(presetCategory ? (presetSub ? 2 : 1) : 0);
+  const [step, setStep] = useState(presetTitle && presetTitle.length >= 3 ? 2 : presetCategory ? (presetSub ? 2 : 1) : 0);
   const [paid, setPaid] = useState(false);
   const [price, setPrice] = useState(PRICES[city.currency][1]);
   const [unlimited, setUnlimited] = useState(false);
@@ -178,7 +184,7 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const geocoderOn = useGeocoderOn();
   const [address, setAddress] = useState('');
   const [spots, setSpots] = useState(6);
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(() => (preset?.description ?? '').slice(0, DESCRIPTION_MAX));
   // The name as published: the activity's own by default, the member may rewrite it.
   const [titleEdit, setTitleEdit] = useState<string | null>(null);
   const signedIn = Boolean(useAccount());
