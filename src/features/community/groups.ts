@@ -19,7 +19,7 @@ const friendly = (m: string) => (/fetch|network/i.test(m) ? 'Can’t reach IRLY 
 export type Subgroup = { id: string; name: string; tagline: string | null; emoji: string | null; members: number; isMember: boolean; postsWeek: number };
 export type Rights = { isAdmin: boolean; canModerate: boolean; isOwner: boolean; announcementsToday: number; nextAnnouncementAt: number | null };
 export type Parent = { id: string; name: string } | null;
-export type CommunityPrefs = { posts: boolean; announcements: boolean };
+export type CommunityPrefs = { posts: boolean; announcements: boolean; activities: boolean };
 export type Person = { userId: string; firstName: string; photo: string | null; role: 'owner' | 'moderator' | 'member' };
 
 const NO_RIGHTS: Rights = { isAdmin: false, canModerate: false, isOwner: false, announcementsToday: 0, nextAnnouncementAt: null };
@@ -32,7 +32,7 @@ export function useCommunityExtras(id: string) {
     groups: [],
     rights: NO_RIGHTS,
     parent: null,
-    prefs: { posts: true, announcements: true },
+    prefs: { posts: true, announcements: true, activities: true },
   });
   const seq = useRef(0);
   const load = useCallback(() => {
@@ -43,7 +43,7 @@ export function useCommunityExtras(id: string) {
       sb().rpc('community_rights', { p_community: id }),
       // The parent in the same round trip (no second, sequential read).
       sb().from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', id).maybeSingle(),
-      sb().from('community_notification_prefs').select('posts, announcements').eq('community_id', id).eq('user_id', uid).maybeSingle(),
+      sb().from('community_notification_prefs').select('*').eq('community_id', id).eq('user_id', uid).maybeSingle(),
     ])
       .then(([g, r, me, pr]) => {
         const row = me.data as { parent_id: string | null; parent: Parent | Parent[] | null } | null;
@@ -72,7 +72,7 @@ export function useCommunityExtras(id: string) {
               }
             : NO_RIGHTS,
           parent,
-          prefs: (pr.data as CommunityPrefs | null) ?? { posts: true, announcements: true },
+          prefs: { posts: true, announcements: true, activities: true, ...((pr.data as Partial<CommunityPrefs> | null) ?? {}) },
         });
       })
       .catch(() => undefined);
@@ -101,7 +101,9 @@ export async function setCommunityPrefs(communityId: string, prefs: CommunityPre
   const { data: auth } = await sb().auth.getSession();
   const uid = auth.session?.user.id;
   if (!uid) throw new Error('Sign in first');
-  const { error } = await sb().from('community_notification_prefs').upsert({ user_id: uid, community_id: communityId, ...prefs });
+  const { error } = await sb()
+    .from('community_notification_prefs')
+    .upsert({ user_id: uid, community_id: communityId, posts: prefs.posts, announcements: prefs.announcements, activities: prefs.activities });
   if (error) throw new Error(friendly(error.message));
 }
 

@@ -6032,4 +6032,6 @@ export const fr: Record<string, string> = {
   'A cancelled plan can\'t be brought back: create a new one': 'Une activité annulée ne peut pas être rétablie : crée-en une nouvelle',
   'The end has passed: pick a later one': 'La fin est déjà passée : choisis plus tard',
   'The host is always going: cancel the plan instead': 'L’organisateur participe toujours : annule plutôt l’activité',
+  'New activities': 'Nouvelles activités',
+  'A member proposes an activity in this community.': 'Un membre propose une activité dans cette communauté.',
 };

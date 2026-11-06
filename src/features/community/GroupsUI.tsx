@@ -137,7 +137,7 @@ export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: st
         toast(e instanceof Error ? e.message : 'Could not save', 'x', 'live');
       });
   };
-  const off = !prefs.posts || !prefs.announcements;
+  const off = !prefs.posts || !prefs.announcements || !prefs.activities;
   return (
     <>
       <Button
@@ -156,6 +156,7 @@ export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: st
             [
               ['posts', 'New posts', 'Someone posts in this community.'],
               ['announcements', 'Announcements', 'Important news from its hosts (at most 3 a day).'],
+              ['activities', 'New activities', 'A member proposes an activity in this community.'],
             ] as const
           ).map(([key, title, body]) => (
             <View key={key} style={[styles.toggle, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
