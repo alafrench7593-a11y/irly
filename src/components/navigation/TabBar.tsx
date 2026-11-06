@@ -1,11 +1,12 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
-import { memo, useEffect } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFrame } from '@/components/layout/AppFrame';
+import { RAIL_WIDTH, useLayout } from '@/components/layout/responsive';
 import { Avatar } from '@/components/ui/Avatar';
 import { Glass } from '@/components/ui/Glass';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -48,6 +49,9 @@ const SIDE = 12;
 /** Space to leave under scrolling content so it clears the floating bar. */
 export function useTabBarSpace(): number {
   const insets = useSafeAreaInsets();
+  const { rail } = useLayout();
+  // Wide screens: the navigation is a rail on the left, nothing floats over the bottom.
+  if (rail) return Math.max(insets.bottom, layout.tabBarBottomGap) + 16;
   return layout.tabBarHeight + Math.max(insets.bottom, layout.tabBarBottomGap) + 28;
 }
 
@@ -58,7 +62,13 @@ export function useTabBarSpace(): number {
  * `spring.medium`, the selected icon pops to `scale.selected` and settles
  * on `spring.strong`, every change ticks a selection haptic.
  */
-export function TabBar({ state, navigation }: BottomTabBarProps) {
+export function TabBar(props: BottomTabBarProps) {
+  const { rail } = useLayout();
+  // Same tabs, same order, same actions: a floating bar on phones, a rail on wide screens.
+  return rail ? <TabRail {...props} /> : <FloatingBar {...props} />;
+}
+
+function FloatingBar({ state, navigation }: BottomTabBarProps) {
   const t = useTheme();
   const router = useRouter();
   const frame = useFrame();
@@ -178,6 +188,121 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   );
 }
 
+const RAIL_ITEM = 72;
+
+/**
+ * Wide screens (expanded size class): the same tabs in a glass rail on the
+ * left, top to bottom in the bar's order, Match IRLY as the disc in the
+ * middle. The lit pill slides between items on `spring.medium`, like the
+ * bar's. Pages start after the rail (tabs layout).
+ */
+function TabRail({ state, navigation }: BottomTabBarProps) {
+  const t = useTheme();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const reduced = useReducedMotion();
+  const { windowHeight } = useLayout();
+  const bottom = Math.max(insets.bottom, layout.tabBarBottomGap);
+  // Short windows (a wide screen held sideways): the items tighten, the disc shrinks to fit.
+  const itemH = Math.max(48, Math.min(RAIL_ITEM, (windowHeight - insets.top - 12 - bottom - 16) / SLOTS.length));
+  const discScale = Math.min(1, (itemH - 4) / IRL_DISC);
+  const activeName = state.routes[state.index]?.name;
+  const activeSlot = SLOTS.indexOf(activeName as (typeof SLOTS)[number]);
+  const offBar = activeSlot < 0;
+  const pillY = Math.max(0, activeSlot) * itemH + (itemH - 48) / 2;
+  const y = useSharedValue(pillY);
+  useEffect(() => {
+    y.set(reduced ? pillY : withSpring(pillY, spring.medium));
+  }, [pillY, y, reduced]);
+  const indicator = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
+  const liveRoute = state.routes.find((r) => r.name === 'live');
+
+  const press = (name: string) => {
+    const route = state.routes.find((r) => r.name === name);
+    if (!route) return;
+    const focused = activeName === name;
+    const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+    if (!focused && !event.defaultPrevented) {
+      haptic('select');
+      navigation.navigate(route.name, route.params);
+    }
+  };
+
+  return (
+    <View
+      style={[styles.railWrap, { top: insets.top + 12, bottom, left: insets.left + 12 }]}
+      pointerEvents="box-none"
+    >
+      <Glass level="thick" style={[styles.rail, { boxShadow: t.shadow.float }]}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.railIndicator,
+            {
+              opacity: offBar ? 0 : 1,
+              backgroundColor: t.mode === 'night' ? 'rgba(255,255,255,0.09)' : 'rgba(10,10,10,0.07)',
+              borderWidth: t.flavor === 'girl' ? 0 : StyleSheet.hairlineWidth * 2,
+              borderColor: t.mode === 'night' ? 'rgba(255,255,255,0.16)' : 'rgba(10,10,10,0.08)',
+            },
+            indicator,
+          ]}
+        />
+        {SLOTS.map((slot) => {
+          let item: ReactNode;
+          if (slot === 'match')
+            item = (
+              <View style={{ transform: [{ scale: discScale }] }}>
+              <MatchButton
+                width={RAIL_WIDTH}
+                lift={false}
+                onPress={() => {
+                  haptic('press');
+                  router.push('/match' as never);
+                }}
+              />
+              </View>
+            );
+          else if (slot === 'live')
+            item = (
+              <LiveTab
+                width={RAIL_WIDTH}
+                focused={activeName === 'live'}
+                onPress={() => {
+                  haptic('select');
+                  if (liveRoute) press('live');
+                }}
+              />
+            );
+          else if (slot === 'network')
+            item = (
+              <TabItem
+                label={tx('IRLY Network')}
+                icon="network"
+                badge={0}
+                focused={false}
+                width={RAIL_WIDTH}
+                onPress={() => {
+                  haptic('select');
+                  router.push('/network');
+                }}
+              />
+            );
+          else if (slot === 'profile') item = <ProfileTab focused={activeName === 'profile'} width={RAIL_WIDTH} onPress={() => press('profile')} />;
+          else {
+            const meta = TABS[slot];
+            item = <TabItem label={tx(meta.label)} icon={meta.icon} badge={0} focused={activeName === slot} width={RAIL_WIDTH} onPress={() => press(slot)} />;
+          }
+          return (
+            <View key={slot} style={[styles.railItem, { height: itemH }]}>
+              {item}
+            </View>
+          );
+        })}
+      </Glass>
+    </View>
+  );
+}
+
 const TabItem = memo(function TabItem({
   label,
   icon,
@@ -263,14 +388,14 @@ const ProfileTab = memo(function ProfileTab({ focused, width, onPress }: { focus
  * « Match » over « IRLY » and opens the people to meet. Same disc in IRLY
  * and IRLY Girl (each in its own ink), sinks under the finger.
  */
-function MatchButton({ width, onPress }: { width: number; onPress: () => void }) {
+function MatchButton({ width, onPress, lift = true }: { width: number; onPress: () => void; lift?: boolean }) {
   const t = useTheme();
   const night = t.mode === 'night';
   const open = FEATURES.matchIrly;
   const reduced = useReducedMotion();
   return (
     <View style={[styles.item, { width }]}>
-      <View style={{ transform: [{ translateY: -IRL_LIFT }] }}>
+      <View style={{ transform: [{ translateY: lift ? -IRL_LIFT : 0 }] }}>
         <PressableScale
           onPress={onPress}
           haptic={false}
@@ -325,6 +450,10 @@ function LiveTab({ width, focused, onPress }: { width: number; focused: boolean;
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', zIndex: 60 },
+  railWrap: { position: 'absolute', zIndex: 60, width: RAIL_WIDTH, justifyContent: 'center' },
+  rail: { width: RAIL_WIDTH, borderRadius: RAIL_WIDTH / 2, paddingVertical: 8, alignItems: 'center' },
+  railItem: { width: RAIL_WIDTH, alignItems: 'center', justifyContent: 'center' },
+  railIndicator: { position: 'absolute', top: 8, left: (RAIL_WIDTH - 56) / 2, width: 56, height: 48, borderRadius: radius.pill },
   bar: {
     height: layout.tabBarHeight,
     borderRadius: radius.pill,

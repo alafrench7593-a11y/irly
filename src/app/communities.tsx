@@ -1,8 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { Rail } from '@/components/cards/Blocks';
+import { useFrame } from '@/components/layout/frame';
+import { gridCell, gridStyles } from '@/components/layout/grid';
+import { ScreenColumn } from '@/components/layout/responsive';
 import { Page } from '@/components/layout/Page';
 import { Button } from '@/components/ui/Button';
 import { Chip, Field, Segmented } from '@/components/ui/Controls';
@@ -67,11 +70,28 @@ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
  */
 export default function CommunitiesRoute() {
   // In IRLY Girl the page wears the Girl look (cosmetic only, see theme/space) and lists IRLY Girl communities.
+  // From WIDE (760 pt) the page uses the whole width; between the phone layout and that, a readable column.
+  const wide = useFrame().width >= WIDE;
   return (
     <SpaceFlavor>
-      <Communities />
+      <ScreenColumn wide={wide}>
+        <Communities />
+      </ScreenColumn>
     </SpaceFlavor>
   );
+}
+
+/** From this width the page lays the tabs beside the map and the communities out as a grid of cards. */
+const WIDE = 760;
+
+/**
+ * Wide: the width of one community card (as many as fit, 260 pt at least),
+ * else undefined (one row per community).
+ */
+function useCardWidth(): number | undefined {
+  const width = useFrame().width;
+  if (width < WIDE) return undefined;
+  return gridCell(width - space.gutter * 2, 260, 4, 12);
 }
 
 function Communities() {
@@ -152,10 +172,36 @@ function Communities() {
         ? tx('You have not joined a community yet')
         : tx('No recommendation yet');
 
+  // Wide: the tabs, the search and the themes in a column beside the map, the communities in a grid under both.
+  const card = useCardWidth();
+  const wide = card !== undefined;
+  const create = <Button label="Create a community" icon="plus" variant="secondary" full onPress={() => router.push('/community/new')} />;
+  const tabs = signedIn ? (
+    <Segmented<Tab>
+      value={tab}
+      onChange={setTab}
+      options={[
+        { value: 'foryou', label: tx('For you') },
+        { value: 'all', label: all.length ? `${tx('All')} · ${all.length}` : tx('All') },
+        { value: 'mine', label: mineCount ? `${tx('Mine')} · ${mineCount}` : tx('Mine') },
+      ]}
+    />
+  ) : null;
+  const filters = signedIn && tab === 'all' ? <Filters cityId={cityId} query={query} onQuery={setQuery} group={group} onGroup={setGroup} wide={wide} /> : null;
+
   return (
     <Page overline={city.name} title="Communities" subtitle="IRLY's communities and the ones members start. Meet the same faces again: that's how trust grows.">
-      <View style={[styles.pad, { marginBottom: space[5] }]}>
-        <CommunityMap cityId={cityId} communities={mapList} status={mapStatus} onRetry={tab === 'mine' ? mine.reload : rec.refresh} emptyText={mapEmpty} />
+      <View style={[styles.pad, wide ? styles.top : null, { marginBottom: space[5] }]}>
+        {wide ? (
+          <View style={styles.side}>
+            {tabs}
+            {filters}
+            {create}
+          </View>
+        ) : null}
+        <View style={wide ? styles.mapWide : null}>
+          <CommunityMap cityId={cityId} communities={mapList} status={mapStatus} onRetry={tab === 'mine' ? mine.reload : rec.refresh} emptyText={mapEmpty} />
+        </View>
       </View>
       {!signedIn ? (
         <View style={styles.pad}>
@@ -163,31 +209,44 @@ function Communities() {
         </View>
       ) : (
         <>
-          <View style={[styles.pad, { marginBottom: space[5] }]}>
-            <Segmented<Tab>
-              value={tab}
-              onChange={setTab}
-              options={[
-                { value: 'foryou', label: tx('For you') },
-                { value: 'all', label: all.length ? `${tx('All')} · ${all.length}` : tx('All') },
-                { value: 'mine', label: mineCount ? `${tx('Mine')} · ${mineCount}` : tx('Mine') },
-              ]}
-            />
-          </View>
+          {wide ? null : <View style={[styles.pad, { marginBottom: space[5] }]}>{tabs}</View>}
           {/* IRLY Girl: « For you » is IRLY Girl's five official communities. */}
-          {tab === 'foryou' ? inGirl ? <GirlOfficialCommunities /> : <ForYou rec={rec} cityId={cityId} onSeeAll={() => setTab('all')} /> : null}
-          {tab === 'all' ? <All list={all} shown={shown} cityId={cityId} query={query} onQuery={setQuery} group={group} onGroup={setGroup} /> : null}
-          {tab === 'mine' ? <Mine list={mine.communities} loading={mine.loading} error={mine.error} onReload={mine.reload} onBrowse={() => setTab('all')} /> : null}
+          {tab === 'foryou' ? inGirl ? <GirlOfficialCommunities cell={card} /> : <ForYou rec={rec} cityId={cityId} onSeeAll={() => setTab('all')} card={card} /> : null}
+          {tab === 'all' ? (
+            <View>
+              {wide ? null : filters}
+              <All list={all} shown={shown} cityId={cityId} card={card} />
+            </View>
+          ) : null}
+          {tab === 'mine' ? <Mine list={mine.communities} loading={mine.loading} error={mine.error} onReload={mine.reload} onBrowse={() => setTab('all')} card={card} /> : null}
         </>
       )}
-      <View style={[styles.pad, { marginTop: space[6] }]}>
-        <Button label="Create a community" icon="plus" variant="secondary" full onPress={() => router.push('/community/new')} />
-      </View>
+      {wide ? null : <View style={[styles.pad, { marginTop: space[6] }]}>{create}</View>}
     </Page>
   );
 }
 
-function ForYou({ rec, cityId, onSeeAll }: { rec: ReturnType<typeof useRecommendedCommunities>; cityId: CityId; onSeeAll: () => void }) {
+/** Search and themes of « All »: a rail of themes on a phone, every theme at once beside the map on a wide screen. */
+function Filters({ cityId, query, onQuery, group, onGroup, wide }: { cityId: CityId; query: string; onQuery: (q: string) => void; group: Group; onGroup: (g: Group) => void; wide: boolean }) {
+  const chips = GROUPS.map((g) => <Chip key={g.id} size="sm" label={g.label} selected={group === g.id} onPress={() => onGroup(g.id)} />);
+  return (
+    <View style={wide ? { gap: space[3] } : null}>
+      <View style={wide ? null : [styles.pad, { marginBottom: space[3] }]}>
+        <Field icon="search" value={query} onChangeText={onQuery} placeholder="Search by name or theme" accessibilityLabel={tx('Search communities')} autoCorrect={false} returnKeyType="search" />
+      </View>
+      {wide ? (
+        <View style={[gridStyles.row, { gap: 8 }]}>{chips}</View>
+      ) : (
+        <View style={{ marginBottom: space[3] }}>
+          <Rail gap={8}>{chips}</Rail>
+        </View>
+      )}
+      <ScopeToggle cityId={cityId} inset={!wide} />
+    </View>
+  );
+}
+
+function ForYou({ rec, cityId, onSeeAll, card }: { rec: ReturnType<typeof useRecommendedCommunities>; cityId: CityId; onSeeAll: () => void; card?: number }) {
   const router = useRouter();
   const city = CITIES[cityId];
   if (rec.loading) return <Loading />;
@@ -214,63 +273,43 @@ function ForYou({ rec, cityId, onSeeAll }: { rec: ReturnType<typeof useRecommend
     );
   const newcomers = list.filter((c) => c.introFirst);
   const rest = list.filter((c) => !c.introFirst);
+  const row = (c: OfficialCommunity, i: number) => (
+    <Row index={i} key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId, !card)} blurb={c.tagline} card={card} action="join" />
+  );
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       {newcomers.length ? <Text variant="overline" tone="tertiary">{tx('New in {city}', { city: city.name })}</Text> : null}
-      {newcomers.map((c, i) => (
-        <Row index={i} key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId)} action="join" />
-      ))}
+      <Cards card={card}>{newcomers.map(row)}</Cards>
       {rest.length ? (
         <Text variant="overline" tone="tertiary" style={{ marginTop: newcomers.length ? space[3] : 0 }}>
           From your interests
         </Text>
       ) : null}
-      {rest.map((c, i) => (
-        <Row index={i} key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId)} action="join" />
-      ))}
+      <Cards card={card}>{rest.map(row)}</Cards>
     </View>
   );
 }
 
-const meta = (c: OfficialCommunity, cityId: string) =>
-  [c.tagline || null, c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null, c.girlOnly ? 'IRLY Girl' : null]
+/** The communities of a list: one under the other on a phone, a grid of cards (`card` wide) on a wide screen. */
+function Cards({ card, children }: { card?: number; children: ReactNode }) {
+  return card ? <View style={[gridStyles.row, { gap: 12 }]}>{children}</View> : <>{children}</>;
+}
+
+// The tagline leads the line of a row; a card shows it on its own (`withTagline` false).
+const meta = (c: OfficialCommunity, cityId: string, withTagline = true) =>
+  [withTagline ? c.tagline || null : null, c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null, c.girlOnly ? 'IRLY Girl' : null]
     .filter(Boolean)
     .join(' · ');
 
-function All({
-  list,
-  shown,
-  cityId,
-  query,
-  onQuery,
-  group,
-  onGroup,
-}: {
-  list: CommunitySummary[];
-  shown: CommunitySummary[];
-  cityId: CityId;
-  query: string;
-  onQuery: (q: string) => void;
-  group: Group;
-  onGroup: (g: Group) => void;
-}) {
+function All({ list, shown, cityId, card }: { list: CommunitySummary[]; shown: CommunitySummary[]; cityId: CityId; card?: number }) {
   const t = useTheme();
   return (
     <View>
-      <View style={[styles.pad, { marginBottom: space[3] }]}>
-        <Field icon="search" value={query} onChangeText={onQuery} placeholder="Search by name or theme" accessibilityLabel={tx('Search communities')} autoCorrect={false} returnKeyType="search" />
-      </View>
-      <View style={{ marginBottom: space[3] }}>
-        <Rail gap={8}>
-          {GROUPS.map((g) => (
-            <Chip key={g.id} size="sm" label={g.label} selected={group === g.id} onPress={() => onGroup(g.id)} />
-          ))}
-        </Rail>
-      </View>
-      <ScopeToggle cityId={cityId} />
-      <View style={[styles.pad, { gap: 10 }]}>
+      <View style={[styles.pad, card ? [gridStyles.row, { gap: 12 }] : { gap: 10 }]}>
         {shown.map((c, i) => (
           <Row
+            card={card}
+            blurb={c.tagline}
             index={i}
             key={c.id}
             id={c.id}
@@ -301,7 +340,7 @@ function All({
   );
 }
 
-function Mine({ list, loading, error, onReload, onBrowse }: { list: MemberCommunity[]; loading: boolean; error: string | null; onReload: () => void; onBrowse: () => void }) {
+function Mine({ list, loading, error, onReload, onBrowse, card }: { list: MemberCommunity[]; loading: boolean; error: string | null; onReload: () => void; onBrowse: () => void; card?: number }) {
   if (loading) return <Loading />;
   if (error && !list.length)
     return (
@@ -318,20 +357,26 @@ function Mine({ list, loading, error, onReload, onBrowse }: { list: MemberCommun
   const created = list.filter((c) => c.role === 'created');
   const joined = list.filter((c) => c.role !== 'created');
   const cityName = (id: string) => CITIES[id as CityId]?.name ?? null;
+  // The tagline leads the line of a row; a card shows it on its own.
+  const facts = (c: MemberCommunity) => [card ? null : c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ');
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       {created.length ? <Text variant="overline" tone="tertiary">Created</Text> : null}
-      {created.map((c, i) => (
-        <Row index={i} key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={[c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} action="none" />
-      ))}
+      <Cards card={card}>
+        {created.map((c, i) => (
+          <Row index={i} key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={facts(c)} blurb={c.tagline} card={card} action="none" />
+        ))}
+      </Cards>
       {joined.length ? (
         <Text variant="overline" tone="tertiary" style={{ marginTop: created.length ? space[3] : 0 }}>
           Joined
         </Text>
       ) : null}
-      {joined.map((c, i) => (
-        <Row index={i} key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={[c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} action="leave" />
-      ))}
+      <Cards card={card}>
+        {joined.map((c, i) => (
+          <Row index={i} key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={facts(c)} blurb={c.tagline} card={card} action="leave" />
+        ))}
+      </Cards>
     </View>
   );
 }
@@ -351,8 +396,14 @@ function Row({
   meta: line,
   action,
   index = 0,
+  blurb,
+  card,
 }: {
   index?: number;
+  /** Wide: shown as a card this wide (cover, name, what it is about, facts, action). */
+  card?: number;
+  /** What it is about, on a card (a row has it in its line already when it shows it). */
+  blurb?: string | null;
   id: string;
   name: string;
   topic: string | null;
@@ -403,6 +454,44 @@ function Row({
         setConfirm(false);
       });
   };
+  const actions = (
+    <>
+      {action === 'join' && !isMember ? <Button label="Join" size="sm" loading={busy} onPress={join} /> : null}
+      {action === 'join' && isMember ? (
+        <Text variant="caption" tone="secondary">
+          Joined
+        </Text>
+      ) : null}
+      {action === 'leave' ? <Button label={confirm ? 'Leave?' : 'Leave'} size="sm" variant={confirm ? 'danger' : 'ghost'} loading={busy} onPress={leave} /> : null}
+      {action === 'none' ? <Icon name="chevronRight" size={16} color={t.c.textTertiary} /> : null}
+    </>
+  );
+  if (card) {
+    return (
+      <Animated.View entering={enter.rise(Math.min(index, 8))} layout={LinearTransition.springify().dampingRatio(0.9)} style={{ width: card }}>
+        <PressableScale onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name} testID={`community-${id}`}>
+          <GlassLayer radius={radius.xl} />
+          <CommunityThumb id={id} name={name} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size="100%" height={128} member={isMember} />
+          <View style={styles.cardBody}>
+            <Text variant="titleS" numberOfLines={1} raw>
+              {name}
+            </Text>
+            {blurb ? (
+              <Text variant="bodyS" tone="secondary" numberOfLines={2}>
+                {blurb}
+              </Text>
+            ) : null}
+            {line ? (
+              <Text variant="caption" tone="tertiary" numberOfLines={1}>
+                {line}
+              </Text>
+            ) : null}
+            <View style={styles.cardFoot}>{actions}</View>
+          </View>
+        </PressableScale>
+      </Animated.View>
+    );
+  }
   return (
     <Animated.View entering={enter.rise(Math.min(index, 8))} layout={LinearTransition.springify().dampingRatio(0.9)}>
       {/* testID: the row of this community, whatever its shown title (end-to-end tests). */}
@@ -419,14 +508,7 @@ function Row({
             </Text>
           ) : null}
         </View>
-        {action === 'join' && !isMember ? <Button label="Join" size="sm" loading={busy} onPress={join} /> : null}
-        {action === 'join' && isMember ? (
-          <Text variant="caption" tone="secondary">
-            Joined
-          </Text>
-        ) : null}
-        {action === 'leave' ? <Button label={confirm ? 'Leave?' : 'Leave'} size="sm" variant={confirm ? 'danger' : 'ghost'} loading={busy} onPress={leave} /> : null}
-        {action === 'none' ? <Icon name="chevronRight" size={16} color={t.c.textTertiary} /> : null}
+        {actions}
       </PressableScale>
     </Animated.View>
   );
@@ -479,5 +561,11 @@ function Empty({
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg },
+  card: { flex: 1, borderRadius: radius.xl },
+  cardBody: { flex: 1, padding: 14, gap: 4 },
+  cardFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 'auto', paddingTop: 8, minHeight: 40 },
+  top: { flexDirection: 'row', alignItems: 'flex-start', gap: space[6] },
+  side: { width: 320, gap: space[4] },
+  mapWide: { flex: 1, minWidth: 0 },
   empty: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, overflow: 'hidden' },
 });

@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
 import { CommunityCard } from '@/components/cards/ThingCards';
+import { ProfileColumns } from '@/components/layout/ProfileColumns';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge, IconButton, SectionHeader } from '@/components/ui/Controls';
@@ -29,7 +30,7 @@ import { CountUp } from '@/motion/CountUp';
 import { enter } from '@/motion/enter';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
-import { radius, space } from '@/theme/tokens';
+import { layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
@@ -104,154 +105,166 @@ function LocalProfile() {
             pointerEvents="none"
           />
         </Cover>
-        <View style={[styles.identity, { marginTop: -52 }]}>
-          <Animated.View entering={enter.pop(0)}>
-            <View style={[styles.avatarRing, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
-              <Avatar name={name} hue={262} size={96} photo={profile.photoUri} />
+        {/* Wide page: you on the left (stays in view), your interests, plans and communities on the right. */}
+        <ProfileColumns
+          scrollY={scrollY}
+          top={insets.top + layout.headerHeight + 16}
+          bottom={bottom}
+          lift={52}
+          side={
+            <View style={[styles.identity, { marginTop: -52 }]}>
+              <Animated.View entering={enter.pop(0)}>
+                <View style={[styles.avatarRing, { borderColor: t.c.bg, boxShadow: t.shadow.float }]}>
+                  <Avatar name={name} hue={262} size={96} photo={profile.photoUri} />
+                </View>
+              </Animated.View>
+              <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 4 }}>
+                <Text variant="displayL" raw>{name}</Text>
+                <Text variant="body" tone="secondary">
+                  {[profile.age, profile.country, tx(city.name)].filter(Boolean).join(' · ')} {city.destinationId === 'bali' ? '🌴' : dest.flag}
+                </Text>
+                {profile.arrivedAt ? (
+                  <View style={[styles.newHere, { backgroundColor: t.c.brand }]}>
+                    <Text variant="overline" color={t.c.onBrand}>
+                      {tx(days === 1 ? 'New in {city} · {n} day' : 'New in {city} · {n} days', { city: city.name, n: days })}
+                    </Text>
+                  </View>
+                ) : null}
+                {profile.bio ? (
+                  <Text variant="body" align="center" style={{ marginTop: 8, paddingHorizontal: 12 }} raw>
+                    {profile.bio}
+                  </Text>
+                ) : null}
+                {profile.languages?.length ? (
+                  <Text variant="caption" tone="secondary">
+                    {tx('Speaks {langs}', { langs: profile.languages.map((l) => tx(l)).join(', ') })}
+                  </Text>
+                ) : null}
+                {profile.faith && profile.faithVisible && profile.faith !== 'Prefer not to say' ? (
+                  <Text variant="caption" tone="tertiary">
+                    {profile.faith}
+                  </Text>
+                ) : null}
+              </Animated.View>
+              <Animated.View entering={enter.rise(2)} style={styles.badges}>
+                {profile.types.map((x) => (
+                  <Badge key={x} kind="accent" label={USER_TYPES[x].label} />
+                ))}
+
+              </Animated.View>
+              <Animated.View entering={enter.rise(3)} style={[styles.stats, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+                <GlassLayer radius={radius.lg} />
+                {/* Same counters as a signed-in profile; without an account nobody can follow you yet. */}
+                <Stat value={0} label="Followers" onPress={() => router.push('/account')} />
+                <View style={[styles.vr, { backgroundColor: t.c.line }]} />
+                <Stat value={0} label="Following" onPress={() => router.push('/account')} />
+                <View style={[styles.vr, { backgroundColor: t.c.line }]} />
+                <Stat value={0} label="Friends" onPress={() => router.push('/account')} />
+              </Animated.View>
             </View>
-          </Animated.View>
-          <Animated.View entering={enter.rise(1)} style={{ alignItems: 'center', gap: 4 }}>
-            <Text variant="displayL" raw>{name}</Text>
-            <Text variant="body" tone="secondary">
-              {[profile.age, profile.country, tx(city.name)].filter(Boolean).join(' · ')} {city.destinationId === 'bali' ? '🌴' : dest.flag}
-            </Text>
-            {profile.arrivedAt ? (
-              <View style={[styles.newHere, { backgroundColor: t.c.brand }]}>
-                <Text variant="overline" color={t.c.onBrand}>
-                  {tx(days === 1 ? 'New in {city} · {n} day' : 'New in {city} · {n} days', { city: city.name, n: days })}
+          }
+          main={
+            <>
+              <Animated.View entering={enter.rise(4)} style={styles.section}>
+                <SectionHeader title="Interests" />
+                <View style={styles.wrap}>
+                  {profile.interests.length === 0 && profile.activities.length === 0 ? (
+                    <Text variant="bodyS" tone="tertiary">
+                      Add interests to get better introductions.
+                    </Text>
+                  ) : null}
+                  {profile.interests.map((i) => (
+                    <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+                      <GlassLayer radius={radius.pill} level="thin" />
+                      <Icon name={INTERESTS[i].icon} size={14} color={t.c.textSecondary} />
+                      <Text variant="label">{INTERESTS[i].label}</Text>
+                    </View>
+                  ))}
+                  {profile.activities.map((a) => (
+                    <View key={a} style={[styles.tag, { backgroundColor: t.light.accentSoft, borderColor: 'transparent' }]}>
+                      <Icon name={ACTIVITIES[a].icon} size={14} color={t.accent} />
+                      <Text variant="label" tone="accent">
+                        {ACTIVITIES[a].label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </Animated.View>
+
+              <Animated.View entering={enter.rise(5)} style={styles.section}>
+                <SectionHeader title="Upcoming" overline="In real life" />
+                <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+                  {planCount === 0 ? (
+                    <EmptyRow icon="calendar" text="Nothing planned yet. Join a plan and it lands here." onPress={() => router.push('/social')} />
+                  ) : live ? (
+                    serverPlans.map((p) => (
+                      <Row key={p.id} icon={p.hosting ? 'star' : 'calendar'} title={p.title} meta={p.hosting ? `${tx('You organise it')} · ${p.when}` : p.when} onPress={() => router.push(`/a/${p.id}`)} />
+                    ))
+                  ) : (
+                    plans.map((p) => (
+                      <Row key={p.id} icon={p.icon} title={p.title} meta={p.when} onPress={() => openHero({ kind: p.kind, id: p.id })} />
+                    ))
+                  )}
+                  {bookings.map((b) => {
+                    const s = findService(b.serviceId);
+                    return s ? (
+                      <Row
+                        key={b.id}
+                        icon={SERVICE_CATEGORIES[s.category].icon}
+                        title={tx('Call with {name}', { name: s.name })}
+                        meta={`${b.dateLabel} · ${b.slot}`}
+                        onPress={() => openHero({ kind: 'service', id: s.id })}
+                      />
+                    ) : null;
+                  })}
+                </View>
+              </Animated.View>
+
+              {live && myServerCommunities.length ? (
+                <Animated.View entering={enter.rise(6)} style={styles.section}>
+                  <SectionHeader title="Your communities" />
+                  <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+                    {myServerCommunities.map((c) => (
+                      <Row key={c.id} icon="users" title={c.name} meta={[c.official ? 'IRLY' : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} onPress={() => router.push(`/c/${c.id}`)} />
+                    ))}
+                  </View>
+                </Animated.View>
+              ) : !live && communities.length ? (
+                <Animated.View entering={enter.rise(6)} style={styles.section}>
+                  <SectionHeader title="Your communities" />
+                  <Rail itemWidth={250}>
+                    {communities.map((c) => (
+                      <CommunityCard key={c.id} community={c} />
+                    ))}
+                  </Rail>
+                </Animated.View>
+              ) : null}
+
+              {/* IRLY or IRLY Girl: the same switch as on the Home (IRLY Girl is offered to women, as there). */}
+              {inGirl || profile.gender === 'woman' ? (
+                <Animated.View entering={enter.rise(7)} style={styles.section}>
+                  <SpaceSwitchCard />
+                </Animated.View>
+              ) : null}
+
+              <Animated.View entering={enter.rise(7)} style={[styles.signin, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
+                <GlassLayer radius={radius.lg} />
+                <Text variant="titleS">Your profile is on this phone only</Text>
+                <Text variant="bodyS" tone="secondary">
+                  Sign in to share it with other members: followers, friends, posts, lives, activities and communities.
+                </Text>
+                <Button label="Sign in" icon="user" onPress={() => router.push('/account')} />
+              </Animated.View>
+
+              <View style={styles.about}>
+                <IrlyMark size={40} state="idle" ringColor={t.c.textTertiary} lensColor={t.c.brand} glow={false} />
+                <Text variant="caption" tone="tertiary" align="center">
+                  IRLY · Find someone to do something with.
                 </Text>
               </View>
-            ) : null}
-            {profile.bio ? (
-              <Text variant="body" align="center" style={{ marginTop: 8, paddingHorizontal: 12 }} raw>
-                {profile.bio}
-              </Text>
-            ) : null}
-            {profile.languages?.length ? (
-              <Text variant="caption" tone="secondary">
-                {tx('Speaks {langs}', { langs: profile.languages.map((l) => tx(l)).join(', ') })}
-              </Text>
-            ) : null}
-            {profile.faith && profile.faithVisible && profile.faith !== 'Prefer not to say' ? (
-              <Text variant="caption" tone="tertiary">
-                {profile.faith}
-              </Text>
-            ) : null}
-          </Animated.View>
-          <Animated.View entering={enter.rise(2)} style={styles.badges}>
-            {profile.types.map((x) => (
-              <Badge key={x} kind="accent" label={USER_TYPES[x].label} />
-            ))}
-
-          </Animated.View>
-          <Animated.View entering={enter.rise(3)} style={[styles.stats, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
-            <GlassLayer radius={radius.lg} />
-            {/* Same counters as a signed-in profile; without an account nobody can follow you yet. */}
-            <Stat value={0} label="Followers" onPress={() => router.push('/account')} />
-            <View style={[styles.vr, { backgroundColor: t.c.line }]} />
-            <Stat value={0} label="Following" onPress={() => router.push('/account')} />
-            <View style={[styles.vr, { backgroundColor: t.c.line }]} />
-            <Stat value={0} label="Friends" onPress={() => router.push('/account')} />
-          </Animated.View>
-        </View>
-
-        <Animated.View entering={enter.rise(4)} style={styles.section}>
-          <SectionHeader title="Interests" />
-          <View style={styles.wrap}>
-            {profile.interests.length === 0 && profile.activities.length === 0 ? (
-              <Text variant="bodyS" tone="tertiary">
-                Add interests to get better introductions.
-              </Text>
-            ) : null}
-            {profile.interests.map((i) => (
-              <View key={i} style={[styles.tag, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
-                <GlassLayer radius={radius.pill} level="thin" />
-                <Icon name={INTERESTS[i].icon} size={14} color={t.c.textSecondary} />
-                <Text variant="label">{INTERESTS[i].label}</Text>
-              </View>
-            ))}
-            {profile.activities.map((a) => (
-              <View key={a} style={[styles.tag, { backgroundColor: t.light.accentSoft, borderColor: 'transparent' }]}>
-                <Icon name={ACTIVITIES[a].icon} size={14} color={t.accent} />
-                <Text variant="label" tone="accent">
-                  {ACTIVITIES[a].label}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
-
-        <Animated.View entering={enter.rise(5)} style={styles.section}>
-          <SectionHeader title="Upcoming" overline="In real life" />
-          <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
-            {planCount === 0 ? (
-              <EmptyRow icon="calendar" text="Nothing planned yet. Join a plan and it lands here." onPress={() => router.push('/social')} />
-            ) : live ? (
-              serverPlans.map((p) => (
-                <Row key={p.id} icon={p.hosting ? 'star' : 'calendar'} title={p.title} meta={p.hosting ? `${tx('You organise it')} · ${p.when}` : p.when} onPress={() => router.push(`/a/${p.id}`)} />
-              ))
-            ) : (
-              plans.map((p) => (
-                <Row key={p.id} icon={p.icon} title={p.title} meta={p.when} onPress={() => openHero({ kind: p.kind, id: p.id })} />
-              ))
-            )}
-            {bookings.map((b) => {
-              const s = findService(b.serviceId);
-              return s ? (
-                <Row
-                  key={b.id}
-                  icon={SERVICE_CATEGORIES[s.category].icon}
-                  title={tx('Call with {name}', { name: s.name })}
-                  meta={`${b.dateLabel} · ${b.slot}`}
-                  onPress={() => openHero({ kind: 'service', id: s.id })}
-                />
-              ) : null;
-            })}
-          </View>
-        </Animated.View>
-
-        {live && myServerCommunities.length ? (
-          <Animated.View entering={enter.rise(6)} style={styles.section}>
-            <SectionHeader title="Your communities" />
-            <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
-              {myServerCommunities.map((c) => (
-                <Row key={c.id} icon="users" title={c.name} meta={[c.official ? 'IRLY' : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ')} onPress={() => router.push(`/c/${c.id}`)} />
-              ))}
-            </View>
-          </Animated.View>
-        ) : !live && communities.length ? (
-          <Animated.View entering={enter.rise(6)} style={styles.section}>
-            <SectionHeader title="Your communities" />
-            <Rail itemWidth={250}>
-              {communities.map((c) => (
-                <CommunityCard key={c.id} community={c} />
-              ))}
-            </Rail>
-          </Animated.View>
-        ) : null}
-
-        {/* IRLY or IRLY Girl: the same switch as on the Home (IRLY Girl is offered to women, as there). */}
-        {inGirl || profile.gender === 'woman' ? (
-          <Animated.View entering={enter.rise(7)} style={styles.section}>
-            <SpaceSwitchCard />
-          </Animated.View>
-        ) : null}
-
-        <Animated.View entering={enter.rise(7)} style={[styles.signin, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
-          <GlassLayer radius={radius.lg} />
-          <Text variant="titleS">Your profile is on this phone only</Text>
-          <Text variant="bodyS" tone="secondary">
-            Sign in to share it with other members: followers, friends, posts, lives, activities and communities.
-          </Text>
-          <Button label="Sign in" icon="user" onPress={() => router.push('/account')} />
-        </Animated.View>
-
-        <View style={styles.about}>
-          <IrlyMark size={40} state="idle" ringColor={t.c.textTertiary} lensColor={t.c.brand} glow={false} />
-          <Text variant="caption" tone="tertiary" align="center">
-            IRLY · Find someone to do something with.
-          </Text>
-        </View>
+            </>
+          }
+        />
       </Animated.ScrollView>
       <View style={[styles.gear, { top: insets.top + 10 }]}>
         <IconButton icon="settings" label={tx('Settings')} variant="glass" onPress={() => router.push('/preferences')} />

@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { Alert, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { Page } from '@/components/layout/Page';
+import { useFrame } from '@/components/layout/AppFrame';
+import { Column, columnsFor, contentWidth, Masonry, WIDE_MIN } from '@/components/layout/wide';
 import { InboxButtons } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { LiveRing } from '@/features/live/LiveStrip';
@@ -54,6 +56,9 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
  * a venue, a neighbourhood or only the city (never an address), gone after 24 hours. Every
  * post is an invitation: message the person or go there.
  */
+/** Narrowest a post card gets in the wide feed's columns (its actions still fit on one row). */
+const POST_MIN = 300;
+
 // Who sees a moment, as stored (a private one is not "Everyone").
 const VISIBILITY_LABEL: Record<string, string> = { everyone: 'Everyone', friends: 'Friends', close_friends: 'Close friends', community: 'Communities', private: 'Only me' };
 
@@ -75,6 +80,14 @@ export default function LiveScreen() {
   const connections = useStore((s) => s.connections);
   // Friends first: people you are connected with, then everyone around you.
   const sorted = [...lives].sort((a, b) => Number(connections[b.authorId] === 'connected') - Number(connections[a.authorId] === 'connected'));
+  // Wide (components/layout/wide): the feed in columns, going live and who is out in a panel beside it.
+  const frame = useFrame();
+  const wide = frame.width >= WIDE_MIN;
+  const contentW = contentWidth(frame.width);
+  const sideW = wide ? Math.min(380, Math.max(320, Math.round(contentW * 0.32))) : 0;
+  const feedW = contentW - sideW;
+  const columns = wide ? columnsFor(feedW, POST_MIN, 14, 2) : 1;
+  const goLive = <GoLiveCard onText={() => setComposer('now')} onPhoto={() => setComposer('post')} />;
   return (
     <Page
       back={false}
@@ -84,20 +97,35 @@ export default function LiveScreen() {
       right={<InboxButtons />}
       bottomInset={bottom + 24}
       overlay={<Composer visible={composer} mode={mode} onClose={() => setComposer(false)} />}
+      contentStyle={{ width: contentW, alignSelf: 'center' }}
     >
-      <View style={{ marginBottom: space[6] }}>
-        <GoLiveCard onText={() => setComposer('now')} onPhoto={() => setComposer('post')} />
-      </View>
-      <View style={{ marginBottom: space[6] }}>
-        <FriendsLiveNow />
-      </View>
-      <ServerFeed cityId={cityId} />
-      <View style={styles.list}>
-        {sorted.map((l, i) => (
-          <Animated.View key={l.id} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
-            <LiveCard live={l} />
-          </Animated.View>
-        ))}
+      <View style={wide ? styles.split : null}>
+        <View style={wide ? styles.feed : null}>
+          {wide ? null : (
+            <>
+              <View style={{ marginBottom: space[6] }}>{goLive}</View>
+              <View style={{ marginBottom: space[6] }}>
+                <FriendsLiveNow />
+              </View>
+            </>
+          )}
+          <ServerFeed cityId={cityId} columns={columns} />
+          <View style={styles.list}>
+            <Masonry columns={columns}>
+              {sorted.map((l, i) => (
+                <Animated.View key={l.id} entering={enter.rise(i)} layout={LinearTransition.springify(spring.medium.duration)}>
+                  <LiveCard live={l} />
+                </Animated.View>
+              ))}
+            </Masonry>
+          </View>
+        </View>
+        {wide ? (
+          <Column width={sideW} style={styles.panel}>
+            {goLive}
+            <FriendsLiveNow stacked />
+          </Column>
+        ) : null}
       </View>
     </Page>
   );
@@ -225,7 +253,7 @@ function ReactButton({ id }: { id: string }) {
  * (a neighbourhood, never an address). Falls back to people around you
  * until you have connections.
  */
-function FriendsLiveNow() {
+function FriendsLiveNow({ stacked = false }: { stacked?: boolean }) {
   const t = useTheme();
   const router = useRouter();
   const cityId = useCityId();
@@ -235,48 +263,54 @@ function FriendsLiveNow() {
   const others = lives.filter((l) => l.authorId !== 'me');
   const friends = others.filter((l) => connections[l.authorId] === 'connected');
   const list = (friends.length ? friends : others).slice(0, 8);
+  const items = list.map((l, i) => {
+    const p = findPerson(l.authorId);
+    if (!p) return null;
+    return (
+      <Animated.View key={l.id} entering={enter.pop(i, 60)}>
+        <PressableScale
+          haptic="select"
+          scaleTo={0.96}
+          onPress={() => router.push(`/person/${p.id}`)}
+          style={[styles.friend, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}
+          accessibilityLabel={tx('{name}, live: {text}, {area}', { name: p.name, text: l.text, area: areaName(city, l.areaId) })}
+        >
+          <GlassLayer radius={radius.xl} />
+          <LiveRing size={48}>
+            <Avatar name={p.name} hue={p.hue} size={38} photo={p.photo} />
+          </LiveRing>
+          <View style={stacked ? styles.friendTextWide : styles.friendText}>
+            <Text variant="label" numberOfLines={1}>
+              {p.name.split(' ')[0]}
+            </Text>
+            <View style={styles.meta}>
+              <LiveDot size={6} color={t.c.positive} />
+              <Text variant="caption" numberOfLines={1}>
+                {tx(l.text).split(/[,.?!]/)[0]}
+              </Text>
+            </View>
+            <Text variant="caption" tone="tertiary" numberOfLines={1}>
+              {areaName(city, l.areaId)}
+            </Text>
+          </View>
+        </PressableScale>
+      </Animated.View>
+    );
+  });
   if (!list.length) return null;
   return (
     <View style={{ gap: 10 }}>
       <Text variant="overline" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
         {friends.length ? 'Friends live now' : 'Live around you'}
       </Text>
-      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
-        {list.map((l, i) => {
-          const p = findPerson(l.authorId);
-          if (!p) return null;
-          return (
-            <Animated.View key={l.id} entering={enter.pop(i, 60)}>
-              <PressableScale
-                haptic="select"
-                scaleTo={0.96}
-                onPress={() => router.push(`/person/${p.id}`)}
-                style={[styles.friend, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}
-                accessibilityLabel={tx('{name}, live: {text}, {area}', { name: p.name, text: l.text, area: areaName(city, l.areaId) })}
-              >
-                <GlassLayer radius={radius.xl} />
-                <LiveRing size={48}>
-                  <Avatar name={p.name} hue={p.hue} size={38} photo={p.photo} />
-                </LiveRing>
-                <View style={{ gap: 1, maxWidth: 120 }}>
-                  <Text variant="label" numberOfLines={1}>
-                    {p.name.split(' ')[0]}
-                  </Text>
-                  <View style={styles.meta}>
-                    <LiveDot size={6} color={t.c.positive} />
-                    <Text variant="caption" numberOfLines={1}>
-                      {tx(l.text).split(/[,.?!]/)[0]}
-                    </Text>
-                  </View>
-                  <Text variant="caption" tone="tertiary" numberOfLines={1}>
-                    {areaName(city, l.areaId)}
-                  </Text>
-                </View>
-              </PressableScale>
-            </Animated.View>
-          );
-        })}
-      </ScrollView>
+      {/* Wide, in the side panel: one under the other instead of a rail. */}
+      {stacked ? (
+        <View style={styles.stack}>{items}</View>
+      ) : (
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
+          {items}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -285,7 +319,7 @@ function FriendsLiveNow() {
  * Signed in: what members are posting right now, live. Friends' posts
  * first; add someone as a friend from their post.
  */
-function ServerFeed({ cityId }: { cityId: CityId }) {
+function ServerFeed({ cityId, columns = 1 }: { cityId: CityId; columns?: number }) {
   const t = useTheme();
   const { narrow } = useCityFilter(cityId);
   const { posts, refresh: reloadFeed } = useServerIrl(cityId);
@@ -317,99 +351,101 @@ function ServerFeed({ cityId }: { cityId: CityId }) {
           {tx('Nobody is live in {city} right now.', { city: CITIES[cityId].name })}
         </Text>
       ) : null}
-      {sorted.map((p, i) => {
-        const f = friends.find((x) => x.userId === p.authorId);
-        const status = p.mine ? 'mine' : p.friend ? 'friend' : f?.status === 'pending' ? (f.incoming ? 'incoming' : 'sent') : 'none';
-        return (
-          <Animated.View key={p.id} entering={enter.rise(i)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}>
-            <GlassLayer radius={radius.xl} />
-            <View style={styles.head}>
-              {/* The author's face and name open their profile. */}
-              <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push(`/person/${p.authorId}`)} accessibilityLabel={p.mine ? 'My profile' : tx('Open {name}’s profile', { name: p.firstName })}>
-                <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} userId={p.authorId} />
-              </PressableScale>
-              <View style={{ flex: 1 }}>
-                <Text variant="titleS" onPress={() => router.push(`/person/${p.authorId}`)} raw>{p.mine ? tx('You') : p.firstName}</Text>
-                <View style={styles.meta}>
-                  <LiveDot size={6} color={t.c.live} />
-                  <Text variant="caption" tone="secondary" numberOfLines={1}>
-                    {placeLabel(cityId, p.cityId, p.areaId, p.placeName)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {tx(VISIBILITY_LABEL[p.visibility as string] ?? 'Everyone')}
-                  </Text>
+      <Masonry columns={columns}>
+        {sorted.map((p, i) => {
+          const f = friends.find((x) => x.userId === p.authorId);
+          const status = p.mine ? 'mine' : p.friend ? 'friend' : f?.status === 'pending' ? (f.incoming ? 'incoming' : 'sent') : 'none';
+          return (
+            <Animated.View key={p.id} entering={enter.rise(i)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}>
+              <GlassLayer radius={radius.xl} />
+              <View style={styles.head}>
+                {/* The author's face and name open their profile. */}
+                <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push(`/person/${p.authorId}`)} accessibilityLabel={p.mine ? 'My profile' : tx('Open {name}’s profile', { name: p.firstName })}>
+                  <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} userId={p.authorId} />
+                </PressableScale>
+                <View style={{ flex: 1 }}>
+                  <Text variant="titleS" onPress={() => router.push(`/person/${p.authorId}`)} raw>{p.mine ? tx('You') : p.firstName}</Text>
+                  <View style={styles.meta}>
+                    <LiveDot size={6} color={t.c.live} />
+                    <Text variant="caption" tone="secondary" numberOfLines={1}>
+                      {placeLabel(cityId, p.cityId, p.areaId, p.placeName)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {tx(VISIBILITY_LABEL[p.visibility as string] ?? 'Everyone')}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-            {/* The frame follows the media's own shape; one broken media shows its own retry, never breaks the feed. */}
-            {p.mediaKind === 'video' && p.mediaUrl ? (
-              <LiveVideo fit url={p.mediaUrl} poster={p.posterUrl} seconds={p.seconds} ratio={p.mediaRatio} onRetry={reloadFeed} style={styles.media} />
-            ) : p.mediaKind ? (
-              <LivePhoto
-                url={p.mediaUrl}
-                kind={p.mediaKind}
-                ratio={p.mediaRatio}
-                onRetry={reloadFeed}
-                style={styles.media}
-                liked={eng.get(p.id).liked}
-                onLike={() => {
-                  if (!eng.signedIn) {
-                    toast('Sign in to interact', 'user', 'brand');
-                    return;
-                  }
-                  // A double tap only ever likes, even before the like state has loaded.
-                  eng.like(p.id, true).catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
-                }}
-              />
-            ) : null}
-            {p.body ? (
-              <Text variant={p.mediaKind ? 'body' : 'titleM'} raw>
-                {p.body}
-              </Text>
-            ) : null}
-            {p.activityId ? (
-              <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={p.activityTitle ? tx('Join {title}', { title: p.activityTitle }) : tx('Join the activity')}>
-                <Icon name="calendar" size={18} color={t.c.text} />
-                <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
-                  {p.activityTitle ?? 'Activity'}
-                </Text>
-                <Text variant="label">Join</Text>
-              </PressableScale>
-            ) : null}
-            <ActionBar target={{ type: 'irl_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} />
-            {status === 'mine' ? (
-              <View style={styles.actions}>
-                <Button label="Edit" variant="secondary" size="sm" icon="edit" onPress={() => setEditing({ id: p.id, body: p.body })} />
-                <Button
-                  label="Remove"
-                  variant="secondary"
-                  size="sm"
-                  icon="x"
-                  onPress={() => {
-                    drop(p.id, true);
-                    deleteServerIrl(p.id).catch((e) => {
-                      drop(p.id, false);
-                      toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live');
-                    });
+              {/* The frame follows the media's own shape; one broken media shows its own retry, never breaks the feed. */}
+              {p.mediaKind === 'video' && p.mediaUrl ? (
+                <LiveVideo fit url={p.mediaUrl} poster={p.posterUrl} seconds={p.seconds} ratio={p.mediaRatio} onRetry={reloadFeed} style={styles.media} />
+              ) : p.mediaKind ? (
+                <LivePhoto
+                  url={p.mediaUrl}
+                  kind={p.mediaKind}
+                  ratio={p.mediaRatio}
+                  onRetry={reloadFeed}
+                  style={styles.media}
+                  liked={eng.get(p.id).liked}
+                  onLike={() => {
+                    if (!eng.signedIn) {
+                      toast('Sign in to interact', 'user', 'brand');
+                      return;
+                    }
+                    // A double tap only ever likes, even before the like state has loaded.
+                    eng.like(p.id, true).catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
                   }}
                 />
-              </View>
-            ) : status === 'friend' ? (
-              <View style={styles.actions}>
-                <Text variant="caption" tone="tertiary" style={{ flex: 1 }}>
-                  Friend
+              ) : null}
+              {p.body ? (
+                <Text variant={p.mediaKind ? 'body' : 'titleM'} raw>
+                  {p.body}
                 </Text>
-                <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
-              </View>
-            ) : (
-              // Anyone's post can be hidden or reported, not only friends'.
-              <View style={styles.actions}>
-                <View style={{ flex: 1 }}>
-                  <FriendButton status={status} name={p.firstName} authorId={p.authorId} onDone={refresh} />
+              ) : null}
+              {p.activityId ? (
+                <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={p.activityTitle ? tx('Join {title}', { title: p.activityTitle }) : tx('Join the activity')}>
+                  <Icon name="calendar" size={18} color={t.c.text} />
+                  <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
+                    {p.activityTitle ?? 'Activity'}
+                  </Text>
+                  <Text variant="label">Join</Text>
+                </PressableScale>
+              ) : null}
+              <ActionBar target={{ type: 'irl_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} />
+              {status === 'mine' ? (
+                <View style={styles.actions}>
+                  <Button label="Edit" variant="secondary" size="sm" icon="edit" onPress={() => setEditing({ id: p.id, body: p.body })} />
+                  <Button
+                    label="Remove"
+                    variant="secondary"
+                    size="sm"
+                    icon="x"
+                    onPress={() => {
+                      drop(p.id, true);
+                      deleteServerIrl(p.id).catch((e) => {
+                        drop(p.id, false);
+                        toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live');
+                      });
+                    }}
+                  />
                 </View>
-                <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
-              </View>
-            )}
-          </Animated.View>
-        );
-      })}
+              ) : status === 'friend' ? (
+                <View style={styles.actions}>
+                  <Text variant="caption" tone="tertiary" style={{ flex: 1 }}>
+                    Friend
+                  </Text>
+                  <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
+                </View>
+              ) : (
+                // Anyone's post can be hidden or reported, not only friends'.
+                <View style={styles.actions}>
+                  <View style={{ flex: 1 }}>
+                    <FriendButton status={status} name={p.firstName} authorId={p.authorId} onDone={refresh} />
+                  </View>
+                  <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
+                </View>
+              )}
+            </Animated.View>
+          );
+        })}
+      </Masonry>
       <EditLive value={editing} onClose={() => setEditing(null)} />
     </View>
   );
@@ -897,6 +933,12 @@ const styles = StyleSheet.create({
   goLiveMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   goLiveBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   round: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  split: { flexDirection: 'row', alignItems: 'flex-start' },
+  feed: { flex: 1, minWidth: 0 },
+  panel: { gap: space[6] },
+  stack: { paddingHorizontal: space.gutter, gap: 10 },
+  friendText: { gap: 1, maxWidth: 120 },
+  friendTextWide: { gap: 1, flex: 1 },
   friend: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingLeft: 10, paddingRight: 16, borderRadius: radius.xl },
   input: { minHeight: 96, borderRadius: radius.lg, padding: 16, fontFamily: font.medium, fontSize: 17, textAlignVertical: 'top' },
   photoFrame: { height: 168, borderRadius: radius.lg, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },

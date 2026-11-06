@@ -9,9 +9,10 @@ import Animated, { useAnimatedRef, useAnimatedScrollHandler, useAnimatedStyle, u
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IrlyMark } from '@/brand/IrlyMark';
 import { Rail } from '@/components/cards/Blocks';
-import { ActivityTile, Carousel, fromEvent, fromSession, HighlightCard, IdeaCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
+import { ActivityTile, Carousel, fromEvent, fromSession, gridTile, HighlightCard, IdeaCard, PersonBubble, type Happening } from '@/components/cards/HomeCards';
 import { CommunityCard, PlaceCard } from '@/components/cards/ThingCards';
 import { useFrame } from '@/components/layout/AppFrame';
+import { Column, Content, contentWidth, WIDE_MIN } from '@/components/layout/wide';
 import { HomeHeader } from '@/components/navigation/Headers';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Chip, SectionHeader } from '@/components/ui/Controls';
@@ -84,6 +85,14 @@ type Idea = { key: string; title: string; place?: string; subId: string; activit
 
 /** Food places for « Find someone to eat with ». */
 const EAT_KINDS = new Set(['restaurant', 'cafe', 'rooftop', 'beachclub']);
+
+/**
+ * Wide screens (components/layout/wide): the Home keeps its order but
+ * splits in two. The main column carries the city (search and who is
+ * live, kinds of plans, the big card, grids and rails); these sections,
+ * about you and your people, sit in a column beside it.
+ */
+const SIDE_SECTIONS = new Set<HomeSection>(['today', 'news', 'sessions', 'people', 'yourCommunities', 'explore', 'portals']);
 
 export default function Home() {
   const t = useTheme();
@@ -197,7 +206,12 @@ export default function Home() {
   // Three rails for this moment (every category stays one tap away in « Discover activities »).
   const lead = entryOf.get('forYou')?.category;
   const forYou = [...sections].sort((a, b) => Number(b.category.id === lead) - Number(a.category.id === lead)).slice(0, count('forYou'));
-  const doorW = (frame.width - space.gutter * 2 - 12) / 2;
+  // Wide: the content is capped and centred, a main column and a side column (SIDE_SECTIONS).
+  const wide = frame.width >= WIDE_MIN;
+  const contentW = contentWidth(frame.width);
+  const sideW = wide ? Math.min(400, Math.max(300, Math.round(contentW * 0.34))) : 0;
+  const mainW = contentW - sideW;
+  const doorW = wide ? gridTile(mainW).width : (mainW - space.gutter * 2 - 12) / 2;
 
   // The grid of plans near you, filtered by the category chips.
   const [picked, setFilter] = useState<CategoryKey | null | undefined>(undefined);
@@ -220,6 +234,8 @@ export default function Home() {
   const [baliCover] = useCmsVisuals(useMemo(() => [{ path: baliEntry?.cover_path, key: baliEntry?.cover_key, fallback: 'bali' }], [baliEntry]));
   const girl = useGirlEntry();
   const seeAllPeople = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
+
+  const shown = entries.filter((e) => e.enabled).map((e) => e.key);
 
   const section = (id: HomeSection): ReactNode => {
     switch (id) {
@@ -266,7 +282,7 @@ export default function Home() {
               {entryOf.get('featured')?.style === 'compact' ? (
                 <HighlightCard h={featured} height={260} compact />
               ) : (
-                <HighlightCard h={featured} height={Math.round(Math.min(460, frame.width * 1.12))} />
+                <HighlightCard h={featured} height={Math.round(Math.min(460, mainW * (wide ? 0.5 : 1.12)))} />
               )}
             </View>
           </ScrollReveal>
@@ -479,22 +495,42 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: bottom }}
       >
-        <HomeHero
-          city={city}
-          now={now}
-          top={heroTop}
-          height={heroH}
-          onHeight={setHeroMeasured}
-          scrollY={scrollY}
-          live={lives.length}
-          onDestination={() => setSheet(true)}
-          onLive={() => router.push('/live')}
-        />
+        <Content width={contentW}>
+          <HomeHero
+            city={city}
+            now={now}
+            top={heroTop}
+            height={heroH}
+            onHeight={setHeroMeasured}
+            scrollY={scrollY}
+            live={lives.length}
+            onDestination={() => setSheet(true)}
+            onLive={() => router.push('/live')}
+          />
+        </Content>
 
-        {/* The same sections in IRLY and in IRLY Girl, in the order the team published (else HOME_SECTIONS). */}
-        {entries.filter((e) => e.enabled).map((e) => (
-          <Fragment key={e.key}>{section(e.key)}</Fragment>
-        ))}
+        {/* The same sections in IRLY and in IRLY Girl, in the order the team published (else HOME_SECTIONS). Wide: two columns, the footer under both. */}
+        <Content width={contentW}>
+          <View style={wide ? styles.columns : undefined}>
+            <Column width={mainW}>
+              {shown
+                .filter((key) => !wide || (!SIDE_SECTIONS.has(key) && key !== 'footer'))
+                .map((key) => (
+                  <Fragment key={key}>{section(key)}</Fragment>
+                ))}
+            </Column>
+            {wide ? (
+              <Column width={sideW} style={styles.side}>
+                {shown
+                  .filter((key) => SIDE_SECTIONS.has(key))
+                  .map((key) => (
+                    <Fragment key={key}>{section(key)}</Fragment>
+                  ))}
+              </Column>
+            ) : null}
+          </View>
+          {wide && shown.includes('footer') ? section('footer') : null}
+        </Content>
       </Animated.ScrollView>
 
       {/* The words pass under the header almost at once now: it turns to glass while they fade. */}
@@ -518,4 +554,7 @@ const styles = StyleSheet.create({
   searchWrap: { marginHorizontal: space.gutter, marginBottom: space[5] },
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, paddingHorizontal: 16, borderRadius: 26 },
   footer: { alignItems: 'center', gap: 12, paddingVertical: space[8] },
+  columns: { flexDirection: 'row', alignItems: 'flex-start' },
+  // The side column starts level with the search, not a section's gap lower.
+  side: { marginTop: space[3] - space[9] },
 });

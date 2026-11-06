@@ -1,9 +1,12 @@
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Page } from '@/components/layout/Page';
+import { FrameContext, useFrame } from '@/components/layout/frame';
+import { COLUMN_MAX, LIST_PANE, useSplit } from '@/components/layout/responsive';
+import { Ambient } from '@/components/visual/Ambient';
 import { useTabBarSpace } from '@/components/navigation/TabBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +22,8 @@ import { findCommunity, findPerson } from '@/data/repo';
 import type { Conversation } from '@/data/types';
 import { useGirlStore } from '@/features/girl/girlStore';
 import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
+import { ConversationView } from '@/features/messages/ConversationView';
+import { useMessagesPane } from '@/features/messages/paneStore';
 import { isServerId, removeConversationForMe, setConversationArchived, useServerInbox } from '@/features/server/chat';
 import { useSignedLinks } from '@/features/server/media';
 import { primeFaces } from '@/features/server/faces';
@@ -65,6 +70,10 @@ const EMPTY: Record<Tab, string> = {
  * that never mix (private, groups, communities, activities). Each row shows
  * the chat's own picture: the person's photo, the group's, the community's
  * or the activity's. Search covers names and last messages.
+ *
+ * Wide screens (useSplit): the list on the left, the chosen conversation on
+ * the right, in the same tree as the phone layout so a fold or a resize
+ * keeps search, tab and scroll. Phones push the conversation as a page.
  */
 export default function MessagesRoute() {
   // In IRLY Girl the list wears the Girl look like every page (cosmetic only, see theme/space).
@@ -157,6 +166,30 @@ function Messages() {
   // Back returns to the page that opened the list (IRLY Girl, a plan...): the tabs' own history
   // would land on the Home tab. Opened from a tab root, the tabs' back is kept.
   const navigation = useNavigation();
+  // The chosen chat lives in a store, not here: folding, unfolding or resizing never loses it.
+  const split = useSplit();
+  const frame = useFrame();
+  const focused = useIsFocused();
+  const selected = useMessagesPane((s) => s.selected);
+  const select = useMessagesPane((s) => s.select);
+  // A chosen chat that left the inbox (deleted, blocked, another city) no longer fills the pane.
+  const known = useMemo(() => Boolean(selected && (all.some((c) => c.id === selected) || server.conversations.some((c) => c.id === selected))), [selected, all, server.conversations]);
+  const current = selected && (known || server.loading) ? selected : null;
+  const open = useCallback(
+    (c: Conversation) => {
+      select(c.id);
+      if (!split) router.push(`/messages/${c.id}`);
+    },
+    [select, split, router],
+  );
+  // Folded (or narrowed) with a chat open in the pane: it stays open, as its own page.
+  const wasSplit = useRef(split);
+  useEffect(() => {
+    if (wasSplit.current && !split && current && focused) router.push(`/messages/${current}`);
+    wasSplit.current = split;
+  }, [split, current, focused, router]);
+  const listFrame = useMemo(() => ({ ...frame, width: split ? LIST_PANE : Math.min(frame.width, COLUMN_MAX) }), [frame, split]);
+  const paneFrame = useMemo(() => ({ ...frame, width: Math.max(0, frame.width - LIST_PANE - StyleSheet.hairlineWidth) }), [frame]);
   const back = () => {
     const stack = navigation.getParent();
     if (stack?.canGoBack()) stack.goBack();
@@ -165,6 +198,9 @@ function Messages() {
   };
 
   return (
+    <View style={styles.split}>
+    <View style={split ? styles.listPane : styles.listFull}>
+    <FrameContext.Provider value={listFrame}>
     <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined} onBack={back} bottomInset={tabBarSpace - insets.bottom}>
       <View style={styles.pad}>
         <View style={styles.search}>
@@ -278,7 +314,7 @@ function Messages() {
         ) : shown.length ? (
           shown.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : enter.rise(Math.min(i, 8), 30)} exiting={reduced ? undefined : FadeOut.duration(120)} layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)}>
-              <Row c={c} onLong={openMenu} lit={highlight === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} picture={c.photoPath ? pictures[c.photoPath] : undefined} appPhoto={c.refId ? appPhotos[c.refId] : undefined} />
+              <Row c={c} onOpen={open} onLong={openMenu} lit={highlight === c.id} selected={split && current === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} picture={c.photoPath ? pictures[c.photoPath] : undefined} appPhoto={c.refId ? appPhotos[c.refId] : undefined} />
             </Animated.View>
           ))
         ) : (
@@ -322,6 +358,44 @@ function Messages() {
         </View>
       </Sheet>
     </Page>
+    </FrameContext.Provider>
+    </View>
+    {split ? (
+      <>
+        <View style={[styles.divider, { backgroundColor: t.c.line }]} />
+        <View style={[styles.detail, { backgroundColor: t.c.bg }]}>
+          <FrameContext.Provider value={paneFrame}>
+            {/* Keyed: another chat starts fresh (its own draft, scroll and sheets). */}
+            {current ? <ConversationView key={current} id={current} pane /> : <ChooseConversation />}
+          </FrameContext.Provider>
+        </View>
+      </>
+    ) : null}
+    </View>
+  );
+}
+
+/** The pane before a chat is chosen. */
+function ChooseConversation() {
+  const t = useTheme();
+  const reduced = useReducedMotion();
+  return (
+    <View style={styles.choose}>
+      <Ambient variant="quiet" />
+      <Animated.View entering={reduced ? undefined : enter.rise(0, 40)} style={styles.chooseCard}>
+        <GlassCard padding={24} style={[styles.empty, { boxShadow: t.shadow.card }]}>
+          <View style={[styles.emptyIcon, { backgroundColor: t.c.brandSoft }]}>
+            <Icon name="message" size={22} color={t.c.text} />
+          </View>
+          <Text variant="titleS" align="center">
+            Choose a conversation
+          </Text>
+          <Text variant="bodyS" tone="secondary" align="center">
+            Pick a chat in the list to read it here.
+          </Text>
+        </GlassCard>
+      </Animated.View>
+    </View>
   );
 }
 
@@ -338,9 +412,8 @@ function Action({ icon, label, onPress }: { icon: IconName; label: string; onPre
 
 const KIND_ICON: Record<Exclude<Tab, 'all'>, IconName> = { private: 'user', groups: 'users', communities: 'heartHandshake', activities: 'calendar' };
 
-const Row = memo(function Row({ c, lit, unread, picture, appPhoto, onLong }: { c: Conversation; lit: boolean; unread: number; picture?: string; appPhoto?: PhotoKey; onLong: (c: Conversation) => void }) {
+const Row = memo(function Row({ c, lit, selected, unread, picture, appPhoto, onOpen, onLong }: { c: Conversation; lit: boolean; selected: boolean; unread: number; picture?: string; appPhoto?: PhotoKey; onOpen: (c: Conversation) => void; onLong: (c: Conversation) => void }) {
   const t = useTheme();
-  const router = useRouter();
   const sent = useStore((s) => s.sent);
   const last = allMessages(c, sent).at(-1);
   const kind = tabOf(c);
@@ -352,14 +425,17 @@ const Row = memo(function Row({ c, lit, unread, picture, appPhoto, onLong }: { c
   const body = last ? (c.lastIsPhoto ? `📷 ${tx('Photo')}` : server ? last.text : tx(last.text)) : kind === 'private' ? tx('You are connected. Say hi 👋') : tx('Say hello to the group');
   return (
     <PressableScale
-      onPress={() => router.push(`/messages/${c.id}`)}
+      onPress={() => onOpen(c)}
       onLongPress={server ? () => onLong(c) : undefined}
       delayLongPress={350}
       scaleTo={0.98}
-      style={[styles.row, { borderColor: lit ? t.c.brand : 'transparent', boxShadow: unread ? t.shadow.card : undefined }]}
+      style={[styles.row, { borderColor: lit || selected ? t.c.brand : 'transparent', boxShadow: unread || selected ? t.shadow.card : undefined }]}
+      accessibilityState={{ selected }}
       accessibilityLabel={`${c.title}${unread ? `, ${tx('{n} unread', { n: unread })}` : ''}`}
     >
-      <Glass level={unread ? 'regular' : 'thin'} style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />
+      <Glass level={unread || selected ? 'regular' : 'thin'} style={[StyleSheet.absoluteFill, { borderRadius: radius.lg }]} />
+      {/* The chat open in the pane (wide screens), tinted with the brand like a lit tab. */}
+      {selected ? <View style={[StyleSheet.absoluteFill, { backgroundColor: t.c.brandSoft }]} /> : null}
       {kind === 'private' ? (
         <Avatar name={c.title} hue={hueOf(c.otherId ?? c.id)} size={56} photo={person?.photo} online={person?.online} userId={server ? c.otherId : undefined} />
       ) : (
@@ -410,6 +486,14 @@ const Row = memo(function Row({ c, lit, unread, picture, appPhoto, onLong }: { c
 });
 
 const styles = StyleSheet.create({
+  split: { flex: 1, flexDirection: 'row', justifyContent: 'center' },
+  listPane: { width: LIST_PANE },
+  // Expanded but too narrow for two panes: the list keeps a readable column.
+  listFull: { flex: 1, maxWidth: COLUMN_MAX },
+  divider: { width: StyleSheet.hairlineWidth },
+  detail: { flex: 1, overflow: 'hidden' },
+  choose: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.gutter },
+  chooseCard: { width: '100%', maxWidth: 420 },
   pad: { paddingHorizontal: space.gutter },
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, paddingHorizontal: 14, borderRadius: radius.pill, overflow: 'hidden' },
   input: { flex: 1, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 },

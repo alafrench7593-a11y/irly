@@ -401,7 +401,7 @@ export const ARTICLES = [
     cover: 'surf',
     figure: { photo: 'volleyball', after: 1 },
     city: 'Bali',
-    updated: '2026-10-24',
+    updated: '2026-11-03',
     title: 'Bali for Digital Nomads: Finding Community and Coworking | IRLY',
     description: 'Working remotely from Bali? How to find a community, choose an area and a coworking space, and build a routine that keeps you social without losing your workdays.',
     h1: 'Bali for digital nomads: community and coworking',
@@ -428,6 +428,17 @@ export const ARTICLES = [
 <li><strong>Your time zone:</strong> if you work evenings for clients in Europe or the Americas, check the opening hours.</li>
 </ul>
 <p>Cafés work for some days, but a fixed place to work makes it easier to see the same faces and keep a routine.</p>`,
+      },
+      {
+        h2: 'Your first week: a simple plan',
+        html: `<p>The first days set your rhythm. A plan this light is enough to leave the week with a routine and a few names:</p>
+<ol>
+<li><strong>Day 1–2:</strong> settle in, walk your area at the hours you will actually be out, and find where you can buy what you need without a long ride.</li>
+<li><strong>Day 2–3:</strong> try one or two coworking spaces on a day pass, at the time you usually work.</li>
+<li><strong>Day 3–4:</strong> go to one event at the space you liked, or one class (yoga, surf, a gym session) you could repeat every week.</li>
+<li><strong>Day 5:</strong> suggest one simple plan to someone you met: lunch after work, a sunset, a short trip at the weekend.</li>
+<li><strong>End of the week:</strong> keep what worked, drop what did not, and only then commit to a longer stay or a monthly membership.</li>
+</ol>`,
       },
       {
         h2: 'Where remote workers meet each other',
@@ -481,7 +492,7 @@ export const ARTICLES = [
     cover: 'surf',
     figure: { photo: 'volleyball', after: 1 },
     city: 'Bali',
-    updated: '2026-10-24',
+    updated: '2026-11-03',
     title: 'Bali pour les digital nomads : communauté et coworking | IRLY',
     description: 'Tu travailles à distance depuis Bali ? Comment trouver une communauté, choisir un quartier et un coworking, et garder une vie sociale sans sacrifier tes journées de travail.',
     h1: 'Bali pour les digital nomads : communauté et coworking',
@@ -508,6 +519,17 @@ export const ARTICLES = [
 <li><strong>Ton fuseau horaire :</strong> si tu travailles le soir pour des clients en Europe ou en Amérique, vérifie les horaires d’ouverture.</li>
 </ul>
 <p>Les cafés conviennent certains jours, mais un lieu de travail fixe aide à revoir les mêmes visages et à garder une routine.</p>`,
+      },
+      {
+        h2: 'Ta première semaine : un plan simple',
+        html: `<p>Les premiers jours donnent le rythme. Un plan aussi léger suffit pour finir la semaine avec une routine et quelques prénoms :</p>
+<ol>
+<li><strong>Jours 1–2 :</strong> installe-toi, marche dans ton quartier aux heures où tu sortiras vraiment, et repère où acheter l’essentiel sans long trajet.</li>
+<li><strong>Jours 2–3 :</strong> teste un ou deux coworkings avec un pass à la journée, aux heures où tu travailles d’habitude.</li>
+<li><strong>Jours 3–4 :</strong> va à un événement dans le coworking qui t’a plu, ou à un cours (yoga, surf, salle de sport) que tu pourrais refaire chaque semaine.</li>
+<li><strong>Jour 5 :</strong> propose un plan simple à quelqu’un que tu as rencontré : un déjeuner après le travail, un coucher de soleil, une sortie le week-end.</li>
+<li><strong>Fin de semaine :</strong> garde ce qui a marché, laisse le reste, et seulement ensuite engage-toi sur un séjour plus long ou un abonnement au mois.</li>
+</ol>`,
       },
       {
         h2: 'Où les travailleurs à distance se rencontrent',
@@ -701,7 +723,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'volleyball', after: 2 },
     city: 'Dubai',
-    updated: '2026-10-25',
+    updated: '2026-11-04',
     title: 'Going Out Alone in Dubai Without Feeling Awkward | IRLY',
     description: 'How to go out alone in Dubai and enjoy it: plans that work solo, how to start a conversation without forcing it, and simple safety habits.',
     h1: 'Going out alone in Dubai without feeling awkward',
@@ -756,6 +778,16 @@ export const ARTICLES = [
 </ol>`,
       },
       {
+        h2: 'If it does not go as planned',
+        html: `<p>Some outings will be quiet, and that is normal. A few ways to handle it:</p>
+<ul>
+<li><strong>Nobody talked to you.</strong> It happens, especially the first time. Go back to the same class or club once more before judging it: the second visit is usually where people recognise you.</li>
+<li><strong>You feel uncomfortable.</strong> You can leave. A short “Thanks, I have to go” is enough, and nobody expects more from someone they just met.</li>
+<li><strong>The format does not suit you.</strong> If loud bars or large events drain you, try smaller formats with a shared task: a workshop, a walk or a sports session. Our list of <a href="../group-activities/">group activities in Dubai</a> has ideas.</li>
+<li><strong>It keeps feeling heavy.</strong> If going out alone starts to feel lonely rather than free, read <a href="../lonely/">what actually helps when you feel lonely in Dubai</a>.</li>
+</ul>`,
+      },
+      {
         h2: 'Where IRLY fits in',
         html: `<p>IRLY helps you find plans that are made for joining alone: activities this week with people who want to meet, communities around what you like, and a group chat to say hello before you arrive. IRLY Girl offers spaces for women only. It is one option among others; what matters is going, and going back.</p>`,
       },
@@ -770,7 +802,7 @@ export const ARTICLES = [
     cover: 'dubaiMarina',
     figure: { photo: 'volleyball', after: 2 },
     city: 'Dubaï',
-    updated: '2026-10-25',
+    updated: '2026-11-04',
     title: 'Sortir seul à Dubaï sans être mal à l’aise | IRLY',
     description: 'Comment sortir seul à Dubaï et en profiter : les sorties qui marchent en solo, lancer une conversation sans forcer, et quelques réflexes de sécurité simples.',
     h1: 'Sortir seul à Dubaï sans être mal à l’aise',
@@ -823,6 +855,16 @@ export const ARTICLES = [
 <li><strong>Prépare une phrase d’accroche.</strong> Une question simple sur l’activité suffit ; pas besoin de plus.</li>
 <li><strong>Prévois la suivante avant de partir.</strong> Si tu as aimé, note la prochaine date tout de suite. C’est en revenant que des inconnus deviennent des visages familiers.</li>
 </ol>`,
+      },
+      {
+        h2: 'Si ça ne se passe pas comme prévu',
+        html: `<p>Certaines sorties seront calmes, et c’est normal. Quelques façons d’y réagir :</p>
+<ul>
+<li><strong>Personne ne t’a parlé.</strong> Ça arrive, surtout la première fois. Retourne une fois de plus au même cours ou au même club avant de juger : c’est souvent à la deuxième visite qu’on te reconnaît.</li>
+<li><strong>Tu ne te sens pas à l’aise.</strong> Tu peux partir. Un simple « Merci, je dois y aller » suffit, et personne n’attend plus de quelqu’un qu’il vient de rencontrer.</li>
+<li><strong>Le format ne te convient pas.</strong> Si les bars bruyants ou les grands événements te fatiguent, essaie des formats plus petits autour d’une activité commune : un atelier, une balade ou une séance de sport. Notre liste d’<a href="../activites-de-groupe/">activités de groupe à Dubaï</a> donne des idées.</li>
+<li><strong>Ça reste pesant.</strong> Si sortir seul commence à ressembler à de la solitude plutôt qu’à de la liberté, lis <a href="../solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</li>
+</ul>`,
       },
       {
         h2: 'La place d’IRLY',
@@ -1507,7 +1549,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'brunch', after: 2 },
     city: 'Life abroad',
-    updated: '2026-10-26',
+    updated: '2026-11-05',
     title: 'Rebuilding Your Social Life After Moving Abroad | IRLY',
     description: 'Moved abroad and starting from zero socially? Why it feels harder than expected, a simple plan for the first three months, and how to turn new faces into real friends.',
     h1: 'Rebuilding your social life after moving abroad',
@@ -1575,6 +1617,16 @@ export const ARTICLES = [
 </ul>`,
       },
       {
+        h2: 'Staying close to friends back home',
+        html: `<p>Old friendships are a real support in the first months, as long as they do not replace the effort to build new ones here.</p>
+<ul>
+<li><strong>Pick a regular moment.</strong> A call at the same time every week or two holds better than “let’s talk soon”, especially across time zones.</li>
+<li><strong>Share small things, not only news.</strong> A photo of your street or a voice note about your day keeps people close to your new life.</li>
+<li><strong>Watch the balance.</strong> If evenings on the phone with home leave no room for plans where you live, move one call to the weekend and keep one evening free to go out.</li>
+<li><strong>Accept that some friendships change.</strong> Distance shows which ones last; that is not a failure on either side.</li>
+</ul>`,
+      },
+      {
         h2: 'When to ask for more help',
         html: `<p>Feeling alone for a while after a move is common. If it lasts, if you feel low most days, or if daily life becomes hard, talk to a doctor or a mental health professional where you live: it is a normal step. In an emergency, call the local emergency number.</p>`,
       },
@@ -1593,7 +1645,7 @@ export const ARTICLES = [
     cover: 'volleyball',
     figure: { photo: 'brunch', after: 2 },
     city: 'Vie à l’étranger',
-    updated: '2026-10-26',
+    updated: '2026-11-05',
     title: 'Reconstruire sa vie sociale après une expatriation | IRLY',
     description: 'Tu t’es expatrié et tu repars de zéro côté amis ? Pourquoi c’est plus dur que prévu, un plan simple pour les trois premiers mois, et comment transformer des connaissances en vrais amis.',
     h1: 'Reconstruire sa vie sociale après une expatriation',
@@ -1658,6 +1710,16 @@ export const ARTICLES = [
 <li><strong>Garde plus d’un cercle,</strong> pour qu’un départ ne vide pas ta semaine.</li>
 <li><strong>Continue d’accueillir les nouveaux :</strong> les arrivants de ce mois sont les amis de demain, et tu sais ce qu’ils ressentent.</li>
 <li><strong>Reste en contact avec ceux qui partent.</strong> Une amitié peut continuer à distance, avec un appel ou une visite.</li>
+</ul>`,
+      },
+      {
+        h2: 'Garder le lien avec les amis restés au pays',
+        html: `<p>Les amitiés d’avant sont un vrai soutien les premiers mois, tant qu’elles ne remplacent pas l’effort d’en créer de nouvelles sur place.</p>
+<ul>
+<li><strong>Choisis un moment régulier.</strong> Un appel à la même heure toutes les une ou deux semaines tient mieux qu’un « on s’appelle bientôt », surtout avec le décalage horaire.</li>
+<li><strong>Partage des petites choses, pas seulement les nouvelles.</strong> Une photo de ta rue ou un message vocal sur ta journée garde tes proches près de ta nouvelle vie.</li>
+<li><strong>Surveille l’équilibre.</strong> Si les soirées au téléphone avec chez toi ne laissent plus de place aux sorties sur place, déplace un appel au week-end et garde une soirée libre pour sortir.</li>
+<li><strong>Accepte que certaines amitiés changent.</strong> La distance montre celles qui durent ; ce n’est un échec pour personne.</li>
 </ul>`,
       },
       {

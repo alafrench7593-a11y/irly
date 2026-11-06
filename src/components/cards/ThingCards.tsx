@@ -68,11 +68,18 @@ function fitWord(label: string, width: number) {
 
 /* ───────── Session card ───────── */
 
-export const SessionCard = memo(function SessionCard({ session, width }: { session: ActivitySession; width?: number }) {
+/**
+ * A session of an activity. A tap opens it full screen; in a list + detail
+ * screen (wide screens) `onSelect` takes the tap instead and `selected`
+ * rings the card shown in the detail pane.
+ */
+export const SessionCard = memo(function SessionCard({ session, width, onSelect, selected }: { session: ActivitySession; width?: number; onSelect?: (id: string) => void; selected?: boolean }) {
   const t = useTheme();
   const city = CITIES[session.cityId];
   const a = ACTIVITIES[session.kind];
-  const { ref, onPress, hidden } = useHeroCard('session', session.id);
+  const hero = useHeroCard('session', session.id);
+  const { ref, hidden } = hero;
+  const onPress = onSelect ? () => onSelect(session.id) : hero.onPress;
   const joined = useStore((s) => Boolean(s.joined[session.id]));
   const going = goingCount(session, joined);
   const left = Math.max(0, session.spots - going);
@@ -80,7 +87,8 @@ export const SessionCard = memo(function SessionCard({ session, width }: { sessi
     <PressableScale
       ref={ref}
       onPress={onPress}
-      style={[styles.session, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', opacity: hidden ? 0 : 1 }]}
+      style={[styles.session, { width, backgroundColor: 'transparent', overflow: 'hidden', borderColor: selected ? t.c.brand : 'transparent', opacity: hidden ? 0 : 1 }]}
+      accessibilityState={onSelect ? { selected: Boolean(selected) } : undefined}
     >
       <GlassLayer radius={radius.lg} />
       <View style={styles.sessionTop}>

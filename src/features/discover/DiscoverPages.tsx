@@ -8,6 +8,7 @@ import { EventCard, EventRow } from '@/components/cards/EventCards';
 import { PersonCard } from '@/components/cards/PeopleCards';
 import { CommunityCard, PlaceCard, SessionCard } from '@/components/cards/ThingCards';
 import { useFrame } from '@/components/layout/AppFrame';
+import { columnsFor, Content, contentWidth, Grid, itemWidth, WIDE_MIN } from '@/components/layout/wide';
 import { Button } from '@/components/ui/Button';
 import { SectionHeader } from '@/components/ui/Controls';
 import { Glass } from '@/components/ui/Glass';
@@ -46,6 +47,16 @@ export type PageProps = {
   bottom: number;
 };
 
+/**
+ * The width a page lays its content in: the whole page on phones, capped
+ * and centred on wide screens (components/layout/wide). `wide`: room for
+ * grids instead of one column of rows.
+ */
+function usePageWidth(): { width: number; wide: boolean } {
+  const frame = useFrame();
+  return { width: contentWidth(frame.width), wide: frame.width >= WIDE_MIN };
+}
+
 /** One vertical page of Discover, with its own scroll position. */
 function PageScroll({ scrollY, top, bottom, children }: { scrollY: SharedValue<number>; top: number; bottom: number; children: ReactNode }) {
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -58,7 +69,7 @@ function PageScroll({ scrollY, top, bottom, children }: { scrollY: SharedValue<n
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingTop: top, paddingBottom: bottom }}
     >
-      {children}
+      <Content>{children}</Content>
     </Animated.ScrollView>
   );
 }
@@ -110,7 +121,10 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
   const women = useGirlPeople(cityId);
   const people = inGirl ? women : content.people;
   const matches = useMemo(() => rankMatches(profile, inGirl ? women : content.people, 'friends', (id) => areaName(city, id)).slice(0, 8), [profile, inGirl, women, content.people, city]);
-  const tileW = (frame.width - space.gutter * 2 - 10) / 2;
+  // Six intents: two a row on phones, three or six a row when wide (never a row of four and two).
+  const page = usePageWidth();
+  const intentColumns = page.wide ? (page.width >= 1080 ? 6 : 3) : 2;
+  const tileW = page.wide ? itemWidth(page.width, intentColumns, 10) : (frame.width - space.gutter * 2 - 10) / 2;
   // Match IRLY, or IRLY Match in IRLY Girl (each says « coming soon » itself while closed).
   const matchOpen = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
   const matchHref = (intent: Intent) => (inGirl ? '/girl/match' : `/match?intent=${intent}`);
@@ -219,7 +233,8 @@ export function ActivitiesPage({ cityId, scrollY, top, bottom }: PageProps) {
   const frame = useFrame();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
-  const doorW = (frame.width - space.gutter * 2 - 12) / 2;
+  const page = usePageWidth();
+  const doorW = page.wide ? itemWidth(page.width, columnsFor(page.width, 220), 12) : (frame.width - space.gutter * 2 - 12) / 2;
   const inGirl = useAppSpace() === 'girl';
   // Shown in IRLY Girl only: not asked for in IRLY.
   const girlPlans = useGirlPlans(cityId, { girlOnly: true, skip: !inGirl });
@@ -234,9 +249,17 @@ export function ActivitiesPage({ cityId, scrollY, top, bottom }: PageProps) {
       {hasSoon ? (
         <ScrollReveal scrollY={scrollY} style={styles.first}>
           <SectionHeader overline="Join in" title="Happening soon" action="Plans" onAction={() => router.push('/social')} />
-          <View style={styles.rows}>
-            {inGirl ? <GirlPlanRows plans={girlPlans} limit={4} /> : soon.map((s) => <SessionCard key={s.id} session={s} />)}
-          </View>
+          {inGirl ? (
+            <View style={styles.rows}>
+              <GirlPlanRows plans={girlPlans} limit={4} />
+            </View>
+          ) : (
+            <Grid columns={page.wide ? 2 : 1} gap={10} width={page.width}>
+              {soon.map((s) => (
+                <SessionCard key={s.id} session={s} />
+              ))}
+            </Grid>
+          )}
         </ScrollReveal>
       ) : null}
 
@@ -259,7 +282,7 @@ export function ActivitiesPage({ cityId, scrollY, top, bottom }: PageProps) {
               photo: ACTIVITIES[city.activityKinds[0]].photo ?? 'running',
               href: '/activities',
             }}
-            width={frame.width - space.gutter * 2}
+            width={page.width - space.gutter * 2}
             height={168}
             light={city.light}
           />
@@ -277,8 +300,11 @@ export function PlacesPage({ cityId, scrollY, top, bottom }: PageProps) {
   const frame = useFrame();
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
-  const full = frame.width - space.gutter * 2;
-  const doorW = (full - 12) / 2;
+  const page = usePageWidth();
+  const full = page.width - space.gutter * 2;
+  // Places and the guide's doors: two a row on phones, as many as fit when wide.
+  const doorW = page.wide ? itemWidth(page.width, columnsFor(page.width, 220), 12) : (frame.width - space.gutter * 2 - 12) / 2;
+  const guideW = page.wide ? itemWidth(page.width, columnsFor(page.width, 220, 12, 4), 12) : doorW;
   const picks = content.places.filter((p) => p.irlyPick);
   const guide: Door[] = [
     ...(cityId === 'bali' ? [{ label: 'Live Bali', caption: 'Areas, moving, test stays', icon: 'palm' as IconName, photo: 'bali' as PhotoKey, href: '/bali' }] : []),
@@ -346,7 +372,7 @@ export function PlacesPage({ cityId, scrollY, top, bottom }: PageProps) {
         <SectionHeader overline="City guide" title="Settle in" />
         <View style={styles.doors}>
           {guide.map((d) => (
-            <DoorTile key={d.label} door={d} width={doorW} light={city.light} />
+            <DoorTile key={d.label} door={d} width={guideW} light={city.light} />
           ))}
         </View>
       </ScrollReveal>
@@ -363,6 +389,8 @@ export function PlacesPage({ cityId, scrollY, top, bottom }: PageProps) {
 
 export function EventsPage({ cityId, scrollY, top, bottom }: PageProps) {
   const router = useRouter();
+  const page = usePageWidth();
+  const columns = page.wide ? 2 : 1;
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const tonight = content.events.filter((e) => e.when.dayOffset === 0);
@@ -382,21 +410,23 @@ export function EventsPage({ cityId, scrollY, top, bottom }: PageProps) {
       {weekend.length ? (
         <ScrollReveal scrollY={scrollY} style={styles.section}>
           <SectionHeader overline="Plan ahead" title="This weekend" />
-          <View style={styles.rows}>
+          <Grid columns={columns} gap={10} width={page.width}>
             {weekend.slice(0, 4).map((e) => (
               <EventRow key={e.id} event={e} />
             ))}
-          </View>
+          </Grid>
         </ScrollReveal>
       ) : null}
 
       <ScrollReveal scrollY={scrollY} style={styles.section}>
         <SectionHeader overline={tx('{n} this week', { n: content.events.length })} title="All events" />
-        <View style={styles.rows}>
+        <Grid columns={columns} gap={10} width={page.width}>
           {upcoming.slice(0, 10).map((e) => (
             <EventRow key={`all-${e.id}`} event={e} />
           ))}
-          <Button label="See all events" variant="secondary" full iconRight="arrowRight" onPress={() => router.push('/events')} style={{ marginTop: 6 }} />
+        </Grid>
+        <View style={styles.rows}>
+          <Button label="See all events" variant="secondary" full={!page.wide} iconRight="arrowRight" onPress={() => router.push('/events')} style={[styles.more, page.wide ? styles.moreWide : null]} />
         </View>
       </ScrollReveal>
     </PageScroll>
@@ -407,6 +437,8 @@ const styles = StyleSheet.create({
   first: { marginTop: space[5] },
   section: { marginTop: space[9] },
   rows: { paddingHorizontal: space.gutter, gap: 10 },
+  more: { marginTop: 16 },
+  moreWide: { alignSelf: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: space.gutter },
   doors: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: space.gutter },
   cta: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: radius.xxl },

@@ -17,6 +17,7 @@ export function CommunityThumb({
   categoryId,
   light,
   size = 44,
+  height,
 }: {
   id?: string;
   name?: string | null;
@@ -26,7 +27,9 @@ export function CommunityThumb({
   /** Kept for callers that still pass it: a community is shown by its photo, not its emoji. */
   emoji?: string | null;
   light: LightId;
-  size?: number;
+  /** Square side; with `height`, the width of a cover (`size` may then be a percentage). */
+  size?: number | `${number}%`;
+  height?: number;
   member?: boolean;
 }) {
   // Lists that do not load the photo path pass none: it is looked up by id, all thumbnails at once.
@@ -40,8 +43,8 @@ export function CommunityThumb({
       light={light}
       style={{
         width: size,
-        height: size,
-        borderRadius: Math.round(size * 0.3),
+        height: height ?? size,
+        borderRadius: height ? 0 : Math.round(Number(size) * 0.3),
         overflow: "hidden",
       }}
       width={240}
