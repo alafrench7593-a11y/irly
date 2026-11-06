@@ -405,7 +405,8 @@ select pg_temp.as_user('c6a00000-0000-0000-0000-000000000002');
 select public.community_stats('c6a00000-0000-0000-0000-0000000000c1') as stats \gset
 select pg_temp.as_admin();
 -- Members: Mel, Cora, Cole, Mona, Bob (back), Rita = 6. Upcoming: Rita's plan
--- after her restriction = 1. Messages this week: Rita's, Mona's = 2 (Mel's was removed).
+-- after her restriction = 1. Messages this week: Rita's, Mona's and the card of Rita's
+-- plan posted in the chat (20261107100000) = 3 (Mel's was removed).
 select pg_temp.check((:'stats'::jsonb ->> 'members')::int = 6
   and (:'stats'::jsonb ->> 'members')::int = (select count(*) from public.community_members where community_id = 'c6a00000-0000-0000-0000-0000000000c1'),
   'stats: real member count');
@@ -414,7 +415,11 @@ select pg_temp.check((:'stats'::jsonb ->> 'new_7d')::int = (select count(*) from
 select pg_temp.check((:'stats'::jsonb ->> 'upcoming_activities')::int = 1, 'stats: upcoming activities');
 select pg_temp.check((:'stats'::jsonb ->> 'activities_30d')::int = 1, 'stats: activities this month (moderated ones left the community)');
 select pg_temp.check((:'stats'::jsonb ->> 'participants_30d')::int = 1, 'stats: participants this month');
-select pg_temp.check((:'stats'::jsonb ->> 'messages_7d')::int = 2, 'stats: messages this week');
+select pg_temp.check((:'stats'::jsonb ->> 'messages_7d')::int = 3, 'stats: messages this week');
+select pg_temp.check(not exists (select 1 from public.messages m join public.conversations c on c.id = m.conversation_id
+  where c.community_id = 'c6a00000-0000-0000-0000-0000000000c1' and m.kind = 'share' and m.ref_type = 'activity' and m.deleted_at is null
+    and m.ref_id in (select id from public.activities where community_id is distinct from 'c6a00000-0000-0000-0000-0000000000c1')),
+  'moderated plans: their cards left the community chat (20261107300000)');
 select pg_temp.check((:'stats'::jsonb ->> 'open_reports')::int = 0, 'stats: no open report yet');
 insert into public.reports (reporter_id, target_user_id, target_kind, target_id, category)
 values ('c6a00000-0000-0000-0000-000000000004', 'c6a00000-0000-0000-0000-000000000008', 'community_post',

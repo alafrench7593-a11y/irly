@@ -220,21 +220,27 @@ export async function fetchStats(communityId: string): Promise<CommunityStats | 
 }
 
 /**
- * The co-admins' permissions, for the owner's toggles (Roles). No function
- * of the contract returns them: read from community_members, as far as row
- * level security lets the reader see them. Null when they cannot be read:
- * the toggles then stay off rather than overwrite what is set.
+ * The co-admins' permissions, for the owner's toggles (Roles): the co-admins
+ * from the members list, each read through community_permissions (owner
+ * only on the server). Null when they cannot be read: the toggles then stay
+ * off rather than overwrite what is set.
  */
 export async function fetchCoAdminPermissions(communityId: string): Promise<Record<string, Permissions> | null> {
   if (!supabase || !communityId) return null;
-  const { data, error } = await supabase.from('community_members').select('user_id, permissions').eq('community_id', communityId).eq('role', 'co_admin');
+  const db = supabase;
+  const { data, error } = await db.rpc('community_members_list', { p_community: communityId, p_search: null, p_limit: 500, p_offset: 0 });
   if (error) return null;
-  return Object.fromEntries(
-    ((data as Row[] | null) ?? []).map((r) => {
-      const p = (r.permissions && typeof r.permissions === 'object' ? r.permissions : {}) as Row;
-      return [r.user_id as string, Object.fromEntries(PERM_KEYS.map((k) => [k, Boolean(p[k])])) as Permissions];
+  const coAdmins = ((data as Row[] | null) ?? []).filter((r) => r.role === 'co_admin').map((r) => r.user_id as string);
+  const entries = await Promise.all(
+    coAdmins.map(async (userId) => {
+      const res = await db.rpc('community_permissions', { p_community: communityId, p_user: userId });
+      if (res.error) return null;
+      const p = (res.data && typeof res.data === 'object' ? res.data : {}) as Row;
+      return [userId, Object.fromEntries(PERM_KEYS.map((k) => [k, Boolean(p[k])])) as Permissions] as const;
     }),
   );
+  if (entries.some((e) => e === null)) return null;
+  return Object.fromEntries(entries as (readonly [string, Permissions])[]);
 }
 
 export function useCoAdminPermissions(communityId: string, enabled = true) {

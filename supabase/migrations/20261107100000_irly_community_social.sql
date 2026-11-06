@@ -51,11 +51,11 @@ alter table public.community_notification_prefs add column if not exists activit
 -- ───────── 2. Shared helpers ─────────
 
 -- Rank of a community role (owner first). Unknown roles last.
-create or replace function private.community_role_rank(p_role text) returns integer
+create or replace function private.community_role_order(p_role text) returns integer
 language sql immutable set search_path = public as $$
   select case p_role when 'owner' then 0 when 'co_admin' then 1 when 'moderator' then 2 when 'member' then 3 else 4 end
 $$;
-revoke all on function private.community_role_rank(text) from public, anon, authenticated;
+revoke all on function private.community_role_order(text) from public, anon, authenticated;
 
 -- A search text as an ilike pattern (wildcards typed by the member are
 -- literal), or null for no search.
@@ -117,7 +117,7 @@ begin
         select 1 from public.blocks b
         where (b.blocker_id = me and b.blocked_id = m.user_id) or (b.blocker_id = m.user_id and b.blocked_id = me)))
       and (insider or private.profile_visible_unchecked(me, m.user_id))
-    order by private.community_role_rank(m.role), p.first_name, m.user_id
+    order by private.community_role_order(m.role), p.first_name, m.user_id
     limit least(greatest(coalesce(p_limit, 200), 1), 500)
     offset greatest(coalesce(p_offset, 0), 0);
 end $$;
