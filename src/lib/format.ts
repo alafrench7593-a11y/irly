@@ -13,9 +13,10 @@ export function formatPrice(amount: number, currency: City['currency']): string 
   return `AED ${formatNumber(amount)}`;
 }
 
+/** A count shown short: 860, 1.2k (« 1,2k » in French), 12k. */
 export function formatCount(n: number): string {
   if (n >= 10_000) return `${Math.round(n / 1000)}k`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace('.0', '')}k`;
+  if (n >= 1000) return `${formatNumber(Math.round(n / 100) / 10)}k`;
   return `${n}`;
 }
 

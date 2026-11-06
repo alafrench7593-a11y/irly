@@ -1,5 +1,6 @@
 import { Photo } from "@/components/visual/Photo";
 import { useCommunityCover, usePhotoLink } from "@/features/server/covers";
+import type { PhotoKey } from "@/data/photos";
 import type { LightId } from "@/theme/lights";
 import { communityPhoto } from "./official";
 
@@ -18,6 +19,7 @@ export function CommunityThumb({
   light,
   size = 44,
   height,
+  photo,
 }: {
   id?: string;
   name?: string | null;
@@ -31,11 +33,13 @@ export function CommunityThumb({
   size?: number | `${number}%`;
   height?: number;
   member?: boolean;
+  /** IRLY's photo for it when it has none of its own, if already known (the example communities of the demo). */
+  photo?: PhotoKey;
 }) {
   // Lists that do not load the photo path pass none: it is looked up by id, all thumbnails at once.
   const path = useCommunityCover(id, coverPath);
   const uri = usePhotoLink(path);
-  const key = communityPhoto(topic, categoryId, name);
+  const key = photo ?? communityPhoto(topic, categoryId, name);
   return (
     <Photo
       pinned
