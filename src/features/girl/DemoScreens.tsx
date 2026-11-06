@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedScrollHandler, useAnimatedStyle, useReducedMotion, useSharedValue, interpolate, Extrapolation } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
@@ -9,7 +9,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { Photo } from '@/components/visual/Photo';
-import { DEMO_CHATS, DEMO_PLANS } from '@/data/content/girlDemo';
+import { DEMO_CHATS, DEMO_PLANS, DEMO_POSTS } from '@/data/content/girlDemo';
 import { findPerson } from '@/data/repo';
 import { t as tx } from '@/i18n';
 import { hueOf } from '@/lib/format';
@@ -26,6 +26,11 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { ActivityFeedCard, ProposeActivityButton } from '@/components/cards/ActivityCards';
 import { openCreate } from '@/features/create/createStore';
 import { COMMUNITY_SIDE, communitySplit, useCommunitySplit } from '@/features/community/layout';
+import { AboutSheet } from '@/features/community/AboutSheet';
+import { Agenda, type AgendaItem } from '@/features/community/Agenda';
+import { MediaTiles, type GalleryItem } from '@/features/community/MediaGallery';
+import { SPACE_TABS, type SpaceTab } from '@/features/community/SpaceTabs';
+import { IconButton } from '@/components/ui/Controls';
 
 /**
  * The IRLY Girl community and plan pages of the demonstration build. They
@@ -36,6 +41,7 @@ import { COMMUNITY_SIDE, communitySplit, useCommunitySplit } from '@/features/co
  */
 
 const HERO = 300;
+const likesOf = (postId: string) => DEMO_POSTS.find((p) => p.id === postId)?.likes ?? 0;
 const people = (ids: string[]) =>
   ids.map((id) => {
     const p = findPerson(id);
@@ -64,12 +70,18 @@ export function DemoCommunityScreen({ id }: { id: string }) {
   const reduced = useReducedMotion();
   const joined = useDemoGirl((s) => Boolean(s.joined[id]));
   const toggle = useDemoGirl((s) => s.toggle);
-  const [tab, setTab] = useState<'discussion' | 'plans' | 'members' | 'about'>('discussion');
+  // The same five spaces as a real community; About sits in the header.
+  const [tab, setTab] = useState<SpaceTab>('posts');
+  const [sort, setSort] = useState<'recent' | 'popular'>('recent');
+  const [about, setAbout] = useState(false);
   const posts = useMemo(() => demoPostsOf(id), [id]);
+  const sorted = useMemo(() => (sort === 'popular' ? [...posts].sort((a, b) => likesOf(b.id) - likesOf(a.id)) : posts), [posts, sort]);
   const eng = useDemoEngagement('community_post', posts.map((p) => p.id));
   const plans = useMemo(() => DEMO_PLANS.filter((p) => p.community === id), [id]);
   const chat = DEMO_CHATS.find((x) => x.kind === 'group' && x.title === c?.name);
   const goingMap = useDemoGirl((s) => s.going);
+  const agenda = useMemo<AgendaItem[]>(() => plans.map((p) => ({ id: p.id, title: p.title, startsAt: planStartsAt(p), going: planGoing(p, goingMap), subtitle: p.place })), [plans, goingMap]);
+  const gallery = useMemo<GalleryItem[]>(() => posts.filter((p) => p.photo).map((p) => ({ key: p.id, kind: 'photo' as const, photo: p.photo })), [posts]);
   const { y, onScroll, photo } = useHero();
   const split = useCommunitySplit();
   if (!c) return <Missing />;
@@ -80,10 +92,11 @@ export function DemoCommunityScreen({ id }: { id: string }) {
     toggle('joined', id);
     toast(joined ? tx('You left {name}', { name: c.name }) : tx('Welcome to {name}', { name: c.name }), joined ? 'check' : 'sparkles', 'brand');
   };
+  const propose = () => (joined ? openCreate(null, { communityId: c.id, communityName: c.name, cityId: 'dubai', girlOnly: true }) : toast('Join the community first', 'users', 'brand'));
 
   return (
     <View style={styles.root}>
-      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false}>
+      <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.hero}>
           <Animated.View style={[StyleSheet.absoluteFill, photo]}>
             <Photo tint={GIRL_TINT} visual={{ photo: c.cover }} light="dubai" scrim="strong" width={900} style={StyleSheet.absoluteFill} />
@@ -107,7 +120,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
           </View>
         </View>
 
-        {/* Wide: members, Join and Chat in a column on the left, under the cover; the posts and plans on the right. */}
+        {/* Wide: members, Join and Chat in a column on the left, under the cover; the five spaces on the right. */}
         <View style={split ? communitySplit.split : null}>
           <View style={split ? styles.side : null}>
             <Animated.View entering={reduced ? undefined : enter.rise(3)} style={styles.card}>
@@ -120,36 +133,23 @@ export function DemoCommunityScreen({ id }: { id: string }) {
               </View>
               <View style={styles.row}>
                 <GButton label={joined ? 'Joined' : 'Join'} icon={joined ? 'check' : 'plus'} variant={joined ? 'secondary' : 'primary'} onPress={join} style={{ flex: 1 }} />
-                <GButton
-                  label="Chat"
-                  icon="message"
-                  variant="secondary"
-                  onPress={() => (joined && chat ? router.push(`/messages/${chat.id}`) : toast(joined ? tx('The group chat opens here') : tx('Join to chat with the group'), 'message', 'brand'))}
-                  style={{ flex: 1 }}
-                />
+                <GButton label="Chat" icon="message" variant="secondary" onPress={() => setTab('chat')} style={{ flex: 1 }} />
               </View>
             </Animated.View>
-
           </View>
 
           <View style={split ? communitySplit.right : null}>
-            <View style={styles.tabs}>
-              {(['discussion', 'plans', 'members', 'about'] as const).map((k) => (
-                <Tab key={k} label={k === 'discussion' ? tx('Discussion') : k === 'plans' ? tx('Activities') : k === 'members' ? tx('Members') : tx('About')} on={tab === k} onPress={() => setTab(k)} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs} accessibilityRole="tablist">
+              {SPACE_TABS.map((k) => (
+                <Tab key={k.key} label={tx(k.label)} on={tab === k.key} onPress={() => setTab(k.key)} testID={`space-tab-${k.key}`} />
               ))}
-            </View>
+            </ScrollView>
 
-            <Animated.View layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)} style={{ gap: 12, paddingHorizontal: space.gutter }}>
-              {/* « + Propose an activity », as in every real community: at the top of Discussion and Activities, for every member. */}
-              {tab === 'discussion' || tab === 'plans' ? (
-                <ProposeActivityButton
-                  communityName={c.name}
-                  onPress={() => (joined ? openCreate(null, { communityId: c.id, communityName: c.name, cityId: 'dubai', girlOnly: true }) : toast('Join the community first', 'users', 'brand'))}
-                />
-              ) : null}
-              {/* Its activities in the feed: the same card as the real community page. */}
-              {tab === 'discussion'
-                ? plans.slice(0, 2).map((p) => (
+            <Animated.View key={tab} entering={reduced ? undefined : FadeIn.duration(180)} layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)} style={{ gap: 12, paddingHorizontal: space.gutter }}>
+              {tab === 'posts' ? (
+                <>
+                  {/* Its activities in the feed: the same card as the real community page. */}
+                  {plans.slice(0, 2).map((p) => (
                     <ActivityFeedCard
                       key={`card-${p.id}`}
                       card={demoPlanCard(p, goingMap)}
@@ -160,18 +160,47 @@ export function DemoCommunityScreen({ id }: { id: string }) {
                         toast(tx('You’re going! The group chat is in Messages'), 'sparkles', 'brand');
                       }}
                     />
-                  ))
-                : null}
-              {tab === 'discussion'
-                ? posts.map((p, i) => (
+                  ))}
+                  <View style={styles.sortRow}>
+                    {(['recent', 'popular'] as const).map((s) => (
+                      <Tab key={s} label={s === 'recent' ? tx('Recent') : tx('Most popular')} on={sort === s} onPress={() => setSort(s)} />
+                    ))}
+                  </View>
+                  {sorted.map((p, i) => (
                     <Animated.View key={p.id} entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
                       <GirlPostCard p={p} eng={eng} cityId="dubai" />
                     </Animated.View>
-                  ))
-                : null}
-              {tab === 'discussion' && !posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the group." /> : null}
-              {tab === 'plans' ? plans.map((p, i) => <PlanCard key={p.id} id={p.id} i={i} />) : null}
-              {tab === 'plans' && !plans.length ? <GNotice icon="calendar" body="No plans yet. Propose the first one." /> : null}
+                  ))}
+                  {!posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the group." /> : null}
+                </>
+              ) : null}
+              {tab === 'chat' ? (
+                joined && chat ? (
+                  <GNotice icon="message" title="The community chat" body="Members talk here every day.">
+                    <GButton label="Open chat" icon="message" onPress={() => router.push(`/messages/${chat.id}`)} />
+                  </GNotice>
+                ) : joined ? (
+                  <GNotice icon="message" title="The community chat" body="The group chat opens here" />
+                ) : (
+                  <GNotice icon="message" title="Join to chat" body="Members talk here every day. Join the community to read the chat and say hello.">
+                    <GButton label="Join" icon="plus" onPress={join} />
+                  </GNotice>
+                )
+              ) : null}
+              {tab === 'activities' ? (
+                <>
+                  {/* « + Propose an activity », as in every real community: for every member. */}
+                  <ProposeActivityButton communityName={c.name} onPress={propose} />
+                  <View style={{ marginHorizontal: -space.gutter }}>
+                    <Agenda items={agenda} cityId="dubai" loading={false} onOpen={(a) => router.push(`/a/${a}`)} />
+                  </View>
+                  {plans.map((p, i) => (
+                    <PlanCard key={p.id} id={p.id} i={i} />
+                  ))}
+                  {!plans.length ? <GNotice icon="calendar" body="No plans yet. Propose the first one." /> : null}
+                </>
+              ) : null}
+              {tab === 'media' ? <MediaTiles items={gallery} empty={<GNotice icon="image" title="No photos yet" body="Photos and videos posted in the community show up here." />} /> : null}
               {tab === 'members'
                 ? people(c.faces).map((m, i) => (
                     <Animated.View key={m.id} entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
@@ -192,22 +221,39 @@ export function DemoCommunityScreen({ id }: { id: string }) {
                   ))
                 : null}
               {tab === 'members' && !c.faces.length ? <GNotice icon="users" body="No members to show yet" /> : null}
-              {tab === 'about' ? (
-                <Animated.View entering={reduced ? undefined : FadeIn} style={[styles.post, { gap: 10 }]}>
-                  <GlassLayer radius={radius.xl} />
-                  <Text variant="body" color={girl.ink} raw>
-                    {c.about}
-                  </Text>
-                  <Fact icon="shield" text={tx('Women only: every member is checked by IRLY Girl.')} />
-                  <Fact icon="message" text={tx('Members are in the group chat as soon as they join.')} />
-                  <Fact icon="flag" text={tx('Anything off? Report a post or a person in one tap.')} />
-                </Animated.View>
-              ) : null}
             </Animated.View>
           </View>
         </View>
       </Animated.ScrollView>
-      <PageHeader title={c.name} scrollY={y} />
+      {tab === 'posts' && joined ? (
+        <View style={[styles.fab, { bottom: insets.bottom + 20 }]} pointerEvents="box-none">
+          <GButton label="Publish" icon="edit" onPress={() => toast('Posting needs an IRLY Girl account', 'edit', 'brand')} />
+        </View>
+      ) : null}
+      <PageHeader
+        title={c.name}
+        scrollY={y}
+        right={
+          <View style={styles.row}>
+            <IconButton icon="search" label={tx('Search in the community')} onPress={() => router.push({ pathname: '/community/search/[id]', params: { id: c.id, name: c.name } })} />
+            <IconButton icon="book" label={tx('About')} onPress={() => setAbout(true)} />
+          </View>
+        }
+      />
+      <AboutSheet
+        visible={about}
+        onClose={() => setAbout(false)}
+        name={c.name}
+        about={c.about}
+        aboutRaw
+        rules={null}
+        facts={[
+          { icon: 'users', text: tx('{n} members', { n: members }) },
+          { icon: 'shield', text: tx('Women only: every member is checked by IRLY Girl.') },
+          { icon: 'message', text: tx('Members are in the group chat as soon as they join.') },
+          { icon: 'flag', text: tx('Anything off? Report a post or a person in one tap.') },
+        ]}
+      />
     </View>
   );
 }
@@ -344,9 +390,9 @@ export function DemoPlanScreen({ id }: { id: string }) {
   );
 }
 
-function Tab({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+function Tab({ label, on, onPress, testID }: { label: string; on: boolean; onPress: () => void; testID?: string }) {
   return (
-    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} style={[styles.tab, { flex: 1 }, on && { boxShadow: girl.shadowPlum }]} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label}>
+    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} style={[styles.tab, on && { boxShadow: girl.shadowPlum }]} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label} testID={testID}>
       <GlassLayer radius={19} variant={on ? 'plum' : 'chip'} />
       <Text variant="label" color={on ? girl.pearl : girl.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
         {label}
@@ -386,8 +432,10 @@ const styles = StyleSheet.create({
   card: { marginHorizontal: space.gutter, marginTop: -22, padding: 16, gap: 12, borderRadius: radius.xl, zIndex: 0, boxShadow: girl.shadowSoft },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   side: { width: COMMUNITY_SIDE },
-  tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, marginTop: space[6], marginBottom: space[4] },
-  tab: { height: 38, paddingHorizontal: 8, borderRadius: 19, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: girl.shadowSoft },
+  tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, paddingTop: space[6], paddingBottom: space[4] },
+  sortRow: { flexDirection: 'row', gap: 8, alignSelf: 'flex-start' },
+  fab: { position: 'absolute', right: space.gutter },
+  tab: { height: 38, paddingHorizontal: 16, borderRadius: 19, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: girl.shadowSoft },
   post: { padding: 16, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   planPhoto: { width: 76, height: 76, borderRadius: radius.lg, overflow: 'hidden' },

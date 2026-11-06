@@ -14,6 +14,7 @@ import { toast } from '@/components/ui/Toast';
 import { realtimeIdsFilter } from '@/features/server/engage';
 import { useAppSpace } from '@/state/appSpace';
 import { displayCommunityName } from './name';
+import { FEED_PAGE, fetchFeedFallback, fetchPostsPage, popularScore, type FeedSort } from './space';
 
 /** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
 export const communitiesChanged = () => changed('communities', 'inbox');
@@ -223,12 +224,27 @@ function toPost(r: Row, uid: string | undefined): CommunityPost {
  * A community's posts. `space` undefined: every post (communities without
  * categories); null: General (posts without a category); a slug: that category.
  */
-export function useCommunityFeed(communityId: string, space?: string | null) {
+export function useCommunityFeed(communityId: string, space?: string | null, opts: { sort?: FeedSort } = {}) {
   const account = useAccount();
   const uid = account?.userId;
+  const sort: FeedSort = opts.sort ?? 'recent';
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Pages (community_posts_page): whether the server has them, whether more are left, how many
+  // posts were added below the first page (a reload keeps them under the fresh first page).
+  const paged = useRef(false);
+  const pageFull = useRef(false);
+  const extra = useRef(0);
+  const [more, setMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // Reading further down: new posts from others wait above (« New posts ») instead of pushing the list.
+  const hold = useRef(false);
+  const [incoming, setIncoming] = useState<CommunityPost[]>([]);
+  const postsRef = useRef<CommunityPost[]>([]);
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
 
   // Loads can finish out of order (a realtime burst); only the newest one lands.
   const seq = useRef(0);
@@ -244,16 +260,51 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
   const load = useCallback(async (): Promise<CommunityPost[]> => {
     if (!uid) return [];
     sentAt.current = syncNow();
-    const { data, error: e } =
-      space === undefined
-        ? await sb().rpc('community_feed', { p_community: communityId, p_limit: 50 })
-        : await sb().rpc('community_space_feed', { p_community: communityId, p_category: space, p_limit: 50 });
-    if (e) throw new Error(e.message);
-    return ((data as Row[]) ?? []).map((r) => toPost(r, uid));
-  }, [communityId, uid, space]);
+    const byScore = (list: CommunityPost[]) => (sort === 'popular' ? [...list].sort((a, b) => popularScore(b) - popularScore(a)) : list);
+    if (space !== undefined) {
+      const { data, error: e } = await sb().rpc('community_space_feed', { p_community: communityId, p_category: space, p_limit: 50 });
+      if (e) throw new Error(e.message);
+      paged.current = false;
+      return byScore(((data as Row[]) ?? []).map((r) => toPost(r, uid)));
+    }
+    // The first page, sorted by the server; a server without pages: the latest 50, as before.
+    const page = await fetchPostsPage(communityId, sort, { limit: FEED_PAGE });
+    paged.current = page !== null;
+    pageFull.current = page !== null && page.length >= FEED_PAGE;
+    const rows = page ?? (await fetchFeedFallback(communityId, 50));
+    const list = rows.map((r) => toPost(r, uid));
+    return page ? list : byScore(list);
+  }, [communityId, uid, space, sort]);
 
-  /** The server list, plus our posts still on their way (they are not in it yet). */
-  const land = useCallback((server: CommunityPost[]) => setPosts((prev) => [...prev.filter((x) => x.pending), ...server]), []);
+  /**
+   * The server list, plus our posts still on their way (they are not in it yet), plus the pages
+   * loaded below the first one. While the member reads further down, posts new from others wait
+   * in `incoming` (the « New posts » pill) instead of moving what she reads.
+   */
+  const land = useCallback(
+    (server: CommunityPost[]) => {
+      const prev = postsRef.current;
+      const known = new Set(prev.map((x) => x.id));
+      const shown = prev.filter((x) => !x.pending);
+      const newest = shown.reduce((m, x) => Math.max(m, x.createdAt), 0);
+      const fresh = hold.current && shown.length && sort === 'recent' ? server.filter((x) => !known.has(x.id) && !x.mine && x.createdAt > newest) : [];
+      const freshIds = new Set(fresh.map((x) => x.id));
+      const head = fresh.length ? server.filter((x) => !freshIds.has(x.id)) : server;
+      const ids = new Set(server.map((x) => x.id));
+      let tail: CommunityPost[] = [];
+      if (extra.current > 0) {
+        const dated = head.filter((x) => !x.pinnedAt);
+        const oldest = dated.length ? Math.min(...dated.map((x) => x.createdAt)) : Infinity;
+        tail = shown.filter((x) => !ids.has(x.id) && (sort === 'popular' || x.createdAt < oldest));
+      }
+      const next = [...prev.filter((x) => x.pending), ...head, ...tail];
+      postsRef.current = next;
+      setPosts(next);
+      if (fresh.length) setIncoming((was) => [...fresh, ...was.filter((x) => !freshIds.has(x.id))]);
+      setMore(paged.current && (extra.current > 0 ? true : pageFull.current));
+    },
+    [sort],
+  );
 
   const refresh = useCallback(() => {
     const n = ++seq.current;
@@ -269,6 +320,14 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
   useEffect(() => {
     if (!uid || !supabase) return;
     let alive = true;
+    // Another sort, space or community: a new list from its first page.
+    extra.current = 0;
+    hold.current = false;
+    postsRef.current = postsRef.current.filter((x) => x.pending);
+    setPosts(postsRef.current);
+    setIncoming([]);
+    setMore(false);
+    setLoading(true);
     const reload = () => {
       const n = ++seq.current;
       load()
@@ -424,7 +483,46 @@ export function useCommunityFeed(communityId: string, space?: string | null) {
     [refresh],
   );
 
-  return { posts: uid ? posts : NONE, loading: uid ? loading : false, error, refresh, post, vote, remove };
+  /** The next page, when the list nears its end: a cursor for Recent, an offset for Popular. */
+  const loadingMoreRef = useRef(false);
+  const loadMore = useCallback(async () => {
+    if (!uid || space !== undefined || !paged.current || !more || loadingMoreRef.current) return;
+    const list = postsRef.current.filter((x) => !x.pending);
+    if (!list.length) return;
+    const dated = list.filter((x) => !x.pinnedAt);
+    const before = (dated.length ? dated : list).reduce((m, x) => Math.min(m, x.createdAt), Infinity);
+    const n = seq.current;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    try {
+      const rows = await fetchPostsPage(communityId, sort, sort === 'recent' ? { before } : { offset: list.length });
+      if (n !== seq.current || !rows) return;
+      const seen = new Set(postsRef.current.map((x) => x.id));
+      const added = rows.map((r) => toPost(r, uid)).filter((x) => !seen.has(x.id));
+      extra.current += added.length;
+      postsRef.current = [...postsRef.current, ...added];
+      setPosts(postsRef.current);
+      setMore(rows.length >= FEED_PAGE && added.length > 0);
+    } catch {
+      // Offline for a moment: the next scroll to the end asks again.
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [uid, space, more, communityId, sort]);
+
+  /** Reading further down (true) or back at the top (false). */
+  const setHold = useCallback((on: boolean) => {
+    hold.current = on;
+  }, []);
+  /** « New posts » tapped: they join the list (from the server, in order). */
+  const showIncoming = useCallback(() => {
+    hold.current = false;
+    setIncoming([]);
+    refresh();
+  }, [refresh]);
+
+  return { posts: uid ? posts : NONE, loading: uid ? loading : false, error, refresh, post, vote, remove, more: Boolean(uid) && more, loadingMore, loadMore, incoming: uid ? incoming : NONE, setHold, showIncoming };
 }
 
 const GIRL_OFFICIAL = new Set(['girl_trip', 'girl_newcomers', 'girl_activity', 'girl_sport']);

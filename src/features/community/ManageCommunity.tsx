@@ -48,14 +48,15 @@ import {
   type Sanction,
 } from './governance';
 import { KIND, MemberSheet, untilText } from './MemberSheet';
+import { SettingsSection } from './CommunitySettings';
 
 /**
- * « Manage the community »: members, roles, moderation, activities, stats
- * and history, each section only for those whose rights allow it
+ * « Manage the community »: members, roles, moderation, activities, stats,
+ * history and settings (name, tagline, description, rules), each section only for those whose rights allow it
  * (community_my_rights). The server decides; refusals are shown in words.
  */
 
-type Section = 'members' | 'roles' | 'moderation' | 'activities' | 'stats' | 'history';
+type Section = 'members' | 'roles' | 'moderation' | 'activities' | 'stats' | 'history' | 'settings';
 const SECTIONS: { key: Section; label: string; allowed: (r: MyRights) => boolean }[] = [
   { key: 'members', label: 'Members', allowed: (r) => r.canManageMembers || r.canModerate },
   { key: 'roles', label: 'Roles', allowed: (r) => r.canRoles },
@@ -63,6 +64,7 @@ const SECTIONS: { key: Section; label: string; allowed: (r: MyRights) => boolean
   { key: 'activities', label: 'Activities', allowed: (r) => r.canModerate },
   { key: 'stats', label: 'Statistics', allowed: (r) => r.canStats },
   { key: 'history', label: 'History', allowed: canSeeAudit },
+  { key: 'settings', label: 'Community settings', allowed: (r) => r.canSettings },
 ];
 
 const PERM_LABEL: Record<PermKey, string> = {
@@ -137,6 +139,7 @@ export function ManageCommunityScreen({ id }: { id: string }) {
               {section === 'activities' ? <ActivitiesSection communityId={id} cityId={c?.cityId ?? 'dubai'} /> : null}
               {section === 'stats' ? <StatsSection communityId={id} /> : null}
               {section === 'history' ? <HistorySection communityId={id} /> : null}
+              {section === 'settings' ? <SettingsSection c={c} /> : null}
             </Animated.View>
           </>
         )}
