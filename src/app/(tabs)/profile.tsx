@@ -41,8 +41,8 @@ import { useAppSpace } from '@/state/appSpace';
 
 /**
  * Your profile. Signed in: the same profile other members see (identity,
- * followers, friends, Posts / Lives / Activities / Communities), with Edit
- * profile and the gear for Settings. Signed out: what is on this phone.
+ * followers and following, « My recap », Posts / Lives / Activities), with
+ * Edit profile and the gear for Settings. Signed out: what is on this phone.
  */
 export default function Profile() {
   const account = useAccount();
@@ -160,8 +160,6 @@ function LocalProfile() {
                 <Stat value={0} label="Followers" onPress={() => router.push('/account')} />
                 <View style={[styles.vr, { backgroundColor: t.c.line }]} />
                 <Stat value={0} label="Following" onPress={() => router.push('/account')} />
-                <View style={[styles.vr, { backgroundColor: t.c.line }]} />
-                <Stat value={0} label="Friends" onPress={() => router.push('/account')} />
               </Animated.View>
             </View>
           }
@@ -260,7 +258,7 @@ function LocalProfile() {
                 <GlassLayer radius={radius.lg} />
                 <Text variant="titleS">Your profile is on this phone only</Text>
                 <Text variant="bodyS" tone="secondary">
-                  Sign in to share it with other members: followers, friends, posts, lives, activities and communities.
+                  Sign in to share it with other members: followers, posts, lives, activities and communities.
                 </Text>
                 <Button label="Sign in" icon="user" onPress={() => router.push('/account')} />
               </Animated.View>
@@ -282,7 +280,7 @@ function LocalProfile() {
   );
 }
 
-function Stat({ value, label, onPress }: { value: number; label: 'Followers' | 'Following' | 'Friends'; onPress?: () => void }) {
+function Stat({ value, label, onPress }: { value: number; label: 'Followers' | 'Following'; onPress?: () => void }) {
   // « 0 Abonné·e »: the word agrees with the number, in the app language.
   const word = countWord(useLang(), value, label);
   return (

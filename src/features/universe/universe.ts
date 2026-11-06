@@ -37,7 +37,11 @@ export function universesForSpace(space: AppSpace): Universe[] {
 
 /** Whether a community row belongs in this app space (Network split by women-only, as lists already do). */
 export function belongsToSpace(c: UniverseRow, space: AppSpace): boolean {
-  const u = universeOf(c);
-  if (u === 'network') return space === 'girl' ? c.girlOnly : !c.girlOnly;
+  return universeInSpace(universeOf(c), c.girlOnly, space);
+}
+
+/** The same rule for a universe the server already worked out (e.g. member_activities' `universe`). */
+export function universeInSpace(u: Universe, girlOnly: boolean, space: AppSpace): boolean {
+  if (u === 'network') return space === 'girl' ? girlOnly : !girlOnly;
   return universesForSpace(space).includes(u);
 }

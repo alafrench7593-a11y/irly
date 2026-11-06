@@ -88,6 +88,9 @@ begin
   perform pg_temp.check((select count(*) from public.notifications where user_id = b and kind = 'NEW_FOLLOWER' and payload ->> 'from' = a::text) = 1, 'refollow the same day: still one notification');
 
   /* ───── Friend requests ───── */
+  -- Members who follow each other are friends (20261110500000_irly_follow_mutual):
+  -- A stops following C, so A and C start this part as strangers (C still follows A).
+  perform public.unfollow_user(c);
   r := public.add_friend(b);
   perform pg_temp.check(r = 'pending', 'request: pending');
   r := public.add_friend(b);
@@ -166,7 +169,8 @@ begin
   perform pg_temp.counts_agree(b, a, 'A by B after block');
   perform pg_temp.act(a);
   select * into p from public.public_profile(a);
-  perform pg_temp.check(p.followers = 0 and p.following = 1 and p.friends = 1, 'A after block: 0 followers, 1 following, 1 friend');
+  -- B became A's friend above: friends follow each other (20261110500000_irly_follow_mutual), so B is A's follower.
+  perform pg_temp.check(p.followers = 1 and p.following = 1 and p.friends = 1, 'A after block: 1 follower (B), 1 following, 1 friend');
   -- C follows B: A (who blocked C) sees B's counter without C, as B's list.
   perform pg_temp.act(c);
   perform public.follow_user(b);

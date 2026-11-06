@@ -45,10 +45,11 @@ import { CommunityThumb } from '@/features/community/CommunityThumb';
 import { languageList } from '@/data/languages';
 import { labelOf } from '@/features/girl/taxonomy';
 import { useStore } from '@/state/store';
+import { MyRecap } from './MyRecap';
 import {
+  inSpace,
   openDirect,
   setFollow,
-  setFriend,
   useMemberActivities,
   useMemberLives,
   useMemberPosts,
@@ -62,8 +63,11 @@ type Tab = 'posts' | 'lives' | 'activities';
 
 /**
  * A member's profile, yours included (the Profile tab shows it with `own`):
- * identity, followers / following / friends, the communities they joined
- * (with their photos), then three tabs (Posts, Lives, Activities).
+ * identity, followers / following (friends are members who follow each
+ * other: no request, no separate counter), the communities they joined
+ * (with their photos; yours in « My recap »), then three tabs (Posts, Lives,
+ * Activities). Each list shows what belongs to the app space on screen
+ * (features/universe): Mixte (+ Network) or IRLY Girl (+ Mom, Network).
  * Everything comes from the server as the viewer
  * may see it; counts and buttons follow the server after every action.
  * Settings live behind the gear (your profile); the "…" menu holds share,
@@ -80,10 +84,11 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
   const faces = useSignedLinks('profile-photos', [p?.photo]);
   // The badge only after a person at IRLY checked the selfie against the photos.
   const verified = useVerified(p?.id ? [p.id] : []).has(p?.id ?? '');
-  const [busy, setBusy] = useState<'follow' | 'message' | 'friend' | 'unfriend' | 'block' | null>(null);
+  const [busy, setBusy] = useState<'follow' | 'message' | 'block' | null>(null);
   const [tab, setTab] = useState<Tab>('posts');
   const [menu, setMenu] = useState(false);
-  const inGirl = useAppSpace() === 'girl';
+  const appSpace = useAppSpace();
+  const inGirl = appSpace === 'girl';
   const woman = useStore((st) => st.profile.gender) === 'woman';
   // Wide page: who they are and the buttons on the left (they stay in view), what they do on the right.
   const wide = useProfileSplit();
@@ -103,24 +108,6 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
       reload();
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
-    } finally {
-      setBusy(null);
-    }
-  };
-  // Friend request, accept, withdraw, decline, unfriend: shown as done only once the server has it.
-  const friend = async (action: 'add' | 'remove') => {
-    if (!p || busy) return;
-    setBusy(action === 'add' ? 'friend' : 'unfriend');
-    try {
-      const next = await setFriend(p.id, action);
-      haptic(action === 'add' ? 'success' : 'select');
-      if (action === 'add')
-        toast(next === 'friends' ? tx('You and {name} are now friends', { name: p.firstName }) : tx('Request sent to {name}', { name: p.firstName }), next === 'friends' ? 'check' : 'send', 'positive');
-      else toast(p.friendStatus === 'friends' ? tx('{name} is no longer your friend', { name: p.firstName }) : p.friendStatus === 'incoming' ? 'Request declined' : 'Request withdrawn', 'check', 'brand');
-      reload();
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
-      reload();
     } finally {
       setBusy(null);
     }
@@ -207,7 +194,9 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
 
   const city = p.cityId ? CITIES[p.cityId as keyof typeof CITIES] : undefined;
   const photo = p.photo ? faces[p.photo] : undefined;
-  const lists = (which: 'followers' | 'following' | 'friends') => (p.visible ? () => router.push(`/follows/${p.id}?which=${which}`) : undefined);
+  // Their communities of this app space (Mixte + Network, or Girl + Mom + Network): nothing moved, only shown.
+  const shown = communities.filter((c) => inSpace({ universe: c.universe ?? null, girlOnly: Boolean(c.girlOnly) }, appSpace));
+  const lists = (which: 'followers' | 'following') => (p.visible ? () => router.push(`/follows/${p.id}?which=${which}`) : undefined);
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} contentContainerStyle={{ paddingBottom: (own ? tabSpace : insets.bottom) + 48 }} showsVerticalScrollIndicator={false}>
@@ -258,7 +247,7 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
                 ) : null}
                 {p.followsMe && !p.isMe ? (
                   <Text variant="caption" tone="tertiary">
-                    Follows you
+                    {p.iFollow ? 'You follow each other' : 'Follows you'}
                   </Text>
                 ) : null}
               </Animated.View>
@@ -285,8 +274,6 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
                 <Count n={p.followers} label="Followers" onPress={lists('followers')} />
                 <View style={[styles.sep, { backgroundColor: t.c.line }]} />
                 <Count n={p.following} label="Following" onPress={lists('following')} />
-                <View style={[styles.sep, { backgroundColor: t.c.line }]} />
-                <Count n={p.friends} label="Friends" onPress={lists('friends')} />
               </Animated.View>
 
               {p.isMe ? (
@@ -298,7 +285,7 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
                   <IconButton icon="share" label="Share profile" size={52} onPress={share} />
                 </View>
               ) : (
-                <Actions p={p} busy={busy} onFriend={friend} onFollow={follow} onMessage={message} />
+                <Actions p={p} busy={busy} onFollow={follow} onMessage={message} />
               )}
               {/* Wide: share and report in sight too (they stay in the "…" menu, with block). */}
               {wide && !p.isMe ? (
@@ -331,7 +318,8 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
                 </View>
               ) : null}
 
-              {p.visible ? <CommunitiesSection list={communities} own={p.isMe} /> : null}
+              {/* Your profile: « My recap » (your communities, activities and posts of this app space). */}
+              {p.isMe ? <MyRecap userId={p.id} communities={communities} /> : p.visible ? <CommunitiesSection list={shown} /> : null}
 
               {/* Your profile: IRLY or IRLY Girl, the same switch as on the Home (IRLY Girl is offered to women, as there). */}
               {own && (inGirl || woman) ? (
@@ -400,7 +388,7 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
           <Divider />
           <MenuRow icon="x" label={busy === 'block' ? 'One moment…' : tx('Block {name}', { name: p.firstName })} danger onPress={block} />
           <Text variant="caption" tone="tertiary" style={{ paddingVertical: 10 }}>
-            {tx('Blocking hides you from each other everywhere and ends any friendship. {name} is not told.', { name: p.firstName })}
+            {tx('Blocking hides you from each other everywhere and ends following both ways. {name} is not told.', { name: p.firstName })}
           </Text>
         </View>
       </Sheet>
@@ -408,9 +396,15 @@ export function MemberProfileView({ userId, own = false }: { userId: string; own
   );
 }
 
-/* ───────── Follow, friend and message (someone else's profile) ───────── */
+/* ───────── Follow and message (someone else's profile) ───────── */
 
-function Actions({ p, busy, onFriend, onFollow, onMessage }: { p: MemberProfile; busy: string | null; onFriend: (a: 'add' | 'remove') => void; onFollow: () => void; onMessage: () => void }) {
+/**
+ * Follow and Message. Following each other makes two members friends, with
+ * no request (the server keeps it so): friends-only plans, Lives and
+ * messages open by themselves; an unfollow by either ends it.
+ */
+function Actions({ p, busy, onFollow, onMessage }: { p: MemberProfile; busy: string | null; onFollow: () => void; onMessage: () => void }) {
+  const mutual = p.iFollow && p.followsMe;
   return (
     <View style={{ alignSelf: 'stretch', gap: 10 }}>
       <View style={styles.buttons}>
@@ -425,44 +419,12 @@ function Actions({ p, busy, onFriend, onFollow, onMessage }: { p: MemberProfile;
           />
         </View>
         <View style={{ flex: 1 }}>
-          <Button
-            label={p.friendStatus === 'friends' ? 'Friends' : p.friendStatus === 'outgoing' ? 'Request sent' : p.friendStatus === 'incoming' ? 'Accept' : 'Add friend'}
-            icon={p.friendStatus === 'friends' ? 'userCheck' : p.friendStatus === 'outgoing' ? 'clock' : p.friendStatus === 'incoming' ? 'check' : 'users'}
-            variant={p.friendStatus === 'friends' ? 'done' : p.friendStatus === 'incoming' ? 'primary' : 'secondary'}
-            loading={busy === 'friend'}
-            full
-            haptic={false}
-            onPress={p.friendStatus === 'none' || p.friendStatus === 'incoming' ? () => onFriend('add') : undefined}
-          />
+          <Button label="Message" icon="message" variant="secondary" loading={busy === 'message'} full disabled={!p.canMessage} onPress={onMessage} />
         </View>
       </View>
-      {/* Two different links, said plainly: following needs no approval; a friend request does. */}
-      <Text variant="caption" tone="tertiary" align="center">
-        Follow: see their posts, no approval needed. Friends: they accept, then you can chat and see each other’s Lives.
-      </Text>
-      <Button label="Message" icon="message" variant="secondary" loading={busy === 'message'} full disabled={!p.canMessage} onPress={onMessage} />
-      {p.friendStatus !== 'none' ? (
-        <PressableScale
-          onPress={() => onFriend('remove')}
-          disabled={Boolean(busy)}
-          style={styles.link}
-          accessibilityRole="button"
-          accessibilityLabel={p.friendStatus === 'friends' ? tx('Remove {name} from your friends', { name: p.firstName }) : p.friendStatus === 'incoming' ? 'Decline the request' : 'Cancel the request'}
-        >
-          <Text variant="caption" tone="tertiary">
-            {busy === 'unfriend' ? 'One moment…' : p.friendStatus === 'friends' ? 'Remove from friends' : p.friendStatus === 'incoming' ? 'Decline the request' : 'Cancel the request'}
-          </Text>
-        </PressableScale>
-      ) : null}
       {!p.canMessage ? (
         <Text variant="caption" tone="tertiary" align="center">
-          {p.friendStatus === 'friends'
-            ? tx('{name} does not accept private messages right now.', { name: p.firstName })
-            : p.friendStatus === 'incoming'
-              ? tx('Accept {name}’s request to start chatting.', { name: p.firstName })
-              : p.friendStatus === 'outgoing'
-                ? tx('You can message {name} once they accept your request.', { name: p.firstName })
-                : tx('Add {name} as a friend to send a message. Following does not open a chat.', { name: p.firstName })}
+          {mutual ? tx('{name} does not accept private messages right now.', { name: p.firstName }) : tx('Follow each other to send {name} a message.', { name: p.firstName })}
         </Text>
       ) : null}
     </View>
@@ -476,12 +438,13 @@ function PostsTab({ userId, own, name }: { userId: string; own: boolean; name: s
   const router = useRouter();
   const now = useNow();
   const posts = useMemberPosts(userId);
+  const appSpace = useAppSpace();
   // Removed here: gone from the list at once.
   const [gone, setGone] = useState<Set<string>>(() => new Set());
   const create = own ? <Button label="Create a post" icon="edit" variant="secondary" full onPress={() => router.push('/post/new')} /> : null;
   if (posts.loading) return <Loading />;
   if (posts.error && !posts.items.length) return <Failed message={posts.error} onRetry={posts.reload} />;
-  const items = posts.items.filter((x) => !gone.has(x.id));
+  const items = posts.items.filter((x) => !gone.has(x.id) && inSpace(x, appSpace));
   if (!items.length)
     return (
       <View style={styles.list}>
@@ -631,13 +594,15 @@ function ActivitiesTab({ userId, own, name }: { userId: string; own: boolean; na
   const tr = useT();
   const router = useRouter();
   const acts = useMemberActivities(userId);
+  const appSpace = useAppSpace();
   const [which, setWhich] = useState<'created' | 'joined'>('created');
   const covers = useSignedLinks('activity-photos', acts.items.map((a) => a.cover));
   if (acts.loading) return <Loading />;
   if (acts.error) return <Failed message={acts.error} onRetry={acts.reload} />;
-  const list = acts.items.filter((a) => a.role === which);
-  const created = acts.items.filter((a) => a.role === 'created').length;
-  const joined = acts.items.length - created;
+  const mine = acts.items.filter((a) => inSpace(a, appSpace));
+  const list = mine.filter((a) => a.role === which);
+  const created = mine.filter((a) => a.role === 'created').length;
+  const joined = mine.length - created;
   return (
     <View style={styles.list}>
       <Segmented
@@ -698,27 +663,25 @@ function ActivityRow({ a, cover, onPress, border }: { a: ProfileActivity; cover?
  * own, or IRLY's photo of its subject: the same as on its page); each opens
  * the community. Only those the viewer may see (member_communities): never
  * a women-only one to someone without IRLY Girl access, none when the
- * profile is hidden from them. Your own profile also shows the retired ones.
+ * profile is hidden from them; only those of the app space on screen. Your
+ * own communities are in « My recap » (MyRecap).
  */
-function CommunitiesSection({ list, own }: { list: MemberCommunity[]; own: boolean }) {
+function CommunitiesSection({ list }: { list: MemberCommunity[] }) {
   const t = useTheme();
   const tr = useT();
   const router = useRouter();
-  if (!list.length && !own) return null;
+  if (!list.length) return null;
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
         <Text variant="titleM" style={{ flex: 1 }}>
           Communities
         </Text>
-        {list.length ? (
-          <Text variant="caption" tone="tertiary">
-            {tr('{n} communities', { n: list.length })}
-          </Text>
-        ) : null}
+        <Text variant="caption" tone="tertiary">
+          {tr('{n} communities', { n: list.length })}
+        </Text>
       </View>
-      {list.length ? (
-        <Rail itemWidth={COMMUNITY_CARD}>
+      <Rail itemWidth={COMMUNITY_CARD}>
           {list.map((c) => {
             const city = CITIES[c.cityId as keyof typeof CITIES];
             const members = tr('{n} members', { n: c.members });
@@ -741,24 +704,11 @@ function CommunitiesSection({ list, own }: { list: MemberCommunity[]; own: boole
                   <Text variant="caption" tone="secondary" numberOfLines={1} raw>
                     {city ? `${tr(city.name)} · ${members}` : members}
                   </Text>
-                  {own && (c.role === 'created' || c.retired) ? (
-                    <Text variant="caption" tone="tertiary" numberOfLines={1}>
-                      {c.retired ? 'No longer listed' : 'You created it'}
-                    </Text>
-                  ) : null}
                 </View>
               </PressableScale>
             );
           })}
-        </Rail>
-      ) : (
-        <Empty
-          icon="heartHandshake"
-          title="No community yet"
-          body="Join a community to meet people who like the same things, in your city."
-          cta={{ label: 'Explore communities', go: () => router.push('/communities') }}
-        />
-      )}
+      </Rail>
     </View>
   );
 }
@@ -767,8 +717,8 @@ const COMMUNITY_CARD = 220;
 
 /* ───────── Small parts ───────── */
 
-function Count({ n, label, onPress }: { n: number; label: 'Followers' | 'Following' | 'Friends'; onPress?: () => void }) {
-  // « 1 Abonné·e », « 0 Ami·e »: the word agrees with the number, in the app language.
+function Count({ n, label, onPress }: { n: number; label: 'Followers' | 'Following'; onPress?: () => void }) {
+  // « 1 Abonné·e », « 0 Abonnement »: the word agrees with the number, in the app language.
   const word = countWord(useLang(), n, label);
   return (
     <PressableScale haptic={onPress ? 'select' : false} disabled={!onPress} onPress={onPress} accessibilityRole={onPress ? 'button' : 'text'} accessibilityLabel={`${n} ${word}`} style={styles.count}>

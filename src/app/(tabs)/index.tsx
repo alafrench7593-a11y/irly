@@ -34,7 +34,7 @@ import { HomeBackdrop } from '@/features/home/HomeBackdrop';
 import { GirlPortals } from '@/features/home/Portals';
 import { ExploreDoors } from '@/features/home/Explore';
 import { DiscoverCategories } from '@/features/home/HomeActivities';
-import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
+import { TodayStrip } from '@/features/engage/EngageUI';
 import { LiveStrip, useLiveFaces } from '@/features/live/LiveStrip';
 import { hasBackend } from '@/lib/supabase';
 import { isHappeningNow } from '@/lib/time';
@@ -356,7 +356,7 @@ export default function Home() {
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             <SectionHeader {...head('today', 'Today on IRLY', 'Real plans, today')} />
             <TodayStrip cityId={cityId} />
-            <RecapDoor />
+            {/* « My recap » lives on your profile now (features/profile/MyRecap). */}
           </ScrollReveal>
         ) : null;
       case 'explore':

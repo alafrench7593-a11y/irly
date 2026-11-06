@@ -1030,6 +1030,9 @@ values (least('00000000-0000-0000-0000-00000000000a'::uuid, '00000000-0000-0000-
 on conflict (user_a, user_b) do update set status = 'accepted';
 insert into public.safety_settings (user_id, profile_visibility) values ('00000000-0000-0000-0000-00000000000c', 'everyone')
 on conflict (user_id) do update set profile_visibility = 'everyone';
+-- B and C connected above (IRLY Network): friends follow each other since
+-- 20261110500000_irly_follow_mutual. This check starts from no follow.
+delete from public.follows where follower_id = '00000000-0000-0000-0000-00000000000b' and followee_id = '00000000-0000-0000-0000-00000000000c';
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select public.follow_user('00000000-0000-0000-0000-00000000000c');
 select public.follow_user('00000000-0000-0000-0000-00000000000c');

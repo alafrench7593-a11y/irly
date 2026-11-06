@@ -5,6 +5,8 @@ import { changed, useRefreshOn } from '@/features/server/sync';
 import { friendlyError, supabase } from '@/lib/supabase';
 import { askPushInContext } from '@/features/push/push';
 import { displayCommunityName } from '@/features/community/name';
+import { universeInSpace, universeOf, type Universe } from '@/features/universe/universe';
+import type { AppSpace } from '@/state/appSpace';
 
 /**
  * A member's profile from the server, as the viewer may see it (their
@@ -28,11 +30,11 @@ export type MemberProfile = {
   canMessage: boolean;
   directId: string | null;
   isMe: boolean;
-  /** Where your friendship stands, from the server: none, sent by you, waiting for you, or friends. */
+  /** Friends = you follow each other (the server keeps it so); 'outgoing' / 'incoming': an older app's request. */
   friendStatus: FriendStatus;
   /** Unique @username, if the member chose one. */
   username: string | null;
-  /** Accepted friendships, counted on the server. */
+  /** Friends (mutual follows), counted on the server; not shown (only followers and following are). */
   friends: number;
 };
 
@@ -57,8 +59,9 @@ export type MemberCommunity = {
   topic: string | null;
   categoryId: string | null;
   retired: boolean;
-  /** Women only (IRLY Girl, Mom, women-only Network): with topic and category, its universe (universe.ts). */
   girlOnly?: boolean;
+  /** Mixte, Girl, Mom or Network (features/universe): which app space lists it (unknown: every space). */
+  universe?: Universe;
 };
 type CommunityRow = {
   id: string;
@@ -155,6 +158,7 @@ export function useMemberProfile(userId: string) {
             categoryId: x.category_id ?? null,
             retired: Boolean(x.retired),
             girlOnly: Boolean(x.girl_only),
+            universe: universeOf({ girlOnly: Boolean(x.girl_only), topic: x.topic ?? null, categoryId: x.category_id ?? null }),
           })),
         });
       })
@@ -221,7 +225,7 @@ function friendError(m: string): string {
 }
 
 /** Followers or following of a member (empty when their profile is hidden from you). */
-export function useFollowList(userId: string, which: 'followers' | 'following' | 'friends') {
+export function useFollowList(userId: string, which: 'followers' | 'following') {
   const uid = useAccount()?.userId;
   const [state, setState] = useState<{ for: string; people: FollowPerson[]; error: string | null }>({ for: '', people: [], error: null });
   const key = `${uid}|${userId}|${which}`;
@@ -230,7 +234,8 @@ export function useFollowList(userId: string, which: 'followers' | 'following' |
   const load = useCallback(() => {
     if (!supabase || !uid) return;
     const n = ++seq.current;
-    (which === 'friends' ? sb().rpc('friend_list', { p_user: userId }) : sb().rpc('follow_list', { p_user: userId, p_which: which }))
+    sb()
+      .rpc('follow_list', { p_user: userId, p_which: which })
       .then(({ data, error }) => {
         if (n !== seq.current) return;
         if (error) {
@@ -268,7 +273,7 @@ export async function openDirect(userId: string): Promise<string> {
 
 /* ───────── Profile tabs: posts, lives, activities (server, as the viewer may see them) ───────── */
 
-export type ProfilePost = MemberPost & { likes: number; comments: number; liked: boolean; media: string | null; mediaPaths: string[]; mediaKind: 'photo' | 'video' | null; thumbPath: string | null; mediaSeconds: number | null; edited: boolean };
+export type ProfilePost = MemberPost & { universe: Universe | null; girlOnly: boolean; likes: number; comments: number; liked: boolean; media: string | null; mediaPaths: string[]; mediaKind: 'photo' | 'video' | null; thumbPath: string | null; mediaSeconds: number | null; edited: boolean };
 export type ProfileLive = { id: string; body: string; media: string | null; video: boolean; poster: string | null; seconds: number | null; areaId: string; placeName: string | null; at: number; expiresAt: number; live: boolean };
 export type ProfileActivity = {
   id: string;
@@ -283,9 +288,13 @@ export type ProfileActivity = {
   going: number;
   role: 'created' | 'joined';
   state: 'upcoming' | 'live' | 'past' | 'cancelled';
+  /** The activity's universe (server: private.activity_universe); null from an older server. */
+  universe: Universe | null;
+  girlOnly: boolean;
 };
 
 const PAGE = 20;
+type PostCommunity = { name: string; topic?: string | null; category_id?: string | null; girl_only?: boolean | null };
 const netError = (e: unknown) => (/fetch|network/i.test(String(e)) ? 'Can’t reach IRLY right now' : e instanceof Error ? e.message : 'Could not load');
 
 /**
@@ -302,7 +311,7 @@ export function useMemberPosts(userId: string, enabled = true) {
     async (before: string | null): Promise<ProfilePost[]> => {
       let q = sb()
         .from('community_posts')
-        .select('id, body, media_path, media_paths, media_kind, thumb_path, media_seconds, edited_at, created_at, community_id, communities(name)')
+        .select('id, body, media_path, media_paths, media_kind, thumb_path, media_seconds, edited_at, created_at, community_id, communities(name, topic, category_id, girl_only)')
         .eq('author_id', userId)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
@@ -323,12 +332,14 @@ export function useMemberPosts(userId: string, enabled = true) {
               edited_at: string | null;
               created_at: string;
               community_id: string | null;
-              communities: { name: string } | { name: string }[] | null;
+              communities: PostCommunity | PostCommunity[] | null;
             }[]
           | null) ?? [];
       const counts = rows.length ? await sb().rpc('engagement', { p_type: 'community_post', p_ids: rows.map((r) => r.id) }) : { data: [] };
       const by = new Map(((counts.data as { target_id: string; likes: number; comments: number; liked: boolean }[] | null) ?? []).map((c) => [c.target_id, c]));
-      return rows.map((x) => ({
+      return rows.map((x) => {
+        const c = Array.isArray(x.communities) ? (x.communities[0] ?? null) : x.communities;
+        return {
         id: x.id,
         body: x.body,
         media: x.media_path,
@@ -339,11 +350,15 @@ export function useMemberPosts(userId: string, enabled = true) {
         edited: Boolean(x.edited_at),
         at: Date.parse(x.created_at),
         communityId: x.community_id,
-        communityName: x.community_id ? displayCommunityName(Array.isArray(x.communities) ? x.communities[0] : x.communities) : '',
+        communityName: x.community_id ? displayCommunityName(c) : '',
+        // A post on the profile itself belongs to no universe: every app space shows it.
+        universe: c ? universeOf({ girlOnly: Boolean(c.girl_only), topic: c.topic ?? null, categoryId: c.category_id ?? null }) : null,
+        girlOnly: Boolean(c?.girl_only),
         likes: by.get(x.id)?.likes ?? 0,
         comments: by.get(x.id)?.comments ?? 0,
         liked: by.get(x.id)?.liked ?? false,
-      }));
+        };
+      });
     },
     [userId],
   );
@@ -409,7 +424,7 @@ function useProfileRpc<R, T>(fn: string, userId: string, map: (r: R) => T, kinds
   return { items: ready ? state.items : [], loading: Boolean(uid) && enabled && !ready, error: ready ? state.error : null, reload: load };
 }
 
-type ActivityRow = { id: string; title: string; category_id: string; city_id: string; area_id: string; place_name: string | null; starts_at: string; ends_at: string | null; cover_path: string | null; going: number; role: 'created' | 'joined'; state: ProfileActivity['state'] };
+type ActivityRow = { id: string; title: string; category_id: string; city_id: string; area_id: string; place_name: string | null; starts_at: string; ends_at: string | null; cover_path: string | null; going: number; role: 'created' | 'joined'; state: ProfileActivity['state']; universe?: Universe | null; girl_only?: boolean | null };
 type LiveRow = { id: string; body: string; media_path: string | null; area_id: string; place_name: string | null; created_at: string; expires_at: string; live: boolean; media_kind?: string | null; thumb_path?: string | null; media_seconds?: number | null };
 
 /** Activities a member created or joined (the activity rules and their activity visibility decide). */
@@ -430,6 +445,8 @@ export const useMemberActivities = (userId: string, enabled = true) =>
       going: r.going,
       role: r.role,
       state: r.state,
+      universe: r.universe ?? null,
+      girlOnly: Boolean(r.girl_only),
     }),
     ['activities'],
     enabled,
@@ -447,3 +464,11 @@ export const useMemberLives = (userId: string, enabled = true) => {
     { p_scope: scope },
   );
 };
+
+/**
+ * Whether a profile item shows in this app space (Mixte + Network, or IRLY
+ * Girl + Mom + Network). An item without universe (a post on the profile
+ * itself, a row from an older server) shows in every space. Display only:
+ * the member's data stays as it is.
+ */
+export const inSpace = (x: { universe: Universe | null; girlOnly: boolean }, space: AppSpace) => x.universe === null || universeInSpace(x.universe, x.girlOnly, space);

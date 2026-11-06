@@ -72,7 +72,8 @@ insert into public.friendships (user_a, user_b, requested_by, status, accepted_a
 insert into public.follows (follower_id, followee_id) values
   ('ac000000-0000-0000-0000-0000000000a1', 'ac000000-0000-0000-0000-0000000000a2'),
   ('ac000000-0000-0000-0000-0000000000a2', 'ac000000-0000-0000-0000-0000000000a1'),
-  ('ac000000-0000-0000-0000-0000000000a2', 'ac000000-0000-0000-0000-0000000000a3');
+  ('ac000000-0000-0000-0000-0000000000a2', 'ac000000-0000-0000-0000-0000000000a3')
+on conflict do nothing; -- friends already follow each other (20261110500000_irly_follow_mutual)
 insert into public.blocks (blocker_id, blocked_id) values ('ac000000-0000-0000-0000-0000000000a3', 'ac000000-0000-0000-0000-0000000000a1');
 
 -- A direct chat Lea / Omar, and a group Lea created with Omar and Nour.

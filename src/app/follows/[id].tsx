@@ -23,7 +23,8 @@ export default function FollowsScreen() {
   const t = useTheme();
   const router = useRouter();
   const { id, which: w } = useLocalSearchParams<{ id: string; which?: string }>();
-  const [which, setWhich] = useState<'followers' | 'following' | 'friends'>(w === 'following' || w === 'friends' ? w : 'followers');
+  // Friends are members who follow each other: no separate list (an old « friends » link opens followers).
+  const [which, setWhich] = useState<'followers' | 'following'>(w === 'following' ? w : 'followers');
   const list = useFollowList(id, which);
   const faces = useSignedLinks('profile-photos', list.people.map((p) => p.photo));
   const [busy, setBusy] = useState<string | null>(null);
@@ -42,13 +43,13 @@ export default function FollowsScreen() {
   };
 
   return (
-    <Page title={which === 'followers' ? 'Followers' : which === 'friends' ? 'Friends' : 'Following'}>
+    <Page title={which === 'followers' ? 'Followers' : 'Following'}>
       <View style={[styles.switch, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
         <GlassLayer radius={22} />
-        {(['followers', 'following', 'friends'] as const).map((x) => (
+        {(['followers', 'following'] as const).map((x) => (
           <PressableScale key={x} haptic="select" onPress={() => setWhich(x)} accessibilityRole="tab" accessibilityState={{ selected: which === x }} style={[styles.seg, which === x ? { backgroundColor: t.c.text } : null]}>
             <Text variant="label" color={which === x ? t.c.bg : t.c.text}>
-              {x === 'followers' ? 'Followers' : x === 'friends' ? 'Friends' : 'Following'}
+              {x === 'followers' ? 'Followers' : 'Following'}
             </Text>
           </PressableScale>
         ))}
@@ -65,7 +66,7 @@ export default function FollowsScreen() {
             <GlassLayer radius={radius.xl} />
             <Icon name="users" size={20} color={t.c.textSecondary} />
             <Text variant="bodyS" tone="secondary" align="center">
-              {which === 'followers' ? 'No followers yet.' : which === 'friends' ? 'No friends yet.' : 'Not following anyone yet.'}
+              {which === 'followers' ? 'No followers yet.' : 'Not following anyone yet.'}
             </Text>
           </Animated.View>
         ) : (
