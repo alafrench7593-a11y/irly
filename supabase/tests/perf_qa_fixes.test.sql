@@ -131,7 +131,11 @@ select ('d7e50000-0000-0000-0000-0000000000a' || k)::uuid, 'community_post', 'd7
 -- Plans today.
 insert into public.activities (id, creator_id, format, title, category_id, city_id, area_id, starts_at, privacy, girl_only, audience)
 select ('d7e50000-0000-0000-0003-00000000000' || k)::uuid, ('d7e50000-0000-0000-0000-0000000000a' || k)::uuid, 'activity',
-  'D7e5 today ' || k, 'sport', 'dubai', 'marina', now() + interval '1 minute', 'public', false, 'all'
+  'D7e5 today ' || k, 'sport', 'dubai', 'marina',
+  -- Today in Dubai whatever the hour the suite runs (a minute ahead, or a minute ago just before Dubai midnight).
+  case when ((now() + interval '1 minute') at time zone private.city_tz('dubai'))::date = (now() at time zone private.city_tz('dubai'))::date
+    then now() + interval '1 minute' else now() - interval '1 minute' end,
+  'public', false, 'all'
 from unnest(array[2, 3, 4, 5]) k;
 
 -- ───────── 1. Feeds: hidden and blocked profiles stay hidden ─────────
