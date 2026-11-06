@@ -73,7 +73,8 @@ returns table (id uuid, name text, tagline text, category_id text, girl_only boo
 language sql stable set search_path = public as $$
   select c.id, c.name, c.tagline, c.category_id, c.girl_only, c.members_count,
     private.i_belong(c.id),
-    (select count(*)::int from public.community_posts p where p.community_id = c.id and p.deleted_at is null and p.created_at > now() - interval '7 days'),
+    -- One index scan per community, same answer as the posts' read rule (20261110600000).
+    private.community_posts_week(c.id),
     c.city_id, c.official, c.topic, t.emoji, c.created_at, c.cover_path
   from public.communities c
   left join public.community_topics t on t.topic = c.topic
