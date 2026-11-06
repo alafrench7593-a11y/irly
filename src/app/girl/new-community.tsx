@@ -275,7 +275,7 @@ function Form({ moms, start }: { moms: boolean; start?: CityId }) {
             </Text>
             <Text variant="body" color={girl.inkSoft}>
               {tx(
-                "A permanent group with its own chat. Women who join are in the chat straight away.",
+                "Women who meet again, with its own chat. Women who join are in the chat straight away.",
               )}
             </Text>
           </Animated.View>

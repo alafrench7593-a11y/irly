@@ -33,7 +33,6 @@ import { Text } from '@/components/ui/Text';
 import { findCommunity, findPerson } from '@/data/repo';
 import { toast } from '@/components/ui/Toast';
 import { chatDraft, isServerId, removeConversationForMe, setConversationArchived, useServerThread } from '@/features/server/chat';
-import { leaveGroup, renameGroup } from '@/features/server/groups';
 import { sharedHref } from '@/features/server/engage';
 import { useActivityCards } from '@/features/server/activityCards';
 import { ActivityChatBanner, ActivityShareCard } from '@/components/cards/ActivityCards';
@@ -609,7 +608,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
                       ? tx('Community · {n} members', { n: Object.keys(thread.members).length })
                       : thread.kind === 'activity'
                         ? tx('Activity · {n} going', { n: Object.keys(thread.members).length })
-                        : tx('Group · {n} members', { n: Object.keys(thread.members).length })}
+                        : tx('{n} members', { n: Object.keys(thread.members).length })}
               </Text>
             </View>
           </PressableScale>
@@ -701,7 +700,6 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
         onClose={() => setInfo(false)}
         id={id}
         title={thread.title}
-        kind={thread.kind}
         members={thread.members}
         communityId={thread.communityId}
         activityId={thread.activityId}
@@ -1126,13 +1124,12 @@ function ConversationActions({ id, archived, onDone }: { id: string; archived: b
   );
 }
 
-/** About a group, community or activity chat: its page, its members (tap for a profile), and for groups rename and leave. */
+/** About a community or activity chat: its page and its members (tap for a profile). */
 function ChatInfo({
   visible,
   onClose,
   id,
   title,
-  kind,
   members,
   communityId,
   activityId,
@@ -1144,7 +1141,6 @@ function ChatInfo({
   onClose: () => void;
   id: string;
   title: string;
-  kind: string | null;
   members: Record<string, { name: string; photo: string | null; admin: boolean }>;
   communityId: string | null;
   activityId: string | null;
@@ -1155,20 +1151,7 @@ function ChatInfo({
   const t = useTheme();
   const router = useRouter();
   const me = useAccount()?.userId;
-  const { pane, leave } = useContext(PlaceContext);
-  const [name, setName] = useState(title);
-  // Each opening starts from the chat's current name: the sheet is mounted before the title has
-  // loaded (a new group, a chat opened from a notification), and a member may rename it meanwhile.
-  const [openFor, setOpenFor] = useState(visible);
-  if (visible !== openFor) {
-    setOpenFor(visible);
-    if (visible) setName(title);
-  }
-  const [busy, setBusy] = useState(false);
-  // Leave waits for the server: a second tap left again (an error toast) and replaced the page twice.
-  const leaving = useBusy<'leave'>();
   const list = Object.entries(members);
-  const isAdmin = Boolean(me && members[me]?.admin);
   const go = (path: string) => {
     onClose();
     router.push(path as never);
@@ -1179,29 +1162,6 @@ function ChatInfo({
         {communityId ? <Button label="Open the community" icon="heartHandshake" variant="secondary" full onPress={() => go(`/c/${communityId}`)} /> : null}
         {activityId ? <Button label="Open the activity" icon="calendar" variant="secondary" full onPress={() => go(`/a/${activityId}`)} /> : null}
         {canEditPhoto ? <Button label={communityId ? 'Change the community photo' : 'Change the photo'} icon="camera" variant="secondary" full onPress={onEditPhoto} /> : null}
-        {kind === 'group' && isAdmin ? (
-          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <TextInput value={name} onChangeText={setName} maxLength={60} style={[styles.rename, { color: t.c.text, borderColor: t.c.line, backgroundColor: t.c.surface }]} accessibilityLabel={a11y('Group name')} />
-            <Button
-              label="Rename"
-              size="sm"
-              loading={busy}
-              onPress={async () => {
-                if (!name.trim() || name.trim() === title) return;
-                setBusy(true);
-                try {
-                  await renameGroup(id, name.trim());
-                  haptic('success');
-                  toast('Group renamed', 'check', 'brand');
-                } catch (e) {
-                  toast(e instanceof Error ? e.message : 'Could not rename', 'x', 'live');
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            />
-          </View>
-        ) : null}
         <ConversationActions id={id} archived={archived} onDone={onClose} />
         <Text variant="overline" tone="tertiary" style={{ marginTop: space[3] }}>
           Members
@@ -1220,34 +1180,6 @@ function ChatInfo({
             <Icon name="chevronRight" size={16} color={t.c.textTertiary} />
           </PressableScale>
         ))}
-        {kind === 'group' ? (
-          <Button
-            label="Leave the group"
-            icon="x"
-            variant="danger"
-            full
-            loading={leaving.busy === 'leave'}
-            onPress={() =>
-              leaving.isRunning() ||
-              confirm(tx('Leave {title}? You will no longer receive its messages.', { title }), () =>
-                void leaving.run('leave', () =>
-                  leaveGroup(id)
-                    .then(() => {
-                      onClose();
-                      toast('You left the group', 'check', 'brand');
-                      // The page goes back to the list (not to the chat left); the pane just empties.
-                      if (pane) leave();
-                      else {
-                        forgetConversation(id);
-                        router.replace('/messages');
-                      }
-                    })
-                    .catch((e) => toast(e instanceof Error ? e.message : 'Could not leave', 'x', 'live')),
-                ),
-              )
-            }
-          />
-        ) : null}
       </ScrollView>
     </Sheet>
   );

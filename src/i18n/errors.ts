@@ -74,6 +74,9 @@ export const SERVER_ERRORS: Record<string, string> = {
   // Activities made from an IRLY event (20261109200000_irly_event_activities).
   'a plan stays with the event it was made for': 'This activity stays with the event it was made for',
   'unknown event': 'This event is not available',
+  'groups are no longer available': 'Groups are no longer available on IRLY',
+  'this group is no longer available': 'This group is no longer available',
+  'group chats are no longer available': 'Group chats are no longer available',
   'a group belongs to a top community': 'A group belongs to a main community',
   'a group cannot move': 'A group cannot move to another community',
   'a poll cannot change once people voted': 'A poll cannot change once people voted',

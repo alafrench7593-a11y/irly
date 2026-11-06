@@ -78,7 +78,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
   const sorted = useMemo(() => (sort === 'popular' ? [...posts].sort((a, b) => likesOf(b.id) - likesOf(a.id)) : posts), [posts, sort]);
   const eng = useDemoEngagement('community_post', posts.map((p) => p.id));
   const plans = useMemo(() => DEMO_PLANS.filter((p) => p.community === id), [id]);
-  const chat = DEMO_CHATS.find((x) => x.kind === 'group' && x.title === c?.name);
+  const chat = DEMO_CHATS.find((x) => x.kind === 'community' && x.title === c?.name);
   const goingMap = useDemoGirl((s) => s.going);
   const agenda = useMemo<AgendaItem[]>(() => plans.map((p) => ({ id: p.id, title: p.title, startsAt: planStartsAt(p), going: planGoing(p, goingMap), subtitle: p.place })), [plans, goingMap]);
   const gallery = useMemo<GalleryItem[]>(() => posts.filter((p) => p.photo).map((p) => ({ key: p.id, kind: 'photo' as const, photo: p.photo })), [posts]);

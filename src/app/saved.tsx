@@ -23,7 +23,7 @@ const TABS: { value: Tab; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'activity', label: 'Plans' },
   { value: 'place', label: 'Places' },
-  { value: 'community', label: 'Groups' },
+  { value: 'community', label: 'Communities' },
   { value: 'irl_post', label: 'Posts' },
   { value: 'profile', label: 'People' },
 ];

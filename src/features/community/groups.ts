@@ -3,13 +3,13 @@ import { useAccount } from '@/features/auth/account';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { supabase } from '@/lib/supabase';
 import { cacheKey, load as loadCached, peek } from './cache';
-import { displayCommunityName } from './name';
 
 /**
- * Communities v2 on the client: a community's groups (Padel inside IRLY
- * Sport), what the signed-in member may do there (moderate, announce, name
- * moderators), pinned posts, announcements to every member, and each
- * member's notification choice per community. Rules are the server's.
+ * Communities v2 on the client: what the signed-in member may do in a
+ * community (moderate, announce, name moderators), pinned posts,
+ * announcements to every member, and each member's notification choice per
+ * community. Rules are the server's. Communities have no groups (removed on
+ * 2026-11-06, migration 20261109000000).
  */
 const sb = () => {
   if (!supabase) throw new Error('The IRLY server is not configured');
@@ -17,28 +17,24 @@ const sb = () => {
 };
 const friendly = (m: string) => (/fetch|network/i.test(m) ? 'Can’t reach IRLY right now' : m);
 
-export type Subgroup = { id: string; name: string; tagline: string | null; emoji: string | null; members: number; isMember: boolean; postsWeek: number };
 export type Rights = { isAdmin: boolean; canModerate: boolean; isOwner: boolean; announcementsToday: number; nextAnnouncementAt: number | null };
-export type Parent = { id: string; name: string } | null;
 export type CommunityPrefs = { posts: boolean; announcements: boolean; activities: boolean };
 export type Person = { userId: string; firstName: string; photo: string | null; role: 'owner' | 'moderator' | 'member' };
 
 const NO_RIGHTS: Rights = { isAdmin: false, canModerate: false, isOwner: false, announcementsToday: 0, nextAnnouncementAt: null };
 
-type Extras = { groups: Subgroup[]; rights: Rights; parent: Parent; prefs: CommunityPrefs };
+type Extras = { rights: Rights; prefs: CommunityPrefs };
 
-/** Groups, rights, parent and my notification choice for one community, kept fresh. */
+/** My rights and my notification choice for one community, kept fresh. */
 export function useCommunityExtras(id: string) {
   const uid = useAccount()?.userId;
   const [state, setState] = useState<{ for: string } & Extras>({
     for: '',
-    groups: [],
     rights: NO_RIGHTS,
-    parent: null,
     prefs: { posts: true, announcements: true, activities: true },
   });
   const seq = useRef(0);
-  // The last known extras show at once (the page's tools and groups do not pop in later).
+  // The last known extras show at once (the page's tools do not pop in later).
   const ck = uid && id ? cacheKey(uid, 'extras', id) : '';
   const load = useCallback(
     (join = false) => {
@@ -55,35 +51,18 @@ export function useCommunityExtras(id: string) {
   useRefreshOn(['communities'], reload);
   const ready = state.for === `${uid}|${id}`;
   const known = ready ? state : peek<Extras>(ck);
-  return { groups: known?.groups ?? NO_GROUPS, rights: known?.rights ?? NO_RIGHTS, parent: known?.parent ?? null, prefs: known?.prefs ?? state.prefs, reload };
+  return { rights: known?.rights ?? NO_RIGHTS, prefs: known?.prefs ?? state.prefs, reload };
 }
 
-const NO_GROUPS: Subgroup[] = [];
-
-/** Groups, my rights, the parent and my notification choice: four reads side by side. */
+/** My rights and my notification choice: two reads side by side. */
 export async function fetchExtras(uid: string, id: string): Promise<Extras> {
   return Promise.all([
-    sb().rpc('community_subgroups', { p_parent: id }),
     sb().rpc('community_rights', { p_community: id }),
-    // The parent in the same round trip (no second, sequential read).
-    sb().from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', id).maybeSingle(),
     sb().from('community_notification_prefs').select('*').eq('community_id', id).eq('user_id', uid).maybeSingle(),
   ])
-    .then(([g, r, me, pr]): Extras => {
-      const row = me.data as { parent_id: string | null; parent: Parent | Parent[] | null } | null;
-      const embedded = Array.isArray(row?.parent) ? (row?.parent[0] ?? null) : (row?.parent ?? null);
-      const parent = row?.parent_id && embedded ? { ...embedded, name: displayCommunityName(embedded) } : null;
+    .then(([r, pr]): Extras => {
       const rr = ((r.data as Record<string, unknown>[] | null) ?? [])[0];
       return {
-        groups: ((g.data as Record<string, unknown>[] | null) ?? []).map((x) => ({
-          id: x.id as string,
-          name: displayCommunityName({ name: x.name as string | null }),
-          tagline: (x.tagline as string | null) ?? null,
-          emoji: (x.emoji as string | null) ?? null,
-          members: Number(x.members ?? 0),
-          isMember: Boolean(x.is_member),
-          postsWeek: Number(x.posts_week ?? 0),
-        })),
         rights: rr
           ? {
               isAdmin: Boolean(rr.is_admin),
@@ -93,7 +72,6 @@ export async function fetchExtras(uid: string, id: string): Promise<Extras> {
               nextAnnouncementAt: rr.next_announcement_at ? Date.parse(rr.next_announcement_at as string) : null,
             }
           : NO_RIGHTS,
-        parent,
         prefs: { posts: true, announcements: true, activities: true, ...((pr.data as Partial<CommunityPrefs> | null) ?? {}) },
       };
     });
@@ -121,13 +99,6 @@ export async function setCommunityPrefs(communityId: string, prefs: CommunityPre
     .from('community_notification_prefs')
     .upsert({ user_id: uid, community_id: communityId, posts: prefs.posts, announcements: prefs.announcements, activities: prefs.activities });
   if (error) throw new Error(friendly(error.message));
-}
-
-export async function createSubgroup(parentId: string, name: string, tagline: string): Promise<string> {
-  const { data, error } = await sb().rpc('create_subgroup', { p_parent: parentId, p_name: name, p_tagline: tagline || null });
-  if (error) throw new Error(friendly(error.message));
-  changed('communities');
-  return data as string;
 }
 
 export async function communityPeople(communityId: string, query?: string): Promise<Person[]> {

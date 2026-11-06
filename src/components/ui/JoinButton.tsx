@@ -19,12 +19,12 @@ import { toast } from './Toast';
 
 type Props = {
   id: string;
-  /** "JOIN ACTIVITY", "JOIN", "JOIN GROUP"... */
+  /** "JOIN ACTIVITY", "JOIN", "JOIN COMMUNITY"... */
   label?: string;
   size?: 'lg' | 'md';
   full?: boolean;
   style?: StyleProp<ViewStyle>;
-  /** Membership instead of attendance (groups). */
+  /** Membership instead of attendance (communities). */
   membership?: boolean;
 };
 
@@ -73,7 +73,7 @@ export const JoinButton = memo(function JoinButton({ id, label = 'JOIN ACTIVITY'
       }
     } else {
       haptic('tap');
-      toast(membership ? 'You left the group' : 'You left this activity', 'x', 'live');
+      toast(membership ? 'You left the community' : 'You left this activity', 'x', 'live');
     }
   };
 

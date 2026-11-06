@@ -13,8 +13,6 @@ import { toast } from '@/components/ui/Toast';
 import { CITIES } from '@/data/destinations';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
 import { joinCommunity } from '@/features/community/data';
-import { useCommunityExtras } from '@/features/community/groups';
-import { SubgroupList } from '@/features/community/GroupsUI';
 import { useRefreshOn } from '@/features/server/sync';
 import { t as tx } from '@/i18n';
 import { ACCESS_LIMIT, readGirlAccess, withLimit, type GirlAccess } from '@/features/girl/access';
@@ -27,16 +25,15 @@ import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 type SpaceId = 'moms' | 'families';
-type Space = { title: string; line: string; womenOnly: boolean; rules: { icon: IconName; text: string }[]; help?: string };
+type Space = { title: string; line: string; womenOnly: boolean; rules: { icon: IconName; text: string }[] };
 
 const SPACES: Record<SpaceId, Space> = {
   moms: {
     title: 'IRLY Mom Community',
     line: 'Moms meeting moms in the city: coffees, playdates, advice and recommendations.',
     womenOnly: true,
-    help: 'schools',
     rules: [
-      { icon: 'shield', text: 'Women only: checked by the server on every screen, post and group.' },
+      { icon: 'shield', text: 'Women only: checked by the server on every screen, post and chat.' },
       { icon: 'eye', text: 'Think before posting children: no faces of other people’s kids without their parents’ consent.' },
       { icon: 'pin', text: 'Meet in public places first; never share your home address in a post.' },
       { icon: 'flag', text: 'Report anything inappropriate: hosts and IRLY review every report.' },
@@ -46,7 +43,6 @@ const SPACES: Record<SpaceId, Space> = {
     title: 'IRLY Family',
     line: 'Families meeting families: weekend outings, kids activities, schools and good deals.',
     womenOnly: false,
-    help: 'schools',
     rules: [
       { icon: 'eye', text: 'Children’s photos: only your own, and only what you would show anyone.' },
       { icon: 'pin', text: 'Meet in public places; share the area, never your address.' },
@@ -64,14 +60,16 @@ const isSpace = (x: string | undefined): x is SpaceId => x === 'moms' || x === '
 const LOAD_LIMIT = ACCESS_LIMIT;
 
 /**
- * A space (IRLY Mom Community, IRLY Family): its rules, its groups
+ * A space (IRLY Family; IRLY Mom Community's old links open its page in IRLY Girl): its rules
  * and its official community, where members post text, photos and videos.
- * Same communities, groups, pins, announcements and reports as everywhere.
+ * Same communities, pins, announcements and reports as everywhere.
  */
 export default function SpaceRoute() {
   const { topic } = useLocalSearchParams<{ topic: string }>();
   // The « girls » space page showed a retired official community: its old links open IRLY Girl itself.
   if (topic === 'girls') return <Redirect href={GIRL_DOOR} />;
+  // IRLY Mom Community lives in IRLY Girl, with its official communities (Mom Expat, Mom Activité…).
+  if (topic === 'moms') return <Redirect href={MOM_DOOR} />;
   // An old or wrong link says so (it used to open IRLY Family silently).
   if (!isSpace(topic)) return <NotFound title="This space does not exist" />;
   return <SpaceScreen id={topic} />;
@@ -118,7 +116,6 @@ function SpaceScreen({ id }: { id: SpaceId }) {
   useEffect(load, [load]);
   useRefreshOn(['communities'], load);
   const row = state.for === key ? state.row : null;
-  const extras = useCommunityExtras(row?.id ?? '');
 
   const join = async () => {
     if (!row || busy) return;
@@ -128,7 +125,6 @@ function SpaceScreen({ id }: { id: SpaceId }) {
       haptic('success');
       toast(tx('Welcome to {name} 👋', { name: row.name }), 'users', 'brand');
       load();
-      extras.reload();
     } catch (e) {
       toast(friendlyError(e instanceof Error ? e.message : 'Could not join'), 'x', 'live');
     } finally {
@@ -184,9 +180,7 @@ function SpaceScreen({ id }: { id: SpaceId }) {
               ) : (
                 <Button label="Join the space" icon="users" full loading={busy} onPress={join} />
               )}
-              {s.help ? <Button label="Ask a question about schools, health…" icon="question" variant="ghost" onPress={() => router.push('/help')} /> : null}
             </View>
-            <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), load())} />
           </>
         )}
         <View style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]}>

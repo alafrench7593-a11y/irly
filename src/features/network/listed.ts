@@ -8,7 +8,7 @@
  * 20261008003400): IRLY Network, and Girl CEO in IRLY Girl (20261028100000:
  * both live here, not in the community lists; the others are retired).
  */
-export const NETWORK_TOPICS = new Set(['network', 'girl_network', 'entrepreneurs', 'ecom', 'tech', 'ai']);
+export const NETWORK_TOPICS = new Set(['network', 'girl_network', 'mom_network', 'entrepreneurs', 'ecom', 'tech', 'ai']);
 export const NETWORK_CATEGORY = 'networking';
 
 // Both fields required: a community without its category is never taken for a networking one.

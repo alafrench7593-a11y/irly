@@ -86,24 +86,6 @@ export function useForYou() {
   );
 }
 
-export type GroupSuggestion = { id: string; name: string; emoji: string | null; parentName: string; members: number; postsWeek: number; reason: 'in_your_community' | 'your_interests' };
-export function useGroupSuggestions(cityId: string) {
-  return useRpc(
-    'suggest_groups',
-    { p_city: cityId, p_limit: 8 },
-    (r): GroupSuggestion => ({
-      id: r.id as string,
-      name: r.name as string,
-      emoji: (r.emoji as string | null) ?? null,
-      parentName: r.parent_name as string,
-      members: Number(r.members ?? 0),
-      postsWeek: Number(r.posts_week ?? 0),
-      reason: r.reason as GroupSuggestion['reason'],
-    }),
-    ['communities'],
-  );
-}
-
 export type Badge = { badge: 'organizer' | 'helper' | 'explorer'; level: number; count: number };
 export function useBadges(userId: string | null | undefined) {
   return useRpc('member_badges', userId ? { p_user: userId } : null, (r): Badge => ({ badge: r.badge as Badge['badge'], level: Number(r.level), count: Number(r.count) }), ['activities', 'communities']);

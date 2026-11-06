@@ -13,10 +13,12 @@ import { displayCommunityName } from './name';
 /**
  * IRLY Community: the official communities IRLY runs, in Dubai only (IRLY
  * Expat, IRLY Activité, IRLY Sport, IRLY Running Club, IRLY Padel Club, IRLY
- * Trip, IRLY Network, Les Français à Dubaï; IRLY Girl, and Girl CEO inside
- * IRLY Network); every other community is created by members. Which ones
- * exist, and what they match, is configured on the server
- * (community_topics, migration 20261108200000_irly_official_communities_dubai);
+ * Trip, IRLY Network, Les Français à Dubaï), mirrored for women in IRLY Girl
+ * (Girl Expat … Les Françaises à Dubaï, Girl CEO inside IRLY Network) and for
+ * moms in IRLY Mom Community (Mom Expat … Les Mamans françaises à Dubaï, Mom
+ * CEO inside IRLY Network); every other community is created by members.
+ * Which ones exist, and what they match, is configured on the server
+ * (community_topics, migration 20261109000000_irly_official_girl_mom_no_groups);
  * the app only sends the member's own onboarding answers as tags and shows
  * what comes back. Joining is always the member's choice.
  */
@@ -118,14 +120,15 @@ export async function joinCommunities(ids: string[]): Promise<number> {
 
 /** Discover groups for the official topics (filters on the Communities page). */
 export const TOPIC_GROUPS: Record<string, string[]> = {
-  sports: ['sport', 'padel', 'football', 'running', 'beach'],
+  sports: ['sport', 'padel', 'football', 'running', 'beach', 'girl_sport', 'girl_padel', 'girl_running', 'mom_sport', 'mom_padel', 'mom_running'],
   fitness: ['gym', 'running', 'wellness'],
-  networking: ['network', 'entrepreneurs', 'tech', 'ai', 'ecom'],
+  networking: ['network', 'entrepreneurs', 'tech', 'ai', 'ecom', 'girl_network', 'mom_network'],
   business: ['entrepreneurs', 'ecom', 'network'],
-  travel: ['trip', 'beach'],
+  travel: ['trip', 'beach', 'girl_trip', 'mom_trip'],
   food: ['food', 'nights'],
   culture: ['culture', 'nights'],
-  lifestyle: ['newcomers', 'expats', 'francais', 'lifestyle', 'girls', 'moms', 'families', 'food', 'beach', 'shopping', 'nights'],
+  lifestyle: ['newcomers', 'expats', 'francais', 'lifestyle', 'girls', 'moms', 'families', 'food', 'beach', 'shopping', 'nights',
+    'girl_newcomers', 'girl_activity', 'girl_trip', 'girl_francaise', 'mom_expat', 'mom_activity', 'mom_trip', 'mom_francaise'],
 };
 
 /** The photo of each IRLY community: always a photo taken in Dubai (the library's Dubai photos, DUBAI_KEYS). */
@@ -162,18 +165,29 @@ export const TOPIC_PHOTO = {
 } as Record<string, PhotoKey>;
 
 /**
- * IRLY Girl's official communities (its four, Girl CEO in IRLY Network, and
- * the retired IRLY Francophone for its members): IRLY's own photos taken in
- * Dubai, the same on the card, the page, the thumbnail and the chat (until
- * IRLY sets a cover).
+ * IRLY Girl's and IRLY Mom Community's official communities (Girl CEO and
+ * Mom CEO in IRLY Network, and the retired IRLY Francophone for its
+ * members): IRLY's own photos taken in Dubai, the same on the card, the page,
+ * the thumbnail and the chat (until IRLY sets a cover).
  */
 export const GIRL_OFFICIAL_PHOTO: Record<string, PhotoKey> = {
-  girl_trip: 'girlTrip',
   girl_newcomers: 'newcomerGirl',
   girl_activity: 'beachClubGirl',
-  girl_sport: 'padelGirl',
+  girl_sport: 'gymGirl',
+  girl_running: 'runGirl',
+  girl_padel: 'padelGirl',
+  girl_trip: 'girlTrip',
   girl_network: 'networkingGirl',
+  girl_francaise: 'restaurantGirl',
   girl_francophone: 'brunchGirl',
+  mom_expat: 'strollerMom',
+  mom_activity: 'safariPark',
+  mom_sport: 'pilatesGirl',
+  mom_running: 'promenadeGirl',
+  mom_padel: 'tennisGirl',
+  mom_trip: 'desertGirl',
+  mom_network: 'skylineGirl',
+  mom_francaise: 'eveningGirl',
 };
 
 /**
@@ -181,7 +195,7 @@ export const GIRL_OFFICIAL_PHOTO: Record<string, PhotoKey> = {
  * CEO (IRLY Girl) are reached from the IRLY Network section, never shown as
  * a second tile in the community lists or recommendations.
  */
-export const NETWORK_OFFICIAL_TOPICS: readonly (string | null)[] = ['network', 'girl_network'];
+export const NETWORK_OFFICIAL_TOPICS: readonly (string | null)[] = ['network', 'girl_network', 'mom_network'];
 
 /** Category photos that were not taken in Dubai, and the Dubai photo a community shows instead. */
 const DUBAI_INSTEAD = { gallery: 'souk', concert: 'festival', dogPark: 'nature', family: 'waterPark', education: 'office' } as Record<string, PhotoKey>;
@@ -229,10 +243,10 @@ export const WELCOME_CHARTER = [
  * answers or deletes it): what people there want to know first.
  */
 function introQuestion(topic: string | null | undefined, cityName: string): string {
-  if (topic === 'girl_network' || topic === 'network') return t('What I do, and what I’m building or looking for: …');
-  if (topic === 'girl_trip') return t('Destinations I’d love to discover: …');
-  if (topic === 'sport' || topic === 'girl_sport') return t('Sports I practise: …');
-  if (topic === 'expats' || topic === 'girl_newcomers') return t('In {city} since: …', { city: cityName });
+  if (topic === 'girl_network' || topic === 'mom_network' || topic === 'network') return t('What I do, and what I’m building or looking for: …');
+  if (topic === 'girl_trip' || topic === 'mom_trip' || topic === 'trip') return t('Destinations I’d love to discover: …');
+  if (topic === 'sport' || topic === 'girl_sport' || topic === 'mom_sport') return t('Sports I practise: …');
+  if (topic === 'expats' || topic === 'girl_newcomers' || topic === 'mom_expat') return t('In {city} since: …', { city: cityName });
   return t('What I’m looking for here: …');
 }
 
@@ -261,22 +275,22 @@ export function introDraft(p: Profile, cityName: string, interestLabels: string[
 }
 
 /**
- * IRLY Girl's official community since 2026-11-06 (girl_official_communities
- * on the server, migration 20261108200000): IRLY Girl, in Dubai. Every page
- * that features IRLY Girl's communities shows it and no other official one
- * (Girl CEO is in IRLY Network; Girl Trip, Girl Expat, Girl Activité and
- * Girl Sport are retired, still open to their members from « Mine »); the
+ * IRLY Girl's official communities since 2026-11-06 (girl_official_communities
+ * on the server, migration 20261109000000): IRLY's list for women, in Dubai,
+ * in this order. Girl CEO is in IRLY Network; the general IRLY Girl community
+ * (girls) is retired, still open to its members from « Mine »; the
  * communities members create stay listed as theirs.
  */
-export const GIRL_OFFICIAL_TOPICS = ['girls'] as const;
+export const GIRL_OFFICIAL_TOPICS = ['girl_newcomers', 'girl_activity', 'girl_sport', 'girl_running', 'girl_padel', 'girl_trip', 'girl_francaise'] as const;
 export type GirlOfficialTopic = (typeof GIRL_OFFICIAL_TOPICS)[number];
 
 /**
- * IRLY Mom Community's official community: IRLY Mom Community (topic moms,
- * the former IRLY Moms, then IRLY Maman). Women only. Retired since
- * 2026-11-06: listed first among the mom communities only for its members.
+ * IRLY Mom Community's official communities (mom_official_communities on the
+ * server): IRLY's list for moms, in Dubai, women only, in this order (Mom CEO
+ * is in IRLY Network). The retired IRLY Mom Community (moms) comes last, for
+ * its members only.
  */
-export const MAMAN_OFFICIAL_TOPICS = ['moms'] as const;
+export const MAMAN_OFFICIAL_TOPICS = ['mom_expat', 'mom_activity', 'mom_sport', 'mom_running', 'mom_padel', 'mom_trip', 'mom_francaise', 'moms'] as const;
 
 export type GirlOfficialCommunity = { id: string; topic: GirlOfficialTopic; name: string; tagline: string; emoji: string; members: number; isMember: boolean; coverPath: string | null };
 

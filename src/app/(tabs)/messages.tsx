@@ -43,32 +43,30 @@ import { useTheme } from '@/theme/useTheme';
 import { SpaceFlavor } from '@/theme/space';
 import { GirlHeaderMark } from '@/features/girl/GirlMark';
 
-type Tab = 'all' | 'private' | 'groups' | 'communities' | 'activities';
+type Tab = 'all' | 'private' | 'communities' | 'activities';
 
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
   { id: 'all', label: 'All', icon: 'message' },
   { id: 'private', label: 'Private', icon: 'user' },
-  { id: 'groups', label: 'Groups', icon: 'users' },
   { id: 'communities', label: 'Communities', icon: 'heartHandshake' },
   { id: 'activities', label: 'Activities', icon: 'calendar' },
 ];
 
-/** Which tab a chat belongs to: one, never two. */
+/** Which tab a chat belongs to: one, never two (group chats were removed on 2026-11-06). */
 const tabOf = (c: Conversation): Exclude<Tab, 'all'> =>
-  c.kind === 'community' ? 'communities' : c.kind === 'event' ? 'activities' : c.kind === 'group' ? 'groups' : 'private';
+  c.kind === 'community' ? 'communities' : c.kind === 'event' ? 'activities' : 'private';
 
 const EMPTY: Record<Tab, string> = {
   all: 'No conversations yet. Join a community or a plan, or message someone you met.',
   private: 'Open someone’s profile and tap Message to start a private conversation.',
-  groups: 'Create a group with people you know: it gets its own chat and photo.',
   communities: 'Join a community: its chat appears here straight away.',
-  activities: 'Join an activity: its group chat appears here until the day.',
+  activities: 'Join an activity: its chat appears here until the day.',
 };
 
 /**
  * Messages: every chat you are in, sorted by the latest message, in tabs
- * that never mix (private, groups, communities, activities). Each row shows
- * the chat's own picture: the person's photo, the group's, the community's
+ * that never mix (private, communities, activities). Each row shows
+ * the chat's own picture: the person's photo, the community's
  * or the activity's. Search covers names and last messages.
  *
  * Wide screens (useSplit): the list on the left, the chosen conversation on
@@ -140,7 +138,7 @@ function Messages() {
   }, [server.conversations, showArchived, cityId, connections, memberOf, matches, sent]);
 
   const counts = useMemo(() => {
-    const n: Record<Tab, number> = { all: all.length, private: 0, groups: 0, communities: 0, activities: 0 };
+    const n: Record<Tab, number> = { all: all.length, private: 0, communities: 0, activities: 0 };
     for (const c of all) n[tabOf(c)] += 1;
     return n;
   }, [all]);
@@ -201,7 +199,7 @@ function Messages() {
     <View style={styles.split}>
     <View style={split ? styles.listPane : styles.listFull}>
     <FrameContext.Provider value={listFrame}>
-    <Page overline={city.name} title="Messages" subtitle="Private chats, groups, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined} onBack={back} bottomInset={tabBarSpace - insets.bottom}>
+    <Page overline={city.name} title="Messages" subtitle="Private chats, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined} onBack={back} bottomInset={tabBarSpace - insets.bottom}>
       <View style={styles.pad}>
         <View style={styles.search}>
           <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
@@ -259,7 +257,6 @@ function Messages() {
       </ScrollView>
 
       <View style={[styles.pad, styles.actions]}>
-        <Action icon="users" label="New group" onPress={() => router.push('/group/new')} />
         <Action icon="heartHandshake" label="Find communities" onPress={() => router.push('/communities')} />
       </View>
       {archivedCount > 0 ? (
@@ -410,7 +407,7 @@ function Action({ icon, label, onPress }: { icon: IconName; label: string; onPre
   );
 }
 
-const KIND_ICON: Record<Exclude<Tab, 'all'>, IconName> = { private: 'user', groups: 'users', communities: 'heartHandshake', activities: 'calendar' };
+const KIND_ICON: Record<Exclude<Tab, 'all'>, IconName> = { private: 'user', communities: 'heartHandshake', activities: 'calendar' };
 
 const Row = memo(function Row({ c, lit, selected, unread, picture, appPhoto, onOpen, onLong }: { c: Conversation; lit: boolean; selected: boolean; unread: number; picture?: string; appPhoto?: PhotoKey; onOpen: (c: Conversation) => void; onLong: (c: Conversation) => void }) {
   const t = useTheme();
@@ -422,7 +419,7 @@ const Row = memo(function Row({ c, lit, selected, unread, picture, appPhoto, onO
   const person = !server && kind === 'private' ? findPerson(c.personIds[0]) : undefined;
   const community = !server && kind === 'communities' && c.refId ? findCommunity(c.refId) : undefined;
   const who = last ? (last.from === 'me' ? `${tx('You:')} ` : kind === 'private' ? '' : `${server ? (c.lastSenderName ?? tx('Member')) : senderName(last.from)}: `) : '';
-  const body = last ? (c.lastIsPhoto ? `📷 ${tx('Photo')}` : server ? last.text : tx(last.text)) : kind === 'private' ? tx('You are connected. Say hi 👋') : tx('Say hello to the group');
+  const body = last ? (c.lastIsPhoto ? `📷 ${tx('Photo')}` : server ? last.text : tx(last.text)) : kind === 'private' ? tx('You are connected. Say hi 👋') : tx('Say hello to everyone');
   return (
     <PressableScale
       onPress={() => onOpen(c)}

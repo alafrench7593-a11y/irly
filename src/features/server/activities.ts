@@ -819,7 +819,7 @@ export function useGeocoderOn(): boolean {
 export type MyCommunityOption = { id: string; name: string; groupOf: string | null; girlOnly: boolean };
 let optionsKnown: { key: string; list: MyCommunityOption[] } | null = null;
 
-/** Communities and groups I belong to, for attaching an activity to one (optional). */
+/** Communities I belong to, for attaching an activity to one (optional). Communities have no groups. */
 export function useMyCommunityOptions(): MyCommunityOption[] {
   const uid = useAccount()?.userId;
   const version = useSyncVersion('communities');
@@ -835,6 +835,7 @@ export function useMyCommunityOptions(): MyCommunityOption[] {
       .select('community_id, communities!inner(id, name, girl_only, deleted_at, parent:parent_id(name))')
       .eq('user_id', uid)
       .is('communities.deleted_at', null)
+      .is('communities.parent_id', null)
       .limit(100)
       .then(
         ({ data, error }) => {

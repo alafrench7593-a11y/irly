@@ -54,7 +54,7 @@ import { useNow } from '@/lib/useNow';
 import { PostMedia } from '@/features/posts/PostMedia';
 import { useChannels, useCommunityExtras } from '@/features/community/groups';
 import { CommunityActivityFeed, ProposeActivity } from '@/features/community/CommunityActivitiesSlot';
-import { HostTools, NotifyPrefs, ParentLink, SpaceChips, SubgroupList } from '@/features/community/GroupsUI';
+import { HostTools, NotifyPrefs, SpaceChips } from '@/features/community/GroupsUI';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
@@ -178,7 +178,7 @@ function CommunityScreen() {
   const city = c ? (CITIES[c.cityId as CityId] ?? CITIES.dubai) : CITIES.dubai;
   const geo: GeoIndex = useMemo(() => ({ cities: [{ id: city.id, name: city.name }], areas: city.areas.map((a) => ({ id: a.id, name: a.name, cityId: city.id })) }), [city]);
   const agenda = useMemo<AgendaItem[]>(
-    () => acts.activities.filter((a) => a.status !== 'cancelled').map((a) => ({ id: a.id, title: a.title, startsAt: a.startsAt, going: a.going, pinned: Boolean(a.pinnedAt), subtitle: a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : a.status === 'ongoing' ? tx('Happening now') : null })),
+    () => acts.activities.filter((a) => a.status !== 'cancelled').map((a) => ({ id: a.id, title: a.title, startsAt: a.startsAt, going: a.going, pinned: Boolean(a.pinnedAt), subtitle: a.status === 'ongoing' ? tx('Happening now') : null })),
     [acts.activities],
   );
   // The feed's files are signed in one request and its first photos fetched ahead; once
@@ -319,7 +319,6 @@ function CommunityScreen() {
     <View style={{ gap: space[5] }}>
       <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator' || my.canSettings} staff={contentStaff} onChanged={refresh} />
       <View style={[styles.pad, { gap: 6 }]}>
-        <ParentLink parent={extras.parent} />
         <Text variant="overline" tone="accent">
           {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
         </Text>
@@ -406,8 +405,7 @@ function CommunityScreen() {
         </View>
       ) : null}
       {my.canIrly ? <IrlyTools communityId={c.id} name={c.name} onChanged={() => feed.refresh()} /> : null}
-      <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} official={c.official} parentId={extras.parent?.id ?? null} onChanged={() => (extras.reload(), feed.refresh())} />
-      {!extras.parent ? <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), refresh())} /> : null}
+      <HostTools communityId={c.id} name={c.name} rights={extras.rights} onChanged={() => (extras.reload(), feed.refresh())} />
 
       {/* IRLY's own: the welcome, the introduction and the rules; a member's community: the introduction. */}
       {c.official ? (
@@ -513,7 +511,7 @@ function CommunityScreen() {
                       </Text>
                     </View>
                     <Text variant="caption" tone="tertiary" raw>
-                      {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`, a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : null]
+                      {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`]
                         .filter(Boolean)
                         .join(' · ')}
                     </Text>

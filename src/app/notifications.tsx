@@ -351,8 +351,6 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
         return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: tx('IRLY Network · say hi') };
       case 'NEW_FOLLOWER':
         return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: tx('See their profile') };
-      case 'GROUP_ADDED':
-        return { icon: 'users', title: tx('{name} added you to {title}', { name: name(p.from), title: String(p.title ?? tx('')) }), body: tx('Open the group chat') };
       case 'FRIEND_ACCEPTED':
         return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends: say hi') };
       case 'COMMUNITY_JOINED':
