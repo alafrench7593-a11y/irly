@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { Rail } from '@/components/cards/Blocks';
@@ -22,6 +22,11 @@ import { CommunityThumb } from '@/features/community/CommunityThumb';
 import type { MapCommunity } from '@/features/community/mapSpots';
 import { displayCommunityName } from '@/features/community/name';
 import { joinCommunity, leaveCommunity, useCommunityList, type CommunitySummary } from '@/features/community/data';
+import { CommunityStats } from '@/features/community/discovery/CommunityStats';
+import { fromDemo, fromSummary, inSpace, sortLocally, useDirectory, useDirectorySort, useFavorites, type DirectoryCommunity } from '@/features/community/discovery/directory';
+import { FavoriteStar } from '@/features/community/discovery/FavoriteStar';
+import { SortBar } from '@/features/community/discovery/SortBar';
+import { useCityFilter } from '@/features/server/scope';
 import { profileTags, TOPIC_GROUPS, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
 import { isDemoId, useDemoCommunitiesLike, useDemoGirl } from '@/features/girl/demo';
 import { GirlOfficialCommunities } from '@/features/girl/GirlOfficial';
@@ -54,19 +59,38 @@ type Group = (typeof GROUPS)[number]['id'];
 
 // Members' own communities follow their category.
 const CATEGORY_GROUP: Record<string, Group> = { sport: 'sports', networking: 'networking', travel: 'travel', food: 'food', wellness: 'fitness', outdoor: 'travel', nightlife: 'lifestyle', culture: 'culture', family: 'lifestyle' };
-const inGroup = (c: CommunitySummary, group: Group) =>
+const inGroup = (c: { topic: string | null; categoryId: string | null }, group: Group) =>
   group === 'all' ||
   (c.topic ? (TOPIC_GROUPS[group] ?? []).includes(c.topic) : CATEGORY_GROUP[c.categoryId ?? ''] === group || (group === 'business' && c.categoryId === 'networking'));
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+/** What the instant search reads while typing: the server search also reads the category's name. */
+const searchable = (c: DirectoryCommunity) => norm(`${c.name} ${c.tagline ?? ''} ${c.description ?? ''} ${c.topic ?? ''} ${c.categoryId ?? ''}`);
+
+/** The value, once it has stopped changing for `ms`. */
+function useSettled<T>(value: T, ms: number): T {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setSettled(value), ms);
+    return () => clearTimeout(id);
+  }, [value, ms]);
+  return settled;
+}
+
+/** Real counts of a community, when the server gave them: members and upcoming activities. */
+type Stats = { members: number | null; upcoming: number | null };
+
+
 /**
- * Communities: every community this member may see, not only theirs.
- * For you: IRLY's own communities recommended from their onboarding answers
- * (never joined for them). All: the whole catalogue of the city (IRLY's and
- * members'), searchable and filtered by theme. Mine: the ones they really
- * belong to, created or joined, with Leave. Everything comes from the server
- * and reloads on any join or leave, here or on another phone.
+ * Communities: every community this member may see, not only theirs, in
+ * three sections. My communities: the ones they really belong to, created
+ * or joined, their favourites pinned first, with Leave. Recommended for me:
+ * IRLY's own communities recommended from their onboarding answers (never
+ * joined for them). Discover: the whole directory of the city (IRLY's and
+ * members'), sorted and searched on the server, filtered by theme. Every
+ * count is the server's; everything reloads on any join or leave, here or
+ * on another phone.
  */
 export default function CommunitiesRoute() {
   // In IRLY Girl the page wears the Girl look (cosmetic only, see theme/space) and lists IRLY Girl communities.
@@ -94,6 +118,9 @@ function useCardWidth(): number | undefined {
   return gridCell(width - space.gutter * 2, 260, 4, 12);
 }
 
+/** The server search starts from this many characters; the instant filter answers from the first. */
+const SEARCH_MIN = 2;
+
 function Communities() {
   const cityId = useCityId();
   const city = CITIES[cityId];
@@ -118,7 +145,7 @@ function Communities() {
   const profile = useStore((s) => s.profile);
   const tags = useMemo(() => profileTags(profile), [profile]);
   const recAll = useRecommendedCommunities(cityId, tags, 12);
-  // In IRLY Girl, the recommendations are IRLY Girl communities too (the « All » list already is).
+  // In IRLY Girl, the recommendations are IRLY Girl communities too (the « Discover » list already is).
   const rec = useMemo(() => (inGirl && recAll.list ? { ...recAll, list: recAll.list.filter((c) => c.girlOnly) } : recAll), [recAll, inGirl]);
   const memberProfile = useMemberProfile(uid ?? '');
   const mine = useMemo(
@@ -135,16 +162,45 @@ function Communities() {
   );
   const mineCount = signedIn ? mine.communities.length : 0;
 
-  // Search and theme live here so the map shows exactly what the list below shows.
+  // The directory: sorted on the server (the sort holds for the session), searched there too once typing settles.
+  const sort = useDirectorySort((s) => s.sort);
   const [query, setQuery] = useState('');
   const [group, setGroup] = useState<Group>('all');
+  const typed = query.trim();
+  const settled = useSettled(typed, 300);
+  const serverOn = signedIn && !demoGirl;
+  const dir = useDirectory(cityId, sort, null, serverOn);
+  const searching = settled.length >= SEARCH_MIN;
+  const found = useDirectory(cityId, sort, searching ? settled : null, serverOn && searching);
+
+  // Same communities as community_list shows (its space, the emirate toggle): the directory has no city, community_list does.
+  const { keep } = useCityFilter(cityId);
+  const cityOf = useMemo(() => new Map(all.map((c) => [c.id, c.cityId])), [all]);
+  const place = useMemo(() => {
+    const visible = (c: DirectoryCommunity) => inSpace(c, inGirl) && keep(c.cityId);
+    return (list: DirectoryCommunity[]) => list.map((c) => ({ ...c, cityId: c.cityId ?? cityOf.get(c.id) ?? null })).filter(visible);
+  }, [inGirl, keep, cityOf]);
+  // Until the directory answers (or if it cannot), community_list sorted here: its upcoming counts stay unknown.
+  const base = useMemo<DirectoryCommunity[]>(
+    () => (demoGirl ? sortLocally(demoAll.map(fromDemo), sort) : dir.list ? place(dir.list) : sortLocally(all.map(fromSummary), sort)),
+    [demoGirl, demoAll, sort, dir.list, place, all],
+  );
+  // What the server knows of each community (counts, favourite), for the cards of every section.
+  const known = useMemo(() => new Map((demoGirl ? base : (dir.list ?? [])).map((c) => [c.id, c])), [demoGirl, base, dir.list]);
+
+  // Search and theme live here so the map shows exactly what the list below shows.
   const shown = useMemo(() => {
-    const q = norm(query.trim());
-    return all.filter((c) => inGroup(c, group) && (!q || norm(`${c.name} ${c.tagline ?? ''} ${c.topic ?? ''} ${c.categoryId ?? ''}`).includes(q)));
-  }, [all, group, query]);
+    const q = norm(typed);
+    const local = base.filter((c) => inGroup(c, group) && (!q || searchable(c).includes(q)));
+    // The server's answer for what is typed now leads; what the instant filter found besides stays.
+    if (!q || settled !== typed || !found.list) return local;
+    const server = place(found.list).filter((c) => inGroup(c, group));
+    const ids = new Set(server.map((c) => c.id));
+    return [...server, ...local.filter((c) => !ids.has(c.id))];
+  }, [base, group, typed, settled, found.list, place]);
 
   const mapList = useMemo<MapCommunity[]>(() => {
-    if (tab === 'all') return shown;
+    if (tab === 'all') return shown.map((c) => ({ id: c.id, name: c.name, topic: c.topic, categoryId: c.categoryId, cityId: c.cityId, emoji: c.emoji, members: c.members ?? 0, isMember: c.isMember }));
     if (tab === 'mine') return mine.communities.map((c) => ({ id: c.id, name: c.name, topic: null, categoryId: null, cityId: c.cityId, emoji: null, members: c.members, isMember: true }));
     return (rec.list ?? []).map((c) => ({ id: c.id, name: c.name, topic: c.topic, categoryId: null, cityId: c.cityId, emoji: c.emoji, members: c.members, isMember: c.isMember }));
   }, [tab, shown, mine.communities, rec.list]);
@@ -165,14 +221,14 @@ function Communities() {
         : 'ready';
   const mapEmpty =
     tab === 'all'
-      ? all.length
+      ? base.length
         ? tx('No community matches these filters')
         : tx('No community here yet')
       : tab === 'mine'
         ? tx('You have not joined a community yet')
         : tx('No recommendation yet');
 
-  // Wide: the tabs, the search and the themes in a column beside the map, the communities in a grid under both.
+  // Wide: the tabs, the search, the themes and the sort in a column beside the map, the communities in a grid under both.
   const card = useCardWidth();
   const wide = card !== undefined;
   const create = <Button label="Create a community" icon="plus" variant="secondary" full onPress={() => router.push('/community/new')} />;
@@ -181,13 +237,19 @@ function Communities() {
       value={tab}
       onChange={setTab}
       options={[
-        { value: 'foryou', label: tx('For you') },
-        { value: 'all', label: all.length ? `${tx('All')} · ${all.length}` : tx('All') },
         { value: 'mine', label: mineCount ? `${tx('Mine')} · ${mineCount}` : tx('Mine') },
+        { value: 'foryou', label: tx('For you') },
+        { value: 'all', label: base.length ? `${tx('Discover')} · ${base.length}` : tx('Discover') },
       ]}
     />
   ) : null;
-  const filters = signedIn && tab === 'all' ? <Filters cityId={cityId} query={query} onQuery={setQuery} group={group} onGroup={setGroup} wide={wide} /> : null;
+  const filters =
+    signedIn && tab === 'all' ? (
+      <>
+        <Filters cityId={cityId} query={query} onQuery={setQuery} group={group} onGroup={setGroup} wide={wide} />
+        <SortBar wide={wide} />
+      </>
+    ) : null;
 
   return (
     <Page overline={city.name} title="Communities" subtitle="IRLY's communities and the ones members start. Meet the same faces again: that's how trust grows.">
@@ -210,15 +272,23 @@ function Communities() {
       ) : (
         <>
           {wide ? null : <View style={[styles.pad, { marginBottom: space[5] }]}>{tabs}</View>}
-          {/* IRLY Girl: « For you » is IRLY Girl's five official communities. */}
-          {tab === 'foryou' ? inGirl ? <GirlOfficialCommunities cell={card} /> : <ForYou rec={rec} cityId={cityId} onSeeAll={() => setTab('all')} card={card} /> : null}
-          {tab === 'all' ? (
-            <View>
-              {wide ? null : filters}
-              <All list={all} shown={shown} cityId={cityId} card={card} />
-            </View>
+          {tab === 'mine' ? (
+            <Section title={<Text variant="overline" tone="secondary">My communities</Text>}>
+              <Mine list={mine.communities} known={known} loading={mine.loading} error={mine.error} onReload={mine.reload} onBrowse={() => setTab('all')} card={card} />
+            </Section>
           ) : null}
-          {tab === 'mine' ? <Mine list={mine.communities} loading={mine.loading} error={mine.error} onReload={mine.reload} onBrowse={() => setTab('all')} card={card} /> : null}
+          {tab === 'foryou' ? (
+            <Section title={<Text variant="overline" tone="secondary">Recommended for me</Text>}>
+              {/* IRLY Girl: « For you » is IRLY Girl's five official communities. */}
+              {inGirl ? <GirlOfficialCommunities cell={card} /> : <ForYou rec={rec} known={known} cityId={cityId} onSeeAll={() => setTab('all')} card={card} />}
+            </Section>
+          ) : null}
+          {tab === 'all' ? (
+            <Section title={<Text variant="overline" tone="secondary">Discover</Text>}>
+              {wide ? null : filters}
+              <All list={base} shown={shown} cityId={cityId} card={card} />
+            </Section>
+          ) : null}
         </>
       )}
       {wide ? null : <View style={[styles.pad, { marginTop: space[6] }]}>{create}</View>}
@@ -226,13 +296,25 @@ function Communities() {
   );
 }
 
-/** Search and themes of « All »: a rail of themes on a phone, every theme at once beside the map on a wide screen. */
+/** One of the three sections: its name in capitals over its communities. */
+function Section({ title, children }: { title: ReactNode; children: ReactNode }) {
+  return (
+    <View>
+      <View style={[styles.pad, styles.sectionTitle]} accessibilityRole="header">
+        {title}
+      </View>
+      {children}
+    </View>
+  );
+}
+
+/** Search and themes of « Discover »: a rail of themes on a phone, every theme at once beside the map on a wide screen. */
 function Filters({ cityId, query, onQuery, group, onGroup, wide }: { cityId: CityId; query: string; onQuery: (q: string) => void; group: Group; onGroup: (g: Group) => void; wide: boolean }) {
   const chips = GROUPS.map((g) => <Chip key={g.id} size="sm" label={g.label} selected={group === g.id} onPress={() => onGroup(g.id)} />);
   return (
     <View style={wide ? { gap: space[3] } : null}>
       <View style={wide ? null : [styles.pad, { marginBottom: space[3] }]}>
-        <Field icon="search" value={query} onChangeText={onQuery} placeholder="Search by name or theme" accessibilityLabel={tx('Search communities')} autoCorrect={false} returnKeyType="search" />
+        <Field icon="search" value={query} onChangeText={onQuery} placeholder="Search by name, theme or description" accessibilityLabel={tx('Search communities')} autoCorrect={false} returnKeyType="search" />
       </View>
       {wide ? (
         <View style={[gridStyles.row, { gap: 8 }]}>{chips}</View>
@@ -241,12 +323,14 @@ function Filters({ cityId, query, onQuery, group, onGroup, wide }: { cityId: Cit
           <Rail gap={8}>{chips}</Rail>
         </View>
       )}
-      <ScopeToggle cityId={cityId} inset={!wide} />
+      <View style={wide ? null : { marginBottom: space[3] }}>
+        <ScopeToggle cityId={cityId} inset={!wide} />
+      </View>
     </View>
   );
 }
 
-function ForYou({ rec, cityId, onSeeAll, card }: { rec: ReturnType<typeof useRecommendedCommunities>; cityId: CityId; onSeeAll: () => void; card?: number }) {
+function ForYou({ rec, known, cityId, onSeeAll, card }: { rec: ReturnType<typeof useRecommendedCommunities>; known: Map<string, DirectoryCommunity>; cityId: CityId; onSeeAll: () => void; card?: number }) {
   const router = useRouter();
   const city = CITIES[cityId];
   if (rec.loading) return <Loading />;
@@ -274,7 +358,22 @@ function ForYou({ rec, cityId, onSeeAll, card }: { rec: ReturnType<typeof useRec
   const newcomers = list.filter((c) => c.introFirst);
   const rest = list.filter((c) => !c.introFirst);
   const row = (c: OfficialCommunity, i: number) => (
-    <Row index={i} key={c.id} id={c.id} name={c.name} topic={c.topic} categoryId={null} emoji={c.emoji} isMember={c.isMember} meta={meta(c, cityId, !card)} blurb={c.tagline} card={card} action="join" />
+    <Row
+      index={i}
+      key={c.id}
+      id={c.id}
+      name={c.name}
+      topic={c.topic}
+      categoryId={null}
+      emoji={c.emoji}
+      isMember={c.isMember}
+      meta={meta(c, cityId, !card)}
+      blurb={c.tagline}
+      card={card}
+      action="join"
+      stats={{ members: c.members, upcoming: known.get(c.id)?.upcoming ?? null }}
+      favorite={known.get(c.id)?.isFavorite}
+    />
   );
   return (
     <View style={[styles.pad, { gap: 10 }]}>
@@ -295,13 +394,11 @@ function Cards({ card, children }: { card?: number; children: ReactNode }) {
   return card ? <View style={[gridStyles.row, { gap: 12 }]}>{children}</View> : <>{children}</>;
 }
 
-// The tagline leads the line of a row; a card shows it on its own (`withTagline` false).
+// The tagline leads the line of a row; a card shows it on its own (`withTagline` false). Counts are on the stats line.
 const meta = (c: OfficialCommunity, cityId: string, withTagline = true) =>
-  [withTagline ? c.tagline || null : null, c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, c.members > 0 ? tx('{n} members', { n: c.members }) : null, c.girlOnly ? 'IRLY Girl' : null]
-    .filter(Boolean)
-    .join(' · ');
+  [withTagline ? c.tagline || null : null, c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ');
 
-function All({ list, shown, cityId, card }: { list: CommunitySummary[]; shown: CommunitySummary[]; cityId: CityId; card?: number }) {
+function All({ list, shown, cityId, card }: { list: DirectoryCommunity[]; shown: DirectoryCommunity[]; cityId: CityId; card?: number }) {
   const t = useTheme();
   return (
     <View>
@@ -321,13 +418,14 @@ function All({ list, shown, cityId, card }: { list: CommunitySummary[]; shown: C
             meta={[
               c.official ? 'IRLY' : tx('By a member'),
               c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null,
-              c.members > 0 ? tx('{n} members', { n: c.members }) : null,
               c.postsWeek ? tx('{n} posts this week', { n: c.postsWeek }) : null,
               c.girlOnly ? 'IRLY Girl' : null,
             ]
               .filter(Boolean)
               .join(' · ')}
             action="join"
+            stats={{ members: c.members, upcoming: c.upcoming }}
+            favorite={c.isFavorite}
           />
         ))}
         {!shown.length ? (
@@ -340,7 +438,25 @@ function All({ list, shown, cityId, card }: { list: CommunitySummary[]; shown: C
   );
 }
 
-function Mine({ list, loading, error, onReload, onBrowse, card }: { list: MemberCommunity[]; loading: boolean; error: string | null; onReload: () => void; onBrowse: () => void; card?: number }) {
+function Mine({
+  list,
+  known,
+  loading,
+  error,
+  onReload,
+  onBrowse,
+  card,
+}: {
+  list: MemberCommunity[];
+  known: Map<string, DirectoryCommunity>;
+  loading: boolean;
+  error: string | null;
+  onReload: () => void;
+  onBrowse: () => void;
+  card?: number;
+}) {
+  const t = useTheme();
+  const chosen = useFavorites((s) => s.chosen);
   if (loading) return <Loading />;
   if (error && !list.length)
     return (
@@ -354,29 +470,55 @@ function Mine({ list, loading, error, onReload, onBrowse, card }: { list: Member
         <Empty icon="users" title="No community yet" body="Join the ones that fit you: their chat and their plans open to you." action="Browse communities" onAction={onBrowse} />
       </View>
     );
-  const created = list.filter((c) => c.role === 'created');
-  const joined = list.filter((c) => c.role !== 'created');
+  // Favourites first, whichever way the member belongs; then the ones they created, then the ones they joined.
+  const isFavorite = (id: string) => chosen[id] ?? known.get(id)?.isFavorite ?? false;
+  const favorites = list.filter((c) => isFavorite(c.id));
+  const created = list.filter((c) => !isFavorite(c.id) && c.role === 'created');
+  const joined = list.filter((c) => !isFavorite(c.id) && c.role !== 'created');
   const cityName = (id: string) => CITIES[id as CityId]?.name ?? null;
   // The tagline leads the line of a row; a card shows it on its own.
-  const facts = (c: MemberCommunity) => [card ? null : c.tagline, cityName(c.cityId), c.members > 0 ? tx('{n} members', { n: c.members }) : null].filter(Boolean).join(' · ');
+  const facts = (c: MemberCommunity) => [card ? null : c.tagline, cityName(c.cityId)].filter(Boolean).join(' · ');
+  const row = (c: MemberCommunity, i: number) => (
+    <Row
+      index={i}
+      key={c.id}
+      id={c.id}
+      name={c.name}
+      topic={known.get(c.id)?.topic ?? null}
+      categoryId={known.get(c.id)?.categoryId ?? null}
+      emoji={known.get(c.id)?.emoji ?? null}
+      isMember
+      meta={facts(c)}
+      blurb={c.tagline}
+      card={card}
+      action={c.role === 'created' ? 'none' : 'leave'}
+      stats={{ members: c.members, upcoming: known.get(c.id)?.upcoming ?? null }}
+      favorite={known.get(c.id)?.isFavorite}
+    />
+  );
   return (
     <View style={[styles.pad, { gap: 10 }]}>
-      {created.length ? <Text variant="overline" tone="tertiary">Created</Text> : null}
-      <Cards card={card}>
-        {created.map((c, i) => (
-          <Row index={i} key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={facts(c)} blurb={c.tagline} card={card} action="none" />
-        ))}
-      </Cards>
+      {favorites.length ? (
+        <View style={styles.groupTitle}>
+          <Icon name="star" size={12} color={t.accent} fill={t.accent} />
+          <Text variant="overline" tone="tertiary">
+            Favourites
+          </Text>
+        </View>
+      ) : null}
+      <Cards card={card}>{favorites.map(row)}</Cards>
+      {created.length ? (
+        <Text variant="overline" tone="tertiary" style={{ marginTop: favorites.length ? space[3] : 0 }}>
+          Created
+        </Text>
+      ) : null}
+      <Cards card={card}>{created.map(row)}</Cards>
       {joined.length ? (
-        <Text variant="overline" tone="tertiary" style={{ marginTop: created.length ? space[3] : 0 }}>
+        <Text variant="overline" tone="tertiary" style={{ marginTop: created.length || favorites.length ? space[3] : 0 }}>
           Joined
         </Text>
       ) : null}
-      <Cards card={card}>
-        {joined.map((c, i) => (
-          <Row index={i} key={c.id} id={c.id} name={c.name} topic={null} categoryId={null} emoji={null} isMember meta={facts(c)} blurb={c.tagline} card={card} action="leave" />
-        ))}
-      </Cards>
+      <Cards card={card}>{joined.map(row)}</Cards>
     </View>
   );
 }
@@ -384,7 +526,8 @@ function Mine({ list, loading, error, onReload, onBrowse, card }: { list: Member
 /**
  * One community: tap to open it. Join answers only once the server has
  * recorded it; Leave asks once more, then the row goes when the server
- * confirms (the lists reload from the sync bus).
+ * confirms (the lists reload from the sync bus). The star pins it among
+ * the favourites; the stats line shows its real counts, « — » when unknown.
  */
 function Row({
   id,
@@ -398,6 +541,8 @@ function Row({
   index = 0,
   blurb,
   card,
+  stats,
+  favorite,
 }: {
   index?: number;
   /** Wide: shown as a card this wide (cover, name, what it is about, facts, action). */
@@ -412,6 +557,9 @@ function Row({
   isMember: boolean;
   meta: string;
   action: 'join' | 'leave' | 'none';
+  stats: Stats;
+  /** What the server said (null or undefined: it has not). */
+  favorite: boolean | null | undefined;
 }) {
   const t = useTheme();
   const router = useRouter();
@@ -454,6 +602,7 @@ function Row({
         setConfirm(false);
       });
   };
+  const star = <FavoriteStar id={id} name={name} known={favorite} />;
   const actions = (
     <>
       {action === 'join' && !isMember ? <Button label="Join" size="sm" loading={busy} onPress={join} /> : null}
@@ -486,7 +635,13 @@ function Row({
                 {line}
               </Text>
             ) : null}
-            <View style={styles.cardFoot}>{actions}</View>
+            <View style={styles.cardFoot}>
+              <View style={styles.cardStats}>
+                <CommunityStats members={stats.members} upcoming={stats.upcoming} />
+              </View>
+              {star}
+              {actions}
+            </View>
           </View>
         </PressableScale>
       </Animated.View>
@@ -498,7 +653,7 @@ function Row({
       <PressableScale onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name} testID={`community-${id}`}>
         <GlassLayer radius={radius.lg} />
         <CommunityThumb id={id} name={name} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size={44} member={isMember} />
-        <View style={{ flex: 1 }}>
+        <View style={styles.rowBody}>
           <Text variant="titleS" numberOfLines={1} raw>
             {name}
           </Text>
@@ -507,7 +662,9 @@ function Row({
               {line}
             </Text>
           ) : null}
+          <CommunityStats members={stats.members} upcoming={stats.upcoming} />
         </View>
+        {star}
         {actions}
       </PressableScale>
     </Animated.View>
@@ -560,10 +717,14 @@ function Empty({
 
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
+  sectionTitle: { marginBottom: space[3] },
+  groupTitle: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: radius.lg },
+  rowBody: { flex: 1, minWidth: 0, gap: 3 },
   card: { flex: 1, borderRadius: radius.xl },
   cardBody: { flex: 1, padding: 14, gap: 4 },
-  cardFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 'auto', paddingTop: 8, minHeight: 40 },
+  cardFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginTop: 'auto', paddingTop: 8, minHeight: 40 },
+  cardStats: { flex: 1, minWidth: 0 },
   top: { flexDirection: 'row', alignItems: 'flex-start', gap: space[6] },
   side: { width: 320, gap: space[4] },
   mapWide: { flex: 1, minWidth: 0 },

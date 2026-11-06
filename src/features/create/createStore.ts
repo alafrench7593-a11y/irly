@@ -16,6 +16,9 @@ export type CreatePreset = {
   communityName?: string;
   /** An IRLY Girl community: the activity is women-only (the server enforces it too). */
   girlOnly?: boolean;
+  /** Started from a chat message (« Turn into an activity »): its name and description, both editable on the form. */
+  title?: string;
+  description?: string;
 };
 
 type CreateState = {

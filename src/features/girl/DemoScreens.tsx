@@ -64,7 +64,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
   const reduced = useReducedMotion();
   const joined = useDemoGirl((s) => Boolean(s.joined[id]));
   const toggle = useDemoGirl((s) => s.toggle);
-  const [tab, setTab] = useState<'posts' | 'plans' | 'about'>('posts');
+  const [tab, setTab] = useState<'discussion' | 'plans' | 'members' | 'about'>('discussion');
   const posts = useMemo(() => demoPostsOf(id), [id]);
   const eng = useDemoEngagement('community_post', posts.map((p) => p.id));
   const plans = useMemo(() => DEMO_PLANS.filter((p) => p.community === id), [id]);
@@ -130,25 +130,25 @@ export function DemoCommunityScreen({ id }: { id: string }) {
               </View>
             </Animated.View>
 
-            {/* « + Propose an activity », as in every real community: the Create form, attached to this one. */}
-            <View style={{ paddingHorizontal: space.gutter, marginTop: 12 }}>
-              <ProposeActivityButton
-                communityName={c.name}
-                onPress={() => (joined ? openCreate(null, { communityId: c.id, communityName: c.name, cityId: 'dubai', girlOnly: true }) : toast('Join the community first', 'users', 'brand'))}
-              />
-            </View>
           </View>
 
           <View style={split ? communitySplit.right : null}>
             <View style={styles.tabs}>
-              {(['posts', 'plans', 'about'] as const).map((k) => (
-                <Tab key={k} label={k === 'posts' ? tx('Posts') : k === 'plans' ? tx('Plans') : tx('About')} on={tab === k} onPress={() => setTab(k)} />
+              {(['discussion', 'plans', 'members', 'about'] as const).map((k) => (
+                <Tab key={k} label={k === 'discussion' ? tx('Discussion') : k === 'plans' ? tx('Activities') : k === 'members' ? tx('Members') : tx('About')} on={tab === k} onPress={() => setTab(k)} />
               ))}
             </View>
 
             <Animated.View layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)} style={{ gap: 12, paddingHorizontal: space.gutter }}>
+              {/* « + Propose an activity », as in every real community: at the top of Discussion and Activities, for every member. */}
+              {tab === 'discussion' || tab === 'plans' ? (
+                <ProposeActivityButton
+                  communityName={c.name}
+                  onPress={() => (joined ? openCreate(null, { communityId: c.id, communityName: c.name, cityId: 'dubai', girlOnly: true }) : toast('Join the community first', 'users', 'brand'))}
+                />
+              ) : null}
               {/* Its activities in the feed: the same card as the real community page. */}
-              {tab === 'posts'
+              {tab === 'discussion'
                 ? plans.slice(0, 2).map((p) => (
                     <ActivityFeedCard
                       key={`card-${p.id}`}
@@ -162,16 +162,36 @@ export function DemoCommunityScreen({ id }: { id: string }) {
                     />
                   ))
                 : null}
-              {tab === 'posts'
+              {tab === 'discussion'
                 ? posts.map((p, i) => (
                     <Animated.View key={p.id} entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
                       <GirlPostCard p={p} eng={eng} cityId="dubai" />
                     </Animated.View>
                   ))
                 : null}
-              {tab === 'posts' && !posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the group." /> : null}
+              {tab === 'discussion' && !posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the group." /> : null}
               {tab === 'plans' ? plans.map((p, i) => <PlanCard key={p.id} id={p.id} i={i} />) : null}
               {tab === 'plans' && !plans.length ? <GNotice icon="calendar" body="No plans yet. Propose the first one." /> : null}
+              {tab === 'members'
+                ? people(c.faces).map((m, i) => (
+                    <Animated.View key={m.id} entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
+                      <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(`/person/${m.id}`)} style={styles.plan} accessibilityLabel={tx('Open {title}', { title: m.name })}>
+                        <GlassLayer radius={radius.xl} />
+                        <Avatar name={m.name} hue={m.hue} size={44} photo={m.photo} />
+                        <View style={{ flex: 1 }}>
+                          <Text variant="titleS" color={girl.ink} raw>
+                            {m.name}
+                          </Text>
+                          <Text variant="caption" color={girl.inkSoft}>
+                            {tx('Member')}
+                          </Text>
+                        </View>
+                        <Icon name="chevronRight" size={18} color={girl.inkFaint} />
+                      </PressableScale>
+                    </Animated.View>
+                  ))
+                : null}
+              {tab === 'members' && !c.faces.length ? <GNotice icon="users" body="No members to show yet" /> : null}
               {tab === 'about' ? (
                 <Animated.View entering={reduced ? undefined : FadeIn} style={[styles.post, { gap: 10 }]}>
                   <GlassLayer radius={radius.xl} />
@@ -326,9 +346,9 @@ export function DemoPlanScreen({ id }: { id: string }) {
 
 function Tab({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
   return (
-    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} style={[styles.tab, on && { boxShadow: girl.shadowPlum }]} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label}>
+    <PressableScale haptic="select" scaleTo={0.95} onPress={onPress} style={[styles.tab, { flex: 1 }, on && { boxShadow: girl.shadowPlum }]} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label}>
       <GlassLayer radius={19} variant={on ? 'plum' : 'chip'} />
-      <Text variant="label" color={on ? girl.pearl : girl.ink}>
+      <Text variant="label" color={on ? girl.pearl : girl.ink} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
         {label}
       </Text>
     </PressableScale>
@@ -367,7 +387,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   side: { width: COMMUNITY_SIDE },
   tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: space.gutter, marginTop: space[6], marginBottom: space[4] },
-  tab: { height: 38, paddingHorizontal: 16, borderRadius: 19, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: girl.shadowSoft },
+  tab: { height: 38, paddingHorizontal: 8, borderRadius: 19, alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: girl.shadowSoft },
   post: { padding: 16, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   plan: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: radius.xl, boxShadow: girl.shadowSoft },
   planPhoto: { width: 76, height: 76, borderRadius: radius.lg, overflow: 'hidden' },

@@ -314,10 +314,10 @@ type ThreadSnapshot = {
 /** Chats opened since launch (memory only, the 30 most recent), to reopen them instantly. */
 const threadCache = new Map<string, ThreadSnapshot>();
 
-type MessageRow = { id: string; sender_id: string | null; kind: string; body: string; created_at: string; ref_type?: string | null; ref_id?: string | null; media_path?: string | null };
+type MessageRow = { id: string; sender_id: string | null; kind: string; body: string; created_at: string; ref_type?: string | null; ref_id?: string | null; media_path?: string | null; reply_to?: string | null };
 
 const PAGE = 50;
-const COLS = 'id, sender_id, kind, body, created_at, ref_type, ref_id, media_path';
+const COLS = 'id, sender_id, kind, body, created_at, ref_type, ref_id, media_path, reply_to';
 // Oldest first; equal times (one transaction) keep a stable order, the same as the server's pages (created_at, id).
 // Compared as times, not as text: the server drops trailing zeros ("…:36+00:00" for "…:36.000000"),
 // and as text that exact second sorted after "…:36.5+00:00".
@@ -348,7 +348,7 @@ function merge(list: MessageRow[], more: MessageRow[]): MessageRow[] {
  * sent twice, and the thread drops it as soon as the server shows it.
  * Forgotten with the account's chats (clearChatCache: sign-out, another account).
  */
-type Pending = Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null; sent?: MessageRow }>;
+type Pending = Record<string, { body: string; at: string; failed: boolean; local?: string; media?: string | null; sent?: MessageRow; replyTo?: string }>;
 type PendingByChat = Record<string, Pending>;
 const usePendingStore = create<PendingByChat>()(
   persist(() => ({}) as PendingByChat, {
@@ -427,6 +427,8 @@ export type ServerMessage = Message & {
   media?: { path: string | null; local: string | null };
   /** Your own message on its way, or not delivered (offline, refused): never shown as sent when it is not. */
   status?: 'sending' | 'failed';
+  /** The message this one answers (messages.reply_to), in the same chat. */
+  replyTo?: string | null;
 };
 
 export type ServerThread = {
@@ -447,7 +449,8 @@ export type ServerThread = {
   /** True while older messages may exist above the first one shown. */
   hasEarlier: boolean;
   loadEarlier: () => Promise<void>;
-  send: (text: string) => Promise<void>;
+  /** Sends a text, answering `replyTo` (a message of this chat) when given. */
+  send: (text: string, replyTo?: string) => Promise<void>;
   /** Sends a message that failed again (same id: it can never arrive twice). */
   retry: (messageId: string) => Promise<void>;
   /** Deletes my message for everyone (author only). */
@@ -764,7 +767,7 @@ export function useServerThread(conversationId: string): ServerThread {
 
   // The id is made here, so the realtime echo, the insert's answer and a retry are one message.
   const deliver = useCallback(
-    async (id: string, text: string, media?: string) => {
+    async (id: string, text: string, media?: string, replyTo?: string) => {
       if (!supabase || !uid) {
         // Not left "sending" forever: the bubble shows Retry.
         setPending((p) => (p[id] ? { ...p, [id]: { ...p[id], failed: true } } : p));
@@ -772,6 +775,7 @@ export function useServerThread(conversationId: string): ServerThread {
       }
       const row: Record<string, string> = { id, conversation_id: conversationId, sender_id: uid, body: text };
       if (media) Object.assign(row, { kind: 'photo', media_path: media });
+      if (replyTo) row.reply_to = replyTo;
       const { data, error: e } = await supabase.from('messages').insert(row).select(COLS).single();
       let sent = (data as MessageRow | null) ?? null;
       // Already there (a retry after a lost answer): that is a success, read back so it stays on screen.
@@ -805,10 +809,10 @@ export function useServerThread(conversationId: string): ServerThread {
     [conversationId, uid, kind, setPending],
   );
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, replyTo?: string) => {
       const id = uuid();
-      setPending((p) => ({ ...p, [id]: { body: text, at: new Date().toISOString(), failed: false } }));
-      await deliver(id, text);
+      setPending((p) => ({ ...p, [id]: { body: text, at: new Date().toISOString(), failed: false, ...(replyTo ? { replyTo } : {}) } }));
+      await deliver(id, text, undefined, replyTo);
     },
     [deliver, setPending],
   );
@@ -844,7 +848,7 @@ export function useServerThread(conversationId: string): ServerThread {
       if (!m) return;
       setPending((p) => ({ ...p, [id]: { ...m, failed: false } }));
       if (m.local && !m.media) await deliverPhoto(id, m.local);
-      else await deliver(id, m.body, m.media ?? undefined);
+      else await deliver(id, m.body, m.media ?? undefined, m.replyTo);
     },
     [deliver, deliverPhoto, pending, setPending],
   );
@@ -905,7 +909,7 @@ export function useServerThread(conversationId: string): ServerThread {
         // Pending ones, until the server confirms them (then they are in rows with the same id).
         ...Object.entries(pending)
           .filter(([id, p]) => !p.sent && !rows.some((r) => r.id === id))
-          .map(([id, p]): MessageRow & { local?: string } => ({ id, sender_id: uid ?? null, kind: p.local ? 'photo' : 'text', body: p.body, created_at: p.at, media_path: p.media ?? null, local: p.local })),
+          .map(([id, p]): MessageRow & { local?: string } => ({ id, sender_id: uid ?? null, kind: p.local ? 'photo' : 'text', body: p.body, created_at: p.at, media_path: p.media ?? null, local: p.local, reply_to: p.replyTo ?? null })),
       ].map(
         (r: MessageRow & { local?: string }): ServerMessage => ({
           id: r.id,
@@ -920,6 +924,7 @@ export function useServerThread(conversationId: string): ServerThread {
           media: r.kind === 'photo' && (r.media_path || r.local) ? { path: r.media_path ?? null, local: r.local ?? (r.id in pending ? (pending[r.id].local ?? null) : null) } : undefined,
           // Only while the server has not given it back: a row of the thread is a message sent.
           status: pending[r.id] && !pending[r.id].sent && !inRows.has(r.id) ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
+          replyTo: r.reply_to ?? null,
         }),
       ),
     [rows, names, uid, pending, blockedIds, inRows],

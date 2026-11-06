@@ -13,6 +13,7 @@ import { areaName, CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { isAvatar } from '@/features/avatar/avatar';
 import { IrlyAvatar } from '@/features/avatar/IrlyAvatar';
+import { useAccountFace } from '@/features/server/faces';
 import { removeFriend } from '@/features/server/social';
 import { openDirect } from '@/features/server/engage';
 import { useT, useTg } from '@/i18n';
@@ -217,6 +218,17 @@ export function IndustryTags({ ids, max = 3 }: { ids: ProProfile['industries']; 
  * on the phone (the small copy a card showed), drawn at once under `uri`.
  * Never a stock picture: no photo stays initials.
  */
+/**
+ * The photo shown for a professional profile: the photo of the professional
+ * profile when there is one, otherwise the member's own profile photo (the
+ * same face as everywhere else in IRLY, through the shared face cache keyed
+ * by her account, so it is always hers), otherwise null for the initials.
+ */
+export function useProPhoto(userId: string | null | undefined, photo: string | null | undefined): string | null {
+  const face = useAccountFace(DEMO ? null : userId);
+  return photo || face?.uri || null;
+}
+
 export const Portrait = memo(function Portrait({
   name,
   uri,
@@ -307,11 +319,12 @@ export const ProCard = memo(function ProCard({
   const who = agreeOf(pro, useAppSpace() === 'girl');
   const router = useRouter();
   const { press, onPressIn, onPressOut } = usePressLight();
+  const shownPhoto = useProPhoto(pro.userId, photo);
   const where = [placeOf(pro), match?.distanceKm != null ? roundDistance(match.distanceKm) : null].filter(Boolean).join(' · ');
   const sharedSkill = (s: string) => Boolean(mine?.skills.some((x) => x.toLowerCase() === s.toLowerCase()));
   const skills = [...pro.skills].sort((a, b) => Number(sharedSkill(b)) - Number(sharedSkill(a))).slice(0, 3);
   const open = () => {
-    rememberPro(pro, photo);
+    rememberPro(pro, shownPhoto ?? undefined);
     router.push(`/network/${pro.userId}`);
   };
   const change = useCallback((c: ProProfile['connection']) => onConnection(pro.userId, c), [onConnection, pro.userId]);
@@ -331,7 +344,7 @@ export const ProCard = memo(function ProCard({
       >
       <View style={styles.head}>
         <View>
-          <Portrait name={pro.firstName} uri={photo} width={PORTRAIT_W} height={PORTRAIT_H} radius={radius.lg} />
+          <Portrait name={pro.firstName} uri={shownPhoto} width={PORTRAIT_W} height={PORTRAIT_H} radius={radius.lg} />
           {match ? (
             <View style={styles.pillOnPhoto}>
               <MatchPill percent={match.percent} small />

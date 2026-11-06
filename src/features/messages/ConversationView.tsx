@@ -20,7 +20,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { IconButton } from '@/components/ui/Controls';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
-import { blockUser, type ReportTarget } from '@/features/moderation/moderation';
+import { blockUser, useBlocked, type ReportTarget } from '@/features/moderation/moderation';
 import { ReportSheet } from '@/features/moderation/ReportSheet';
 import { confirm } from '@/lib/confirm';
 import { Glass } from '@/components/ui/Glass';
@@ -30,7 +30,7 @@ import { enter } from '@/motion/enter';
 import { useKeyboardHeight } from '@/motion/keyboard';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { findPerson } from '@/data/repo';
+import { findCommunity, findPerson } from '@/data/repo';
 import { toast } from '@/components/ui/Toast';
 import { chatDraft, isServerId, removeConversationForMe, setConversationArchived, useServerThread } from '@/features/server/chat';
 import { leaveGroup, renameGroup } from '@/features/server/groups';
@@ -50,10 +50,15 @@ import { useNow } from '@/lib/useNow';
 import { PressableScale } from '@/motion/PressableScale';
 import { spring } from '@/motion/tokens';
 import { useCityId, useStore } from '@/state/store';
+import type { Message } from '@/data/types';
 import { font, layout, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { useBusy } from '@/lib/useBusy';
 import { forgetConversation } from '@/features/messages/paneStore';
+import { communityDeleteMessage, useCommunityRights, useCommunityRoles, type CommunityRole } from '@/features/messages/communityChat';
+import { useQuotedOutside, useReactions, type ReactionChip, type ReactionsByMessage } from '@/features/messages/reactions';
+import { ContextMenuArea, MessageMenu, ModerationSheet, QuoteInBubble, ReactionChips, ReplyBar, RoleBadge, quoteText } from '@/features/messages/ChatBits';
+import { chatCommunity, openActivityFromMessage } from '@/features/messages/toActivity';
 
 /**
  * Where the chat is drawn. A page of its own (phones, `/messages/[id]`):
@@ -200,6 +205,11 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
   const [openedAt, setOpenedAt] = useState<number | null>(null);
   if (openedAt === null && !thread.loading) setOpenedAt(thread.messages.length ? thread.messages[thread.messages.length - 1].at : 0);
 
+  // Answering a message (« Reply »): shown above the composer, sent with the next message.
+  // Tied to its chat: a pane that shows another chat does not carry it over.
+  const [replying, setReplying] = useState<{ conv: string; m: ThreadMessage } | null>(null);
+  const replyingTo = replying?.conv === id ? replying.m : null;
+  const input = useRef<TextInput>(null);
   // One send at a time: a double tap must not post the same message twice.
   const sending = useRef(false);
   const send = async () => {
@@ -208,10 +218,12 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
     sending.current = true;
     haptic('tap');
     setText('');
+    const answer = replyingTo?.id;
+    setReplying(null);
     stick.current = true;
     // Shown at once as "sending"; a failure stays in the thread with "Retry".
     try {
-      await thread.send(body);
+      await thread.send(body, answer);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Message not sent', 'x', 'live');
     } finally {
@@ -288,6 +300,113 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
     }
   };
 
+  // A community chat: the senders' roles (badges) and whether I may moderate, each read once for the chat.
+  const me = useAccount()?.userId;
+  const communityChat = thread.kind === 'community' ? thread.communityId : null;
+  const roles = useCommunityRoles(communityChat);
+  const rights = useCommunityRights(communityChat);
+  // Removed here by a moderator: gone from the screen at once (the server has removed it for everyone).
+  const [removed, setRemoved] = useState<ReadonlySet<string>>(() => new Set());
+  const shown = useMemo(() => (removed.size ? visible.filter((m) => !removed.has(m.id)) : visible), [visible, removed]);
+  // Reactions of what is on screen (messages the server has), people I blocked left out.
+  const blocked = useBlocked();
+  const blockedIds = useMemo(() => new Set(blocked.list.map((b) => b.userId)), [blocked.list]);
+  const reactable = useMemo(() => shown.filter((m) => m.from !== 'irly' && !m.status).map((m) => m.id), [shown]);
+  const reactions = useReactions(id, reactable, me, blockedIds);
+  const reactionsToggle = reactions.toggle;
+  const react = useCallback(
+    (messageId: string, emoji: string) => {
+      reactionsToggle(messageId, emoji).catch((e) => toast(e instanceof Error ? e.message : 'Could not react', 'x', 'live'));
+    },
+    [reactionsToggle],
+  );
+  // Quotes: the message answered, from the chat on the phone, else read once (older than what is loaded).
+  const byId = useMemo(() => new Map(all.map((m) => [m.id, m])), [all]);
+  const missingQuotes = useMemo(() => shown.flatMap((m) => (m.replyTo && !byId.has(m.replyTo) ? [m.replyTo] : [])), [shown, byId]);
+  const outside = useQuotedOutside(id, missingQuotes);
+  const members = thread.members;
+  const quoteOf = useCallback(
+    (replyTo: string): Quote | null => {
+      const m = byId.get(replyTo);
+      if (m) return { id: m.id, name: m.from === 'me' ? tx('You') : (m.name ?? tx('Member')), text: quoteText({ text: m.text, photo: Boolean(m.media) }), loaded: true };
+      const q = outside[replyTo];
+      if (!q) return null;
+      const name = q.gone ? tx('Message') : q.senderId === me ? tx('You') : (q.senderId && members[q.senderId]?.name) || tx('Member');
+      return { id: q.id, name, text: quoteText(q), loaded: false };
+    },
+    [byId, outside, me, members],
+  );
+  // Tap on a quote: back to the original, drawn first if it was above what is shown.
+  const places = useRef(new Map<string, number>());
+  const [flash, setFlash] = useState<string | null>(null);
+  const goTo = useRef<string | null>(null);
+  const reveal = useCallback((target: string) => {
+    const y = places.current.get(target);
+    if (y === undefined) return false;
+    stick.current = false;
+    scrollRef.current?.scrollTo({ y: Math.max(0, y - 120), animated: true });
+    setFlash(target);
+    setTimeout(() => setFlash((f) => (f === target ? null : f)), 1400);
+    return true;
+  }, []);
+  const onPlace = useCallback(
+    (messageId: string, y: number) => {
+      places.current.set(messageId, y);
+      if (goTo.current === messageId) {
+        goTo.current = null;
+        requestAnimationFrame(() => reveal(messageId));
+      }
+    },
+    [reveal],
+  );
+  const onQuote = useCallback(
+    (target: string) => {
+      haptic('select');
+      if (visible.some((m) => m.id === target) && reveal(target)) return;
+      const m = all.find((x) => x.id === target);
+      if (!m) {
+        toast(tx('The original message is further up: load earlier messages'), 'message', 'brand');
+        return;
+      }
+      goTo.current = target;
+      setFrom({ id: m.id, at: m.at });
+    },
+    [visible, all, reveal],
+  );
+  const [moderating, setModerating] = useState<ThreadMessage | null>(null);
+  const [modBusy, setModBusy] = useState(false);
+  const moderate = async (m: ThreadMessage, reason: string) => {
+    setModBusy(true);
+    try {
+      await communityDeleteMessage(m.id, reason);
+      setRemoved((r) => new Set(r).add(m.id));
+      haptic('success');
+      toast(tx('Message removed'), 'shield', 'brand');
+      setModerating(null);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not delete', 'x', 'live');
+    } finally {
+      setModBusy(false);
+    }
+  };
+  const [toActivity, setToActivity] = useState(false);
+  const turnIntoActivity = async (m: ThreadMessage) => {
+    if (!communityChat || toActivity) return;
+    setToActivity(true);
+    try {
+      const community = await chatCommunity(communityChat, thread.title);
+      setMsgMenu(null);
+      openActivityFromMessage(m.text, community);
+    } catch {
+      toast('Can’t reach IRLY right now', 'x', 'live');
+    } finally {
+      setToActivity(false);
+    }
+  };
+  const menuMine = msgMenu?.from === 'me';
+  const menuText = msgMenu && !msgMenu.media && !msgMenu.share ? msgMenu.text : undefined;
+  const menuSettled = Boolean(msgMenu && !msgMenu.status);
+
   // Activities referenced here (shares, and this chat's own activity): read live, never from the message text.
   const activityCards = useActivityCards([...thread.messages.map((m) => (m.share?.type === 'activity' ? m.share.id : null)), thread.kind === 'activity' ? thread.activityId : null]);
   const ownActivity = thread.kind === 'activity' && thread.activityId ? activityCards.get(thread.activityId) : undefined;
@@ -363,7 +482,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
             </Text>
           ) : null}
           <ThreadMessages
-            messages={visible}
+            messages={shown}
             media={media}
             group={group}
             now={now}
@@ -373,6 +492,13 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
             onHello={setText}
             cardOf={activityCards.get}
             cardsFailed={activityCards.failed}
+            roles={communityChat ? roles : NO_ROLES}
+            reactions={reactions.byMessage}
+            onReact={react}
+            quoteOf={quoteOf}
+            onQuote={onQuote}
+            onPlace={onPlace}
+            flash={flash}
           />
           {thread.typing.length ? (
             <View style={{ gap: 2 }}>
@@ -383,6 +509,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
             </View>
           ) : null}
         </ScrollView>
+        {replyingTo ? <ReplyBar name={replyingTo.from === 'me' ? tx('You') : (replyingTo.name ?? tx('Member'))} text={quoteText({ text: replyingTo.text, photo: Boolean(replyingTo.media) })} onClose={() => setReplying(null)} /> : null}
         <Glass lifted level="thick" style={[styles.composer, { paddingBottom: keyboard ? 12 : Math.max(insets.bottom, 12) }]} intensity={60}>
           <PressableScale haptic="select" onPress={() => setAttach(true)} scaleTo={0.88} style={styles.attach} accessibilityLabel="Send a photo">
             <GlassLayer radius={21} level="thin" />
@@ -391,6 +518,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
           <View style={styles.inputWrap}>
             <GlassLayer radius={radius.pill} level="thin" />
             <TextInput
+              ref={input}
               value={text}
               onChangeText={(v) => {
                 setText(v);
@@ -538,29 +666,74 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
         }}
         archived={thread.archived}
       />
-      <Sheet visible={msgMenu !== null} onClose={() => setMsgMenu(null)} title="Message" subtitle={msgMenu?.from === 'me' ? tx('Your message') : msgMenu?.name}>
-        <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
+      <MessageMenu
+        visible={msgMenu !== null}
+        onClose={() => setMsgMenu(null)}
+        subtitle={menuMine ? tx('Your message') : msgMenu?.name}
+        preview={msgMenu ? quoteText({ text: msgMenu.text, photo: Boolean(msgMenu.media) }) : undefined}
+        reactions={menuSettled}
+        picked={msgMenu ? (reactions.byMessage[msgMenu.id] ?? []).filter((c) => c.mine).map((c) => c.emoji) : undefined}
+        onReact={(emoji) => {
+          const m = msgMenu;
+          if (!m) return;
+          setMsgMenu(null);
+          react(m.id, emoji);
+        }}
+      >
+        {menuSettled ? (
           <Button
-            label="Delete for me"
-            icon="eye"
-            variant="secondary"
+            label="Reply"
+            icon="message"
             full
-            loading={msgBusy}
-            onPress={() => msgMenu && runOnMessage(() => thread.hideForMe(msgMenu.id), tx('Deleted for you'))}
+            onPress={() => {
+              const m = msgMenu;
+              if (!m) return;
+              setMsgMenu(null);
+              setReplying({ conv: id, m });
+              stick.current = true;
+              setTimeout(() => input.current?.focus(), 250);
+            }}
           />
-          {msgMenu?.from === 'me' ? (
-            <Button
-              label="Delete for everyone"
-              icon="x"
-              variant="danger"
-              full
-              disabled={msgBusy}
-              onPress={() => {
-                const m = msgMenu;
-                confirm('Delete this message for everyone? It cannot be undone.', () => runOnMessage(() => thread.remove(m.id), tx('Deleted for everyone')), 'Delete');
-              }}
-            />
-          ) : msgMenu ? (
+        ) : null}
+        {menuMine && communityChat && menuText && menuSettled ? (
+          <Button label="Turn into an activity" icon="calendar" variant="secondary" full loading={toActivity} onPress={() => msgMenu && turnIntoActivity(msgMenu)} />
+        ) : null}
+        <Button
+          label="Delete for me"
+          icon="eye"
+          variant="secondary"
+          full
+          loading={msgBusy}
+          onPress={() => msgMenu && runOnMessage(() => thread.hideForMe(msgMenu.id), tx('Deleted for you'))}
+        />
+        {menuMine ? (
+          <Button
+            label="Delete for everyone"
+            icon="x"
+            variant="danger"
+            full
+            disabled={msgBusy}
+            onPress={() => {
+              const m = msgMenu;
+              if (!m) return;
+              confirm('Delete this message for everyone? It cannot be undone.', () => runOnMessage(() => thread.remove(m.id), tx('Deleted for everyone')), 'Delete');
+            }}
+          />
+        ) : msgMenu ? (
+          <>
+            {communityChat && rights?.can_moderate && menuSettled ? (
+              <Button
+                label="Delete (moderation)"
+                icon="shield"
+                variant="danger"
+                full
+                onPress={() => {
+                  const m = msgMenu;
+                  setMsgMenu(null);
+                  setModerating(m);
+                }}
+              />
+            ) : null}
             <Button
               label="Report"
               icon="flag"
@@ -573,9 +746,10 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
                 setReporting({ kind: 'message', id: m.id, userId: m.senderId });
               }}
             />
-          ) : null}
-        </View>
-      </Sheet>
+          </>
+        ) : null}
+      </MessageMenu>
+      <ModerationSheet visible={moderating !== null} name={moderating?.name} busy={modBusy} onClose={() => setModerating(null)} onConfirm={(reason) => moderating && moderate(moderating, reason)} />
       <ReportSheet target={reporting} name={reportName} onClose={() => setReporting(null)} onBlocked={leave} />
       <Sheet visible={photoMenu} onClose={() => setPhotoMenu(false)} title="Chat photo" subtitle={tx('Everyone in the chat sees it')}>
         <View style={{ paddingHorizontal: space.gutter, gap: 10 }}>
@@ -592,6 +766,10 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
  * other members keep the conversation and its history.
  */
 type ThreadMessage = ReturnType<typeof useServerThread>['messages'][number];
+/** The message a bubble answers, as drawn in it; `loaded`: in the chat on the phone, so a tap can go to it. */
+type Quote = { id: string; name: string; text: string; loaded: boolean };
+const NO_ROLES: Record<string, CommunityRole> = {};
+const NO_CHIPS: ReactionChip[] = [];
 /**
  * The messages of an open chat. Its own memoised component: typing in the
  * composer (a state of the screen) re-rendered every bubble of the thread
@@ -609,6 +787,13 @@ const ThreadMessages = memo(function ThreadMessages({
   onHello,
   cardOf,
   cardsFailed,
+  roles,
+  reactions,
+  onReact,
+  quoteOf,
+  onQuote,
+  onPlace,
+  flash,
 }: {
   messages: ThreadMessage[];
   media: Record<string, string>;
@@ -621,6 +806,16 @@ const ThreadMessages = memo(function ThreadMessages({
   /** Live cards of the activities shared here (useActivityCards). */
   cardOf: ReturnType<typeof useActivityCards>['get'];
   cardsFailed: boolean;
+  /** Community chats: the senders' roles (a badge by the name); empty elsewhere. */
+  roles: Record<string, CommunityRole>;
+  reactions: ReactionsByMessage;
+  onReact: (messageId: string, emoji: string) => void;
+  quoteOf: (messageId: string) => Quote | null;
+  onQuote: (messageId: string) => void;
+  /** Where each message sits in the list, so a tap on a quote can scroll to it. */
+  onPlace: (messageId: string, y: number) => void;
+  /** The message just reached from a quote: outlined a moment. */
+  flash: string | null;
 }) {
   const t = useTheme();
   const router = useRouter();
@@ -672,16 +867,24 @@ const ThreadMessages = memo(function ThreadMessages({
       const showFace = !mine && group && (!next || next.from !== m.from);
       const openSender = m.senderId ? () => router.push(`/person/${m.senderId}`) : undefined;
       const photoUri = m.media ? (m.media.path ? media[m.media.path] : null) ?? m.media.local : null;
+      const role = m.senderId ? roles[m.senderId] : undefined;
+      const quote = m.replyTo ? quoteOf(m.replyTo) : null;
+      const chips = reactions[m.id] ?? NO_CHIPS;
+      const lit = flash === m.id;
+      const menu = () => onLong(m);
       return (
-        <View key={m.id}>
+        <View key={m.id} onLayout={(e) => onPlace(m.id, e.nativeEvent.layout.y)}>
           {day}
           <Animated.View entering={slideIn(m.at)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
             {showName ? (
-              <PressableScale haptic="select" onPress={openSender} hitSlop={6} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })} style={{ marginLeft: group ? 46 : 12, marginBottom: 2 }}>
-                <Text variant="caption" tone="tertiary" raw>
-                  {m.name ?? tx('Member')}
-                </Text>
-              </PressableScale>
+              <View style={[styles.nameRow, { marginLeft: group ? 46 : 12 }]}>
+                <PressableScale haptic="select" onPress={openSender} hitSlop={6} accessibilityLabel={tx('Open {name}’s profile', { name: m.name ?? tx('Member') })}>
+                  <Text variant="caption" tone="tertiary" raw>
+                    {m.name ?? tx('Member')}
+                  </Text>
+                </PressableScale>
+                <RoleBadge role={role} />
+              </View>
             ) : null}
             <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, maxWidth: '100%' }}>
               {!mine && group ? (
@@ -693,8 +896,9 @@ const ThreadMessages = memo(function ThreadMessages({
                   <View style={{ width: 30 }} />
                 )
               ) : null}
+              <ContextMenuArea onMenu={menu}>
               {m.media ? (
-                <PressableScale haptic={false} onLongPress={() => onLong(m)} delayLongPress={350} accessibilityHint={mine ? tx('Long press to delete') : tx('Long press to report')}>
+                <PressableScale haptic={false} onLongPress={menu} delayLongPress={350} accessibilityHint={tx('Long press for reactions and more')}>
                   {photoUri ? (
                     <TapPhoto photo={{ uri: photoUri }} style={[styles.photoBubble, { opacity: m.status === 'sending' ? 0.6 : 1 }]}>
                       {/* Cached by the stored file, not by its signed link (a new one every few hours and at each launch): seen once, not downloaded again. */}
@@ -716,13 +920,13 @@ const ThreadMessages = memo(function ThreadMessages({
                 <ActivityShareCard
                   card={cardOf(m.share.id)}
                   onOpen={() => router.push(`/a/${m.share?.id}`)}
-                  onLongPress={() => onLong(m)}
+                  onLongPress={menu}
                 />
               ) : (
             <PressableScale
               haptic={false}
               scaleTo={0.98}
-              onLongPress={() => onLong(m)}
+              onLongPress={menu}
               delayLongPress={350}
               onPress={
                 m.share
@@ -732,15 +936,17 @@ const ThreadMessages = memo(function ThreadMessages({
                     }
                   : undefined
               }
-              accessibilityHint={mine ? tx('Long press to delete') : tx('Long press to report')}
+              accessibilityHint={tx('Long press for reactions and more')}
               style={[
                 styles.bubble,
                 mine
                   ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
                   : { borderBottomLeftRadius: 6, overflow: 'hidden' },
+                lit ? { borderWidth: 2, borderColor: t.c.steel } : null,
               ]}
             >
               {mine ? null : <GlassLayer radius={20} />}
+              {quote ? <QuoteInBubble name={quote.name} text={quote.text} mine={mine} onPress={quote.loaded ? () => onQuote(quote.id) : undefined} /> : null}
               {m.share ? (
                 <View style={styles.shared}>
                   <Icon name={m.share.type === 'activity' ? 'calendar' : m.share.type === 'place' ? 'pin' : 'link'} size={16} color={mine ? t.c.onBrand : t.c.text} />
@@ -756,7 +962,9 @@ const ThreadMessages = memo(function ThreadMessages({
               )}
             </PressableScale>
               )}
+              </ContextMenuArea>
             </View>
+            <ReactionChips chips={chips} mine={mine} onToggle={m.status ? undefined : (emoji) => onReact(m.id, emoji)} />
             {m.status === 'failed' ? (
               <PressableScale haptic={false} onPress={() => onRetry(m.id)} accessibilityRole="button" accessibilityLabel={tx('Not sent. Retry')} style={{ alignSelf: 'flex-end', marginTop: 2, marginRight: 6 }}>
                 <Text variant="caption" color={t.c.live}>
@@ -990,6 +1198,29 @@ function Thread({ id }: { id: string }) {
   const later = (fn: () => void, ms: number) => {
     timers.current.push(setTimeout(fn, ms));
   };
+  // The demonstration keeps replies and reactions on this screen only (nothing is saved).
+  const [menu, setMenu] = useState<Message | null>(null);
+  const [replying, setReplying] = useState<Message | null>(null);
+  const [replies, setReplies] = useState<Record<string, string>>({});
+  const [mine, setMine] = useState<Record<string, string[]>>({});
+  const places = useRef(new Map<string, number>());
+  const [flash, setFlash] = useState<string | null>(null);
+  const input = useRef<TextInput>(null);
+  const toggle = (messageId: string, emoji: string) => {
+    haptic('select');
+    setMine((r) => {
+      const list = r[messageId] ?? [];
+      return { ...r, [messageId]: list.includes(emoji) ? list.filter((e) => e !== emoji) : [...list, emoji] };
+    });
+  };
+  const goTo = (target: string) => {
+    const y = places.current.get(target);
+    if (y === undefined) return;
+    haptic('select');
+    scrollRef.current?.scrollTo({ y: Math.max(0, y - 120), animated: true });
+    setFlash(target);
+    later(() => setFlash((f) => (f === target ? null : f)), 1400);
+  };
 
   const conversationId = conversation?.id;
   useEffect(() => {
@@ -999,12 +1230,23 @@ function Thread({ id }: { id: string }) {
   if (!conversation) return <NotFound title="This conversation is not available" />;
   const messages = allMessages(conversation, sent);
   const person = conversation.kind === 'direct' ? findPerson(conversation.personIds[0]) : undefined;
+  // A community chat: its first member stands for its creator (the demonstration has no roles of its own).
+  const community = conversation.kind === 'community' && conversation.refId ? findCommunity(conversation.refId) : undefined;
+  const demoRole = (from: string): CommunityRole | undefined => (community && community.memberIds[0] === from ? 'owner' : undefined);
+  const byId = new Map(messages.map((m) => [m.id, m]));
+  const nameOf = (m: Message) => (m.from === 'me' ? tx('You') : senderName(m.from));
 
   const send = () => {
     const body = text.trim();
     if (!body) return;
     haptic('tap');
     sendMessage(conversation.id, body);
+    const answer = replying?.id;
+    if (answer) {
+      const last = useStore.getState().sent[conversation.id]?.at(-1);
+      if (last) setReplies((r) => ({ ...r, [last.id]: answer }));
+    }
+    setReplying(null);
     setText('');
     later(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     const replier = conversation.personIds[0];
@@ -1053,38 +1295,65 @@ function Thread({ id }: { id: string }) {
                 </Animated.View>
               );
             }
-            const mine = m.from === 'me';
-            const showName = !mine && conversation.kind !== 'direct' && messages[i - 1]?.from !== m.from;
+            const own = m.from === 'me';
+            const showName = !own && conversation.kind !== 'direct' && messages[i - 1]?.from !== m.from;
+            const quoted = replies[m.id] ? byId.get(replies[m.id]) : undefined;
+            const picked = mine[m.id] ?? [];
+            const chips: ReactionChip[] = picked.map((emoji) => ({ emoji, count: 1, mine: true }));
+            const open = () => {
+              haptic('select');
+              setMenu(m);
+            };
             return (
-              <Animated.View key={m.id} entering={FadeInDown.springify(380).dampingRatio(0.8)} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
+              <Animated.View
+                key={m.id}
+                onLayout={(e) => places.current.set(m.id, e.nativeEvent.layout.y)}
+                entering={FadeInDown.springify(380).dampingRatio(0.8)}
+                style={[styles.bubbleRow, own ? styles.right : styles.left]}
+              >
                 {showName ? (
-                  <Text variant="caption" tone="tertiary" style={{ marginLeft: 12, marginBottom: 2 }}>
-                    {senderName(m.from)}
-                  </Text>
+                  <View style={[styles.nameRow, { marginLeft: 12 }]}>
+                    <Text variant="caption" tone="tertiary">
+                      {senderName(m.from)}
+                    </Text>
+                    <RoleBadge role={demoRole(m.from)} />
+                  </View>
                 ) : null}
-                <View
-                  style={[
-                    styles.bubble,
-                    mine
-                      ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
-                      : { borderBottomLeftRadius: 6, overflow: 'hidden' },
-                  ]}
-                >
-                  {mine ? null : <GlassLayer radius={20} />}
-                  <Text variant="body" raw={mine} color={mine ? t.c.onBrand : t.c.text}>
-                    {m.text}
-                  </Text>
-                </View>
+                <ContextMenuArea onMenu={open}>
+                  <PressableScale
+                    haptic={false}
+                    scaleTo={0.98}
+                    onLongPress={open}
+                    delayLongPress={350}
+                    accessibilityHint={tx('Long press for reactions and more')}
+                    style={[
+                      styles.bubble,
+                      own
+                        ? { backgroundColor: t.c.brand, borderBottomRightRadius: 6 }
+                        : { borderBottomLeftRadius: 6, overflow: 'hidden' },
+                      flash === m.id ? { borderWidth: 2, borderColor: t.c.steel } : null,
+                    ]}
+                  >
+                    {own ? null : <GlassLayer radius={20} />}
+                    {quoted ? <QuoteInBubble name={nameOf(quoted)} text={quoted.text} mine={own} onPress={() => goTo(quoted.id)} /> : null}
+                    <Text variant="body" raw={own} color={own ? t.c.onBrand : t.c.text}>
+                      {m.text}
+                    </Text>
+                  </PressableScale>
+                </ContextMenuArea>
+                <ReactionChips chips={chips} mine={own} onToggle={(emoji) => toggle(m.id, emoji)} />
               </Animated.View>
             );
           })}
           {typing ? <Typing /> : null}
         </ScrollView>
 
+        {replying ? <ReplyBar name={nameOf(replying)} text={replying.text} onClose={() => setReplying(null)} /> : null}
         <Glass lifted level="thick" style={[styles.composer, { paddingBottom: keyboard ? 12 : Math.max(insets.bottom, 12) }]} intensity={60}>
           <View style={styles.inputWrap}>
             <GlassLayer radius={radius.pill} level="thin" />
             <TextInput
+              ref={input}
               value={text}
               onChangeText={setText}
               placeholder={tx('Message')}
@@ -1122,6 +1391,42 @@ function Thread({ id }: { id: string }) {
           )}
         </View>
       </View>
+      <MessageMenu
+        visible={menu !== null}
+        onClose={() => setMenu(null)}
+        subtitle={menu ? (menu.from === 'me' ? tx('Your message') : senderName(menu.from)) : undefined}
+        preview={menu?.text}
+        reactions
+        picked={menu ? mine[menu.id] : undefined}
+        onReact={(emoji) => {
+          if (menu) toggle(menu.id, emoji);
+          setMenu(null);
+        }}
+      >
+        <Button
+          label="Reply"
+          icon="message"
+          full
+          onPress={() => {
+            setReplying(menu);
+            setMenu(null);
+            later(() => input.current?.focus(), 250);
+          }}
+        />
+        {menu?.from === 'me' && community ? (
+          <Button
+            label="Turn into an activity"
+            icon="calendar"
+            variant="secondary"
+            full
+            onPress={() => {
+              const m = menu;
+              setMenu(null);
+              openActivityFromMessage(m.text, { id: community.id, name: community.name, cityId: community.cityId });
+            }}
+          />
+        ) : null}
+      </MessageMenu>
     </View>
   );
 }
@@ -1194,6 +1499,7 @@ const styles = StyleSheet.create({
   photoBubble: { width: 220, height: 260, borderRadius: 18, overflow: 'hidden' },
   photoSending: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
   bubbleRow: { maxWidth: '80%' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
   note: { alignSelf: 'center', maxWidth: '85%', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, overflow: 'hidden' },
   left: { alignSelf: 'flex-start' },
   right: { alignSelf: 'flex-end' },
