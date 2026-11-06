@@ -133,3 +133,14 @@ const REPLIES = [
 export function cannedReply(seed: number): string {
   return REPLIES[seed % REPLIES.length];
 }
+
+/**
+ * The universe of an on-device chat (the demo's examples): its IRLY Girl
+ * examples (`gcv-…`) are Girl, other community and activity chats Mixte, and
+ * a private chat has none (every universe). Server chats carry theirs.
+ */
+export function localChatUniverse(c: Conversation): Conversation['universe'] {
+  if (c.universe !== undefined) return c.universe;
+  if (c.kind !== 'community' && c.kind !== 'event') return null;
+  return c.id.startsWith('gcv-') ? 'girl' : 'mixte';
+}

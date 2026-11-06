@@ -40,7 +40,10 @@ export function belongsToSpace(c: UniverseRow, space: AppSpace): boolean {
   return universeInSpace(universeOf(c), c.girlOnly, space);
 }
 
-/** The same rule for a universe the server already worked out (e.g. member_activities' `universe`). */
+/**
+ * The same rule for content whose universe is already known (a chat or a
+ * notification, told by the server): Network follows its women-only side.
+ */
 export function universeInSpace(u: Universe, girlOnly: boolean, space: AppSpace): boolean {
   if (u === 'network') return space === 'girl' ? girlOnly : !girlOnly;
   return universesForSpace(space).includes(u);

@@ -765,7 +765,24 @@ export async function removeFriend(userId: string): Promise<void> {
 
 /* ───────────────────────── Notifications ───────────────────────── */
 
-export type ServerNotification = { id: string; kind: string; payload: Record<string, string>; readAt: number | null; createdAt: number };
+export type ServerNotification = {
+  id: string;
+  kind: string;
+  payload: Record<string, string>;
+  readAt: number | null;
+  createdAt: number;
+  /** Its universe (migration 20261110100000): null, about no universe (a follower, a friend); undefined, not told by this server. */
+  universe?: NotificationUniverse | null;
+  womenOnly?: boolean;
+};
+export type NotificationUniverse = 'mixte' | 'girl' | 'mom' | 'network';
+
+/** The notification columns read, with each one's universe when the server tells it (computed columns). */
+export const NOTIFICATION_COLUMNS = 'id, kind, payload, read_at, created_at';
+export const NOTIFICATION_UNIVERSE_COLUMNS = `${NOTIFICATION_COLUMNS}, notification_universe, notification_women_only`;
+/** A server without the universe columns yet (before 20261110100000): read again without them. */
+export const missingUniverseColumns = (error: { message?: string | null } | null | undefined): boolean =>
+  Boolean(error && /notification_(universe|women_only)/.test(error.message ?? ''));
 
 /** Bumped when notifications are marked read: the header badge and the list stay in step. */
 const useNotifVersion = create<{ n: number }>(() => ({ n: 0 }));
@@ -839,6 +856,25 @@ export async function dismissNotifications(ids: string[]): Promise<boolean> {
   return true;
 }
 
+type NotificationRow = {
+  id: string;
+  kind: string;
+  payload: Record<string, string> | null;
+  read_at: string | null;
+  created_at: string;
+  notification_universe?: NotificationUniverse | null;
+  notification_women_only?: boolean | null;
+};
+export const toServerNotification = (n: NotificationRow): ServerNotification => ({
+  id: n.id,
+  kind: n.kind,
+  payload: n.payload ?? {},
+  readAt: n.read_at ? Date.parse(n.read_at) : null,
+  createdAt: Date.parse(n.created_at),
+  universe: n.notification_universe,
+  womenOnly: Boolean(n.notification_women_only),
+});
+
 export function useServerNotifications(): { items: ServerNotification[]; unread: number; markAllRead: () => Promise<boolean>; status: 'loading' | 'ok' | 'failed'; reload: () => void } {
   const account = useAccount();
   const uid = account?.userId;
@@ -854,18 +890,13 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     // the latest 50 (and the bell to 0): messages have their own badge.
     const sb = supabase;
     // The bell (always mounted) and the Notifications page read the same list in the same moment: one read.
-    const { data, error } = await together(`notifs:${uid}`, () =>
-      // Group chats were removed on 2026-11-06: their « added you to a group » rows stay on the server, never shown.
-      sb.from('notifications').select('id, kind, payload, read_at, created_at').not('kind', 'in', '(MESSAGE_CREATED,GROUP_ADDED)').order('created_at', { ascending: false }).limit(50),
-    );
+    // Group chats were removed on 2026-11-06: their « added you to a group » rows stay on the server, never shown.
+    const read = (columns: string) =>
+      sb.from('notifications').select(columns).not('kind', 'in', '(MESSAGE_CREATED,GROUP_ADDED)').order('created_at', { ascending: false }).limit(50);
+    let { data, error } = await together(`notifs:${uid}`, () => read(NOTIFICATION_UNIVERSE_COLUMNS));
+    if (missingUniverseColumns(error)) ({ data, error } = await together(`notifs-plain:${uid}`, () => read(NOTIFICATION_COLUMNS)));
     if (error) throw new Error(error.message);
-    return (data ?? []).map((n) => ({
-      id: n.id,
-      kind: n.kind,
-      payload: n.payload ?? {},
-      readAt: n.read_at ? Date.parse(n.read_at) : null,
-      createdAt: Date.parse(n.created_at),
-    }));
+    return ((data ?? []) as unknown as NotificationRow[]).map(toServerNotification);
   }, [uid]);
   const version = useNotifVersion((s) => s.n) + useSyncVersion('notifs');
   // Reads can cross (a sync bump while the first read is on its way): only the newest one started lands.

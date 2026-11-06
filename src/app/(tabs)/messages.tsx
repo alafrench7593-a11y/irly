@@ -21,10 +21,15 @@ import { CITIES } from '@/data/destinations';
 import { findCommunity, findPerson } from '@/data/repo';
 import type { Conversation } from '@/data/types';
 import { useGirlStore } from '@/features/girl/girlStore';
-import { allMessages, cityConversations, minutesAgo, senderName } from '@/features/messages/conversations';
+import { allMessages, cityConversations, localChatUniverse, minutesAgo, senderName } from '@/features/messages/conversations';
+import { UNIVERSE_NAME, UniverseBadge } from '@/features/messages/UniverseBadge';
+import { universesForSpace, type Universe } from '@/features/universe/universe';
+import { communityPhoto } from '@/features/community/official';
+import { CATEGORY_BY_ID, ideaPhoto, type CategoryKey } from '@/data/catalog/categories';
+import { useAppSpace, type AppSpace } from '@/state/appSpace';
 import { ConversationView } from '@/features/messages/ConversationView';
 import { useMessagesPane } from '@/features/messages/paneStore';
-import { isServerId, removeConversationForMe, setConversationArchived, useServerInbox } from '@/features/server/chat';
+import { chatInSpace, isServerId, removeConversationForMe, setConversationArchived, useServerInbox } from '@/features/server/chat';
 import { useSignedLinks } from '@/features/server/media';
 import { primeFaces } from '@/features/server/faces';
 import { a11y, t as tx } from '@/i18n';
@@ -43,31 +48,57 @@ import { useTheme } from '@/theme/useTheme';
 import { SpaceFlavor } from '@/theme/space';
 import { GirlHeaderMark } from '@/features/girl/GirlMark';
 
-type Tab = 'all' | 'private' | 'communities' | 'activities';
+type Tab = 'recent' | 'unread' | 'private' | 'communities' | 'activities';
+type Kind = 'private' | 'communities' | 'activities';
 
 const TABS: { id: Tab; label: string; icon: IconName }[] = [
-  { id: 'all', label: 'All', icon: 'message' },
-  { id: 'private', label: 'Private', icon: 'user' },
+  { id: 'recent', label: 'Recent chats', icon: 'message' },
+  { id: 'unread', label: 'Unread', icon: 'bell' },
+  { id: 'private', label: 'Private messages', icon: 'user' },
   { id: 'communities', label: 'Communities', icon: 'heartHandshake' },
   { id: 'activities', label: 'Activities', icon: 'calendar' },
 ];
 
-/** Which tab a chat belongs to: one, never two (group chats were removed on 2026-11-06). */
-const tabOf = (c: Conversation): Exclude<Tab, 'all'> =>
-  c.kind === 'community' ? 'communities' : c.kind === 'event' ? 'activities' : 'private';
+/** Which kind a chat is: one, never two (group chats were removed on 2026-11-06). */
+const kindOf = (c: Conversation): Kind => (c.kind === 'community' ? 'communities' : c.kind === 'event' ? 'activities' : 'private');
 
 const EMPTY: Record<Tab, string> = {
-  all: 'No conversations yet. Join a community or a plan, or message someone you met.',
+  recent: 'No conversations yet. Join a community or a plan, or message someone you met.',
+  unread: 'All caught up: no unread message here.',
   private: 'Open someone’s profile and tap Message to start a private conversation.',
   communities: 'Join a community: its chat appears here straight away.',
   activities: 'Join an activity: its chat appears here until the day.',
 };
 
+/** The universe shown: the one picked in this app space, else the space's own (Mixte, or Girl). */
+const pickUniverse = (picked: { space: AppSpace; universe: Universe } | null, space: AppSpace): Universe => {
+  const list = universesForSpace(space);
+  return picked && picked.space === space && list.includes(picked.universe) ? picked.universe : list[0];
+};
+
+/** A chat with its universe known (on-device examples get theirs from features/messages/conversations). */
+const withUniverse = (c: Conversation): Conversation => {
+  if (isServerId(c.id) || c.universe !== undefined) return c;
+  const universe = localChatUniverse(c);
+  return { ...c, universe, womenOnly: universe === 'girl' };
+};
+
 /**
- * Messages: every chat you are in, sorted by the latest message, in tabs
- * that never mix (private, communities, activities). Each row shows
- * the chat's own picture: the person's photo, the community's
- * or the activity's. Search covers names and last messages.
+ * Messages: every chat you are in, sorted by the latest message.
+ *
+ * By universe first (features/universe): the Mixte app lists Mixte and
+ * Network (Mixte side), the IRLY Girl app Girl, Mom and Network (Girl side),
+ * one universe at a time, the app's own first (Mixte, or Girl). A community
+ * or activity chat is in its universe only; a private chat has none and is
+ * the same single chat in every universe. Then by section: Recent, Unread,
+ * Private messages, Communities, Activities.
+ * Each row shows the chat's own picture (the person's photo, the community's
+ * or the activity's), its name, last message, date, unread count and
+ * universe. Search covers names and last messages of every chat of the app
+ * space (all its universes and sections).
+ * The Messages badge counts the unread messages of the app space: all its
+ * universes and private chats (features/server/chat, UnreadSync); a dot on a
+ * universe tells which of its community or activity chats wait.
  *
  * Wide screens (useSplit): the list on the left, the chosen conversation on
  * the right, in the same tree as the phone layout so a fold or a resize
@@ -99,19 +130,24 @@ function Messages() {
   const sent = useStore((s) => s.sent);
   const matches = useGirlStore((s) => s.matches);
   const server = useServerInbox();
-  const [tab, setTab] = useState<Tab>('all');
+  const appSpace = useAppSpace();
+  const universes = universesForSpace(appSpace);
+  // One universe at a time, the app space's own first; another space starts again from its own.
+  const [picked, setPicked] = useState<{ space: AppSpace; universe: Universe } | null>(null);
+  const universe = pickUniverse(picked, appSpace);
+  const [tab, setTab] = useState<Tab>('recent');
   const [q, setQ] = useState('');
   // Archived chats live in their own list, never in the tabs.
   const [archivedView, setArchivedView] = useState(false);
   const [menu, setMenu] = useState<Conversation | null>(null);
   const [busy, setBusy] = useState(false);
-  const archivedCount = useMemo(() => server.conversations.filter((c) => c.archived).length, [server.conversations]);
+  const archivedCount = useMemo(() => server.conversations.filter((c) => c.archived && chatInSpace(c, appSpace)).length, [server.conversations, appSpace]);
   const showArchived = archivedView && archivedCount > 0;
   const openMenu = useCallback((c: Conversation) => {
     if (!isServerId(c.id)) return;
     haptic('select');
     setMenu(c);
-  }, []);
+  }, [setMenu]);
   const act = async (action: () => Promise<void>, done: string) => {
     setBusy(true);
     try {
@@ -126,40 +162,58 @@ function Messages() {
     }
   };
 
+  // Every chat of this app space (all its universes): what search and the badge cover.
   const all = useMemo(() => {
     const mine = server.conversations.filter((c) => Boolean(c.archived) === showArchived);
-    const list = showArchived ? mine : [...mine, ...cityConversations(cityId, connections, memberOf, matches)];
+    const list = (showArchived ? mine : [...mine, ...cityConversations(cityId, connections, memberOf, matches)]).map(withUniverse).filter((c) => chatInSpace(c, appSpace));
     // Latest first, by the last message; chats without one go last.
     const age = (c: Conversation) => {
       const last = allMessages(c, sent).at(-1);
       return last ? minutesAgo(last) : Infinity;
     };
     return list.map((c) => ({ c, age: age(c) })).sort((a, b) => a.age - b.age).map((x) => x.c);
-  }, [server.conversations, showArchived, cityId, connections, memberOf, matches, sent]);
+  }, [server.conversations, showArchived, cityId, connections, memberOf, matches, sent, appSpace]);
+
+  const unreadOf = useCallback((c: Conversation) => (isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread), [read]);
+  // The chosen universe: its community and activity chats, and every private chat (archived ones: all of the space).
+  const inUniverse = useMemo(() => (showArchived ? all : all.filter((c) => !c.universe || c.universe === universe)), [all, showArchived, universe]);
+  // A dot on a universe whose own chats (not the shared private ones) have unread messages.
+  const waiting = useMemo(() => {
+    const out = new Set<Universe>();
+    for (const c of all) if (c.universe && !c.archived && unreadOf(c)) out.add(c.universe);
+    return out;
+  }, [all, unreadOf]);
 
   const counts = useMemo(() => {
-    const n: Record<Tab, number> = { all: all.length, private: 0, communities: 0, activities: 0 };
-    for (const c of all) n[tabOf(c)] += 1;
+    const n: Record<Tab, number> = { recent: inUniverse.length, unread: 0, private: 0, communities: 0, activities: 0 };
+    for (const c of inUniverse) {
+      n[kindOf(c)] += 1;
+      if (unreadOf(c)) n.unread += 1;
+    }
     return n;
-  }, [all]);
+  }, [inUniverse, unreadOf]);
 
   const needle = q.trim().toLowerCase();
+  // Searching looks through every chat of the app space (each row says its universe); otherwise the universe and section chosen.
   const shown = useMemo(
     () =>
-      all.filter((c) => {
-        if (tab !== 'all' && tabOf(c) !== tab) return false;
-        if (!needle) return true;
-        const last = allMessages(c, sent).at(-1);
-        return c.title.toLowerCase().includes(needle) || (last?.text ?? '').toLowerCase().includes(needle);
-      }),
-    [all, tab, needle, sent],
+      needle
+        ? all.filter((c) => {
+            const last = allMessages(c, sent).at(-1);
+            return c.title.toLowerCase().includes(needle) || (last?.text ?? '').toLowerCase().includes(needle);
+          })
+        : inUniverse.filter((c) => tab === 'recent' || (tab === 'unread' ? unreadOf(c) > 0 : kindOf(c) === tab)),
+    [all, inUniverse, tab, needle, sent, unreadOf],
   );
 
   // People's faces come from the shared faces (small copies, cached); chats' own pictures are signed here.
   useEffect(() => primeFaces(server.conversations.filter((c) => c.otherId).map((c) => ({ id: c.otherId!, path: c.otherPhoto }))), [server.conversations]);
   const pictures = useSignedLinks('activity-photos', useMemo(() => all.map((c) => c.photoPath), [all]));
   // A community chat without a photo of its own shows its community's picture, as on the community's page.
-  const appPhotos = useCommunityPhotoKeys(useMemo(() => all.filter((c) => isServerId(c.id) && tabOf(c) === 'communities' && c.refId).map((c) => c.refId!), [all]));
+  // (The server tells the community's topic and category with the inbox: asked again only from a server that does not.)
+  const appPhotos = useCommunityPhotoKeys(
+    useMemo(() => all.filter((c) => isServerId(c.id) && kindOf(c) === 'communities' && c.refId && c.refCategory === undefined && c.refTopic === undefined).map((c) => c.refId!), [all]),
+  );
   const loading = server.loading && !server.conversations.length;
   // Back returns to the page that opened the list (IRLY Girl, a plan...): the tabs' own history
   // would land on the Home tab. Opened from a tab root, the tabs' back is kept.
@@ -200,6 +254,33 @@ function Messages() {
     <View style={split ? styles.listPane : styles.listFull}>
     <FrameContext.Provider value={listFrame}>
     <Page overline={city.name} title="Messages" subtitle="Private chats, communities and activities, in one place." right={t.flavor === 'girl' ? <GirlHeaderMark size={14} /> : undefined} onBack={back} bottomInset={tabBarSpace - insets.bottom}>
+      {showArchived ? null : (
+        <View style={[styles.pad, styles.universes]}>
+          {universes.map((u) => {
+            const on = u === universe && !needle;
+            return (
+              <PressableScale
+                key={u}
+                haptic="select"
+                scaleTo={0.96}
+                onPress={() => {
+                  setPicked({ space: appSpace, universe: u });
+                  setQ('');
+                }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={waiting.has(u) ? tx('Universe: {name}, unread messages', { name: UNIVERSE_NAME[u] }) : tx('Universe: {name}', { name: UNIVERSE_NAME[u] })}
+                style={[styles.universe, { borderColor: on ? t.c.brand : t.c.line, backgroundColor: on ? t.c.brandSoft : 'transparent' }]}
+              >
+                <Text variant="label" color={on ? t.c.text : t.c.textSecondary} raw>
+                  {UNIVERSE_NAME[u]}
+                </Text>
+                {waiting.has(u) ? <View style={[styles.universeDot, { backgroundColor: t.c.brand }]} /> : null}
+              </PressableScale>
+            );
+          })}
+        </View>
+      )}
       <View style={styles.pad}>
         <View style={styles.search}>
           <Glass level="thin" style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
@@ -222,6 +303,9 @@ function Messages() {
         </View>
       </View>
 
+      {needle ? (
+        <View style={{ height: space[4] }} />
+      ) : (
       <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
         {TABS.map((x) => {
           const on = tab === x.id;
@@ -255,6 +339,7 @@ function Messages() {
           );
         })}
       </ScrollView>
+      )}
 
       <View style={[styles.pad, styles.actions]}>
         <Action icon="heartHandshake" label="Find communities" onPress={() => router.push('/communities')} />
@@ -311,7 +396,7 @@ function Messages() {
         ) : shown.length ? (
           shown.map((c, i) => (
             <Animated.View key={c.id} entering={reduced ? undefined : enter.rise(Math.min(i, 8), 30)} exiting={reduced ? undefined : FadeOut.duration(120)} layout={reduced ? undefined : LinearTransition.springify(420).dampingRatio(0.9)}>
-              <Row c={c} onOpen={open} onLong={openMenu} lit={highlight === c.id} selected={split && current === c.id} unread={isServerId(c.id) ? c.unread : read[c.id] ? 0 : c.unread} picture={c.photoPath ? pictures[c.photoPath] : undefined} appPhoto={c.refId ? appPhotos[c.refId] : undefined} />
+              <Row c={c} onOpen={open} onLong={openMenu} lit={highlight === c.id} selected={split && current === c.id} unread={unreadOf(c)} picture={c.photoPath ? pictures[c.photoPath] : undefined} appPhoto={c.refId ? appPhotos[c.refId] : undefined} />
             </Animated.View>
           ))
         ) : (
@@ -407,14 +492,23 @@ function Action({ icon, label, onPress }: { icon: IconName; label: string; onPre
   );
 }
 
-const KIND_ICON: Record<Exclude<Tab, 'all'>, IconName> = { private: 'user', communities: 'heartHandshake', activities: 'calendar' };
+const KIND_ICON: Record<Kind, IconName> = { private: 'user', communities: 'heartHandshake', activities: 'calendar' };
+
+/** The app's picture for a server chat with no photo of its own: its community's or its activity's subject (as on their pages). */
+function subjectPhoto(c: Conversation, kind: Kind): PhotoKey | undefined {
+  if (!isServerId(c.id) || (c.refCategory === undefined && c.refTopic === undefined)) return undefined;
+  if (kind === 'communities') return communityPhoto(c.refTopic, c.refCategory, c.title);
+  if (kind === 'activities') return ideaPhoto((c.refCategory && CATEGORY_BY_ID[c.refCategory as CategoryKey] ? c.refCategory : 'sport') as CategoryKey, c.title, c.refPlace, c.refSub);
+  return undefined;
+}
 
 const Row = memo(function Row({ c, lit, selected, unread, picture, appPhoto, onOpen, onLong }: { c: Conversation; lit: boolean; selected: boolean; unread: number; picture?: string; appPhoto?: PhotoKey; onOpen: (c: Conversation) => void; onLong: (c: Conversation) => void }) {
   const t = useTheme();
   const sent = useStore((s) => s.sent);
   const last = allMessages(c, sent).at(-1);
-  const kind = tabOf(c);
+  const kind = kindOf(c);
   const server = isServerId(c.id);
+  const subject = appPhoto ?? subjectPhoto(c, kind);
   // On-device chats (demo) take their pictures from the example data.
   const person = !server && kind === 'private' ? findPerson(c.personIds[0]) : undefined;
   const community = !server && kind === 'communities' && c.refId ? findCommunity(c.refId) : undefined;
@@ -437,13 +531,13 @@ const Row = memo(function Row({ c, lit, selected, unread, picture, appPhoto, onO
         <Avatar name={c.title} hue={hueOf(c.otherId ?? c.id)} size={56} photo={person?.photo} online={person?.online} userId={server ? c.otherId : undefined} />
       ) : (
         <View style={[styles.picture, { backgroundColor: t.c.overlay }]}>
-          {picture || community || appPhoto ? (
+          {picture || community || subject ? (
             <Photo
-              visual={community?.visual ?? { photo: appPhoto ?? 'meeting', uri: picture }}
+              visual={community?.visual ?? { photo: subject ?? 'meeting', uri: picture }}
               light="dubai"
               width={160}
               style={StyleSheet.absoluteFill}
-              recyclingKey={picture ? `conv-${c.id}-${c.photoPath}` : appPhoto && c.refId ? `community-${c.refId}-app` : `conv-${c.id}-app`}
+              recyclingKey={picture ? `conv-${c.id}-${c.photoPath}` : subject && c.refId ? (kind === 'activities' ? `a-${c.refId}` : `community-${c.refId}-app`) : `conv-${c.id}-app`}
             />
           ) : (
             <Icon name={KIND_ICON[kind]} size={22} color={t.c.textSecondary} />
@@ -456,6 +550,7 @@ const Row = memo(function Row({ c, lit, selected, unread, picture, appPhoto, onO
           <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }} raw={isServerId(c.id)}>
             {c.title}
           </Text>
+          {c.universe ? <UniverseBadge universe={c.universe} /> : null}
           <Text variant="caption" tone={unread ? 'primary' : 'tertiary'}>
             {last ? timeAgo(minutesAgo(last)) : tx('new')}
           </Text>
@@ -495,6 +590,9 @@ const styles = StyleSheet.create({
   search: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, paddingHorizontal: 14, borderRadius: radius.pill, overflow: 'hidden' },
   input: { flex: 1, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 },
   tabs: { paddingHorizontal: space.gutter, gap: 8, paddingVertical: space[4] },
+  universes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: space[3] },
+  universe: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 34, paddingHorizontal: 14, borderRadius: 17, borderWidth: 1 },
+  universeDot: { width: 7, height: 7, borderRadius: 4 },
   tab: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 14, borderRadius: 19, zIndex: 0 },
   tabFill: { borderRadius: 19 },
   under: { zIndex: -1 },

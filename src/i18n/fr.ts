@@ -6305,4 +6305,13 @@ export const fr: Record<string, string> = {
   'No post here yet': 'Aucune publication ici pour l’instant',
   'What you missed': 'Ce que tu as manqué',
   'Since your last visit: discussions, your next plans, groups for you': 'Depuis ta dernière visite : discussions, tes prochaines activités, groupes pour toi',
+  // Messages by universe and notifications (features/messages, app/notifications).
+  'Recent chats': 'Récentes',
+  'Unread': 'Non lues',
+  'Private messages': 'Messages privés',
+  'All caught up: no unread message here.': 'Tout est lu : aucun message non lu ici.',
+  'Universe: {name}': 'Univers : {name}',
+  'Universe: {name}, unread messages': 'Univers : {name}, messages non lus',
+  '{name} followed you back': '{name} s’est abonné·e à toi en retour',
+  'You follow each other now': 'Vous vous suivez maintenant',
 };

@@ -33,11 +33,18 @@ import { SpaceFlavor } from '@/theme/space';
 import { GirlHeaderMark } from '@/features/girl/GirlMark';
 import { useNow } from '@/lib/useNow';
 import { displayCommunityName } from '@/features/community/name';
+import { UniverseBadge } from '@/features/messages/UniverseBadge';
 
 type Item = { id: string; icon: IconName; title: string; body: string; ago: string; personId?: string; onPress?: () => void; unread?: boolean };
 
 /**
- * Notifications: few and useful. Someone joined your session, a session
+ * Notifications: few and useful.
+ *
+ * Every universe in one list (a notification is never lost by being in the
+ * other app space): each one about a universe says which (Mixte, Girl, Mom,
+ * Network), and opening it switches to that universe's app space
+ * (features/notifications/open). IRLY Girl ones only ever reach members with
+ * IRLY Girl access (server read rules). Someone joined your session, a session
  * starts near you, someone is live nearby, a reminder. No likes spam.
  *
  * Read means seen: a notification that has really been on screen (see
@@ -350,6 +357,8 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
       case 'PRO_CONNECT_ACCEPTED':
         return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: tx('IRLY Network · say hi') };
       case 'NEW_FOLLOWER':
+        // Following back someone who follows you: said so (payload.mutual, migration 20261110100000).
+        if (String(p.mutual) === 'true') return { icon: 'userPlus', title: tx('{name} followed you back', { name: name(p.from) }), body: tx('You follow each other now') };
         return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: tx('See their profile') };
       case 'FRIEND_ACCEPTED':
         return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends: say hi') };
@@ -414,6 +423,12 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
               <Text variant="label" numberOfLines={2}>
                 {d.title}
               </Text>
+              {/* Which universe it is about (a Girl community, a Mixte plan…): opening it switches to that app space. */}
+              {n.universe ? (
+                <View style={styles.universe}>
+                  <UniverseBadge universe={n.universe} />
+                </View>
+              ) : null}
               {d.body ? (
                 <Text variant="bodyS" tone="secondary" numberOfLines={1} raw>
                   {d.body}
@@ -483,6 +498,7 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
 
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 6 },
+  universe: { flexDirection: 'row' },
   list: { paddingHorizontal: space.gutter, gap: 8 },
   heading: { marginTop: 6, marginLeft: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg },
