@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import type { ReactNode } from 'react';
@@ -14,6 +15,7 @@ import type { CityId } from '@/data/types';
 import type { NewsItem } from '@/features/news/news';
 import type { ServerActivity } from '@/features/server/activities';
 import { t as tx, useT, useTg } from '@/i18n';
+import { isAvatar } from '@/features/avatar/avatar';
 import { initials } from '@/lib/format';
 import { timeAgo } from '@/lib/time';
 import { enter } from '@/motion/enter';
@@ -25,7 +27,7 @@ import { LINK_KINDS, linkLabel, safeLink, type ProLinks } from './links';
 import type { ProProfile } from './match';
 import { blockIn, REVEAL_BATCH, stateIn, useBump, usePressLight } from './motion';
 import { AccentFill, layered, NetworkPane, useNetworkTone } from './tone';
-import { Shimmer, useGlint, useMeAgree } from './ui';
+import { Shimmer, useGlint, useMeAgree, useProPhoto } from './ui';
 
 /**
  * The parts of the IRLY Network page: the intro, section heads, rails of
@@ -33,6 +35,13 @@ import { Shimmer, useGlint, useMeAgree } from './ui';
  * failure and empty states. Colours come from the theme only, so the same
  * page wears the IRLY Girl look in IRLY Girl.
  */
+
+/** Your photo in the strip (over the initials, which stay if there is none or it fails to load). */
+function MinePhoto({ userId }: { userId: string }) {
+  const uri = useProPhoto(userId, null);
+  if (!uri || isAvatar(uri)) return null;
+  return <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />;
+}
 
 /**
  * The top of IRLY Network. Without a professional profile: what IRLY
@@ -84,6 +93,8 @@ export function NetworkIntro({
             <Text variant="titleS" color={tone.onAccent} raw>
               {initials(name || pro.firstName)}
             </Text>
+            {/* Your photo over the initials: the professional one, or your profile photo. */}
+            <MinePhoto userId={pro.userId} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text variant="overline" tone="tertiary" numberOfLines={1}>

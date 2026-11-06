@@ -24,7 +24,7 @@ import { seenPro, useMyPro, usePro } from '@/features/network/api';
 import { reasonText, roundDistance, scorePro } from '@/features/network/match';
 import { blockIn, LightDrift } from '@/features/network/motion';
 import { agreeOf, INDUSTRY, INTENT, ROLE_LABEL, skillLabel } from '@/features/network/taxonomy';
-import { ConnectAction, MatchPill, NetworkState, placeOf, Portrait, Shimmer, useGlint } from '@/features/network/ui';
+import { ConnectAction, MatchPill, NetworkState, placeOf, Portrait, Shimmer, useGlint, useProPhoto } from '@/features/network/ui';
 import { ProLinkButtons } from '@/features/network/sections';
 import { jobLine } from '@/features/network/demo';
 import { useT, useTg } from '@/i18n';
@@ -59,6 +59,8 @@ function ProProfileScreenPage() {
   // Opened from a card: the page starts on what the card showed (its data, its small photo) while its own read arrives.
   const handoff = useMemo(() => seenPro(id), [id]);
   const pro = fresh ?? (state === 'loading' ? (handoff?.pro ?? null) : null);
+  // Her professional photo, or her own profile photo when the professional profile has none.
+  const heroPhoto = useProPhoto(pro?.userId ?? id, photo ?? null);
   const ready = state === 'ready';
   const me = useMyPro();
   const [safety, setSafety] = useState(false);
@@ -121,7 +123,7 @@ function ProProfileScreenPage() {
           bottom={insets.bottom + 24}
           side={
             <>
-              <Hero pro={pro} photo={photo ?? null} small={handoff?.photo ?? null} width={heroW} height={heroH} scrollY={scrollY} where={where} matchPercent={match?.percent ?? null} parallax={!wide} />
+              <Hero pro={pro} photo={heroPhoto} small={handoff?.photo ?? null} width={heroW} height={heroH} scrollY={scrollY} where={where} matchPercent={match?.percent ?? null} parallax={!wide} />
 
               {match ? (
                 <Animated.View entering={blockIn(0, 260)} style={[styles.card, layered, { overflow: 'hidden', boxShadow: tone.surface.shadowHero }]}>
