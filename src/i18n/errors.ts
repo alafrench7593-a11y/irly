@@ -58,6 +58,9 @@ export const SERVER_ERRORS: Record<string, string> = {
   'a Live stays in the space it was posted in': 'A Live stays in the space it was posted in',
   'a category stays in its community': 'A category stays in its community',
   'a community has 30 groups at most': 'A community has 30 groups at most',
+  // Activities made from an IRLY event (20261109200000_irly_event_activities).
+  'a plan stays with the event it was made for': 'This activity stays with the event it was made for',
+  'unknown event': 'This event is not available',
   'a group belongs to a top community': 'A group belongs to a main community',
   'a group cannot move': 'A group cannot move to another community',
   'a poll cannot change once people voted': 'A poll cannot change once people voted',

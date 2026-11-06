@@ -6117,4 +6117,16 @@ export const fr: Record<string, string> = {
   'Shown to everyone in « About ». One rule per line works best.': 'Visibles par toutes dans « À propos ». Une règle par ligne, c’est l’idéal.',
   'Be kind. No ads. Plans happen in public places first.': 'Sois bienveillante. Pas de pub. Les premiers rendez-vous ont lieu dans des lieux publics.',
   'Posting needs an IRLY Girl account': 'Publier demande un compte IRLY Girl',
+  // Events: members' plans to go together (features/events).
+  'Going together': 'Ils y vont ensemble',
+  'Go together': 'Y aller ensemble',
+  'Creates an activity for this event': 'Crée une activité pour cet événement',
+  '{n} plan by members to go together': '{n} activité de membres pour y aller ensemble',
+  '{n} plans by members to go together': '{n} activités de membres pour y aller ensemble',
+  'Looking for plans…': 'Recherche des activités…',
+  'No plan yet. Start one and go with other members.': 'Aucune activité pour l’instant. Crée la tienne et vas-y avec d’autres membres.',
+  'Sign in to see who is going together.': 'Connecte-toi pour voir qui y va ensemble.',
+  'For the event {name}': 'Pour l’événement {name}',
+  'This activity stays with the event it was made for': 'Cette activité reste liée à l’événement pour lequel elle a été créée',
+  'This event is not available': 'Cet événement n’est pas disponible',
 };

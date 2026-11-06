@@ -32,6 +32,9 @@ import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, openDirect, useEngagement } from '@/features/server/engage';
 import { useActivityCards } from '@/features/server/activityCards';
 import { displayCommunityName } from '@/features/community/name';
+import { findEvent } from '@/data/repo';
+import { useActivityEventKey } from '@/features/events/goTogether';
+import { openHero } from '@/features/hero/heroStore';
 import { PressableScale } from '@/motion/PressableScale';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
@@ -72,6 +75,8 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
   const eng = useEngagement('activity', a ? [a.id] : []);
   // Its live card: the origin community's name and whether its organiser accepts a message from me.
   const card = useActivityCards(a ? [a.id] : []).get(id);
+  // Made from an IRLY event (« Go together »): that event, one tap away.
+  const eventKey = useActivityEventKey(id);
   const [busy, setBusy] = useState(false);
   // Right after joining: the button confirms ("You're in") until the page knows you are going,
   // and at least a beat, so it never flashes back to Join while the detail refreshes.
@@ -146,6 +151,8 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
   // Same cutoff as the server's join: two hours after the start when no end is set.
   const over = (a.endsAt ?? a.startsAt + 2 * 3600_000) < now;
   const isEvent = a.format === 'event';
+  // Only an event this app knows (the catalogue): an unknown key shows nothing.
+  const linkedEvent = eventKey ? findEvent(eventKey) : undefined;
   const target = { type: 'activity' as const, id: a.id, title: a.title };
 
   const confirmingNow = confirming && (held || !going);
@@ -278,6 +285,16 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
               <Icon name="users" size={18} color={t.c.textSecondary} />
               <Text variant="body" style={{ flex: 1 }} numberOfLines={1}>
                 {tx('Proposed in {name}', { name: tx(displayCommunityName({ name: card.communityName })) })}
+              </Text>
+              <Icon name="chevronRight" size={16} color={t.c.textSecondary} />
+            </PressableScale>
+          ) : null}
+          {linkedEvent ? (
+            // The event it was made for: its page lists this plan under « Going together ».
+            <PressableScale haptic="select" onPress={() => openHero({ kind: 'event', id: linkedEvent.id })} style={styles.fact} accessibilityLabel={tx('Open {title}', { title: tx(linkedEvent.title) })}>
+              <Icon name="ticket" size={18} color={t.c.textSecondary} />
+              <Text variant="body" style={{ flex: 1 }} numberOfLines={1}>
+                {tx('For the event {name}', { name: tx(linkedEvent.title) })}
               </Text>
               <Icon name="chevronRight" size={16} color={t.c.textSecondary} />
             </PressableScale>

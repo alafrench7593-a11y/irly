@@ -27,6 +27,7 @@ import {
 } from '@/data/repo';
 import type { City, Visual } from '@/data/types';
 import { MapArt } from '@/features/map/MapArt';
+import { GoTogether } from '@/features/events/GoTogether';
 import { formatCount, formatPrice, priceLevel } from '@/lib/format';
 import { cityNow, durationLabel, whenLabel } from '@/lib/time';
 import { FEATURES } from '@/lib/features';
@@ -318,18 +319,22 @@ const EventBody = memo(function EventBody({ id, go }: { id: string; go: Go }) {
       <Section title="Who's going" index={1}>
         <Going ids={e.goingIds} extra={e.extraGoing} joined={joined} go={go} />
       </Section>
-      <Section title="About" index={2}>
+      {/* Members' own plans to go together (« Ils y vont ensemble »), and « Y aller ensemble ». */}
+      <Section title="Going together" index={2}>
+        <GoTogether event={e} go={go} />
+      </Section>
+      <Section title="About" index={3}>
         <Text variant="bodyL" tone="secondary">
           {e.description}
         </Text>
       </Section>
-      <Section title="Why it's worth it" index={3}>
+      <Section title="Why it's worth it" index={4}>
         <Highlights items={e.highlights} />
       </Section>
-      <Section title="Hosted by" index={4}>
+      <Section title="Hosted by" index={5}>
         <HostCard name={e.host} verified={e.hostVerified} />
       </Section>
-      <Section title="Location" index={5}>
+      <Section title="Location" index={6}>
         <MiniMap city={city} areaId={e.areaId} />
       </Section>
     </>

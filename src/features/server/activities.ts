@@ -51,6 +51,8 @@ export type ActivityExtras = {
   endsAt?: Date | null;
   /** The request's id, chosen by the caller (a Live passes its own id): the server keeps one activity per id. */
   clientRef?: string;
+  /** Made from an IRLY event (« Go together »): the event's key (features/events/goTogether), listed on its page. */
+  eventKey?: string | null;
 };
 
 /** Signed links for uploaded activity photos (private bucket); other values pass through. */
@@ -132,6 +134,8 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
       community_id: extras.communityId ?? null,
       // An exact address puts it on the map once the server's geocoder matched it precisely (never a guess).
       ...(extras.address?.trim() ? { address: extras.address.trim().slice(0, 200) } : {}),
+      // The event it is for: only a key in the server's format (a bad one would refuse the whole plan).
+      ...(extras.eventKey && extras.eventKey.length <= 64 && /^e-[a-z0-9]+(-[a-z0-9]+)*$/.test(extras.eventKey) ? { event_key: extras.eventKey } : {}),
       client_ref: clientRef,
     })
     // The row as the server stored it (its triggers may set girl_only…): the activity page opens with it at once.
