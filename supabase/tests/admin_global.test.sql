@@ -198,8 +198,11 @@ begin
   -- The owner's list of 2026-11-06 (20261108200000).
   perform pg_temp.check(mixte = array['expats', 'lifestyle', 'sport', 'running', 'padel', 'trip', 'network', 'francais'], 'E: IRLY''s eight, in the owner''s order');
   perform pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'girl')
-    = array['girls', 'girl_network'], 'E: IRLY Girl, Girl CEO last (inside IRLY Network)');
-  perform pg_temp.check(not exists (select 1 from public.admin_official_topics() where space = 'mom'), 'E: IRLY Maman is retired');
+    = array['girl_newcomers', 'girl_activity', 'girl_sport', 'girl_running', 'girl_padel', 'girl_trip', 'girl_network', 'girl_francaise'],
+    'E: IRLY Girl mirrors IRLY (20261109000000), Girl CEO inside IRLY Network');
+  perform pg_temp.check((select array_agg(topic order by sort) from public.admin_official_topics() where space = 'mom')
+    = array['mom_expat', 'mom_activity', 'mom_sport', 'mom_running', 'mom_padel', 'mom_trip', 'mom_network', 'mom_francaise'],
+    'E: IRLY Mom Community mirrors IRLY (20261109000000), Mom CEO inside IRLY Network');
   rev := array['lifestyle', 'francais', 'network', 'trip', 'padel', 'running', 'sport', 'expats'];
   perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['lifestyle', 'lifestyle', 'sport', 'expats'], 'New order')$q$) = '22023', 'E: a duplicate is refused');
   perform pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['lifestyle', 'sport', 'expats'], 'New order')$q$) = '22023', 'E: a missing community is refused');

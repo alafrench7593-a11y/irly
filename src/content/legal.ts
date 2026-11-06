@@ -47,6 +47,14 @@ export const LEGAL: Record<LegalDoc, { title: string; version: string; updated: 
         ],
       },
       {
+        title: 'IRLY Girl: women-only access, verification and safety moderation',
+        body: [
+          'IRLY Girl is reserved for women. Access is based on the gender on your IRLY account, which you declare at signup and can only be changed by contacting support, and is checked by our servers, not only by the app.',
+          'Selfie verification: once IRLY Girl reaches a size set by IRLY (100 members at launch), entering it also requires a verified profile. You take a selfie in the app with a gesture chosen at random, and an IRLY admin compares it with your profile photos. The selfie is stored in a private space only you and IRLY admins can read, and it is deleted after the decision; we keep the date of verification and which profile photos were reviewed. Until then, IRLY Girl opens without the selfie, and joining an IRLY Girl community without a verified profile is recorded for the safety moderator.',
+          'Safety moderation: one person of the IRLY team, designated by IRLY, can view IRLY Girl (communities, posts, members and activities, and the chat of IRLY’s own IRLY Girl communities) in read-only mode, to keep it safe. They cannot join, post, message, react or appear in member lists. Each viewing is recorded in IRLY’s internal moderation log (who, what and when), kept 24 months. Members are not notified of each viewing.',
+        ],
+      },
+      {
         title: 'Service providers',
         body: [
           `Supabase (database, authentication, file storage and realtime). Your data is stored in ${APP.hosting}.`,
@@ -235,6 +243,14 @@ export const LEGAL_FR: typeof LEGAL = {
           'Bloquer quelqu’un vous masque l’un à l’autre partout.',
           'Les modérateurs d’IRLY peuvent lire les contenus signalés, pour les examiner.',
           'Nous ne vendons pas tes données et n’utilisons pas de traceurs publicitaires.',
+        ],
+      },
+      {
+        title: 'IRLY Girl : accès réservé aux femmes, vérification et modération sécurité',
+        body: [
+          'IRLY Girl est réservé aux femmes. L’accès dépend du genre indiqué sur ton compte IRLY, déclaré à l’inscription et modifiable seulement en contactant le support, et il est vérifié par nos serveurs, pas seulement par l’app.',
+          'Vérification par selfie : dès qu’IRLY Girl atteint une taille fixée par IRLY (100 membres au lancement), y entrer demande aussi un profil vérifié. Tu prends un selfie dans l’app avec un geste choisi au hasard, et un administrateur IRLY le compare à tes photos de profil. Le selfie est stocké dans un espace privé que seuls toi et les administrateurs IRLY pouvez lire, et il est supprimé après la décision ; nous gardons la date de vérification et les photos de profil examinées. D’ici là, IRLY Girl s’ouvre sans selfie, et rejoindre une communauté IRLY Girl sans profil vérifié est enregistré pour la modération sécurité.',
+          'Modération sécurité : une seule personne de l’équipe IRLY, désignée par IRLY, peut consulter IRLY Girl (communautés, publications, membres et activités, ainsi que le chat des communautés IRLY Girl d’IRLY) en lecture seule, pour le protéger. Elle ne peut ni rejoindre, ni publier, ni écrire, ni réagir, ni apparaître dans les listes de membres. Chaque consultation est inscrite au journal de modération interne d’IRLY (qui, quoi, quand), conservé 24 mois. Les membres ne sont pas prévenues de chaque consultation.',
         ],
       },
       {

@@ -1,5 +1,4 @@
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useMemo, useRef, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -21,7 +20,7 @@ import { MapButton, MapEmpty, MapTopBar, ModeSwitch, searchMap, type Layer } fro
 import { ClusterView, MarkerView } from './MapMarkers';
 import { MapSheet, type Snap } from './MapSheet';
 import type { MapMarkerData } from './markers';
-import { useMapLayers } from './useActivityLayer';
+import { useFocusActivity, useMapLayers } from './useActivityLayer';
 import { placeMarkers, STREET, type Located } from './place';
 import { nativeMapAvailable } from './nativeMaps';
 
@@ -35,7 +34,7 @@ export const hasRealMap = nativeMapAvailable;
  * and real 3D buildings. People and lives are only ever placed around
  * their neighbourhood, never at an address.
  */
-export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
+export function RealCityMap({ cityId, areaId, activityId }: { cityId: CityId; areaId?: string; activityId?: string }) {
   const insets = useSafeAreaInsets();
   const t = useTheme();
   const night = t.mode === 'night';
@@ -43,7 +42,6 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const tabSpace = useTabBarSpace();
   const map = useRef<MapView>(null);
   const city = CITIES[cityId];
-  const router = useRouter();
   const [layer, setLayer] = useState<Layer>('all');
   const [selected, setSelected] = useState<MapMarkerData | null>(null);
   const [snap, setSnap] = useState<Snap>('collapsed');
@@ -82,17 +80,23 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
     map.current?.animateToRegion({ latitude: c.latitude - shift, longitude: c.longitude, latitudeDelta: d, longitudeDelta: d }, 600);
   };
 
+  // A tap shows the marker's card (an activity's card opens its page); the camera keeps it in view.
   const select = (m: MapMarkerData & { coords?: LatLng }) => {
     haptic('select');
-    // An activity opens its own page (the same record everywhere); a person, her preview.
-    if (m.type === 'activity' && m.href) {
-      router.push(m.href as never);
-      return;
-    }
     setSelected(m);
     setSnap('collapsed');
     if (m.coords) centerOn(m.coords, Math.min(region.latitudeDelta, STREET * 0.9), 136);
   };
+
+  // « See on the map » from an activity's page: its card, the camera on it (once the map can move).
+  const [mapReady, setMapReady] = useState(false);
+  useFocusActivity(all, activityId, ready, mapReady, (m) => {
+    if (m) {
+      setSelected(m);
+      setSnap('collapsed');
+      centerOn(m.coords, STREET * 0.6, 136);
+    } else toast('This activity is not on the map right now', 'pin', 'brand');
+  });
 
   const setMode = async (next: boolean) => {
     if (next === three) return;
@@ -159,6 +163,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
         style={StyleSheet.absoluteFill}
         initialRegion={start}
         onRegionChangeComplete={setRegion}
+        onMapReady={() => setMapReady(true)}
         onPress={() => setSelected(null)}
         showsUserLocation={me}
         showsBuildings

@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { Avatar } from '@/components/ui/Avatar';
@@ -8,122 +7,27 @@ import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { deleteCommunity, joinCommunity } from '@/features/community/data';
-import { prefetchCommunity } from '@/features/community/prefetch';
 import { a11y, t as tx } from '@/i18n';
 import { confirm } from '@/lib/confirm';
 import { hueOf } from '@/lib/format';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
-import { PressableScale } from '@/motion/PressableScale';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import {
   addChannel,
   announce,
   communityPeople,
-  createSubgroup,
   deleteChannel,
   renameChannel,
   setCommunityPrefs,
   setRole,
   type Channel,
   type CommunityPrefs,
-  type Parent,
   type Person,
   type Rights,
-  type Subgroup,
 } from './groups';
 import { GlassLayer } from '@/components/ui/GlassLayer';
-import Animated from 'react-native-reanimated';
-import { enter } from '@/motion/enter';
-import { useBusy } from '@/lib/useBusy';
-
-/** "← IRLY Sport" on a group's page. */
-export function ParentLink({ parent }: { parent: Parent }) {
-  const router = useRouter();
-  const t = useTheme();
-  if (!parent) return null;
-  return (
-    <PressableScale haptic="select" onPressIn={() => prefetchCommunity(parent.id)} onPress={() => router.push(`/c/${parent.id}`)} style={styles.parent} accessibilityRole="link" accessibilityLabel={tx('Part of {name}', { name: parent.name })}>
-      <Icon name="layers" size={14} color={t.c.textSecondary} />
-      <Text variant="caption" tone="secondary" raw>
-        {tx('Group of {name}', { name: parent.name })}
-      </Text>
-    </PressableScale>
-  );
-}
-
-/** A community's topic groups: open one, or join it in one tap. */
-export function SubgroupList({ groups, onChanged }: { groups: Subgroup[]; onChanged: () => void }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState<string | null>(null);
-  if (!groups.length) return null;
-  return (
-    <View style={{ gap: 10 }}>
-      <View style={[styles.pad, styles.row]}>
-        <Text variant="overline" tone="secondary" style={{ flex: 1 }}>
-          Groups
-        </Text>
-        <Text variant="caption" tone="tertiary">
-          {tx('{n} topics', { n: groups.length })}
-        </Text>
-      </View>
-      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: space.gutter, gap: 10 }}>
-        {groups.map((g, i) => (
-          <Animated.View key={g.id} entering={enter.slide(Math.min(i, 6))}>
-            <PressableScale
-              haptic="select"
-              scaleTo={0.97}
-              onPressIn={() => prefetchCommunity(g.id)}
-              onPress={() => router.push(`/c/${g.id}`)}
-              style={[styles.group, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}
-              accessibilityLabel={g.name}
-            >
-              <GlassLayer radius={radius.xl} />
-              <Text style={{ fontSize: 24 }} raw>
-                {g.emoji ?? '💬'}
-              </Text>
-              <Text variant="titleS" numberOfLines={1}>
-                {g.name}
-              </Text>
-              <Text variant="caption" tone="tertiary" numberOfLines={2}>
-                {g.tagline ?? ''}
-              </Text>
-              <Text variant="caption" tone="secondary">
-                {g.postsWeek ? tx('{n} members · {p} posts this week', { n: g.members, p: g.postsWeek }) : tx('{n} members', { n: g.members })}
-              </Text>
-              {g.isMember ? (
-                <Text variant="label" tone="tertiary">
-                  Joined ✓
-                </Text>
-              ) : (
-                <Button
-                  label="Join"
-                  size="sm"
-                  variant="secondary"
-                  loading={busy === g.id}
-                  onPress={() => {
-                    if (busy) return;
-                    setBusy(g.id);
-                    joinCommunity(g.id)
-                      .then(() => {
-                        haptic('success');
-                        toast(tx('You joined {name}', { name: g.name }), 'users', 'brand');
-                        onChanged();
-                      })
-                      .catch((e) => toast(e instanceof Error ? e.message : 'Could not join', 'x', 'live'))
-                      .finally(() => setBusy(null));
-                  }}
-                />
-              )}
-            </PressableScale>
-          </Animated.View>
-        ))}
-      </ScrollView>
-    </View>
-  );
-}
 
 /** Notifications for this community: its posts, its announcements. */
 export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: string; prefs: CommunityPrefs; onChanged: () => void }) {
@@ -184,46 +88,11 @@ export function NotifyPrefs({ communityId, prefs, onChanged }: { communityId: st
   );
 }
 
-/** Hosts' tools: notify every member, add a group, name moderators. */
-export function HostTools({
-  communityId,
-  name,
-  rights,
-  isTop,
-  official,
-  parentId,
-  onChanged,
-}: {
-  communityId: string;
-  name: string;
-  rights: Rights;
-  isTop: boolean;
-  official: boolean;
-  parentId: string | null;
-  onChanged: () => void;
-}) {
+/** Hosts' tools: notify every member, name moderators. */
+export function HostTools({ communityId, name, rights, onChanged }: { communityId: string; name: string; rights: Rights; onChanged: () => void }) {
   const t = useTheme();
-  const router = useRouter();
-  const [sheet, setSheet] = useState<'announce' | 'group' | 'people' | null>(null);
-  // Delete waits for the server: a second tap deleted again (an error toast) and navigated twice.
-  const removing = useBusy<'delete'>();
+  const [sheet, setSheet] = useState<'announce' | 'people' | null>(null);
   if (!rights.canModerate) return null;
-  // A group (not a top community) can be deleted by its moderators; IRLY's own groups only by an IRLY admin.
-  const canDelete = !isTop && (!official || rights.isAdmin);
-  const remove = () =>
-    removing.isRunning() ||
-    confirm(tx('Delete this group? It disappears for everyone, and its chat leaves every inbox.'), () =>
-      void removing.run('delete', () =>
-        deleteCommunity(communityId)
-          .then(() => {
-            toast(tx('Group deleted'), 'check', 'brand');
-            if (parentId) router.replace(`/c/${parentId}`);
-            else if (router.canGoBack()) router.back();
-            else router.replace('/communities');
-          })
-          .catch((e) => toast(e instanceof Error ? e.message : tx('Could not delete'), 'x', 'live')),
-      ),
-    );
   return (
     <View style={[styles.pad, styles.tools, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
       <GlassLayer radius={radius.xl} />
@@ -235,12 +104,9 @@ export function HostTools({
       </View>
       <View style={styles.wrap}>
         <Chip size="sm" icon="megaphone" label={tx('Notify all members')} onPress={() => setSheet('announce')} />
-        {isTop ? <Chip size="sm" icon="plus" label={tx('Add a group')} onPress={() => setSheet('group')} /> : null}
         {rights.isOwner ? <Chip size="sm" icon="users" label={tx('Moderators')} onPress={() => setSheet('people')} /> : null}
-        {canDelete ? <Chip size="sm" icon="x" label={removing.busy ? tx('One moment…') : tx('Delete this group')} onPress={remove} /> : null}
       </View>
       <AnnounceSheet visible={sheet === 'announce'} communityId={communityId} name={name} rights={rights} onClose={() => setSheet(null)} onSent={onChanged} />
-      <NewGroupSheet visible={sheet === 'group'} parentId={communityId} onClose={() => setSheet(null)} onMade={onChanged} />
       <PeopleSheet visible={sheet === 'people'} communityId={communityId} onClose={() => setSheet(null)} />
     </View>
   );
@@ -297,55 +163,6 @@ function AnnounceSheet({ visible, communityId, name, rights, onClose, onSent }: 
             : tx('At most 3 a day, one per hour, never the same text twice in a week. Sent today: {n}.', { n: rights.announcementsToday })}
         </Text>
         <Button label="Send to everyone" icon="megaphone" full loading={busy} disabled={blocked || body.trim().length < 3} onPress={send} />
-      </View>
-    </Sheet>
-  );
-}
-
-function NewGroupSheet({ visible, parentId, onClose, onMade }: { visible: boolean; parentId: string; onClose: () => void; onMade: () => void }) {
-  const t = useTheme();
-  const router = useRouter();
-  const [name, setName] = useState('');
-  const [tagline, setTagline] = useState('');
-  const [busy, setBusy] = useState(false);
-  const make = async () => {
-    if (busy || name.trim().length < 3) return;
-    setBusy(true);
-    try {
-      const id = await createSubgroup(parentId, name.trim(), tagline.trim());
-      haptic('success');
-      setName('');
-      setTagline('');
-      onMade();
-      onClose();
-      router.push(`/c/${id}`);
-    } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not create the group', 'x', 'live');
-    } finally {
-      setBusy(false);
-    }
-  };
-  const input = [styles.line, { color: t.c.text, backgroundColor: t.c.overlay }];
-  return (
-    <Sheet visible={visible} onClose={onClose} title="Add a group" subtitle="A topic inside this community, with its own posts and chat.">
-      <View style={{ paddingHorizontal: space.gutter, gap: space[3], paddingBottom: space[2] }}>
-        <TextInput
-          value={name}
-          onChangeText={(v) => setName(v.slice(0, 60))}
-          placeholder={tx('Padel, Startups, Brunch…')}
-          placeholderTextColor={t.c.textTertiary}
-          style={input}
-          accessibilityLabel={a11y('Group name')}
-        />
-        <TextInput
-          value={tagline}
-          onChangeText={(v) => setTagline(v.slice(0, 80))}
-          placeholder={tx('One line about it (optional)')}
-          placeholderTextColor={t.c.textTertiary}
-          style={input}
-          accessibilityLabel={a11y('Tagline')}
-        />
-        <Button label="Create the group" icon="plus" full loading={busy} disabled={name.trim().length < 3} onPress={make} />
       </View>
     </Sheet>
   );

@@ -27,7 +27,7 @@ const OPTIONS: Option[] = [
   { id: 'meetup', label: 'Meetup', hint: 'Coffee, networking', icon: 'handshake', color: '#A2845E', preset: { format: 'meetup' } },
   { id: 'live', label: 'Live', hint: 'What you\'re doing right now', icon: 'zap', color: '#FF3B30', route: '/live?compose=1' },
   { id: 'post', label: 'Post', hint: 'Photo or text, IRL', icon: 'camera', route: '/live?compose=photo' },
-  { id: 'community', label: 'Community', hint: 'A permanent group', icon: 'users', color: '#30B0C7', route: '/community/new' },
+  { id: 'community', label: 'Community', hint: 'People who meet again', icon: 'users', color: '#30B0C7', route: '/community/new' },
 ];
 
 /**

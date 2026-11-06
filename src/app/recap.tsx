@@ -9,7 +9,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { CITIES } from '@/data/destinations';
 import { useAccount } from '@/features/auth/account';
-import { useChallenges, useForYou, useGroupSuggestions, useRecap, type RecapItem } from '@/features/engage/engage';
+import { useChallenges, useForYou, useRecap, type RecapItem } from '@/features/engage/engage';
 import { t as tx } from '@/i18n';
 import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
@@ -29,7 +29,7 @@ const SECTIONS: { id: RecapItem['section']; title: string; icon: IconName }[] = 
 /**
  * My recap: since my last visit, what happened in my communities, my next
  * plans, what is new and activities that fit what I like; then posts for
- * me, groups to join and this month's shared challenges. Only real activity.
+ * me and this month's shared challenges. Only real activity.
  */
 export default function RecapScreen() {
   const t = useTheme();
@@ -40,7 +40,6 @@ export default function RecapScreen() {
   const now = useNow();
   const recap = useRecap(cityId);
   const forYou = useForYou();
-  const groups = useGroupSuggestions(cityId);
   const challenges = useChallenges(cityId);
   const { markSeen, loading, failed } = recap;
   // Seen once shown: next time, the recap starts from now. A failed load was not seen: it stays for next time.
@@ -59,8 +58,8 @@ export default function RecapScreen() {
   }
   const open = (r: RecapItem) => (r.section === 'discussion' ? router.push({ pathname: '/comments', params: { type: 'community_post', id: r.id } }) : r.section === 'community' ? router.push(`/c/${r.id}`) : router.push(`/a/${r.id}`));
   // Unreachable is not "nothing new": then it says so, with a retry.
-  const anyFailed = recap.failed || forYou.failed || groups.failed;
-  const nothing = !anyFailed && !recap.loading && !recap.items.length && !forYou.items.length && !groups.items.length;
+  const anyFailed = recap.failed || forYou.failed;
+  const nothing = !anyFailed && !recap.loading && !recap.items.length && !forYou.items.length;
 
   return (
     <Page overline={city.name} title="My recap" subtitle={recap.since ? tx('Since your last visit, {time}.', { time: timeAgo(Math.max(1, Math.round((now - Date.parse(recap.since)) / 60000))) }) : tx('The last 7 days.')}>
@@ -77,7 +76,6 @@ export default function RecapScreen() {
               onPress={() => {
                 recap.reload();
                 forYou.reload();
-                groups.reload();
               }}
             />
           </View>
@@ -141,33 +139,6 @@ export default function RecapScreen() {
                   <Text variant="caption" tone="secondary">
                     {tx('{c} comments · {l} likes', { c: p.comments, l: p.likes })}
                   </Text>
-                </PressableScale>
-              </Animated.View>
-            ))}
-          </View>
-        ) : null}
-
-        {groups.items.length ? (
-          <View style={{ gap: 8 }}>
-            <View style={[styles.pad, styles.row]}>
-              <Icon name="layers" size={16} color={t.c.text} />
-              <Text variant="titleS">Groups for you</Text>
-            </View>
-            {groups.items.map((g, idx) => (
-              <Animated.View key={g.id} entering={enter.rise(Math.min(idx, 8))}>
-                <PressableScale haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${g.id}`)} style={[styles.item, styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={g.name}>
-                  <GlassLayer radius={radius.lg} />
-                  <Text style={{ fontSize: 22 }} raw>
-                    {g.emoji ?? '💬'}
-                  </Text>
-                  <View style={{ flex: 1 }}>
-                    <Text variant="label" numberOfLines={2}>
-                      {g.name}
-                    </Text>
-                    <Text variant="caption" tone="tertiary" raw>
-                      {[g.parentName, g.reason === 'in_your_community' ? tx('in a community you joined') : tx('matches your interests'), tx('{n} members', { n: g.members })].join(' · ')}
-                    </Text>
-                  </View>
                 </PressableScale>
               </Animated.View>
             ))}

@@ -21,13 +21,19 @@ import { GButton, GIconWell } from './ui';
 /** Each official community's photo (until its hosts set one): the same as on its page (official.ts). */
 const PHOTO: Record<GirlOfficialTopic, PhotoKey> = GIRL_OFFICIAL_PHOTO;
 
-/** The demo build has no server: the same one (IRLY Girl, since 2026-11-06), with no members and nothing to join. */
+/** The demo build has no server: the same seven (IRLY's list for women, since 2026-11-06), with no members and nothing to join. */
 const DEMO_OFFICIAL: GirlOfficialCommunity[] = [
-  { id: 'demo-girls', topic: 'girls', name: 'IRLY Girl', tagline: 'Women meeting women in Dubai: plans, advice and friendship.', emoji: '💗', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_newcomers', topic: 'girl_newcomers', name: 'Girl Expat', tagline: 'Living abroad, between women: tips, friends and a sense of home.', emoji: '🌍', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_activity', topic: 'girl_activity', name: 'Girl Activité', tagline: 'Outings between women: restaurants, cafés, beach clubs, shopping, nights out and more.', emoji: '✨', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_sport', topic: 'girl_sport', name: 'Girl Sport', tagline: 'Play, train and stay active together, between women.', emoji: '🏅', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_running', topic: 'girl_running', name: 'Girl Running Club', tagline: 'Run together in Dubai, between women, from sunrise 5Ks to race days.', emoji: '🏃‍♀️', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_padel', topic: 'girl_padel', name: 'Girl Padel Club', tagline: 'Find padel partners and play together in Dubai, between women.', emoji: '🎾', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_trip', topic: 'girl_trip', name: 'Girl Trip', tagline: 'Discover the Emirates and travel together, between women.', emoji: '✈️', members: 0, isMember: false, coverPath: null },
+  { id: 'demo-girl_francaise', topic: 'girl_francaise', name: 'Les Françaises à Dubaï', tagline: 'French-speaking women in Dubai: meetups, tips and plans in French.', emoji: '🥐', members: 0, isMember: false, coverPath: null },
 ];
 
 /**
- * IRLY Girl's official communities (IRLY Girl since 2026-11-06), as cards: photo, name, what it is
+ * IRLY Girl's official communities (IRLY's list for women since 2026-11-06), as cards: photo, name, what it is
  * for, its real member count and a Join button that answers at once (the
  * count follows the server). Joining twice or leaving twice is never sent:
  * a card waits for its answer. `cell`: on a wide screen the cards form a

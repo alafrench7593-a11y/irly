@@ -17,9 +17,7 @@ import { DEMO } from '@/config/app';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import { useAccount } from '@/features/auth/account';
-import { CommunityMap } from '@/features/community/CommunityMap';
 import { CommunityThumb } from '@/features/community/CommunityThumb';
-import type { MapCommunity } from '@/features/community/mapSpots';
 import { displayCommunityName } from '@/features/community/name';
 import { joinCommunity, leaveCommunity, useCommunityList, type CommunitySummary } from '@/features/community/data';
 import { CommunityStats } from '@/features/community/discovery/CommunityStats';
@@ -106,7 +104,7 @@ export default function CommunitiesRoute() {
   );
 }
 
-/** From this width the page lays the tabs beside the map and the communities out as a grid of cards. */
+/** From this width the page lays the tabs, the search and the themes out in rows, and the communities as a grid of cards. */
 const WIDE = 760;
 
 /**
@@ -189,7 +187,7 @@ function Communities() {
   // What the server knows of each community (counts, favourite), for the cards of every section.
   const known = useMemo(() => new Map((demoGirl ? base : (dir.list ?? [])).map((c) => [c.id, c])), [demoGirl, base, dir.list]);
 
-  // Search and theme live here so the map shows exactly what the list below shows.
+  // Search and theme: what « Discover » lists.
   const shown = useMemo(() => {
     const q = norm(typed);
     const local = base.filter((c) => inGroup(c, group) && (!q || searchable(c).includes(q)));
@@ -200,36 +198,7 @@ function Communities() {
     return [...server, ...local.filter((c) => !ids.has(c.id))];
   }, [base, group, typed, settled, found.list, place]);
 
-  const mapList = useMemo<MapCommunity[]>(() => {
-    if (tab === 'all') return shown.map((c) => ({ id: c.id, name: c.name, topic: c.topic, categoryId: c.categoryId, cityId: c.cityId, emoji: c.emoji, members: c.members ?? 0, isMember: c.isMember }));
-    if (tab === 'mine') return mine.communities.map((c) => ({ id: c.id, name: c.name, topic: null, categoryId: null, cityId: c.cityId, emoji: null, members: c.members, isMember: true }));
-    return (rec.list ?? []).map((c) => ({ id: c.id, name: c.name, topic: c.topic, categoryId: null, cityId: c.cityId, emoji: c.emoji, members: c.members, isMember: c.isMember }));
-  }, [tab, shown, mine.communities, rec.list]);
-  const mapStatus = !signedIn
-    ? 'signedOut'
-    : tab === 'foryou'
-      ? rec.loading
-        ? 'loading'
-        : rec.error && !rec.list?.length
-          ? 'error'
-          : 'ready'
-      : tab === 'mine'
-        ? mine.loading
-          ? 'loading'
-          : mine.error && !mine.communities.length
-            ? 'error'
-            : 'ready'
-        : 'ready';
-  const mapEmpty =
-    tab === 'all'
-      ? base.length
-        ? tx('No community matches these filters')
-        : tx('No community here yet')
-      : tab === 'mine'
-        ? tx('You have not joined a community yet')
-        : tx('No recommendation yet');
-
-  // Wide: the tabs, the search, the themes and the sort in a column beside the map, the communities in a grid under both.
+  // Wide: the tabs and « Create » on one row, the search, the themes and the sort under them, the communities in a grid below.
   const card = useCardWidth();
   const wide = card !== undefined;
   const create = <Button label="Create a community" icon="plus" variant="secondary" full onPress={() => router.push('/community/new')} />;
@@ -254,18 +223,15 @@ function Communities() {
 
   return (
     <Page overline={city.name} title="Communities" subtitle="IRLY's communities and the ones members start. Meet the same faces again: that's how trust grows.">
-      <View style={[styles.pad, wide ? styles.top : null, { marginBottom: space[5] }]}>
-        {wide ? (
-          <View style={styles.side}>
-            {tabs}
-            {filters}
-            {create}
+      {wide ? (
+        <View style={[styles.pad, styles.controls]}>
+          <View style={styles.top}>
+            <View style={styles.tabsWide}>{tabs}</View>
+            <View style={styles.createWide}>{create}</View>
           </View>
-        ) : null}
-        <View style={wide ? styles.mapWide : null}>
-          <CommunityMap cityId={cityId} communities={mapList} status={mapStatus} onRetry={tab === 'mine' ? mine.reload : rec.refresh} emptyText={mapEmpty} />
+          {filters}
         </View>
-      </View>
+      ) : null}
       {!signedIn ? (
         <View style={styles.pad}>
           <Empty icon="users" title="Sign in to see the communities" body="Communities, their chats and their members are on the IRLY server." action="Sign in" onAction={() => router.push('/account')} />
@@ -280,7 +246,7 @@ function Communities() {
           ) : null}
           {tab === 'foryou' ? (
             <Section title={<Text variant="overline" tone="secondary">Recommended for me</Text>}>
-              {/* IRLY Girl: « For you » is IRLY Girl's official community (IRLY Girl). */}
+              {/* IRLY Girl: « For you » is IRLY Girl's official list (Girl Expat … Les Françaises à Dubaï). */}
               {inGirl ? <GirlOfficialCommunities cell={card} /> : <ForYou rec={rec} known={known} cityId={cityId} onSeeAll={() => setTab('all')} card={card} />}
             </Section>
           ) : null}
@@ -309,7 +275,7 @@ function Section({ title, children }: { title: ReactNode; children: ReactNode })
   );
 }
 
-/** Search and themes of « Discover »: a rail of themes on a phone, every theme at once beside the map on a wide screen. */
+/** Search and themes of « Discover »: a rail of themes on a phone, every theme at once on a wide screen. */
 function Filters({ cityId, query, onQuery, group, onGroup, wide }: { cityId: CityId; query: string; onQuery: (q: string) => void; group: Group; onGroup: (g: Group) => void; wide: boolean }) {
   const chips = GROUPS.map((g) => <Chip key={g.id} size="sm" label={g.label} selected={group === g.id} onPress={() => onGroup(g.id)} />);
   return (
@@ -726,8 +692,9 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1, padding: 14, gap: 4 },
   cardFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6, marginTop: 'auto', paddingTop: 8, minHeight: 40 },
   cardStats: { flex: 1, minWidth: 0 },
-  top: { flexDirection: 'row', alignItems: 'flex-start', gap: space[6] },
-  side: { width: 320, gap: space[4] },
-  mapWide: { flex: 1, minWidth: 0 },
+  controls: { gap: space[4], marginBottom: space[5] },
+  top: { flexDirection: 'row', alignItems: 'center', gap: space[4] },
+  tabsWide: { flex: 1, minWidth: 0, maxWidth: 520 },
+  createWide: { width: 240, marginLeft: 'auto' },
   empty: { alignItems: 'center', gap: 6, padding: 22, borderRadius: radius.xl, overflow: 'hidden' },
 });

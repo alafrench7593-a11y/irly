@@ -32,6 +32,9 @@ import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, openDirect, useEngagement } from '@/features/server/engage';
 import { useActivityCards } from '@/features/server/activityCards';
 import { displayCommunityName } from '@/features/community/name';
+import { findEvent } from '@/data/repo';
+import { useActivityEventKey } from '@/features/events/goTogether';
+import { openHero } from '@/features/hero/heroStore';
 import { PressableScale } from '@/motion/PressableScale';
 import { track } from '@/lib/analytics';
 import { haptic } from '@/motion/haptics';
@@ -72,6 +75,8 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
   const eng = useEngagement('activity', a ? [a.id] : []);
   // Its live card: the origin community's name and whether its organiser accepts a message from me.
   const card = useActivityCards(a ? [a.id] : []).get(id);
+  // Made from an IRLY event (« Go together »): that event, one tap away.
+  const eventKey = useActivityEventKey(id);
   const [busy, setBusy] = useState(false);
   // Right after joining: the button confirms ("You're in") until the page knows you are going,
   // and at least a beat, so it never flashes back to Join while the detail refreshes.
@@ -146,6 +151,8 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
   // Same cutoff as the server's join: two hours after the start when no end is set.
   const over = (a.endsAt ?? a.startsAt + 2 * 3600_000) < now;
   const isEvent = a.format === 'event';
+  // Only an event this app knows (the catalogue): an unknown key shows nothing.
+  const linkedEvent = eventKey ? findEvent(eventKey) : undefined;
   const target = { type: 'activity' as const, id: a.id, title: a.title };
 
   const confirmingNow = confirming && (held || !going);
@@ -282,6 +289,16 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
               <Icon name="chevronRight" size={16} color={t.c.textSecondary} />
             </PressableScale>
           ) : null}
+          {linkedEvent ? (
+            // The event it was made for: its page lists this plan under « Going together ».
+            <PressableScale haptic="select" onPress={() => openHero({ kind: 'event', id: linkedEvent.id })} style={styles.fact} accessibilityLabel={tx('Open {title}', { title: tx(linkedEvent.title) })}>
+              <Icon name="ticket" size={18} color={t.c.textSecondary} />
+              <Text variant="body" style={{ flex: 1 }} numberOfLines={1}>
+                {tx('For the event {name}', { name: tx(linkedEvent.title) })}
+              </Text>
+              <Icon name="chevronRight" size={16} color={t.c.textSecondary} />
+            </PressableScale>
+          ) : null}
           {a.description ? (
             <View style={styles.about}>
               <Text variant="overline" tone="secondary">
@@ -297,6 +314,10 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
           </Text>
           <View style={styles.row}>
             {!a.cancelled ? <Button label="Share in a chat" icon="send" size="sm" variant="secondary" onPress={shareInChat} /> : null}
+            {/* The Map tab, centred on it with its card open (its neighbourhood if it is not on the map). */}
+            {!a.cancelled && !over ? (
+              <Button label="See on the map" icon="map" size="sm" variant="secondary" onPress={() => router.push(`/map?activity=${encodeURIComponent(a.id)}&area=${encodeURIComponent(a.areaId)}`)} />
+            ) : null}
             {!hosting && card?.canMessageHost ? <Button label="Contact the organiser" icon="message" size="sm" variant="secondary" loading={busy} onPress={contact} /> : null}
             <Button label="Add to my calendar" icon="calendar" size="sm" variant="secondary" onPress={addToCalendar} />
             <Button label="Not for me" icon="eye" size="sm" variant="ghost" onPress={more} />

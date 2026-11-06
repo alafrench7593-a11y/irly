@@ -611,7 +611,7 @@ export const dubai: CityContent = {
     {
       id: 'cv-d2',
       cityId: C,
-      kind: 'group',
+      kind: 'event',
       title: 'Padel social · Al Quoz',
       personIds: ['p-arjun', 'p-chloe', 'p-khalid'],
       unread: 2,

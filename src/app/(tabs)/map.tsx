@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -32,7 +32,8 @@ import { MapButton, MapEmpty, MapTopBar, ModeSwitch, searchMap, type Layer } fro
 import { MapSheet, type Snap } from '@/features/map/MapSheet';
 import { hasRealMap, RealCityMap } from '@/features/map/RealMap';
 import { placeMarkers, ZOOM, type MapMarkerData } from '@/features/map/markers';
-import { useMapLayers } from '@/features/map/useActivityLayer';
+import { useFocusActivity, useMapLayers } from '@/features/map/useActivityLayer';
+import { toast } from '@/components/ui/Toast';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { blur, ease, motion, spring } from '@/motion/tokens';
@@ -69,11 +70,12 @@ function busiestArea(city: City, markers: { point: MapPoint }[]): MapPoint {
 
 export default function MapScreen() {
   const cityId = useCityId();
-  const params = useLocalSearchParams<{ area?: string }>();
-  // A new city, or a link to one of its areas, starts with a fresh camera and selection.
+  const params = useLocalSearchParams<{ area?: string; activity?: string }>();
+  // A new city, or a link to one of its areas or activities, starts with a fresh camera and selection.
   // On phones: the real map (Apple Maps / Google Maps). On the web: the IRLY map.
-  if (hasRealMap) return <RealCityMap key={`${cityId}:${params.area ?? ''}`} cityId={cityId} areaId={params.area} />;
-  return <CityMap key={`${cityId}:${params.area ?? ''}`} cityId={cityId} areaId={params.area} />;
+  const key = `${cityId}:${params.area ?? ''}:${params.activity ?? ''}`;
+  if (hasRealMap) return <RealCityMap key={key} cityId={cityId} areaId={params.area} activityId={params.activity} />;
+  return <CityMap key={key} cityId={cityId} areaId={params.area} activityId={params.activity} />;
 }
 
 /**
@@ -83,13 +85,12 @@ export default function MapScreen() {
  * while the camera glides to keep it in view above the sheet, and the
  * sheet follows the finger between its three snaps.
  */
-function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
+function CityMap({ cityId, areaId, activityId }: { cityId: CityId; areaId?: string; activityId?: string }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const frame = useFrame();
   const tabSpace = useTabBarSpace();
   const city = CITIES[cityId];
-  const router = useRouter();
   const [layer, setLayer] = useState<Layer>('all');
   const [selected, setSelected] = useState<MapMarkerData | null>(null);
   const [snap, setSnap] = useState<Snap>('collapsed');
@@ -216,17 +217,22 @@ function CityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
     cam.tilt.set(withTiming(three ? 1 : 0, { duration: three ? 1200 : 800, easing: ease.camera }));
   };
 
+  // A tap shows the marker's card (an activity's card opens its page); the camera keeps it in view.
   const select = (m: MapMarkerData) => {
     haptic('select');
-    // An activity opens its own page (the same record everywhere); a person, her preview.
-    if (m.type === 'activity' && m.href) {
-      router.push(m.href as never);
-      return;
-    }
     setSelected(m);
     setSnap('collapsed');
     centerOn(m.point, Math.max(cam.zoom.get(), ZOOM.neighbourhood + 0.15), 136);
   };
+
+  // « See on the map » from an activity's page.
+  useFocusActivity(all, activityId, ready, true, (m) => {
+    if (m) {
+      setSelected(m);
+      setSnap('collapsed');
+      centerOn(m.point, Math.max(ZOOM.street, ZOOM.neighbourhood + 0.15), 136);
+    } else toast('This activity is not on the map right now', 'pin', 'brand');
+  });
 
   const openCluster = (p: MapPoint) => {
     centerOn(p, clamp(cam.zoom.get() * 1.6, MIN_Z, MAX_Z));

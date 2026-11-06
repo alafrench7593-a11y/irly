@@ -1005,60 +1005,14 @@ async function main() {
     }
     return false;
   });
-  let groupId = null;
-  await step('New group with Vera (name, people) → its chat opens; Vera has it in her inbox as a group', async () => {
+  // Group chats were removed on 2026-11-06 (migration 20261109050000): their door says so, the server refuses one.
+  await step('Group chats: /group/new says they are no longer available, create_group is refused, Messages has no Groups tab', async () => {
     await page.goto(`${BASE}/group/new`);
-    await page.getByPlaceholder('Group name').fill(`Padel crew ${run}`);
-    await page.getByRole('checkbox', { name: 'Vera' }).click({ timeout: 20000 });
-    await page.getByRole('button', { name: 'Create the group' }).click();
-    await page.waitForURL(/\/messages\/[0-9a-f-]{36}/, { timeout: 20000 });
-    groupId = page.url().split('/messages/')[1].split('?')[0];
-    const inbox = must(await veraSb.rpc('my_conversations'));
-    const g = inbox.find((x) => x.conversation_id === groupId);
-    return g?.kind === 'group' && g.members === 2;
-  });
-  await step('Vera writes in the group → it appears live in Uma\'s open group chat', async () => {
-    await page.waitForTimeout(1500);
-    must(await veraSb.from('messages').insert({ conversation_id: groupId, sender_id: vera.id, body: `Group hello ${run}` }));
-    await visible(page, `Group hello ${run}`, 20000);
-    return true;
-  });
-  await step('Messages tabs: the group is under Groups, the chat with Vera under Private, never both', async () => {
+    await visible(page, 'Group chats are no longer available', 20000);
+    const refused = (await veraSb.rpc('create_group', { p_title: `Padel crew ${run}`, p_members: [uma.id] })).error;
     await page.goto(`${BASE}/messages`);
-    await page.getByRole('tab', { name: /^Groups/ }).click();
-    await visible(page, `Padel crew ${run}`, 20000);
-    const vInGroups = await page.getByText('Vera', { exact: true }).filter({ visible: true }).count();
-    await page.getByRole('tab', { name: /^Private/ }).click();
-    await visible(page, 'Vera', 15000);
-    const gInPrivate = await page.getByText(`Padel crew ${run}`).filter({ visible: true }).count();
-    return vInGroups === 0 && gInPrivate === 0;
-  });
-  await step('Search finds the group by name', async () => {
-    await page.getByRole('tab', { name: /^All/ }).click();
-    await page.getByPlaceholder('Search conversations').fill('Padel crew');
-    await visible(page, `Padel crew ${run}`, 10000);
-    await page.getByPlaceholder('Search conversations').fill('');
-    return true;
-  });
-  // Uma accepts messages from people she shares a community with (Vera adds her to a group).
-  await sql(`insert into public.safety_settings (user_id, who_can_message) values ('${uma.id}', 'everyone') on conflict (user_id) do update set who_can_message = 'everyone'`);
-  let photoGroup = null;
-  await step('Vera creates a group with its photo → Uma sees it under Groups with that photo', async () => {
-    const path1 = `${vera.id}/g1-${run}.png`;
-    must(await veraSb.storage.from('activity-photos').upload(path1, PNG, { contentType: 'image/png', upsert: true }));
-    photoGroup = must(await veraSb.rpc('create_group', { p_title: `Photo group ${run}`, p_members: [uma.id], p_photo: path1 }));
-    await page.goto(`${BASE}/messages`);
-    await page.getByRole('tab', { name: /^Groups/ }).click();
-    await visible(page, `Photo group ${run}`, 20000);
-    await page.locator(`img[src*="g1-${run}"]`).first().waitFor({ timeout: 20000 });
-    return true;
-  });
-  await step('… Vera changes the group photo → Uma\'s open list shows the new one, no reload', async () => {
-    const path2 = `${vera.id}/g2-${run}.png`;
-    must(await veraSb.storage.from('activity-photos').upload(path2, PNG, { contentType: 'image/png', upsert: true }));
-    must(await veraSb.rpc('set_conversation_photo', { p_conversation: photoGroup, p_path: path2 }));
-    await page.locator(`img[src*="g2-${run}"]`).first().waitFor({ timeout: 25000 });
-    return true;
+    const groupsTab = await page.getByRole('tab', { name: /^Groups/ }).count();
+    return Boolean(refused) && groupsTab === 0;
   });
   let photoClub = null;
   await step('Community: Vera creates one, Uma joins → its chat is under Communities with the community\'s photo', async () => {
@@ -1096,12 +1050,6 @@ async function main() {
     await visible(page, `Photo club ${run} Bali`, 25000);
     must(await veraSb.rpc('delete_community', { p_community: photoClub }));
     return true;
-  });
-  await step('Access: someone outside the group cannot read it, nor open its photos', async () => {
-    // Vera leaves; she can no longer read the group or a photo sent in it.
-    must(await veraSb.rpc('leave_group', { p_conversation: groupId }));
-    const { data: msgs } = await veraSb.from('messages').select('id').eq('conversation_id', groupId);
-    return (msgs ?? []).length === 0;
   });
 
   // ───────── 1. Paths: every screen opens ─────────

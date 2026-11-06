@@ -43,7 +43,7 @@ import { NewPostsPill, PublishButton } from '@/features/community/FeedOverlays';
 import { MediaEmpty, MediaGrid, type GalleryItem } from '@/features/community/MediaGallery';
 import { PinnedStrip } from '@/features/community/PinnedStrip';
 import { SpaceTabs, TabPanel, TABS_HEIGHT, type SpaceTab } from '@/features/community/SpaceTabs';
-import { PIN_FOR, pinPostFor, prefetchMedia, useCommunityMedia, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
+import { PIN_FOR, pinPostFor, pinUntil, prefetchMedia, useCommunityMedia, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
 import { prefetchMembers, warmPostImages } from '@/features/community/prefetch';
 import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -54,7 +54,7 @@ import { useNow } from '@/lib/useNow';
 import { PostMedia } from '@/features/posts/PostMedia';
 import { useChannels, useCommunityExtras } from '@/features/community/groups';
 import { CommunityActivityFeed, ProposeActivity } from '@/features/community/CommunityActivitiesSlot';
-import { HostTools, NotifyPrefs, ParentLink, SpaceChips, SubgroupList } from '@/features/community/GroupsUI';
+import { HostTools, NotifyPrefs, SpaceChips } from '@/features/community/GroupsUI';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { font, layout, radius, space } from '@/theme/tokens';
@@ -67,6 +67,8 @@ import { useBusy } from '@/lib/useBusy';
 import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { ScreenColumn } from '@/components/layout/responsive';
 import { communitySplit, useCommunitySplit } from '@/features/community/layout';
+import { irlyPinPost } from '@/features/community/irly';
+import { IrlyBadge, IrlyTools } from '@/features/community/IrlyTools';
 
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
 // Upcoming needs no label; the others say what they are.
@@ -176,7 +178,7 @@ function CommunityScreen() {
   const city = c ? (CITIES[c.cityId as CityId] ?? CITIES.dubai) : CITIES.dubai;
   const geo: GeoIndex = useMemo(() => ({ cities: [{ id: city.id, name: city.name }], areas: city.areas.map((a) => ({ id: a.id, name: a.name, cityId: city.id })) }), [city]);
   const agenda = useMemo<AgendaItem[]>(
-    () => acts.activities.filter((a) => a.status !== 'cancelled').map((a) => ({ id: a.id, title: a.title, startsAt: a.startsAt, going: a.going, pinned: Boolean(a.pinnedAt), subtitle: a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : a.status === 'ongoing' ? tx('Happening now') : null })),
+    () => acts.activities.filter((a) => a.status !== 'cancelled').map((a) => ({ id: a.id, title: a.title, startsAt: a.startsAt, going: a.going, pinned: Boolean(a.pinnedAt), subtitle: a.status === 'ongoing' ? tx('Happening now') : null })),
     [acts.activities],
   );
   // The feed's files are signed in one request and its first photos fetched ahead; once
@@ -228,8 +230,10 @@ function CommunityScreen() {
     }
   };
 
+  // A moderator pins as one; the IRLY team in an official community pins as IRLY.
+  const pinsAsModerator = c?.myRole === 'owner' || c?.myRole === 'moderator' || extras.rights.canModerate || my.canModerate;
   const pin = (p: CommunityPost, on: boolean, f: PinFor = 'none') =>
-    pinPostFor(p.id, on, f)
+    (pinsAsModerator || !my.canIrly ? pinPostFor(p.id, on, f) : irlyPinPost(p.id, on, on ? pinUntil(f) : null))
       .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
       .catch((e) => toast(e instanceof Error ? e.message : 'Could not pin', 'x', 'live'));
   // This render's handlers behind the cards' stable actions (`postActions`).
@@ -315,7 +319,6 @@ function CommunityScreen() {
     <View style={{ gap: space[5] }}>
       <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator' || my.canSettings} staff={contentStaff} onChanged={refresh} />
       <View style={[styles.pad, { gap: 6 }]}>
-        <ParentLink parent={extras.parent} />
         <Text variant="overline" tone="accent">
           {[c.official ? tx('IRLY Community') : null, city.name, c.girlOnly ? 'IRLY Girl' : null].filter(Boolean).join(' · ')}
         </Text>
@@ -401,8 +404,8 @@ function CommunityScreen() {
           <NotifyPrefs communityId={c.id} prefs={extras.prefs} onChanged={extras.reload} />
         </View>
       ) : null}
-      <HostTools communityId={c.id} name={c.name} rights={extras.rights} isTop={!extras.parent} official={c.official} parentId={extras.parent?.id ?? null} onChanged={() => (extras.reload(), feed.refresh())} />
-      {!extras.parent ? <SubgroupList groups={extras.groups} onChanged={() => (extras.reload(), refresh())} /> : null}
+      {my.canIrly ? <IrlyTools communityId={c.id} name={c.name} onChanged={() => feed.refresh()} /> : null}
+      <HostTools communityId={c.id} name={c.name} rights={extras.rights} onChanged={() => (extras.reload(), feed.refresh())} />
 
       {/* IRLY's own: the welcome, the introduction and the rules; a member's community: the introduction. */}
       {c.official ? (
@@ -457,7 +460,7 @@ function CommunityScreen() {
         onEndReachedThreshold={0.6}
         onScroll={onFeedScroll}
         scrollEventThrottle={100}
-        renderItem={({ item: p }) => <PostCard cityId={city.id} p={p} eng={eng} canModerate={canModerate} isMember={c.isMember} geo={geo} actions={postActions} />}
+        renderItem={({ item: p }) => <PostCard cityId={city.id} p={p} eng={eng} canModerate={canModerate} canPin={canModerate || my.canIrly} isMember={c.isMember} geo={geo} actions={postActions} />}
         ListEmptyComponent={
           feed.loading ? (
             <PostSkeletons />
@@ -508,7 +511,7 @@ function CommunityScreen() {
                       </Text>
                     </View>
                     <Text variant="caption" tone="tertiary" raw>
-                      {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`, a.groupName ? tx('in {name}', { name: tx(a.groupName) }) : null]
+                      {[STATUS_LABEL[a.status] ? tx(STATUS_LABEL[a.status] as string) : null, when(a.startsAt, city.id), `${a.going} ${tx('going')}`]
                         .filter(Boolean)
                         .join(' · ')}
                     </Text>
@@ -944,6 +947,7 @@ const PostCard = memo(function PostCard({
   p,
   eng,
   canModerate,
+  canPin,
   isMember,
   geo,
   actions,
@@ -952,6 +956,8 @@ const PostCard = memo(function PostCard({
   p: CommunityPost;
   eng: ReturnType<typeof useEngagement>;
   canModerate: boolean;
+  /** Moderators, and the IRLY team in an official community. */
+  canPin: boolean;
   isMember: boolean;
   /** The community city and its neighbourhoods: a plan needs one, and a post rarely names it. */
   geo: GeoIndex;
@@ -975,17 +981,28 @@ const PostCard = memo(function PostCard({
     <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter, marginBottom: space[5] }]}>
       <GlassLayer radius={radius.xl} />
       <View style={styles.row}>
-        <ProfileAvatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />
+        {p.asIrly ? <IrlyBadge size={36} /> : <ProfileAvatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />}
         <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text variant="titleS" raw style={{ flexShrink: 1 }} numberOfLines={1}>{p.mine ? tx('You') : p.firstName}</Text>
-            <AdminBadge userId={p.authorId} />
-          </View>
+          {p.asIrly ? (
+            // Signed IRLY: the official name and badge, never the person who wrote it.
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text variant="titleS">IRLY</Text>
+              <Icon name="badgeCheck" size={14} color={t.c.text} />
+              <Text variant="caption" tone="tertiary">
+                The IRLY team
+              </Text>
+            </View>
+          ) : (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text variant="titleS" raw style={{ flexShrink: 1 }} numberOfLines={1}>{p.mine ? tx('You') : p.firstName}</Text>
+              <AdminBadge userId={p.authorId} />
+            </View>
+          )}
           <Text variant="caption" tone="tertiary">
             {p.pending ? tx('Sending…') : timeAgo(Math.max(0, Math.round((now - p.createdAt) / 60000)))}
           </Text>
         </View>
-        {canModerate && !p.pending ? (
+        {canPin && !p.pending ? (
           <PressableScale onPress={() => onPin(!p.pinnedAt)} haptic="select" hitSlop={8} accessibilityLabel={p.pinnedAt ? 'Unpin' : 'Pin at the top'}>
             <Icon name="pinPost" size={16} color={p.pinnedAt ? t.c.text : t.c.textTertiary} />
           </PressableScale>

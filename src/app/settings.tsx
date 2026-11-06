@@ -33,7 +33,7 @@ type MapVisibility = { map_visible: boolean; map_visible_girl: boolean };
 const DEFAULTS: Safety = { profile_visibility: 'everyone', irl_visibility: 'friends', activity_visibility: 'everyone', location_precision: 'area', show_active: false };
 
 const GROUPS: { label: string; kinds: string[] }[] = [
-  { label: 'Messages', kinds: ['MESSAGE_CREATED', 'GROUP_ADDED'] },
+  { label: 'Messages', kinds: ['MESSAGE_CREATED'] },
   { label: 'Likes', kinds: ['LIKE'] },
   { label: 'Comments and replies', kinds: ['COMMENT', 'COMMENT_REPLY', 'MENTION'] },
   { label: 'Friends and followers', kinds: ['FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'IRLY_POST_CREATED', 'NEW_FOLLOWER'] },

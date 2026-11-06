@@ -23,7 +23,7 @@ import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * Create a community: a permanent group with its own chat. You become its
+ * Create a community: people who meet again, with its own chat. You become its
  * owner and land in the chat. Girls-only communities are offered to women
  * and enforced by the server.
  */
@@ -72,7 +72,7 @@ export default function NewCommunity() {
   const input = [styles.input, { color: t.c.text }];
 
   return (
-    <Page overline={city.name} title="New community" subtitle="A permanent group with its own chat. People who join are in the chat straight away.">
+    <Page overline={city.name} title="New community" subtitle="People who meet again, with its own chat. People who join are in the chat straight away.">
       <View style={styles.body}>
         {!account ? (
           <Animated.View entering={enter.rise(0, 40)} style={styles.note}>

@@ -96,7 +96,7 @@ export default function ShareScreen() {
               <Row
                 key={c.id}
                 title={c.title}
-                subtitle={c.kind === 'community' ? 'Community' : c.kind === 'event' ? 'Activity chat' : c.kind === 'group' ? 'Group' : 'Private'}
+                subtitle={c.kind === 'community' ? 'Community' : c.kind === 'event' ? 'Activity chat' : 'Private'}
                 done={sent[c.id]}
                 onPress={() => toChat(c.id)}
                 avatar={c.title}

@@ -41,15 +41,16 @@ export default function CommunitiesWelcome() {
   const introSeen = useStore((s) => s.communityIntroSeen);
   const markIntro = useStore((s) => s.markCommunityIntroSeen);
   const tags = useMemo(() => profileTags(profile), [profile]);
-  // IRLY Girl: its official community (IRLY Girl); IRLY: the ones matching the answers.
+  // The ones matching the answers. In IRLY Girl, its own (Girl and Mom ones) matching them, else IRLY Girl's official list.
   const inGirl = useAppSpace() === 'girl';
   const rec = useRecommendedCommunities(cityId, tags, 6);
   const five = useGirlOfficialCommunities(inGirl);
-  const girlList = useMemo<OfficialCommunity[] | null>(
-    () => five.list?.map((c) => ({ id: c.id, topic: c.topic, name: c.name, tagline: c.tagline, emoji: c.emoji, girlOnly: true, introFirst: false, members: c.members, isMember: c.isMember, score: 0, cityId: 'dubai' })) ?? null,
-    [five.list],
-  );
-  const { list, loading, error, signedIn } = inGirl ? { list: girlList, loading: five.loading, error: five.error, signedIn: five.signedIn } : rec;
+  const girlList = useMemo<OfficialCommunity[] | null>(() => {
+    const matched = (rec.list ?? []).filter((c) => c.girlOnly);
+    if (matched.length) return matched;
+    return five.list?.map((c) => ({ id: c.id, topic: c.topic, name: c.name, tagline: c.tagline, emoji: c.emoji, girlOnly: true, introFirst: false, members: c.members, isMember: c.isMember, score: 0, cityId: 'dubai' })) ?? null;
+  }, [five.list, rec.list]);
+  const { list, loading, error, signedIn } = inGirl ? { list: girlList, loading: five.loading || rec.loading, error: five.error, signedIn: five.signedIn } : rec;
   const fresh = useMemo(() => (list ?? []).filter((c) => !c.isMember), [list]);
   const [choosing, setChoosing] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());

@@ -27,7 +27,7 @@ export const LAYERS: { id: Layer; label: string; icon: IconName }[] = [
   { id: 'activity', label: 'Activities', icon: 'activity' },
   { id: 'event', label: 'Events', icon: 'ticket' },
   { id: 'person', label: 'People', icon: 'users' },
-  { id: 'group', label: 'Groups', icon: 'heartHandshake' },
+  { id: 'group', label: 'Communities', icon: 'heartHandshake' },
   { id: 'place', label: 'Places', icon: 'pin' },
 ];
 

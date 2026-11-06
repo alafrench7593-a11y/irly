@@ -166,13 +166,15 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const [query, setQuery] = useState('');
   const [custom, setCustom] = useState('');
   // No date or time is chosen for the member: they pick both (in the city's time) before publishing.
-  const [when, setWhen] = useState<When | null>(null);
+  // From an IRLY event (« Go together »): its date and time, editable.
+  const [when, setWhen] = useState<When | null>(preset?.when ?? null);
   const [picking, setPicking] = useState(false);
   // Re-read every minute: a time picked earlier that has passed since is shown, never moved.
   const now = useNow();
   const whenProblem = when ? problemOf(when, city.utcOffset ?? 4, now) : null;
   // No neighbourhood is chosen for the member either (it used to be the first one, Deira, silently).
-  const [area, setArea] = useState<string | null>(null);
+  // From an IRLY event: its neighbourhood (when the city lists it).
+  const [area, setArea] = useState<string | null>(preset?.areaId && city.areas.some((a) => a.id === preset.areaId) ? preset.areaId : null);
   const [privacy, setPrivacy] = useState<NonNullable<MyPlan['privacy']>>(preset?.communityId ? 'community' : 'public');
   // Optional: the community (or group) it belongs to. Not needed to create an activity.
   const [communityId, setCommunityId] = useState<string | null>(preset?.communityId ?? null);
@@ -191,7 +193,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   // IRLY Girl: the same form, in the Girl look, and the activity is for women only.
   const girlSpace = useAppSpace() === 'girl';
   // The photo: an IRLY library photo (drawn at random for the type until the member chooses), her own, or none.
-  const [photoChoice, setPhotoChoice] = useState<PhotoChoice | null>(null);
+  // From an IRLY event: the event's own photo (an IRLY library photo), until she picks another.
+  const [photoChoice, setPhotoChoice] = useState<PhotoChoice | null>(() => (preset?.cover ? { type: 'library', url: preset.cover, kind: '', auto: false } : null));
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [upload, setUpload] = useState<'idle' | 'uploading' | 'failed'>('idle');
   const cover = photoChoice?.type === 'own' ? photoChoice.uri : null;
@@ -281,7 +284,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
   const results = useMemo(() => searchCatalog(query, 8), [query]);
   const category = pick ? CATEGORY_BY_ID[pick.categoryId] : undefined;
   const title = pick?.custom ?? pick?.activity?.label ?? (pick?.sub ? `${tx('{what} session', { what: tx(pick.sub.label) })}` : undefined);
-  const place = pick?.activity?.place;
+  // From an IRLY event: its venue, as long as the activity is still the event's (not another one chosen since).
+  const place = pick?.activity?.place ?? (preset?.place && pick?.custom && pick.custom === presetTitle ? preset.place : undefined);
   const finalTitle = (titleEdit ?? title ?? '').trim();
 
   // The IRLY library for this type of activity (padel, brunch, beach…), every photo of it.
@@ -432,6 +436,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
         girlOnly: girlSpace || chosen?.girlOnly || (communityId === preset?.communityId && preset?.girlOnly) || undefined,
         ...(girlSpace ? { audience: 'girls' as const } : {}),
         address: geocoderOn ? address : null,
+        // Made from an IRLY event: the event page lists it, its page links back to the event.
+        eventKey: preset?.eventKey ?? null,
       });
       // No id: nothing was created (session ended). Never "live" then; the form stays.
       if (!serverId) throw new Error(tx('your session has ended, sign in again'));
@@ -482,6 +488,16 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             {tx('Step {n} / {total}', { n: step + 1, total: 4 })}{category ? ` · ${tx(category.label)}` : ''}
           </Text>
         </View>
+        {preset?.eventKey && preset.eventTitle ? (
+          // Made from an IRLY event: the event it is for, on every step.
+          <View style={styles.origin} accessibilityLabel={tx('For the event {name}', { name: preset.eventTitle })}>
+            <GlassLayer radius={radius.pill} level="thin" />
+            <Icon name="ticket" size={14} color={t.c.text} />
+            <Text variant="caption" raw numberOfLines={1} style={{ flexShrink: 1 }}>
+              {tx('For the event {name}', { name: tx(preset.eventTitle) })}
+            </Text>
+          </View>
+        ) : null}
         {originName ? (
           // Proposed from a community (or attached to one): where it will be shown, on every step.
           <View style={styles.origin} accessibilityLabel={tx('Proposed in {name}', { name: originName })}>

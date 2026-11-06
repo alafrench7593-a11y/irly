@@ -342,9 +342,11 @@ end $$;
 
 -- ───────── COMMUNITIES-11: group names ─────────
 select pg_temp.as_user('b0b00000-0000-0000-0000-000000000009');
-select pg_temp.check(pg_temp.fails($q$select public.create_subgroup('b0b00000-0000-0000-0000-0000000000c1', 'ab')$q$) = '22023',
-  '11: a 2-character group name is refused with a clear error');
-select pg_temp.check(pg_temp.fails($q$select public.create_subgroup('b0b00000-0000-0000-0000-0000000000c1', 'abc')$q$) is null, '11 (guard): 3 characters are fine');
+-- Groups were removed on 2026-11-06 (20261109000000): no group can be created, whatever its name.
+select pg_temp.check(pg_temp.fails($q$select public.create_subgroup('b0b00000-0000-0000-0000-0000000000c1', 'ab')$q$) = '42501',
+  '11: no group can be created (groups were removed)');
+select pg_temp.check(pg_temp.fails($q$select public.create_subgroup('b0b00000-0000-0000-0000-0000000000c1', 'abc')$q$) = '42501', '11: not even with a valid name');
+select pg_temp.check(not exists (select 1 from public.communities where parent_id = 'b0b00000-0000-0000-0000-0000000000c1' and deleted_at is null), '11: nothing was created');
 
 -- ───────── COMMUNITIES-12: the owner does not leave ─────────
 select pg_temp.check(pg_temp.fails($q$select public.leave_community('b0b00000-0000-0000-0000-0000000000c1')$q$) = '22023',

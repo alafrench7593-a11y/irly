@@ -351,8 +351,6 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
         return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: tx('IRLY Network · say hi') };
       case 'NEW_FOLLOWER':
         return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: tx('See their profile') };
-      case 'GROUP_ADDED':
-        return { icon: 'users', title: tx('{name} added you to {title}', { name: name(p.from), title: String(p.title ?? tx('')) }), body: tx('Open the group chat') };
       case 'FRIEND_ACCEPTED':
         return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends: say hi') };
       case 'COMMUNITY_JOINED':
@@ -362,7 +360,8 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
       case 'COMMUNITY_ANNOUNCEMENT':
         return { icon: 'megaphone', title: tx('Announcement · {name}', { name: p.community ? displayCommunityName({ name: String(p.community) }) : 'IRLY' }), body: p.body ?? '' };
       case 'COMMUNITY_POST':
-        return { icon: 'message', title: tx('{name} posted in {community}', { name: name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : '' }), body: p.body ?? '' };
+        // Signed IRLY (the team, in an official community): IRLY, never the person.
+        return { icon: 'message', title: tx('{name} posted in {community}', { name: String(p.as_irly) === 'true' ? 'IRLY' : name(p.from), community: p.community ? displayCommunityName({ name: String(p.community) }) : '' }), body: p.body ?? '' };
       case 'IRLY_POST_CREATED':
         // A Live lasts 24 hours (a deleted one takes its notice with it): an ended one neither quotes nor opens it.
         if (!destinationOf(n, now)) return { icon: 'zap', title: tx('{name} was live', { name: name(p.from) }), body: tx('This Live has ended') };

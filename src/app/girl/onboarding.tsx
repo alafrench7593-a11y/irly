@@ -26,8 +26,9 @@ import { radius, space } from '@/theme/tokens';
 import { Flavor } from '@/theme/flavor';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
+import { girlPromise, useGirlSelfieRequired } from '@/features/girl/moderation';
 
-type Slide = { photo: PhotoKey; title: string; body: string; points?: { icon: IconName; text: string }[]; flow?: string[] };
+type Slide = { photo: PhotoKey; title: string; body: string; /** The women-only promise: its words follow the server (selfie verification on or not yet). */ promise?: boolean; points?: { icon: IconName; text: string }[]; flow?: string[] };
 
 const SLIDES: Slide[] = [
   {
@@ -62,7 +63,8 @@ const SLIDES: Slide[] = [
   {
     photo: 'spaGirl',
     title: 'Your privacy matters.',
-    body: 'IRLY Girl is for women only, checked by our servers, not just the app.',
+    body: 'IRLY Girl is for women only, checked by our servers. Only IRLY’s safety moderator can view it, read-only, to keep it safe.',
+    promise: true,
     points: [
       { icon: 'pin', text: 'Your exact location is never shown, only your area' },
       { icon: 'lock', text: 'You choose what your profile shows' },
@@ -106,6 +108,8 @@ function GirlOnboarding() {
   });
 
   const last = index === SLIDES.length - 1;
+  // The promise says what is true now: selfie verification on, or not yet (it switches on as IRLY Girl grows).
+  const promise = girlPromise(useGirlSelfieRequired());
 
   const next = async () => {
     if (!last) {
@@ -143,7 +147,7 @@ function GirlOnboarding() {
         onMomentumScrollEnd={(e) => setIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
       >
         {SLIDES.map((s, i) => (
-          <SlideView key={s.title} slide={s} i={i} x={x} width={width} top={insets.top} city={cityName} />
+          <SlideView key={s.title} slide={s.promise ? { ...s, body: promise } : s} i={i} x={x} width={width} top={insets.top} city={cityName} />
         ))}
       </Animated.ScrollView>
 

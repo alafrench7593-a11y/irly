@@ -12,6 +12,19 @@
 const GENERIC = 'Something went wrong. Try again';
 
 export const SERVER_ERRORS: Record<string, string> = {
+  // IRLY publishing in its official communities (20261109100000_irly_admin_publish).
+  'only IRLY publishes as IRLY': 'Only the IRLY team publishes as IRLY',
+  'IRLY speaks only in its official communities': 'IRLY publishes only in its official communities',
+  'write something or add a photo': 'Write something or add a photo',
+  'ten photos at most': 'Ten photos at most',
+  'media: photo or video': GENERIC,
+  'write 1 to 2000 characters': 'Write 1 to 2000 characters',
+  'IRLY Girl content: only a removal': 'In IRLY Girl, the team can only remove a post',
+  'only the owner designates the IRLY Girl safety moderator': 'Only the owner designates the IRLY Girl safety moderator',
+  'the IRLY Girl safety moderator must be on the IRLY team': 'The IRLY Girl safety moderator must be on the IRLY team',
+  'IRLY Girl moderation view: the safety moderator only': 'IRLY Girl moderation view: the safety moderator only',
+  'not an IRLY Girl community': GENERIC,
+  'choose auto, on or off': GENERIC,
   // Refusals added on 2026-11-03 and 2026-11-07, mapped when the communities overhaul was merged.
   'the quoted message is not in this chat': 'This message can\'t be quoted here',
   'a photo message needs its photo': 'Add the photo before sending',
@@ -58,6 +71,12 @@ export const SERVER_ERRORS: Record<string, string> = {
   'a Live stays in the space it was posted in': 'A Live stays in the space it was posted in',
   'a category stays in its community': 'A category stays in its community',
   'a community has 30 groups at most': 'A community has 30 groups at most',
+  // Activities made from an IRLY event (20261109200000_irly_event_activities).
+  'a plan stays with the event it was made for': 'This activity stays with the event it was made for',
+  'unknown event': 'This event is not available',
+  'groups are no longer available': 'Groups are no longer available on IRLY',
+  'this group is no longer available': 'This group is no longer available',
+  'group chats are no longer available': 'Group chats are no longer available',
   'a group belongs to a top community': 'A group belongs to a main community',
   'a group cannot move': 'A group cannot move to another community',
   'a poll cannot change once people voted': 'A poll cannot change once people voted',

@@ -20,6 +20,7 @@ import Animated from 'react-native-reanimated';
 import { Ambient } from '@/components/visual/Ambient';
 import { GirlLoader } from './GirlMark';
 import { useGirlStore } from './girlStore';
+import { useGirlModeration } from './moderation';
 
 /**
  * Who may enter IRLY Girl (and IRLY Mom Community, which lives inside it), as seen
@@ -268,6 +269,7 @@ export function GirlClosed({ reason, onRetry, moms }: { reason: GirlClosedReason
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const c = CLOSED[reason];
+  const moderator = useGirlModeration();
   return (
     <View style={[styles.root, styles.center, { padding: space.gutter + 8, gap: 16, paddingTop: insets.top + 40, paddingBottom: insets.bottom + 24 }]}>
       <Ambient variant="hero" />
@@ -287,6 +289,8 @@ export function GirlClosed({ reason, onRetry, moms }: { reason: GirlClosedReason
         {reason === 'needs_verification' ? <GButton label="Verify my profile" icon="badgeCheck" onPress={() => router.push('/verify')} /> : null}
         {/* IRLY Family is open to every parent: the way in for a dad who tapped « IRLY Mom Community ». */}
         {reason === 'not_eligible' && moms ? <GButton label="Explore IRLY Family" icon="home" variant="secondary" onPress={() => router.replace('/space/families')} /> : null}
+        {/* The one IRLY Girl safety moderator (designated by the owner): the read-only, journaled view. */}
+        {reason === 'not_eligible' && moderator ? <GButton label="Open the moderation view" icon="eye" variant="secondary" onPress={() => router.push('/admin/girl')} /> : null}
         <GButton label="Back to IRLY" variant={reason === 'not_eligible' && !moms ? 'primary' : 'ghost'} onPress={() => safeBack(router, '/')} />
       </View>
     </View>

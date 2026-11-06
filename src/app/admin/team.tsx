@@ -7,6 +7,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { loadStaff, searchMembers, setRole, transferOwner, type MemberRow, type StaffRole, type StaffRow } from '@/features/admin/api';
 import { AdminInput, adminStyles, Card, day, Loadable } from '@/features/admin/ui';
+import { GirlModeratorCard } from '@/features/girl/AdminGirlPanels';
 import { t as tx } from '@/i18n';
 
 const ROLES: { value: Exclude<StaffRole, 'owner'>; label: string; help: string }[] = [
@@ -73,6 +74,7 @@ export default function Team() {
             ))
           }
         </Loadable>
+        {staff ? <GirlModeratorCard staff={staff} /> : null}
         <Text variant="label" style={{ marginTop: 8 }}>
           Add someone
         </Text>

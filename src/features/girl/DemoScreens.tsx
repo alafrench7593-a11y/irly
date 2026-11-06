@@ -78,7 +78,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
   const sorted = useMemo(() => (sort === 'popular' ? [...posts].sort((a, b) => likesOf(b.id) - likesOf(a.id)) : posts), [posts, sort]);
   const eng = useDemoEngagement('community_post', posts.map((p) => p.id));
   const plans = useMemo(() => DEMO_PLANS.filter((p) => p.community === id), [id]);
-  const chat = DEMO_CHATS.find((x) => x.kind === 'group' && x.title === c?.name);
+  const chat = DEMO_CHATS.find((x) => x.kind === 'community' && x.title === c?.name);
   const goingMap = useDemoGirl((s) => s.going);
   const agenda = useMemo<AgendaItem[]>(() => plans.map((p) => ({ id: p.id, title: p.title, startsAt: planStartsAt(p), going: planGoing(p, goingMap), subtitle: p.place })), [plans, goingMap]);
   const gallery = useMemo<GalleryItem[]>(() => posts.filter((p) => p.photo).map((p) => ({ key: p.id, kind: 'photo' as const, photo: p.photo })), [posts]);
@@ -336,6 +336,13 @@ export function DemoPlanScreen({ id }: { id: string }) {
         <Animated.View entering={reduced ? undefined : enter.rise(2)} style={styles.card}>
           <GlassFill level="thick" radius={radius.xl} />
           <Fact icon="pin" text={p.place} />
+          <PressableScale haptic="select" onPress={() => router.push(`/map?activity=${encodeURIComponent(p.id)}&area=${encodeURIComponent(p.area)}`)} style={styles.row} accessibilityLabel={tx('See on the map')}>
+            <Icon name="map" size={18} color={girl.rose} />
+            <Text variant="label" color={girl.rose} style={{ flex: 1 }}>
+              See on the map
+            </Text>
+            <Icon name="chevronRight" size={16} color={girl.inkFaint} />
+          </PressableScale>
           <Fact icon="users" text={tx('{n}/{max} going', { n, max: p.capacity })} />
           <Fact icon="ticket" text={tx('Free')} />
           {community ? (

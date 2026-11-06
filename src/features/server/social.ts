@@ -795,7 +795,8 @@ export function useServerNotifications(): { items: ServerNotification[]; unread:
     const sb = supabase;
     // The bell (always mounted) and the Notifications page read the same list in the same moment: one read.
     const { data, error } = await together(`notifs:${uid}`, () =>
-      sb.from('notifications').select('id, kind, payload, read_at, created_at').neq('kind', 'MESSAGE_CREATED').order('created_at', { ascending: false }).limit(50),
+      // Group chats were removed on 2026-11-06: their « added you to a group » rows stay on the server, never shown.
+      sb.from('notifications').select('id, kind, payload, read_at, created_at').not('kind', 'in', '(MESSAGE_CREATED,GROUP_ADDED)').order('created_at', { ascending: false }).limit(50),
     );
     if (error) throw new Error(error.message);
     return (data ?? []).map((n) => ({

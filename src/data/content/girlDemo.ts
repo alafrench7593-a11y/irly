@@ -81,7 +81,14 @@ export const DEMO_COMMUNITIES: DemoCommunity[] = [
   { id: 'gc-solo', name: 'Solo Girls', tagline: 'Going alone? Not anymore.', about: 'For the girls who go to the concert, the beach or the museum alone, and would rather meet someone there.', cover: 'readingGirl', members: 17, faces: ['w-noor', 'w-aisha', 'g-hana'] },
   { id: 'gc-business', name: 'Women in Business Dubai', tagline: 'Founders, freelancers and women who build.', about: 'Coffee meetups, intros and honest advice between women who run a business, freelance or want to start one.', cover: 'networkingGirl', members: 29, faces: ['g-amira', 'w-giulia', 'g-maya', 'w-adaeze'], network: true },
   { id: 'gc-irly-girl', name: 'IRLY Girl Feedback', tagline: 'Ideas, feedback and hellos.', about: 'The place to tell us what you want from IRLY Girl, and to meet the women building it with us.', cover: 'dubaiPink', members: 44, faces: ['g-maya', 'w-naomi', 'w-giulia'] },
-  { id: 'gc-irly-maman', name: 'IRLY Mom Community', tagline: 'Moms meeting moms, with or without the kids.', about: 'A community for moms who want to meet other moms, share their experiences, swap tips and organise activities that fit their family life. Members can introduce themselves, chat, share recommendations and suggest outings with their children.', cover: 'strollerMom', members: 0, faces: [], moms: true, official: true },
+  // IRLY Mom Community's official communities (20261109000000): IRLY's list for moms, in Dubai.
+  { id: 'gc-mom-expat', name: 'Mom Expat', tagline: 'Moms new to Dubai or living here: schools, tips and a sense of home.', about: 'A community for moms who are expats, newly arrived or living in Dubai and want to grow their circle.', cover: 'strollerMom', members: 0, faces: [], moms: true, official: true },
+  { id: 'gc-mom-activity', name: 'Mom Activité', tagline: 'Outings with the kids: parks, play areas, the beach, workshops and more.', about: 'A community to suggest and discover outings to share with children: parks, play areas, the beach, workshops, family-friendly restaurants and cafés.', cover: 'safariPark', members: 0, faces: [], moms: true, official: true },
+  { id: 'gc-mom-sport', name: 'Mom Sport', tagline: 'Stay active between moms, with or without the kids.', about: 'A community for moms who want to find sports partners, organise workouts that fit family life, do physical activities together and share their goals.', cover: 'pilatesGirl', members: 0, faces: [], moms: true, official: true },
+  { id: 'gc-mom-running', name: 'Mom Running Club', tagline: 'Run together between moms in Dubai, strollers welcome.', about: 'A community for moms who run, at every level, to find running partners, join group runs that fit school hours, discover family-friendly routes in Dubai and prepare races together.', cover: 'promenadeGirl', members: 0, faces: [], moms: true, official: true },
+  { id: 'gc-mom-padel', name: 'Mom Padel Club', tagline: 'Find padel partners between moms, around school hours.', about: 'A community for moms who play padel, at every level, to find partners, organise games around family life, share courts and progress together.', cover: 'tennisGirl', members: 0, faces: [], moms: true, official: true },
+  { id: 'gc-mom-trip', name: 'Mom Trip', tagline: 'Family outings and weekends: discover the Emirates with the kids.', about: 'A community for moms who want to plan family outings, weekends and trips together, discover the Emirates and beyond with their children, and find other families to travel with.', cover: 'desertGirl', members: 0, faces: [], moms: true, official: true },
+  { id: 'gc-mom-francaise', name: 'Les Mamans françaises à Dubaï', tagline: 'French-speaking moms in Dubai: schools, tips and family plans in French.', about: 'A community for French-speaking moms living in Dubai or newly arrived, to meet, swap tips on schools and family life, share plans with the kids and help each other, in French.', cover: 'eveningGirl', members: 0, faces: [], moms: true, official: true },
   { id: 'gc-moms', name: 'Moms in Dubai', tagline: 'Playdates, schools and coffee while they nap.', about: 'Moms of little ones and big ones: tips, playdates and a coffee when you need one.', cover: 'strollerMom', members: 21, faces: ['g-elena', 'w-salma'], moms: true },
 ];
 
@@ -311,7 +318,7 @@ export const DEMO_PLANS: DemoPlan[] = [
 ];
 
 export type DemoMessage = { by: string; text: string; ago: number };
-export type DemoChat = { id: string; kind: 'direct' | 'group'; with?: string; title: string; members?: string[]; unread: number; messages: DemoMessage[] };
+export type DemoChat = { id: string; kind: 'direct' | 'community'; with?: string; title: string; members?: string[]; unread: number; messages: DemoMessage[] };
 
 /** Conversations of the visitor (`ME`): oldest message first. */
 export const DEMO_CHATS: DemoChat[] = [
@@ -332,7 +339,7 @@ export const DEMO_CHATS: DemoChat[] = [
   },
   {
     id: 'gcv-brunch',
-    kind: 'group',
+    kind: 'community',
     title: 'Girls Brunch Club',
     members: ['g-sofia', 'g-chloe', 'w-ana', 'g-zara', 'w-noor'],
     unread: 4,

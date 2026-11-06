@@ -3,7 +3,7 @@ import { t as tx, formatNumber } from '@/i18n';
 import { ACTIVITIES, EVENT_CATEGORIES, PLACE_KINDS } from '@/data/catalog';
 import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { cityCentre } from '@/data/areas';
-import { DEMO_PLANS } from '@/data/content/girlDemo';
+import { DEMO_COMMUNITIES, DEMO_PLANS } from '@/data/content/girlDemo';
 import { GIRL_PEOPLE } from '@/data/content/girls';
 import { areaCoords, toLatLng, type LatLng } from '@/data/geo';
 import { findPerson } from '@/data/repo';
@@ -45,6 +45,12 @@ export type MapMarkerData = {
   body?: string;
   /** A server activity: its page (the same record everywhere). */
   href?: string;
+  /** Activities: when it starts (already in the city's time), spots, the community running it. */
+  when?: string;
+  capacity?: number | null;
+  community?: string | null;
+  /** Placed around its neighbourhood, not at its meeting point (none is known yet). */
+  approx?: boolean;
 };
 
 /**
@@ -109,14 +115,22 @@ export function activityMarkers(city: City, rows: MapActivityRow[], whenText: (m
       x: Math.min(0.99, Math.max(0.01, near.a.point.x + (r.longitude - near.c.longitude) / k)),
       y: Math.min(0.99, Math.max(0.01, near.a.point.y - (r.latitude - near.c.latitude) / k)),
     };
+    const area = r.areaId ? city.areas.find((a) => a.id === r.areaId) : undefined;
+    const when = r.status === 'ongoing' ? tx('Happening now') : whenText(r.startsAt);
+    // No meeting point known: said as « around <neighbourhood> », never shown as the place itself.
+    const where = r.precise === false ? [r.place, area ? tx('Around {area}', { area: area.name }) : tx('Around here')].filter(Boolean).join(', ') : (r.place ?? r.address);
     return {
       id: `a:${r.id}`,
       type: 'activity' as const,
-      areaId: near.a.id,
+      areaId: area?.id ?? near.a.id,
       point,
       coords: { latitude: r.latitude, longitude: r.longitude },
       title: r.title,
-      subtitle: [r.status === 'ongoing' ? tx('Happening now') : whenText(r.startsAt), r.place ?? r.address, r.communityName ? tx(r.communityName) : null].filter(Boolean).join(' · '),
+      subtitle: [when, where, r.communityName ? tx(r.communityName) : null].filter(Boolean).join(' · '),
+      when,
+      capacity: r.capacity ?? null,
+      community: r.communityName ? tx(r.communityName) : null,
+      approx: r.precise === false,
       // The activity's own category: its icon and colour, so a plan reads at a glance (and never as a person).
       icon: CATEGORY_BY_ID[r.categoryId as CategoryKey]?.icon ?? ('calendar' as const),
       color: CATEGORY_BY_ID[r.categoryId as CategoryKey]?.color ?? category.business,
@@ -127,7 +141,24 @@ export function activityMarkers(city: City, rows: MapActivityRow[], whenText: (m
     };
   });
 }
-export type MapActivityRow = { id: string; title: string; description: string | null; startsAt: number; place: string | null; address: string | null; latitude: number; longitude: number; categoryId: string; communityName: string | null; status: 'upcoming' | 'ongoing'; going: number };
+export type MapActivityRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  startsAt: number;
+  place: string | null;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+  categoryId: string;
+  communityName: string | null;
+  status: 'upcoming' | 'ongoing';
+  going: number;
+  capacity?: number | null;
+  areaId?: string | null;
+  /** False: around its neighbourhood (see map_activity_pins). Absent: exact. */
+  precise?: boolean;
+};
 
 /** A member the server placed on the map: her neighbourhood, never finer (see map_people). */
 export type MapPersonRow = { id: string; firstName: string; username: string | null; cityId: string; areaId: string; verified: boolean };
@@ -317,6 +348,9 @@ function girlDemo(city: City, pt: (areaId: string) => MapPoint): MapMarkerData[]
       color: cat?.color ?? category.activities,
       goingIds: p.going,
       count: p.going.length,
+      when: cityWhen(planStartsAt(p), city.id),
+      capacity: p.capacity,
+      community: p.community ? (DEMO_COMMUNITIES.find((c) => c.id === p.community)?.name ?? null) : null,
       href: `/a/${p.id}`,
     });
   });

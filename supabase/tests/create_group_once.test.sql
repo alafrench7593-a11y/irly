@@ -1,7 +1,5 @@
--- A group chat is created once (20261029100000_irly_create_group_once.sql): Create
--- sent twice (a double tap, a retry after a lost answer) answers with the group
--- already made, its people notified once; another title, other people, another
--- creator or a later try is a new group.
+-- A group chat was created once (20261029100000_irly_create_group_once.sql); since
+-- 20261109050000 (owner decision of 2026-11-06) no group chat is created at all.
 -- Runs after irly_test.sql on the same database (scripts/test-db.sh).
 -- TEST accounts only, ids prefixed d2900000-….
 --
@@ -43,38 +41,21 @@ insert into public.friendships (user_a, user_b, status, requested_by) values
   ('d2900000-0000-0000-0000-0000000000a1', 'd2900000-0000-0000-0000-0000000000a3', 'accepted', 'd2900000-0000-0000-0000-0000000000a1'),
   ('d2900000-0000-0000-0000-0000000000a2', 'd2900000-0000-0000-0000-0000000000a3', 'accepted', 'd2900000-0000-0000-0000-0000000000a2');
 
--- ───────── 1. Create sent twice: one group ─────────
+-- Group chats were removed on 2026-11-06 (20261109050000_irly_no_group_chats): Create,
+-- sent once or twice, is refused and makes nothing; nobody is notified.
 select pg_temp.as_user('d2900000-0000-0000-0000-0000000000a1');
-select public.create_group('d29 crew', array['d2900000-0000-0000-0000-0000000000a2', 'd2900000-0000-0000-0000-0000000000a3']::uuid[]) as g1 \gset
-select public.create_group(' d29 crew ', array['d2900000-0000-0000-0000-0000000000a3', 'd2900000-0000-0000-0000-0000000000a2', 'd2900000-0000-0000-0000-0000000000a2']::uuid[]) as g2 \gset
-select pg_temp.check(:'g1' = :'g2', 'Ana taps Create twice (same name, same people, any order): the same group');
-select pg_temp.as_admin();
-select pg_temp.check((select count(*) from public.conversations where kind = 'group' and title = 'd29 crew') = 1, '… one group in the database');
-select pg_temp.check((select count(*) from public.conversation_members where conversation_id = :'g1') = 3, '… with Ana, Ben and Eve once each');
-select pg_temp.check((select count(*) from public.notifications where kind = 'GROUP_ADDED' and payload ->> 'conversation_id' = :'g1') = 2, '… Ben and Eve are told once each');
-select pg_temp.check((select role from public.conversation_members where conversation_id = :'g1' and user_id = 'd2900000-0000-0000-0000-0000000000a1') = 'admin', '… Ana is its admin');
-
--- ───────── 2. Anything different is a new group ─────────
-select pg_temp.as_user('d2900000-0000-0000-0000-0000000000a1');
-select pg_temp.check(public.create_group('d29 crew', array['d2900000-0000-0000-0000-0000000000a2']::uuid[]) <> :'g1', 'the same name with other people: a new group');
-select pg_temp.check(public.create_group('d29 brunch', array['d2900000-0000-0000-0000-0000000000a2', 'd2900000-0000-0000-0000-0000000000a3']::uuid[]) <> :'g1', 'the same people under another name: a new group');
-select pg_temp.as_user('d2900000-0000-0000-0000-0000000000a2');
-select pg_temp.check(public.create_group('d29 crew', array['d2900000-0000-0000-0000-0000000000a1', 'd2900000-0000-0000-0000-0000000000a3']::uuid[]) <> :'g1', 'Ben makes the same group himself: his own group (Ana is not its admin)');
-select pg_temp.as_admin();
-update public.conversations set created_at = now() - interval '3 minutes' where id = :'g1';
-select pg_temp.as_user('d2900000-0000-0000-0000-0000000000a1');
-select pg_temp.check(public.create_group('d29 crew', array['d2900000-0000-0000-0000-0000000000a2', 'd2900000-0000-0000-0000-0000000000a3']::uuid[]) <> :'g1', 'the same group made again minutes later: a new group (a choice, not a retry)');
-
--- ───────── 3. Its checks still hold ─────────
-select pg_temp.as_admin();
-insert into auth.users (id) values ('d2900000-0000-0000-0000-0000000000a4');
-insert into public.profiles (id, first_name, birthdate, gender, city_id) values ('d2900000-0000-0000-0000-0000000000a4', 'Cat', '1996-06-06', 'woman', 'dubai');
-insert into public.safety_settings (user_id, who_can_message) values ('d2900000-0000-0000-0000-0000000000a4', 'nobody');
-select pg_temp.as_user('d2900000-0000-0000-0000-0000000000a1');
-do $$
+create or replace function pg_temp.fails(stmt text) returns text language plpgsql as $f$
 begin
-  perform public.create_group('d29 closed', array['d2900000-0000-0000-0000-0000000000a4']::uuid[]);
-  raise exception 'FAIL create_group_once: a group still only adds people who accept your messages';
-exception when insufficient_privilege then
-  raise notice 'ok  a group still only adds people who accept your messages';
-end $$;
+  execute stmt;
+  return null;
+exception when others then
+  return sqlstate;
+end $f$;
+select pg_temp.check(pg_temp.fails($q$select public.create_group('d29 crew', array['d2900000-0000-0000-0000-0000000000a2', 'd2900000-0000-0000-0000-0000000000a3']::uuid[])$q$) = '42501',
+  'Ana taps Create: refused (group chats were removed)');
+select pg_temp.check(pg_temp.fails($q$select public.create_group('d29 crew', array['d2900000-0000-0000-0000-0000000000a2', 'd2900000-0000-0000-0000-0000000000a3']::uuid[])$q$) = '42501',
+  '… and again');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.conversations where kind = 'group' and title like 'd29%'), 'no group chat in the database');
+select pg_temp.check(not exists (select 1 from public.notifications where kind = 'GROUP_ADDED' and user_id in ('d2900000-0000-0000-0000-0000000000a2', 'd2900000-0000-0000-0000-0000000000a3')),
+  'nobody is told they were added');

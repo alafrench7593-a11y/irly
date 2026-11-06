@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { CategoryKey } from '@/data/catalog/categories';
+import type { When } from './when';
 
 /** What the member is creating. Every format becomes a session with its own chat. */
 export type CreateFormat = 'activity' | 'sport' | 'event' | 'session' | 'meetup' | 'trip';
@@ -19,6 +20,16 @@ export type CreatePreset = {
   /** Started from a chat message (« Turn into an activity »): its name and description, both editable on the form. */
   title?: string;
   description?: string;
+  /** Started from an IRLY event (« Go together »): its key, stored with the activity so the event page lists it. */
+  eventKey?: string;
+  /** The event's name, shown on the form as what the activity is for. */
+  eventTitle?: string;
+  /** The event's neighbourhood, venue, date and time and photo: the form starts with them, all editable. */
+  areaId?: string;
+  place?: string;
+  when?: When;
+  /** An IRLY library photo link. */
+  cover?: string;
 };
 
 type CreateState = {

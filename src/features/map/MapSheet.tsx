@@ -144,12 +144,17 @@ export function MapSheet({
               </View>
               <IconButton icon="x" label="Close" size={34} variant="plain" onPress={close} />
             </View>
-            <Animated.View style={[styles.hint, hintStyle]} pointerEvents="none">
-              <Icon name="chevronUp" size={14} color={t.c.textTertiary} />
-              <Text variant="caption" tone="tertiary">
-                Swipe up
-              </Text>
-            </Animated.View>
+            {marker.type === 'activity' && marker.href ? (
+              // A plan: who goes, its community, and its page one tap away (already at the peek).
+              <ActivityMeta marker={marker} />
+            ) : (
+              <Animated.View style={[styles.hint, hintStyle]} pointerEvents="none">
+                <Icon name="chevronUp" size={14} color={t.c.textTertiary} />
+                <Text variant="caption" tone="tertiary">
+                  Swipe up
+                </Text>
+              </Animated.View>
+            )}
           </View>
         </GestureDetector>
 
@@ -183,6 +188,33 @@ function label(m: MapMarkerData) {
     case 'live':
       return 'IRL';
   }
+}
+
+/** The card of a plan at the peek: going (out of its spots), its community, and Open. */
+function ActivityMeta({ marker }: { marker: MapMarkerData }) {
+  const t = useTheme();
+  const router = useRouter();
+  const going = marker.count ?? 0;
+  const full = Boolean(marker.capacity && going >= marker.capacity);
+  const count = marker.capacity ? tx('{n} / {max} going', { n: going, max: marker.capacity }) : tx('{n} going', { n: going });
+  return (
+    <View style={styles.meta}>
+      <View style={styles.metaInfo}>
+        <Icon name="users" size={14} color={t.c.textSecondary} />
+        <Text variant="caption" tone="secondary" numberOfLines={1}>
+          {full ? `${count} · ${tx('Full')}` : count}
+        </Text>
+        {marker.community ? (
+          <View style={[styles.badge, { borderColor: t.c.lineStrong }]} accessibilityLabel={a11y('Community')}>
+            <Text variant="caption" numberOfLines={1} raw style={{ maxWidth: 140 }}>
+              {marker.community}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+      <Button label="Open" iconRight="arrowUpRight" size="sm" onPress={() => marker.href && router.push(marker.href as never)} />
+    </View>
+  );
 }
 
 function Lead({ marker }: { marker: MapMarkerData }) {
@@ -361,5 +393,8 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   detail: { borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2, padding: 16, gap: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  metaInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
+  badge: { borderWidth: StyleSheet.hairlineWidth * 2, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 2, flexShrink: 1 },
   personRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
 });

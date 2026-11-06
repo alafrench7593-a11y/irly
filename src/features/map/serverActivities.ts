@@ -7,9 +7,11 @@ import { offsetOf } from '@/lib/time';
 import { displayCommunityName } from '@/features/community/name';
 
 /**
- * Activities on the map: the server's, only those the member may see, only
- * where their position is reliable (a listed place, or an address the
- * geocoder matched precisely). Never placed at a guessed point.
+ * Activities on the map: the server's, exactly those the member may see in
+ * the activities list (map_activity_pins). Each at its meeting point when it
+ * is known (a listed place, or an address the geocoder matched precisely);
+ * otherwise around its neighbourhood (`precise` false), at a fixed offset
+ * drawn by the server so plans of one area never stack, and said as such.
  */
 export type MapWhen = 'any' | 'today' | 'week';
 export type MapFilters = { when: MapWhen; category: string | null; community: string | null; km: number | null };
@@ -32,6 +34,11 @@ export type MapActivity = {
   going: number;
   capacity: number | null;
   distanceKm: number | null;
+  /** Its neighbourhood (the pin is around its centre when `precise` is false). */
+  areaId: string | null;
+  cityId: string | null;
+  /** True at the meeting point itself, false around the neighbourhood. */
+  precise: boolean;
 };
 
 const until = (when: MapWhen, cityId: string): string | null => {
@@ -61,18 +68,21 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
   const load = useCallback(() => {
     if (!uid || !supabase) return;
     const n = ++seq.current;
-    supabase
-      .rpc('map_activities', {
-        p_city: cityId,
-        p_to: until(filters.when, cityId),
-        p_category: filters.category,
-        p_community: filters.community,
-        p_lat: filters.km && lat != null ? lat : null,
-        p_lng: filters.km && lng != null ? lng : null,
-        p_km: filters.km && lat != null ? filters.km : null,
-        p_limit: 300,
-        p_girl_only: girl,
-      })
+    const sb = supabase;
+    const args = {
+      p_city: cityId,
+      p_to: until(filters.when, cityId),
+      p_category: filters.category,
+      p_community: filters.community,
+      p_lat: filters.km && lat != null ? lat : null,
+      p_lng: filters.km && lng != null ? lng : null,
+      p_km: filters.km && lat != null ? filters.km : null,
+      p_limit: 300,
+      p_girl_only: girl,
+    };
+    sb.rpc('map_activity_pins', args)
+      // A server not yet updated (no map_activity_pins): the plans with an exact position, as before.
+      .then((res) => (res.error?.code === 'PGRST202' ? sb.rpc('map_activities', args) : res))
       .then(
         ({ data, error }) => {
           // Offline, server error or IRLY Girl refused: never a guess. A refresh of the same question keeps
@@ -98,6 +108,10 @@ export function useMapActivities(cityId: string, filters: MapFilters, origin: { 
               going: Number(r.going ?? 0),
               capacity: r.capacity == null ? null : Number(r.capacity),
               distanceKm: r.distance_km == null ? null : Number(r.distance_km),
+              areaId: (r.area_id as string | null) ?? null,
+              cityId: (r.city_id as string | null) ?? null,
+              // map_activities (older server) only ever returned exact positions.
+              precise: r.precise === undefined ? true : Boolean(r.precise),
             })),
           });
         },

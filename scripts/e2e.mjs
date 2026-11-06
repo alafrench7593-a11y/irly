@@ -557,26 +557,19 @@ try {
   // Communities v2: groups inside communities, hosts-only announcements and pins.
   const groupsV2 = !(await A.sb.rpc('community_rights', { p_community: '00000000-0000-0000-0000-000000000000' })).error;
   if (!groupsV2) console.log('○ communities v2: migration not deployed yet, steps skipped');
-  if (groupsV2) await step('a group (Padel) is joined from its community, and joining it joins the community', async () => {
+  // Groups were removed on 2026-11-06 (migration 20261109000000): none is listed, none can be made.
+  if (groupsV2) await step('communities have no groups: none listed, none can be created', async () => {
     const sport = must(await A.sb.from('communities').select('id').eq('official', true).eq('topic', 'sport').eq('city_id', 'dubai').is('parent_id', null).single());
     const groups = must(await A.sb.rpc('community_subgroups', { p_parent: sport.id }));
-    const padel = groups.find((g) => g.name === 'Padel');
-    if (!padel) throw new Error('no Padel group');
-    must(await timed('join a group', () => A.sb.rpc('join_community', { p_community: padel.id })));
-    const both = must(await A.sb.from('community_members').select('community_id').eq('user_id', A.id).in('community_id', [sport.id, padel.id]));
-    const notHost = (await A.sb.rpc('announce', { p_community: padel.id, p_body: 'Hello everyone' })).error;
-    // The community page reads the parent and my chat mute setting in one round trip each.
-    const withParent = must(await A.sb.from('communities').select('parent_id, parent:parent_id(id, name)').eq('id', padel.id).maybeSingle());
-    const parent = Array.isArray(withParent?.parent) ? withParent.parent[0] : withParent?.parent;
-    const mine = must(await A.sb.from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', A.id).eq('conversations.community_id', sport.id).limit(1));
-    await A.sb.rpc('leave_community', { p_community: sport.id });
-    if (both.length !== 2) throw new Error(`member of ${both.length} of the community and its group (expected 2)`);
-    if (!notHost) throw new Error('a member could announce in a group she does not host');
-    if (parent?.id !== sport.id) throw new Error(`the group's parent read back as ${JSON.stringify(withParent)}`);
-    if (mine.length !== 1 || typeof mine[0].muted !== 'boolean') throw new Error(`the community chat membership read back as ${JSON.stringify(mine)}`);
+    const refused = (await A.sb.rpc('create_subgroup', { p_parent: sport.id, p_name: `Padel ${run}` })).error;
+    const suggested = must(await A.sb.rpc('suggest_groups', { p_city: 'dubai', p_limit: 20 }));
+    if (groups.length) throw new Error(`IRLY Sport still lists ${groups.length} groups`);
+    if (!refused) throw new Error('a group could still be created');
+    if (suggested.length) throw new Error(`${suggested.length} groups still suggested`);
     return true;
   });
-  const helpV = groupsV2 && !(await A.sb.rpc('help_groups', { p_city: 'dubai' })).error;
+  // Help & Questions lived in the Help community's groups (removed): the step runs only where they still exist.
+  const helpV = groupsV2 && ((await A.sb.rpc('help_groups', { p_city: 'dubai' })).data ?? []).length > 0;
   if (helpV) await step('Help & Questions: ask in Visa, another member finds it by keywords and answers', async () => {
     const groups = must(await A.sb.rpc('help_groups', { p_city: 'dubai' }));
     const visa = groups.find((g) => g.category === 'visa');

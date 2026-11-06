@@ -210,7 +210,7 @@ export function PeoplePage({ cityId, scrollY, top, bottom }: PageProps) {
       ) : null}
 
       <ScrollReveal scrollY={scrollY} style={styles.section}>
-        <SectionHeader overline={inGirl ? 'Women only · with their own chat' : 'Groups that meet IRL'} title="Communities" action="All" onAction={() => router.push('/communities')} />
+        <SectionHeader overline={inGirl ? 'Women only · with their own chat' : 'People who meet IRL'} title="Communities" action="All" onAction={() => router.push('/communities')} />
         {inGirl ? (
           <GirlCommunities cityId={cityId} />
         ) : (

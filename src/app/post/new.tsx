@@ -41,10 +41,12 @@ function NewPostForm() {
   const t = useTheme();
   const router = useRouter();
   const account = useAccount();
-  const params = useLocalSearchParams<{ community?: string; name?: string; edit?: string; body?: string; kind?: string; category?: string }>();
+  const params = useLocalSearchParams<{ community?: string; name?: string; edit?: string; body?: string; kind?: string; category?: string; asIrly?: string }>();
   const editing = params.edit ?? null;
   const [communityId, setCommunityId] = useState<string | null>(params.community ?? null);
-  const key = draftKey(communityId);
+  // The IRLY team, in an official community: the post is signed IRLY (the server checks it is allowed).
+  const asIrly = params.asIrly === '1' && !editing && Boolean(params.community) && communityId === params.community;
+  const key = draftKey(communityId) + (asIrly ? ':irly' : '');
   const saved = useDrafts((s) => (editing ? undefined : s.byKey[key]));
   const saveDraft = useDrafts((s) => s.save);
   // Text typed on the community page is added to a kept draft, never in its place (the draft is cleared once posted).
@@ -205,11 +207,11 @@ function NewPostForm() {
         const category = communityId === params.community ? (params.category ?? null) : null;
         const sig = JSON.stringify([communityId, body.trim(), kind ?? 'post', category, media?.kind ?? null, media?.files.map((f) => f.path ?? f.uri) ?? []]);
         if (postId.current?.sig !== sig) postId.current = { sig, id: uuid() };
-        await createPost({ id: postId.current.id, communityId, body, media, mentions, onProgress, kind: kind ?? 'post', category });
+        await createPost({ id: postId.current.id, communityId, body, media, mentions: asIrly ? [] : mentions, onProgress, kind: asIrly ? 'post' : (kind ?? 'post'), category, asIrly });
       }
       if (!editing) saveDraft(key, null);
       haptic('success');
-      toast(editing ? 'Post updated' : communityId ? 'Posted in the community' : 'Posted on your profile', 'check', 'brand');
+      toast(editing ? 'Post updated' : asIrly ? 'Posted as IRLY' : communityId ? 'Posted in the community' : 'Posted on your profile', 'check', 'brand');
       leave();
     } catch (e) {
       // Nothing is lost: the words and files stay, the member taps again.
@@ -222,7 +224,9 @@ function NewPostForm() {
   };
 
   const title = editing ? 'Edit post' : kind === 'question' ? 'Ask a question' : kind === 'recommendation' ? 'Recommend' : 'New post';
-  const where = communityId ? (params.name ? tx('In {name}', { name: params.name }) : tx('In the community')) : tx('On your profile');
+  const where = asIrly
+    ? tx('Signed IRLY in {name}', { name: params.name ?? tx('the community') })
+    : communityId ? (params.name ? tx('In {name}', { name: params.name }) : tx('In the community')) : tx('On your profile');
   return (
     <Page title={title} subtitle={where} onBack={askLeave}>
       <View style={styles.body}>

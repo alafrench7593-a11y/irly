@@ -16,7 +16,6 @@ import { enter } from '@/motion/enter';
 type Door = { title: string; line: string; icon: IconName; route: string; women?: boolean };
 
 const DOORS: Door[] = [
-  { title: 'Help & Questions', line: 'Ask, answer, recommend', icon: 'question', route: '/help' },
   { title: 'Dubai News & Life', line: 'What’s happening, from the sources', icon: 'news', route: '/news' },
   { title: 'IRLY Family', line: 'Outings, schools, families nearby', icon: 'home', route: '/space/families' },
   { title: 'IRLY Mom Community', line: 'Moms meeting moms', icon: 'baby', route: MOM_DOOR, women: true },
