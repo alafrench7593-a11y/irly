@@ -45,3 +45,6 @@ $$;
 -- Les Français à Dubaï: recommended to members who speak French (the app
 -- sends 'lang:fr' from the languages they gave at signup).
 update public.community_topics set match_tags = '{lang:fr}' where topic = 'francais';
+
+-- IRLY Padel Club: also for members who chose sport at signup, not only padel.
+update public.community_topics set match_tags = '{activity:padel,goal:sport,interest:sports}' where topic = 'padel';

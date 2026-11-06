@@ -212,5 +212,23 @@ select pg_temp.check(exists (select 1 from public.community_recommend('dubai', '
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{interest:sports}', 20) where topic = 'francais'), 'without French it is not');
 select pg_temp.as_admin();
 
+-- Every official community is reached from what signup asks (src/app/onboarding:
+-- interests, activities, languages, « What are you looking for? »). One answer each.
+select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a1');
+select pg_temp.check(exists (select 1 from public.community_recommend('dubai', array[x.tag], 20) where topic = x.topic), 'signup answer ' || x.tag || ' recommends ' || x.topic)
+from (values ('expats', 'newcomer'), ('expats', 'goal:friends'), ('expats', 'interest:languages'),
+  ('lifestyle', 'interest:food'), ('lifestyle', 'goal:nightlife'), ('lifestyle', 'goal:events'),
+  ('sport', 'interest:sports'), ('sport', 'activity:gym'), ('sport', 'goal:sport'),
+  ('running', 'activity:running'), ('running', 'goal:sport'),
+  ('padel', 'activity:padel'), ('padel', 'goal:sport'), ('padel', 'interest:sports'),
+  ('trip', 'interest:travel'), ('trip', 'goal:travel'), ('trip', 'activity:hiking'),
+  ('network', 'interest:business'), ('network', 'goal:networking'), ('network', 'activity:networking'), ('network', 'interest:startups'),
+  ('francais', 'lang:fr')) as x(topic, tag);
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{goal:irlygirl,goal:friends}', 20) where girl_only), 'Marc (a man) is never recommended IRLY Girl');
+select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a3');
+select pg_temp.check(exists (select 1 from public.community_recommend('dubai', '{goal:irlygirl}', 20) where topic = 'girls'), 'Lina chose IRLY Girl at signup: IRLY Girl is recommended');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer,interest:sports,interest:business,interest:travel,goal:irlygirl,lang:fr}', 20) c
+    join public.communities x on x.id = c.id where x.retired_at is not null or x.city_id <> 'dubai'), 'Lina: only listed Dubai communities, whatever she chose');
+
 select pg_temp.as_admin();
 rollback;
