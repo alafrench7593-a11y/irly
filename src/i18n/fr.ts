@@ -2045,6 +2045,12 @@ export const fr: Record<string, string> = {
   'Welcome, {name}': 'Bienvenue, {name}',
   'Search {city}: padel, rooftop, visa…': 'Chercher à {city} : padel, rooftop, visa…',
   'Around {city}': 'Autour de {city}',
+  // Map tab: activities on the map (around their neighbourhood when no meeting point is known), « See on the map ».
+  'Around {area}': 'Autour de {area}',
+  'Around here': 'Dans le coin',
+  '{n} / {max} going': '{n} / {max} participants',
+  'See on the map': 'Voir sur la carte',
+  'This activity is not on the map right now': 'Cette activité n’est pas sur la carte pour le moment',
   'Noted: we will show {place} first when it opens': 'C’est noté : {place} te sera proposé en premier à son ouverture',
   '{n} emirates': '{n} émirats',
   'You are not in {city} right now. Showing {city}': 'Tu n’es pas à {city} en ce moment. Voici {city}',

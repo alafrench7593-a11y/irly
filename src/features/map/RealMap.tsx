@@ -1,5 +1,4 @@
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
 import type { Map as MapLibre } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -22,7 +21,7 @@ import { MapButton, MapEmpty, MapLoadError, MapTopBar, ModeSwitch, searchMap, ty
 import { ClusterView, MarkerView } from './MapMarkers';
 import { MapSheet, type Snap } from './MapSheet';
 import type { MapMarkerData } from './markers';
-import { useMapLayers } from './useActivityLayer';
+import { useFocusActivity, useMapLayers } from './useActivityLayer';
 import { placeMarkers, STREET, type Located, type Region } from './place';
 
 export const hasRealMap = true;
@@ -42,7 +41,7 @@ const zoomFor = (span: number, height: number) => Math.log2((height * 360) / (25
  * sits on top as ordinary views placed at their projected position. People
  * and lives are only ever placed around their neighbourhood.
  */
-export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: string }) {
+export function RealCityMap({ cityId, areaId, activityId }: { cityId: CityId; areaId?: string; activityId?: string }) {
   const insets = useSafeAreaInsets();
   const t = useTheme();
   const night = t.mode === 'night';
@@ -51,7 +50,6 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
   const host = useRef<View>(null);
   const [map, setMap] = useState<MapLibre | null>(null);
   const city = CITIES[cityId];
-  const router = useRouter();
   const [layer, setLayer] = useState<Layer>('all');
   const [selected, setSelected] = useState<MapMarkerData | null>(null);
   const [snap, setSnap] = useState<Snap>('collapsed');
@@ -175,17 +173,22 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
     map?.easeTo({ center: [c.longitude, c.latitude], zoom: zoomFor(d, frame.height), offset: [0, -sheetH / 2], duration: 600 });
   };
 
+  // A tap shows the marker's card (an activity's card opens its page); the camera keeps it in view.
   const select = (m: Located) => {
     haptic('select');
-    // An activity opens its own page (the same record everywhere); a person, her preview.
-    if (m.type === 'activity' && m.href) {
-      router.push(m.href as never);
-      return;
-    }
     setSelected(m);
     setSnap('collapsed');
     centerOn(m.coords, Math.min(region.latitudeDelta, STREET * 0.9), 136);
   };
+
+  // « See on the map » from an activity's page: its card, the camera on it.
+  useFocusActivity(all, activityId, ready, Boolean(map), (m) => {
+    if (m) {
+      setSelected(m);
+      setSnap('collapsed');
+      centerOn(m.coords, STREET * 0.6, 136);
+    } else toast('This activity is not on the map right now', 'pin', 'brand');
+  });
 
   const setMode = (next: boolean) => {
     if (next === three) return;
@@ -299,7 +302,7 @@ export function RealCityMap({ cityId, areaId }: { cityId: CityId; areaId?: strin
       </Animated.View>
 
       {/* Nothing where the map looks: said plainly (never example content). */}
-      {loadFailed ? <MapLoadError bottom={tabSpace + 48} onRetry={retryLoad} /> : null}
+      {loadFailed && !selected ? <MapLoadError bottom={tabSpace + 48} onRetry={retryLoad} /> : null}
       {!loadFailed && ready && !selected && !query && placed.length === 0 ? <MapEmpty layer={layer} bottom={tabSpace + 48} failed={failed} /> : null}
 
       {selected ? (

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { City } from '@/data/types';
 import { CATEGORIES } from '@/data/catalog/categories';
 import { getCityContent } from '@/data/repo';
@@ -48,4 +48,30 @@ export function useMapLayers(city: City, origin: { latitude: number; longitude: 
     [city, content, lives, girl, people.list, acts.markers],
   );
   return { all, acts, ready: acts.ready && people.ready, failed: acts.failed };
+}
+
+/**
+ * « See on the map » from an activity's page (/map?activity=<id>): once its
+ * marker is among those loaded, `focus` gets it (select it, centre on it).
+ * Not there once everything is loaded (finished, cancelled, not visible to
+ * this member, another country): `focus(null)`, once. `canMove`: the map is
+ * ready to move its camera.
+ */
+export function useFocusActivity<T extends MapMarkerData>(all: T[], activityId: string | undefined, ready: boolean, canMove: boolean, focus: (m: T | null) => void) {
+  const done = useRef(false);
+  const latest = useRef(focus);
+  useEffect(() => {
+    latest.current = focus;
+  });
+  useEffect(() => {
+    if (!activityId || done.current || !canMove) return;
+    const m = all.find((x) => x.id === `a:${activityId}`);
+    if (m) {
+      done.current = true;
+      latest.current(m);
+    } else if (ready) {
+      done.current = true;
+      latest.current(null);
+    }
+  }, [all, activityId, ready, canMove]);
 }

@@ -314,6 +314,10 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
           </Text>
           <View style={styles.row}>
             {!a.cancelled ? <Button label="Share in a chat" icon="send" size="sm" variant="secondary" onPress={shareInChat} /> : null}
+            {/* The Map tab, centred on it with its card open (its neighbourhood if it is not on the map). */}
+            {!a.cancelled && !over ? (
+              <Button label="See on the map" icon="map" size="sm" variant="secondary" onPress={() => router.push(`/map?activity=${encodeURIComponent(a.id)}&area=${encodeURIComponent(a.areaId)}`)} />
+            ) : null}
             {!hosting && card?.canMessageHost ? <Button label="Contact the organiser" icon="message" size="sm" variant="secondary" loading={busy} onPress={contact} /> : null}
             <Button label="Add to my calendar" icon="calendar" size="sm" variant="secondary" onPress={addToCalendar} />
             <Button label="Not for me" icon="eye" size="sm" variant="ghost" onPress={more} />

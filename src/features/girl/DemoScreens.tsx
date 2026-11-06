@@ -336,6 +336,13 @@ export function DemoPlanScreen({ id }: { id: string }) {
         <Animated.View entering={reduced ? undefined : enter.rise(2)} style={styles.card}>
           <GlassFill level="thick" radius={radius.xl} />
           <Fact icon="pin" text={p.place} />
+          <PressableScale haptic="select" onPress={() => router.push(`/map?activity=${encodeURIComponent(p.id)}&area=${encodeURIComponent(p.area)}`)} style={styles.row} accessibilityLabel={tx('See on the map')}>
+            <Icon name="map" size={18} color={girl.rose} />
+            <Text variant="label" color={girl.rose} style={{ flex: 1 }}>
+              See on the map
+            </Text>
+            <Icon name="chevronRight" size={16} color={girl.inkFaint} />
+          </PressableScale>
           <Fact icon="users" text={tx('{n}/{max} going', { n, max: p.capacity })} />
           <Fact icon="ticket" text={tx('Free')} />
           {community ? (
