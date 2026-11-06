@@ -1,6 +1,6 @@
 import { webLink } from '@/config/app';
 import { useRouter } from 'expo-router';
-import { cityWhen } from '@/lib/time';
+import { cityDayKey, cityWhen } from '@/lib/time';
 import { t as tx, formatNumber } from '@/i18n';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
@@ -48,8 +48,13 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 import { Ambient } from '@/components/visual/Ambient';
 import { enter } from '@/motion/enter';
 
-// The activity's own city time, wherever the phone is.
-const when = (ms: number, cityId: string) => cityWhen(ms, cityId, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+// The activity's own city time, wherever the phone is: « Saturday 25 October, 19:30 – 21:30 », the end marked when it is the next day.
+const when = (startsAt: number, endsAt: number | null, cityId: string) => {
+  const start = cityWhen(startsAt, cityId, { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  if (!endsAt) return start;
+  const end = cityWhen(endsAt, cityId, { hour: '2-digit', minute: '2-digit' });
+  return `${start} – ${end}${cityDayKey(endsAt, cityId) !== cityDayKey(startsAt, cityId) ? ` ${tx('(next day)')}` : ''}`;
+};
 
 /**
  * The canonical page of a member activity or event (one id, linked from
@@ -275,7 +280,7 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
             </View>
           ) : null}
           <ActionBar target={target} eng={eng} />
-          <Fact index={0} icon="clock" text={when(a.startsAt, a.cityId)} />
+          <Fact index={0} icon="clock" text={when(a.startsAt, a.endsAt, a.cityId)} />
           <Fact index={1} icon="pin" text={`${a.placeName ? `${a.placeName} · ` : ''}${city ? areaName(city, a.areaId) : a.areaId}`} />
           <Fact index={2} icon="users" text={`${a.going}${a.capacity ? ` / ${a.capacity}` : ''} ${tx('going')}${full ? ` · ${tx('Full')}` : ''}`} />
           <Fact index={3} icon="banknote" text={a.priceMinor ? `${a.currency} ${formatNumber(a.priceMinor / 100)}` : tx('Free')} />
@@ -323,14 +328,27 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
             {!hosting && card?.canMessageHost ? <Button label="Contact the organiser" icon="message" size="sm" variant="secondary" loading={busy} onPress={contact} /> : null}
             <Button label="Add to my calendar" icon="calendar" size="sm" variant="secondary" onPress={addToCalendar} />
             <Button label="Not for me" icon="eye" size="sm" variant="ghost" onPress={more} />
-            <Button
-              label="Report"
-              icon="flag"
-              size="sm"
-              variant="ghost"
-              onPress={() => openReport({ kind: 'activity', id: a.id, userId: a.creatorId })}
-            />
           </View>
+          {hosting ? null : (
+            // Reporting stays one tap away (App Store guideline 1.2), out of the options above: a quiet
+            // line at the end of the page, the same report sheet (with « also block »), sent to the team.
+            <PressableScale
+              haptic="select"
+              onPress={() => openReport({ kind: 'activity', id: a.id, userId: a.creatorId }, a.creatorName ?? undefined)}
+              style={styles.safety}
+              accessibilityRole="button"
+              accessibilityLabel={tx('Something wrong with this activity? Report it')}
+              testID="activity-report"
+            >
+              <Icon name="flag" size={14} color={t.c.textTertiary} />
+              <Text variant="caption" tone="tertiary" style={{ flexShrink: 1 }}>
+                Something wrong with this activity?
+              </Text>
+              <Text variant="caption" tone="secondary" style={styles.safetyLink}>
+                Report it
+              </Text>
+            </PressableScale>
+          )}
         </Animated.View>
       </ScrollView>
 
@@ -559,5 +577,7 @@ const styles = StyleSheet.create({
   cta: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter, paddingTop: 12, borderTopWidth: StyleSheet.hairlineWidth },
   ctaRow: { flex: 1, flexDirection: 'row', gap: 10 },
   top: { position: 'absolute', left: space.gutter, right: space.gutter, top: 0, flexDirection: 'row', justifyContent: 'space-between' },
+  safety: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: 2, alignSelf: 'flex-start', paddingVertical: 10, marginTop: 4 },
+  safetyLink: { textDecorationLine: 'underline' },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: space.gutter },
 });

@@ -32,6 +32,7 @@ const FAQ: { q: string; a: string }[] = [
   { q: 'How do I get a copy of my data or delete my account?', a: 'Settings → Download my data, and Settings → Delete account. Deleting removes your account and data from IRLY’s servers.' },
   { q: 'Someone else is using my account', a: 'Change your password now in Settings → Sign-in & password, then write to us below with "Safety concern" so we can check the account.' },
   { q: 'How do I report a member?', a: 'Open their profile, tap … then Report. In a chat, long-press a message. Or write to us below with "Safety concern".' },
+  { q: 'How do I report an activity?', a: 'Open the activity and, at the bottom of its page, tap « Something wrong with this activity? Report it ». You can also report its organiser from their profile, or write to us below with "Safety concern".' },
   { q: 'Someone is in danger', a: 'Contact local emergency services first. Then report the profile in the app or write to us below with "Safety concern".' },
 ];
 

@@ -74,6 +74,12 @@ export const SERVER_ERRORS: Record<string, string> = {
   'a Live stays in the space it was posted in': 'A Live stays in the space it was posted in',
   'a category stays in its community': 'A category stays in its community',
   'a community has 30 groups at most': 'A community has 30 groups at most',
+  // Activities made from a post, and moving an activity (20261110300000_irly_activity_from_post).
+  'this post is not available': 'This post is not available',
+  'an activity was just created from this post': 'An activity was just created from this post',
+  'an activity stays with the post it was made from': 'This activity stays with the post it was made from',
+  'an activity made from a post stays in its community': 'An activity made from a post stays in the post\'s community',
+  'an activity cannot be moved into the past': 'This time has passed: pick a later one',
   // Activities made from an IRLY event (20261109200000_irly_event_activities).
   'a plan stays with the event it was made for': 'This activity stays with the event it was made for',
   'unknown event': 'This event is not available',

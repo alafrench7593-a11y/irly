@@ -438,6 +438,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
         address: geocoderOn ? address : null,
         // Made from an IRLY event: the event page lists it, its page links back to the event.
         eventKey: preset?.eventKey ?? null,
+        // Made from a post: the post's card lists it (public.post_activities).
+        sourcePostId: preset?.sourcePostId ?? null,
       });
       // No id: nothing was created (session ended). Never "live" then; the form stays.
       if (!serverId) throw new Error(tx('your session has ended, sign in again'));
@@ -495,6 +497,16 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
             <Icon name="ticket" size={14} color={t.c.text} />
             <Text variant="caption" raw numberOfLines={1} style={{ flexShrink: 1 }}>
               {tx('For the event {name}', { name: tx(preset.eventTitle) })}
+            </Text>
+          </View>
+        ) : null}
+        {preset?.sourcePostId ? (
+          // Made from a post: said on every step (the post's card will list it).
+          <View style={styles.origin} accessibilityLabel={tx('From a post')}>
+            <GlassLayer radius={radius.pill} level="thin" />
+            <Icon name="message" size={14} color={t.c.text} />
+            <Text variant="caption" numberOfLines={1} style={{ flexShrink: 1 }}>
+              From a post
             </Text>
           </View>
         ) : null}
@@ -709,7 +721,8 @@ function Composer({ open, onClosed }: { open: boolean; onClosed: () => void }) {
                   ))}
                 </View>
               </Animated.View>
-              {signedIn && myCommunities.length ? (
+              {/* Made from a community's post: it stays in that community (the server checks it too), named above. */}
+              {signedIn && myCommunities.length && !(preset?.sourcePostId && preset.communityId) ? (
                 <Animated.View entering={enter.rise(5)} style={styles.block}>
                   <Text variant="overline" tone="secondary">
                     In a community (optional)
