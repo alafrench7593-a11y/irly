@@ -259,20 +259,20 @@ export function introDraft(p: Profile, cityName: string, interestLabels: string[
 }
 
 /**
- * IRLY Girl's official communities: the four IRLY runs for it, in its order
- * (girl_official_communities on the server): Girl Trip, Girl Expat (topic
- * girl_newcomers, the former IRLY Nouvelle Arrivante), Girl Activité, Girl
- * Sport. Every page that features IRLY Girl's communities shows these and
- * no other official one (Girl CEO is in IRLY Network); the communities
- * members create stay listed as theirs.
+ * IRLY Girl's official community since 2026-11-06 (girl_official_communities
+ * on the server, migration 20261108200000): IRLY Girl, in Dubai. Every page
+ * that features IRLY Girl's communities shows it and no other official one
+ * (Girl CEO is in IRLY Network; Girl Trip, Girl Expat, Girl Activité and
+ * Girl Sport are retired, still open to their members from « Mine »); the
+ * communities members create stay listed as theirs.
  */
-export const GIRL_OFFICIAL_TOPICS = ['girl_trip', 'girl_newcomers', 'girl_activity', 'girl_sport'] as const;
+export const GIRL_OFFICIAL_TOPICS = ['girls'] as const;
 export type GirlOfficialTopic = (typeof GIRL_OFFICIAL_TOPICS)[number];
 
 /**
  * IRLY Mom Community's official community: IRLY Mom Community (topic moms,
- * the former IRLY Moms, then IRLY Maman). Women only; listed first among the
- * mom communities.
+ * the former IRLY Moms, then IRLY Maman). Women only. Retired since
+ * 2026-11-06: listed first among the mom communities only for its members.
  */
 export const MAMAN_OFFICIAL_TOPICS = ['moms'] as const;
 

@@ -600,12 +600,12 @@ export function useCommunityFeed(communityId: string, space?: string | null, opt
   return { posts: uid ? posts : NONE, loading: uid ? loading : false, error, refresh, post, vote, remove, more: Boolean(uid) && more, loadingMore, loadMore, incoming: uid ? incoming : NONE, setHold, showIncoming };
 }
 
-const GIRL_OFFICIAL = new Set(['girl_trip', 'girl_newcomers', 'girl_activity', 'girl_sport']);
-/** One of IRLY Girl's four official communities (official.ts, GIRL_OFFICIAL_TOPICS). */
+const GIRL_OFFICIAL = new Set(['girls']);
+/** IRLY Girl's official community, IRLY Girl (official.ts, GIRL_OFFICIAL_TOPICS). */
 const isGirlOfficial = (topic: string | null) => Boolean(topic && GIRL_OFFICIAL.has(topic));
 
 export function useCommunityList(cityId: string) {
-  // Each space lists its own: IRLY Girl, its communities (of IRLY's official ones, only its four); IRLY, none of them.
+  // Each space lists its own: IRLY Girl, its communities (of IRLY's official ones, only IRLY Girl); IRLY, none of them.
   // IRLY Network's own community (and Girl CEO) live in the IRLY Network section, never as a second tile here.
   const girlSpace = useAppSpace() === 'girl';
   const list = useCommunityRows(cityId);

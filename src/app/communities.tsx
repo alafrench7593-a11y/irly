@@ -280,7 +280,7 @@ function Communities() {
           ) : null}
           {tab === 'foryou' ? (
             <Section title={<Text variant="overline" tone="secondary">Recommended for me</Text>}>
-              {/* IRLY Girl: « For you » is IRLY Girl's five official communities. */}
+              {/* IRLY Girl: « For you » is IRLY Girl's official community (IRLY Girl). */}
               {inGirl ? <GirlOfficialCommunities cell={card} /> : <ForYou rec={rec} known={known} cityId={cityId} onSeeAll={() => setTab('all')} card={card} />}
             </Section>
           ) : null}
