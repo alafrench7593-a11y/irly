@@ -87,7 +87,7 @@ export const SEARCH_FILTERS: { key: SearchFilter; label: string }[] = [
   { key: 'media', label: 'Media' },
   { key: 'activities', label: 'Activities' },
   { key: 'members', label: 'Members' },
-  { key: 'pinned', label: 'Pinned' },
+  { key: 'pinned', label: 'Pinned items' },
 ];
 export type SearchKind = 'post' | 'announcement' | 'activity' | 'member' | 'media';
 export type SearchHit = {

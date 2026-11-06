@@ -4093,6 +4093,8 @@ export const fr: Record<string, string> = {
   'Unpin': 'Désépingler',
   'Pin at the top': 'Épingler en haut',
   'Pinned': 'Épinglé',
+  'Pinned items': 'Épinglés',
+  'An official community keeps IRLY’s name and texts': 'Une communauté officielle garde le nom et les textes d’IRLY',
   'Question': 'Question',
   'Recommendation': 'Recommandation',
   'Announcement · {name}': 'Annonce · {name}',

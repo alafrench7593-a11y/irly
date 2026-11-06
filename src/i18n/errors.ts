@@ -289,6 +289,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'only the owner and co-admins in charge can read the stats': 'Only the owner and co-admins in charge can read the stats',
   // Community space (20261108000000_irly_community_space).
   'join the community to take part': 'Join the community to take part',
+  'official communities keep IRLY\'s texts': 'An official community keeps IRLY’s name and texts',
   'type 2 characters at least to search': 'Type at least 2 characters to search',
   'filter: all, recent, popular, media, activities, members or pinned': GENERIC,
   'sort: recent or popular': GENERIC,
