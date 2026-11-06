@@ -20,6 +20,11 @@ export const SERVER_ERRORS: Record<string, string> = {
   'media: photo or video': GENERIC,
   'write 1 to 2000 characters': 'Write 1 to 2000 characters',
   'IRLY Girl content: only a removal': 'In IRLY Girl, the team can only remove a post',
+  'only the owner designates the IRLY Girl safety moderator': 'Only the owner designates the IRLY Girl safety moderator',
+  'the IRLY Girl safety moderator must be on the IRLY team': 'The IRLY Girl safety moderator must be on the IRLY team',
+  'IRLY Girl moderation view: the safety moderator only': 'IRLY Girl moderation view: the safety moderator only',
+  'not an IRLY Girl community': GENERIC,
+  'choose auto, on or off': GENERIC,
   // Refusals added on 2026-11-03 and 2026-11-07, mapped when the communities overhaul was merged.
   'the quoted message is not in this chat': 'This message can\'t be quoted here',
   'a photo message needs its photo': 'Add the photo before sending',

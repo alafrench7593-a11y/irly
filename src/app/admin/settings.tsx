@@ -7,6 +7,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { isAdmin, loadSettings, retryEmail, saveSetting, type AdminSettings, type EmailScope } from '@/features/admin/api';
 import { AdminInput, adminStyles, Card, day, Fact, NoAccess, useAdminRole, useLoad } from '@/features/admin/ui';
+import { GirlSelfieCard } from '@/features/girl/AdminGirlPanels';
 import { t as tx } from '@/i18n';
 import { useTheme } from '@/theme/useTheme';
 
@@ -40,6 +41,7 @@ export default function AdminSettingsScreen() {
   return (
     <Page title="Admin settings" subtitle="Changes are recorded in the moderation log.">
       <View style={adminStyles.body}>
+        {role !== undefined ? <GirlSelfieCard /> : null}
         {error ? (
           <>
             <Text variant="body" tone="secondary">

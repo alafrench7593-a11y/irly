@@ -1,4 +1,6 @@
--- The IRLY team publishes in its official communities, signed « IRLY ».
+-- The IRLY team publishes in its official communities, signed « IRLY »
+-- (sections 1-7), and one designated IRLY Girl safety moderator gets a
+-- read-only, journaled view of IRLY Girl (section 8).
 -- Additive: two columns, functions created or replaced, triggers added. No
 -- policy is loosened, no row is changed or removed, RLS stays on everywhere.
 --
@@ -365,3 +367,361 @@ revoke all on function private.girl_staff_edit_guard() from public, anon, authen
 drop trigger if exists community_posts_girl_staff_edit on public.community_posts;
 create trigger community_posts_girl_staff_edit before update on public.community_posts
 for each row execute function private.girl_staff_edit_guard();
+
+-- ───────── 8. The IRLY Girl safety moderator: one person, read-only, journaled ─────────
+-- IRLY Girl stays women-only. One person, and only one, may view it for its
+-- safety (lists, community pages, feeds, members, activities and, for IRLY's
+-- own communities, the chat): the IRLY Girl safety moderator. The owner of
+-- the back office (staff role 'owner', the role the Grant owner workflow
+-- gives) designates, changes or removes that person in the app (Team and
+-- roles), with a reason, in the staff journal; nothing names anyone in the
+-- code. The person must be on the IRLY team (any role, not suspended) for
+-- the designation to count; it ends by itself when they leave the team.
+-- The view goes only through the staff_girl_* functions: each call writes
+-- who, what and when to private.admin_audit (action girl.view) before
+-- returning anything. The read policies of IRLY Girl are NOT widened: a
+-- direct read of a table (REST, Realtime) still returns nothing to anyone
+-- without IRLY Girl access, the moderator included, so there is no read the
+-- journal would miss (a GET is a read-only transaction and could not write
+-- it). The view writes nothing but the journal: joining, posting,
+-- messaging, reacting, voting and Match keep demanding IRLY Girl access
+-- (unchanged), so the moderator never appears in a member list and is never
+-- matched or recommended; and signing as IRLY in IRLY Girl still needs IRLY
+-- Girl access of one's own (section 3): the designation gives none. Members
+-- are not notified per access; the journal is there for audits.
+create table if not exists private.girl_moderator (
+  singleton boolean primary key default true check (singleton),
+  user_id uuid not null unique references public.profiles (id) on delete cascade,
+  granted_by uuid references public.profiles (id) on delete set null,
+  granted_at timestamptz not null default now()
+);
+revoke all on private.girl_moderator from public, anon, authenticated;
+
+/** Is this person the IRLY Girl safety moderator (designated, on the team, not suspended)? */
+create or replace function private.girl_moderator_of(uid uuid default auth.uid()) returns boolean
+language sql stable security definer set search_path = public, private as $$
+  select uid is not null
+    and exists (select 1 from private.girl_moderator g join public.profiles p on p.id = g.user_id and p.deleted_at is null where g.user_id = uid)
+    and private.staff_power(uid) is not null
+    and not private.is_sanctioned(uid)
+$$;
+revoke all on function private.girl_moderator_of(uuid) from public, anon, authenticated;
+
+/** The app asks whether to show the moderation view's door (the server checks again on every read). */
+create or replace function public.my_girl_moderation() returns boolean
+language sql stable security definer set search_path = public, private as $$
+  select private.girl_moderator_of(auth.uid())
+$$;
+revoke all on function public.my_girl_moderation() from public, anon;
+grant execute on function public.my_girl_moderation() to authenticated;
+
+/** Owner only: who the IRLY Girl safety moderator is ({} when nobody). */
+create or replace function public.admin_girl_moderator() returns jsonb
+language plpgsql stable security definer set search_path = public, private as $$
+begin
+  if private.staff_power(auth.uid()) is distinct from 'owner' then
+    raise exception 'only the owner designates the IRLY Girl safety moderator' using errcode = '42501';
+  end if;
+  return coalesce((select jsonb_build_object('user_id', g.user_id, 'first_name', p.first_name, 'granted_at', g.granted_at,
+      'active', private.girl_moderator_of(g.user_id))
+    from private.girl_moderator g left join public.profiles p on p.id = g.user_id), '{}'::jsonb);
+end $$;
+revoke all on function public.admin_girl_moderator() from public, anon;
+grant execute on function public.admin_girl_moderator() to authenticated;
+
+/** Owner only: designates (or, with null, removes) the one IRLY Girl safety moderator, with a reason. */
+create or replace function public.admin_set_girl_moderator(p_user uuid, p_reason text) returns void
+language plpgsql security definer set search_path = public, private as $$
+declare
+  me uuid := auth.uid();
+  why text := btrim(coalesce(p_reason, ''));
+  before uuid;
+begin
+  if private.staff_power(me) is distinct from 'owner' then
+    raise exception 'only the owner designates the IRLY Girl safety moderator' using errcode = '42501';
+  end if;
+  if char_length(why) < 3 then raise exception 'give a reason' using errcode = '22023'; end if;
+  perform pg_advisory_xact_lock(hashtextextended('girl_moderator', 0));
+  select user_id into before from private.girl_moderator;
+  if p_user is null then
+    delete from private.girl_moderator;
+    if before is not null then
+      perform private.journal('girl.moderator_removed', before, null, 'profile', before, why);
+    end if;
+    return;
+  end if;
+  if not exists (select 1 from public.profiles where id = p_user and deleted_at is null) then
+    raise exception 'not found' using errcode = 'P0002';
+  end if;
+  if private.staff_power(p_user) is null then
+    raise exception 'the IRLY Girl safety moderator must be on the IRLY team' using errcode = '42501';
+  end if;
+  insert into private.girl_moderator (singleton, user_id, granted_by, granted_at) values (true, p_user, me, now())
+  on conflict (singleton) do update set user_id = excluded.user_id, granted_by = excluded.granted_by, granted_at = excluded.granted_at;
+  if before is not null and before <> p_user then
+    perform private.journal('girl.moderator_removed', before, null, 'profile', before, why);
+  end if;
+  perform private.journal('girl.moderator_set', p_user, null, 'profile', p_user, why);
+end $$;
+revoke all on function public.admin_set_girl_moderator(uuid, text) from public, anon;
+grant execute on function public.admin_set_girl_moderator(uuid, text) to authenticated;
+
+/** Refuses anyone but the IRLY Girl safety moderator, then writes the access to the staff journal (who, what, when). */
+create or replace function private.staff_girl_need(p_what text, p_id uuid) returns void
+language plpgsql security definer set search_path = public, private as $$
+begin
+  if not private.girl_moderator_of(auth.uid()) then
+    raise exception 'IRLY Girl moderation view: the safety moderator only' using errcode = '42501';
+  end if;
+  perform private.journal('girl.view', null, null, p_what, p_id, null, '{}');
+end $$;
+revoke all on function private.staff_girl_need(text, uuid) from public, anon, authenticated;
+
+/** A women-only community, for the view (raises when it is not one). */
+create or replace function private.staff_girl_community_row(cid uuid) returns public.communities
+language plpgsql stable security definer set search_path = public as $$
+declare
+  c public.communities;
+begin
+  select * into c from public.communities where id = cid and deleted_at is null;
+  if not found then raise exception 'community not found' using errcode = 'P0002'; end if;
+  if not c.girl_only then raise exception 'not an IRLY Girl community' using errcode = '22023'; end if;
+  return c;
+end $$;
+revoke all on function private.staff_girl_community_row(uuid) from public, anon, authenticated;
+
+/** Every IRLY Girl community (IRLY's own first), for the view. */
+create or replace function public.staff_girl_communities() returns jsonb
+language plpgsql security definer set search_path = public, private as $$
+begin
+  perform private.staff_girl_need('communities', null);
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+      'id', c.id, 'name', c.name, 'tagline', c.tagline, 'city_id', c.city_id,
+      'official', c.official, 'parent_id', c.parent_id, 'members', c.members_count,
+      'retired', c.retired_at is not null, 'created_at', c.created_at)
+      order by c.retired_at is not null, c.official desc, c.parent_id is not null, c.city_id, c.name, c.id)
+    from public.communities c
+    where c.girl_only and c.deleted_at is null), '[]'::jsonb);
+end $$;
+revoke all on function public.staff_girl_communities() from public, anon;
+grant execute on function public.staff_girl_communities() to authenticated;
+
+/** One IRLY Girl community: its facts, latest posts, members and activities. */
+create or replace function public.staff_girl_community(p_community uuid) returns jsonb
+language plpgsql security definer set search_path = public, private as $$
+declare
+  c public.communities;
+begin
+  c := private.staff_girl_community_row(p_community);
+  perform private.staff_girl_need('community', c.id);
+  return jsonb_build_object(
+    'community', jsonb_build_object('id', c.id, 'name', c.name, 'tagline', c.tagline, 'description', c.description,
+      'city_id', c.city_id, 'official', c.official, 'parent_id', c.parent_id,
+      'members', c.members_count, 'retired', c.retired_at is not null),
+    'posts', coalesce((
+      select jsonb_agg(x.j order by x.pinned desc, x.created_at desc) from (
+        select p.created_at, pin.post_id is not null as pinned, jsonb_build_object(
+          'id', p.id, 'first_name', case when p.as_irly then 'IRLY' else pr.first_name end,
+          'body', p.body, 'kind', p.kind, 'created_at', p.created_at, 'as_irly', p.as_irly,
+          'media', cardinality(p.media_paths), 'media_kind', p.media_kind,
+          'pinned', pin.post_id is not null,
+          'likes', (select count(*) from public.likes l where l.target_type = 'community_post' and l.target_id = p.id::text),
+          'comments', (select count(*) from public.comments k where k.target_type = 'community_post' and k.target_id = p.id::text and k.deleted_at is null)) as j
+        from public.community_posts p
+        left join public.profiles pr on pr.id = p.author_id
+        left join public.community_pins pin on pin.post_id = p.id and (pin.expires_at is null or pin.expires_at > now())
+        where p.community_id = c.id and p.deleted_at is null
+        order by pin.post_id is not null desc, p.created_at desc
+        limit 50) x), '[]'::jsonb),
+    'members', coalesce((
+      select jsonb_agg(jsonb_build_object('user_id', m.user_id, 'first_name', pr.first_name, 'role', m.role, 'joined_at', m.joined_at)
+        order by case m.role when 'owner' then 0 when 'co_admin' then 1 when 'moderator' then 2 else 3 end, pr.first_name, m.user_id)
+      from public.community_members m join public.profiles pr on pr.id = m.user_id and pr.deleted_at is null
+      where m.community_id = c.id), '[]'::jsonb),
+    'activities', coalesce((
+      select jsonb_agg(jsonb_build_object('id', a.id, 'title', a.title, 'starts_at', a.starts_at,
+          'cancelled', a.cancelled_at is not null,
+          'going', (select count(*) from public.activity_participants ap where ap.activity_id = a.id))
+        order by a.starts_at desc)
+      from (select * from public.activities a where a.community_id = c.id and a.starts_at > now() - interval '30 days'
+            order by a.starts_at desc limit 50) a), '[]'::jsonb));
+end $$;
+revoke all on function public.staff_girl_community(uuid) from public, anon;
+grant execute on function public.staff_girl_community(uuid) to authenticated;
+
+/** The chat of an official IRLY Girl community (IRLY hosts it): its latest 50 messages. */
+create or replace function public.staff_girl_chat(p_community uuid) returns jsonb
+language plpgsql security definer set search_path = public, private as $$
+declare
+  c public.communities;
+  conv uuid;
+begin
+  c := private.staff_girl_community_row(p_community);
+  if not c.official then raise exception 'IRLY speaks only in its official communities' using errcode = '42501'; end if;
+  perform private.staff_girl_need('chat', c.id);
+  select v.id into conv from public.conversations v where v.community_id = c.id and v.kind = 'community';
+  return coalesce((
+    select jsonb_agg(x.j order by x.created_at) from (
+      select m.created_at, jsonb_build_object('id', m.id, 'created_at', m.created_at, 'kind', m.kind,
+        'first_name', case when m.sender_id is null then 'IRLY' else pr.first_name end,
+        'as_irly', m.as_irly, 'body', case when m.kind = 'photo' then null else m.body end) as j
+      from public.messages m left join public.profiles pr on pr.id = m.sender_id
+      where m.conversation_id = conv and m.deleted_at is null and m.kind in ('text', 'photo', 'activity', 'location', 'share')
+      order by m.created_at desc
+      limit 50) x), '[]'::jsonb);
+end $$;
+revoke all on function public.staff_girl_chat(uuid) from public, anon;
+grant execute on function public.staff_girl_chat(uuid) to authenticated;
+
+/** IRLY Girl activities coming up (and the last week), for the view. */
+create or replace function public.staff_girl_activities() returns jsonb
+language plpgsql security definer set search_path = public, private as $$
+begin
+  perform private.staff_girl_need('activities', null);
+  return coalesce((
+    select jsonb_agg(jsonb_build_object('id', a.id, 'title', a.title, 'starts_at', a.starts_at, 'city_id', a.city_id,
+        'community', (select c.name from public.communities c where c.id = a.community_id),
+        'cancelled', a.cancelled_at is not null,
+        'going', (select count(*) from public.activity_participants ap where ap.activity_id = a.id))
+      order by a.starts_at)
+    from (select * from public.activities a where a.girl_only and a.starts_at > now() - interval '7 days'
+          order by a.starts_at limit 200) a), '[]'::jsonb);
+end $$;
+revoke all on function public.staff_girl_activities() from public, anon;
+grant execute on function public.staff_girl_activities() to authenticated;
+
+-- ───────── 9. Selfie verification for IRLY Girl: until 100 members, then on by itself ─────────
+-- IRLY Girl access = a woman's account (profiles.gender, set at signup and
+-- locked: only support changes it) AND, when selfie verification is
+-- required, a verified identity (as before). Nothing else changes: men are
+-- refused everywhere in every mode, suspensions and sanctions still close
+-- it, every policy keeps the one predicate private.girl_eligible_unchecked.
+-- « Required » comes from private.girl_settings, key selfie_mode:
+--   auto (default)  required once IRLY Girl has had `selfie_threshold`
+--                   members (100 unless set): distinct women's accounts,
+--                   not deleted, members of at least one women-only
+--                   community that is not deleted. Counted when someone
+--                   joins a women-only community; once reached it is
+--                   latched (selfie_reached_at) and stays on, so members
+--                   leaving later do not switch it off again;
+--   on / off        set by an IRLY admin (admin_set_girl_selfie_mode,
+--                   journaled), to force it either way.
+-- When it switches on, an unverified woman's my_girl_status() becomes
+-- needs_verification: the app shows its verification screen (selfie and
+-- photos), not an error. While it is off, each unverified woman who joins
+-- a women-only community is written to the staff journal
+-- (girl.unverified_joined) for the safety moderator to review; reporting
+-- stays as it is.
+create table if not exists private.girl_settings (
+  key text primary key check (key in ('selfie_mode', 'selfie_threshold', 'selfie_reached_at')),
+  value text not null,
+  updated_at timestamptz not null default now(),
+  updated_by uuid references public.profiles (id) on delete set null
+);
+alter table private.girl_settings enable row level security;
+revoke all on private.girl_settings from public, anon, authenticated;
+
+/** Distinct women members of IRLY Girl (see above). */
+create or replace function private.girl_member_count() returns integer
+language sql stable security definer set search_path = public as $$
+  select count(distinct m.user_id)::int
+  from public.community_members m
+  join public.communities c on c.id = m.community_id and c.girl_only and c.deleted_at is null
+  join public.profiles p on p.id = m.user_id and p.gender = 'woman' and p.deleted_at is null
+$$;
+revoke all on function private.girl_member_count() from public, anon, authenticated;
+
+/** Is a selfie-verified identity required for IRLY Girl right now? */
+create or replace function private.girl_selfie_required() returns boolean
+language sql stable security definer set search_path = public, private as $$
+  select case coalesce((select value from private.girl_settings where key = 'selfie_mode'), 'auto')
+    when 'on' then true
+    when 'off' then false
+    else exists (select 1 from private.girl_settings where key = 'selfie_reached_at')
+  end
+$$;
+revoke all on function private.girl_selfie_required() from public, anon, authenticated;
+
+/** Latches « reached » once IRLY Girl has its threshold of members. */
+create or replace function private.girl_selfie_latch() returns void
+language plpgsql security definer set search_path = public, private as $$
+begin
+  if exists (select 1 from private.girl_settings where key = 'selfie_reached_at') then return; end if;
+  if private.girl_member_count() >= coalesce((select value::int from private.girl_settings where key = 'selfie_threshold'), 100) then
+    insert into private.girl_settings (key, value) values ('selfie_reached_at', now()::text) on conflict (key) do nothing;
+    insert into private.admin_audit (actor, action, details)
+    values (null, 'girl.selfie_required', jsonb_build_object('members', private.girl_member_count()));
+  end if;
+end $$;
+revoke all on function private.girl_selfie_latch() from public, anon, authenticated;
+
+/** On each join of a women-only community: the latch, and the journal line for an unverified woman. */
+create or replace function private.girl_member_joined() returns trigger
+language plpgsql security definer set search_path = public, private as $$
+begin
+  if not exists (select 1 from public.communities c where c.id = new.community_id and c.girl_only) then return new; end if;
+  perform private.girl_selfie_latch();
+  if not private.identity_verified(new.user_id) then
+    insert into private.admin_audit (actor, action, target_user, details)
+    values (new.user_id, 'girl.unverified_joined', new.user_id,
+            jsonb_build_object('kind', 'community', 'id', new.community_id, 'selfie_required', private.girl_selfie_required()));
+  end if;
+  return new;
+end $$;
+revoke all on function private.girl_member_joined() from public, anon, authenticated;
+drop trigger if exists community_members_girl_joined on public.community_members;
+create trigger community_members_girl_joined after insert on public.community_members
+for each row execute function private.girl_member_joined();
+
+-- Last defined in 20261103100000_irly_qa_fix_moderation. Same rule, with
+-- the verified identity required only while private.girl_selfie_required().
+create or replace function private.girl_eligible_unchecked(uid uuid) returns boolean
+language sql stable security definer set search_path = public, private as $$
+  select exists (
+    select 1 from public.profiles p
+    where p.id = uid and p.gender = 'woman' and p.deleted_at is null
+      and not exists (select 1 from public.girl_suspensions s where s.user_id = uid)
+      and (private.identity_verified(uid) or not private.girl_selfie_required())
+  ) and not private.is_sanctioned(uid)
+$$;
+
+/** For the app: whether IRLY Girl asks for selfie verification now (the promise text and the verification step follow it). */
+create or replace function public.girl_selfie_required() returns boolean
+language sql stable security definer set search_path = public, private as $$
+  select private.girl_selfie_required()
+$$;
+revoke all on function public.girl_selfie_required() from public, anon;
+grant execute on function public.girl_selfie_required() to authenticated;
+
+/** IRLY admins: the mode (auto, on, off), the members counted and whether it is required now. */
+create or replace function public.admin_girl_selfie() returns jsonb
+language plpgsql stable security definer set search_path = public, private as $$
+begin
+  perform private.need_admin();
+  return jsonb_build_object(
+    'mode', coalesce((select value from private.girl_settings where key = 'selfie_mode'), 'auto'),
+    'threshold', coalesce((select value::int from private.girl_settings where key = 'selfie_threshold'), 100),
+    'members', private.girl_member_count(),
+    'reached_at', (select value from private.girl_settings where key = 'selfie_reached_at'),
+    'required', private.girl_selfie_required());
+end $$;
+revoke all on function public.admin_girl_selfie() from public, anon;
+grant execute on function public.admin_girl_selfie() to authenticated;
+
+/** IRLY admins: forces selfie verification on or off, or back to auto; journaled. */
+create or replace function public.admin_set_girl_selfie_mode(p_mode text) returns void
+language plpgsql security definer set search_path = public, private as $$
+begin
+  perform private.need_admin();
+  if p_mode is null or p_mode not in ('auto', 'on', 'off') then raise exception 'choose auto, on or off' using errcode = '22023'; end if;
+  insert into private.girl_settings (key, value, updated_at, updated_by) values ('selfie_mode', p_mode, now(), auth.uid())
+  on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = auth.uid();
+  perform private.journal('girl.selfie_mode', null, null, null, null, null, jsonb_build_object('mode', p_mode));
+  if p_mode = 'auto' then perform private.girl_selfie_latch(); end if;
+end $$;
+revoke all on function public.admin_set_girl_selfie_mode(text) from public, anon;
+grant execute on function public.admin_set_girl_selfie_mode(text) to authenticated;
+
+-- IRLY Girl may already have its members: the latch is checked once now.
+select private.girl_selfie_latch();

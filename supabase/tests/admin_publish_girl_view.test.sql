@@ -1,7 +1,8 @@
 -- The IRLY team publishes in its official communities signed « IRLY »
--- (migration 20261109100000_irly_admin_publish). In IRLY Girl and Mom, only a
+-- (migration 20261109100000_irly_admin_publish_girl_view). In IRLY Girl and Mom, only a
 -- team member with IRLY Girl access of her own: being staff opens nothing
--- there, and IRLY Girl isolation holds for every man, staff or not.
+-- there, and IRLY Girl isolation holds for every man, staff or not, except
+-- the read-only, journaled view of the one designated safety moderator.
 -- Every check fails before that migration.
 -- Runs in one transaction rolled back at the end: later files see nothing of it.
 -- Ids a9b00000-….
@@ -27,7 +28,7 @@ end $$;
 
 create or replace function pg_temp.check(ok boolean, label text) returns void language plpgsql as $$
 begin
-  if not coalesce(ok, false) then raise exception 'FAIL admin_publish: %', label; end if;
+  if not coalesce(ok, false) then raise exception 'FAIL admin_publish_girl_view: %', label; end if;
   raise notice 'ok  %', label;
 end $$;
 
@@ -302,5 +303,172 @@ select pg_temp.check(not exists (select 1 from public.community_members m where 
   'the staff appear in no member list');
 select pg_temp.as_user('a9b00000-0000-0000-0000-000000000002');
 select pg_temp.check(not public.irly_pin_post('a9b00000-0000-0000-0000-0000000000a1', false), 'the woman admin unpins in IRLY Girl');
+
+-- ───────── 3. The IRLY Girl safety moderator: one person, read-only, journaled ─────────
+select pg_temp.as_admin();
+-- The staff journal lines of an action by a person (read as the server).
+create or replace function pg_temp.journal_count(p_actor uuid, p_action text) returns integer language plpgsql security definer as $$
+declare n integer;
+begin
+  select count(*) into n from private.admin_audit where actor = p_actor and action = p_action;
+  return n;
+end $$;
+
+-- Nobody is designated: the owner himself (a man) is refused.
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000001');
+select pg_temp.check(not public.my_girl_moderation(), 'nobody designated: the owner is not the moderator');
+select pg_temp.check(pg_temp.fails('select public.staff_girl_communities()') = '42501', 'a non-designated owner is refused the view');
+select pg_temp.check(public.admin_girl_moderator() = '{}'::jsonb, 'nobody designated yet');
+
+-- Only the owner designates; a reason is needed; the person must be on the team.
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000002');
+select pg_temp.check(pg_temp.fails($$select public.admin_set_girl_moderator('a9b00000-0000-0000-0000-000000000002', 'myself')$$) = '42501',
+  'an admin cannot designate (herself or anyone)');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000001');
+select pg_temp.check(pg_temp.fails($$select public.admin_set_girl_moderator('a9b00000-0000-0000-0000-000000000004', '')$$) = '22023', 'a reason is needed');
+select pg_temp.check(pg_temp.fails($$select public.admin_set_girl_moderator('a9b00000-0000-0000-0000-000000000006', 'a member')$$) = '42501',
+  'a member who is not on the team cannot be designated');
+select public.admin_set_girl_moderator('a9b00000-0000-0000-0000-000000000004', 'Safety reviews of IRLY Girl');
+select pg_temp.check(public.admin_girl_moderator() ->> 'user_id' = 'a9b00000-0000-0000-0000-000000000004', 'the owner designates Mo (a man, moderator)');
+select pg_temp.as_admin();
+select pg_temp.check(pg_temp.journal_count('a9b00000-0000-0000-0000-000000000001', 'girl.moderator_set') = 1, 'the designation is in the staff journal');
+select pg_temp.check(pg_temp.fails($$insert into private.girl_moderator (user_id) values ('a9b00000-0000-0000-0000-000000000003')$$) = '23505',
+  'one moderator at most, even written by hand on the server');
+
+-- Mo reads IRLY Girl through the view, each read journaled.
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000004');
+select pg_temp.check(public.my_girl_moderation(), 'Mo is told he is the moderator');
+select public.staff_girl_communities() as girl_list \gset
+select pg_temp.check(:'girl_list'::jsonb @> '[{"id": "a9b00000-0000-0000-0000-0000000000c2"}]'
+  and not (:'girl_list'::jsonb @> '[{"id": "a9b00000-0000-0000-0000-0000000000c1"}]'),
+  'the moderator lists the IRLY Girl communities (and only them)');
+select public.staff_girl_community('a9b00000-0000-0000-0000-0000000000c2') as girl_page \gset
+select pg_temp.check((:'girl_page'::jsonb -> 'posts') @> '[{"id": "a9b00000-0000-0000-0000-0000000000a1"}]'
+  and (:'girl_page'::jsonb -> 'members') @> '[{"first_name": "Nina"}]'
+  and (:'girl_page'::jsonb -> 'posts') @> '[{"first_name": "IRLY", "as_irly": true}]',
+  'and opens one: posts (IRLY''s signed IRLY), members');
+select pg_temp.check(jsonb_array_length(public.staff_girl_chat('a9b00000-0000-0000-0000-0000000000c2')) >= 1, 'its chat (IRLY''s own community)');
+select pg_temp.check(jsonb_typeof(public.staff_girl_activities()) = 'array', 'IRLY Girl activities');
+select pg_temp.check(pg_temp.fails($$select public.staff_girl_community('a9b00000-0000-0000-0000-0000000000c1')$$) = '22023',
+  'the view is for IRLY Girl communities only');
+select pg_temp.as_admin();
+select pg_temp.check(pg_temp.journal_count('a9b00000-0000-0000-0000-000000000004', 'girl.view') = 4, 'each of the four reads wrote one journal line');
+select pg_temp.check(exists (select 1 from private.admin_audit where actor = 'a9b00000-0000-0000-0000-000000000004' and action = 'girl.view'
+  and details ->> 'kind' = 'community' and details ->> 'id' = 'a9b00000-0000-0000-0000-0000000000c2' and at <= now()),
+  'with who, what and when');
+
+-- Read-only: the designation opens nothing else.
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000004');
+select pg_temp.check(pg_temp.count_of($$select 1 from public.community_posts where community_id = 'a9b00000-0000-0000-0000-0000000000c2'$$) = 0,
+  'the moderator reads no IRLY Girl table directly (every read is journaled)');
+select pg_temp.check(pg_temp.fails($$select public.join_community('a9b00000-0000-0000-0000-0000000000c2')$$) = '42501', 'the moderator cannot join');
+select pg_temp.check(pg_temp.fails($$insert into public.community_posts (community_id, author_id, body)
+  values ('a9b00000-0000-0000-0000-0000000000c2', 'a9b00000-0000-0000-0000-000000000004', 'Hi')$$) = '42501', 'nor post');
+select pg_temp.check(pg_temp.fails(format($$insert into public.messages (conversation_id, sender_id, body)
+  values (%L, 'a9b00000-0000-0000-0000-000000000004', 'Hi')$$, :'chat_g')) = '42501', 'nor message');
+select pg_temp.check(pg_temp.fails($$insert into public.likes (user_id, target_type, target_id)
+  values ('a9b00000-0000-0000-0000-000000000004', 'community_post', 'a9b00000-0000-0000-0000-0000000000a1')$$) = '42501', 'nor react');
+select pg_temp.check(pg_temp.fails($$select public.irly_post('a9b00000-0000-0000-0000-0000000000c2', 'As IRLY')$$) = '42501',
+  'nor publish as IRLY there (he is not of the content team, and has no IRLY Girl access)');
+select pg_temp.check(not private.girl_eligible_unchecked('a9b00000-0000-0000-0000-000000000004'), 'the designation gives no IRLY Girl access (never matched or listed)');
+select pg_temp.as_admin();
+select pg_temp.check(not exists (select 1 from public.community_members where user_id = 'a9b00000-0000-0000-0000-000000000004'), 'he appears in no member list');
+
+-- Everyone else stays refused: a second staff man, the owner.
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000003');
+select pg_temp.check(pg_temp.fails('select public.staff_girl_communities()') = '42501', 'a second staff man is refused');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000001');
+select pg_temp.check(pg_temp.fails($$select public.staff_girl_community('a9b00000-0000-0000-0000-0000000000c2')$$) = '42501', 'the owner, not designated, is refused');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000006');
+select pg_temp.check(pg_temp.fails('select public.staff_girl_communities()') = '42501', 'a member man is refused');
+select pg_temp.check(pg_temp.fails('select public.admin_girl_moderator()') = '42501', 'and cannot see who the moderator is');
+select pg_temp.as_admin();
+select pg_temp.check(pg_temp.journal_count('a9b00000-0000-0000-0000-000000000003', 'girl.view') = 0
+  and pg_temp.journal_count('a9b00000-0000-0000-0000-000000000001', 'girl.view') = 0, 'refused reads write nothing');
+
+-- Changing the moderator: the previous one loses the view at once; leaving the team ends it too.
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000001');
+select public.admin_set_girl_moderator('a9b00000-0000-0000-0000-000000000001', 'The owner takes it over');
+select pg_temp.check(jsonb_typeof(public.staff_girl_communities()) = 'array', 'the owner, once designated, opens the view');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000004');
+select pg_temp.check(pg_temp.fails('select public.staff_girl_communities()') = '42501', 'Mo, replaced, is refused');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) = 1 from private.girl_moderator), 'still one designation');
+select pg_temp.check(pg_temp.journal_count('a9b00000-0000-0000-0000-000000000001', 'girl.moderator_removed') = 1, 'the replacement is journaled');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000001');
+select public.admin_set_girl_moderator('a9b00000-0000-0000-0000-000000000003', 'Cleo for the reviews');
+select pg_temp.as_admin();
+delete from public.staff_roles where user_id = 'a9b00000-0000-0000-0000-000000000003';
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000003');
+select pg_temp.check(pg_temp.fails('select public.staff_girl_communities()') = '42501', 'a moderator who leaves the team loses the view');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000001');
+select public.admin_set_girl_moderator(null, 'Nobody for now');
+select pg_temp.check(public.admin_girl_moderator() = '{}'::jsonb, 'the owner removes the designation');
+
+-- ───────── 4. Selfie verification: off until IRLY Girl has its threshold of members ─────────
+select pg_temp.as_admin();
+delete from private.girl_settings;
+insert into auth.users (id) values ('a9b00000-0000-0000-0000-000000000009'), ('a9b00000-0000-0000-0000-000000000010');
+insert into public.profiles (id, first_name, birthdate, gender, city_id) values
+  ('a9b00000-0000-0000-0000-000000000009', 'Uma', '1995-01-01', 'woman', 'dubai'),
+  ('a9b00000-0000-0000-0000-000000000010', 'Vera', '1995-01-01', 'woman', 'dubai');
+update public.profiles set created_at = now() - interval '90 days' where id in ('a9b00000-0000-0000-0000-000000000009', 'a9b00000-0000-0000-0000-000000000010');
+-- Unverified (irly_test.sql, run before on the same database, verifies every new woman by itself).
+delete from public.verification_requests where user_id in ('a9b00000-0000-0000-0000-000000000009', 'a9b00000-0000-0000-0000-000000000010');
+update public.profiles set verified_at = null where id in ('a9b00000-0000-0000-0000-000000000009', 'a9b00000-0000-0000-0000-000000000010');
+select pg_temp.check(not private.identity_verified('a9b00000-0000-0000-0000-000000000009'), 'Uma and Vera are not verified');
+-- Below the threshold (auto): an unverified woman is admitted, a man is not.
+insert into private.girl_settings (key, value) values ('selfie_threshold', (private.girl_member_count() + 2)::text);
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000009');
+select pg_temp.check(not public.girl_selfie_required(), 'auto, below the threshold: selfie verification not required');
+select pg_temp.check(public.my_girl_status() = 'open', 'an unverified woman is admitted below the threshold');
+select pg_temp.check(public.join_community('a9b00000-0000-0000-0000-0000000000c2') is not null, 'and joins an IRLY Girl community');
+select pg_temp.check(pg_temp.count_of($$select 1 from public.community_posts where id = 'a9b00000-0000-0000-0000-0000000000a1'$$) = 1, 'and reads it');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from private.admin_audit where action = 'girl.unverified_joined'
+  and target_user = 'a9b00000-0000-0000-0000-000000000009' and details ->> 'id' = 'a9b00000-0000-0000-0000-0000000000c2'),
+  'her admission is in the staff journal for the safety moderator');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000006');
+select pg_temp.check(public.my_girl_status() = 'not_eligible' and not private.is_girl_eligible(), 'a man is refused (auto, below the threshold)');
+select pg_temp.check(pg_temp.fails($$select public.join_community('a9b00000-0000-0000-0000-0000000000c2')$$) = '42501', 'and cannot join');
+
+-- The threshold is reached: required from now on, latched.
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000010');
+select public.join_community('a9b00000-0000-0000-0000-0000000000c2');
+select pg_temp.check(public.girl_selfie_required(), 'the threshold reached: selfie verification required');
+select pg_temp.check(public.my_girl_status() = 'needs_verification', 'Vera, unverified, is asked to verify (not an error)');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000009');
+select pg_temp.check(public.my_girl_status() = 'needs_verification' and not private.is_girl_eligible(), 'so is Uma, who was admitted before');
+select pg_temp.check(pg_temp.count_of($$select 1 from public.community_posts where id = 'a9b00000-0000-0000-0000-0000000000a1'$$) = 0, 'and she reads nothing until verified');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000005');
+select pg_temp.check(public.my_girl_status() = 'open', 'a verified woman is not affected');
+select pg_temp.as_admin();
+select pg_temp.check(exists (select 1 from private.admin_audit where action = 'girl.selfie_required'), 'the switch is journaled');
+delete from public.community_members where user_id = 'a9b00000-0000-0000-0000-000000000010';
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000009');
+select pg_temp.check(public.girl_selfie_required(), 'members leaving do not switch it off again');
+
+-- Overrides, by IRLY admins only.
+select pg_temp.check(pg_temp.fails($$select public.admin_set_girl_selfie_mode('off')$$) = '42501', 'a member cannot change the mode');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000003');
+select pg_temp.check(pg_temp.fails($$select public.admin_set_girl_selfie_mode('off')$$) = '42501', 'nor the content role');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000002');
+select public.admin_set_girl_selfie_mode('off');
+select pg_temp.check((public.admin_girl_selfie() ->> 'mode') = 'off', 'an admin turns it off');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000009');
+select pg_temp.check(public.my_girl_status() = 'open', 'off: the unverified woman is admitted again');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000006');
+select pg_temp.check(not private.is_girl_eligible(), 'off: a man is still refused');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000002');
+select public.admin_set_girl_selfie_mode('on');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000009');
+select pg_temp.check(public.my_girl_status() = 'needs_verification', 'on: she is asked to verify');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000006');
+select pg_temp.check(not private.is_girl_eligible(), 'on: a man is refused');
+select pg_temp.as_user('a9b00000-0000-0000-0000-000000000002');
+select pg_temp.check(pg_temp.fails($$select public.admin_set_girl_selfie_mode('maybe')$$) = '22023', 'auto, on or off only');
+select pg_temp.as_admin();
+select pg_temp.check((select count(*) = 2 from private.admin_audit where action = 'girl.selfie_mode' and actor = 'a9b00000-0000-0000-0000-000000000002'),
+  'each change of mode is journaled');
 
 rollback;

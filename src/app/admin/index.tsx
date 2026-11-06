@@ -24,6 +24,7 @@ import { t as tx } from '@/i18n';
 import { girlPalette, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { ErrorScreen } from '@/components/layout/ErrorScreen';
+import { useGirlModeration } from '@/features/girl/moderation';
 
 /** A crash here shows Try again and a way home, not a blank screen (components/layout/ErrorScreen). */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
@@ -40,6 +41,8 @@ export default function AdminHome() {
   const role = useAdminRole();
   const admin = isAdmin(role);
   const staff = Boolean(role);
+  // The one IRLY Girl safety moderator (designated by the owner): the server says who.
+  const girlModerator = useGirlModeration();
 
   return (
     <Page overline="IRLY" title="Back office" subtitle={role ? tx('Your role: {role}', { role: tx(ROLE_LABEL[role]) }) : undefined}>
@@ -56,6 +59,7 @@ export default function AdminHome() {
               Sections
             </Text>
             <View style={{ gap: 8 }}>
+              {girlModerator ? <Button label="IRLY Girl · moderation view" icon="eye" full onPress={() => router.push('/admin/girl')} /> : null}
               {admin ? <Button label="CRM" icon="briefcase" full onPress={() => router.push('/admin/crm')} /> : null}
               <Button label="Users" icon="users" variant="secondary" full onPress={() => router.push('/admin/members')} />
               <Button label="Communities" icon="network" variant="secondary" full onPress={() => router.push('/admin/communities')} />

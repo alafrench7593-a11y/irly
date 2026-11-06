@@ -65,6 +65,9 @@ select pg_temp.as_admin();
 insert into public.profiles (id, first_name, birthdate, gender, city_id)
 values ('5ec00000-0000-0000-0000-0000000000a9', 'Admina', '1985-03-03', 'woman', 'dubai');
 insert into public.staff_roles (user_id, role) values ('5ec00000-0000-0000-0000-0000000000a9', 'admin');
+-- These checks are about the verified mode: selfie verification required
+-- (20261109100000 makes it automatic from 100 members; see admin_publish_girl_view for the other modes).
+insert into private.girl_settings (key, value) values ('selfie_mode', 'on') on conflict (key) do update set value = 'on';
 
 select pg_temp.as_user('5ec00000-0000-0000-0000-0000000000a1');
 select pg_temp.check(public.my_girl_status() = 'needs_verification', 'girl: an unverified woman reads needs_verification');
