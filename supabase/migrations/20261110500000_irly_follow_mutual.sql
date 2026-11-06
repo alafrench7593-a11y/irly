@@ -144,7 +144,10 @@ begin
   -- Follow, unfollow, follow again: one notification a day at most.
   if n > 0 and not exists (select 1 from public.notifications where user_id = p_user and kind = 'NEW_FOLLOWER'
                            and payload ->> 'from' = me::text and created_at > now() - interval '1 day') then
-    insert into public.notifications (user_id, kind, payload) values (p_user, 'NEW_FOLLOWER', jsonb_build_object('from', me));
+    -- `mutual` when the person followed already follows me (20261110100000_irly_chat_universe: « X followed you back »).
+    insert into public.notifications (user_id, kind, payload) values (p_user, 'NEW_FOLLOWER',
+      jsonb_build_object('from', me) || case when exists (select 1 from public.follows f where f.follower_id = p_user and f.followee_id = me)
+                                             then jsonb_build_object('mutual', true) else '{}'::jsonb end);
   end if;
   return true;
 end $$;
@@ -157,14 +160,14 @@ grant execute on function public.follow_user(uuid) to authenticated;
 -- the same rule as private.conversation_universe for an activity's chat.
 -- Only called on rows the caller already reads (member_activities is
 -- security invoker): it says nothing more than the row's universe.
-create or replace function private.activity_universe(p_activity uuid) returns text
+create or replace function private.activity_universe(p_id uuid) returns text
 language sql stable security definer set search_path = public, private as $$
   select case
     when a.community_id is not null then coalesce(private.community_universe(a.community_id), case when a.girl_only then 'girl' else 'mixte' end)
     when a.girl_only then 'girl'
     else 'mixte' end
   from public.activities a
-  where a.id = p_activity
+  where a.id = p_id
 $$;
 revoke all on function private.activity_universe(uuid) from public, anon;
 grant execute on function private.activity_universe(uuid) to authenticated;
