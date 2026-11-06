@@ -12,7 +12,7 @@ import { PageHeader } from '@/components/navigation/Headers';
 import { ActionBar } from '@/components/social/ActionBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Chip, Segmented } from '@/components/ui/Controls';
+import { Chip, IconButton, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
@@ -32,14 +32,15 @@ import { communityPhoto, GUIDELINES } from '@/features/community/official';
 import { CommunityEmpty, IntroCard, WelcomeCharter } from '@/features/community/Welcome';
 import { Photo } from '@/components/visual/Photo';
 import { openReport } from '@/features/moderation/reportStore';
-import { useEngagement } from '@/features/server/engage';
+import { shareNative, useEngagement } from '@/features/server/engage';
+import { isManager, useCommunityHeader, useMyRights } from '@/features/community/governance';
+import { ChatEntry, CommunityFacts, MemberList } from '@/features/community/CommunityPageParts';
 import { track } from '@/lib/analytics';
 import { hueOf } from '@/lib/format';
 import { cityWhen, timeAgo } from '@/lib/time';
 import { useNow } from '@/lib/useNow';
 import { PostMedia } from '@/features/posts/PostMedia';
 import { pinPost, useChannels, useCommunityExtras } from '@/features/community/groups';
-import { openCreate } from '@/features/create/createStore';
 import { CommunityActivityFeed, ProposeActivity } from '@/features/community/CommunityActivitiesSlot';
 import { HostTools, NotifyPrefs, ParentLink, SpaceChips, SubgroupList } from '@/features/community/GroupsUI';
 import { haptic } from '@/motion/haptics';
@@ -55,7 +56,7 @@ import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { ScreenColumn } from '@/components/layout/responsive';
 import { communitySplit, useCommunitySplit } from '@/features/community/layout';
 
-type Tab = 'posts' | 'activities' | 'about';
+type Tab = 'discussion' | 'activities' | 'members' | 'about';
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
 // Upcoming needs no label; the others say what they are.
 const STATUS_LABEL: Partial<Record<ActivityStatus, string>> = { ongoing: 'Happening now', finished: 'Finished', cancelled: 'Cancelled' };
@@ -111,7 +112,10 @@ function CommunityScreen() {
   const actThumbs = useActivityThumbs(acts.activities.map((a) => a.id));
   const extras = useCommunityExtras(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
-  const [tab, setTab] = useState<Tab>('posts');
+  const [tab, setTab] = useState<Tab>('discussion');
+  // What I may do here (community_my_rights) and the header's real numbers (community_header).
+  const { rights: my } = useMyRights(id);
+  const { header } = useCommunityHeader(id);
   const [busy, setBusy] = useState(false);
   // Leave / Delete wait for the server: one at a time, a spinner meanwhile (a second tap asked again, then failed).
   const owner = useBusy<'leave' | 'delete'>();
@@ -223,7 +227,7 @@ function CommunityScreen() {
           {/* Wide: who the community is and Join on the left, its posts and activities on the right (same tree in every size). */}
           <View style={split ? communitySplit.split : communitySplit.stack}>
             <View style={split ? communitySplit.left : communitySplit.stack}>
-              <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator'} staff={contentStaff} onChanged={refresh} />
+              <CommunityCover id={c.id} name={c.name} topic={c.topic ?? null} categoryId={c.categoryId} coverPath={c.coverPath} light={city.light} canEdit={c.myRole === 'owner' || c.myRole === 'moderator' || my.canSettings} staff={contentStaff} onChanged={refresh} />
               <View style={[styles.pad, { gap: 6 }]}>
                 <ParentLink parent={extras.parent} />
                 <Text variant="overline" tone="accent">
@@ -235,9 +239,7 @@ function CommunityScreen() {
                     {c.tagline}
                   </Text>
                 ) : null}
-                <Text variant="caption" tone="tertiary">
-                  {tx('{n} members', { n: c.members })}
-                </Text>
+                <CommunityFacts header={header} fallbackMembers={c.members} official={c.official} />
               </View>
 
               {/* Joining swaps Join for the chat: the new actions rise in. */}
@@ -294,11 +296,19 @@ function CommunityScreen() {
                     )}
                   </>
                 ) : (
-                  <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
+                  <View style={{ flex: 1 }}>
+                    <Button label="Join the community" icon="users" full loading={busy} onPress={join} />
+                  </View>
                 )}
+                <IconButton icon="share" label={tx('Share')} onPress={() => void shareNative({ type: 'community', id: c.id, title: c.name }).catch(() => undefined)} />
               </Animated.View>
 
-              <ProposeActivity c={c} join={joinFirst} />
+              {/* The team's tools: only for those whose rights allow something there. */}
+              {isManager(my) ? (
+                <View style={styles.pad}>
+                  <Button label="Manage the community" icon="settings" variant="secondary" full onPress={() => router.push(`/community/manage/${c.id}`)} />
+                </View>
+              ) : null}
 
               {c.isMember ? (
                 <View style={[styles.pad, styles.row]}>
@@ -322,8 +332,9 @@ function CommunityScreen() {
               <View style={styles.pad}>
                 <Segmented
                   options={[
-                    { value: 'posts', label: tx('Posts') },
+                    { value: 'discussion', label: tx('Discussion') },
                     { value: 'activities', label: tx('Activities') },
+                    { value: 'members', label: tx('Members') },
                     { value: 'about', label: tx('About') },
                   ]}
                   value={tab}
@@ -331,13 +342,16 @@ function CommunityScreen() {
                 />
               </View>
 
-              {/* Switching Posts / Activities / About cross-fades the panel. */}
+              {/* Switching Discussion / Activities / Members / About cross-fades the panel. */}
               <Animated.View key={tab} entering={reduced ? undefined : FadeIn.duration(180)} style={{ gap: space[5] }}>
-                {tab === 'posts' ? (
+                {tab === 'discussion' ? (
                   <>
+                    {/* The chat and « + Propose an activity », one tap away for every member. */}
+                    <ChatEntry isMember={c.isMember} onOpen={() => (c.isMember && c.conversationId ? router.push(`/messages/${c.conversationId}`) : join())} />
+                    <ProposeActivity c={c} join={joinFirst} />
                     <CommunityActivityFeed communityId={c.id} onSeeAll={() => setTab('activities')} />
                     <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
-                    <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate} communityId={c.id} />
+                    <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate} communityId={c.id} />
                     {c.isMember ? (
                       <Composer
                         key={idea.n}
@@ -362,7 +376,7 @@ function CommunityScreen() {
                           key={p.id}
                           p={p}
                           eng={eng}
-                          canModerate={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate}
+                          canModerate={c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate}
                           onPin={(on) =>
                             pinPost(p.id, on)
                               .then(() => (feed.refresh(), toast(on ? 'Pinned at the top' : 'Unpinned', 'pinPost', 'brand')))
@@ -380,12 +394,12 @@ function CommunityScreen() {
                   </>
                 ) : null}
 
+                {tab === 'activities' ? <ProposeActivity c={c} join={joinFirst} /> : null}
                 {tab === 'activities' ? (
                   <View style={[styles.pad, { gap: 10 }]}>
                     <View style={[styles.row, { flexWrap: 'wrap' }]}>
                       <Chip size="sm" label={tx('Coming up')} selected={!past} onPress={() => setPast(false)} />
                       <Chip size="sm" label={tx('Past')} selected={past} onPress={() => setPast(true)} />
-                      {c.isMember ? <Chip size="sm" icon="plus" label={tx('Create an activity')} onPress={() => openCreate(null, { communityId: c.id, cityId: c.cityId, communityName: c.official ? tx(c.name) : c.name, girlOnly: c.girlOnly || undefined })} /> : null}
                     </View>
                     {acts.activities.length ? (
                       acts.activities.map((a, i) => (
@@ -410,7 +424,7 @@ function CommunityScreen() {
                                   .join(' · ')}
                               </Text>
                             </View>
-                            {(c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate) && a.status !== 'finished' && a.status !== 'cancelled' ? (
+                            {(c.myRole === 'owner' || c.myRole === 'moderator' || extras.rights.canModerate || my.canModerate) && a.status !== 'finished' && a.status !== 'cancelled' ? (
                               <Chip
                                 size="sm"
                                 icon="pinPost"
@@ -438,6 +452,8 @@ function CommunityScreen() {
                     )}
                   </View>
                 ) : null}
+
+                {tab === 'members' ? <MemberList communityId={c.id} /> : null}
 
                 {tab === 'about' ? (
                   <View style={[styles.pad, { gap: 10 }]}>
