@@ -26,6 +26,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { prefetchCommunity } from '@/features/community/prefetch';
 
 /**
  * One post, the same in every universe (community pages, the Live, IRLY Girl):
@@ -225,10 +226,10 @@ export const PostCard = memo(function PostCard({
 const CommunityLine = memo(function CommunityLine({ community }: { community: PostCommunity }) {
   const router = useRouter();
   const cityId = useCityId();
-  const uri = usePhotoLink(community.coverPath ?? null);
+  const uri = usePhotoLink(community.coverPath ?? null, true);
   const photo = communityPhoto(community.topic ?? null, community.categoryId ?? null, community.name);
   return (
-    <PressableScale onPress={() => router.push(`/c/${community.id}`)} haptic="select" scaleTo={0.97} style={styles.community} accessibilityLabel={tx('Open {name}', { name: tx(community.name) })}>
+    <PressableScale onPressIn={() => prefetchCommunity(community.id)} onPress={() => router.push(`/c/${community.id}`)} haptic="select" scaleTo={0.97} style={styles.community} accessibilityLabel={tx('Open {name}', { name: tx(community.name) })}>
       <Photo visual={{ photo, uri: uri ?? undefined }} light={CITIES[cityId].light} style={styles.communityPhoto} width={80} recyclingKey={`community-${community.id}`} />
       <Text variant="label" tone="secondary" numberOfLines={1} style={{ flexShrink: 1 }}>
         {tx(community.name)}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { isAvatar } from '@/features/avatar/avatar';
-import { faceThumb, imageBytes, imageType, prepareImage } from '@/lib/media';
+import { coverThumb, faceThumb, imageBytes, imageType, prepareImage } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 
 /**
@@ -157,20 +157,108 @@ export async function uploadFaceThumb(path: string, source: string): Promise<voi
   }
 }
 
-/** Signed links for a list of paths in one bucket (unchanged paths keep their links). */
-export function useSignedLinks(bucket: Bucket, paths: (string | null | undefined)[]): Record<string, string> {
+/**
+ * The links already known for these paths, without asking anyone (no request,
+ * no wait): a screen opened again shows its photos on its first frame instead
+ * of a grey frame while signedLinks() answers from the same cache a tick later.
+ */
+export function peekLinks(bucket: Bucket, paths: (string | null | undefined)[], small = false): Record<string, string> {
+  const now = Date.now();
+  const out: Record<string, string> = {};
+  for (const p of paths) {
+    if (!p) continue;
+    if (isAvatar(p) || /^https?:|^data:|^file:|^blob:/.test(p)) {
+      out[p] = p;
+      continue;
+    }
+    if (small && bucket === 'activity-photos' && thumbable(p) && !noCoverThumb.has(p)) {
+      const t = cache.get(key(bucket, coverThumbOf(p)));
+      if (t && t.until > now) {
+        out[p] = t.url;
+        continue;
+      }
+      // Its small copy is not known yet: asked for (with the photo) before anything is shown.
+      continue;
+    }
+    const hit = cache.get(key(bucket, p));
+    if (hit && hit.until > now) out[p] = hit.url;
+  }
+  return out;
+}
+
+/* ───────── Small copies of covers ───────── */
+
+/**
+ * Where the small copy of a cover lives ("activity-photos": communities,
+ * activities, chats), next to it: "<path>_thumb.jpg". Lists and cards show it
+ * (a few KB) instead of the 1280–1600 px photo; pages and viewers keep the
+ * photo. Read by exactly who may read the photo (storage rule, migration
+ * 20261110600000_irly_latency). Covers stored before it have none: they
+ * show the photo, as before.
+ */
+export const coverThumbOf = (path: string) => `${path}_thumb.jpg`;
+/** A member's stored cover (not an IRLY library link, not already a small copy). */
+const thumbable = (p: string) => /^[0-9a-f-]{36}\/[A-Za-z0-9._-]+$/i.test(p) && !/_thumb\.jpg$/i.test(p);
+// Covers without a small copy (stored before them, or its upload failed): not asked for again.
+const noCoverThumb = new Set<string>();
+
+/** The files a stored cover is made of (the photo and its small copy): removed together. */
+export const coverFiles = (path: string): string[] => (thumbable(path) ? [path, coverThumbOf(path)] : [path]);
+
+/**
+ * Stores the small copy of a cover just uploaded, made from the same picked
+ * image (best effort: without it, lists show the photo itself).
+ */
+export async function uploadCoverThumb(path: string, source: string): Promise<void> {
+  if (!supabase || !thumbable(path)) return;
+  try {
+    const body = await coverThumb(source);
+    await supabase.storage.from('activity-photos').upload(coverThumbOf(path), body, { contentType: 'image/jpeg' });
+  } catch {
+    // The photo itself still shows.
+  }
+}
+
+/**
+ * Links for covers shown small (a list's tiles, a chat row, a card): each
+ * one's small copy when it has one, else the photo, keyed by the photo's
+ * path. The small copies and the photos are signed in ONE request.
+ */
+export async function smallCoverLinks(paths: (string | null | undefined)[]): Promise<Record<string, string>> {
+  const files = [...new Set(paths.filter((x): x is string => Boolean(x)))];
+  const thumbs = files.filter((p) => thumbable(p) && !noCoverThumb.has(p)).map(coverThumbOf);
+  const links = await signedLinks('activity-photos', [...thumbs, ...files]);
+  const out: Record<string, string> = {};
+  for (const p of files) {
+    const small = thumbable(p) && !noCoverThumb.has(p) ? links[coverThumbOf(p)] : undefined;
+    // The photo was signed but not its small copy: there is none (an older cover).
+    if (!small && links[p] && thumbable(p)) noCoverThumb.add(p);
+    const shown = small ?? links[p];
+    if (shown) out[p] = shown;
+  }
+  return out;
+}
+
+/**
+ * Signed links for a list of paths in one bucket (unchanged paths keep their
+ * links). `small`: covers shown small take their small copy when there is one.
+ * Links already known show on the first frame.
+ */
+export function useSignedLinks(bucket: Bucket, paths: (string | null | undefined)[], small = false): Record<string, string> {
   const list = useMemo(() => [...new Set(paths.filter((x): x is string => Boolean(x)))].sort(), [paths]);
   const id = list.join('\n');
   const [links, setLinks] = useState<{ id: string; map: Record<string, string> }>({ id: '', map: {} });
+  const thumbs = small && bucket === 'activity-photos';
   useEffect(() => {
     if (!id) return;
     let alive = true;
-    signedLinks(bucket, id.split('\n')).then((map) => alive && setLinks({ id, map }));
+    (thumbs ? smallCoverLinks(id.split('\n')) : signedLinks(bucket, id.split('\n'))).then((map) => alive && setLinks({ id, map }));
     return () => {
       alive = false;
     };
-  }, [bucket, id]);
-  return links.map;
+  }, [bucket, id, thumbs]);
+  const known = useMemo(() => (id ? peekLinks(bucket, id.split('\n'), thumbs) : {}), [bucket, id, thumbs]);
+  return useMemo(() => (links.id === id ? links.map : { ...links.map, ...known }), [links, id, known]);
 }
 
 /* ───────── Photos sent in chats ───────── */
@@ -229,4 +317,5 @@ export async function uploadChatPhoto(uri: string, name: string): Promise<string
 /** Signed out or account deleted: every cached link (and local copy standing for an upload) is forgotten. */
 export function clearLinkCache(): void {
   cache.clear();
+  noCoverThumb.clear();
 }

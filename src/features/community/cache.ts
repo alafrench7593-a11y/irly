@@ -85,6 +85,18 @@ export function load<T>(key: string, run: () => Promise<T>, join = false): Promi
   return p;
 }
 
+/**
+ * The answer for `key` already on its way, or read a moment ago (REUSE_MS),
+ * without sending anything: another read can take what it needs from it
+ * instead of a request of its own. Undefined when there is none.
+ */
+export function joinable<T>(key: string): Promise<T> | undefined {
+  const running = inflight.get(key);
+  if (running) return running.p as Promise<T>;
+  const hit = mem.get(key);
+  return hit && Date.now() - hit.at < REUSE_MS ? Promise.resolve(hit.v as T) : undefined;
+}
+
 /** Reads `key` unless it was read less than `maxAge` ago or is on its way (a prefetch). */
 export function warm<T>(key: string, run: () => Promise<T>, maxAge = FRESH_MS): Promise<T | undefined> {
   if (!key) return Promise.resolve(undefined);

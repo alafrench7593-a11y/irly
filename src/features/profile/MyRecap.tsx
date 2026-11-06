@@ -21,6 +21,7 @@ import { useAppSpace } from '@/state/appSpace';
 import { radius, space as gap } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { useMemberActivities, useMemberPosts, type MemberCommunity, type ProfileActivity, type ProfilePost } from './member';
+import { prefetchCommunity } from '@/features/community/prefetch';
 
 type Filter = 'all' | Universe;
 
@@ -185,7 +186,7 @@ function CommunityCard({ c }: { c: MemberCommunity }) {
   const city = CITIES[c.cityId as keyof typeof CITIES];
   const members = tr('{n} members', { n: c.members });
   return (
-    <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(`/c/${c.id}`)} accessibilityRole="link" accessibilityLabel={[c.name, c.universe ? UNIVERSE_LABEL[c.universe] : null, members].filter(Boolean).join(', ')} style={[styles.card, { width: COMMUNITY_W, borderColor: t.c.line }]}>
+    <PressableScale haptic="select" scaleTo={0.97} onPressIn={() => prefetchCommunity(c.id)} onPress={() => router.push(`/c/${c.id}`)} accessibilityRole="link" accessibilityLabel={[c.name, c.universe ? UNIVERSE_LABEL[c.universe] : null, members].filter(Boolean).join(', ')} style={[styles.card, { width: COMMUNITY_W, borderColor: t.c.line }]}>
       <GlassLayer radius={radius.lg} />
       {/* Its own photo (signed link, cached; a broken one is asked again), else IRLY's photo of its subject. */}
       <View style={styles.cover}>

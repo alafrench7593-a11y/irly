@@ -22,3 +22,25 @@ export function together<T>(key: string, run: () => PromiseLike<T>): Promise<T> 
   waiting.set(key, p);
   return p;
 }
+
+const kept = new Map<string, { at: number; p: Promise<unknown> }>();
+/**
+ * Like together(), and an answer read less than `ms` ago is handed out again
+ * (a tab opened right after another one that read the same list). `key`
+ * must also carry the sync version of what it reads, so a change bumps it
+ * and the next caller reads again. A failed read (an error answer or a
+ * thrown one) is never kept.
+ */
+export function togetherRecent<T>(key: string, ms: number, run: () => PromiseLike<T>): Promise<T> {
+  const now = Date.now();
+  const hit = kept.get(key);
+  if (hit && now - hit.at < ms) return hit.p as Promise<T>;
+  if (kept.size > 50) for (const [k, v] of kept) if (now - v.at >= ms) kept.delete(k);
+  const p = together(key, run);
+  kept.set(key, { at: now, p });
+  const drop = () => {
+    if (kept.get(key)?.p === p) kept.delete(key);
+  };
+  p.then((r) => (r && typeof r === 'object' && 'error' in r && (r as { error: unknown }).error ? drop() : undefined), drop);
+  return p;
+}

@@ -36,6 +36,7 @@ import { useDemoActivities } from '@/features/girl/demo';
 import { useGirlEntry } from '@/features/profile/girlEntry';
 import { DEMO } from '@/config/app';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { prefetchCommunity } from '@/features/community/prefetch';
 
 const HERO = 320;
 
@@ -293,7 +294,7 @@ export default function CategoryScreen() {
           {myCommunities.length ? (
             <View style={[styles.rows, { marginTop: communities.length ? space[4] : 0 }]}>
               {myCommunities.map((c) => (
-                <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPress={() => router.push(`/c/${c.id}`)} style={[styles.activity, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
+                <PressableScale key={c.id} haptic="select" scaleTo={0.98} onPressIn={() => prefetchCommunity(c.id)} onPress={() => router.push(`/c/${c.id}`)} style={[styles.activity, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
                   <GlassLayer radius={radius.xl} />
                   <View style={{ flex: 1 }}>
                     <Text variant="titleS" raw numberOfLines={2}>

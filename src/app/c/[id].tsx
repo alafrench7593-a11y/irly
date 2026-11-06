@@ -441,6 +441,8 @@ function CommunityScreen() {
         initialNumToRender={5}
         maxToRenderPerBatch={6}
         windowSize={9}
+        // Android: rows far off screen are detached (less to draw while scrolling). Never on iOS, where it can blank rows.
+        removeClippedSubviews={Platform.OS === 'android'}
         onEndReached={() => void feed.loadMore()}
         onEndReachedThreshold={0.6}
         onScroll={onFeedScroll}
@@ -910,7 +912,7 @@ function CommunityCover({ id, name, topic, categoryId, coverPath, light, canEdit
   const fallback = communityPhoto(topic, categoryId, name);
   return (
     <View style={styles.pad}>
-      <Photo pinned visual={{ photo: fallback, uri: uri ?? undefined }} light={light} scrim="soft" style={styles.coverPhoto} width={1000} recyclingKey={`community-${id}-${coverPath ?? 'app'}`}>
+      <Photo pinned visual={{ photo: fallback, uri: uri ?? undefined }} light={light} scrim="soft" style={styles.coverPhoto} width={1000} priority="high" recyclingKey={`community-${id}-${coverPath ?? 'app'}`}>
         {canEdit || staff ? <CoverEditor style={coverEditorSlot} hasOwn={Boolean(coverPath)} staff={staff && !canEdit} save={(picked) => setCommunityCover(id, picked)} onChanged={onChanged} /> : null}
       </Photo>
     </View>

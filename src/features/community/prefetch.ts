@@ -1,5 +1,5 @@
 import { currentUserId } from '@/features/auth/account';
-import { signedLinks } from '@/features/server/media';
+import { signedLinks, storedKey } from '@/features/server/media';
 import { supabase } from '@/lib/supabase';
 import { cacheKey, peek, warm, warmImages } from './cache';
 import { feedKey, fetchCommunityDetail, fetchFeedFirst, type CommunityPost, type FirstPage } from './data';
@@ -20,7 +20,8 @@ import { fetchChannels, fetchExtras, type Channel } from './groups';
 export function prefetchCommunity(id: string | null | undefined): void {
   const uid = currentUserId();
   if (!supabase || !uid || !id) return;
-  void warm(cacheKey(uid, 'detail', id), () => fetchCommunityDetail(uid, id));
+  // Its header photo too: signed and fetched while the finger is down, so the page opens on it.
+  void warm(cacheKey(uid, 'detail', id), () => fetchCommunityDetail(uid, id)).then((d) => warmCover(d?.coverPath));
   void warm(cacheKey(uid, 'header', id), () => fetchHeader(id));
   void warm(cacheKey(uid, 'rights', id), () => fetchMyRights(id));
   void warm(cacheKey(uid, 'extras', id), () => fetchExtras(uid, id));
@@ -58,5 +59,17 @@ export function warmPostImages(posts: CommunityPost[], fetchFirst = 4): void {
   if (!files.length || !supabase) return;
   signedLinks('post-media', files)
     .then((links) => warmImages(photos.filter((p) => links[p]).map((p) => ({ uri: links[p], cacheKey: p })), fetchFirst))
+    .catch(() => undefined);
+}
+
+/** A community's own header photo (its full size, as the page shows it) into the image cache. */
+function warmCover(path: string | null | undefined): void {
+  if (!path || !supabase) return;
+  signedLinks('activity-photos', [path])
+    .then((links) => {
+      const uri = links[path];
+      const key = storedKey(uri);
+      if (uri && key) warmImages([{ uri, cacheKey: key }], 1);
+    })
     .catch(() => undefined);
 }

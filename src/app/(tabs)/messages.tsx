@@ -208,7 +208,8 @@ function Messages() {
 
   // People's faces come from the shared faces (small copies, cached); chats' own pictures are signed here.
   useEffect(() => primeFaces(server.conversations.filter((c) => c.otherId).map((c) => ({ id: c.otherId!, path: c.otherPhoto }))), [server.conversations]);
-  const pictures = useSignedLinks('activity-photos', useMemo(() => all.map((c) => c.photoPath), [all]));
+  // Row pictures: the small copies of the chats' photos.
+  const pictures = useSignedLinks('activity-photos', useMemo(() => all.map((c) => c.photoPath), [all]), true);
   // A community chat without a photo of its own shows its community's picture, as on the community's page.
   // (The server tells the community's topic and category with the inbox: asked again only from a server that does not.)
   const appPhotos = useCommunityPhotoKeys(

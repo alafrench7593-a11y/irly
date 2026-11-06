@@ -7,7 +7,7 @@ import { CITIES, cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount, withProfile } from '@/features/auth/account';
-import { signedLinks } from '@/features/server/media';
+import { coverFiles, signedLinks, uploadCoverThumb } from '@/features/server/media';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
@@ -114,8 +114,12 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   if (!coverPath && extras.coverUri) {
     const img = await cleanImage(extras.coverUri);
     coverPath = `${uid}/${Date.now()}.${img.ext}`;
-    const up = await supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType });
-    if (up.error) throw new Error('Could not upload the photo');
+    // Its small copy (lists, rows) goes up at the same time.
+    const [up] = await Promise.all([supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType }), uploadCoverThumb(coverPath, extras.coverUri)]);
+    if (up.error) {
+      supabase.storage.from('activity-photos').remove(coverFiles(coverPath)).catch(() => undefined);
+      throw new Error('Could not upload the photo');
+    }
   }
   // No photo given at all (the assistant, a Live, a quick plan): one of the IRLY library for its type,
   // drawn at random. `libraryCover: null` is « no photo » on purpose: nothing is drawn then.
@@ -147,7 +151,7 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
     .single();
   // Not saved (refused, or the first tap already saved it with its own photo): this photo is not left behind.
   // A staged photo stays with the form, which sends it again on retry (and removes it if abandoned).
-  if (error && coverPath && !staged) await supabase.storage.from('activity-photos').remove([coverPath]).catch(() => undefined);
+  if (error && coverPath && !staged) await supabase.storage.from('activity-photos').remove(coverFiles(coverPath)).catch(() => undefined);
   if (error?.code === '23505') {
     // Already created by the first tap: hand back that one (same request, or the same post a moment ago).
     const { data: byRef } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).is('cancelled_at', null).maybeSingle();

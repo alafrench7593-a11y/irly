@@ -58,6 +58,7 @@ import {
   type MemberProfile,
   type ProfileActivity,
 } from './member';
+import { prefetchCommunity } from '@/features/community/prefetch';
 
 type Tab = 'posts' | 'lives' | 'activities';
 
@@ -596,7 +597,8 @@ function ActivitiesTab({ userId, own, name }: { userId: string; own: boolean; na
   const acts = useMemberActivities(userId);
   const appSpace = useAppSpace();
   const [which, setWhich] = useState<'created' | 'joined'>('created');
-  const covers = useSignedLinks('activity-photos', acts.items.map((a) => a.cover));
+  // Row thumbnails: the covers' small copies.
+  const covers = useSignedLinks('activity-photos', acts.items.map((a) => a.cover), true);
   if (acts.loading) return <Loading />;
   if (acts.error) return <Failed message={acts.error} onRetry={acts.reload} />;
   const mine = acts.items.filter((a) => inSpace(a, appSpace));
@@ -690,6 +692,7 @@ function CommunitiesSection({ list }: { list: MemberCommunity[] }) {
                 key={c.id}
                 haptic="select"
                 scaleTo={0.97}
+                onPressIn={() => prefetchCommunity(c.id)}
                 onPress={() => router.push(`/c/${c.id}`)}
                 accessibilityRole="link"
                 accessibilityLabel={`${c.name}, ${members}`}

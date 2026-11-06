@@ -150,7 +150,8 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
   // `draft`: a first message prepared elsewhere (Introduce myself): editable, never sent by itself.
   const chatPhoto = useChatPhoto(id);
   const universe = useChatUniverse(id);
-  const chatPhotoUri = usePhotoLink(chatPhoto.path);
+  // A 36 pt picture in the header: its small copy.
+  const chatPhotoUri = usePhotoLink(chatPhoto.path, true);
   const [photoMenu, setPhotoMenu] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const changePhoto = async (next: 'pick' | 'reset') => {

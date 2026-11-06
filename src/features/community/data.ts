@@ -3,7 +3,7 @@ import type { CityId } from '@/data/types';
 import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
 import { uuid } from '@/lib/uuid';
-import { together } from '@/lib/together';
+import { togetherRecent } from '@/lib/together';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
@@ -55,6 +55,8 @@ export type CommunityDetail = {
   emoji: string | null;
   /** Introductions strongly suggested (IRLY Newcomers). */
   introFirst: boolean;
+  /** Its rules (read with the rest: the page's rules then need no request of their own). */
+  rules?: string | null;
   /** My chat notifications are off. */
   muted: boolean;
 };
@@ -134,7 +136,7 @@ export async function setCommunityMuted(conversationId: string, muted: boolean):
 export async function fetchCommunityDetail(uid: string, id: string): Promise<CommunityDetail | null> {
   const [{ data, error: e }, { data: cover }, { data: mine }] = await Promise.all([
     sb().rpc('community_detail', { p_id: id }),
-    sb().from('communities').select('cover_path, official, topic, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
+    sb().from('communities').select('cover_path, official, topic, rules, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
     sb().from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', uid).eq('conversations.community_id', id).limit(1),
   ]);
   if (e) throw new Error(e.message);
@@ -158,6 +160,8 @@ export async function fetchCommunityDetail(uid: string, id: string): Promise<Com
     topic: (cover?.topic as string | null) ?? null,
     emoji: topicOf(cover)?.emoji ?? null,
     introFirst: Boolean(topicOf(cover)?.intro_first),
+    // Undefined when that read failed: the rules are then read on their own.
+    rules: cover ? (typeof cover.rules === 'string' ? cover.rules.trim() || null : null) : undefined,
     muted: Boolean(r.conversation_id && (mine as { muted: boolean }[] | null)?.[0]?.muted),
   };
 }
@@ -654,8 +658,9 @@ function useCommunityRows(cityId: string) {
     const sb = supabase;
     // The pages kept on the phone are read now, before one of these communities is opened.
     void hydrateCommunityCache();
-    // Home, Profile and Communities list the same communities (tabs stay mounted, a sync bump reaches them all): one read.
-    together(`community_list:${uid}:${cityId}`, () => sb.rpc('community_list', { p_city: cityId })).then(({ data, error }) => {
+    // Home, Profile and Communities list the same communities (tabs stay mounted, a sync bump reaches them all): one read,
+    // and a screen opened within 20 s of another takes its answer (a change bumps `version`, read again then).
+    togetherRecent(`community_list:${uid}:${cityId}:${version}`, 20_000, () => sb.rpc('community_list', { p_city: cityId })).then(({ data, error }) => {
       // A failed load keeps the list already on screen.
       if (!alive || error) return;
       setList(
