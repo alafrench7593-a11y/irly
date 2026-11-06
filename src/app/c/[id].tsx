@@ -17,14 +17,13 @@ import { Chip, IconButton, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { ACTIVITIES } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import type { LightId } from '@/theme/lights';
-import { dateFor, planDay, type Day, type GeoIndex } from '@/features/ai/intent';
-import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type PlanDraft } from '@/features/community/assist';
+import { dateFor, planDay, type GeoIndex } from '@/features/ai/intent';
+import { postLooksLikeAPlan, type PlanDraft } from '@/features/community/assist';
 import { confirm } from '@/lib/confirm';
-import { deleteCommunity, fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost, pinActivity, type ActivityStatus } from '@/features/community/data';
+import { deleteCommunity, joinCommunity, leaveCommunity, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost, pinActivity, type ActivityStatus } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
 import { setCommunityCover, useActivityThumbs, usePhotoLink } from '@/features/server/covers';
 import { CoverEditor, coverEditorSlot } from '@/components/visual/CoverEditor';
@@ -40,10 +39,9 @@ import { AboutSheet } from '@/features/community/AboutSheet';
 import { Agenda, type AgendaItem } from '@/features/community/Agenda';
 import { ChatInvite, ChatPane } from '@/features/community/ChatPane';
 import { NewPostsPill, PublishButton } from '@/features/community/FeedOverlays';
-import { MediaEmpty, MediaGrid, type GalleryItem } from '@/features/community/MediaGallery';
 import { PinnedStrip } from '@/features/community/PinnedStrip';
 import { SpaceTabs, TabPanel, TABS_HEIGHT, type SpaceTab } from '@/features/community/SpaceTabs';
-import { PIN_FOR, pinPostFor, pinUntil, prefetchMedia, useCommunityMedia, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
+import { PIN_FOR, pinPostFor, pinUntil, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
 import { prefetchMembers, warmPostImages } from '@/features/community/prefetch';
 import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -80,12 +78,11 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 /**
- * A community in five spaces: Posts (text, photos, polls, plans, pinned
+ * A community in four spaces: Posts (text, photos, polls, plans, pinned
  * first, Recent or Popular, paged), its Chat (in the page, for members),
- * Activities (an agenda by week or month), Media (every photo and video)
- * and Members. About (with the rules) and Search sit in the header. A free
- * assistant plans an activity for the group, drafts a poll, summarises the
- * week or suggests what to post. Join = you are in the chat too.
+ * Activities (an agenda by week or month) and Members (photos and videos
+ * stay in their posts). About (with the rules and Report) and Search sit in the
+ * header. Join = you are in the chat too.
  */
 // The demonstration build's IRLY Girl communities (example content, nothing saved).
 export default function CommunityRoute() {
@@ -129,13 +126,9 @@ function CommunityScreen() {
   const actThumbs = useActivityThumbs(acts.activities.map((a) => a.id));
   const extras = useCommunityExtras(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
-  // The five spaces; each keeps its state (scroll, search, agenda) while another shows.
+  // The four spaces; each keeps its state (scroll, search, agenda) while another shows.
   const [tab, setTab] = useState<SpaceTab>('posts');
   const [actView, setActView] = useState<'agenda' | 'list'>('agenda');
-  // The gallery loads the first time Media opens, then stays.
-  const [mediaOn, setMediaOn] = useState(false);
-  if (tab === 'media' && !mediaOn) setMediaOn(true);
-  const media = useCommunityMedia(id, mediaOn);
   const [about, setAbout] = useState(false);
   const { rules, loading: rulesLoading } = useCommunityRules(id);
   // A post a moderator pins: for how long (24 h, 7 days, no end).
@@ -147,8 +140,6 @@ function CommunityScreen() {
   // Leave / Delete wait for the server: one at a time, a spinner meanwhile (a second tap asked again, then failed).
   const owner = useBusy<'leave' | 'delete'>();
   const reduced = useReducedMotion();
-  // An assistant idea tapped goes into the post composer (n remounts it).
-  const [idea, setIdea] = useState({ text: '', n: 0 });
   const list = useRef<FlatList<CommunityPost>>(null);
   // The cards' actions, the same functions on every render (the cards are memoized): each
   // call runs the handler of the latest render, kept below once the community is known.
@@ -182,18 +173,17 @@ function CommunityScreen() {
     [acts.activities],
   );
   // The feed's files are signed in one request and its first photos fetched ahead; once
-  // the page has settled, the gallery's first page and thumbnails too (Media opens filled).
+  // the page has settled, the members too (Members opens filled).
   const uid = useAccount()?.userId;
   useEffect(() => warmPostImages(feed.posts), [feed.posts]);
   const settled = !feed.loading && Boolean(loaded);
   useEffect(() => {
-    if (!settled || !uid || mediaOn) return;
-    const timer = setTimeout(() => (prefetchMedia(uid, id), prefetchMembers(id)), 1200);
+    if (!settled || !uid) return;
+    const timer = setTimeout(() => prefetchMembers(id), 1200);
     return () => clearTimeout(timer);
-  }, [settled, uid, id, mediaOn]);
-  const gallery = useMemo<GalleryItem[]>(() => media.items.map((m) => ({ key: m.key, kind: m.kind, path: m.path, thumbPath: m.thumbPath, seconds: m.seconds, postId: m.postId })), [media.items]);
+  }, [settled, uid, id]);
 
-  /** A plan from the assistant or a post: a real activity of this community, in its Activities space. */
+  /** A plan from a post: a real activity of this community, in its Activities space. */
   const createPlan = async (d: PlanDraft): Promise<boolean> => {
     if (!c) return false;
     if (!c.isMember) {
@@ -409,7 +399,7 @@ function CommunityScreen() {
 
       {/* IRLY's own: the welcome, the introduction and the rules; a member's community: the introduction. */}
       {c.official ? (
-        <OfficialBlock c={c} cityName={city.name} onMuted={refresh} />
+        <OfficialBlock c={c} cityName={city.name} />
       ) : c.isMember ? (
         <View style={styles.pad}>
           <IntroCard c={c} cityName={city.name} />
@@ -418,15 +408,14 @@ function CommunityScreen() {
     </View>
   );
 
-  /* Posts: the pinned strip, the activities coming up, the assistant, the composer, the sort. */
+  /* Posts: the pinned strip, the activities coming up, the composer, the sort. */
   const postsHeader = (
     <View style={{ gap: space[5], paddingBottom: space[5] }}>
       {split ? null : hero}
       <PinnedStrip posts={feed.posts} />
       <CommunityActivityFeed communityId={c.id} onSeeAll={() => setTab('activities')} />
-      <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
       <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={canModerate} communityId={c.id} />
-      {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })} onMedia={(body) => openComposer(body)} /> : null}
+      {c.isMember ? <Composer onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })} onMedia={(body) => openComposer(body)} /> : null}
       <View style={styles.pad}>
         <Segmented
           options={[
@@ -538,7 +527,7 @@ function CommunityScreen() {
             </View>
           ) : (
             <Text variant="body" tone="secondary">
-              {acts.error ? 'Can’t reach IRLY right now' : past ? 'No past activities yet.' : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
+              {acts.error ? 'Can’t reach IRLY right now' : past ? 'No past activities yet.' : 'Nothing planned yet: propose something and it gets its own chat.'}
             </Text>
           )}
         </View>
@@ -565,19 +554,6 @@ function CommunityScreen() {
       <TabPanel active={tab === 'posts'}>{posts}</TabPanel>
       <TabPanel active={tab === 'chat'}>{chat}</TabPanel>
       <TabPanel active={tab === 'activities'}>{activities}</TabPanel>
-      <TabPanel active={tab === 'media'}>
-        <MediaGrid
-          items={gallery}
-          loading={media.loading}
-          loadingMore={media.loadingMore}
-          error={media.error}
-          onEnd={media.more}
-          topInset={top + 16}
-          bottomInset={insets.bottom}
-          onOpenPost={(postId) => router.push({ pathname: '/comments', params: { type: 'community_post', id: postId } })}
-          empty={<MediaEmpty title="No photos yet" body="Photos and videos posted in the community show up here." />}
-        />
-      </TabPanel>
       <TabPanel active={tab === 'members'}>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: top + 16, paddingBottom: insets.bottom + 60 }}>
           <MemberList communityId={c.id} />
@@ -594,7 +570,7 @@ function CommunityScreen() {
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Ambient />
-      {/* Wide: who the community is and Join on the left, its five spaces on the right (same tree in every size). */}
+      {/* Wide: who the community is and Join on the left, its four spaces on the right (same tree in every size). */}
       {split ? (
         <View style={[communitySplit.split, { flex: 1 }]}>
           <ScrollView style={[communitySplit.left, { alignSelf: 'stretch' }]} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: headerH + 12, paddingBottom: insets.bottom + 40 }}>
@@ -671,189 +647,6 @@ function PostSkeletons() {
           <Skeleton height={160} radius={radius.lg} />
         </View>
       ))}
-    </View>
-  );
-}
-
-/* ───────── Assistant ───────── */
-
-function Assistant({
-  communityId,
-  name,
-  categoryId,
-  geo,
-  isMember,
-  onPlan,
-  onPoll,
-  onIdea,
-}: {
-  communityId: string;
-  name: string;
-  categoryId: string | null;
-  geo: GeoIndex;
-  isMember: boolean;
-  onPlan: (d: PlanDraft) => Promise<boolean>;
-  onPoll: (question: string, options: string[]) => Promise<void>;
-  onIdea: (text: string) => void;
-}) {
-  const t = useTheme();
-  const [text, setText] = useState('');
-  const [result, setResult] = useState<Assist | null>(null);
-  const [posting, setPosting] = useState(false);
-  const [digest, setDigest] = useState<string[] | null>(null);
-  const [draft, setDraft] = useState<PlanDraft | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const ask = (input: string) => {
-    const r = communityAssist(input, { communityName: name, categoryId, geo, activityLabel: (id) => { const l = ACTIVITIES[id as keyof typeof ACTIVITIES]?.label; return l ? tx(l) : undefined; }, tx });
-    setResult(r);
-    setDigest(null);
-    setDraft(r.kind === 'plan' ? r.draft : null);
-    track('AI_COMMAND', { scope: 'community', kind: r.kind });
-    if (r.kind === 'digest') {
-      fetchDigest(communityId)
-        .then((d) => setDigest(digestLines(d, (ms) => when(ms, geo.cities[0]?.id ?? 'dubai'), tx)))
-        .catch(() => setDigest(['Can’t reach IRLY right now.']));
-    }
-  };
-
-  const chips = ['Organise padel Saturday 9am', 'Poll: Saturday or Sunday?', "What's new this week?", 'Post ideas'];
-
-  return (
-    <View style={[styles.assist, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
-      <GlassLayer radius={radius.xl} />
-      <View style={styles.row}>
-        <Icon name="sparkles" size={18} color={t.c.text} />
-        <Text variant="titleS" style={{ flex: 1 }}>
-          Community assistant
-        </Text>
-        <Text variant="caption" tone="tertiary">
-          Free
-        </Text>
-      </View>
-      <View style={[styles.inputWrap, { borderColor: t.c.line, backgroundColor: t.c.bg }]}>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder={tx('Ask: organise brunch Sunday 11am…')}
-          placeholderTextColor={t.c.textTertiary}
-          style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 }}
-          onSubmitEditing={() => text.trim() && ask(text)}
-          returnKeyType="go"
-          accessibilityLabel={a11y('Ask the community assistant')}
-        />
-        <PressableScale onPress={() => text.trim() && ask(text)} haptic="select" hitSlop={8} accessibilityLabel="Ask">
-          <Icon name="send" size={18} color={t.c.text} />
-        </PressableScale>
-      </View>
-      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-        {chips.map((q) => (
-          <Chip key={q} size="sm" label={tx(q)} onPress={() => ask(tx(q))} />
-        ))}
-      </ScrollView>
-
-      {result?.kind === 'plan' && draft ? (
-        <Animated.View entering={FadeInDown.springify(380)} style={{ gap: 10 }}>
-          <Text variant="titleS">{draft.title}</Text>
-          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {(['today', 'tomorrow', 'sat', 'sun', 'next_week'] as Day[]).map((d) => (
-              <Chip key={d} size="sm" label={d === 'sat' ? tx('Saturday') : d === 'sun' ? tx('Sunday') : tx(planDay(d))} selected={(draft.day ?? 'today') === d} onPress={() => setDraft({ ...draft, day: d })} />
-            ))}
-          </ScrollView>
-          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {['08:00', '09:00', '11:00', '16:00', '18:00', '19:30'].map((h) => (
-              <Chip key={h} size="sm" label={h} selected={draft.time === h} onPress={() => setDraft({ ...draft, time: h })} />
-            ))}
-          </ScrollView>
-          {/* Where: a plan needs a neighbourhood and none is picked for the member (unless she named one). */}
-          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {geo.areas.map((a) => (
-              <Chip key={a.id} size="sm" icon="pin" label={a.name} raw selected={draft.areaId === a.id} onPress={() => setDraft({ ...draft, areaId: draft.areaId === a.id ? undefined : a.id })} />
-            ))}
-          </ScrollView>
-          <Button
-            label={isMember ? 'Create it for the community' : 'Join to create it'}
-            icon="plus"
-            full
-            loading={busy}
-            disabled={!isMember || busy}
-            onPress={async () => {
-              if (busy) return;
-              setBusy(true);
-              const asked = result;
-              const typed = text;
-              let ok = false;
-              try {
-                ok = await onPlan(draft);
-              } finally {
-                setBusy(false);
-              }
-              if (!ok) return;
-              // Clear only this plan: a question asked meanwhile keeps its answer.
-              setResult((r) => (r === asked ? null : r));
-              setText((x) => (x === typed ? '' : x));
-            }}
-          />
-        </Animated.View>
-      ) : null}
-
-      {result?.kind === 'poll' ? (
-        <View style={{ gap: 8 }}>
-          <Text variant="titleS" raw>{result.question}</Text>
-          <Text variant="bodyS" tone="secondary">
-            {result.options.join(' · ')}
-          </Text>
-          <Button
-            label={isMember ? 'Post this poll' : 'Join to post'}
-            icon="send"
-            full
-            loading={posting}
-            disabled={!isMember || posting}
-            onPress={() => {
-              if (posting) return;
-              setPosting(true);
-              const asked = result;
-              const typed = text;
-              onPoll(result.question, result.options)
-                .then(() => {
-                  setResult((r) => (r === asked ? null : r));
-                  setText((x) => (x === typed ? '' : x));
-                })
-                .catch((e) => toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live'))
-                .finally(() => setPosting(false));
-            }}
-          />
-        </View>
-      ) : null}
-
-      {result?.kind === 'digest' ? (
-        <View style={{ gap: 4 }}>
-          {(digest ?? ['…']).map((l) => (
-            <Text key={l} variant="bodyS">
-              {l}
-            </Text>
-          ))}
-        </View>
-      ) : null}
-
-      {result?.kind === 'ideas' ? (
-        <View style={{ gap: 8 }}>
-          {result.ideas.map((i) => (
-            <PressableScale key={i} onPress={() => onIdea(tx(i))} haptic="select" style={[styles.idea, { borderColor: t.c.line }]} accessibilityLabel={i}>
-              <Text variant="bodyS">{tx(i)}</Text>
-            </PressableScale>
-          ))}
-          <Text variant="caption" tone="tertiary">
-            Tap one, then post it below.
-          </Text>
-        </View>
-      ) : null}
-
-      {result?.kind === 'help' ? (
-        <Text variant="bodyS" tone="secondary">
-          Try: “organise padel Saturday 9am”, “poll: Saturday or Sunday?”, “what’s new this week?” or “post ideas”.
-        </Text>
-      ) : null}
     </View>
   );
 }
@@ -1141,13 +934,11 @@ function Loading() {
 /**
  * IRLY's own communities: who it is for and how it works (the welcome),
  * say hello first (strongly suggested for newcomers, asked once), the
- * house rules, and the member's controls (mute, report).
+ * house rules. Report is in About, as for every community.
  */
-function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName: string; onMuted: () => void }) {
+function OfficialBlock({ c, cityName }: { c: CommunityDetail; cityName: string }) {
   const t = useTheme();
   const [rules, setRules] = useState(!c.isMember);
-  // Mute flips what the page last read: a second tap before the answer sent the same flip again.
-  const muting = useBusy<'mute'>();
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       <WelcomeCharter c={c} />
@@ -1169,27 +960,6 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
             ))
           : null}
       </PressableScale>
-      {c.isMember && c.conversationId ? (
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Button
-            label={c.muted ? 'Unmute chat' : 'Mute chat'}
-            icon={c.muted ? 'bell' : 'bellOff'}
-            variant="ghost"
-            loading={muting.busy === 'mute'}
-            onPress={() =>
-              void muting.run('mute', () =>
-                setCommunityMuted(c.conversationId!, !c.muted)
-                  .then(() => {
-                    toast(c.muted ? 'Chat notifications on' : 'Chat muted', 'check', 'brand');
-                    onMuted();
-                  })
-                  .catch(() => toast('Could not change it', 'x', 'live')),
-              )
-            }
-          />
-          <Button label="Report" icon="flag" variant="ghost" onPress={() => openReport({ kind: 'community', id: c.id })} />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -1215,9 +985,6 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: space.gutter },
-  assist: { marginHorizontal: space.gutter, padding: 16, borderRadius: radius.xl, gap: 12 },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, borderRadius: 23, borderWidth: 1, paddingHorizontal: 16 },
-  idea: { padding: 12, borderRadius: radius.lg, borderWidth: 1 },
   composer: { minHeight: 90, borderRadius: radius.lg, borderWidth: 1, padding: 14, fontFamily: font.medium, fontSize: 16, textAlignVertical: 'top' },
   option: { height: 44, borderRadius: radius.md, borderWidth: 1, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 15 },
   card: { padding: 16, borderRadius: radius.xl, gap: 12 },

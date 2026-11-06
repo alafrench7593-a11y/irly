@@ -37,6 +37,8 @@ export type OfficialCommunity = {
   isMember: boolean;
   score: number;
   cityId: string;
+  /** Its own photo (a storage path), null: none (IRLY's photo). Undefined: not said by the server, looked up by id. */
+  coverPath?: string | null;
 };
 
 type Row = Record<string, unknown>;
@@ -67,6 +69,7 @@ const toCommunity = (r: Row): OfficialCommunity => ({
   isMember: Boolean(r.is_member),
   score: Number(r.score ?? 0),
   cityId: (r.city_id as string) ?? '',
+  coverPath: 'cover_path' in r ? ((r.cover_path as string | null) ?? null) : undefined,
 });
 
 /** Communities recommended for these answers in this city, best first. */

@@ -15,7 +15,7 @@ import { prefetchCommunity } from './prefetch';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
 /**
- * Home: the communities you are in (up to 5, both spaces), the main communities ranked
+ * Home: the communities you are in (up to 5, this app's universes), the main communities ranked
  * by their real number of members (groups stay inside their community), and
  * an always-visible way to discover IRLY Communities.
  */
@@ -24,7 +24,7 @@ export function YourCommunities({ cityId }: { cityId: string }) {
   const reduced = useReducedMotion();
   const signedIn = Boolean(useAccount());
   // The server's order: main communities only, most members first.
-  // Yours from both spaces (an IRLY Girl member still sees the IRLY ones she joined); the ranking stays this space's.
+  // Yours in this app's universes (universe.ts): IRLY Girl never lists her Mixte ones, Mixte never her Girl ones.
   const mine = useMyCommunities(cityId).slice(0, 5);
   const ranked = useCommunityList(cityId).slice(0, 10);
 
@@ -46,7 +46,7 @@ export function YourCommunities({ cityId }: { cityId: string }) {
             <Animated.View key={c.id} entering={reduced ? undefined : FadeInDown.springify(520).dampingRatio(0.85).delay(i * 60)}>
               <PressableScale haptic="select" scaleTo={0.97} onPressIn={() => prefetchCommunity(c.id)} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
                 <GlassLayer radius={radius.xl} />
-                <CommunityThumb id={c.id} name={c.name} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member />
+                <CommunityThumb id={c.id} name={c.name} coverPath={c.coverPath} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member />
                 <Text variant="titleS" numberOfLines={1}>
                   {c.name}
                 </Text>
@@ -72,7 +72,7 @@ export function YourCommunities({ cityId }: { cityId: string }) {
             {ranked.map((c) => (
               <PressableScale key={c.id} haptic="select" scaleTo={0.97} onPressIn={() => prefetchCommunity(c.id)} onPress={() => router.push(`/c/${c.id}`)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={c.name}>
                 <GlassLayer radius={radius.xl} />
-                <CommunityThumb id={c.id} name={c.name} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member={c.isMember} />
+                <CommunityThumb id={c.id} name={c.name} coverPath={c.coverPath} topic={c.topic} categoryId={c.categoryId} emoji={c.emoji} light={CITIES[cityId as keyof typeof CITIES]?.light ?? 'dubai'} size={44} member={c.isMember} />
                 <Text variant="titleS" numberOfLines={1}>
                   {c.name}
                 </Text>

@@ -1673,7 +1673,7 @@ select pg_temp.check((select bool_and(ok) from (select
     coalesce(official or members >= lead(members) over (partition by official order by n), true)
     and coalesce(not official or sort <= lead(sort) over (partition by official order by n), true)
     and coalesce(official >= lead(official) over (order by n), true) as ok
-  from (select l.*, t.sort from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
+  from (select l.*, t.sort from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, cover_path, n)
     left join public.community_topics t on t.topic = l.topic) l
   where city_id = 'dubai') x), 'ranking: main communities come official first (in the team''s order), then most members first');
 select pg_temp.check(not exists (select 1 from public.community_list('dubai') l join public.communities c on c.id = l.id where c.parent_id is not null), 'ranking: no group among main communities');

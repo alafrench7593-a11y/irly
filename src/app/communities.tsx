@@ -27,7 +27,7 @@ import { SortBar } from '@/features/community/discovery/SortBar';
 import { useCityFilter } from '@/features/server/scope';
 import { profileTags, TOPIC_GROUPS, useRecommendedCommunities, type OfficialCommunity } from '@/features/community/official';
 import { prefetchCommunity } from '@/features/community/prefetch';
-import { isDemoId, useDemoCommunitiesLike, useDemoGirl } from '@/features/girl/demo';
+import { findDemoCommunity, isDemoId, useDemoCommunitiesLike, useDemoGirl } from '@/features/girl/demo';
 import { GirlOfficialCommunities } from '@/features/girl/GirlOfficial';
 import { useMemberProfile, type MemberCommunity } from '@/features/profile/member';
 import { t as tx } from '@/i18n';
@@ -40,6 +40,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { enter } from '@/motion/enter';
 import { SpaceFlavor } from '@/theme/space';
 import { useAppSpace } from '@/state/appSpace';
+import { belongsToSpace } from '@/features/universe/universe';
 
 type Tab = 'foryou' | 'all' | 'mine';
 
@@ -126,7 +127,8 @@ function Communities() {
   const router = useRouter();
   const uid = useAccount()?.userId;
   const params = useLocalSearchParams<{ tab?: Tab }>();
-  const inGirl = useAppSpace() === 'girl';
+  const appSpace = useAppSpace();
+  const inGirl = appSpace === 'girl';
   // The demo build has no server: in IRLY Girl it shows the demo's example communities (as its Girl home does).
   const demoGirl = DEMO && inGirl;
   const signedIn = Boolean(uid) || demoGirl;
@@ -144,20 +146,27 @@ function Communities() {
   const profile = useStore((s) => s.profile);
   const tags = useMemo(() => profileTags(profile), [profile]);
   const recAll = useRecommendedCommunities(cityId, tags, 12);
-  // In IRLY Girl, the recommendations are IRLY Girl communities too (the « Discover » list already is).
-  const rec = useMemo(() => (inGirl && recAll.list ? { ...recAll, list: recAll.list.filter((c) => c.girlOnly) } : recAll), [recAll, inGirl]);
+  // Each app recommends its own universes (universe.ts): never an IRLY Girl or Mom community in Mixte, nor a Mixte one in IRLY Girl.
+  const rec = useMemo(
+    () => (recAll.list ? { ...recAll, list: recAll.list.filter((c) => belongsToSpace({ girlOnly: c.girlOnly, topic: c.topic, categoryId: null }, appSpace)) } : recAll),
+    [recAll, appSpace],
+  );
   const memberProfile = useMemberProfile(uid ?? '');
   const mine = useMemo(
     () =>
       demoGirl
         ? {
-            communities: demoAll.filter((c) => c.isMember).map((c): MemberCommunity => ({ id: c.id, name: c.name, cityId: c.cityId ?? cityId, cover: null, members: c.members, tagline: c.tagline, role: 'joined', official: false, topic: null, categoryId: null, retired: false })),
+            communities: demoAll.filter((c) => c.isMember).map((c): MemberCommunity => ({ id: c.id, name: c.name, cityId: c.cityId ?? cityId, cover: null, members: c.members, tagline: c.tagline, role: 'joined', official: false, topic: null, categoryId: null, retired: false, girlOnly: true })),
             loading: false,
             error: null as string | null,
             reload: (): void => undefined,
           }
-        : memberProfile,
-    [demoGirl, demoAll, memberProfile, cityId],
+        : {
+            ...memberProfile,
+            // Hers in this app's universes only (universe.ts): her Mixte ones stay in Mixte, her Girl and Mom ones in IRLY Girl.
+            communities: memberProfile.communities.filter((c) => belongsToSpace({ girlOnly: Boolean(c.girlOnly), topic: c.topic, categoryId: c.categoryId }, appSpace)),
+          },
+    [demoGirl, demoAll, memberProfile, cityId, appSpace],
   );
   const mineCount = signedIn ? mine.communities.length : 0;
 
@@ -332,6 +341,7 @@ function ForYou({ rec, known, cityId, onSeeAll, card }: { rec: ReturnType<typeof
       name={c.name}
       topic={c.topic}
       categoryId={null}
+      coverPath={c.coverPath}
       emoji={c.emoji}
       isMember={c.isMember}
       meta={meta(c, cityId, !card)}
@@ -380,6 +390,7 @@ function All({ list, shown, cityId, card }: { list: DirectoryCommunity[]; shown:
             name={c.name}
             topic={c.topic}
             categoryId={c.categoryId}
+            coverPath={c.coverPath}
             emoji={c.emoji}
             isMember={c.isMember}
             meta={[
@@ -451,8 +462,9 @@ function Mine({
       key={c.id}
       id={c.id}
       name={c.name}
-      topic={known.get(c.id)?.topic ?? null}
-      categoryId={known.get(c.id)?.categoryId ?? null}
+      topic={c.topic ?? known.get(c.id)?.topic ?? null}
+      categoryId={c.categoryId ?? known.get(c.id)?.categoryId ?? null}
+      coverPath={c.cover}
       emoji={known.get(c.id)?.emoji ?? null}
       isMember
       meta={facts(c)}
@@ -510,7 +522,10 @@ function Row({
   card,
   stats,
   favorite,
+  coverPath,
 }: {
+  /** Its own photo when the list knows it (null: none); undefined: looked up by id. */
+  coverPath?: string | null;
   index?: number;
   /** Wide: shown as a card this wide (cover, name, what it is about, facts, action). */
   card?: number;
@@ -533,6 +548,8 @@ function Row({
   const city = CITIES[useCityId()];
   // Never an id or a test code as the title, whichever list the row comes from.
   const name = displayCommunityName({ name: stored, topic, categoryId, cityId: city.id });
+  // The demo's example communities keep their own photo here too (as on their page).
+  const demoPhoto = isDemoId(id) ? findDemoCommunity(id)?.cover : undefined;
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const join = () => {
@@ -587,7 +604,7 @@ function Row({
       <Animated.View entering={enter.rise(Math.min(index, 8))} layout={LinearTransition.springify().dampingRatio(0.9)} style={{ width: card }}>
         <PressableScale onPressIn={() => prefetchCommunity(id)} onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name} testID={`community-${id}`}>
           <GlassLayer radius={radius.xl} />
-          <CommunityThumb id={id} name={name} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size="100%" height={128} member={isMember} />
+          <CommunityThumb id={id} name={name} coverPath={coverPath} photo={demoPhoto} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size="100%" height={128} member={isMember} />
           <View style={styles.cardBody}>
             <Text variant="titleS" numberOfLines={1} raw>
               {name}
@@ -619,7 +636,7 @@ function Row({
       {/* testID: the row of this community, whatever its shown title (end-to-end tests). */}
       <PressableScale onPressIn={() => prefetchCommunity(id)} onPress={() => router.push(`/c/${id}`)} haptic="select" scaleTo={0.98} style={[styles.row, { backgroundColor: 'transparent', overflow: 'hidden' }]} accessibilityLabel={name} testID={`community-${id}`}>
         <GlassLayer radius={radius.lg} />
-        <CommunityThumb id={id} name={name} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size={44} member={isMember} />
+        <CommunityThumb id={id} name={name} coverPath={coverPath} photo={demoPhoto} topic={topic} categoryId={categoryId} emoji={emoji} light={city.light} size={44} member={isMember} />
         <View style={styles.rowBody}>
           <Text variant="titleS" numberOfLines={1} raw>
             {name}

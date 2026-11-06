@@ -32,6 +32,7 @@ import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, openDirect, useEngagement } from '@/features/server/engage';
 import { useActivityCards } from '@/features/server/activityCards';
 import { displayCommunityName } from '@/features/community/name';
+import { CommunityThumb } from '@/features/community/CommunityThumb';
 import { findEvent } from '@/data/repo';
 import { useActivityEventKey } from '@/features/events/goTogether';
 import { openHero } from '@/features/hero/heroStore';
@@ -282,7 +283,8 @@ function ActivityDetail({ id, pane = false, onClose }: { id: string; pane?: bool
           {a.communityId && card?.communityName ? (
             // Its origin community (one activity, shown there too): one tap back to it.
             <PressableScale haptic="select" onPress={() => router.push(`/c/${a.communityId}`)} style={styles.fact} accessibilityLabel={tx('Open {title}', { title: card.communityName })}>
-              <Icon name="users" size={18} color={t.c.textSecondary} />
+              {/* Its community's photo (its own, else IRLY's photo of its subject), as everywhere else. */}
+              <CommunityThumb id={a.communityId} name={card.communityName} light={city?.light ?? 'dubai'} size={22} />
               <Text variant="body" style={{ flex: 1 }} numberOfLines={1}>
                 {tx('Proposed in {name}', { name: tx(displayCommunityName({ name: card.communityName })) })}
               </Text>

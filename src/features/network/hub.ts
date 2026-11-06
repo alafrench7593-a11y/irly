@@ -94,6 +94,8 @@ export function useNetworkCommunities(cityId: CityId) {
           cityId: (r.city_id as string | null) ?? null,
           topic: (r.topic as string | null) ?? null,
           categoryId: (r.category_id as string | null) ?? null,
+          // Its own photo when the server says it (20261110200000); otherwise looked up by id.
+          coverPath: 'cover_path' in r ? ((r.cover_path as string | null) ?? null) : undefined,
         }));
       setState({ for: key, list, error: null });
     });

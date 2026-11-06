@@ -138,9 +138,9 @@ select pg_temp.check((select array_agg(distinct topic collate "C" order by topic
 -- Members still create communities; IRLY's own come first in their city.
 select public.create_community('c9a Book Club', 'dubai', 'Books and coffee', null, 'culture', false) as club_id \gset
 select pg_temp.check(exists (select 1 from public.community_list('dubai') where id = :'club_id' and not official and is_member), 'Tom created a community: listed, his');
-select pg_temp.check((select max(n) from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
+select pg_temp.check((select max(n) from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, cover_path, n)
     where official and city_id = 'dubai')
-  < (select min(n) from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
+  < (select min(n) from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, cover_path, n)
     where not official and city_id = 'dubai'), 'official ones first, then the members''');
 select pg_temp.check(pg_temp.fails(format('update public.communities set retired_at = now() where id = %L', :'club_id')) = '42501', 'an owner cannot retire (hide) a community');
 

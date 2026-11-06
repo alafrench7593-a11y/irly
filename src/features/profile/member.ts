@@ -57,6 +57,8 @@ export type MemberCommunity = {
   topic: string | null;
   categoryId: string | null;
   retired: boolean;
+  /** Women only (IRLY Girl, Mom, women-only Network): with topic and category, its universe (universe.ts). */
+  girlOnly?: boolean;
 };
 type CommunityRow = {
   id: string;
@@ -70,6 +72,7 @@ type CommunityRow = {
   topic?: string | null;
   category_id?: string | null;
   retired?: boolean | null;
+  girl_only?: boolean | null;
 };
 export type FollowPerson = { id: string; firstName: string; photo: string | null; iFollow: boolean };
 
@@ -151,6 +154,7 @@ export function useMemberProfile(userId: string) {
             topic: x.topic ?? null,
             categoryId: x.category_id ?? null,
             retired: Boolean(x.retired),
+            girlOnly: Boolean(x.girl_only),
           })),
         });
       })
