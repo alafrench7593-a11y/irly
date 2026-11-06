@@ -16,6 +16,7 @@ import { useAppSpace } from '@/state/appSpace';
 import { cacheKey, hydrateCommunityCache, load as loadCached, peek } from './cache';
 import { displayCommunityName } from './name';
 import { FEED_PAGE, fetchFeedFallback, fetchPostsPage, popularScore, type FeedSort } from './space';
+import { isIrlyPost, loadIrlyPostIds } from './irly';
 
 /** Communities changed (created, joined, left, edited, deleted): every screen showing them reloads. */
 export const communitiesChanged = () => changed('communities', 'inbox');
@@ -84,6 +85,8 @@ export type CommunityPost = {
   kind?: 'post' | 'question' | 'recommendation' | 'announcement';
   category?: string | null;
   pinnedAt?: number | null;
+  /** Signed IRLY (the team, in an official community): shown as IRLY, never as the person. */
+  asIrly?: boolean;
 };
 
 export type CommunitySummary = {
@@ -203,10 +206,12 @@ export function useCommunity(id: string) {
 }
 
 function toPost(r: Row, uid: string | undefined): CommunityPost {
+  const irly = isIrlyPost(r.id as string);
   return {
+    asIrly: irly,
     id: r.id as string,
     authorId: r.author_id as string,
-    firstName: (r.first_name as string) ?? 'Member',
+    firstName: irly ? 'IRLY' : ((r.first_name as string) ?? 'Member'),
     body: r.body as string,
     activityId: (r.activity_id as string) ?? null,
     activityTitle: (r.activity_title as string) ?? null,
@@ -246,11 +251,12 @@ export async function fetchFeedFirst(uid: string, communityId: string, space: st
   const sentAt = syncNow();
   const byScore = (list: CommunityPost[]) => (sort === 'popular' ? [...list].sort((a, b) => popularScore(b) - popularScore(a)) : list);
   if (space !== undefined) {
-    const { data, error: e } = await sb().rpc('community_space_feed', { p_community: communityId, p_category: space, p_limit: 50 });
+    const [{ data, error: e }] = await Promise.all([sb().rpc('community_space_feed', { p_community: communityId, p_category: space, p_limit: 50 }), loadIrlyPostIds(communityId)]);
     if (e) throw new Error(e.message);
     return { posts: byScore(((data as Row[]) ?? []).map((r) => toPost(r, uid))), paged: false, full: false, sentAt };
   }
-  const page = await fetchPostsPage(communityId, sort, { limit: FEED_PAGE });
+  // The posts signed IRLY are read alongside (their cards say IRLY).
+  const [page] = await Promise.all([fetchPostsPage(communityId, sort, { limit: FEED_PAGE }), loadIrlyPostIds(communityId)]);
   const rows = page ?? (await fetchFeedFallback(communityId, 50));
   const list = rows.map((r) => toPost(r, uid));
   return { posts: page ? list : byScore(list), paged: page !== null, full: page !== null && page.length >= FEED_PAGE, sentAt };

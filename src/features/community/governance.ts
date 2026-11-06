@@ -38,6 +38,8 @@ export type MyRights = {
   canStats: boolean;
   canAnnounce: boolean;
   canOfficial: boolean;
+  /** The IRLY team, in an official community: may publish, announce, write in the chat and pin, signed IRLY. */
+  canIrly: boolean;
   bannedUntil: number | null;
   restrictedUntil: number | null;
 };
@@ -52,6 +54,7 @@ export const NO_RIGHTS: MyRights = {
   canStats: false,
   canAnnounce: false,
   canOfficial: false,
+  canIrly: false,
   bannedUntil: null,
   restrictedUntil: null,
 };
@@ -126,6 +129,7 @@ function toRights(r: Row | null): MyRights {
     canStats: Boolean(r.can_stats),
     canAnnounce: Boolean(r.can_announce),
     canOfficial: Boolean(r.can_official),
+    canIrly: Boolean(r.can_irly),
     bannedUntil: time(r.banned_until),
     restrictedUntil: time(r.restricted_until),
   };

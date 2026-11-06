@@ -12,6 +12,14 @@
 const GENERIC = 'Something went wrong. Try again';
 
 export const SERVER_ERRORS: Record<string, string> = {
+  // IRLY publishing in its official communities (20261109100000_irly_admin_publish).
+  'only IRLY publishes as IRLY': 'Only the IRLY team publishes as IRLY',
+  'IRLY speaks only in its official communities': 'IRLY publishes only in its official communities',
+  'write something or add a photo': 'Write something or add a photo',
+  'ten photos at most': 'Ten photos at most',
+  'media: photo or video': GENERIC,
+  'write 1 to 2000 characters': 'Write 1 to 2000 characters',
+  'IRLY Girl content: only a removal': 'In IRLY Girl, the team can only remove a post',
   // Refusals added on 2026-11-03 and 2026-11-07, mapped when the communities overhaul was merged.
   'the quoted message is not in this chat': 'This message can\'t be quoted here',
   'a photo message needs its photo': 'Add the photo before sending',

@@ -299,7 +299,7 @@ export const PIN_FOR: { key: PinFor; label: string }[] = [
   { key: 'week', label: '7 days' },
   { key: 'none', label: 'No end' },
 ];
-const pinUntil = (f: PinFor): number | null => (f === 'day' ? Date.now() + 86_400_000 : f === 'week' ? Date.now() + 7 * 86_400_000 : null);
+export const pinUntil = (f: PinFor): number | null => (f === 'day' ? Date.now() + 86_400_000 : f === 'week' ? Date.now() + 7 * 86_400_000 : null);
 
 /**
  * Pins (or unpins) a post, until a date when one is given (`pin_post` with

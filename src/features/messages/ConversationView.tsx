@@ -915,6 +915,11 @@ const ThreadMessages = memo(function ThreadMessages({
             {day}
             <Animated.View entering={joined ? FadeInDown.springify(420).dampingRatio(0.8) : undefined} style={styles.note}>
               <GlassLayer radius={16} level="thin" />
+              {m.official ? (
+                <Text variant="overline" tone="accent" align="center">
+                  IRLY
+                </Text>
+              ) : null}
               <Text variant="bodyS" tone="secondary" align="center">
                 {m.text}
               </Text>

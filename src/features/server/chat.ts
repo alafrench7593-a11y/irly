@@ -429,6 +429,8 @@ export type ServerMessage = Message & {
   status?: 'sending' | 'failed';
   /** The message this one answers (messages.reply_to), in the same chat. */
   replyTo?: string | null;
+  /** Written by the IRLY team in an official community, signed IRLY (no sender, not a note). */
+  official?: boolean;
 };
 
 export type ServerThread = {
@@ -926,6 +928,7 @@ export function useServerThread(conversationId: string): ServerThread {
           // Only while the server has not given it back: a row of the thread is a message sent.
           status: pending[r.id] && !pending[r.id].sent && !inRows.has(r.id) ? (pending[r.id].failed ? 'failed' : 'sending') : undefined,
           replyTo: r.reply_to ?? null,
+          official: !r.sender_id && r.kind === 'text',
         }),
       ),
     [rows, names, uid, pending, blockedIds, inRows],

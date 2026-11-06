@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { storageName } from '@/config/app';
 import { pickLiveMedia, uploadLiveFile } from '@/features/live/liveMedia';
 import { MAX_MENTIONS, missingColumn } from '@/features/messages/communitySpace';
+import { irlyPost, markIrlyPost } from '@/features/community/irly';
 import { changed } from '@/features/server/sync';
 import { cleanImage } from '@/lib/media';
 import { friendlyError, supabase } from '@/lib/supabase';
@@ -96,7 +97,7 @@ const friendly = (msg: string) =>
  * one. Files already sent are removed only when the server really refused
  * the post: without an answer it may have been saved with them.
  */
-export async function createPost(input: { id: string; communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; mentions?: string[]; onProgress?: (p: number) => void }): Promise<string> {
+export async function createPost(input: { id: string; communityId: string | null; body: string; media: DraftMedia | null; kind?: 'post' | 'question' | 'recommendation'; category?: string | null; mentions?: string[]; onProgress?: (p: number) => void; asIrly?: boolean }): Promise<string> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const sb = supabase;
   const { data: auth } = await sb.auth.getSession();
@@ -112,9 +113,14 @@ export async function createPost(input: { id: string; communityId: string | null
     const values: Record<string, unknown> = withMentions && mentions.length ? { ...fields, mentions } : fields;
     return sb.from('community_posts').insert(values).select('id').single();
   };
-  let { error } = await insert(true);
+  // Signed IRLY (the team, in an official community): the server writes it (irly_post), as IRLY.
+  const irly = input.asIrly && input.communityId
+    ? await irlyPost({ id: input.id, communityId: input.communityId, body, mediaPaths: row.media_paths, mediaKind: row.media_kind, thumbPath: row.thumb_path, mediaSeconds: row.media_seconds, category: input.category ?? null })
+    : null;
+  let { error } = irly ?? (await insert(true));
   // A server without community_posts.mentions yet: the post goes out without them.
-  if (missingColumn(error, 'mentions')) ({ error } = await insert(false));
+  if (!irly && missingColumn(error, 'mentions')) ({ error } = await insert(false));
+  if (irly && !error) markIrlyPost(input.id);
   if (error) {
     // Already there: an earlier try landed (its answer was lost). That post, with its own files, is the one.
     if (error.code === '23505') {
