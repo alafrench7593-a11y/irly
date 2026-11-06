@@ -234,6 +234,36 @@ export const SERVER_ERRORS: Record<string, string> = {
   'a secure (https) address is needed': 'A secure (https) address is needed',
   'unknown setting': GENERIC,
   'nothing to send again': 'Nothing to send again',
+  // Community governance (20261107000000_irly_community_governance).
+  'the community audit log is append-only': GENERIC,
+  'who?': GENERIC,
+  'not on yourself': 'You cannot do this to yourself',
+  'not on someone of your rank or above': 'You cannot do this to someone of your rank or above',
+  'you were banned from this community': 'You were banned from this community',
+  'only the owner can delete or move the community': 'Only the owner can delete or move the community',
+  'role: co_admin, moderator or member': GENERIC,
+  'only the owner names or removes co-admins': 'Only the owner names or removes co-admins',
+  'only the owner sets permissions': 'Only the owner sets permissions',
+  'only the owner reads permissions': 'Only the owner sees permissions',
+  'permissions: an object of booleans': GENERIC,
+  'permissions are for co-admins': 'Permissions are for co-admins',
+  'only the owner hands the community over': 'Only the owner can hand the community over',
+  'only the owner or a co-admin in charge of members can ban': 'Only the owner or a co-admin in charge of members can ban',
+  'the end of a ban is in the future': 'The end of a ban must be in the future',
+  'only the owner or a co-admin in charge of members can lift a ban': 'Only the owner or a co-admin in charge of members can lift a ban',
+  'not banned': 'This person is not banned',
+  "only the community's owner and moderators can warn": 'Only the owner and moderators can warn',
+  'say why': 'Say why',
+  "only the community's owner and moderators can restrict": 'Only the owner and moderators can restrict',
+  'the end of a restriction is in the future': 'The end of a restriction must be in the future',
+  "only the community's owner and moderators can lift a restriction": 'Only the owner and moderators can lift a restriction',
+  'not restricted': 'This person is not restricted',
+  'managers only': 'Moderators only',
+  'this activity is not in a community': 'This activity is not in a community',
+  "only the community's moderators can do this": 'Only the community’s moderators can do this',
+  'only messages of a community chat': 'Only messages of a community chat',
+  'only the owner and co-admins in charge can read the log': 'Only the owner and co-admins in charge can read the log',
+  'only the owner and co-admins in charge can read the stats': 'Only the owner and co-admins in charge can read the stats',
 };
 
 /**
@@ -249,6 +279,7 @@ export const SERVER_PATTERNS: [RegExp, string][] = [
   [/^.+ is read-only$/, GENERIC],
   [/^unknown action .+$/, GENERIC],
   [/^unsupported conversation kind .+$/, GENERIC],
+  [/^you are restricted in this community until (.+)$/, 'You are restricted in this community until {max}'],
 ];
 
 /**
