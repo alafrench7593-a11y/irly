@@ -48,6 +48,8 @@ export function profileTags(p: Profile): string[] {
   // Every answer to "What are you looking for?" is a goal the server can match.
   (p.lookingFor ?? []).forEach((x) => tags.add(`goal:${x}`));
   if (p.since === 'new' || p.since === 'year') tags.add('newcomer');
+  // Languages they speak (native names at signup, or codes): Les Français à Dubaï for French speakers.
+  if ((p.languages ?? []).some((l) => l === 'fr' || l === 'Français' || l.toLowerCase() === 'french')) tags.add('lang:fr');
   return [...tags];
 }
 

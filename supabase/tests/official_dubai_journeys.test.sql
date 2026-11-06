@@ -204,5 +204,13 @@ select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a6');
 select pg_temp.check(pg_temp.fails($q$select public.admin_official_reorder('mixte', array['francais', 'padel', 'running', 'expats', 'lifestyle', 'sport', 'trip', 'network', 'moms'], 'Bring back')$q$) = '22023',
   'Cleo: a retired one cannot be put back in the order');
 
+-- Les Français à Dubaï: recommended to French speakers only.
+select pg_temp.as_admin();
+select pg_temp.check((select match_tags from public.community_topics where topic = 'francais') = '{lang:fr}', 'Les Français à Dubaï matches French speakers');
+select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a1');
+select pg_temp.check(exists (select 1 from public.community_recommend('dubai', '{lang:fr}', 20) where topic = 'francais'), 'Marc speaks French: Les Français à Dubaï is recommended');
+select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{interest:sports}', 20) where topic = 'francais'), 'without French it is not');
+select pg_temp.as_admin();
+
 select pg_temp.as_admin();
 rollback;

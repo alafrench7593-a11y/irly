@@ -23,6 +23,7 @@ language sql stable set search_path = public as $$
           when m.tag like 'interest:%' then 3
           when m.tag like 'activity:%' or m.tag like 'goal:%' then 2
           when m.tag like 'type:%' then 1
+          when m.tag like 'lang:%' then 3
           else 0 end), 0)::int
         from mine m where m.tag = any (t.match_tags)) as base
     from public.communities c
@@ -40,3 +41,7 @@ language sql stable set search_path = public as $$
   order by score desc, sort, name
   limit greatest(1, least(coalesce(p_limit, 6), 20))
 $$;
+
+-- Les Français à Dubaï: recommended to members who speak French (the app
+-- sends 'lang:fr' from the languages they gave at signup).
+update public.community_topics set match_tags = '{lang:fr}' where topic = 'francais';
