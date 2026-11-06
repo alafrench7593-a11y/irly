@@ -287,6 +287,17 @@ export const SERVER_ERRORS: Record<string, string> = {
   'only messages of a community chat': 'Only messages of a community chat',
   'only the owner and co-admins in charge can read the log': 'Only the owner and co-admins in charge can read the log',
   'only the owner and co-admins in charge can read the stats': 'Only the owner and co-admins in charge can read the stats',
+  // Community space (20261108000000_irly_community_space).
+  'join the community to take part': 'Join the community to take part',
+  'type 2 characters at least to search': 'Type at least 2 characters to search',
+  'filter: all, recent, popular, media, activities, members or pinned': GENERIC,
+  'sort: recent or popular': GENERIC,
+  'the end of a pin is in the future': 'The end of a pin must be in the future',
+  'unpin a message first: 5 pinned at most': 'Unpin a message first: 5 pinned at most',
+  'mention 10 people at most': 'Mention 10 people at most',
+  'only the owner or a co-admin in charge of settings can edit the community': 'Only the owner or a co-admin in charge of settings can edit the community',
+  'rules have 4000 characters at most': 'Rules have 4000 characters at most',
+  "the texts of IRLY's official communities are set by IRLY": 'The texts of IRLY’s official communities are set by IRLY',
 };
 
 /**

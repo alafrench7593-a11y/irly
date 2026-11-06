@@ -6034,4 +6034,13 @@ export const fr: Record<string, string> = {
   'The host is always going: cancel the plan instead': 'L’organisateur participe toujours : annule plutôt l’activité',
   'New activities': 'Nouvelles activités',
   'A member proposes an activity in this community.': 'Un membre propose une activité dans cette communauté.',
+  // Community space (server refusals).
+  'Join the community to take part': 'Rejoins la communauté pour participer',
+  'Type at least 2 characters to search': 'Tape au moins 2 caractères pour chercher',
+  'The end of a pin must be in the future': 'La fin d’un épinglage doit être dans le futur',
+  'Unpin a message first: 5 pinned at most': 'Désépingle d’abord un message : 5 épinglés au maximum',
+  'Mention 10 people at most': 'Mentionne 10 personnes au maximum',
+  'Only the owner or a co-admin in charge of settings can edit the community': 'Seuls le ou la propriétaire et les co-admins chargés des paramètres peuvent modifier la communauté',
+  'Rules have 4000 characters at most': 'Les règles font 4000 caractères au maximum',
+  'The texts of IRLY’s official communities are set by IRLY': 'Les textes des communautés officielles d’IRLY sont écrits par IRLY',
 };
