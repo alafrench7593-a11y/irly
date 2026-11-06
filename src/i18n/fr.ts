@@ -5846,4 +5846,22 @@ export const fr: Record<string, string> = {
   'Posting needs an IRLY account. Accounts are not available in the demo.': 'Publier demande un compte IRLY. Les comptes ne sont pas disponibles dans la démo.',
   // leave_community refuses the owner (22023): said in the app's words (features/community/data).
   'You own this community. Hand it over to another member or delete it first.': 'Cette communauté est à toi. Confie-la à un autre membre ou supprime-la d’abord.',
+  // Community discovery (communities.tsx, features/community/discovery): sections, sort, search, favourites, real counts.
+  'Recommended for me': 'Recommandées pour moi',
+  'Favourites': 'Favorites',
+  'Sort by': 'Trier par',
+  'Most members': 'Plus de membres',
+  'Most active': 'Plus actives',
+  'Newest': 'Plus récentes',
+  'Most activities': 'Plus d’activités',
+  'Search by name, theme or description': 'Nom, thème ou description',
+  'Member count unknown': 'Nombre de membres inconnu',
+  'Upcoming activities unknown': 'Activités à venir inconnues',
+  'Add {name} to favourites': 'Ajouter {name} aux favorites',
+  'Remove {name} from favourites': 'Retirer {name} des favorites',
+  '{name} added to your favourites': '{name} ajoutée à tes favorites',
+  '{name} removed from your favourites': '{name} retirée de tes favorites',
+  'Could not change your favourites. Try again.': 'Impossible de modifier tes favorites. Réessaie.',
+  // Search results: the suggestion before a word to try.
+  'Try': 'Essaie',
 };
