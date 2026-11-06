@@ -1396,8 +1396,6 @@ export const fr: Record<string, string> = {
   'Replying to {name}': 'Réponse à {name}',
   'Reply': 'Répondre',
   // Chat: replies, reactions, community roles, moderation and « Turn into an activity » (features/messages).
-  'Creator': 'Créateur',
-  'Co-admin': 'Co-admin',
   'Cancel the reply': 'Annuler la réponse',
   'Message unavailable': 'Message indisponible',
   '📷 Photo': '📷 Photo',
@@ -1417,7 +1415,6 @@ export const fr: Record<string, string> = {
   'The message is removed for everyone. The reason is kept in the community’s journal.': 'Le message est supprimé pour tout le monde. La raison est gardée dans le journal de la communauté.',
   'Message removed': 'Message supprimé',
   'Turn into an activity': 'Transformer en activité',
-  'Try': 'Essaie',
   'Delete': 'Supprimer',
   'Report': 'Signaler',
   'Comment deleted': 'Commentaire supprimé',
@@ -5988,5 +5985,4 @@ export const fr: Record<string, string> = {
   '{name} removed from your favourites': '{name} retirée de tes favorites',
   'Could not change your favourites. Try again.': 'Impossible de modifier tes favorites. Réessaie.',
   // Search results: the suggestion before a word to try.
-  'Try': 'Essaie',
 };
