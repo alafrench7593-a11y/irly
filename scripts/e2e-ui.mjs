@@ -158,14 +158,43 @@ async function main() {
   // IRLY Community after signing in: an account that already exists has seen the intro (9bfa033),
   // so the recommendations from the answers come first.
   // Nothing is joined here: a join would post "Uma just joined" in a real community chat.
-  await check('Your communities: newcomers recommended (IRLY Expat), join or skip', '/onboarding/communities', ['Your communities', 'IRLY Expat', 'Join all', 'Choose my communities', 'Skip for now']);
+  // IRLY's official communities (IRLY Expat…) are in Dubai only (owner decision): in Bali none is
+  // offered, and each list says so honestly.
+  const expatShown = async () => page.getByText('IRLY Expat', { exact: false }).filter({ visible: true }).count();
+  await check('Your communities (Bali): no official community offered, the honest empty state', '/onboarding/communities', ['Your communities', 'No community matches your answers yet', 'Explore communities', 'Skip for now'], async () => {
+    await page.getByText('No community matches your answers yet', { exact: false }).first().waitFor({ timeout: 15000 });
+    if (await expatShown()) throw new Error('IRLY Expat is offered in Bali');
+  });
   await check('Skip for now goes Home', null, ['Live Bali'], async () => {
     await click('Skip for now');
   });
-  await check('Communities: For you recommends IRLY Expat (not joined)', '/communities', ['For you', 'IRLY Expat', 'Join']);
-  await check('Communities: All lists IRLY\'s communities; search finds IRLY Expat (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expat'], async () => {
-    await page.getByPlaceholder('Search by name or theme').fill('expat');
+  await check('Communities (Bali): For you recommends no official community', '/communities', ['For you', 'Tell IRLY what you like', 'See all communities'], async () => {
+    await page.getByText('Tell IRLY what you like', { exact: true }).first().waitFor({ timeout: 15000 });
+    if (await expatShown()) throw new Error('IRLY Expat is recommended in Bali');
   });
+  await check('Communities (Bali): All lists no IRLY Expat; searching "expat" finds nothing', '/communities?tab=all', ['Sports'], async () => {
+    await page.getByPlaceholder('Search by name, theme or description').fill('expat');
+    await page.getByText(/^No community (matches\. Try another word or theme\.|here yet\. Start the first one\.)$/).first().waitFor({ timeout: 15000 });
+    if (await expatShown()) throw new Error('IRLY Expat is listed in Bali');
+  });
+  // The same member in Dubai (the city the app is set to, on this phone): IRLY Expat is recommended to a
+  // newcomer, not joined, and found by the search. Back to Bali afterwards for the rest of the walk.
+  const setCity = (destinationId, cityId) =>
+    page.evaluate(
+      ([d, c]) => {
+        const s = JSON.parse(localStorage.getItem('irly-v2') ?? '{}');
+        s.state = { ...(s.state ?? {}), destinationId: d, cityId: c };
+        localStorage.setItem('irly-v2', JSON.stringify(s));
+      },
+      [destinationId, cityId],
+    );
+  await setCity('emirates', 'dubai');
+  await check('Your communities (Dubai): newcomers recommended (IRLY Expat), join or skip', '/onboarding/communities', ['IRLY Community · Dubai', 'IRLY Expat', 'Join all', 'Choose my communities', 'Skip for now']);
+  await check('Communities (Dubai): For you recommends IRLY Expat (not joined)', '/communities', ['For you', 'New in Dubai', 'IRLY Expat', 'Join']);
+  await check('Communities (Dubai): All lists IRLY\'s communities; search finds IRLY Expat (not joined)', '/communities?tab=all', ['Sports', 'IRLY Expat'], async () => {
+    await page.getByPlaceholder('Search by name, theme or description').fill('expat');
+  });
+  await setCity('bali', 'bali');
   // Match IRLY is not open yet (src/lib/features.ts): the bar button (« Soon » while it is
   // closed) must lead to its coming-soon page, which says so, not to a list of people.
   await check('Match IRLY in the bar opens its coming-soon page', '/', ['Match IRLY is not open yet', 'Tell me when it opens'], async () => {
@@ -219,7 +248,24 @@ async function main() {
   await check('Notifications', '/notifications', ['Notifications']);
   await check('Privacy & notifications settings', '/settings', ['Who can find my profile']);
   await check('Saved', '/saved', ['Saved']);
-  await check('Messages inbox lists the playdate chat', '/messages', ['Playdate']);
+  // Messages by universe (owner decision): the playdate is an IRLY Girl plan (women only), so its chat is in
+  // IRLY Girl's inbox, under Girl, and never in IRLY Mixte's (whose search covers Mixte and Network; its
+  // « No conversation matches » shows only once the list is read and nothing matches).
+  await check('Messages (IRLY Mixte): the playdate chat is not there, a Girl plan stays in its universe', '/messages', ['No conversation matches'], async () => {
+    await page.getByPlaceholder('Search conversations').fill('Playdate · Echo Beach');
+  });
+  await check('Messages (IRLY Girl): the playdate chat is under Girl', '/girl', ['Playdate · Echo Beach'], async () => {
+    await page.waitForURL((u) => new URL(u).pathname === '/', { timeout: 20000 });
+    for (let i = 0; i < 20 && (await space()) !== 'girl'; i++) await page.waitForTimeout(500);
+    if ((await space()) !== 'girl') throw new Error('the app did not switch to IRLY Girl');
+    await page.goto(BASE + '/messages', { waitUntil: 'domcontentloaded' });
+    await page.getByRole('tab', { name: /^Universe: Girl(, unread messages)?$/ }).first().click({ timeout: 20000 });
+  });
+  await check('… back to IRLY Mixte from Settings', '/preferences', [], async () => {
+    await page.getByText('IRLY Mixte', { exact: true }).filter({ visible: true }).first().click();
+    for (let i = 0; i < 20 && (await space()) !== 'mixte'; i++) await page.waitForTimeout(500);
+    if ((await space()) !== 'mixte') throw new Error('still in IRLY Girl');
+  });
 
   // ── A server fact, checked like a screen.
   const verify = async (label, fn) => {

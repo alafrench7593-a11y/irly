@@ -201,11 +201,24 @@ function writtenByMe(e: Heard): boolean {
     if (e.table === 'activity_participants' || e.table === 'community_members' || e.table === 'saves') return r.user_id === me;
     if (e.table === 'communities') return r.created_by === me;
     if (e.table === 'follows') return r.follower_id === me;
-    if (e.table === 'friendships') return r.requested_by === me;
+    // A request you sent. An accepted friendship you « asked » for is the other's follow back (below).
+    if (e.table === 'friendships') return r.requested_by === me && r.status !== 'accepted';
   }
   // Accepting is done by the one who did not ask.
   if (e.type === 'UPDATE' && e.table === 'friendships') return r.status === 'accepted' && typeof r.requested_by === 'string' && r.requested_by !== me;
   return false;
+}
+/*
+ * Rows only someone else's action writes: your request accepted, or a follow
+ * back that makes you friends (requested_by is you, the first to ask or
+ * follow). The server keeps friendships equal to the mutual follows
+ * (20261110500000_irly_follow_mutual), so that same transaction also holds
+ * rows that look like yours (your follow of them, added by the server): it is
+ * never your own write.
+ */
+function writtenByOther(e: Heard): boolean {
+  const r = e.row;
+  return Boolean(me) && e.table === 'friendships' && (e.type === 'INSERT' || e.type === 'UPDATE') && r.status === 'accepted' && r.requested_by === me;
 }
 // How long an echo of your own write waits for your action's reload, and how far before it that reload may be.
 const OWN_WAIT_MS = 3000;
@@ -215,15 +228,17 @@ function weigh() {
   const now = syncNow();
   const events = heard;
   heard = [];
+  // Transactions of someone else (accepting my request, following me back): none of their changes is mine.
+  const theirs = new Set(events.filter(writtenByOther).map((e) => e.commit).filter(precise));
   // Transactions that contain a write of mine: all their changes are my action's.
-  const mine = new Set(events.filter(writtenByMe).map((e) => e.commit).filter(precise));
+  const mine = new Set(events.filter(writtenByMe).map((e) => e.commit).filter((c) => precise(c) && !theirs.has(c)));
   const kinds = new Set<SyncKind>();
   for (const e of events) {
     if (ownEcho(e, now) || messageBump(e, now)) continue;
     const b = bound(e.at);
     const left = e.kinds.filter((k) => !(reloadedAt[k] >= b));
     if (!left.length) continue;
-    if (writtenByMe(e) || (precise(e.commit) && mine.has(e.commit))) {
+    if ((writtenByMe(e) && !(precise(e.commit) && theirs.has(e.commit))) || (precise(e.commit) && mine.has(e.commit))) {
       if (left.every((k) => reloadedAt[k] >= e.heardAt - OWN_BEFORE_MS)) continue;
       if (now < e.heardAt + OWN_WAIT_MS) {
         heard.push({ ...e, kinds: left });

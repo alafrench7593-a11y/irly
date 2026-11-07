@@ -777,6 +777,36 @@ await scenario(
   },
   { profile: true },
 );
+// The server keeps friendships equal to the mutual follows (20261110500000_irly_follow_mutual): Bob's
+// accept also adds both follows (mine to him among them), Bob's follow back also adds the friendship
+// (asked by me, the first to follow), in Bob's transaction. Neither is my own write.
+await scenario(
+  'friend request, then Bob accepts 1 s later (with the two follows the server adds)',
+  null,
+  async () => {
+    await member.setFriend(BOB, 'add');
+    await sleep(1_000);
+    commit([
+      { table: 'friendships', event: 'UPDATE', row: { user_a: ME, user_b: BOB, requested_by: ME, status: 'accepted' } },
+      { table: 'follows', event: 'INSERT', row: { follower_id: ME, followee_id: BOB } },
+      { table: 'follows', event: 'INSERT', row: { follower_id: BOB, followee_id: ME } },
+    ]);
+  },
+  { profile: true },
+);
+await scenario(
+  'follow, then Bob follows back 0.5 s later (with the friendship the server adds)',
+  null,
+  async () => {
+    await member.setFollow(BOB, true);
+    await sleep(500);
+    commit([
+      { table: 'follows', event: 'INSERT', row: { follower_id: BOB, followee_id: ME } },
+      { table: 'friendships', event: 'INSERT', row: { user_a: ME, user_b: BOB, requested_by: ME, status: 'accepted' } },
+    ]);
+  },
+  { profile: true },
+);
 await scenario('join activity, answer 1.6 s late', null, async () => {
   server.slow = 1_600;
   await supabase.rpc('join_activity');
@@ -869,6 +899,16 @@ expect(notes('removed from the chat elsewhere').join() === 'error: You are no lo
 expect(n('follow', 'public_profile') === 1, 'follow: the profile reloads once');
 expect(n('friend request', 'public_profile') === 1 && n('friend request', 'friends') === 1, 'friend request: profile and friends reload once');
 expect(n('follow, then Bob follows back 0.5 s later', 'public_profile') === 2, 'a real change right after my own action still reloads');
+expect(
+  n('friend request, then Bob accepts 1 s later (with the two follows the server adds)', 'friends') === 2 &&
+    n('friend request, then Bob accepts 1 s later (with the two follows the server adds)', 'public_profile') === 2,
+  'Bob accepting my request right after I sent it reloads friends and his profile (the follow the server adds for me is not my write)',
+);
+expect(
+  n('follow, then Bob follows back 0.5 s later (with the friendship the server adds)', 'public_profile') === 2 &&
+    n('follow, then Bob follows back 0.5 s later (with the friendship the server adds)', 'friends') === 1,
+  'Bob following back right after my follow reloads his profile and friends (the friendship the server adds is not my write)',
+);
 expect(n('Bob joins my activity (nothing done here)', 'activities_list') === 1, "other people's changes still reload");
 expect(n('join activity, answer 1.6 s late', 'activities_list') === 1 && n('join activity, answer 1.6 s late', 'my_conversations') === 1, 'an echo heard before a slow answer waits for its reload (one reload)');
 expect(n('whole-second commit times: join, then Bob adds me to a group 0.3 s later', 'my_conversations') === 2, 'whole-second commit times never hide a change');
