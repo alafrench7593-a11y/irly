@@ -18,7 +18,6 @@ import { createServerCommunity } from '@/features/server/activities';
 import { haptic } from '@/motion/haptics';
 import { useAppSpace } from '@/state/appSpace';
 import { useCityId } from '@/state/store';
-import { useGirlEntry } from '@/features/profile/girlEntry';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -33,7 +32,6 @@ export default function NewCommunity() {
   const account = useAccount();
   const cityId = useCityId();
   const city = CITIES[cityId];
-  const woman = useGirlEntry();
   const [name, setName] = useState('');
   const [tagline, setTagline] = useState('');
   const [description, setDescription] = useState('');
@@ -121,7 +119,8 @@ export default function NewCommunity() {
             ))}
           </View>
         </View>
-        {woman || inGirl ? (
+        {/* Never mixed: a women-only community is made in IRLY Girl (owner, 2026-11-06); in IRLY Mixte it is always open. */}
+        {inGirl ? (
           <Animated.View entering={enter.rise(1, 40)} style={styles.toggle}>
             <GlassLayer radius={radius.xl} />
             <View style={{ flex: 1 }}>

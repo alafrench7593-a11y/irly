@@ -63,7 +63,8 @@ function NetworkDiscoverPage() {
   const girl = useAppSpace() === 'girl';
   const meWho = agreeOf({ gender: useStore((s) => s.profile?.gender) }, girl);
   const filterWho = meWho;
-  const crowd: Agree = meWho === 'woman' ? 'woman' : 'man';
+  // The list itself: women only in IRLY Girl, mixed in IRLY (generic masculine for a mixed group in French).
+  const crowd: Agree = girl ? 'woman' : 'man';
 
   const [industry, setIndustry] = useState<IndustryId | null>(null);
   const [role, setRole] = useState<RoleId | null>(null);

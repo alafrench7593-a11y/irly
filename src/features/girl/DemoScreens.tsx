@@ -169,7 +169,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
                       <GirlPostCard p={p} eng={eng} cityId="dubai" />
                     </Animated.View>
                   ))}
-                  {!posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the group." /> : null}
+                  {!posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the community." /> : null}
                 </>
               ) : null}
               {tab === 'chat' ? (
@@ -178,7 +178,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
                     <GButton label="Open chat" icon="message" onPress={() => router.push(`/messages/${chat.id}`)} />
                   </GNotice>
                 ) : joined ? (
-                  <GNotice icon="message" title="The community chat" body="The group chat opens here" />
+                  <GNotice icon="message" title="The community chat" body="The community chat opens here" />
                 ) : (
                   <GNotice icon="message" title="Join to chat" body="Members talk here every day. Join the community to read the chat and say hello.">
                     <GButton label="Join" icon="plus" onPress={join} />
@@ -247,7 +247,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
         facts={[
           { icon: 'users', text: tx('{n} members', { n: members }) },
           { icon: 'shield', text: tx('Women only: every member is checked by IRLY Girl.') },
-          { icon: 'message', text: tx('Members are in the group chat as soon as they join.') },
+          { icon: 'message', text: tx('Members are in the community chat as soon as they join.') },
           { icon: 'flag', text: tx('Anything off? Report a post or a person in one tap.') },
         ]}
       />

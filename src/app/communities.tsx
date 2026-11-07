@@ -134,7 +134,8 @@ function Communities() {
   const signedIn = Boolean(uid) || demoGirl;
   const [tab, setTab] = useState<Tab>(params.tab === 'all' || params.tab === 'mine' ? params.tab : 'foryou');
   const serverAll = useCommunityList(cityId);
-  const demo = useDemoCommunitiesLike(cityId, '');
+  // IRLY Girl's Communities: Girl and Mom (owner, 2026-11-06).
+  const demo = useDemoCommunitiesLike(cityId, '', true, false, [], true);
   const demoAll = useMemo<CommunitySummary[]>(
     () =>
       demoGirl
@@ -394,7 +395,8 @@ function All({ list, shown, cityId, card }: { list: DirectoryCommunity[]; shown:
             emoji={c.emoji}
             isMember={c.isMember}
             meta={[
-              c.official ? 'IRLY' : tx('By a member'),
+              // Women-only communities are made by women: « Par une membre ».
+              c.official ? 'IRLY' : tx(c.girlOnly ? 'By a woman member' : 'By a member'),
               c.cityId && c.cityId !== cityId ? CITIES[c.cityId as CityId]?.name : null,
               c.postsWeek ? tx('{n} posts this week', { n: c.postsWeek }) : null,
               c.girlOnly ? 'IRLY Girl' : null,

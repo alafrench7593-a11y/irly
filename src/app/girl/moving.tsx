@@ -266,7 +266,7 @@ function GirlsMoving() {
                   </Text>
                 ) : null}
               </PressableScale>
-              {c.member ? <GChip small label={tx('Joined')} selected /> : <GButton label="Join" loading={joining === c.id} disabled={Boolean(joining)} onPress={() => join(c.id)} />}
+              {c.member ? <GChip small label={tx('Member')} selected /> : <GButton label="Join" loading={joining === c.id} disabled={Boolean(joining)} onPress={() => join(c.id)} />}
             </Animated.View>
           ))}
         </View>

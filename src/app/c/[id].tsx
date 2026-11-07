@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
+import { DemoGirlPage } from '@/features/girl/DemoGirlPage';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoCommunityScreen } from '@/features/girl/DemoScreens';
 import { t as tx, a11y } from '@/i18n';
@@ -88,7 +89,7 @@ export default function CommunityRoute() {
   const split = useCommunitySplit();
   return (
     <SpaceFlavor>
-      <ScreenColumn wide={split}>{isDemoId(id) ? <DemoCommunityScreen id={id} /> : <CommunityScreen />}</ScreenColumn>
+      <ScreenColumn wide={split}>{isDemoId(id) ? <DemoGirlPage><DemoCommunityScreen id={id} /></DemoGirlPage> : <CommunityScreen />}</ScreenColumn>
     </SpaceFlavor>
   );
 }

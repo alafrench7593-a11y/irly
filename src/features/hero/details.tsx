@@ -687,7 +687,7 @@ export function DetailCTA({ item, go }: { item: HeroItem; go: Go }) {
         <View style={{ flex: 1 }} />
       )}
       {model.kind === 'member' ? (
-        <JoinButton id={item.id} membership label="JOIN GROUP" size="md" />
+        <JoinButton id={item.id} membership label="JOIN COMMUNITY" size="md" />
       ) : null}
       {model.kind === 'save' ? (
         <>

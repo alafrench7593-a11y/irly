@@ -191,7 +191,8 @@ function discover(all: ProProfile[], cityId: string, f: ProFilters): ProProfile[
       (!f.industry || p.industries.includes(f.industry)) &&
       (!f.role || p.role === f.role) &&
       (!f.intent || p.intents.includes(f.intent)) &&
-      (!q || [p.jobTitle, p.company ?? '', p.skills.join(' '), p.project ?? ''].some((x) => x.toLowerCase().includes(q))),
+      // The words as shown (French on a French screen) and as stored.
+      (!q || [p.jobTitle, tx(p.jobTitle), p.company ?? '', p.skills.join(' '), p.skills.map((k) => tx(k)).join(' '), p.project ?? ''].some((x) => x.toLowerCase().includes(q))),
   );
 }
 

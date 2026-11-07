@@ -1295,7 +1295,7 @@ function Thread({ id }: { id: string }) {
               {conversation.title}
             </Text>
             <Text variant="caption" tone="tertiary" align="center">
-              {person ? tx('{headline} · met on IRLY', { headline: tx(person.headline) }) : tx('{n} members · messages stay in the group', { n: conversation.personIds.length + 1 })}
+              {person ? tx('{headline} · met on IRLY', { headline: tx(person.headline) }) : tx('Community chat · messages stay in the community')}
             </Text>
           </View>
           {messages.map((m, i) => {
@@ -1401,7 +1401,7 @@ function Thread({ id }: { id: string }) {
               {localUniverse ? <UniverseBadge universe={localUniverse} /> : null}
             </View>
             <Text variant="caption" tone={person?.online ? 'positive' : 'tertiary'}>
-              {person ? (person.online ? 'Active now' : 'Usually replies within a day') : 'Group'}
+              {person ? (person.online ? 'Active now' : 'Usually replies within a day') : 'Community'}
             </Text>
           </View>
           {person ? (

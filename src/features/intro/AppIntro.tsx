@@ -59,6 +59,7 @@ export function AppIntro() {
   if (!show) return null;
   return (
     <Animated.View style={[StyleSheet.absoluteFill, styles.curtain, curtainStyle]} pointerEvents="none">
+      {/* Clipped by the curtain (overflow hidden): the 420 pt glow never widens a 390 pt page. */}
       <Svg width={420} height={420} style={styles.glow}>
         <Defs>
           <RadialGradient id="irly-intro-glow" cx="50%" cy="50%" r="50%">
@@ -77,7 +78,7 @@ export function AppIntro() {
 }
 
 const styles = StyleSheet.create({
-  curtain: { backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center', zIndex: 1000 },
+  curtain: { backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center', zIndex: 1000, overflow: 'hidden' },
   // A breath of the logo's steel light behind the dots.
   glow: { position: 'absolute' },
 });

@@ -69,7 +69,7 @@ const POST_MIN = 300;
 const clock = () => Date.now();
 
 // Who sees a moment, as stored (a private one is not "Everyone").
-const VISIBILITY_LABEL: Record<string, string> = { everyone: 'Everyone', friends: 'Mutual follows', close_friends: 'Close friends', community: 'Communities', private: 'Only me' };
+const VISIBILITY_LABEL: Record<string, string> = { everyone: 'Everyone', friends: 'Mutual follows', close_friends: 'Close circle', community: 'Communities', private: 'Only me' };
 
 export default function LiveScreen() {
   const cityId = useCityId();
@@ -316,7 +316,7 @@ function FriendsLiveNow({ stacked = false }: { stacked?: boolean }) {
   return (
     <View style={{ gap: 10 }}>
       <Text variant="overline" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
-        {friends.length ? 'Friends live now' : 'Live around you'}
+        {friends.length ? 'People you follow, live now' : 'Live around you'}
       </Text>
       {/* Wide, in the side panel: one under the other instead of a rail. */}
       {stacked ? (
@@ -491,8 +491,8 @@ const LiveFeedCard = memo(function LiveFeedCard({
     return o;
   }, [p, fromPost, fromCommunity, member, girlSpace, status, router, onEdit, remove, hide, type]);
   const meta = fromCommunity
-    ? status === 'friend' ? tx('Friend') : null
-    : [placeLabel(cityId, p.cityId, p.areaId, p.placeName), tx(VISIBILITY_LABEL[p.visibility as string] ?? 'Everyone'), status === 'friend' ? tx('Friend') : null].filter(Boolean).join(' · ');
+    ? status === 'friend' ? tx('You follow each other') : null
+    : [placeLabel(cityId, p.cityId, p.areaId, p.placeName), tx(VISIBILITY_LABEL[p.visibility as string] ?? 'Everyone'), status === 'friend' ? tx('You follow each other') : null].filter(Boolean).join(' · ');
   // The frame follows the media's own shape; one broken media shows its own retry, never breaks the feed.
   const media = fromCommunity ? (
     p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} liked={eng.get(p.id).liked} onLike={like} /> : null

@@ -44,6 +44,7 @@ import { useIntro } from '@/features/intro/introStore';
 import { ScrollReveal } from '@/motion/ScrollReveal';
 import { enter } from '@/motion/enter';
 import { spring } from '@/motion/tokens';
+import { useProgressiveCount } from '@/motion/useProgressiveCount';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
@@ -236,6 +237,8 @@ export default function Home() {
   const seeAllPeople = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
 
   const shown = entries.filter((e) => e.enabled).map((e) => e.key);
+  // The top sections now, the rest a couple per frame: the first frame no longer builds the whole page.
+  const mounted = useProgressiveCount(shown.length, 3, 2, `${cityId}:${homeSpace}`);
 
   const section = (id: HomeSection): ReactNode => {
     switch (id) {
@@ -513,7 +516,7 @@ export default function Home() {
         <Content width={contentW}>
           <View style={wide ? styles.columns : undefined}>
             <Column width={mainW}>
-              {shown
+              {(wide ? shown : shown.slice(0, mounted))
                 .filter((key) => !wide || (!SIDE_SECTIONS.has(key) && key !== 'footer'))
                 .map((key) => (
                   <Fragment key={key}>{section(key)}</Fragment>

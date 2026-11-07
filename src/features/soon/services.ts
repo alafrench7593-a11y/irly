@@ -107,7 +107,7 @@ export const SOON: Record<SoonId, SoonService> = {
     preparing: [
       { icon: 'sparkles', title: 'Suggestions with the reason why', body: 'What you both chose: interests, activities, goals, languages and city.' },
       { icon: 'shield', title: 'Verified members only', body: 'Photos and a selfie checked by a person at IRLY, for everyone you meet.' },
-      { icon: 'userPlus', title: 'Add friend, or not now', body: 'A request the other person accepts. Nothing opens a chat on its own.' },
+      { icon: 'userPlus', title: 'Follow, or not now', body: 'You follow each other first. Nothing opens a chat on its own.' },
       { icon: 'calendar', title: 'Then meet in real life', body: 'Plans and activities to do together, near you.' },
     ],
     liveNow: { label: 'Real-life plans', caption: 'Activities near you, open to join today', icon: 'users', href: '/social' },

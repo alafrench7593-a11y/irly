@@ -35,6 +35,7 @@ import { PaneEmpty, SplitView } from '@/components/layout/SplitView';
 import { useSessionSplit } from '@/features/activity/useSessionSplit';
 import { DetailPane } from '@/features/hero/DetailPane';
 import { openHero } from '@/features/hero/heroStore';
+import { useAppSpace } from '@/state/appSpace';
 
 const HERO = 300;
 
@@ -59,10 +60,12 @@ function KindPage({ kind }: { kind: ActivityKind }) {
   const content = getCityContent(cityId);
   const profile = useStore((s) => s.profile);
   const a = ACTIVITIES[kind];
-  const sessions = content.sessions.filter((s) => s.kind === kind);
+  // IRLY Girl never lists IRLY's mixed sessions or players.
+  const inGirl = useAppSpace() === 'girl';
+  const sessions = inGirl ? [] : content.sessions.filter((s) => s.kind === kind);
   const players = rankMatches(
     { ...profile, activities: [...profile.activities, kind] },
-    content.people.filter((p) => p.activities.includes(kind)),
+    (inGirl ? [] : content.people).filter((p) => p.activities.includes(kind)),
     'sports',
     (id) => areaName(city, id),
   );

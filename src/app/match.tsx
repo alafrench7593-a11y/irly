@@ -138,7 +138,7 @@ function Match() {
           How Match IRLY works
         </Text>
         <Text variant="bodyS" tone="secondary">
-          No swiping, no score on people. We compare what you both chose and show what you share. Hidden profiles, blocked members and your friends are never suggested.
+          No swiping, no score on people. We compare what you both chose and show what you share. Hidden profiles, blocked members and people you already follow each other with are never suggested.
         </Text>
         <View style={styles.signals}>
           {SIGNALS.map((s) => (
