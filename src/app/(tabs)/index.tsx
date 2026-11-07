@@ -178,7 +178,8 @@ export default function Home() {
     };
   };
   const happenings = useMemo<Happening[]>(() => {
-    const list = [...(inGirl ? [] : content.sessions.map(fromSession)), ...content.events.map(fromEvent)];
+    // IRLY Girl never lists IRLY's mixed sessions or events (owner, 2026-11-07).
+    const list = inGirl ? [] : [...content.sessions.map(fromSession), ...content.events.map(fromEvent)];
     return list.sort(
       (a, b) => a.item.when.dayOffset - b.item.when.dayOffset || a.item.when.time.localeCompare(b.item.when.time),
     );

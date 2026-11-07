@@ -18,6 +18,7 @@ import { useCityId } from '@/state/store';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+import { useAppSpace } from '@/state/appSpace';
 
 type When = 'today' | 'tomorrow' | 'week' | 'weekend';
 const CATEGORIES: EventCategory[] = ['sports', 'networking', 'party', 'wellness', 'business', 'culture', 'food'];
@@ -31,7 +32,9 @@ export default function Events() {
   const [when, setWhen] = useState<When>('week');
   const [cats, setCats] = useState<EventCategory[]>([]);
 
-  const list = content.events
+  // IRLY Girl never lists IRLY's mixed events (owner, 2026-11-07).
+  const inGirl = useAppSpace() === 'girl';
+  const list = (inGirl ? [] : content.events)
     .filter((e) => {
       if (when === 'today') return e.when.dayOffset === 0;
       if (when === 'tomorrow') return e.when.dayOffset === 1;

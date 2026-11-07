@@ -101,7 +101,9 @@ export default function RootLayout() {
     const timer = setTimeout(() => setLate(true), SPLASH_MAX_MS);
     return () => clearTimeout(timer);
   }, []);
-  const ready = late || ((fontsLoaded || Boolean(fontError)) && hydrated && spaceHydrated && langHydrated);
+  // On the web the page does not wait for the fonts (about 280 KB): text shows in the fallback face, then swaps.
+  const fontsOk = fontsLoaded || Boolean(fontError) || Platform.OS === 'web';
+  const ready = late || (fontsOk && hydrated && spaceHydrated && langHydrated);
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => undefined);
