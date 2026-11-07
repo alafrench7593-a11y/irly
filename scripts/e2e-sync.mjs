@@ -143,6 +143,20 @@ async function backToMixte(page) {
   await page.getByText('IRLY Mixte', { exact: true }).filter({ visible: true }).first().click({ timeout: 20000 });
   await inSpace(page, 'mixte');
 }
+// Messages by universe (src/app/(tabs)/messages.tsx, owner decision): IRLY Mixte shows Mixte / Network,
+// IRLY Girl shows Girl / Mom / Network; a community or activity chat is only in its own universe.
+async function openUniverse(page, name) {
+  await page.goto(`${BASE}/messages`);
+  await page.getByRole('tab', { name: new RegExp(`^Universe: ${name}(, unread messages)?$`) }).first().click({ timeout: 20000 });
+}
+// Nowhere in this app space's inbox: its search covers every universe of the space, and says so once the server answered.
+async function notInInbox(page, text) {
+  await page.goto(`${BASE}/messages`);
+  await page.getByPlaceholder('Search conversations').fill(text);
+  // Shown only once the list is read and nothing matches (the empty state then names the search).
+  await visible(page, 'No conversation matches', 20000);
+  return true;
+}
 // A community's row in the lists, whatever its shown title (a run stamp is never shown: src/features/community/name.ts).
 const communityRow = (page, id) => page.locator(`[data-testid="community-${id}"]`).filter({ visible: true }).first();
 
@@ -245,10 +259,12 @@ async function main() {
   });
   await step('the same activity is on every screen: calendar', async () => (await page.goto(`${BASE}/calendar`), await visible(page, 'Playdate'), true));
   await step('… the place page (who\'s going)', async () => (await page.goto(`${BASE}/place/echo-beach`), await visible(page, 'Playdate'), true));
-  await step('… the messages inbox', async () => (await page.goto(`${BASE}/messages`), await visible(page, 'Playdate'), true));
+  // A playdate is an IRLY Girl plan (women only): its chat is in IRLY Girl's inbox, never in IRLY Mixte's.
+  await step('… not in the IRLY Mixte inbox (a Girl plan stays in its universe)', async () => notInInbox(page, 'Playdate · Echo Beach'));
   await step('… Discover search', async () => (await page.goto(`${BASE}/discover?q=Playdate`), await visible(page, 'On IRLY now'), await visible(page, 'Playdate'), true));
   // A playdate is a moms plan (women only): the lists of plans show it in the IRLY Girl space.
   await step('… in IRLY Girl: the area page of Canggu', async () => (await enterGirl(page), await page.goto(`${BASE}/bali/area/canggu`), await visible(page, 'Playdate'), true));
+  await step('… in IRLY Girl: the messages inbox, under Girl', async () => (await openUniverse(page, 'Girl'), await visible(page, 'Playdate · Echo Beach', 20000), true));
   await step('… its category page (Family)', async () => (await page.goto(`${BASE}/category/family`), await visible(page, 'Playdate'), true));
   await step('… IRLY Girl (a moms plan)', async () => (await page.goto(`${BASE}/category/girl`), await visible(page, 'Playdate'), true));
   await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
@@ -350,7 +366,7 @@ async function main() {
   const niaSb = createClient(URL_, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
   must(await niaSb.auth.signInWithPassword({ email: nia.email, password: PASSWORD }));
   const netTile = (id) => page.locator(`[data-testid="net-community-${id}"]`).filter({ visible: true }).first();
-  const netJoin = async (id, name, other) => {
+  const netJoin = async (id, name, other, own) => {
     await page.goto(`${BASE}/network`);
     const tile = netTile(id);
     await tile.waitFor({ timeout: 25000 });
@@ -363,27 +379,31 @@ async function main() {
     await visible(page, 'Open chat', 10000);
     const [{ n }] = await sql(`select count(*)::int as n from public.community_members where community_id = '${id}' and user_id = '${uma.id}'`);
     if (n !== 1) throw new Error(`Uma is not a member on the server (${n})`);
-    await page.goto(`${BASE}/messages`);
+    // A networking community's chat is under Network in the inbox, not under the space's own universe.
+    await openUniverse(page, 'Network');
     await visible(page, name, 20000);
+    await openUniverse(page, own);
+    await page.waitForTimeout(1500);
+    if (await page.getByText(name).filter({ visible: true }).count()) throw new Error(`its chat is also under ${own}`);
     return true;
   };
   const netClub = `Founders circle ${run}`;
   const netGirlClub = `Women founders ${run}`;
   let netClubId;
   let netGirlId;
-  await step('IRLY Network (Mixte): a networking community → Join → member at once, chat in the inbox', async () => {
+  await step('IRLY Network (Mixte): a networking community → Join → member at once, its chat under Network in the inbox (not under Mixte)', async () => {
     netClubId = must(await niaSb.rpc('create_community', { p_name: netClub, p_city: 'bali', p_category: 'networking' }));
     netGirlId = must(await niaSb.rpc('create_community', { p_name: netGirlClub, p_city: 'bali', p_category: 'networking', p_girl_only: true }));
-    return netJoin(netClubId, netClub, netGirlId);
+    return netJoin(netClubId, netClub, netGirlId, 'Mixte');
   });
-  await step('IRLY Network (Girl): a women-only networking community → Join → member at once, chat in the inbox', async () => {
+  await step('IRLY Network (Girl): a women-only networking community → Join → member at once, its chat under Network in the inbox (not under Girl)', async () => {
     await enterGirl(page);
-    return netJoin(netGirlId, netGirlClub, netClubId);
+    return netJoin(netGirlId, netGirlClub, netClubId, 'Girl');
   });
   for (const id of [netClubId, netGirlId]) if (id) await niaSb.rpc('delete_community', { p_community: id });
   await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
 
-  // ───────── Community: post, live feed, assistant ─────────
+  // ───────── Community: post, live feed ─────────
   // Nia makes the women-only community the test uses (deleted with the test accounts at the end),
   // rather than relying on one that happens to exist in production.
   const girlsName = `Bali Girls ${run}`;
@@ -420,6 +440,9 @@ async function main() {
     must(await veraSb.from('community_posts').insert({ community_id: momsId, author_id: vera.id, body: momsSays }));
     await page.goto(`${BASE}/c/${momsId}`);
     await visible(page, momsSays, 20000);
+    // Only members take part (likes, comments: 20261108000000_irly_community_space): Uma joins, as a mom would to like there.
+    await page.getByRole('button', { name: 'Join the community' }).click();
+    await visible(page, 'Open chat');
     await page.goto(`${BASE}/girl?mode=moms`);
     // IRLY Mom Community is a page of IRLY Girl (features/girl/doors): the gate switches space, then opens it.
     await page.waitForURL(/\/girl\/moms/, { timeout: 25000 });
@@ -428,7 +451,7 @@ async function main() {
     await visible(page, momsSays, 20000);
     return true;
   });
-  await step('… Vera posts again → it appears live in Uma\'s open IRLY Moms feed; Uma likes it there → one like on the server', async () => {
+  await step('… Vera posts again → it appears live in Uma\'s open IRLY Moms feed; Uma (a member) likes it there → one like on the server', async () => {
     await page.waitForTimeout(1500);
     const body = `Girl feed live ${run}`;
     const [{ id: postId }] = must(await veraSb.from('community_posts').insert({ community_id: momsId, author_id: vera.id, body }).select('id'));
@@ -455,39 +478,27 @@ async function main() {
   });
   if (momsId) await veraSb.rpc('delete_community', { p_community: momsId });
   await step('… back to IRLY Mixte from Settings', async () => (await backToMixte(page), true));
-  // Back to the community page for the assistant steps.
-  await page.goto(`${BASE}/c/${girlsId}`);
-  await page.waitForTimeout(1500);
-  await step('assistant: "Poll: Saturday or Sunday?" → poll posted, Uma votes', async () => {
-    await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Poll: Saturday or Sunday?');
-    await page.getByRole('button', { name: 'Ask', exact: true }).click();
-    await page.getByRole('button', { name: 'Post this poll' }).click();
-    await visible(page, 'Saturday or Sunday?');
+  // The community assistant (« Assistance de la communauté »: polls, plans and the weekly digest asked in
+  // words) was removed by the owner (2026-11-07), with « Couper le chat » and the Médias tab: its three steps
+  // went with it. Polls stay, from the community's own composer (« Add a poll »): that is checked here instead.
+  await step('A poll from the community composer: "Saturday or Sunday?" → posted, Uma votes → one vote on the server', async () => {
+    const q = `Saturday or Sunday? ${run}`;
+    await page.goto(`${BASE}/c/${girlsId}`);
+    await page.getByPlaceholder('Write to the community…').fill(q);
+    await page.getByRole('button', { name: /Add a poll/ }).first().click();
+    await page.getByLabel('Poll option 1', { exact: true }).fill('Saturday');
+    await page.getByLabel('Poll option 2', { exact: true }).fill('Sunday');
+    await page.getByRole('button', { name: 'Post', exact: true }).click();
+    await visible(page, q, 20000);
     await page.getByRole('button', { name: 'Vote: Sunday' }).first().click();
     await visible(page, '1 vote');
-    return true;
-  });
-  // A plan is an activity of the community (its Activities space), not a post in the feed.
-  await step('assistant: "Organise padel Saturday 9am" → activity created in the community, no announcement post', async () => {
-    await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill('Organise padel Saturday 9am');
-    await page.getByRole('button', { name: 'Ask', exact: true }).click();
-    // No neighbourhood is picked for her: she chooses one under the day and the time.
-    await page.getByRole('button', { name: 'Create it for the community' }).waitFor({ timeout: 15000 });
-    await page.getByRole('button', { name: 'Canggu', exact: true }).last().click();
-    await page.getByRole('button', { name: 'Create it for the community' }).click();
-    let acts = [];
-    for (let i = 0; i < 20 && !acts.some((a) => a.title.startsWith('Padel')); i++) {
-      await page.waitForTimeout(1000);
-      acts = must(await veraSb.from('activities').select('title').eq('community_id', girlsId));
+    for (let i = 0; i < 20; i++) {
+      const rows = await sql(`select v.option from public.community_poll_votes v join public.community_posts p on p.id = v.post_id
+        where p.community_id = '${girlsId}' and p.body = '${q}' and v.user_id = '${uma.id}'`);
+      if (rows.length === 1 && rows[0].option === 1) return true;
+      await page.waitForTimeout(500);
     }
-    const posts = must(await veraSb.from('community_posts').select('body').eq('community_id', girlsId).like('body', 'New plan:%'));
-    return acts.some((a) => a.title.startsWith('Padel')) && posts.length === 0;
-  });
-  await step('assistant: weekly digest from real data', async () => {
-    await page.getByPlaceholder('Ask: organise brunch Sunday 11am…').fill("What's new this week?");
-    await page.getByRole('button', { name: 'Ask', exact: true }).click();
-    await visible(page, 'posts this week');
-    return true;
+    return false;
   });
 
   // ───────── Networking, professional side ─────────
@@ -852,7 +863,19 @@ async function main() {
     await visible(page, 'Wes', 15000);
     return friendsCounter === 0 && c.followers >= 2 && c.following >= 1;
   });
-  await step('Posts tab: Uma\'s own post is on her profile, Vera\'s is not', async () => {
+  // Profiles show only the app space's own content (owner decision, features/universe): the Bali Girls
+  // community is women-only, so its posts, Uma's membership and the playdate are IRLY Girl's, shown in
+  // IRLY Girl and never in IRLY Mixte.
+  await step('In IRLY Mixte, Uma\'s profile shows none of her IRLY Girl posts', async () => {
+    await backToMixte(page);
+    await page.goto(`${BASE}/profile`);
+    await visible(page, 'Your communities, plans and posts in IRLY Mixte', 20000);
+    // « My posts » of the recap has read the server (no post of this space).
+    await visible(page, 'No post here yet', 20000);
+    return (await page.getByText(`Hello girls ${run}`).filter({ visible: true }).count()) === 0;
+  });
+  await step('Posts tab (IRLY Girl): Uma\'s own post is on her profile, Vera\'s is not', async () => {
+    await enterGirl(page);
     await page.goto(`${BASE}/profile`);
     await visible(page, `Hello girls ${run}`, 20000);
     return !(await page.getByText(`Live from Vera ${run}`).first().isVisible().catch(() => false));
@@ -862,24 +885,44 @@ async function main() {
     await visible(page, `Live from Vera ${run}`, 20000);
     return !(await page.getByText(`Hello girls ${run}`).first().isVisible().catch(() => false));
   });
-  await step('Activities tab: Created and Joined match the server', async () => {
-    const acts = await sql(`select a.title, case when a.creator_id = '${uma.id}' then 'created' else 'joined' end as role
-      from public.activities a where a.creator_id = '${uma.id}' or exists (select 1 from public.activity_participants x where x.activity_id = a.id and x.user_id = '${uma.id}' and x.status = 'going')`);
+  // What each space lists, from the server: the activity's universe (private.activity_universe), Network by its women-only side.
+  const profileActs = async () => sql(`select a.title, case when a.creator_id = '${uma.id}' then 'created' else 'joined' end as role,
+      case when private.activity_universe(a.id) in ('girl', 'mom') or (private.activity_universe(a.id) = 'network' and a.girl_only) then 'girl' else 'mixte' end as space
+    from public.activities a where a.creator_id = '${uma.id}'
+      or exists (select 1 from public.activity_participants x where x.activity_id = a.id and x.user_id = '${uma.id}' and x.status = 'going')`);
+  const activitiesTab = async (space) => {
+    const acts = (await profileActs()).filter((a) => a.space === space);
+    const created = acts.filter((a) => a.role === 'created');
+    const joined = acts.filter((a) => a.role === 'joined');
     await page.goto(`${BASE}/profile`);
     await page.getByRole('tab', { name: 'Activities', exact: true }).first().click();
-    const created = acts.filter((a) => a.role === 'created');
+    await page.getByRole('tab', { name: `Created · ${created.length}`, exact: true }).first().waitFor({ timeout: 15000 });
+    await page.getByRole('tab', { name: `Joined · ${joined.length}`, exact: true }).first().waitFor({ timeout: 5000 });
     if (created.length) await visible(page, created[0].title, 15000);
     else await visible(page, 'You have not organised anything yet', 15000);
     await page.getByRole('tab', { name: /^Joined/ }).first().click();
-    const joined = acts.filter((a) => a.role === 'joined');
     if (joined.length) await visible(page, joined[0].title, 15000);
     else await visible(page, 'You have not joined an activity yet', 15000);
+    return acts;
+  };
+  await step('Activities tab (IRLY Girl): Created and Joined match the server (the playdate is there)', async () => {
+    const acts = await activitiesTab('girl');
+    return acts.some((a) => a.role === 'created' && a.title.startsWith('Playdate'));
+  });
+  // Shown as « Bali Girls »: a run stamp is never part of a shown title (src/features/community/name.ts).
+  await step('My recap (IRLY Girl): the women-only community is under My communities, with its card', async () => {
+    await page.goto(`${BASE}/profile`);
+    await visible(page, 'Your communities, plans and posts in IRLY Girl', 20000);
+    await page.getByRole('link', { name: /^Bali Girls, IRLY Girl\b/ }).first().waitFor({ timeout: 15000 });
     return true;
   });
-  await step('Communities tab: the community is listed under Joined', async () => {
-    await page.getByRole('tab', { name: 'Communities', exact: true }).first().click();
-    await visible(page, girlsName, 15000);
-    return true;
+  await step('… back in IRLY Mixte: neither the community nor the playdate is on her profile; Created and Joined match the server', async () => {
+    await backToMixte(page);
+    const acts = await activitiesTab('mixte');
+    if (acts.some((a) => a.title.startsWith('Playdate'))) throw new Error('the server classed the playdate as Mixte');
+    if (await page.getByText('Playdate · Echo Beach').filter({ visible: true }).count()) throw new Error('the playdate is on her IRLY Mixte profile');
+    await visible(page, 'My communities', 15000);
+    return (await page.getByRole('link', { name: /^Bali Girls, / }).count()) === 0;
   });
   await step('Lives tab: an honest empty state when Uma has no live post', async () => {
     const [n] = await sql(`select count(*)::int as n from public.irl_posts where author_id = '${uma.id}'`);
@@ -932,7 +975,8 @@ async function main() {
   await step('… still following after a reload; the followers list shows Uma', async () => {
     await page.reload();
     await visible(page, 'You follow', 20000);
-    await page.getByRole('button', { name: /Followers/ }).first().click();
+    // « 1 Follower », « 2 Followers »: the word agrees with the number (MemberProfileView Count).
+    await page.getByRole('button', { name: /^\d+ Followers?$/ }).first().click();
     // Uma sees herself in Vera's followers, shown as "You".
     await visible(page, 'You', 15000);
     return true;

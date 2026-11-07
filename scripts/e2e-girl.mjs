@@ -108,6 +108,19 @@ async function inGirl() {
   for (let i = 0; i < 30 && (await spaceOf()) !== 'girl'; i++) await page.waitForTimeout(500);
   return (await spaceOf()) === 'girl';
 }
+// Turns a wheel of the date and time picker to a value, one step at a time, and checks it shows it (as e2e-ui).
+async function turnWheel(testId, target) {
+  const wheel = page.getByTestId(testId).first();
+  await wheel.waitFor({ timeout: 10000 });
+  await wheel.focus();
+  for (let i = 0; i < 30; i++) {
+    const now = Number(await wheel.getAttribute('aria-valuenow'));
+    if (now === target) return;
+    await wheel.press(now < target ? 'ArrowDown' : 'ArrowUp');
+    await page.waitForTimeout(120);
+  }
+  throw new Error(`${testId} did not reach ${target} (shows ${await wheel.getAttribute('aria-valuenow')})`);
+}
 // A plan made from the Create form in IRLY Girl: a category page, its kind, a neighbourhood, tomorrow at 20:30.
 async function createInGirl({ category, kind, title, double = false }) {
   await page.goto(`${BASE}/category/${category}`);
@@ -118,10 +131,9 @@ async function createInGirl({ category, kind, title, double = false }) {
   await page.getByRole('radio', { name: /^Dubai Marina/ }).first().click();
   await page.getByRole('button', { name: 'Pick a date and time' }).click();
   await page.getByRole('button').filter({ hasText: 'Tomorrow' }).first().click();
-  await page.getByLabel('Hour', { exact: true }).getByText('20', { exact: true }).click();
-  await page.waitForTimeout(500);
-  await page.getByLabel('Minutes', { exact: true }).getByText('30', { exact: true }).click();
-  await page.waitForTimeout(500);
+  // The picker's wheels (2026-11-06): each one turns with the arrow keys on the web and says its value (aria-valuenow).
+  await turnWheel('wheel-hour', 20);
+  await turnWheel('wheel-minute', 30);
   await page.getByRole('button', { name: 'Confirm', exact: true }).click();
   await page.getByRole('button', { name: 'Tomorrow · 20:30' }).waitFor({ timeout: 10000 });
   await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
@@ -213,6 +225,7 @@ async function main() {
 
   // ───────── Another woman joins; a man cannot ─────────
   await step('Mia joins Lea’s girl trip → Lea’s open plan says 2 going', async () => {
+    if (!tripId) throw new Error('no girl trip: the plan above was not created');
     must(await mia.sb.rpc('join_activity', { p_activity: tripId, p_status: 'going' }));
     await page.goto(`${BASE}/a/${tripId}`);
     // A plan from the Create form has spots (« 2 / 6 going »).
@@ -220,12 +233,14 @@ async function main() {
     return true;
   });
   await step('Max (a man) cannot see the girl trip, nor join it, even through the API', async () => {
+    if (!tripId) throw new Error('no girl trip: the plan above was not created');
     const seen = must(await max.sb.from('activities').select('id').eq('id', tripId));
     const join = await max.sb.rpc('join_activity', { p_activity: tripId, p_status: 'going' });
     const people = must(await max.sb.from('activity_participants').select('user_id').eq('activity_id', tripId));
     return seen.length === 0 && Boolean(join.error) && people.length === 0;
   });
   await step('Mia comments on the trip; Lea reads it; Max reads nothing', async () => {
+    if (!tripId) throw new Error('no girl trip: the plan above was not created');
     must(await mia.sb.from('comments').insert({ author_id: mia.id, target_type: 'activity', target_id: tripId, body: `Oman, yes! ${run}` }));
     const forLea = must(await lea.sb.from('comments').select('id').eq('target_id', tripId));
     const forMax = must(await max.sb.from('comments').select('id').eq('target_id', tripId));
