@@ -88,7 +88,7 @@ export default function Discover() {
     // everyone (they do not say who is a woman). People found are the women of
     // IRLY Girl; women-only plans and communities come from the server search.
     return {
-      events: content.events.filter((e) => has(e.title, e.venue, e.description, e.category)),
+      events: inGirl ? [] : content.events.filter((e) => has(e.title, e.venue, e.description, e.category)),
       sessions: inGirl ? [] : content.sessions.filter((s) => has(s.title, s.venue, ACTIVITIES[s.kind].label)),
       places: content.places.filter((p) => has(p.name, p.blurb, ...p.tags)),
       communities: inGirl ? [] : content.communities.filter((c) => has(c.name, c.tagline, c.description)),

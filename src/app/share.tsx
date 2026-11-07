@@ -107,7 +107,7 @@ export default function ShareScreen() {
           <View style={[styles.note, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
             <GlassLayer radius={radius.lg} />
             <Text variant="bodyS" tone="secondary">
-              Your chats appear here once you sign in, join an activity or add friends.
+              Your chats appear here once you sign in, join an activity or follow people.
             </Text>
             <PressableScale onPress={() => router.push('/account')} haptic="select" accessibilityLabel="Sign in">
               <Text variant="label">Sign in</Text>

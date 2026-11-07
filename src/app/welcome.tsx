@@ -26,6 +26,7 @@ import { SIGNUP_ROUTES, signupStep } from '@/features/auth/signup';
 import { IrlyStory, STORY_VERSION } from '@/features/onboarding/IrlyStory';
 import { useExpand } from '@/features/onboarding/useExpand';
 import { SoonPill } from '@/features/soon/SoonPill';
+import { t as tx } from '@/i18n';
 import { enter } from '@/motion/enter';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
@@ -183,7 +184,7 @@ export default function Welcome() {
           <Animated.View entering={FadeIn.delay(700).duration(500)} style={styles.soon}>
             <Icon name="globe" size={14} color="rgba(255,255,255,0.5)" />
             <Text variant="bodyS" color="rgba(255,255,255,0.5)">
-              Next: {UPCOMING_DESTINATIONS.map((d) => DESTINATIONS[d].shortName).join(' · ')}
+              {tx('Next:')} {UPCOMING_DESTINATIONS.map((d) => tx(DESTINATIONS[d].shortName)).join(' · ')}
             </Text>
           </Animated.View>
         </View>

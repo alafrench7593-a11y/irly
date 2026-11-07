@@ -7,7 +7,7 @@ import { CITIES, cityScope } from '@/data/destinations';
 import { useCityFilter } from './scope';
 import { dateFor, dayOf, guessCategory } from '@/features/ai/intent';
 import { useAccount, withProfile } from '@/features/auth/account';
-import { signedLinks } from '@/features/server/media';
+import { coverFiles, signedLinks, uploadCoverThumb } from '@/features/server/media';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
 import { changed, useRefreshOn, useSyncVersion } from './sync';
 import { uuid } from '@/lib/uuid';
@@ -53,6 +53,8 @@ export type ActivityExtras = {
   clientRef?: string;
   /** Made from an IRLY event (« Go together »): the event's key (features/events/goTogether), listed on its page. */
   eventKey?: string | null;
+  /** Made from a post (« Create an activity »): its id, kept as activities.source_post_id (public.post_activities lists it). */
+  sourcePostId?: string | null;
 };
 
 /** Signed links for uploaded activity photos (private bucket); other values pass through. */
@@ -62,6 +64,7 @@ export const coverLinks = (paths: (string | null | undefined)[]): Promise<Record
 // One tap = one activity: the same plan sent twice (double tap, retry after a
 // network error) reuses the same request and the same client_ref, and the
 // server refuses a second row with that ref.
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const inFlight = new Map<string, { at: number; ref: string; promise: Promise<string | null> }>();
 
 export function createServerActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at?: Date, given: ActivityExtras = {}): Promise<string | null> {
@@ -111,8 +114,12 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
   if (!coverPath && extras.coverUri) {
     const img = await cleanImage(extras.coverUri);
     coverPath = `${uid}/${Date.now()}.${img.ext}`;
-    const up = await supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType });
-    if (up.error) throw new Error('Could not upload the photo');
+    // Its small copy (lists, rows) goes up at the same time.
+    const [up] = await Promise.all([supabase.storage.from('activity-photos').upload(coverPath, img.body, { contentType: img.contentType }), uploadCoverThumb(coverPath, extras.coverUri)]);
+    if (up.error) {
+      supabase.storage.from('activity-photos').remove(coverFiles(coverPath)).catch(() => undefined);
+      throw new Error('Could not upload the photo');
+    }
   }
   // No photo given at all (the assistant, a Live, a quick plan): one of the IRLY library for its type,
   // drawn at random. `libraryCover: null` is « no photo » on purpose: nothing is drawn then.
@@ -136,6 +143,7 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
       ...(extras.address?.trim() ? { address: extras.address.trim().slice(0, 200) } : {}),
       // The event it is for: only a key in the server's format (a bad one would refuse the whole plan).
       ...(extras.eventKey && extras.eventKey.length <= 64 && /^e-[a-z0-9]+(-[a-z0-9]+)*$/.test(extras.eventKey) ? { event_key: extras.eventKey } : {}),
+      ...(extras.sourcePostId && UUID.test(extras.sourcePostId) ? { source_post_id: extras.sourcePostId } : {}),
       client_ref: clientRef,
     })
     // The row as the server stored it (its triggers may set girl_only…): the activity page opens with it at once.
@@ -143,10 +151,15 @@ async function insertActivity(plan: Omit<MyPlan, 'id' | 'createdAt'>, at: Date |
     .single();
   // Not saved (refused, or the first tap already saved it with its own photo): this photo is not left behind.
   // A staged photo stays with the form, which sends it again on retry (and removes it if abandoned).
-  if (error && coverPath && !staged) await supabase.storage.from('activity-photos').remove([coverPath]).catch(() => undefined);
+  if (error && coverPath && !staged) await supabase.storage.from('activity-photos').remove(coverFiles(coverPath)).catch(() => undefined);
   if (error?.code === '23505') {
-    // Already created by the first tap: hand back that one.
-    const { data: same } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).is('cancelled_at', null).maybeSingle();
+    // Already created by the first tap: hand back that one (same request, or the same post a moment ago).
+    const { data: byRef } = await supabase.from('activities').select('id').eq('creator_id', uid).eq('client_ref', clientRef).is('cancelled_at', null).maybeSingle();
+    const same =
+      byRef ??
+      (extras.sourcePostId
+        ? (await supabase.from('activities').select('id').eq('creator_id', uid).eq('source_post_id', extras.sourcePostId).is('cancelled_at', null).order('created_at', { ascending: false }).limit(1).maybeSingle()).data
+        : null);
     if (same) {
       // Its chat too (the first answer, lost, never said so).
       changed('activities', 'inbox');

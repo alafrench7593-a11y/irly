@@ -28,7 +28,6 @@ import { openCreate } from '@/features/create/createStore';
 import { COMMUNITY_SIDE, communitySplit, useCommunitySplit } from '@/features/community/layout';
 import { AboutSheet } from '@/features/community/AboutSheet';
 import { Agenda, type AgendaItem } from '@/features/community/Agenda';
-import { MediaTiles, type GalleryItem } from '@/features/community/MediaGallery';
 import { SPACE_TABS, type SpaceTab } from '@/features/community/SpaceTabs';
 import { IconButton } from '@/components/ui/Controls';
 
@@ -70,7 +69,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
   const reduced = useReducedMotion();
   const joined = useDemoGirl((s) => Boolean(s.joined[id]));
   const toggle = useDemoGirl((s) => s.toggle);
-  // The same five spaces as a real community; About sits in the header.
+  // The same four spaces as a real community; About sits in the header.
   const [tab, setTab] = useState<SpaceTab>('posts');
   const [sort, setSort] = useState<'recent' | 'popular'>('recent');
   const [about, setAbout] = useState(false);
@@ -81,7 +80,6 @@ export function DemoCommunityScreen({ id }: { id: string }) {
   const chat = DEMO_CHATS.find((x) => x.kind === 'community' && x.title === c?.name);
   const goingMap = useDemoGirl((s) => s.going);
   const agenda = useMemo<AgendaItem[]>(() => plans.map((p) => ({ id: p.id, title: p.title, startsAt: planStartsAt(p), going: planGoing(p, goingMap), subtitle: p.place })), [plans, goingMap]);
-  const gallery = useMemo<GalleryItem[]>(() => posts.filter((p) => p.photo).map((p) => ({ key: p.id, kind: 'photo' as const, photo: p.photo })), [posts]);
   const { y, onScroll, photo } = useHero();
   const split = useCommunitySplit();
   if (!c) return <Missing />;
@@ -120,7 +118,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
           </View>
         </View>
 
-        {/* Wide: members, Join and Chat in a column on the left, under the cover; the five spaces on the right. */}
+        {/* Wide: members, Join and Chat in a column on the left, under the cover; the four spaces on the right. */}
         <View style={split ? communitySplit.split : null}>
           <View style={split ? styles.side : null}>
             <Animated.View entering={reduced ? undefined : enter.rise(3)} style={styles.card}>
@@ -171,7 +169,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
                       <GirlPostCard p={p} eng={eng} cityId="dubai" />
                     </Animated.View>
                   ))}
-                  {!posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the group." /> : null}
+                  {!posts.length ? <GNotice icon="message" body="No posts yet. Say hello to the community." /> : null}
                 </>
               ) : null}
               {tab === 'chat' ? (
@@ -180,7 +178,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
                     <GButton label="Open chat" icon="message" onPress={() => router.push(`/messages/${chat.id}`)} />
                   </GNotice>
                 ) : joined ? (
-                  <GNotice icon="message" title="The community chat" body="The group chat opens here" />
+                  <GNotice icon="message" title="The community chat" body="The community chat opens here" />
                 ) : (
                   <GNotice icon="message" title="Join to chat" body="Members talk here every day. Join the community to read the chat and say hello.">
                     <GButton label="Join" icon="plus" onPress={join} />
@@ -200,7 +198,6 @@ export function DemoCommunityScreen({ id }: { id: string }) {
                   {!plans.length ? <GNotice icon="calendar" body="No plans yet. Propose the first one." /> : null}
                 </>
               ) : null}
-              {tab === 'media' ? <MediaTiles items={gallery} empty={<GNotice icon="image" title="No photos yet" body="Photos and videos posted in the community show up here." />} /> : null}
               {tab === 'members'
                 ? people(c.faces).map((m, i) => (
                     <Animated.View key={m.id} entering={reduced ? undefined : enter.rise(Math.min(i, 4))}>
@@ -250,7 +247,7 @@ export function DemoCommunityScreen({ id }: { id: string }) {
         facts={[
           { icon: 'users', text: tx('{n} members', { n: members }) },
           { icon: 'shield', text: tx('Women only: every member is checked by IRLY Girl.') },
-          { icon: 'message', text: tx('Members are in the group chat as soon as they join.') },
+          { icon: 'message', text: tx('Members are in the community chat as soon as they join.') },
           { icon: 'flag', text: tx('Anything off? Report a post or a person in one tap.') },
         ]}
       />

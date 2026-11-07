@@ -38,7 +38,8 @@ export function CommunityThumb({
 }) {
   // Lists that do not load the photo path pass none: it is looked up by id, all thumbnails at once.
   const path = useCommunityCover(id, coverPath);
-  const uri = usePhotoLink(path);
+  // A square tile takes the photo's small copy; a cover (with a height) the photo itself.
+  const uri = usePhotoLink(path, height === undefined && typeof size === "number" && size <= 120);
   const key = photo ?? communityPhoto(topic, categoryId, name);
   return (
     <Photo

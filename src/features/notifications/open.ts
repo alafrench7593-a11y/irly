@@ -1,7 +1,17 @@
 import { router } from 'expo-router';
 import { toast } from '@/components/ui/Toast';
 import { LIVE_TTL_MIN } from '@/features/live/liveStore';
-import { markNotificationRead } from '@/features/server/social';
+import {
+  markNotificationRead,
+  missingUniverseColumns,
+  NOTIFICATION_COLUMNS,
+  NOTIFICATION_UNIVERSE_COLUMNS,
+  toServerNotification,
+  type NotificationUniverse,
+  type ServerNotification,
+} from '@/features/server/social';
+import { universeInSpace } from '@/features/universe/universe';
+import { setAppSpace, useSpaceStore, type AppSpace } from '@/state/appSpace';
 import { FEATURES } from '@/lib/features';
 import { supabase } from '@/lib/supabase';
 
@@ -17,7 +27,39 @@ import { supabase } from '@/lib/supabase';
  * instead (the calendar for an activity, your chats for a chat…).
  */
 
-export type NotificationLike = { id: string; kind: string; payload: Record<string, string>; createdAt: number };
+export type NotificationLike = {
+  id: string;
+  kind: string;
+  payload: Record<string, string>;
+  createdAt: number;
+  /** Its universe, when the server tells it (features/server/social). */
+  universe?: NotificationUniverse | null;
+  womenOnly?: boolean;
+};
+
+/**
+ * The app space a notification's page belongs to, or null when any will do
+ * (no universe: a follower, a friend, a private chat). The IRLY Girl space
+ * is only ever named for a notification its reader may read now: the server
+ * keeps IRLY Girl notifications for members with IRLY Girl access (read
+ * rules of 20261025000100_irly_girl_isolation), and every Girl page stays
+ * guarded on its own.
+ */
+export function spaceOf(n: Pick<NotificationLike, 'universe' | 'womenOnly'>): AppSpace | null {
+  if (!n.universe) return null;
+  return universeInSpace(n.universe, Boolean(n.womenOnly), 'girl') ? 'girl' : 'mixte';
+}
+
+/** One notification, read under its owner's rules (a phone notification tapped), with its universe when the server tells it. */
+export async function readNotification(id: string): Promise<ServerNotification | null> {
+  if (!supabase) return null;
+  const sb = supabase;
+  const read = (columns: string) => sb.from('notifications').select(columns).eq('id', id).maybeSingle();
+  let { data, error } = await read(NOTIFICATION_UNIVERSE_COLUMNS);
+  if (missingUniverseColumns(error)) ({ data, error } = await read(NOTIFICATION_COLUMNS));
+  if (error || !data) return null;
+  return toServerNotification(data as unknown as Parameters<typeof toServerNotification>[0]);
+}
 
 /** What a page needs to exist for you (read with your own rights: RLS hides what you may not see). */
 type Check =
@@ -159,6 +201,10 @@ export async function openNotification(n: NotificationLike, from: 'list' | 'push
     }
     if (!d) return from === 'push' ? go('/notifications') : undefined;
     if (d.check && (await exists(d.check)) === 'gone') return gone(from, d.fallback);
+    // Opened in its own universe's app space (IRLY Girl content in IRLY Girl, Mixte content in Mixte):
+    // Messages and the lists behind the page then show what it belongs to.
+    const target = spaceOf(n);
+    if (target && useSpaceStore.getState().space !== target) setAppSpace(target);
     go(d.href);
   } finally {
     // Kept a moment: the page being pushed has not taken the screen yet.

@@ -393,9 +393,12 @@ export function EventsPage({ cityId, scrollY, top, bottom }: PageProps) {
   const columns = page.wide ? 2 : 1;
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
-  const tonight = content.events.filter((e) => e.when.dayOffset === 0);
-  const weekend = content.events.filter((e) => isWeekend(e.when, city));
-  const upcoming = [...content.events].sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time));
+  // IRLY Girl never lists IRLY's mixed events (owner, 2026-11-07).
+  const inGirl = useAppSpace() === 'girl';
+  const events = inGirl ? [] : content.events;
+  const tonight = events.filter((e) => e.when.dayOffset === 0);
+  const weekend = events.filter((e) => isWeekend(e.when, city));
+  const upcoming = [...events].sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time));
   return (
     <PageScroll scrollY={scrollY} top={top} bottom={bottom}>
       <ScrollReveal scrollY={scrollY} style={styles.first}>
@@ -419,7 +422,7 @@ export function EventsPage({ cityId, scrollY, top, bottom }: PageProps) {
       ) : null}
 
       <ScrollReveal scrollY={scrollY} style={styles.section}>
-        <SectionHeader overline={tx('{n} this week', { n: content.events.length })} title="All events" />
+        <SectionHeader overline={tx('{n} this week', { n: events.length })} title="All events" />
         <Grid columns={columns} gap={10} width={page.width}>
           {upcoming.slice(0, 10).map((e) => (
             <EventRow key={`all-${e.id}`} event={e} />

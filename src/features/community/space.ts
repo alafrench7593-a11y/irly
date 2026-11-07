@@ -5,7 +5,7 @@ import { isMissingFunction } from '@/features/live/livePublish';
 import { changed, useRefreshOn } from '@/features/server/sync';
 import { friendlyError, supabase } from '@/lib/supabase';
 import { signedLinks } from '@/features/server/media';
-import { cacheKey, load as loadCached, peek, warm, warmImages } from './cache';
+import { cacheKey, joinable, load as loadCached, peek, warm, warmImages } from './cache';
 import { fetchMembers } from './governance';
 import { pinPost } from './groups';
 
@@ -340,7 +340,10 @@ export function useCommunityRules(communityId: string) {
     (join: boolean) => {
       if (!uid || !communityId) return;
       let alive = true;
-      loadCached(ck, () => fetchRules(communityId), join).then((rules) => alive && setState({ key, rules }));
+      // Opening the page: its detail (read at the same moment, or on press) carries the rules; no second request.
+      const detail = join ? joinable<{ rules?: string | null } | null>(cacheKey(uid, 'detail', communityId)) : undefined;
+      const run = () => (detail ? detail.then((d) => (d && d.rules !== undefined ? d.rules : fetchRules(communityId)), () => fetchRules(communityId)) : fetchRules(communityId));
+      loadCached(ck, run, join).then((rules) => alive && setState({ key, rules }));
       return () => {
         alive = false;
       };

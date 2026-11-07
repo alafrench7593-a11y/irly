@@ -8,6 +8,7 @@ import { cleanImage, imageBytes, imageType } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
 import { changed, useSyncVersion } from './sync';
 import { coverLinks } from './activities';
+import { coverFiles, peekLinks, smallCoverLinks, uploadCoverThumb } from './media';
 import { communityPhoto } from '@/features/community/official';
 import { conversationHead } from './chat';
 
@@ -35,8 +36,12 @@ export async function uploadCover(uri: string): Promise<string> {
   if (!uid) throw new Error('Sign in first');
   const img = imageType(uri);
   const path = `${uid}/${Date.now()}.${img.ext}`;
-  const { error } = await supabase.storage.from('activity-photos').upload(path, await imageBytes(uri), { contentType: img.contentType });
-  if (error) throw new Error(error.message);
+  // Its small copy (lists, rows) goes up at the same time, not after.
+  const [{ error }] = await Promise.all([supabase.storage.from('activity-photos').upload(path, await imageBytes(uri), { contentType: img.contentType }), uploadCoverThumb(path, uri)]);
+  if (error) {
+    supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
+    throw new Error(error.message);
+  }
   return path;
 }
 
@@ -52,15 +57,18 @@ export async function stageCover(uri: string): Promise<string> {
   const uid = session.session?.user.id;
   if (!uid) throw new Error('Sign in first');
   const path = `${uid}/${Date.now()}.${img.ext}`;
-  const { error } = await supabase.storage.from('activity-photos').upload(path, img.body, { contentType: img.contentType });
-  if (error) throw new Error('Could not upload the photo');
+  const [{ error }] = await Promise.all([supabase.storage.from('activity-photos').upload(path, img.body, { contentType: img.contentType }), uploadCoverThumb(path, uri)]);
+  if (error) {
+    supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
+    throw new Error('Could not upload the photo');
+  }
   return path;
 }
 
 /** A staged photo that ended up unused (replaced, removed, form closed): not left behind. */
 export function dropStagedCover(path: string | null | undefined): void {
   if (!path || !supabase) return;
-  supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+  supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
 }
 
 /** A community's photo: a picked image, or null to go back to the app's photo. */
@@ -70,7 +78,7 @@ export async function setCommunityCover(communityId: string, uri: string | null)
   const { error } = await supabase.rpc('set_community_cover', { p_community: communityId, p_path: path });
   if (error) {
     // Refused (no longer allowed, removed meanwhile): the photo just sent is not left behind.
-    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    if (path) await supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
     throw new Error(error.message);
   }
   changed('communities', 'inbox');
@@ -83,7 +91,7 @@ export async function setActivityCover(activityId: string, uri: string | null): 
   const { error } = await supabase.rpc('set_activity_cover', { p_activity: activityId, p_path: path });
   if (error) {
     // Refused (no longer allowed, removed meanwhile): the photo just sent is not left behind.
-    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    if (path) await supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
     throw new Error(error.message);
   }
   changed('activities', 'inbox');
@@ -96,24 +104,31 @@ export async function setChatPhoto(conversationId: string, uri: string | null): 
   const { error } = await supabase.rpc('set_conversation_photo', { p_conversation: conversationId, p_path: path });
   if (error) {
     // Refused (no longer allowed, removed meanwhile): the photo just sent is not left behind.
-    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    if (path) await supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
     throw new Error(error.message);
   }
   changed('inbox', 'communities');
 }
 
-/** A viewable link for a stored photo path (null while loading or without one). */
-export function usePhotoLink(path: string | null | undefined): string | null {
-  const [link, setLink] = useState<{ path: string; url: string } | null>(null);
+/**
+ * A viewable link for a stored photo path (null while loading or without one).
+ * `small`: shown small (a tile, a row, a chip): its small copy when it has one.
+ * A link already known shows on the first frame (no grey frame on a screen opened again).
+ */
+export function usePhotoLink(path: string | null | undefined, small = false): string | null {
+  const [link, setLink] = useState<{ for: string; url: string } | null>(null);
+  const asked = path ? `${small ? 's' : 'f'}|${path}` : '';
   useEffect(() => {
     if (!path) return;
     let alive = true;
-    coverLinks([path]).then((m) => alive && m[path] && setLink({ path, url: m[path] }));
+    (small ? smallCoverLinks([path]) : coverLinks([path])).then((m) => alive && m[path] && setLink({ for: `${small ? 's' : 'f'}|${path}`, url: m[path] }));
     return () => {
       alive = false;
     };
-  }, [path]);
-  return path && link?.path === path ? link.url : null;
+  }, [path, small]);
+  if (!path) return null;
+  if (link?.for === asked) return link.url;
+  return peekLinks('activity-photos', [path], small)[path] ?? null;
 }
 
 /** An activity's picture in a list: its saved photo (signed link) or the app's photo of its subject. */
@@ -135,7 +150,8 @@ export function useActivityThumbs(ids: string[]): Record<string, ActivityThumb> 
     (async () => {
       const { data } = await sb.from('activities').select('id, title, category_id, sub_id, place_name, cover_path').in('id', list.split(','));
       const rows = (data ?? []) as { id: string; title: string; category_id: string; sub_id: string | null; place_name: string | null; cover_path: string | null }[];
-      const links = await coverLinks(rows.map((r) => r.cover_path));
+      // Shown small (search rows, a community's activities): their small copies.
+      const links = await smallCoverLinks(rows.map((r) => r.cover_path));
       const map: Record<string, ActivityThumb> = {};
       for (const r of rows) {
         const cat = (CATEGORY_BY_ID[r.category_id as CategoryKey] ? r.category_id : 'sport') as CategoryKey;

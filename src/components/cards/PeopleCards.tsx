@@ -23,39 +23,36 @@ import { Text } from '../ui/Text';
 import { toast } from '../ui/Toast';
 import { GlassLayer } from '@/components/ui/GlassLayer';
 
-/* ───────── Connect button with its three states ───────── */
+/* ───────── Follow button (example people): Follow, then You follow + Message ───────── */
 
 export function ConnectButton({ person, size = 'md', full }: { person: Person; size?: 'md' | 'sm' | 'lg'; full?: boolean }) {
-  const state = useStore((s) => s.connections[person.id]);
-  const connect = useStore((s) => s.connect);
+  const following = useStore((s) => s.connections[person.id] === 'connected');
+  const toggleFollow = useStore((s) => s.toggleFollow);
   const router = useRouter();
-  if (state === 'connected') {
-    return (
-      <Button
-        label="Message"
-        icon="message"
-        variant="done"
-        size={size}
-        full={full}
-        onPress={() => router.push('/messages')}
-      />
-    );
-  }
-  return (
+  const follow = (
     <Button
-      label={state === 'pending' ? 'Requested' : 'Connect'}
-      icon={state === 'pending' ? 'clock' : 'plus'}
-      variant={state === 'pending' ? 'secondary' : 'primary'}
+      label={following ? 'You follow' : 'Follow'}
+      icon={following ? 'check' : 'userPlus'}
+      variant={following ? 'secondary' : 'primary'}
       size={size}
       full={full}
       haptic={false}
+      accessibilityHint={following ? tx('Tap to unfollow') : undefined}
       onPress={() => {
-        if (state) return;
-        connect(person.id);
-        haptic('success');
-        toast(tx('Request sent to {name}', { name: person.name }), 'send', 'brand');
+        const on = toggleFollow(person.id);
+        haptic(on ? 'success' : 'select');
+        if (on) toast(tx('You follow {name}', { name: person.name }), 'user', 'brand');
       }}
     />
+  );
+  if (!following) return follow;
+  return (
+    <View style={{ flexDirection: 'row', gap: 8, flex: full ? 1 : undefined }}>
+      <View style={{ flex: 1 }}>{follow}</View>
+      <View style={{ flex: 1 }}>
+        <Button label="Message" icon="message" variant="done" size={size} full onPress={() => router.push('/messages')} />
+      </View>
+    </View>
   );
 }
 

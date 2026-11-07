@@ -32,7 +32,8 @@ import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { findCommunity, findPerson } from '@/data/repo';
 import { toast } from '@/components/ui/Toast';
-import { chatDraft, isServerId, removeConversationForMe, setConversationArchived, useServerThread } from '@/features/server/chat';
+import { chatDraft, isServerId, removeConversationForMe, setConversationArchived, useChatUniverse, useServerThread } from '@/features/server/chat';
+import { UniverseBadge } from '@/features/messages/UniverseBadge';
 import { sharedHref } from '@/features/server/engage';
 import { useActivityCards } from '@/features/server/activityCards';
 import { ActivityChatBanner, ActivityShareCard } from '@/components/cards/ActivityCards';
@@ -43,7 +44,7 @@ import { TapPhoto } from '@/features/photo/TapPhoto';
 import { hueOf } from '@/lib/format';
 import { Image } from 'expo-image';
 import { Photo } from '@/components/visual/Photo';
-import { allMessages, cannedReply, resolveConversation, senderName } from '@/features/messages/conversations';
+import { allMessages, cannedReply, localChatUniverse, resolveConversation, senderName } from '@/features/messages/conversations';
 import { haptic } from '@/motion/haptics';
 import { useNow } from '@/lib/useNow';
 import { PressableScale } from '@/motion/PressableScale';
@@ -148,7 +149,9 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
   const now = useNow();
   // `draft`: a first message prepared elsewhere (Introduce myself): editable, never sent by itself.
   const chatPhoto = useChatPhoto(id);
-  const chatPhotoUri = usePhotoLink(chatPhoto.path);
+  const universe = useChatUniverse(id);
+  // A 36 pt picture in the header: its small copy.
+  const chatPhotoUri = usePhotoLink(chatPhoto.path, true);
   const [photoMenu, setPhotoMenu] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
   const changePhoto = async (next: 'pick' | 'reset') => {
@@ -596,9 +599,13 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
               <Photo visual={{ photo: chatPhoto.fallback, uri: chatPhotoUri ?? undefined }} light="dubai" style={styles.chatPhoto} width={120} recyclingKey={chatPhoto.path ? `chat-${id}-${chatPhoto.path}` : (chatPhoto.seed ?? `chat-${id}-app`)} />
             ) : null}
             <View style={{ flexShrink: 1, alignItems: other || chatPhoto.hasPhoto ? 'flex-start' : 'center' }}>
-              <Text variant="titleS" numberOfLines={1} raw>
-                {thread.title}
-              </Text>
+              <View style={styles.titleRow}>
+                <Text variant="titleS" numberOfLines={1} raw style={{ flexShrink: 1 }}>
+                  {thread.title}
+                </Text>
+                {/* A community or activity chat says which universe it belongs to (a private chat has none). */}
+                {universe && !other ? <UniverseBadge universe={universe} /> : null}
+              </View>
               <Text variant="caption" tone="tertiary">
                 {thread.kind === null
                   ? ''
@@ -1236,6 +1243,7 @@ function Thread({ id }: { id: string }) {
 
   if (!conversation) return <NotFound title="This conversation is not available" />;
   const messages = allMessages(conversation, sent);
+  const localUniverse = localChatUniverse(conversation);
   const person = conversation.kind === 'direct' ? findPerson(conversation.personIds[0]) : undefined;
   // A community chat: its first member stands for its creator (the demonstration has no roles of its own).
   const community = conversation.kind === 'community' && conversation.refId ? findCommunity(conversation.refId) : undefined;
@@ -1287,7 +1295,7 @@ function Thread({ id }: { id: string }) {
               {conversation.title}
             </Text>
             <Text variant="caption" tone="tertiary" align="center">
-              {person ? tx('{headline} · met on IRLY', { headline: tx(person.headline) }) : tx('{n} members · messages stay in the group', { n: conversation.personIds.length + 1 })}
+              {person ? tx('{headline} · met on IRLY', { headline: tx(person.headline) }) : tx('Community chat · messages stay in the community')}
             </Text>
           </View>
           {messages.map((m, i) => {
@@ -1386,11 +1394,14 @@ function Thread({ id }: { id: string }) {
         <View style={styles.headerRow}>
           <HeaderBack />
           <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text variant="titleS" numberOfLines={1}>
-              {conversation.title}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text variant="titleS" numberOfLines={1} style={{ flexShrink: 1 }}>
+                {conversation.title}
+              </Text>
+              {localUniverse ? <UniverseBadge universe={localUniverse} /> : null}
+            </View>
             <Text variant="caption" tone={person?.online ? 'positive' : 'tertiary'}>
-              {person ? (person.online ? 'Active now' : 'Usually replies within a day') : 'Group'}
+              {person ? (person.online ? 'Active now' : 'Usually replies within a day') : 'Community'}
             </Text>
           </View>
           {person ? (
@@ -1521,6 +1532,7 @@ const styles = StyleSheet.create({
   inputWrap: { flex: 1, height: 46, borderRadius: radius.pill, paddingHorizontal: 18, justifyContent: 'center', overflow: 'hidden' },
   send: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' },
   header: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, maxWidth: '100%' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: space.gutter, height: layout.headerHeight },
   banner: { paddingHorizontal: space.gutter, paddingTop: 4 },
 });

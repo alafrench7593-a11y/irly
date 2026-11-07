@@ -1,6 +1,9 @@
 // The free community assistant: plans, polls, digest, ideas, post → activity.
 import { communityAssist, digestLines, postLooksLikeAPlan } from '../src/features/community/assist.ts';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { networkListed } from '../src/features/network/listed.ts';
+import { belongsToSpace, universeOf } from '../src/features/universe/universe.ts';
 
 const geo = { cities: [{ id: 'bali', name: 'Bali' }], areas: [{ id: 'canggu', name: 'Canggu', cityId: 'bali' }, { id: 'ubud', name: 'Ubud', cityId: 'bali' }] };
 const ctx = { communityName: 'Girls Padel Bali', categoryId: 'sport', geo };
@@ -54,6 +57,39 @@ expect(!networkListed(womenClub, false) && !networkListed(girlNetworking, false)
 expect(networkListed(girlNetworking, true), 'Network (Girl): Girl CEO (girl_network) is listed');
 expect(networkListed(womenClub, true) && !networkListed(mixed, true) && !networkListed(club, true), 'Network (Girl): women-only networking communities only');
 expect(!networkListed({ categoryId: null, topic: 'girls', girlOnly: true }, true) && !networkListed({ categoryId: 'sport', topic: null, girlOnly: true }, true), 'Network (Girl): not a community about something else');
+
+// Lists by universe (universe.ts): a woman's Mixte communities never show in IRLY Girl, her Girl and Mom ones never in Mixte.
+const mixteClub = { categoryId: 'sport', topic: null, girlOnly: false };
+const girlClub = { categoryId: 'food', topic: null, girlOnly: true };
+const momClub = { categoryId: 'family', topic: 'mom_sport', girlOnly: true };
+expect(belongsToSpace(mixteClub, 'mixte') && !belongsToSpace(mixteClub, 'girl'), 'lists: a Mixte community only in Mixte');
+expect(belongsToSpace(girlClub, 'girl') && !belongsToSpace(girlClub, 'mixte'), 'lists: an IRLY Girl community only in IRLY Girl');
+expect(belongsToSpace(momClub, 'girl') && !belongsToSpace(momClub, 'mixte') && universeOf(momClub) === 'mom', 'lists: a Mom community only in IRLY Girl (its Mom universe)');
+expect(belongsToSpace(womenClub, 'girl') && !belongsToSpace(womenClub, 'mixte') && belongsToSpace(club, 'mixte') && !belongsToSpace(club, 'girl'), 'lists: Network split by women-only');
+
+// Every community list the app reads returns each community's own photo (cover_path): the latest
+// definition of each list RPC called in src/ (migrations in order) has it in its result.
+const COMMUNITY_LISTS = ['community_list', 'community_directory', 'community_recommend', 'member_communities', 'girl_official_communities', 'mom_official_communities'];
+const root = new URL('..', import.meta.url).pathname;
+const sources: string[] = [];
+const walk = (dir: string) => {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, e.name);
+    if (e.isDirectory()) walk(full);
+    else if (/\.(ts|tsx)$/.test(e.name)) sources.push(readFileSync(full, 'utf8'));
+  }
+};
+walk(join(root, 'src'));
+const called = new Set(sources.flatMap((src) => [...src.matchAll(/rpc\('([a-z_]+)'/g)].map((m) => m[1])));
+// A new list of communities (…_communities, community_list…) must be added to COMMUNITY_LISTS, so it is checked too.
+const unlisted = [...called].filter((n) => /(^|_)communities$|^community_(list|directory|recommend)$/.test(n) && !COMMUNITY_LISTS.includes(n) && !/^(join|staff_girl)_communities$/.test(n));
+expect(unlisted.length === 0, 'every community list RPC the app calls is checked for its photo', unlisted);
+const migrations = readdirSync(join(root, 'supabase/migrations')).filter((f) => f.endsWith('.sql')).sort().map((f) => readFileSync(join(root, 'supabase/migrations', f), 'utf8'));
+for (const name of COMMUNITY_LISTS.filter((n) => called.has(n) || n === 'mom_official_communities')) {
+  const def = new RegExp(`create (?:or replace )?function public\\.${name}\\([^)]*\\)\\s*returns table \\(([^;]*?)\\)\\s*language`, 'gi');
+  const last = migrations.flatMap((m) => [...m.matchAll(def)].map((x) => x[1])).pop();
+  expect(Boolean(last && /\bcover_path text\b/.test(last)), `${name} returns cover_path`, last?.slice(0, 200));
+}
 
 if (failed) {
   console.error(`${failed} community check(s) failed`);

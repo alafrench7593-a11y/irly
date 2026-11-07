@@ -11,6 +11,7 @@ import { useRefreshOn } from '@/features/server/sync';
 import { NONE } from '@/lib/none';
 import { supabase } from '@/lib/supabase';
 import { useAppSpace } from '@/state/appSpace';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
 import { isNetworkCommunity, networkListed } from './listed';
 
 /**
@@ -69,13 +70,13 @@ const netError = (e: unknown) => (/fetch|network|failed/i.test(String(e)) ? 'Can
 export function useNetworkCommunities(cityId: CityId) {
   const uid = useAccount()?.userId;
   const girlSpace = useAppSpace() === 'girl';
-  const key = `${uid ?? ''}|${cityId}`;
+  const key = `${uid ?? ''}|${cityId}|${girlSpace ? 'girl' : 'mixte'}`;
   const [state, setState] = useState<{ for: string; list: NetCommunity[]; error: string | null }>({ for: '', list: [], error: null });
   const seq = useRef(0);
   const load = useCallback(() => {
     if (!uid || !supabase) return;
     const n = ++seq.current;
-    supabase.rpc('community_list', { p_city: cityId }).then(({ data, error }) => {
+    rpcInSpace(supabase, 'community_list', { p_city: cityId }, girlSpace ? 'girl' : 'mixte').then(({ data, error }) => {
       if (n !== seq.current) return;
       // A failed reload keeps the list on screen and says so.
       if (error) return setState((s) => ({ ...s, for: key, error: netError(error.message) }));
@@ -94,10 +95,12 @@ export function useNetworkCommunities(cityId: CityId) {
           cityId: (r.city_id as string | null) ?? null,
           topic: (r.topic as string | null) ?? null,
           categoryId: (r.category_id as string | null) ?? null,
+          // Its own photo when the server says it (20261110200000); otherwise looked up by id.
+          coverPath: 'cover_path' in r ? ((r.cover_path as string | null) ?? null) : undefined,
         }));
       setState({ for: key, list, error: null });
     });
-  }, [uid, cityId, key]);
+  }, [uid, cityId, key, girlSpace]);
   useEffect(load, [load]);
   useRefreshOn(['communities'], load);
   const { keep } = useCityFilter(cityId);

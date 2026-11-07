@@ -16,7 +16,11 @@ import { supabase } from '@/lib/supabase';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { belongsToSpace } from '@/features/universe/universe';
+import { useAppSpace, type AppSpace } from '@/state/appSpace';
 import { GlassLayer } from '@/components/ui/GlassLayer';
+
+type UniverseCell = { girl_only?: boolean | null; topic?: string | null; category_id?: string | null };
 
 type Tab = 'all' | 'activity' | 'place' | 'community' | 'irl_post' | 'profile';
 const TABS: { value: Tab; label: string }[] = [
@@ -43,21 +47,32 @@ const titleOf = (titles: Record<string, string>, i: SavedItem) => titles[`${i.ty
 const ICON: Partial<Record<TargetType, IconName>> = { activity: 'calendar', place: 'pin', community: 'users', irl_post: 'camera', profile: 'user', catalog: 'sparkles', community_post: 'message' };
 
 /** Resolve titles in one query per type (saves only keep the canonical id). */
-async function titlesFor(items: SavedItem[]): Promise<Record<string, string>> {
+async function titlesFor(items: SavedItem[], appSpace: AppSpace): Promise<Record<string, string>> {
   if (!supabase) return {};
   const out: Record<string, string> = {};
   const ids = (type: TargetType) => items.filter((i) => i.type === type).map((i) => i.id);
   const [acts, places, comms, posts, people, cposts] = await Promise.all([
-    ids('activity').length ? supabase.from('activities').select('id, title').in('id', ids('activity')) : null,
+    ids('activity').length ? supabase.from('activities').select('id, title, girl_only, communities(girl_only, topic, category_id)').in('id', ids('activity')) : null,
     ids('place').length ? supabase.from('places').select('slug, name').in('slug', ids('place')) : null,
-    ids('community').length ? supabase.from('communities').select('id, name, topic, category_id, city_id').in('id', ids('community')) : null,
+    ids('community').length ? supabase.from('communities').select('id, name, topic, category_id, city_id, girl_only').in('id', ids('community')) : null,
     ids('irl_post').length ? supabase.from('irl_posts').select('id, body, expires_at').in('id', ids('irl_post')) : null,
     ids('profile').length ? supabase.from('profiles_public').select('id, first_name').in('id', ids('profile')) : null,
-    ids('community_post').length ? supabase.from('community_posts').select('id, body, community_id, deleted_at').in('id', ids('community_post')) : null,
+    ids('community_post').length ? supabase.from('community_posts').select('id, body, community_id, deleted_at, communities(girl_only, topic, category_id)').in('id', ids('community_post')) : null,
   ]);
-  acts?.data?.forEach((r) => (out[`activity:${r.id}`] = r.title));
+  // Saved in the other app space (an IRLY Girl or Mom community, its posts and plans, seen from Mixte, or the reverse): listed in its own space only.
+  const other = (c: UniverseCell | UniverseCell[] | null | undefined, girlOnly: boolean) => {
+    const one = Array.isArray(c) ? c[0] : c;
+    return one ? !belongsToSpace({ girlOnly: Boolean(one.girl_only), topic: one.topic ?? null, categoryId: one.category_id ?? null }, appSpace) : (appSpace === 'girl') !== girlOnly;
+  };
+  acts?.data?.forEach((r) => {
+    out[`activity:${r.id}`] = r.title;
+    if (other(r.communities as UniverseCell | UniverseCell[] | null, Boolean(r.girl_only))) out[`activity:${r.id}:gone`] = '1';
+  });
   places?.data?.forEach((r) => (out[`place:${r.slug}`] = r.name));
-  comms?.data?.forEach((r) => (out[`community:${r.id}`] = displayCommunityName(r)));
+  comms?.data?.forEach((r) => {
+    out[`community:${r.id}`] = displayCommunityName(r);
+    if (other(r as UniverseCell, Boolean(r.girl_only))) out[`community:${r.id}:gone`] = '1';
+  });
   posts?.data?.forEach((r) => (out[`irl_post:${r.id}`] = r.body));
   // A Live that ended or was deleted, a post removed: it would open nothing, so it is not listed
   // (the server drops the save of a removed one; an ended Live has no event to drop it).
@@ -71,8 +86,9 @@ async function titlesFor(items: SavedItem[]): Promise<Record<string, string>> {
   cposts?.data?.forEach((r) => {
     out[`community_post:${r.id}`] = r.body;
     out[`community_post:${r.id}:community`] = r.community_id;
+    if (r.community_id && other(r.communities as UniverseCell | UniverseCell[] | null, false)) out[`community_post:${r.id}:other`] = '1';
   });
-  if (cposts && !cposts.error) gone('community_post', (cposts.data ?? []).filter((r) => !r.deleted_at));
+  if (cposts && !cposts.error) gone('community_post', (cposts.data ?? []).filter((r) => !r.deleted_at && !out[`community_post:${r.id}:other`]));
   return out;
 }
 
@@ -85,15 +101,16 @@ export default function SavedScreen() {
   const [tab, setTab] = useState<Tab>('all');
   const [titles, setTitles] = useState<Record<string, string>>({});
   const removing = useRef(new Set<string>());
+  const appSpace = useAppSpace();
 
   useEffect(() => {
     let alive = true;
     if (!items.length) return;
-    titlesFor(items).then((m) => alive && setTitles(m));
+    titlesFor(items, appSpace).then((m) => alive && setTitles(m));
     return () => {
       alive = false;
     };
-  }, [items]);
+  }, [items, appSpace]);
 
   const shown = items.filter((i) => !titles[`${i.type}:${i.id}:gone`] && (tab === 'all' || i.type === tab || (tab === 'irl_post' && i.type === 'community_post')));
 

@@ -87,7 +87,7 @@ select pg_temp.as_user('d0b10000-0000-0000-0000-0000000000a1');
 select pg_temp.check((select array_agg(name order by name collate "C") from public.community_list('dubai') where official)
   = array['IRLY Activité', 'IRLY Expat', 'IRLY Network', 'IRLY Padel Club', 'IRLY Running Club', 'IRLY Sport', 'IRLY Trip', 'Les Français à Dubaï'],
   'Marc: the eight official communities, nothing else official');
-select pg_temp.check((select array_agg(topic order by n) from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n) where official)
+select pg_temp.check((select array_agg(topic order by n) from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, cover_path, n) where official)
   = array['expats', 'lifestyle', 'sport', 'running', 'padel', 'trip', 'network', 'francais'], 'Marc: in IRLY''s order');
 select pg_temp.check(not exists (select 1 from public.community_list('dubai') where girl_only), 'Marc: no women-only community listed');
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer,type:expat,activity:padel,activity:running,activity:football,goal:networking,interest:food,interest:travel,interest:family}', 20) r

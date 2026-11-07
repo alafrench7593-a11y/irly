@@ -161,6 +161,8 @@ type Actions = {
   toggleSave: (id: string) => boolean;
   toggleMembership: (id: string) => boolean;
   connect: (personId: string) => void;
+  /** Example people only (demo build): follow or unfollow, kept on this device. */
+  toggleFollow: (personId: string) => boolean;
   book: (b: Omit<Booking, 'id' | 'createdAt'>) => Booking;
   sendMessage: (conversationId: string, text: string) => void;
   receiveMessage: (conversationId: string, from: string, text: string) => void;
@@ -289,6 +291,15 @@ export const useStore = create<State & Actions>()(
       connect: (personId) => {
         if (get().connections[personId]) return;
         set({ connections: { ...get().connections, [personId]: 'pending' } });
+      },
+      // Following replaces friend requests (owner, 2026-11-06): one tap, no approval.
+      toggleFollow: (personId) => {
+        const following = get().connections[personId] === 'connected';
+        const connections = { ...get().connections };
+        if (following) delete connections[personId];
+        else connections[personId] = 'connected';
+        set({ connections });
+        return !following;
       },
       book: (b) => {
         const booking: Booking = { ...b, id: `bk-${Date.now()}`, createdAt: Date.now() };

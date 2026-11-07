@@ -34,7 +34,7 @@ import { HomeBackdrop } from '@/features/home/HomeBackdrop';
 import { GirlPortals } from '@/features/home/Portals';
 import { ExploreDoors } from '@/features/home/Explore';
 import { DiscoverCategories } from '@/features/home/HomeActivities';
-import { RecapDoor, TodayStrip } from '@/features/engage/EngageUI';
+import { TodayStrip } from '@/features/engage/EngageUI';
 import { LiveStrip, useLiveFaces } from '@/features/live/LiveStrip';
 import { hasBackend } from '@/lib/supabase';
 import { isHappeningNow } from '@/lib/time';
@@ -44,6 +44,7 @@ import { useIntro } from '@/features/intro/introStore';
 import { ScrollReveal } from '@/motion/ScrollReveal';
 import { enter } from '@/motion/enter';
 import { spring } from '@/motion/tokens';
+import { useProgressiveCount } from '@/motion/useProgressiveCount';
 import { PressableScale } from '@/motion/PressableScale';
 import { useCityId, useStore } from '@/state/store';
 import { layout, radius, space } from '@/theme/tokens';
@@ -177,7 +178,8 @@ export default function Home() {
     };
   };
   const happenings = useMemo<Happening[]>(() => {
-    const list = [...(inGirl ? [] : content.sessions.map(fromSession)), ...content.events.map(fromEvent)];
+    // IRLY Girl never lists IRLY's mixed sessions or events (owner, 2026-11-07).
+    const list = inGirl ? [] : [...content.sessions.map(fromSession), ...content.events.map(fromEvent)];
     return list.sort(
       (a, b) => a.item.when.dayOffset - b.item.when.dayOffset || a.item.when.time.localeCompare(b.item.when.time),
     );
@@ -236,6 +238,8 @@ export default function Home() {
   const seeAllPeople = inGirl ? FEATURES.girlMatch : FEATURES.matchIrly;
 
   const shown = entries.filter((e) => e.enabled).map((e) => e.key);
+  // The top sections now, the rest a couple per frame: the first frame no longer builds the whole page.
+  const mounted = useProgressiveCount(shown.length, 3, 2, `${cityId}:${homeSpace}`);
 
   const section = (id: HomeSection): ReactNode => {
     switch (id) {
@@ -356,7 +360,7 @@ export default function Home() {
           <ScrollReveal scrollY={scrollY} style={styles.section}>
             <SectionHeader {...head('today', 'Today on IRLY', 'Real plans, today')} />
             <TodayStrip cityId={cityId} />
-            <RecapDoor />
+            {/* « My recap » lives on your profile now (features/profile/MyRecap). */}
           </ScrollReveal>
         ) : null;
       case 'explore':
@@ -513,7 +517,7 @@ export default function Home() {
         <Content width={contentW}>
           <View style={wide ? styles.columns : undefined}>
             <Column width={mainW}>
-              {shown
+              {(wide ? shown : shown.slice(0, mounted))
                 .filter((key) => !wide || (!SIDE_SECTIONS.has(key) && key !== 'footer'))
                 .map((key) => (
                   <Fragment key={key}>{section(key)}</Fragment>

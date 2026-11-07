@@ -15,7 +15,7 @@ import { GRID_GAP, gridColumns, tileWidth } from '@/features/match/grid';
 import { usePeopleMatch, type PeopleMatch } from '@/features/match/people';
 import { ProfilePhoto } from '@/features/match/ProfilePhoto';
 import { SoonPage } from '@/features/soon/SoonPage';
-import { setFriend, type FriendStatus } from '@/features/profile/member';
+import { setFollow } from '@/features/profile/member';
 import { useSignedLinks } from '@/features/server/media';
 import { useMyVerification } from '@/features/verify/verify';
 import { t as tx } from '@/i18n';
@@ -138,7 +138,7 @@ function Match() {
           How Match IRLY works
         </Text>
         <Text variant="bodyS" tone="secondary">
-          No swiping, no score on people. We compare what you both chose and show what you share. Hidden profiles, blocked members and your friends are never suggested.
+          No swiping, no score on people. We compare what you both chose and show what you share. Hidden profiles, blocked members and people you already follow each other with are never suggested.
         </Text>
         <View style={styles.signals}>
           {SIGNALS.map((s) => (
@@ -156,22 +156,23 @@ function Match() {
 function MatchCard({ person, photo, cityId, width, onSkip }: { person: PeopleMatch; photo?: string; cityId: CityId; width: number; onSkip: () => Promise<void> }) {
   const t = useTheme();
   const router = useRouter();
-  const [status, setStatus] = useState<FriendStatus>(person.friendStatus);
-  const [busy, setBusy] = useState<'friend' | 'skip' | null>(null);
+  // Friends are members who follow each other (no request): here you follow; following back makes you friends.
+  const [status, setStatus] = useState<'friends' | 'following' | 'none'>(person.friendStatus === 'friends' ? 'friends' : 'none');
+  const [busy, setBusy] = useState<'follow' | 'skip' | null>(null);
   const shared = sharedLabels(person).slice(0, 3);
   const elsewhere = person.cityId && person.cityId !== cityId ? CITIES[person.cityId as CityId]?.name : null;
   const handle = [person.username ? `@${person.username}` : null, elsewhere].filter(Boolean).join(' · ');
   const photos = photo ? [photo] : undefined;
 
-  const add = () => {
+  const follow = () => {
     if (busy) return;
-    setBusy('friend');
-    setFriend(person.id, 'add')
-      .then((s) => {
-        setStatus(s);
-        toast(s === 'friends' ? tx('You and {name} are friends', { name: person.firstName }) : tx('Request sent to {name}', { name: person.firstName }));
+    setBusy('follow');
+    setFollow(person.id, true)
+      .then(() => {
+        setStatus('following');
+        toast(tx('You follow {name}', { name: person.firstName }));
       })
-      .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
+      .catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'))
       .finally(() => setBusy(null));
   };
   const skip = () => {
@@ -220,10 +221,9 @@ function MatchCard({ person, photo, cityId, width, onSkip }: { person: PeopleMat
         </View>
       </PressableScale>
       <View style={styles.actions}>
-        {status === 'none' ? <Button label="Add friend" icon="userPlus" size="sm" loading={busy === 'friend'} onPress={add} style={{ flex: 1 }} /> : null}
-        {status === 'outgoing' ? <Button label="Request sent" icon="check" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
-        {status === 'incoming' ? <Button label="Accept request" icon="userCheck" size="sm" loading={busy === 'friend'} onPress={add} style={{ flex: 1 }} /> : null}
-        {status === 'friends' ? <Button label="Friends" icon="userCheck" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
+        {status === 'none' ? <Button label="Follow" icon="userPlus" size="sm" loading={busy === 'follow'} onPress={follow} style={{ flex: 1 }} /> : null}
+        {status === 'following' ? <Button label="You follow" icon="check" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
+        {status === 'friends' ? <Button label="You follow each other" icon="userCheck" size="sm" variant="secondary" disabled style={{ flex: 1 }} /> : null}
         <PressableScale haptic="tap" scaleTo={0.9} onPress={skip} disabled={busy === 'skip'} accessibilityRole="button" accessibilityLabel={tx('Not now')} style={[styles.skip, { backgroundColor: t.c.overlay, opacity: busy === 'skip' ? 0.5 : 1 }]}>
           <Icon name="x" size={16} color={t.c.text} />
         </PressableScale>

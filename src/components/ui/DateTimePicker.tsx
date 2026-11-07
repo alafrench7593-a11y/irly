@@ -1,9 +1,26 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, StyleSheet, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 // The gesture handler's ScrollView: inside a Sheet (itself a pan gesture) the wheels keep their own vertical scroll.
 import { ScrollView } from 'react-native-gesture-handler';
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
-import { addDays, cityParts, clockLabel, endsNextDay, nextDays, problemOf, type Clock, type DayKey, type When } from '@/features/create/when';
+import Animated, { FadeIn, useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
+import {
+  addDays,
+  cityParts,
+  clockIsPast,
+  clockLabel,
+  draftWhen,
+  durationLabel,
+  durationOf,
+  DURATIONS,
+  endsNextDay,
+  hourIsPast,
+  minuteStep,
+  nextDays,
+  problemOf,
+  withDuration,
+  type DayKey,
+  type When,
+} from '@/features/create/when';
 import { a11y, dateLocale, t as tx } from '@/i18n';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
@@ -12,6 +29,7 @@ import { spring } from '@/motion/tokens';
 import { font, radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { Button } from './Button';
+import { Chip } from './Controls';
 import { Glass } from './Glass';
 import { Icon } from './Icon';
 import { Sheet, SheetScrollView } from './Sheet';
@@ -25,6 +43,8 @@ const useVisibleRows = () => (useWindowDimensions().height < 740 ? 3 : 5);
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
 const pad = (n: number) => String(n).padStart(2, '0');
+/** The time at a tap (not during render). */
+const clockNow = () => Date.now();
 
 /** A day key as a date at noon UTC: formatted with timeZone UTC, it is that calendar day everywhere. */
 function dayDate(day: DayKey): Date {
@@ -46,16 +66,6 @@ export function whenText(w: When, utcOffset: number, now = Date.now()): string {
   const end = w.end ? ` – ${clockLabel(w.end)}${endsNextDay(w) ? ` ${tx('(next day)')}` : ''}` : '';
   return `${dayText(w.day, utcOffset, now)} · ${clockLabel(w.start)}${end}`;
 }
-
-/** A first choice to start from (never saved until confirmed): 19:00 today, or tomorrow once it is late. */
-function draftFor(utcOffset: number, now: number): When {
-  const p = cityParts(now, utcOffset);
-  const late = p.h * 60 + p.m > 18 * 60 + 30;
-  return { day: late ? addDays(p.day, 1) : p.day, start: { h: 19, m: 0 }, end: null };
-}
-
-/** The minute wheel moves in 5-minute steps: an older value (19:32) shows on the nearest step below. */
-const minuteIndex = (m: number) => Math.min(MINUTES.length - 1, Math.floor(m / 5));
 
 /* ───────── Field shown in forms ───────── */
 
@@ -87,6 +97,7 @@ export const WhenField = memo(function WhenField({ value, utcOffset, onPress, pl
       accessibilityRole="button"
       accessibilityLabel={a11y(label ?? placeholder)}
       accessibilityHint={a11y('Opens the date and time picker')}
+      testID="when-field"
     >
       <Animated.View style={[styles.field, { borderColor: invalid ? t.c.critical : girl ? t.c.lineStrong : t.c.line }, girl ? { boxShadow: t.shadow.card } : null, popStyle]}>
         <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
@@ -118,13 +129,24 @@ export const WhenField = memo(function WhenField({ value, utcOffset, onPress, pl
 
 /* ───────── Wheel ───────── */
 
-type WheelProps = { values: number[]; index: number; onIndex: (i: number) => void; label: string };
+type WheelProps = {
+  values: number[];
+  index: number;
+  onIndex: (i: number) => void;
+  label: string;
+  /** Rows already behind us (today): shown faded, still reachable; the sheet says why Confirm waits. */
+  isPast?: (v: number) => boolean;
+  testID?: string;
+};
 
 /**
- * A snapping wheel: the row in the band is the value. Scroll it, or tap a
- * row above or below to bring it in. A selection haptic on each step.
+ * A snapping wheel, as on iOS: the row in the band is the value. Scroll it,
+ * tap a row above or below to bring it in, or use the arrow keys (web) /
+ * swipe up and down (VoiceOver). A selection haptic on each step. Every row
+ * is a fixed 44 pt and the chosen one only changes weight and opacity: the
+ * wheel never shifts while it turns.
  */
-function Wheel({ values, index, onIndex, label }: WheelProps) {
+function Wheel({ values, index, onIndex, label, isPast, testID }: WheelProps) {
   const t = useTheme();
   const ref = useRef<ScrollView>(null);
   const shown = useRef(index);
@@ -133,13 +155,35 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
   const visible = useVisibleRows();
   const above = ROW * ((visible - 1) / 2);
 
+  // A row brought in by a tap, a key or from outside: the rows the scroll passes on its way are not choices
+  // (read as such, a passing row was sent back up and the wheel returned to it).
+  const target = useRef<{ i: number; at: number } | null>(null);
+  const aim = (i: number) => {
+    target.current = { i, at: Date.now() };
+    ref.current?.scrollTo({ y: i * ROW, animated: true });
+  };
+
   useEffect(() => () => {
     if (settle.current) clearTimeout(settle.current);
   }, []);
 
+  // Moved from outside (a day change, an edit opening on its value): the wheel follows without a haptic.
+  useEffect(() => {
+    if (index === shown.current) return;
+    shown.current = index;
+    aim(index);
+  }, [index]);
+
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = e.nativeEvent.contentOffset.y;
     const i = clamp(Math.round(y / ROW));
+    const aimed = target.current;
+    if (aimed && Date.now() - aimed.at < 800) {
+      // On its way to the aimed row: arrived, the wheel listens again.
+      if (Math.abs(y - aimed.i * ROW) <= 1) target.current = null;
+      return;
+    }
+    target.current = null;
     if (i !== shown.current) {
       shown.current = i;
       haptic('select');
@@ -149,19 +193,31 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
     if (Platform.OS === 'web') {
       if (settle.current) clearTimeout(settle.current);
       settle.current = setTimeout(() => {
-        if (Math.abs(y - i * ROW) > 1) ref.current?.scrollTo({ y: i * ROW, animated: true });
+        if (Math.abs(y - i * ROW) > 1) aim(i);
       }, 140);
     }
   };
   const go = (i: number) => {
     const j = clamp(i);
-    ref.current?.scrollTo({ y: j * ROW, animated: true });
+    aim(j);
     if (j !== shown.current) {
       shown.current = j;
       haptic('select');
       onIndex(j);
     }
   };
+  // Web (fold, desktop): the focused wheel turns with the arrow keys.
+  const keys =
+    Platform.OS === 'web'
+      ? ({
+          tabIndex: 0,
+          onKeyDown: (e: { key: string; preventDefault: () => void }) => {
+            if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+            e.preventDefault();
+            go(index + (e.key === 'ArrowDown' ? 1 : -1));
+          },
+        } as object)
+      : null;
 
   return (
     <View
@@ -170,8 +226,15 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
       accessibilityRole="adjustable"
       accessibilityLabel={a11y(label)}
       accessibilityValue={{ text: pad(values[index]) }}
+      // The web reads the value from aria-* (accessibilityValue.text is native only).
+      aria-valuetext={pad(values[index])}
+      aria-valuenow={values[index]}
+      aria-valuemin={values[0]}
+      aria-valuemax={values[values.length - 1]}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => go(index + (e.nativeEvent.actionName === 'increment' ? 1 : -1))}
+      testID={testID}
+      {...keys}
     >
       <View pointerEvents="none" style={[styles.band, { top: above }, t.flavor === 'girl' ? { backgroundColor: t.c.brandSoft, borderColor: t.c.lineStrong } : { backgroundColor: t.c.overlay, borderColor: t.c.line }]} />
       <ScrollView
@@ -182,6 +245,7 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
         decelerationRate="fast"
         scrollEventThrottle={16}
         onScroll={onScroll}
+        onScrollBeginDrag={() => (target.current = null)}
         nestedScrollEnabled
         // Opens on the value: contentOffset for the first frame (iOS), then once the rows are measured
         // (a scrollTo before that is lost and the wheel showed 00 under the band).
@@ -192,13 +256,20 @@ function Wheel({ values, index, onIndex, label }: WheelProps) {
       >
         {values.map((v, i) => {
           const d = Math.abs(i - index);
+          const past = isPast?.(v) ?? false;
           return (
             <PressableScale key={v} onPress={() => go(i)} haptic={false} scaleTo={0.94} style={styles.row} accessible={false}>
-              {/* Rows are a fixed 44 pt: larger text would spill out of them. */}
+              {/* One size for every row (only weight and opacity change): nothing moves while the wheel turns. */}
               <Text
                 raw
                 maxFontSizeMultiplier={1}
-                style={{ fontFamily: d === 0 ? font.bold : font.medium, fontSize: d === 0 ? 26 : 20, fontVariant: ['tabular-nums'], opacity: d === 0 ? 1 : d === 1 ? 0.55 : 0.28 }}
+                style={{
+                  fontFamily: d === 0 ? font.bold : font.medium,
+                  fontSize: 24,
+                  fontVariant: ['tabular-nums'],
+                  opacity: (d === 0 ? 1 : d === 1 ? 0.5 : 0.25) * (past ? 0.45 : 1),
+                  textDecorationLine: past && d === 0 ? 'line-through' : 'none',
+                }}
                 color={t.c.text}
               >
                 {pad(v)}
@@ -221,21 +292,33 @@ type PickerProps = {
   /** The city's offset from UTC, in hours (Dubai 4, Bali 8): every time shown and saved is the city's. */
   utcOffset: number;
   cityName: string;
-  /** Offer an end time (on by default). */
+  /** Offer a length (on by default): the end is the start plus a length, so it can never come before the start. */
   withEnd?: boolean;
   title?: string;
 };
 
+type Draft = { day: DayKey; start: When['start']; duration: number | null };
+const draftOf = (w: When): Draft => ({ day: w.day, start: w.start, duration: durationOf(w) });
+const whenOf = (d: Draft): When => withDuration({ day: d.day, start: d.start, end: null }, d.duration);
+
 /**
  * Date and time of an activity, in the city's time: a strip of the next 90
- * days, an hour wheel and a minute wheel (5-minute steps), an optional end.
- * Nothing changes until Confirm; a past time is explained, never moved.
+ * days, an hour wheel and a minute wheel (5-minute steps, as iOS does), and
+ * an optional length (30 min to 6 h) instead of a second clock, so the end
+ * always follows the start. Times already past today are faded on the
+ * wheels; choosing one is explained (never silently moved) and Confirm
+ * waits. Nothing changes until Confirm: closing the sheet keeps the field
+ * as it was.
+ *
+ * Why wheels drawn by IRLY and not the system picker: the same picker on
+ * iPhone, Android and the web (fold, desktop), the city's time whatever the
+ * phone's time zone (a system picker shows the phone's), and no native
+ * module to add to the app binary.
  */
 export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, value, onConfirm, utcOffset, cityName, withEnd = true, title = 'When' }: PickerProps) {
   const t = useTheme();
   const now = useNow(15_000);
-  const [draft, setDraft] = useState<When>(() => value ?? draftFor(utcOffset, now));
-  const [editing, setEditing] = useState<'start' | 'end'>('start');
+  const [draft, setDraft] = useState<Draft>(() => draftOf(value ?? draftWhen(utcOffset, now)));
   const strip = useRef<ScrollView>(null);
 
   // The picker has no text input: a keyboard left up by the form would hide the wheels and Confirm.
@@ -247,68 +330,53 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
   const [shown, setShown] = useState(visible);
   if (visible !== shown) {
     setShown(visible);
-    if (visible) {
-      setDraft(value ?? draftFor(utcOffset, now));
-      setEditing('start');
-    }
+    if (visible) setDraft(draftOf(value ?? draftWhen(utcOffset, now)));
   }
   // The next 90 days in the city; an older date being edited stays offered first.
   const today = cityParts(now, utcOffset).day;
   const upcoming = nextDays(now, utcOffset);
   const days = upcoming.includes(draft.day) || draft.day > today ? upcoming : [draft.day, ...upcoming];
 
-  const clock = editing === 'end' && draft.end ? draft.end : draft.start;
-  const setClock = useCallback(
-    (c: Partial<Clock>) => setDraft((w) => (editing === 'end' && w.end ? { ...w, end: { ...w.end, ...c } } : { ...w, start: { ...w.start, ...c } })),
-    [editing],
-  );
-  const problem = problemOf(draft, utcOffset, now);
-  const message =
-    problem === 'past'
-      ? tx('This time has already passed in {city}. Pick a later time.', { city: cityName })
-      : problem === 'end-before-start'
-        ? tx('The end must be after the start.')
-        : null;
+  const when = whenOf(draft);
+  const problem = problemOf(when, utcOffset, now);
+  const durations: number[] = draft.duration && !(DURATIONS as readonly number[]).includes(draft.duration) ? [...DURATIONS, draft.duration].sort((a, b) => a - b) : [...DURATIONS];
 
   const confirm = () => {
     // Checked again at the tap: the sheet may have stayed open past the chosen minute.
-    if (problemOf(draft, utcOffset, Date.now())) {
+    if (problemOf(when, utcOffset, clockNow())) {
       haptic('error');
       return;
     }
     haptic('success');
-    onConfirm(draft);
+    onConfirm(when);
     onClose();
-  };
-  const addEnd = () => {
-    const s = draft.start.h * 60 + draft.start.m + 120;
-    setDraft((w) => ({ ...w, end: { h: Math.floor(s / 60) % 24, m: s % 60 } }));
-    setEditing('end');
-  };
-  const removeEnd = () => {
-    setDraft((w) => ({ ...w, end: null }));
-    setEditing('start');
   };
 
   const selected = Math.max(0, days.indexOf(draft.day));
+  const status = problem === 'past'
+    ? tx('This time has already passed in {city}. Pick a later time.', { city: cityName })
+    : problem === 'end-before-start'
+      ? tx('The end must be after the start.')
+      : when.end
+        ? tx('Ends at {time}', { time: `${clockLabel(when.end)}${endsNextDay(when) ? ` ${tx('(next day)')}` : ''}` })
+        : tx('Starts at {time}, no end time', { time: clockLabel(when.start) });
 
   return (
     <Sheet visible={visible} onClose={onClose} title={title} subtitle={tx('{city} time', { city: cityName })} maxHeight={0.94}>
       {/* The title stays above and Cancel / Confirm below; only the middle scrolls when the screen is too short
           (iPhone SE, Safari with its bars, larger text), so neither is ever pushed off screen. */}
       <SheetScrollView style={styles.body} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <Animated.View key={whenText(draft, utcOffset, now)} entering={FadeIn.duration(160)} style={{ paddingHorizontal: space.gutter }}>
-          <Text variant="titleM" raw accessibilityLiveRegion="polite">
-            {whenText(draft, utcOffset, now)}
+        <View style={styles.summary}>
+          <Text variant="titleM" raw numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} accessibilityLiveRegion="polite" testID="when-summary">
+            {whenText(when, utcOffset, now)}
           </Text>
-        </Animated.View>
+        </View>
 
         <ScrollView
           ref={strip}
           horizontal
-          style={styles.stripView}
           showsHorizontalScrollIndicator={false}
-          // Room above and below: the chosen day springs up and glows, and the strip would cut it.
+          // Room above and below: the chosen day springs up and glows, inside the strip (nothing overlaps the wheels).
           contentContainerStyle={styles.strip}
           onLayout={(e) => strip.current?.scrollTo({ x: Math.max(0, selected * (PILL + 8) - e.nativeEvent.layout.width / 2 + PILL / 2), animated: false })}
         >
@@ -322,67 +390,11 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
                 <Text variant="caption" tone="tertiary" raw numberOfLines={1} style={styles.month}>
                   {head}
                 </Text>
-                <DayPill
-                  on={on}
-                  width={PILL}
-                  top={top}
-                  day={dd}
-                  label={fmt(d, { weekday: 'long', day: 'numeric', month: 'long' })}
-                  onPress={() => setDraft((w) => ({ ...w, day: d }))}
-                />
+                <DayPill on={on} width={PILL} top={top} day={dd} label={fmt(d, { weekday: 'long', day: 'numeric', month: 'long' })} onPress={() => setDraft((w) => ({ ...w, day: d }))} />
               </View>
             );
           })}
         </ScrollView>
-
-        {withEnd ? (
-          <View style={styles.tabs}>
-            <PressableScale onPress={() => setEditing('start')} haptic="select" accessibilityRole="tab" accessibilityState={{ selected: editing === 'start' }} style={{ flex: 1 }}>
-              <View style={[styles.tab, { borderColor: editing === 'start' ? t.c.brand : t.c.line }]}>
-                <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
-                <Text variant="caption" tone="secondary">
-                  Starts
-                </Text>
-                <Text variant="titleS" raw>
-                  {clockLabel(draft.start)}
-                </Text>
-              </View>
-            </PressableScale>
-            {draft.end ? (
-              <PressableScale onPress={() => setEditing('end')} haptic="select" accessibilityRole="tab" accessibilityState={{ selected: editing === 'end' }} style={{ flex: 1 }}>
-                <View style={[styles.tab, { borderColor: editing === 'end' ? t.c.brand : t.c.line }]}>
-                  <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
-                  <Text variant="caption" tone="secondary">
-                    {endsNextDay(draft) ? 'Ends (next day)' : 'Ends'}
-                  </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Text variant="titleS" raw>
-                      {clockLabel(draft.end)}
-                    </Text>
-                    <PressableScale onPress={removeEnd} haptic="tap" hitSlop={10} accessibilityRole="button" accessibilityLabel={a11y('Remove the end time')}>
-                      <Icon name="x" size={16} color={t.c.textTertiary} />
-                    </PressableScale>
-                  </View>
-                </View>
-              </PressableScale>
-            ) : (
-              <PressableScale onPress={addEnd} haptic="select" accessibilityRole="button" style={{ flex: 1 }}>
-                <View style={[styles.tab, { borderColor: t.c.lineStrong, borderStyle: 'dashed' }]}>
-                  <Glass level="thin" border={false} style={[StyleSheet.absoluteFill, { borderRadius: radius.md }]} />
-                  <Text variant="caption" tone="secondary">
-                    Optional
-                  </Text>
-                  <View style={styles.addEnd}>
-                    <Icon name="plus" size={16} color={t.c.brand} />
-                    <Text variant="titleS" tone="brand" numberOfLines={1} style={{ flexShrink: 1 }}>
-                      End time
-                    </Text>
-                  </View>
-                </View>
-              </PressableScale>
-            )}
-          </View>
-        ) : null}
 
         <View>
           <View style={styles.wheelTitles} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
@@ -394,26 +406,52 @@ export const DateTimePicker = memo(function DateTimePicker({ visible, onClose, v
               Minutes
             </Text>
           </View>
-          {/* key: switching Start/End rebuilds the wheels on that value. */}
-          <View key={editing} style={styles.wheels}>
-            <Wheel label="Hour" values={HOURS} index={clock.h} onIndex={(i) => setClock({ h: HOURS[i] })} />
-            <Text raw maxFontSizeMultiplier={1} style={[styles.colon, { fontFamily: font.bold, fontSize: 26, textAlign: 'center' }]} color={t.c.text}>
+          <View style={styles.wheels}>
+            <Wheel
+              label="Start hour"
+              testID="wheel-hour"
+              values={HOURS}
+              index={draft.start.h}
+              isPast={(h) => hourIsPast(draft.day, h, utcOffset, now)}
+              onIndex={(i) => setDraft((w) => ({ ...w, start: { ...w.start, h: HOURS[i] } }))}
+            />
+            <Text raw maxFontSizeMultiplier={1} style={[styles.colon, { fontFamily: font.bold, fontSize: 24, textAlign: 'center' }]} color={t.c.text}>
               :
             </Text>
-            <Wheel label="Minutes" values={MINUTES} index={minuteIndex(clock.m)} onIndex={(i) => setClock({ m: MINUTES[i] })} />
+            <Wheel
+              label="Start minutes"
+              testID="wheel-minute"
+              values={MINUTES}
+              index={MINUTES.indexOf(minuteStep(draft.start.m))}
+              isPast={(m) => clockIsPast(draft.day, { h: draft.start.h, m }, utcOffset, now)}
+              onIndex={(i) => setDraft((w) => ({ ...w, start: { ...w.start, m: MINUTES[i] } }))}
+            />
           </View>
         </View>
+
+        {withEnd ? (
+          <View style={styles.lengthBlock}>
+            <Text variant="overline" tone="tertiary" style={{ paddingHorizontal: space.gutter }}>
+              Duration
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.lengths} keyboardShouldPersistTaps="handled">
+              <Chip size="sm" label={tx('No end time')} selected={draft.duration === null} onPress={() => setDraft((w) => ({ ...w, duration: null }))} raw />
+              {durations.map((m) => (
+                <Chip key={m} size="sm" label={durationLabel(m)} selected={draft.duration === m} onPress={() => setDraft((w) => ({ ...w, duration: m }))} raw />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
       </SheetScrollView>
 
       <View style={styles.footer}>
-        {message ? (
-          <Animated.View entering={FadeIn.duration(160)} exiting={FadeOut.duration(120)} style={[styles.message, { backgroundColor: t.c.liveSoft }]}>
-            <Icon name="clock" size={16} color={t.c.critical} />
-            <Text variant="bodyS" tone="critical" style={{ flex: 1 }} raw accessibilityLiveRegion="polite">
-              {message}
-            </Text>
-          </Animated.View>
-        ) : null}
+        {/* One line, always there: the end time, or why Confirm waits. Its height never changes, so nothing jumps. */}
+        <View style={[styles.status, problem ? { backgroundColor: t.c.liveSoft } : null]} testID="when-status">
+          <Icon name={problem ? 'clock' : 'check'} size={16} color={problem ? t.c.critical : t.c.textSecondary} />
+          <Text variant="bodyS" tone={problem ? 'critical' : 'secondary'} style={{ flex: 1 }} numberOfLines={2} raw accessibilityLiveRegion="polite">
+            {status}
+          </Text>
+        </View>
 
         <View style={styles.actions}>
           <Button label="Cancel" variant="secondary" size="md" onPress={onClose} style={{ flex: 1 }} haptic="tap" />
@@ -468,16 +506,16 @@ const web = { contain: Platform.OS === 'web' ? ({ overscrollBehavior: 'contain' 
 
 const styles = StyleSheet.create({
   body: { flexShrink: 1 },
-  content: { gap: space[4], paddingBottom: space[3] },
-  strip: { paddingHorizontal: space.gutter, paddingTop: 4, paddingBottom: 24, gap: 8 },
-  // The glow's room below the strip overlaps the tabs instead of pushing them down.
-  stripView: { marginBottom: -16 },
+  content: { gap: space[3], paddingBottom: space[3] },
+  summary: { paddingHorizontal: space.gutter, minHeight: 30, justifyContent: 'center' },
+  strip: { paddingHorizontal: space.gutter, paddingTop: 4, paddingBottom: 12, gap: 8 },
   month: { height: 16, textTransform: 'capitalize' },
   longTop: { fontSize: 11, letterSpacing: -0.2 },
-  addEnd: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   wheelTitles: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingHorizontal: space.gutter, marginBottom: 4 },
   wheelTitle: { width: 96 },
-  colon: { width: 10 },
+  colon: { width: 12 },
+  lengthBlock: { gap: 8 },
+  lengths: { paddingHorizontal: space.gutter, gap: 8, paddingVertical: 4 },
   footer: { gap: space[3], paddingTop: space[3] },
   fieldIcon: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginLeft: -4 },
   field: {
@@ -491,12 +529,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pill: { height: 64, paddingHorizontal: 4, borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth * 2, alignItems: 'center', justifyContent: 'center', gap: 2, overflow: 'hidden' },
-  tabs: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter },
-  tab: { borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 8, gap: 2, minHeight: 56, justifyContent: 'center', overflow: 'hidden' },
   wheels: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: space.gutter },
   wheel: { width: 96 },
   band: { position: 'absolute', left: 0, right: 0, height: ROW, borderRadius: radius.sm, borderWidth: StyleSheet.hairlineWidth * 2 },
   row: { height: ROW, alignItems: 'center', justifyContent: 'center' },
-  message: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: space.gutter, padding: 12, borderRadius: radius.sm },
+  // Two lines of room at all times (the longest message, in French, on a 320 pt phone).
+  status: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: space.gutter, paddingHorizontal: 12, minHeight: 52, borderRadius: radius.sm },
   actions: { flexDirection: 'row', gap: 10, paddingHorizontal: space.gutter },
 });

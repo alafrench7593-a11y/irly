@@ -704,54 +704,57 @@ async function main() {
     return false;
   });
 
-  // ───────── Friends, end to end, with default settings (no shortcut): Wes and Xan are new ─────────
-  // Two real browsers: Uma (page) adds Wes (wesPage); nobody's "who can message me" is changed.
+  // ───────── Friends = mutual follows, end to end, default settings (no shortcut): Wes and Xan are new ─────────
+  // Since 2026-11-06 there is no friend request: following each other makes two members
+  // friends (migration 20261110500000), an unfollow by either ends it. Two real browsers:
+  // Uma (page) follows Wes (wesPage); nobody's "who can message me" is changed.
   const wes = await createWoman('Wes');
   const xan = await createWoman('Xan');
   const xanSb = createClient(URL_, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
   must(await xanSb.auth.signInWithPassword({ email: xan.email, password: PASSWORD }));
   const wesPage = await signedInPage(browser, wes);
   const friendRow = async (a, b) => (await sql(`select status, requested_by from public.friendships where user_a = least('${a}'::uuid, '${b}'::uuid) and user_b = greatest('${a}'::uuid, '${b}'::uuid)`))[0];
-  await step('Wes\'s profile: no chat with a stranger, it says how (Add friend), Message is disabled', async () => {
+  const follows = async (a, b) => (await sql(`select count(*)::int as n from public.follows where follower_id = '${a}' and followee_id = '${b}'`))[0].n;
+  await step('Wes\'s profile: Follow, no Add friend; Message disabled and it says how (follow each other)', async () => {
     await page.goto(`${BASE}/person/${wes.id}`);
-    await visible(page, 'Add friend', 20000);
-    await visible(page, 'Add Wes as a friend to send a message');
-    return page.getByRole('button', { name: 'Message', exact: true }).isDisabled();
+    await page.getByRole('button', { name: 'Follow', exact: true }).waitFor({ timeout: 20000 });
+    await visible(page, 'Follow each other to send Wes a message.');
+    const addFriend = await page.getByRole('button', { name: /Add friend|Accept friend/ }).count();
+    return addFriend === 0 && (await page.getByRole('button', { name: 'Message', exact: true }).isDisabled());
   });
-  await step('Wes has her notifications open; Uma taps Add friend twice → one request, one notification, "Request sent"', async () => {
+  await step('Wes has her notifications open; Uma taps Follow twice → one follow, one notification, "You follow", not friends yet', async () => {
     await wesPage.goto(`${BASE}/notifications`);
     await wesPage.waitForTimeout(1500);
-    const add = page.getByRole('button', { name: 'Add friend', exact: true });
-    await Promise.all([add.click(), add.click({ timeout: 2000 }).catch(() => undefined)]);
-    await visible(page, 'Request sent', 15000);
-    const row = await friendRow(uma.id, wes.id);
-    const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${wes.id}' and kind = 'FRIEND_REQUEST' and payload ->> 'from' = '${uma.id}'`);
-    const [rows] = await sql(`select count(*)::int as n from public.friendships where '${wes.id}' in (user_a, user_b)`);
-    return row?.status === 'pending' && row.requested_by === uma.id && n.n === 1 && rows.n === 1;
+    const follow = page.getByRole('button', { name: 'Follow', exact: true });
+    await Promise.all([follow.click(), follow.click({ timeout: 2000 }).catch(() => undefined)]);
+    await page.getByRole('button', { name: 'You follow', exact: true }).waitFor({ timeout: 15000 });
+    const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${wes.id}' and kind = 'NEW_FOLLOWER' and payload ->> 'from' = '${uma.id}'`);
+    const fr = await friendRow(uma.id, wes.id);
+    return (await follows(uma.id, wes.id)) === 1 && n.n === 1 && !fr;
   });
-  await step('… Wes sees "Uma wants to be friends" appear live in her open notifications, with Accept', async () => {
-    await visible(wesPage, 'Uma wants to be friends', 20000);
-    await wesPage.getByRole('button', { name: 'Accept', exact: true }).first().waitFor({ timeout: 10000 });
+  await step('… Wes sees "Uma started following you" appear live in her open notifications', async () => {
+    await visible(wesPage, 'Uma started following you', 20000);
     return true;
   });
-  await step('… still "Request sent" for Uma after a reload (from the server)', async () => {
+  await step('… still "You follow" for Uma after a reload (from the server); Message still waits for a follow back', async () => {
     await page.reload();
-    await visible(page, 'Request sent', 20000);
-    await visible(page, 'You can message Wes once they accept your request');
-    return true;
+    await page.getByRole('button', { name: 'You follow', exact: true }).waitFor({ timeout: 20000 });
+    await visible(page, 'Follow each other to send Wes a message.');
+    return page.getByRole('button', { name: 'Message', exact: true }).isDisabled();
   });
-  await step('Wes accepts in her app → recorded; Uma\'s open profile turns to Friends and Message opens, no reload', async () => {
-    await wesPage.getByRole('button', { name: 'Accept', exact: true }).first().click();
-    await visible(wesPage, 'You are now friends', 15000);
+  await step('Wes follows back from Uma\'s profile → friends on the server; Uma is told; Uma\'s open profile of Wes lets her write, no reload', async () => {
+    await wesPage.goto(`${BASE}/person/${uma.id}`);
+    await wesPage.getByRole('button', { name: 'Follow back', exact: true }).click({ timeout: 20000 });
+    await wesPage.getByRole('button', { name: 'You follow', exact: true }).waitFor({ timeout: 15000 });
+    for (let i = 0; i < 20 && (await friendRow(uma.id, wes.id))?.status !== 'accepted'; i++) await wesPage.waitForTimeout(500);
     const row = await friendRow(uma.id, wes.id);
-    if (row?.status !== 'accepted') throw new Error(`status ${row?.status}`);
-    await visible(page, 'Friends', 20000);
-    await page.getByRole('button', { name: 'Message', exact: true }).waitFor({ timeout: 15000 });
+    if (row?.status !== 'accepted') throw new Error(`friendship ${row?.status}`);
     for (let i = 0; i < 30; i++) {
       if (!(await page.getByRole('button', { name: 'Message', exact: true }).isDisabled())) break;
       await page.waitForTimeout(500);
     }
-    const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${uma.id}' and kind = 'FRIEND_ACCEPTED' and payload ->> 'from' = '${wes.id}'`);
+    const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${uma.id}' and kind = 'NEW_FOLLOWER'
+      and payload ->> 'from' = '${wes.id}' and payload ->> 'mutual' = 'true'`);
     return n.n === 1 && !(await page.getByRole('button', { name: 'Message', exact: true }).isDisabled());
   });
   let wesDm = null;
@@ -799,18 +802,16 @@ async function main() {
     const dm = await xanSb.rpc('open_direct', { p_user: wes.id });
     return msgs.length === 0 && fr.length === 0 && notes.length === 0 && Boolean(write.error) && Boolean(dm.error);
   });
-  await step('Xan asks Uma → Uma accepts from her notifications; then Uma unfriends from the profile → gone for both', async () => {
-    must(await xanSb.rpc('add_friend', { p_user: uma.id }));
-    await page.goto(`${BASE}/notifications`);
-    await visible(page, 'Xan wants to be friends', 20000);
-    await page.getByRole('button', { name: 'Accept', exact: true }).first().click();
+  await step('Xan follows Uma → Uma follows back from Xan\'s profile: friends; then Uma unfollows → no longer friends, Xan\'s follow stays', async () => {
+    must(await xanSb.rpc('follow_user', { p_user: uma.id }));
+    await page.goto(`${BASE}/person/${xan.id}`);
+    await page.getByRole('button', { name: 'Follow back', exact: true }).click({ timeout: 20000 });
     for (let i = 0; i < 20 && (await friendRow(uma.id, xan.id))?.status !== 'accepted'; i++) await page.waitForTimeout(500);
     if ((await friendRow(uma.id, xan.id))?.status !== 'accepted') return false;
-    await page.goto(`${BASE}/person/${xan.id}`);
-    await visible(page, 'Friends', 20000);
-    await page.getByRole('button', { name: /Remove Xan from your friends/ }).click();
-    await visible(page, 'Add friend', 20000);
-    return !(await friendRow(uma.id, xan.id)) && must(await xanSb.rpc('my_friends')).length === 0;
+    await page.getByRole('button', { name: 'You follow', exact: true }).click({ timeout: 15000 });
+    await page.getByRole('button', { name: 'Follow back', exact: true }).waitFor({ timeout: 20000 });
+    for (let i = 0; i < 20 && (await friendRow(uma.id, xan.id)); i++) await page.waitForTimeout(500);
+    return !(await friendRow(uma.id, xan.id)) && (await follows(xan.id, uma.id)) === 1 && (await follows(uma.id, xan.id)) === 0;
   });
   await wesPage.context().close();
 
@@ -837,16 +838,19 @@ async function main() {
     const { error } = await veraSb.from('profiles').update({ username: handle }).eq('id', vera.id);
     return free === false && Boolean(error);
   });
-  await step('Own profile: followers, following and friends match the server; the lists open', async () => {
+  await step('Own profile: Followers and Following match the server, no Friends counter; the lists open (Wes, a mutual follow, in both)', async () => {
     const [c] = await sql(`select (select count(*)::int from public.follows where followee_id = '${uma.id}') as followers,
-      (select count(*)::int from public.follows where follower_id = '${uma.id}') as following,
-      (select count(*)::int from public.friendships where status = 'accepted' and '${uma.id}' in (user_a, user_b)) as friends`);
+      (select count(*)::int from public.follows where follower_id = '${uma.id}') as following`);
     await page.goto(`${BASE}/profile`);
     await page.getByLabel(`${c.followers} Followers`).first().waitFor({ timeout: 20000 });
     await page.getByLabel(`${c.following} Following`).first().waitFor({ timeout: 5000 });
-    await page.getByLabel(`${c.friends} Friends`).first().click();
+    const friendsCounter = await page.getByLabel(/^\d+ Friends?$/).count();
+    await page.getByLabel(`${c.followers} Followers`).first().click();
     await visible(page, 'Wes', 15000);
-    return c.friends === 1;
+    await page.goto(`${BASE}/profile`);
+    await page.getByLabel(`${c.following} Following`).first().click({ timeout: 20000 });
+    await visible(page, 'Wes', 15000);
+    return friendsCounter === 0 && c.followers >= 2 && c.following >= 1;
   });
   await step('Posts tab: Uma\'s own post is on her profile, Vera\'s is not', async () => {
     await page.goto(`${BASE}/profile`);

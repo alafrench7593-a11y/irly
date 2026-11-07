@@ -78,6 +78,57 @@ export function whenFrom(startsAtMs: number, endsAtMs: number | null, utcOffset:
 
 export const clockLabel = (c: Clock) => `${pad(c.h)}:${pad(c.m)}`;
 
+/* ───────── The picker: a start and a length, never an end before the start ───────── */
+
+/** The lengths offered in the picker, in minutes (an end is always after the start). */
+export const DURATIONS = [30, 60, 90, 120, 180, 240, 360] as const;
+
+const minutesOf = (c: Clock) => c.h * 60 + c.m;
+const clockAt = (minutes: number): Clock => {
+  const x = ((minutes % 1440) + 1440) % 1440;
+  return { h: Math.floor(x / 60), m: x % 60 };
+};
+
+/** How long it lasts, in minutes (an end earlier than the start is the next morning), or null without an end. */
+export function durationOf(w: When): number | null {
+  if (!w.end) return null;
+  const d = minutesOf(w.end) - minutesOf(w.start);
+  return d > 0 ? d : d + 1440;
+}
+
+/** The same start with an end `minutes` later (null: no end). Past midnight, the end is the next day. */
+export function withDuration(w: When, minutes: number | null): When {
+  if (!minutes || minutes <= 0) return { ...w, end: null };
+  return { ...w, end: clockAt(minutesOf(w.start) + Math.min(minutes, 1435)) };
+}
+
+/** "45 min", "2 h", "1 h 30". */
+export function durationLabel(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (!h) return `${m} min`;
+  return m ? `${h} h ${pad(m)}` : `${h} h`;
+}
+
+/** The minute wheel moves in 5-minute steps: an older value (19:32) shows on the nearest step below. */
+export const minuteStep = (m: number) => Math.min(55, Math.floor(m / 5) * 5);
+
+/** True when this day and clock in the city is already behind `now`. */
+export const clockIsPast = (day: DayKey, clock: Clock, utcOffset: number, now: number) => toInstant(day, clock, utcOffset).getTime() < now;
+
+/** True when every 5-minute step of this hour has passed (the hour row is dimmed on the wheel). */
+export const hourIsPast = (day: DayKey, h: number, utcOffset: number, now: number) => clockIsPast(day, { h, m: 55 }, utcOffset, now);
+
+/**
+ * The picker's first choice when nothing is set yet: 19:00 today, or 19:00
+ * tomorrow once it is past 18:30 in the city. Never in the past.
+ */
+export function draftWhen(utcOffset: number, now: number): When {
+  const p = cityParts(now, utcOffset);
+  const late = p.h * 60 + p.m > 18 * 60 + 30;
+  return { day: late ? addDays(p.day, 1) : p.day, start: { h: 19, m: 0 }, end: null };
+}
+
 const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /**

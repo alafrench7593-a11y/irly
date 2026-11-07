@@ -90,3 +90,38 @@ export async function faceThumb(uri: string): Promise<ArrayBuffer> {
   const out = await manipulateAsync(first.uri, [{ resize: side }], { compress: 0.8, format: SaveFormat.JPEG });
   return imageBytes(out.uri);
 }
+
+/** Shortest side of a cover's small copy: sharp in a list's tiles and rows (up to ~120 pt on dense screens). */
+export const COVER_THUMB_SIDE = 360;
+
+/**
+ * The small copy of a cover (360 px on its short side, light JPEG, no
+ * metadata), made from the picked image on the phone: what lists, rows and
+ * small cards show instead of the 1280–1600 px photo.
+ */
+export async function coverThumb(uri: string): Promise<ArrayBuffer> {
+  const held: { release?: () => void }[] = [];
+  try {
+    const first = ImageManipulator.manipulate(uri);
+    held.push(first);
+    let ref = await first.renderAsync();
+    held.push(ref);
+    if (Math.min(ref.width, ref.height) > COVER_THUMB_SIDE) {
+      const resize = ref.width <= ref.height ? { width: COVER_THUMB_SIDE } : { height: COVER_THUMB_SIDE };
+      const second = ImageManipulator.manipulate(ref).resize(resize);
+      held.push(second);
+      ref = await second.renderAsync();
+      held.push(ref);
+    }
+    const out = await ref.saveAsync({ compress: 0.72, format: SaveFormat.JPEG });
+    return imageBytes(out.uri);
+  } finally {
+    for (const h of held) {
+      try {
+        h.release?.();
+      } catch {
+        // Already released: nothing to free.
+      }
+    }
+  }
+}

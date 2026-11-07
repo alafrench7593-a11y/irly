@@ -1,5 +1,7 @@
 import { DEMO } from '@/config/app';
-import { useServerUnread } from '@/features/server/chat';
+import { chatInSpace, useServerUnread } from '@/features/server/chat';
+import { localChatUniverse } from '@/features/messages/conversations';
+import { useAppSpace } from '@/state/appSpace';
 import { usePathname, useRouter } from 'expo-router';
 import { t as tx } from '@/i18n';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
@@ -35,8 +37,9 @@ export function useUnread(): number {
   const read = useStore((s) => s.read);
   const server = useServerUnread((s) => s.n);
   const account = useAccount();
-  // Signed in: real unread messages; the on-device chats only exist in the demo build.
-  const local = getCityContent(cityId).conversations.reduce((n, c) => n + (read[c.id] ? 0 : c.unread), 0);
+  const space = useAppSpace();
+  // Signed in: real unread messages; the on-device chats only exist in the demo build (those of this app space, as Messages lists them).
+  const local = getCityContent(cityId).conversations.reduce((n, c) => n + (read[c.id] || !chatInSpace({ universe: localChatUniverse(c), womenOnly: localChatUniverse(c) === 'girl' }, space) ? 0 : c.unread), 0);
   return (account ? server : 0) + local;
 }
 

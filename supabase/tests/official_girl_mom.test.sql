@@ -188,7 +188,7 @@ from (values ('girl_newcomers', 'newcomer'), ('girl_activity', 'interest:food'),
   ('girl_padel', 'activity:padel'), ('girl_trip', 'interest:travel'), ('girl_francaise', 'lang:fr')) as x(topic, tag);
 select pg_temp.check(not exists (select 1 from public.community_recommend('dubai', '{newcomer,activity:running,activity:padel,interest:travel,lang:fr}', 20) where topic like 'mom\_%'),
   'Jade, no « Family & kids »: no Mom community recommended');
-select pg_temp.check((select array_agg(topic order by n) from public.community_recommend('dubai', '{activity:running}', 20) with ordinality r(id, topic, name, tagline, emoji, girl_only, intro_first, members, is_member, score, city_id, n)
+select pg_temp.check((select array_agg(topic order by n) from public.community_recommend('dubai', '{activity:running}', 20) with ordinality r(id, topic, name, tagline, emoji, girl_only, intro_first, members, is_member, score, city_id, cover_path, n)
     where topic in ('running', 'girl_running')) = array['running', 'girl_running'],
   'Jade: on a tie IRLY''s community comes before its Girl twin');
 select public.join_community(:'girl_padel_id') as girl_padel_chat \gset

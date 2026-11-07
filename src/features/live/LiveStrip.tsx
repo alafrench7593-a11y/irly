@@ -55,7 +55,7 @@ export function LiveStrip() {
   return (
     <View style={{ gap: 12 }}>
       <View style={styles.head}>
-        <Text variant="titleM">{friendsLive ? 'Friends live now' : 'Live now'}</Text>
+        <Text variant="titleM">{friendsLive ? 'People you follow, live now' : 'Live now'}</Text>
         <PressableScale haptic="select" scaleTo={0.94} hitSlop={12} onPress={() => router.push('/live')} accessibilityRole="link" accessibilityLabel="Open IRL">
           <Text variant="label" tone="secondary">
             IRL

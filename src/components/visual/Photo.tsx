@@ -36,6 +36,8 @@ type Props = {
   tint?: { base: string; pulse: string };
   /** Always the key's first picture (the Dubai photo of a Dubai key), never another photo of the subject. */
   pinned?: boolean;
+  /** Above the fold (a page's header, the Home hero): fetched before the photos further down. Large headers (drift) always are. */
+  priority?: "low" | "normal" | "high";
 };
 
 const SCRIMS = {
@@ -65,6 +67,7 @@ export const Photo = memo(function Photo({
   drift,
   tint,
   pinned,
+  priority,
 }: Props) {
   // loading: breathing placeholder · done: photo shown, or the plain
   // destination colours if the network refused it (no endless pulse).
@@ -159,8 +162,10 @@ export const Photo = memo(function Photo({
           source={{ uri, cacheKey: storedKey(uri) }}
           style={StyleSheet.absoluteFill}
           contentFit="cover"
-          transition={{ duration: 520, effect: "cross-dissolve" }}
+          // Short: a photo already on the phone shows at once, a new one fades in without making anyone wait.
+          transition={{ duration: 240, effect: "cross-dissolve" }}
           cachePolicy="memory-disk"
+          priority={priority ?? (drift ? "high" : "normal")}
           recyclingKey={recyclingKey}
           blurRadius={blur}
           onLoad={() => setStatus("done")}

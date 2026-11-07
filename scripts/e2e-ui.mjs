@@ -277,8 +277,8 @@ async function main() {
     await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /^Notifications, \d+ new$/ }).first().waitFor({ timeout: 20000 });
   });
-  await check('Notifications lists it as unread', '/notifications', ['Zoe wants to be friends'], async () => {
-    await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).first().waitFor({ timeout: 15000 });
+  await check('Notifications lists it as unread', '/notifications', ['Zoe wants to follow you'], async () => {
+    await page.getByRole('button', { name: /Zoe wants to follow you, unread/ }).first().waitFor({ timeout: 15000 });
   });
   // Read means seen: a row on screen for 600 ms is read (seen.ts); a row below the fold is not.
   await verify('seen on screen, it is read on the server without a tap', async () => {
@@ -306,7 +306,7 @@ async function main() {
     if (left) throw new Error(`${left} still unread after scrolling past them`);
   });
   await check('tapping it opens Zoe’s profile', null, ['Zoe'], async () => {
-    await page.getByText('Zoe wants to be friends', { exact: true }).first().click();
+    await page.getByText('Zoe wants to follow you', { exact: true }).first().click();
     await page.waitForURL(new RegExp(`/person/${zoe}`), { timeout: 15000 });
   });
   await verify('that notification is still read on the server', async () => {
@@ -317,10 +317,10 @@ async function main() {
   await check('the bell no longer counts it', '/', [], async () => {
     await page.getByRole('button', { name: 'Notifications', exact: true }).first().waitFor({ timeout: 15000 });
   });
-  await check('after a reload it is still read', '/notifications', ['Zoe wants to be friends'], async () => {
+  await check('after a reload it is still read', '/notifications', ['Zoe wants to follow you'], async () => {
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.getByText('Zoe wants to be friends', { exact: true }).first().waitFor({ timeout: 15000 });
-    if (await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).count()) throw new Error('shown unread again');
+    await page.getByText('Zoe wants to follow you', { exact: true }).first().waitFor({ timeout: 15000 });
+    if (await page.getByRole('button', { name: /Zoe wants to follow you, unread/ }).count()) throw new Error('shown unread again');
   });
 
   // ── Activity: no start time is chosen for the member; the one they pick is saved in the city's time.
@@ -335,13 +335,25 @@ async function main() {
     await page.waitForTimeout(500);
     if (await next.isEnabled()) throw new Error('Next is enabled before a time is picked');
   });
+  // Turns a wheel of the date and time picker to a value, one step at a time, and checks it shows it.
+  const turnWheel = async (testId, target) => {
+    const wheel = page.getByTestId(testId).first();
+    await wheel.waitFor({ timeout: 10000 });
+    await wheel.focus();
+    for (let i = 0; i < 30; i++) {
+      const now = Number(await wheel.getAttribute('aria-valuenow'));
+      if (now === target) return;
+      await wheel.press(now < target ? 'ArrowDown' : 'ArrowUp');
+      await page.waitForTimeout(120);
+    }
+    throw new Error(`${testId} did not reach ${target} (shows ${await wheel.getAttribute('aria-valuenow')})`);
+  };
   await check('pick tomorrow 20:30 in the date and time picker, publish, land on the activity', null, ['Open chat'], async () => {
     await page.getByRole('button', { name: 'Pick a date and time' }).click();
     await page.getByRole('button').filter({ hasText: 'Tomorrow' }).first().click();
-    await page.getByLabel('Hour', { exact: true }).getByText('20', { exact: true }).click();
-    await page.waitForTimeout(500);
-    await page.getByLabel('Minutes', { exact: true }).getByText('30', { exact: true }).click();
-    await page.waitForTimeout(500);
+    // The picker's wheels (2026-11-06): each one turns with the arrow keys on the web and says its value (aria-valuenow).
+    await turnWheel('wheel-hour', 20);
+    await turnWheel('wheel-minute', 30);
     await page.getByRole('button', { name: 'Confirm', exact: true }).click();
     await page.getByRole('button', { name: 'Tomorrow · 20:30' }).waitFor({ timeout: 10000 });
     await page.getByRole('button', { name: 'Next', exact: true }).filter({ visible: true }).last().click();
@@ -421,7 +433,7 @@ async function main() {
       await page.waitForTimeout(3000);
       const text = await page.evaluate(() => document.body.innerText);
       const row = await page.locator(`[data-testid="community-${commId}"]`).count();
-      if (text.includes('Zoe wants to be friends') || text.includes(COMM) || text.includes('E2E Padel') || row || text.includes('Playdate')) throw new Error(`${route} shows Uma's data to Zoe`);
+      if (text.includes('Zoe wants to follow you') || text.includes(COMM) || text.includes('E2E Padel') || row || text.includes('Playdate')) throw new Error(`${route} shows Uma's data to Zoe`);
     }
   });
   await check('Zoe logs out', '/preferences', [], async () => {
@@ -432,9 +444,9 @@ async function main() {
   await check('signed in again: the account data comes back', '/communities?tab=mine', ['E2E Padel'], async () => {
     await mineRow().waitFor({ timeout: 15000 });
   });
-  await check('… and her read notification is still read', '/notifications', ['Zoe wants to be friends'], async () => {
-    await page.getByText('Zoe wants to be friends', { exact: true }).first().waitFor({ timeout: 15000 });
-    if (await page.getByRole('button', { name: /Zoe wants to be friends, unread/ }).count()) throw new Error('unread again after signing in');
+  await check('… and her read notification is still read', '/notifications', ['Zoe wants to follow you'], async () => {
+    await page.getByText('Zoe wants to follow you', { exact: true }).first().waitFor({ timeout: 15000 });
+    if (await page.getByRole('button', { name: /Zoe wants to follow you, unread/ }).count()) throw new Error('unread again after signing in');
   });
 
   // ── Delete the account through Settings: timed, gone on the server, signed out, cannot sign in again.

@@ -184,16 +184,19 @@ try {
   // ───── Friends, IRL, likes, comments ─────
   let postId;
   // Speed: real round trips against the live project, measured.
-  await step('Alice and Carl become friends (request, notification, accept, both sides agree)', async () => {
-    const sent = must(await timed('add friend (request)', () => A.sb.rpc('add_friend', { p_user: C.id })));
-    const notified = must(await C.sb.from('notifications').select('kind, payload')).some((n) => n.kind === 'FRIEND_REQUEST' && n.payload?.from === A.id);
-    const asked = must(await A.sb.rpc('public_profile', { p_user: C.id }))[0]?.friend_status === 'outgoing';
-    const accepted = must(await timed('add friend (accept)', () => C.sb.rpc('add_friend', { p_user: A.id }))) === 'accepted';
+  // Friends are members who follow each other (2026-11-06, migration 20261110500000): no request.
+  await step('Alice and Carl become friends by following each other (notification, follow back, both sides agree)', async () => {
+    must(await timed('follow', () => A.sb.rpc('follow_user', { p_user: C.id })));
+    const notified = must(await C.sb.from('notifications').select('kind, payload')).some((n) => n.kind === 'NEW_FOLLOWER' && n.payload?.from === A.id);
+    const one = must(await A.sb.rpc('public_profile', { p_user: C.id }))[0];
+    const notYet = one?.i_follow === true && one?.friend_status !== 'friends';
+    must(await timed('follow back', () => C.sb.rpc('follow_user', { p_user: A.id })));
     const both = must(await A.sb.rpc('public_profile', { p_user: C.id }))[0]?.friend_status === 'friends' && must(await C.sb.rpc('public_profile', { p_user: A.id }))[0]?.friend_status === 'friends';
-    const told = must(await A.sb.from('notifications').select('kind, payload')).some((n) => n.kind === 'FRIEND_ACCEPTED' && n.payload?.from === C.id);
-    // A second tap changes nothing and never fails.
-    const again = must(await A.sb.rpc('add_friend', { p_user: C.id }));
-    return sent === 'pending' && notified && asked && accepted && both && told && again === 'accepted';
+    const told = must(await A.sb.from('notifications').select('kind, payload')).some((n) => n.kind === 'NEW_FOLLOWER' && n.payload?.from === C.id && n.payload?.mutual === true);
+    // A second tap changes nothing and never fails: still one follow each way.
+    must(await A.sb.rpc('follow_user', { p_user: C.id }));
+    const [f] = await sql(`select count(*)::int as n from public.follows where (follower_id, followee_id) in (('${A.id}', '${C.id}'), ('${C.id}', '${A.id}'))`);
+    return notified && notYet && both && told && f.n === 2;
   });
   await step('a friend request cannot be sent in someone else\'s name', () => denied(A.sb.from('friendships').insert({ user_a: B.id < C.id ? B.id : C.id, user_b: B.id < C.id ? C.id : B.id, requested_by: B.id })));
   await step('Alice posts an IRL moment for friends', async () => {
@@ -568,6 +571,26 @@ try {
     if (suggested.length) throw new Error(`${suggested.length} groups still suggested`);
     return true;
   });
+  // Owner decisions of 2026-11-06 (migrations 20261108200000 and 20261109000000): IRLY's official
+  // communities are in Dubai only; IRLY Girl (general) and IRLY Mom Community are retired (kept for
+  // their members, never offered) and replaced by the Girl and Mom lists.
+  await step('official communities: Dubai only; IRLY Girl general and IRLY Mom Community retired, Girl and Mom lists in place', async () => {
+    const elsewhere = await sql(`select count(*)::int as n from public.communities where official and parent_id is null and deleted_at is null
+      and retired_at is null and city_id <> 'dubai'`);
+    const retired = await sql(`select topic from public.communities where official and parent_id is null and deleted_at is null
+      and retired_at is null and topic in ('girls', 'moms')`);
+    const girl = await sql(`select topic, name from public.communities where official and city_id = 'dubai' and parent_id is null and deleted_at is null
+      and retired_at is null and topic in ('girl_newcomers', 'girl_activity', 'girl_sport', 'girl_running', 'girl_padel', 'girl_trip', 'girl_francaise')`);
+    const mom = await sql(`select topic, name from public.communities where official and city_id = 'dubai' and parent_id is null and deleted_at is null
+      and retired_at is null and topic in ('mom_expat', 'mom_activity', 'mom_sport', 'mom_running', 'mom_padel', 'mom_trip', 'mom_francaise')`);
+    const names = Object.fromEntries([...girl, ...mom].map((r) => [r.topic, r.name]));
+    if (elsewhere[0].n) throw new Error(`${elsewhere[0].n} official communities outside Dubai`);
+    if (retired.length) throw new Error(`still offered: ${retired.map((r) => r.topic).join(', ')}`);
+    return girl.length === 7 && mom.length === 7 && names.girl_newcomers === 'Girl Expat' && names.mom_expat === 'Mom Expat'
+      && names.mom_running === 'Mom Running Club' && names.mom_francaise === 'Les Mamans françaises à Dubaï';
+  });
+  // Group chats were removed with the groups: none can be made.
+  await step('no group chats: create_group is refused', async () => Boolean((await A.sb.rpc('create_group', { p_title: `E2E crew ${run}`, p_members: [C.id] })).error));
   // Help & Questions lived in the Help community's groups (removed): the step runs only where they still exist.
   const helpV = groupsV2 && ((await A.sb.rpc('help_groups', { p_city: 'dubai' })).data ?? []).length > 0;
   if (helpV) await step('Help & Questions: ask in Visa, another member finds it by keywords and answers', async () => {

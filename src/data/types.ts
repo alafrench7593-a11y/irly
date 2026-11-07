@@ -335,6 +335,19 @@ export type Conversation = {
   lastSenderName?: string;
   /** Server chats: archived by me (my list only). */
   archived?: boolean;
+  /**
+   * The chat's universe (features/universe): a community's or an activity's.
+   * null: a private chat, one chat shown in every universe. undefined: not
+   * known (a server without it): shown everywhere, as before.
+   */
+  universe?: 'mixte' | 'girl' | 'mom' | 'network' | null;
+  /** Women-only (which side of IRLY Network a Network chat is on). */
+  womenOnly?: boolean;
+  /** What the chat's picture needs when it has no photo of its own (community topic, category; activity sub-category and place). */
+  refTopic?: string;
+  refCategory?: string;
+  refSub?: string;
+  refPlace?: string;
 };
 
 /** Everything IRLY knows about one city. */

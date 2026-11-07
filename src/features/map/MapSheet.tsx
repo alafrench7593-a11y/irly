@@ -182,7 +182,7 @@ function label(m: MapMarkerData) {
     case 'event':
       return 'Event';
     case 'group':
-      return 'Group';
+      return 'Community';
     case 'place':
       return 'Place';
     case 'live':
@@ -294,7 +294,7 @@ function HalfContent({ marker }: { marker: MapMarkerData }) {
         ) : marker.type === 'activity' || marker.type === 'event' ? (
           <JoinButton id={marker.id} full style={{ flex: 1 }} />
         ) : marker.type === 'group' ? (
-          <JoinButton id={marker.id} membership label="JOIN GROUP" full style={{ flex: 1 }} />
+          <JoinButton id={marker.id} membership label="JOIN COMMUNITY" full style={{ flex: 1 }} />
         ) : marker.hero ? (
           <Button label="Open" iconRight="arrowUpRight" size="lg" full onPress={() => marker.hero && openHero(marker.hero)} />
         ) : null}

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { DEMO } from '@/config/app';
 import { useAccount } from '@/features/auth/account';
 import { refreshPhotoOverrides } from '@/features/photo/overrides';
-import type { Bucket } from '@/features/server/media';
+import { coverFiles, uploadCoverThumb, type Bucket } from '@/features/server/media';
 import { changed, type SyncKind } from '@/features/server/sync';
 import { cleanImage } from '@/lib/media';
 import { supabase } from '@/lib/supabase';
@@ -318,12 +318,15 @@ export async function replaceCommunityCover(id: string, uri: string | null, reas
     const uid = session.session?.user.id;
     if (!uid) throw new Error('Sign in first');
     path = `${uid}/${Date.now()}.${img.ext}`;
-    const { error } = await supabase.storage.from('activity-photos').upload(path, img.body, { contentType: img.contentType });
-    if (error) throw new Error('Could not upload the photo');
+    const [{ error }] = await Promise.all([supabase.storage.from('activity-photos').upload(path, img.body, { contentType: img.contentType }), uploadCoverThumb(path, uri)]);
+    if (error) {
+      supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
+      throw new Error('Could not upload the photo');
+    }
   }
   const { error } = await supabase.rpc('admin_set_community_cover', { p_id: id, p_path: path, p_reason: reason });
   if (error) {
-    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    if (path) await supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
     throw new Error(error.message);
   }
   changed('communities', 'inbox');
@@ -390,8 +393,12 @@ async function uploadStaffPhoto(bucket: 'activity-photos' | 'app-photos', uri: s
   if (!uid) throw new Error('Sign in first');
   const path = `${uid}/${Date.now()}.${img.ext}`;
   onStep?.('uploading');
-  const { error } = await supabase.storage.from(bucket).upload(path, img.body, { contentType: img.contentType });
-  if (error) throw new Error('Could not upload the photo');
+  // A cover's small copy (lists, rows) goes up at the same time.
+  const [{ error }] = await Promise.all([supabase.storage.from(bucket).upload(path, img.body, { contentType: img.contentType }), bucket === 'activity-photos' ? uploadCoverThumb(path, uri) : undefined]);
+  if (error) {
+    if (bucket === 'activity-photos') supabase.storage.from(bucket).remove(coverFiles(path)).catch(() => undefined);
+    throw new Error('Could not upload the photo');
+  }
   onStep?.('saving');
   return path;
 }
@@ -408,7 +415,7 @@ export async function replaceItemPhoto(kind: 'community' | 'activity', id: strin
   if (!uri) onStep?.('saving');
   const { error } = await supabase.rpc('admin_set_photo', { p_kind: kind, p_id: id, p_path: path, p_old: null, p_reason: reason });
   if (error) {
-    if (path) await supabase.storage.from('activity-photos').remove([path]).catch(() => undefined);
+    if (path) await supabase.storage.from('activity-photos').remove(coverFiles(path)).catch(() => undefined);
     throw new Error(error.message);
   }
   changed(kind === 'community' ? 'communities' : 'activities', 'inbox');

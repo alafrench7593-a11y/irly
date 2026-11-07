@@ -20,6 +20,10 @@ import { Photo } from '@/components/visual/Photo';
 import { CITIES } from '@/data/destinations';
 import { useActivityThumbs } from '@/features/server/covers';
 import { displayCommunityName } from '@/features/community/name';
+import { CommunityThumb } from '@/features/community/CommunityThumb';
+import { useCommunityFacts } from '@/features/community/facts';
+import { belongsToSpace } from '@/features/universe/universe';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
 
 export type SearchHit = { kind: 'activity' | 'community' | 'person' | 'place' | 'area' | 'city' | 'category'; id: string; title: string; subtitle: string | null; cityId: string | null; areaId: string | null; startsAt: number | null };
 
@@ -31,7 +35,10 @@ export type SearchHit = { kind: 'activity' | 'community' | 'person' | 'place' | 
  */
 export async function searchServer(q: string, cityId: string | null, limit = 30, girl = false): Promise<SearchHit[]> {
   if (!supabase || q.trim().length < 1) return [];
-  const { data, error } = await supabase.rpc(girl ? 'search_all_girl' : 'search_all', { p_q: q.trim(), p_city: cityId, p_limit: limit });
+  // Mixte: search_all for the Mixte space only (20261110700000): no IRLY Girl, Mom or women-only Network community or plan.
+  const { data, error } = girl
+    ? await supabase.rpc('search_all_girl', { p_q: q.trim(), p_city: cityId, p_limit: limit })
+    : await rpcInSpace(supabase, 'search_all', { p_q: q.trim(), p_city: cityId, p_limit: limit }, 'mixte');
   if (error) {
     if (girl) return [];
     // Unreachable is not "nothing found".
@@ -109,7 +116,12 @@ function ResultsList({ q, cityId, girl, only, cell }: { q: string; cityId: strin
   }, [q, cityId, uid, seen, girl]);
 
   const current = uid && q.trim().length >= 2 && res.key === `${q}|${cityId}|${uid}`;
-  const found = current ? res.hits : [];
+  const hits = current ? res.hits : [];
+  // A community found shows its photo, and only in its own app (universe.ts): a woman's IRLY Girl or
+  // Mom communities never show in the Mixte search (shown once their universe is known).
+  const communities = useCommunityFacts(hits.filter((h) => h.kind === 'community').map((h) => h.id));
+  const appSpace = girl ? 'girl' : 'mixte';
+  const found = hits.filter((h) => h.kind !== 'community' || (communities.facts[h.id] && belongsToSpace(communities.facts[h.id], appSpace)));
   const shown = only ? found.filter((h) => only.includes(h.kind)) : found;
   // An activity found shows its photo: the one saved on it, else the app's photo of its subject (the same as on its page).
   const thumbs = useActivityThumbs(found.filter((h) => h.kind === 'activity').map((h) => h.id));
@@ -147,6 +159,17 @@ function ResultsList({ q, cityId, girl, only, cell }: { q: string; cityId: strin
               <GlassLayer radius={radius.lg} />
               {h.kind === 'activity' && thumbs[h.id] ? (
                 <Photo visual={{ photo: thumbs[h.id].photo, uri: thumbs[h.id].uri ?? undefined }} light={(CITIES[h.cityId as keyof typeof CITIES] ?? CITIES[cityId as keyof typeof CITIES] ?? CITIES.dubai).light} width={120} style={styles.thumb} recyclingKey={`srv-${h.id}`} />
+              ) : h.kind === 'community' && communities.facts[h.id] ? (
+                // Its own photo, else IRLY's photo of its subject: the same as on its page.
+                <CommunityThumb
+                  id={h.id}
+                  name={communities.facts[h.id].name ?? h.title}
+                  coverPath={communities.facts[h.id].coverPath}
+                  topic={communities.facts[h.id].topic}
+                  categoryId={communities.facts[h.id].categoryId}
+                  light={(CITIES[h.cityId as keyof typeof CITIES] ?? CITIES[cityId as keyof typeof CITIES] ?? CITIES.dubai).light}
+                  size={44}
+                />
               ) : (
                 <View style={[styles.icon, { backgroundColor: t.c.brandSoft }]}>
                   <Icon name={ICON[h.kind]} size={18} color={t.c.text} />

@@ -8,7 +8,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
-import { openNotification } from '@/features/notifications/open';
+import { openNotification, readNotification } from '@/features/notifications/open';
 import { dateLocale, useLang, type Lang } from '@/i18n';
 import { supabase } from '@/lib/supabase';
 
@@ -338,9 +338,10 @@ function tapped(response: Notifications.NotificationResponse | null): Tapped | n
  */
 async function openTapped(t: Tapped, uid: string | undefined): Promise<void> {
   if (t.id && uid && supabase) {
-    const { data, error } = await supabase.from('notifications').select('id, kind, payload, created_at').eq('id', t.id).maybeSingle();
-    if (!error && data) {
-      await openNotification({ id: data.id, kind: data.kind, payload: data.payload ?? {}, createdAt: Date.parse(data.created_at) }, 'push');
+    // (With its universe: it opens in its own app space, IRLY Girl or Mixte.)
+    const n = await readNotification(t.id);
+    if (n) {
+      await openNotification(n, 'push');
       return;
     }
   }

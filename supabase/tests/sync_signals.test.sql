@@ -39,7 +39,8 @@ insert into public.friendships (user_a, user_b, requested_by, status, accepted_a
   ('5e000000-0000-0000-0000-0000000000a3', '5e000000-0000-0000-0000-0000000000a4', '5e000000-0000-0000-0000-0000000000a3', 'accepted', now());
 insert into public.follows (follower_id, followee_id) values
   ('5e000000-0000-0000-0000-0000000000a1', '5e000000-0000-0000-0000-0000000000a2'),
-  ('5e000000-0000-0000-0000-0000000000a2', '5e000000-0000-0000-0000-0000000000a1');
+  ('5e000000-0000-0000-0000-0000000000a2', '5e000000-0000-0000-0000-0000000000a1')
+on conflict do nothing; -- friends already follow each other (20261110500000_irly_follow_mutual)
 
 do $$
 declare

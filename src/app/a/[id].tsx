@@ -2,6 +2,7 @@ import { useLocalSearchParams, type ErrorBoundaryProps } from 'expo-router';
 import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { NotFound } from '@/components/layout/NotFound';
 import { ActivityDetailView } from '@/features/activity/ActivityDetailView';
+import { DemoGirlPage } from '@/features/girl/DemoGirlPage';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoPlanScreen } from '@/features/girl/DemoScreens';
 import { hasBackend } from '@/lib/supabase';
@@ -21,5 +22,5 @@ export default function ActivityRoute() {
   // Opened from IRLY Girl, the page wears the Girl look (cosmetic only, see theme/space).
   // The demonstration build's IRLY Girl plans (example content, nothing saved).
   // The demo has no server: any other activity link is gone (never a sign-in wall that leads nowhere).
-  return <SpaceFlavor>{isDemoId(id) ? <DemoPlanScreen id={id} /> : hasBackend ? <ActivityDetailView id={id} /> : <NotFound title="This activity is no longer available" />}</SpaceFlavor>;
+  return <SpaceFlavor>{isDemoId(id) ? <DemoGirlPage><DemoPlanScreen id={id} /></DemoGirlPage> : hasBackend ? <ActivityDetailView id={id} /> : <NotFound title="This activity is no longer available" />}</SpaceFlavor>;
 }

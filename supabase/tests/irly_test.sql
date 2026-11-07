@@ -1030,6 +1030,9 @@ values (least('00000000-0000-0000-0000-00000000000a'::uuid, '00000000-0000-0000-
 on conflict (user_a, user_b) do update set status = 'accepted';
 insert into public.safety_settings (user_id, profile_visibility) values ('00000000-0000-0000-0000-00000000000c', 'everyone')
 on conflict (user_id) do update set profile_visibility = 'everyone';
+-- B and C connected above (IRLY Network): friends follow each other since
+-- 20261110500000_irly_follow_mutual. This check starts from no follow.
+delete from public.follows where follower_id = '00000000-0000-0000-0000-00000000000b' and followee_id = '00000000-0000-0000-0000-00000000000c';
 select pg_temp.as_user('00000000-0000-0000-0000-00000000000b');
 select public.follow_user('00000000-0000-0000-0000-00000000000c');
 select public.follow_user('00000000-0000-0000-0000-00000000000c');
@@ -1673,7 +1676,7 @@ select pg_temp.check((select bool_and(ok) from (select
     coalesce(official or members >= lead(members) over (partition by official order by n), true)
     and coalesce(not official or sort <= lead(sort) over (partition by official order by n), true)
     and coalesce(official >= lead(official) over (order by n), true) as ok
-  from (select l.*, t.sort from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, n)
+  from (select l.*, t.sort from public.community_list('dubai') with ordinality l(id, name, tagline, category_id, girl_only, members, is_member, posts_week, city_id, official, topic, emoji, created_at, cover_path, n)
     left join public.community_topics t on t.topic = l.topic) l
   where city_id = 'dubai') x), 'ranking: main communities come official first (in the team''s order), then most members first');
 select pg_temp.check(not exists (select 1 from public.community_list('dubai') l join public.communities c on c.id = l.id where c.parent_id is not null), 'ranking: no group among main communities');

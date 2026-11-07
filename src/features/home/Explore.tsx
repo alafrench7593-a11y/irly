@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/Text';
 import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import { useGirlEntry } from '@/features/profile/girlEntry';
+import { useAppSpace } from '@/state/appSpace';
 import { GIRL_DOOR, MOM_DOOR } from '@/features/girl/doors';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -33,9 +34,11 @@ export const ExploreDoors = memo(function ExploreDoors() {
   const t = useTheme();
   const router = useRouter();
   const woman = useGirlEntry();
+  // Already in IRLY Girl: its own door would lead nowhere.
+  const inGirl = useAppSpace() === 'girl';
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-      {DOORS.filter((d) => !d.women || woman).map((d, i) => (
+      {DOORS.filter((d) => (!d.women || woman) && !(inGirl && d.route === GIRL_DOOR)).map((d, i) => (
         <Animated.View key={d.route} entering={enter.slide(Math.min(i, 6))}>
         <PressableScale haptic="select" scaleTo={0.97} onPress={() => router.push(d.route as never)} style={[styles.door, { backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]} accessibilityLabel={`${tx(d.title)}. ${tx(d.line)}`}>
           <GlassLayer radius={radius.xl} />

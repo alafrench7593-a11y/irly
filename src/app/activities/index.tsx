@@ -23,6 +23,7 @@ import { enter } from '@/motion/enter';
 import { useCityId } from '@/state/store';
 import { layout, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { useAppSpace } from '@/state/appSpace';
 
 /** Space between tiles, and the narrowest a tile gets before the row takes one fewer. */
 const GAP = 12;
@@ -49,7 +50,9 @@ export default function Activities() {
   const city = CITIES[cityId];
   const content = getCityContent(cityId);
   const [kind, setKind] = useState<ActivityKind | null>(null);
-  const upcoming = [...content.sessions].sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time));
+  // IRLY Girl never lists IRLY's mixed sessions (its plans are on its own pages).
+  const inGirl = useAppSpace() === 'girl';
+  const upcoming = [...(inGirl ? [] : content.sessions)].sort((a, b) => a.when.dayOffset - b.when.dayOffset || a.when.time.localeCompare(b.when.time));
   const shown = kind ? upcoming.filter((s) => s.kind === kind) : upcoming;
   const { split, selected, select } = useSessionSplit(shown.map((s) => s.id));
   // Tiles a row from the width this page has: two on a narrow outer screen (three would break « Networking »

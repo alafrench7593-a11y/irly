@@ -247,8 +247,14 @@ async function main() {
     await page.goto(`${BASE}/c/${clubId}`);
     await page.getByRole('button', { name: 'Join the community' }).click({ timeout: 25000 });
     await page.getByText('Open chat', { exact: true }).first().click({ timeout: 20000 });
-    await page.waitForURL(/\/messages\//, { timeout: 25000 });
-    return true;
+    // The chat opens inside the community's Chat tab (2026-11-06): same page, the Chat tab
+    // selected, its composer ready; it no longer leaves for /messages/….
+    const chatTab = page.getByTestId('space-tab-chat');
+    await page.waitForFunction(() => document.querySelector('[data-testid="space-tab-chat"]')?.getAttribute('aria-selected') === 'true', null, { timeout: 25000 });
+    await page.getByPlaceholder(/Message/).first().waitFor({ timeout: 25000 });
+    const onPage = new URL(page.url()).pathname === `/c/${clubId}`;
+    const tabs = await page.getByRole('tab').allTextContents();
+    return onPage && (await chatTab.count()) === 1 && tabs.map((x) => x.trim()).join('|') === 'Posts|Chat|Activities|Members';
   });
   await step('… Lea writes in the community chat → Mia receives it; Max cannot read it', async () => {
     const body = `Who plays Saturday? ${run}`;
@@ -379,13 +385,30 @@ async function main() {
     }
     return false;
   });
-  await step('Maman: the official community is « IRLY Mom Community », once, and opening Maman created no community', async () => {
+  // IRLY Mom Community was retired on 2026-11-06 (migration 20261109000000): the Mom
+  // communities are now IRLY's seven, once each in Dubai, and the retired one is listed
+  // to its own members only (Lea is not one).
+  const MOM_OFFICIAL = {
+    mom_expat: 'Mom Expat',
+    mom_activity: 'Mom Activité',
+    mom_sport: 'Mom Sport',
+    mom_running: 'Mom Running Club',
+    mom_padel: 'Mom Padel Club',
+    mom_trip: 'Mom Trip',
+    mom_francaise: 'Les Mamans françaises à Dubaï',
+  };
+  await step('Maman: the official Mom communities are IRLY\'s seven, once each; IRLY Mom Community is retired and not offered; opening Maman created no community', async () => {
     await page.getByText('Mom communities', { exact: true }).first().waitFor({ timeout: 25000 });
-    await page.getByRole('button', { name: 'Open IRLY Mom Community', exact: true }).first().waitFor({ timeout: 25000 });
-    const official = await sql(`select name from public.communities where official and topic = 'moms' and city_id = 'dubai' and parent_id is null and deleted_at is null`);
+    for (const name of Object.values(MOM_OFFICIAL)) await page.getByRole('button', { name: `Open ${name}`, exact: true }).first().waitFor({ timeout: 25000 });
+    const retiredShown = await page.getByRole('button', { name: 'Open IRLY Mom Community', exact: true }).count();
+    const official = await sql(`select topic, name from public.communities where official and city_id = 'dubai' and parent_id is null and deleted_at is null
+      and retired_at is null and (topic = 'moms' or topic like 'mom\\_%') and topic <> 'mom_network' order by topic`);
+    const [{ live }] = await sql(`select count(*)::int as live from public.communities where official and topic = 'moms' and city_id = 'dubai' and parent_id is null
+      and deleted_at is null and retired_at is null`);
     const [{ made }] = await sql(`select count(*)::int as made from public.communities
       where created_at >= '${momsFrom}' and (official or created_by in ('${lea.id}', '${mia.id}', '${max.id}'))`);
-    return official.length === 1 && official[0].name === 'IRLY Mom Community' && made === 0;
+    const byTopic = Object.fromEntries(official.map((r) => [r.topic, r.name]));
+    return retiredShown === 0 && live === 0 && official.length === 7 && Object.entries(MOM_OFFICIAL).every(([t, n]) => byTopic[t] === n) && made === 0;
   });
   await step('Maman: Max (a man) gets no mom from the server, and so no child age group', async () => {
     const r = await max.sb.rpc('girl_circle', { p_destination: 'dubai', p_moms: true });

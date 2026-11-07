@@ -1,7 +1,7 @@
 import { AreaPicker } from '@/components/ui/AreaPicker';
 import { t as tx, a11y } from '@/i18n';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Alert, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Animated, { FadeIn, LinearTransition, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -16,10 +16,16 @@ import { uuid } from '@/lib/uuid';
 import { LiveVideo } from '@/features/live/LiveVideo';
 import { LivePhoto } from '@/features/live/LivePhoto';
 import { useAccount } from '@/features/auth/account';
-import { addFriend, deleteServerIrl, editServerIrl, postServerIrl, settleLive, useFriends, useServerIrl } from '@/features/server/social';
+import { bumpIrl, deleteServerIrl, editServerIrl, postServerIrl, settleLive, useFriends, useServerIrl, type ServerIrlPost } from '@/features/server/social';
 import { outcomeOf, type LivePhase } from '@/features/live/livePublish';
-import { useDrafts } from '@/features/posts/posts';
-import { ActionBar } from '@/components/social/ActionBar';
+import { createPost, MAX_PHOTOS, pickPhotos, removePost, useDrafts, type DraftMedia } from '@/features/posts/posts';
+import { PostCard, PostCardSkeleton, type PostOption } from '@/features/posts/PostCard';
+import { PostMedia } from '@/features/posts/PostMedia';
+import { createActivityFromPost, useActivityFromPost } from '@/features/posts/activityFromPost';
+import { useMyCommunities } from '@/features/community/data';
+import { setFollow } from '@/features/profile/member';
+import { belongsToSpace } from '@/features/universe/universe';
+import { Image } from 'expo-image';
 import { openReport } from '@/features/moderation/reportStore';
 import { hideItem, useEngagement } from '@/features/server/engage';
 import { track } from '@/lib/analytics';
@@ -59,8 +65,11 @@ import { GlassLayer } from '@/components/ui/GlassLayer';
 /** Narrowest a post card gets in the wide feed's columns (its actions still fit on one row). */
 const POST_MIN = 300;
 
+/** The time now, read in handlers (taps, answers), never while rendering. */
+const clock = () => Date.now();
+
 // Who sees a moment, as stored (a private one is not "Everyone").
-const VISIBILITY_LABEL: Record<string, string> = { everyone: 'Everyone', friends: 'Friends', close_friends: 'Close friends', community: 'Communities', private: 'Only me' };
+const VISIBILITY_LABEL: Record<string, string> = { everyone: 'Everyone', friends: 'Mutual follows', close_friends: 'Close circle', community: 'Communities', private: 'Only me' };
 
 export default function LiveScreen() {
   const cityId = useCityId();
@@ -189,18 +198,18 @@ function LiveCard({ live }: { live: Live }) {
 }
 
 /**
- * « What are you doing right now? »: the door to going live, at the top of
- * the feed, so it never floats over the Match IRLY button. The whole card opens
- * the words; the camera opens the photo-first composer.
+ * « Write something… » and « Publish »: the door to publishing, at the top
+ * of the feed, so it never floats over the Match IRLY button. The whole card
+ * opens the composer; the camera opens it photo first.
  */
 function GoLiveCard({ onText, onPhoto }: { onText: () => void; onPhoto: () => void }) {
   const t = useTheme();
   const name = useStore((s) => s.profile.name) || tx('You');
   const photo = useStore((s) => s.profile.photoUri);
   return (
-    <View style={[styles.goLive, { marginHorizontal: space.gutter, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent' }]}>
+    <View style={[styles.goLive, { marginHorizontal: space.gutter, backgroundColor: 'transparent', overflow: 'hidden', borderColor: 'transparent', boxShadow: t.shadow.card }]}>
       <GlassLayer radius={radius.xl} />
-      <PressableScale haptic="select" scaleTo={0.98} onPress={onText} style={styles.goLiveMain} accessibilityLabel={tx('Go live: what are you doing right now?')}>
+      <PressableScale haptic="select" scaleTo={0.98} onPress={onText} style={styles.goLiveMain} accessibilityRole="button" accessibilityLabel={tx('Publish: write something')}>
         <Avatar name={name} hue={262} size={44} photo={photo} />
         <View style={{ flex: 1, gap: 2 }}>
           <View style={styles.meta}>
@@ -209,13 +218,19 @@ function GoLiveCard({ onText, onPhoto }: { onText: () => void; onPhoto: () => vo
               Go live
             </Text>
           </View>
-          <Text variant="body" tone="secondary" numberOfLines={2}>
-            What are you doing right now?
+          <Text variant="body" tone="secondary" numberOfLines={1}>
+            Write something…
           </Text>
         </View>
       </PressableScale>
-      <PressableScale haptic="select" scaleTo={0.9} onPress={onPhoto} accessibilityLabel="Post a photo" style={[styles.goLiveBtn, { backgroundColor: t.c.brand }]}>
-        <Icon name="camera" size={18} color={t.c.onBrand} />
+      <PressableScale haptic="select" scaleTo={0.9} onPress={onPhoto} accessibilityLabel="Post a photo" style={[styles.goLiveBtn, { backgroundColor: t.c.overlay }]}>
+        <Icon name="camera" size={18} color={t.c.text} />
+      </PressableScale>
+      <PressableScale haptic="select" scaleTo={0.94} onPress={onText} accessibilityRole="button" accessibilityLabel={tx('Publish')} style={[styles.publish, { backgroundColor: t.c.brand }]} testID="live-publish">
+        <Icon name="send" size={15} color={t.c.onBrand} />
+        <Text variant="label" color={t.c.onBrand}>
+          Publish
+        </Text>
       </PressableScale>
     </View>
   );
@@ -301,7 +316,7 @@ function FriendsLiveNow({ stacked = false }: { stacked?: boolean }) {
   return (
     <View style={{ gap: 10 }}>
       <Text variant="overline" tone="secondary" style={{ paddingHorizontal: space.gutter }}>
-        {friends.length ? 'Friends live now' : 'Live around you'}
+        {friends.length ? 'People you follow, live now' : 'Live around you'}
       </Text>
       {/* Wide, in the side panel: one under the other instead of a rail. */}
       {stacked ? (
@@ -317,27 +332,44 @@ function FriendsLiveNow({ stacked = false }: { stacked?: boolean }) {
 
 /**
  * Signed in: what members are posting right now, live. Friends' posts
- * first; add someone as a friend from their post.
+ * first; add someone as a friend from their post. The feed mixes the space's
+ * Lives and the community posts published to the Live: one record each (a
+ * community post here IS the community's: same likes, comments, removal).
  */
 function ServerFeed({ cityId, columns = 1 }: { cityId: CityId; columns?: number }) {
-  const t = useTheme();
   const { narrow } = useCityFilter(cityId);
-  const { posts, refresh: reloadFeed } = useServerIrl(cityId);
+  const { posts, refresh: reloadFeed, loaded } = useServerIrl(cityId);
   const { friends, refresh } = useFriends();
-  const router = useRouter();
-  const eng = useEngagement('irl_post', posts.map((p) => p.id));
-  const now = useNow();
+  const girlSpace = useAppSpace() === 'girl';
+  const myCommunities = useMyCommunities(cityId);
+  const memberOf = useMemo(() => new Set(myCommunities.map((c) => c.id)), [myCommunities]);
+  const irlIds = useMemo(() => posts.filter((p) => p.source !== 'community').map((p) => p.id), [posts]);
+  const communityIds = useMemo(() => posts.filter((p) => p.source === 'community').map((p) => p.id), [posts]);
+  const engIrl = useEngagement('irl_post', irlIds);
+  const engCommunity = useEngagement('community_post', communityIds);
+  const signedIn = Boolean(useAccount());
   // Hidden or being removed: gone from the list at once.
   const [gone, setGone] = useState<Set<string>>(() => new Set());
-  const drop = (id: string, on: boolean) =>
-    setGone((g) => {
-      const next = new Set(g);
-      if (on) next.add(id);
-      else next.delete(id);
-      return next;
-    });
+  const drop = useCallback(
+    (id: string, on: boolean) =>
+      setGone((g) => {
+        const next = new Set(g);
+        if (on) next.add(id);
+        else next.delete(id);
+        return next;
+      }),
+    [],
+  );
   const [editing, setEditing] = useState<{ id: string; body: string } | null>(null);
   const visible = posts.filter((p) => !gone.has(p.id));
+  if (signedIn && !loaded) {
+    return (
+      <View style={[styles.list, { marginBottom: space[6] }]} accessibilityLabel={tx('Loading')}>
+        <PostCardSkeleton />
+        <PostCardSkeleton media={false} />
+      </View>
+    );
+  }
   if (!visible.length && !narrow) return null;
   const sorted = [...visible].sort((a, b) => Number(b.friend) - Number(a.friend) || b.createdAt - a.createdAt);
   return (
@@ -354,95 +386,22 @@ function ServerFeed({ cityId, columns = 1 }: { cityId: CityId; columns?: number 
       <Masonry columns={columns}>
         {sorted.map((p, i) => {
           const f = friends.find((x) => x.userId === p.authorId);
-          const status = p.mine ? 'mine' : p.friend ? 'friend' : f?.status === 'pending' ? (f.incoming ? 'incoming' : 'sent') : 'none';
+          const status = p.mine ? 'mine' : p.friend ? 'friend' : p.asIrly ? 'irly' : f?.status === 'pending' ? (f.incoming ? 'incoming' : 'sent') : 'none';
           return (
-            <Animated.View key={p.id} entering={enter.rise(i)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', boxShadow: t.shadow.card }]}>
-              <GlassLayer radius={radius.xl} />
-              <View style={styles.head}>
-                {/* The author's face and name open their profile. */}
-                <PressableScale haptic="select" scaleTo={0.94} onPress={() => router.push(`/person/${p.authorId}`)} accessibilityLabel={p.mine ? 'My profile' : tx('Open {name}’s profile', { name: p.firstName })}>
-                  <Avatar name={p.firstName} hue={(p.authorId.charCodeAt(0) * 37) % 360} size={40} userId={p.authorId} />
-                </PressableScale>
-                <View style={{ flex: 1 }}>
-                  <Text variant="titleS" onPress={() => router.push(`/person/${p.authorId}`)} raw>{p.mine ? tx('You') : p.firstName}</Text>
-                  <View style={styles.meta}>
-                    <LiveDot size={6} color={t.c.live} />
-                    <Text variant="caption" tone="secondary" numberOfLines={1}>
-                      {placeLabel(cityId, p.cityId, p.areaId, p.placeName)} · {timeAgo(Math.max(1, Math.round((now - p.createdAt) / 60000)))} · {tx(VISIBILITY_LABEL[p.visibility as string] ?? 'Everyone')}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              {/* The frame follows the media's own shape; one broken media shows its own retry, never breaks the feed. */}
-              {p.mediaKind === 'video' && p.mediaUrl ? (
-                <LiveVideo fit url={p.mediaUrl} poster={p.posterUrl} seconds={p.seconds} ratio={p.mediaRatio} onRetry={reloadFeed} style={styles.media} />
-              ) : p.mediaKind ? (
-                <LivePhoto
-                  url={p.mediaUrl}
-                  kind={p.mediaKind}
-                  ratio={p.mediaRatio}
-                  onRetry={reloadFeed}
-                  style={styles.media}
-                  liked={eng.get(p.id).liked}
-                  onLike={() => {
-                    if (!eng.signedIn) {
-                      toast('Sign in to interact', 'user', 'brand');
-                      return;
-                    }
-                    // A double tap only ever likes, even before the like state has loaded.
-                    eng.like(p.id, true).catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
-                  }}
-                />
-              ) : null}
-              {p.body ? (
-                <Text variant={p.mediaKind ? 'body' : 'titleM'} raw>
-                  {p.body}
-                </Text>
-              ) : null}
-              {p.activityId ? (
-                <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={p.activityTitle ? tx('Join {title}', { title: p.activityTitle }) : tx('Join the activity')}>
-                  <Icon name="calendar" size={18} color={t.c.text} />
-                  <Text variant="titleS" numberOfLines={1} style={{ flex: 1 }}>
-                    {p.activityTitle ?? 'Activity'}
-                  </Text>
-                  <Text variant="label">Join</Text>
-                </PressableScale>
-              ) : null}
-              <ActionBar target={{ type: 'irl_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} />
-              {status === 'mine' ? (
-                <View style={styles.actions}>
-                  <Button label="Edit" variant="secondary" size="sm" icon="edit" onPress={() => setEditing({ id: p.id, body: p.body })} />
-                  <Button
-                    label="Remove"
-                    variant="secondary"
-                    size="sm"
-                    icon="x"
-                    onPress={() => {
-                      drop(p.id, true);
-                      deleteServerIrl(p.id).catch((e) => {
-                        drop(p.id, false);
-                        toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live');
-                      });
-                    }}
-                  />
-                </View>
-              ) : status === 'friend' ? (
-                <View style={styles.actions}>
-                  <Text variant="caption" tone="tertiary" style={{ flex: 1 }}>
-                    Friend
-                  </Text>
-                  <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
-                </View>
-              ) : (
-                // Anyone's post can be hidden or reported, not only friends'.
-                <View style={styles.actions}>
-                  <View style={{ flex: 1 }}>
-                    <FriendButton status={status} name={p.firstName} authorId={p.authorId} onDone={refresh} />
-                  </View>
-                  <PostMenu id={p.id} authorId={p.authorId} onHide={(on) => drop(p.id, on)} />
-                </View>
-              )}
-            </Animated.View>
+            <LiveFeedCard
+              key={p.id}
+              p={p}
+              index={i}
+              cityId={cityId}
+              status={status}
+              eng={p.source === 'community' ? engCommunity : engIrl}
+              member={Boolean(p.community && memberOf.has(p.community.id))}
+              girlSpace={girlSpace}
+              onHide={drop}
+              onEdit={setEditing}
+              onRetry={reloadFeed}
+              onFriend={refresh}
+            />
           );
         })}
       </Masonry>
@@ -450,6 +409,123 @@ function ServerFeed({ cityId, columns = 1 }: { cityId: CityId; columns?: number 
     </View>
   );
 }
+
+type FeedEng = ReturnType<typeof useEngagement>;
+
+/** One post of the Live: a Live (irl_posts) or a community post published to the Live. */
+const LiveFeedCard = memo(function LiveFeedCard({
+  p,
+  index,
+  cityId,
+  status,
+  eng,
+  member,
+  girlSpace,
+  onHide,
+  onEdit,
+  onRetry,
+  onFriend,
+}: {
+  p: ServerIrlPost;
+  index: number;
+  cityId: CityId;
+  status: 'mine' | 'friend' | 'irly' | 'incoming' | 'sent' | 'none';
+  eng: FeedEng;
+  /** A community post: the member belongs to its community (she can create an activity there). */
+  member: boolean;
+  girlSpace: boolean;
+  onHide: (id: string, on: boolean) => void;
+  onEdit: (v: { id: string; body: string }) => void;
+  onRetry: () => void;
+  onFriend: () => void;
+}) {
+  const router = useRouter();
+  const fromCommunity = p.source === 'community';
+  const type = fromCommunity ? ('community_post' as const) : ('irl_post' as const);
+  const fromPost = useActivityFromPost(p.id);
+  const like = useCallback(() => {
+    if (!eng.signedIn) {
+      toast('Sign in to interact', 'user', 'brand');
+      return;
+    }
+    // A double tap only ever likes, even before the like state has loaded.
+    eng.like(p.id, true).catch((e) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live'));
+  }, [eng, p.id]);
+  const remove = useCallback(() => {
+    onHide(p.id, true);
+    (fromCommunity ? removePost(p.id).then(bumpIrl) : deleteServerIrl(p.id)).catch((e) => {
+      onHide(p.id, false);
+      toast(e instanceof Error ? e.message : 'Could not remove', 'x', 'live');
+    });
+  }, [fromCommunity, onHide, p.id]);
+  const hide = useCallback(() => {
+    onHide(p.id, true);
+    hideItem({ type, id: p.id })
+      .then(() => toast('Hidden from your feed', 'eye', 'brand'))
+      .catch(() => {
+        onHide(p.id, false);
+        toast('Could not hide this post', 'x', 'live');
+      });
+  }, [onHide, p.id, type]);
+  const options = useMemo<PostOption[]>(() => {
+    const o: PostOption[] = [];
+    // An activity from the post: in its community (members), or, for a Live, on its own in this space.
+    if (!p.activityId && !fromPost && (fromCommunity ? member : true))
+      o.push({
+        key: 'activity',
+        label: 'Create an activity',
+        icon: 'calendar',
+        onPress: () => createActivityFromPost({ id: p.id, body: p.body, community: p.community ? { id: p.community.id, name: p.community.name, cityId: p.cityId, girlOnly: girlSpace } : null, girlSpace }),
+      });
+    if (status === 'mine') {
+      o.push(
+        fromCommunity
+          ? { key: 'edit', label: 'Edit post', icon: 'edit', onPress: () => router.push({ pathname: '/post/new', params: { edit: p.id } }) }
+          : { key: 'edit', label: 'Edit', icon: 'edit', onPress: () => onEdit({ id: p.id, body: p.body }) },
+      );
+      o.push({ key: 'remove', label: 'Remove', icon: 'x', destructive: true, onPress: remove });
+    } else {
+      o.push({ key: 'hide', label: 'Hide this post', icon: 'eye', onPress: hide });
+      o.push({ key: 'report', label: 'Report this post', icon: 'flag', onPress: () => openReport({ kind: type, id: p.id, userId: p.authorId }) });
+    }
+    return o;
+  }, [p, fromPost, fromCommunity, member, girlSpace, status, router, onEdit, remove, hide, type]);
+  const meta = fromCommunity
+    ? status === 'friend' ? tx('You follow each other') : null
+    : [placeLabel(cityId, p.cityId, p.areaId, p.placeName), tx(VISIBILITY_LABEL[p.visibility as string] ?? 'Everyone'), status === 'friend' ? tx('You follow each other') : null].filter(Boolean).join(' · ');
+  // The frame follows the media's own shape; one broken media shows its own retry, never breaks the feed.
+  const media = fromCommunity ? (
+    p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} liked={eng.get(p.id).liked} onLike={like} /> : null
+  ) : p.mediaKind === 'video' && p.mediaUrl ? (
+    <LiveVideo fit url={p.mediaUrl} poster={p.posterUrl} seconds={p.seconds} ratio={p.mediaRatio} onRetry={onRetry} style={styles.media} />
+  ) : p.mediaKind ? (
+    <LivePhoto url={p.mediaUrl} kind={p.mediaKind} ratio={p.mediaRatio} onRetry={onRetry} style={styles.media} liked={eng.get(p.id).liked} onLike={like} />
+  ) : null;
+  const link = p.activityId
+    ? { id: p.activityId, title: p.activityTitle ?? tx('Activity'), cta: tx('Join') }
+    : fromPost
+      ? { id: fromPost.id, title: fromPost.title, cta: tx('Open') }
+      : null;
+  return (
+    <PostCard
+      index={index}
+      author={{ id: p.authorId, name: p.firstName, mine: p.mine, asIrly: p.asIrly }}
+      createdAt={p.createdAt}
+      community={p.community ?? null}
+      meta={meta}
+      live
+      body={p.body}
+      richId={fromCommunity ? p.id : null}
+      bigText={!fromCommunity}
+      media={media}
+      link={link}
+      target={{ type, id: p.id, title: p.body.slice(0, 60) }}
+      eng={eng}
+      options={options}
+      footer={status === 'none' || status === 'incoming' || status === 'sent' ? <FollowButton name={p.firstName} authorId={p.authorId} onDone={onFriend} /> : null}
+    />
+  );
+});
 
 /** Corrects the text of my Live (photo, video and place stay). */
 function EditLive({ value, onClose }: { value: { id: string; body: string } | null; onClose: () => void }) {
@@ -493,27 +569,30 @@ function EditLive({ value, onClose }: { value: { id: string; body: string } | nu
 }
 
 /**
- * Add friend → (sending) → Request sent; Accept friend → (sending) → Friends.
+ * Follow → (sending) → You follow. Friends are members who follow each other
+ * (no friend request any more): following back makes two members friends.
  * The button only changes once the server has answered: a failure leaves it
  * as it was, and a double tap never sends twice.
  */
-function FriendButton({ status, name, authorId, onDone }: { status: 'incoming' | 'sent' | 'none'; name: string; authorId: string; onDone: () => void }) {
+function FollowButton({ name, authorId, onDone }: { name: string; authorId: string; onDone: () => void }) {
   const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
   return (
     <Button
-      label={status === 'incoming' ? 'Accept friend' : status === 'sent' ? 'Request sent' : 'Add friend'}
+      label={done ? 'You follow' : 'Follow'}
       size="sm"
-      variant={status === 'sent' ? 'secondary' : 'primary'}
-      icon={status === 'sent' ? 'check' : 'plus'}
-      disabled={status === 'sent'}
+      variant={done ? 'secondary' : 'primary'}
+      icon={done ? 'check' : 'plus'}
+      disabled={done}
       loading={busy}
       onPress={() => {
-        if (busy) return;
+        if (busy || done) return;
         setBusy(true);
-        addFriend(authorId)
-          .then((r) => {
+        setFollow(authorId, true)
+          .then(() => {
             haptic('success');
-            toast(r === 'accepted' ? tx('You and {name} are friends', { name }) : tx('Request sent to {name}', { name }), 'user', 'brand');
+            setDone(true);
+            toast(tx('You follow {name}', { name }), 'user', 'brand');
             onDone();
           })
           .catch((e) => toast(e instanceof Error ? e.message : 'Could not send', 'x', 'live'))
@@ -523,48 +602,19 @@ function FriendButton({ status, name, authorId, onDone }: { status: 'incoming' |
   );
 }
 
-/** Not for me / report, on someone else's post. */
-function PostMenu({ id, authorId, onHide }: { id: string; authorId: string; onHide: (on: boolean) => void }) {
-  const t = useTheme();
-  return (
-    <View style={{ flexDirection: 'row', gap: 14 }}>
-      <PressableScale
-        onPress={() => {
-          onHide(true);
-          hideItem({ type: 'irl_post', id })
-            .then(() => toast('Hidden from your feed', 'eye', 'brand'))
-            .catch(() => {
-              onHide(false);
-              toast('Could not hide this post', 'x', 'live');
-            });
-        }}
-        haptic="select"
-        hitSlop={8}
-        accessibilityLabel="Hide this post"
-      >
-        <Icon name="eye" size={18} color={t.c.textTertiary} />
-      </PressableScale>
-      <PressableScale
-        onPress={() => openReport({ kind: 'irl_post', id, userId: authorId })}
-        haptic="select"
-        hitSlop={8}
-        accessibilityLabel="Report this post"
-      >
-        <Icon name="flag" size={18} color={t.c.textTertiary} />
-      </PressableScale>
-    </View>
-  );
-}
-
 /**
- * Two doors into the same composer: « Post IRL » leads with the photo,
- * « Share what I'm doing » with the words.
+ * « Write something… »: the Live's composer. Words, photos or a video, and
+ * optionally one of her communities of this universe: then it is published
+ * as that community's post AND shown in this Live for 24 hours (one record,
+ * community_posts.in_live). Without a community it is a Live (its area, who
+ * sees it, « anyone can join »).
  */
 function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?: 'post' | 'now'; onClose: () => void }) {
   const t = useTheme();
   const cityId = useCityId();
   // The space this Live is posted in: it shows only in that space's Live.
-  const scope = useAppSpace() === 'girl' ? 'irly_girl' : 'irly';
+  const space_ = useAppSpace();
+  const scope = space_ === 'girl' ? 'irly_girl' : 'irly';
   const city = CITIES[cityId];
   const post = useLiveStore((s) => s.post);
   const liveDraft = useDrafts((s) => s.byKey.live);
@@ -577,7 +627,15 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const area = startArea(city, picked);
   const where = area ?? city.id;
   const [media, setMedia] = useState<LiveMedia | undefined>();
+  // More photos after the first (a post in a community takes up to 10).
+  const [extra, setExtra] = useState<string[]>([]);
   const uri = media?.uri;
+  // Her communities of this universe only (Mixte app: Mixte and mixed Network; IRLY Girl: Girl, Mom, women-only Network).
+  const mine = useMyCommunities(cityId);
+  const communities = useMemo(() => mine.filter((c) => belongsToSpace({ girlOnly: c.girlOnly, topic: c.topic, categoryId: c.categoryId }, space_)), [mine, space_]);
+  const [communityId, setCommunityId] = useState<string | null>(null);
+  const community = communities.find((c) => c.id === communityId) ?? null;
+  const photos = media?.kind === 'photo' ? [media.uri, ...extra] : [];
   // The picked photo (or the video's poster) is prepared while the member writes: Post then only uploads.
   const [prep, setPrep] = useState<{ uri: string; data: PreparedLive } | null>(null);
   const ready = prep && prep.uri === uri ? prep.data : null;
@@ -643,6 +701,8 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     if (!mounted.current) return;
     setText('');
     setMedia(undefined);
+    setExtra([]);
+    setCommunityId(null);
     setChosen(null);
     setOpenUp(false);
     setProgress(null);
@@ -653,11 +713,12 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
    * The member gives up on a try that got no answer (closed the composer,
    * discarded it): the server either has it (it stays: said so) or makes
    * sure it never lands (its files and activity go). Unreachable: settled at
-   * the next start of the app, never guessed.
+   * the next start of the app, never guessed. A community post tried again
+   * with its id is the same post (createPost): nothing to settle.
    */
   const giveUp = () => {
     const a = attempt.current;
-    if (!a?.unknown) return;
+    if (!a?.unknown || a.key.startsWith('community:')) return;
     attempt.current = null;
     if (mounted.current) setPhase('draft');
     settleLive(a.id)
@@ -674,7 +735,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   // composer only hides: the Live goes on and says how it ended.
   const close = () => {
     if (!busy) {
-      saveDraft('live', text.trim() ? { body: text, media: null, at: Date.now() } : null);
+      saveDraft('live', text.trim() ? { body: text, media: null, at: clock() } : null);
       giveUp();
     }
     onClose();
@@ -686,6 +747,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
       giveUp();
       setText('');
       setMedia(undefined);
+      setExtra([]);
       onClose();
     };
     if (Platform.OS === 'web') {
@@ -703,9 +765,23 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   const pick = async (kind: 'photo' | 'video' = 'photo') => {
     if (sending.current) return;
     try {
+      // In a community: several photos at once (up to 10), added to those already picked.
+      if (kind === 'photo' && community) {
+        const room = MAX_PHOTOS - photos.length;
+        if (room <= 0) return toast(tx('{n} photos at most', { n: MAX_PHOTOS }), 'image', 'brand');
+        const files = (await pickPhotos(room)).map((f) => f.uri).filter((x): x is string => Boolean(x));
+        if (!files.length || !mounted.current) return;
+        if (media?.kind === 'photo') setExtra((x) => [...x, ...files].slice(0, MAX_PHOTOS - 1));
+        else {
+          setMedia({ kind: 'photo', uri: files[0] });
+          setExtra(files.slice(1));
+        }
+        return;
+      }
       const m = await pickLiveMedia(kind);
       if (!m || !mounted.current) return;
       setMedia(m);
+      setExtra([]);
       prepareLiveMedia(m)
         .then((data) => mounted.current && setPrep({ uri: m.uri, data }))
         // A failure shows when posting (which tries again), not now.
@@ -715,8 +791,63 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     }
   };
 
+  const chooseCommunity = (id: string | null) => {
+    if (busy) return;
+    // A Live without a community keeps one photo: the others are let go, and she is told.
+    if (!id && extra.length) {
+      setExtra([]);
+      toast('A Live without a community keeps one photo', 'image', 'brand');
+    }
+    setCommunityId(id);
+  };
+
+  const removePhoto = (u: string) => {
+    if (busy) return;
+    if (media?.uri === u) {
+      const [next, ...rest] = extra;
+      setMedia(next ? { kind: 'photo', uri: next } : undefined);
+      setExtra(rest);
+    } else setExtra((x) => x.filter((y) => y !== u));
+  };
+
+  /** Published in a community AND shown in this Live: one community post (in_live). */
+  const submitToCommunity = async (c: { id: string; name: string }) => {
+    sending.current = true;
+    setPhase('publishing');
+    const key = `community:${JSON.stringify([text.trim(), media?.uri ?? null, extra, c.id])}`;
+    if (!attempt.current || attempt.current.key !== key) attempt.current = { key, id: uuid(), at: new Date(), unknown: false };
+    const a = attempt.current;
+    if (media) setProgress(0);
+    const draft: DraftMedia | null = !media
+      ? null
+      : media.kind === 'video'
+        ? { kind: 'video', files: [{ uri: media.uri, type: media.type }], poster: media.poster, seconds: media.seconds }
+        : { kind: 'photo', files: photos.map((u) => ({ uri: u })) };
+    try {
+      await createPost({ id: a.id, communityId: c.id, body: text.trim(), media: draft, inLive: true, onProgress: media ? (p) => mounted.current && setProgress(p) : undefined });
+      track('IRL_CREATE', { photo: media?.kind === 'photo', video: media?.kind === 'video', activity: false });
+    } catch (e) {
+      sending.current = false;
+      // Tried again with the same id, it is the same post (never a second one).
+      a.unknown = true;
+      if (mounted.current) {
+        setPhase('failed');
+        setProgress(null);
+      }
+      toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live');
+      return;
+    }
+    sending.current = false;
+    bumpIrl();
+    haptic('success');
+    toast(tx('Posted in {name} and in the Live', { name: tx(c.name) }), 'zap', 'live');
+    published();
+    onClose();
+  };
+
   const submit = async () => {
     if ((!text.trim() && !media) || sending.current) return;
+    if (account && community) return submitToCommunity(community);
     if (!account) {
       post({ cityId, kind: media?.kind === 'photo' ? 'photo' : 'text', text: text.trim(), photoUri: media?.kind === 'photo' ? uri : undefined, place: areaName(city, where), areaId: where });
       haptic('success');
@@ -730,7 +861,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
     setPhase('publishing');
     const key = JSON.stringify([text.trim(), media?.uri ?? null, area, chosen, openUp, cityId]);
     const prev = attempt.current;
-    if (prev && prev.key !== key && prev.unknown) {
+    if (prev && prev.key !== key && prev.unknown && !prev.key.startsWith('community:')) {
       // Changed after a try without answer: that try is settled first, or it could land next to this one.
       const r = await settleLive(prev.id).catch(() => 'later' as const);
       if (r === 'later') {
@@ -747,7 +878,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         return;
       }
     }
-    if (!attempt.current || attempt.current.key !== key) attempt.current = { key, id: uuid(), at: new Date(Date.now() + 30 * 60 * 1000), unknown: false };
+    if (!attempt.current || attempt.current.key !== key) attempt.current = { key, id: uuid(), at: new Date(clock() + 30 * 60 * 1000), unknown: false };
     const a = attempt.current;
     if (media) setProgress(0);
     try {
@@ -801,7 +932,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
       }
       if (!shown.current) {
         // Closed while it was sending: the member is not here to try again. The words stay as a draft.
-        if (text.trim()) saveDraft('live', { body: text, media: null, at: Date.now() });
+        if (text.trim()) saveDraft('live', { body: text, media: null, at: clock() });
         giveUp();
         toast('Your Live was not posted. It is kept as a draft.', 'x', 'live');
         return;
@@ -818,17 +949,8 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
   };
 
   return (
-    <Sheet
-      visible={visible}
-      onClose={close}
-      title={mode === 'post' ? 'Post IRL' : 'Go live'}
-      subtitle={
-        mode === 'post'
-          ? 'A photo of where you are, right now. Only your area is shown, never your address.'
-          : 'What are you doing right now? Only your area is shown, never your address.'
-      }
-    >
-      {/* Scrolls when the keyboard is up, so the field and Post live stay reachable; it shares
+    <Sheet visible={visible} onClose={close} title="Publish" subtitle={community ? tx('In {name} and in the Live for 24 hours.', { name: tx(community.name) }) : 'Right now, around you. Only your area is shown, never your address.'}>
+      {/* Scrolls when the keyboard is up, so the field and Publish stay reachable; it shares
           the drag with the sheet, which follows the finger only from the top of the content. */}
       <SheetScrollView
         style={{ flexShrink: 1 }}
@@ -851,15 +973,28 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
         <TextInput
           value={text}
           onChangeText={setText}
-          placeholder={tx('Coffee in the Marina, anyone?')}
+          placeholder={tx('Write something…')}
           placeholderTextColor={t.c.textTertiary}
           multiline
-          maxLength={160}
+          maxLength={community ? 2000 : 160}
           editable={!busy}
           style={[styles.input, { color: t.c.text, backgroundColor: t.c.overlay }]}
-          accessibilityLabel={a11y('What are you doing right now?')}
+          accessibilityLabel={a11y('Write something…')}
         />
-        {media ? (
+        {photos.length > 1 ? (
+          <Animated.View entering={FadeIn}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
+              {photos.map((u) => (
+                <View key={u} style={styles.thumb}>
+                  <Image source={{ uri: u }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                  <PressableScale haptic="select" onPress={() => removePhoto(u)} disabled={busy} hitSlop={8} style={styles.thumbX} accessibilityLabel="Remove the photo">
+                    <Icon name="x" size={12} color="#fff" />
+                  </PressableScale>
+                </View>
+              ))}
+            </ScrollView>
+          </Animated.View>
+        ) : media ? (
           <Animated.View entering={FadeIn}>
             {/* The same frame as in the feed: what you see here is what gets published. */}
             {media.kind === 'video' ? (
@@ -867,7 +1002,7 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
             ) : (
               <LivePhoto url={media.uri} ratio={ready?.ratio ?? media.ratio} tappable={false} style={styles.media} />
             )}
-            <PressableScale haptic="select" onPress={() => setMedia(undefined)} disabled={busy} hitSlop={8} style={styles.removeMedia} accessibilityLabel={media.kind === 'video' ? 'Remove the video' : 'Remove the photo'}>
+            <PressableScale haptic="select" onPress={() => (setMedia(undefined), setExtra([]))} disabled={busy} hitSlop={8} style={styles.removeMedia} accessibilityLabel={media.kind === 'video' ? 'Remove the video' : 'Remove the photo'}>
               <Icon name="x" size={16} color="#fff" />
             </PressableScale>
           </Animated.View>
@@ -878,15 +1013,15 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
               <View style={[styles.barFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: t.c.text }]} />
             </View>
             <Text variant="caption" tone="secondary">
-              {tx(media?.kind === 'photo' ? 'Sending the photo… {n}%' : 'Sending the video… {n}%', { n: Math.round(progress * 100) })}
+              {tx(media?.kind === 'video' ? 'Sending the video… {n}%' : 'Sending the photo… {n}%', { n: Math.round(progress * 100) })}
             </Text>
           </View>
         ) : null}
         {mode === 'post' && !uri ? null : (
           <View style={styles.wrap}>
-            <PressableScale haptic="select" onPress={() => pick('photo')} disabled={busy} style={[styles.addPhoto, { borderColor: t.c.lineStrong, flex: 1 }]} accessibilityLabel="Add a photo">
-              <Icon name="camera" size={18} color={t.c.text} />
-              <Text variant="label">{media?.kind === 'photo' ? 'Change photo' : 'Photo'}</Text>
+            <PressableScale haptic="select" onPress={() => pick('photo')} disabled={busy} style={[styles.addPhoto, { borderColor: t.c.lineStrong, flex: 1 }]} accessibilityLabel={community ? 'Add photos' : 'Add a photo'}>
+              <Icon name="image" size={18} color={t.c.text} />
+              <Text variant="label">{community ? (photos.length ? 'Add photos' : 'Photos') : media?.kind === 'photo' ? 'Change photo' : 'Photo'}</Text>
             </PressableScale>
             <PressableScale haptic="select" onPress={() => pick('video')} disabled={busy} style={[styles.addPhoto, { borderColor: t.c.lineStrong, flex: 1 }]} accessibilityLabel="Add a video">
               <Icon name="video" size={18} color={t.c.text} />
@@ -894,25 +1029,45 @@ function Composer({ visible, mode = 'now', onClose }: { visible: boolean; mode?:
             </PressableScale>
           </View>
         )}
-        <View style={{ gap: 8 }}>
-          <Text variant="overline" tone="tertiary">
-            Where (optional)
-          </Text>
-          <AreaPicker cityId={city.id} value={area} onChange={(id) => setArea(area === id ? null : id)} />
-        </View>
-        {account ? (
+        {account && communities.length ? (
+          <View style={{ gap: 8 }}>
+            <Text variant="overline" tone="tertiary">
+              Community (optional)
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 8 }}>
+              <Chip size="sm" label="Live only" icon="zap" selected={!community} onPress={() => chooseCommunity(null)} />
+              {communities.map((c) => (
+                <Chip key={c.id} size="sm" label={tx(c.name)} raw icon="users" selected={communityId === c.id} onPress={() => chooseCommunity(c.id)} />
+              ))}
+            </ScrollView>
+            {community ? (
+              <Text variant="caption" tone="secondary">
+                {tx('Everyone who can see {name} sees it, there and in the Live.', { name: tx(community.name) })}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+        {community ? null : (
+          <View style={{ gap: 8 }}>
+            <Text variant="overline" tone="tertiary">
+              Where (optional)
+            </Text>
+            <AreaPicker cityId={city.id} value={area} onChange={(id) => setArea(area === id ? null : id)} />
+          </View>
+        )}
+        {account && !community ? (
           <View style={{ gap: 8 }}>
             <Text variant="overline" tone="tertiary">
               Who sees it
             </Text>
             <View style={styles.wrap}>
-              <Chip size="sm" label="Friends" icon="users" selected={visibility === 'friends'} onPress={() => setChosen('friends')} />
+              <Chip size="sm" label="Mutual follows" icon="users" selected={visibility === 'friends'} onPress={() => setChosen('friends')} />
               <Chip size="sm" label="Everyone nearby" icon="globe" selected={visibility === 'everyone'} onPress={() => setChosen('everyone')} />
             </View>
             <Chip size="sm" label="Anyone can join: make it an activity" icon="plus" selected={openUp} onPress={() => !busy && setOpenUp(!openUp)} />
           </View>
         ) : null}
-        <Button label="Post live" icon="zap" full haptic={false} loading={busy} disabled={!text.trim() && !media} onPress={submit} />
+        <Button label="Publish" icon="send" full haptic={false} loading={busy} disabled={!text.trim() && !media} onPress={submit} />
       </SheetScrollView>
     </Sheet>
   );
@@ -931,7 +1086,10 @@ const styles = StyleSheet.create({
   linked: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: radius.lg },
   goLive: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, paddingLeft: 12, borderRadius: radius.xl, borderWidth: StyleSheet.hairlineWidth * 2 },
   goLiveMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  goLiveBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  goLiveBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  publish: { flexDirection: 'row', alignItems: 'center', gap: 6, height: 40, paddingHorizontal: 14, borderRadius: 20 },
+  thumb: { width: 96, height: 120, borderRadius: radius.md, overflow: 'hidden', backgroundColor: 'rgba(127,127,127,0.12)' },
+  thumbX: { position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
   round: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   split: { flexDirection: 'row', alignItems: 'flex-start' },
   feed: { flex: 1, minWidth: 0 },

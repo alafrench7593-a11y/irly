@@ -7,6 +7,9 @@ import { useCommunitiesVersion, type CommunitySummary } from '@/features/communi
 import { displayCommunityName } from '@/features/community/name';
 import { GIRL_OFFICIAL_TOPICS, NETWORK_OFFICIAL_TOPICS } from '@/features/community/official';
 import { isDemoId } from '@/features/girl/demo';
+import { belongsToSpace } from '@/features/universe/universe';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
+import { useAppSpace, type AppSpace } from '@/state/appSpace';
 import { t as tx } from '@/i18n';
 import { friendlyError, supabase } from '@/lib/supabase';
 
@@ -42,6 +45,8 @@ type DirectoryRow = {
   created_at: string | null;
   is_member: boolean | null;
   is_favorite: boolean | null;
+  /** Its own photo (20261110200000); absent from an older server. */
+  cover_path?: string | null;
 };
 
 type DirectoryArgs = { p_city: string; p_sort: DirectorySort; p_search: string | null; p_limit: number };
@@ -65,6 +70,8 @@ export type DirectoryCommunity = {
   isMember: boolean;
   /** null: the server did not say (the directory has not answered). */
   isFavorite: boolean | null;
+  /** Its own photo (a storage path), null: none. Undefined: not said, looked up by id. */
+  coverPath?: string | null;
 };
 
 const count = (v: number | string | null | undefined): number | null => {
@@ -91,6 +98,7 @@ const fromRow = (r: DirectoryRow): DirectoryCommunity => ({
   createdAt: r.created_at ? Date.parse(r.created_at) : null,
   isMember: Boolean(r.is_member),
   isFavorite: r.is_favorite == null ? null : Boolean(r.is_favorite),
+  coverPath: 'cover_path' in r ? (r.cover_path ?? null) : undefined,
 });
 
 /** A row of community_list, for when the directory has not answered: its upcoming count is unknown. */
@@ -111,15 +119,17 @@ export const fromSummary = (c: CommunitySummary): DirectoryCommunity => ({
   createdAt: c.createdAt,
   isMember: c.isMember,
   isFavorite: null,
+  coverPath: c.coverPath,
 });
 
 /** The demo's own communities: their upcoming count is the demo's plans linked to each (example content). */
 export const fromDemo = (c: CommunitySummary): DirectoryCommunity => ({ ...fromSummary(c), upcoming: DEMO_PLANS.filter((p) => p.community === c.id).length });
 
-export async function fetchDirectory(cityId: string, sort: DirectorySort, search: string | null, limit = 200): Promise<DirectoryCommunity[]> {
+export async function fetchDirectory(cityId: string, sort: DirectorySort, search: string | null, space: AppSpace, limit = 200): Promise<DirectoryCommunity[]> {
   if (!supabase) throw new Error('The IRLY server is not configured');
   const args: DirectoryArgs = { p_city: cityId, p_sort: sort, p_search: search, p_limit: limit };
-  const { data, error } = await supabase.rpc('community_directory', args);
+  // This app space only, on the server (20261110700000): the other space's communities never come back.
+  const { data, error } = await rpcInSpace(supabase, 'community_directory', args, space);
   if (error) throw new Error(friendlyError(error.message));
   return ((data as DirectoryRow[] | null) ?? []).map(fromRow);
 }
@@ -132,11 +142,15 @@ export async function toggleCommunityFavorite(communityId: string): Promise<bool
   return Boolean(data);
 }
 
-/** Each space lists its own, as community_list does (IRLY Network's own community lives in its section). */
-export const inSpace = (c: Pick<DirectoryCommunity, 'girlOnly' | 'official' | 'topic'>, girl: boolean) =>
-  girl
+/**
+ * Each space lists its own, as community_list does: its universes (universe.ts), and IRLY Network's own
+ * community lives in its section. A woman's Mixte communities never show in IRLY Girl, nor her Girl ones in Mixte.
+ */
+export const inSpace = (c: Pick<DirectoryCommunity, 'girlOnly' | 'official' | 'topic' | 'categoryId'>, girl: boolean) =>
+  belongsToSpace(c, girl ? 'girl' : 'mixte') &&
+  (girl
     ? c.girlOnly && (!c.official || (GIRL_OFFICIAL_TOPICS as readonly (string | null)[]).includes(c.topic))
-    : !c.girlOnly && !(c.official && NETWORK_OFFICIAL_TOPICS.includes(c.topic));
+    : !c.girlOnly && !(c.official && NETWORK_OFFICIAL_TOPICS.includes(c.topic)));
 
 /** Same order as the server, for lists the server did not sort (demo, or no answer yet). Unknown counts go last. */
 export function sortLocally(list: DirectoryCommunity[], sort: DirectorySort): DirectoryCommunity[] {
@@ -155,7 +169,8 @@ export function sortLocally(list: DirectoryCommunity[], sort: DirectorySort): Di
 export function useDirectory(cityId: string, sort: DirectorySort, search: string | null, enabled = true) {
   const uid = useAccount()?.userId;
   const version = useCommunitiesVersion();
-  const key = `${cityId}|${sort}|${search ?? ''}`;
+  const space = useAppSpace();
+  const key = `${cityId}|${sort}|${search ?? ''}|${space}`;
   const [state, setState] = useState<{ key: string; list: DirectoryCommunity[] | null; error: string | null }>({ key: '', list: null, error: null });
   const [n, setN] = useState(0);
   const refresh = useCallback(() => setN((x) => x + 1), []);
@@ -163,14 +178,14 @@ export function useDirectory(cityId: string, sort: DirectorySort, search: string
   useEffect(() => {
     if (!on) return;
     let alive = true;
-    fetchDirectory(cityId, sort, search).then(
+    fetchDirectory(cityId, sort, search, space).then(
       (list) => alive && setState({ key, list, error: null }),
       (e: unknown) => alive && setState((s) => ({ key, list: s.key === key ? s.list : null, error: e instanceof Error ? e.message : 'offline' })),
     );
     return () => {
       alive = false;
     };
-  }, [on, key, cityId, sort, search, version, n]);
+  }, [on, key, cityId, sort, search, space, version, n]);
   const mine = state.key === key;
   return { list: on && mine ? state.list : null, error: on && mine ? state.error : null, loading: on && (!mine || (state.list === null && state.error === null)), refresh };
 }

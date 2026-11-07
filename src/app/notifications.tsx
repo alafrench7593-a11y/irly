@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useAuthStatus } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
+import { useAppSpace } from '@/state/appSpace';
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -33,11 +34,18 @@ import { SpaceFlavor } from '@/theme/space';
 import { GirlHeaderMark } from '@/features/girl/GirlMark';
 import { useNow } from '@/lib/useNow';
 import { displayCommunityName } from '@/features/community/name';
+import { UniverseBadge } from '@/features/messages/UniverseBadge';
 
 type Item = { id: string; icon: IconName; title: string; body: string; ago: string; personId?: string; onPress?: () => void; unread?: boolean };
 
 /**
- * Notifications: few and useful. Someone joined your session, a session
+ * Notifications: few and useful.
+ *
+ * Every universe in one list (a notification is never lost by being in the
+ * other app space): each one about a universe says which (Mixte, Girl, Mom,
+ * Network), and opening it switches to that universe's app space
+ * (features/notifications/open). IRLY Girl ones only ever reach members with
+ * IRLY Girl access (server read rules). Someone joined your session, a session
  * starts near you, someone is live nearby, a reminder. No likes spam.
  *
  * Read means seen: a notification that has really been on screen (see
@@ -65,6 +73,7 @@ function Notifications() {
   const viewport = useViewport();
   // Examples of what IRLY sends, only before sign-in (never mixed with real ones).
   const auth = useAuthStatus();
+  const demoSpace = useAppSpace();
   const items: Item[] = auth !== 'out' ? [] : [
     a && s ? { id: 'n1', icon: 'users', title: tx('{name} joined {what}', { name: a.name, what: tx(s.title) }), body: tx('7 people are going now'), ago: '4 min', personId: a.id, onPress: () => openHero({ kind: 'session', id: s.id }) } : null,
     b ? { id: 'n2', icon: 'zap', title: tx('{name} is live nearby', { name: b.name }), body: tx('Coffee and laptop, anyone around?'), ago: '12 min', personId: b.id, onPress: () => router.push('/live') } : null,
@@ -87,7 +96,8 @@ function Notifications() {
           onPress: () => router.push((g.target.startsWith('/') ? g.target : `/comments?type=community_post&id=${g.target}`) as never),
         }))
       : [];
-  items.unshift(...girlItems);
+  // Each app keeps its own examples: IRLY Girl's in IRLY Girl, IRLY's in IRLY (never mixed).
+  if (demoSpace === 'girl') items.splice(0, items.length, ...girlItems);
   // The examples are read like real ones (seen or opened), in this tab's memory only.
   const read = useDemoRead((st) => st.ids);
   const local = items.map((n) => ({ ...n, unread: (n.unread || EXAMPLE_UNREAD.includes(n.id)) && !read[n.id] }));
@@ -332,8 +342,8 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
         const pending = friends.find((f) => f.userId === p.from && f.incoming);
         return {
           icon: 'user',
-          title: tx('{name} wants to be friends', { name: name(p.from) }),
-          body: tx(pending ? 'Accept to chat and see each other’s IRL posts' : friends.some((f) => f.userId === p.from && f.status === 'accepted') ? 'You are now friends' : 'See their profile'),
+          title: tx('{name} wants to follow you', { name: name(p.from) }),
+          body: tx(pending ? 'Accept to follow each other' : friends.some((f) => f.userId === p.from && f.status === 'accepted') ? 'You follow each other now' : 'See their profile'),
           accept: pending ? p.from : undefined,
         };
       }
@@ -350,9 +360,11 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
       case 'PRO_CONNECT_ACCEPTED':
         return { icon: 'handshake', title: tx('{name} accepted your request', { name: name(p.from) }), body: tx('IRLY Network · say hi') };
       case 'NEW_FOLLOWER':
+        // Following back someone who follows you: said so (payload.mutual, migration 20261110100000).
+        if (String(p.mutual) === 'true') return { icon: 'userPlus', title: tx('{name} followed you back', { name: name(p.from) }), body: tx('You follow each other now') };
         return { icon: 'userPlus', title: tx('{name} started following you', { name: name(p.from) }), body: tx('See their profile') };
       case 'FRIEND_ACCEPTED':
-        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends: say hi') };
+        return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You follow each other now: say hi') };
       case 'COMMUNITY_JOINED':
         return { icon: 'heartHandshake', title: 'You joined a community', body: tx('Its chat is in Messages') };
       case 'COMMUNITY_INVITATION':
@@ -372,9 +384,9 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
       case 'PROFILE_UPDATED':
         if (p.type === 'friend_request') {
           const pending = friends.find((f) => f.userId === p.from && f.incoming);
-          return { icon: 'user', title: tx('{name} wants to be friends', { name: name(p.from) }), body: tx('Friends see each other’s IRL posts'), accept: pending ? p.from : undefined };
+          return { icon: 'user', title: tx('{name} wants to follow you', { name: name(p.from) }), body: tx('When you follow each other, you see each other’s IRL posts'), accept: pending ? p.from : undefined };
         }
-        if (p.type === 'friend_accepted') return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You are now friends') };
+        if (p.type === 'friend_accepted') return { icon: 'check', title: tx('{name} accepted', { name: name(p.from) }), body: tx('You follow each other now') };
         if (p.type === 'verified') return { icon: 'shield', title: 'Your profile is verified ✓', body: tx(FEATURES.matchIrly ? 'Match is open' : 'The badge shows on your profile') };
         if (p.type === 'verification_rejected') return { icon: 'x', title: 'Verification declined', body: p.reason ? tx('Reason: {reason}. You can try again.', { reason: p.reason }) : tx('You can try again') };
         return { icon: 'user', title: 'Profile update', body: '' };
@@ -414,6 +426,12 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
               <Text variant="label" numberOfLines={2}>
                 {d.title}
               </Text>
+              {/* Which universe it is about (a Girl community, a Mixte plan…): opening it switches to that app space. */}
+              {n.universe ? (
+                <View style={styles.universe}>
+                  <UniverseBadge universe={n.universe} />
+                </View>
+              ) : null}
               {d.body ? (
                 <Text variant="bodyS" tone="secondary" numberOfLines={1} raw>
                   {d.body}
@@ -446,7 +464,7 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
                     (d.pro ? proConnect(d.accept!).then((s) => s === 'accepted') : setFriend(d.accept!, 'add').then((s) => s === 'friends'))
                       .then((accepted) => {
                         // The request may have been withdrawn meanwhile: then this only sent yours.
-                        if (accepted) toast(d.pro ? 'You are now connected' : 'You are now friends', 'check', 'positive');
+                        if (accepted) toast(d.pro ? 'You are now connected' : 'You follow each other now', 'check', 'positive');
                         else toast('Request sent', 'check', 'brand');
                         refresh();
                       })
@@ -483,6 +501,7 @@ function ServerNotifications({ viewport }: { viewport: Viewport }) {
 
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 6 },
+  universe: { flexDirection: 'row' },
   list: { paddingHorizontal: space.gutter, gap: 8 },
   heading: { marginTop: 6, marginLeft: 4 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: radius.lg },

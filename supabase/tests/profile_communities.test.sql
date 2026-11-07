@@ -147,7 +147,7 @@ select pg_temp.check(pg_temp.seen('b4c00000-0000-0000-0000-000000000001', 'b4c00
 -- ───────── Signed out ─────────
 select pg_temp.check((select count(*) from public.member_communities('b4c00000-0000-0000-0000-000000000001')) = 0,
   'signed out (as the server itself, no member): nothing');
-select pg_temp.check(not has_function_privilege('anon', 'public.member_communities(uuid)', 'execute'),
+select pg_temp.check(not has_function_privilege('anon', 'public.member_communities(uuid, text)', 'execute'),
   'visitors without an account cannot call it');
 
 rollback;

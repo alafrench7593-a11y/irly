@@ -1,30 +1,26 @@
 import { useLocalSearchParams, useRouter, type ErrorBoundaryProps } from 'expo-router';
-import { AdminBadge } from '@/features/admin/StaffBadge';
 import { useAccount, useAuthStatus } from '@/features/auth/account';
+import { DemoGirlPage } from '@/features/girl/DemoGirlPage';
 import { isDemoId } from '@/features/girl/demo';
 import { DemoCommunityScreen } from '@/features/girl/DemoScreens';
 import { t as tx, a11y } from '@/i18n';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
+import Animated, { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageHeader } from '@/components/navigation/Headers';
-import { ActionBar } from '@/components/social/ActionBar';
-import { ProfileAvatar } from '@/components/ui/ProfileAvatar';
-import { RichText } from '@/components/ui/RichText';
 import { Button } from '@/components/ui/Button';
 import { Chip, IconButton, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
-import { ACTIVITIES } from '@/data/catalog';
 import { CITIES } from '@/data/destinations';
 import type { CityId } from '@/data/types';
 import type { LightId } from '@/theme/lights';
-import { dateFor, planDay, type Day, type GeoIndex } from '@/features/ai/intent';
-import { communityAssist, digestLines, postLooksLikeAPlan, type Assist, type PlanDraft } from '@/features/community/assist';
+import { dateFor, planDay, type GeoIndex } from '@/features/ai/intent';
+import { postLooksLikeAPlan, type PlanDraft } from '@/features/community/assist';
 import { confirm } from '@/lib/confirm';
-import { deleteCommunity, fetchDigest, joinCommunity, leaveCommunity, setCommunityMuted, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost, pinActivity, type ActivityStatus } from '@/features/community/data';
+import { deleteCommunity, joinCommunity, leaveCommunity, useCommunity, type CommunityDetail, useCommunityActivities, useCommunityFeed, type CommunityPost, pinActivity, type ActivityStatus } from '@/features/community/data';
 import { createServerActivity } from '@/features/server/activities';
 import { setCommunityCover, useActivityThumbs, usePhotoLink } from '@/features/server/covers';
 import { CoverEditor, coverEditorSlot } from '@/components/visual/CoverEditor';
@@ -40,18 +36,17 @@ import { AboutSheet } from '@/features/community/AboutSheet';
 import { Agenda, type AgendaItem } from '@/features/community/Agenda';
 import { ChatInvite, ChatPane } from '@/features/community/ChatPane';
 import { NewPostsPill, PublishButton } from '@/features/community/FeedOverlays';
-import { MediaEmpty, MediaGrid, type GalleryItem } from '@/features/community/MediaGallery';
 import { PinnedStrip } from '@/features/community/PinnedStrip';
 import { SpaceTabs, TabPanel, TABS_HEIGHT, type SpaceTab } from '@/features/community/SpaceTabs';
-import { PIN_FOR, pinPostFor, pinUntil, prefetchMedia, useCommunityMedia, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
+import { PIN_FOR, pinPostFor, pinUntil, useCommunityRules, type FeedSort, type PinFor } from '@/features/community/space';
 import { prefetchMembers, warmPostImages } from '@/features/community/prefetch';
 import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { track } from '@/lib/analytics';
-import { hueOf } from '@/lib/format';
-import { cityWhen, timeAgo } from '@/lib/time';
-import { useNow } from '@/lib/useNow';
+import { cityWhen } from '@/lib/time';
 import { PostMedia } from '@/features/posts/PostMedia';
+import { PostCard as PostCardView, PostCardSkeleton, type PostOption } from '@/features/posts/PostCard';
+import { createActivityFromPost, useActivityFromPost } from '@/features/posts/activityFromPost';
 import { useChannels, useCommunityExtras } from '@/features/community/groups';
 import { CommunityActivityFeed, ProposeActivity } from '@/features/community/CommunityActivitiesSlot';
 import { HostTools, NotifyPrefs, SpaceChips } from '@/features/community/GroupsUI';
@@ -68,7 +63,7 @@ import { ErrorScreen } from '@/components/layout/ErrorScreen';
 import { ScreenColumn } from '@/components/layout/responsive';
 import { communitySplit, useCommunitySplit } from '@/features/community/layout';
 import { irlyPinPost } from '@/features/community/irly';
-import { IrlyBadge, IrlyTools } from '@/features/community/IrlyTools';
+import { IrlyTools } from '@/features/community/IrlyTools';
 
 const when = (ms: number, cityId: string) => cityWhen(ms, cityId);
 // Upcoming needs no label; the others say what they are.
@@ -80,12 +75,11 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 /**
- * A community in five spaces: Posts (text, photos, polls, plans, pinned
+ * A community in four spaces: Posts (text, photos, polls, plans, pinned
  * first, Recent or Popular, paged), its Chat (in the page, for members),
- * Activities (an agenda by week or month), Media (every photo and video)
- * and Members. About (with the rules) and Search sit in the header. A free
- * assistant plans an activity for the group, drafts a poll, summarises the
- * week or suggests what to post. Join = you are in the chat too.
+ * Activities (an agenda by week or month) and Members (photos and videos
+ * stay in their posts). About (with the rules and Report) and Search sit in the
+ * header. Join = you are in the chat too.
  */
 // The demonstration build's IRLY Girl communities (example content, nothing saved).
 export default function CommunityRoute() {
@@ -95,7 +89,7 @@ export default function CommunityRoute() {
   const split = useCommunitySplit();
   return (
     <SpaceFlavor>
-      <ScreenColumn wide={split}>{isDemoId(id) ? <DemoCommunityScreen id={id} /> : <CommunityScreen />}</ScreenColumn>
+      <ScreenColumn wide={split}>{isDemoId(id) ? <DemoGirlPage><DemoCommunityScreen id={id} /></DemoGirlPage> : <CommunityScreen />}</ScreenColumn>
     </SpaceFlavor>
   );
 }
@@ -129,13 +123,9 @@ function CommunityScreen() {
   const actThumbs = useActivityThumbs(acts.activities.map((a) => a.id));
   const extras = useCommunityExtras(id);
   const eng = useEngagement('community_post', feed.posts.filter((p) => !p.pending).map((p) => p.id));
-  // The five spaces; each keeps its state (scroll, search, agenda) while another shows.
+  // The four spaces; each keeps its state (scroll, search, agenda) while another shows.
   const [tab, setTab] = useState<SpaceTab>('posts');
   const [actView, setActView] = useState<'agenda' | 'list'>('agenda');
-  // The gallery loads the first time Media opens, then stays.
-  const [mediaOn, setMediaOn] = useState(false);
-  if (tab === 'media' && !mediaOn) setMediaOn(true);
-  const media = useCommunityMedia(id, mediaOn);
   const [about, setAbout] = useState(false);
   const { rules, loading: rulesLoading } = useCommunityRules(id);
   // A post a moderator pins: for how long (24 h, 7 days, no end).
@@ -147,8 +137,6 @@ function CommunityScreen() {
   // Leave / Delete wait for the server: one at a time, a spinner meanwhile (a second tap asked again, then failed).
   const owner = useBusy<'leave' | 'delete'>();
   const reduced = useReducedMotion();
-  // An assistant idea tapped goes into the post composer (n remounts it).
-  const [idea, setIdea] = useState({ text: '', n: 0 });
   const list = useRef<FlatList<CommunityPost>>(null);
   // The cards' actions, the same functions on every render (the cards are memoized): each
   // call runs the handler of the latest render, kept below once the community is known.
@@ -182,18 +170,17 @@ function CommunityScreen() {
     [acts.activities],
   );
   // The feed's files are signed in one request and its first photos fetched ahead; once
-  // the page has settled, the gallery's first page and thumbnails too (Media opens filled).
+  // the page has settled, the members too (Members opens filled).
   const uid = useAccount()?.userId;
   useEffect(() => warmPostImages(feed.posts), [feed.posts]);
   const settled = !feed.loading && Boolean(loaded);
   useEffect(() => {
-    if (!settled || !uid || mediaOn) return;
-    const timer = setTimeout(() => (prefetchMedia(uid, id), prefetchMembers(id)), 1200);
+    if (!settled || !uid) return;
+    const timer = setTimeout(() => prefetchMembers(id), 1200);
     return () => clearTimeout(timer);
-  }, [settled, uid, id, mediaOn]);
-  const gallery = useMemo<GalleryItem[]>(() => media.items.map((m) => ({ key: m.key, kind: m.kind, path: m.path, thumbPath: m.thumbPath, seconds: m.seconds, postId: m.postId })), [media.items]);
+  }, [settled, uid, id]);
 
-  /** A plan from the assistant or a post: a real activity of this community, in its Activities space. */
+  /** A plan from a post: a real activity of this community, in its Activities space. */
   const createPlan = async (d: PlanDraft): Promise<boolean> => {
     if (!c) return false;
     if (!c.isMember) {
@@ -409,7 +396,7 @@ function CommunityScreen() {
 
       {/* IRLY's own: the welcome, the introduction and the rules; a member's community: the introduction. */}
       {c.official ? (
-        <OfficialBlock c={c} cityName={city.name} onMuted={refresh} />
+        <OfficialBlock c={c} cityName={city.name} />
       ) : c.isMember ? (
         <View style={styles.pad}>
           <IntroCard c={c} cityName={city.name} />
@@ -418,15 +405,14 @@ function CommunityScreen() {
     </View>
   );
 
-  /* Posts: the pinned strip, the activities coming up, the assistant, the composer, the sort. */
+  /* Posts: the pinned strip, the activities coming up, the composer, the sort. */
   const postsHeader = (
     <View style={{ gap: space[5], paddingBottom: space[5] }}>
       {split ? null : hero}
       <PinnedStrip posts={feed.posts} />
       <CommunityActivityFeed communityId={c.id} onSeeAll={() => setTab('activities')} />
-      <Assistant communityId={c.id} name={c.name} categoryId={c.categoryId} geo={geo} isMember={c.isMember} onPlan={createPlan} onPoll={(question, options) => feed.post({ body: question, poll: options, category: channels.length ? postSpace : null })} onIdea={(text) => setIdea((x) => ({ text, n: x.n + 1 }))} />
       <SpaceChips channels={channels} value={postSpace} onChange={setPostSpace} canManage={canModerate} communityId={c.id} />
-      {c.isMember ? <Composer key={idea.n} initial={idea.text} onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })} onMedia={(body) => openComposer(body)} /> : null}
+      {c.isMember ? <Composer onPost={(body, poll) => feed.post({ body, poll, category: channels.length ? postSpace : null })} onMedia={(body) => openComposer(body)} /> : null}
       <View style={styles.pad}>
         <Segmented
           options={[
@@ -456,11 +442,13 @@ function CommunityScreen() {
         initialNumToRender={5}
         maxToRenderPerBatch={6}
         windowSize={9}
+        // Android: rows far off screen are detached (less to draw while scrolling). Never on iOS, where it can blank rows.
+        removeClippedSubviews={Platform.OS === 'android'}
         onEndReached={() => void feed.loadMore()}
         onEndReachedThreshold={0.6}
         onScroll={onFeedScroll}
         scrollEventThrottle={100}
-        renderItem={({ item: p }) => <PostCard cityId={city.id} p={p} eng={eng} canModerate={canModerate} canPin={canModerate || my.canIrly} isMember={c.isMember} geo={geo} actions={postActions} />}
+        renderItem={({ item: p }) => <PostCard cityId={city.id} p={p} eng={eng} canModerate={canModerate} canPin={canModerate || my.canIrly} isMember={c.isMember} geo={geo} actions={postActions} community={c} />}
         ListEmptyComponent={
           feed.loading ? (
             <PostSkeletons />
@@ -538,7 +526,7 @@ function CommunityScreen() {
             </View>
           ) : (
             <Text variant="body" tone="secondary">
-              {acts.error ? 'Can’t reach IRLY right now' : past ? 'No past activities yet.' : 'Nothing planned yet. Ask the assistant: “organise padel Saturday 9am”.'}
+              {acts.error ? 'Can’t reach IRLY right now' : past ? 'No past activities yet.' : 'Nothing planned yet: propose something and it gets its own chat.'}
             </Text>
           )}
         </View>
@@ -565,19 +553,6 @@ function CommunityScreen() {
       <TabPanel active={tab === 'posts'}>{posts}</TabPanel>
       <TabPanel active={tab === 'chat'}>{chat}</TabPanel>
       <TabPanel active={tab === 'activities'}>{activities}</TabPanel>
-      <TabPanel active={tab === 'media'}>
-        <MediaGrid
-          items={gallery}
-          loading={media.loading}
-          loadingMore={media.loadingMore}
-          error={media.error}
-          onEnd={media.more}
-          topInset={top + 16}
-          bottomInset={insets.bottom}
-          onOpenPost={(postId) => router.push({ pathname: '/comments', params: { type: 'community_post', id: postId } })}
-          empty={<MediaEmpty title="No photos yet" body="Photos and videos posted in the community show up here." />}
-        />
-      </TabPanel>
       <TabPanel active={tab === 'members'}>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: top + 16, paddingBottom: insets.bottom + 60 }}>
           <MemberList communityId={c.id} />
@@ -594,7 +569,7 @@ function CommunityScreen() {
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Ambient />
-      {/* Wide: who the community is and Join on the left, its five spaces on the right (same tree in every size). */}
+      {/* Wide: who the community is and Join on the left, its four spaces on the right (same tree in every size). */}
       {split ? (
         <View style={[communitySplit.split, { flex: 1 }]}>
           <ScrollView style={[communitySplit.left, { alignSelf: 'stretch' }]} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: headerH + 12, paddingBottom: insets.bottom + 40 }}>
@@ -657,203 +632,8 @@ function PostSkeletons() {
   return (
     <View style={{ gap: space[5] }}>
       {[0, 1].map((i) => (
-        <View key={i} style={[styles.card, { marginHorizontal: space.gutter, overflow: 'hidden' }]}>
-          <GlassLayer radius={radius.xl} />
-          <View style={styles.row}>
-            <Skeleton width={36} height={36} radius={18} />
-            <View style={{ flex: 1, gap: 6 }}>
-              <Skeleton width="40%" height={12} />
-              <Skeleton width="25%" height={10} />
-            </View>
-          </View>
-          <Skeleton height={14} />
-          <Skeleton height={14} width="80%" />
-          <Skeleton height={160} radius={radius.lg} />
-        </View>
+        <PostCardSkeleton key={i} style={{ marginHorizontal: space.gutter }} />
       ))}
-    </View>
-  );
-}
-
-/* ───────── Assistant ───────── */
-
-function Assistant({
-  communityId,
-  name,
-  categoryId,
-  geo,
-  isMember,
-  onPlan,
-  onPoll,
-  onIdea,
-}: {
-  communityId: string;
-  name: string;
-  categoryId: string | null;
-  geo: GeoIndex;
-  isMember: boolean;
-  onPlan: (d: PlanDraft) => Promise<boolean>;
-  onPoll: (question: string, options: string[]) => Promise<void>;
-  onIdea: (text: string) => void;
-}) {
-  const t = useTheme();
-  const [text, setText] = useState('');
-  const [result, setResult] = useState<Assist | null>(null);
-  const [posting, setPosting] = useState(false);
-  const [digest, setDigest] = useState<string[] | null>(null);
-  const [draft, setDraft] = useState<PlanDraft | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const ask = (input: string) => {
-    const r = communityAssist(input, { communityName: name, categoryId, geo, activityLabel: (id) => { const l = ACTIVITIES[id as keyof typeof ACTIVITIES]?.label; return l ? tx(l) : undefined; }, tx });
-    setResult(r);
-    setDigest(null);
-    setDraft(r.kind === 'plan' ? r.draft : null);
-    track('AI_COMMAND', { scope: 'community', kind: r.kind });
-    if (r.kind === 'digest') {
-      fetchDigest(communityId)
-        .then((d) => setDigest(digestLines(d, (ms) => when(ms, geo.cities[0]?.id ?? 'dubai'), tx)))
-        .catch(() => setDigest(['Can’t reach IRLY right now.']));
-    }
-  };
-
-  const chips = ['Organise padel Saturday 9am', 'Poll: Saturday or Sunday?', "What's new this week?", 'Post ideas'];
-
-  return (
-    <View style={[styles.assist, { backgroundColor: 'transparent', overflow: 'hidden' }]}>
-      <GlassLayer radius={radius.xl} />
-      <View style={styles.row}>
-        <Icon name="sparkles" size={18} color={t.c.text} />
-        <Text variant="titleS" style={{ flex: 1 }}>
-          Community assistant
-        </Text>
-        <Text variant="caption" tone="tertiary">
-          Free
-        </Text>
-      </View>
-      <View style={[styles.inputWrap, { borderColor: t.c.line, backgroundColor: t.c.bg }]}>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder={tx('Ask: organise brunch Sunday 11am…')}
-          placeholderTextColor={t.c.textTertiary}
-          style={{ flex: 1, color: t.c.text, fontFamily: font.medium, fontSize: 15, paddingVertical: 0 }}
-          onSubmitEditing={() => text.trim() && ask(text)}
-          returnKeyType="go"
-          accessibilityLabel={a11y('Ask the community assistant')}
-        />
-        <PressableScale onPress={() => text.trim() && ask(text)} haptic="select" hitSlop={8} accessibilityLabel="Ask">
-          <Icon name="send" size={18} color={t.c.text} />
-        </PressableScale>
-      </View>
-      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-        {chips.map((q) => (
-          <Chip key={q} size="sm" label={tx(q)} onPress={() => ask(tx(q))} />
-        ))}
-      </ScrollView>
-
-      {result?.kind === 'plan' && draft ? (
-        <Animated.View entering={FadeInDown.springify(380)} style={{ gap: 10 }}>
-          <Text variant="titleS">{draft.title}</Text>
-          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {(['today', 'tomorrow', 'sat', 'sun', 'next_week'] as Day[]).map((d) => (
-              <Chip key={d} size="sm" label={d === 'sat' ? tx('Saturday') : d === 'sun' ? tx('Sunday') : tx(planDay(d))} selected={(draft.day ?? 'today') === d} onPress={() => setDraft({ ...draft, day: d })} />
-            ))}
-          </ScrollView>
-          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {['08:00', '09:00', '11:00', '16:00', '18:00', '19:30'].map((h) => (
-              <Chip key={h} size="sm" label={h} selected={draft.time === h} onPress={() => setDraft({ ...draft, time: h })} />
-            ))}
-          </ScrollView>
-          {/* Where: a plan needs a neighbourhood and none is picked for the member (unless she named one). */}
-          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {geo.areas.map((a) => (
-              <Chip key={a.id} size="sm" icon="pin" label={a.name} raw selected={draft.areaId === a.id} onPress={() => setDraft({ ...draft, areaId: draft.areaId === a.id ? undefined : a.id })} />
-            ))}
-          </ScrollView>
-          <Button
-            label={isMember ? 'Create it for the community' : 'Join to create it'}
-            icon="plus"
-            full
-            loading={busy}
-            disabled={!isMember || busy}
-            onPress={async () => {
-              if (busy) return;
-              setBusy(true);
-              const asked = result;
-              const typed = text;
-              let ok = false;
-              try {
-                ok = await onPlan(draft);
-              } finally {
-                setBusy(false);
-              }
-              if (!ok) return;
-              // Clear only this plan: a question asked meanwhile keeps its answer.
-              setResult((r) => (r === asked ? null : r));
-              setText((x) => (x === typed ? '' : x));
-            }}
-          />
-        </Animated.View>
-      ) : null}
-
-      {result?.kind === 'poll' ? (
-        <View style={{ gap: 8 }}>
-          <Text variant="titleS" raw>{result.question}</Text>
-          <Text variant="bodyS" tone="secondary">
-            {result.options.join(' · ')}
-          </Text>
-          <Button
-            label={isMember ? 'Post this poll' : 'Join to post'}
-            icon="send"
-            full
-            loading={posting}
-            disabled={!isMember || posting}
-            onPress={() => {
-              if (posting) return;
-              setPosting(true);
-              const asked = result;
-              const typed = text;
-              onPoll(result.question, result.options)
-                .then(() => {
-                  setResult((r) => (r === asked ? null : r));
-                  setText((x) => (x === typed ? '' : x));
-                })
-                .catch((e) => toast(e instanceof Error ? e.message : 'Could not post', 'x', 'live'))
-                .finally(() => setPosting(false));
-            }}
-          />
-        </View>
-      ) : null}
-
-      {result?.kind === 'digest' ? (
-        <View style={{ gap: 4 }}>
-          {(digest ?? ['…']).map((l) => (
-            <Text key={l} variant="bodyS">
-              {l}
-            </Text>
-          ))}
-        </View>
-      ) : null}
-
-      {result?.kind === 'ideas' ? (
-        <View style={{ gap: 8 }}>
-          {result.ideas.map((i) => (
-            <PressableScale key={i} onPress={() => onIdea(tx(i))} haptic="select" style={[styles.idea, { borderColor: t.c.line }]} accessibilityLabel={i}>
-              <Text variant="bodyS">{tx(i)}</Text>
-            </PressableScale>
-          ))}
-          <Text variant="caption" tone="tertiary">
-            Tap one, then post it below.
-          </Text>
-        </View>
-      ) : null}
-
-      {result?.kind === 'help' ? (
-        <Text variant="bodyS" tone="secondary">
-          Try: “organise padel Saturday 9am”, “poll: Saturday or Sunday?”, “what’s new this week?” or “post ideas”.
-        </Text>
-      ) : null}
     </View>
   );
 }
@@ -952,6 +732,7 @@ const PostCard = memo(function PostCard({
   geo,
   actions,
   cityId,
+  community,
 }: {
   p: CommunityPost;
   eng: ReturnType<typeof useEngagement>;
@@ -963,86 +744,58 @@ const PostCard = memo(function PostCard({
   geo: GeoIndex;
   actions: PostActions;
   cityId: string;
+  /** The community the post is in: « Create an activity » publishes there. */
+  community: Pick<CommunityDetail, 'id' | 'name' | 'cityId' | 'girlOnly'>;
 }) {
   const t = useTheme();
   const router = useRouter();
-  const now = useNow();
   const total = p.pollCounts.reduce((n, x) => n + x, 0);
   const areas = geo.areas;
   // A post that reads like a plan offers « Make it an activity » (members only).
   const plan = useMemo(() => (!p.activityId && isMember ? postLooksLikeAPlan(p.body, geo, tx) : null), [p.activityId, p.body, isMember, geo]);
   const onVote = (o: number) => actions.vote(p, o);
-  const onRemove = () => actions.remove(p);
   const onPlan = (d: PlanDraft) => actions.plan(d);
-  const onPin = (on: boolean) => actions.pin(p, on);
   // "Make it an activity" from a post that names no neighbourhood: the member picks one (none preselected).
   const [where, setWhere] = useState<{ open: boolean; areaId?: string }>({ open: false });
+  // The activity created from this post (« Create an activity »), when there is one.
+  const fromPost = useActivityFromPost(p.pending ? null : p.id);
+  const linked = p.activityId
+    ? { id: p.activityId, title: p.activityTitle ?? tx('Activity'), when: p.activityStartsAt ? when(p.activityStartsAt, cityId) : null }
+    : fromPost
+      ? { id: fromPost.id, title: fromPost.title, when: fromPost.startsAt ? when(fromPost.startsAt, cityId) : null, cta: tx('Open') }
+      : null;
+  const options = useMemo<PostOption[]>(() => {
+    const o: PostOption[] = [];
+    if (isMember && !p.activityId && !fromPost)
+      o.push({ key: 'activity', label: 'Create an activity', icon: 'calendar', onPress: () => createActivityFromPost({ id: p.id, body: p.body, community, girlSpace: community.girlOnly }) });
+    if (canPin) o.push({ key: 'pin', label: p.pinnedAt ? 'Unpin' : 'Pin at the top', icon: 'pinPost', onPress: () => actions.pin(p, !p.pinnedAt) });
+    if (p.mine) o.push({ key: 'edit', label: 'Edit post', icon: 'edit', onPress: () => router.push({ pathname: '/post/new', params: { edit: p.id } }) });
+    if (p.mine || canModerate) o.push({ key: 'remove', label: 'Remove post', icon: 'x', destructive: true, onPress: () => actions.remove(p) });
+    else o.push({ key: 'report', label: 'Report post', icon: 'flag', onPress: () => openReport({ kind: 'community_post', id: p.id, userId: p.authorId }, p.firstName) });
+    return o;
+  }, [isMember, p, fromPost, community, canPin, canModerate, actions, router]);
+  const label = p.pinnedAt || (p.kind && p.kind !== 'post')
+    ? {
+        text: [p.pinnedAt ? tx('Pinned') : null, p.kind === 'announcement' ? tx('Announcement') : p.kind === 'question' ? tx('Question') : p.kind === 'recommendation' ? tx('Recommendation') : null].filter(Boolean).join(' · '),
+        icon: p.pinnedAt ? ('pinPost' as const) : undefined,
+      }
+    : null;
   return (
-    <Animated.View entering={FadeInDown.springify(360).dampingRatio(0.85)} style={[styles.card, { backgroundColor: 'transparent', overflow: 'hidden', marginHorizontal: space.gutter, marginBottom: space[5] }]}>
-      <GlassLayer radius={radius.xl} />
-      <View style={styles.row}>
-        {p.asIrly ? <IrlyBadge size={36} /> : <ProfileAvatar name={p.firstName} hue={hueOf(p.authorId)} size={36} userId={p.authorId} />}
-        <View style={{ flex: 1 }}>
-          {p.asIrly ? (
-            // Signed IRLY: the official name and badge, never the person who wrote it.
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text variant="titleS">IRLY</Text>
-              <Icon name="badgeCheck" size={14} color={t.c.text} />
-              <Text variant="caption" tone="tertiary">
-                The IRLY team
-              </Text>
-            </View>
-          ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text variant="titleS" raw style={{ flexShrink: 1 }} numberOfLines={1}>{p.mine ? tx('You') : p.firstName}</Text>
-              <AdminBadge userId={p.authorId} />
-            </View>
-          )}
-          <Text variant="caption" tone="tertiary">
-            {p.pending ? tx('Sending…') : timeAgo(Math.max(0, Math.round((now - p.createdAt) / 60000)))}
-          </Text>
-        </View>
-        {canPin && !p.pending ? (
-          <PressableScale onPress={() => onPin(!p.pinnedAt)} haptic="select" hitSlop={8} accessibilityLabel={p.pinnedAt ? 'Unpin' : 'Pin at the top'}>
-            <Icon name="pinPost" size={16} color={p.pinnedAt ? t.c.text : t.c.textTertiary} />
-          </PressableScale>
-        ) : null}
-        {p.mine && !p.pending ? (
-          <PressableScale onPress={() => router.push({ pathname: '/post/new', params: { edit: p.id } })} haptic="select" hitSlop={8} accessibilityLabel="Edit post">
-            <Icon name="edit" size={16} color={t.c.textTertiary} />
-          </PressableScale>
-        ) : null}
-        {p.mine || canModerate ? (
-          <PressableScale onPress={onRemove} haptic="select" hitSlop={8} accessibilityLabel="Remove post">
-            <Icon name="x" size={18} color={t.c.textTertiary} />
-          </PressableScale>
-        ) : (
-          <PressableScale
-            onPress={() => openReport({ kind: 'community_post', id: p.id, userId: p.authorId }, p.firstName)}
-            haptic="select"
-            hitSlop={8}
-            accessibilityLabel="Report post"
-          >
-            <Icon name="flag" size={16} color={t.c.textTertiary} />
-          </PressableScale>
-        )}
-      </View>
-      {p.pinnedAt || (p.kind && p.kind !== 'post') ? (
-        <View style={[styles.row, { gap: 6 }]}>
-          {p.pinnedAt ? <Icon name="pinPost" size={13} color={t.c.textSecondary} /> : null}
-          <Text variant="overline" tone="secondary">
-            {[p.pinnedAt ? tx('Pinned') : null, p.kind === 'announcement' ? tx('Announcement') : p.kind === 'question' ? tx('Question') : p.kind === 'recommendation' ? tx('Recommendation') : null].filter(Boolean).join(' · ')}
-          </Text>
-        </View>
-      ) : null}
-      {p.body ? <RichText text={p.body} postId={p.pending ? null : p.id} /> : null}
-      {p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} /> : null}
-      {p.edited ? (
-        <Text variant="caption" tone="tertiary">
-          {tx('Edited')}
-        </Text>
-      ) : null}
-
+    <PostCardView
+      style={{ marginHorizontal: space.gutter, marginBottom: space[5] }}
+      author={{ id: p.authorId, name: p.firstName, mine: p.mine, asIrly: p.asIrly }}
+      createdAt={p.createdAt}
+      pending={p.pending}
+      edited={p.edited}
+      label={label}
+      body={p.body}
+      richId={p.pending ? null : p.id}
+      media={p.mediaPaths?.length ? <PostMedia paths={p.mediaPaths} kind={p.mediaKind ?? null} thumb={p.thumbPath} seconds={p.mediaSeconds} liked={eng.get(p.id).liked} onLike={() => eng.signedIn && void eng.like(p.id).catch(() => undefined)} /> : null}
+      link={linked}
+      target={p.pending ? null : { type: 'community_post', id: p.id, title: p.body.slice(0, 60) }}
+      eng={eng}
+      options={options}
+    >
       {p.poll ? (
         <View style={{ gap: 6 }}>
           {p.poll.options.map((o, i) => {
@@ -1067,22 +820,7 @@ const PostCard = memo(function PostCard({
         </View>
       ) : null}
 
-      {p.activityId ? (
-        <PressableScale onPress={() => router.push(`/a/${p.activityId}`)} haptic="select" scaleTo={0.98} style={[styles.linked, { backgroundColor: t.c.bg }]} accessibilityLabel={p.activityTitle ? tx('Open {title}', { title: p.activityTitle }) : tx('Open the activity')}>
-          <Icon name="calendar" size={18} color={t.c.text} />
-          <View style={{ flex: 1 }}>
-            <Text variant="titleS" numberOfLines={1}>
-              {p.activityTitle ?? tx('Activity')}
-            </Text>
-            {p.activityStartsAt ? (
-              <Text variant="caption" tone="tertiary">
-                {when(p.activityStartsAt, cityId)}
-              </Text>
-            ) : null}
-          </View>
-          <Text variant="label">{tx('Join')}</Text>
-        </PressableScale>
-      ) : plan ? (
+      {!linked && plan ? (
         <View style={{ gap: 8 }}>
           <Button
             label={tx('Make it an activity: {title}', { title: plan.title })}
@@ -1106,9 +844,7 @@ const PostCard = memo(function PostCard({
           ) : null}
         </View>
       ) : null}
-
-      {!p.pending ? <ActionBar target={{ type: 'community_post', id: p.id, title: p.body.slice(0, 60) }} eng={eng} /> : null}
-    </Animated.View>
+    </PostCardView>
   );
 });
 
@@ -1141,13 +877,11 @@ function Loading() {
 /**
  * IRLY's own communities: who it is for and how it works (the welcome),
  * say hello first (strongly suggested for newcomers, asked once), the
- * house rules, and the member's controls (mute, report).
+ * house rules. Report is in About, as for every community.
  */
-function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName: string; onMuted: () => void }) {
+function OfficialBlock({ c, cityName }: { c: CommunityDetail; cityName: string }) {
   const t = useTheme();
   const [rules, setRules] = useState(!c.isMember);
-  // Mute flips what the page last read: a second tap before the answer sent the same flip again.
-  const muting = useBusy<'mute'>();
   return (
     <View style={[styles.pad, { gap: 10 }]}>
       <WelcomeCharter c={c} />
@@ -1169,27 +903,6 @@ function OfficialBlock({ c, cityName, onMuted }: { c: CommunityDetail; cityName:
             ))
           : null}
       </PressableScale>
-      {c.isMember && c.conversationId ? (
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <Button
-            label={c.muted ? 'Unmute chat' : 'Mute chat'}
-            icon={c.muted ? 'bell' : 'bellOff'}
-            variant="ghost"
-            loading={muting.busy === 'mute'}
-            onPress={() =>
-              void muting.run('mute', () =>
-                setCommunityMuted(c.conversationId!, !c.muted)
-                  .then(() => {
-                    toast(c.muted ? 'Chat notifications on' : 'Chat muted', 'check', 'brand');
-                    onMuted();
-                  })
-                  .catch(() => toast('Could not change it', 'x', 'live')),
-              )
-            }
-          />
-          <Button label="Report" icon="flag" variant="ghost" onPress={() => openReport({ kind: 'community', id: c.id })} />
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -1200,7 +913,7 @@ function CommunityCover({ id, name, topic, categoryId, coverPath, light, canEdit
   const fallback = communityPhoto(topic, categoryId, name);
   return (
     <View style={styles.pad}>
-      <Photo pinned visual={{ photo: fallback, uri: uri ?? undefined }} light={light} scrim="soft" style={styles.coverPhoto} width={1000} recyclingKey={`community-${id}-${coverPath ?? 'app'}`}>
+      <Photo pinned visual={{ photo: fallback, uri: uri ?? undefined }} light={light} scrim="soft" style={styles.coverPhoto} width={1000} priority="high" recyclingKey={`community-${id}-${coverPath ?? 'app'}`}>
         {canEdit || staff ? <CoverEditor style={coverEditorSlot} hasOwn={Boolean(coverPath)} staff={staff && !canEdit} save={(picked) => setCommunityCover(id, picked)} onChanged={onChanged} /> : null}
       </Photo>
     </View>
@@ -1215,9 +928,6 @@ const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: space.gutter },
-  assist: { marginHorizontal: space.gutter, padding: 16, borderRadius: radius.xl, gap: 12 },
-  inputWrap: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, borderRadius: 23, borderWidth: 1, paddingHorizontal: 16 },
-  idea: { padding: 12, borderRadius: radius.lg, borderWidth: 1 },
   composer: { minHeight: 90, borderRadius: radius.lg, borderWidth: 1, padding: 14, fontFamily: font.medium, fontSize: 16, textAlignVertical: 'top' },
   option: { height: 44, borderRadius: radius.md, borderWidth: 1, paddingHorizontal: 14, fontFamily: font.medium, fontSize: 15 },
   card: { padding: 16, borderRadius: radius.xl, gap: 12 },

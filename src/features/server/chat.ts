@@ -16,6 +16,8 @@ import { primeFaces } from './faces';
 import { askPushInContext } from '@/features/push/push';
 import { useBlocked } from '@/features/moderation/moderation';
 import { t as tx } from '@/i18n';
+import { useAppSpace, type AppSpace } from '@/state/appSpace';
+import { universeInSpace } from '@/features/universe/universe';
 
 /**
  * Server chats (signed in): the inbox from `my_conversations()` and live
@@ -46,6 +48,13 @@ type InboxRow = {
   last_kind: string | null;
   last_sender_name: string | null;
   archived?: boolean;
+  // From migration 20261110100000_irly_chat_universe (absent on an older server).
+  universe?: 'mixte' | 'girl' | 'mom' | 'network' | null;
+  women_only?: boolean;
+  ref_topic?: string | null;
+  ref_category?: string | null;
+  ref_sub?: string | null;
+  ref_place?: string | null;
 };
 
 const KIND: Record<InboxRow['kind'], Conversation['kind']> = {
@@ -60,11 +69,25 @@ const KIND: Record<InboxRow['kind'], Conversation['kind']> = {
 /** Unread messages across your server chats (the badge on Messages), fed by <UnreadSync />. */
 export const useServerUnread = create<{ n: number }>(() => ({ n: 0 }));
 
-/** Mounted once at the root: keeps the unread count live for every header. */
+/**
+ * Whether a chat is listed in an app space: a private chat (no universe) in
+ * every space, a community or activity chat in its universe's space only
+ * (features/universe). A server that does not tell the universe yet: everywhere.
+ */
+export function chatInSpace(c: Pick<Conversation, 'universe' | 'womenOnly'>, space: AppSpace): boolean {
+  return !c.universe || universeInSpace(c.universe, Boolean(c.womenOnly), space);
+}
+
+/**
+ * Mounted once at the root: keeps the unread count live for every header.
+ * The badge counts the chats of the app space in use (every universe of it,
+ * and private chats): the same chats Messages lists in that space.
+ */
 export function UnreadSync() {
   const { conversations } = useServerInbox();
+  const space = useAppSpace();
   // Archived chats keep their own unread count but stay out of the badge.
-  const n = conversations.reduce((sum, c) => sum + (c.archived ? 0 : (c.unread ?? 0)), 0);
+  const n = conversations.reduce((sum, c) => sum + (c.archived || !chatInSpace(c, space) ? 0 : (c.unread ?? 0)), 0);
   useEffect(() => {
     useServerUnread.setState({ n });
   }, [n]);
@@ -249,6 +272,12 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
       lastIsPhoto: r.last_kind === 'photo',
       lastSenderName: r.last_sender_name ?? undefined,
       archived: Boolean(r.archived),
+      universe: r.universe,
+      womenOnly: Boolean(r.women_only),
+      refTopic: r.ref_topic ?? undefined,
+      refCategory: r.ref_category ?? undefined,
+      refSub: r.ref_sub ?? undefined,
+      refPlace: r.ref_place ?? undefined,
       messages: r.last_body
         ? [{ id: `${r.conversation_id}-last`, from: r.last_sender === uid ? 'me' : r.last_sender ? 'member' : 'irly', text: shownBody(r.last_body), minAgo: 0, at: Date.parse(r.last_at) }]
         : [],
@@ -257,6 +286,12 @@ export function useServerInbox(): { conversations: Conversation[]; refresh: () =
     [rows, uid],
   );
   return { conversations, refresh, loading: Boolean(uid) && !(mine && store.for === uid), error: mine && store.for === uid ? store.error : null };
+}
+
+/** A chat's universe, as the inbox told it (null: a private chat, every universe; undefined: not known here). */
+export function useChatUniverse(conversationId: string): Conversation['universe'] {
+  const uid = useAccount()?.userId;
+  return useInboxStore((s) => (uid && s.uid === uid ? s.rows.find((r) => r.conversation_id === conversationId)?.universe : undefined));
 }
 
 /**

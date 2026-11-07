@@ -3,7 +3,7 @@ import type { CityId } from '@/data/types';
 import { useCityFilter } from '@/features/server/scope';
 import { NONE } from '@/lib/none';
 import { uuid } from '@/lib/uuid';
-import { together } from '@/lib/together';
+import { togetherRecent } from '@/lib/together';
 import { useAccount, withProfile } from '@/features/auth/account';
 import { track } from '@/lib/analytics';
 import { friendlyError, liveChannel, supabase, whenListening } from '@/lib/supabase';
@@ -13,6 +13,8 @@ import { askPushInContext } from '@/features/push/push';
 import { toast } from '@/components/ui/Toast';
 import { realtimeIdsFilter } from '@/features/server/engage';
 import { useAppSpace } from '@/state/appSpace';
+import { belongsToSpace } from '@/features/universe/universe';
+import { rpcInSpace } from '@/features/universe/spaceRpc';
 import { cacheKey, hydrateCommunityCache, load as loadCached, peek } from './cache';
 import { displayCommunityName } from './name';
 import { FEED_PAGE, fetchFeedFallback, fetchPostsPage, popularScore, type FeedSort } from './space';
@@ -54,6 +56,8 @@ export type CommunityDetail = {
   emoji: string | null;
   /** Introductions strongly suggested (IRLY Newcomers). */
   introFirst: boolean;
+  /** Its rules (read with the rest: the page's rules then need no request of their own). */
+  rules?: string | null;
   /** My chat notifications are off. */
   muted: boolean;
 };
@@ -104,6 +108,8 @@ export type CommunitySummary = {
   topic: string | null;
   emoji: string | null;
   createdAt: number | null;
+  /** Its own photo (a storage path), null: none (IRLY's photo of its subject). Undefined: not said by the server, looked up by id. */
+  coverPath?: string | null;
 };
 
 export type Digest = { postsWeek: number; newMembersWeek: number; members: number; upcoming: number; nextTitle: string | null; nextStartsAt: number | null; topPostBody: string | null; topPostLikes: number };
@@ -131,7 +137,7 @@ export async function setCommunityMuted(conversationId: string, muted: boolean):
 export async function fetchCommunityDetail(uid: string, id: string): Promise<CommunityDetail | null> {
   const [{ data, error: e }, { data: cover }, { data: mine }] = await Promise.all([
     sb().rpc('community_detail', { p_id: id }),
-    sb().from('communities').select('cover_path, official, topic, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
+    sb().from('communities').select('cover_path, official, topic, rules, community_topics(emoji, intro_first)').eq('id', id).maybeSingle(),
     sb().from('conversation_members').select('muted, conversations!inner(community_id)').eq('user_id', uid).eq('conversations.community_id', id).limit(1),
   ]);
   if (e) throw new Error(e.message);
@@ -155,6 +161,8 @@ export async function fetchCommunityDetail(uid: string, id: string): Promise<Com
     topic: (cover?.topic as string | null) ?? null,
     emoji: topicOf(cover)?.emoji ?? null,
     introFirst: Boolean(topicOf(cover)?.intro_first),
+    // Undefined when that read failed: the rules are then read on their own.
+    rules: cover ? (typeof cover.rules === 'string' ? cover.rules.trim() || null : null) : undefined,
     muted: Boolean(r.conversation_id && (mine as { muted: boolean }[] | null)?.[0]?.muted),
   };
 }
@@ -611,31 +619,39 @@ const GIRL_OFFICIAL = new Set(['girls']);
 const isGirlOfficial = (topic: string | null) => Boolean(topic && GIRL_OFFICIAL.has(topic));
 
 export function useCommunityList(cityId: string) {
-  // Each space lists its own: IRLY Girl, its communities (of IRLY's official ones, only IRLY Girl); IRLY, none of them.
+  // Each space lists its own (universe.ts): IRLY Girl, Girl, Mom and women-only Network communities
+  // (of IRLY's official ones, only IRLY Girl's); Mixte, Mixte and mixed Network ones.
   // IRLY Network's own community (and Girl CEO) live in the IRLY Network section, never as a second tile here.
-  const girlSpace = useAppSpace() === 'girl';
+  const space = useAppSpace();
+  const girlSpace = space === 'girl';
   const list = useCommunityRows(cityId);
   return useMemo(
-    () => list.filter((c) => (girlSpace ? c.girlOnly && (!c.official || isGirlOfficial(c.topic)) : !c.girlOnly && !(c.official && c.topic === 'network'))),
-    [list, girlSpace],
+    () =>
+      list.filter(
+        (c) => belongsToSpace(c, space) && (girlSpace ? c.girlOnly && (!c.official || isGirlOfficial(c.topic)) : !c.girlOnly && !(c.official && c.topic === 'network')),
+      ),
+    [list, girlSpace, space],
   );
 }
 
 /**
- * The communities this member is in, whichever space they belong to: « Your
- * communities » is about the member, so IRLY Girl also shows the IRLY ones
- * they joined (and IRLY the IRLY Girl ones). The server only returns rows
- * this account may see.
+ * The communities this member is in, in the universe of the app she is
+ * using (universe.ts): IRLY Girl lists her Girl, Mom and women-only Network
+ * ones, never her Mixte ones; Mixte lists her Mixte and mixed Network ones.
+ * Her memberships are all kept: each shows in its own app.
  */
 export function useMyCommunities(cityId: string) {
+  const space = useAppSpace();
   const list = useCommunityRows(cityId);
-  return useMemo(() => list.filter((c) => c.isMember && !(c.official && c.topic === 'network')), [list]);
+  return useMemo(() => list.filter((c) => c.isMember && belongsToSpace(c, space) && !(c.official && c.topic === 'network')), [list, space]);
 }
 
 /** Every community the server lists for this city (kept by the city filter), both spaces. */
 function useCommunityRows(cityId: string) {
   const account = useAccount();
   const uid = account?.userId;
+  // Asked for this app space only: the server leaves out the other space's communities (20261110700000).
+  const space = useAppSpace();
   // IRLY Girl communities come back to eligible women only.
   const [list, setList] = useState<CommunitySummary[]>([]);
   const version = useCommunitiesVersion();
@@ -645,8 +661,9 @@ function useCommunityRows(cityId: string) {
     const sb = supabase;
     // The pages kept on the phone are read now, before one of these communities is opened.
     void hydrateCommunityCache();
-    // Home, Profile and Communities list the same communities (tabs stay mounted, a sync bump reaches them all): one read.
-    together(`community_list:${uid}:${cityId}`, () => sb.rpc('community_list', { p_city: cityId })).then(({ data, error }) => {
+    // Home, Profile and Communities list the same communities (tabs stay mounted, a sync bump reaches them all): one read,
+    // and a screen opened within 20 s of another takes its answer (a change bumps `version`, read again then).
+    togetherRecent(`community_list:${uid}:${cityId}:${space}:${version}`, 20_000, () => rpcInSpace(sb, 'community_list', { p_city: cityId }, space)).then(({ data, error }) => {
       // A failed load keeps the list already on screen.
       if (!alive || error) return;
       setList(
@@ -664,13 +681,15 @@ function useCommunityRows(cityId: string) {
           topic: (r.topic as string) ?? null,
           emoji: (r.emoji as string) ?? null,
           createdAt: r.created_at ? Date.parse(r.created_at as string) : null,
+          // A server without the column says nothing: the photo is then looked up by id.
+          coverPath: 'cover_path' in r ? ((r.cover_path as string | null) ?? null) : undefined,
         })),
       );
     });
     return () => {
       alive = false;
     };
-  }, [cityId, uid, version]);
+  }, [cityId, uid, version, space]);
   const { keep } = useCityFilter(cityId as CityId);
   const shown = useMemo(() => list.filter((c) => keep(c.cityId)), [list, keep]);
   return uid ? shown : NONE;

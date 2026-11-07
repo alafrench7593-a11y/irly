@@ -30,6 +30,13 @@ export type CreatePreset = {
   when?: When;
   /** An IRLY library photo link. */
   cover?: string;
+  /**
+   * Started from a post (« Create an activity » on a post card): the post's id
+   * (community_posts.id). Saved as activities.source_post_id; the server checks
+   * the member can see the post and refuses a second activity from the same
+   * post by the same member within 2 minutes (a double tap).
+   */
+  sourcePostId?: string;
 };
 
 type CreateState = {
@@ -53,4 +60,35 @@ export const useCreateStore = create<CreateState>((set) => ({
 /** Opens the composer, growing from `origin` when given, starting from `preset`. */
 export function openCreate(origin?: { x: number; y: number } | null, preset?: CreatePreset | null) {
   useCreateStore.getState().show(origin, preset);
+}
+
+/** What a post card hands to « Create an activity ». */
+export type PostActivitySeed = {
+  /** community_posts.id */
+  postId: string;
+  /** The post's text (or its first line): the activity's name, editable. Under 3 characters, the member starts from the categories. */
+  title?: string;
+  /** The rest of the post, as the activity's description (editable, cut to the form's limit). */
+  description?: string;
+  /** The post's community: preselected (members-only visibility by default), with its name, emirate and IRLY Girl flag. */
+  communityId?: string | null;
+  communityName?: string;
+  cityId?: string;
+  girlOnly?: boolean;
+};
+
+/** The composer, started from a post: name prefilled, its community preselected, the post linked. */
+export function presetFromPost(seed: PostActivitySeed): CreatePreset {
+  return {
+    sourcePostId: seed.postId,
+    title: seed.title?.replace(/\s+/g, ' ').trim().slice(0, 80) || undefined,
+    description: seed.description?.trim() || undefined,
+    ...(seed.communityId ? { communityId: seed.communityId, communityName: seed.communityName, girlOnly: seed.girlOnly } : {}),
+    ...(seed.cityId ? { cityId: seed.cityId } : {}),
+  };
+}
+
+/** Opens the composer from a post card (« Create an activity »), growing from `origin` when given. */
+export function openCreateFromPost(seed: PostActivitySeed, origin?: { x: number; y: number } | null) {
+  openCreate(origin, presetFromPost(seed));
 }

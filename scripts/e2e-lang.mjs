@@ -42,7 +42,11 @@ const PHRASES_OK = [
   /\bFree zone\b/g, // Dubai's legal term, said in English in French too
   // The demo's members, organisers and places wrote these in English: member
   // content stays in the language it was written in, whatever the app's.
-  /\b(Women in Business UAE|Girls Who Travel|New in Dubai|Padel Open|The Overlook|The Greens & The Views|The Springs & Meadows)\b/g,
+  /\b(Business Leaders UAE|Girls Who Travel|New in Dubai|Padel Open|The Overlook|The Greens & The Views|The Springs & Meadows|Women in Business Dubai)\b/g,
+  // Names of IRLY's official communities, the same in every language (« Les Françaises à Dubaï »),
+  // and the demo back office's banner title (team content, written once, not translated by the app).
+  /Les Françaises à Dubaï/g,
+  /^Girls’ night out$/g,
   /^Great, let’s meet in front of the bookshop 🤍$/g,
   /^Thinking about it\. First time, any tips\?$/g,
   /^Building a fashion brand between Paris and Dubai\..*$/g,

@@ -10,18 +10,18 @@ import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * A community's five spaces (Posts | Chat | Activities | Media | Members),
- * the same on the real and the demonstration pages. A glass bar under the
- * page header; the selected tab's underline glides to it, and the bar
- * scrolls sideways when the five do not fit (small phones, long words).
+ * A community's four spaces (Posts | Chat | Activities | Members), the
+ * same on the real and the demonstration pages (no Media tab: photos and
+ * videos stay in their posts, owner decision). A glass bar under the page
+ * header; the selected tab's underline glides to it, and the bar scrolls
+ * sideways when the tabs do not fit (small phones, long words).
  */
 
-export type SpaceTab = 'posts' | 'chat' | 'activities' | 'media' | 'members';
+export type SpaceTab = 'posts' | 'chat' | 'activities' | 'members';
 export const SPACE_TABS: { key: SpaceTab; label: string }[] = [
   { key: 'posts', label: 'Posts' },
   { key: 'chat', label: 'Chat' },
   { key: 'activities', label: 'Activities' },
-  { key: 'media', label: 'Media' },
   { key: 'members', label: 'Members' },
 ];
 export const TABS_HEIGHT = 46;
