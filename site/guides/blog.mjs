@@ -373,4 +373,178 @@ export const POSTS = [
       { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-gym-class-acquaintance-friend',
+    path: 'blog/gym-class-acquaintance-to-friend/',
+    city: 'Dubai',
+    published: '2026-11-07',
+    title: 'From Gym or Class Acquaintance to Friend: The Next Steps | IRLY',
+    description: 'You see the same faces at the gym or in class every week. How to go from a nod to a name, then to a first plan, without making it awkward for anyone.',
+    h1: 'From gym or class acquaintance to friend: the next steps',
+    lead: 'If you already see someone every week at the gym or in a class, the hardest part is done. To turn that acquaintance into a friend, learn their name, use the few minutes before and after the session to talk, then suggest one small plan linked to the activity before moving outside it.',
+    sections: [
+      {
+        h2: 'Move from nodding to names',
+        html: `<p>Many of these friendships stop at the same point: you recognise each other, you smile, and that is it. The first step is simply to learn their name and give yours. A good moment is right after a session you both found hard: “That one was tough. I’m Alex, by the way.” Use their name the next time you see them. It sounds small, but it turns a familiar face into a person you know. Some people come only to focus on their workout; if someone keeps their headphones on and answers briefly, respect it and try with someone else.</p>`,
+      },
+      {
+        h2: 'Use the minutes before and after',
+        html: `<p>The session itself is rarely the time to talk. The few minutes around it are. Arrive a little early or stay a little after, and build on what you already share:</p>
+<ul>
+<li><strong>Ask about the activity:</strong> how long they have been coming, which session they prefer, what they are working towards.</li>
+<li><strong>Remember one detail</strong> and ask about it the next week: the race they mentioned, the trip, the new job.</li>
+<li><strong>Share a little about yourself</strong> too, so the conversation goes both ways.</li>
+</ul>
+<p>After a few weeks of this, you know each other a bit beyond the activity, and a plan feels natural instead of sudden.</p>`,
+      },
+      {
+        h2: 'Suggest a plan linked to the activity',
+        html: `<p>The easiest first invitation stays close to what you already do together, so it does not feel like a big ask:</p>
+<ul>
+<li>a coffee or breakfast right after the session;</li>
+<li>trying a different class, a longer session or a weekend outing together;</li>
+<li>going to an event related to the activity, like a match to watch or a beginner workshop.</li>
+</ul>
+<p>Keep the wording open and easy to decline: “A few of us are getting coffee after, want to join?” Inviting two or three people from the group often feels more relaxed than a one-to-one plan. Swap numbers or join the group chat if there is one, so the next plan does not depend on bumping into each other.</p>`,
+      },
+      {
+        h2: 'Read the signals, then step outside the activity',
+        html: `<p>If they say yes and you enjoy it, suggest something away from the activity after a couple of these: a walk, a meal, a game. If they say no, look at how they say it. “Not today, but another time” with a counter-offer is a good sign; two vague answers in a row mean you can let them come to you. Either way, keep going to the session as before, so nothing feels strange. Not every acquaintance becomes a friend, and that is fine: a regular activity keeps bringing new faces. For more, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Want more familiar faces?', body: 'Find a regular activity where the same people come back each week, in real life.', label: 'Find an activity' },
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
+      { label: 'Making friends in Dubai as an introvert', path: 'blog/introvert-make-friends-dubai/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-gym-class-acquaintance-friend',
+    path: 'fr/blog/connaissance-sport-cours-devenir-ami/',
+    city: 'Dubaï',
+    published: '2026-11-07',
+    title: 'Salle de sport ou cours : faire d’une connaissance un ami | IRLY',
+    description: 'Tu croises les mêmes têtes à la salle ou en cours chaque semaine ? Comment passer du simple bonjour au prénom, puis à un premier plan, sans gêne pour personne.',
+    h1: 'Salle de sport ou cours : faire d’une connaissance un ami',
+    lead: 'Si tu vois déjà quelqu’un chaque semaine à la salle ou en cours, le plus dur est fait. Pour en faire un ami, retiens son prénom, profite des quelques minutes avant et après la séance pour discuter, puis propose un petit plan lié à l’activité avant d’aller plus loin.',
+    sections: [
+      {
+        h2: 'Passe du signe de tête au prénom',
+        html: `<p>Beaucoup de ces amitiés bloquent au même endroit : on se reconnaît, on se sourit, et c’est tout. Le premier pas, c’est simplement d’apprendre son prénom et de donner le tien. Un bon moment : juste après une séance difficile pour tout le monde. « Elle était dure, celle-là. Moi, c’est Alex, au fait. » Utilise son prénom la fois suivante. Ça paraît anodin, mais un visage familier devient une personne que tu connais. Certains viennent seulement pour se concentrer sur leur entraînement : si quelqu’un garde ses écouteurs et répond en deux mots, respecte ce choix et tente ta chance avec quelqu’un d’autre.</p>`,
+      },
+      {
+        h2: 'Profite des minutes avant et après',
+        html: `<p>Pendant la séance, on a rarement le temps de parler. Les quelques minutes autour, si. Arrive un peu en avance ou reste un peu après, et pars de ce que vous partagez déjà :</p>
+<ul>
+<li><strong>Parle de l’activité :</strong> depuis quand la personne vient, sa séance préférée, son objectif du moment.</li>
+<li><strong>Retiens un détail</strong> et reviens-y la semaine suivante : la course dont vous aviez parlé, le voyage, le nouveau travail.</li>
+<li><strong>Parle un peu de toi</strong> aussi, pour que l’échange aille dans les deux sens.</li>
+</ul>
+<p>Au bout de quelques semaines, vous vous connaissez un peu au-delà de l’activité, et proposer un plan paraît naturel plutôt que soudain.</p>`,
+      },
+      {
+        h2: 'Propose un plan lié à l’activité',
+        html: `<p>La première invitation la plus simple reste proche de ce que vous faites déjà ensemble, pour que ce ne soit pas une grosse demande :</p>
+<ul>
+<li>un café ou un petit-déjeuner juste après la séance ;</li>
+<li>essayer ensemble un autre cours, une séance plus longue ou une sortie le week-end ;</li>
+<li>aller à un événement lié à l’activité, comme un match à regarder ou un atelier pour débutants.</li>
+</ul>
+<p>Garde une formulation ouverte, facile à refuser : « On va prendre un café après à quelques-uns, tu viens ? » Inviter deux ou trois personnes du groupe est souvent plus détendu qu’un plan en tête-à-tête. Échange ton numéro ou rejoins le groupe de discussion s’il y en a un, pour que le prochain plan ne dépende pas du hasard.</p>`,
+      },
+      {
+        h2: 'Lis les signaux, puis sors du cadre de l’activité',
+        html: `<p>Si la personne dit oui et que le moment est agréable, propose après deux ou trois fois quelque chose en dehors de l’activité : une balade, un repas, un jeu. Si elle dit non, regarde comment. « Pas aujourd’hui, mais une autre fois » avec une autre date proposée, c’est bon signe ; deux réponses vagues d’affilée, et tu peux la laisser revenir vers toi. Dans tous les cas, continue à venir à la séance comme avant, pour que rien ne devienne bizarre. Toutes les connaissances ne deviennent pas des amis, et ce n’est pas grave : une activité régulière amène sans cesse de nouveaux visages. Pour aller plus loin, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Envie de plus de visages familiers ?', body: 'Trouve une activité régulière où les mêmes personnes reviennent chaque semaine, en vrai.', label: 'Trouver une activité' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Se faire des amis à Dubaï quand on est introverti', path: 'fr/blog/introverti-se-faire-des-amis-dubai/' },
+    ],
+  },
+  {
+    lang: 'en',
+    pair: 'blog-friends-dubai-30s',
+    path: 'blog/make-friends-dubai-30s/',
+    city: 'Dubai',
+    published: '2026-11-07',
+    title: 'Making Friends in Dubai in Your 30s: What Changes | IRLY',
+    description: 'In your 30s, people in Dubai have less free time and very different lives. How to make friends anyway: regular plans, a clear ask, and a circle of mixed ages.',
+    h1: 'Making friends in Dubai in your 30s: what changes',
+    lead: 'Making friends in your 30s in Dubai works, but not the way it did at 20: people have less free time, more varied lives and fewer late nights out. What helps is choosing regular plans that fit busy schedules, saying clearly that you want to meet people, and not limiting yourself to people at your exact stage of life.',
+    sections: [
+      {
+        h2: 'What is different in your 30s',
+        html: `<p>At this age, many people around you are busy with careers, partners or young children, and their free time is often planned weeks ahead. Friendships no longer grow from long nights out or years spent in the same classroom. That does not mean people are closed to new friends. Many want them too, especially those who moved here themselves. It just means friendship needs a bit more intention and a place in the calendar.</p>`,
+      },
+      {
+        h2: 'Choose plans that fit a busy life',
+        html: `<ul>
+<li><strong>Regular and short:</strong> a weekly morning sport session, an evening class, a monthly book club. A fixed slot is easier to keep than a vague “let’s catch up”.</li>
+<li><strong>Mornings and daytime:</strong> they often suit people who work long hours or keep evenings for family.</li>
+<li><strong>Plans that welcome partners or children,</strong> if that is your situation or theirs: a walk, a picnic, a meetup in a park.</li>
+</ul>
+<p>Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has ideas to start with.</p>`,
+      },
+      {
+        h2: 'Say clearly that you are looking for friends',
+        html: `<p>In your 30s, saying “I’m fairly new here and trying to meet people” is not strange; many people will relate. Being direct saves time and makes it easier for others to invite you. When you get along with someone, suggest a specific plan with a day and a time rather than “we should meet up sometime”. Before you leave, agree on the next one: busy people keep what is in their calendar.</p>`,
+      },
+      {
+        h2: 'Mix ages and life stages',
+        html: `<p>You do not need friends who are exactly your age or in exactly your situation. Single or in a couple, with or without children, a few years younger or older: shared interests matter more than matching lives. A mixed circle also means someone is free on the evenings when others are not. If it feels slow, that is normal; friendships take a few months of regular plans at any age. For more, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and, if quiet days weigh on you, <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Busy week, little free time?', body: 'Find a regular activity that fits your schedule, with people who want to meet too, in real life.', label: 'Find my people' },
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'Making friends at work in Dubai', path: 'blog/make-friends-at-work-dubai/' },
+      { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-friends-dubai-30s',
+    path: 'fr/blog/se-faire-des-amis-dubai-trentaine/',
+    city: 'Dubaï',
+    published: '2026-11-07',
+    title: 'Se faire des amis à Dubaï à 30 ans : ce qui change | IRLY',
+    description: 'Dans la trentaine à Dubaï, on a moins de temps libre et des vies variées. Comment se faire des amis quand même : plans réguliers, demande claire, âges mélangés.',
+    h1: 'Se faire des amis à Dubaï dans la trentaine : ce qui change',
+    lead: 'Se faire des amis à Dubaï dans la trentaine, c’est possible, mais pas comme à 20 ans : les gens ont moins de temps libre, des vies plus variées et moins de soirées qui finissent tard. Ce qui aide : choisir des plans réguliers qui collent à des emplois du temps chargés, dire clairement que tu cherches à rencontrer du monde, et ne pas te limiter aux personnes qui vivent exactement la même étape que toi.',
+    sections: [
+      {
+        h2: 'Ce qui change dans la trentaine',
+        html: `<p>À cet âge, beaucoup de gens autour de toi sont pris par leur carrière, leur couple ou de jeunes enfants, et leur temps libre se planifie souvent des semaines à l’avance. Les amitiés ne naissent plus des longues soirées ou des années passées sur les mêmes bancs. Ça ne veut pas dire que les gens sont fermés : beaucoup cherchent aussi de nouveaux amis, surtout ceux qui sont arrivés ici comme toi. Simplement, l’amitié demande un peu plus d’intention et une place dans l’agenda.</p>`,
+      },
+      {
+        h2: 'Choisis des plans compatibles avec une vie chargée',
+        html: `<ul>
+<li><strong>Réguliers et courts :</strong> une séance de sport le matin chaque semaine, un cours en soirée, un club de lecture une fois par mois. Un créneau fixe tient mieux qu’un vague « on se voit bientôt ».</li>
+<li><strong>Le matin et en journée :</strong> ces horaires conviennent souvent à ceux qui travaillent tard ou gardent leurs soirées pour la famille.</li>
+<li><strong>Des plans ouverts aux conjoints ou aux enfants,</strong> si c’est ta situation ou la leur : une balade, un pique-nique, une rencontre dans un parc.</li>
+</ul>
+<p>Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne des idées pour commencer.</p>`,
+      },
+      {
+        h2: 'Dis clairement que tu cherches des amis',
+        html: `<p>Dans la trentaine, dire « Je suis arrivé(e) il y a peu et j’essaie de rencontrer du monde » n’a rien de bizarre : beaucoup s’y reconnaîtront. Être direct fait gagner du temps et aide les autres à t’inviter. Quand le courant passe avec quelqu’un, propose un plan précis, avec un jour et une heure, plutôt qu’un « faudrait qu’on se voie un de ces jours ». Avant de vous quitter, calez le suivant : les gens occupés gardent ce qui est dans leur agenda.</p>`,
+      },
+      {
+        h2: 'Mélange les âges et les étapes de vie',
+        html: `<p>Pas besoin d’amis qui ont exactement ton âge ou vivent exactement ta situation. Célibataire ou en couple, avec ou sans enfants, quelques années de plus ou de moins : les centres d’intérêt communs comptent plus que des vies identiques. Un cercle varié, c’est aussi quelqu’un de disponible les soirs où les autres ne le sont pas. Si ça te paraît lent, c’est normal : à tout âge, une amitié demande quelques mois de plans réguliers. Pour aller plus loin, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et, si les journées calmes te pèsent, <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Semaine chargée, peu de temps libre ?', body: 'Trouve une activité régulière qui colle à ton emploi du temps, avec des gens qui veulent aussi se rencontrer, en vrai.', label: 'Trouver mes gens' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Se faire des amis au travail à Dubaï', path: 'fr/blog/amis-au-travail-dubai/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+    ],
+  },
 ];

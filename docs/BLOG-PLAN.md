@@ -20,8 +20,8 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
 - [x] Making friends in Dubai as an introvert
 - [x] Making friends at work in Dubai without making it awkward
 - [x] Lonely after a breakup in a new city
-- [ ] How to turn a gym or class acquaintance into a friend
-- [ ] Making friends in Dubai in your 30s
+- [x] How to turn a gym or class acquaintance into a friend
+- [x] Making friends in Dubai in your 30s
 - [ ] Making friends in Dubai in your 40s and 50s
 - [ ] New in Dubai with a partner: building a social life as a couple
 - [ ] Moved to Dubai for your partner's job: building your own circle
