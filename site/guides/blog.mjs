@@ -533,7 +533,7 @@ export const POSTS = [
       },
       {
         h2: 'Dis clairement que tu cherches des amis',
-        html: `<p>Dans la trentaine, dire « Je suis arrivé(e) il y a peu et j’essaie de rencontrer du monde » n’a rien de bizarre : beaucoup s’y reconnaîtront. Être direct fait gagner du temps et aide les autres à t’inviter. Quand le courant passe avec quelqu’un, propose un plan précis, avec un jour et une heure, plutôt qu’un « faudrait qu’on se voie un de ces jours ». Avant de vous quitter, calez le suivant : les gens occupés gardent ce qui est dans leur agenda.</p>`,
+        html: `<p>Dans la trentaine, dire « Je suis arrivé(e) il y a peu et j’essaie de rencontrer du monde » n’a rien de bizarre : beaucoup s’y reconnaîtront. Être direct fait gagner du temps et aide les autres à t’inviter. Quand le courant passe avec quelqu’un, propose un plan précis, avec un jour et une heure, plutôt qu’un « faudrait qu’on se voie un de ces jours ». Avant de vous quitter, cale le suivant : les gens occupés gardent ce qui est dans leur agenda.</p>`,
       },
       {
         h2: 'Mélange les âges et les étapes de vie',
