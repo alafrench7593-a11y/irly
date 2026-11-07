@@ -12,7 +12,9 @@ import { useTheme } from '@/theme/useTheme';
 /**
  * The Chat tab: the community's conversation in the page (the same view as
  * Messages, as a pane), for members. The pane sits under the page header and
- * the tabs, so it sees no top inset of its own.
+ * the tabs, so it sees no top inset of its own; `top` (from the top of the
+ * screen) is also what the keyboard avoider must add, as it measures from the
+ * pane, not from the screen.
  */
 export function ChatPane({ conversationId, top }: { conversationId: string; top: number }) {
   const insets = useSafeAreaInsets();
@@ -20,7 +22,7 @@ export function ChatPane({ conversationId, top }: { conversationId: string; top:
   return (
     <View style={[styles.fill, { top }]}>
       <SafeAreaInsetsContext.Provider value={inner}>
-        <ConversationView id={conversationId} pane />
+        <ConversationView id={conversationId} pane keyboardOffset={top} />
       </SafeAreaInsetsContext.Provider>
     </View>
   );

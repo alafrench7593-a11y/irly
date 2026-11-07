@@ -66,16 +66,21 @@ import { chatCommunity, openActivityFromMessage } from '@/features/messages/toAc
  * Where the chat is drawn. A page of its own (phones, `/messages/[id]`):
  * back and leaving go back. A pane next to the list (wide screens): no back,
  * and leaving the chat (blocked, archived, deleted, group left) empties the pane.
+ * `keyboardOffset`: how far below the top of the screen the view starts (the
+ * community Chat tab sits under the page header and the tabs). The keyboard
+ * avoider measures its frame from its parent, not from the screen: without
+ * this it lifted the composer by that much too little and the keyboard
+ * covered it.
  */
-type Place = { pane: boolean; leave: () => void };
-const PlaceContext = createContext<Place>({ pane: false, leave: () => {} });
+type Place = { pane: boolean; leave: () => void; keyboardOffset: number };
+const PlaceContext = createContext<Place>({ pane: false, leave: () => {}, keyboardOffset: 0 });
 
 /**
  * One conversation: realtime messages, text and photos, replies, reactions,
  * delete, report and block. The same view serves the page and the pane, so
  * both behave alike.
  */
-export function ConversationView({ id, draft, pane = false }: { id: string; draft?: string; pane?: boolean }) {
+export function ConversationView({ id, draft, pane = false, keyboardOffset = 0 }: { id: string; draft?: string; pane?: boolean; keyboardOffset?: number }) {
   const router = useRouter();
   const status = useAuthStatus();
   const leave = useCallback(() => {
@@ -84,7 +89,7 @@ export function ConversationView({ id, draft, pane = false }: { id: string; draf
     if (router.canGoBack()) router.back();
     else router.replace('/messages');
   }, [id, pane, router]);
-  const place = useMemo(() => ({ pane, leave }), [pane, leave]);
+  const place = useMemo(() => ({ pane, leave, keyboardOffset }), [pane, leave, keyboardOffset]);
   // Server conversations (signed in) have UUIDs; the rest live on the device.
   let body;
   if (isServerId(id) && status === 'out') body = <SignedOut />;
@@ -144,7 +149,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { leave } = useContext(PlaceContext);
+  const { leave, keyboardOffset } = useContext(PlaceContext);
   const thread = useServerThread(id);
   const now = useNow();
   // `draft`: a first message prepared elsewhere (Introduce myself): editable, never sent by itself.
@@ -457,7 +462,7 @@ function ServerThreadView({ id, draft }: { id: string; draft?: string }) {
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Ambient variant="quiet" />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'} keyboardVerticalOffset={keyboardOffset}>
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24 + (ownActivity ? BANNER : 0) + (pinsShown ? PIN_BANNER : 0), paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
@@ -1196,6 +1201,7 @@ function Thread({ id }: { id: string }) {
   const t = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { keyboardOffset } = useContext(PlaceContext);
   const cityId = useCityId();
   const conversation = resolveConversation(id, cityId);
   const sent = useStore((s) => s.sent);
@@ -1279,7 +1285,7 @@ function Thread({ id }: { id: string }) {
   return (
     <View style={[styles.root, { backgroundColor: t.c.bg }]}>
       <Ambient variant="quiet" />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'web' ? undefined : 'padding'} keyboardVerticalOffset={keyboardOffset}>
         <ScrollView
           ref={scrollRef}
           contentContainerStyle={{ paddingTop: insets.top + layout.headerHeight + 24, paddingBottom: 24, paddingHorizontal: space.gutter, gap: 8 }}
