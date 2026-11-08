@@ -547,4 +547,172 @@ export const POSTS = [
       { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-friends-dubai-40s-50s',
+    path: 'blog/make-friends-dubai-40s-50s/',
+    city: 'Dubai',
+    published: '2026-11-08',
+    title: 'Making Friends in Dubai in Your 40s and 50s: How to Start | IRLY',
+    description: 'New in Dubai in your 40s or 50s? Where friendships grow at this stage: roles that use your experience, inviting people home, and circles of all ages.',
+    h1: 'Making friends in Dubai in your 40s and 50s: how to start',
+    lead: 'Making friends in Dubai in your 40s and 50s is very possible, but it rarely happens at events built for a younger crowd. At this stage, friendships tend to grow from a role you take on, from people you invite into your home, and from shared values more than shared nights out. You also need fewer new friends than you might think: one or two people you can call often matter more than a full calendar.',
+    sections: [
+      {
+        h2: 'What is specific at this stage',
+        html: `<p>Many people arrive in Dubai at this age with a settled life: a senior job, teenage or grown-up children, sometimes children who stayed in another country. The ready-made social life that came with school gates or first jobs may not be there anymore. Many advertised events seem aimed at people in their twenties, and it is easy to conclude there is no place for you. That conclusion is usually wrong. Plenty of people your age moved here too and are looking for the same thing; they are simply in other places.</p>`,
+      },
+      {
+        h2: 'Look for roles where your experience counts',
+        html: `<p>At this stage, a role often works better than a mixer. When you help run something, you see the same people regularly and you have a reason to talk from the first day:</p>
+<ul>
+<li><strong>Volunteering</strong> with a regular slot, where your organisation or practical skills are useful.</li>
+<li><strong>Mentoring or teaching a skill</strong> you know well: a language, a craft, a sport, your profession.</li>
+<li><strong>A professional association or alumni group</strong> linked to your field, your country or your former university.</li>
+<li><strong>A community around your language, culture or faith,</strong> where newcomers of all ages are usually welcome.</li>
+<li><strong>A school or residents’ committee,</strong> if you have children at school or live in a community with shared spaces.</li>
+</ul>
+<p>Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has more ideas to start with.</p>`,
+      },
+      {
+        h2: 'Be the one who invites',
+        html: `<p>Many people your age would like more friends but wait for someone else to take the first step. You can be that person. Invite two or three people you have met to a simple meal at home, suggest a regular weekend walk, or start a small monthly dinner where each guest brings someone new. An invitation to someone’s home feels personal in a way a group event does not, and many people find hosting easier at this stage of life. Keep it simple and regular: the same plan each month builds more than one big evening.</p>`,
+      },
+      {
+        h2: 'Keep old friendships, and give new ones time',
+        html: `<p>The friends you already have, at home or elsewhere, still count. Schedule calls with them instead of waiting for the right moment; they make the first months here lighter. With new people, do not filter by age: your next good friend may be ten years younger or older, and shared interests matter more than the same birth year. Expect it to take some months of regular plans, as at any age. If the quiet weeks start to weigh on you, talking to a doctor or a mental health professional is a normal step. For more, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a> and <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Ready to meet people at your own pace?', body: 'Find a regular activity with people who want to meet too, whatever their age, in real life.', label: 'Find my people' },
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'Making friends in Dubai in your 30s', path: 'blog/make-friends-dubai-30s/' },
+      { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-friends-dubai-40s-50s',
+    path: 'fr/blog/se-faire-des-amis-dubai-40-50-ans/',
+    city: 'Dubaï',
+    published: '2026-11-08',
+    title: 'Se faire des amis à Dubaï après 40 ans : par où commencer | IRLY',
+    description: 'Nouveau ou nouvelle à Dubaï à 40 ou 50 ans ? Où naissent les amitiés à cet âge : un rôle qui valorise ton expérience, recevoir chez toi, des amis de tous âges.',
+    h1: 'Se faire des amis à Dubaï après 40 ans : par où commencer',
+    lead: 'Se faire des amis à Dubaï à 40 ou 50 ans, c’est tout à fait possible, mais rarement dans des soirées pensées pour un public plus jeune. À cette étape, les amitiés naissent plutôt d’un rôle que tu prends, des personnes que tu invites chez toi, et de valeurs partagées plus que de sorties. Et il te faut moins de nouveaux amis que tu ne le crois : une ou deux personnes que tu peux appeler souvent comptent plus qu’un agenda plein.',
+    sections: [
+      {
+        h2: 'Ce qui est propre à cette étape',
+        html: `<p>Beaucoup de gens arrivent à Dubaï à cet âge avec une vie déjà installée : un poste à responsabilités, des enfants ados ou adultes, parfois des enfants restés dans un autre pays. La vie sociale toute faite qui venait avec l’école des enfants ou les premiers boulots n’est plus forcément là. Beaucoup d’événements annoncés semblent viser les vingtenaires, et on en conclut vite qu’il n’y a pas de place pour soi. C’est rarement vrai. De nombreuses personnes de ton âge sont arrivées ici aussi et cherchent la même chose : elles sont simplement ailleurs.</p>`,
+      },
+      {
+        h2: 'Cherche des rôles où ton expérience compte',
+        html: `<p>À cette étape, un rôle marche souvent mieux qu’une soirée de rencontres. Quand tu aides à faire tourner quelque chose, tu revois les mêmes personnes régulièrement et tu as une raison de parler dès le premier jour :</p>
+<ul>
+<li><strong>Du bénévolat</strong> avec un créneau régulier, où ton sens de l’organisation ou tes compétences pratiques servent.</li>
+<li><strong>Du mentorat ou l’enseignement d’un savoir-faire</strong> que tu maîtrises : une langue, un loisir créatif, un sport, ton métier.</li>
+<li><strong>Une association professionnelle ou un réseau d’anciens élèves</strong> lié à ton secteur, à ton pays ou à ton ancienne université.</li>
+<li><strong>Une communauté autour de ta langue, de ta culture ou de ta foi,</strong> où les nouveaux arrivants de tous âges sont en général bien accueillis.</li>
+<li><strong>Un comité de parents ou de résidents,</strong> si tes enfants sont scolarisés ou si tu vis dans une résidence avec des espaces communs.</li>
+</ul>
+<p>Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne d’autres idées pour commencer.</p>`,
+      },
+      {
+        h2: 'Sois la personne qui invite',
+        html: `<p>Beaucoup de gens de ton âge aimeraient avoir plus d’amis, mais attendent que quelqu’un d’autre fasse le premier pas. Tu peux être cette personne. Invite deux ou trois personnes rencontrées à un repas simple chez toi, propose une balade régulière le week-end, ou lance un petit dîner mensuel où chaque invité amène quelqu’un de nouveau. Une invitation à la maison a quelque chose de personnel qu’un événement de groupe n’a pas, et beaucoup trouvent plus facile de recevoir à cette étape de la vie. Reste simple et régulier : le même plan chaque mois construit plus qu’une grande soirée.</p>`,
+      },
+      {
+        h2: 'Garde tes anciennes amitiés, et laisse du temps aux nouvelles',
+        html: `<p>Les amis que tu as déjà, au pays ou ailleurs, comptent toujours. Prévois des appels avec eux au lieu d’attendre le bon moment : ils rendent les premiers mois ici plus légers. Avec les nouvelles personnes, ne trie pas par âge : ton prochain bon ami a peut-être dix ans de plus ou de moins, et les centres d’intérêt communs comptent plus que l’année de naissance. Compte quelques mois de plans réguliers, comme à tout âge. Si les semaines calmes commencent à te peser, en parler à un médecin ou à un professionnel de santé mentale est une démarche normale. Pour aller plus loin, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a> et <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Envie de rencontrer du monde à ton rythme ?', body: 'Trouve une activité régulière avec des gens qui veulent aussi se rencontrer, quel que soit leur âge, en vrai.', label: 'Trouver mes gens' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Se faire des amis à Dubaï dans la trentaine', path: 'fr/blog/se-faire-des-amis-dubai-trentaine/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+    ],
+  },
+  {
+    lang: 'en',
+    pair: 'blog-couple-social-life-dubai',
+    path: 'blog/new-dubai-couple-social-life/',
+    city: 'Dubai',
+    published: '2026-11-08',
+    title: 'New in Dubai as a Couple: Building a Social Life Together | IRLY',
+    description: 'Moving to Dubai as a couple can turn into a bubble for two. How to build a shared circle, keep a few plans of your own, and find a pace that suits you both.',
+    h1: 'New in Dubai as a couple: building a social life together',
+    lead: 'Arriving in Dubai with a partner is a real help, but it also makes it easy to stay in a comfortable bubble for two. To build a social life as a couple, do a few regular things together where you meet other people, keep at least one plan each of your own, and talk openly about how much social time you each want.',
+    sections: [
+      {
+        h2: 'Why couples can end up isolated',
+        html: `<p>When you move with a partner, you always have someone to eat with, explore with and talk to in the evening. That is a good thing, and it also means there is less pressure to go out and meet people. Weeks pass, then months, and you realise you mostly see each other and a few colleagues. If one of you works long hours or travels a lot, the other often feels the gap first. None of this says anything bad about your relationship; it simply means your social life needs some attention, like everything else in a new city.</p>`,
+      },
+      {
+        h2: 'Build a shared circle',
+        html: `<ul>
+<li><strong>Pick one regular activity you both enjoy</strong> where the same people come back: a weekend sport, a hiking group, a class, a quiz night, a volunteering slot.</li>
+<li><strong>Invite people home.</strong> A simple meal with another couple, a neighbour or a colleague turns acquaintances into friends faster than meeting outside.</li>
+<li><strong>Do not only look for other couples.</strong> Single friends, friends with children and friends without them all bring something different, and mixed groups keep your circle open.</li>
+<li><strong>Say yes as a pair when you can,</strong> then invite them back a few weeks later so the contact does not fade.</li>
+</ul>
+<p>Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has ideas you can try together.</p>`,
+      },
+      {
+        h2: 'Keep a few plans of your own',
+        html: `<p>A shared circle grows faster when each of you also has something on your own: one activity a week, a class, a sport or a community around your language or work. You meet people you would not meet together, and you can bring them into the shared circle later. It also avoids a common pattern where one partner organises the whole social life and the other simply follows. If going alone feels uncomfortable at first, our guide on <a href="../../dubai/going-out-alone/">going out alone in Dubai</a> can help.</p>`,
+      },
+      {
+        h2: 'Agree on a pace that suits you both',
+        html: `<p>Partners rarely want the same amount of social time. One may want plans every weekend, the other a quiet evening after a long week. Talk about it openly: how many plans a week feel right, which evenings stay free for just the two of you, and who you would each like to see more. A small compromise, like one shared plan and one solo plan each week, usually works better than one of you always giving in. If the move puts real strain on your relationship, or one of you feels low for weeks, a couples counsellor or a mental health professional can help; it is a normal step. For more ideas, read <a href="../../dubai/make-friends/">how to make friends in Dubai</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Looking for plans for two?', body: 'Find a regular activity you can join together, with people who want to meet too, in real life.', label: 'Find an activity' },
+    related: [
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
+      { label: 'Lonely on weekends in Dubai', path: 'blog/lonely-weekends-dubai/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-couple-social-life-dubai',
+    path: 'fr/blog/arriver-dubai-en-couple-vie-sociale/',
+    city: 'Dubaï',
+    published: '2026-11-08',
+    title: 'En couple à Dubaï : construire une vie sociale à deux | IRLY',
+    description: 'Arriver à Dubaï en couple peut vite devenir une bulle à deux. Comment créer un cercle commun, garder chacun ses plans et trouver un rythme qui vous va.',
+    h1: 'En couple à Dubaï : construire une vie sociale à deux',
+    lead: 'Arriver à Dubaï à deux est une vraie aide, mais ça rend aussi très facile de rester dans une bulle confortable. Pour construire une vie sociale en couple, prévoyez ensemble quelques activités régulières où vous rencontrez d’autres gens, garde au moins un plan rien qu’à toi, et parlez franchement du temps social que chacun de vous souhaite.',
+    sections: [
+      {
+        h2: 'Pourquoi un couple peut finir isolé',
+        html: `<p>Quand tu déménages à deux, tu as toujours quelqu’un avec qui manger, découvrir la ville et parler le soir. C’est une chance, et c’est aussi pour ça qu’on ressent moins le besoin de sortir rencontrer du monde. Les semaines passent, puis les mois, et tu te rends compte que vous ne voyez presque que l’un l’autre et quelques collègues. Si l’un de vous travaille tard ou voyage souvent, l’autre ressent souvent le manque en premier. Ça ne dit rien de négatif sur votre couple : votre vie sociale demande simplement un peu d’attention, comme tout le reste dans une nouvelle ville.</p>`,
+      },
+      {
+        h2: 'Construis un cercle commun',
+        html: `<ul>
+<li><strong>Choisissez ensemble une activité régulière qui vous plaît à tous les deux,</strong> où les mêmes personnes reviennent : un sport le week-end, un groupe de randonnée, un cours, une soirée quiz, un créneau de bénévolat.</li>
+<li><strong>Invite des gens chez vous.</strong> Un repas simple avec un autre couple, un voisin ou une collègue transforme des connaissances en amis plus vite qu’une sortie dehors.</li>
+<li><strong>Ne cherche pas que d’autres couples.</strong> Les amis célibataires, ceux qui ont des enfants et ceux qui n’en ont pas apportent chacun quelque chose de différent, et les groupes mélangés gardent votre cercle ouvert.</li>
+<li><strong>Dis oui à deux quand c’est possible,</strong> puis propose un plan à ton tour quelques semaines plus tard pour que le contact ne s’éteigne pas.</li>
+</ul>
+<p>Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne des idées à tester ensemble.</p>`,
+      },
+      {
+        h2: 'Garde quelques plans rien qu’à toi',
+        html: `<p>Un cercle commun grandit plus vite quand chacun de vous a aussi quelque chose de son côté : une activité par semaine, un cours, un sport ou une communauté autour de sa langue ou de son métier. Tu rencontres des gens que vous n’auriez pas rencontrés ensemble, et tu peux les faire entrer plus tard dans le cercle commun. Ça évite aussi un schéma fréquent où l’un organise toute la vie sociale et l’autre se contente de suivre. Si sortir seul te met mal à l’aise au début, notre guide <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> peut aider.</p>`,
+      },
+      {
+        h2: 'Trouve un rythme qui vous convient à tous les deux',
+        html: `<p>Deux partenaires veulent rarement la même dose de vie sociale. L’un a envie de plans chaque week-end, l’autre d’une soirée calme après une longue semaine. Parlez-en franchement tous les deux : combien de plans par semaine vous semblent justes, quelles soirées restent rien qu’à vous deux, et qui chacun aimerait voir plus souvent. Un petit compromis, comme un plan commun et un plan en solo chaque semaine, marche en général mieux que si l’un de vous cède toujours. Si le déménagement met votre couple sous tension, ou si l’un de vous se sent mal pendant des semaines, un conseiller conjugal ou un professionnel de santé mentale peut aider : c’est une démarche normale. Pour d’autres idées, lis <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Envie de plans à deux ?', body: 'Trouve une activité régulière à rejoindre ensemble, avec des gens qui veulent aussi se rencontrer, en vrai.', label: 'Trouver une activité' },
+    related: [
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Seul le week-end à Dubaï', path: 'fr/blog/week-end-seul-dubai/' },
+    ],
+  },
 ];
