@@ -29,11 +29,55 @@ This repository is public: every Actions log is readable by anyone.
 | Grant owner, Review account | accounts | manual | `main` only, `production` environment |
 | Apple build status (`asc-builds.yml`) | App Store Connect team / testers (optional inputs) | manual | `main` only, `production` environment |
 | Places, Storage purge, Report email | data refresh, file purge, email | schedule, manual | schedule or `main` |
+| Over-the-air update (`ota.yml`) | new JavaScript on installed iPhone apps | manual, input `SEND` | `main` only, `production` environment |
+| Android build (`android.yml`) | none (an .aab on Expo, nothing sent to Google Play) | manual | `main` only |
+| Health (`health.yml`) | read only: crashes of the last 24 h, newest database backup | daily, manual | schedule or `main` |
 | Community census, Security audit, Website check | read only | manual | `main` only |
 
 Scheduled runs always use the copy of the workflow on the repository's
 default branch. Make `main` the default branch so schedules run from reviewed
 code.
+
+## Crashes, updates and backups
+
+- **Crash reports** go through the app's own analytics (`public.analytics_events`,
+  `src/lib/crashReport.ts`): `SCREEN_ERROR` when a screen shows "Something went
+  wrong", `JS_ERROR` for errors no screen caught (a fatal one is kept on the
+  phone and sent at the next launch). A report holds the error's kind, a
+  scrubbed first line (`src/lib/crashScrub.ts`, tested by `npm run test:crash`),
+  the screen with ids removed, the app version and the update it ran: never a
+  stack, a member's text or an id. Native crashes (outside JavaScript) are not
+  caught: App Store Connect → TestFlight → Crashes, or Xcode → Organizer.
+- **Health** (`health.yml`, every morning): crashes of the last 24 hours and
+  the newest database backup. A red run means something needs a look; GitHub
+  emails the failure to the repository's owner. It goes red when the project
+  has no backup in 48 hours, which is the case on Supabase's free plan.
+- **Over-the-air updates** (`expo-updates`, `ota.yml`): a JavaScript fix
+  reaches installed apps without a build or an App Store review; apps check at
+  launch and apply it at the next launch. The runtime version is the native
+  fingerprint: an update only reaches builds with the same native layer, so a
+  JavaScript update can never land on an app missing a native module. Apps
+  built before expo-updates was added (build 34 and earlier) receive nothing.
+  Apple allows updates that fix or adjust the reviewed app, not ones that
+  change its purpose.
+- **Restoring the database**: Supabase dashboard → Database → Backups (daily
+  backups on a paid plan; point-in-time recovery is an add-on). A restore
+  replaces the whole database: decide it with the owner, never from a
+  workflow.
+
+## Known advisories (npm audit)
+
+Left as is on purpose, re-checked at each Expo SDK upgrade:
+
+- `maplibre-gl` 5.x (web map, critical): XSS bypass in its HTML sanitizer.
+  IRLY never passes HTML to the map (no popups, the attribution comes from the
+  tile style). The fixed 6.x changes how its worker loads and breaks the web
+  map with the Metro bundler: upgrade when that is solved.
+- `expo-router` 57 through `query-string` / `decode-uri-component` (high):
+  slow decoding of a malformed link, on the device that opens it. Fixed in
+  Expo SDK 58 only.
+- `glob`, `minimatch`, `@expo/fingerprint` (moderate): build tools, not in
+  the app.
 
 ## Running a production clean-up
 

@@ -7,7 +7,7 @@ import {
 } from '@expo-google-fonts/manrope';
 import { InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
 import { useFonts } from 'expo-font';
-import { Stack, type ErrorBoundaryProps } from 'expo-router';
+import { Stack, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
@@ -45,9 +45,13 @@ import { Flavor } from '@/theme/flavor';
 import { useTheme } from '@/theme/useTheme';
 import { watchWebUpdates } from '@/lib/webUpdate';
 import { guardNavigation } from '@/lib/navGuard';
+import { installCrashReporting, setCrashRoute } from '@/lib/crashReport';
 
 // A double tap on Back pops one page; a link tapped twice opens its page once.
 guardNavigation();
+
+// Errors no screen catches (event handlers, timers) are reported too (lib/crashReport).
+installCrashReporting();
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ duration: 250, fade: true });
@@ -142,6 +146,8 @@ function SpaceApp() {
 function App() {
   const t = useTheme();
   usePush();
+  const pathname = usePathname();
+  useEffect(() => setCrashRoute(pathname), [pathname]);
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(t.c.bg).catch(() => undefined);
   }, [t.c.bg]);

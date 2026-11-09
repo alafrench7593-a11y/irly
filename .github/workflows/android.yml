@@ -1,0 +1,40 @@
+name: Android build
+
+# Builds the Android app (an .aab for Google Play) on Expo's servers (EAS).
+# Manual only, from main. Nothing is sent to Google Play: that needs a Google
+# Play developer account and a service account key, added once they exist.
+#
+# Needs the EXPO_TOKEN secret (the TestFlight workflow's). The signing key
+# (keystore) is created and kept by Expo on the first build; if EAS refuses to
+# create it without a prompt, run `eas credentials -p android` once on a
+# computer, then run this again. Without a Google Maps key (app.json
+# android.config.googleMaps.apiKey) the map screens show their list instead
+# (src/features/map/nativeMaps.ts).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android
+  cancel-in-progress: false
+
+jobs:
+  android:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm i -g eas-cli@latest
+      - name: Build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: eas build --platform android --profile production --non-interactive --wait

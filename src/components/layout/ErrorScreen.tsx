@@ -5,7 +5,7 @@ import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { IrlyWordmark } from '@/brand/IrlyLogo';
 import { Button } from '@/components/ui/Button';
 import { Text } from '@/components/ui/Text';
-import { track } from '@/lib/analytics';
+import { reportScreenError } from '@/lib/crashReport';
 import { space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -20,8 +20,8 @@ export function ErrorScreen({ error, retry, where }: ErrorBoundaryProps & { wher
   const insets = useContext(SafeAreaInsetsContext);
 
   useEffect(() => {
-    // The kind of error only (TypeError…): its message can carry what was on screen.
-    track('SCREEN_ERROR', { screen: where, kind: error?.name?.slice(0, 40) ?? 'Error' });
+    // The kind of error and a scrubbed first line: no text that was on screen (lib/crashReport).
+    reportScreenError(error, where);
     if (__DEV__) console.warn(`[IRLY] ${where} crashed:`, error);
   }, [error, where]);
 
