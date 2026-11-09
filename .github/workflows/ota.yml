@@ -1,0 +1,51 @@
+name: Over-the-air update
+
+# Sends the JavaScript of main to installed apps (expo-updates), without a new
+# build or an App Store review. Manual only, from main, with a confirmation.
+#
+# Only apps with the same native layer receive it: the runtime version is the
+# native fingerprint (app.json runtimeVersion.policy = fingerprint). A change
+# to native code or native packages gives a new fingerprint: that update then
+# reaches no installed app, and a new build is needed. Apps check at launch and
+# apply the update at the next launch.
+#
+# Needs the EXPO_TOKEN secret (the TestFlight workflow's). Apps built before
+# expo-updates was added (build 34 and earlier) never receive updates.
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'What this update fixes (shown in expo.dev)'
+        required: true
+      confirm:
+        description: 'Type SEND to publish to every installed app'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ota
+  cancel-in-progress: false
+
+jobs:
+  update:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'SEND'
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm i -g eas-cli@latest
+      - name: Publish the update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          MESSAGE: ${{ inputs.message }}
+        run: eas update --channel production --platform ios --message "$MESSAGE" --non-interactive

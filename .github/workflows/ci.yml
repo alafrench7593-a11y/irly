@@ -28,5 +28,7 @@ jobs:
         run: npm run -s test:report-email
       - name: CRM rules (statistics, duplicates, CSV)
         run: npm run -s test:crm
+      - name: Crash reports carry nothing personal
+        run: npm run -s test:crash
       - name: Web build
         run: npx expo export --platform web
