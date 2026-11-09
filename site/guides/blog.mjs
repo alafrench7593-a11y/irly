@@ -715,4 +715,180 @@ export const POSTS = [
       { label: 'Seul le week-end à Dubaï', path: 'fr/blog/week-end-seul-dubai/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-moved-for-partner-own-circle',
+    path: 'blog/moved-for-partner-job-dubai-own-circle/',
+    city: 'Dubai',
+    published: '2026-11-09',
+    title: 'Moved to Dubai for Your Partner’s Job? Your Own Circle | IRLY',
+    description: 'Moved to Dubai for your partner’s job? How to give your days a structure of their own, build a circle that is yours and talk about it at home.',
+    h1: 'Moved to Dubai for your partner’s job: building your own circle',
+    lead: 'When you move to Dubai for your partner’s job, they arrive with colleagues, a schedule and a reason to be here, while you often start with empty days. Building your own circle means giving your week a structure of its own, meeting people through what you like rather than through their work, and talking openly at home about how it feels.',
+    sections: [
+      {
+        h2: 'Why it feels different when you followed someone',
+        html: `<p>Your partner’s new job comes with a ready-made routine: an office, a team, lunches and sometimes work events. You may have left a job, friends and a role that said a lot about who you are, and arrived without any of that. It is common to be glad about the move and still feel unsure where you fit. Some people also feel that their days are organised around someone else’s schedule. None of this means the move was a mistake; it means you need a life here that does not depend only on your partner’s.</p>`,
+      },
+      {
+        h2: 'Give your week its own structure',
+        html: `<p>Empty days are the hardest part, so start by placing a few fixed points in them:</p>
+<ul>
+<li><strong>Two or three regular slots a week</strong> at set times: a class, a sport, a volunteering shift, a language course.</li>
+<li><strong>Daytime activities,</strong> which are often easier to join and less crowded than evening events.</li>
+<li><strong>A project of your own:</strong> learning a skill, studying, freelancing or looking for work, if that suits you. If you want to work or study here, first check with official sources what your residence status allows.</li>
+</ul>
+<p>Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has ideas to fill these slots.</p>`,
+      },
+      {
+        h2: 'Build a circle that is yours',
+        html: `<p>Your partner’s colleagues and their own partners can be a good start, but if they are your only circle, your social life depends on one workplace. Look for people through what you like: a community around your language or your former profession, a regular sport, a volunteering group, a professional network in your field. In these groups, many people also moved for someone else’s job and are looking for the same thing. Going on your own may feel strange at first; our guide on <a href="../../dubai/going-out-alone/">going out alone in Dubai</a> can help. When you get on well with someone, suggest a plan with just the two of you before bringing partners in, so the friendship starts as yours.</p>`,
+      },
+      {
+        h2: 'Talk about it at home, and look after yourself',
+        html: `<p>It is easy to keep these feelings to yourself, especially while your partner is settling into a new job. Say plainly how your days feel and what would help: a weekend plan you choose, one evening a week kept for your own activity, or simply being asked how your week went. Shared plans as a couple matter too, and our post on <a href="../new-dubai-couple-social-life/">building a social life together as a couple</a> covers that side. If you feel low most days for weeks, or lose interest in things you used to enjoy, talking to a doctor or a mental health professional is a normal step. For more, read <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Want a circle of your own?', body: 'Find a regular activity around what you like, with people who want to meet too, in real life.', label: 'Find my people' },
+    related: [
+      { label: 'New in Dubai as a couple: building a social life together', path: 'blog/new-dubai-couple-social-life/' },
+      { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' },
+      { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-moved-for-partner-own-circle',
+    path: 'fr/blog/suivre-partenaire-dubai-ton-propre-cercle/',
+    city: 'Dubaï',
+    published: '2026-11-09',
+    title: 'Suivre ton ou ta partenaire à Dubaï : ton propre cercle | IRLY',
+    description: 'Tu as suivi ton ou ta partenaire à Dubaï pour son travail ? Comment structurer tes journées, créer un cercle à toi et en parler à la maison.',
+    h1: 'Suivre ton ou ta partenaire à Dubaï : construire ton propre cercle',
+    lead: 'Quand tu t’installes à Dubaï pour le travail de ton ou ta partenaire, l’autre arrive avec des collègues, un emploi du temps et une raison d’être là, alors que toi, tu commences souvent avec des journées vides. Construire ton propre cercle, c’est donner à ta semaine une structure à toi, rencontrer des gens par ce que tu aimes plutôt que par son travail, et parler franchement à la maison de ce que tu vis.',
+    sections: [
+      {
+        h2: 'Pourquoi c’est différent quand on a suivi quelqu’un',
+        html: `<p>Le nouveau poste de ton ou ta partenaire vient avec une routine toute faite : un bureau, une équipe, des déjeuners et parfois des événements professionnels. Toi, tu as peut-être quitté un travail, des amis et un rôle qui en disait long sur qui tu es, et tu arrives sans rien de tout ça. Il est courant d’apprécier le déménagement tout en ne sachant plus très bien où est ta place. Certaines personnes ont aussi l’impression que leurs journées tournent autour de l’emploi du temps de quelqu’un d’autre. Ça ne veut pas dire que le déménagement était une erreur : il te faut simplement une vie ici qui ne dépende pas seulement de celle de ton ou ta partenaire.</p>`,
+      },
+      {
+        h2: 'Donne à ta semaine sa propre structure',
+        html: `<p>Les journées vides sont le plus difficile, alors commence par y placer quelques repères fixes :</p>
+<ul>
+<li><strong>Deux ou trois créneaux réguliers par semaine</strong> à heure fixe : un cours, un sport, du bénévolat, une langue à apprendre.</li>
+<li><strong>Des activités en journée,</strong> souvent plus faciles à rejoindre et moins bondées que les soirées.</li>
+<li><strong>Un projet à toi :</strong> apprendre quelque chose de nouveau, reprendre des études, te lancer en freelance ou chercher un emploi, si ça te correspond. Si tu veux travailler ou étudier ici, vérifie d’abord auprès des sources officielles ce que ton statut de résident permet.</li>
+</ul>
+<p>Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne des idées pour remplir ces créneaux.</p>`,
+      },
+      {
+        h2: 'Construis un cercle qui est le tien',
+        html: `<p>Les collègues de ton ou ta partenaire et leurs propres partenaires peuvent être un bon début, mais s’ils sont ton seul cercle, ta vie sociale dépend d’un seul lieu de travail. Cherche des gens à travers ce que tu aimes : une communauté autour de ta langue ou de ton ancien métier, un sport régulier, un groupe de bénévoles, un réseau professionnel dans ton domaine. Dans ces groupes, beaucoup de personnes sont aussi venues pour le travail de quelqu’un d’autre et cherchent la même chose. Y aller sans personne peut sembler étrange au début : notre guide <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> peut aider. Quand le courant passe avec quelqu’un, propose un plan rien qu’à vous deux avant d’inclure les partenaires, pour que cette amitié commence comme la tienne.</p>`,
+      },
+      {
+        h2: 'Parles-en à la maison, et prends soin de toi',
+        html: `<p>On garde facilement ce ressenti pour soi, surtout quand l’autre a la tête dans son nouveau poste. Dis simplement comment se passent tes journées et ce qui t’aiderait : un plan de week-end que tu choisis, une soirée par semaine réservée à ton activité, ou juste qu’on te demande comment s’est passée ta semaine. Les plans à deux comptent aussi, et notre article sur <a href="../arriver-dubai-en-couple-vie-sociale/">la vie sociale en couple à Dubaï</a> couvre ce côté-là. Si tu te sens mal la plupart des jours pendant des semaines, ou si tu perds l’envie de faire ce que tu aimais, en parler à un médecin ou à un professionnel de santé mentale est une démarche normale. Pour aller plus loin, lis <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Envie d’un cercle à toi ?', body: 'Trouve une activité régulière autour de ce que tu aimes, avec des gens qui veulent aussi se rencontrer, en vrai.', label: 'Trouver mes gens' },
+    related: [
+      { label: 'En couple à Dubaï : construire une vie sociale à deux', path: 'fr/blog/arriver-dubai-en-couple-vie-sociale/' },
+      { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+    ],
+  },
+  {
+    lang: 'en',
+    pair: 'blog-lonely-holidays-far-from-home',
+    path: 'blog/lonely-holidays-far-from-home/',
+    city: 'Dubai',
+    published: '2026-11-09',
+    title: 'Lonely During the Holidays Far From Home: What Helps | IRLY',
+    description: 'Holidays far from family can feel lonelier than any other time abroad. How to plan the day ahead, gather others who stay and keep home close.',
+    h1: 'Lonely during the holidays far from home: what helps',
+    lead: 'Holidays far from home can feel lonelier than ordinary days, because everything around you is about family and being together. What helps is deciding your plan before the day arrives, gathering other people who are also far from home, and staying in touch with your own people in a way that comforts rather than hurts.',
+    sections: [
+      {
+        h2: 'Why holidays hit harder abroad',
+        html: `<p>On a normal day, being far from home is part of the routine. On a holiday you celebrate, the gap becomes visible: family photos fill your phone, calls remind you of what you are missing, and some friends here may travel or spend the day with their own families. If the holiday is not widely celebrated where you live, the day can also look completely ordinary around you, which can feel strange. Feeling sad at these moments is normal and says nothing bad about your life here.</p>`,
+      },
+      {
+        h2: 'Decide your plan before the day',
+        html: `<p>The hardest version of a holiday is the one you did not plan, when you wake up with nothing ahead. A week or two before, decide one thing:</p>
+<ul>
+<li><strong>Host a small gathering</strong> for others who are staying: colleagues, neighbours, people from an activity. A simple meal where everyone brings a dish from home works well.</li>
+<li><strong>Join something that runs that day</strong> or that week: a group activity, a sport session, a community meetup.</li>
+<li><strong>Volunteer.</strong> Giving time to a cause gives the day a purpose and puts you among people.</li>
+<li><strong>Say yes to invitations,</strong> even from people you do not know well yet. One more guest is often welcome.</li>
+</ul>
+<p>Our list of <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> can help you find a plan.</p>`,
+      },
+      {
+        h2: 'Keep home close without making it harder',
+        html: `<ul>
+<li><strong>Schedule your calls</strong> at a time that suits both time zones, instead of checking your phone all day.</li>
+<li><strong>Keep one tradition you love:</strong> a dish, a song, a small ritual. Sharing it with new friends turns it into something you have here too.</li>
+<li><strong>Limit scrolling</strong> through other people’s celebrations if it makes you feel worse.</li>
+<li><strong>Plan something for the day after,</strong> so the holiday is not followed by an empty day.</li>
+</ul>`,
+      },
+      {
+        h2: 'If it weighs on you',
+        html: `<p>Some sadness around holidays is common and usually passes. If you feel low for weeks, or if sleep or daily life becomes hard, talk to a doctor or a mental health professional; it is a normal step. If you are in danger or think about harming yourself, call the emergency services right away: 999 (police) or 998 (ambulance) in the UAE, or the local emergency number where you are. For more ideas, read <a href="../../dubai/lonely/">what actually helps when you feel lonely in Dubai</a> and, if the weekends around the holidays are quiet, <a href="../lonely-weekends-dubai/">how to plan one thing before the weekend starts</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Nothing planned for the holidays?', body: 'Find an activity or a community with people who are around too, in real life.', label: 'Find an activity' },
+    related: [
+      { label: 'Lonely in Dubai: what actually helps', path: 'dubai/lonely/' },
+      { label: 'Lonely on weekends in Dubai', path: 'blog/lonely-weekends-dubai/' },
+      { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-lonely-holidays-far-from-home',
+    path: 'fr/blog/seul-pendant-les-fetes-loin-de-chez-soi/',
+    city: 'Dubaï',
+    published: '2026-11-09',
+    title: 'Seul pendant les fêtes loin de chez toi : ce qui aide | IRLY',
+    description: 'Les fêtes loin de ta famille peuvent peser plus que tout autre moment à l’étranger. Prévois ton plan, réunis ceux qui restent et garde les tiens proches.',
+    h1: 'Seul pendant les fêtes loin de chez toi : ce qui aide',
+    lead: 'Les fêtes loin de chez toi peuvent sembler plus solitaires que les jours ordinaires, parce que tout autour parle de famille et de retrouvailles. Ce qui aide : décider de ton plan avant le jour J, réunir d’autres personnes elles aussi loin de chez elles, et garder le lien avec les tiens d’une façon qui réconforte au lieu de peser.',
+    sections: [
+      {
+        h2: 'Pourquoi les fêtes pèsent plus à l’étranger',
+        html: `<p>Un jour normal, être loin de chez soi fait partie de la routine. Un jour de fête que tu célèbres, le manque devient visible : les photos de famille remplissent ton téléphone, les appels te rappellent ce que tu rates, et certains amis d’ici partent en voyage ou passent la journée en famille. Si cette fête n’est pas très célébrée là où tu vis, la journée peut aussi sembler tout à fait ordinaire autour de toi, ce qui fait un drôle d’effet. Ressentir de la tristesse à ces moments-là est normal et ne dit rien de négatif sur ta vie ici.</p>`,
+      },
+      {
+        h2: 'Décide de ton plan avant le jour J',
+        html: `<p>La version la plus dure d’une fête, c’est celle qu’on n’a pas prévue, quand on se réveille sans rien devant soi. Une ou deux semaines avant, décide d’une chose :</p>
+<ul>
+<li><strong>Reçois un petit groupe</strong> de personnes qui restent aussi : des collègues, des voisins, des gens rencontrés à une activité. Un repas simple où chacun apporte un plat de chez soi marche bien.</li>
+<li><strong>Rejoins quelque chose qui a lieu ce jour-là</strong> ou cette semaine-là : une activité de groupe, une séance de sport, une rencontre de communauté.</li>
+<li><strong>Fais du bénévolat.</strong> Consacrer du temps à une cause donne un sens à la journée et te met au milieu des autres.</li>
+<li><strong>Dis oui aux invitations,</strong> même de personnes que tu connais encore peu. Une personne de plus à table fait souvent plaisir.</li>
+</ul>
+<p>Notre liste d’<a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> peut t’aider à trouver un plan.</p>`,
+      },
+      {
+        h2: 'Garde les tiens proches sans te faire plus de mal',
+        html: `<ul>
+<li><strong>Programme tes appels</strong> à un horaire qui convient aux deux fuseaux, au lieu de regarder ton téléphone toute la journée.</li>
+<li><strong>Garde une tradition qui te tient à cœur :</strong> un plat, une chanson, un petit rituel. La partager avec tes nouveaux amis, c’est aussi la faire vivre ici.</li>
+<li><strong>Passe moins de temps</strong> sur les photos de fêtes des autres si ça te fait plus de mal que de bien.</li>
+<li><strong>Prévois quelque chose pour le lendemain,</strong> pour que la fête ne soit pas suivie d’une journée vide.</li>
+</ul>`,
+      },
+      {
+        h2: 'Si ça te pèse',
+        html: `<p>Un peu de tristesse autour des fêtes est fréquent et passe en général. Si tu te sens mal pendant des semaines, ou si le sommeil ou le quotidien deviennent difficiles, parles-en à un médecin ou à un professionnel de santé mentale : c’est une démarche normale. Si tu es en danger ou si tu penses à te faire du mal, appelle tout de suite les secours : le 999 (police) ou le 998 (ambulance) aux Émirats, ou le numéro d’urgence local là où tu es. Pour d’autres idées, lis <a href="../../dubai/solitude/">ce qui aide vraiment quand on se sent seul à Dubaï</a> et, si les week-ends autour des fêtes sont calmes, <a href="../week-end-seul-dubai/">comment prévoir une chose avant que le week-end commence</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Rien de prévu pour les fêtes ?', body: 'Trouve une activité ou une communauté avec des gens qui sont là aussi, en vrai.', label: 'Trouver une activité' },
+    related: [
+      { label: 'Se sentir seul à Dubaï', path: 'fr/dubai/solitude/' },
+      { label: 'Seul le week-end à Dubaï', path: 'fr/blog/week-end-seul-dubai/' },
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+    ],
+  },
 ];

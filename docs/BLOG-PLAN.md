@@ -24,8 +24,8 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
 - [x] Making friends in Dubai in your 30s
 - [x] Making friends in Dubai in your 40s and 50s
 - [x] New in Dubai with a partner: building a social life as a couple
-- [ ] Moved to Dubai for your partner's job: building your own circle
-- [ ] Lonely during the holidays far from home
+- [x] Moved to Dubai for your partner's job: building your own circle
+- [x] Lonely during the holidays far from home
 - [ ] How to start a small group yourself (a weekly walk, a book club)
 - [ ] What to say to start a conversation at an activity
 - [ ] How often to see someone before they become a friend
