@@ -5,6 +5,7 @@ import { CATEGORY_BY_ID, type CategoryKey } from '@/data/catalog/categories';
 import { cityCentre } from '@/data/areas';
 import { DEMO_COMMUNITIES, DEMO_PLANS } from '@/data/content/girlDemo';
 import { GIRL_PEOPLE } from '@/data/content/girls';
+import { DEMO } from '@/config/app';
 import { areaCoords, toLatLng, type LatLng } from '@/data/geo';
 import { findPerson } from '@/data/repo';
 import type { City, CityContent, CityId, MapPoint } from '@/data/types';
@@ -223,7 +224,8 @@ export function buildMarkers(city: City, content: CityContent, lives: Live[] = [
     });
   });
   if (girl) {
-    girlDemo(city, pt).forEach((m) => list.push(m));
+    // The example women and plans are the demo's only: in the app, the map shows the server's (useActivityLayer).
+    if (DEMO) girlDemo(city, pt).forEach((m) => list.push(m));
     content.places.forEach((p) => list.push(placeMarker(p, pt)));
     return list.map((m) => ({ ...m, coords: m.coords ?? toLatLng(city.id, m.areaId, pt(m.areaId), m.point) }));
   }

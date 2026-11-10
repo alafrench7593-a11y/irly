@@ -57,7 +57,7 @@ code.
   launch and apply it at the next launch. The runtime version is the native
   fingerprint: an update only reaches builds with the same native layer, so a
   JavaScript update can never land on an app missing a native module. Apps
-  built before expo-updates was added (build 34 and earlier) receive nothing.
+  built before expo-updates was added (builds before 3.0.0 (33)) receive nothing.
   Apple allows updates that fix or adjust the reviewed app, not ones that
   change its purpose.
 - **Restoring the database**: Supabase dashboard → Database → Backups (daily

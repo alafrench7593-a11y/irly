@@ -10,7 +10,7 @@ name: Over-the-air update
 # apply the update at the next launch.
 #
 # Needs the EXPO_TOKEN secret (the TestFlight workflow's). Apps built before
-# expo-updates was added (build 34 and earlier) never receive updates.
+# expo-updates was added (builds before 3.0.0 (33)) never receive updates.
 
 on:
   workflow_dispatch:
