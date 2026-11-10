@@ -62,9 +62,20 @@ export default function GameRoomScreen() {
       </View>
     );
   }
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/games'));
+  const werewolf = room?.game === 'werewolf' && room.status !== 'abandoned';
+  const leaveGame = () => {
+    if (!room) return;
+    const running = room.status === 'playing';
+    Alert.alert(tx(running ? 'Leave the game?' : 'Leave the table?'), running ? tx('You will be out of this game.') : undefined, [
+      { text: tx('Stay'), style: 'cancel' },
+      { text: tx('Leave'), style: 'destructive', onPress: () => leaveRoom(room.id).then(back).catch(fail) },
+    ]);
+  };
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.root, { backgroundColor: room?.game === 'werewolf' ? '#0B0907' : t.c.bg, paddingBottom: Platform.OS === 'android' ? keyboard : 0 }]}>
-      <Header room={room} me={uid} onBack={() => (router.canGoBack() ? router.back() : router.replace('/games'))} />
+      {/* Loup-Garou fills the screen with its own top bar; the other games keep the shared header. */}
+      {werewolf ? null : <Header room={room} me={uid} onBack={back} />}
       {!room ? (
         <View style={styles.center}>
           <Text tone="tertiary">Loading…</Text>
@@ -72,7 +83,7 @@ export default function GameRoomScreen() {
       ) : (
         room.game === 'werewolf' && room.status !== 'abandoned' ? (
           // Loup-Garou lays out its own screen: the table scrolls, what to do now stays docked at the bottom.
-          <WerewolfRoom room={room} me={uid} messages={messages}>
+          <WerewolfRoom room={room} me={uid} messages={messages} onBack={back} onLeave={leaveGame}>
             {/* Before the start, the table talks in the shared chat; in the game, the Loup-Garou chat follows the night. */}
             {room.status === 'waiting' && room.kind !== 'irl' ? <Chat room={room} me={uid} messages={messages} /> : null}
           </WerewolfRoom>

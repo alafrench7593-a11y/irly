@@ -47,7 +47,7 @@ export const GameShareCard = memo(function GameShareCard({ postId }: { postId: s
       .finally(() => setBusy(false));
   };
   const left = Math.max(0, card.max - card.players);
-  const action = card.mine && (card.status === 'waiting' || card.status === 'full' || card.status === 'playing') ? { label: 'Open the game', onPress: open } : card.status === 'waiting' ? { label: 'Join the game', onPress: join } : null;
+  const action = card.mine && (card.status === 'waiting' || card.status === 'full' || card.status === 'playing') ? { label: 'Return to the game', onPress: open } : card.status === 'waiting' ? { label: 'Join the game', onPress: join } : null;
   return (
     <Animated.View entering={reduced ? undefined : FadeIn.duration(240)} style={styles.card} testID="game-share">
       <Image source={SCENES[mode].home} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />

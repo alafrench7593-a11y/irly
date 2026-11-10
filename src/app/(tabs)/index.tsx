@@ -365,8 +365,8 @@ export default function Home() {
           </ScrollReveal>
         ) : null;
       case 'games':
-        // IRLY Games: one card the size of an activity tile; real counts only (features/games/HomeGames).
-        return <HomeGames scrollY={scrollY} width={doorW} />;
+        // The way into IRLY Games: one quiet row, no game promoted on the Home (features/games/HomeGames).
+        return <HomeGames />;
       case 'explore':
         return (
           <ScrollReveal scrollY={scrollY} style={styles.section}>
