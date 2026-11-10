@@ -7154,4 +7154,5 @@ export const fr: Record<string, string> = {
   'Search a community': 'Rechercher une communauté',
   'No community matches.': 'Aucune communauté ne correspond.',
   'Return to the game': 'Retourner à la partie',
+  'The game has moved on. Here is where it stands.': 'La partie a avancé. Voici où elle en est.',
 };

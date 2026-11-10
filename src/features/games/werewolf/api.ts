@@ -99,10 +99,10 @@ export function useWwView(roomId: string | undefined, changed: unknown) {
   const [failed, setFailed] = useState<string | null>(null);
   const [skew, setSkew] = useState(0);
   const seq = useRef(0);
-  const load = useCallback(() => {
-    if (!roomId || !supabase) return;
+  const load = useCallback((): Promise<void> => {
+    if (!roomId || !supabase) return Promise.resolve();
     const n = ++seq.current;
-    rpc<WwView>('ww_view', { p_room: roomId })
+    return rpc<WwView>('ww_view', { p_room: roomId })
       .then((v) => {
         if (n !== seq.current) return;
         setView(v);
@@ -114,12 +114,12 @@ export function useWwView(roomId: string | undefined, changed: unknown) {
       });
   }, [roomId]);
   useEffect(() => {
-    load();
+    void load();
   }, [load, changed]);
   const running = view ? view.phase !== 'lobby' && view.phase !== 'ended' : false;
   useEffect(() => {
     if (!running) return;
-    const timer = setInterval(load, 3000);
+    const timer = setInterval(() => void load(), 2000);
     return () => clearInterval(timer);
   }, [running, load]);
   return { view, failed, reload: load, skew };
