@@ -44,6 +44,11 @@ export const SERVER_ERRORS: Record<string, string> = {
   'the village sleeps: no talking at night': 'The village sleeps: no talking at night',
   'you cannot do that now': 'You can\'t do that now',
   'you cannot talk here now': 'You can\'t talk here now',
+  // Sharing a game (20261118000000_irly_game_share).
+  'a game is shared when the post is published': GENERIC,
+  'a game against AI players is not shared': 'A game against AI players is not shared',
+  'choose a community': 'Choose a community',
+  'this game cannot be shared in this community': 'This game cannot be shared in this community',
   // Loup-Garou voice games (20261117000000_irly_werewolf_voice).
   'choose text or voice': 'Choose text or voice',
   'voice is for online games': 'Voice is for online games',

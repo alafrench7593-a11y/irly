@@ -25,7 +25,6 @@ import { CreateMenu } from '@/features/create/CreateMenu';
 import { Photo } from '@/components/visual/Photo';
 import { MemberActivities } from '@/features/server/MemberActivities';
 import { HomeGames } from '@/features/games/HomeGames';
-import { HomeWerewolfPromo } from '@/features/games/werewolf/home/HomePromo';
 import { planDisplay } from '@/data/catalog/mapping';
 import { areaName, CITIES, DESTINATIONS } from '@/data/destinations';
 import { getCityContent } from '@/data/repo';
@@ -366,13 +365,8 @@ export default function Home() {
           </ScrollReveal>
         ) : null;
       case 'games':
-        // IRLY Games: real counts only; hidden signed out and in the demo (features/games/HomeGames).
-        return (
-          <>
-            <HomeWerewolfPromo scrollY={scrollY} />
-            <HomeGames />
-          </>
-        );
+        // The way into IRLY Games: one quiet row, no game promoted on the Home (features/games/HomeGames).
+        return <HomeGames />;
       case 'explore':
         return (
           <ScrollReveal scrollY={scrollY} style={styles.section}>

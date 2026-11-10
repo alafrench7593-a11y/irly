@@ -1,3 +1,5 @@
+import { GameShareCard } from '@/features/games/GameShareCard';
+import { GAME_SHARE_MARK } from '@/features/games/share';
 import { useRouter } from 'expo-router';
 import { memo, useCallback, useState, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -172,7 +174,8 @@ export const PostCard = memo(function PostCard({
         </View>
       ) : null}
 
-      {body ? (
+      {richId && body === GAME_SHARE_MARK ? <GameShareCard postId={richId} /> : null}
+      {body && !(richId && body === GAME_SHARE_MARK) ? (
         <View style={{ gap: 4 }}>
           <RichText text={body} variant={bigText && !media ? 'titleM' : 'body'} postId={richId ?? null} numberOfLines={long && !more ? 7 : undefined} />
           {long ? (

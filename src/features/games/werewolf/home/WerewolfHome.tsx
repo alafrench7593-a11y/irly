@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,6 +112,8 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
   const [training, setTraining] = useState(false);
   const [creating, setCreating] = useState(false);
   const { data } = useGamesOverview();
+  const scroller = useRef<ScrollView>(null);
+  const tablesY = useRef(0);
   const { rooms } = useOpenRooms('werewolf');
   const [comms, setComms] = useState<Record<string, 'text' | 'voice'>>({});
   const roomIds = (rooms ?? []).map((r) => r.id).join(',');
@@ -149,9 +151,9 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
       </Animated.View>
       <LinearGradient colors={['rgba(11,9,7,0.35)', 'rgba(11,9,7,0.05)', 'rgba(11,9,7,0.6)', 'rgba(11,9,7,0.96)']} locations={[0, 0.25, 0.5, 0.8]} style={StyleSheet.absoluteFill} />
       <GoldDust count={14} height={height} />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scroller} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <View style={[styles.top, { width: pageW }]}>
-          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
+          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/games'))} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
             <Icon name="arrowLeft" size={20} color={DX.goldLight} />
           </Pressable>
           <Text style={[styles.brand, serif(fonts, '700')]}>IRLY GAMES</Text>
@@ -224,6 +226,7 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
 
         <Animated.View style={[styles.menu, { width: pageW - 32 }, menuStyle]}>
           <MenuButton icon="userPlus" label={tx('Create a table (online or in person)')} onPress={() => setCreating(true)} fonts={fonts} />
+          <MenuButton icon="users" label={tx('Join a game')} onPress={() => scroller.current?.scrollTo({ y: Math.max(0, tablesY.current - 12), animated: !reduced })} fonts={fonts} />
           <MenuButton icon="key" label={tx('Join with a code')} onPress={() => setJoining((v) => !v)} fonts={fonts} />
           {joining ? (
             <View style={styles.codeRow}>
@@ -244,6 +247,7 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
               </PressableScale>
             </View>
           ) : null}
+          <MenuButton icon="sparkles" label={tx('Discover the modes')} onPress={() => router.push('/games/discover')} fonts={fonts} />
           <View style={styles.pair}>
             <SmallButton icon="drama" label={tx('The cards')} onPress={() => router.push(`/games/cards?mode=${mode}`)} fonts={fonts} />
             <SmallButton icon="book" label={tx('Rules')} onPress={() => router.push(`/games/dubai-rules?mode=${mode}`)} fonts={fonts} />
@@ -256,14 +260,14 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
           ) : null}
         </Animated.View>
 
-        {rooms && rooms.length > 0 ? (
-          <View style={[styles.section, { width: pageW - 32 }]}>
-            <Text style={[styles.sectionTitle, serif(fonts, '700')]}>{tx('Loup-Garou tables')}</Text>
-            {rooms.map((r) => (
-              <RoomRow key={r.id} room={r} voice={comms[r.id] === 'voice'} onOpen={() => run(() => (r.mine ? Promise.resolve(r.id) : joinRoom(r.id)))} />
-            ))}
-          </View>
-        ) : null}
+        <View style={[styles.section, { width: pageW - 32 }]} onLayout={(e) => (tablesY.current = e.nativeEvent.layout.y)} testID="ww-tables">
+          <Text style={[styles.sectionTitle, serif(fonts, '700')]}>{tx('Loup-Garou tables')}</Text>
+          {rooms && rooms.length > 0 ? (
+            rooms.map((r) => <RoomRow key={r.id} room={r} voice={comms[r.id] === 'voice'} onOpen={() => run(() => (r.mine ? Promise.resolve(r.id) : joinRoom(r.id)))} />)
+          ) : (
+            <Text style={styles.small}>{tx('No table is open right now. Create one, or play online: a table opens for you.')}</Text>
+          )}
+        </View>
 
         {recent && recent.some((g) => (g.people ?? []).length > 0) ? (
           <View style={[styles.section, { width: pageW - 32 }]}>

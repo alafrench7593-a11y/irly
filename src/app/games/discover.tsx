@@ -49,7 +49,7 @@ export default function DiscoverGameScreen() {
   const [open, setOpen] = useState<WwMode>('classic');
   const pageW = Math.min(width, 620);
   const heroH = Math.min(Math.round(height * 0.52), 460);
-  const play = (m: WwMode) => router.push(m === 'dubai' ? '/games/dubai' : `/games?mode=${m}`);
+  const play = (m: WwMode) => router.push(m === 'dubai' ? '/games/dubai' : `/games/werewolf?mode=${m}`);
   return (
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -85,7 +85,7 @@ export default function DiscoverGameScreen() {
               </View>
             </Animated.View>
           ))}
-          <Gold label="Play now" onPress={() => router.push('/games')} fonts={fonts} testID="discover-play" />
+          <Gold label="Play now" onPress={() => router.push('/games/werewolf')} fonts={fonts} testID="discover-play" />
           <View style={styles.row}>
             <Ghost label="The characters" onPress={() => router.push('/games/cards?mode=classic')} fonts={fonts} testID="discover-cards" />
             <Ghost label="The rules" onPress={() => router.push('/games/dubai-rules?mode=classic')} fonts={fonts} testID="discover-rules" />
