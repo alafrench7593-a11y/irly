@@ -104,7 +104,7 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
       ) : null}
       {/* In the game: what I may do now, and the three panels, stay at the bottom of the screen. */}
       {playing && view && !typing ? (
-        <View style={[styles.dock, { paddingBottom: insets.bottom + 10, maxHeight: Math.round(height * 0.44) }]} testID="ww-dock">
+        <View style={[styles.dock, { paddingBottom: insets.bottom + 10, maxHeight: Math.round(height * 0.4) }]} testID="ww-dock">
           <View style={styles.tabs}>
             <Tab icon="drama" label={tx('My card')} on={open === 'card'} onPress={() => setPanel('card')} testID="ww-tab-card" />
             {room.kind !== 'irl' ? <Tab icon="message" label={tx('Chat')} on={open === 'chat'} onPress={() => setPanel('chat')} testID="ww-tab-chat" /> : null}
@@ -245,7 +245,7 @@ function Lobby({ room, me, view, onChanged, voice, people, onInvite }: { room: R
   }, [host, irl]);
   // Seats: four to a row on a phone, every seat of the table drawn, the free ones as quiet outlines.
   const cols = width >= 520 ? 5 : 4;
-  const seatW = Math.floor((Math.min(width, 560) - 32 - 28 - (cols - 1) * 8) / cols);
+  const seatW = Math.floor((Math.min(width, 560) - 32 - 28 - 4 - (cols - 1) * 8) / cols);
   const free = Math.max(0, room.max - present.length);
   return (
     <View style={styles.block}>
@@ -668,15 +668,20 @@ function Chat({ room, view, messages, me, name, bare }: { room: Room; view: WwVi
   const ended = view.phase === 'ended';
   const channel: 'all' | 'wolves' | 'dead' = ended ? 'all' : !alive ? 'dead' : night && view.me?.pack ? 'wolves' : 'all';
   const canWrite = ended || !alive || (night ? Boolean(view.me?.pack) : true);
-  const shown = messages.filter((m) => (m.channel ?? 'all') === channel).slice(-40);
+  // What I just sent shows at once, until the server's copy arrives (the live feed can be a moment late).
+  const [sent, setSent] = useState<GameMessage[]>([]);
+  const arrived = (o: GameMessage) => messages.some((m) => m.user_id === me && m.body === o.body && Date.parse(m.created_at) >= Date.parse(o.created_at) - 5000);
+  const shown = [...messages, ...sent.filter((o) => !arrived(o))].filter((m) => (m.channel ?? 'all') === channel).slice(-40);
   const send = () => {
     const body = text.trim();
     if (!body) return;
     setText('');
-    wwSay(room.id, body, channel).catch((e) => {
-      setText(body);
-      fail(e);
-    });
+    wwSay(room.id, body, channel)
+      .then(() => setSent((list) => [...list.slice(-5), { id: -Date.now(), room_id: room.id, user_id: me, kind: 'chat', body, data: null, created_at: new Date().toISOString(), channel, seat: view.me?.seat ?? null }]))
+      .catch((e) => {
+        setText(body);
+        fail(e);
+      });
   };
   const nameOf = (m: GameMessage) => (m.seat !== null && m.seat !== undefined ? name(m.seat) : tx('A member'));
   const title =
@@ -810,8 +815,8 @@ const styles = StyleSheet.create({
   ghostText: { color: DX.goldLight, fontSize: 14, fontWeight: '700' },
   disabled: { opacity: 0.45 },
   lobbyHero: { height: 190, borderRadius: 18, overflow: 'hidden', borderWidth: 1.5, borderColor: DX.gold, justifyContent: 'flex-end', padding: 16, gap: 4 },
-  lobbyMode: { color: DX.gold, fontSize: 13, letterSpacing: 3 },
-  lobbyTitle: { color: DX.goldLight, fontSize: 20 },
+  lobbyMode: { color: DX.gold, fontSize: 13, letterSpacing: 1.5 },
+  lobbyTitle: { color: DX.goldLight, fontSize: 18, lineHeight: 24 },
   lobbyLine: { color: DX.ivory, fontSize: 13 },
   codeBox: { alignItems: 'center', gap: 10 },
   codeText: { color: DX.goldLight, fontSize: 32, letterSpacing: 6 },

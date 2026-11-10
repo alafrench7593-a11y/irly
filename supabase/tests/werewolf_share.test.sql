@@ -140,3 +140,20 @@ end $$;
 
 select pg_temp.check(not has_function_privilege('anon', 'public.game_share(uuid, uuid, boolean)', 'execute') and not has_function_privilege('anon', 'public.game_share_cards(uuid[])', 'execute')
   and not has_function_privilege('anon', 'public.game_join_shared(uuid)', 'execute'), 'signed-out visitors can call none of the sharing functions');
+
+-- ───── Chat by day against AI players (20261118000100): a message is accepted, and an AI player named in it answers ─────
+do $$
+declare tr uuid; ai_name text; n integer;
+begin
+  perform pg_temp.as_user(8);
+  tr := public.ww_training('mixte', 8, 'villager', 'beginner');
+  perform pg_temp.as_admin();
+  update private.ww_games set phase = 'day', day = 1, deadline = now() + interval '1 hour' where room_id = tr;
+  select name into ai_name from private.ww_players where room_id = tr and bot and alive order by seat limit 1;
+  perform pg_temp.as_user(8);
+  perform pg_temp.check(pg_temp.err(format('select public.ww_say(%L, %L, %L)', tr, 'bonjour le village', 'all')) is null, 'against AI players, a message written by day is accepted');
+  perform pg_temp.check(pg_temp.err(format('select public.ww_say(%L, %L, %L)', tr, ai_name || ', tu mens ?', 'all')) is null, 'naming an AI player in the chat is accepted');
+  perform pg_temp.as_admin();
+  select count(*) into n from public.game_messages where room_id = tr and kind = 'bot' and (data ->> 'target')::int = (select seat from private.ww_players where room_id = tr and user_id = pg_temp.uid(8));
+  perform pg_temp.check(n >= 1 and (select count(*) = 2 from public.game_messages where room_id = tr and user_id = pg_temp.uid(8)), 'the AI player named answers; both messages are stored');
+end $$;
