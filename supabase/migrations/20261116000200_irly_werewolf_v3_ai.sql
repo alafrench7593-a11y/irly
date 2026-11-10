@@ -31,8 +31,11 @@ begin
       t := null; t2 := null;
       r := private.ww_rand();
       if kind_ = 'wolf' then
+        -- Never the same victim two nights running: whoever survived the pack last night was protected, try someone else.
         select (c::text)::integer into t from jsonb_array_elements(opt -> 'targets') c
-          order by -(select count(*) from jsonb_array_elements(v -> 'log') e, jsonb_each(e -> 'data' -> 'ballots') bb
+          order by (exists (select 1 from jsonb_array_elements(v -> 'log') e where e ->> 'kind' = 'pack_target'
+              and (e -> 'data' ->> 'night')::integer = g.night - 1 and e -> 'data' ->> 'seat' = c::text))::integer,
+            -(select count(*) from jsonb_array_elements(v -> 'log') e, jsonb_each(e -> 'data' -> 'ballots') bb
             where e ->> 'kind' = 'votes' and bb.key = c::text and pack @> bb.value), md5(p_room::text || g.night || c::text) limit 1;
       elsif kind_ = 'seer' then
         select (c::text)::integer into t from jsonb_array_elements(opt -> 'targets') c
@@ -94,7 +97,10 @@ begin
       elsif kind_ = 'ready' then
         null;
       elsif kind_ = 'vote' then
-        if pack is not null then
+        -- A second round after a tie: half of the AI players change their mind, so a tie does not repeat for ever.
+        if g.phase = 'revote' and r < 0.5 then
+          select (c::text)::integer into t from jsonb_array_elements(opt -> 'targets') c where pack is null or not pack @> c order by random() limit 1;
+        elsif pack is not null then
           select (c::text)::integer into t from jsonb_array_elements(opt -> 'targets') c where not pack @> c
             order by -coalesce((sus ->> c::text)::numeric, 0), random() limit 1;
         else

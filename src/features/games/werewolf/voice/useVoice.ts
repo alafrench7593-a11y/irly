@@ -100,6 +100,7 @@ export function useVoice(roomId: string, changed: unknown) {
   const conns = useRef<Map<string, Conn>>(new Map());
   const gen = useRef(0);
   const joinedRef = useRef(false);
+  const failures = useRef(0);
   const want = useRef({ mic: false, deaf: false, muted: [] as string[] });
   const resyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncRef = useRef<() => Promise<void>>(() => Promise.resolve());
@@ -212,12 +213,15 @@ export function useVoice(roomId: string, changed: unknown) {
     for (const t of fresh) {
       if (n !== gen.current) return;
       const room = new lk.Room({ adaptiveStream: false, dynacast: false, audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+      // Ask again, a little later each time it fails (0.7 s, then up to 15 s): never a storm of requests.
       const again = () => {
         if (!joinedRef.current) return;
         if (resyncTimer.current) clearTimeout(resyncTimer.current);
+        const wait = Math.min(700 * 2 ** failures.current, 15000);
+        failures.current += 1;
         resyncTimer.current = setTimeout(() => {
           syncRef.current().catch(() => undefined);
-        }, 700);
+        }, wait);
       };
       room
         .on(lk.RoomEvent.ActiveSpeakersChanged, refresh)
@@ -260,6 +264,7 @@ export function useVoice(roomId: string, changed: unknown) {
         return;
       }
       conns.current.set(t.room, { name: t.room, channel: t.channel, speak: t.speak, room });
+      failures.current = 0;
       room.startAudio().catch(() => undefined);
     }
     if (n !== gen.current) return;

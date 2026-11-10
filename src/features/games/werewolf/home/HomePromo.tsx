@@ -30,7 +30,7 @@ import { DX, serif, useDubaiFonts } from '../dubai/theme';
 const WOLF = require('../../../../../assets/games/classic/werewolf.webp');
 
 /** Where the moon sits in the official illustration (720 × 960), as fractions of its width. */
-const MOON = { x: 0.71, y: 0.17, r: 0.17 };
+const MOON = { x: 0.74, y: 0.16, r: 0.17 };
 const MAX_W = 560;
 
 /**
@@ -90,7 +90,7 @@ export const HomeWerewolfPromo = memo(function HomeWerewolfPromo({ scrollY }: { 
     const p = interpolate(scrollY.get() + frame.height - top.get(), [0, frame.height + H], [0, 1], Extrapolation.CLAMP);
     return { transform: [{ scale: 1.12 - loop.get() * 0.02 }, { translateY: (p - 0.5) * -26 }] };
   });
-  const moon = useAnimatedStyle(() => ({ opacity: 0.35 + loop.get() * 0.4 + press.get() * 0.25, transform: [{ scale: 1 + loop.get() * 0.12 + press.get() * 0.5 }] }));
+  const moon = useAnimatedStyle(() => ({ opacity: 0.4 + loop.get() * 0.6, transform: [{ scale: 1 + loop.get() * 0.12 + press.get() * 0.5 }] }));
   const fogA = useAnimatedStyle(() => ({ transform: [{ translateX: -W + fog.get() * W }] }));
   const fogB = useAnimatedStyle(() => ({ transform: [{ translateX: -fog.get() * W }] }));
   const edge = useAnimatedStyle(() => ({ opacity: 0.55 + loop.get() * 0.35 }));
@@ -111,14 +111,19 @@ export const HomeWerewolfPromo = memo(function HomeWerewolfPromo({ scrollY }: { 
     press.set(0);
   }, [press]);
 
-  const moonSize = W * MOON.r * 2.5;
+  const moonSize = W * MOON.r * 2.7;
   return (
     <Animated.View onLayout={(e) => top.set(e.nativeEvent.layout.y)} style={[styles.root, reveal]}>
       <View style={[styles.card, { width: W, height: H }]} testID="home-werewolf">
         <Animated.View style={[StyleSheet.absoluteFill, art]}>
           <Image source={WOLF} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" transition={300} accessibilityLabel={tx('A werewolf under the full moon, above the village')} />
+          {/* The moon's halo lives in the illustration's own layer: it stays on the moon whatever the scale. */}
+          <Animated.View pointerEvents="none" style={[styles.halo, { width: moonSize, height: moonSize, left: W * MOON.x - moonSize / 2, top: W * MOON.y - moonSize / 2 }, moon]}>
+            {[1, 0.82, 0.66].map((k) => (
+              <View key={k} style={[styles.haloRing, { width: moonSize * k, height: moonSize * k, borderRadius: (moonSize * k) / 2 }]} />
+            ))}
+          </Animated.View>
         </Animated.View>
-        <Animated.View pointerEvents="none" style={[styles.moon, { width: moonSize, height: moonSize, borderRadius: moonSize / 2, left: W * MOON.x - moonSize / 2, top: W * MOON.y - moonSize / 2 }, moon]} />
         {reduced ? null : (
           <View pointerEvents="none" style={[styles.fogBand, { top: H * 0.42, height: H * 0.3 }]}>
             <Animated.View style={[styles.fog, { width: W * 2 }, fogA]}>
@@ -213,7 +218,8 @@ function MoonGate({ onOpen, onDone }: { onOpen: () => void; onDone: () => void }
 const styles = StyleSheet.create({
   root: { alignItems: 'center', paddingTop: space[6] },
   card: { borderRadius: 26, overflow: 'hidden', backgroundColor: DX.black },
-  moon: { position: 'absolute', backgroundColor: 'rgba(214,226,255,0.22)' },
+  halo: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
+  haloRing: { position: 'absolute', backgroundColor: 'rgba(214,226,255,0.09)' },
   fogBand: { position: 'absolute', left: 0, right: 0, overflow: 'hidden' },
   fog: { position: 'absolute', top: 0, bottom: '35%', left: 0 },
   fogLow: { top: '35%', bottom: 0 },

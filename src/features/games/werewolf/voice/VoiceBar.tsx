@@ -142,7 +142,8 @@ export const VoiceBar = memo(function VoiceBar(props: Props) {
             }}
             accessibilityRole="switch"
             accessibilityLabel={tx('Microphone')}
-            accessibilityState={{ disabled: !canSpeak, checked: voice.micOn }}
+            aria-checked={voice.micOn}
+            aria-disabled={!canSpeak}
             style={[styles.mic, voice.micOn ? styles.micOn : null, !canSpeak ? styles.disabled : null]}
             testID="voice-mic"
           >
@@ -156,7 +157,7 @@ export const VoiceBar = memo(function VoiceBar(props: Props) {
           {voice.micError ? <Text style={styles.error}>{tx(voice.micError)}</Text> : null}
         </View>
         <Round icon={voice.deaf ? 'volumeOff' : 'volume'} on={!voice.deaf} label={tx(voice.deaf ? 'Sound off. Turn the sound on' : 'Sound on. Turn the sound off')} onPress={voice.toggleDeaf} testID="voice-sound" />
-        {voice.outputs.length > 1 ? <Round icon="headphones" on={outputsOpen} label={tx('Audio output')} onPress={() => setOutputsOpen((v) => !v)} testID="voice-output" /> : null}
+        {voice.outputs.length > 1 ? <Round icon="headphones" label={tx('Audio output')} onPress={() => setOutputsOpen((v) => !v)} testID="voice-output" /> : null}
         <Round icon="logOut" label={tx('Leave the voice')} onPress={voice.leave} testID="voice-leave" />
       </View>
       <View style={styles.modes} accessibilityRole="radiogroup">
@@ -208,7 +209,9 @@ export const VoiceMic = memo(function VoiceMic({ voice }: { voice: Voice }) {
         onPressOut={push ? () => voice.hold(false) : undefined}
         accessibilityRole={push ? 'button' : 'switch'}
         accessibilityLabel={push ? label : tx('Microphone')}
-        accessibilityState={push ? { disabled: !canSpeak, selected: voice.micOn } : { disabled: !canSpeak, checked: voice.micOn }}
+        aria-checked={push ? undefined : voice.micOn}
+        aria-pressed={push ? voice.micOn : undefined}
+        aria-disabled={!canSpeak}
         style={[styles.mic, styles.micSmall, voice.micOn ? styles.micOn : null, !canSpeak ? styles.disabled : null]}
         testID="voice-dock-mic"
       >
