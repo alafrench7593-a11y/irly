@@ -194,7 +194,9 @@ export function libraryThumb(url: string): string {
 
 /** Only photos of the IRLY library can be saved as a link (the server checks the same). */
 export const LIBRARY_URL = /^https:\/\/(alafrench7593-a11y\.github\.io\/irly\/photos\/|getirly\.com\/img\/own\/|images\.unsplash\.com\/photo-)[A-Za-z0-9._~\/?&=%-]+$/;
-export const isLibraryUrl = (url: string | null | undefined): url is string => Boolean(url && url.length <= 400 && !url.includes('..') && LIBRARY_URL.test(url));
+/** A photo the IRLY team put in the library (back office, data/photos overrides): its public link (server: 20261111000200). */
+const TEAM_URL = /^https:\/\/yqutcmgslwxcmnsqmhvy\.supabase\.co\/storage\/v1\/object\/public\/app-photos\/[0-9a-f-]{36}\/[A-Za-z0-9._-]{1,80}(\?v=[0-9]{1,12})?$/;
+export const isLibraryUrl = (url: string | null | undefined): url is string => Boolean(url && url.length <= 400 && !url.includes('..') && (LIBRARY_URL.test(url) || TEAM_URL.test(url)));
 
 /**
  * SURPRISE ME: one photo picked uniformly at random among the type's photos,

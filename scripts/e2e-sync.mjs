@@ -8,6 +8,7 @@
 //     up on every screen that should list it; cancelling reaches the others.
 // Two throwaway members (Uma in the browser, Vera through the API), deleted
 // at the end.
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -1223,8 +1224,15 @@ async function main() {
     const [p] = await sql(`select count(*)::int as n from public.profiles where id = '${uma.id}'`);
     const [u] = await sql(`select count(*)::int as n from auth.users where id = '${uma.id}'`);
     const [m] = await sql(`select count(*)::int as n from public.messages where sender_id = '${uma.id}'`);
+    if (p.n || u.n || m.n) throw new Error(`left behind: profile ${p.n}, user ${u.n}, messages ${m.n}`);
+    // Files are removed by the storage purge (scripts/storage-purge.mjs, every 30 min), never by the database:
+    // every file left in her folder must be on the purge list, then the purge removes them all.
+    const [unqueued] = await sql(`select count(*)::int as n from storage.objects o where (storage.foldername(o.name))[1] = '${uma.id}'
+      and not exists (select 1 from private.storage_cleanup q where q.bucket_id = o.bucket_id and q.name = o.name)`);
+    if (unqueued.n) throw new Error(`${unqueued.n} file(s) left behind and not queued for the purge`);
+    execFileSync(process.execPath, ['scripts/storage-purge.mjs'], { env: process.env, stdio: 'ignore', timeout: 120000 });
     const [f] = await sql(`select count(*)::int as n from storage.objects where (storage.foldername(name))[1] = '${uma.id}'`);
-    if (p.n || u.n || m.n || f.n) throw new Error(`left behind: profile ${p.n}, user ${u.n}, messages ${m.n}, files ${f.n}`);
+    if (f.n) throw new Error(`the purge left ${f.n} file(s) in her folder`);
     // The old session no longer works.
     const stored = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.includes('auth-token')).length);
     return stored === 0;
