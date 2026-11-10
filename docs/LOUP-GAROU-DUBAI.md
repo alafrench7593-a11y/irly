@@ -22,7 +22,7 @@ comme le Village. Les huit modes existants ne changent pas.
 [Proposé] nommer la faction « Résidents » (Expats reste le nom de la carte de base), ou garder
 « Expats » et retirer l'Émirati de cette faction (impossible : il n'y a que 2 camps collectifs).
 
-## 2. Les 20 cartes, traduites en mécaniques du moteur
+## 2. Les 20 premières cartes, traduites en mécaniques du moteur
 
 Fenêtre = moment où le pouvoir se joue. « Attaque collective » = l'attaque de la meute des Escrocs.
 
@@ -48,6 +48,35 @@ Fenêtre = moment où le pouvoir se joue. « Attaque collective » = l'attaque d
 | 18 | Le Concierge | Expats | Accès VIP : chaque nuit, « a-t-il reçu une visite ? » ; pas 2 nuits de suite le même | nuit, phase 5 (résultat après phase 9) | type Somnambule |
 | 19 | Le Faux Millionnaire | Indépendants | Bluff : 1×, apparaît Expat aux enquêtes de camp ; gagne s'il est vivant à la fin | nuit, phase 5 | Solo de survie |
 | 20 | Le Networker | Double Jeu | Carnet d'adresses : 1×, enquête de camp ; perso : avoir enquêté sur un Escroc et survivre | nuit, phase 5 | Hybride V3 (double victoire) |
+
+### 2 bis. Cartes ajoutées (demande du 10/11) — 29 cartes au total
+
+Chaque nouvelle carte reprend une mécanique déjà définie dans le livre V3, pour ne pas créer
+de règle nouvelle. Les Escrocs passent de 3 à 6 cartes, ce qui rend les compositions plus variées.
+
+| # | Carte | Camp | Pouvoir | Fenêtre | Mécanique V3 |
+|---|---|---|---|---|---|
+| 21 | Le Crypto-trader | Escrocs | Rug Pull : 2×, bloque le pouvoir nocturne d'un joueur | nuit, phase 2 | Saboteur |
+| 22 | Le Sosie | Escrocs | Double vie : apparaît « Expats » aux enquêtes de camp (passif) | phase 5 | Agent double |
+| 23 | Le Gourou | Escrocs | Retraite silencieuse : 1×, empêche un joueur de voter ce jour | jour, avant le vote | Manipulateur |
+| 24 | Le Détective privé | Expats | Filature : chaque nuit, découvre le rôle exact d'un joueur | nuit, phase 5 | Voyante |
+| 25 | La Médecin urgentiste | Expats | Urgences : 1×, connaît la victime des Escrocs et la sauve | nuit, phase 7 | Sorcière (guérison seule) |
+| 26 | L'Avocat d'affaires | Expats | Vice de procédure : 1×, annule une élimination par vote | jour, vote §8 | Avocat |
+| 27 | Le Journaliste | Expats | Scoop : 2×, découvre la cible de l'action nocturne d'un joueur | nuit, phase 5 | Espion |
+| 28 | Le Parieur | Indépendants | Pari : nuit 1, parie secrètement sur le camp gagnant (Expats ou Escrocs) ; gagne si le pari est juste, même mort | nuit 1 | objectif Solo définitif |
+| 29 | La Coach | Double Jeu | Protège un joueur chaque nuit, pas deux nuits de suite le même ; perso : empêcher deux attaques mortelles | nuit, phase 4 | Gardien (hybride V3) |
+
+Points à décider sur ces cartes :
+- **D14** Le Détective privé rend le mode beaucoup plus favorable aux Expats (enquête de rôle chaque
+  nuit). [Proposé] seulement à partir de 10 joueurs, et jamais avec l'Investisseur et l'Émirati ensemble.
+- **D15** Le Parieur : pari sur « Expats » ou « Escrocs » seulement (pas « égalité »). [Proposé] oui.
+- **D16** Le Sosie apparaît Expats aux enquêtes de camp, mais le Détective privé voit son vrai rôle. [Proposé] oui.
+
+### 2 ter. Visages des personnages
+
+Chaque carte aura un visage qui lui est propre, différent des maquettes, sans ressemblance
+avec une personne réelle. Les personnages varient en âge, en genre et en origine, sans
+caricature. Aucune illustration ne sera réutilisée pour deux cartes.
 
 ## 3. Ordre de résolution (le moteur V3 ne change pas d'ordre)
 
@@ -117,6 +146,10 @@ Le CEO et l'Influenceuse ensemble seulement à partir de 15 joueurs.
 | 12 | Escroc ×2, Broker | Investisseur, Entrepreneur, Golden Visa, Concierge, CEO, Créateur | Faux Millionnaire | 2 |
 | 15 | Escroc ×3, Agent immobilier | Investisseur, Émirati, Entrepreneur, Millionnaire, Touriste, Célibataire, Influenceuse, Nouvel Arrivant | Charo, Networker | 1 |
 | 20 | Escroc ×3, Agent immobilier, Broker | Investisseur, Émirati, Entrepreneur, Millionnaire, Touriste, Célibataire, Influenceuse, CEO, Nouvel Arrivant, Concierge, Créateur | Charo, Faux Millionnaire, Networker | 1 |
+
+Avec les cartes 21 à 29, l'hôte peut aussi piocher dans la réserve : chaque composition
+garde les plafonds ci-dessus (la Médecin et la Coach comptent comme protections, le Journaliste
+et le Détective privé comme enquêtes), et au moins un Escroc « simple » reste dans la meute.
 
 Ces grilles sont des hypothèses : elles seront ajustées après des simulations IA (comme les
 135 parties du mode Classique) jusqu'à un taux de victoire Escrocs entre 40 et 55 %.
