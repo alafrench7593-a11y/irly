@@ -17,8 +17,10 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { startRoom, type GameMessage, type Room } from '../api';
-import { ACTION_TITLE, CARD_ORDER, campName, cardOf, DUBAI_ORDER, NO_TARGET, SPECIALS, wolvesFor, type CardId } from './cards';
+import { ACTION_TITLE, CARD_ORDER, campName, cardOf, DUBAI_ORDER, NO_TARGET, SPECIALS, wolvesFor, type CardId, type DubaiCardId } from './cards';
 import { botLine, logLine } from './lines';
+import { DubaiHeader, DubaiMyCard } from './dubai/RoomParts';
+import { DX } from './dubai/theme';
 import { Qr } from './Qr';
 import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, wwTraining, type WwOption, type WwPlayer, type WwView } from './api';
 
@@ -155,6 +157,24 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
 
   return (
     <View style={styles.block}>
+      {view.mode === 'dubai' ? (
+        <DubaiHeader
+          phase={ended ? 'ended' : night ? 'night' : 'day'}
+          title={
+            ended
+              ? tx('The game is over')
+              : night
+                ? tx('Night {n}', { n: view.night ?? 1 })
+                : view.phase === 'day'
+                  ? tx('Day {n}', { n: view.day ?? 1 })
+                  : view.phase === 'revote'
+                    ? tx('Second round')
+                    : tx('Day {n} · vote', { n: view.day ?? 1 })
+          }
+          subtitle={ended ? undefined : night ? tx('Powers act in secret…') : view.phase === 'day' ? tx('Debate') : tx('Elimination vote')}
+          clock={!ended ? <Clock deadline={view.deadline ?? null} skew={skew} color="#F7DE97" /> : undefined}
+        />
+      ) : (
       <View style={styles.skyWrap}>
         <LinearGradient colors={['#F6D365', '#FDA085']} style={StyleSheet.absoluteFill} />
         <Animated.View style={[StyleSheet.absoluteFill, sky]}>
@@ -187,6 +207,7 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
           ) : null}
         </View>
       </View>
+      )}
 
       {view.me ? <MyCard view={view} name={name} /> : null}
       {ended ? <Result view={view} me={me} room={room} /> : <Actions room={room} view={view} name={name} onChanged={onChanged} />}
@@ -228,6 +249,16 @@ const MyCard = memo(function MyCard({ view, name }: { view: WwView; name: (s?: n
   const front = useAnimatedStyle(() => ({ transform: [{ perspective: 800 }, { rotateY: `${180 - flip.get() * 180}deg` }], opacity: flip.get() > 0.5 ? 1 : 0 }));
   const back = useAnimatedStyle(() => ({ transform: [{ perspective: 800 }, { rotateY: `${-flip.get() * 180}deg` }], opacity: flip.get() > 0.5 ? 0 : 1 }));
   const wolves = card.camp === 'wolves';
+  if (view.mode === 'dubai') {
+    return (
+      <DubaiMyCard id={me.card as DubaiCardId} startShown={view.phase === 'ended'}>
+        {me.seduced && me.seduced.length ? <Text variant="caption" tone="secondary" align="center" raw>{tx('Seduced: {names}', { names: me.seduced.map(name).join(', ') })}</Text> : null}
+        {me.pack && me.pack.length > 1 ? <Text variant="caption" tone="secondary" align="center" raw>{tx('Your accomplices: {names}', { names: me.pack.map(name).join(', ') })}</Text> : null}
+        {me.lover !== null && me.lover !== undefined ? <Text variant="caption" tone="secondary" align="center" raw>{tx('In love with {name}', { name: name(me.lover) })}</Text> : null}
+        {!me.alive ? <Text variant="caption" tone="live" align="center">You are dead: watch, and talk with the dead</Text> : null}
+      </DubaiMyCard>
+    );
+  }
   return (
     <PressableScale onPress={() => setShown((v) => !v)} accessibilityRole="button" accessibilityLabel={shown ? tx('Hide my card') : tx('Show my card')}>
       <View style={styles.cardBox}>
@@ -318,10 +349,13 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
     wwAct(room.id, option.kind, a, b).then(onChanged).catch(fail);
   };
   const chosen = done[0];
+  const dx = view.mode === 'dubai';
   const label = (s: number) => name(s) + (view.pack_votes && option.kind === 'wolf' ? votesFor(view.pack_votes, s) : '');
   return (
-    <Animated.View entering={FadeInDown.duration(300)} style={[styles.option, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-      <Text variant="titleS">{ACTION_TITLE[option.kind] ?? option.kind}</Text>
+    <Animated.View entering={FadeInDown.duration(300)} style={[styles.option, dx ? styles.optionDx : { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+      <Text variant="titleS" color={dx ? DX.goldLight : undefined}>
+        {ACTION_TITLE[option.kind] ?? option.kind}
+      </Text>
       {chosen ? (
         <Text variant="caption" tone="positive" raw>
           {option.kind === 'link' ? tx('Chosen: {a} and {b}', { a: name(chosen.target ?? undefined), b: name(chosen.target2 ?? undefined) }) : chosen.target !== null && option.kind !== 'steal' ? tx('Chosen: {name}', { name: name(chosen.target) }) : tx('Done')}
@@ -353,8 +387,13 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
                 accessibilityRole="button"
                 accessibilityLabel={name(s)}
               >
-                <View style={[styles.target, { borderColor: on ? t.c.text : t.c.line, backgroundColor: on ? t.c.overlay : 'transparent' }]}>
-                  <Text variant="caption" raw>
+                <View
+                  style={[
+                    styles.target,
+                    dx ? { borderColor: on ? DX.gold : DX.goldDark, backgroundColor: on ? DX.red : 'rgba(11,9,7,0.6)' } : { borderColor: on ? t.c.text : t.c.line, backgroundColor: on ? t.c.overlay : 'transparent' },
+                  ]}
+                >
+                  <Text variant="caption" color={dx ? DX.ivory : undefined} raw>
                     {label(s)}
                   </Text>
                 </View>
@@ -379,7 +418,7 @@ function Table({ room, view, me }: { room: Room; view: WwView; me: string }) {
   return (
     <View style={styles.grid}>
       {(view.players ?? []).map((p) => (
-        <PlayerTile key={p.seat} p={p} room={room} me={me} acted={showActed && p.acted} lineColor={t.c.line} />
+        <PlayerTile key={p.seat} p={p} room={room} me={me} acted={showActed && p.acted} lineColor={view.mode === 'dubai' ? DX.goldDark : t.c.line} />
       ))}
     </View>
   );
@@ -600,6 +639,7 @@ const styles = StyleSheet.create({
   card: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: radius.xl, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: space[5], gap: space[2], backfaceVisibility: 'hidden' },
   cardFront: {},
   cardEmoji: { fontSize: 46, lineHeight: 54 },
+  optionDx: { backgroundColor: 'rgba(21,16,12,0.95)', borderColor: DX.gold, borderWidth: 1.5 },
   option: { padding: space[4], borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, gap: space[3] },
   targets: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   target: { paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radius.pill, borderWidth: 1.5 },

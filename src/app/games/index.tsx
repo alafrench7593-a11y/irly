@@ -12,6 +12,7 @@ import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { createRoom, joinByCode, joinRoom, quickplay, useGamesOverview, useGamesPresence, useOpenRooms, useRecentGames, type RoomCard } from '@/features/games/api';
 import { CARD_ORDER, cardOf, DUBAI_ORDER } from '@/features/games/werewolf/cards';
+import { DubaiTile } from '@/features/games/werewolf/dubai/DubaiTile';
 import { wwCreate, wwTraining } from '@/features/games/werewolf/api';
 import { t as tx, useLang } from '@/i18n';
 import { hasBackend } from '@/lib/supabase';
@@ -137,6 +138,8 @@ function Games() {
             </Text>
           ) : null}
         </View>
+
+        <DubaiTile />
 
         <View style={styles.codeRow}>
           <View style={{ flex: 1 }}>
