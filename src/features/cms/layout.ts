@@ -34,6 +34,7 @@ export type SectionSpec = {
 export const SECTION_SPEC: Record<HomeSection, SectionSpec> = {
   search: { pinned: 'first' },
   today: { text: true, cta: true },
+  games: {},
   news: { text: true, cta: true, styles: ['cards', 'list'], count: [1, 10, 5] },
   categories: {},
   banners: { styles: ['carousel', 'stack'], count: [1, 5, 3] },
@@ -57,6 +58,7 @@ export const SECTION_SPEC: Record<HomeSection, SectionSpec> = {
 export const SECTION_LABEL: Record<HomeSection, string> = {
   search: 'Search and Live now',
   today: 'Today on IRLY',
+  games: 'IRLY Games',
   news: 'IRLY news',
   categories: 'Discover activities (categories)',
   banners: 'Banners',

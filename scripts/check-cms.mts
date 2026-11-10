@@ -16,7 +16,15 @@ import { checkLayout, defaultLayout, entryCount, SECTION_SPEC } from '../src/fea
 import { HOME_SECTIONS } from '../src/features/home/sections.ts';
 
 const root = path.join(import.meta.dirname, '..');
-const sql = fs.readFileSync(path.join(root, 'supabase/migrations/20261028500000_irly_admin_cms.sql'), 'utf8');
+// Every migration in order: a later one may redefine a function (the last definition is the live one).
+const dir = path.join(root, 'supabase/migrations');
+const sql = fs
+  .readdirSync(dir)
+  .filter((f) => f.endsWith('.sql'))
+  .sort()
+  .map((f) => fs.readFileSync(path.join(dir, f), 'utf8'))
+  .join('\n');
+const lastMatch = (re: RegExp) => [...sql.matchAll(new RegExp(re.source, 'g'))].at(-1);
 let passed = 0;
 const fails: string[] = [];
 const check = (ok: boolean, what: string) => {
@@ -45,14 +53,14 @@ const refusal = (fn: () => unknown): string | null => {
   }
 };
 const arrayIn = (fn: string) => {
-  const m = sql.match(new RegExp(`function private\\.${fn}\\(\\)[\\s\\S]*?select array\\[([\\s\\S]*?)\\]`));
+  const m = lastMatch(new RegExp(`function private\\.${fn}\\(\\)[\\s\\S]*?select array\\[([\\s\\S]*?)\\]`));
   return m ? [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]) : [];
 };
 
 console.log('Server and app hold the same rules');
 check(same(arrayIn('home_section_keys'), [...HOME_SECTIONS]), `the same Home sections, in the same order (${HOME_SECTIONS.length})`);
 check(same(arrayIn('cms_categories'), CATEGORIES.map((c) => c.id)), `the same categories (${CATEGORIES.length})`);
-const specBlock = sql.match(/function private\.home_section_spec[\s\S]*?end\)::jsonb/)?.[0] ?? '';
+const specBlock = lastMatch(/function private\.home_section_spec[\s\S]*?end\)::jsonb/)?.[0] ?? '';
 for (const key of HOME_SECTIONS) {
   const m = specBlock.match(new RegExp(`when '${key}' then '([^']*)'`));
   const server = m ? (JSON.parse(m[1]) as Record<string, unknown>) : null;
