@@ -17,8 +17,12 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { startRoom, type GameMessage, type Room } from '../api';
-import { ACTION_TITLE, CARD_ORDER, cardOf, SPECIALS, wolvesFor, type CardId } from './cards';
+import { ACTION_TITLE, CARD_ORDER, campName, cardOf, DUBAI_ORDER, NO_TARGET, SPECIALS, wolvesFor, type CardId, type DubaiCardId } from './cards';
 import { botLine, logLine } from './lines';
+import { DubaiResult } from './dubai/Result';
+import { DubaiMyCard } from './dubai/RoomParts';
+import { Stage } from './dubai/Stage';
+import { DX } from './dubai/theme';
 import { Qr } from './Qr';
 import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, wwTraining, type WwOption, type WwPlayer, type WwView } from './api';
 
@@ -107,13 +111,13 @@ function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: b
         {tx('The deck for {n} players{custom}', { n: players, custom: view.custom ? ` · ${tx('set by the host')}` : '' })}
       </Text>
       <View style={styles.cards}>
-        {CARD_ORDER.filter((id) => (comp[id] ?? 0) > 0).map((id) => (
+        {(view.mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER).filter((id) => (comp[id] ?? 0) > 0).map((id) => (
           <View key={id} style={[styles.cardChip, { borderColor: t.c.line }]}>
             <Text raw>{`${cardOf(id).emoji} ${tx(cardOf(id).name)}${(comp[id] ?? 0) > 1 ? ` ×${comp[id]}` : ''}`}</Text>
           </View>
         ))}
       </View>
-      {editable ? (
+      {editable && view.mode !== 'dubai' ? (
         <>
           <View style={styles.cards}>
             <Button label="− Werewolf" size="sm" variant="secondary" disabled={(comp.werewolf ?? 1) <= 1} onPress={() => save({ ...comp, werewolf: (comp.werewolf ?? 1) - 1 })} />
@@ -152,9 +156,51 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
     dark.set(reduced ? (night ? 1 : 0) : withTiming(night ? 1 : 0, { duration: 900 }));
   }, [night, dark, reduced]);
   const sky = useAnimatedStyle(() => ({ opacity: dark.get() }));
+  // Dubaï: the main choice of the moment is made on the table itself (vote, the Escrocs' victim, a power on someone).
+  const stageOption =
+    view.mode === 'dubai'
+      ? ((view.options ?? []).find((o) => o.kind === 'vote' || o.kind === 'wolf') ?? (view.options ?? []).find((o) => o.targets.length > 0 && o.kind !== 'link' && o.kind !== 'steal'))
+      : undefined;
+  const stageChosen = stageOption ? ((view.mine ?? []).find((m) => m.kind === stageOption.kind)?.target ?? null) : null;
+  const stageMarks = useMemo(() => {
+    const out: Record<number, string> = {};
+    if (view.mode !== 'dubai') return out;
+    for (const e of view.log ?? []) {
+      const s = typeof e.data.seat === 'number' ? (e.data.seat as number) : undefined;
+      if (s === undefined || Number(e.data.day) !== view.day) continue;
+      if (e.kind === 'vote_doubled') out[s] = tx('×2 vote');
+      if (e.kind === 'immune') out[s] = tx('Immune');
+    }
+    if (view.pack_votes) for (const v of Object.values(view.pack_votes)) out[v] = `${(out[v] ? `${out[v]} ` : '')}●`;
+    return out;
+  }, [view.mode, view.log, view.day, view.pack_votes]);
 
   return (
     <View style={styles.block}>
+      {view.mode === 'dubai' && ended ? null : view.mode === 'dubai' ? (
+        <Stage
+          phase={ended ? 'ended' : night ? 'night' : 'day'}
+          title={
+            ended
+              ? tx('The game is over')
+              : night
+                ? tx('Night {n}', { n: view.night ?? 1 })
+                : view.phase === 'day'
+                  ? tx('Day {n}', { n: view.day ?? 1 })
+                  : view.phase === 'revote'
+                    ? tx('Second round')
+                    : tx('Day {n} · vote', { n: view.day ?? 1 })
+          }
+          subtitle={ended ? undefined : night ? tx('Powers act in secret…') : view.phase === 'day' ? tx('Debate') : tx('Elimination vote')}
+          clock={!ended ? <Clock deadline={view.deadline ?? null} skew={skew} color="#F7DE97" /> : undefined}
+          players={players}
+          mySeat={view.me?.seat}
+          targets={stageOption && view.me?.alive ? stageOption.targets : []}
+          chosen={stageChosen}
+          marks={stageMarks}
+          onPick={stageOption ? (seat) => wwAct(room.id, stageOption.kind, seat).then(onChanged).catch(fail) : undefined}
+        />
+      ) : (
       <View style={styles.skyWrap}>
         <LinearGradient colors={['#F6D365', '#FDA085']} style={StyleSheet.absoluteFill} />
         <Animated.View style={[StyleSheet.absoluteFill, sky]}>
@@ -187,12 +233,27 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
           ) : null}
         </View>
       </View>
+      )}
 
-      {view.me ? <MyCard view={view} name={name} /> : null}
-      {ended ? <Result view={view} me={me} room={room} /> : <Actions room={room} view={view} name={name} onChanged={onChanged} />}
-      <Table room={room} view={view} me={me} />
-      <Log view={view} name={name} />
-      {room.kind !== 'irl' || ended ? <Chat room={room} view={view} messages={messages} me={me} name={name} /> : null}
+      {view.me && !(view.mode === 'dubai' && ended) ? <MyCard view={view} name={name} /> : null}
+      {ended ? (
+        view.mode === 'dubai' ? (
+          <DubaiResult view={view} me={me} room={room} />
+        ) : (
+          <Result view={view} me={me} room={room} />
+        )
+      ) : (
+        <Actions room={room} view={view} name={name} onChanged={onChanged} skip={stageOption?.kind} />
+      )}
+      {view.mode === 'dubai' ? null : <Table room={room} view={view} me={me} />}
+      <View style={view.mode === 'dubai' ? styles.dxPanel : undefined}>
+        <Log view={view} name={name} />
+      </View>
+      {room.kind !== 'irl' || ended ? (
+        <View style={view.mode === 'dubai' ? styles.dxPanel : undefined}>
+          <Chat room={room} view={view} messages={messages} me={me} name={name} />
+        </View>
+      ) : null}
       {room.kind === 'irl' && view.phase === 'day' && room.host_id === me ? (
         <Button label="Everyone has talked: vote" icon="arrowRight" onPress={() => wwSkipDay(room.id).then(onChanged).catch(fail)} full />
       ) : null}
@@ -228,6 +289,16 @@ const MyCard = memo(function MyCard({ view, name }: { view: WwView; name: (s?: n
   const front = useAnimatedStyle(() => ({ transform: [{ perspective: 800 }, { rotateY: `${180 - flip.get() * 180}deg` }], opacity: flip.get() > 0.5 ? 1 : 0 }));
   const back = useAnimatedStyle(() => ({ transform: [{ perspective: 800 }, { rotateY: `${-flip.get() * 180}deg` }], opacity: flip.get() > 0.5 ? 0 : 1 }));
   const wolves = card.camp === 'wolves';
+  if (view.mode === 'dubai') {
+    return (
+      <DubaiMyCard id={me.card as DubaiCardId} startShown={view.phase === 'ended'}>
+        {me.seduced && me.seduced.length ? <Text variant="caption" tone="secondary" align="center" raw>{tx('Seduced: {names}', { names: me.seduced.map(name).join(', ') })}</Text> : null}
+        {me.pack && me.pack.length > 1 ? <Text variant="caption" tone="secondary" align="center" raw>{tx('Your accomplices: {names}', { names: me.pack.map(name).join(', ') })}</Text> : null}
+        {me.lover !== null && me.lover !== undefined ? <Text variant="caption" tone="secondary" align="center" raw>{tx('In love with {name}', { name: name(me.lover) })}</Text> : null}
+        {!me.alive ? <Text variant="caption" tone="live" align="center">You are dead: watch, and talk with the dead</Text> : null}
+      </DubaiMyCard>
+    );
+  }
   return (
     <PressableScale onPress={() => setShown((v) => !v)} accessibilityRole="button" accessibilityLabel={shown ? tx('Hide my card') : tx('Show my card')}>
       <View style={styles.cardBox}>
@@ -250,8 +321,13 @@ const MyCard = memo(function MyCard({ view, name }: { view: WwView; name: (s?: n
             {tx(card.power)}
           </Text>
           <Text variant="caption" color={wolves ? '#FFD6D6' : undefined} tone={wolves ? undefined : 'tertiary'} align="center" raw>
-            {`${tx(wolves ? 'Werewolves' : 'Village')} · ${tx(card.goal)}`}
+            {`${tx(campName(card.camp, view.mode))} · ${tx(card.goal)}`}
           </Text>
+          {me.seduced && me.seduced.length ? (
+            <Text variant="caption" align="center" raw>
+              {tx('Seduced: {names}', { names: me.seduced.map(name).join(', ') })}
+            </Text>
+          ) : null}
           {me.pack && me.pack.length > 1 ? (
             <Text variant="caption" color="#FFD6D6" align="center" raw>
               {tx('Your pack: {names}', { names: me.pack.map(name).join(', ') })}
@@ -274,10 +350,18 @@ const MyCard = memo(function MyCard({ view, name }: { view: WwView; name: (s?: n
 });
 
 // ───────── What I may do now ─────────
-function Actions({ room, view, name, onChanged }: { room: Room; view: WwView; name: (s?: number) => string; onChanged: () => void }) {
-  const options = view.options ?? [];
+function Actions({ room, view, name, onChanged, skip }: { room: Room; view: WwView; name: (s?: number) => string; onChanged: () => void; skip?: string }) {
+  const all = view.options ?? [];
+  const options = all.filter((o) => o.kind !== skip);
   const mine = view.mine ?? [];
   if (!view.me?.alive) return null;
+  if (skip && !options.length) {
+    return (
+      <Text tone="secondary" align="center">
+        {view.phase === 'vote' || view.phase === 'revote' ? 'Touch a player on the table to vote' : 'Touch a player on the table to choose'}
+      </Text>
+    );
+  }
   if (!options.length) {
     return (
       <Text tone="secondary" align="center">
@@ -313,17 +397,20 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
     wwAct(room.id, option.kind, a, b).then(onChanged).catch(fail);
   };
   const chosen = done[0];
+  const dx = view.mode === 'dubai';
   const label = (s: number) => name(s) + (view.pack_votes && option.kind === 'wolf' ? votesFor(view.pack_votes, s) : '');
   return (
-    <Animated.View entering={FadeInDown.duration(300)} style={[styles.option, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-      <Text variant="titleS">{ACTION_TITLE[option.kind] ?? option.kind}</Text>
+    <Animated.View entering={FadeInDown.duration(300)} style={[styles.option, dx ? styles.optionDx : { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
+      <Text variant="titleS" color={dx ? DX.goldLight : undefined}>
+        {ACTION_TITLE[option.kind] ?? option.kind}
+      </Text>
       {chosen ? (
         <Text variant="caption" tone="positive" raw>
           {option.kind === 'link' ? tx('Chosen: {a} and {b}', { a: name(chosen.target ?? undefined), b: name(chosen.target2 ?? undefined) }) : chosen.target !== null && option.kind !== 'steal' ? tx('Chosen: {name}', { name: name(chosen.target) }) : tx('Done')}
         </Text>
       ) : null}
-      {option.kind === 'ready' || option.kind === 'hint' ? (
-        <Button label={option.kind === 'ready' ? 'Ready to vote' : 'Spy tonight'} size="sm" disabled={Boolean(chosen)} onPress={() => send()} />
+      {NO_TARGET.has(option.kind) ? (
+        <Button label={option.kind === 'ready' ? 'Ready to vote' : option.kind === 'hint' ? 'Spy tonight' : 'Use my power'} size="sm" disabled={Boolean(chosen)} onPress={() => send()} />
       ) : option.kind === 'steal' ? (
         <View style={styles.targets}>
           {(option.cards ?? []).map((c, i) => (
@@ -348,8 +435,13 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
                 accessibilityRole="button"
                 accessibilityLabel={name(s)}
               >
-                <View style={[styles.target, { borderColor: on ? t.c.text : t.c.line, backgroundColor: on ? t.c.overlay : 'transparent' }]}>
-                  <Text variant="caption" raw>
+                <View
+                  style={[
+                    styles.target,
+                    dx ? { borderColor: on ? DX.gold : DX.goldDark, backgroundColor: on ? DX.red : 'rgba(11,9,7,0.6)' } : { borderColor: on ? t.c.text : t.c.line, backgroundColor: on ? t.c.overlay : 'transparent' },
+                  ]}
+                >
+                  <Text variant="caption" color={dx ? DX.ivory : undefined} raw>
                     {label(s)}
                   </Text>
                 </View>
@@ -374,7 +466,7 @@ function Table({ room, view, me }: { room: Room; view: WwView; me: string }) {
   return (
     <View style={styles.grid}>
       {(view.players ?? []).map((p) => (
-        <PlayerTile key={p.seat} p={p} room={room} me={me} acted={showActed && p.acted} lineColor={t.c.line} />
+        <PlayerTile key={p.seat} p={p} room={room} me={me} acted={showActed && p.acted} lineColor={view.mode === 'dubai' ? DX.goldDark : t.c.line} />
       ))}
     </View>
   );
@@ -461,7 +553,13 @@ function Chat({ room, view, messages, me, name }: { room: Room; view: WwView; me
   return (
     <View style={[styles.chat, { borderColor: t.c.line }]}>
       <Text variant="label" tone="secondary">
-        {channel === 'wolves' ? 'Pack chat (only werewolves read it)' : channel === 'dead' ? 'Chat of the dead' : 'Village chat'}
+        {channel === 'wolves'
+          ? view.mode === 'dubai'
+            ? 'Escrocs’ chat (only they read it)'
+            : 'Pack chat (only werewolves read it)'
+          : channel === 'dead'
+            ? 'Chat of the dead'
+            : 'Village chat'}
       </Text>
       {shown.map((m) => (
         <View key={m.id} style={styles.msg}>
@@ -502,10 +600,22 @@ function Result({ view, me, room }: { view: WwView; me: string; room: Room }) {
   const cards = ((view.log ?? []).find((e) => e.kind === 'game_over')?.data.cards ?? []) as { seat: number; name: string; bot: boolean; card: CardId; alive: boolean; won: boolean }[];
   const mySeat = view.me?.seat;
   const iWon = r?.seats.includes(mySeat ?? -1);
-  const title = r?.winner === 'village' ? 'The village wins' : r?.winner === 'wolves' ? 'The werewolves win' : r?.winner === 'lovers' ? 'The lovers win' : 'Nobody survived';
+  const dubai = view.mode === 'dubai';
+  const title =
+    r?.winner === 'village'
+      ? dubai
+        ? 'The Expats win'
+        : 'The village wins'
+      : r?.winner === 'wolves'
+        ? dubai
+          ? 'The Escrocs win'
+          : 'The werewolves win'
+        : r?.winner === 'lovers'
+          ? 'The lovers win'
+          : 'Nobody survived';
   const humans = room.people.filter((p) => p.id !== me && !p.blocked);
   const again = () =>
-    wwTraining(room.space === 'irly_girl' ? 'girl' : 'mixte', view.size, null, (view.difficulty as 'beginner' | 'intermediate' | 'expert') ?? 'intermediate')
+    wwTraining(room.space === 'irly_girl' ? 'girl' : 'mixte', view.size, null, (view.difficulty as 'beginner' | 'intermediate' | 'expert') ?? 'intermediate', view.mode === 'dubai' ? 'dubai' : 'classic')
       .then((id) => router.replace(`/games/${id}`))
       .catch(fail);
   return (
@@ -536,7 +646,7 @@ function Result({ view, me, room }: { view: WwView; me: string; room: Room }) {
           </Text>
           {c.won ? (
             <Text variant="caption" tone="positive">
-              Won
+              {r?.solo?.includes(c.seat) ? 'Personal victory' : r?.double?.includes(c.seat) ? 'Double victory' : 'Won'}
             </Text>
           ) : null}
         </View>
@@ -577,6 +687,8 @@ const styles = StyleSheet.create({
   card: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: radius.xl, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: space[5], gap: space[2], backfaceVisibility: 'hidden' },
   cardFront: {},
   cardEmoji: { fontSize: 46, lineHeight: 54 },
+  dxPanel: { borderWidth: 1.5, borderColor: DX.goldDark, borderRadius: 16, backgroundColor: 'rgba(21,16,12,0.95)', padding: 12 },
+  optionDx: { backgroundColor: 'rgba(21,16,12,0.95)', borderColor: DX.gold, borderWidth: 1.5 },
   option: { padding: space[4], borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, gap: space[3] },
   targets: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   target: { paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radius.pill, borderWidth: 1.5 },
