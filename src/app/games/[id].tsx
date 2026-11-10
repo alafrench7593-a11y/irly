@@ -68,22 +68,26 @@ export default function GameRoomScreen() {
           <Text tone="tertiary">Loading…</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + space[4] }]} keyboardShouldPersistTaps="handled">
-          {room.game === 'werewolf' ? (
-            <>
-              {room.status === 'abandoned' ? <End room={room} me={uid} /> : <WerewolfRoom room={room} me={uid} messages={messages} />}
-              {/* Before the start, the table talks in the shared chat; in the game, the Loup-Garou chat follows the night. */}
-              {room.status === 'waiting' && room.kind !== 'irl' ? <Chat room={room} me={uid} messages={messages} /> : null}
-            </>
-          ) : (
-            <>
-              {room.status === 'waiting' ? <Lobby room={room} me={uid} onChanged={reload} /> : null}
-              {room.status === 'playing' ? <Play room={room} me={uid} skew={skew} onChanged={reload} /> : null}
-              {room.status === 'finished' || room.status === 'abandoned' ? <End room={room} me={uid} /> : null}
-              <Chat room={room} me={uid} messages={messages} />
-            </>
-          )}
-        </ScrollView>
+        room.game === 'werewolf' && room.status !== 'abandoned' ? (
+          // Loup-Garou lays out its own screen: the table scrolls, what to do now stays docked at the bottom.
+          <WerewolfRoom room={room} me={uid} messages={messages}>
+            {/* Before the start, the table talks in the shared chat; in the game, the Loup-Garou chat follows the night. */}
+            {room.status === 'waiting' && room.kind !== 'irl' ? <Chat room={room} me={uid} messages={messages} /> : null}
+          </WerewolfRoom>
+        ) : (
+          <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + space[4] }]} keyboardShouldPersistTaps="handled">
+            {room.game === 'werewolf' ? (
+              <End room={room} me={uid} />
+            ) : (
+              <>
+                {room.status === 'waiting' ? <Lobby room={room} me={uid} onChanged={reload} /> : null}
+                {room.status === 'playing' ? <Play room={room} me={uid} skew={skew} onChanged={reload} /> : null}
+                {room.status === 'finished' || room.status === 'abandoned' ? <End room={room} me={uid} /> : null}
+                <Chat room={room} me={uid} messages={messages} />
+              </>
+            )}
+          </ScrollView>
+        )
       )}
     </KeyboardAvoidingView>
   );

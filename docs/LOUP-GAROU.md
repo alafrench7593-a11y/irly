@@ -167,3 +167,22 @@ Migration `20261114000000_irly_werewolf_chaos.sql`, tests `supabase/tests/werewo
   publique du même mode avec une place, sinon une nouvelle table de ce mode.
 - Simulations IA (90 parties, 6 à 20 joueurs) : loups-garous 63, village 24, amoureux 3. Comme le
   Classique, le mode favorise les loups face à l'IA ; à mesurer en parties humaines.
+
+## Rythme contre l'IA, modes Cauchemar et Tous pouvoirs
+
+Migration `20261115000000_irly_werewolf_pace_modes.sql`, tests `supabase/tests/werewolf_pace_modes.test.sql`.
+
+- Retour des joueurs : « l'IA va trop vite, pas le temps de voter ». En entraînement :
+  nuit 75 s, sorcière 45 s, jour 180 s, vote 90 s, second tour 60 s (avant : 40/25/90/45/35) ;
+  une phase dure au moins 5 s même quand tout le monde a agi (les IA répondent aussitôt :
+  sans cela une nuit, ou toute la fin de partie d'un joueur éliminé, passait en un clin d'œil).
+  Les tables en ligne et en présentiel gardent leurs durées.
+- À l'écran, ce que le joueur peut faire (voter, être prêt, utiliser un pouvoir, s'abstenir)
+  reste ancré en bas, sans défilement ; la table tient au-dessus sur les petits téléphones.
+- **Cauchemar** : le deck Classique avec un loup-garou de plus (tant qu'ils restent moins de la
+  moitié) et sans Voyante. Simulations IA (60 parties) : loups 45, village 14, amoureux 1.
+- **Tous pouvoirs** : le nombre habituel de loups, puis une carte spéciale par siège tant qu'il
+  en reste (Voyante, Sorcière, Chasseur, Salvateur, Cupidon, Petite Fille, Ancien) ; les simples
+  villageois ne viennent qu'après. Simulations IA (60 parties) : loups 36, village 21, amoureux 3.
+- Ces deux modes ne changent aucune règle : seule la composition diffère. Les modes qui
+  demandent de nouvelles règles (Manipulation, Fusion, Apocalypse) attendent des décisions.

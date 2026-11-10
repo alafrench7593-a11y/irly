@@ -126,7 +126,7 @@ try {
   });
   await step('training: a whole game against the AI players ends, unranked', async () => {
     let v;
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 1600; i++) {
       v = await playOnce(A, training);
       if (v.phase === 'ended') break;
       await sleep(250);
@@ -150,7 +150,7 @@ try {
     const room = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 9, p_role: null, p_difficulty: 'intermediate', p_mode: 'chaos' }));
     let v = must(await A.sb.rpc('ww_view', { p_room: room }));
     const hidden = v.phase === 'ended' || (!('composition' in v) && !(v.log ?? []).some((e) => e.data && 'composition' in e.data));
-    for (let i = 0; i < 400 && v.phase !== 'ended'; i++) {
+    for (let i = 0; i < 1600 && v.phase !== 'ended'; i++) {
       v = await playOnce(A, room);
       await sleep(250);
     }
@@ -159,6 +159,20 @@ try {
   });
   await step('chaos: a host cannot choose the deck', () =>
     refused(A.sb.rpc('ww_create', { p_space: 'mixte', p_visibility: 'private', p_size: 8, p_kind: 'online', p_composition: { werewolf: 2, villager: 6 }, p_title: null, p_lang: 'fr', p_mode: 'chaos' }), 'Chaos: the deck is drawn in secret'));
+
+  await step('new modes: a Nightmare training game starts without a Seer, an All powers one without a villager', async () => {
+    const n = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 8, p_role: null, p_difficulty: 'intermediate', p_mode: 'nightmare' }));
+    const vn = must(await A.sb.rpc('ww_view', { p_room: n }));
+    const p = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 8, p_role: null, p_difficulty: 'intermediate', p_mode: 'powers' }));
+    const vp = must(await A.sb.rpc('ww_view', { p_room: p }));
+    return vn.mode === 'nightmare' && !('seer' in vn.composition) && vn.composition.werewolf === 3 && vp.mode === 'powers' && !('villager' in vp.composition);
+  });
+  await step('training does not rush: the phase is still there right after every AI player has acted', async () => {
+    const r = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 8, p_role: 'villager', p_difficulty: 'intermediate', p_mode: 'classic' }));
+    const a = must(await A.sb.rpc('ww_view', { p_room: r }));
+    const b = must(await A.sb.rpc('ww_view', { p_room: r }));
+    return a.phase === 'night' && a.night === 1 && b.phase === 'night' && b.night === 1;
+  });
 
   // ───── A private online table of six ─────
   await step('online: a private table of six, joined with its code', async () => {

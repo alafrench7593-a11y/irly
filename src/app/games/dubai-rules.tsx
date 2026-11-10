@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
-import { CARD_ORDER, CARDS, DUBAI_ORDER } from '@/features/games/werewolf/cards';
+import { CARD_ORDER, CARDS, DUBAI_ORDER, MODE_NAME, MODES, type WwMode } from '@/features/games/werewolf/cards';
 import { SCENES } from '@/features/games/werewolf/dubai/art';
 import { LivingScene } from '@/features/games/werewolf/dubai/Motion';
 import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, factionText, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
@@ -16,7 +16,7 @@ type Section = { key: string; title: string; lines: string[] };
 /** A mode's rules, as the server plays them (docs/LOUP-GAROU.md, docs/LOUP-GAROU-DUBAI.md). ?mode=classic|dubai|chaos. */
 export default function RulesScreen() {
   const { mode: m } = useLocalSearchParams<{ mode?: string }>();
-  const mode = m === 'classic' || m === 'chaos' ? m : 'dubai';
+  const mode: WwMode = MODES.includes(m as WwMode) ? (m as WwMode) : 'dubai';
   const dubai = mode === 'dubai';
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -98,7 +98,23 @@ export default function RulesScreen() {
             ],
           },
         ]
-      : []),
+      : mode === 'nightmare'
+        ? [
+            {
+              key: 'nightmare',
+              title: tx('Nightmare mode'),
+              lines: [tx('One more werewolf than usual, and no Seer: nobody can check a card.'), tx('For players who know the game: the village only has its debates and its votes.')],
+            },
+          ]
+        : mode === 'powers'
+          ? [
+              {
+                key: 'powers',
+                title: tx('All powers mode'),
+                lines: [tx('Every seat gets a special card while there are some: plain villagers only come after.'), tx('The usual number of werewolves: a good mode to try every power.')],
+              },
+            ]
+          : []),
     {
       key: 'secret',
       title: tx('Secrets'),
@@ -122,7 +138,7 @@ export default function RulesScreen() {
             <Icon name="arrowLeft" size={20} color={DX.goldLight} />
           </Pressable>
           <Text style={[styles.title, serif(fonts, '900')]} accessibilityRole="header">
-            {`${tx('Rules of the game')} · ${tx(dubai ? 'Dubai' : mode === 'chaos' ? 'Chaos' : 'Classic')}`.toUpperCase()}
+            {`${tx('Rules of the game')} · ${tx(MODE_NAME[mode])}`.toUpperCase()}
           </Text>
         </View>
         <View style={{ width: Math.min(width, 640), paddingHorizontal: 16, gap: 10 }}>

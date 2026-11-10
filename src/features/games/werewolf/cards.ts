@@ -28,8 +28,12 @@ export type DubaiCardId =
   | 'networker';
 export type CardId = ClassicCardId | DubaiCardId;
 export type Camp = 'village' | 'wolves' | 'solo';
-export type WwMode = 'classic' | 'dubai' | 'chaos';
-export const MODES: WwMode[] = ['classic', 'dubai', 'chaos'];
+export type WwMode = 'classic' | 'dubai' | 'chaos' | 'nightmare' | 'powers';
+export const MODES: WwMode[] = ['classic', 'dubai', 'chaos', 'nightmare', 'powers'];
+/** A mode read from the server or a link; anything unknown is Classic. */
+export const toMode = (m: string | null | undefined): WwMode => (MODES.includes(m as WwMode) ? (m as WwMode) : 'classic');
+export const MODE_NAME: Record<WwMode, string> = { classic: 'Classic', dubai: 'Dubai', chaos: 'Chaos', nightmare: 'Nightmare', powers: 'All powers' };
+export const MODE_LABEL: Record<WwMode, string> = { classic: 'Classic mode', dubai: 'Dubai mode', chaos: 'Chaos mode', nightmare: 'Nightmare mode', powers: 'All powers mode' };
 
 export type CardInfo = {
   id: CardId;

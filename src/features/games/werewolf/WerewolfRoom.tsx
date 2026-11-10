@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState, type ReactNode } from 'react';
-import { Alert, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { Avatar } from '@/components/ui/Avatar';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -13,7 +14,7 @@ import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { startRoom, type GameMessage, type Room } from '../api';
-import { ACTION_TITLE, CARD_ORDER, cardOf, DUBAI_ORDER, NO_TARGET, SPECIALS, wolvesFor, type CardId, type WwMode } from './cards';
+import { ACTION_TITLE, CARD_ORDER, cardOf, DUBAI_ORDER, MODE_NAME, NO_TARGET, SPECIALS, toMode, wolvesFor, type CardId } from './cards';
 import { botLine, logLine } from './lines';
 import { PORTRAIT, SCENES } from './dubai/art';
 import { DubaiResult } from './dubai/Result';
@@ -25,7 +26,7 @@ import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, type WwOption, ty
 
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 const JOIN_URL = 'https://getirly.com/app/games/join?code=';
-const modeOf = (m: string | undefined): WwMode => (m === 'dubai' || m === 'chaos' ? m : 'classic');
+const modeOf = toMode;
 /** Day powers are used from their own buttons: touching the table by day is for the vote only. */
 const DAY_POWERS = new Set(['buzz', 'dump', 'board', 'fresh']);
 
@@ -36,13 +37,33 @@ const DAY_POWERS = new Set(['buzz', 'dump', 'board', 'fresh']);
  * card, the log, the chat of her channel), then the result with every card
  * revealed. The server decides everything.
  */
-export function WerewolfRoom({ room, me, messages }: { room: Room; me: string; messages: GameMessage[] }) {
+export function WerewolfRoom({ room, me, messages, children }: { room: Room; me: string; messages: GameMessage[]; children?: ReactNode }) {
   const { view, failed, reload, skew } = useWwView(room.id, room);
-  if (!view) {
-    return <Text style={styles.muted}>{failed ? tx(failed) : tx('Loading…')}</Text>;
-  }
-  if (view.phase === 'lobby') return <Lobby room={room} me={me} view={view} onChanged={reload} />;
-  return <Game room={room} me={me} view={view} messages={messages} skew={skew} onChanged={reload} />;
+  const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const playing = view && view.phase !== 'lobby' && view.phase !== 'ended';
+  return (
+    <View style={styles.screen}>
+      <ScrollView style={styles.screen} contentContainerStyle={[styles.scroll, { paddingBottom: playing ? 16 : insets.bottom + 16 }]} keyboardShouldPersistTaps="handled">
+        {!view ? (
+          <Text style={styles.muted}>{failed ? tx(failed) : tx('Loading…')}</Text>
+        ) : view.phase === 'lobby' ? (
+          <Lobby room={room} me={me} view={view} onChanged={reload} />
+        ) : (
+          <Game room={room} me={me} view={view} messages={messages} skew={skew} onChanged={reload} />
+        )}
+        {children}
+      </ScrollView>
+      {/* What I may do now stays at the bottom of the screen: never a scroll away. */}
+      {playing ? (
+        <View style={[styles.dock, { paddingBottom: insets.bottom + 10, maxHeight: Math.round(height * 0.42) }]} testID="ww-dock">
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.dockInner}>
+            <Actions room={room} view={view} name={(s) => (s === undefined ? tx('someone') : ((view.players ?? []).find((p) => p.seat === s)?.name ?? tx('someone')))} onChanged={reload} />
+          </ScrollView>
+        </View>
+      ) : null}
+    </View>
+  );
 }
 
 // ───────── Small parts in the game's style ─────────
@@ -121,8 +142,6 @@ function Lobby({ room, me, view, onChanged }: { room: Room; me: string; view: Ww
     </View>
   );
 }
-
-export const MODE_NAME: Record<WwMode, string> = { classic: 'Classic', dubai: 'Dubai', chaos: 'Chaos' };
 
 /** The deck the game will use; the host adjusts the werewolves and the special cards in Classic (the server checks). Chaos: secret. */
 function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: boolean; roomId: string; onChanged: () => void }) {
@@ -259,7 +278,6 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
           hint={hint}
         />
       )}
-      {ended ? null : <Actions room={room} view={view} name={name} onChanged={onChanged} />}
       {ended ? (
         <DubaiResult view={view} me={me} room={room} />
       ) : view.me ? (
@@ -301,16 +319,15 @@ function Clock({ deadline, skew }: { deadline: string | null; skew: number }) {
 function Actions({ room, view, name, onChanged }: { room: Room; view: WwView; name: (s?: number) => string; onChanged: () => void }) {
   const options = view.options ?? [];
   const mine = view.mine ?? [];
-  if (!view.me?.alive) return null;
+  const fonts = useDubaiFonts();
+  if (!view.me?.alive) return <Text style={styles.waitText}>{tx('You are out: watch the end of the game')}</Text>;
   if (!options.length) {
-    return (
-      <Panel>
-        <Text style={styles.waitText}>{view.phase === 'night' || view.phase === 'witch' ? tx('You sleep. The night goes on…') : tx('Wait for the others…')}</Text>
-      </Panel>
-    );
+    return <Text style={styles.waitText}>{view.phase === 'night' || view.phase === 'witch' ? tx('You sleep. The night goes on…') : tx('Wait for the others…')}</Text>;
   }
+  const waiting = options.every((o) => mine.some((m) => m.kind === o.kind)) || mine.some((m) => m.kind === 'pass');
   return (
-    <Panel accent title={tx('Your turn')}>
+    <View style={styles.actions}>
+      <Text style={[styles.panelTitle, serif(fonts, '700')]}>{waiting ? tx('Done. Waiting for the others…') : tx('Your turn')}</Text>
       {view.phase === 'witch' && view.victim !== null && view.victim !== undefined ? (
         <Text style={styles.alert}>{tx(view.mode === 'dubai' ? 'The Escrocs attacked {name}' : 'The werewolves attacked {name}', { name: name(view.victim) })}</Text>
       ) : null}
@@ -319,7 +336,7 @@ function Actions({ room, view, name, onChanged }: { room: Room; view: WwView; na
       ))}
       {view.phase !== 'day' && !mine.length ? <GoldButton label={tx(view.phase === 'vote' || view.phase === 'revote' ? 'Abstain' : 'Do nothing')} ghost onPress={() => wwAct(room.id, 'pass').then(onChanged).catch(fail)} /> : null}
       {mine.some((m) => m.kind === 'pass') ? <Text style={styles.small}>{tx('You chose to do nothing')}</Text> : null}
-    </Panel>
+    </View>
   );
 }
 
@@ -475,6 +492,11 @@ function Chat({ room, view, messages, me, name }: { room: Room; view: WwView; me
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  scroll: { padding: 16, gap: 14 },
+  dock: { borderTopWidth: 1.5, borderColor: DX.gold, backgroundColor: '#15100C', shadowColor: '#000', shadowOpacity: 0.6, shadowRadius: 12, shadowOffset: { width: 0, height: -4 } },
+  dockInner: { paddingHorizontal: 16, paddingTop: 12 },
+  actions: { gap: 10 },
   block: { gap: 14 },
   panel: { borderWidth: 1.5, borderColor: DX.goldDark, borderRadius: 16, backgroundColor: 'rgba(21,16,12,0.96)', padding: 14, gap: 10 },
   panelAccent: { borderColor: DX.gold, shadowColor: DX.gold, shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } },

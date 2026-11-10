@@ -45,6 +45,18 @@ const MODE_INFO: Record<WwMode, ModeInfo> = {
     line: 'The Classic cards, a deck drawn at random and kept secret until the end.',
     cast: ['thief', 'little_girl', 'werewolf', 'elder', 'salvateur', 'seer'],
   },
+  nightmare: {
+    name: 'Nightmare',
+    tagline: 'One more werewolf. No Seer.',
+    line: 'For players who know the game: the village only has its debates and its votes.',
+    cast: ['hunter', 'werewolf', 'witch', 'salvateur', 'villager', 'elder'],
+  },
+  powers: {
+    name: 'All powers',
+    tagline: 'Everyone has a power.',
+    line: 'A special card for every seat while there are some: the mode to try them all.',
+    cast: ['seer', 'witch', 'hunter', 'cupid', 'salvateur', 'little_girl'],
+  },
 };
 
 /**
@@ -90,6 +102,7 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
   const menuStyle = useAnimatedStyle(() => ({ opacity: menu.get(), transform: [{ translateY: (1 - menu.get()) * 24 }] }));
   const pageW = Math.min(width, 560);
   const tileW = Math.floor((pageW - 32 - 2 * 10) / 3);
+  const tileH = Math.round(tileW * 0.82);
   return (
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -99,7 +112,7 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
       </Animated.View>
       <LinearGradient colors={['rgba(11,9,7,0.35)', 'rgba(11,9,7,0.05)', 'rgba(11,9,7,0.6)', 'rgba(11,9,7,0.96)']} locations={[0, 0.25, 0.5, 0.8]} style={StyleSheet.absoluteFill} />
       <GoldDust count={14} height={height} />
-      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 32, alignItems: 'center' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={[styles.top, { width: pageW }]}>
           <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
             <Icon name="arrowLeft" size={20} color={DX.goldLight} />
@@ -149,11 +162,11 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
                 accessibilityState={{ selected: on }}
                 accessibilityLabel={tx(MODE_INFO[m].name)}
               >
-                <View style={[styles.modeTile, { width: tileW, height: tileW * 1.3 }, on && styles.modeTileOn]}>
+                <View style={[styles.modeTile, { width: tileW, height: tileH }, on && styles.modeTileOn]}>
                   <Image source={PORTRAIT[MODE_INFO[m].cast[0]]} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
                   <LinearGradient colors={['transparent', 'rgba(11,9,7,0.95)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
-                  <Text style={[styles.modeTileText, serif(fonts, '900'), { fontSize: Math.min(14, Math.floor(tileW / 8.5)) }, on && { color: DX.goldLight }]} numberOfLines={1} adjustsFontSizeToFit>{tx(MODE_INFO[m].name).toUpperCase()}</Text>
-                  {m === 'chaos' ? (
+                  <Text style={[styles.modeTileText, serif(fonts, '900'), { fontSize: Math.max(8, Math.min(14, Math.floor((tileW - 12) / (tx(MODE_INFO[m].name).length * 0.98)))) }, on && { color: DX.goldLight }]} numberOfLines={1}>{tx(MODE_INFO[m].name).toUpperCase()}</Text>
+                  {m === 'nightmare' || m === 'powers' ? (
                     <View style={styles.newBadge}>
                       <Text style={styles.newText}>{tx('New mode')}</Text>
                     </View>
@@ -173,15 +186,6 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
         <Text style={styles.modeLine}>{tx(info.line)}</Text>
 
         <Animated.View style={[styles.menu, { width: pageW - 32 }, menuStyle]}>
-          <Breathe>
-            <PressableScale onPress={() => run(() => wwQuickplay(appSpace, mode))} accessibilityRole="button" accessibilityLabel={tx('Play online')} disabled={busy}>
-              <LinearGradient colors={['#B3262F', DX.red, '#5E0F15']} style={styles.play}>
-                <Icon name="play" size={22} color={DX.goldLight} />
-                <Text style={[styles.playText, serif(fonts, '900')]}>{tx('Play online')}</Text>
-              </LinearGradient>
-            </PressableScale>
-          </Breathe>
-          <MenuButton icon="sparkles" label={tx('Train against AI players')} onPress={() => setTraining(true)} fonts={fonts} />
           <MenuButton icon="userPlus" label={tx('Create a table (online or in person)')} onPress={() => setCreating(true)} fonts={fonts} />
           <MenuButton icon="key" label={tx('Join with a code')} onPress={() => setJoining((v) => !v)} fonts={fonts} />
           {joining ? (
@@ -245,6 +249,34 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
           </View>
         ) : null}
       </ScrollView>
+      {/* The two ways to play stay at the bottom of the screen, whatever the mode: never a scroll away. */}
+      <View style={[styles.dock, { paddingBottom: insets.bottom + 10 }]} testID="ww-home-dock">
+        <View style={[styles.dockRow, { width: pageW - 32 }]}>
+          <View style={{ flex: 1.15 }}>
+            <Breathe>
+              <PressableScale onPress={() => run(() => wwQuickplay(appSpace, mode))} accessibilityRole="button" accessibilityLabel={tx('Play online')} disabled={busy}>
+                <LinearGradient colors={['#B3262F', DX.red, '#5E0F15']} style={styles.play}>
+                  {pageW < 360 ? null : <Icon name="play" size={18} color={DX.goldLight} />}
+                  <Text style={[styles.playText, serif(fonts, '900'), pageW < 360 && { fontSize: 13 }]} numberOfLines={1}>
+                    {tx('Play online')}
+                  </Text>
+                </LinearGradient>
+              </PressableScale>
+            </Breathe>
+          </View>
+          <View style={{ flex: 1 }}>
+            <PressableScale onPress={() => setTraining(true)} accessibilityRole="button" accessibilityLabel={tx('Train against AI players')}>
+              <View style={styles.train}>
+                {pageW < 360 ? null : <Icon name="sparkles" size={18} color={DX.gold} />}
+                <Text style={[styles.trainText, serif(fonts, '700'), pageW < 360 && { fontSize: 13 }]} numberOfLines={1}>
+                  {tx('Against the AI')}
+                </Text>
+              </View>
+            </PressableScale>
+          </View>
+        </View>
+        <Text style={styles.dockMode}>{`${tx('Mode')} : ${tx(info.name)}`}</Text>
+      </View>
       <TrainingSheet visible={training} mode={mode} onClose={() => setTraining(false)} onCreated={go} />
       <TableSheet visible={creating} mode={mode} onClose={() => setCreating(false)} onCreated={go} />
     </View>
@@ -326,9 +358,9 @@ function StartButton({ label, onPress, disabled }: { label: string; onPress: () 
   const fonts = useDubaiFonts();
   return (
     <PressableScale onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label}>
-      <LinearGradient colors={['#B3262F', DX.red, '#5E0F15']} style={[styles.play, { height: 54 }, disabled && { opacity: 0.5 }]}>
+      <LinearGradient colors={['#B3262F', DX.red, '#5E0F15']} style={[styles.play, disabled && { opacity: 0.5 }]}>
         <Icon name="play" size={18} color={DX.goldLight} />
-        <Text style={[styles.playText, serif(fonts, '900'), { fontSize: 18 }]}>{label}</Text>
+        <Text style={[styles.playText, serif(fonts, '900')]}>{label}</Text>
       </LinearGradient>
     </PressableScale>
   );
@@ -353,8 +385,10 @@ function TrainingSheet({ visible, mode, onClose, onCreated }: { visible: boolean
       .finally(() => setBusy(false));
   };
   return (
-    <Sheet visible={visible} onClose={onClose} title={tx('Train against AI players')} subtitle={`${tx(MODE_INFO[mode].name)} · ${tx('Training · unranked: never counted in the ranking.')}`}>
+    <Sheet visible={visible} onClose={onClose} scroll title={tx('Train against AI players')} subtitle={`${tx(MODE_INFO[mode].name)} · ${tx('Training · unranked: never counted in the ranking.')}`}>
       <SheetBody>
+        {/* First, so it is on screen whatever the length of the role list (21 choices in Dubaï). */}
+        <StartButton label={tx('Start')} disabled={busy} onPress={start} />
         <Label>{tx('Players')}</Label>
         <Choice
           options={[
@@ -416,7 +450,7 @@ function TableSheet({ visible, mode, onClose, onCreated }: { visible: boolean; m
       .finally(() => setBusy(false));
   };
   return (
-    <Sheet visible={visible} onClose={onClose} title={tx('New Loup-Garou table')} subtitle={tx(MODE_INFO[mode].name)}>
+    <Sheet visible={visible} onClose={onClose} scroll title={tx('New Loup-Garou table')} subtitle={tx(MODE_INFO[mode].name)}>
       <SheetBody>
         <TextInput
           value={title}
@@ -473,15 +507,15 @@ const styles = StyleSheet.create({
   online: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: DX.goldDark, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'rgba(11,9,7,0.6)' },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#3FBF6F' },
   onlineText: { color: DX.ivory, fontSize: 12, fontWeight: '700' },
-  titleBox: { alignItems: 'center', marginTop: 70 },
+  titleBox: { alignItems: 'center', marginTop: 28 },
   title: { color: DX.goldLight, fontSize: 40, lineHeight: 46, letterSpacing: 1, textShadowColor: '#000', textShadowRadius: 14 },
   claws: { marginTop: -26, marginBottom: -8 },
   modeBand: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   rule: { width: 42, height: 1.5, backgroundColor: DX.gold },
   modeName: { color: DX.gold, fontSize: 30, letterSpacing: 4, textShadowColor: '#000', textShadowRadius: 12 },
   tagline: { color: DX.ivory, fontSize: 15, marginTop: 10, textAlign: 'center', paddingHorizontal: 24, textShadowColor: '#000', textShadowRadius: 8 },
-  modes: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 26 },
-  modeTile: { borderRadius: 16, overflow: 'hidden', borderWidth: 1.5, borderColor: DX.goldDark, justifyContent: 'flex-end', padding: 8, backgroundColor: DX.black, opacity: 0.8 },
+  modes: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, marginTop: 22 },
+  modeTile: { borderRadius: 16, overflow: 'hidden', borderWidth: 1.5, borderColor: DX.goldDark, justifyContent: 'flex-end', padding: 6, backgroundColor: DX.black, opacity: 0.8 },
   modeTileOn: { borderColor: DX.goldLight, borderWidth: 2.5, opacity: 1, shadowColor: DX.gold, shadowOpacity: 0.7, shadowRadius: 14, shadowOffset: { width: 0, height: 0 } },
   modeTileText: { color: DX.ivory, letterSpacing: 0.5, textAlign: 'center' },
   newBadge: { position: 'absolute', top: 8, right: 8, backgroundColor: DX.red, borderRadius: 8, borderWidth: 1, borderColor: DX.gold, paddingHorizontal: 6, paddingVertical: 1 },
@@ -490,8 +524,13 @@ const styles = StyleSheet.create({
   face: { width: 44, height: 44, borderRadius: 22, overflow: 'hidden', borderWidth: 2, borderColor: DX.gold, backgroundColor: DX.black },
   modeLine: { color: DX.muted, fontSize: 13, textAlign: 'center', marginTop: 10, paddingHorizontal: 28 },
   menu: { marginTop: 20, gap: 10 },
-  play: { height: 62, borderRadius: 18, borderWidth: 2, borderColor: DX.gold, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
-  playText: { color: DX.goldLight, fontSize: 24, letterSpacing: 1 },
+  play: { height: 56, borderRadius: 16, borderWidth: 2, borderColor: DX.gold, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 10 },
+  playText: { color: DX.goldLight, fontSize: 15, letterSpacing: 0.3, flexShrink: 1 },
+  dock: { alignItems: 'center', gap: 6, paddingTop: 10, borderTopWidth: 1.5, borderColor: DX.gold, backgroundColor: '#15100C' },
+  dockRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  dockMode: { color: DX.muted, fontSize: 12 },
+  train: { height: 56, borderRadius: 16, borderWidth: 1.5, borderColor: DX.gold, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 10, backgroundColor: 'rgba(11,9,7,0.9)' },
+  trainText: { color: DX.goldLight, fontSize: 14, flexShrink: 1 },
   item: { minHeight: 52, borderRadius: 14, borderWidth: 1.5, borderColor: DX.goldDark, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 18 },
   itemText: { flex: 1, color: DX.ivory, fontSize: 15, letterSpacing: 0.3 },
   pair: { flexDirection: 'row', gap: 10 },
