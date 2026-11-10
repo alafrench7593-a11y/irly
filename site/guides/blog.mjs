@@ -891,4 +891,184 @@ export const POSTS = [
       { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
     ],
   },
+  {
+    lang: 'en',
+    pair: 'blog-start-small-group',
+    path: 'blog/start-small-group-weekly-walk-book-club/',
+    city: 'Dubai',
+    published: '2026-11-10',
+    title: 'How to Start a Small Group Yourself: A Walk or a Book Club | IRLY',
+    description: 'No group fits your interests or schedule? How to start a small one yourself, like a weekly walk or a book club: the details, the first invite, the first months.',
+    h1: 'How to start a small group yourself: a weekly walk or a book club',
+    lead: 'If you cannot find the group you want, you can start a small one yourself, and it is less work than it sounds. Settle the details once, invite a handful of people with a clear message, host the first sessions simply, and keep the same slot even when only two people come.',
+    sections: [
+      {
+        h2: 'Settle the details once',
+        html: `<p>A group that people join easily answers their questions before they ask. Write down five things in a short paragraph you can paste anywhere:</p>
+<ul>
+<li><strong>What:</strong> one activity, described plainly. “A one-hour walk at an easy pace” or “a book club, one book a month, you can come even if you did not finish it”.</li>
+<li><strong>When:</strong> a fixed day and time, every week or every month.</li>
+<li><strong>Where:</strong> a public meeting point that is easy to find. If you need a room or a booking, check the rules for groups first. In the hot months, pick a cooler time of day and remind people to bring water.</li>
+<li><strong>How long:</strong> a clear end time makes it easier to say yes.</li>
+<li><strong>Who it is for:</strong> beginners welcome, newcomers welcome, come on your own.</li>
+</ul>
+<p>Our guide to <a href="../../dubai/group-activities/">group activities to meet people in Dubai</a> has ideas if you are still choosing the format.</p>`,
+      },
+      {
+        h2: 'Send the first invitation',
+        html: `<p>Start with people you already half know: a colleague, a neighbour, someone from a class, a group chat you are in. A personal message works better than a public post at first. Keep it short and specific: “I’m starting an easy walk on Saturday mornings at 8, about an hour. Want to come this week? Bring anyone you like.” Asking people to bring a friend is the simplest way to grow, and it makes the first session feel less like a test for everyone. You can also post your plan in a community or on an app where people look for activities; IRLY is one of these options, along with local groups and social networks. When people you have not met join, keep to public places and share personal details only when you feel comfortable.</p>`,
+      },
+      {
+        h2: 'Host the first sessions',
+        html: `<ul>
+<li><strong>Arrive first</strong> and greet each person by name as they come.</li>
+<li><strong>Introduce people to each other</strong> with one detail: “Sam also just moved here.” That is most of a host’s job.</li>
+<li><strong>Give the conversation a start.</strong> For a book club, one open question about the book; for a walk, a simple round of names and how long everyone has been here.</li>
+<li><strong>End on time,</strong> then say the next date out loud before people leave.</li>
+</ul>`,
+      },
+      {
+        h2: 'Keep it going past the first month',
+        html: `<p>The first weeks decide whether the group lasts. Keep the same slot even if only two people come; regulars count more than numbers, and a small group is often where people talk most. Create a group chat and send a short reminder the day before. After a few sessions, ask someone to help: choosing the next book, leading the walk when you travel. Shared roles make the group belong to everyone, not only to you. Do not take a quiet week personally: schedules change, and people come back when the slot stays reliable. For what comes next, read <a href="../gym-class-acquaintance-to-friend/">how to turn a class acquaintance into a friend</a> and <a href="../../dubai/make-friends/">how to make friends in Dubai</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Ready to start your own plan?', body: 'Create a small activity around what you like and invite people who want to meet too, in real life.', label: 'Create a plan' },
+    related: [
+      { label: '15 group activities to meet people in Dubai', path: 'dubai/group-activities/' },
+      { label: 'How to make friends in Dubai', path: 'dubai/make-friends/' },
+      { label: 'From gym or class acquaintance to friend', path: 'blog/gym-class-acquaintance-to-friend/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-start-small-group',
+    path: 'fr/blog/creer-un-petit-groupe-balade-club-lecture/',
+    city: 'Dubaï',
+    published: '2026-11-10',
+    title: 'Lancer ton propre petit groupe : balade, club de lecture | IRLY',
+    description: 'Aucun groupe ne colle à tes envies ? Comment lancer le tien, une balade chaque semaine ou un club de lecture : les détails, la première invitation, la suite.',
+    h1: 'Lancer ton propre petit groupe : une balade chaque semaine, un club de lecture',
+    lead: 'Si tu ne trouves pas le groupe qu’il te faut, tu peux en lancer un petit toi-même, et c’est moins de travail qu’il n’y paraît. Fixe les détails dès le départ, invite quelques personnes avec un message clair, anime les premières séances simplement, et garde le même créneau, même quand vous n’êtes que deux.',
+    sections: [
+      {
+        h2: 'Fixe les détails une fois pour toutes',
+        html: `<p>Un groupe que l’on rejoint facilement répond aux questions avant qu’on les pose. Écris cinq choses dans un court paragraphe que tu pourras coller partout :</p>
+<ul>
+<li><strong>Quoi :</strong> une seule activité, décrite simplement. « Une balade d’une heure à allure tranquille » ou « un club de lecture, un livre par mois, tu peux venir même sans l’avoir fini ».</li>
+<li><strong>Quand :</strong> un jour et une heure fixes, chaque semaine ou chaque mois.</li>
+<li><strong>Où :</strong> un point de rendez-vous public et facile à trouver. Si tu as besoin d’une salle ou d’une réservation, vérifie d’abord les règles pour les groupes. Pendant les mois chauds, choisis une heure plus fraîche et rappelle à chacun d’apporter de l’eau.</li>
+<li><strong>Combien de temps :</strong> une heure de fin claire aide à dire oui.</li>
+<li><strong>Pour qui :</strong> débutants bienvenus, nouveaux arrivants bienvenus, on peut venir seul.</li>
+</ul>
+<p>Notre guide des <a href="../../dubai/activites-de-groupe/">activités de groupe pour rencontrer du monde à Dubaï</a> donne des idées si tu hésites encore sur le format.</p>`,
+      },
+      {
+        h2: 'Envoie la première invitation',
+        html: `<p>Commence par les personnes que tu connais déjà un peu : un collègue, une voisine, quelqu’un rencontré en cours, un groupe de discussion dont tu fais partie. Au début, un message personnel marche mieux qu’une annonce publique. Reste court et précis : « Je lance une balade tranquille le samedi à 8 h, environ une heure. Tu viens cette semaine ? Amène qui tu veux. » Demander d’amener un ami est la façon la plus simple de faire grandir le groupe, et ça rend la première séance moins intimidante pour tout le monde. Tu peux aussi publier ton plan dans une communauté ou sur une appli où les gens cherchent des activités ; IRLY est l’une de ces options, avec les groupes locaux et les réseaux sociaux. Quand des personnes que tu ne connais pas encore te rejoignent, reste dans des lieux publics et ne partage tes coordonnées que lorsque tu te sens à l’aise.</p>`,
+      },
+      {
+        h2: 'Anime les premières séances',
+        html: `<ul>
+<li><strong>Arrive le premier</strong> et accueille chaque personne par son prénom.</li>
+<li><strong>Présente les gens entre eux</strong> avec un détail : « Sam vient aussi d’arriver. » C’est l’essentiel du rôle d’hôte.</li>
+<li><strong>Lance la conversation.</strong> Pour un club de lecture, une question ouverte sur le livre ; pour une balade, un tour des prénoms et depuis quand chacun est ici.</li>
+<li><strong>Termine à l’heure,</strong> puis annonce la prochaine date à voix haute avant que tout le monde parte.</li>
+</ul>`,
+      },
+      {
+        h2: 'Fais-le durer au-delà du premier mois',
+        html: `<p>Tout se joue dans les premières semaines. Garde le même créneau même si vous n’êtes que deux : les habitués comptent plus que le nombre, et c’est souvent en petit comité qu’on parle le plus. Crée un groupe de discussion et envoie un petit rappel la veille. Après quelques séances, demande à quelqu’un de t’aider : choisir le prochain livre, mener la balade quand tu voyages. Partager les rôles fait du groupe celui de tout le monde, pas seulement le tien. Ne prends pas personnellement une semaine creuse : les emplois du temps bougent, et les gens reviennent quand le créneau reste fiable. Pour la suite, lis <a href="../connaissance-sport-cours-devenir-ami/">comment faire d’une connaissance de cours un ami</a> et notre guide pour <a href="../../dubai/se-faire-des-amis/">se faire des amis à Dubaï</a>.</p>`,
+      },
+    ],
+    cta: { title: 'Prêt à lancer ton propre plan ?', body: 'Crée une petite activité autour de ce que tu aimes et invite des gens qui veulent aussi se rencontrer, en vrai.', label: 'Créer un plan' },
+    related: [
+      { label: '15 activités de groupe pour rencontrer du monde à Dubaï', path: 'fr/dubai/activites-de-groupe/' },
+      { label: 'Se faire des amis à Dubaï', path: 'fr/dubai/se-faire-des-amis/' },
+      { label: 'Salle de sport ou cours : faire d’une connaissance un ami', path: 'fr/blog/connaissance-sport-cours-devenir-ami/' },
+    ],
+  },
+  {
+    lang: 'en',
+    pair: 'blog-start-conversation-activity',
+    path: 'blog/what-to-say-start-conversation-activity/',
+    city: 'Dubai',
+    published: '2026-11-10',
+    title: 'What to Say to Start a Conversation at an Activity | IRLY',
+    description: 'Not sure what to say at a class, a run or a meetup? Simple first lines for each moment, how to keep the talk going, join a group and leave on a good note.',
+    h1: 'What to say to start a conversation at an activity',
+    lead: 'At an activity, you do not need a clever opening line: a short comment or question about what you are both doing is enough. What matters more is the timing, one follow-up question that shows you listened, and ending the chat in a way that makes the next one easy.',
+    sections: [
+      {
+        h2: 'First lines for each moment',
+        html: `<p>The activity gives you a ready-made topic. Pick a line that fits the moment:</p>
+<ul>
+<li><strong>While waiting to start:</strong> “Do you know if we’re doing the long route today?” or “I’m new, is there anything I should know?”</li>
+<li><strong>During a break:</strong> “How are you finding it?” or “That part was harder than it looked.”</li>
+<li><strong>Right after:</strong> “Have you done this one before? I’m trying to decide whether to come back next week.”</li>
+<li><strong>At a book club or workshop:</strong> “What made you pick this one?” or “Which part did you like most?”</li>
+</ul>
+<p>Asking for a small piece of help or an opinion works well, because most people like to give one. Saying you are new is also fine: it explains why you are talking and invites others to guide you.</p>`,
+      },
+      {
+        h2: 'Keep it going with one follow-up',
+        html: `<p>A first exchange often stops after one answer. To keep it going, pick up something they said and ask one more question: “You said you started last month. What got you into it?” Then share something about yourself in return, so it does not feel like an interview. Open questions, starting with what, how or why, leave more room than yes-or-no questions. From the activity, you can move gently to wider topics: how long they have been in the city, what they do on weekends, where they are from. If the answers stay short, that is information, not a failure: let it be and try someone else another time.</p>`,
+      },
+      {
+        h2: 'Joining a group that is already talking',
+        html: `<p>Walking up to three people who already know each other feels harder than talking to one. Stand close, listen for a moment, and join on the topic they are on rather than starting a new one: “Sorry to jump in, are you talking about the beginner session? I was wondering about that too.” Often someone will turn towards you and include you. If the organiser is around, asking them to introduce you to one or two people is perfectly normal.</p>`,
+      },
+      {
+        h2: 'Leave on a good note',
+        html: `<p>A conversation that ends well is easier to restart. Close it simply: “Nice talking to you, I’m Lina by the way. See you next week?” Saying your name and mentioning the next session gives you both an easy opening next time. If you clicked, you can suggest something small right away, like a coffee after the next session. Keep first plans in public places and share your number when you feel ready. For more on going alone, read <a href="../../dubai/going-out-alone/">going out alone in Dubai</a>, and for what comes after a few good chats, <a href="../gym-class-acquaintance-to-friend/">how to turn a class acquaintance into a friend</a>. If social situations make you anxious most of the time, talking to a mental health professional can help; it is a normal step.</p>`,
+      },
+    ],
+    cta: { title: 'Want an easy place to start?', body: 'Join a small activity where conversation comes naturally, with people who want to meet too, in real life.', label: 'Find an activity' },
+    related: [
+      { label: 'Going out alone in Dubai', path: 'dubai/going-out-alone/' },
+      { label: 'Making friends in Dubai as an introvert', path: 'blog/introvert-make-friends-dubai/' },
+      { label: 'From gym or class acquaintance to friend', path: 'blog/gym-class-acquaintance-to-friend/' },
+    ],
+  },
+  {
+    lang: 'fr',
+    pair: 'blog-start-conversation-activity',
+    path: 'fr/blog/quoi-dire-pour-lancer-une-conversation-activite/',
+    city: 'Dubaï',
+    published: '2026-11-10',
+    title: 'Quoi dire pour lancer une conversation pendant une activité | IRLY',
+    description: 'Tu ne sais pas quoi dire en cours, à un footing ou à une rencontre ? Des phrases simples pour chaque moment, pour relancer, rejoindre un groupe et conclure.',
+    h1: 'Quoi dire pour lancer une conversation pendant une activité',
+    lead: 'Pendant une activité, pas besoin d’une phrase d’accroche brillante : un petit commentaire ou une question sur ce que vous faites tous les deux suffit. Ce qui compte davantage, c’est le bon moment, une question de relance qui montre que tu as écouté, et une fin de conversation qui rend la suivante facile.',
+    sections: [
+      {
+        h2: 'Des premières phrases pour chaque moment',
+        html: `<p>L’activité te donne un sujet tout prêt. Choisis une phrase adaptée au moment :</p>
+<ul>
+<li><strong>En attendant le début :</strong> « Tu sais si on fait le grand parcours aujourd’hui ? » ou « Je suis nouveau, il y a quelque chose à savoir ? »</li>
+<li><strong>Pendant une pause :</strong> « Tu t’en sors comment ? » ou « Ce passage était plus dur qu’il n’en avait l’air. »</li>
+<li><strong>Juste après :</strong> « Tu l’avais déjà fait, celui-là ? J’hésite à revenir la semaine prochaine. »</li>
+<li><strong>À un club de lecture ou un atelier :</strong> « Qu’est-ce qui t’a donné envie de venir ? » ou « Quel passage t’a le plus plu ? »</li>
+</ul>
+<p>Demander un petit coup de main ou un avis marche bien, parce que la plupart des gens aiment en donner. Dire que tu es nouveau, c’est aussi très bien : ça explique pourquoi tu parles et ça invite les autres à te guider.</p>`,
+      },
+      {
+        h2: 'Relance avec une seule question',
+        html: `<p>Un premier échange s’arrête souvent après une réponse. Pour continuer, reprends quelque chose que la personne a dit et pose une question de plus : « Tu disais que tu as commencé le mois dernier. Qu’est-ce qui t’a donné envie ? » Puis parle un peu de toi en retour, pour que ça ne ressemble pas à un interrogatoire. Les questions ouvertes, qui commencent par « qu’est-ce que », « comment » ou « pourquoi », laissent plus de place que celles où l’on répond par oui ou non. À partir de l’activité, tu peux élargir doucement : depuis quand elle vit ici, ce qu’elle fait le week-end, d’où elle vient. Si les réponses restent courtes, c’est une information, pas un échec : n’insiste pas et essaie avec quelqu’un d’autre une autre fois.</p>`,
+      },
+      {
+        h2: 'Rejoindre un groupe qui discute déjà',
+        html: `<p>Aborder trois personnes qui se connaissent déjà paraît plus dur que parler à une seule. Approche-toi, écoute un instant, et entre dans la conversation sur leur sujet plutôt que d’en lancer un nouveau : « Pardon de m’incruster, vous parlez de la séance débutants ? Je me posais la même question. » Souvent, quelqu’un se tourne vers toi et t’inclut. Si l’organisateur est là, lui demander de te présenter à une ou deux personnes est tout à fait normal.</p>`,
+      },
+      {
+        h2: 'Termine sur une bonne note',
+        html: `<p>Une conversation qui finit bien est plus facile à reprendre. Conclus simplement : « Ravie d’avoir discuté avec toi, moi c’est Lina, au fait. À la semaine prochaine ? » Donner ton prénom et évoquer la prochaine séance vous donne à tous les deux une façon simple de reprendre la conversation la prochaine fois. Si le courant est passé, tu peux proposer tout de suite quelque chose de simple, comme un café après la prochaine séance. Garde les premiers rendez-vous dans des lieux publics et donne ton numéro quand tu te sens prêt. Si tu y vas seul, lis notre guide <a href="../../dubai/sortir-seul/">sortir seul à Dubaï</a> et, pour la suite après quelques bonnes discussions, <a href="../connaissance-sport-cours-devenir-ami/">comment faire d’une connaissance de cours un ami</a>. Si les situations sociales t’angoissent la plupart du temps, en parler à un professionnel de santé mentale peut aider : c’est une démarche normale.</p>`,
+      },
+    ],
+    cta: { title: 'Envie d’un endroit facile pour commencer ?', body: 'Rejoins une petite activité où la conversation vient naturellement, avec des gens qui veulent aussi se rencontrer, en vrai.', label: 'Trouver une activité' },
+    related: [
+      { label: 'Sortir seul à Dubaï', path: 'fr/dubai/sortir-seul/' },
+      { label: 'Se faire des amis à Dubaï quand on est introverti', path: 'fr/blog/introverti-se-faire-des-amis-dubai/' },
+      { label: 'Salle de sport ou cours : faire d’une connaissance un ami', path: 'fr/blog/connaissance-sport-cours-devenir-ami/' },
+    ],
+  },
 ];
