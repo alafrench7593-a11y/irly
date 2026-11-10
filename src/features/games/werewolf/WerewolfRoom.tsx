@@ -13,7 +13,8 @@ import { t as tx } from '@/i18n';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
-import { kickPlayer, startRoom, type GameMessage, type Room } from '../api';
+import { joinRoom, kickPlayer, startRoom, type GameMessage, type Room } from '../api';
+import { ShareGame } from '../ShareGame';
 import { ACTION_TITLE, CARD_ORDER, cardOf, DAY_POWERS, deckOf, MODE_NAME, NO_TARGET, SPECIALS, toMode, TWO_TARGETS, wolvesFor, type CardId } from './cards';
 import { botLine, logLine } from './lines';
 import { PORTRAIT, SCENES } from './dubai/art';
@@ -135,6 +136,12 @@ function Lobby({ room, me, view, onChanged, voice, people }: { room: Room; me: s
             <Text style={[styles.codeText, serif(fonts, '900')]}>{room.code}</Text>
             <GoldButton label={tx('Share')} icon="share" ghost onPress={share} />
           </View>
+        </Panel>
+      ) : null}
+      {!present.some((p) => p.id === me) && room.status === 'waiting' ? <GoldButton label={tx('Join the game')} icon="userPlus" onPress={() => joinRoom(room.id).then(onChanged).catch(fail)} /> : null}
+      {host ? (
+        <Panel title={tx('Invite players')}>
+          <ShareGame room={room} />
         </Panel>
       ) : null}
       {host && !irl && (voiceOk || voice.isVoice) ? (
