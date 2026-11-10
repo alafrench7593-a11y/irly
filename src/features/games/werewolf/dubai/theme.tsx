@@ -45,6 +45,9 @@ export const factionOf = (id: DubaiCardId): Faction =>
         : 'expats';
 
 export const FACTION_NAME: Record<Faction, string> = { expats: 'Expats', escrocs: 'Escrocs', independents: 'Independents', double: 'Double Game' };
+/** The faction's name as shown: « Expats » and « Escrocs » are the game's own words, the same in every language. */
+export const factionLabel = (f: Faction, tr: (s: string) => string): string => (f === 'expats' ? 'Expats' : f === 'escrocs' ? 'Escrocs' : tr(FACTION_NAME[f]));
+
 export const FACTION_COLOR: Record<Faction, string> = { expats: DX.expats, escrocs: DX.escrocs, independents: DX.independents, double: DX.double };
 
 /** The faction's emblem, drawn (no emoji): people, a mask, a diamond, scales. */

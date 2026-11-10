@@ -9,7 +9,7 @@ import { Icon } from '@/components/ui/Icon';
 import { DUBAI_ORDER, type DubaiCardId } from '@/features/games/werewolf/cards';
 import { BACKGROUND } from '@/features/games/werewolf/dubai/art';
 import { DubaiCard } from '@/features/games/werewolf/dubai/DubaiCard';
-import { DX, FACTION_NAME, factionOf, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
+import { DX, factionLabel, factionOf, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
 import { t as tx } from '@/i18n';
 
 type Filter = 'all' | Faction;
@@ -29,7 +29,7 @@ export default function DubaiCardsScreen() {
   const cardW = Math.floor((pageW - 16 * 2 - 12 * (cols - 1)) / cols);
   const filters: { key: Filter; label: string }[] = [
     { key: 'all', label: `${tx('All')} (${DUBAI_ORDER.length})` },
-    ...(['expats', 'escrocs', 'independents', 'double'] as Faction[]).map((f) => ({ key: f, label: `${tx(FACTION_NAME[f])} (${count(f)})` })),
+    ...(['expats', 'escrocs', 'independents', 'double'] as Faction[]).map((f) => ({ key: f, label: `${factionLabel(f, tx)} (${count(f)})` })),
   ];
   return (
     <View style={styles.root}>

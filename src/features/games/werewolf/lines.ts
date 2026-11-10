@@ -81,7 +81,7 @@ export function logLine(e: WwLog, name: Name): string | null {
     case 'network_result':
       return tx('Your address book: {name} is with the {faction}', {
         name: name(seat('seat')),
-        faction: tx(d.faction === 'escrocs' ? 'Escrocs' : d.faction === 'independents' ? 'Independents' : 'Expats'),
+        faction: d.faction === 'escrocs' ? 'Escrocs' : d.faction === 'independents' ? tx('Independents') : 'Expats',
       });
     case 'story_result':
       return d.acted ? tx('Your story: {name} acted tonight', { name: name(seat('seat')) }) : tx('Your story: {name} did not act tonight', { name: name(seat('seat')) });

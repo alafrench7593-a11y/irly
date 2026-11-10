@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { t as tx } from '@/i18n';
 import { CARDS, type DubaiCardId } from '../cards';
 import { PORTRAIT } from './art';
-import { DX, FACTION_COLOR, FACTION_NAME, FactionGlyph, factionOf, serif, useDubaiFonts } from './theme';
+import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, serif, useDubaiFonts } from './theme';
 
 type Props = {
   id: DubaiCardId;
@@ -47,7 +47,7 @@ export const DubaiCard = memo(function DubaiCard({ id, width, details = false, d
           <View style={styles.body}>
             <View style={[styles.camp, { borderColor: FACTION_COLOR[faction] }]}>
               <Text style={[styles.campText, { color: FACTION_COLOR[faction] === DX.expats ? '#8FB2FF' : FACTION_COLOR[faction] }]}>
-                {`${tx('Camp')} : ${tx(FACTION_NAME[faction])}`}
+                {`${tx('Camp')} : ${factionLabel(faction, tx)}`}
               </Text>
             </View>
             {details ? (

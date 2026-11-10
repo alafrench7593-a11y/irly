@@ -33,7 +33,8 @@ export const DubaiHeader = memo(function DubaiHeader({ phase, title, subtitle, c
 export const DubaiMyCard = memo(function DubaiMyCard({ id, startShown, children }: { id: DubaiCardId; startShown: boolean; children?: ReactNode }) {
   const fonts = useDubaiFonts();
   const { width } = useWindowDimensions();
-  const w = Math.min(280, width - 80);
+  // Small during the game (the table comes first), full size once revealed at the end.
+  const w = Math.min(startShown ? 280 : 210, width - 80);
   const [shown, setShown] = useState(startShown);
   const flip = useSharedValue(startShown ? 1 : 0);
   const reduced = useReducedMotion();

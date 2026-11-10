@@ -19,7 +19,9 @@ import { useTheme } from '@/theme/useTheme';
 import { startRoom, type GameMessage, type Room } from '../api';
 import { ACTION_TITLE, CARD_ORDER, campName, cardOf, DUBAI_ORDER, NO_TARGET, SPECIALS, wolvesFor, type CardId, type DubaiCardId } from './cards';
 import { botLine, logLine } from './lines';
-import { DubaiHeader, DubaiMyCard } from './dubai/RoomParts';
+import { DubaiResult } from './dubai/Result';
+import { DubaiMyCard } from './dubai/RoomParts';
+import { Stage } from './dubai/Stage';
 import { DX } from './dubai/theme';
 import { Qr } from './Qr';
 import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, wwTraining, type WwOption, type WwPlayer, type WwView } from './api';
@@ -154,11 +156,29 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
     dark.set(reduced ? (night ? 1 : 0) : withTiming(night ? 1 : 0, { duration: 900 }));
   }, [night, dark, reduced]);
   const sky = useAnimatedStyle(() => ({ opacity: dark.get() }));
+  // Dubaï: the main choice of the moment is made on the table itself (vote, the Escrocs' victim, a power on someone).
+  const stageOption =
+    view.mode === 'dubai'
+      ? ((view.options ?? []).find((o) => o.kind === 'vote' || o.kind === 'wolf') ?? (view.options ?? []).find((o) => o.targets.length > 0 && o.kind !== 'link' && o.kind !== 'steal'))
+      : undefined;
+  const stageChosen = stageOption ? ((view.mine ?? []).find((m) => m.kind === stageOption.kind)?.target ?? null) : null;
+  const stageMarks = useMemo(() => {
+    const out: Record<number, string> = {};
+    if (view.mode !== 'dubai') return out;
+    for (const e of view.log ?? []) {
+      const s = typeof e.data.seat === 'number' ? (e.data.seat as number) : undefined;
+      if (s === undefined || Number(e.data.day) !== view.day) continue;
+      if (e.kind === 'vote_doubled') out[s] = tx('×2 vote');
+      if (e.kind === 'immune') out[s] = tx('Immune');
+    }
+    if (view.pack_votes) for (const v of Object.values(view.pack_votes)) out[v] = `${(out[v] ? `${out[v]} ` : '')}●`;
+    return out;
+  }, [view.mode, view.log, view.day, view.pack_votes]);
 
   return (
     <View style={styles.block}>
-      {view.mode === 'dubai' ? (
-        <DubaiHeader
+      {view.mode === 'dubai' && ended ? null : view.mode === 'dubai' ? (
+        <Stage
           phase={ended ? 'ended' : night ? 'night' : 'day'}
           title={
             ended
@@ -173,6 +193,12 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
           }
           subtitle={ended ? undefined : night ? tx('Powers act in secret…') : view.phase === 'day' ? tx('Debate') : tx('Elimination vote')}
           clock={!ended ? <Clock deadline={view.deadline ?? null} skew={skew} color="#F7DE97" /> : undefined}
+          players={players}
+          mySeat={view.me?.seat}
+          targets={stageOption && view.me?.alive ? stageOption.targets : []}
+          chosen={stageChosen}
+          marks={stageMarks}
+          onPick={stageOption ? (seat) => wwAct(room.id, stageOption.kind, seat).then(onChanged).catch(fail) : undefined}
         />
       ) : (
       <View style={styles.skyWrap}>
@@ -209,11 +235,25 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
       </View>
       )}
 
-      {view.me ? <MyCard view={view} name={name} /> : null}
-      {ended ? <Result view={view} me={me} room={room} /> : <Actions room={room} view={view} name={name} onChanged={onChanged} />}
-      <Table room={room} view={view} me={me} />
-      <Log view={view} name={name} />
-      {room.kind !== 'irl' || ended ? <Chat room={room} view={view} messages={messages} me={me} name={name} /> : null}
+      {view.me && !(view.mode === 'dubai' && ended) ? <MyCard view={view} name={name} /> : null}
+      {ended ? (
+        view.mode === 'dubai' ? (
+          <DubaiResult view={view} me={me} room={room} />
+        ) : (
+          <Result view={view} me={me} room={room} />
+        )
+      ) : (
+        <Actions room={room} view={view} name={name} onChanged={onChanged} skip={stageOption?.kind} />
+      )}
+      {view.mode === 'dubai' ? null : <Table room={room} view={view} me={me} />}
+      <View style={view.mode === 'dubai' ? styles.dxPanel : undefined}>
+        <Log view={view} name={name} />
+      </View>
+      {room.kind !== 'irl' || ended ? (
+        <View style={view.mode === 'dubai' ? styles.dxPanel : undefined}>
+          <Chat room={room} view={view} messages={messages} me={me} name={name} />
+        </View>
+      ) : null}
       {room.kind === 'irl' && view.phase === 'day' && room.host_id === me ? (
         <Button label="Everyone has talked: vote" icon="arrowRight" onPress={() => wwSkipDay(room.id).then(onChanged).catch(fail)} full />
       ) : null}
@@ -310,10 +350,18 @@ const MyCard = memo(function MyCard({ view, name }: { view: WwView; name: (s?: n
 });
 
 // ───────── What I may do now ─────────
-function Actions({ room, view, name, onChanged }: { room: Room; view: WwView; name: (s?: number) => string; onChanged: () => void }) {
-  const options = view.options ?? [];
+function Actions({ room, view, name, onChanged, skip }: { room: Room; view: WwView; name: (s?: number) => string; onChanged: () => void; skip?: string }) {
+  const all = view.options ?? [];
+  const options = all.filter((o) => o.kind !== skip);
   const mine = view.mine ?? [];
   if (!view.me?.alive) return null;
+  if (skip && !options.length) {
+    return (
+      <Text tone="secondary" align="center">
+        {view.phase === 'vote' || view.phase === 'revote' ? 'Touch a player on the table to vote' : 'Touch a player on the table to choose'}
+      </Text>
+    );
+  }
   if (!options.length) {
     return (
       <Text tone="secondary" align="center">
@@ -639,6 +687,7 @@ const styles = StyleSheet.create({
   card: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: radius.xl, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: space[5], gap: space[2], backfaceVisibility: 'hidden' },
   cardFront: {},
   cardEmoji: { fontSize: 46, lineHeight: 54 },
+  dxPanel: { borderWidth: 1.5, borderColor: DX.goldDark, borderRadius: 16, backgroundColor: 'rgba(21,16,12,0.95)', padding: 12 },
   optionDx: { backgroundColor: 'rgba(21,16,12,0.95)', borderColor: DX.gold, borderWidth: 1.5 },
   option: { padding: space[4], borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, gap: space[3] },
   targets: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },

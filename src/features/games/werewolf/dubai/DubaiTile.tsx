@@ -13,7 +13,7 @@ export const DubaiTile = memo(function DubaiTile() {
   const router = useRouter();
   const fonts = useDubaiFonts();
   return (
-    <Pressable onPress={() => router.push('/games/cards')} accessibilityRole="button" accessibilityLabel={tx('Dubai mode: discover the characters')} style={styles.tile}>
+    <Pressable onPress={() => router.push('/games/dubai')} accessibilityRole="button" accessibilityLabel={tx('Open the Dubai mode')} style={styles.tile}>
       <Image source={BACKGROUND.home} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
       <LinearGradient colors={['rgba(11,9,7,0.05)', 'rgba(11,9,7,0.6)', 'rgba(11,9,7,0.95)']} locations={[0, 0.5, 1]} style={StyleSheet.absoluteFill} />
       <View style={styles.faces}>
@@ -29,7 +29,7 @@ export const DubaiTile = memo(function DubaiTile() {
           <Text style={styles.sub}>{tx('Expats vs Escrocs · 20 characters')}</Text>
         </View>
         <View style={styles.cta}>
-          <Text style={styles.ctaText}>{tx('Characters')}</Text>
+          <Text style={styles.ctaText}>{tx('Enter')}</Text>
           <Icon name="chevronRight" size={16} color={DX.goldLight} />
         </View>
       </View>
