@@ -10,7 +10,7 @@ export type WwPhase = 'lobby' | 'night' | 'witch' | 'day' | 'vote' | 'revote' | 
 export type WwOption = { kind: string; targets: number[]; cards?: string[] };
 export type WwPlayer = { seat: number; name: string; bot: boolean; user_id: string | null; alive: boolean; acted: boolean };
 export type WwLog = { id: number; at: string; kind: string; data: Record<string, unknown>; audience: string };
-export type WwKnown = { kind: 'seer' | 'hint'; night: number; seat?: number; card?: string; seats?: number[] };
+export type WwKnown = { kind: 'seer' | 'hint' | 'probe' | 'network'; night: number; seat?: number; card?: string; seats?: number[]; escroc?: boolean; faction?: string };
 export type WwResultCard = { seat: number; name: string; bot: boolean; card: string; camp: string; alive: boolean; death: string | null; lover: number | null; won: boolean };
 
 export type WwView = {
@@ -28,14 +28,26 @@ export type WwView = {
   /** Lobby only: players there now, and whether the host's deck is the one used. */
   present?: number;
   custom?: boolean;
-  me?: { seat: number; card: string; camp: 'village' | 'wolves'; alive: boolean; charges: Record<string, number | null>; lover: number | null; known: WwKnown[]; pack: number[] | null };
+  me?: {
+    seat: number;
+    card: string;
+    camp: 'village' | 'wolves' | 'solo';
+    alive: boolean;
+    charges: Record<string, number | null>;
+    lover: number | null;
+    known: WwKnown[];
+    pack: number[] | null;
+    /** The Charo only: who he seduced. */
+    seduced?: number[] | null;
+  };
   players?: WwPlayer[];
   options?: WwOption[];
   mine?: { kind: string; target: number | null; target2: number | null }[];
   victim?: number | null;
   pack_votes?: Record<string, number> | null;
   revote?: number[] | null;
-  result?: { winner: 'village' | 'wolves' | 'lovers' | 'draw'; seats: number[]; ranked: boolean } | null;
+  /** solo: the Indépendants' victories; double: the Double Jeu's personal victories on top of their camp's. */
+  result?: { winner: 'village' | 'wolves' | 'lovers' | 'draw'; seats: number[]; ranked: boolean; solo?: number[]; double?: number[] } | null;
   log?: WwLog[];
 };
 
@@ -48,7 +60,7 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export const wwCreate = (space: string, opts: { kind: 'online' | 'irl'; visibility: 'public' | 'private'; size: number; title?: string; lang: 'en' | 'fr' }) =>
+export const wwCreate = (space: string, opts: { kind: 'online' | 'irl'; visibility: 'public' | 'private'; size: number; title?: string; lang: 'en' | 'fr'; mode?: 'classic' | 'dubai' }) =>
   rpc<{ id: string; code: string | null }>('ww_create', {
     p_space: spaceArg(space),
     p_visibility: opts.visibility,
@@ -57,9 +69,10 @@ export const wwCreate = (space: string, opts: { kind: 'online' | 'irl'; visibili
     p_composition: null,
     p_title: opts.title?.trim() || null,
     p_lang: opts.lang,
+    p_mode: opts.mode ?? 'classic',
   });
-export const wwTraining = (space: string, size: number, role: string | null, difficulty: 'beginner' | 'intermediate' | 'expert') =>
-  rpc<string>('ww_training', { p_space: spaceArg(space), p_size: size, p_role: role, p_difficulty: difficulty });
+export const wwTraining = (space: string, size: number, role: string | null, difficulty: 'beginner' | 'intermediate' | 'expert', mode: 'classic' | 'dubai' = 'classic') =>
+  rpc<string>('ww_training', { p_space: spaceArg(space), p_size: size, p_role: role, p_difficulty: difficulty, p_mode: mode });
 export const wwAct = (room: string, kind: string, target?: number | null, target2?: number | null) =>
   rpc<void>('ww_act', { p_room: room, p_kind: kind, p_target: target ?? null, p_target2: target2 ?? null });
 export const wwSay = (room: string, body: string, channel: 'all' | 'wolves' | 'dead') => rpc<void>('ww_say', { p_room: room, p_body: body, p_channel: channel });

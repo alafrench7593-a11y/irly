@@ -17,7 +17,7 @@ import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { startRoom, type GameMessage, type Room } from '../api';
-import { ACTION_TITLE, CARD_ORDER, cardOf, SPECIALS, wolvesFor, type CardId } from './cards';
+import { ACTION_TITLE, CARD_ORDER, campName, cardOf, DUBAI_ORDER, NO_TARGET, SPECIALS, wolvesFor, type CardId } from './cards';
 import { botLine, logLine } from './lines';
 import { Qr } from './Qr';
 import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, wwTraining, type WwOption, type WwPlayer, type WwView } from './api';
@@ -107,13 +107,13 @@ function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: b
         {tx('The deck for {n} players{custom}', { n: players, custom: view.custom ? ` · ${tx('set by the host')}` : '' })}
       </Text>
       <View style={styles.cards}>
-        {CARD_ORDER.filter((id) => (comp[id] ?? 0) > 0).map((id) => (
+        {(view.mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER).filter((id) => (comp[id] ?? 0) > 0).map((id) => (
           <View key={id} style={[styles.cardChip, { borderColor: t.c.line }]}>
             <Text raw>{`${cardOf(id).emoji} ${tx(cardOf(id).name)}${(comp[id] ?? 0) > 1 ? ` ×${comp[id]}` : ''}`}</Text>
           </View>
         ))}
       </View>
-      {editable ? (
+      {editable && view.mode !== 'dubai' ? (
         <>
           <View style={styles.cards}>
             <Button label="− Werewolf" size="sm" variant="secondary" disabled={(comp.werewolf ?? 1) <= 1} onPress={() => save({ ...comp, werewolf: (comp.werewolf ?? 1) - 1 })} />
@@ -250,8 +250,13 @@ const MyCard = memo(function MyCard({ view, name }: { view: WwView; name: (s?: n
             {tx(card.power)}
           </Text>
           <Text variant="caption" color={wolves ? '#FFD6D6' : undefined} tone={wolves ? undefined : 'tertiary'} align="center" raw>
-            {`${tx(wolves ? 'Werewolves' : 'Village')} · ${tx(card.goal)}`}
+            {`${tx(campName(card.camp, view.mode))} · ${tx(card.goal)}`}
           </Text>
+          {me.seduced && me.seduced.length ? (
+            <Text variant="caption" align="center" raw>
+              {tx('Seduced: {names}', { names: me.seduced.map(name).join(', ') })}
+            </Text>
+          ) : null}
           {me.pack && me.pack.length > 1 ? (
             <Text variant="caption" color="#FFD6D6" align="center" raw>
               {tx('Your pack: {names}', { names: me.pack.map(name).join(', ') })}
@@ -322,8 +327,8 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
           {option.kind === 'link' ? tx('Chosen: {a} and {b}', { a: name(chosen.target ?? undefined), b: name(chosen.target2 ?? undefined) }) : chosen.target !== null && option.kind !== 'steal' ? tx('Chosen: {name}', { name: name(chosen.target) }) : tx('Done')}
         </Text>
       ) : null}
-      {option.kind === 'ready' || option.kind === 'hint' ? (
-        <Button label={option.kind === 'ready' ? 'Ready to vote' : 'Spy tonight'} size="sm" disabled={Boolean(chosen)} onPress={() => send()} />
+      {NO_TARGET.has(option.kind) ? (
+        <Button label={option.kind === 'ready' ? 'Ready to vote' : option.kind === 'hint' ? 'Spy tonight' : 'Use my power'} size="sm" disabled={Boolean(chosen)} onPress={() => send()} />
       ) : option.kind === 'steal' ? (
         <View style={styles.targets}>
           {(option.cards ?? []).map((c, i) => (
@@ -461,7 +466,13 @@ function Chat({ room, view, messages, me, name }: { room: Room; view: WwView; me
   return (
     <View style={[styles.chat, { borderColor: t.c.line }]}>
       <Text variant="label" tone="secondary">
-        {channel === 'wolves' ? 'Pack chat (only werewolves read it)' : channel === 'dead' ? 'Chat of the dead' : 'Village chat'}
+        {channel === 'wolves'
+          ? view.mode === 'dubai'
+            ? 'Escrocs’ chat (only they read it)'
+            : 'Pack chat (only werewolves read it)'
+          : channel === 'dead'
+            ? 'Chat of the dead'
+            : 'Village chat'}
       </Text>
       {shown.map((m) => (
         <View key={m.id} style={styles.msg}>
@@ -502,10 +513,22 @@ function Result({ view, me, room }: { view: WwView; me: string; room: Room }) {
   const cards = ((view.log ?? []).find((e) => e.kind === 'game_over')?.data.cards ?? []) as { seat: number; name: string; bot: boolean; card: CardId; alive: boolean; won: boolean }[];
   const mySeat = view.me?.seat;
   const iWon = r?.seats.includes(mySeat ?? -1);
-  const title = r?.winner === 'village' ? 'The village wins' : r?.winner === 'wolves' ? 'The werewolves win' : r?.winner === 'lovers' ? 'The lovers win' : 'Nobody survived';
+  const dubai = view.mode === 'dubai';
+  const title =
+    r?.winner === 'village'
+      ? dubai
+        ? 'The Expats win'
+        : 'The village wins'
+      : r?.winner === 'wolves'
+        ? dubai
+          ? 'The Escrocs win'
+          : 'The werewolves win'
+        : r?.winner === 'lovers'
+          ? 'The lovers win'
+          : 'Nobody survived';
   const humans = room.people.filter((p) => p.id !== me && !p.blocked);
   const again = () =>
-    wwTraining(room.space === 'irly_girl' ? 'girl' : 'mixte', view.size, null, (view.difficulty as 'beginner' | 'intermediate' | 'expert') ?? 'intermediate')
+    wwTraining(room.space === 'irly_girl' ? 'girl' : 'mixte', view.size, null, (view.difficulty as 'beginner' | 'intermediate' | 'expert') ?? 'intermediate', view.mode === 'dubai' ? 'dubai' : 'classic')
       .then((id) => router.replace(`/games/${id}`))
       .catch(fail);
   return (
@@ -536,7 +559,7 @@ function Result({ view, me, room }: { view: WwView; me: string; room: Room }) {
           </Text>
           {c.won ? (
             <Text variant="caption" tone="positive">
-              Won
+              {r?.solo?.includes(c.seat) ? 'Personal victory' : r?.double?.includes(c.seat) ? 'Double victory' : 'Won'}
             </Text>
           ) : null}
         </View>

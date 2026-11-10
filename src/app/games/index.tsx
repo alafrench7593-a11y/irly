@@ -11,7 +11,7 @@ import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { createRoom, joinByCode, joinRoom, quickplay, useGamesOverview, useGamesPresence, useOpenRooms, useRecentGames, type RoomCard } from '@/features/games/api';
-import { CARD_ORDER, cardOf } from '@/features/games/werewolf/cards';
+import { CARD_ORDER, cardOf, DUBAI_ORDER } from '@/features/games/werewolf/cards';
 import { wwCreate, wwTraining } from '@/features/games/werewolf/api';
 import { t as tx, useLang } from '@/i18n';
 import { hasBackend } from '@/lib/supabase';
@@ -306,10 +306,11 @@ function TrainingSheet({ visible, onClose, onCreated }: { visible: boolean; onCl
   const [size, setSize] = useState<'6' | '8' | '10' | '12'>('8');
   const [role, setRole] = useState<string>('random');
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'expert'>('intermediate');
+  const [mode, setMode] = useState<'classic' | 'dubai'>('classic');
   const [busy, setBusy] = useState(false);
   const start = () => {
     setBusy(true);
-    wwTraining(appSpace, Number(size), role === 'random' ? null : role, difficulty)
+    wwTraining(appSpace, Number(size), role === 'random' ? null : role, difficulty, mode)
       .then((id) => {
         onClose();
         onCreated(id);
@@ -323,6 +324,20 @@ function TrainingSheet({ visible, onClose, onCreated }: { visible: boolean; onCl
         <Text variant="caption" tone="tertiary">
           Training · unranked: never counted in the ranking.
         </Text>
+        <Text variant="label" tone="secondary">
+          Mode
+        </Text>
+        <Segmented
+          options={[
+            { value: 'classic', label: tx('Classic') },
+            { value: 'dubai', label: tx('Dubai') },
+          ]}
+          value={mode}
+          onChange={(m) => {
+            setMode(m);
+            setRole('random');
+          }}
+        />
         <Text variant="label" tone="secondary">
           Players
         </Text>
@@ -352,7 +367,7 @@ function TrainingSheet({ visible, onClose, onCreated }: { visible: boolean; onCl
           Your role
         </Text>
         <View style={styles.roles}>
-          {['random', ...CARD_ORDER].map((id) => (
+          {['random', ...(mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER)].map((id) => (
             <Button
               key={id}
               label={id === 'random' ? `🎲 ${tx('Random')}` : `${cardOf(id).emoji} ${tx(cardOf(id).name)}`}
@@ -376,10 +391,11 @@ function WerewolfTableSheet({ visible, onClose, onCreated }: { visible: boolean;
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [size, setSize] = useState<'8' | '10' | '12' | '20'>('10');
   const [title, setTitle] = useState('');
+  const [mode, setMode] = useState<'classic' | 'dubai'>('classic');
   const [busy, setBusy] = useState(false);
   const create = () => {
     setBusy(true);
-    wwCreate(appSpace, { kind, visibility, size: Number(size), title, lang: lang === 'fr' ? 'fr' : 'en' })
+    wwCreate(appSpace, { kind, visibility, size: Number(size), title, lang: lang === 'fr' ? 'fr' : 'en', mode })
       .then((r) => {
         onClose();
         onCreated(r.id);
@@ -391,6 +407,14 @@ function WerewolfTableSheet({ visible, onClose, onCreated }: { visible: boolean;
     <Sheet visible={visible} onClose={onClose} title="New Loup-Garou table">
       <View style={styles.sheet}>
         <Field placeholder="Name (optional)" value={title} onChangeText={(v) => setTitle(v.slice(0, 60))} maxLength={60} />
+        <Segmented
+          options={[
+            { value: 'classic', label: tx('Classic') },
+            { value: 'dubai', label: tx('Dubai · Expats vs Escrocs') },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
         <Segmented
           options={[
             { value: 'online', label: tx('Online') },

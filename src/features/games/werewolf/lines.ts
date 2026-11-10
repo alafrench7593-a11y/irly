@@ -67,6 +67,34 @@ export function logLine(e: WwLog, name: Name): string | null {
       return tx('{name} was not a werewolf: your shot turns against you', { name: name(seat('seat')) });
     case 'elder_resisted':
       return tx('The werewolves attacked you, but you resisted');
+    // Dubaï.
+    case 'vote_doubled':
+      return d.ceo ? tx('{name} calls a board meeting: their vote counts double today', { name: name(seat('seat')) }) : tx('{name}’s vote counts double today', { name: name(seat('seat')) });
+    case 'immune':
+      return tx('{name} cannot be voted out today', { name: name(seat('seat')) });
+    case 'immune_saved':
+      return tx('{name} was the most voted, but is immune today: nobody is out', { name: name(seat('seat')) });
+    case 'dumped':
+      return tx('You cancelled {name}’s vote today', { name: name(seat('seat')) });
+    case 'probe_result':
+      return d.escroc ? tx('Your investigation: {name} is an Escroc', { name: name(seat('seat')) }) : tx('Your investigation: {name} is not an Escroc', { name: name(seat('seat')) });
+    case 'network_result':
+      return tx('Your address book: {name} is with the {faction}', {
+        name: name(seat('seat')),
+        faction: tx(d.faction === 'escrocs' ? 'Escrocs' : d.faction === 'independents' ? 'Independents' : 'Expats'),
+      });
+    case 'story_result':
+      return d.acted ? tx('Your story: {name} acted tonight', { name: name(seat('seat')) }) : tx('Your story: {name} did not act tonight', { name: name(seat('seat')) });
+    case 'watch_result':
+      return d.visited ? tx('VIP access: {name} got a visit tonight', { name: name(seat('seat')) }) : tx('VIP access: nobody visited {name} tonight', { name: name(seat('seat')) });
+    case 'second_chance':
+      return tx('The Escrocs attacked you: your Second Chance saved you');
+    case 'seduced':
+      return tx('You seduced {name} ({n}/3)', { name: name(seat('seat')), n: Number(d.count) });
+    case 'seduce_failed':
+      return tx('Your seduction of {name} did not count', { name: name(seat('seat')) });
+    case 'solo_won':
+      return tx('Three players seduced: your personal victory is won, whatever happens now');
     default:
       return null;
   }

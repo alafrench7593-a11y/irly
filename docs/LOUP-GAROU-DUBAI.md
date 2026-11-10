@@ -1,6 +1,9 @@
 # IRLY Loup-Garou — mode Dubaï (9e mode) — spécification v0 (à valider)
 
-Statut : **brouillon**. Rien n'est codé. Chaque point marqué **[À décider]** attend une
+Statut : **les 20 cartes officielles sont codées côté serveur** (migration
+`20261113000000_irly_werewolf_dubai.sql`, tests `supabase/tests/werewolf_dubai.test.sql`), avec les
+choix **[Proposé]** ci-dessous appliqués par défaut tant qu'ils ne sont pas validés. Les cartes 21 à 29
+(§2 bis) ne sont **pas** codées. Le design des maquettes n'est pas encore fait (illustrations à produire).
 décision du propriétaire ; **[Proposé]** est la proposition par défaut si elle est validée.
 
 Principe : le mode Dubaï est le mode Classique du livre V3 avec d'autres noms et
@@ -165,3 +168,27 @@ par le classement réel (points du classement Loup-Garou).
 Textes des maquettes corrigés selon les règles : le Concierge apparaît parmi les Escrocs
 dans l'écran « Victoire des Escrocs » alors qu'il est Expat ; la collection affiche
 « Escrocs (1) » alors que la spécification compte 3 cartes Escrocs (Escroc, Agent immobilier, Broker).
+
+## 8. Implémentation (état réel)
+
+Choix appliqués par défaut (à valider) :
+- D2 : le CEO et le vote doublé de l'Influenceuse sont annoncés publiquement (sans nommer la carte de
+  l'Influenceuse) ; l'immunité du Nouvel Arrivant est annoncée à son usage ; le Broker reste secret.
+- D4 : une protection déjà suffisante ne consomme pas les autres charges. D5 : un Millionnaire protégé
+  garde sa Seconde Chance. D6 : le Touriste reste ciblable, l'attaque échoue sans explication.
+- D7 : l'Investisseur et l'Émirati ont une réponse « Escroc / pas Escroc » ; le Networker reçoit la
+  faction (Expats, Escrocs, Indépendants). Le Bluff montre « Expats », la Fausse annonce inverse.
+- D10 : une visite = toute action de nuit d'un autre joueur visant ce joueur (vote des Escrocs compris).
+- D11 : le Charo peut séduire n'importe quel joueur vivant, jamais deux fois le même ni lui-même.
+- D12 : le Faux Millionnaire gagne s'il est vivant à la fin, sauf égalité.
+- D13 : l'objectif du Networker regarde le vrai camp, pas le résultat (éventuellement falsifié) reçu.
+- L'Entrepreneur ne peut pas se protéger lui-même (le Golden Visa est la carte d'auto-protection).
+- Les pouvoirs de jour sont définitifs dès qu'ils sont utilisés (pas de changement de cible).
+- Vote : annulations (Broker), puis votes doublés (CEO, Influenceuse ; une voix vaut au plus 2),
+  le plus de points, second tour en cas d'égalité, puis immunité du Nouvel Arrivant.
+
+Simulations (IA contre IA, 180 parties, 6 à 20 joueurs × 3 niveaux × 4) : aucune partie bloquée ;
+Escrocs 128, Expats 51, amoureux 1 ; 75 victoires personnelles (Charo, Faux Millionnaire).
+**Le mode n'est pas équilibré avec les IA actuelles : les Escrocs gagnent 71 % des parties** (le mode
+Classique, avec les mêmes IA : Loups 64 %). Les IA du Village jouent faiblement ; l'équilibrage final
+demande des parties humaines, puis un ajustement des compositions (§6).
