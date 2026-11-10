@@ -26,8 +26,8 @@ The blog posts are short (400 to 600 words), in English and French, in `site/gui
 - [x] New in Dubai with a partner: building a social life as a couple
 - [x] Moved to Dubai for your partner's job: building your own circle
 - [x] Lonely during the holidays far from home
-- [ ] How to start a small group yourself (a weekly walk, a book club)
-- [ ] What to say to start a conversation at an activity
+- [x] How to start a small group yourself (a weekly walk, a book club)
+- [x] What to say to start a conversation at an activity
 - [ ] How often to see someone before they become a friend
 - [ ] Feeling lonely even with people around you
 - [ ] Working from home in Dubai and feeling isolated
