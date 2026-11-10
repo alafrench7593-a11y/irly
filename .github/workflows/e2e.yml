@@ -17,6 +17,7 @@ on:
       - 'scripts/e2e-girl.mjs'
       - 'scripts/e2e-activities.mjs'
       - 'scripts/e2e-cms.mjs'
+      - 'scripts/e2e-games.mjs'
       - 'scripts/check-routes.mjs'
       - 'src/**'
       - '.github/workflows/e2e.yml'
@@ -100,6 +101,11 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/e2e-activities.mjs
+      - name: IRLY Games (a whole game of Ludo between test members, private tables only)
+        if: always()
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/e2e-games.mjs
       - name: Editorial back office (news, Home layout, banners; IRLY and IRLY Girl)
         if: always()
         env:

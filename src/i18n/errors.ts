@@ -12,6 +12,32 @@
 const GENERIC = 'Something went wrong. Try again';
 
 export const SERVER_ERRORS: Record<string, string> = {
+  // IRLY Games (20261111000000_irly_games).
+  'sign in to play': 'Sign in to play',
+  'your account cannot play right now': 'Your account can\'t play right now',
+  'IRLY Girl games are for IRLY Girl members': 'IRLY Girl games are for IRLY Girl members',
+  'Loup-Garou opens soon': 'Loup-Garou opens soon',
+  'unknown game': GENERIC,
+  'public or private': GENERIC,
+  'Ludo: 2 to 4 players': 'Ludo is for 2 to 4 players',
+  'language: en or fr': GENERIC,
+  'you are already in three games': 'You are already in three games',
+  'this game no longer exists': 'This game no longer exists',
+  'this game is private: ask for its code': 'This game is private: ask for its code',
+  'this game has already started': 'This game has already started',
+  'you cannot join this game': 'You can\'t join this game',
+  'this game is full': 'This game is full',
+  'no game with this code': 'No game with this code',
+  'only the host can do this': 'Only the host can do this',
+  'two players are needed to start': 'Two players are needed to start',
+  'this game is not running': 'This game is not running',
+  'you are not playing in this game': 'You are not playing in this game',
+  'not your turn': 'Not your turn',
+  'move a token first': 'Move a token first',
+  'roll the die first': 'Roll the die first',
+  'this token cannot move': 'This token can\'t move',
+  'write 1 to 300 characters': 'Write 1 to 300 characters',
+  'slow down a little': 'Slow down a little',
   // The Live and community posts, one record (20261110400000_irly_live_community_posts).
   'a post joins the Live only when it is published': 'A post can only join the Live when it is published',
   'sign in to see the Live': 'Sign in to see the Live',

@@ -86,6 +86,7 @@
     "test:cms": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-cms.mts",
     "test:network": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-network-gender.mts",
     "test:doors": "node --experimental-strip-types --no-warnings scripts/check-doors.mts",
+    "test:ludo": "node --experimental-strip-types --no-warnings scripts/check-ludo.mts",
     "test:crash": "node --experimental-strip-types --no-warnings scripts/check-crash-scrub.mts",
     "test:crm": "node --experimental-strip-types --no-warnings --import ./scripts/alias.mjs scripts/check-crm.mts"
   },

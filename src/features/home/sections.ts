@@ -18,6 +18,7 @@ import type { AppSpace } from '@/state/appSpace';
 export const HOME_SECTIONS = [
   'search',
   'today',
+  'games',
   'news',
   'categories',
   'banners',
