@@ -17,6 +17,41 @@ export const PORTRAIT: Record<CardId, ImageSourcePropType> = {
   little_girl: require('../../../../../assets/games/classic/little_girl.webp'),
   elder: require('../../../../../assets/games/classic/elder.webp'),
   thief: require('../../../../../assets/games/classic/thief.webp'),
+  // The book V3's families: Chaos, Nightmare, Manipulation, Hybrids.
+  scammer: require('../../../../../assets/games/v3/scammer.webp'),
+  swapper: require('../../../../../assets/games/v3/swapper.webp'),
+  gambler: require('../../../../../assets/games/v3/gambler.webp'),
+  mirror: require('../../../../../assets/games/v3/mirror.webp'),
+  saboteur: require('../../../../../assets/games/v3/saboteur.webp'),
+  chameleon: require('../../../../../assets/games/v3/chameleon.webp'),
+  clown: require('../../../../../assets/games/v3/clown.webp'),
+  shapeshifter: require('../../../../../assets/games/v3/shapeshifter.webp'),
+  anomaly: require('../../../../../assets/games/v3/anomaly.webp'),
+  ninja: require('../../../../../assets/games/v3/ninja.webp'),
+  revenant: require('../../../../../assets/games/v3/revenant.webp'),
+  cursed: require('../../../../../assets/games/v3/cursed.webp'),
+  exorcist: require('../../../../../assets/games/v3/exorcist.webp'),
+  possessed: require('../../../../../assets/games/v3/possessed.webp'),
+  reaper: require('../../../../../assets/games/v3/reaper.webp'),
+  spider: require('../../../../../assets/games/v3/spider.webp'),
+  vampire: require('../../../../../assets/games/v3/vampire.webp'),
+  gravedigger: require('../../../../../assets/games/v3/gravedigger.webp'),
+  sleepwalker: require('../../../../../assets/games/v3/sleepwalker.webp'),
+  dark_oracle: require('../../../../../assets/games/v3/dark_oracle.webp'),
+  manipulator: require('../../../../../assets/games/v3/manipulator.webp'),
+  hacker: require('../../../../../assets/games/v3/hacker.webp'),
+  double_agent: require('../../../../../assets/games/v3/double_agent.webp'),
+  corrupt: require('../../../../../assets/games/v3/corrupt.webp'),
+  lawyer: require('../../../../../assets/games/v3/lawyer.webp'),
+  paparazzi: require('../../../../../assets/games/v3/paparazzi.webp'),
+  usurper: require('../../../../../assets/games/v3/usurper.webp'),
+  spy: require('../../../../../assets/games/v3/spy.webp'),
+  dictator: require('../../../../../assets/games/v3/dictator.webp'),
+  bounty_hunter: require('../../../../../assets/games/v3/bounty_hunter.webp'),
+  detective: require('../../../../../assets/games/v3/detective.webp'),
+  vigilante: require('../../../../../assets/games/v3/vigilante.webp'),
+  prophet: require('../../../../../assets/games/v3/prophet.webp'),
+  guardian: require('../../../../../assets/games/v3/guardian.webp'),
   // Dubaï.
 
   expat: require('../../../../../assets/games/dubai/expat.webp'),
@@ -59,11 +94,19 @@ const CHAOS_SKY = require('../../../../../assets/games/classic/bg_chaos.webp') a
 const NIGHTMARE_FOG = require('../../../../../assets/games/classic/bg_nightmare.webp') as ImageSourcePropType;
 const POWERS_SQUARE = require('../../../../../assets/games/classic/bg_powers.webp') as ImageSourcePropType;
 
+const MANIPULATION_HALL = require('../../../../../assets/games/v3/bg_manipulation.webp') as ImageSourcePropType;
+const APOCALYPSE_SKY = require('../../../../../assets/games/v3/bg_apocalypse.webp') as ImageSourcePropType;
+
 /** Each mode's scenes: its home, its night, its day and its victory. */
 export const SCENES: Record<WwMode, Scene> = {
   classic: VILLAGE,
   dubai: BACKGROUND,
   chaos: { ...VILLAGE, home: CHAOS_SKY, night: CHAOS_SKY },
   nightmare: { ...VILLAGE, home: NIGHTMARE_FOG, night: NIGHTMARE_FOG },
+  manipulation: { ...VILLAGE, home: MANIPULATION_HALL, night: MANIPULATION_HALL },
+  nightmare_chaos: { ...VILLAGE, home: NIGHTMARE_FOG, night: CHAOS_SKY },
+  manipulation_chaos: { ...VILLAGE, home: MANIPULATION_HALL, night: CHAOS_SKY },
+  nightmare_manipulation: { ...VILLAGE, home: NIGHTMARE_FOG, night: MANIPULATION_HALL },
+  apocalypse: { ...VILLAGE, home: APOCALYPSE_SKY, night: APOCALYPSE_SKY },
   powers: { ...VILLAGE, home: POWERS_SQUARE, night: POWERS_SQUARE },
 };

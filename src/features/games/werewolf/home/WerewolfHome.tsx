@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,38 +18,70 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useAppSpace } from '@/state/appSpace';
 import { wwCreate, wwQuickplay, wwTraining } from '../api';
-import { CARD_ORDER, cardOf, DUBAI_ORDER, MODES, type CardId, type WwMode } from '../cards';
+import { cardOf, deckOf, MODES, type CardId, type WwMode } from '../cards';
 import { PORTRAIT, SCENES } from '../dubai/art';
 import { Breathe, GoldDust, LivingScene, useEntrance } from '../dubai/Motion';
 import { DX, serif, useDubaiFonts } from '../dubai/theme';
+import { CommChoice, type Comm } from '../voice/CommChoice';
+import { voiceConfigured, voiceSupported, wwComms, wwSetComm } from '../voice/useVoice';
 
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 
-type ModeInfo = { name: string; tagline: string; line: string; cast: CardId[] };
-const MODE_INFO: Record<WwMode, ModeInfo> = {
+export type ModeInfo = { name: string; tagline: string; line: string; cast: CardId[] };
+export const MODE_INFO: Record<WwMode, ModeInfo> = {
   classic: {
     name: 'Classic',
     tagline: 'The village against the werewolves.',
     line: 'The rules everyone knows: 10 cards, from 6 to 20 players.',
     cast: ['werewolf', 'seer', 'witch', 'hunter', 'cupid', 'villager'],
   },
+  chaos: {
+    name: 'Chaos',
+    tagline: 'Cards change hands. Nothing is sure.',
+    line: 'The Classic cards and 10 Chaos cards: Scammer, Mirror, Saboteur, Clown, Ninja…',
+    cast: ['scammer', 'mirror', 'clown', 'saboteur', 'ninja', 'chameleon'],
+  },
+  nightmare: {
+    name: 'Nightmare',
+    tagline: 'The dead come back. The living turn.',
+    line: 'The Classic cards and 10 Nightmare cards: Vampire, Revenant, Cursed, Reaper…',
+    cast: ['vampire', 'revenant', 'cursed', 'reaper', 'exorcist', 'dark_oracle'],
+  },
+  manipulation: {
+    name: 'Manipulation',
+    tagline: 'The vote is a weapon.',
+    line: 'The Classic cards and 9 Manipulation cards: Lawyer, Dictator, Double Agent, Spy…',
+    cast: ['manipulator', 'double_agent', 'lawyer', 'dictator', 'hacker', 'spy'],
+  },
+  nightmare_chaos: {
+    name: 'Nightmare Chaos',
+    tagline: 'Curses and swaps, the same night.',
+    line: 'Nightmare and Chaos cards together, with the hybrids of the Village.',
+    cast: ['reaper', 'scammer', 'vampire', 'mirror', 'guardian', 'cursed'],
+  },
+  manipulation_chaos: {
+    name: 'Manipulation Chaos',
+    tagline: 'Lies by day, swaps by night.',
+    line: 'Manipulation and Chaos cards together, with the hybrids of the Village.',
+    cast: ['dictator', 'scammer', 'usurper', 'clown', 'detective', 'gambler'],
+  },
+  nightmare_manipulation: {
+    name: 'Nightmare Manipulation',
+    tagline: 'They vote. Something else decides.',
+    line: 'Nightmare and Manipulation cards together, with the hybrids of the Village.',
+    cast: ['possessed', 'lawyer', 'vampire', 'double_agent', 'prophet', 'spider'],
+  },
+  apocalypse: {
+    name: 'Apocalypse',
+    tagline: 'Every card. Every power.',
+    line: 'The 44 cards of the four families and the Classic, drawn anew each game.',
+    cast: ['anomaly', 'vampire', 'dictator', 'bounty_hunter', 'scammer', 'reaper'],
+  },
   dubai: {
     name: 'Dubai',
     tagline: 'In Dubai, everyone has something to hide.',
     line: 'Expats against Escrocs, with Independents: 20 characters.',
     cast: ['expat', 'influencer', 'emirati', 'escroc', 'golden_visa', 'concierge'],
-  },
-  chaos: {
-    name: 'Chaos',
-    tagline: 'Nobody knows which cards are in play.',
-    line: 'The Classic cards, a deck drawn at random and kept secret until the end.',
-    cast: ['thief', 'little_girl', 'werewolf', 'elder', 'salvateur', 'seer'],
-  },
-  nightmare: {
-    name: 'Nightmare',
-    tagline: 'One more werewolf. No Seer.',
-    line: 'For players who know the game: the village only has its debates and its votes.',
-    cast: ['hunter', 'werewolf', 'witch', 'salvateur', 'villager', 'elder'],
   },
   powers: {
     name: 'All powers',
@@ -81,6 +113,11 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
   const [creating, setCreating] = useState(false);
   const { data } = useGamesOverview();
   const { rooms } = useOpenRooms('werewolf');
+  const [comms, setComms] = useState<Record<string, 'text' | 'voice'>>({});
+  const roomIds = (rooms ?? []).map((r) => r.id).join(',');
+  useEffect(() => {
+    if (roomIds) wwComms(roomIds.split(',')).then(setComms);
+  }, [roomIds]);
   const recent = useRecentGames();
   const now = useNow();
   useGamesPresence();
@@ -165,8 +202,8 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
                 <View style={[styles.modeTile, { width: tileW, height: tileH }, on && styles.modeTileOn]}>
                   <Image source={PORTRAIT[MODE_INFO[m].cast[0]]} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
                   <LinearGradient colors={['transparent', 'rgba(11,9,7,0.95)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
-                  <Text style={[styles.modeTileText, serif(fonts, '900'), { fontSize: Math.max(8, Math.min(14, Math.floor((tileW - 12) / (tx(MODE_INFO[m].name).length * 0.98)))) }, on && { color: DX.goldLight }]} numberOfLines={1}>{tx(MODE_INFO[m].name).toUpperCase()}</Text>
-                  {m === 'nightmare' || m === 'powers' ? (
+                  <Text style={[styles.modeTileText, serif(fonts, '900'), { fontSize: Math.max(8, Math.min(14, Math.floor((tileW - 12) / (Math.max(...tx(MODE_INFO[m].name).split(' ').map((w) => w.length)) * 0.98)))) }, on && { color: DX.goldLight }]} numberOfLines={2}>{tx(MODE_INFO[m].name).toUpperCase()}</Text>
+                  {m !== 'classic' && m !== 'dubai' && m !== 'powers' ? (
                     <View style={styles.newBadge}>
                       <Text style={styles.newText}>{tx('New mode')}</Text>
                     </View>
@@ -223,7 +260,7 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
           <View style={[styles.section, { width: pageW - 32 }]}>
             <Text style={[styles.sectionTitle, serif(fonts, '700')]}>{tx('Loup-Garou tables')}</Text>
             {rooms.map((r) => (
-              <RoomRow key={r.id} room={r} onOpen={() => run(() => (r.mine ? Promise.resolve(r.id) : joinRoom(r.id)))} />
+              <RoomRow key={r.id} room={r} voice={comms[r.id] === 'voice'} onOpen={() => run(() => (r.mine ? Promise.resolve(r.id) : joinRoom(r.id)))} />
             ))}
           </View>
         ) : null}
@@ -306,7 +343,7 @@ function SmallButton({ icon, label, onPress, fonts }: { icon: IconName; label: s
   );
 }
 
-function RoomRow({ room, onOpen }: { room: RoomCard; onOpen: () => void }) {
+function RoomRow({ room, voice, onOpen }: { room: RoomCard; voice: boolean; onOpen: () => void }) {
   const full = room.players >= room.max;
   const label = room.mine ? tx('Open') : room.status === 'playing' ? tx('Playing') : full ? tx('Full') : tx('Join');
   const disabled = !room.mine && (full || room.status !== 'waiting');
@@ -317,7 +354,7 @@ function RoomRow({ room, onOpen }: { room: RoomCard; onOpen: () => void }) {
           {room.title ?? tx("{name}'s table", { name: room.host ?? tx('A member') })}
         </Text>
         <Text style={styles.small}>
-          {[tx('{n}/{max} players', { n: room.players, max: room.max }), room.lang === 'fr' ? 'Français' : 'English', room.visibility === 'private' ? tx('Private') : tx('Public'), room.status === 'playing' ? tx('In progress') : tx('Waiting')].join(' · ')}
+          {[...(voice ? [tx('🎙️ Voice')] : []), tx('{n}/{max} players', { n: room.players, max: room.max }), room.lang === 'fr' ? 'Français' : 'English', room.visibility === 'private' ? tx('Private') : tx('Public'), room.status === 'playing' ? tx('In progress') : tx('Waiting')].join(' · ')}
         </Text>
       </View>
       <PressableScale onPress={onOpen} disabled={disabled} accessibilityRole="button" accessibilityLabel={label}>
@@ -373,7 +410,7 @@ function TrainingSheet({ visible, mode, onClose, onCreated }: { visible: boolean
   const [role, setRole] = useState<string>('random');
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'expert'>('intermediate');
   const [busy, setBusy] = useState(false);
-  const roles: CardId[] = mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER;
+  const roles: CardId[] = deckOf(mode);
   const start = () => {
     setBusy(true);
     wwTraining(appSpace, Number(size), role === 'random' || !roles.includes(role as CardId) ? null : role, difficulty, mode)
@@ -439,10 +476,18 @@ function TableSheet({ visible, mode, onClose, onCreated }: { visible: boolean; m
   const [size, setSize] = useState<'8' | '10' | '12' | '20'>('10');
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
+  const [comm, setComm] = useState<Comm>('text');
+  // Voice is offered only where it really works: an audio server on the project, WebRTC on this device.
+  const [voiceOk, setVoiceOk] = useState(false);
+  useEffect(() => {
+    if (visible && voiceSupported()) voiceConfigured().then(setVoiceOk);
+  }, [visible]);
+  const voice = voiceOk && kind === 'online' && comm === 'voice';
   const create = () => {
     setBusy(true);
     wwCreate(appSpace, { kind, visibility, size: Number(size), title, lang: lang === 'fr' ? 'fr' : 'en', mode })
-      .then((r) => {
+      .then(async (r) => {
+        if (voice) await wwSetComm(r.id, 'voice');
         onClose();
         onCreated(r.id);
       })
@@ -481,6 +526,7 @@ function TableSheet({ visible, mode, onClose, onCreated }: { visible: boolean; m
         ) : (
           <Text style={styles.small}>{tx('In person: everyone scans the QR code, gets a secret card on their phone and votes there. No game master needed.')}</Text>
         )}
+        {voiceOk && kind === 'online' ? <CommChoice value={comm} onChange={setComm} /> : null}
         <Label>{tx('Up to')}</Label>
         <Choice
           options={[

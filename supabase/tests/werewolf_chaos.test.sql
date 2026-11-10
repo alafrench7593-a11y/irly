@@ -1,4 +1,6 @@
--- IRLY Loup-Garou, mode Chaos (20261114000000_irly_werewolf_chaos): random secret Classic deck.
+-- IRLY Loup-Garou: the random Classic deck of 20261114000000_irly_werewolf_chaos (its drawing function is kept),
+-- and « Play online » by mode. The mode named Chaos is, since 20261116000000, the book's Chaos (its own cards,
+-- tested in werewolf_v3.test.sql): the secret-deck variant shipped under that name is gone.
 \set ON_ERROR_STOP 1
 
 create or replace function pg_temp.check(ok boolean, label text) returns void language plpgsql as $$
@@ -31,73 +33,9 @@ begin
   end loop;
   select count(*) into distinct_decks from jsonb_object_keys(seen);
   perform pg_temp.check(distinct_decks > 100, format('Chaos decks vary (%s different decks in 300 draws)', distinct_decks));
-  perform pg_temp.check(pg_temp.err($q$select private.ww_check_for('chaos', 8, '{"werewolf": 2, "villager": 6}')$q$) = 'Chaos: the deck is drawn in secret',
-    'a host cannot choose a Chaos deck');
   perform pg_temp.check((private.ww_default_for('classic', 8) ->> 'werewolf')::int = 2 and private.ww_default_for('classic', 8) = private.ww_default_composition(8),
     'the Classic deck is unchanged');
 end $$;
-
--- ───────── A training game: the deck stays secret until the end ─────────
-do $$
-declare
-  me uuid := gen_random_uuid();
-  rid uuid;
-  v jsonb;
-  steps integer := 0;
-begin
-  insert into auth.users (id) values (me);
-  insert into public.profiles (id, first_name, birthdate, gender, city_id, onboarded_at) values (me, 'Chaos', '1995-01-01', 'woman', 'dubai', now());
-  perform set_config('request.jwt.claim.sub', me::text, true);
-  rid := public.ww_training('mixte', 9, null, 'intermediate', 'chaos');
-  perform pg_temp.check((select mode = 'chaos' and phase = 'night' from private.ww_games where room_id = rid), 'a Chaos training game starts');
-  v := public.ww_view(rid);
-  perform pg_temp.check(v ->> 'phase' = 'ended' or not v ? 'composition', format('a Chaos player does not see the deck (phase %s, keys %s)', v ->> 'phase', (select string_agg(k, ',') from jsonb_object_keys(v) k)));
-  perform pg_temp.check(v ->> 'phase' = 'ended' or not exists (select 1 from jsonb_array_elements(v -> 'log') e where e -> 'data' ? 'composition'), 'nor in the log');
-  while (select phase from private.ww_games where room_id = rid) <> 'ended' and steps < 300 loop
-    perform private.ww_advance(rid, true);
-    steps := steps + 1;
-  end loop;
-  v := public.ww_view(rid);
-  perform pg_temp.check(v ->> 'phase' = 'ended' and v ? 'composition', 'the deck is shown once the game is over');
-  perform pg_temp.check(pg_temp.err(format($q$select public.ww_create('mixte', 'private', 8, 'online', '{"werewolf": 2, "villager": 6}', null, 'fr', 'chaos')$q$)) = 'Chaos: the deck is drawn in secret',
-    'a Chaos table refuses a chosen deck');
-  perform pg_temp.check(pg_temp.err($q$select public.ww_training('mixte', 8, null, 'intermediate', 'apocalypse')$q$) = 'this mode is not available yet',
-    'an unknown mode is refused');
-end $$;
-
--- ───────── Whole Chaos games played by AI players ─────────
-create or replace function pg_temp.csim(p_size integer, p_diff text) returns text language plpgsql as $$
-declare rid uuid := gen_random_uuid(); steps integer := 0;
-begin
-  insert into public.game_rooms (id, game, space, max_players, kind, status, visibility) values (rid, 'werewolf', 'irly', p_size, 'training', 'playing', 'private');
-  insert into private.ww_games (room_id, kind, size, composition, difficulty, mode) values (rid, 'training', p_size, private.ww_chaos_composition(p_size), p_diff, 'chaos');
-  perform private.ww_deal(rid, '{}', p_size, null);
-  perform private.ww_enter(rid, 'night');
-  while (select phase from private.ww_games where room_id = rid) <> 'ended' and steps < 300 loop
-    perform private.ww_advance(rid, true);
-    steps := steps + 1;
-  end loop;
-  return coalesce((select result ->> 'winner' from private.ww_games where room_id = rid), 'stuck');
-end $$;
-
-do $$
-declare n integer; d text; w text; games integer := 0; wins jsonb := '{}'::jsonb;
-begin
-  for n in 6..20 loop
-    foreach d in array array['beginner', 'expert'] loop
-      for k in 1..3 loop
-        w := pg_temp.csim(n, d);
-        games := games + 1;
-        wins := jsonb_set(wins, array[w], to_jsonb(coalesce((wins ->> w)::int, 0) + 1));
-      end loop;
-    end loop;
-  end loop;
-  raise notice '    Chaos simulations: % games, results %', games, wins;
-  perform pg_temp.check(not wins ? 'stuck', format('every simulated Chaos game ends (%s games)', games));
-end $$;
-
-select pg_temp.check(not has_function_privilege('authenticated', 'private.ww_chaos_composition(integer)', 'execute')
-  and not has_function_privilege('authenticated', 'private.ww_hide_chaos(uuid, jsonb)', 'execute'), 'members cannot call the Chaos helpers');
 
 -- ───────── Play in a mode: joins a table of that mode, never another ─────────
 do $$

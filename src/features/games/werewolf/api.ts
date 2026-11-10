@@ -35,12 +35,19 @@ export type WwView = {
     card: string;
     camp: 'village' | 'wolves' | 'solo';
     alive: boolean;
-    charges: Record<string, number | null>;
+    charges: Record<string, unknown>;
     lover: number | null;
     known: WwKnown[];
     pack: number[] | null;
     /** The Charo only: who he seduced. */
     seduced?: number[] | null;
+    /** V3: the power lent or copied for tonight, the Possédé's target, the Vampire's servants, one's master, a personal victory won, no vote today. */
+    borrowed?: string | null;
+    prey?: number | null;
+    servants?: number[] | null;
+    master?: number | null;
+    solo_won?: boolean;
+    silenced?: boolean;
   };
   players?: WwPlayer[];
   options?: WwOption[];

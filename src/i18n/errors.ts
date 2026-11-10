@@ -27,6 +27,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'composition: the CEO and the Influenceuse together from 15 players': 'The CEO and the Influencer together from 15 players',
   'composition: that role cannot be added at this size': 'That card cannot be added at this size',
   'this mode is not available yet': 'This mode is not available yet',
+  'composition: at least one villager card': 'At least one card of the Village is needed',
   'Chaos: the deck is drawn in secret': 'Chaos: the deck is drawn in secret',
   // Raised only while a migration runs, never to a member.
   'ww modes: % does not have the expected mode check': GENERIC,
@@ -43,6 +44,10 @@ export const SERVER_ERRORS: Record<string, string> = {
   'the village sleeps: no talking at night': 'The village sleeps: no talking at night',
   'you cannot do that now': 'You can\'t do that now',
   'you cannot talk here now': 'You can\'t talk here now',
+  // Loup-Garou voice games (20261117000000_irly_werewolf_voice).
+  'choose text or voice': 'Choose text or voice',
+  'voice is for online games': 'Voice is for online games',
+  'this game is played in writing': 'This game is played in writing',
   // IRLY Games (20261111000000_irly_games).
   'sign in to play': 'Sign in to play',
   'your account cannot play right now': 'Your account can\'t play right now',

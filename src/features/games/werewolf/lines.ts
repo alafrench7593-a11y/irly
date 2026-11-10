@@ -48,6 +48,7 @@ export function logLine(e: WwLog, name: Name): string | null {
       return tx('The game is over');
     // Private lines (only their reader receives them).
     case 'seer_saw':
+      if (!d.card) return tx('Nothing can be seen of {name} tonight', { name: name(seat('seat')) });
       return tx('Your vision: {name} is {card}', { name: name(seat('seat')), card: tx(cardOf(d.card as string).name) });
     case 'hint':
       return tx('Among {names}, at least one is a werewolf', { names: seats('seats').map(name).join(', ') });
@@ -94,7 +95,105 @@ export function logLine(e: WwLog, name: Name): string | null {
     case 'seduce_failed':
       return tx('Your seduction of {name} did not count', { name: name(seat('seat')) });
     case 'solo_won':
+      if (d.why) return tx('Your personal goal is reached: this victory is yours, whatever happens now');
       return tx('Three players seduced: your personal victory is won, whatever happens now');
+    // ───── The book V3's cards (docs/LOUP-GAROU-V3.md) ─────
+    case 'block_done':
+      return tx('You blocked {name}’s power tonight', { name: name(seat('seat')) });
+    case 'power_blocked':
+      return tx('Your power was blocked tonight: it is not used up');
+    case 'gamble_result': {
+      const n = name(seat('seat'));
+      if (d.outcome === 'protect') return tx('Luck: {name} is protected tonight', { name: n });
+      if (d.outcome === 'block') return tx('Luck: {name}’s power is blocked tonight', { name: n });
+      return d.card ? tx('Luck: {name} is {card}', { name: n, card: tx(cardOf(d.card as string).name) }) : tx('Nothing can be seen of {name} tonight', { name: n });
+    }
+    case 'scam_done':
+      return tx('You swapped cards with {name}: you are now {card}', { name: name(seat('seat')), card: tx(cardOf(d.card as string).name) });
+    case 'scam_victim':
+      return tx('Someone swapped cards with you: you are now {card}', { card: tx(cardOf(d.card as string).name) });
+    case 'scam_cancelled':
+      return tx('Your swap with {name} did not happen: you can still use it', { name: name(seat('seat')) });
+    case 'exchange_done':
+      return tx('Next night, {a} and {b} trade their powers', { a: name(seat('a')), b: name(seat('b')) });
+    case 'exchange_failed':
+      return tx('Nothing to trade between {a} and {b}: you can still use your power', { a: name(seat('a')), b: name(seat('b')) });
+    case 'power_lent':
+      return tx('Next night, you play the power of {card} instead of yours', { card: tx(cardOf(d.card as string).name) });
+    case 'copy_done':
+      return tx('Next night, you can use the power of {card}', { card: tx(cardOf(d.card as string).name) });
+    case 'copy_failed':
+      return tx('{name} has no power to copy: you can still use yours', { name: name(seat('seat')) });
+    case 'fog_blind':
+      return tx('Fog: your power saw nothing tonight');
+    case 'detect_result':
+      if (d.wolf === null || d.wolf === undefined) return tx('Nothing can be seen of {name} tonight', { name: name(seat('seat')) });
+      return d.wolf ? tx('Your investigation: {name} is a werewolf', { name: name(seat('seat')) }) : tx('Your investigation: {name} is not a werewolf', { name: name(seat('seat')) });
+    case 'omen_result':
+      if (!d.camp) return tx('Nothing can be seen of {name} tonight', { name: name(seat('seat')) });
+      return tx('Your vision: {name} is of the camp {camp}', { name: name(seat('seat')), camp: tx(d.camp === 'wolves' ? 'Werewolves' : d.camp === 'solo' ? 'Solo' : 'Village') });
+    case 'oracle_cursed':
+      return tx('Your visions have a price: you cannot vote tomorrow');
+    case 'predict_result':
+      if (d.right === null || d.right === undefined) return tx('Nothing can be seen of {name} tonight', { name: name(seat('seat')) });
+      return d.right ? tx('Your prediction about {name} was right', { name: name(seat('seat')) }) : tx('Your prediction about {name} was wrong', { name: name(seat('seat')) });
+    case 'dig_result':
+      return tx('{name} was {card}', { name: name(seat('seat')), card: tx(cardOf(d.card as string).name) });
+    case 'hack_result':
+      return d.acted ? tx('{name} used a power tonight', { name: name(seat('seat')) }) : tx('{name} did not use a power tonight', { name: name(seat('seat')) });
+    case 'spy_result':
+      return seat('target') !== undefined
+        ? tx('{name} targeted {target} tonight', { name: name(seat('seat')), target: name(seat('target')) })
+        : tx('{name} targeted nobody tonight', { name: name(seat('seat')) });
+    case 'paparazzi_result':
+      return seat('target') !== undefined ? tx('Your clue: a power was used on {name} tonight', { name: name(seat('target')) }) : tx('Your clue: nothing to report tonight');
+    case 'marked':
+      return tx('You marked {name}: the mark strikes when the next night begins', { name: name(seat('seat')) });
+    case 'exorcise_result':
+      return d.removed ? tx('You freed {name} from what weighed on them', { name: name(seat('seat')) }) : tx('Nothing weighed on {name}', { name: name(seat('seat')) });
+    case 'freed':
+      return tx('You are free of the Vampire');
+    case 'cursed_turned':
+      return tx('The werewolves attacked you: you are one of them now. You join the pack next night');
+    case 'bite_done':
+      return tx('{name} is your servant now', { name: name(seat('seat')) });
+    case 'bitten':
+      return tx('The Vampire ({name}) bit you: you serve him now, and win with him', { name: name(seat('seat')) });
+    case 'bite_failed':
+      return tx('Your bite on {name} failed', { name: name(seat('seat')) });
+    case 'prey':
+      return tx('Your target is {name}: get them voted out', { name: name(seat('seat')) });
+    case 'visit_result':
+      return d.attacked ? tx('An attack was aimed at {name} tonight', { name: name(seat('seat')) }) : tx('Nothing happened to {name} tonight', { name: name(seat('seat')) });
+    case 'mirror_reflected':
+      return tx('Your mirror sent an attack back to its author');
+    case 'guard_saved':
+      return tx('Your protection stopped an attack tonight');
+    case 'muted':
+      return tx('You silenced {name} for today’s vote', { name: name(seat('seat')) });
+    case 'silenced':
+      return tx('You cannot vote today');
+    case 'bribed':
+      return tx('Your vote counts double today');
+    case 'pleading':
+      return tx('You plead for {name} today', { name: name(seat('seat')) });
+    case 'decree_ready':
+      return tx('Your decree is ready for today');
+    // Public.
+    case 'anomaly_event':
+      return d.event === 'fog'
+        ? tx('The Anomaly is gone. Fog next night: no investigation will see anything')
+        : tx('The Anomaly is gone. Curfew next night: the pack will not attack');
+    case 'opening': {
+      const parts: string[] = [];
+      if (seats('revived').length) parts.push(tx('{names} came back from the dead', { names: seats('revived').map(name).join(', ') }));
+      if (seats('dead').length) parts.push(tx('{names} died as the night began', { names: seats('dead').map(name).join(', ') }));
+      return parts.join(' · ') || null;
+    }
+    case 'lawyer_saved':
+      return tx('The Lawyer cancelled the elimination of {name}', { name: name(seat('seat')) });
+    case 'decree':
+      return tx('The Dictator decrees one more vote');
     default:
       return null;
   }
