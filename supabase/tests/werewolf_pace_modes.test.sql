@@ -1,4 +1,6 @@
--- IRLY Loup-Garou: pace against the AI and the Nightmare / All powers modes (20261115000000_irly_werewolf_pace_modes).
+-- IRLY Loup-Garou: pace against the AI and the All powers mode (20261115000000_irly_werewolf_pace_modes). The deck
+-- with one more werewolf and no Seer is still checked as a function; the mode named Nightmare is, since
+-- 20261116000000, the book's Nightmare (its own cards, tested in werewolf_v3.test.sql).
 \set ON_ERROR_STOP 1
 
 create or replace function pg_temp.check(ok boolean, label text) returns void language plpgsql as $$
@@ -59,15 +61,13 @@ begin
     perform pg_temp.check((public.ww_view(rid)) ->> 'phase' = before_, 'the next phase waits too');
   end if;
   -- New modes start, with their deck; an unknown mode is refused.
-  rid := public.ww_training('mixte', 8, null, 'intermediate', 'nightmare');
-  perform pg_temp.check((select mode = 'nightmare' and (composition ->> 'werewolf')::int = 3 and not composition ? 'seer' from private.ww_games where room_id = rid), 'a Nightmare training game starts with its deck');
   rid := public.ww_training('mixte', 8, null, 'intermediate', 'powers');
   perform pg_temp.check((select mode = 'powers' and not composition ? 'villager' from private.ww_games where room_id = rid), 'an All powers training game starts with its deck');
   rid := public.ww_quickplay('mixte', 'powers');
   perform pg_temp.check((select mode = 'powers' from private.ww_games where room_id = rid), 'Play online opens an All powers table');
   perform pg_temp.check((public.ww_view(rid) -> 'composition') = private.ww_powers_composition(6), 'its lobby shows the mode''s deck');
-  perform pg_temp.check(pg_temp.err($q$select public.ww_training('mixte', 8, null, 'intermediate', 'apocalypse')$q$) = 'this mode is not available yet', 'an unknown mode is still refused');
-  perform pg_temp.check(pg_temp.err($q$select public.ww_quickplay('mixte', 'apocalypse')$q$) = 'this mode is not available yet', '… by Play online too');
+  perform pg_temp.check(pg_temp.err($q$select public.ww_training('mixte', 8, null, 'intermediate', 'no_such_mode')$q$) = 'this mode is not available yet', 'an unknown mode is still refused');
+  perform pg_temp.check(pg_temp.err($q$select public.ww_quickplay('mixte', 'no_such_mode')$q$) = 'this mode is not available yet', '… by Play online too');
 end $$;
 
 -- ───────── Whole games in the new modes, played by AI players ─────────
@@ -87,7 +87,7 @@ end $$;
 do $$
 declare m text; n integer; w text; wins jsonb;
 begin
-  foreach m in array array['nightmare', 'powers'] loop
+  foreach m in array array['powers'] loop
     wins := '{}'::jsonb;
     for n in 6..20 loop
       for k in 1..4 loop
