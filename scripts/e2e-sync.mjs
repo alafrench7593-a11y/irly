@@ -738,7 +738,9 @@ async function main() {
     await wesPage.goto(`${BASE}/notifications`);
     await wesPage.waitForTimeout(1500);
     const follow = page.getByRole('button', { name: 'Follow', exact: true });
-    await Promise.all([follow.click(), follow.click({ timeout: 2000 }).catch(() => undefined)]);
+    // A real double tap: both taps land at once on the same button. Two separate clicks made the second one
+    // wait until the button was enabled again, then tap « You follow » on purpose (an unfollow, not a double tap).
+    await follow.dblclick({ timeout: 10000 });
     await page.getByRole('button', { name: 'You follow', exact: true }).waitFor({ timeout: 15000 });
     const [n] = await sql(`select count(*)::int as n from public.notifications where user_id = '${wes.id}' and kind = 'NEW_FOLLOWER' and payload ->> 'from' = '${uma.id}'`);
     const fr = await friendRow(uma.id, wes.id);

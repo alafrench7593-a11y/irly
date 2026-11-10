@@ -4,13 +4,15 @@ import { StyleSheet, View } from 'react-native';
 import { Page } from '@/components/layout/Page';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
-import { Chip, Field, SectionHeader, Segmented } from '@/components/ui/Controls';
+import { Field, SectionHeader, Segmented } from '@/components/ui/Controls';
 import { Icon } from '@/components/ui/Icon';
 import { Sheet } from '@/components/ui/Sheet';
 import { Text } from '@/components/ui/Text';
 import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { createRoom, joinByCode, joinRoom, quickplay, useGamesOverview, useGamesPresence, useOpenRooms, useRecentGames, type RoomCard } from '@/features/games/api';
+import { CARD_ORDER, cardOf } from '@/features/games/werewolf/cards';
+import { wwCreate, wwTraining } from '@/features/games/werewolf/api';
 import { t as tx, useLang } from '@/i18n';
 import { hasBackend } from '@/lib/supabase';
 import { timeAgo } from '@/lib/time';
@@ -21,10 +23,10 @@ import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * IRLY Games: play Ludo now (or create a table), join a public table or a
- * private one with its code, find the people of your last games.
- * Loup-Garou opens later as scheduled game nights. Every number is the
- * server's.
+ * IRLY Games: play Ludo now (or create a table), Loup-Garou online, in
+ * person or in training against AI players, join a public table or a
+ * private one with its code, find the people of your last games. Every
+ * number is the server's.
  */
 export default function GamesScreen() {
   const router = useRouter();
@@ -50,6 +52,9 @@ function Games() {
   const appSpace = useAppSpace();
   const { data } = useGamesOverview();
   const { rooms, failed, reload } = useOpenRooms('ludo');
+  const { rooms: wwRooms } = useOpenRooms('werewolf');
+  const [training, setTraining] = useState(false);
+  const [wwCreating, setWwCreating] = useState(false);
   const recent = useRecentGames();
   const now = useNow();
   const [code, setCode] = useState('');
@@ -57,6 +62,7 @@ function Games() {
   const [busy, setBusy] = useState(false);
   useGamesPresence();
   const ludo = data?.games.find((g) => g.game === 'ludo');
+  const wolves = data?.games.find((g) => g.game === 'werewolf');
   const go = (id: string) => router.push(`/games/${id}`);
 
   const run = (fn: () => Promise<string>) => {
@@ -101,21 +107,35 @@ function Games() {
           </View>
         </View>
 
-        <View style={[styles.game, { backgroundColor: t.c.surface, borderColor: t.c.line, opacity: 0.85 }]}>
+        <View style={[styles.game, { backgroundColor: '#140F24', borderColor: '#3B2E63' }]}>
           <View style={styles.gameHead}>
             <Text style={styles.emoji} raw>
               🐺
             </Text>
             <View style={{ flex: 1 }}>
-              <Text variant="titleM">
+              <Text variant="titleM" color="#FFFFFF">
                 Loup-Garou
               </Text>
-              <Text variant="caption" tone="secondary">
-                Game nights in your communities, 6 to 20 players
+              <Text variant="caption" color="#C9C2E8">
+                Classic mode · 6 to 20 players · unranked
               </Text>
             </View>
-            <Chip label="Soon" size="sm" />
           </View>
+          <Button label="Train against AI players" icon="sparkles" onPress={() => setTraining(true)} full />
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Button label="Play online" icon="play" variant="secondary" disabled={busy} onPress={() => run(() => quickplay(appSpace, 'werewolf'))} full />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button label="New table" icon="plus" variant="secondary" onPress={() => setWwCreating(true)} full />
+            </View>
+          </View>
+          {wolves ? (
+            <Text variant="caption" color="#C9C2E8" raw>
+              {[wolves.waiting ? tx('{n} games to join', { n: wolves.waiting }) : null, wolves.in_game ? tx('{n} playing now', { n: wolves.in_game }) : null].filter(Boolean).join(' · ') ||
+                tx('No table yet: start one, or train while others arrive')}
+            </Text>
+          ) : null}
         </View>
 
         <View style={styles.codeRow}>
@@ -132,6 +152,14 @@ function Games() {
           <Button label="Join" size="md" disabled={code.length !== 6 || busy} onPress={() => run(() => joinByCode(code))} />
         </View>
 
+        {wwRooms && wwRooms.length > 0 ? (
+          <>
+            <SectionHeader title="Loup-Garou tables" style={styles.header} />
+            {wwRooms.map((r) => (
+              <RoomRow key={r.id} room={r} onOpen={() => (r.mine ? go(r.id) : run(() => joinRoom(r.id)))} />
+            ))}
+          </>
+        ) : null}
         <SectionHeader title="Tables to join" action={failed ? 'Retry' : undefined} onAction={reload} style={styles.header} />
         {rooms === null ? (
           <Text tone="tertiary">{failed ? 'Could not load the games. Check your connection.' : 'Loading…'}</Text>
@@ -165,6 +193,8 @@ function Games() {
         ) : null}
       </View>
       <CreateSheet visible={creating} onClose={() => setCreating(false)} onCreated={(id) => go(id)} />
+      <TrainingSheet visible={training} onClose={() => setTraining(false)} onCreated={(id) => go(id)} />
+      <WerewolfTableSheet visible={wwCreating} onClose={() => setWwCreating(false)} onCreated={(id) => go(id)} />
     </Page>
   );
 }
@@ -192,7 +222,7 @@ function RoomRow({ room, onOpen }: { room: RoomCard; onOpen: () => void }) {
     <View style={[styles.room, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
       <View style={{ flex: 1, gap: 2 }}>
         <Text variant="titleS" numberOfLines={1} raw>
-          {room.title ?? tx("{name}'s table", { name: room.host ?? tx('A member') })}
+          {(room.game === 'werewolf' ? '🐺 ' : '') + (room.title ?? tx("{name}'s table", { name: room.host ?? tx('A member') }))}
         </Text>
         <Text variant="caption" tone="secondary" raw>
           {[
@@ -270,6 +300,141 @@ function CreateSheet({ visible, onClose, onCreated }: { visible: boolean; onClos
   );
 }
 
+/** Training against AI players (V3 §11): size, the role she plays, the difficulty. Never ranked. */
+function TrainingSheet({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const appSpace = useAppSpace();
+  const [size, setSize] = useState<'6' | '8' | '10' | '12'>('8');
+  const [role, setRole] = useState<string>('random');
+  const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'expert'>('intermediate');
+  const [busy, setBusy] = useState(false);
+  const start = () => {
+    setBusy(true);
+    wwTraining(appSpace, Number(size), role === 'random' ? null : role, difficulty)
+      .then((id) => {
+        onClose();
+        onCreated(id);
+      })
+      .catch(fail)
+      .finally(() => setBusy(false));
+  };
+  return (
+    <Sheet visible={visible} onClose={onClose} title="Train against AI players" subtitle="Learn to unmask the werewolves, try the powers, at your own pace.">
+      <View style={styles.sheet}>
+        <Text variant="caption" tone="tertiary">
+          Training · unranked: never counted in the ranking.
+        </Text>
+        <Text variant="label" tone="secondary">
+          Players
+        </Text>
+        <Segmented
+          options={[
+            { value: '6', label: '6' },
+            { value: '8', label: '8' },
+            { value: '10', label: '10' },
+            { value: '12', label: '12' },
+          ]}
+          value={size}
+          onChange={setSize}
+        />
+        <Text variant="label" tone="secondary">
+          Difficulty
+        </Text>
+        <Segmented
+          options={[
+            { value: 'beginner', label: tx('Beginner') },
+            { value: 'intermediate', label: tx('Intermediate') },
+            { value: 'expert', label: tx('Expert') },
+          ]}
+          value={difficulty}
+          onChange={setDifficulty}
+        />
+        <Text variant="label" tone="secondary">
+          Your role
+        </Text>
+        <View style={styles.roles}>
+          {['random', ...CARD_ORDER].map((id) => (
+            <Button
+              key={id}
+              label={id === 'random' ? `🎲 ${tx('Random')}` : `${cardOf(id).emoji} ${tx(cardOf(id).name)}`}
+              size="sm"
+              variant={role === id ? 'primary' : 'secondary'}
+              onPress={() => setRole(id)}
+            />
+          ))}
+        </View>
+        <Button label="Start" icon="play" disabled={busy} onPress={start} full />
+      </View>
+    </Sheet>
+  );
+}
+
+/** A Loup-Garou table: online (public or with a code) or in person (QR code, no game master). */
+function WerewolfTableSheet({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const lang = useLang();
+  const appSpace = useAppSpace();
+  const [kind, setKind] = useState<'online' | 'irl'>('online');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+  const [size, setSize] = useState<'8' | '10' | '12' | '20'>('10');
+  const [title, setTitle] = useState('');
+  const [busy, setBusy] = useState(false);
+  const create = () => {
+    setBusy(true);
+    wwCreate(appSpace, { kind, visibility, size: Number(size), title, lang: lang === 'fr' ? 'fr' : 'en' })
+      .then((r) => {
+        onClose();
+        onCreated(r.id);
+      })
+      .catch(fail)
+      .finally(() => setBusy(false));
+  };
+  return (
+    <Sheet visible={visible} onClose={onClose} title="New Loup-Garou table">
+      <View style={styles.sheet}>
+        <Field placeholder="Name (optional)" value={title} onChangeText={(v) => setTitle(v.slice(0, 60))} maxLength={60} />
+        <Segmented
+          options={[
+            { value: 'online', label: tx('Online') },
+            { value: 'irl', label: tx('In person (QR code)') },
+          ]}
+          value={kind}
+          onChange={setKind}
+        />
+        {kind === 'online' ? (
+          <Segmented
+            options={[
+              { value: 'public', label: tx('Public') },
+              { value: 'private', label: tx('Private, with a code') },
+            ]}
+            value={visibility}
+            onChange={setVisibility}
+          />
+        ) : (
+          <Text variant="caption" tone="tertiary">
+            In person: everyone scans the QR code, gets a secret card on their phone and votes there. No game master needed.
+          </Text>
+        )}
+        <Text variant="label" tone="secondary">
+          Up to
+        </Text>
+        <Segmented
+          options={[
+            { value: '8', label: '8' },
+            { value: '10', label: '10' },
+            { value: '12', label: '12' },
+            { value: '20', label: '20' },
+          ]}
+          value={size}
+          onChange={setSize}
+        />
+        <Text variant="caption" tone="tertiary">
+          The game starts from 6 players. Unranked.
+        </Text>
+        <Button label="Create the table" icon="check" disabled={busy} onPress={create} full />
+      </View>
+    </Sheet>
+  );
+}
+
 const styles = StyleSheet.create({
   pad: { paddingHorizontal: space.gutter, gap: space[5] },
   body: { paddingHorizontal: space.gutter, gap: space[5], paddingTop: space[3] },
@@ -286,4 +451,5 @@ const styles = StyleSheet.create({
   person: { alignItems: 'center', gap: 4, width: 64 },
   sheet: { gap: space[4], paddingBottom: space[6] },
   header: { paddingHorizontal: 0, marginTop: space[3] },
+  roles: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
 });

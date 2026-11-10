@@ -12,11 +12,30 @@
 const GENERIC = 'Something went wrong. Try again';
 
 export const SERVER_ERRORS: Record<string, string> = {
+  // IRLY Loup-Garou (20261112000000_irly_werewolf).
+  'Loup-Garou: 6 to 20 players': 'Loup-Garou is for 6 to 20 players',
+  'composition: a list of cards': GENERIC,
+  'composition: a whole number per card': GENERIC,
+  'composition: at least one werewolf': 'The game needs at least one werewolf',
+  'composition: one card per player (two more with the thief)': 'One card per player (two more with the Thief)',
+  'composition: one of each special card': 'One of each special card at most',
+  'composition: that role is not in this game': 'That role is not in this game',
+  'composition: unknown card': GENERIC,
+  'composition: werewolves must be fewer than half the players': 'Werewolves must be fewer than half the players',
+  'difficulty: beginner, intermediate or expert': GENERIC,
+  'in person, talk around the table': 'In person, talk around the table',
+  'not a valid target': 'You can\'t choose this player',
+  'nothing to do now': 'Nothing to do now',
+  'online or in person': GENERIC,
+  'six players are needed to start': 'Six players are needed to start',
+  'the dead only talk among themselves': 'The dead only talk among themselves',
+  'the village sleeps: no talking at night': 'The village sleeps: no talking at night',
+  'you cannot do that now': 'You can\'t do that now',
+  'you cannot talk here now': 'You can\'t talk here now',
   // IRLY Games (20261111000000_irly_games).
   'sign in to play': 'Sign in to play',
   'your account cannot play right now': 'Your account can\'t play right now',
   'IRLY Girl games are for IRLY Girl members': 'IRLY Girl games are for IRLY Girl members',
-  'Loup-Garou opens soon': 'Loup-Garou opens soon',
   'unknown game': GENERIC,
   'public or private': GENERIC,
   'Ludo: 2 to 4 players': 'Ludo is for 2 to 4 players',
