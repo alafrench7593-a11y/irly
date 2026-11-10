@@ -145,6 +145,21 @@ try {
     return msgs.every((m) => keys.has(m.body) && !JSON.stringify(m.data ?? {}).includes('card'));
   });
 
+  // ───── Chaos: a random deck, secret until the end ─────
+  await step('chaos training: the deck stays secret during the game, revealed at the end', async () => {
+    const room = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 9, p_role: null, p_difficulty: 'intermediate', p_mode: 'chaos' }));
+    let v = must(await A.sb.rpc('ww_view', { p_room: room }));
+    const hidden = v.phase === 'ended' || (!('composition' in v) && !(v.log ?? []).some((e) => e.data && 'composition' in e.data));
+    for (let i = 0; i < 400 && v.phase !== 'ended'; i++) {
+      v = await playOnce(A, room);
+      await sleep(250);
+    }
+    v = must(await A.sb.rpc('ww_view', { p_room: room }));
+    return hidden && v.phase === 'ended' && v.mode === 'chaos' && v.composition && Object.values(v.composition).reduce((a, b) => a + b, 0) === 9;
+  });
+  await step('chaos: a host cannot choose the deck', () =>
+    refused(A.sb.rpc('ww_create', { p_space: 'mixte', p_visibility: 'private', p_size: 8, p_kind: 'online', p_composition: { werewolf: 2, villager: 6 }, p_title: null, p_lang: 'fr', p_mode: 'chaos' }), 'Chaos: the deck is drawn in secret'));
+
   // ───── A private online table of six ─────
   await step('online: a private table of six, joined with its code', async () => {
     const t = must(await A.sb.rpc('ww_create', { p_space: 'mixte', p_visibility: 'private', p_size: 8, p_kind: 'online', p_composition: null, p_title: 'E2E village', p_lang: 'fr' }));

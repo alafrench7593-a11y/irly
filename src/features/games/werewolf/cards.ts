@@ -28,7 +28,8 @@ export type DubaiCardId =
   | 'networker';
 export type CardId = ClassicCardId | DubaiCardId;
 export type Camp = 'village' | 'wolves' | 'solo';
-export type WwMode = 'classic' | 'dubai';
+export type WwMode = 'classic' | 'dubai' | 'chaos';
+export const MODES: WwMode[] = ['classic', 'dubai', 'chaos'];
 
 export type CardInfo = {
   id: CardId;

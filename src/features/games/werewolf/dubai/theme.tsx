@@ -2,7 +2,7 @@ import { Cinzel_600SemiBold, Cinzel_700Bold, Cinzel_900Black } from '@expo-googl
 import { useFonts } from 'expo-font';
 import { memo } from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
-import type { DubaiCardId } from '../cards';
+import type { CardId } from '../cards';
 
 /** The Dubaï mode's palette (official mockups): black, burgundy, gold, night blue, ivory. */
 export const DX = {
@@ -32,29 +32,40 @@ export function useDubaiFonts(): boolean {
 export const serif = (loaded: boolean, weight: '600' | '700' | '900' = '700') =>
   loaded ? { fontFamily: weight === '900' ? 'Cinzel_900Black' : weight === '600' ? 'Cinzel_600SemiBold' : 'Cinzel_700Bold' } : { fontWeight: weight as '600' | '700' | '900' };
 
-export type Faction = 'expats' | 'escrocs' | 'independents' | 'double';
+export type Faction = 'expats' | 'escrocs' | 'independents' | 'double' | 'village' | 'wolves';
 
-/** The faction a Dubaï card shows (the Networker is an Expat with a personal goal: Double Jeu). */
-export const factionOf = (id: DubaiCardId): Faction =>
-  id === 'escroc' || id === 'realtor' || id === 'broker'
-    ? 'escrocs'
-    : id === 'charo' || id === 'fake_millionaire'
-      ? 'independents'
-      : id === 'networker'
-        ? 'double'
-        : 'expats';
+/** The faction a card shows: Classic (village, werewolves) or Dubaï (the Networker is an Expat with a personal goal: Double Jeu). */
+export const factionOf = (id: CardId | string): Faction =>
+  id === 'werewolf'
+    ? 'wolves'
+    : id === 'villager' || id === 'seer' || id === 'witch' || id === 'hunter' || id === 'cupid' || id === 'little_girl' || id === 'salvateur' || id === 'thief' || id === 'elder'
+      ? 'village'
+      : id === 'escroc' || id === 'realtor' || id === 'broker'
+        ? 'escrocs'
+        : id === 'charo' || id === 'fake_millionaire'
+          ? 'independents'
+          : id === 'networker'
+            ? 'double'
+            : 'expats';
 
-export const FACTION_NAME: Record<Faction, string> = { expats: 'Expats', escrocs: 'Escrocs', independents: 'Independents', double: 'Double Game' };
+export const FACTION_NAME: Record<Faction, string> = { expats: 'Expats', escrocs: 'Escrocs', independents: 'Independents', double: 'Double Game', village: 'Village', wolves: 'Werewolves' };
 /** The faction's name as shown: « Expats » and « Escrocs » are the game's own words, the same in every language. */
 export const factionLabel = (f: Faction, tr: (s: string) => string): string => (f === 'expats' ? 'Expats' : f === 'escrocs' ? 'Escrocs' : tr(FACTION_NAME[f]));
 
-export const FACTION_COLOR: Record<Faction, string> = { expats: DX.expats, escrocs: DX.escrocs, independents: DX.independents, double: DX.double };
+export const FACTION_COLOR: Record<Faction, string> = { expats: DX.expats, escrocs: DX.escrocs, independents: DX.independents, double: DX.double, village: DX.expats, wolves: DX.escrocs };
+/** A faction colour readable on the black panels (the Expats' blue is lightened). */
+export const factionText = (f: Faction): string => (FACTION_COLOR[f] === DX.expats ? '#8FB2FF' : FACTION_COLOR[f]);
 
 /** The faction's emblem, drawn (no emoji): people, a mask, a diamond, scales. */
 export const FactionGlyph = memo(function FactionGlyph({ faction, size = 22, color = DX.gold }: { faction: Faction; size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-      {faction === 'expats' ? (
+      {faction === 'wolves' ? (
+        <>
+          <Path d="M4 4l3 5M20 4l-3 5M7 9c-1.5 2-2 4.5-1 7l3 3h6l3-3c1-2.5.5-5-1-7-1.4-1-3.2-1.5-5-1.5S8.4 8 7 9z" />
+          <Path d="M9.5 13h.01M14.5 13h.01M10.5 17l1.5 1 1.5-1" />
+        </>
+      ) : faction === 'expats' || faction === 'village' ? (
         <>
           <Circle cx={12} cy={8} r={3.2} />
           <Path d="M5.5 20c.6-3.4 3.2-5.5 6.5-5.5s5.9 2.1 6.5 5.5" />

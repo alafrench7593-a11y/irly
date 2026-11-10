@@ -61,7 +61,7 @@ export default function GameRoomScreen() {
     );
   }
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.root, { backgroundColor: t.c.bg }]}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.root, { backgroundColor: room?.game === 'werewolf' ? '#0B0907' : t.c.bg }]}>
       <Header room={room} me={uid} onBack={() => (router.canGoBack() ? router.back() : router.replace('/games'))} />
       {!room ? (
         <View style={styles.center}>
@@ -106,7 +106,7 @@ function Header({ room, me, onBack }: { room: Room | null; me: string; onBack: (
       <IconButton icon="chevronLeft" label="Back" onPress={onBack} />
       <View style={{ flex: 1 }}>
         <Text variant="titleS" numberOfLines={1} raw>
-          {room?.title ?? (room?.game === 'werewolf' ? `🐺 ${tx(room.kind === 'training' ? 'Training' : 'Loup-Garou')}` : `🎲 ${tx('Ludo')}`)}
+          {room?.title ?? (room?.game === 'werewolf' ? tx(room.kind === 'training' ? 'Training' : 'Loup-Garou') : tx('Ludo'))}
         </Text>
         {room ? (
           <Text variant="caption" tone="secondary" raw>

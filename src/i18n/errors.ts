@@ -27,6 +27,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'composition: the CEO and the Influenceuse together from 15 players': 'The CEO and the Influencer together from 15 players',
   'composition: that role cannot be added at this size': 'That card cannot be added at this size',
   'this mode is not available yet': 'This mode is not available yet',
+  'Chaos: the deck is drawn in secret': 'Chaos: the deck is drawn in secret',
   'composition: that role is not in this game': 'That role is not in this game',
   'composition: unknown card': GENERIC,
   'composition: werewolves must be fewer than half the players': 'Werewolves must be fewer than half the players',

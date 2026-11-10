@@ -9,18 +9,18 @@ type Line = { title: string; body: string };
 
 const NIGHT: Line[] = [
   { title: "Can't sleep? Come and play 🎮", body: "Others may be awake too. Join a game and meet new people!" },
-  { title: 'Night owls, this way 🌙', body: 'A quick game of Ludo with someone still up?' },
+  { title: 'Night owls, this way 🌙', body: 'A round of Loup-Garou with the night owls?' },
 ];
 const MORNING: Line[] = [
-  { title: 'Coffee and a game? ☕', body: 'A relaxed game of Ludo to start the day.' },
+  { title: 'Coffee and a game? ☕', body: 'Train against the AI over breakfast: a quick Loup-Garou.' },
 ];
 const AFTERNOON: Line[] = [
   { title: 'Bored? 🎲', body: 'Players are waiting on IRLY Games. Join them!' },
-  { title: 'Want to meet new people? 👥', body: 'Break the ice over a game of Ludo!' },
+  { title: 'Want to meet new people? 👥', body: 'Break the ice over a game of Loup-Garou!' },
 ];
 const EVENING: Line[] = [
   { title: 'Staying in tonight? 🏠', body: 'No need to go out to meet people. A game, anyone?' },
-  { title: 'Game night 🎲', body: 'Gather a table of 2 to 4 and play.' },
+  { title: 'Game night 🎲', body: 'Gather a table of 6 to 20 and play Loup-Garou.' },
 ];
 
 export function gamesLine(hour: number, now: number): Line {
