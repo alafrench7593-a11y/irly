@@ -113,7 +113,11 @@ try {
     return typeof o.online === 'number' && Array.isArray(o.games) && o.games.some((g) => g.game === 'ludo');
   });
   await step('a man reads no IRLY Girl counts', () => refused(O.sb.rpc('games_overview', { p_space: 'girl' }), 'IRLY Girl games are for IRLY Girl members'));
-  await step('Loup-Garou is not open yet', () => refused(O.sb.rpc('game_create', { p_game: 'werewolf', p_space: 'mixte' }), 'Loup-Garou opens soon'));
+  await step('a Loup-Garou table opens (private, then left)', async () => {
+    const t = must(await O.sb.rpc('game_create', { p_game: 'werewolf', p_space: 'mixte', p_visibility: 'private', p_max: 8 }));
+    must(await O.sb.rpc('game_leave', { p_room: t.id }));
+    return Boolean(t.id && t.code);
+  });
 
   await step('Omar opens a private 3-player Ludo table (a code, not listed)', async () => {
     const r = must(await O.sb.rpc('game_create', { p_game: 'ludo', p_space: 'mixte', p_visibility: 'private', p_max: 3, p_title: 'E2E table', p_lang: 'fr' }));

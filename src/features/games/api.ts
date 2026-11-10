@@ -17,6 +17,8 @@ export type GamesOverview = { online: number; games: GameCount[] };
 
 export type RoomCard = {
   id: string;
+  /** online, training (against AI players), irl (in person). */
+  kind?: 'online' | 'training' | 'irl';
   game: GameId;
   title: string | null;
   visibility: 'public' | 'private';
@@ -56,7 +58,19 @@ export type Room = RoomCard & {
   people: RoomPerson[];
 };
 
-export type GameMessage = { id: number; room_id: string; user_id: string | null; kind: 'chat' | 'system'; body: string; data: Record<string, string> | null; created_at: string };
+export type GameMessage = {
+  id: number;
+  room_id: string;
+  user_id: string | null;
+  kind: 'chat' | 'system' | 'bot';
+  body: string;
+  data: Record<string, string | number> | null;
+  created_at: string;
+  /** Loup-Garou: the table, the pack at night, or the dead. */
+  channel?: 'all' | 'wolves' | 'dead';
+  /** Loup-Garou: the seat of who wrote (AI players have no account). */
+  seat?: number | null;
+};
 
 export type RecentGame = {
   id: string;
@@ -206,7 +220,7 @@ export function useRoom(roomId: string | undefined) {
     if (!uid || !supabase || !roomId) return;
     void supabase
       .from('game_messages')
-      .select('id, room_id, user_id, kind, body, data, created_at')
+      .select('id, room_id, user_id, kind, body, data, created_at, channel, seat')
       .eq('room_id', roomId)
       .order('id', { ascending: false })
       .limit(80)
@@ -248,9 +262,11 @@ export function useRoom(roomId: string | undefined) {
       } else {
         load();
       }
+      // AI players' lines show a few seconds after they are written, and a missed live message comes back.
+      loadMessages();
     }, 5000);
     return () => clearInterval(timer);
-  }, [status, deadline, skew, roomId, load]);
+  }, [status, deadline, skew, roomId, load, loadMessages]);
 
   return { room, missing, messages, reload: load, skew };
 }

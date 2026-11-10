@@ -13,6 +13,7 @@ import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { createRoom, joinByCode, kickPlayer, leaveRoom, moveToken, rollDie, sayInRoom, startRoom, useGamesPresence, useRoom, type GameMessage, type LudoState, type Room } from '@/features/games/api';
 import { LudoBoard } from '@/features/games/ludo/Board';
+import { WerewolfRoom } from '@/features/games/werewolf/WerewolfRoom';
 import { legalTokens, LUDO_COLORS, LUDO_COLOR_NAMES } from '@/features/games/ludo/geometry';
 import { blockUser } from '@/features/moderation/moderation';
 import { openReport } from '@/features/moderation/reportStore';
@@ -68,10 +69,20 @@ export default function GameRoomScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + space[4] }]} keyboardShouldPersistTaps="handled">
-          {room.status === 'waiting' ? <Lobby room={room} me={uid} onChanged={reload} /> : null}
-          {room.status === 'playing' ? <Play room={room} me={uid} skew={skew} onChanged={reload} /> : null}
-          {room.status === 'finished' || room.status === 'abandoned' ? <End room={room} me={uid} /> : null}
-          <Chat room={room} me={uid} messages={messages} />
+          {room.game === 'werewolf' ? (
+            <>
+              {room.status === 'abandoned' ? <End room={room} me={uid} /> : <WerewolfRoom room={room} me={uid} messages={messages} />}
+              {/* Before the start, the table talks in the shared chat; in the game, the Loup-Garou chat follows the night. */}
+              {room.status === 'waiting' && room.kind !== 'irl' ? <Chat room={room} me={uid} messages={messages} /> : null}
+            </>
+          ) : (
+            <>
+              {room.status === 'waiting' ? <Lobby room={room} me={uid} onChanged={reload} /> : null}
+              {room.status === 'playing' ? <Play room={room} me={uid} skew={skew} onChanged={reload} /> : null}
+              {room.status === 'finished' || room.status === 'abandoned' ? <End room={room} me={uid} /> : null}
+              <Chat room={room} me={uid} messages={messages} />
+            </>
+          )}
         </ScrollView>
       )}
     </KeyboardAvoidingView>
@@ -95,11 +106,13 @@ function Header({ room, me, onBack }: { room: Room | null; me: string; onBack: (
       <IconButton icon="chevronLeft" label="Back" onPress={onBack} />
       <View style={{ flex: 1 }}>
         <Text variant="titleS" numberOfLines={1} raw>
-          {room?.title ?? `🎲 ${tx('Ludo')}`}
+          {room?.title ?? (room?.game === 'werewolf' ? `🐺 ${tx(room.kind === 'training' ? 'Training' : 'Loup-Garou')}` : `🎲 ${tx('Ludo')}`)}
         </Text>
         {room ? (
           <Text variant="caption" tone="secondary" raw>
-            {[room.visibility === 'private' ? tx('Private') : tx('Public'), room.lang === 'fr' ? 'Français' : 'English', tx('{n}/{max} players', { n: room.players, max: room.max })].join(' · ')}
+            {room.kind === 'training'
+              ? tx('Against {n} AI players', { n: room.max - 1 })
+              : [room.visibility === 'private' ? tx('Private') : tx('Public'), room.lang === 'fr' ? 'Français' : 'English', tx('{n}/{max} players', { n: room.players, max: room.max })].join(' · ')}
           </Text>
         ) : null}
       </View>
@@ -410,7 +423,8 @@ const REMATCH = /→ ([A-Z2-9]{6})$/;
 
 function systemLine(m: GameMessage, names: Map<string, string>): string {
   const n = (id?: string) => (id ? (names.get(id) ?? tx('A member')) : tx('A member'));
-  const d = m.data ?? {};
+  // Ludo system lines carry member ids (strings).
+  const d = (m.data ?? {}) as Record<string, string | undefined>;
   switch (m.body) {
     case 'joined':
       return tx('{name} joined', { name: n(d.user) });

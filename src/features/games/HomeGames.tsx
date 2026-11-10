@@ -35,6 +35,7 @@ function Inner() {
   const { data } = useGamesOverview();
   const line = useMemo(() => gamesLine(new Date(now).getHours(), now), [now]);
   const ludo = data?.games.find((g) => g.game === 'ludo');
+  const wolves = data?.games.find((g) => g.game === 'werewolf');
   const online = data?.online ?? 0;
   const play = () =>
     quickplay(space_)
@@ -70,7 +71,7 @@ function Inner() {
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
         <GameCard emoji="🎲" name="Ludo" subtitle="2 to 4 players · 15 min" count={ludo} onPlay={play} onOpen={() => router.push('/games')} />
-        <GameCard emoji="🐺" name="Loup-Garou" subtitle="Game nights, 6 to 20 players" soon onOpen={() => router.push('/games')} />
+        <GameCard emoji="🐺" name="Loup-Garou" subtitle="Online, in person, or train against AI" count={wolves} playLabel="Play" onPlay={() => router.push('/games')} onOpen={() => router.push('/games')} />
       </ScrollView>
     </View>
   );
@@ -82,6 +83,7 @@ const GameCard = memo(function GameCard({
   subtitle,
   count,
   soon,
+  playLabel,
   onPlay,
   onOpen,
 }: {
@@ -90,6 +92,7 @@ const GameCard = memo(function GameCard({
   subtitle: string;
   count?: GameCount;
   soon?: boolean;
+  playLabel?: string;
   onPlay?: () => void;
   onOpen: () => void;
 }) {
@@ -126,7 +129,7 @@ const GameCard = memo(function GameCard({
           </Text>
         )}
       </View>
-      {onPlay && !soon ? <Button label={count?.waiting ? 'Join a game' : 'Play now'} size="sm" icon="play" onPress={onPlay} /> : null}
+      {onPlay && !soon ? <Button label={playLabel ?? (count?.waiting ? 'Join a game' : 'Play now')} size="sm" icon="play" onPress={onPlay} /> : null}
     </PressableScale>
   );
 });

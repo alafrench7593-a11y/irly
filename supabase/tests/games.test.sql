@@ -111,7 +111,10 @@ select pg_temp.as_user('9a3e0000-0000-0000-0000-0000000000a2');
 do $$
 declare r jsonb; rid uuid;
 begin
-  perform pg_temp.check(pg_temp.err($q$select public.game_create('werewolf', 'mixte')$q$) = 'Loup-Garou opens soon', 'Loup-Garou rooms are refused until it opens');
+  -- Loup-Garou tables open through the same function (20261112000100): a private one, left at once.
+  r := public.game_create('werewolf', 'mixte', 'private', 8);
+  perform pg_temp.check((select game = 'werewolf' and kind = 'online' and max_players = 8 from public.game_rooms where id = (r ->> 'id')::uuid), 'a Loup-Garou table opens through game_create');
+  perform public.game_leave((r ->> 'id')::uuid);
   perform pg_temp.check(pg_temp.err($q$select public.game_create('ludo', 'mixte', 'public', 6)$q$) = 'Ludo: 2 to 4 players', 'Ludo takes 2 to 4 players');
   perform pg_temp.check(pg_temp.err($q$select public.game_create('ludo', 'girl')$q$) = 'IRLY Girl games are for IRLY Girl members', 'a man cannot open an IRLY Girl game');
   perform pg_temp.check(pg_temp.err($q$select public.games_overview('girl')$q$) = 'IRLY Girl games are for IRLY Girl members', 'a man cannot read IRLY Girl counts');
