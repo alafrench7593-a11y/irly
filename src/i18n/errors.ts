@@ -27,6 +27,7 @@ export const SERVER_ERRORS: Record<string, string> = {
   'composition: the CEO and the Influenceuse together from 15 players': 'The CEO and the Influencer together from 15 players',
   'composition: that role cannot be added at this size': 'That card cannot be added at this size',
   'this mode is not available yet': 'This mode is not available yet',
+  'composition: at least one villager card': 'At least one card of the Village is needed',
   'Chaos: the deck is drawn in secret': 'Chaos: the deck is drawn in secret',
   // Raised only while a migration runs, never to a member.
   'ww modes: % does not have the expected mode check': GENERIC,

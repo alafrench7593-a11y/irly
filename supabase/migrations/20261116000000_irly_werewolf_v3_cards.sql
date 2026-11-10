@@ -127,15 +127,6 @@ language sql immutable as $$
     else '{}' end::jsonb
 $$;
 
--- Dubaï's charges were defined in 20261113000000 with the same values; this keeps one function for every card.
-do $$
-declare r text;
-begin
-  foreach r in array private.ww_dubai_roles() loop
-    if private.ww_fresh_charges(r) is null then raise exception 'ww v3: no charges for %', r; end if;
-  end loop;
-end $$;
-
 /** Cards with a power used at night on one's own: the only ones the Échangeur can swap and the Caméléon can copy. */
 create or replace function private.ww_active_cards() returns text[]
 language sql immutable as $$

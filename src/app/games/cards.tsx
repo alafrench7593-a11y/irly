@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
-import { CARD_ORDER, DUBAI_ORDER, MODE_LABEL, toMode, type CardId } from '@/features/games/werewolf/cards';
+import { deckOf, MODE_LABEL, toMode, type CardId } from '@/features/games/werewolf/cards';
 import { SCENES } from '@/features/games/werewolf/dubai/art';
 import { DubaiCard } from '@/features/games/werewolf/dubai/DubaiCard';
 import { DX, factionLabel, factionOf, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
@@ -18,8 +18,8 @@ type Filter = 'all' | Faction;
 export default function CardsScreen() {
   const { mode: m } = useLocalSearchParams<{ mode?: string }>();
   const mode = toMode(m);
-  const deck: CardId[] = mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER;
-  const factions: Faction[] = mode === 'dubai' ? ['expats', 'escrocs', 'independents', 'double'] : ['village', 'wolves'];
+  const deck: CardId[] = useMemo(() => deckOf(mode), [mode]);
+  const factions = (['village', 'hybrid', 'wolves', 'solo', 'expats', 'escrocs', 'independents', 'double'] as Faction[]).filter((f) => deck.some((id) => factionOf(id) === f));
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fonts = useDubaiFonts();
@@ -53,7 +53,7 @@ export default function CardsScreen() {
           <View style={styles.modeBadge}>
             <Text style={[styles.modeText, serif(fonts, '700')]}>{tx(MODE_LABEL[mode]).toUpperCase()}</Text>
           </View>
-          <Text style={[styles.sub, serif(fonts, '600')]}>{tx(mode === 'dubai' ? 'Dubai collection' : 'The village collection')}</Text>
+          <Text style={[styles.sub, serif(fonts, '600')]}>{tx(mode === 'dubai' ? 'Dubai collection' : '{n} cards', { n: deck.length })}</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar} contentContainerStyle={styles.filters}>
           {filters.map((f) => {

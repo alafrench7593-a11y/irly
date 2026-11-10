@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
-import { CARD_ORDER, CARDS, DUBAI_ORDER, MODE_NAME, MODES, type WwMode } from '@/features/games/werewolf/cards';
+import { CARDS, deckOf, isV3, MODE_NAME, MODES, type WwMode } from '@/features/games/werewolf/cards';
 import { SCENES } from '@/features/games/werewolf/dubai/art';
 import { LivingScene } from '@/features/games/werewolf/dubai/Motion';
 import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, factionText, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
@@ -86,35 +86,47 @@ export default function RulesScreen() {
         tx('5. The game goes on until a camp wins.'),
       ],
     },
-    ...(mode === 'chaos'
+    ...(isV3(mode)
       ? [
           {
-            key: 'chaos',
-            title: tx('Chaos mode'),
+            key: 'night',
+            title: tx('The night, in order'),
             lines: [
-              tx('The server draws the deck at random for each game: one werewolf more or less than usual, one to seven special cards.'),
-              tx('Nobody knows which powers are in play, not even the host: you find out by playing.'),
-              tx('The whole deck is revealed at the end.'),
+              tx('Everyone chooses in secret; the server then plays the night in a fixed order.'),
+              tx('1. Blocks: a blocked power is not played, and is not used up.'),
+              tx('2. Swaps of cards, then protections.'),
+              tx('3. Investigations, on the cards as they are after the swaps. Some cards hide or falsify what is seen.'),
+              tx('4. The pack chooses its victim, the Witch answers, then every attack is played: a protected player survives.'),
+              tx('5. What is due later is kept for later: a mark strikes when the next night begins, a Revenant comes back then.'),
+            ],
+          },
+          {
+            key: 'solo',
+            title: tx('Personal victories'),
+            lines: [
+              tx('Solo cards win alone, by their own goal. Hybrids are of the Village and have a goal of their own on top.'),
+              tx('A personal victory is won for good: it stays yours if you die, if your card is swapped or if your camp loses.'),
+              tx('It is shown at the end of the game, beside the camp that won.'),
+            ],
+          },
+          {
+            key: 'vote2',
+            title: tx('The vote'),
+            lines: [
+              tx('One voice each. Some cards silence a voter, double a vote, cancel an elimination or call one more vote.'),
+              tx('A tie gives a second round between the tied; a second tie, nobody is eliminated.'),
             ],
           },
         ]
-      : mode === 'nightmare'
+      : mode === 'powers'
         ? [
             {
-              key: 'nightmare',
-              title: tx('Nightmare mode'),
-              lines: [tx('One more werewolf than usual, and no Seer: nobody can check a card.'), tx('For players who know the game: the village only has its debates and its votes.')],
+              key: 'powers',
+              title: tx('All powers mode'),
+              lines: [tx('Every seat gets a special card while there are some: plain villagers only come after.'), tx('The usual number of werewolves: a good mode to try every power.')],
             },
           ]
-        : mode === 'powers'
-          ? [
-              {
-                key: 'powers',
-                title: tx('All powers mode'),
-                lines: [tx('Every seat gets a special card while there are some: plain villagers only come after.'), tx('The usual number of werewolves: a good mode to try every power.')],
-              },
-            ]
-          : []),
+        : []),
     {
       key: 'secret',
       title: tx('Secrets'),
@@ -126,7 +138,7 @@ export default function RulesScreen() {
     },
   ];
   const sections = dubai ? dubaiSections : village;
-  const deck = dubai ? DUBAI_ORDER : CARD_ORDER;
+  const deck = deckOf(mode);
   return (
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -159,7 +171,7 @@ export default function RulesScreen() {
               ) : null}
             </View>
           ))}
-          <Text style={[styles.cardsTitle, serif(fonts, '700')]}>{dubai ? tx('The 20 characters') : tx('The 10 cards')}</Text>
+          <Text style={[styles.cardsTitle, serif(fonts, '700')]}>{dubai ? tx('The 20 characters') : tx('{n} cards', { n: deck.length })}</Text>
           {deck.map((id) => {
             const f: Faction = factionOf(id);
             return (

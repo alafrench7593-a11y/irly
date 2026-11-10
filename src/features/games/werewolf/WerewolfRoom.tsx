@@ -14,7 +14,7 @@ import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { startRoom, type GameMessage, type Room } from '../api';
-import { ACTION_TITLE, CARD_ORDER, cardOf, DUBAI_ORDER, MODE_NAME, NO_TARGET, SPECIALS, toMode, wolvesFor, type CardId } from './cards';
+import { ACTION_TITLE, CARD_ORDER, cardOf, DAY_POWERS, deckOf, MODE_NAME, NO_TARGET, SPECIALS, toMode, TWO_TARGETS, wolvesFor, type CardId } from './cards';
 import { botLine, logLine } from './lines';
 import { PORTRAIT, SCENES } from './dubai/art';
 import { DubaiResult } from './dubai/Result';
@@ -27,8 +27,6 @@ import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, type WwOption, ty
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 const JOIN_URL = 'https://getirly.com/app/games/join?code=';
 const modeOf = toMode;
-/** Day powers are used from their own buttons: touching the table by day is for the vote only. */
-const DAY_POWERS = new Set(['buzz', 'dump', 'board', 'fresh']);
 
 /**
  * A Loup-Garou table, in every mode (Classic, Dubaï, Chaos): the waiting room
@@ -147,10 +145,10 @@ function Lobby({ room, me, view, onChanged }: { room: Room; me: string; view: Ww
 function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: boolean; roomId: string; onChanged: () => void }) {
   const players = Math.max(view.present ?? 6, 6);
   const mode = modeOf(view.mode);
-  if (mode === 'chaos' || !view.composition) {
+  if (!view.composition) {
     return (
       <Panel title={tx('The deck')}>
-        <Text style={styles.body}>{tx('Chaos: the server draws a secret deck at the start. Werewolves and powers are revealed only at the end.')}</Text>
+        <Text style={styles.body}>{tx('The server draws the deck of this mode when the game starts, for the players who are there. It is shown to all then.')}</Text>
       </Panel>
     );
   }
@@ -165,7 +163,7 @@ function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: b
   return (
     <Panel title={tx('The deck for {n} players{custom}', { n: players, custom: view.custom ? ` · ${tx('set by the host')}` : '' })}>
       <View style={styles.chips}>
-        {(mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER)
+        {[...new Set([...deckOf(mode), ...CARD_ORDER])]
           .filter((id) => (comp[id] ?? 0) > 0)
           .map((id) => (
             <CardChip key={id} id={id} count={comp[id] ?? 0} />
@@ -216,7 +214,7 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
   const options = view.options ?? [];
   const mine = view.mine ?? [];
   // The main choice of the moment is made on the table itself: the vote, the victim, a night power on someone.
-  const stageOption = options.find((o) => o.kind === 'vote' || o.kind === 'wolf') ?? options.find((o) => o.targets.length > 0 && o.kind !== 'link' && o.kind !== 'steal' && !DAY_POWERS.has(o.kind));
+  const stageOption = options.find((o) => o.kind === 'vote' || o.kind === 'wolf') ?? options.find((o) => o.targets.length > 0 && !TWO_TARGETS.has(o.kind) && o.kind !== 'steal' && !DAY_POWERS.has(o.kind) && !o.kind.startsWith('predict'));
   const stageChosen = stageOption ? (mine.find((m) => m.kind === stageOption.kind)?.target ?? null) : null;
   const stageMarks = useMemo(() => {
     const out: Record<number, string> = {};
@@ -292,15 +290,21 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
   );
 }
 
-/** What my card has taught me so far (accomplices, lover, seductions; the seer's and investigators' results are in the log). */
+/** What my card has taught me so far (accomplices, lover, target, servants…; the investigations' results are in the log). */
 function Knowledge({ view, name }: { view: WwView; name: (s?: number) => string }) {
   const me = view.me!;
   const mode = modeOf(view.mode);
   return (
     <>
+      {me.borrowed ? <Text style={[styles.know, { color: DX.goldLight }]}>{tx('Tonight you play the power of {card}', { card: tx(cardOf(me.borrowed).name) })}</Text> : null}
       {me.seduced && me.seduced.length ? <Text style={styles.know}>{tx('Seduced: {names}', { names: me.seduced.map(name).join(', ') })}</Text> : null}
       {me.pack && me.pack.length > 1 ? <Text style={[styles.know, { color: DX.redLight }]}>{tx(mode === 'dubai' ? 'Your accomplices: {names}' : 'Your pack: {names}', { names: me.pack.filter((s) => s !== me.seat).map(name).join(', ') })}</Text> : null}
       {me.lover !== null && me.lover !== undefined ? <Text style={styles.know}>{tx('In love with {name}', { name: name(me.lover) })}</Text> : null}
+      {me.prey !== null && me.prey !== undefined ? <Text style={[styles.know, { color: DX.goldLight }]}>{tx('Your target: {name}', { name: name(me.prey) })}</Text> : null}
+      {me.servants && me.servants.length ? <Text style={styles.know}>{tx('Your servants: {names}', { names: me.servants.map(name).join(', ') })}</Text> : null}
+      {me.master !== null && me.master !== undefined ? <Text style={[styles.know, { color: DX.redLight }]}>{tx('You serve the Vampire: {name}', { name: name(me.master) })}</Text> : null}
+      {me.solo_won ? <Text style={[styles.know, { color: '#7BD89B' }]}>{tx('Your personal victory is won, for good')}</Text> : null}
+      {me.silenced && me.alive ? <Text style={[styles.know, { color: DX.redLight }]}>{tx('You cannot vote today')}</Text> : null}
       {!me.alive ? <Text style={[styles.know, { color: DX.redLight }]}>{tx('You are dead: watch, and talk with the dead')}</Text> : null}
     </>
   );
@@ -354,7 +358,7 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
       <Text style={styles.optionTitle}>{tx(ACTION_TITLE[option.kind] ?? option.kind)}</Text>
       {chosen ? (
         <Text style={styles.done}>
-          {option.kind === 'link'
+          {TWO_TARGETS.has(option.kind)
             ? tx('Chosen: {a} and {b}', { a: name(chosen.target ?? undefined), b: name(chosen.target2 ?? undefined) })
             : chosen.target !== null && option.kind !== 'steal'
               ? tx('Chosen: {name}', { name: name(chosen.target) })
@@ -380,7 +384,7 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
               <PressableScale
                 key={s}
                 onPress={() => {
-                  if (option.kind !== 'link') return send(s);
+                  if (!TWO_TARGETS.has(option.kind)) return send(s);
                   if (first === null) return setFirst(s);
                   if (first === s) return setFirst(null);
                   send(first, s);

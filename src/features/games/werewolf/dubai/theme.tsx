@@ -2,7 +2,7 @@ import { Cinzel_600SemiBold, Cinzel_700Bold, Cinzel_900Black } from '@expo-googl
 import { useFonts } from 'expo-font';
 import { memo } from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
-import type { CardId } from '../cards';
+import { CARDS, HYBRIDS, type CardId } from '../cards';
 
 /** The Dubaï mode's palette (official mockups): black, burgundy, gold, night blue, ivory. */
 export const DX = {
@@ -32,27 +32,26 @@ export function useDubaiFonts(): boolean {
 export const serif = (loaded: boolean, weight: '600' | '700' | '900' = '700') =>
   loaded ? { fontFamily: weight === '900' ? 'Cinzel_900Black' : weight === '600' ? 'Cinzel_600SemiBold' : 'Cinzel_700Bold' } : { fontWeight: weight as '600' | '700' | '900' };
 
-export type Faction = 'expats' | 'escrocs' | 'independents' | 'double' | 'village' | 'wolves';
+export type Faction = 'expats' | 'escrocs' | 'independents' | 'double' | 'village' | 'wolves' | 'solo' | 'hybrid';
+const DUBAI_FACTION: Record<string, Faction> = { escroc: 'escrocs', realtor: 'escrocs', broker: 'escrocs', charo: 'independents', fake_millionaire: 'independents', networker: 'double' };
+const DUBAI_CARDS = new Set(['expat', 'escroc', 'influencer', 'entrepreneur', 'millionaire', 'single', 'charo', 'golden_visa', 'investor', 'ceo', 'ecommerce', 'newcomer', 'emirati', 'realtor', 'creator', 'broker', 'tourist', 'concierge', 'fake_millionaire', 'networker']);
 
-/** The faction a card shows: Classic (village, werewolves) or Dubaï (the Networker is an Expat with a personal goal: Double Jeu). */
-export const factionOf = (id: CardId | string): Faction =>
-  id === 'werewolf'
-    ? 'wolves'
-    : id === 'villager' || id === 'seer' || id === 'witch' || id === 'hunter' || id === 'cupid' || id === 'little_girl' || id === 'salvateur' || id === 'thief' || id === 'elder'
-      ? 'village'
-      : id === 'escroc' || id === 'realtor' || id === 'broker'
-        ? 'escrocs'
-        : id === 'charo' || id === 'fake_millionaire'
-          ? 'independents'
-          : id === 'networker'
-            ? 'double'
-            : 'expats';
+/**
+ * The faction a card shows. Dubaï: Expats, Escrocs, Indépendants, Double Jeu (the Networker).
+ * Every other mode: Village, Loups-Garous, Solo, and the hybrids (of the Village, with an objective of their own).
+ */
+export const factionOf = (id: CardId | string): Faction => {
+  if (DUBAI_CARDS.has(id)) return DUBAI_FACTION[id] ?? 'expats';
+  if (HYBRIDS.has(id)) return 'hybrid';
+  const camp = CARDS[id as CardId]?.camp;
+  return camp === 'wolves' ? 'wolves' : camp === 'solo' ? 'solo' : 'village';
+};
 
-export const FACTION_NAME: Record<Faction, string> = { expats: 'Expats', escrocs: 'Escrocs', independents: 'Independents', double: 'Double Game', village: 'Village', wolves: 'Werewolves' };
+export const FACTION_NAME: Record<Faction, string> = { expats: 'Expats', escrocs: 'Escrocs', independents: 'Independents', double: 'Double Game', village: 'Village', wolves: 'Werewolves', solo: 'Solo', hybrid: 'Village · personal goal' };
 /** The faction's name as shown: « Expats » and « Escrocs » are the game's own words, the same in every language. */
 export const factionLabel = (f: Faction, tr: (s: string) => string): string => (f === 'expats' ? 'Expats' : f === 'escrocs' ? 'Escrocs' : tr(FACTION_NAME[f]));
 
-export const FACTION_COLOR: Record<Faction, string> = { expats: DX.expats, escrocs: DX.escrocs, independents: DX.independents, double: DX.double, village: DX.expats, wolves: DX.escrocs };
+export const FACTION_COLOR: Record<Faction, string> = { expats: DX.expats, escrocs: DX.escrocs, independents: DX.independents, double: DX.double, village: DX.expats, wolves: DX.escrocs, solo: DX.independents, hybrid: DX.double };
 /** A faction colour readable on the black panels (the Expats' blue is lightened). */
 export const factionText = (f: Faction): string => (FACTION_COLOR[f] === DX.expats ? '#8FB2FF' : FACTION_COLOR[f]);
 
@@ -77,7 +76,7 @@ export const FactionGlyph = memo(function FactionGlyph({ faction, size = 22, col
           <Path d="M3 9c2.5-1.6 5.5-1.8 9-1.8S18.5 7.4 21 9c-.3 4.2-2.7 7-5.4 7-1.6 0-2.5-1-3.6-2.4C10.9 15 10 16 8.4 16 5.7 16 3.3 13.2 3 9z" />
           <Path d="M7 11h2.5M14.5 11H17" />
         </>
-      ) : faction === 'independents' ? (
+      ) : faction === 'independents' || faction === 'solo' ? (
         <>
           <Path d="M6 4h12l3 5-9 11L3 9z" />
           <Path d="M3 9h18M9 4l3 16 3-16" />

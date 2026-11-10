@@ -18,7 +18,7 @@ import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { useAppSpace } from '@/state/appSpace';
 import { wwCreate, wwQuickplay, wwTraining } from '../api';
-import { CARD_ORDER, cardOf, DUBAI_ORDER, MODES, type CardId, type WwMode } from '../cards';
+import { cardOf, deckOf, MODES, type CardId, type WwMode } from '../cards';
 import { PORTRAIT, SCENES } from '../dubai/art';
 import { Breathe, GoldDust, LivingScene, useEntrance } from '../dubai/Motion';
 import { DX, serif, useDubaiFonts } from '../dubai/theme';
@@ -33,23 +33,53 @@ const MODE_INFO: Record<WwMode, ModeInfo> = {
     line: 'The rules everyone knows: 10 cards, from 6 to 20 players.',
     cast: ['werewolf', 'seer', 'witch', 'hunter', 'cupid', 'villager'],
   },
+  chaos: {
+    name: 'Chaos',
+    tagline: 'Cards change hands. Nothing is sure.',
+    line: 'The Classic cards and 10 Chaos cards: Scammer, Mirror, Saboteur, Clown, Ninja…',
+    cast: ['scammer', 'mirror', 'clown', 'saboteur', 'ninja', 'chameleon'],
+  },
+  nightmare: {
+    name: 'Nightmare',
+    tagline: 'The dead come back. The living turn.',
+    line: 'The Classic cards and 10 Nightmare cards: Vampire, Revenant, Cursed, Reaper…',
+    cast: ['vampire', 'revenant', 'cursed', 'reaper', 'exorcist', 'dark_oracle'],
+  },
+  manipulation: {
+    name: 'Manipulation',
+    tagline: 'The vote is a weapon.',
+    line: 'The Classic cards and 9 Manipulation cards: Lawyer, Dictator, Double Agent, Spy…',
+    cast: ['manipulator', 'double_agent', 'lawyer', 'dictator', 'hacker', 'spy'],
+  },
+  nightmare_chaos: {
+    name: 'Nightmare Chaos',
+    tagline: 'Curses and swaps, the same night.',
+    line: 'Nightmare and Chaos cards together, with the hybrids of the Village.',
+    cast: ['reaper', 'scammer', 'vampire', 'mirror', 'guardian', 'cursed'],
+  },
+  manipulation_chaos: {
+    name: 'Manipulation Chaos',
+    tagline: 'Lies by day, swaps by night.',
+    line: 'Manipulation and Chaos cards together, with the hybrids of the Village.',
+    cast: ['dictator', 'scammer', 'usurper', 'clown', 'detective', 'gambler'],
+  },
+  nightmare_manipulation: {
+    name: 'Nightmare Manipulation',
+    tagline: 'They vote. Something else decides.',
+    line: 'Nightmare and Manipulation cards together, with the hybrids of the Village.',
+    cast: ['possessed', 'lawyer', 'vampire', 'double_agent', 'prophet', 'spider'],
+  },
+  apocalypse: {
+    name: 'Apocalypse',
+    tagline: 'Every card. Every power.',
+    line: 'The 44 cards of the four families and the Classic, drawn anew each game.',
+    cast: ['anomaly', 'vampire', 'dictator', 'bounty_hunter', 'scammer', 'reaper'],
+  },
   dubai: {
     name: 'Dubai',
     tagline: 'In Dubai, everyone has something to hide.',
     line: 'Expats against Escrocs, with Independents: 20 characters.',
     cast: ['expat', 'influencer', 'emirati', 'escroc', 'golden_visa', 'concierge'],
-  },
-  chaos: {
-    name: 'Chaos',
-    tagline: 'Nobody knows which cards are in play.',
-    line: 'The Classic cards, a deck drawn at random and kept secret until the end.',
-    cast: ['thief', 'little_girl', 'werewolf', 'elder', 'salvateur', 'seer'],
-  },
-  nightmare: {
-    name: 'Nightmare',
-    tagline: 'One more werewolf. No Seer.',
-    line: 'For players who know the game: the village only has its debates and its votes.',
-    cast: ['hunter', 'werewolf', 'witch', 'salvateur', 'villager', 'elder'],
   },
   powers: {
     name: 'All powers',
@@ -165,8 +195,8 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
                 <View style={[styles.modeTile, { width: tileW, height: tileH }, on && styles.modeTileOn]}>
                   <Image source={PORTRAIT[MODE_INFO[m].cast[0]]} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
                   <LinearGradient colors={['transparent', 'rgba(11,9,7,0.95)']} locations={[0.4, 1]} style={StyleSheet.absoluteFill} />
-                  <Text style={[styles.modeTileText, serif(fonts, '900'), { fontSize: Math.max(8, Math.min(14, Math.floor((tileW - 12) / (tx(MODE_INFO[m].name).length * 0.98)))) }, on && { color: DX.goldLight }]} numberOfLines={1}>{tx(MODE_INFO[m].name).toUpperCase()}</Text>
-                  {m === 'nightmare' || m === 'powers' ? (
+                  <Text style={[styles.modeTileText, serif(fonts, '900'), { fontSize: Math.max(8, Math.min(14, Math.floor((tileW - 12) / (Math.max(...tx(MODE_INFO[m].name).split(' ').map((w) => w.length)) * 0.98)))) }, on && { color: DX.goldLight }]} numberOfLines={2}>{tx(MODE_INFO[m].name).toUpperCase()}</Text>
+                  {m !== 'classic' && m !== 'dubai' && m !== 'powers' ? (
                     <View style={styles.newBadge}>
                       <Text style={styles.newText}>{tx('New mode')}</Text>
                     </View>
@@ -373,7 +403,7 @@ function TrainingSheet({ visible, mode, onClose, onCreated }: { visible: boolean
   const [role, setRole] = useState<string>('random');
   const [difficulty, setDifficulty] = useState<'beginner' | 'intermediate' | 'expert'>('intermediate');
   const [busy, setBusy] = useState(false);
-  const roles: CardId[] = mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER;
+  const roles: CardId[] = deckOf(mode);
   const start = () => {
     setBusy(true);
     wwTraining(appSpace, Number(size), role === 'random' || !roles.includes(role as CardId) ? null : role, difficulty, mode)

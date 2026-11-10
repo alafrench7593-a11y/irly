@@ -63,7 +63,7 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
   const survivors = cards.filter((c) => c.alive);
   const out = cards.filter((c) => !c.alive);
   const minutes = room.started_at && room.finished_at ? Math.max(1, Math.round((Date.parse(room.finished_at) - Date.parse(room.started_at)) / 60000)) : null;
-  const byFaction = (['village', 'wolves', 'expats', 'escrocs', 'independents', 'double'] as Faction[]).map((f) => ({ f, n: cards.filter((c) => factionOf(c.card) === f).length })).filter((x) => x.n > 0);
+  const byFaction = (['village', 'hybrid', 'wolves', 'solo', 'expats', 'escrocs', 'independents', 'double'] as Faction[]).map((f) => ({ f, n: cards.filter((c) => factionOf(c.card) === f).length })).filter((x) => x.n > 0);
   const ranking = [...cards].sort((a, b) => Number(b.won) - Number(a.won) || Number(b.alive) - Number(a.alive) || a.seat - b.seat);
   const enter = useEntrance(200, 900);
   const bannerStyle = useAnimatedStyle(() => ({ opacity: enter.get(), transform: [{ scale: 0.85 + enter.get() * 0.15 }] }));
@@ -107,8 +107,11 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
 
       <Animated.View entering={reduced ? undefined : FadeInDown.delay(500).duration(500)} style={styles.panel}>
         <Text style={[styles.panelTitle, serif(fonts, '700')]}>{iWon ? tx('You won this game') : tx('You lost this game')}</Text>
-        {solo.includes(mySeat) ? <Text style={styles.note}>{tx('Your personal goal is reached: a victory for good.')}</Text> : null}
-        {double.includes(mySeat) ? <Text style={styles.note}>{tx('Double victory: your faction and your personal goal.')}</Text> : null}
+        {double.includes(mySeat) ? (
+          <Text style={styles.note}>{tx('Double victory: your faction and your personal goal.')}</Text>
+        ) : solo.includes(mySeat) ? (
+          <Text style={styles.note}>{tx('Your personal goal is reached: a victory for good.')}</Text>
+        ) : null}
         <Text style={styles.small}>{view.kind === 'training' ? tx('Training against AI players: never counted in the ranking.') : tx('Unranked game')}</Text>
       </Animated.View>
 
@@ -146,7 +149,7 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
               </Text>
             </View>
             <Text style={[styles.rankWon, { color: c.won ? '#7BE0A0' : DX.muted }]}>
-              {solo.includes(c.seat) ? tx('Personal victory') : double.includes(c.seat) ? tx('Double victory') : c.won ? tx('Won') : tx('Lost')}
+              {double.includes(c.seat) ? tx('Double victory') : solo.includes(c.seat) ? tx('Personal victory') : c.won ? tx('Won') : tx('Lost')}
             </Text>
           </Animated.View>
         ))}

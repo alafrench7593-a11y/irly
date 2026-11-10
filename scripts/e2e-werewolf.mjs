@@ -145,27 +145,32 @@ try {
     return msgs.every((m) => keys.has(m.body) && !JSON.stringify(m.data ?? {}).includes('card'));
   });
 
-  // ───── Chaos: a random deck, secret until the end ─────
-  await step('chaos training: the deck stays secret during the game, revealed at the end', async () => {
-    const room = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 9, p_role: null, p_difficulty: 'intermediate', p_mode: 'chaos' }));
-    let v = must(await A.sb.rpc('ww_view', { p_room: room }));
-    const hidden = v.phase === 'ended' || (!('composition' in v) && !(v.log ?? []).some((e) => e.data && 'composition' in e.data));
-    for (let i = 0; i < 1600 && v.phase !== 'ended'; i++) {
+  // ───── The seven V3 modes: a training game in each starts with a card of the mode, and one is played to its end ─────
+  await step('V3 modes: training starts in each of the seven, with the chosen card', async () => {
+    const picks = { chaos: 'scammer', nightmare: 'vampire', manipulation: 'lawyer', nightmare_chaos: 'reaper', manipulation_chaos: 'dictator', nightmare_manipulation: 'possessed', apocalypse: 'bounty_hunter' };
+    for (const [mode, role] of Object.entries(picks)) {
+      const room = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 10, p_role: role, p_difficulty: 'intermediate', p_mode: mode }));
+      const v = must(await A.sb.rpc('ww_view', { p_room: room }));
+      if (v.mode !== mode || v.me.card !== role || v.players.length !== 10 || !v.composition[role]) throw new Error(`${mode}: got ${v.me.card} in ${v.mode}`);
+      if (v.players.some((x) => 'card' in x || 'camp' in x)) throw new Error(`${mode}: a card is shown`);
+    }
+    return true;
+  });
+  await step('V3: a card of another family is refused; an unknown mode too', async () => {
+    await refused(A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 8, p_role: 'vampire', p_difficulty: 'intermediate', p_mode: 'chaos' }), 'composition: unknown card');
+    return refused(A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 8, p_role: null, p_difficulty: 'intermediate', p_mode: 'no_such_mode' }), 'this mode is not available yet');
+  });
+  await step('Apocalypse: a whole training game against the AI players ends, unranked', async () => {
+    const room = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 12, p_role: null, p_difficulty: 'intermediate', p_mode: 'apocalypse' }));
+    let v;
+    for (let i = 0; i < 1600; i++) {
       v = await playOnce(A, room);
+      if (v.phase === 'ended') break;
       await sleep(250);
     }
     v = must(await A.sb.rpc('ww_view', { p_room: room }));
-    return hidden && v.phase === 'ended' && v.mode === 'chaos' && v.composition && Object.values(v.composition).reduce((a, b) => a + b, 0) === 9;
-  });
-  await step('chaos: a host cannot choose the deck', () =>
-    refused(A.sb.rpc('ww_create', { p_space: 'mixte', p_visibility: 'private', p_size: 8, p_kind: 'online', p_composition: { werewolf: 2, villager: 6 }, p_title: null, p_lang: 'fr', p_mode: 'chaos' }), 'Chaos: the deck is drawn in secret'));
-
-  await step('new modes: a Nightmare training game starts without a Seer, an All powers one without a villager', async () => {
-    const n = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 8, p_role: null, p_difficulty: 'intermediate', p_mode: 'nightmare' }));
-    const vn = must(await A.sb.rpc('ww_view', { p_room: n }));
-    const p = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 8, p_role: null, p_difficulty: 'intermediate', p_mode: 'powers' }));
-    const vp = must(await A.sb.rpc('ww_view', { p_room: p }));
-    return vn.mode === 'nightmare' && !('seer' in vn.composition) && vn.composition.werewolf === 3 && vp.mode === 'powers' && !('villager' in vp.composition);
+    console.log(`    (${v.result?.winner} won after ${v.night} nights; personal victories: ${(v.result?.solo ?? []).length})`);
+    return v.phase === 'ended' && v.result.ranked === false && ['village', 'wolves', 'lovers', 'draw'].includes(v.result.winner);
   });
   await step('training does not rush: the phase is still there right after every AI player has acted', async () => {
     const r = must(await A.sb.rpc('ww_training', { p_space: 'mixte', p_size: 8, p_role: 'villager', p_difficulty: 'intermediate', p_mode: 'classic' }));
