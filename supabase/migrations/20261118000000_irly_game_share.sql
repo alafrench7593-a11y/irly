@@ -15,7 +15,8 @@
 --   - an IRLY Girl game is shared only in an IRLY Girl community, a Mixte game
 --     only in a Mixte one (the Live's universe rule), so a share never moves a
 --     game across the two spaces;
---   - one post per game and community: sharing again returns the same post.
+--   - one post per game and community: sharing again returns the same post (asking for the Live afterwards
+--     publishes it again, flagged, in place of the first).
 --
 -- What a reader sees comes from the room itself, read at the moment it is
 -- shown (game_share_cards): players, seats, status, text or voice. Only for
@@ -71,12 +72,19 @@ language plpgsql volatile security invoker set search_path = public as $$
 declare
   me uuid := auth.uid();
   pid uuid;
+  was_live boolean;
 begin
   if me is null then raise exception 'sign in to play' using errcode = '42501'; end if;
   if p_room is null or p_community is null then raise exception 'choose a community' using errcode = '22023'; end if;
-  select id into pid from public.community_posts
+  select id, in_live into pid, was_live from public.community_posts
     where game_room_id = p_room and community_id = p_community and deleted_at is null limit 1;
-  if pid is not null then return pid; end if;
+  if pid is not null and (was_live or not coalesce(p_live, false)) then return pid; end if;
+  -- Already in this community, now wanted on the Live too: a post joins the Live only when it is published, so the
+  -- host's earlier post is withdrawn and published again, flagged. Still one post for this game here.
+  if pid is not null then
+    update public.community_posts set deleted_at = now() where id = pid and author_id = me;
+    if not found then return pid; end if;
+  end if;
   insert into public.community_posts (community_id, author_id, body, game_room_id, in_live)
     values (p_community, me, '🐺 Loup-Garou', p_room, coalesce(p_live, false))
     returning id into pid;

@@ -11,6 +11,7 @@ import { blockUser } from '@/features/moderation/moderation';
 import { openReport } from '@/features/moderation/reportStore';
 import { t as tx } from '@/i18n';
 import { useNow } from '@/lib/useNow';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { joinRoom, kickPlayer, startRoom, type GameMessage, type Room } from '../api';
@@ -44,13 +45,15 @@ export function WerewolfRoom({ room, me, messages, children }: { room: Room; me:
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const playing = view && view.phase !== 'lobby' && view.phase !== 'ended';
+  // While the keyboard is up the dock steps aside: the field being typed in and its send button keep the room.
+  const typing = useKeyboardHeight() > 0;
   // Voice games: my rights are read again when the table changes (lobby) or when the phase, the living or my camp do.
   const voiceSig = !view || view.phase === 'lobby' ? room : `${view.phase}|${view.night}|${view.day}|${(view.players ?? []).map((p) => (p.alive ? 1 : 0)).join('')}|${view.me?.camp}|${(view.me?.pack ?? []).join(',')}`;
   const voice = useVoice(room.id, voiceSig);
   const people = useMemo(() => room.people.map((p) => ({ id: p.id, name: p.name ?? tx('A member') })), [room.people]);
   return (
     <View style={styles.screen}>
-      <ScrollView style={styles.screen} contentContainerStyle={[styles.scroll, { paddingBottom: playing ? 16 : insets.bottom + 16 }]} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.screen} contentContainerStyle={[styles.scroll, { paddingBottom: playing ? 16 : insets.bottom + 16 }]} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
         {!view ? (
           <Text style={styles.muted}>{failed ? tx(failed) : tx('Loading…')}</Text>
         ) : view.phase === 'lobby' ? (
@@ -61,7 +64,7 @@ export function WerewolfRoom({ room, me, messages, children }: { room: Room; me:
         {children}
       </ScrollView>
       {/* What I may do now stays at the bottom of the screen: never a scroll away. */}
-      {playing ? (
+      {playing && !typing ? (
         <View style={[styles.dock, { paddingBottom: insets.bottom + 10, maxHeight: Math.round(height * 0.42) }]} testID="ww-dock">
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.dockInner}>
             <VoiceMic voice={voice} />
@@ -508,6 +511,8 @@ function Chat({ room, view, messages, me, name }: { room: Room; view: WwView; me
             placeholderTextColor={DX.muted}
             style={styles.input}
             onSubmitEditing={send}
+            // Sending keeps the keyboard up: the next message can be typed at once.
+            submitBehavior="submit"
             returnKeyType="send"
             maxLength={300}
             accessibilityLabel={tx(channel === 'wolves' ? 'Whisper to the pack' : 'Talk to the village')}

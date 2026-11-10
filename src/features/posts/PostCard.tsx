@@ -175,7 +175,7 @@ export const PostCard = memo(function PostCard({
       ) : null}
 
       {richId && body === GAME_SHARE_MARK ? <GameShareCard postId={richId} /> : null}
-      {body ? (
+      {body && !(richId && body === GAME_SHARE_MARK) ? (
         <View style={{ gap: 4 }}>
           <RichText text={body} variant={bigText && !media ? 'titleM' : 'body'} postId={richId ?? null} numberOfLines={long && !more ? 7 : undefined} />
           {long ? (

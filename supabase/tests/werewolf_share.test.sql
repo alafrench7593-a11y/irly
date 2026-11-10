@@ -63,6 +63,12 @@ begin
   perform pg_temp.check((select count(distinct game_room_id) = 1 and count(*) = 2 from public.community_posts where id in (p1, pl))
     and (select count(*) = 1 from public.game_rooms where host_id = pg_temp.uid(1) and status = 'waiting' and kind = 'online'), 'two posts, one room: sharing never creates another game');
   perform pg_temp.check(pg_temp.err(format('update public.community_posts set game_room_id = %L where id = %L', gen_random_uuid(), p1)) is not null, 'a post cannot be pointed to another game afterwards');
+  -- Shared in a community first, then asked on the Live for the same community: one post still, now on the Live.
+  p2 := public.game_share(t, open_c, true);
+  perform pg_temp.check(p2 <> p1 and (select in_live from public.community_posts where id = p2) and (select deleted_at is not null from public.community_posts where id = p1)
+    and (select count(*) = 1 from public.community_posts where game_room_id = t and community_id = open_c and deleted_at is null)
+    and public.game_share(t, open_c, false) = p2, 'asked on the Live after the community: the post is published again on the Live, and there is still one');
+  p1 := p2;
   -- ───── Who may share ─────
   perform pg_temp.as_user(2);
   perform pg_temp.check(pg_temp.err(format('select public.game_share(%L, %L, false)', t, second_c)) = 'only the host can do this' or public.game_share(t, second_c, false) = pl,

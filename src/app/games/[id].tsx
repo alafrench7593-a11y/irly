@@ -22,6 +22,7 @@ import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
 import { radius, space } from '@/theme/tokens';
+import { useKeyboardHeight } from '@/motion/keyboard';
 import { useTheme } from '@/theme/useTheme';
 
 /** A crash here shows Try again and a way home, not a blank screen (components/layout/ErrorScreen). */
@@ -40,6 +41,7 @@ export default function GameRoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const t = useTheme();
+  const keyboard = useKeyboardHeight();
   const insets = useSafeAreaInsets();
   const uid = useAccount()?.userId;
   const { room, missing, messages, reload, skew } = useRoom(id);
@@ -61,7 +63,7 @@ export default function GameRoomScreen() {
     );
   }
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.root, { backgroundColor: room?.game === 'werewolf' ? '#0B0907' : t.c.bg }]}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.root, { backgroundColor: room?.game === 'werewolf' ? '#0B0907' : t.c.bg, paddingBottom: Platform.OS === 'android' ? keyboard : 0 }]}>
       <Header room={room} me={uid} onBack={() => (router.canGoBack() ? router.back() : router.replace('/games'))} />
       {!room ? (
         <View style={styles.center}>

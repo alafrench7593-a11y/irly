@@ -151,7 +151,7 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
       </Animated.View>
       <LinearGradient colors={['rgba(11,9,7,0.35)', 'rgba(11,9,7,0.05)', 'rgba(11,9,7,0.6)', 'rgba(11,9,7,0.96)']} locations={[0, 0.25, 0.5, 0.8]} style={StyleSheet.absoluteFill} />
       <GoldDust count={14} height={height} />
-      <ScrollView ref={scroller} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scroller} contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: 24, alignItems: 'center' }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         <View style={[styles.top, { width: pageW }]}>
           <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/games'))} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
             <Icon name="arrowLeft" size={20} color={DX.goldLight} />
