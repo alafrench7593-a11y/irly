@@ -70,7 +70,11 @@ aussi.
 1. Créer un projet LiveKit (Cloud ou auto-hébergé).
 2. Dans Supabase → Edge Functions → Secrets : `LIVEKIT_URL` (wss://…), `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`.
 3. Déployer la fonction : `supabase functions deploy voice-token`.
-4. Web : rien d'autre. Le choix « Mode vocal » apparaît à la création d'une table.
+4. Web : le site interdit aujourd'hui le micro à toutes les pages (`vercel.json`, en-tête `Permissions-Policy:
+   microphone=()`). Pour que le vocal marche dans le navigateur, il faut le passer à `microphone=(self)`. C'est un
+   réglage de sécurité : il n'a pas été modifié ici, la décision revient au propriétaire. Sans ce changement, le
+   navigateur refuse le micro et l'application affiche « Le micro est bloqué ». Ajouter aussi l'adresse du serveur
+   audio à `connect-src` de la politique de contenu (aujourd'hui en mode rapport seulement : elle ne bloque pas).
 5. iOS / Android : un nouveau build est nécessaire (pas Expo Go, pas une simple mise à jour OTA) :
    - `npx expo install @livekit/react-native @livekit/react-native-webrtc @livekit/react-native-expo-plugin @config-plugins/react-native-webrtc`
    - `app.json` : ajouter les deux plugins, le texte d'autorisation du micro (`NSMicrophoneUsageDescription`),

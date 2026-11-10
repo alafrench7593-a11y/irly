@@ -187,6 +187,19 @@ try {
     for (const p of [B, C, D, E, F]) must(await p.sb.rpc('game_join_code', { p_code: code }));
     return must(await A.sb.rpc('game_room', { p_room: table })).players === 6;
   });
+  await step('voice: a table is in writing by default; only the host turns voice on; the lobby may then speak', async () => {
+    const before = must(await A.sb.rpc('ww_voice_state', { p_room: table }));
+    await refused(B.sb.rpc('ww_set_comm', { p_room: table, p_comm: 'voice' }), 'only the host can do this');
+    await refused(A.sb.rpc('ww_voice_grant', { p_room: table }), 'this game is played in writing');
+    must(await A.sb.rpc('ww_set_comm', { p_room: table, p_comm: 'voice' }));
+    const host = must(await A.sb.rpc('ww_voice_state', { p_room: table }));
+    const member = must(await B.sb.rpc('ww_voice_state', { p_room: table }));
+    const ga = must(await A.sb.rpc('ww_voice_grant', { p_room: table }));
+    const gb = must(await B.sb.rpc('ww_voice_grant', { p_room: table }));
+    await refused(G.sb.rpc('ww_voice_grant', { p_room: table }), 'this game no longer exists');
+    return before.comm === 'text' && before.channels.length === 0 && host.comm === 'voice' && member.channels.length === 1 && member.channels[0].channel === 'all' && member.channels[0].speak
+      && ga.channels[0].room === gb.channels[0].room && ga.identity !== gb.identity;
+  });
   await step('online: only the host starts', () => refused(B.sb.rpc('game_start', { p_room: table }), 'only the host can do this'));
   await step('online: the host starts; each sees only her own card', async () => {
     must(await A.sb.rpc('game_start', { p_room: table }));
@@ -208,6 +221,17 @@ try {
     const seen = must(await villager.p.sb.from('game_messages').select('id').eq('room_id', table).eq('channel', 'wolves'));
     const own = must(await wolf.p.sb.from('game_messages').select('id').eq('room_id', table).eq('channel', 'wolves'));
     return seen.length === 0 && own.length === 1;
+  });
+  await step('voice at night: only the wolf holds a channel (the pack); a villager holds none and is refused', async () => {
+    const views = [];
+    for (const p of [A, B, C, D, E, F]) views.push({ p, v: must(await p.sb.rpc('ww_view', { p_room: table })) });
+    const wolf = views.find((x) => x.v.me.pack);
+    const villager = views.find((x) => !x.v.me.pack);
+    const ws = must(await wolf.p.sb.rpc('ww_voice_state', { p_room: table }));
+    const vs = must(await villager.p.sb.rpc('ww_voice_state', { p_room: table }));
+    const wg = must(await wolf.p.sb.rpc('ww_voice_grant', { p_room: table }));
+    await refused(villager.p.sb.rpc('ww_voice_grant', { p_room: table }), 'you cannot talk here now');
+    return ws.channels.length === 1 && ws.channels[0].channel === 'wolves' && vs.channels.length === 0 && wg.channels.length === 1 && /-wolves-/.test(wg.channels[0].room);
   });
   await step('online: once everyone acted at night, the morning comes (no waiting for the clock)', async () => {
     for (const p of [A, B, C, D, E, F]) await playOnce(p, table);
