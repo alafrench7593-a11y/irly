@@ -26,6 +26,8 @@ type Props = {
   onPick?: (seat: number) => void;
   /** Touching a member who cannot be chosen now (report, block). */
   onMenu?: (p: WwPlayer) => void;
+  /** Voice games: the seats speaking right now (a ring of light around them). */
+  speaking?: number[];
   /** What to do now, written on the table itself (« Touch a player to vote »). */
   hint?: string;
   /** The mode's scenes (Classic village, Dubaï, Chaos). */
@@ -37,7 +39,7 @@ type Props = {
  * title and clock in the middle, the players all around. A player who can be
  * chosen now glows; touching them sends the choice (the server checks it).
  */
-export const Stage = memo(function Stage({ phase, title, subtitle, clock, players, mySeat, targets, chosen, marks, onPick, onMenu, hint, scene = BACKGROUND }: Props) {
+export const Stage = memo(function Stage({ phase, title, subtitle, clock, players, mySeat, targets, chosen, marks, onPick, onMenu, hint, speaking, scene = BACKGROUND }: Props) {
   const fonts = useDubaiFonts();
   const { width, height } = useWindowDimensions();
   const W = Math.min(width - 32, 560);
@@ -88,6 +90,7 @@ export const Stage = memo(function Stage({ phase, title, subtitle, clock, player
             mark={marks?.[p.seat]}
             onPick={onPick}
             onMenu={onMenu}
+            talking={speaking?.includes(p.seat) ?? false}
           />
         );
       })}
@@ -95,7 +98,7 @@ export const Stage = memo(function Stage({ phase, title, subtitle, clock, player
   );
 });
 
-const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, mark, onPick, onMenu }: { p: WwPlayer; x: number; y: number; size: number; index: number; me: boolean; pickable: boolean; chosen: boolean; mark?: string; onPick?: (seat: number) => void; onMenu?: (p: WwPlayer) => void }) {
+const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, mark, onPick, onMenu, talking }: { talking: boolean; p: WwPlayer; x: number; y: number; size: number; index: number; me: boolean; pickable: boolean; chosen: boolean; mark?: string; onPick?: (seat: number) => void; onMenu?: (p: WwPlayer) => void }) {
   const reduced = useReducedMotion();
   const pulse = useSharedValue(0);
   const fall = useSharedValue(p.alive ? 0 : 1);
@@ -114,6 +117,15 @@ const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, ma
     }
     fall.set(reduced ? 1 : withSequence(withTiming(0.2, { duration: 120 }), withSpring(1, { damping: 8 })));
   }, [p.alive, fall, reduced]);
+  const voice = useSharedValue(0);
+  useEffect(() => {
+    if (!talking) {
+      voice.set(withTiming(0, { duration: 180 }));
+      return;
+    }
+    voice.set(reduced ? 1 : withRepeat(withSequence(withTiming(1, { duration: 320 }), withTiming(0.45, { duration: 320 })), -1, false));
+  }, [talking, reduced, voice]);
+  const voiceRing = useAnimatedStyle(() => ({ opacity: voice.get(), transform: [{ scale: 1 + voice.get() * 0.07 }] }));
   const ring = useAnimatedStyle(() => ({ opacity: chosen ? 1 : 0.35 + pulse.get() * 0.65, transform: [{ scale: chosen ? 1.08 : 1 + pulse.get() * 0.06 }] }));
   const body = useAnimatedStyle(() => ({ opacity: 1 - fall.get() * 0.55, transform: [{ rotate: `${Math.sin(fall.get() * Math.PI * 3) * 6 * (1 - fall.get())}deg` }] }));
   const ringColor = chosen ? DX.redLight : pickable ? DX.goldLight : me ? DX.gold : DX.goldDark;
@@ -129,10 +141,11 @@ const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, ma
         }}
         accessibilityRole="button"
         accessibilityState={{ disabled: !pickable, selected: chosen }}
-        accessibilityLabel={p.name + (p.alive ? '' : ` · ${tx('eliminated')}`)}
+        accessibilityLabel={p.name + (p.alive ? '' : ` · ${tx('eliminated')}`) + (talking ? ` · ${tx('speaking')}` : '')}
         hitSlop={6}
       >
         <Animated.View style={body}>
+          {talking ? <Animated.View pointerEvents="none" style={[styles.voice, { width: size + 16, height: size + 16, borderRadius: (size + 16) / 2 }, voiceRing]} /> : null}
           {pickable && !chosen ? <Animated.View style={[styles.halo, { width: size + 18, height: size + 18, borderRadius: (size + 18) / 2 }, ring]} /> : null}
           {(pickable || chosen || me) && p.alive ? <Animated.View style={[styles.ring, { width: size + 8, height: size + 8, borderRadius: (size + 8) / 2, borderColor: ringColor }, ring]} /> : null}
           <View style={[styles.face, { width: size, height: size, borderRadius: size / 2, borderColor: chosen ? DX.redLight : DX.gold }]}>
@@ -180,6 +193,7 @@ const styles = StyleSheet.create({
   seat: { position: 'absolute', alignItems: 'center' },
   ring: { position: 'absolute', left: -4, top: -4, borderWidth: 2.5 },
   halo: { position: 'absolute', left: -9, top: -9, backgroundColor: 'rgba(247,222,151,0.28)', shadowColor: DX.goldLight, shadowOpacity: 0.9, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
+  voice: { position: 'absolute', left: -8, top: -8, borderWidth: 3, borderColor: '#BFE3FF', backgroundColor: 'rgba(191,227,255,0.16)', shadowColor: '#BFE3FF', shadowOpacity: 0.95, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
   hint: { alignItems: 'center' },
   hintText: { color: DX.black, backgroundColor: DX.goldLight, borderRadius: 14, overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 5, fontSize: 13, fontWeight: '800', textAlign: 'center' },
   face: { overflow: 'hidden', borderWidth: 2, backgroundColor: DX.black, alignItems: 'center', justifyContent: 'center' },

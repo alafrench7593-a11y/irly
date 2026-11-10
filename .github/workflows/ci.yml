@@ -32,5 +32,7 @@ jobs:
         run: npm run -s test:crash
       - name: Ludo board matches the server's rules
         run: npm run -s test:ludo
+      - name: Voice tokens (claims, signature)
+        run: node --experimental-strip-types --no-warnings scripts/test-voice-token.mts
       - name: Web build
         run: npx expo export --platform web

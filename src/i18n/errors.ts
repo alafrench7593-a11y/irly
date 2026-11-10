@@ -44,6 +44,10 @@ export const SERVER_ERRORS: Record<string, string> = {
   'the village sleeps: no talking at night': 'The village sleeps: no talking at night',
   'you cannot do that now': 'You can\'t do that now',
   'you cannot talk here now': 'You can\'t talk here now',
+  // Loup-Garou voice games (20261117000000_irly_werewolf_voice).
+  'choose text or voice': 'Choose text or voice',
+  'voice is for online games': 'Voice is for online games',
+  'this game is played in writing': 'This game is played in writing',
   // IRLY Games (20261111000000_irly_games).
   'sign in to play': 'Sign in to play',
   'your account cannot play right now': 'Your account can\'t play right now',

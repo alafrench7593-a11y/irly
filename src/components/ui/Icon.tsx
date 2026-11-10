@@ -70,7 +70,12 @@ import MapPin from 'lucide-react-native/icons/map-pin';
 import Martini from 'lucide-react-native/icons/martini';
 import Medal from 'lucide-react-native/icons/medal';
 import MessageCircle from 'lucide-react-native/icons/message-circle';
+import Headphones from 'lucide-react-native/icons/headphones';
+import LogOut from 'lucide-react-native/icons/log-out';
 import Mic from 'lucide-react-native/icons/mic';
+import MicOff from 'lucide-react-native/icons/mic-off';
+import Volume2 from 'lucide-react-native/icons/volume-2';
+import VolumeX from 'lucide-react-native/icons/volume-x';
 import Minus from 'lucide-react-native/icons/minus';
 import Moon from 'lucide-react-native/icons/moon';
 import Shuffle from 'lucide-react-native/icons/shuffle';
@@ -219,6 +224,11 @@ export const icons = {
   medal: Medal,
   message: MessageCircle,
   mic: Mic,
+  micOff: MicOff,
+  volume: Volume2,
+  volumeOff: VolumeX,
+  headphones: Headphones,
+  logOut: LogOut,
   minus: Minus,
   moon: Moon,
   shuffle: Shuffle,

@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Alert, ScrollView, Share, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
@@ -13,7 +13,7 @@ import { t as tx } from '@/i18n';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
-import { startRoom, type GameMessage, type Room } from '../api';
+import { kickPlayer, startRoom, type GameMessage, type Room } from '../api';
 import { ACTION_TITLE, CARD_ORDER, cardOf, DAY_POWERS, deckOf, MODE_NAME, NO_TARGET, SPECIALS, toMode, TWO_TARGETS, wolvesFor, type CardId } from './cards';
 import { botLine, logLine } from './lines';
 import { PORTRAIT, SCENES } from './dubai/art';
@@ -22,6 +22,9 @@ import { DubaiMyCard } from './dubai/RoomParts';
 import { Stage } from './dubai/Stage';
 import { DX, serif, useDubaiFonts } from './dubai/theme';
 import { Qr } from './Qr';
+import { CommChoice } from './voice/CommChoice';
+import { useVoice, voiceConfigured, voiceSupported, wwSetComm, type Voice } from './voice/useVoice';
+import { VoiceBar, VoiceMic } from './voice/VoiceBar';
 import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, type WwOption, type WwPlayer, type WwView } from './api';
 
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
@@ -40,15 +43,19 @@ export function WerewolfRoom({ room, me, messages, children }: { room: Room; me:
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const playing = view && view.phase !== 'lobby' && view.phase !== 'ended';
+  // Voice games: my rights are read again when the table changes (lobby) or when the phase, the living or my camp do.
+  const voiceSig = !view || view.phase === 'lobby' ? room : `${view.phase}|${view.night}|${view.day}|${(view.players ?? []).map((p) => (p.alive ? 1 : 0)).join('')}|${view.me?.camp}|${(view.me?.pack ?? []).join(',')}`;
+  const voice = useVoice(room.id, voiceSig);
+  const people = useMemo(() => room.people.map((p) => ({ id: p.id, name: p.name ?? tx('A member') })), [room.people]);
   return (
     <View style={styles.screen}>
       <ScrollView style={styles.screen} contentContainerStyle={[styles.scroll, { paddingBottom: playing ? 16 : insets.bottom + 16 }]} keyboardShouldPersistTaps="handled">
         {!view ? (
           <Text style={styles.muted}>{failed ? tx(failed) : tx('Loading…')}</Text>
         ) : view.phase === 'lobby' ? (
-          <Lobby room={room} me={me} view={view} onChanged={reload} />
+          <Lobby room={room} me={me} view={view} onChanged={reload} voice={voice} people={people} />
         ) : (
-          <Game room={room} me={me} view={view} messages={messages} skew={skew} onChanged={reload} />
+          <Game room={room} me={me} view={view} messages={messages} skew={skew} onChanged={reload} voice={voice} people={people} />
         )}
         {children}
       </ScrollView>
@@ -56,6 +63,7 @@ export function WerewolfRoom({ room, me, messages, children }: { room: Room; me:
       {playing ? (
         <View style={[styles.dock, { paddingBottom: insets.bottom + 10, maxHeight: Math.round(height * 0.42) }]} testID="ww-dock">
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.dockInner}>
+            <VoiceMic voice={voice} />
             <Actions room={room} view={view} name={(s) => (s === undefined ? tx('someone') : ((view.players ?? []).find((p) => p.seat === s)?.name ?? tx('someone')))} onChanged={reload} />
           </ScrollView>
         </View>
@@ -95,12 +103,17 @@ function GoldButton({ label, icon, onPress, disabled, ghost }: { label: string; 
 }
 
 // ───────── Waiting room ─────────
-function Lobby({ room, me, view, onChanged }: { room: Room; me: string; view: WwView; onChanged: () => void }) {
+function Lobby({ room, me, view, onChanged, voice, people }: { room: Room; me: string; view: WwView; onChanged: () => void; voice: Voice; people: { id: string; name: string }[] }) {
   const fonts = useDubaiFonts();
   const host = room.host_id === me;
   const present = room.people.filter((p) => !p.left);
   const irl = room.kind === 'irl';
   const mode = modeOf(view.mode);
+  // The host may turn voice on where it really works (an audio server on the project, WebRTC on this device).
+  const [voiceOk, setVoiceOk] = useState(false);
+  useEffect(() => {
+    if (host && !irl && voiceSupported()) voiceConfigured().then(setVoiceOk);
+  }, [host, irl]);
   const share = () => {
     const text = room.code ? tx('Join my Loup-Garou game on IRLY with the code {code}: {url}', { code: room.code, url: JOIN_URL + room.code }) : tx('Join my Loup-Garou game on IRLY');
     Share.share({ message: text }).catch(() => undefined);
@@ -124,6 +137,12 @@ function Lobby({ room, me, view, onChanged }: { room: Room; me: string; view: Ww
           </View>
         </Panel>
       ) : null}
+      {host && !irl && (voiceOk || voice.isVoice) ? (
+        <Panel title={tx('How the table talks')}>
+          <CommChoice value={voice.isVoice ? 'voice' : 'text'} onChange={(c) => wwSetComm(room.id, c).then(onChanged).catch(fail)} />
+        </Panel>
+      ) : null}
+      <VoiceBar voice={voice} phase="lobby" me={me} people={people} onKick={host ? (id) => kickPlayer(room.id, id).then(onChanged).catch(fail) : undefined} />
       <Deck view={view} editable={host} roomId={room.id} onChanged={onChanged} />
       <Panel title={tx('At the table')}>
         {present.map((p) => (
@@ -204,7 +223,7 @@ function CardChip({ id, count }: { id: CardId; count: number }) {
 }
 
 // ───────── The game ─────────
-function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: string; view: WwView; messages: GameMessage[]; skew: number; onChanged: () => void }) {
+function Game({ room, me, view, messages, skew, onChanged, voice, people }: { room: Room; me: string; view: WwView; messages: GameMessage[]; skew: number; onChanged: () => void; voice: Voice; people: { id: string; name: string }[] }) {
   const night = view.phase === 'night' || view.phase === 'witch';
   const ended = view.phase === 'ended';
   const mode = modeOf(view.mode);
@@ -274,8 +293,10 @@ function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: s
           onPick={stageOption ? pick : undefined}
           onMenu={menu}
           hint={hint}
+          speaking={voice.joined ? players.filter((p) => p.user_id && voice.speaking.includes(p.user_id)).map((p) => p.seat) : undefined}
         />
       )}
+      <VoiceBar voice={voice} phase={view.phase} night={view.night} alive={view.me?.alive} dubai={mode === 'dubai'} me={me} people={people} />
       {ended ? (
         <DubaiResult view={view} me={me} room={room} />
       ) : view.me ? (

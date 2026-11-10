@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,8 @@ import { cardOf, deckOf, MODES, type CardId, type WwMode } from '../cards';
 import { PORTRAIT, SCENES } from '../dubai/art';
 import { Breathe, GoldDust, LivingScene, useEntrance } from '../dubai/Motion';
 import { DX, serif, useDubaiFonts } from '../dubai/theme';
+import { CommChoice, type Comm } from '../voice/CommChoice';
+import { voiceConfigured, voiceSupported, wwComms, wwSetComm } from '../voice/useVoice';
 
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 
@@ -111,6 +113,11 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
   const [creating, setCreating] = useState(false);
   const { data } = useGamesOverview();
   const { rooms } = useOpenRooms('werewolf');
+  const [comms, setComms] = useState<Record<string, 'text' | 'voice'>>({});
+  const roomIds = (rooms ?? []).map((r) => r.id).join(',');
+  useEffect(() => {
+    if (roomIds) wwComms(roomIds.split(',')).then(setComms);
+  }, [roomIds]);
   const recent = useRecentGames();
   const now = useNow();
   useGamesPresence();
@@ -253,7 +260,7 @@ export function WerewolfHome({ initialMode = 'classic' }: { initialMode?: WwMode
           <View style={[styles.section, { width: pageW - 32 }]}>
             <Text style={[styles.sectionTitle, serif(fonts, '700')]}>{tx('Loup-Garou tables')}</Text>
             {rooms.map((r) => (
-              <RoomRow key={r.id} room={r} onOpen={() => run(() => (r.mine ? Promise.resolve(r.id) : joinRoom(r.id)))} />
+              <RoomRow key={r.id} room={r} voice={comms[r.id] === 'voice'} onOpen={() => run(() => (r.mine ? Promise.resolve(r.id) : joinRoom(r.id)))} />
             ))}
           </View>
         ) : null}
@@ -336,7 +343,7 @@ function SmallButton({ icon, label, onPress, fonts }: { icon: IconName; label: s
   );
 }
 
-function RoomRow({ room, onOpen }: { room: RoomCard; onOpen: () => void }) {
+function RoomRow({ room, voice, onOpen }: { room: RoomCard; voice: boolean; onOpen: () => void }) {
   const full = room.players >= room.max;
   const label = room.mine ? tx('Open') : room.status === 'playing' ? tx('Playing') : full ? tx('Full') : tx('Join');
   const disabled = !room.mine && (full || room.status !== 'waiting');
@@ -347,7 +354,7 @@ function RoomRow({ room, onOpen }: { room: RoomCard; onOpen: () => void }) {
           {room.title ?? tx("{name}'s table", { name: room.host ?? tx('A member') })}
         </Text>
         <Text style={styles.small}>
-          {[tx('{n}/{max} players', { n: room.players, max: room.max }), room.lang === 'fr' ? 'Français' : 'English', room.visibility === 'private' ? tx('Private') : tx('Public'), room.status === 'playing' ? tx('In progress') : tx('Waiting')].join(' · ')}
+          {[...(voice ? [tx('🎙️ Voice')] : []), tx('{n}/{max} players', { n: room.players, max: room.max }), room.lang === 'fr' ? 'Français' : 'English', room.visibility === 'private' ? tx('Private') : tx('Public'), room.status === 'playing' ? tx('In progress') : tx('Waiting')].join(' · ')}
         </Text>
       </View>
       <PressableScale onPress={onOpen} disabled={disabled} accessibilityRole="button" accessibilityLabel={label}>
@@ -469,10 +476,18 @@ function TableSheet({ visible, mode, onClose, onCreated }: { visible: boolean; m
   const [size, setSize] = useState<'8' | '10' | '12' | '20'>('10');
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
+  const [comm, setComm] = useState<Comm>('text');
+  // Voice is offered only where it really works: an audio server on the project, WebRTC on this device.
+  const [voiceOk, setVoiceOk] = useState(false);
+  useEffect(() => {
+    if (visible && voiceSupported()) voiceConfigured().then(setVoiceOk);
+  }, [visible]);
+  const voice = voiceOk && kind === 'online' && comm === 'voice';
   const create = () => {
     setBusy(true);
     wwCreate(appSpace, { kind, visibility, size: Number(size), title, lang: lang === 'fr' ? 'fr' : 'en', mode })
-      .then((r) => {
+      .then(async (r) => {
+        if (voice) await wwSetComm(r.id, 'voice');
         onClose();
         onCreated(r.id);
       })
@@ -511,6 +526,7 @@ function TableSheet({ visible, mode, onClose, onCreated }: { visible: boolean; m
         ) : (
           <Text style={styles.small}>{tx('In person: everyone scans the QR code, gets a secret card on their phone and votes there. No game master needed.')}</Text>
         )}
+        {voiceOk && kind === 'online' ? <CommChoice value={comm} onChange={setComm} /> : null}
         <Label>{tx('Up to')}</Label>
         <Choice
           options={[
