@@ -11,19 +11,21 @@ import { t as tx } from '@/i18n';
 import { PressableScale } from '@/motion/PressableScale';
 import type { Room } from '../../api';
 import type { WwView } from '../api';
-import { CARDS, type DubaiCardId } from '../cards';
-import { BACKGROUND, PORTRAIT } from './art';
+import { CARDS, type CardId, type WwMode } from '../cards';
+import { PORTRAIT, SCENES } from './art';
 import { GoldConfetti, LivingScene, useEntrance } from './Motion';
-import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, serif, useDubaiFonts, type Faction } from './theme';
+import { Avatar } from '@/components/ui/Avatar';
+import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, factionText, serif, useDubaiFonts, type Faction } from './theme';
 import { wwTraining } from '../api';
 
-type Revealed = { seat: number; name: string; bot: boolean; card: DubaiCardId; alive: boolean; won: boolean };
+type Revealed = { seat: number; name: string; bot: boolean; card: CardId; alive: boolean; won: boolean };
 
+const MODE_LABEL: Record<WwMode, string> = { classic: 'Classic mode', dubai: 'Dubai mode', chaos: 'Chaos mode' };
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 
 /**
- * The end of a Dubaï game (official mockup 2): the winners' banner over the
- * city in fireworks, the survivors and the eliminated with every card
+ * The end of a game, in every mode (official Dubaï mockup 2): the winners'
+ * banner over the mode's scene in fireworks, the survivors and the eliminated with every card
  * revealed, the factions, and the game's own ranking (winners first).
  * No points, coins or rewards: the app has none to give.
  */
@@ -39,38 +41,46 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
   const solo = r?.solo ?? [];
   const double = r?.double ?? [];
   const winner = r?.winner;
+  const mode: WwMode = view.mode === 'dubai' || view.mode === 'chaos' ? view.mode : 'classic';
+  const dubai = mode === 'dubai';
   const banner =
-    winner === 'village' ? tx('The Expats win') : winner === 'wolves' ? tx('The Escrocs win') : winner === 'lovers' ? tx('The lovers win') : tx('Draw');
+    winner === 'village'
+      ? tx(dubai ? 'The Expats win' : 'The village wins')
+      : winner === 'wolves'
+        ? tx(dubai ? 'The Escrocs win' : 'The werewolves win')
+        : winner === 'lovers'
+          ? tx('The lovers win')
+          : tx('Draw');
   const line =
     winner === 'village'
-      ? tx('The Expats unmasked and eliminated every Escroc!')
+      ? tx(dubai ? 'The Expats unmasked and eliminated every Escroc!' : 'The village unmasked and eliminated every werewolf!')
       : winner === 'wolves'
-        ? tx('The Escrocs took control of the city!')
+        ? tx(dubai ? 'The Escrocs took control of the city!' : 'The werewolves devoured the village!')
         : winner === 'lovers'
           ? tx('The lovers are the last two standing.')
           : tx('Nobody survived.');
-  const emblem: Faction = winner === 'wolves' ? 'escrocs' : 'expats';
+  const emblem: Faction = winner === 'wolves' ? (dubai ? 'escrocs' : 'wolves') : dubai ? 'expats' : 'village';
+  const humans = room.people.filter((p) => p.id !== me && !p.blocked);
   const survivors = cards.filter((c) => c.alive);
   const out = cards.filter((c) => !c.alive);
   const minutes = room.started_at && room.finished_at ? Math.max(1, Math.round((Date.parse(room.finished_at) - Date.parse(room.started_at)) / 60000)) : null;
-  const byFaction = (['expats', 'escrocs', 'independents', 'double'] as Faction[]).map((f) => ({ f, n: cards.filter((c) => factionOf(c.card) === f).length })).filter((x) => x.n > 0);
+  const byFaction = (['village', 'wolves', 'expats', 'escrocs', 'independents', 'double'] as Faction[]).map((f) => ({ f, n: cards.filter((c) => factionOf(c.card) === f).length })).filter((x) => x.n > 0);
   const ranking = [...cards].sort((a, b) => Number(b.won) - Number(a.won) || Number(b.alive) - Number(a.alive) || a.seat - b.seat);
   const enter = useEntrance(200, 900);
   const bannerStyle = useAnimatedStyle(() => ({ opacity: enter.get(), transform: [{ scale: 0.85 + enter.get() * 0.15 }] }));
   const w = Math.min(width - 32, 560);
   const thumb = Math.floor((w - 32 - 3 * 8) / 4);
   const again = () =>
-    wwTraining(room.space === 'irly_girl' ? 'girl' : 'mixte', view.size, null, (view.difficulty as 'beginner' | 'intermediate' | 'expert') ?? 'intermediate', 'dubai')
+    wwTraining(room.space === 'irly_girl' ? 'girl' : 'mixte', view.size, null, (view.difficulty as 'beginner' | 'intermediate' | 'expert') ?? 'intermediate', mode)
       .then((id) => router.replace(`/games/${id}`))
       .catch(fail);
   const share = () => {
-    void Share.share({ message: `${banner} · IRLY Loup-Garou Dubaï\nhttps://getirly.com` }).catch(() => undefined);
+    void Share.share({ message: `${banner} · IRLY Loup-Garou ${tx(MODE_LABEL[mode])}\nhttps://getirly.com` }).catch(() => undefined);
   };
-  void me;
   return (
     <View style={[styles.root, { width: w }]}>
       <View style={styles.hero}>
-        <LivingScene source={BACKGROUND.victory} />
+        <LivingScene source={SCENES[mode].victory} />
         <LinearGradient colors={['rgba(11,9,7,0)', 'rgba(11,9,7,0.35)', 'rgba(11,9,7,0.92)']} style={StyleSheet.absoluteFill} />
         {winner === 'draw' ? null : <GoldConfetti count={24} height={300} />}
         <Animated.View style={[styles.bannerWrap, bannerStyle]}>
@@ -80,7 +90,7 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
           <View style={styles.bannerRow}>
             <Laurel />
             <View style={styles.banner}>
-              <Text style={[styles.bannerText, serif(fonts, '900')]} accessibilityRole="header">
+              <Text style={[styles.bannerText, serif(fonts, '900'), banner.length > 17 && { fontSize: 17 }]} accessibilityRole="header" numberOfLines={2} adjustsFontSizeToFit>
                 {banner.toUpperCase()}
               </Text>
             </View>
@@ -93,7 +103,7 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
       <View style={styles.stats}>
         <Stat icon="users" label={tx('{n} players', { n: cards.length })} />
         {minutes ? <Stat icon="timer" label={tx('{n} min', { n: minutes })} /> : null}
-        <Stat icon="building" label={tx('Dubai mode')} />
+        <Stat icon={dubai ? 'building' : 'moon'} label={tx(MODE_LABEL[mode])} />
       </View>
 
       <Animated.View entering={reduced ? undefined : FadeInDown.delay(500).duration(500)} style={styles.panel}>
@@ -113,7 +123,7 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
         <View style={styles.factions}>
           {byFaction.map(({ f, n }) => (
             <View key={f} style={[styles.faction, { borderColor: FACTION_COLOR[f] }]}>
-              <FactionGlyph faction={f} size={18} color={FACTION_COLOR[f] === DX.expats ? '#8FB2FF' : FACTION_COLOR[f]} />
+              <FactionGlyph faction={f} size={18} color={factionText(f)} />
               <Text style={styles.factionText}>{`${factionLabel(f, tx)} (${n})`}</Text>
             </View>
           ))}
@@ -143,10 +153,25 @@ export const DubaiResult = memo(function DubaiResult({ view, me, room }: { view:
         ))}
       </View>
 
+      {humans.length ? (
+        <View style={styles.panel}>
+          <Text style={[styles.panelTitle, serif(fonts, '700')]}>{tx('Want to stay in touch?')}</Text>
+          {humans.map((p) => (
+            <PressableScale key={p.id} onPress={() => router.push(`/person/${p.id}`)} accessibilityRole="button" accessibilityLabel={tx('See profile')} style={styles.rank}>
+              <Avatar name={p.name ?? '?'} hue={0} userId={p.id} size={38} />
+              <Text style={[styles.rankName, { flex: 1 }]} numberOfLines={1}>
+                {p.name ?? tx('A member')}
+              </Text>
+              <Text style={[styles.rankWon, { color: DX.gold }]}>{tx('See profile')}</Text>
+            </PressableScale>
+          ))}
+        </View>
+      ) : null}
+
       <View style={styles.actions}>
         {view.kind === 'training' ? <Action icon="repeat" label={tx('Play again')} primary onPress={again} fonts={fonts} /> : null}
-        <Action icon="home" label={tx('Back to the lobby')} onPress={() => router.replace('/games/dubai')} fonts={fonts} />
-        <Action icon="drama" label={tx('See the cards')} onPress={() => router.push('/games/cards')} fonts={fonts} />
+        <Action icon="home" label={tx('IRLY Games')} onPress={() => router.replace(`/games?mode=${mode}`)} fonts={fonts} />
+        <Action icon="drama" label={tx('See the cards')} onPress={() => router.push(`/games/cards?mode=${mode}`)} fonts={fonts} />
         <Action icon="share" label={tx('Share')} onPress={share} fonts={fonts} />
       </View>
     </View>
@@ -213,8 +238,8 @@ const styles = StyleSheet.create({
   hero: { height: 300, borderRadius: 22, overflow: 'hidden', borderWidth: 1.5, borderColor: DX.gold, justifyContent: 'flex-end' },
   bannerWrap: { alignItems: 'center', padding: 14, gap: 6 },
   emblem: { width: 58, height: 58, borderRadius: 29, borderWidth: 2, borderColor: DX.gold, backgroundColor: DX.red, alignItems: 'center', justifyContent: 'center' },
-  bannerRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  banner: { borderWidth: 2, borderColor: DX.gold, borderRadius: 12, backgroundColor: 'rgba(94,15,21,0.92)', paddingHorizontal: 14, paddingVertical: 6 },
+  bannerRow: { flexDirection: 'row', alignItems: 'center', gap: 4, maxWidth: '100%', paddingHorizontal: 4 },
+  banner: { flexShrink: 1, borderWidth: 2, borderColor: DX.gold, borderRadius: 12, backgroundColor: 'rgba(94,15,21,0.92)', paddingHorizontal: 14, paddingVertical: 6 },
   bannerText: { color: DX.goldLight, fontSize: 22, letterSpacing: 1, textAlign: 'center' },
   bannerLine: { color: DX.ivory, fontSize: 13, textAlign: 'center' },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },

@@ -1,11 +1,24 @@
 import type { ImageSourcePropType } from 'react-native';
-import type { DubaiCardId } from '../cards';
+import type { CardId, WwMode } from '../cards';
 
 /**
- * The Dubaï mode's illustrations (generated for IRLY from the official mockups, fictional people).
+ * The game's illustrations (generated for IRLY, fictional people): the Classic village and the Dubaï cast.
  * Portraits 720×960, backgrounds 900×1600, WebP.
  */
-export const PORTRAIT: Record<DubaiCardId, ImageSourcePropType> = {
+export const PORTRAIT: Record<CardId, ImageSourcePropType> = {
+  // Classic (and Chaos): the village.
+  werewolf: require('../../../../../assets/games/classic/werewolf.webp'),
+  villager: require('../../../../../assets/games/classic/villager.webp'),
+  seer: require('../../../../../assets/games/classic/seer.webp'),
+  witch: require('../../../../../assets/games/classic/witch.webp'),
+  hunter: require('../../../../../assets/games/classic/hunter.webp'),
+  salvateur: require('../../../../../assets/games/classic/salvateur.webp'),
+  cupid: require('../../../../../assets/games/classic/cupid.webp'),
+  little_girl: require('../../../../../assets/games/classic/little_girl.webp'),
+  elder: require('../../../../../assets/games/classic/elder.webp'),
+  thief: require('../../../../../assets/games/classic/thief.webp'),
+  // Dubaï.
+
   expat: require('../../../../../assets/games/dubai/expat.webp'),
   escroc: require('../../../../../assets/games/dubai/escroc.webp'),
   influencer: require('../../../../../assets/games/dubai/influencer.webp'),
@@ -33,4 +46,20 @@ export const BACKGROUND = {
   night: require('../../../../../assets/games/dubai/bg_night.webp') as ImageSourcePropType,
   day: require('../../../../../assets/games/dubai/bg_day.webp') as ImageSourcePropType,
   victory: require('../../../../../assets/games/dubai/bg_victory.webp') as ImageSourcePropType,
+};
+
+type Scene = { home: ImageSourcePropType; night: ImageSourcePropType; day: ImageSourcePropType; victory: ImageSourcePropType };
+const VILLAGE: Scene = {
+  home: require('../../../../../assets/games/classic/bg_night.webp') as ImageSourcePropType,
+  night: require('../../../../../assets/games/classic/bg_night.webp') as ImageSourcePropType,
+  day: require('../../../../../assets/games/classic/bg_day.webp') as ImageSourcePropType,
+  victory: require('../../../../../assets/games/classic/bg_victory.webp') as ImageSourcePropType,
+};
+const CHAOS_SKY = require('../../../../../assets/games/classic/bg_chaos.webp') as ImageSourcePropType;
+
+/** Each mode's scenes: its home, its night, its day and its victory. */
+export const SCENES: Record<WwMode, Scene> = {
+  classic: VILLAGE,
+  dubai: BACKGROUND,
+  chaos: { ...VILLAGE, home: CHAOS_SKY, night: CHAOS_SKY },
 };

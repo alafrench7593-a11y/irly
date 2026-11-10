@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { memo, useEffect, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View, type ImageSourcePropType } from 'react-native';
 import Animated, { FadeIn, useAnimatedStyle, useReducedMotion, useSharedValue, withRepeat, withSequence, withSpring, withTiming, ZoomIn } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Avatar } from '@/components/ui/Avatar';
@@ -24,6 +24,12 @@ type Props = {
   /** Little marks on a seat (votes of the pack, «x2 vote», «immune»). */
   marks?: Record<number, string>;
   onPick?: (seat: number) => void;
+  /** Touching a member who cannot be chosen now (report, block). */
+  onMenu?: (p: WwPlayer) => void;
+  /** What to do now, written on the table itself (« Touch a player to vote »). */
+  hint?: string;
+  /** The mode's scenes (Classic village, Dubaï, Chaos). */
+  scene?: { night: ImageSourcePropType; day: ImageSourcePropType; victory: ImageSourcePropType };
 };
 
 /**
@@ -31,7 +37,7 @@ type Props = {
  * title and clock in the middle, the players all around. A player who can be
  * chosen now glows; touching them sends the choice (the server checks it).
  */
-export const Stage = memo(function Stage({ phase, title, subtitle, clock, players, mySeat, targets, chosen, marks, onPick }: Props) {
+export const Stage = memo(function Stage({ phase, title, subtitle, clock, players, mySeat, targets, chosen, marks, onPick, onMenu, hint, scene = BACKGROUND }: Props) {
   const fonts = useDubaiFonts();
   const { width } = useWindowDimensions();
   const W = Math.min(width - 32, 560);
@@ -41,8 +47,8 @@ export const Stage = memo(function Stage({ phase, title, subtitle, clock, player
   const rx = W / 2 - face / 2 - 6;
   const ry = H / 2 - face / 2 - 18;
   return (
-    <View style={[styles.stage, { width: W, height: H }]}>
-      <LivingScene source={phase === 'night' ? BACKGROUND.night : phase === 'day' ? BACKGROUND.day : BACKGROUND.victory} />
+    <View style={[styles.stage, { width: W, height: H }]} testID="ww-stage">
+      <LivingScene source={phase === 'night' ? scene.night : phase === 'day' ? scene.day : scene.victory} />
       <LinearGradient colors={['rgba(11,9,7,0.25)', 'rgba(11,9,7,0.1)', 'rgba(11,9,7,0.7)']} style={StyleSheet.absoluteFill} />
       {phase === 'night' ? <GoldDust count={10} height={H} /> : null}
       <View style={styles.center} pointerEvents="none">
@@ -53,6 +59,11 @@ export const Stage = memo(function Stage({ phase, title, subtitle, clock, player
           {subtitle ? <Text style={[styles.sub, serif(fonts, '600')]}>{subtitle}</Text> : null}
         </Animated.View>
         {clock ? <View style={styles.clock}>{clock}</View> : null}
+        {hint ? (
+          <Animated.View key={hint} entering={FadeIn.duration(400)} style={styles.hint}>
+            <Text style={styles.hintText}>{hint}</Text>
+          </Animated.View>
+        ) : null}
       </View>
       {players.map((p, i) => {
         const a = -Math.PI / 2 + (i / n) * Math.PI * 2;
@@ -71,6 +82,7 @@ export const Stage = memo(function Stage({ phase, title, subtitle, clock, player
             chosen={chosen === p.seat}
             mark={marks?.[p.seat]}
             onPick={onPick}
+            onMenu={onMenu}
           />
         );
       })}
@@ -78,7 +90,7 @@ export const Stage = memo(function Stage({ phase, title, subtitle, clock, player
   );
 });
 
-const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, mark, onPick }: { p: WwPlayer; x: number; y: number; size: number; index: number; me: boolean; pickable: boolean; chosen: boolean; mark?: string; onPick?: (seat: number) => void }) {
+const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, mark, onPick, onMenu }: { p: WwPlayer; x: number; y: number; size: number; index: number; me: boolean; pickable: boolean; chosen: boolean; mark?: string; onPick?: (seat: number) => void; onMenu?: (p: WwPlayer) => void }) {
   const reduced = useReducedMotion();
   const pulse = useSharedValue(0);
   const fall = useSharedValue(p.alive ? 0 : 1);
@@ -103,10 +115,12 @@ const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, ma
   return (
     <Animated.View entering={reduced ? undefined : ZoomIn.delay(index * 45).duration(380)} style={[styles.seat, { left: x, top: y, width: size }]}>
       <Pressable
-        disabled={!pickable || !onPick}
+        disabled={!(pickable && onPick) && !(onMenu && !p.bot && p.user_id && !me)}
         onPress={() => {
-          haptic('select');
-          onPick?.(p.seat);
+          if (pickable && onPick) {
+            haptic('select');
+            onPick(p.seat);
+          } else onMenu?.(p);
         }}
         accessibilityRole="button"
         accessibilityState={{ disabled: !pickable, selected: chosen }}
@@ -114,6 +128,7 @@ const Seat = memo(function Seat({ p, x, y, size, index, me, pickable, chosen, ma
         hitSlop={6}
       >
         <Animated.View style={body}>
+          {pickable && !chosen ? <Animated.View style={[styles.halo, { width: size + 18, height: size + 18, borderRadius: (size + 18) / 2 }, ring]} /> : null}
           {(pickable || chosen || me) && p.alive ? <Animated.View style={[styles.ring, { width: size + 8, height: size + 8, borderRadius: (size + 8) / 2, borderColor: ringColor }, ring]} /> : null}
           <View style={[styles.face, { width: size, height: size, borderRadius: size / 2, borderColor: chosen ? DX.redLight : DX.gold }]}>
             {p.bot || !p.user_id ? (
@@ -158,6 +173,9 @@ const styles = StyleSheet.create({
   clock: { borderWidth: 1.5, borderColor: DX.gold, borderRadius: 18, backgroundColor: 'rgba(11,9,7,0.85)', paddingHorizontal: 14, paddingVertical: 3 },
   seat: { position: 'absolute', alignItems: 'center' },
   ring: { position: 'absolute', left: -4, top: -4, borderWidth: 2.5 },
+  halo: { position: 'absolute', left: -9, top: -9, backgroundColor: 'rgba(247,222,151,0.28)', shadowColor: DX.goldLight, shadowOpacity: 0.9, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } },
+  hint: { maxWidth: '58%', alignItems: 'center' },
+  hintText: { color: DX.black, backgroundColor: DX.goldLight, borderRadius: 14, overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 5, fontSize: 13, fontWeight: '800', textAlign: 'center' },
   face: { overflow: 'hidden', borderWidth: 2, backgroundColor: DX.black, alignItems: 'center', justifyContent: 'center' },
   initialBox: { alignItems: 'center', justifyContent: 'center' },
   initial: { color: DX.goldLight, fontWeight: '800' },

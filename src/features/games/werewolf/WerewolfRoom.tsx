@@ -1,12 +1,10 @@
-import { useRouter } from 'expo-router';
-import { memo, useEffect, useMemo, useState } from 'react';
-import { Alert, Share, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Alert, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { Avatar } from '@/components/ui/Avatar';
-import { Button } from '@/components/ui/Button';
-import { IconButton } from '@/components/ui/Controls';
-import { Text } from '@/components/ui/Text';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { toast } from '@/components/ui/Toast';
 import { blockUser } from '@/features/moderation/moderation';
 import { openReport } from '@/features/moderation/reportStore';
@@ -14,90 +12,130 @@ import { t as tx } from '@/i18n';
 import { useNow } from '@/lib/useNow';
 import { haptic } from '@/motion/haptics';
 import { PressableScale } from '@/motion/PressableScale';
-import { radius, space } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { startRoom, type GameMessage, type Room } from '../api';
-import { ACTION_TITLE, CARD_ORDER, campName, cardOf, DUBAI_ORDER, NO_TARGET, SPECIALS, wolvesFor, type CardId, type DubaiCardId } from './cards';
+import { ACTION_TITLE, CARD_ORDER, cardOf, DUBAI_ORDER, NO_TARGET, SPECIALS, wolvesFor, type CardId, type WwMode } from './cards';
 import { botLine, logLine } from './lines';
+import { PORTRAIT, SCENES } from './dubai/art';
 import { DubaiResult } from './dubai/Result';
 import { DubaiMyCard } from './dubai/RoomParts';
 import { Stage } from './dubai/Stage';
-import { DX } from './dubai/theme';
+import { DX, serif, useDubaiFonts } from './dubai/theme';
 import { Qr } from './Qr';
-import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, wwTraining, type WwOption, type WwPlayer, type WwView } from './api';
+import { useWwView, wwAct, wwSay, wwSetComposition, wwSkipDay, type WwOption, type WwPlayer, type WwView } from './api';
 
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 const JOIN_URL = 'https://getirly.com/app/games/join?code=';
+const modeOf = (m: string | undefined): WwMode => (m === 'dubai' || m === 'chaos' ? m : 'classic');
+/** Day powers are used from their own buttons: touching the table by day is for the vote only. */
+const DAY_POWERS = new Set(['buzz', 'dump', 'board', 'fresh']);
 
 /**
- * A Loup-Garou table: the waiting room (code and QR code, the deck), then the
- * game as this player sees it (her card, the night or the day, what she may
- * do, the table, the log, the chat of her channel), then the result with
- * every card revealed. The server decides everything.
+ * A Loup-Garou table, in every mode (Classic, Dubaï, Chaos): the waiting room
+ * (code and QR code, the deck), then the game as this player sees it (the
+ * table with the scene of the moment, what she may do right under it, her
+ * card, the log, the chat of her channel), then the result with every card
+ * revealed. The server decides everything.
  */
 export function WerewolfRoom({ room, me, messages }: { room: Room; me: string; messages: GameMessage[] }) {
   const { view, failed, reload, skew } = useWwView(room.id, room);
   if (!view) {
-    return (
-      <Text tone="tertiary" raw>
-        {failed ? tx(failed) : tx('Loading…')}
-      </Text>
-    );
+    return <Text style={styles.muted}>{failed ? tx(failed) : tx('Loading…')}</Text>;
   }
   if (view.phase === 'lobby') return <Lobby room={room} me={me} view={view} onChanged={reload} />;
   return <Game room={room} me={me} view={view} messages={messages} skew={skew} onChanged={reload} />;
 }
 
+// ───────── Small parts in the game's style ─────────
+function Panel({ children, title, accent }: { children: ReactNode; title?: string; accent?: boolean }) {
+  const fonts = useDubaiFonts();
+  return (
+    <View style={[styles.panel, accent && styles.panelAccent]}>
+      {title ? <Text style={[styles.panelTitle, serif(fonts, '700')]}>{title}</Text> : null}
+      {children}
+    </View>
+  );
+}
+
+function GoldButton({ label, icon, onPress, disabled, ghost }: { label: string; icon?: IconName; onPress: () => void; disabled?: boolean; ghost?: boolean }) {
+  const fonts = useDubaiFonts();
+  return (
+    <PressableScale onPress={onPress} disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: Boolean(disabled) }}>
+      {ghost ? (
+        <View style={[styles.ghost, disabled && styles.disabled]}>
+          {icon ? <Icon name={icon} size={16} color={DX.goldLight} /> : null}
+          <Text style={styles.ghostText}>{label}</Text>
+        </View>
+      ) : (
+        <LinearGradient colors={['#B3262F', DX.red, '#5E0F15']} style={[styles.gold, disabled && styles.disabled]}>
+          {icon ? <Icon name={icon} size={18} color={DX.goldLight} /> : null}
+          <Text style={[styles.goldText, serif(fonts, '700')]}>{label}</Text>
+        </LinearGradient>
+      )}
+    </PressableScale>
+  );
+}
+
 // ───────── Waiting room ─────────
 function Lobby({ room, me, view, onChanged }: { room: Room; me: string; view: WwView; onChanged: () => void }) {
-  const t = useTheme();
+  const fonts = useDubaiFonts();
   const host = room.host_id === me;
   const present = room.people.filter((p) => !p.left);
   const irl = room.kind === 'irl';
+  const mode = modeOf(view.mode);
   const share = () => {
     const text = room.code ? tx('Join my Loup-Garou game on IRLY with the code {code}: {url}', { code: room.code, url: JOIN_URL + room.code }) : tx('Join my Loup-Garou game on IRLY');
     Share.share({ message: text }).catch(() => undefined);
   };
   return (
     <View style={styles.block}>
-      <Text variant="titleM">{irl ? 'In person: everyone joins with their phone' : 'Waiting for the village'}</Text>
-      <Text tone="secondary" raw>
-        {tx('{n} players here. The host starts at 6 or more (up to {max}).', { n: present.length, max: room.max })}
-      </Text>
-      <Text variant="caption" tone="tertiary">
-        Unranked game
-      </Text>
+      <View style={styles.lobbyHero}>
+        <Image source={SCENES[mode].home} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityIgnoresInvertColors />
+        <LinearGradient colors={['rgba(11,9,7,0.1)', 'rgba(11,9,7,0.9)']} style={StyleSheet.absoluteFill} />
+        <Text style={[styles.lobbyMode, serif(fonts, '900')]}>{tx(MODE_NAME[mode]).toUpperCase()}</Text>
+        <Text style={[styles.lobbyTitle, serif(fonts, '700')]}>{irl ? tx('In person: everyone joins with their phone') : tx('Waiting for the village')}</Text>
+        <Text style={styles.lobbyLine}>{tx('{n} players here. The host starts at 6 or more (up to {max}).', { n: present.length, max: room.max })}</Text>
+      </View>
       {room.code ? (
-        <View style={[styles.codeBox, { borderColor: t.c.lineStrong }]}>
-          {irl ? <Qr value={JOIN_URL + room.code} size={180} /> : null}
-          <Text variant="caption" tone="secondary">
-            {irl ? 'Scan, or type the code in IRLY Games' : 'Code of this private game'}
-          </Text>
-          <Text style={styles.codeText} raw>
-            {room.code}
-          </Text>
-          <Button label="Share" icon="share" size="sm" variant="secondary" onPress={share} />
-        </View>
+        <Panel>
+          <View style={styles.codeBox}>
+            {irl ? <Qr value={JOIN_URL + room.code} size={180} /> : null}
+            <Text style={styles.muted}>{irl ? tx('Scan, or type the code in IRLY Games') : tx('Code of this private game')}</Text>
+            <Text style={[styles.codeText, serif(fonts, '900')]}>{room.code}</Text>
+            <GoldButton label={tx('Share')} icon="share" ghost onPress={share} />
+          </View>
+        </Panel>
       ) : null}
       <Deck view={view} editable={host} roomId={room.id} onChanged={onChanged} />
-      {present.map((p) => (
-        <View key={p.id} style={[styles.row, { borderColor: t.c.line }]}>
-          <Avatar name={p.name ?? '?'} hue={0} userId={p.id} size={38} />
-          <Text variant="titleS" style={{ flex: 1 }} raw>
-            {(p.name ?? tx('A member')) + (p.id === me ? ` (${tx('you')})` : '') + (p.id === room.host_id ? ` · ${tx('Host')}` : '')}
-          </Text>
-        </View>
-      ))}
-      {host ? <Button label="Start the game" icon="play" disabled={present.length < 6} onPress={() => startRoom(room.id).then(onChanged).catch(fail)} full /> : null}
+      <Panel title={tx('At the table')}>
+        {present.map((p) => (
+          <View key={p.id} style={styles.personRow}>
+            <Avatar name={p.name ?? '?'} hue={0} userId={p.id} size={36} />
+            <Text style={styles.personName} numberOfLines={1}>
+              {(p.name ?? tx('A member')) + (p.id === me ? ` (${tx('you')})` : '') + (p.id === room.host_id ? ` · ${tx('Host')}` : '')}
+            </Text>
+          </View>
+        ))}
+        <Text style={styles.small}>{tx('Unranked game')}</Text>
+      </Panel>
+      {host ? <GoldButton label={tx('Start the game')} icon="play" disabled={present.length < 6} onPress={() => startRoom(room.id).then(onChanged).catch(fail)} /> : null}
     </View>
   );
 }
 
-/** The deck the game will use; the host adjusts the werewolves and the special cards (the server checks). */
+export const MODE_NAME: Record<WwMode, string> = { classic: 'Classic', dubai: 'Dubai', chaos: 'Chaos' };
+
+/** The deck the game will use; the host adjusts the werewolves and the special cards in Classic (the server checks). Chaos: secret. */
 function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: boolean; roomId: string; onChanged: () => void }) {
-  const t = useTheme();
-  const comp = view.composition;
   const players = Math.max(view.present ?? 6, 6);
+  const mode = modeOf(view.mode);
+  if (mode === 'chaos' || !view.composition) {
+    return (
+      <Panel title={tx('The deck')}>
+        <Text style={styles.body}>{tx('Chaos: the server draws a secret deck at the start. Werewolves and powers are revealed only at the end.')}</Text>
+      </Panel>
+    );
+  }
+  const comp = view.composition;
   const save = (next: Record<string, number>) => {
     const specials = SPECIALS.reduce((n, id) => n + (next[id] ?? 0), 0);
     const wolves = next.werewolf ?? 1;
@@ -106,40 +144,44 @@ function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: b
     void wwSetComposition(roomId, { ...next, villager: villagers }).then(onChanged).catch(fail);
   };
   return (
-    <View style={[styles.deck, { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-      <Text variant="label" tone="secondary" raw>
-        {tx('The deck for {n} players{custom}', { n: players, custom: view.custom ? ` · ${tx('set by the host')}` : '' })}
-      </Text>
-      <View style={styles.cards}>
-        {(view.mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER).filter((id) => (comp[id] ?? 0) > 0).map((id) => (
-          <View key={id} style={[styles.cardChip, { borderColor: t.c.line }]}>
-            <Text raw>{`${cardOf(id).emoji} ${tx(cardOf(id).name)}${(comp[id] ?? 0) > 1 ? ` ×${comp[id]}` : ''}`}</Text>
-          </View>
-        ))}
+    <Panel title={tx('The deck for {n} players{custom}', { n: players, custom: view.custom ? ` · ${tx('set by the host')}` : '' })}>
+      <View style={styles.chips}>
+        {(mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER)
+          .filter((id) => (comp[id] ?? 0) > 0)
+          .map((id) => (
+            <CardChip key={id} id={id} count={comp[id] ?? 0} />
+          ))}
       </View>
-      {editable && view.mode !== 'dubai' ? (
+      {editable && mode === 'classic' ? (
         <>
-          <View style={styles.cards}>
-            <Button label="− Werewolf" size="sm" variant="secondary" disabled={(comp.werewolf ?? 1) <= 1} onPress={() => save({ ...comp, werewolf: (comp.werewolf ?? 1) - 1 })} />
-            <Button label="+ Werewolf" size="sm" variant="secondary" disabled={((comp.werewolf ?? 1) + 1) * 2 >= players} onPress={() => save({ ...comp, werewolf: (comp.werewolf ?? 1) + 1 })} />
+          <View style={styles.chips}>
+            <GoldButton label={tx('− Werewolf')} ghost disabled={(comp.werewolf ?? 1) <= 1} onPress={() => save({ ...comp, werewolf: (comp.werewolf ?? 1) - 1 })} />
+            <GoldButton label={tx('+ Werewolf')} ghost disabled={((comp.werewolf ?? 1) + 1) * 2 >= players} onPress={() => save({ ...comp, werewolf: (comp.werewolf ?? 1) + 1 })} />
           </View>
-          <View style={styles.cards}>
+          <View style={styles.chips}>
             {SPECIALS.map((id) => {
               const on = (comp[id] ?? 0) > 0;
               return (
                 <PressableScale key={id} onPress={() => save({ ...comp, [id]: on ? 0 : 1 })} accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={tx(cardOf(id).name)}>
-                  <View style={[styles.cardChip, { borderColor: on ? t.c.text : t.c.line, opacity: on ? 1 : 0.5 }]}>
-                    <Text variant="caption" raw>{`${cardOf(id).emoji} ${tx(cardOf(id).name)}`}</Text>
+                  <View style={{ opacity: on ? 1 : 0.45 }}>
+                    <CardChip id={id} count={1} />
                   </View>
                 </PressableScale>
               );
             })}
           </View>
-          <Text variant="caption" tone="tertiary" raw>
-            {tx('Default: {n} werewolf(s) for {p} players. Villagers fill the other seats.', { n: wolvesFor(players), p: players })}
-          </Text>
+          <Text style={styles.small}>{tx('Default: {n} werewolf(s) for {p} players. Villagers fill the other seats.', { n: wolvesFor(players), p: players })}</Text>
         </>
       ) : null}
+    </Panel>
+  );
+}
+
+function CardChip({ id, count }: { id: CardId; count: number }) {
+  return (
+    <View style={styles.cardChip}>
+      <Image source={PORTRAIT[id]} style={styles.chipFace} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
+      <Text style={styles.chipText}>{`${tx(cardOf(id).name)}${count > 1 ? ` ×${count}` : ''}`}</Text>
     </View>
   );
 }
@@ -148,278 +190,173 @@ function Deck({ view, editable, roomId, onChanged }: { view: WwView; editable: b
 function Game({ room, me, view, messages, skew, onChanged }: { room: Room; me: string; view: WwView; messages: GameMessage[]; skew: number; onChanged: () => void }) {
   const night = view.phase === 'night' || view.phase === 'witch';
   const ended = view.phase === 'ended';
+  const mode = modeOf(view.mode);
   const players = view.players ?? [];
+  const alive = view.me?.alive ?? false;
   const name = (s: number | undefined) => (s === undefined ? tx('someone') : (players.find((p) => p.seat === s)?.name ?? tx('someone')));
-  const reduced = useReducedMotion();
-  const dark = useSharedValue(night ? 1 : 0);
-  useEffect(() => {
-    dark.set(reduced ? (night ? 1 : 0) : withTiming(night ? 1 : 0, { duration: 900 }));
-  }, [night, dark, reduced]);
-  const sky = useAnimatedStyle(() => ({ opacity: dark.get() }));
-  // Dubaï: the main choice of the moment is made on the table itself (vote, the Escrocs' victim, a power on someone).
-  const stageOption =
-    view.mode === 'dubai'
-      ? ((view.options ?? []).find((o) => o.kind === 'vote' || o.kind === 'wolf') ?? (view.options ?? []).find((o) => o.targets.length > 0 && o.kind !== 'link' && o.kind !== 'steal'))
-      : undefined;
-  const stageChosen = stageOption ? ((view.mine ?? []).find((m) => m.kind === stageOption.kind)?.target ?? null) : null;
+  const options = view.options ?? [];
+  const mine = view.mine ?? [];
+  // The main choice of the moment is made on the table itself: the vote, the victim, a night power on someone.
+  const stageOption = options.find((o) => o.kind === 'vote' || o.kind === 'wolf') ?? options.find((o) => o.targets.length > 0 && o.kind !== 'link' && o.kind !== 'steal' && !DAY_POWERS.has(o.kind));
+  const stageChosen = stageOption ? (mine.find((m) => m.kind === stageOption.kind)?.target ?? null) : null;
   const stageMarks = useMemo(() => {
     const out: Record<number, string> = {};
-    if (view.mode !== 'dubai') return out;
     for (const e of view.log ?? []) {
       const s = typeof e.data.seat === 'number' ? (e.data.seat as number) : undefined;
       if (s === undefined || Number(e.data.day) !== view.day) continue;
       if (e.kind === 'vote_doubled') out[s] = tx('×2 vote');
       if (e.kind === 'immune') out[s] = tx('Immune');
     }
-    if (view.pack_votes) for (const v of Object.values(view.pack_votes)) out[v] = `${(out[v] ? `${out[v]} ` : '')}●`;
+    if (view.pack_votes) for (const v of Object.values(view.pack_votes)) out[v] = `${out[v] ? `${out[v]} ` : ''}●`;
     return out;
-  }, [view.mode, view.log, view.day, view.pack_votes]);
+  }, [view.log, view.day, view.pack_votes]);
+  const pick = (seat: number) => {
+    if (!stageOption) return;
+    wwAct(room.id, stageOption.kind, seat).then(onChanged).catch(fail);
+  };
+  const menu = (p: WwPlayer) => {
+    if (p.bot || !p.user_id || p.user_id === me) return;
+    Alert.alert(p.name, undefined, [
+      { text: tx('Report'), onPress: () => openReport({ kind: 'profile', userId: p.user_id! }, p.name) },
+      { text: tx('Block'), style: 'destructive', onPress: () => blockUser(p.user_id!).then(() => toast(tx('{name} is blocked', { name: p.name }), 'check')).catch(fail) },
+      { text: tx('Cancel'), style: 'cancel' },
+    ]);
+  };
+  const hint = ended
+    ? undefined
+    : !alive
+      ? tx('You are out: watch the end of the game')
+      : stageOption
+        ? stageChosen !== null
+          ? tx('Chosen: {name}. Touch another player to change', { name: name(stageChosen) })
+          : stageOption.kind === 'vote'
+            ? tx('Touch a player to vote')
+            : stageOption.kind === 'wolf'
+              ? tx('Touch your victim')
+              : tx('Touch a player to use your power')
+        : night
+          ? tx('You sleep. The night goes on…')
+          : view.phase === 'day'
+            ? tx('Debate, then get ready to vote')
+            : tx('Wait for the others…');
 
   return (
     <View style={styles.block}>
-      {view.mode === 'dubai' && ended ? null : view.mode === 'dubai' ? (
+      {ended ? null : (
         <Stage
-          phase={ended ? 'ended' : night ? 'night' : 'day'}
-          title={
-            ended
-              ? tx('The game is over')
-              : night
-                ? tx('Night {n}', { n: view.night ?? 1 })
-                : view.phase === 'day'
-                  ? tx('Day {n}', { n: view.day ?? 1 })
-                  : view.phase === 'revote'
-                    ? tx('Second round')
-                    : tx('Day {n} · vote', { n: view.day ?? 1 })
-          }
-          subtitle={ended ? undefined : night ? tx('Powers act in secret…') : view.phase === 'day' ? tx('Debate') : tx('Elimination vote')}
-          clock={!ended ? <Clock deadline={view.deadline ?? null} skew={skew} color="#F7DE97" /> : undefined}
+          phase={night ? 'night' : 'day'}
+          scene={SCENES[mode]}
+          title={night ? tx('Night {n}', { n: view.night ?? 1 }) : view.phase === 'day' ? tx('Day {n}', { n: view.day ?? 1 }) : view.phase === 'revote' ? tx('Second round') : tx('Day {n} · vote', { n: view.day ?? 1 })}
+          subtitle={night ? tx('Powers act in secret…') : view.phase === 'day' ? tx('Debate') : tx('Elimination vote')}
+          clock={<Clock deadline={view.deadline ?? null} skew={skew} />}
           players={players}
           mySeat={view.me?.seat}
-          targets={stageOption && view.me?.alive ? stageOption.targets : []}
+          targets={stageOption && alive ? stageOption.targets : []}
           chosen={stageChosen}
           marks={stageMarks}
-          onPick={stageOption ? (seat) => wwAct(room.id, stageOption.kind, seat).then(onChanged).catch(fail) : undefined}
+          onPick={stageOption ? pick : undefined}
+          onMenu={menu}
+          hint={hint}
         />
-      ) : (
-      <View style={styles.skyWrap}>
-        <LinearGradient colors={['#F6D365', '#FDA085']} style={StyleSheet.absoluteFill} />
-        <Animated.View style={[StyleSheet.absoluteFill, sky]}>
-          <LinearGradient colors={['#0B1026', '#2B1B4A']} style={StyleSheet.absoluteFill} />
-        </Animated.View>
-        <View style={styles.skyInner}>
-          <Text style={styles.skyEmoji} raw>
-            {ended ? '🏁' : night ? '🌕' : '☀️'}
-          </Text>
-          <View style={{ flex: 1 }}>
-            <Text variant="titleM" color={night ? '#FFFFFF' : '#1B1B1B'} raw>
-              {ended
-                ? tx('The game is over')
-                : night
-                  ? tx('Night {n}', { n: view.night ?? 1 })
-                  : view.phase === 'day'
-                    ? tx('Day {n} · discussion', { n: view.day ?? 1 })
-                    : view.phase === 'revote'
-                      ? tx('Second round')
-                      : tx('Day {n} · vote', { n: view.day ?? 1 })}
-            </Text>
-            {!ended ? <Clock deadline={view.deadline ?? null} skew={skew} color={night ? '#D8D3FF' : '#3A2B1B'} /> : null}
-          </View>
-          {view.kind === 'training' ? (
-            <View style={styles.badge}>
-              <Text variant="caption" color="#FFFFFF" raw>
-                {`🤖 ${tx('Unranked')}`}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      </View>
       )}
-
-      {view.me && !(view.mode === 'dubai' && ended) ? <MyCard view={view} name={name} /> : null}
+      {ended ? null : <Actions room={room} view={view} name={name} onChanged={onChanged} />}
       {ended ? (
-        view.mode === 'dubai' ? (
-          <DubaiResult view={view} me={me} room={room} />
-        ) : (
-          <Result view={view} me={me} room={room} />
-        )
-      ) : (
-        <Actions room={room} view={view} name={name} onChanged={onChanged} skip={stageOption?.kind} />
-      )}
-      {view.mode === 'dubai' ? null : <Table room={room} view={view} me={me} />}
-      <View style={view.mode === 'dubai' ? styles.dxPanel : undefined}>
-        <Log view={view} name={name} />
-      </View>
-      {room.kind !== 'irl' || ended ? (
-        <View style={view.mode === 'dubai' ? styles.dxPanel : undefined}>
-          <Chat room={room} view={view} messages={messages} me={me} name={name} />
-        </View>
+        <DubaiResult view={view} me={me} room={room} />
+      ) : view.me ? (
+        <DubaiMyCard id={view.me.card as CardId} startShown={false}>
+          <Knowledge view={view} name={name} />
+        </DubaiMyCard>
       ) : null}
-      {room.kind === 'irl' && view.phase === 'day' && room.host_id === me ? (
-        <Button label="Everyone has talked: vote" icon="arrowRight" onPress={() => wwSkipDay(room.id).then(onChanged).catch(fail)} full />
-      ) : null}
+      <Log view={view} name={name} />
+      {room.kind !== 'irl' || ended ? <Chat room={room} view={view} messages={messages} me={me} name={name} /> : null}
+      {room.kind === 'irl' && view.phase === 'day' && room.host_id === me ? <GoldButton label={tx('Everyone has talked: vote')} icon="arrowRight" onPress={() => wwSkipDay(room.id).then(onChanged).catch(fail)} /> : null}
     </View>
   );
 }
 
-function Clock({ deadline, skew, color }: { deadline: string | null; skew: number; color: string }) {
+/** What my card has taught me so far (accomplices, lover, seductions; the seer's and investigators' results are in the log). */
+function Knowledge({ view, name }: { view: WwView; name: (s?: number) => string }) {
+  const me = view.me!;
+  const mode = modeOf(view.mode);
+  return (
+    <>
+      {me.seduced && me.seduced.length ? <Text style={styles.know}>{tx('Seduced: {names}', { names: me.seduced.map(name).join(', ') })}</Text> : null}
+      {me.pack && me.pack.length > 1 ? <Text style={[styles.know, { color: DX.redLight }]}>{tx(mode === 'dubai' ? 'Your accomplices: {names}' : 'Your pack: {names}', { names: me.pack.filter((s) => s !== me.seat).map(name).join(', ') })}</Text> : null}
+      {me.lover !== null && me.lover !== undefined ? <Text style={styles.know}>{tx('In love with {name}', { name: name(me.lover) })}</Text> : null}
+      {!me.alive ? <Text style={[styles.know, { color: DX.redLight }]}>{tx('You are dead: watch, and talk with the dead')}</Text> : null}
+    </>
+  );
+}
+
+function Clock({ deadline, skew }: { deadline: string | null; skew: number }) {
   const now = useNow(500);
   if (!deadline) return null;
   const left = Math.max(0, Math.ceil((Date.parse(deadline) - (now + skew)) / 1000));
   const m = Math.floor(left / 60);
   const s = left % 60;
-  return (
-    <Text variant="caption" color={color} raw>
-      {`⏳ ${m}:${String(s).padStart(2, '0')}`}
-    </Text>
-  );
+  return <Text style={[styles.clock, left <= 10 && { color: DX.redLight }]}>{`${m}:${String(s).padStart(2, '0')}`}</Text>;
 }
 
-/** My card, face down until tapped (nobody looking over the shoulder), with what I know. */
-const MyCard = memo(function MyCard({ view, name }: { view: WwView; name: (s?: number) => string }) {
-  const t = useTheme();
-  const me = view.me!;
-  const card = cardOf(me.card);
-  // Face down during the game (nobody looking over the shoulder), face up once it is over.
-  const [shown, setShown] = useState(view.phase === 'ended');
-  const flip = useSharedValue(0);
-  const reduced = useReducedMotion();
-  useEffect(() => {
-    flip.set(reduced ? (shown ? 1 : 0) : withTiming(shown ? 1 : 0, { duration: 450 }));
-  }, [shown, flip, reduced]);
-  const front = useAnimatedStyle(() => ({ transform: [{ perspective: 800 }, { rotateY: `${180 - flip.get() * 180}deg` }], opacity: flip.get() > 0.5 ? 1 : 0 }));
-  const back = useAnimatedStyle(() => ({ transform: [{ perspective: 800 }, { rotateY: `${-flip.get() * 180}deg` }], opacity: flip.get() > 0.5 ? 0 : 1 }));
-  const wolves = card.camp === 'wolves';
-  if (view.mode === 'dubai') {
-    return (
-      <DubaiMyCard id={me.card as DubaiCardId} startShown={view.phase === 'ended'}>
-        {me.seduced && me.seduced.length ? <Text variant="caption" tone="secondary" align="center" raw>{tx('Seduced: {names}', { names: me.seduced.map(name).join(', ') })}</Text> : null}
-        {me.pack && me.pack.length > 1 ? <Text variant="caption" tone="secondary" align="center" raw>{tx('Your accomplices: {names}', { names: me.pack.map(name).join(', ') })}</Text> : null}
-        {me.lover !== null && me.lover !== undefined ? <Text variant="caption" tone="secondary" align="center" raw>{tx('In love with {name}', { name: name(me.lover) })}</Text> : null}
-        {!me.alive ? <Text variant="caption" tone="live" align="center">You are dead: watch, and talk with the dead</Text> : null}
-      </DubaiMyCard>
-    );
-  }
-  return (
-    <PressableScale onPress={() => setShown((v) => !v)} accessibilityRole="button" accessibilityLabel={shown ? tx('Hide my card') : tx('Show my card')}>
-      <View style={styles.cardBox}>
-        <Animated.View style={[styles.card, { backgroundColor: '#1B1430', borderColor: '#5B4A8A' }, back]}>
-          <Text style={styles.cardEmoji} raw>
-            🃏
-          </Text>
-          <Text color="#E9E4FF" variant="titleS">
-            Tap to see your card
-          </Text>
-        </Animated.View>
-        <Animated.View style={[styles.card, styles.cardFront, { backgroundColor: wolves ? '#3A0D12' : t.c.surface, borderColor: wolves ? '#C0392B' : t.c.lineStrong }, front]}>
-          <Text style={styles.cardEmoji} raw>
-            {card.emoji}
-          </Text>
-          <Text variant="titleM" color={wolves ? '#FFFFFF' : undefined} raw>
-            {tx(card.name)}
-          </Text>
-          <Text variant="caption" color={wolves ? '#FFD6D6' : undefined} tone={wolves ? undefined : 'secondary'} align="center" raw>
-            {tx(card.power)}
-          </Text>
-          <Text variant="caption" color={wolves ? '#FFD6D6' : undefined} tone={wolves ? undefined : 'tertiary'} align="center" raw>
-            {`${tx(campName(card.camp, view.mode))} · ${tx(card.goal)}`}
-          </Text>
-          {me.seduced && me.seduced.length ? (
-            <Text variant="caption" align="center" raw>
-              {tx('Seduced: {names}', { names: me.seduced.map(name).join(', ') })}
-            </Text>
-          ) : null}
-          {me.pack && me.pack.length > 1 ? (
-            <Text variant="caption" color="#FFD6D6" align="center" raw>
-              {tx('Your pack: {names}', { names: me.pack.map(name).join(', ') })}
-            </Text>
-          ) : null}
-          {me.lover !== null && me.lover !== undefined ? (
-            <Text variant="caption" align="center" raw>
-              {tx('In love with {name} 💘', { name: name(me.lover) })}
-            </Text>
-          ) : null}
-          {!me.alive ? (
-            <Text variant="caption" tone="live" align="center">
-              You are dead: watch, and talk with the dead
-            </Text>
-          ) : null}
-        </Animated.View>
-      </View>
-    </PressableScale>
-  );
-});
-
 // ───────── What I may do now ─────────
-function Actions({ room, view, name, onChanged, skip }: { room: Room; view: WwView; name: (s?: number) => string; onChanged: () => void; skip?: string }) {
-  const all = view.options ?? [];
-  const options = all.filter((o) => o.kind !== skip);
+function Actions({ room, view, name, onChanged }: { room: Room; view: WwView; name: (s?: number) => string; onChanged: () => void }) {
+  const options = view.options ?? [];
   const mine = view.mine ?? [];
   if (!view.me?.alive) return null;
-  if (skip && !options.length) {
-    return (
-      <Text tone="secondary" align="center">
-        {view.phase === 'vote' || view.phase === 'revote' ? 'Touch a player on the table to vote' : 'Touch a player on the table to choose'}
-      </Text>
-    );
-  }
   if (!options.length) {
     return (
-      <Text tone="secondary" align="center">
-        {view.phase === 'night' || view.phase === 'witch' ? 'You sleep. The night goes on…' : 'Wait for the others…'}
-      </Text>
+      <Panel>
+        <Text style={styles.waitText}>{view.phase === 'night' || view.phase === 'witch' ? tx('You sleep. The night goes on…') : tx('Wait for the others…')}</Text>
+      </Panel>
     );
   }
   return (
-    <View style={styles.block}>
+    <Panel accent title={tx('Your turn')}>
       {view.phase === 'witch' && view.victim !== null && view.victim !== undefined ? (
-        <Text variant="titleS" raw>
-          {tx('The werewolves attacked {name}', { name: name(view.victim) })}
-        </Text>
+        <Text style={styles.alert}>{tx(view.mode === 'dubai' ? 'The Escrocs attacked {name}' : 'The werewolves attacked {name}', { name: name(view.victim) })}</Text>
       ) : null}
       {options.map((o) => (
         <Option key={o.kind} room={room} view={view} option={o} done={mine.filter((m) => m.kind === o.kind)} name={name} onChanged={onChanged} />
       ))}
-      {view.phase !== 'day' && !mine.length ? <Button label="Do nothing" variant="ghost" size="sm" onPress={() => wwAct(room.id, 'pass').then(onChanged).catch(fail)} /> : null}
-      {mine.some((m) => m.kind === 'pass') ? (
-        <Text variant="caption" tone="tertiary" align="center">
-          You chose to do nothing
-        </Text>
-      ) : null}
-    </View>
+      {view.phase !== 'day' && !mine.length ? <GoldButton label={tx(view.phase === 'vote' || view.phase === 'revote' ? 'Abstain' : 'Do nothing')} ghost onPress={() => wwAct(room.id, 'pass').then(onChanged).catch(fail)} /> : null}
+      {mine.some((m) => m.kind === 'pass') ? <Text style={styles.small}>{tx('You chose to do nothing')}</Text> : null}
+    </Panel>
   );
 }
 
 function Option({ room, view, option, done, name, onChanged }: { room: Room; view: WwView; option: WwOption; done: { target: number | null; target2: number | null }[]; name: (s?: number) => string; onChanged: () => void }) {
-  const t = useTheme();
   const [first, setFirst] = useState<number | null>(null);
+  const reduced = useReducedMotion();
   const send = (a?: number | null, b?: number | null) => {
     haptic('press');
     wwAct(room.id, option.kind, a, b).then(onChanged).catch(fail);
   };
   const chosen = done[0];
-  const dx = view.mode === 'dubai';
   const label = (s: number) => name(s) + (view.pack_votes && option.kind === 'wolf' ? votesFor(view.pack_votes, s) : '');
   return (
-    <Animated.View entering={FadeInDown.duration(300)} style={[styles.option, dx ? styles.optionDx : { backgroundColor: t.c.surface, borderColor: t.c.line }]}>
-      <Text variant="titleS" color={dx ? DX.goldLight : undefined}>
-        {ACTION_TITLE[option.kind] ?? option.kind}
-      </Text>
+    <Animated.View entering={reduced ? undefined : FadeInDown.duration(300)} style={styles.option}>
+      <Text style={styles.optionTitle}>{tx(ACTION_TITLE[option.kind] ?? option.kind)}</Text>
       {chosen ? (
-        <Text variant="caption" tone="positive" raw>
-          {option.kind === 'link' ? tx('Chosen: {a} and {b}', { a: name(chosen.target ?? undefined), b: name(chosen.target2 ?? undefined) }) : chosen.target !== null && option.kind !== 'steal' ? tx('Chosen: {name}', { name: name(chosen.target) }) : tx('Done')}
+        <Text style={styles.done}>
+          {option.kind === 'link'
+            ? tx('Chosen: {a} and {b}', { a: name(chosen.target ?? undefined), b: name(chosen.target2 ?? undefined) })
+            : chosen.target !== null && option.kind !== 'steal'
+              ? tx('Chosen: {name}', { name: name(chosen.target) })
+              : tx('Done')}
         </Text>
       ) : null}
       {NO_TARGET.has(option.kind) ? (
-        <Button label={option.kind === 'ready' ? 'Ready to vote' : option.kind === 'hint' ? 'Spy tonight' : 'Use my power'} size="sm" disabled={Boolean(chosen)} onPress={() => send()} />
+        <GoldButton label={tx(option.kind === 'ready' ? 'Ready to vote' : option.kind === 'hint' ? 'Spy tonight' : 'Use my power')} disabled={Boolean(chosen)} onPress={() => send()} />
       ) : option.kind === 'steal' ? (
-        <View style={styles.targets}>
+        <View style={styles.chips}>
           {(option.cards ?? []).map((c, i) => (
-            <Button key={i} label={`${cardOf(c).emoji} ${tx(cardOf(c).name)}`} size="sm" variant="secondary" onPress={() => send(i)} />
+            <PressableScale key={i} onPress={() => send(i)} accessibilityRole="button" accessibilityLabel={tx(cardOf(c).name)}>
+              <CardChip id={c as CardId} count={1} />
+            </PressableScale>
           ))}
-          <Button label="Keep my card" size="sm" variant="ghost" onPress={() => send(-1)} />
+          <GoldButton label={tx('Keep my card')} ghost onPress={() => send(-1)} />
         </View>
       ) : (
-        <View style={styles.targets}>
+        <View style={styles.chips}>
           {option.targets.map((s) => {
             const on = chosen?.target === s || chosen?.target2 === s || first === s;
             return (
@@ -434,16 +371,10 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={name(s)}
+                accessibilityState={{ selected: on }}
               >
-                <View
-                  style={[
-                    styles.target,
-                    dx ? { borderColor: on ? DX.gold : DX.goldDark, backgroundColor: on ? DX.red : 'rgba(11,9,7,0.6)' } : { borderColor: on ? t.c.text : t.c.line, backgroundColor: on ? t.c.overlay : 'transparent' },
-                  ]}
-                >
-                  <Text variant="caption" color={dx ? DX.ivory : undefined} raw>
-                    {label(s)}
-                  </Text>
+                <View style={[styles.target, on && styles.targetOn]}>
+                  <Text style={[styles.targetText, on && { color: DX.goldLight }]}>{label(s)}</Text>
                 </View>
               </PressableScale>
             );
@@ -456,55 +387,12 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
 
 const votesFor = (votes: Record<string, number>, s: number) => {
   const n = Object.values(votes).filter((v) => v === s).length;
-  return n ? ` · 🐺×${n}` : '';
+  return n ? ` · ●×${n}` : '';
 };
 
-// ───────── The table ─────────
-function Table({ room, view, me }: { room: Room; view: WwView; me: string }) {
-  const t = useTheme();
-  const showActed = view.phase === 'day' || view.phase === 'vote' || view.phase === 'revote';
-  return (
-    <View style={styles.grid}>
-      {(view.players ?? []).map((p) => (
-        <PlayerTile key={p.seat} p={p} room={room} me={me} acted={showActed && p.acted} lineColor={view.mode === 'dubai' ? DX.goldDark : t.c.line} />
-      ))}
-    </View>
-  );
-}
-
-function PlayerTile({ p, room, me, acted, lineColor }: { p: WwPlayer; room: Room; me: string; acted: boolean; lineColor: string }) {
-  const menu = () => {
-    if (p.bot || !p.user_id || p.user_id === me) return;
-    Alert.alert(p.name, undefined, [
-      { text: tx('Report'), onPress: () => openReport({ kind: 'profile', userId: p.user_id! }, p.name) },
-      { text: tx('Block'), style: 'destructive', onPress: () => blockUser(p.user_id!).then(() => toast(tx('{name} is blocked', { name: p.name }), 'check')).catch(fail) },
-      { text: tx('Cancel'), style: 'cancel' },
-    ]);
-  };
-  void room;
-  return (
-    <PressableScale onPress={menu} accessibilityRole="button" accessibilityLabel={p.name} style={[styles.tile, { borderColor: lineColor, opacity: p.alive ? 1 : 0.4 }]}>
-      {p.bot ? (
-        <View style={styles.botFace}>
-          <Text raw>🤖</Text>
-        </View>
-      ) : (
-        <Avatar name={p.name} hue={0} userId={p.user_id} size={36} />
-      )}
-      <Text variant="caption" numberOfLines={1} raw>
-        {`${p.alive ? '' : '💀 '}${p.name}${p.user_id === me ? ` (${tx('you')})` : ''}`}
-      </Text>
-      {acted ? (
-        <Text variant="caption" tone="positive">
-          ✓
-        </Text>
-      ) : null}
-    </PressableScale>
-  );
-}
-
-// ───────── The log ─────────
+// ───────── The log: the newest first, the last one highlighted ─────────
 function Log({ view, name }: { view: WwView; name: (s?: number) => string }) {
+  const reduced = useReducedMotion();
   const lines = useMemo(
     () =>
       (view.log ?? [])
@@ -514,25 +402,21 @@ function Log({ view, name }: { view: WwView; name: (s?: number) => string }) {
         .reverse(),
     [view.log, name],
   );
+  if (!lines.length) return null;
   return (
-    <View style={styles.block}>
-      <Text variant="label" tone="secondary">
-        What happened
-      </Text>
-      {lines.map((l) => (
-        <Animated.View key={l.id} entering={FadeIn.duration(400)}>
-          <Text variant="caption" tone={l.private ? 'accent' : 'secondary'} raw>
-            {(l.private ? '🔒 ' : '• ') + l.text}
-          </Text>
+    <Panel title={tx('What happened')}>
+      {lines.map((l, i) => (
+        <Animated.View key={l.id} entering={reduced ? undefined : FadeIn.duration(400)} style={i === 0 ? styles.latest : undefined}>
+          <Text style={[styles.logLine, l.private && { color: DX.goldLight }, i === 0 && styles.latestText]}>{(l.private ? '◆ ' : '• ') + l.text}</Text>
         </Animated.View>
       ))}
-    </View>
+      <Text style={styles.small}>{tx('◆ only you see these lines')}</Text>
+    </Panel>
   );
 }
 
 // ───────── Chat (the table by day, the pack at night, the dead) ─────────
 function Chat({ room, view, messages, me, name }: { room: Room; view: WwView; messages: GameMessage[]; me: string; name: (s?: number) => string }) {
-  const t = useTheme();
   const [text, setText] = useState('');
   const alive = view.me?.alive ?? false;
   const night = view.phase === 'night' || view.phase === 'witch';
@@ -550,153 +434,87 @@ function Chat({ room, view, messages, me, name }: { room: Room; view: WwView; me
     });
   };
   const nameOf = (m: GameMessage) => (m.seat !== null && m.seat !== undefined ? name(m.seat) : tx('A member'));
+  const title =
+    channel === 'wolves'
+      ? view.mode === 'dubai'
+        ? tx('Escrocs’ chat (only they read it)')
+        : tx('Pack chat (only werewolves read it)')
+      : channel === 'dead'
+        ? tx('Chat of the dead')
+        : tx('Village chat');
   return (
-    <View style={[styles.chat, { borderColor: t.c.line }]}>
-      <Text variant="label" tone="secondary">
-        {channel === 'wolves'
-          ? view.mode === 'dubai'
-            ? 'Escrocs’ chat (only they read it)'
-            : 'Pack chat (only werewolves read it)'
-          : channel === 'dead'
-            ? 'Chat of the dead'
-            : 'Village chat'}
-      </Text>
+    <Panel title={title}>
       {shown.map((m) => (
         <View key={m.id} style={styles.msg}>
-          <Text variant="caption" tone="secondary" raw>
-            {(m.kind === 'bot' ? '🤖 ' : '') + nameOf(m) + (m.user_id === me ? ` (${tx('you')})` : '')}
-          </Text>
-          <Text raw>{m.kind === 'bot' ? botLine(m.body, m.id, m.data, name) : m.body}</Text>
+          <Text style={styles.msgName}>{(m.kind === 'bot' ? `${tx('AI')} · ` : '') + nameOf(m) + (m.user_id === me ? ` (${tx('you')})` : '')}</Text>
+          <Text style={styles.body}>{m.kind === 'bot' ? botLine(m.body, m.id, m.data, name) : m.body}</Text>
         </View>
       ))}
       {canWrite ? (
-        <View style={[styles.inputRow, { borderColor: t.c.lineStrong, backgroundColor: t.c.surface }]}>
+        <View style={styles.inputRow}>
           <TextInput
             value={text}
             onChangeText={(v) => setText(v.slice(0, 300))}
             placeholder={tx(channel === 'wolves' ? 'Whisper to the pack' : 'Talk to the village')}
-            placeholderTextColor={t.c.textTertiary}
-            style={[styles.input, { color: t.c.text }]}
+            placeholderTextColor={DX.muted}
+            style={styles.input}
             onSubmitEditing={send}
             returnKeyType="send"
             maxLength={300}
+            accessibilityLabel={tx(channel === 'wolves' ? 'Whisper to the pack' : 'Talk to the village')}
           />
-          <IconButton icon="send" label="Send" onPress={send} />
+          <PressableScale onPress={send} accessibilityRole="button" accessibilityLabel={tx('Send')} style={styles.sendBtn}>
+            <Icon name="send" size={18} color={DX.goldLight} />
+          </PressableScale>
         </View>
       ) : (
-        <Text variant="caption" tone="tertiary">
-          The village sleeps: no talking at night
-        </Text>
+        <Text style={styles.small}>{tx('The village sleeps: no talking at night')}</Text>
       )}
-    </View>
-  );
-}
-
-// ───────── Result ─────────
-function Result({ view, me, room }: { view: WwView; me: string; room: Room }) {
-  const t = useTheme();
-  const router = useRouter();
-  const r = view.result;
-  const cards = ((view.log ?? []).find((e) => e.kind === 'game_over')?.data.cards ?? []) as { seat: number; name: string; bot: boolean; card: CardId; alive: boolean; won: boolean }[];
-  const mySeat = view.me?.seat;
-  const iWon = r?.seats.includes(mySeat ?? -1);
-  const dubai = view.mode === 'dubai';
-  const title =
-    r?.winner === 'village'
-      ? dubai
-        ? 'The Expats win'
-        : 'The village wins'
-      : r?.winner === 'wolves'
-        ? dubai
-          ? 'The Escrocs win'
-          : 'The werewolves win'
-        : r?.winner === 'lovers'
-          ? 'The lovers win'
-          : 'Nobody survived';
-  const humans = room.people.filter((p) => p.id !== me && !p.blocked);
-  const again = () =>
-    wwTraining(room.space === 'irly_girl' ? 'girl' : 'mixte', view.size, null, (view.difficulty as 'beginner' | 'intermediate' | 'expert') ?? 'intermediate', view.mode === 'dubai' ? 'dubai' : 'classic')
-      .then((id) => router.replace(`/games/${id}`))
-      .catch(fail);
-  return (
-    <View style={styles.block}>
-      <Animated.View entering={FadeInDown.duration(500)}>
-        <Text variant="titleL" raw>
-          {`${iWon ? '🏆' : '🌑'} ${tx(title)}`}
-        </Text>
-        <Text tone="secondary">{iWon ? 'You won this game.' : 'You lost this game.'}</Text>
-        {view.kind === 'training' ? (
-          <Text variant="caption" tone="tertiary">
-            Training against AI players: never counted in the ranking.
-          </Text>
-        ) : (
-          <Text variant="caption" tone="tertiary">
-            Unranked game
-          </Text>
-        )}
-      </Animated.View>
-      <Text variant="label" tone="secondary">
-        Every card
-      </Text>
-      {cards.map((c) => (
-        <View key={c.seat} style={[styles.row, { borderColor: t.c.line }]}>
-          <Text raw>{cardOf(c.card).emoji}</Text>
-          <Text style={{ flex: 1 }} raw>
-            {`${c.bot ? '🤖 ' : ''}${c.name} · ${tx(cardOf(c.card).name)}${c.alive ? '' : ' · 💀'}`}
-          </Text>
-          {c.won ? (
-            <Text variant="caption" tone="positive">
-              {r?.solo?.includes(c.seat) ? 'Personal victory' : r?.double?.includes(c.seat) ? 'Double victory' : 'Won'}
-            </Text>
-          ) : null}
-        </View>
-      ))}
-      {humans.length ? (
-        <>
-          <Text variant="titleS">Want to stay in touch?</Text>
-          {humans.map((p) => (
-            <View key={p.id} style={[styles.row, { borderColor: t.c.line }]}>
-              <Avatar name={p.name ?? '?'} hue={0} userId={p.id} size={40} />
-              <Text style={{ flex: 1 }} raw>
-                {p.name ?? tx('A member')}
-              </Text>
-              <Button label="See profile" size="sm" variant="secondary" onPress={() => router.push(`/person/${p.id}`)} />
-            </View>
-          ))}
-        </>
-      ) : null}
-      {view.kind === 'training' ? <Button label="Train again" icon="repeat" onPress={again} full /> : null}
-      <Button label="IRLY Games" variant="secondary" onPress={() => router.replace('/games')} full />
-    </View>
+    </Panel>
   );
 }
 
 const styles = StyleSheet.create({
-  block: { gap: space[4] },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[3], borderBottomWidth: StyleSheet.hairlineWidth },
-  codeBox: { alignItems: 'center', gap: space[3], padding: space[5], borderRadius: radius.lg, borderWidth: 1.5, borderStyle: 'dashed' },
-  codeText: { fontSize: 32, lineHeight: 38, letterSpacing: 6, fontWeight: '800' },
-  deck: { padding: space[4], borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, gap: space[3] },
-  cards: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  cardChip: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, borderWidth: 1 },
-  skyWrap: { borderRadius: radius.xl, overflow: 'hidden', minHeight: 92 },
-  skyInner: { flexDirection: 'row', alignItems: 'center', gap: space[4], padding: space[5] },
-  skyEmoji: { fontSize: 40, lineHeight: 46 },
-  badge: { backgroundColor: 'rgba(0,0,0,0.35)', paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill },
-  cardBox: { height: 210 },
-  card: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: radius.xl, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', padding: space[5], gap: space[2], backfaceVisibility: 'hidden' },
-  cardFront: {},
-  cardEmoji: { fontSize: 46, lineHeight: 54 },
-  dxPanel: { borderWidth: 1.5, borderColor: DX.goldDark, borderRadius: 16, backgroundColor: 'rgba(21,16,12,0.95)', padding: 12 },
-  optionDx: { backgroundColor: 'rgba(21,16,12,0.95)', borderColor: DX.gold, borderWidth: 1.5 },
-  option: { padding: space[4], borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, gap: space[3] },
-  targets: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  target: { paddingHorizontal: space[4], paddingVertical: space[3], borderRadius: radius.pill, borderWidth: 1.5 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
-  tile: { width: 74, alignItems: 'center', gap: 4, paddingVertical: space[2], borderRadius: radius.md, borderWidth: StyleSheet.hairlineWidth },
-  botFace: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(127,127,127,0.18)' },
-  chat: { gap: space[3], paddingTop: space[4], borderTopWidth: StyleSheet.hairlineWidth },
+  block: { gap: 14 },
+  panel: { borderWidth: 1.5, borderColor: DX.goldDark, borderRadius: 16, backgroundColor: 'rgba(21,16,12,0.96)', padding: 14, gap: 10 },
+  panelAccent: { borderColor: DX.gold, shadowColor: DX.gold, shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 0 } },
+  panelTitle: { color: DX.goldLight, fontSize: 16, letterSpacing: 0.5 },
+  body: { color: DX.ivory, fontSize: 14, lineHeight: 20 },
+  muted: { color: DX.muted, fontSize: 14 },
+  small: { color: DX.muted, fontSize: 12 },
+  waitText: { color: DX.ivory, fontSize: 15, textAlign: 'center' },
+  alert: { color: DX.redLight, fontSize: 15, fontWeight: '800' },
+  gold: { minHeight: 50, borderRadius: 14, borderWidth: 1.5, borderColor: DX.gold, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingHorizontal: 16 },
+  goldText: { color: DX.goldLight, fontSize: 16, letterSpacing: 0.5 },
+  ghost: { minHeight: 42, borderRadius: 12, borderWidth: 1.2, borderColor: DX.goldDark, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 14, backgroundColor: 'rgba(11,9,7,0.6)' },
+  ghostText: { color: DX.goldLight, fontSize: 14, fontWeight: '700' },
+  disabled: { opacity: 0.45 },
+  lobbyHero: { height: 190, borderRadius: 18, overflow: 'hidden', borderWidth: 1.5, borderColor: DX.gold, justifyContent: 'flex-end', padding: 16, gap: 4 },
+  lobbyMode: { color: DX.gold, fontSize: 13, letterSpacing: 3 },
+  lobbyTitle: { color: DX.goldLight, fontSize: 20 },
+  lobbyLine: { color: DX.ivory, fontSize: 13 },
+  codeBox: { alignItems: 'center', gap: 10 },
+  codeText: { color: DX.goldLight, fontSize: 32, letterSpacing: 6 },
+  personRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  personName: { flex: 1, color: DX.ivory, fontSize: 15, fontWeight: '700' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  cardChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: DX.goldDark, borderRadius: 18, paddingRight: 10, backgroundColor: DX.black, overflow: 'hidden' },
+  chipFace: { width: 30, height: 30, borderRadius: 15 },
+  chipText: { color: DX.ivory, fontSize: 12.5, fontWeight: '700' },
+  option: { gap: 8 },
+  optionTitle: { color: DX.ivory, fontSize: 15, fontWeight: '800' },
+  done: { color: '#7BD89B', fontSize: 13, fontWeight: '700' },
+  target: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: DX.goldDark, backgroundColor: 'rgba(11,9,7,0.7)' },
+  targetOn: { borderColor: DX.gold, backgroundColor: DX.red },
+  targetText: { color: DX.ivory, fontSize: 14, fontWeight: '700' },
+  clock: { color: DX.goldLight, fontSize: 14, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  know: { color: DX.ivory, fontSize: 12.5, lineHeight: 17 },
+  latest: { borderLeftWidth: 3, borderLeftColor: DX.gold, paddingLeft: 8 },
+  latestText: { color: DX.goldLight, fontSize: 14.5, fontWeight: '700' },
+  logLine: { color: DX.muted, fontSize: 13, lineHeight: 19 },
   msg: { gap: 2 },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: space[2], borderWidth: 1, borderRadius: radius.pill, paddingLeft: space[4], paddingRight: space[2], minHeight: 46 },
-  input: { flex: 1, fontSize: 16, paddingVertical: space[3] },
+  msgName: { color: DX.gold, fontSize: 12, fontWeight: '700' },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1.2, borderColor: DX.goldDark, borderRadius: 24, paddingLeft: 14, paddingRight: 4, minHeight: 48, backgroundColor: DX.black },
+  input: { flex: 1, fontSize: 16, paddingVertical: 10, color: DX.ivory },
+  sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: DX.red, borderWidth: 1, borderColor: DX.gold, alignItems: 'center', justifyContent: 'center' },
 });

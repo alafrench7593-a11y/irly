@@ -1,42 +1,46 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
-import { DUBAI_ORDER, type DubaiCardId } from '@/features/games/werewolf/cards';
-import { BACKGROUND } from '@/features/games/werewolf/dubai/art';
+import { CARD_ORDER, DUBAI_ORDER, type CardId } from '@/features/games/werewolf/cards';
+import { SCENES } from '@/features/games/werewolf/dubai/art';
 import { DubaiCard } from '@/features/games/werewolf/dubai/DubaiCard';
 import { DX, factionLabel, factionOf, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
 import { t as tx } from '@/i18n';
 
 type Filter = 'all' | Faction;
 
-/** The Dubaï mode's collection (official mockup): every card, filtered by faction. */
-export default function DubaiCardsScreen() {
+/** A mode's collection (official mockup): every card, filtered by faction. ?mode=classic|dubai|chaos (Chaos plays the Classic cards). */
+export default function CardsScreen() {
+  const { mode: m } = useLocalSearchParams<{ mode?: string }>();
+  const mode = m === 'dubai' || m === 'chaos' ? m : 'classic';
+  const deck: CardId[] = mode === 'dubai' ? DUBAI_ORDER : CARD_ORDER;
+  const factions: Faction[] = mode === 'dubai' ? ['expats', 'escrocs', 'independents', 'double'] : ['village', 'wolves'];
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fonts = useDubaiFonts();
   const reduced = useReducedMotion();
   const { width } = useWindowDimensions();
   const [filter, setFilter] = useState<Filter>('all');
-  const cards = useMemo(() => DUBAI_ORDER.filter((id) => filter === 'all' || factionOf(id) === filter), [filter]);
-  const count = (f: Faction) => DUBAI_ORDER.filter((id) => factionOf(id) === f).length;
+  const cards = useMemo(() => deck.filter((id) => filter === 'all' || factionOf(id) === filter), [filter, deck]);
+  const count = (f: Faction) => deck.filter((id) => factionOf(id) === f).length;
   const pageW = Math.min(width, 720);
   const cols = pageW >= 600 ? 3 : 2;
   const cardW = Math.floor((pageW - 16 * 2 - 12 * (cols - 1)) / cols);
   const filters: { key: Filter; label: string }[] = [
-    { key: 'all', label: `${tx('All')} (${DUBAI_ORDER.length})` },
-    ...(['expats', 'escrocs', 'independents', 'double'] as Faction[]).map((f) => ({ key: f, label: `${factionLabel(f, tx)} (${count(f)})` })),
+    { key: 'all', label: `${tx('All')} (${deck.length})` },
+    ...factions.map((f) => ({ key: f, label: `${factionLabel(f, tx)} (${count(f)})` })),
   ];
   return (
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32, alignItems: 'center' }} showsVerticalScrollIndicator={false}>
         <View style={[styles.hero, { width, paddingTop: insets.top + 8 }]}>
-          <Image source={BACKGROUND.home} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
+          <Image source={SCENES[mode].home} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition="top" accessibilityIgnoresInvertColors />
           <LinearGradient colors={['rgba(11,9,7,0.25)', 'rgba(11,9,7,0.35)', DX.black]} style={StyleSheet.absoluteFill} />
           <View style={[styles.heroRow, { width: pageW }]}>
             <Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel={tx('Back')} style={styles.round}>
@@ -47,9 +51,9 @@ export default function DubaiCardsScreen() {
             {'IRLY\nLOUP-GAROU'}
           </Text>
           <View style={styles.modeBadge}>
-            <Text style={[styles.modeText, serif(fonts, '700')]}>{tx('Dubai mode').toUpperCase()}</Text>
+            <Text style={[styles.modeText, serif(fonts, '700')]}>{tx(mode === 'dubai' ? 'Dubai mode' : mode === 'chaos' ? 'Chaos mode' : 'Classic mode').toUpperCase()}</Text>
           </View>
-          <Text style={[styles.sub, serif(fonts, '600')]}>{tx('Dubai collection')}</Text>
+          <Text style={[styles.sub, serif(fonts, '600')]}>{tx(mode === 'dubai' ? 'Dubai collection' : 'The village collection')}</Text>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar} contentContainerStyle={styles.filters}>
           {filters.map((f) => {
@@ -62,7 +66,7 @@ export default function DubaiCardsScreen() {
           })}
         </ScrollView>
         <View style={[styles.grid, { width: pageW }]}>
-          {cards.map((id: DubaiCardId, i) => (
+          {cards.map((id: CardId, i) => (
             <Animated.View key={id} entering={reduced ? undefined : FadeInDown.delay(Math.min(i, 8) * 45).duration(380)}>
               <DubaiCard id={id} width={cardW} details />
             </Animated.View>

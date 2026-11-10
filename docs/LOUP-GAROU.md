@@ -150,3 +150,20 @@ de son joueur. Toute action est une intention validée par le serveur.
 - `scripts/e2e-werewolf.mjs` (CI, en production, comptes de test, tables
   privées) : une partie d'entraînement complète, une table en ligne de six
   (cartes secrètes, meute, chat), une table en présentiel.
+
+## Mode Chaos
+
+Migration `20261114000000_irly_werewolf_chaos.sql`, tests `supabase/tests/werewolf_chaos.test.sql`.
+
+- Mêmes cartes et mêmes règles que le mode Classique ; seul le deck change.
+- Le serveur tire le deck au hasard au démarrage de chaque partie (`private.ww_chaos_composition`) :
+  le nombre habituel de loups-garous ±1 (au moins 1, toujours moins de la moitié), de 1 à 7 cartes
+  spéciales distinctes parmi Voyante, Sorcière, Chasseur, Salvateur, Cupidon, Petite Fille, Ancien,
+  des villageois pour le reste. Jamais le Voleur (ses deux cartes en plus trahiraient le deck).
+- Le deck reste secret pour tout le monde, hôte compris : ni le lobby, ni la vue de jeu, ni le journal
+  ne le montrent avant la fin (`private.ww_hide_chaos`). Il est révélé avec toutes les cartes à la fin.
+- Un hôte ne peut pas choisir un deck Chaos (refus « Chaos: the deck is drawn in secret »).
+- « Jouer en ligne » est désormais par mode (`public.ww_quickplay(p_space, p_mode)`) : une table
+  publique du même mode avec une place, sinon une nouvelle table de ce mode.
+- Simulations IA (90 parties, 6 à 20 joueurs) : loups-garous 63, village 24, amoureux 3. Comme le
+  Classique, le mode favorise les loups face à l'IA ; à mesurer en parties humaines.

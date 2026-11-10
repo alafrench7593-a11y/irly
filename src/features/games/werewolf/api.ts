@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import type { WwMode } from './cards';
 
 /**
  * IRLY Loup-Garou on the server (supabase/migrations/20261112000000_irly_werewolf.sql).
@@ -24,7 +25,8 @@ export type WwView = {
   size: number;
   ranked: boolean;
   difficulty?: string | null;
-  composition: Record<string, number>;
+  /** The deck; absent in Chaos until the end (the server keeps it secret). */
+  composition?: Record<string, number> | null;
   /** Lobby only: players there now, and whether the host's deck is the one used. */
   present?: number;
   custom?: boolean;
@@ -60,7 +62,7 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
-export const wwCreate = (space: string, opts: { kind: 'online' | 'irl'; visibility: 'public' | 'private'; size: number; title?: string; lang: 'en' | 'fr'; mode?: 'classic' | 'dubai' }) =>
+export const wwCreate = (space: string, opts: { kind: 'online' | 'irl'; visibility: 'public' | 'private'; size: number; title?: string; lang: 'en' | 'fr'; mode?: WwMode }) =>
   rpc<{ id: string; code: string | null }>('ww_create', {
     p_space: spaceArg(space),
     p_visibility: opts.visibility,
@@ -71,8 +73,10 @@ export const wwCreate = (space: string, opts: { kind: 'online' | 'irl'; visibili
     p_lang: opts.lang,
     p_mode: opts.mode ?? 'classic',
   });
-export const wwTraining = (space: string, size: number, role: string | null, difficulty: 'beginner' | 'intermediate' | 'expert', mode: 'classic' | 'dubai' = 'classic') =>
+export const wwTraining = (space: string, size: number, role: string | null, difficulty: 'beginner' | 'intermediate' | 'expert', mode: WwMode = 'classic') =>
   rpc<string>('ww_training', { p_space: spaceArg(space), p_size: size, p_role: role, p_difficulty: difficulty, p_mode: mode });
+/** « Play » in a mode: a public table of that mode with a free seat, or a new one. */
+export const wwQuickplay = (space: string, mode: WwMode) => rpc<string>('ww_quickplay', { p_space: spaceArg(space), p_mode: mode });
 export const wwAct = (room: string, kind: string, target?: number | null, target2?: number | null) =>
   rpc<void>('ww_act', { p_room: room, p_kind: kind, p_target: target ?? null, p_target2: target2 ?? null });
 export const wwSay = (room: string, body: string, channel: 'all' | 'wolves' | 'dead') => rpc<void>('ww_say', { p_room: room, p_body: body, p_channel: channel });

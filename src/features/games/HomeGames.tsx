@@ -4,16 +4,14 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { toast } from '@/components/ui/Toast';
 import { useAccount } from '@/features/auth/account';
 import { t as tx } from '@/i18n';
 import { hasBackend } from '@/lib/supabase';
 import { useNow } from '@/lib/useNow';
 import { PressableScale } from '@/motion/PressableScale';
-import { useAppSpace } from '@/state/appSpace';
 import { radius, space } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { quickplay, useGamesOverview, type GameCount } from './api';
+import { useGamesOverview, type GameCount } from './api';
 import { gamesLine } from './lines';
 
 /**
@@ -30,17 +28,11 @@ export const HomeGames = memo(function HomeGames() {
 function Inner() {
   const t = useTheme();
   const router = useRouter();
-  const space_ = useAppSpace();
   const now = useNow(60_000);
   const { data } = useGamesOverview();
   const line = useMemo(() => gamesLine(new Date(now).getHours(), now), [now]);
-  const ludo = data?.games.find((g) => g.game === 'ludo');
   const wolves = data?.games.find((g) => g.game === 'werewolf');
   const online = data?.online ?? 0;
-  const play = () =>
-    quickplay(space_)
-      .then((id) => router.push(`/games/${id}`))
-      .catch((e: Error) => toast(e.message, 'x', 'live'));
 
   return (
     <View style={styles.root}>
@@ -70,8 +62,7 @@ function Inner() {
         </Text>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rail}>
-        <GameCard emoji="🎲" name="Ludo" subtitle="2 to 4 players · 15 min" count={ludo} onPlay={play} onOpen={() => router.push('/games')} />
-        <GameCard emoji="🐺" name="Loup-Garou" subtitle="Online, in person, or train against AI" count={wolves} playLabel="Play" onPlay={() => router.push('/games')} onOpen={() => router.push('/games')} />
+        <GameCard emoji="🐺" name="Loup-Garou" subtitle="Classic, Dubai, Chaos · online, in person or against AI" count={wolves} playLabel="Play" onPlay={() => router.push('/games')} onOpen={() => router.push('/games')} />
       </ScrollView>
     </View>
   );

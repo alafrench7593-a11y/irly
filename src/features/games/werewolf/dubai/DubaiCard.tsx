@@ -3,12 +3,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { t as tx } from '@/i18n';
-import { CARDS, type DubaiCardId } from '../cards';
+import { CARDS, type CardId } from '../cards';
 import { PORTRAIT } from './art';
-import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, serif, useDubaiFonts } from './theme';
+import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, factionText, serif, useDubaiFonts } from './theme';
 
 type Props = {
-  id: DubaiCardId;
+  id: CardId;
   /** Card width; the height follows (portrait 3:4 + text). */
   width: number;
   /** With the power and the goal under the name (collection, my card). */
@@ -46,7 +46,7 @@ export const DubaiCard = memo(function DubaiCard({ id, width, details = false, d
           </View>
           <View style={styles.body}>
             <View style={[styles.camp, { borderColor: FACTION_COLOR[faction] }]}>
-              <Text style={[styles.campText, { color: FACTION_COLOR[faction] === DX.expats ? '#8FB2FF' : FACTION_COLOR[faction] }]}>
+              <Text style={[styles.campText, { color: factionText(faction) }]}>
                 {`${tx('Camp')} : ${factionLabel(faction, tx)}`}
               </Text>
             </View>

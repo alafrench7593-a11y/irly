@@ -73,6 +73,7 @@ import MessageCircle from 'lucide-react-native/icons/message-circle';
 import Mic from 'lucide-react-native/icons/mic';
 import Minus from 'lucide-react-native/icons/minus';
 import Moon from 'lucide-react-native/icons/moon';
+import Shuffle from 'lucide-react-native/icons/shuffle';
 import Pencil from 'lucide-react-native/icons/pencil';
 import Pin from 'lucide-react-native/icons/pin';
 import Megaphone from 'lucide-react-native/icons/megaphone';
@@ -220,6 +221,7 @@ export const icons = {
   mic: Mic,
   minus: Minus,
   moon: Moon,
+  shuffle: Shuffle,
   mountain: Mountain,
   music: Music,
   navigation: Navigation,

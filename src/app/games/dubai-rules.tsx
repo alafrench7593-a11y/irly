@@ -1,27 +1,30 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
-import { CARDS, DUBAI_ORDER } from '@/features/games/werewolf/cards';
-import { BACKGROUND } from '@/features/games/werewolf/dubai/art';
+import { CARD_ORDER, CARDS, DUBAI_ORDER } from '@/features/games/werewolf/cards';
+import { SCENES } from '@/features/games/werewolf/dubai/art';
 import { LivingScene } from '@/features/games/werewolf/dubai/Motion';
-import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
+import { DX, FACTION_COLOR, factionLabel, FactionGlyph, factionOf, factionText, serif, useDubaiFonts, type Faction } from '@/features/games/werewolf/dubai/theme';
 import { t as tx } from '@/i18n';
 
 type Section = { key: string; title: string; lines: string[] };
 
-/** The Dubaï mode's rules, as the server plays them (docs/LOUP-GAROU-DUBAI.md). */
-export default function DubaiRulesScreen() {
+/** A mode's rules, as the server plays them (docs/LOUP-GAROU.md, docs/LOUP-GAROU-DUBAI.md). ?mode=classic|dubai|chaos. */
+export default function RulesScreen() {
+  const { mode: m } = useLocalSearchParams<{ mode?: string }>();
+  const mode = m === 'classic' || m === 'chaos' ? m : 'dubai';
+  const dubai = mode === 'dubai';
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const fonts = useDubaiFonts();
   const reduced = useReducedMotion();
   const { width } = useWindowDimensions();
   const [open, setOpen] = useState<string>('goal');
-  const sections: Section[] = [
+  const dubaiSections: Section[] = [
     {
       key: 'goal',
       title: tx('Goal of the game'),
@@ -62,10 +65,56 @@ export default function DubaiRulesScreen() {
       ],
     },
   ];
+  const village: Section[] = [
+    {
+      key: 'goal',
+      title: tx('Goal of the game'),
+      lines: [
+        tx('The village wins when every werewolf is eliminated.'),
+        tx('The werewolves win when they are at least as many as the other living players.'),
+        tx('Two lovers from different camps win together if they are the last two standing.'),
+      ],
+    },
+    {
+      key: 'flow',
+      title: tx('How a game goes'),
+      lines: [
+        tx('1. Your card is dealt in secret: only you see it.'),
+        tx('2. Night: the werewolves choose a victim together; the powers act in secret.'),
+        tx('3. Day: the night’s events are announced, everyone debates.'),
+        tx('4. Vote: the most voted player is eliminated; a tie gives a second round between the tied, a second tie: nobody.'),
+        tx('5. The game goes on until a camp wins.'),
+      ],
+    },
+    ...(mode === 'chaos'
+      ? [
+          {
+            key: 'chaos',
+            title: tx('Chaos mode'),
+            lines: [
+              tx('The server draws the deck at random for each game: one werewolf more or less than usual, one to seven special cards.'),
+              tx('Nobody knows which powers are in play, not even the host: you find out by playing.'),
+              tx('The whole deck is revealed at the end.'),
+            ],
+          },
+        ]
+      : []),
+    {
+      key: 'secret',
+      title: tx('Secrets'),
+      lines: [
+        tx('Nobody sees another player’s card during the game, and the results of a power go only to its player.'),
+        tx('All the cards are revealed at the end.'),
+        tx('The server decides everything: the deal, the powers, the votes, the victories.'),
+      ],
+    },
+  ];
+  const sections = dubai ? dubaiSections : village;
+  const deck = dubai ? DUBAI_ORDER : CARD_ORDER;
   return (
     <View style={styles.root}>
       <Stack.Screen options={{ headerShown: false }} />
-      <LivingScene source={BACKGROUND.night} />
+      <LivingScene source={SCENES[mode].night} />
       <LinearGradient colors={['rgba(11,9,7,0.4)', 'rgba(11,9,7,0.85)', DX.black]} locations={[0, 0.35, 0.7]} style={StyleSheet.absoluteFill} />
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: insets.bottom + 32, alignItems: 'center' }}>
         <View style={[styles.head, { width: Math.min(width, 640) }]}>
@@ -73,7 +122,7 @@ export default function DubaiRulesScreen() {
             <Icon name="arrowLeft" size={20} color={DX.goldLight} />
           </Pressable>
           <Text style={[styles.title, serif(fonts, '900')]} accessibilityRole="header">
-            {tx('Rules of the game').toUpperCase()}
+            {`${tx('Rules of the game')} · ${tx(dubai ? 'Dubai' : mode === 'chaos' ? 'Chaos' : 'Classic')}`.toUpperCase()}
           </Text>
         </View>
         <View style={{ width: Math.min(width, 640), paddingHorizontal: 16, gap: 10 }}>
@@ -94,8 +143,8 @@ export default function DubaiRulesScreen() {
               ) : null}
             </View>
           ))}
-          <Text style={[styles.cardsTitle, serif(fonts, '700')]}>{tx('The 20 characters')}</Text>
-          {DUBAI_ORDER.map((id) => {
+          <Text style={[styles.cardsTitle, serif(fonts, '700')]}>{dubai ? tx('The 20 characters') : tx('The 10 cards')}</Text>
+          {deck.map((id) => {
             const f: Faction = factionOf(id);
             return (
               <View key={id} style={styles.card}>
@@ -104,7 +153,7 @@ export default function DubaiRulesScreen() {
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={[styles.cardName, serif(fonts, '700')]}>{tx(CARDS[id].name)}</Text>
-                  <Text style={[styles.cardCamp, { color: FACTION_COLOR[f] === DX.expats ? '#8FB2FF' : FACTION_COLOR[f] }]}>{factionLabel(f, tx)}</Text>
+                  <Text style={[styles.cardCamp, { color: factionText(f) }]}>{factionLabel(f, tx)}</Text>
                   <Text style={styles.line}>{tx(CARDS[id].power)}</Text>
                   <Text style={[styles.line, { color: DX.muted }]}>{tx(CARDS[id].goal)}</Text>
                 </View>
