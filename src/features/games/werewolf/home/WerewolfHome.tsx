@@ -25,8 +25,8 @@ import { DX, serif, useDubaiFonts } from '../dubai/theme';
 
 const fail = (e: unknown) => toast(e instanceof Error ? e.message : 'Try again', 'x', 'live');
 
-type ModeInfo = { name: string; tagline: string; line: string; cast: CardId[] };
-const MODE_INFO: Record<WwMode, ModeInfo> = {
+export type ModeInfo = { name: string; tagline: string; line: string; cast: CardId[] };
+export const MODE_INFO: Record<WwMode, ModeInfo> = {
   classic: {
     name: 'Classic',
     tagline: 'The village against the werewolves.',
