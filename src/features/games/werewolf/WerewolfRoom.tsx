@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from 'react-native-reanimated';
@@ -63,6 +63,7 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
     setPanel(null);
     setCardSeen(true);
   };
+  const { act, busy } = useAct(room.id, reload);
   const [inviting, setInviting] = useState(false);
   const present = room.people.filter((p) => !p.left);
   const seated = present.some((p) => p.id === me);
@@ -77,7 +78,7 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
         ) : view.phase === 'lobby' ? (
           <Lobby room={room} me={me} view={view} onChanged={reload} voice={voice} people={people} onInvite={() => setInviting(true)} />
         ) : (
-          <Game room={room} me={me} view={view} messages={messages} skew={skew} onChanged={reload} voice={voice} people={people} panel={open} onClosePanel={closePanel} />
+          <Game room={room} me={me} view={view} messages={messages} skew={skew} onChanged={reload} voice={voice} people={people} panel={open} onClosePanel={closePanel} act={act} busy={busy} />
         )}
         {children}
       </ScrollView>
@@ -112,7 +113,7 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
           </View>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.dockInner}>
             <VoiceMic voice={voice} />
-            <Actions room={room} view={view} name={(s) => (s === undefined ? tx('someone') : ((view.players ?? []).find((p) => p.seat === s)?.name ?? tx('someone')))} onChanged={reload} />
+            <Actions view={view} name={(s) => (s === undefined ? tx('someone') : ((view.players ?? []).find((p) => p.seat === s)?.name ?? tx('someone')))} act={act} busy={busy} />
           </ScrollView>
         </View>
       ) : null}
@@ -122,6 +123,36 @@ export function WerewolfRoom({ room, me, messages, onBack, onLeave, children }: 
 }
 
 type GamePanel = 'card' | 'chat' | 'log';
+
+/** What the server answers when the screen was a moment late: the phase moved on, nothing is wrong. */
+const LATE = new Set(['you cannot do that now', 'nothing to do now', 'not a valid target', 'this game is not running']);
+type Act = (kind: string, a?: number | null, b?: number | null) => void;
+
+/**
+ * One action at a time. While it is sent, and until the game is read again, nothing else can be sent: a second
+ * tap never reaches the server from a screen that is out of date. If the phase had already moved on, the game is
+ * simply read again and the player is told so, without an error.
+ */
+function useAct(roomId: string, reload: () => Promise<void>): { act: Act; busy: boolean } {
+  const [busy, setBusy] = useState(false);
+  const sending = useRef(false);
+  const act: Act = (kind, a, b) => {
+    if (sending.current) return;
+    sending.current = true;
+    setBusy(true);
+    wwAct(roomId, kind, a, b)
+      .catch((e: unknown) => {
+        if (e instanceof Error && LATE.has(e.message)) toast(tx('The game has moved on. Here is where it stands.'), 'clock');
+        else fail(e);
+      })
+      .then(reload)
+      .finally(() => {
+        sending.current = false;
+        setBusy(false);
+      });
+  };
+  return { act, busy };
+}
 
 const PHASE_ICON = { night: '🌙', witch: '🌙', day: '☀️', vote: '🗳️', revote: '🗳️', ended: '🏁', lobby: '' } as const;
 
@@ -385,7 +416,7 @@ function CardChip({ id, count }: { id: CardId; count: number }) {
 }
 
 // ───────── The game ─────────
-function Game({ room, me, view, messages, skew, onChanged, voice, people, panel, onClosePanel }: { room: Room; me: string; view: WwView; messages: GameMessage[]; skew: number; onChanged: () => void; voice: Voice; people: { id: string; name: string }[]; panel: GamePanel | null; onClosePanel: () => void }) {
+function Game({ room, me, view, messages, skew, onChanged, voice, people, panel, onClosePanel, act, busy }: { room: Room; me: string; view: WwView; messages: GameMessage[]; skew: number; onChanged: () => void; voice: Voice; people: { id: string; name: string }[]; panel: GamePanel | null; onClosePanel: () => void; act: Act; busy: boolean }) {
   const night = view.phase === 'night' || view.phase === 'witch';
   const ended = view.phase === 'ended';
   const mode = modeOf(view.mode);
@@ -410,7 +441,7 @@ function Game({ room, me, view, messages, skew, onChanged, voice, people, panel,
   }, [view.log, view.day, view.pack_votes]);
   const pick = (seat: number) => {
     if (!stageOption) return;
-    wwAct(room.id, stageOption.kind, seat).then(onChanged).catch(fail);
+    act(stageOption.kind, seat);
   };
   const menu = (p: WwPlayer) => {
     if (p.bot || !p.user_id || p.user_id === me) return;
@@ -449,7 +480,7 @@ function Game({ room, me, view, messages, skew, onChanged, voice, people, panel,
           clock={<Clock deadline={view.deadline ?? null} skew={skew} />}
           players={players}
           mySeat={view.me?.seat}
-          targets={stageOption && alive ? stageOption.targets : []}
+          targets={stageOption && alive && !busy ? stageOption.targets : []}
           chosen={stageChosen}
           marks={stageMarks}
           onPick={stageOption ? pick : undefined}
@@ -525,7 +556,7 @@ function Clock({ deadline, skew }: { deadline: string | null; skew: number }) {
 }
 
 // ───────── What I may do now ─────────
-function Actions({ room, view, name, onChanged }: { room: Room; view: WwView; name: (s?: number) => string; onChanged: () => void }) {
+function Actions({ view, name, act, busy }: { view: WwView; name: (s?: number) => string; act: Act; busy: boolean }) {
   const options = view.options ?? [];
   const mine = view.mine ?? [];
   const fonts = useDubaiFonts();
@@ -541,25 +572,26 @@ function Actions({ room, view, name, onChanged }: { room: Room; view: WwView; na
         <Text style={styles.alert}>{tx(view.mode === 'dubai' ? 'The Escrocs attacked {name}' : 'The werewolves attacked {name}', { name: name(view.victim) })}</Text>
       ) : null}
       {options.map((o) => (
-        <Option key={o.kind} room={room} view={view} option={o} done={mine.filter((m) => m.kind === o.kind)} name={name} onChanged={onChanged} />
+        <Option key={o.kind} view={view} option={o} done={mine.filter((m) => m.kind === o.kind)} name={name} act={act} busy={busy} />
       ))}
-      {view.phase !== 'day' && !mine.length ? <GoldButton label={tx(view.phase === 'vote' || view.phase === 'revote' ? 'Abstain' : 'Do nothing')} ghost onPress={() => wwAct(room.id, 'pass').then(onChanged).catch(fail)} /> : null}
+      {view.phase !== 'day' && !mine.length ? <GoldButton label={tx(view.phase === 'vote' || view.phase === 'revote' ? 'Abstain' : 'Do nothing')} ghost disabled={busy} onPress={() => act('pass')} /> : null}
       {mine.some((m) => m.kind === 'pass') ? <Text style={styles.small}>{tx('You chose to do nothing')}</Text> : null}
     </View>
   );
 }
 
-function Option({ room, view, option, done, name, onChanged }: { room: Room; view: WwView; option: WwOption; done: { target: number | null; target2: number | null }[]; name: (s?: number) => string; onChanged: () => void }) {
+function Option({ view, option, done, name, act, busy }: { view: WwView; option: WwOption; done: { target: number | null; target2: number | null }[]; name: (s?: number) => string; act: Act; busy: boolean }) {
   const [first, setFirst] = useState<number | null>(null);
   const reduced = useReducedMotion();
   const send = (a?: number | null, b?: number | null) => {
+    if (busy) return;
     haptic('press');
-    wwAct(room.id, option.kind, a, b).then(onChanged).catch(fail);
+    act(option.kind, a, b);
   };
   const chosen = done[0];
   const label = (s: number) => name(s) + (view.pack_votes && option.kind === 'wolf' ? votesFor(view.pack_votes, s) : '');
   return (
-    <Animated.View entering={reduced ? undefined : FadeInDown.duration(300)} style={styles.option}>
+    <Animated.View entering={reduced ? undefined : FadeInDown.duration(300)} style={[styles.option, busy ? styles.sending : null]}>
       <Text style={styles.optionTitle}>{tx(ACTION_TITLE[option.kind] ?? option.kind)}</Text>
       {chosen ? (
         <Text style={styles.done}>
@@ -571,7 +603,7 @@ function Option({ room, view, option, done, name, onChanged }: { room: Room; vie
         </Text>
       ) : null}
       {NO_TARGET.has(option.kind) ? (
-        <GoldButton label={tx(option.kind === 'ready' ? 'Ready to vote' : option.kind === 'hint' ? 'Spy tonight' : 'Use my power')} disabled={Boolean(chosen)} onPress={() => send()} />
+        <GoldButton label={tx(option.kind === 'ready' ? 'Ready to vote' : option.kind === 'hint' ? 'Spy tonight' : 'Use my power')} disabled={Boolean(chosen) || busy} onPress={() => send()} />
       ) : option.kind === 'steal' ? (
         <View style={styles.chips}>
           {(option.cards ?? []).map((c, i) => (
@@ -827,6 +859,7 @@ const styles = StyleSheet.create({
   chipFace: { width: 30, height: 30, borderRadius: 15 },
   chipText: { color: DX.ivory, fontSize: 12.5, fontWeight: '700' },
   option: { gap: 8 },
+  sending: { opacity: 0.55 },
   optionTitle: { color: DX.ivory, fontSize: 15, fontWeight: '800' },
   done: { color: '#7BD89B', fontSize: 13, fontWeight: '700' },
   target: { minHeight: 40, justifyContent: 'center', paddingHorizontal: 14, borderRadius: 20, borderWidth: 1.5, borderColor: DX.goldDark, backgroundColor: 'rgba(11,9,7,0.7)' },
